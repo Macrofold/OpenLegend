@@ -10,7 +10,21 @@ import {
   readsPersonalHistory,
   type LiveReadCuts,
   type LiveReadCutsProvider,
+  type MetadataBaseline,
 } from './live-read-overlay.js';
+
+interface TransactionScope {
+  active: boolean;
+  client: pg.Client;
+  readOnly: boolean;
+  committed: (() => void)[];
+  rolledBack: (() => void)[];
+  liveCuts?: LiveReadCuts;
+  liveHead?: Record<string, unknown>;
+  liveOverlays?: Map<string, LiveReadOverlay>;
+  exactCut?: boolean;
+  actor?: { worldId: string; actorId: string };
+}
 
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
 export class PostgresDatabase implements SqlDatabase {
@@ -23,17 +37,35 @@ export class PostgresDatabase implements SqlDatabase {
   private readReady?: Promise<void>;
   private readonly readLane = new WorkLane('postgres.read', 512);
   private readonly writeLane = new WorkLane('postgres', 512);
-  private transactionContext = new AsyncLocalStorage<{
-    active: boolean;
-    client: pg.Client;
-    readOnly: boolean;
-    committed: (() => void)[];
-    rolledBack: (() => void)[];
-    liveCuts?: LiveReadCuts;
-    liveOverlay?: LiveReadOverlay;
-    exactCut?: boolean;
-    actor?: { worldId: string; actorId: string };
-  }>();
+  private transactionContext = new AsyncLocalStorage<TransactionScope>();
+  private readonly metadataBaselineRead = new AsyncLocalStorage<boolean>();
+  readMetadataBaseline<T>(
+    actorIds: readonly string[],
+    operation: (baseline: MetadataBaseline) => Promise<T>,
+  ): Promise<T> {
+    const read = async () => {
+      const scope = this.transactionContext.getStore();
+      const actor = this.actorReadScope.getStore() ?? scope?.actor;
+      if (scope?.readOnly && actor && actorIds.some((id) => id !== actor.actorId))
+        throw new LiveReadRevisionError();
+      const overlay =
+        scope?.readOnly && scope.liveCuts ? await this.resolveLiveOverlay(scope) : undefined;
+      const head = overlay
+        ? overlay.metadataBaseline(actorIds)
+        : await this.query('SELECT world_id,revision FROM world_head WHERE id=1').then(
+            ({ rows }) => ({
+              worldId: String(rows[0]?.['world_id']),
+              revision: Number(rows[0]?.['revision']),
+            }),
+          );
+      // This consumer merges its selected pending metadata itself. Expanding the
+      // same pending bodies into SQL duplicates that work and can exceed the read
+      // allowance before SQL filters them. Body/source reads outside this callback
+      // retain normal live semantics. The captured cut was validated above.
+      return this.metadataBaselineRead.run(true, () => operation(head));
+    };
+    return this.transactionContext.getStore()?.active ? read() : this.readTransaction(read);
+  }
   private readonly actorReadScope = new AsyncLocalStorage<{ worldId: string; actorId: string }>();
   readForActor<T>(worldId: string, actorId: string, operation: () => Promise<T>): Promise<T> {
     return this.actorReadScope.run({ worldId, actorId }, operation);
@@ -214,6 +246,53 @@ export class PostgresDatabase implements SqlDatabase {
       return result;
     });
   }
+  private async resolveLiveOverlay(scope: TransactionScope): Promise<LiveReadOverlay> {
+    if (!scope.liveCuts) throw new LiveReadRevisionError();
+    const requested = this.actorReadScope.getStore(),
+      actor = requested ?? scope.actor;
+    if (
+      scope.actor &&
+      requested &&
+      (scope.actor.worldId !== requested.worldId || scope.actor.actorId !== requested.actorId)
+    )
+      throw new LiveReadRevisionError();
+    const key = actor ? JSON.stringify([actor.worldId, actor.actorId]) : '';
+    const cached = scope.liveOverlays?.get(key);
+    if (cached) return cached;
+    // Every selected durable row and the header use the same repeatable-read
+    // snapshot, whether the consumer merges bodies or only canonical metadata.
+    const value = (scope.liveHead ??=
+      (await this.query('SELECT world_id,generation,revision FROM world_head WHERE id=1'))
+        .rows[0] ?? {});
+    const prepare = (cut: LiveReadCuts) =>
+      new LiveReadOverlay(
+        cut,
+        Number(value?.['revision']),
+        String(value?.['generation']),
+        String(value?.['world_id']),
+        actor,
+      );
+    let overlay: LiveReadOverlay;
+    try {
+      overlay = prepare(scope.liveCuts);
+    } catch (error) {
+      const latest =
+        !scope.exactCut && error instanceof LiveReadRevisionError
+          ? this.liveReadCuts?.(scope.actor)
+          : undefined;
+      if (
+        !latest ||
+        latest.generation !== scope.liveCuts.generation ||
+        latest.timeline !== scope.liveCuts.timeline
+      )
+        throw error;
+      overlay = prepare(latest);
+      scope.liveCuts = latest;
+    }
+    scope.liveOverlays ??= new Map();
+    scope.liveOverlays.set(key, overlay);
+    return overlay;
+  }
   async query(sql: string, params: unknown[] = []) {
     const execute = async () => {
       await this.ready;
@@ -221,6 +300,7 @@ export class PostgresDatabase implements SqlDatabase {
         throw new Error('PostgreSQL unavailable; restart and reconcile pending writes.');
       const scope = this.transactionContext.getStore();
       if (
+        !this.metadataBaselineRead.getStore() &&
         scope?.readOnly &&
         scope.liveCuts &&
         (scope.liveCuts.cuts.length ||
@@ -228,41 +308,8 @@ export class PostgresDatabase implements SqlDatabase {
           (scope.liveCuts.historyEligibility?.size && readsPersonalHistory(sql))) &&
         mayReadLiveTables(sql)
       ) {
-        if (!scope.liveOverlay) {
-          // The header and all selected durable rows share this repeatable-read
-          // snapshot. A save completing during capture is mapped to its prefix.
-          const head = await this.query(
-            'SELECT world_id,generation,revision FROM world_head WHERE id=1',
-          );
-          const value = head.rows[0];
-          const prepare = (cut: LiveReadCuts) =>
-            new LiveReadOverlay(
-              cut,
-              Number(value?.['revision']),
-              String(value?.['generation']),
-              String(value?.['world_id']),
-              scope.actor,
-            );
-          try {
-            scope.liveOverlay = prepare(scope.liveCuts);
-          } catch (error) {
-            // A current read gets one recapture before any source query runs.
-            // Explicit historical/native cuts never silently move forward.
-            const latest =
-              !scope.exactCut && error instanceof LiveReadRevisionError
-                ? this.liveReadCuts?.(scope.actor)
-                : undefined;
-            if (
-              !latest ||
-              latest.generation !== scope.liveCuts.generation ||
-              latest.timeline !== scope.liveCuts.timeline
-            )
-              throw error;
-            scope.liveOverlay = prepare(latest);
-            scope.liveCuts = latest;
-          }
-        }
-        const rewritten = scope.liveOverlay.rewrite(sql, params);
+        const overlay = await this.resolveLiveOverlay(scope);
+        const rewritten = overlay.rewrite(sql, params);
         sql = rewritten.sql;
         params = rewritten.params;
       }

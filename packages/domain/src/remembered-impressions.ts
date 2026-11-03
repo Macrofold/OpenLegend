@@ -88,11 +88,14 @@ export function encodedExperienceBytes(entry: ExperienceEntry): number {
  * replaceable aftermath early enough to leave the world's maintenance share
  * available for the next admitted batch; active owners remain protected. */
 export function experienceMaintenanceTarget(world: WorldState, pool: ExperienceAccountClass) {
-  const policy = selectedTemporalPolicy(world), hard = policy[pool];
-  return pool === 'required' ? {
-    maxBytes: Math.floor(hard.maxBytes * (1 - policy.maintenanceHeadroom)),
-    maxRecords: Math.floor(hard.maxRecords * (1 - policy.maintenanceHeadroom)),
-  } : hard;
+  const policy = selectedTemporalPolicy(world),
+    hard = policy[pool];
+  return pool === 'required'
+    ? {
+        maxBytes: Math.floor(hard.maxBytes * (1 - policy.maintenanceHeadroom)),
+        maxRecords: Math.floor(hard.maxRecords * (1 - policy.maintenanceHeadroom)),
+      }
+    : hard;
 }
 export function markRequiredExperienceMaintenance(world: WorldState, actorId: string): void {
   const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
@@ -160,7 +163,8 @@ export function adjustExperienceAccounting(
   ensureExperienceAccounting(world, actorId);
   const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
   if (!accounts) return;
-  const category = accountClass(entry), account = accounts[category];
+  const category = accountClass(entry),
+    account = accounts[category];
   const bytes = account.bytes + delta * encodedExperienceBytes(entry),
     count = account.count + delta;
   if (bytes < 0 || count < 0) throw new Error('Personal account retention counters underflowed.');

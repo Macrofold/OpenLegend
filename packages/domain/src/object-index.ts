@@ -96,11 +96,14 @@ export function* objectIndexEntries<T>(tree: Tree<T>, after?: string): Generator
 export function* objectIndexEntriesAtLeast(
   tree: Tree<number>,
   threshold: number,
+  after?: string,
 ): Generator<[string, number]> {
   if (!tree || tree.maximum < threshold) return;
-  yield* objectIndexEntriesAtLeast(tree.left, threshold);
-  if (tree.value >= threshold) yield [tree.key, tree.value];
-  yield* objectIndexEntriesAtLeast(tree.right, threshold);
+  if (after === undefined || tree.key > after) {
+    yield* objectIndexEntriesAtLeast(tree.left, threshold, after);
+    if (tree.value >= threshold) yield [tree.key, tree.value];
+  }
+  yield* objectIndexEntriesAtLeast(tree.right, threshold, after);
 }
 
 /** Numeric revision selection without scanning unchanged owners. */

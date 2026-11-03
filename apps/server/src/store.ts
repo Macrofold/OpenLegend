@@ -1,12 +1,12 @@
 import {
   prepareAccountRetentionPlan,
-  maximumAccountRetentionActors,
   nextAccountRetentionAt,
   type AccountRetentionPlan,
 } from './account-retention.js';
-import { dueAccountRetentionActors } from './retention-deadlines.js';
+import { RetentionActorSelection } from './retention-deadlines.js';
+import { selectActorLiveReadCuts, selectActorRecordChanges } from './actor-record-selection.js';
 import { prepareRecentRetention, type RecentRetentionPlan } from './recent-retention.js';
-import type { LiveReadCuts, LiveReadCutsProvider } from './live-read-overlay.js';
+import type { LiveReadCuts, LiveReadCutsProvider, MetadataBaseline } from './live-read-overlay.js';
 import { receivedCurrentOwnerTables } from './received-record-references.js';
 import { retentionDueActors, recentRetentionDue } from './temporal-storage.js';
 import type { PreparedDiagnosticRecord } from './diagnostic-capture.js';
@@ -47,7 +47,12 @@ import {
   compactContributionHistory,
 } from './history-residency.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
-import { WorldRecords, retainedSourceTables, type RecordChanges } from './world-records.js';
+import {
+  WorldRecords,
+  mergeRecordChanges,
+  retainedSourceTables,
+  type RecordChanges,
+} from './world-records.js';
 import {
   RetentionMetadata,
   accountTables,
@@ -182,6 +187,12 @@ export interface SqlDatabase {
   readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
   readForActor?<T>(worldId: string, actorId: string, operation: () => Promise<T>): Promise<T>;
   readAtCut?<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T>;
+  /** Selected canonical metadata plus explicit pending merge, in the same
+   * validated snapshot. Ordinary body/source readers keep the live overlay. */
+  readMetadataBaseline?<T>(
+    actorIds: readonly string[],
+    operation: (baseline: MetadataBaseline) => Promise<T>,
+  ): Promise<T>;
   afterCommit?(callback: () => void): void;
   afterRollback?(callback: () => void): void;
   exec(sql: string): Promise<void>;
@@ -518,6 +529,7 @@ export class SqlGameRepository implements GameRepository {
     return () => this.projectionListeners.delete(listener);
   }
   private readonly receivedOwnership: ReceivedValueOwnership;
+  private readonly retentionActors = new RetentionActorSelection();
   private liveReadCuts?: LiveReadCutsProvider;
   private retainedValueLookup?: (worldId: string) => Readonly<Record<string, unknown>>;
   setRetainedValueLookup(provider: (worldId: string) => Readonly<Record<string, unknown>>): void {
@@ -576,18 +588,15 @@ export class SqlGameRepository implements GameRepository {
     const dueAt = nextAccountRetentionAt(state.world);
     if (dueAt === null || dueAt > state.world.simTime)
       return { worldId: state.world.id, actors: [], rows: new Map() };
-    const actors: string[] = [];
-    for (const actorId of dueAccountRetentionActors(state.world)) {
-      actors.push(actorId);
-      if (actors.length === maximumAccountRetentionActors) break;
-    }
+    const actors = this.retentionActors.select(state.world, 'accounts'),
+      selectedPending = selectActorRecordChanges(pending, actors);
     const metadata = new RetentionMetadata();
     const baseline = this.acceptedState;
     const operation = async () => {
       metadata.initialize(
         await metadata.capture(this.db, state.world.id, actors, {
           recentActors: [],
-          changes: pending,
+          changes: selectedPending,
           world: state.world,
           previous: baseline?.world,
         }),
@@ -595,26 +604,32 @@ export class SqlGameRepository implements GameRepository {
       return prepareAccountRetentionPlan(
         this.db,
         state,
-        metadata.view(state.world.id, pending),
+        metadata.view(state.world.id, selectedPending),
         actors,
-        pending.deletes,
+        selectedPending.deletes,
         async (prepared) => {
           this.records.stageRetirements(prepared.state, prepared.rows, prepared.positions);
-          const changes = this.records.prepare(
-            baseline ?? undefined,
-            prepared.state,
-            new Set(accountTables),
+          // Pending rows already carry their exact encoded changes. Prepare only
+          // this slice's retirement/impression effects, not every unsaved account
+          // again against the older durable world.
+          const changes = mergeRecordChanges(
+            selectedPending,
+            this.records.prepare(state, prepared.state, new Set(accountTables)),
           );
           return this.memories.prepareSourceVersionRetention(
             prepared.state,
             changes,
             metadata.view(state.world.id, changes),
+            actors,
           );
         },
       );
     };
     return cut && this.db.readAtCut
-      ? this.db.readAtCut(cut, operation)
+      ? this.db.readAtCut(
+          selectActorLiveReadCuts(cut, actors, this.memories.captureSources.bind(this.memories)),
+          operation,
+        )
       : (this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db))(operation);
   }
   prepareRecentRetention(
@@ -622,8 +637,15 @@ export class SqlGameRepository implements GameRepository {
     pending?: RecordChanges,
     cut?: LiveReadCuts,
   ): Promise<RecentRetentionPlan> {
-    const operation = () => prepareRecentRetention(this.db, state, pending);
-    return cut && this.db.readAtCut ? this.db.readAtCut(cut, operation) : operation();
+    const actors = this.retentionActors.select(state.world, 'recent'),
+      selectedPending = pending && selectActorRecordChanges(pending, actors);
+    const operation = () => prepareRecentRetention(this.db, state, actors, selectedPending);
+    return cut && this.db.readAtCut
+      ? this.db.readAtCut(
+          selectActorLiveReadCuts(cut, actors, this.memories.captureSources.bind(this.memories)),
+          operation,
+        )
+      : operation();
   }
   async eraseReceivedValues(worldId: string, ids: readonly string[]): Promise<void> {
     await this.receivedOwnership.erase(worldId, ids);

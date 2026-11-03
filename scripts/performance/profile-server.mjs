@@ -133,6 +133,18 @@ function recentOwnerCensus(world) {
     residentChunks: actor.chunks.length,
     releasedThrough: actor.releasedThrough ?? null,
     recordingGap: actor.recordingGap ? { ...actor.recordingGap } : null,
+    accounts: actor.accounts
+      ? Object.fromEntries(
+          ['optional', 'required', 'speech'].map((pool) => [
+            pool,
+            {
+              bytes: actor.accounts[pool].bytes,
+              count: actor.accounts[pool].count,
+            },
+          ]),
+        )
+      : null,
+    nextAccountMaintenanceAt: actor.accounts?.nextDue ?? null,
   }));
   const totals = { actors: actors.length, bytes: 0, count: 0, residentChunks: 0 };
   for (const actor of actors) {
@@ -1128,7 +1140,12 @@ async function main() {
       heapUsedBytes: process.memoryUsage().heapUsed,
       rssBytes: process.memoryUsage().rss,
       storageError: game.service.storageError,
-      backgroundFailures: after.runtime.backgroundFailures,
+      backgroundFailures: {
+        ...after.runtime.backgroundFailures,
+        observedInPhase:
+          after.runtime.backgroundFailures.observed -
+          phase.before.runtime.backgroundFailures.observed,
+      },
       memoryBacklog: game.service.memoryBacklog,
       attribution: appProfiling
         ? { status: 'collected', ...metricDelta(phase.before, after) }

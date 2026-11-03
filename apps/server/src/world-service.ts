@@ -1,4 +1,5 @@
 import { nextRecentRetentionAt, nextAccountRetentionAt } from './retention-deadlines.js';
+import { selectActorLiveReadCuts } from './actor-record-selection.js';
 import { releaseIdentityAllocationProof, preserveIdentityHighWater } from '@open-legend/domain';
 import { applyAccountRetentionPlan } from './account-retention.js';
 import { applyRecentRetention } from './recent-retention.js';
@@ -1936,6 +1937,10 @@ export class WorldService {
     import('./world-records.js').RecordChanges,
     (actorId?: string) => import('./memory-repository.js').PreparedMemorySources
   >();
+  private readonly pendingHistoryReads = new WeakMap<
+    import('./history-preparation.js').PreparedHistory,
+    import('./history-preparation.js').PreparedHistoryRead
+  >();
   private captureLiveReadCuts(actor?: import('./live-read-overlay.js').LiveReadActorScope) {
     const key = [
       this.generation,
@@ -1971,14 +1976,21 @@ export class WorldService {
         // old world/entity/catalogue root leaves the writer with a cold reader.
         const changes = pending.changes(),
           versions = pending.versions;
-        const history = pending.history
-          ? captureHistoryRead(pending.history, actor?.actorId)
-          : undefined;
+        let history: import('./history-preparation.js').PreparedHistoryRead | undefined;
+        if (pending.history) {
+          history = this.pendingHistoryReads.get(pending.history);
+          if (!history) {
+            history = captureHistoryRead(pending.history);
+            this.pendingHistoryReads.set(pending.history, history);
+          }
+        }
         if (!actor)
           for (const event of history?.changed ?? [])
             for (const id of event.audience) historyActors.add(id);
-        let getSources = this.pendingSourceReaders.get(changes);
-        if (!getSources && this.store.memories) {
+        // An actor's factory is built below from its selected immutable rows.
+        // Never wrap a global source factory: that would still retain everyone.
+        let getSources = actor ? undefined : this.pendingSourceReaders.get(changes);
+        if (!actor && !getSources && this.store.memories) {
           getSources = this.store.memories.captureSources(worldId, changes, versions);
           this.pendingSourceReaders.set(changes, getSources);
         }
@@ -1989,8 +2001,15 @@ export class WorldService {
     cut.historyEligibility = new Map(
       [...historyActors].map((id) => [id, captureHistoryAccountCut(this.world, id)]),
     );
-    this.liveReadCache.set(scope, cut);
-    return cut;
+    const selected = actor
+      ? selectActorLiveReadCuts(
+          cut,
+          [actor.actorId],
+          this.store.memories?.captureSources.bind(this.store.memories),
+        )
+      : cut;
+    this.liveReadCache.set(scope, selected);
+    return selected;
   }
 
   private retentionTimer?: ReturnType<typeof setTimeout>;
@@ -3006,9 +3025,9 @@ export class WorldService {
     };
   }
   async memoryMaintenanceStatus(actorId: string) {
-    // Scheduling can use the last durable snapshot. Flushing here made every idle
-    // actor force a world save. Actual maintenanceBatch flushes before selecting
-    // sources; the next committed actor revision wakes this advisory check again.
+    // Scheduling reads a captured accepted cut without forcing a world save.
+    // Actual maintenanceBatch waits for its scheduled durable cut before source
+    // selection; the next committed actor revision wakes this advisory check again.
     const world = this.world;
     // These booleans grant no source access. ActorWork fences the scheduling
     // snapshot, and actual batch selection checks the current database generation.

@@ -150,7 +150,9 @@ export async function prepareSourceVersions(
   state: SavedWorld,
   changes: RecordChanges,
   metadata: RetentionMetadataView,
+  actorIds?: readonly string[],
 ): Promise<{ state: SavedWorld; plan: SourceVersionPlan }> {
+  const selected = actorIds && new Set(actorIds);
   const actors = new Set<string>(),
     future = new Map<string, Category>(),
     versionGroups = new Map<string, Array<{ sourceId: string; revision: string }>>(),
@@ -184,12 +186,14 @@ export async function prepareSourceVersions(
     for (const id of changes.deletes.get(table) ?? []) {
       const path = JSON.parse(id) as string[];
       const actorId = path[kind === 'memory' ? 2 : 3]!;
+      if (selected && !selected.has(actorId)) continue;
       actors.add(actorId);
       changed(actorId, kind, id, true);
     }
     for (const row of changes.writes.get(table) ?? []) {
       const path = JSON.parse(row.id) as string[],
         actorId = path[kind === 'memory' ? 2 : 3]!;
+      if (selected && !selected.has(actorId)) continue;
       const value = JSON.parse(row.payload) as ExperienceEntry['value'];
       const manifest = 'manifest' in value ? value.manifest : undefined;
       const sources = 'sources' in value ? value.sources : [];
@@ -242,11 +246,15 @@ export async function prepareSourceVersions(
           bytes += size;
           offset++;
         }
-        for (const row of await db
-          .prepare(
-            `SELECT source_id,payload FROM ${table} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
-          )
-          .all(world.id, actorId, batch)) {
+        const read = () =>
+          db
+            .prepare(
+              `SELECT source_id,payload FROM ${table} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
+            )
+            .all(world.id, actorId, batch);
+        for (const row of await (db.readForActor
+          ? db.readForActor(world.id, actorId, read)
+          : read())) {
           const payload = String(row['payload']);
           const value = {
             actorId,

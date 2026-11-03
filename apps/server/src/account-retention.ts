@@ -7,6 +7,7 @@ import {
   ensureExperienceAccounting,
   experienceRetentionDue,
   experienceMaintenanceTarget,
+  markRequiredExperienceMaintenance,
   createRememberedImpression,
   weakenImpression,
   awarenessMemory,
@@ -23,6 +24,7 @@ import {
   type ImpressionDependency,
   type ExperienceEntry,
   type MemoryRecord,
+  type TemporalActorHistory,
   type WorldState,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
@@ -41,7 +43,6 @@ const tables = {
 } as const;
 type Kind = keyof typeof tables;
 const maximumPreparationBytes = 4 * 1024 * 1024;
-export const maximumAccountRetentionActors = 32;
 interface Candidate {
   kind: Kind;
   id: string;
@@ -100,7 +101,7 @@ export async function prepareAccountRetention(
   const rows = new Map<string, string[]>(),
     positions = new Map<string, Map<string, number>>();
   let world = state.world;
-  for (const actorId of actorIds) {
+  const prepareActor = async (actorId: string) => {
     let accounts = world.experience!.temporal!.actors[actorId]!.accounts;
     if (!accounts) {
       const totals = new Map<string, { bytes: number; count: number }>();
@@ -157,7 +158,7 @@ export async function prepareAccountRetention(
           accounts![key].count <= policy[key].maxRecords,
       )
     )
-      continue;
+      return;
     const priorSupportIds = Object.keys(
       world.experience!.temporal!.actors[actorId]!.supports ?? {},
     );
@@ -524,6 +525,11 @@ export async function prepareAccountRetention(
           ...finalSupports.ids,
         ]),
       ]);
+  };
+  for (const actorId of actorIds) {
+    const operation = () => prepareActor(actorId);
+    if (db.readForActor) await db.readForActor(world.id, actorId, operation);
+    else await operation();
   }
   return { state: world === state.world ? state : { ...state, world }, rows, positions };
 }
@@ -531,9 +537,8 @@ export async function prepareAccountRetention(
 export { nextAccountRetentionAt } from './retention-deadlines.js';
 
 type Identity = NonNullable<WorldState['observerIdentities']>[string][string];
-type Support = NonNullable<
-  NonNullable<WorldState['experience']>['temporal']
->['actors'][string]['supports'];
+type Support = TemporalActorHistory['supports'];
+type Accounts = NonNullable<TemporalActorHistory['accounts']>;
 interface OwnedChange<T> {
   id: string;
   before: T | undefined;
@@ -551,12 +556,8 @@ interface AccountActorPlan {
   supports: OwnedChange<NonNullable<Support>[string]>[];
   delta: Record<'optional' | 'required' | 'speech', { bytes: number; count: number }>;
   nextDue: number | null;
-  archivesBefore?: NonNullable<
-    NonNullable<WorldState['experience']>['temporal']
-  >['actors'][string]['accounts'];
-  archivesAfter?: NonNullable<
-    NonNullable<WorldState['experience']>['temporal']
-  >['actors'][string]['accounts'];
+  accountsBefore?: Accounts;
+  accountsAfter: Accounts;
 }
 export interface AccountRetentionPlan {
   worldId: string;
@@ -588,7 +589,14 @@ export async function prepareAccountRetentionPlan(
   ) => Promise<{ state: SavedWorld; plan: SourceVersionPlan }>,
 ): Promise<AccountRetentionPlan> {
   const repaired = await prepareIndividualReferenceRepairs(db, state, metadata, actorIds);
-  const prepared = await prepareAccountRetention(db, repaired, false, pendingDeletes, metadata, actorIds);
+  const prepared = await prepareAccountRetention(
+    db,
+    repaired,
+    false,
+    pendingDeletes,
+    metadata,
+    actorIds,
+  );
   const versions = prepareVersions ? await prepareVersions(prepared) : undefined;
   if (versions) prepared.state = versions.state;
   const result: AccountRetentionPlan = {
@@ -601,7 +609,7 @@ export async function prepareAccountRetentionPlan(
   for (const actorId of actorIds) {
     const after = prepared.state.world.experience!.temporal!.actors[actorId]!;
     const before = state.world.experience?.temporal?.actors[actorId];
-    if (!before || !before.accounts || !after.accounts) continue;
+    if (!before || !after.accounts) continue;
     const writes: ExperienceEntry[] = [];
     const deletes = new Map<Kind, Set<string>>();
     for (const kind of Object.keys(tables) as Kind[]) {
@@ -633,12 +641,13 @@ export async function prepareAccountRetentionPlan(
       (['optional', 'required', 'speech'] as const).map((pool) => [
         pool,
         {
-          bytes: after.accounts![pool].bytes - before.accounts![pool].bytes,
-          count: after.accounts![pool].count - before.accounts![pool].count,
+          bytes: after.accounts![pool].bytes - (before.accounts?.[pool].bytes ?? 0),
+          count: after.accounts![pool].count - (before.accounts?.[pool].count ?? 0),
         },
       ]),
     ) as AccountActorPlan['delta'];
     if (
+      before.accounts &&
       !writes.length &&
       ![...deletes.values()].some((ids) => ids.size) &&
       !identities.length &&
@@ -662,8 +671,8 @@ export async function prepareAccountRetentionPlan(
       supports,
       delta,
       nextDue: after.accounts.nextDue,
-      archivesBefore: before.accounts,
-      archivesAfter: after.accounts,
+      accountsBefore: before.accounts,
+      accountsAfter: after.accounts,
     });
   }
   return result;
@@ -682,6 +691,7 @@ export function applyAccountRetentionPlan(
   if (state.world.id !== plan.worldId) return { state, rows, stale: true };
   let stale = false;
   const ready: AccountActorPlan[] = [];
+  const changedRequiredAccounts = new Set<string>();
   for (const actorPlan of plan.actors) {
     const { actorId } = actorPlan,
       actor = state.world.experience?.temporal?.actors[actorId];
@@ -719,11 +729,15 @@ export function applyAccountRetentionPlan(
         (change) => state.world.observerIdentities?.[actorId]?.[change.id] !== change.before,
       ) ||
       actorPlan.supports.some((change) => actor.supports?.[change.id] !== change.before) ||
-      actor.accounts?.archives !== actorPlan.archivesBefore?.archives
+      (actorPlan.accountsBefore
+        ? !actor.accounts || actor.accounts.archives !== actorPlan.accountsBefore.archives
+        : actor.accounts !== undefined)
     ) {
       stale = true;
       continue;
     }
+    if (actor.accounts?.required !== actorPlan.accountsBefore?.required)
+      changedRequiredAccounts.add(actorId);
     ready.push(actorPlan);
   }
   if (!ready.length) return { state, rows, stale };
@@ -800,14 +814,19 @@ export function applyAccountRetentionPlan(
           if (change.after) supports[change.id] = change.after;
           else delete supports[change.id];
         }
-        for (const pool of ['optional', 'required', 'speech'] as const) {
-          actor.accounts![pool].bytes += actorPlan.delta[pool].bytes;
-          actor.accounts![pool].count += actorPlan.delta[pool].count;
-          if (actor.accounts![pool].bytes < 0 || actor.accounts![pool].count < 0)
-            throw new MemoryRetentionError(
-              'Account retention counters changed before installation.',
-            );
-        }
+        if (!actorPlan.accountsBefore)
+          // A temporal-only actor can have no accounting yet. Install the complete
+          // prepared canonical totals once, never a resident-tail approximation.
+          actor.accounts = structuredClone(actorPlan.accountsAfter);
+        else
+          for (const pool of ['optional', 'required', 'speech'] as const) {
+            actor.accounts![pool].bytes += actorPlan.delta[pool].bytes;
+            actor.accounts![pool].count += actorPlan.delta[pool].count;
+            if (actor.accounts![pool].bytes < 0 || actor.accounts![pool].count < 0)
+              throw new MemoryRetentionError(
+                'Account retention counters changed before installation.',
+              );
+          }
         let nextDue = actorPlan.nextDue;
         for (const entry of sourceEntries(draft, actorId)) {
           const due = experienceRetentionDue(draft, entry);
@@ -819,7 +838,12 @@ export function applyAccountRetentionPlan(
           if (!actor.individualRepairs?.length) delete actor.individualRepairs;
         }
         actor.accounts!.nextDue = actor.individualRepairs?.length ? draft.simTime : nextDue;
-        actor.accounts!.archives = actorPlan.archivesAfter?.archives;
+        actor.accounts!.archives = actorPlan.accountsAfter.archives;
+        // A newer native suffix may have crossed the early required-pool target
+        // while this read was pending. Do not overwrite its due marker with the
+        // prepared deadline. With no concurrent account change, protected owners
+        // above that target do not keep scheduling an otherwise empty slice.
+        if (changedRequiredAccounts.has(actorId)) markRequiredExperienceMaintenance(draft, actorId);
         invalidateKnownPlaceEvidence(draft, actorId);
         for (const id of plan.rows.get('mind_temporal_supports') ?? [])
           if ((JSON.parse(id) as string[])[4] === actorId)

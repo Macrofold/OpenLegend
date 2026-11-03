@@ -656,10 +656,11 @@ export class MemoryRepository {
     state: SavedWorld,
     changes: RecordChanges,
     metadata?: RetentionMetadataView,
+    actorIds?: readonly string[],
   ) {
     metadata ??= await this.prepareRetentionMetadata?.(state, changes, false);
     if (!metadata) throw new Error('Complete personal retention metadata is unavailable.');
-    return prepareSourceVersions(this.db, state, changes, metadata);
+    return prepareSourceVersions(this.db, state, changes, metadata, actorIds);
   }
   private derivedAllowance?: DerivedMemoryAllowance;
   private derivedPolicyDirty = false;
@@ -1970,32 +1971,34 @@ export class MemoryRepository {
     scope: MemoryScope,
     locators: readonly TemporalReceiptLocator[],
   ): Promise<boolean> {
-    if (!locators.length) return true;
-    if (
-      locators.length > RETRIEVAL_ROWS ||
-      locators.some((locator) => locator.actorId !== scope.actorId)
-    )
-      return false;
-    const unique = [
-      ...new Map(locators.map((locator) => [JSON.stringify(locator), locator])).values(),
-    ];
-    const row = await this.db
-      .prepare(
-        `SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
-      q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
-      WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
-        EXISTS (SELECT 1 FROM LATERAL (
-          SELECT last_ordinal FROM mind_temporal_chunks c
-          WHERE c.retired_revision IS NULL AND c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
-            AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
-            AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
-          ORDER BY c.first_ordinal DESC LIMIT 1
-        ) current WHERE current.last_ordinal>=q.ordinal)
-        OR EXISTS (SELECT 1 FROM mind_temporal_supports s WHERE s.world_id=? AND s.actor_id=q."actorId"
-          AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal))`,
+    return this.actorRead(scope, async () => {
+      if (!locators.length) return true;
+      if (
+        locators.length > RETRIEVAL_ROWS ||
+        locators.some((locator) => locator.actorId !== scope.actorId)
       )
-      .get(JSON.stringify(unique), scope.worldId, scope.generation, scope.worldId, scope.worldId);
-    return Number(row?.['count'] ?? 0) === unique.length;
+        return false;
+      const unique = [
+        ...new Map(locators.map((locator) => [JSON.stringify(locator), locator])).values(),
+      ];
+      const row = await this.db
+        .prepare(
+          `SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
+        q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
+        WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
+          EXISTS (SELECT 1 FROM LATERAL (
+            SELECT last_ordinal FROM mind_temporal_chunks c
+            WHERE c.retired_revision IS NULL AND c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
+              AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
+              AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
+            ORDER BY c.first_ordinal DESC LIMIT 1
+          ) current WHERE current.last_ordinal>=q.ordinal)
+          OR EXISTS (SELECT 1 FROM mind_temporal_supports s WHERE s.world_id=? AND s.actor_id=q."actorId"
+            AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal))`,
+        )
+        .get(JSON.stringify(unique), scope.worldId, scope.generation, scope.worldId, scope.worldId);
+      return Number(row?.['count'] ?? 0) === unique.length;
+    });
   }
   /** Called before current rows change, inside their transaction. Retired/corrected
    * source versions preserve provenance for future consolidation policies.
@@ -2750,7 +2753,7 @@ export class MemoryRepository {
       this.db.readTransaction
         ? this.db.readTransaction(() => this.readKnownPlaceEvidence(scope))
         : this.db.transaction(() => this.readKnownPlaceEvidence(scope));
-    return this.db.readForActor ? this.db.readForActor(scope.worldId, scope.actorId, read) : read();
+    return this.scopeActorRead(scope, read);
   }
   private async readKnownPlaceEvidence(scope: MemoryScope) {
     const owner = [scope.worldId, scope.actorId, scope.generation];
@@ -3205,12 +3208,23 @@ export class MemoryRepository {
     }
   }
   private readonly registeredModels = new Map<string, string>();
-  private actorRead<T>(scope: MemoryScope, operation: () => Promise<T>): Promise<T> {
-    if (this.sourceEditPending(scope)) return Promise.reject(new MemoryPreparationError());
-    const privacy = this.sourceAccessRevision(scope);
-    const pending = this.db.readForActor
+  private scopeActorRead<T>(
+    scope: Pick<MemoryScope, 'worldId' | 'actorId'>,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    return this.db.readForActor
       ? this.db.readForActor(scope.worldId, scope.actorId, operation)
       : operation();
+  }
+  // Bind the actor before pending rows are prepared, not only in the eventual
+  // SQL predicate. Recheck the same owner's privacy after asynchronous work.
+  private actorRead<T>(
+    scope: Pick<MemoryScope, 'worldId' | 'actorId'>,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    if (this.sourceEditPending(scope)) return Promise.reject(new MemoryPreparationError());
+    const privacy = this.sourceAccessRevision(scope);
+    const pending = this.scopeActorRead(scope, operation);
     return pending.then((value) => {
       if (this.sourceEditPending(scope) || privacy !== this.sourceAccessRevision(scope))
         throw new MemoryPreparationError();
@@ -3312,34 +3326,39 @@ export class MemoryRepository {
    * record, correction, forgetting or generation never validates an older cache. */
   async currentCompactionSources(scope: MemoryScope, sources: PersonalSourceRef[]) {
     if (sources.length > RETRIEVAL_ROWS) return false;
-    let matched = 0;
-    for (let offset = 0; offset < sources.length; offset += 300) {
-      const rows = await this.db
-        .prepare(
-          `SELECT q.id FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
-        LEFT JOIN recall_sources r ON r.world_id=? AND r.actor_id=? AND r.source_kind=q.kind AND r.id=q.id
-        WHERE (SELECT generation FROM world_head WHERE id=1)=?
-          AND (r.revision=q.revision OR (r.id IS NULL AND EXISTS (
-            SELECT 1 FROM mind_source_versions v WHERE v.world_id=? AND v.actor_id=?
-              AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision)))
-          AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=? AND f.actor_id=? AND f.source_id=q.id)
-          AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=? AND c.actor_id=? AND c.source_id=q.id)`,
-        )
-        .all(
-          JSON.stringify(sources.slice(offset, offset + 300)),
-          scope.worldId,
-          scope.actorId,
-          scope.generation,
-          scope.worldId,
-          scope.actorId,
-          scope.worldId,
-          scope.actorId,
-          scope.worldId,
-          scope.actorId,
-        );
-      matched += rows.length;
-    }
-    return matched === sources.length;
+    if (!sources.length) return true;
+    const batchSize = 300;
+    const read = async () => {
+      let matched = 0;
+      for (let offset = 0; offset < sources.length; offset += batchSize) {
+        const rows = await this.db
+          .prepare(
+            `SELECT q.id FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
+          LEFT JOIN recall_sources r ON r.world_id=? AND r.actor_id=? AND r.source_kind=q.kind AND r.id=q.id
+          WHERE (SELECT generation FROM world_head WHERE id=1)=?
+            AND (r.revision=q.revision OR (r.id IS NULL AND EXISTS (
+              SELECT 1 FROM mind_source_versions v WHERE v.world_id=? AND v.actor_id=?
+                AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision)))
+            AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=? AND f.actor_id=? AND f.source_id=q.id)
+            AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=? AND c.actor_id=? AND c.source_id=q.id)`,
+          )
+          .all(
+            JSON.stringify(sources.slice(offset, offset + batchSize)),
+            scope.worldId,
+            scope.actorId,
+            scope.generation,
+            scope.worldId,
+            scope.actorId,
+            scope.worldId,
+            scope.actorId,
+            scope.worldId,
+            scope.actorId,
+          );
+        matched += rows.length;
+      }
+      return matched === sources.length;
+    };
+    return sources.length > batchSize ? this.snapshot(scope, read) : this.actorRead(scope, read);
   }
   /** Publish against exact selected sources and coverage. Later unrelated speech
    * may append without invalidating this actor-owned derived artifact. */
@@ -3395,19 +3414,21 @@ export class MemoryRepository {
       .run([...prefix].length, prefix);
   }
   async entry(scope: MemoryScope, key: string): Promise<ExperienceEntry | undefined> {
-    const separator = key.indexOf(':');
-    const kind = key.slice(0, separator);
-    if (!Object.hasOwn(sourceTables, kind)) return undefined;
-    const table = sourceTables[kind as SourceKind];
-    const row = await this.db
-      .prepare(
-        `SELECT payload FROM ${table} WHERE world_id=? AND actor_id=? AND source_id=?
-      AND (SELECT generation FROM world_head WHERE id=1)=?`,
-      )
-      .get(scope.worldId, scope.actorId, key.slice(separator + 1), scope.generation);
-    return row
-      ? decodeMemorySource(kind as SourceKind, String(row['payload']), scope.actorId)
-      : undefined;
+    return this.actorRead(scope, async () => {
+      const separator = key.indexOf(':');
+      const kind = key.slice(0, separator);
+      if (!Object.hasOwn(sourceTables, kind)) return undefined;
+      const table = sourceTables[kind as SourceKind];
+      const row = await this.db
+        .prepare(
+          `SELECT payload FROM ${table} WHERE world_id=? AND actor_id=? AND source_id=?
+        AND (SELECT generation FROM world_head WHERE id=1)=?`,
+        )
+        .get(scope.worldId, scope.actorId, key.slice(separator + 1), scope.generation);
+      return row
+        ? decodeMemorySource(kind as SourceKind, String(row['payload']), scope.actorId)
+        : undefined;
+    });
   }
   async page(
     scope: MemoryScope,
@@ -3521,18 +3542,27 @@ export class MemoryRepository {
     scope: MemoryScope,
     source: { kind: SourceKind; id: string; revision: string },
   ) {
-    const rows = await this.db
-      .prepare(
-        `SELECT a.namespace,a.revision,a.payload FROM mind_source_annotations a
-      JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.source_kind=a.source_kind AND r.id=a.source_id AND r.revision=a.source_revision
-      WHERE r.world_id=? AND r.actor_id=? AND r.source_kind=? AND r.id=? AND r.revision=? AND (SELECT generation FROM world_head WHERE id=1)=? ORDER BY a.namespace`,
-      )
-      .all(scope.worldId, scope.actorId, source.kind, source.id, source.revision, scope.generation);
-    return rows.map((row) => ({
-      namespace: String(row['namespace']),
-      revision: Number(row['revision']),
-      value: JSON.parse(String(row['payload'])) as unknown,
-    }));
+    return this.actorRead(scope, async () => {
+      const rows = await this.db
+        .prepare(
+          `SELECT a.namespace,a.revision,a.payload FROM mind_source_annotations a
+        JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.source_kind=a.source_kind AND r.id=a.source_id AND r.revision=a.source_revision
+        WHERE r.world_id=? AND r.actor_id=? AND r.source_kind=? AND r.id=? AND r.revision=? AND (SELECT generation FROM world_head WHERE id=1)=? ORDER BY a.namespace`,
+        )
+        .all(
+          scope.worldId,
+          scope.actorId,
+          source.kind,
+          source.id,
+          source.revision,
+          scope.generation,
+        );
+      return rows.map((row) => ({
+        namespace: String(row['namespace']),
+        revision: Number(row['revision']),
+        value: JSON.parse(String(row['payload'])) as unknown,
+      }));
+    });
   }
   async commitments(scope: MemoryScope): Promise<RetrievedMemory[]> {
     return this.snapshot(scope, async () =>
@@ -3677,38 +3707,40 @@ export class MemoryRepository {
   }
   /** Indexed scheduling facts only; a wakeup must not reconstruct an actor's past. */
   async maintenanceStatus(scope: Pick<MemoryScope, 'worldId' | 'actorId'>, simTime: number) {
-    const cutoff = simTime - EXPERIENCE_LIMITS.rawHours * 3600;
-    // One statement supplies one coherent snapshot and avoids five round trips per mind.
-    const row = await this.db
-      .prepare(
-        `SELECT
-      CASE WHEN EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=? AND r.actor_id=? AND r.eligible=1) THEN 1 ELSE 0 END AS memories,
-      CASE WHEN EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='awareness' AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND at<=?)
-        OR EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='memory' AND memory_kind='episode' AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND at<=?) THEN 1 ELSE 0 END AS due,
-      CASE WHEN EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='awareness' AND importance<${EXPERIENCE_LIMITS.protectedImportance} LIMIT 1 OFFSET ?)
-        OR EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='memory' AND memory_kind='episode' AND importance<${EXPERIENCE_LIMITS.protectedImportance} LIMIT 1 OFFSET ?) THEN 1 ELSE 0 END AS pressure`,
-      )
-      .get(
-        scope.worldId,
-        scope.actorId,
-        scope.worldId,
-        scope.actorId,
-        cutoff,
-        scope.worldId,
-        scope.actorId,
-        cutoff,
-        scope.worldId,
-        scope.actorId,
-        EXPERIENCE_LIMITS.consolidationPressure - 1,
-        scope.worldId,
-        scope.actorId,
-        EXPERIENCE_LIMITS.consolidationPressure + 15,
-      );
-    return {
-      hasMemories: Number(row?.['memories']) === 1,
-      rawDue: Number(row?.['due']) === 1,
-      pressure: Number(row?.['pressure']) === 1,
-    };
+    return this.scopeActorRead(scope, async () => {
+      const cutoff = simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+      // One statement supplies one coherent snapshot and avoids five round trips per mind.
+      const row = await this.db
+        .prepare(
+          `SELECT
+        CASE WHEN EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=? AND r.actor_id=? AND r.eligible=1) THEN 1 ELSE 0 END AS memories,
+        CASE WHEN EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='awareness' AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND at<=?)
+          OR EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='memory' AND memory_kind='episode' AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND at<=?) THEN 1 ELSE 0 END AS due,
+        CASE WHEN EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='awareness' AND importance<${EXPERIENCE_LIMITS.protectedImportance} LIMIT 1 OFFSET ?)
+          OR EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='memory' AND memory_kind='episode' AND importance<${EXPERIENCE_LIMITS.protectedImportance} LIMIT 1 OFFSET ?) THEN 1 ELSE 0 END AS pressure`,
+        )
+        .get(
+          scope.worldId,
+          scope.actorId,
+          scope.worldId,
+          scope.actorId,
+          cutoff,
+          scope.worldId,
+          scope.actorId,
+          cutoff,
+          scope.worldId,
+          scope.actorId,
+          EXPERIENCE_LIMITS.consolidationPressure - 1,
+          scope.worldId,
+          scope.actorId,
+          EXPERIENCE_LIMITS.consolidationPressure + 15,
+        );
+      return {
+        hasMemories: Number(row?.['memories']) === 1,
+        rawDue: Number(row?.['due']) === 1,
+        pressure: Number(row?.['pressure']) === 1,
+      };
+    });
   }
   /** A bounded chronological prefix, never a truncated claim about the whole backlog.
    * Daily cursors exclude summaries written by earlier partitions of this review.
@@ -4039,10 +4071,12 @@ export class MemoryRepository {
     );
   }
   async count(scope: MemoryScope): Promise<number> {
-    const row = await this.db
-      .prepare(`SELECT COUNT(*) AS count FROM recall_sources r WHERE ${this.eligible}`)
-      .get(...this.params(scope));
-    return Number(row?.['count'] ?? 0);
+    return this.actorRead(scope, async () => {
+      const row = await this.db
+        .prepare(`SELECT COUNT(*) AS count FROM recall_sources r WHERE ${this.eligible}`)
+        .get(...this.params(scope));
+      return Number(row?.['count'] ?? 0);
+    });
   }
   /** Exact retained observer originals, admitted by one current summary's native
    * coverage. Selection/bytes precede body reads; raw global events are never a substitute. */
@@ -4719,17 +4753,19 @@ export class MemoryRepository {
     if (!(await this.optionalIndexAdmission(scope.worldId, [scope.actorId])).has(scope.actorId))
       return [];
     await this.registerIndexModel(scope, model);
-    const rows = await this.db
-      .prepare(
-        `WITH pending AS MATERIALIZED (SELECT * FROM memory_index_queue
-      WHERE world_id=? AND actor_id=? AND model=? AND dimensions=? ORDER BY importance DESC,at DESC,source_id LIMIT ?)
-      SELECT ${sourceColumns} FROM pending q JOIN recall_sources r
-      ON r.world_id=q.world_id AND r.actor_id=q.actor_id AND r.id=q.source_id AND r.revision=q.source_revision
-      WHERE r.eligible=1 AND (SELECT generation FROM world_head WHERE id=1)=?
-      ORDER BY q.importance DESC,q.at DESC,q.source_id`,
-      )
-      .all(scope.worldId, scope.actorId, model.model, model.dimensions, limit, scope.generation);
-    return this.hydrate(rows);
+    return this.snapshot(scope, async () => {
+      const rows = await this.db
+        .prepare(
+          `WITH pending AS MATERIALIZED (SELECT * FROM memory_index_queue
+        WHERE world_id=? AND actor_id=? AND model=? AND dimensions=? ORDER BY importance DESC,at DESC,source_id LIMIT ?)
+        SELECT ${sourceColumns} FROM pending q JOIN recall_sources r
+        ON r.world_id=q.world_id AND r.actor_id=q.actor_id AND r.id=q.source_id AND r.revision=q.source_revision
+        WHERE r.eligible=1 AND (SELECT generation FROM world_head WHERE id=1)=?
+        ORDER BY q.importance DESC,q.at DESC,q.source_id`,
+        )
+        .all(scope.worldId, scope.actorId, model.model, model.dimensions, limit, scope.generation);
+      return this.hydrate(rows);
+    });
   }
   async markAttempt(
     scope: MemoryScope,

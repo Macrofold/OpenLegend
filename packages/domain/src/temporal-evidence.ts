@@ -65,7 +65,10 @@ import { entityGet } from './entity-collection.js';
 import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { ensureExperienceAccounting } from './remembered-impressions.js';
+import {
+  ensureExperienceAccounting,
+  markRequiredExperienceMaintenance,
+} from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
 import { immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
 import {
@@ -3462,6 +3465,7 @@ function admitTemporalSupport(
   (actor.supports ??= {})[id] = capsule;
   account.bytes += capsule.bytes;
   account.count++;
+  if (capsule.required) markRequiredExperienceMaintenance(world, actorId);
   chargeWork({ effects: 1, outputBytes: Math.max(0, capsule.bytes - (prior?.bytes ?? 0)) });
   return capsule;
 }
@@ -3591,6 +3595,7 @@ export function setTemporalSupportRequired(
   after.bytes += replacement.bytes;
   after.count++;
   actor.supports![receiptId] = replacement;
+  if (required) markRequiredExperienceMaintenance(world, actorId);
   return true;
 }
 

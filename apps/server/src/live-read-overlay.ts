@@ -52,6 +52,13 @@ export interface LiveReadActorScope {
   actorId: string;
 }
 export type LiveReadCutsProvider = (actor?: LiveReadActorScope) => LiveReadCuts | undefined;
+/** Canonical metadata is merged with pending record changes by its semantic
+ * consumer. Version replacements also belong to that captured publication. */
+export interface MetadataBaseline {
+  worldId: string;
+  revision: number;
+  versions?: SourceVersionPlan;
+}
 interface PendingTable {
   keys: readonly string[];
   rows: Map<string, Record<string, unknown>>;
@@ -118,6 +125,11 @@ export function mayReadLiveTables(sql: string): boolean {
     sql,
   );
 }
+/** The SQL read owner also defines which canonical pending rows can be consumed.
+ * Actor captures need no physical/configuration bodies from other subsystems. */
+export function mayReadLiveRecordTable(table: string): boolean {
+  return RECORD_NODES.has(table) && mayReadLiveTables(`SELECT * FROM ${table}`);
+}
 export function readsPersonalHistory(sql: string): boolean {
   return references(sql, 'history_perspectives');
 }
@@ -154,6 +166,35 @@ export class LiveReadOverlay {
     this.cuts = cut.cuts.filter((value) => value.through > durable);
     this.through = cut.sequence;
     if (actor && actor.worldId !== cut.worldId) throw new MemoryPreparationError();
+  }
+  metadataBaseline(actorIds: readonly string[]): MetadataBaseline {
+    const selected = new Set(actorIds),
+      versions = new Map<string, SourceVersionPlan['retained']>();
+    for (const cut of this.cuts) {
+      const plan = cut.versions;
+      if (!plan) continue;
+      for (const id of plan.actors) if (selected.has(id)) versions.set(id, []);
+      for (const row of plan.retained) {
+        if (!selected.has(row.actorId)) continue;
+        // Retention consumes identity/category/charge, never archived prose.
+        // Do not pin or serialize a source body for a metadata-only read.
+        versions.get(row.actorId)?.push({
+          actorId: row.actorId,
+          kind: row.kind,
+          id: row.id,
+          revision: row.revision,
+          category: row.category,
+          bytes: row.bytes,
+        });
+      }
+    }
+    return {
+      worldId: this.cut.worldId,
+      revision: this.revision,
+      ...(versions.size
+        ? { versions: { actors: [...versions.keys()], retained: [...versions.values()].flat() } }
+        : {}),
+    };
   }
   private table(name: string): PendingTable {
     let table = this.tables.get(name);

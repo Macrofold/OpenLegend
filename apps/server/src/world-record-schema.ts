@@ -29,6 +29,8 @@ import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
  */
 export interface RecordNode {
   table: string;
+  /** This map's key is its personal actor; descendants inherit that ownership. */
+  actorOwner?: boolean;
   children?: Record<string, RecordCollection>;
   columns?: Record<string, { sql: string; value: (value: JsonRecord, path: string[]) => unknown }>;
   indexes?: string[][];
@@ -78,9 +80,19 @@ const one = (
   mode: 'one',
   node: { table, children, ...codec },
 });
+const actorMap = (
+  table: string,
+  children?: RecordNode['children'],
+  codec?: Pick<RecordNode, 'encode' | 'decode'>,
+): RecordCollection => {
+  const collection = map(table, children, codec);
+  collection.node.actorOwner = true;
+  return collection;
+};
 const actorLists = (table: string, key?: string): RecordCollection =>
-  map(`${table}_owners`, { $: list(table, key) });
-const actorMaps = (table: string): RecordCollection => map(`${table}_owners`, { $: map(table) });
+  actorMap(`${table}_owners`, { $: list(table, key) });
+const actorMaps = (table: string): RecordCollection =>
+  actorMap(`${table}_owners`, { $: map(table) });
 const textColumn = (field: string) => ({
   sql: 'TEXT',
   value: (value: JsonRecord) => value[field] ?? null,
@@ -195,8 +207,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         occurrences: actorLists('activity_occurrences', 'id'),
         methods: map('activity_methods'),
         acquisitions: actorMaps('activity_acquisitions'),
-        learning: map('activity_learning'),
-        current: map('activity_current'),
+        learning: actorMap('activity_learning'),
+        current: actorMap('activity_current'),
         active: map('activity_active'),
         items: map('activity_item_sources'),
         changes: map('activity_state_sources'),
@@ -216,19 +228,19 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       places: map('definition_places'),
       visiblePlaces: actorMaps('mind_visible_places'),
       memories: actorLists('mind_memories', 'id'),
-      minds: map('mind_state', {
+      minds: actorMap('mind_state', {
         documents: list('mind_documents', 'id'),
         records: list('mind_facets', 'id'),
         thoughts: list('mind_thoughts'),
       }),
       knowledge: actorLists('mind_learned_capabilities', 'recipeId'),
       actorKnowledge: actorMaps('mind_knowledge_documents'),
-      knowledgeRevisions: map('mind_knowledge_revisions'),
+      knowledgeRevisions: actorMap('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
       receivedValues: one('mind_perception_value_state', {
         sources: { ...map('mind_perception_values'), unordered: true },
       }),
-      perceptionEvidence: map('mind_perception_owners', {
+      perceptionEvidence: actorMap('mind_perception_owners', {
         // Rolling maps preserve iteration order without renumbering surviving rows.
         current: {
           mode: 'indexed-map',
@@ -279,7 +291,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       // Episode identities fence recognition by key, never by iteration order.
       // docs/performance.md#preserve-order-without-one-global-database-bottleneck
       perceptionEpisodes: {
-        ...map('mind_exposure_owners', {
+        ...actorMap('mind_exposure_owners', {
           $: { ...map('mind_exposure'), unordered: true },
         }),
         unordered: true,
@@ -287,22 +299,24 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       visibleObjects: actorLists('mind_visible_objects'),
       visiblePeople: actorLists('mind_visible_people'),
       appraisals: actorMaps('mind_appraisals'),
-      appraisalProcesses: map('mind_appraisal_processes'),
+      appraisalProcesses: actorMap('mind_appraisal_processes'),
       familyTree: one('sim_family_tree', { links: map('sim_parent_links') }),
       responseReceipts: { ...map('response_receipts'), stablePositions: true },
       experience: one('experience_state', {
         // Correction chronology belongs to its evidence, not map insertion order.
         corrections: {
-          ...map('mind_corrections_owners', { $: { ...map('mind_corrections'), unordered: true } }),
+          ...actorMap('mind_corrections_owners', {
+            $: { ...map('mind_corrections'), unordered: true },
+          }),
           unordered: true,
         },
         awareness: actorLists('mind_awareness', 'eventId'),
         summaries: actorLists('mind_summaries', 'id'),
-        consolidatedAt: map('mind_consolidation'),
+        consolidatedAt: actorMap('mind_consolidation'),
         forgotten: actorLists('mind_forgotten'),
-        privacyRevisions: map('mind_privacy_revisions'),
+        privacyRevisions: actorMap('mind_privacy_revisions'),
         temporal: one('mind_temporal_state', {
-          actors: map('mind_temporal_actors', {
+          actors: actorMap('mind_temporal_actors', {
             chunks: {
               ...list('mind_temporal_chunks', 'id'),
               orderKey: 'order',
@@ -326,7 +340,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           }),
         }),
       }),
-      innerWorlds: map('mind_inner_worlds'),
+      innerWorlds: actorMap('mind_inner_worlds'),
       events: list('world_hot_events', 'id'),
       // Exact command IDs govern replay; insertion order has no gameplay meaning.
       // Canonical row identities/bodies remain independent of the runtime tree.
@@ -337,7 +351,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       },
       declarationReceipts: map('declaration_receipts'),
     }),
-    actorMilestones: map('actor_milestones'),
+    actorMilestones: actorMap('actor_milestones'),
   },
 };
 
@@ -345,13 +359,22 @@ export const RECORD_NODES = new Map<string, RecordNode>();
 export const RECORD_PARENTS = new Map<string, string>();
 /** Canonical identity lengths include collection keys, but not transparent `$` fields. */
 export const RECORD_PATH_DEPTHS = new Map<string, number>();
-function register(node: RecordNode, parent?: RecordNode, depth = 0) {
+/** Actor key position in canonical identities, inherited from the schema owner. */
+export const RECORD_ACTOR_PATHS = new Map<string, number>();
+function register(node: RecordNode, parent?: RecordNode, depth = 0, actorAt?: number) {
   if (RECORD_NODES.has(node.table)) throw new Error(`Duplicate record table: ${node.table}`);
   RECORD_NODES.set(node.table, node);
   RECORD_PATH_DEPTHS.set(node.table, depth);
+  if (node.actorOwner) actorAt = depth - 1;
+  if (actorAt !== undefined) RECORD_ACTOR_PATHS.set(node.table, actorAt);
   if (parent) RECORD_PARENTS.set(node.table, parent.table);
   for (const [field, child] of Object.entries(node.children ?? {}))
-    register(child.node, node, depth + (field === '$' ? 0 : 1) + (child.mode === 'one' ? 0 : 1));
+    register(
+      child.node,
+      node,
+      depth + (field === '$' ? 0 : 1) + (child.mode === 'one' ? 0 : 1),
+      actorAt,
+    );
 }
 register(WORLD_RECORD_SCHEMA);
 function columns(table: string, value: NonNullable<RecordNode['columns']>, indexes: string[][]) {

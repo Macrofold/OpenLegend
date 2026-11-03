@@ -20,6 +20,21 @@ import type { AccountRetentionMetadata } from './retention-record-metadata.js';
 import type { RetainedSourceVersion } from './source-version-retention.js';
 import { countMetric } from './performance.js';
 import { receiptLookupBucket } from './evidence-segments.js';
+import type { MetadataBaseline } from './live-read-overlay.js';
+
+interface RetentionSelection {
+  recentActors: readonly string[];
+  changes: RecordChanges;
+  world: WorldState;
+  previous?: WorldState;
+}
+interface RetentionSnapshot {
+  worldId: string;
+  revision: number;
+  rows: RetentionRow[];
+  versions: RetainedSourceVersion[];
+  completeAccounts: string[];
+}
 
 export const accountTables = ['mind_awareness', 'mind_memories', 'mind_summaries'] as const;
 const indexedTables = [
@@ -275,21 +290,31 @@ export class RetentionMetadata {
     db: SqlDatabase,
     worldId: string,
     actorIds: readonly string[],
-    selection: {
-      recentActors: readonly string[];
-      changes: RecordChanges;
-      world: WorldState;
-      previous?: WorldState;
-    },
-  ): Promise<{
-    worldId: string;
-    revision: number;
-    rows: RetentionRow[];
-    versions: RetainedSourceVersion[];
-    completeAccounts: string[];
-  }> {
-    const head = await db.prepare('SELECT world_id,revision FROM world_head WHERE id=1').get();
-    if (head?.['world_id'] !== worldId) throw new Error('Retention metadata world changed.');
+    selection: RetentionSelection,
+  ): Promise<RetentionSnapshot> {
+    return db.readMetadataBaseline
+      ? db.readMetadataBaseline(actorIds, (baseline) =>
+          this.captureBaseline(db, worldId, actorIds, selection, baseline),
+        )
+      : this.captureBaseline(db, worldId, actorIds, selection);
+  }
+  private async captureBaseline(
+    db: SqlDatabase,
+    worldId: string,
+    actorIds: readonly string[],
+    selection: RetentionSelection,
+    baseline?: MetadataBaseline,
+  ): Promise<RetentionSnapshot> {
+    const head =
+      baseline ??
+      (await db
+        .prepare('SELECT world_id,revision FROM world_head WHERE id=1')
+        .get()
+        .then((row) => ({
+          worldId: String(row?.['world_id']),
+          revision: Number(row?.['revision']),
+        })));
+    if (!head || head.worldId !== worldId) throw new Error('Retention metadata world changed.');
     const projection = (table: Table) => {
       const encoded =
         table === 'mind_temporal_chunks'
@@ -512,7 +537,7 @@ export class RetentionMetadata {
           .all(worldId, actorIds, [...retirementParents], segments),
       );
 
-    const versions = (
+    let versions: RetainedSourceVersion[] = (
       accountActors.length
         ? await db
             .prepare(
@@ -528,9 +553,20 @@ export class RetentionMetadata {
       category: row['retention_class'] as RetainedSourceVersion['category'],
       bytes: Number(row['logical_bytes']),
     }));
+    if (baseline?.versions) {
+      // The metadata baseline is durable; the accepted plan replaces a complete
+      // actor's version set. Merge its small identity/charge projection once,
+      // independently of record changes, without retaining archived bodies.
+      const replaced = new Set(baseline.versions.actors),
+        selected = new Set(accountActors);
+      versions = versions.filter((row) => !replaced.has(row.actorId));
+      for (const row of baseline.versions.retained)
+        if (selected.has(row.actorId) && ['awareness', 'memory', 'summary'].includes(row.kind))
+          versions.push(row);
+    }
     return {
       worldId,
-      revision: Number(head['revision']),
+      revision: head.revision,
       rows: [...rows.values()],
       versions,
       completeAccounts: accountActors,

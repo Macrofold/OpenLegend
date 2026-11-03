@@ -1,4 +1,3 @@
-import { dueRecentRetentionActors } from './retention-deadlines.js';
 export { nextRecentRetentionAt } from './retention-deadlines.js';
 import {
   retireTemporalChunks,
@@ -75,20 +74,17 @@ const compareHeaders = (a: Header, b: Header) => a.firstAt - b.firstAt || a.orde
 export async function prepareRecentRetention(
   db: SqlDatabase,
   state: SavedWorld,
+  due: readonly string[],
   pending?: RecordChanges,
 ): Promise<RecentRetentionPlan> {
   const world = state.world,
     policy = selectedTemporalPolicy(world).recent;
-  const due: string[] = [];
-  for (const id of dueRecentRetentionActors(world)) {
-    due.push(id);
-    if (due.length === 32) break;
-  }
   const result: RecentRetentionPlan = { worldId: world.id, at: world.simTime, actors: [] };
   if (!due.length) return result;
-  const rows = await db
-    .prepare(
-      `
+  const readHeaders = () =>
+    db
+      .prepare(
+        `
     SELECT q.actor_id,h.id,h.source_id,h.chunk_order,h.first_at,h.last_at,
       h.last_ordinal,h.logical_bytes,h.receipt_count
     FROM jsonb_to_recordset(?::jsonb) q(actor_id text,frontier_order bigint,frontier_ordinal bigint)
@@ -100,22 +96,32 @@ export async function prepareRecentRetention(
         AND NOT(id=ANY(?::text[]))
       ORDER BY first_at,first_order,id LIMIT ?
     ) h`,
-    )
-    .all(
-      JSON.stringify(
-        due.map((actor_id) => {
-          const frontier = world.experience!.temporal!.actors[actor_id]!.retiredThrough;
-          return {
-            actor_id,
-            frontier_order: frontier?.chunkOrder ?? null,
-            frontier_ordinal: frontier?.ordinal ?? null,
-          };
-        }),
-      ),
-      world.id,
-      pending?.deletes.get('mind_temporal_chunks') ?? [],
-      headerSlice + 1,
-    );
+      )
+      .all(
+        JSON.stringify(
+          due.map((actor_id) => {
+            const frontier = world.experience!.temporal!.actors[actor_id]!.retiredThrough;
+            return {
+              actor_id,
+              frontier_order: frontier?.chunkOrder ?? null,
+              frontier_ordinal: frontier?.ordinal ?? null,
+            };
+          }),
+        ),
+        world.id,
+        pending?.deletes.get('mind_temporal_chunks') ?? [],
+        headerSlice + 1,
+      );
+  // This owner already folds exact pending/native headers below. Query their
+  // canonical metadata in the validated cut instead of expanding the same pending
+  // chunk bodies through SQL before its actor/frontier/limit selection.
+  const rows = db.readMetadataBaseline
+    ? await db.readMetadataBaseline(due, (baseline) => {
+        if (baseline.worldId !== world.id)
+          throw new MemoryRetentionError('Recent retirement belongs to another world.');
+        return readHeaders();
+      })
+    : await readHeaders();
   const edges = new Map<string, Header>();
   const counts = new Map<string, number>();
   const byActor = new Map<string, Map<string, Header>>();

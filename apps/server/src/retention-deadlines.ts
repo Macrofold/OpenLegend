@@ -69,17 +69,33 @@ export function nextAccountRetentionAt(world: WorldState): number | null {
   const tree = indexes(world).accounts.read(actors(world));
   return tree ? -tree.maximum : null;
 }
-export function* dueRecentRetentionActors(world: WorldState): Generator<string> {
-  for (const [id] of objectIndexEntriesAtLeast(
-    indexes(world).recent.read(actors(world)),
-    -world.simTime,
-  ))
-    yield id;
-}
-export function* dueAccountRetentionActors(world: WorldState): Generator<string> {
-  for (const [id] of objectIndexEntriesAtLeast(
-    indexes(world).accounts.read(actors(world)),
-    -world.simTime,
-  ))
-    yield id;
+/** Fair bounded preparation over the same native deadline index. Cursors select
+ * service order only; they retain neither a world snapshot nor personal content,
+ * and need no persistence. A failed/still-due slice cannot starve later actors. */
+export class RetentionActorSelection {
+  private static readonly maximumActors = 32;
+  private worldId?: string;
+  private after: Partial<Record<'recent' | 'accounts', string>> = {};
+  select(world: WorldState, kind: 'recent' | 'accounts'): string[] {
+    if (this.worldId !== world.id) {
+      this.worldId = world.id;
+      this.after = {};
+    }
+    const tree = indexes(world)[kind].read(actors(world)),
+      threshold = -world.simTime,
+      after = this.after[kind],
+      selected: string[] = [];
+    for (const [id] of objectIndexEntriesAtLeast(tree, threshold, after)) {
+      selected.push(id);
+      if (selected.length === RetentionActorSelection.maximumActors) break;
+    }
+    if (after !== undefined && selected.length < RetentionActorSelection.maximumActors)
+      for (const [id] of objectIndexEntriesAtLeast(tree, threshold)) {
+        if (id > after) break;
+        selected.push(id);
+        if (selected.length === RetentionActorSelection.maximumActors) break;
+      }
+    if (selected.length) this.after[kind] = selected.at(-1)!;
+    return selected;
+  }
 }
