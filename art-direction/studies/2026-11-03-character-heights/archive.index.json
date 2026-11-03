@@ -5,31 +5,10 @@
       "id": "openlegend-curated"
     },
     "assetId": "character-heights-2026-11-03",
-    "revisionId": "sha256-3cf8474705d06ea342640168d8d4f136e2f56afc3b7b0e3a66b106eb144697f5",
-    "manifestSha256": "bcf761e2870c86e6ad43d042d6239382dd75fcb37d093800477b91c26929e72a"
+    "revisionId": "sha256-003b0d7d0ea5517e39b332cff437f2af5336e8c9d8e56a3449ac262d87ffd75b",
+    "manifestSha256": "90f4bf6201e1cedee185f9dacc04663c8a399140f68ed0b22528d882306de891"
   },
   "files": {
-    "apps/client/src/props/art-study/source-mercenary/mercenary-embroidered.glb": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "3666475831bfb4b2b0834ce84a18b41df0940ee56258f9923f33484a03cf04e4",
-      "bytes": 2375748,
-      "mediaType": "model/gltf-binary"
-    },
-    "apps/client/src/props/art-study/source-mercenary/mercenary-restored.glb": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "fb5fcfc4045648548f4158b3a841f46df797425f448ad6dfdc2c09fa9b4e6f9f",
-      "bytes": 3288904,
-      "mediaType": "model/gltf-binary"
-    },
-    "apps/client/src/props/art-study/source-mercenary/mercenary-tailored.glb": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "07cd0bcf6662cbf3373fafa73d6fbfa3f2591f95df1436aee0647ffe3cf985cd",
-      "bytes": 4760580,
-      "mediaType": "model/gltf-binary"
-    },
     "apps/client/src/props/art-study/study-characters/ada-field-tunic.glb": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
@@ -775,8 +754,8 @@
     "study/work/recipes/build_manifest.py": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "1d8b7d7481812231cbc221a90548dc1946fa3391efe5fb5f2964f73e9ff7f30d",
-      "bytes": 3082,
+      "sha256": "7b2bbe1d3dae69d4381af060fa433f132ca5db1d5bed877fb4a976c7945c9036",
+      "bytes": 3135,
       "mediaType": "text/x-python; charset=utf-8"
     },
     "study/work/recipes/plan.json": {
