@@ -20,6 +20,9 @@ type Choice = StudyCatalogAsset & {
   localBytes?: ArrayBuffer;
   sourceUrl?: string;
   historical: boolean;
+  /** A current study-only collection (catalog group `study-*`): its own subjects, and never
+   * in the game's runtime catalogs, which take only `source-*` groups (vite.config.ts). */
+  collection?: string;
   sourceControl?: boolean;
 };
 const sourcePages = new Map(catalogs.map((catalog) => [catalog.group, catalog.sourcePage]));
@@ -29,7 +32,8 @@ const choices: Choice[] = catalogs.flatMap((catalog) =>
     ...(catalog.controls ?? []).map((asset) => ({ ...asset, sourceControl: true })),
   ].map((asset) => ({
     ...asset,
-    historical: !catalog.group.startsWith('source-'),
+    historical: !/^(source|study)-/.test(catalog.group),
+    collection: catalog.group.startsWith('study-') ? catalog.group : undefined,
     url: assetUrl(
       `apps/client/src/props/art-study/${asset.fileGroup ?? catalog.group}/${asset.file}`,
     ),
@@ -91,19 +95,40 @@ function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
 const subject = element<HTMLSelectElement>('subject');
-const subjectKey = (choice: Choice) => (choice.historical ? 'earlier:' : '') + choice.family;
+const subjectKey = (choice: Choice) =>
+  (choice.historical ? 'earlier:' : choice.collection ? choice.collection + ':' : '') +
+  choice.family;
+const collectionTitle = (collection: string) => {
+  const name = collection.slice('study-'.length);
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
 for (const family of new Set(choices.map(subjectKey))) {
   const option = document.createElement('option');
   option.value = family;
   const member = choices.find((choice) => subjectKey(choice) === family)!;
-  option.textContent = `${member.historical ? 'Earlier study · ' : retainedFamilies.has(member.family) ? 'Retained source · ' : ''}${member.historical ? (layout[member.family]?.label ?? member.label) : member.label}`;
+  option.textContent = `${member.historical ? 'Earlier study · ' : member.collection ? collectionTitle(member.collection) + ' · ' : retainedFamilies.has(member.family) ? 'Retained source · ' : ''}${member.historical ? (layout[member.family]?.label ?? member.label) : member.label}`;
   subject.append(option);
 }
+/** One option per shown version of the chosen subject; subjects have different numbers. */
+function refreshVersions(): void {
+  const versions = element<HTMLSelectElement>('versions');
+  const kept = versions.value;
+  for (const option of [...versions.options]) if (/^\d+$/.test(option.value)) option.remove();
+  choices
+    .filter((asset) => subjectKey(asset) === subject.value && !asset.sourceControl)
+    .forEach((asset, index) =>
+      versions.append(
+        new Option(`${String.fromCharCode(65 + index)} · ${asset.variant}`, String(index)),
+      ),
+    );
+  versions.value = [...versions.options].some((option) => option.value === kept) ? kept : 'compare';
+}
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
-if (requested && choices.some((choice) => subjectKey(choice) === requested))
+if (requested && [...subject.options].some((option) => option.value === requested))
   subject.value = requested;
 else if (!requested && choices.some((choice) => choice.family === 'mercenary'))
   subject.value = 'mercenary';
+refreshVersions();
 
 /** Finite trusted asset inspection, independent of saves, world actions and AI. */
 export class ArtStudy {
@@ -211,7 +236,11 @@ export class ArtStudy {
     this.observer.observe(canvas.parentElement!);
     const on = (target: EventTarget, event: string, handler: EventListener) =>
       target.addEventListener(event, handler, { signal: this.events.signal });
-    for (const id of ['subject', 'versions']) on(element(id), 'change', () => void this.show());
+    on(subject, 'change', () => {
+      refreshVersions();
+      void this.show();
+    });
+    on(element('versions'), 'change', () => void this.show());
     const captureName = () =>
       'openlegend-asset-' +
       [
@@ -432,7 +461,7 @@ export class ArtStudy {
   async show(): Promise<void> {
     if (this.disposed) return;
     const epoch = ++this.epoch,
-      composition = ['composition', 'calibration', 'cast'].includes(subject.value);
+      composition = ['composition', 'calibration', 'cast', 'characters'].includes(subject.value);
     if (this.pendingModels) this.releaseModels(this.pendingModels);
     this.pendingModels = undefined;
     const versions = element<HTMLSelectElement>('versions');
@@ -449,11 +478,14 @@ export class ArtStudy {
             asset.recommended &&
             (subject.value === 'composition'
               ? asset.historical
-              : !asset.historical &&
-                (subject.value === 'cast'
-                  ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
-                  : ['mercenary', 'ada', 'grounded-chest', 'natural-sword']
-                ).includes(asset.family)),
+              : subject.value === 'characters'
+                ? asset.collection === 'study-characters'
+                : !asset.historical &&
+                  !asset.collection &&
+                  (subject.value === 'cast'
+                    ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
+                    : ['mercenary', 'ada', 'grounded-chest', 'natural-sword']
+                  ).includes(asset.family)),
         )
       : choices.filter(
           (asset) =>
@@ -681,7 +713,7 @@ export class ArtStudy {
           p.className = 'recommendation';
           p.textContent = asset.historical
             ? 'Earlier selection · rejected study'
-            : retainedFamilies.has(asset.family)
+            : !asset.collection && retainedFamilies.has(asset.family)
               ? 'Previous selection · retained for comparison'
               : 'Working selection · under review';
           card.append(p);

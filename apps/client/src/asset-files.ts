@@ -4,7 +4,13 @@ import {
   isRepositoryAssetPath,
   type AssetRevisionReference,
 } from '@open-legend/assets';
-import { delivery, files, release, releaseSha256 } from 'virtual:openlegend-assets';
+import {
+  delivery,
+  files,
+  release,
+  releaseFileCount,
+  releaseSha256,
+} from 'virtual:openlegend-assets';
 import { consumeHttp, type NetworkOperation } from '@open-legend/network';
 import { assetNetwork, createAssetReadOwner } from './browser-network';
 
@@ -48,7 +54,8 @@ const referencesByUrl = new Map(
 // A scene can legitimately request more than four selected models at once.
 // Queue that first request, never a failed transfer, with one original budget.
 // The finite release bounds waiting readers; completed/aborted reads leave it.
-const assetReaders = createAssetReadOwner(referencesByUrl.size + assetNetwork.snapshot().capacity);
+// Count every selected file: a private collection bundles none of its references.
+const assetReaders = createAssetReadOwner(releaseFileCount + assetNetwork.snapshot().capacity);
 interface PendingAssetRead {
   operation: NetworkOperation;
   work(operation: NetworkOperation): Promise<ArrayBuffer>;
