@@ -62,6 +62,7 @@ export class PostgresDatabase implements SqlDatabase {
       // same pending bodies into SQL duplicates that work and can exceed the read
       // allowance before SQL filters them. Body/source reads outside this callback
       // retain normal live semantics. The captured cut was validated above.
+      // docs/projects/bookkeeping-simplification-runtime-design.md#63-reads-while-progress-is-unsaved
       return this.metadataBaselineRead.run(true, () => operation(head));
     };
     return this.transactionContext.getStore()?.active ? read() : this.readTransaction(read);

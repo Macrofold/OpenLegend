@@ -128,7 +128,8 @@ function selectedGroups(index: SelectionIndex, actorIds: ReadonlySet<string>): A
 /** Index each immutable pending cut once, then visit only the selected actors and
  * referenced shared values. No record body is copied or decoded. Ancestor deletes
  * still fence descendants. Cross-cut references keep a value introduced before
- * the selected actor's receipt available while both cuts remain unsaved. */
+ * the selected actor's receipt available while both cuts remain unsaved.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#63-reads-while-progress-is-unsaved */
 export function selectActorRecordChanges(
   changes: RecordChanges,
   actorIds?: readonly string[],
