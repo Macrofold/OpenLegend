@@ -1,12 +1,12 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Retention/read repairs are implemented; final connected checks and operating acceptance remain open. | 2026-11-03   |
+| Status      | Current progress                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Connected repairs pass; the completed-source standard run reaches 63.2% normal; operating acceptance fails. | 2026-11-03   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
-**Current behavior reconciled November 2, 2026, 13:39 UTC.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Focused semantic/storage checks pass, but the standard run fails retention preparation and later native admission; BK10/BK12/BK15 fixes and BK16 qualification remain open. No scale pass is claimed.
+**Current behavior reconciled November 3, 2026, 08:45 UTC.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Connected read, retention, correction/privacy and restoration checks pass. The [completed-source standard run](../verification/performance/2026-10/bookkeeping-simplification.md#final-standard-run--no-runtime-failure-operating-gate-fails) completes without runtime failure at only 0.632342 normal; BK12/BK16 retain cleanup sustainability and operating qualification. No scale pass is claimed.
 
 ## 1. Outcome
 
