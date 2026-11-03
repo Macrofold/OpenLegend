@@ -539,6 +539,9 @@ export function validatePerceptionEvidenceState(
           record,
           ['id', 'revision', 'grant', 'originalSource', 'times', 'value', 'originalOrdinal'],
           [
+            // The read projection copies this already-validated group state;
+            // unchecked detail is a supported current fact, including after load.
+            'availability',
             'bodyLeaseId',
             'localSubject',
             'motionContinuityRevision',
