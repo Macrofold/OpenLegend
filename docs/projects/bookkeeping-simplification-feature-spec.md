@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Connected repairs pass; the completed-source standard run reaches 63.2% normal; operating acceptance fails. | 2026-11-03   |
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Operating acceptance fails; a structural replacement is designed from completed-source profiling, not implemented. | 2026-11-03   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
@@ -127,3 +127,13 @@ Recent observation detail, lasting personal knowledge, required commitments, exa
 Lack of references is not a gameplay reason to delete a historical event. Personal forgetting changes personal access; this project adds no automatic world-archive deletion or indefinite record-everything promise. Optional pools have bounded maintenance headroom; required support remains reserved and protected. Physical deletion, search preparation and optional quota enforcement are bounded background jobs. A saturated optional buffer may expose missing coverage but may not freeze physical time or fabricate detail; normal operating acceptance must demonstrate that this fallback is not routine.
 
 The [runtime companion](bookkeeping-simplification-runtime-design.md) owns exact data/change contracts, every measured SQL category, caller conversion, gameplay cases and stage-by-stage removal checks. It extends the existing writer, reception, knowledge and memory owners. No separate store, journal or model-based expiry is added. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) tracks delivery. Design completion does not close BK07/SR11/RU11 or full PP07/SAI-A.
+
+## 10. Proposed compact received state and chronology
+
+**Proposed November 3, 2026, 16:24 UTC; no runtime change.** The [completed-source profile](../verification/performance/2026-10/bookkeeping-simplification.md#completed-source-cpu-and-storage-attribution--november-3) shows that processing and saving the representation of observations still overwhelms useful play. The [replacement design](bookkeeping-simplification-runtime-design.md#10-proposed-received-state-and-history-representation) keeps current grouped knowledge, exact checks and admitted temporal changes while eliminating repeated field-proof objects and storage-triggered baselines. [BK17–BK19](../maintainers/production-data.md#received-state-and-history-representation-proposal) track proposed implementation, with BK12/BK16 retaining operating qualification.
+
+While a character attends to an unchanged subject, its current acquired state holds an open recorded interval. Actual checks retain their exact times. When the received state changes, support ends or attention leaves, the old interval closes into compact personal history before the new state replaces it. Received movement samples and interactions stay ordered; no AI episode naming, guessed destination, continuous-visibility claim or pre-attention route is added. Broad surroundings and acquired geometry remain available outside detailed attention. Different witnesses still have different knowledge.
+
+Closing an interval transfers ownership atomically with the new current state; saving, pending reads and cold restoration must never omit or duplicate that history. Independent stale details, unknown identity, source correction and forgetting keep their existing meanings. Meaningful learned names, places and promises retain minimum support independently of recent detail; trivial experience can expire without a mandatory summary or model call.
+
+The proposal preserves sensing/action/attention defaults and configured retention/save limits. Its deliberate accounting change charges useful retained closure and exact samples instead of repeated storage dictionaries, so the same byte allowance can retain more useful detail. Logical change/context limits still count expanded observations, not compressed runs. [BKS-L09](../limits/persistence.md#bks-l09--proposed-span-and-check-representation) owns this proposed change and its bounds. No improvement or population capacity is claimed until complete implementation, semantic checks and the unchanged operating gates pass.

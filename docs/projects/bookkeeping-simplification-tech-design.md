@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Connected repairs pass; the completed-source standard run reaches 63.2% normal; operating acceptance fails. | 2026-11-03   |
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Operating acceptance fails; a structural replacement is designed from completed-source profiling, not implemented. | 2026-11-03   |
 
 **Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. Architecture used and implementation reconciled 2026-10-31 10:59 UTC on `codex/bookkeeping-runtime-01`, based on `39aa9775a5cf48e4318227410d0ab5625f92db9d`. [BK](../maintainers/production-data.md#bookkeeping-simplification) owns remaining qualification; concurrent unrelated work is outside this project. The [integration contract](attention-and-scenes-runtime-design.md#14-integration-contract-for-the-completed-bk-ru-and-vw-branches) coordinates BK with RU consumers and VW tooling without duplicating this implementation.
 
@@ -329,3 +329,7 @@ No blocking product question remains. The selected hybrid and direct writer are 
 ## 12. Database-work reduction target
 
 [The runtime companion](bookkeeping-simplification-runtime-design.md) is the sole detailed owner of the next conversion: typed mutation intent, metadata-only current writes, independently retained support, prefix expiry outside native advancement, background quota/cleanup, owner-held authority checks, exact banner reuse and ordinary acceptance before saving. Reuse BK/RU/PP08 implementations and remove replaced paths in the same stages. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns tasks, [BKS-L06–BKS-L08](../limits/persistence.md#bks-l06--maintenance-headroom-target) owns constraints, and the existing operating gates remain open. No new journal/application stage or legacy API is selected.
+
+## 13. Proposed representation replacement
+
+**Architecture used November 3, 2026, 16:24 UTC, at `7bc715edf45d12647341cfcd185a4864f5ca481b`.** [Runtime §10](bookkeeping-simplification-runtime-design.md#10-proposed-received-state-and-history-representation) owns the complete proposal from the completed-source profile: stable native group reads, current-owned open intervals, packed self-contained closed intervals, exact shared check timelines, save-cut encoding, one lookup projection and candidate-first retention. It compares the minimal conversion and objective-log alternative, specifies ownership transfer/cold reads/correction/accounting, and maps removals to [BK17–BK19](../maintainers/production-data.md#received-state-and-history-representation-proposal). This is designed but not implemented; it proposes replacing §3.3's chunk-dependent baseline representation and the affected encoding/maintenance mechanisms, not their gameplay guarantees. Installed current-format behavior remains as described above until that coordinated conversion. No old-format reader, second timeline, new writer or automatic model maintenance is proposed.
