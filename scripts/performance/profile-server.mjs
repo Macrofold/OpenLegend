@@ -1468,10 +1468,15 @@ async function main() {
       }
     }
     await saveCpuProfile();
-    report.evidenceStorage = await evidenceStorageStats(
-      game.service.store.db,
-      game.service.world.id,
-    );
+    try {
+      report.evidenceStorage = await evidenceStorageStats(
+        game.service.store.db,
+        game.service.world.id,
+      );
+    } catch (error) {
+      report.evidenceStorageError = String(error);
+      process.exitCode = 1;
+    }
     report.finalCounts = {
       entities: entityKeys(game.service.world.entities).length,
       events: game.service.world.events.length,
@@ -1500,7 +1505,8 @@ async function main() {
     } else report.retainedMemory = { status: 'unavailable', reason: 'Run Node with --expose-gc.' };
   } catch (error) {
     if (activePhase) report.incompletePhase = finishPhase(activePhase);
-    report.error = String(error);
+    if (report.error === undefined) report.error = String(error);
+    else report.finalizationError = String(error);
     process.exitCode = 1;
   } finally {
     // An overloaded warm-up is evidence too. Stop before cleanup, retaining its
@@ -1551,6 +1557,8 @@ async function main() {
         memoryBacklog: p.memoryBacklog,
       })),
       error: report.error,
+      evidenceStorageError: report.evidenceStorageError,
+      finalizationError: report.finalizationError,
     }),
   );
 }

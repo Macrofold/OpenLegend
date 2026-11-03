@@ -1014,8 +1014,8 @@ export class MemoryRepository {
   }
   private readonly placeReadEpoch = randomUUID();
   private placeReset = 0;
-  /** Retained place capsules share the existing personal-memory revision. Current
-   * reception is excluded by committed(); correction, support and cold-source changes are not. */
+  /** Public place-page/cache revisions include all personal-source eligibility
+   * and pending privacy edits. Native preparation uses its narrower domain token. */
   knownPlacesRevision(actorId: string): string {
     return JSON.stringify([this.placeReadEpoch, this.placeReset, this.actorRevision(actorId)]);
   }

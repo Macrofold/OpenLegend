@@ -3,8 +3,11 @@ import type { SqlDatabase } from '../../apps/server/src/store.js';
 /** Explicit post-workload diagnostic; never called by gameplay or save admission.
  * SQL aggregates count cold data without loading it into the simulation. */
 export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
-  const read = db.readTransaction?.bind(db) ?? db.transaction.bind(db);
-  return read(async () => {
+  if (!db.readMetadataBaseline)
+    throw new Error('Physical storage diagnostics require a durable metadata snapshot.');
+  return db.readMetadataBaseline([], async (baseline) => {
+    if (baseline.worldId !== worldId)
+      throw new Error('Physical storage diagnostic world changed before capture.');
     const tables = [
       'mind_perception_current',
       'mind_perception_attention_annotations',

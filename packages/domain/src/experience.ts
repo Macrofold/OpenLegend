@@ -54,7 +54,9 @@ import {
   type ExperienceManifest,
 } from './experience-manifest.js';
 import {
+  acquireKnownPlaceCapsules,
   acquireKnownPlaceEvidence,
+  experienceKnownPlaceCapsules,
   invalidateKnownPlaceEvidence,
   installKnownPlaceEvidence,
   prepareKnownPlaceEvidence,
@@ -946,7 +948,6 @@ export function admitAutomaticExperience(
   if (invalidated === null) throw new Error('Personal experience could not be recorded.');
   for (const entry of admitted)
     if (entry.source === 'awareness') {
-      acquireKnownPlaceEvidence(world, entry.value);
       if (entry.value.speech) selectedRetainRecognitionEvidence(world, entry.value);
     }
   return {
@@ -1050,6 +1051,19 @@ function applyExperienceMutation(
       return null;
     ensureExperienceAccounting(world, actorId);
     const accounting = experienceEntries(world, actorId);
+    const placesChanged =
+      [...accounting.values()].some(
+        (entry) =>
+          used.has(
+            experienceSourceKey({
+              kind: entry.source,
+              id: entry.source === 'awareness' ? entry.value.eventId : entry.value.id,
+            }),
+          ) && experienceKnownPlaceCapsules(entry).length > 0,
+      ) ||
+      mutation.summaries.some(
+        (value) => experienceKnownPlaceCapsules({ source: 'summary', value }).length > 0,
+      );
     const state = world.experience!;
     state.summaries[actorId] = cloneValue(mutation.summaries);
     state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(
@@ -1059,7 +1073,7 @@ function applyExperienceMutation(
       (m) => !used.has(experienceSourceKey({ kind: 'memory', id: m.id })),
     );
     state.consolidatedAt[actorId] = world.simTime;
-    invalidateKnownPlaceEvidence(world, actorId);
+    if (placesChanged) invalidateKnownPlaceEvidence(world, actorId);
     reconcileExperienceAccounting(world, actorId, accounting);
     return mutation.retiredSources.map((source) => source.id);
   }
@@ -1193,6 +1207,9 @@ function applyExperienceMutation(
         summaries,
         'id',
       );
+    for (const entry of additions)
+      if (entry.source === 'awareness') acquireKnownPlaceEvidence(world, entry.value);
+      else acquireKnownPlaceCapsules(world, actorId, experienceKnownPlaceCapsules(entry));
     return [];
   }
 
@@ -2023,7 +2040,11 @@ export function expireExperience(
   state.summaries[actorId] = (state.summaries[actorId] ?? []).filter(
     (entry) => !selected.has(`summary:${entry.id}`),
   );
-  invalidateKnownPlaceEvidence(world, actorId);
+  if (
+    entries.some((entry) => experienceKnownPlaceCapsules(entry).length > 0) ||
+    additions.some((entry) => experienceKnownPlaceCapsules(entry).length > 0)
+  )
+    invalidateKnownPlaceEvidence(world, actorId);
   if (
     additions.length &&
     applyExperienceMutation(

@@ -44,6 +44,7 @@ import {
   captureKnownPlaceEvidence,
   inheritUnchangedExposure,
   knownPlaceEvidenceReady,
+  knownPlaceEvidenceRevision,
   installKnownPlaceEvidence,
   prepareKnownPlaceEvidence,
   encounterPreferenceBinding,
@@ -2487,7 +2488,7 @@ export class WorldService {
       if (repository && !head) throw new KnownPlacePreparationError();
       for (const actorId of actors) {
         if (knownPlaceEvidenceReady(candidate, actorId)) continue;
-        const sourceRevision = repository?.knownPlacesRevision(actorId);
+        const sourceRevision = knownPlaceEvidenceRevision(candidate, actorId);
         const life = entityGet(candidate.entities, actorId)?.actor?.physicalLife;
         const privacy = candidate.experience?.privacyRevisions?.[actorId];
         const index =
@@ -2574,7 +2575,7 @@ export class WorldService {
           live &&
           (generation !== this.generation ||
             candidate.id !== target.id ||
-            sourceRevision !== repository?.knownPlacesRevision(actorId) ||
+            sourceRevision !== knownPlaceEvidenceRevision(target, actorId) ||
             life !== entityGet(target.entities, actorId)?.actor?.physicalLife ||
             privacy !== target.experience?.privacyRevisions?.[actorId])
         ) {

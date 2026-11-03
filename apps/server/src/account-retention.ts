@@ -21,6 +21,7 @@ import {
   selectedRecognitionMaintenanceDue,
   selectedExpireRecognitionSeeds,
   invalidateKnownPlaceEvidence,
+  knownPlaceEvidenceRevision,
   type ImpressionDependency,
   type ExperienceEntry,
   type MemoryRecord,
@@ -558,6 +559,7 @@ interface AccountActorPlan {
   nextDue: number | null;
   accountsBefore?: Accounts;
   accountsAfter: Accounts;
+  knownPlacesChanged: boolean;
 }
 export interface AccountRetentionPlan {
   worldId: string;
@@ -646,6 +648,9 @@ export async function prepareAccountRetentionPlan(
         },
       ]),
     ) as AccountActorPlan['delta'];
+    const knownPlacesChanged =
+      knownPlaceEvidenceRevision(state.world, actorId) !==
+      knownPlaceEvidenceRevision(prepared.state.world, actorId);
     if (
       before.accounts &&
       !writes.length &&
@@ -654,7 +659,8 @@ export async function prepareAccountRetentionPlan(
       !supports.length &&
       (before.individualRepairs?.length ?? 0) === (after.individualRepairs?.length ?? 0) &&
       before.accounts.nextDue === after.accounts.nextDue &&
-      !Object.values(delta).some((value) => value.bytes || value.count)
+      !Object.values(delta).some((value) => value.bytes || value.count) &&
+      !knownPlacesChanged
     )
       continue;
     result.actors.push({
@@ -673,6 +679,7 @@ export async function prepareAccountRetentionPlan(
       nextDue: after.accounts.nextDue,
       accountsBefore: before.accounts,
       accountsAfter: after.accounts,
+      knownPlacesChanged,
     });
   }
   return result;
@@ -844,7 +851,9 @@ export function applyAccountRetentionPlan(
         // prepared deadline. With no concurrent account change, protected owners
         // above that target do not keep scheduling an otherwise empty slice.
         if (changedRequiredAccounts.has(actorId)) markRequiredExperienceMaintenance(draft, actorId);
-        invalidateKnownPlaceEvidence(draft, actorId);
+        // Preparation already inspected the exact selected source bodies. A
+        // movement-account/deadline change cannot discard unrelated place proof.
+        if (actorPlan.knownPlacesChanged) invalidateKnownPlaceEvidence(draft, actorId);
         for (const id of plan.rows.get('mind_temporal_supports') ?? [])
           if ((JSON.parse(id) as string[])[4] === actorId)
             rows.set('mind_temporal_supports', [...(rows.get('mind_temporal_supports') ?? []), id]);

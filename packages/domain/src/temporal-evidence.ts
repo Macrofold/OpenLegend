@@ -69,6 +69,11 @@ import {
   ensureExperienceAccounting,
   markRequiredExperienceMaintenance,
 } from './remembered-impressions.js';
+import {
+  acquireKnownPlaceCapsules,
+  invalidateKnownPlaceEvidence,
+  temporalKnownPlaceCapsules,
+} from './known-place-evidence.js';
 import { personalFactAlias } from './experience-source.js';
 import { immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
 import {
@@ -3466,6 +3471,15 @@ function admitTemporalSupport(
   account.bytes += capsule.bytes;
   account.count++;
   if (capsule.required) markRequiredExperienceMaintenance(world, actorId);
+  // Sparse retained place proof participates in the same derived native index as
+  // its original account. Replacing a place-bearing owner may expose an older
+  // cold fallback; never delete only the cached winner and claim completeness.
+  const places = temporalKnownPlaceCapsules(actorId, capsule),
+    previousPlaces = prior ? temporalKnownPlaceCapsules(actorId, prior) : [];
+  if (JSON.stringify(previousPlaces) !== JSON.stringify(places)) {
+    if (previousPlaces.length) invalidateKnownPlaceEvidence(world, actorId);
+    acquireKnownPlaceCapsules(world, actorId, places);
+  }
   chargeWork({ effects: 1, outputBytes: Math.max(0, capsule.bytes - (prior?.bytes ?? 0)) });
   return capsule;
 }
@@ -3567,6 +3581,8 @@ export function releaseTemporalSupport(
   account.bytes -= capsule.bytes;
   account.count--;
   delete actor.supports![receiptId];
+  if (temporalKnownPlaceCapsules(actorId, capsule).length)
+    invalidateKnownPlaceEvidence(world, actorId);
 }
 
 export function setTemporalSupportRequired(
