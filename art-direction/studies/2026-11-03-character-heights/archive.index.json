@@ -5,8 +5,8 @@
       "id": "openlegend-curated"
     },
     "assetId": "character-heights-2026-11-03",
-    "revisionId": "sha256-003b0d7d0ea5517e39b332cff437f2af5336e8c9d8e56a3449ac262d87ffd75b",
-    "manifestSha256": "90f4bf6201e1cedee185f9dacc04663c8a399140f68ed0b22528d882306de891"
+    "revisionId": "sha256-7bdcf2abfb78fb7297806b56ef9f0e67d5d1eab545c46ad70967c5f5b27bfe60",
+    "manifestSha256": "4a4e3f22e72f7a4228d3fbf7f5848d19bd7a8d03c53defcb31b7f045ec2376a3"
   },
   "files": {
     "apps/client/src/props/art-study/study-characters/ada-field-tunic.glb": {
@@ -93,6 +93,34 @@
       "bytes": 3011536,
       "mediaType": "model/gltf-binary"
     },
+    "apps/client/src/props/art-study/study-characters/maer-meshy-candidate.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "cddf47cd151760582da01b37f2a3871ddacae0e85539411f59f95199c6faab3c",
+      "bytes": 3662940,
+      "mediaType": "model/gltf-binary"
+    },
+    "apps/client/src/props/art-study/study-characters/maer-meshy-sheet-crop.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "fedbbde803e6ebb5e5e66ceeb6224c32f41a1b571c80945d69b2a1835bc3f6c7",
+      "bytes": 3977224,
+      "mediaType": "model/gltf-binary"
+    },
+    "apps/client/src/props/art-study/study-characters/maer-sheet-model.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7819545fcdb4a6b68e77bce8b4a8aae663ab11947497c76b322f3539e740c1d3",
+      "bytes": 1834536,
+      "mediaType": "model/gltf-binary"
+    },
+    "apps/client/src/props/art-study/study-characters/maer-tripo-candidate.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f389fe778f12efc8e0b3b345ac13f3d0071e6b3e8d732835ea7935eda3f1efe3",
+      "bytes": 6180012,
+      "mediaType": "model/gltf-binary"
+    },
     "apps/client/src/props/art-study/study-characters/mara-field-tunic.glb": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
@@ -170,39 +198,11 @@
       "bytes": 2948304,
       "mediaType": "model/gltf-binary"
     },
-    "apps/client/src/props/art-study/study-characters/orin-meshy-candidate.glb": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "2d20cfd3bf1242d5145a86e9510197d2accb4382e9b676b9c11845cebde244a8",
-      "bytes": 3662944,
-      "mediaType": "model/gltf-binary"
-    },
-    "apps/client/src/props/art-study/study-characters/orin-meshy-sheet-crop.glb": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "839ff45d182228f73caa2da7f906f9a106da4a2aa8776871fd6e9ecdae005d51",
-      "bytes": 3977224,
-      "mediaType": "model/gltf-binary"
-    },
-    "apps/client/src/props/art-study/study-characters/orin-sheet-model.glb": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "f42bc09ef490d686ec73341a744e5ef680e3fbae469fa340aa8f97dbeb3741ed",
-      "bytes": 1834544,
-      "mediaType": "model/gltf-binary"
-    },
     "apps/client/src/props/art-study/study-characters/orin-travel-coat.glb": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
       "sha256": "1ee08ac082ae88c00a41b185007bbee8e7c7ace84b850ee7dc30358f01cb4852",
       "bytes": 3103388,
-      "mediaType": "model/gltf-binary"
-    },
-    "apps/client/src/props/art-study/study-characters/orin-tripo-candidate.glb": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "9ce9a44ba067c50f097959e8995758c116fc868befe077a93413bbea62689263",
-      "bytes": 6180016,
       "mediaType": "model/gltf-binary"
     },
     "apps/client/src/props/art-study/study-characters/orin-work-vest.glb": {
@@ -215,21 +215,21 @@
     "apps/client/src/props/art-study/study-characters/sela-meshy-candidate.glb": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "d02e45ed487b50578a421487a47c71b743150968674fed33552e7d1fe3340c51",
+      "sha256": "67126e22fb1905cfcacb4a0de1bd807df0f8e4ac75e79712f2c49c97567f212b",
       "bytes": 4824012,
       "mediaType": "model/gltf-binary"
     },
     "apps/client/src/props/art-study/study-characters/sela-sheet-model.glb": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "2a4c2126453b8204e8e9dbfcb8ad4b714177b73b8fc0a361b27682d201240c56",
+      "sha256": "b20010e56a4e0502484b7f294a37e747824ea436256c5a01e60aa39e43e8e749",
       "bytes": 6191712,
       "mediaType": "model/gltf-binary"
     },
     "apps/client/src/props/art-study/study-characters/sela-tripo-candidate.glb": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "5e6d0f60d4b7c8c8200e37821b37c0d40f2dd7f89956eabeea9f5354b4b74970",
+      "sha256": "2b854239c3c8e4cc43e3bc187e071cb1bf840deac86de76782a43683bfea9138",
       "bytes": 6767264,
       "mediaType": "model/gltf-binary"
     },
@@ -257,8 +257,8 @@
     "study/export/facts.json": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "ccdff6173cfae75e330bb35a60f2f83fad9c7df8192933bf4b5295b2384dae79",
-      "bytes": 18767,
+      "sha256": "818ffb0a95a5b051cd847c5a39f19f5c32510fe4d21c8511c959ab3326559255",
+      "bytes": 18768,
       "mediaType": "application/json"
     },
     "study/review/reports/ada-field-tunic.report.json": {
@@ -345,6 +345,34 @@
       "bytes": 4089,
       "mediaType": "application/json"
     },
+    "study/review/reports/maer-meshy-candidate.report.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "33e3159c9ca7f7bb19b6ded0e638284fd20a786b21484ac3e3ddd2dd71b8a325",
+      "bytes": 2166,
+      "mediaType": "application/json"
+    },
+    "study/review/reports/maer-meshy-sheet-crop.report.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0c1d0fe917a69cc8db98d4da955fe023bbb117ae2e38460a540e30de44e37bc0",
+      "bytes": 2167,
+      "mediaType": "application/json"
+    },
+    "study/review/reports/maer-sheet-model.report.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "33ac830e48bda53c51f371f172908c590a0f73f899e2ea352ea0f5d5e7ef37b9",
+      "bytes": 3201,
+      "mediaType": "application/json"
+    },
+    "study/review/reports/maer-tripo-candidate.report.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "378e2aa906fd4c246943691ca480cd9297e5c830145f43e43331c4a5d021d087",
+      "bytes": 2512,
+      "mediaType": "application/json"
+    },
     "study/review/reports/mara-field-tunic.report.json": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
@@ -422,39 +450,11 @@
       "bytes": 4096,
       "mediaType": "application/json"
     },
-    "study/review/reports/orin-meshy-candidate.report.json": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "6182aae61e354e7e1e96240d8151ebeabf8ea34c05a479aed44dabd781a471b9",
-      "bytes": 2166,
-      "mediaType": "application/json"
-    },
-    "study/review/reports/orin-meshy-sheet-crop.report.json": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "c2da7b3f23f17303d9d726b0d1dfe3eeac2009d85ed9ccbee9e8828c4b9cd393",
-      "bytes": 2165,
-      "mediaType": "application/json"
-    },
-    "study/review/reports/orin-sheet-model.report.json": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "bcedd6f555b57a4f4b7aec1b11085dd426bd3bb18be02b844073a557c0665b70",
-      "bytes": 3201,
-      "mediaType": "application/json"
-    },
     "study/review/reports/orin-travel-coat.report.json": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
       "sha256": "b5ee3db8d680fa2fbe03ddafbf47345b1ce8d96850d024b34eb66c52b150a530",
       "bytes": 4099,
-      "mediaType": "application/json"
-    },
-    "study/review/reports/orin-tripo-candidate.report.json": {
-      "boundary": "art-studies",
-      "accessDomain": "curated-private",
-      "sha256": "ade756b39d060fc89856edb15d707a07a21a4dfb33fbf47a33b2bfc0d2f47a87",
-      "bytes": 2511,
       "mediaType": "application/json"
     },
     "study/review/reports/orin-work-vest.report.json": {
@@ -467,22 +467,22 @@
     "study/review/reports/sela-meshy-candidate.report.json": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "27a0963f159554f35643974bcd1716ca720ceaabfeac283ea073815b43fcb0eb",
+      "sha256": "5723c1bbd5ba3ff0cf487e8998d5df3a267335f74c4235de36b8fe63207332ee",
       "bytes": 2163,
       "mediaType": "application/json"
     },
     "study/review/reports/sela-sheet-model.report.json": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "2e73d6d5206ff7c545db2b23536d4995464f1eb1f8f285853ee2e4631985cf57",
-      "bytes": 3164,
+      "sha256": "6424b616da309d9ee33ca069d4886ccfe8f8c964b42e55a93df6b6d3a4829ec7",
+      "bytes": 3165,
       "mediaType": "application/json"
     },
     "study/review/reports/sela-tripo-candidate.report.json": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "4816d6bfdfeb6f5f653b9e6b8ea40ed9036e521aa4d6d8e695a482cf3b85af9b",
-      "bytes": 2510,
+      "sha256": "8daf73fdd6d3392686359ed8bf66b38d632d29f9d8fe1077c013cbd5dcc06a5a",
+      "bytes": 2511,
       "mediaType": "application/json"
     },
     "study/review/reports/tavin-field-tunic.report.json": {
@@ -754,15 +754,15 @@
     "study/work/recipes/build_manifest.py": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "7b2bbe1d3dae69d4381af060fa433f132ca5db1d5bed877fb4a976c7945c9036",
-      "bytes": 3135,
+      "sha256": "10b1ef9ccf4fe3ae6723862d1cfc4e1b2dfb77f9bc1510c2cdf1deb799461abe",
+      "bytes": 3199,
       "mediaType": "text/x-python; charset=utf-8"
     },
     "study/work/recipes/plan.json": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "2510905751cc95b98cd5ac5a52b39d93a9f647838f762cdadfac2bf6d4bcf753",
-      "bytes": 6741,
+      "sha256": "b8c43ef0746eef261acb6edb916b231499ede852ca99ded0902d95c8beee7852",
+      "bytes": 7036,
       "mediaType": "application/json"
     },
     "study/work/recipes/scale-heights.py": {
@@ -775,9 +775,16 @@
     "study/work/recipes/write-catalog.py": {
       "boundary": "art-studies",
       "accessDomain": "curated-private",
-      "sha256": "d49722fca1238c3321c9a1a877b650da0ab28cf59d5ecca8c290cdad64549632",
+      "sha256": "749f70f420a30816c9b273a888d458ee2fcadb90cd4d02a205f50cac611cf36a",
       "bytes": 5332,
       "mediaType": "text/x-python; charset=utf-8"
+    },
+    "study/work/tools/view-server.config.mts": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f86a025c27d20a359c7f54a11e9ec255c27667909f78c2397036e954be6e1210",
+      "bytes": 3009,
+      "mediaType": "text/plain; charset=utf-8"
     }
   }
 }

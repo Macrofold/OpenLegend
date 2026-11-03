@@ -2,11 +2,11 @@
 
 For new studies, use the [art workflow](../../docs/production-workflows/art-flows/README.md), its [naming conventions](../../docs/production-workflows/art-flows/README.md#7-working-files-ids-and-records) and [record/handoff outline](../../docs/production-workflows/art-flows/study-record.md). The [UI surface-language brief](ui-surface-language/brief.md) defines the requested border, panel and connector exploration. The [October 25 Higgsfield UI material-language study](2026-10-25-ui-material-language-higgsfield/README.md) holds sixteen rounds (12 material directions, Gildmoss variations, five rounds of one-off corner HUDs, and procedural panel glass with its cracks, stone, grain, light, bezel and colour) and the resulting production package, all archived privately.
 
-**Character heights (2026-11-03):** the [study record](2026-11-03-character-heights/README.md) gives the eight people of the cast and the proof run their own heights, read from their stories (1.58–1.82 m, beside the 2.035 m mercenary), with every variation and the eight clips in the art study's character lineup.
+**Character heights (2026-11-03):** the [study record](2026-11-03-character-heights/README.md) gives the nine people of the cast and the proof run their own heights, read from their stories (1.58–1.82 m, beside the 2.035 m mercenary), with every variation and the eight clips in the art study's character lineup.
 
 **Character motion (2026-10-31):** the [study record](2026-10-31-character-motion/README.md) measures and reworks the mercenary's walking, running and strikes (travel playback, speed-matched gait, capture window, smooth poses and simulated cape) and gives the five proof-run people and, since November 1, the seven prepared library people (21 outfit files) the same eight clips.
 
-**Character-sheet proof run (2026-10-31):** the [study record](2026-10-31-character-sheet-proof/README.md) takes Mike's five character sheets (Sela Tern, Jessa Cairn, Ada, Mara Reed, Orin) to rigged models with `Idle` and `Run`, with every candidate, sheet and capture stored as a private S3 collection with an exact index.
+**Character-sheet proof run (2026-10-31):** the [study record](2026-10-31-character-sheet-proof/README.md) takes Mike's five character sheets (Sela Tern, Jessa Cairn, Ada, Mara Reed, Maer Fen) to rigged models with `Idle` and `Run`, with every candidate, sheet and capture stored as a private S3 collection with an exact index.
 
 **Interface overhaul, direct method (2026-10-18 to 2026-10-26):** the [study record](2026-10-18-interface-direct-method/README.md) covers every round, the owner-selected Gildmoss design and its production package, all stored as private S3 collections with exact indexes.
 
