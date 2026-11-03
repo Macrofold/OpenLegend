@@ -5,8 +5,8 @@
       "id": "openlegend-curated"
     },
     "assetId": "public-studies",
-    "revisionId": "sha256-b789ebfda3d3421a5a6ff9f6532c64ec78851adb17dd40ae28bff10cf33584d9",
-    "manifestSha256": "217a4af202d6604700d1a6999dc052910822b4f9a3cfb77e5f7581f175969f29"
+    "revisionId": "sha256-ddc18f0e4c1e62a65c1af71ffe9d043d3ad13474bdfdfedea6fb5f0c556d2ca2",
+    "manifestSha256": "92defb29ee9a03b62354ea3af5ce730d0ebc3e75d31a11e886a7a3d27ba7a38d"
   },
   "files": {
     "apps/client/src/characters/mercenary-assets/mercenary-motion.glb": {
@@ -10443,6 +10443,258 @@
       "sha256": "92a43077648051e82bab440620283dfb16de5520f8b96c7db890cb69d79f6bb8",
       "bytes": 4494,
       "mediaType": "text/plain",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/ada-field-tunic.glb": {
+      "sha256": "3bf74c1cb67bbae6df5ae0d0dd6f3f041779b6db00fafc6a875829f71f62bd28",
+      "bytes": 3192608,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/ada-meshy-candidate.glb": {
+      "sha256": "0784dda28879bd69ddeac9e5a281b04ff2c0a0e5d60d95673ea7f1b8c8e01f69",
+      "bytes": 4332464,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/ada-sheet-model.glb": {
+      "sha256": "59b287b5d1b9050e842d7b5d2a80e662fc7217a868b4ea33c401dbdf6d267f10",
+      "bytes": 5750636,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/ada-travel-coat.glb": {
+      "sha256": "dcb9548e606f128edf1f84ebc5d5513332a0db4e0d8947b7dad71921e0ad55f7",
+      "bytes": 3188264,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/ada-tripo-candidate.glb": {
+      "sha256": "e28cc31e318e9cb9e5dbe9e3d58d1b957dfb1b2a409eeb9fb299b4f1b6643d8d",
+      "bytes": 6552804,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/ada-work-vest.glb": {
+      "sha256": "e2e6ba2c05b0f02048cae56c9bba4c1ad94ff3231080733564396b334c44f6d8",
+      "bytes": 3146872,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/catalog.json": {
+      "sha256": "d297eb82d277eb8186b0260cd97d8a14ff3f0e841eb924a1c2e255a9d48db9b6",
+      "bytes": 46715,
+      "mediaType": "application/json",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/jessa-meshy-candidate.glb": {
+      "sha256": "a034fdb1e10f3070e4039b2489c40bcd73cc6295dcbfb1a46f42b17a54f7ff66",
+      "bytes": 4829280,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/jessa-sheet-model.glb": {
+      "sha256": "a5eb8beb2d1500f0b39de3e5ff890f211e647e1e3925fa8fab5424759e54ff89",
+      "bytes": 6138692,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/jessa-tripo-candidate.glb": {
+      "sha256": "0e5dc307cf7cbb69d541afd8b62f3a92fd1df36cfd6194f1cba1621d4e0416ef",
+      "bytes": 8561568,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/kest-field-tunic.glb": {
+      "sha256": "06b05d45ae5bbe0503010f9a979379e2cb2e749811872b9e542132fc75473309",
+      "bytes": 2924464,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/kest-travel-coat.glb": {
+      "sha256": "923ec5c54b40023e202afd569a93493b8e9b51d7b26bf5cc1922464fec0d1c15",
+      "bytes": 2913668,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/kest-work-vest.glb": {
+      "sha256": "40368653dbfe81df2995d2f7a078c26dae564f742c8c617b2ece075a8e13e3b3",
+      "bytes": 3011536,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/maer-meshy-candidate.glb": {
+      "sha256": "cddf47cd151760582da01b37f2a3871ddacae0e85539411f59f95199c6faab3c",
+      "bytes": 3662940,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/maer-meshy-sheet-crop.glb": {
+      "sha256": "fedbbde803e6ebb5e5e66ceeb6224c32f41a1b571c80945d69b2a1835bc3f6c7",
+      "bytes": 3977224,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/maer-sheet-model.glb": {
+      "sha256": "7819545fcdb4a6b68e77bce8b4a8aae663ab11947497c76b322f3539e740c1d3",
+      "bytes": 1834536,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/maer-tripo-candidate.glb": {
+      "sha256": "f389fe778f12efc8e0b3b345ac13f3d0071e6b3e8d732835ea7935eda3f1efe3",
+      "bytes": 6180012,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mara-field-tunic.glb": {
+      "sha256": "cc0883c59ced926b05541bc4763e4534fcbf46f2655c726c42d98df82610b9c6",
+      "bytes": 3104676,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mara-meshy-candidate.glb": {
+      "sha256": "2719613e49826f618004d7724a83aeade386d1b11e54daaa387170029b122fbc",
+      "bytes": 4058632,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mara-meshy-sheet-crop.glb": {
+      "sha256": "0712594353bf7ee17ce6e18c249448e4aa6f841e32af317cb60571cf00e327be",
+      "bytes": 4154748,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mara-sheet-model.glb": {
+      "sha256": "a0291ef2b6528d767316d6eb742f1895feaf01d9a3b39f18c6b6002a997c5c96",
+      "bytes": 5413012,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mara-travel-coat.glb": {
+      "sha256": "eca308394932d87cdf74b66c8c48a2fd9429f1d45d8123372e1618502e258aff",
+      "bytes": 3049856,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mara-tripo-candidate.glb": {
+      "sha256": "36f6376d743923916fa73565ab53e7552f6863669601f472a4faf26b1baac9cb",
+      "bytes": 6750392,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mara-work-vest.glb": {
+      "sha256": "67ba67870487fb09c955196eb76480fedd98583eadb486e9fdfac31a613a55be",
+      "bytes": 3256184,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mike-field-tunic.glb": {
+      "sha256": "2008b4ac35c4e2dfa69cbf4de96ea7639b24b316a57254eeda9b7db41ae4369b",
+      "bytes": 2962456,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mike-travel-coat.glb": {
+      "sha256": "0a1a27ad1f20f30716f34ec68a5f1e487f24d66a9c9e60836141cda122430417",
+      "bytes": 2920164,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/mike-work-vest.glb": {
+      "sha256": "928304c092cc1d5a8b6fcb5b8b2a021910c05c24c07f9016014863e65b4ff901",
+      "bytes": 2965528,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/orin-field-tunic.glb": {
+      "sha256": "a4deb8788267ebb2e8ff5c793db3898a2e4f0c690009a7137c715f5cb6412f49",
+      "bytes": 2948304,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/orin-travel-coat.glb": {
+      "sha256": "1ee08ac082ae88c00a41b185007bbee8e7c7ace84b850ee7dc30358f01cb4852",
+      "bytes": 3103388,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/orin-work-vest.glb": {
+      "sha256": "a57159b2c0c06cc2a5e0badf4df109e4f73cf2025843917bf16fdf4aef4fd054",
+      "bytes": 3108304,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/sela-meshy-candidate.glb": {
+      "sha256": "67126e22fb1905cfcacb4a0de1bd807df0f8e4ac75e79712f2c49c97567f212b",
+      "bytes": 4824012,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/sela-sheet-model.glb": {
+      "sha256": "b20010e56a4e0502484b7f294a37e747824ea436256c5a01e60aa39e43e8e749",
+      "bytes": 6191712,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/sela-tripo-candidate.glb": {
+      "sha256": "2b854239c3c8e4cc43e3bc187e071cb1bf840deac86de76782a43683bfea9138",
+      "bytes": 6767264,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/tavin-field-tunic.glb": {
+      "sha256": "8d1cdec07de93825e3cdfbda31b8e4a940383865d78ef0fef58ab22c00e2c00d",
+      "bytes": 2882484,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/tavin-travel-coat.glb": {
+      "sha256": "238260bb33199b75ac1159a19b7e29c3686a7c86c3bc8661a1e452230936eef0",
+      "bytes": 2970836,
+      "mediaType": "model/gltf-binary",
+      "boundary": "art-studies",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/study-characters/tavin-work-vest.glb": {
+      "sha256": "00551beeba010bb28dab32a6d1a1ce23c4a22d809fc0ce13a1ea4732f5dcc05c",
+      "bytes": 2946404,
+      "mediaType": "model/gltf-binary",
       "boundary": "art-studies",
       "accessDomain": "public"
     }
