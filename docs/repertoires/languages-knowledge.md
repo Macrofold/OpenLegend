@@ -12,10 +12,6 @@
 
 The [observer-specific perception design](../projects/perspective-perception-feature-spec.md) distinguishes hearing, understanding words, recognizing an individual and learning a name; remembered facts retain their original times. It follows the [shared stealth contracts](../projects/stealth-awareness-tech-design.md#shared-contracts), with rules selected by each world. The [perception tracker](../maintainers/perspective-perception.md) owns delivery; the catalogue remains a library of proposals.
 
-## Selected recognition and evidence boundary
-
-The [observer-specific perception design](../projects/perspective-perception-feature-spec.md) distinguishes hearing, understanding words, recognizing an individual and learning a name; remembered facts retain their original times. It follows the [shared stealth contracts](../projects/stealth-awareness-tech-design.md#shared-contracts), with rules selected by each world. The [perception tracker](../maintainers/perspective-perception.md) owns delivery; the catalogue remains a library of proposals.
-
 ## Coverage to develop
 
 These domains orient the expanded inventory. The ten retained patterns illustrate selected connections; a world can choose a much smaller repertoire.
