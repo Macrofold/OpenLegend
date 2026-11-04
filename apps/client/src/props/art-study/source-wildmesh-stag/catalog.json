@@ -1,0 +1,63 @@
+{
+  "group": "source-wildmesh-stag",
+  "recipe": {
+    "path": "scripts/prepare-game-animals.ts",
+    "sha256": "952cf6c58f4b46d4273af5950becb87bfaa3aeb687e1fa79c308ad320b4f0ce8"
+  },
+  "helpers": {
+    "model-files.ts": "567b7ee35a5b679159539d14c12b26887e336a88edc38a9ac9e07294206b4982"
+  },
+  "survey": {
+    "item": "deer-wildmesh-deer-animated-cel-shading-3d-model",
+    "file": "apps/client/src/props/art-survey/wildmesh/wildmesh-deer-deer-animated-cel-shading-3d-model.glb",
+    "sha256": "dbf958696aef9178758d3a0de67daeb70ad7ea99be760e0c625c0ab508d350dc"
+  },
+  "sources": [
+    {
+      "page": "https://sketchfab.com/3d-models/deer-animated-cel-shading-3d-model-f798cc7ee1214ddcb3417329636c4433",
+      "creator": "WildMesh 3D",
+      "license": "CC BY 4.0",
+      "file": "deer_animated_cel_shading_3d_model.glb",
+      "bytes": 6957196,
+      "sha256": "a3a2ed8c84175b01778b4e01bf6eeeb30da51504fbdb591d92c580a846288242",
+      "retrieved": "2026-11-04T00:46:25Z"
+    }
+  ],
+  "attribution": [
+    {
+      "work": "Deer Animated Cel Shading 3D Model",
+      "creator": "WildMesh 3D",
+      "url": "https://sketchfab.com/3d-models/deer-animated-cel-shading-3d-model-f798cc7ee1214ddcb3417329636c4433",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Resized by OpenLegend, keeping only its standing and walking animations."
+    }
+  ],
+  "assets": [
+    {
+      "id": "wildmesh-stag",
+      "family": "wildmesh-stag",
+      "label": "Stag · WildMesh 3D",
+      "variant": "painted",
+      "description": "WildMesh 3D’s painted stag with its breathing idle and walk.",
+      "recommended": true,
+      "file": "wildmesh-stag.glb",
+      "bounds": {
+        "min": [-0.465535, 0, -0.995884],
+        "max": [0.465535, 1.949994, 0.995884]
+      },
+      "triangles": 7948,
+      "vertices": 6551,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024],
+        [512, 512],
+        [1024, 1024]
+      ],
+      "sha256": "4915969f78742b1c0b4d04f1b5f4384fe59baee17f56a3a23929cdec63c9a47c",
+      "source": "Deer Animated Cel Shading 3D Model by WildMesh 3D, CC BY 4.0, https://sketchfab.com/3d-models/deer-animated-cel-shading-3d-model-f798cc7ee1214ddcb3417329636c4433; resized to 1.95 m, standing in the first frame of its idle, with only that idle and its walk, held in place, by OpenLegend.",
+      "animatedFile": "wildmesh-stag-motion.glb",
+      "animatedSha256": "b1926e922f57bc33199a2b0b60adcf61b63ce03d93f0aa6d76df1aca601c28c6"
+    }
+  ]
+}

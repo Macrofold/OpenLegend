@@ -5,7 +5,6 @@ import { BundledModels, destroyModelApplication } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
 import { StudyCapture } from './study-capture';
-import { ScenePixels, markPixelDetail, needsFinePixels } from './scene-pixels';
 import studyLayout from './props/art-study/layout.json';
 import selections from './props/art-study/selections.json';
 import catalogs from 'virtual:openlegend-study-catalogs/all';
@@ -73,7 +72,6 @@ export class ArtStudy {
   private readonly sun: pc.Entity;
   private readonly fill: pc.Entity;
   private readonly frame: pc.CameraFrame;
-  private readonly pixels: ScenePixels;
   private materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
   private roots: pc.Entity[] = [];
@@ -122,9 +120,7 @@ export class ArtStudy {
     this.frame = new pc.CameraFrame(this.app, this.camera.camera!);
     this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
     this.frame.rendering.samples = 4;
-    this.frame.rendering.renderFormats = [pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
     this.frame.update();
-    this.pixels = new ScenePixels(this.app.graphicsDevice, this.camera.camera!);
     this.sun = new pc.Entity('Shared study daylight', this.app);
     this.sun.addComponent('light', {
       type: 'directional',
@@ -170,9 +166,7 @@ export class ArtStudy {
       'openlegend-asset-' +
       [
         subject.value.replace(':', '-'),
-        ...['versions', 'light', 'framing', 'pixel-treatment'].map(
-          (id) => element<HTMLSelectElement>(id).value,
-        ),
+        ...['versions', 'light', 'framing'].map((id) => element<HTMLSelectElement>(id).value),
       ].join('-');
     on(element('save-image'), 'click', () => {
       this.invalidate();
@@ -193,7 +187,6 @@ export class ArtStudy {
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
     on(element('shading'), 'change', () => this.shading());
-    on(element('pixel-treatment'), 'change', () => this.placeCamera());
     for (const [id, yaw] of [
       ['front', 0],
       ['quarter', 0.55],
@@ -334,8 +327,6 @@ export class ArtStudy {
     materials: Map<pc.StandardMaterial, pc.StandardMaterial>,
     asset: Choice,
   ): void {
-    const { min, max } = asset.bounds;
-    const fine = needsFinePixels(max[0]! - min[0]!, max[1]! - min[1]!, max[2]! - min[2]!);
     for (const component of node.findComponents('render')) {
       if (!(component instanceof pc.RenderComponent)) continue;
       for (const mesh of component.meshInstances) {
@@ -349,7 +340,8 @@ export class ArtStudy {
           if (isFoliageMaterialName(source.name)) material.twoSidedLighting = false;
           for (const texture of [material.diffuseMap, material.normalMap, material.opacityMap]) {
             if (!texture) continue;
-            texture.magFilter = pc.FILTER_NEAREST;
+            // Match the game's plain-3D sampling; pixel controls come from the grid.
+            texture.magFilter = pc.FILTER_LINEAR;
             texture.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
             texture.mipmaps = true;
           }
@@ -358,7 +350,6 @@ export class ArtStudy {
             prepareFoliageLight(material, this.app.graphicsDevice);
             material.specularityFactor = 0.04;
           }
-          if (fine) markPixelDetail(material, this.app.graphicsDevice);
           material.update();
           materials.set(source, material);
         }
@@ -668,36 +659,15 @@ export class ArtStudy {
     );
     this.camera.lookAt(target);
     const rect = this.canvas.parentElement!.getBoundingClientRect();
-    const density = element<HTMLSelectElement>('pixel-treatment').value;
-    const balanced = density === 'balanced';
-    const fine = density === 'small' || balanced;
-    // Use the game's single final resolve. Rendering this inspector directly
-    // into a tiny buffer chose coarse texture mips before the final sampling,
-    // erasing facial paint that survives in the actual full-detail scene.
+    // Render at full display resolution, matching the game's plain-3D scene.
     const width = Math.max(1, Math.round(rect.width));
     const pixelsHigh = Math.max(1, Math.round(rect.height));
     if (this.app.graphicsDevice.width !== width || this.app.graphicsDevice.height !== pixelsHigh) {
       this.app.setCanvasResolution(pc.RESOLUTION_FIXED, width, pixelsHigh);
       this.frame.update();
     }
-    this.pixels.setTreatment(
-      density === 'native'
-        ? 'full'
-        : density === '20'
-          ? 'anchored2'
-          : density === '30' || balanced
-            ? 'metres30'
-            : density === '40' || fine
-              ? 'metres40'
-              : 'metres64',
-      balanced ? 'balanced' : fine ? 'small' : 'shared',
-    );
-    const effective = Math.min(
-      balanced ? 30 : fine ? 40 : Number(density),
-      pixelsHigh / (2 * height),
-    );
-    element('pixel-evidence').textContent =
-      `${width} × ${pixelsHigh} source · ${density === 'native' ? 'full display resolution' : balanced ? '30 samples/metre · small subjects 60 (display limited)' : fine ? '40 samples/metre · small subjects 120 (display limited)' : `${effective.toFixed(1)} samples/metre · game resolve`} · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
+    element('display-evidence').textContent =
+      `${width} × ${pixelsHigh} · full display resolution · ${framing === 'game' ? 'current game camera' : 'inspection framing'}`;
     this.invalidate();
   }
   private labels(): void {
@@ -773,7 +743,6 @@ export class ArtStudy {
     this.materials.clear();
     this.stageMaterial.destroy();
     this.frame.destroy();
-    this.pixels.destroy();
     element('labels').replaceChildren();
     this.releaseModels(this.models);
     if (this.pendingModels) this.releaseModels(this.pendingModels);

@@ -70,7 +70,7 @@ Place the brief in the existing art-study record, project design or task record 
 
 The brief should be concrete enough for independent contributors to produce compatible work. It does not need to settle every brushstroke. For a hypothetical new lantern appearance, it might pin the silhouette, handle, scale and supported carrying state while leaving surface wear open. Whether it emits game light is a separate native fact; a painted glow cannot decide that behavior.
 
-Use the [creative brief](../../art-direction/final-board/creative-brief.md), [recorded art decisions](../../art-direction/decisions.md) and [UI brief](../ui-design-brief.md) as existing inputs. Reference art communicates a target; source ownership and production-use rights are recorded separately in the existing asset records.
+Use the [creative brief](../../art-direction/final-board/creative-brief.md), [recorded art decisions](../../art-direction/decisions.md) and [UI brief](../ui-design-brief.md) as existing inputs. World art is plain 3D models and textures with no pixel treatment under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-31-2026); prefer routes that generation tools can repeat at scale over per-asset hand finishing. Reference art communicates a target; source ownership and production-use rights are recorded separately in the existing asset records.
 
 ## Explore before expanding a family
 

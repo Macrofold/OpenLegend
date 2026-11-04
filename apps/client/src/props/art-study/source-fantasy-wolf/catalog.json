@@ -1,0 +1,50 @@
+{
+  "group": "source-fantasy-wolf",
+  "recipe": {
+    "path": "scripts/prepare-game-animals.ts",
+    "sha256": "952cf6c58f4b46d4273af5950becb87bfaa3aeb687e1fa79c308ad320b4f0ce8"
+  },
+  "helpers": {
+    "model-files.ts": "567b7ee35a5b679159539d14c12b26887e336a88edc38a9ac9e07294206b4982"
+  },
+  "survey": {
+    "item": "predators-creatures-wolf",
+    "file": "apps/client/src/props/art-survey/creatures/algumacoisaqq-fantasy-creatures-wolf.glb",
+    "sha256": "3b821242ce7a5d7c1b1178195c9309206f2822195f15c18e5f18ff93bba22bf7"
+  },
+  "sources": [
+    {
+      "page": "https://algumacoisaqq.itch.io/fantasy-creatures-wolf-giant-rat-spider-wasp-centipede",
+      "creator": "Daniel Gruginski (algumacoisaqq)",
+      "license": "CC0 1.0",
+      "file": "Creatures_Godot.zip",
+      "model": "extracted/Creatures_Godot/beasts/Wolf/Wolf.glb",
+      "coat": "extracted/Creatures_Godot/beasts/Wolf/M_Wolf_Grey.tres",
+      "bytes": 302029781,
+      "sha256": "dd38aecebcc74afb096dbcc12a2d0282c38dd49a9eaea52cefa2f83719d1eed2",
+      "retrieved": "2026-11-03T22:57:17Z"
+    }
+  ],
+  "assets": [
+    {
+      "id": "fantasy-wolf-grey",
+      "family": "fantasy-wolf-grey",
+      "label": "Grey wolf · Fantasy Creatures",
+      "variant": "grey",
+      "description": "The Fantasy Creatures wolf in its grey coat, with its idle and walk.",
+      "recommended": true,
+      "file": "fantasy-wolf-grey.glb",
+      "bounds": {
+        "min": [-0.13448, 0, -0.772229],
+        "max": [0.13448, 0.960472, 0.772229]
+      },
+      "triangles": 4850,
+      "vertices": 3084,
+      "textureSizes": [[1024, 1024]],
+      "sha256": "7553355bfea76231fee0f5fed76c85a0e9bff4a14ec06af9012a8198e268d37a",
+      "source": "Wolf from Fantasy Creatures by Daniel Gruginski (algumacoisaqq), CC0 1.0, https://algumacoisaqq.itch.io/fantasy-creatures-wolf-giant-rat-spider-wasp-centipede; grey coat applied as its Godot scene does; resized to 0.96 m, standing in the first frame of its idle, with only that idle and its walk, held in place, by OpenLegend.",
+      "animatedFile": "fantasy-wolf-grey-motion.glb",
+      "animatedSha256": "89f61908ebd7a0686133d63080c002ef9d83a8e1c46ec4a3b641d44fab16ce3a"
+    }
+  ]
+}

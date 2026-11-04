@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Open Legend · World asset survey</title>
+  </head>
+  <body>
+    <main class="survey">
+      <header class="survey-header">
+        <div>
+          <p class="eyebrow">Open Legend · World asset survey</p>
+          <h1>Choose the look of the world</h1>
+          <p>
+            Objects, environment, animals and buildings from six style families, shown at real size
+            under the same light. Like the pieces you want in the world and mark the family that
+            fits each subject best; your picks stay in this browser.
+          </p>
+        </div>
+        <nav class="survey-links" aria-label="Other studies">
+          <a href="./scene-study.html">View the starting world</a>
+          <a href="./art-study.html">Individual asset study</a>
+        </nav>
+      </header>
+      <section class="survey-picker" aria-label="What to compare">
+        <div class="survey-categories" role="group" aria-label="Category" id="categories"></div>
+        <div class="survey-subjects" role="group" aria-label="Subject" id="subjects"></div>
+      </section>
+      <section class="survey-controls" aria-label="Comparison controls">
+        <label
+          >Group<select id="grouping">
+            <option value="subject">One subject, all families</option>
+            <option value="family">One family, whole category</option>
+          </select></label
+        >
+        <label id="family-choice-label" hidden>Family<select id="family-choice"></select></label>
+        <fieldset class="survey-families" id="families">
+          <legend>Families shown</legend>
+        </fieldset>
+        <label
+          >Light<select id="light">
+            <option value="day">Daylight</option>
+            <option value="warm">Warm evening</option>
+            <option value="overcast">Overcast</option>
+          </select></label
+        >
+        <label
+          >Shading<select id="shading">
+            <option value="smooth">Natural light</option>
+            <option value="soft">Soft light bands (game today)</option>
+          </select></label
+        >
+        <label
+          >Reflections<select id="reflections">
+            <option value="sky">Sky light (scanned models expect it)</option>
+            <option value="none">None (game today)</option>
+          </select></label
+        >
+        <label
+          >Projection<select id="projection">
+            <option value="ortho">Orthographic</option>
+            <option value="perspective">Perspective</option>
+          </select></label
+        >
+        <button id="turn" type="button" aria-pressed="false">Turntable</button>
+        <button id="labels-toggle" type="button" aria-pressed="true">Labels</button>
+        <button id="reset-view" type="button">Reset view</button>
+      </section>
+      <div class="survey-body">
+        <section class="survey-stage" aria-label="3D comparison">
+          <canvas
+            id="survey-canvas"
+            tabindex="0"
+            aria-label="3D comparison of the selected models. Drag to orbit, shift-drag to pan, scroll or plus and minus to zoom, arrow keys rotate. Click a model to select it; double-click to focus it."
+          ></canvas>
+          <p id="status" role="status">Loading the survey…</p>
+          <div id="labels" aria-hidden="true"></div>
+          <p class="stage-help">
+            Drag to orbit · shift-drag to pan · scroll to zoom · click to select · double-click to
+            focus
+          </p>
+        </section>
+        <aside class="survey-picks" aria-labelledby="picks-title">
+          <h2 id="picks-title">Your picks</h2>
+          <p id="picks-summary" aria-live="polite"></p>
+          <div id="picks-families"></div>
+          <h3>Liked pieces</h3>
+          <ol id="picks-list"></ol>
+          <div class="picks-actions">
+            <button id="copy-picks" type="button">Copy picks as text</button>
+            <button id="clear-picks" type="button" class="quiet">Clear all picks</button>
+          </div>
+          <p id="copy-status" role="status"></p>
+        </aside>
+      </div>
+      <section
+        id="family-groups"
+        class="survey-groups"
+        aria-label="Pieces in this comparison"
+      ></section>
+      <details class="survey-diagnostics">
+        <summary>Rendering and loaded resources</summary>
+        <button id="inspect-resources" type="button">Inspect resource use</button>
+        <pre id="inspection-metrics"></pre>
+      </details>
+      <footer>
+        <p>
+          Every piece is a third-party model or texture shown as found, scaled to its stated real
+          size; textures above 1024 px are reduced for this survey. Family labels describe visual
+          style, not quality. Presence here is not approval for the game.
+        </p>
+        <p id="source-credits"></p>
+      </footer>
+    </main>
+    <script type="module" src="/src/asset-survey.ts"></script>
+  </body>
+</html>

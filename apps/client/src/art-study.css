@@ -43,6 +43,11 @@ p {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.study-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
 .study-controls {
   display: flex;
   gap: 8px;
@@ -185,8 +190,7 @@ footer p + p {
   .study-header {
     display: block;
   }
-  .study-header > a {
-    display: inline-block;
+  .study-links {
     margin-top: 12px;
   }
   .study-controls {

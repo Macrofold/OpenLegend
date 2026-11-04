@@ -20,6 +20,10 @@ export type CameraCommand =
   | { type: 'perspective-lock' }
   | { type: 'follow' };
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+// The scenery in view grows with the square of the zoom, and wider views were GPU-bound;
+// 15 still shows about 53×48 m of ground at the default tilt. docs/limits/interface.md#la228
+const MIN_ZOOM = 4,
+  MAX_ZOOM = 15;
 export const CAMERA_FOV_DEGREES = 45;
 export function initialCamera(): CameraState {
   return {
@@ -68,7 +72,7 @@ export function updateCamera(state: CameraState, command: CameraCommand): Camera
     }
     case 'zoom':
       return Number.isFinite(command.delta)
-        ? { ...state, zoom: clamp(state.zoom + command.delta, 4, 30) }
+        ? { ...state, zoom: clamp(state.zoom + command.delta, MIN_ZOOM, MAX_ZOOM) }
         : state;
     case 'focus':
       return finitePoint(command.point) ? { ...state, focus: { ...command.point } } : state;
@@ -129,7 +133,8 @@ export function restoreCameraPreferences(value: unknown): CameraState {
     state.yaw = Math.atan2(Math.sin(v.yaw), Math.cos(v.yaw));
   if (typeof v.pitch === 'number' && Number.isFinite(v.pitch))
     state.pitch = clamp(v.pitch, Math.PI / 7.2, Math.PI / 2.4);
-  if (typeof v.zoom === 'number' && Number.isFinite(v.zoom)) state.zoom = clamp(v.zoom, 4, 30);
+  if (typeof v.zoom === 'number' && Number.isFinite(v.zoom))
+    state.zoom = clamp(v.zoom, MIN_ZOOM, MAX_ZOOM);
   if (v.projection === 'perspective') state.projection = v.projection;
   if (typeof v.rotationLocked === 'boolean') state.rotationLocked = v.rotationLocked;
   if (typeof v.following === 'boolean') state.following = v.following;

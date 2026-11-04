@@ -43,7 +43,7 @@ Choose a new external output directory. Authenticated workspace creation require
 
 For new work, save directly to a deliberately named external workspace. Keep provenance beside the output: source URL/package and license, original hashes, creator, tool/version, prompt or recipe when applicable, input revisions and known verification limits. Do not include credentials, provider job records or unrelated private files in a source bundle or public study.
 
-Follow the relevant [visual requirements](../art-direction/decisions.md#current-visual-requirements--october-16-2026), [creative brief](../art-direction/final-board/creative-brief.md) and [scene/tool workflow](../.agents/skills/openlegend-playcanvas/SKILL.md). Storage approval does not establish visual quality, geometry correctness or runtime behavior. Retain requested iterations as exact external source/export/capture references rather than overwriting their only copies.
+Follow the relevant [visual requirements](../art-direction/decisions.md#current-visual-requirements--october-31-2026), [creative brief](../art-direction/final-board/creative-brief.md) and [scene/tool workflow](../.agents/skills/openlegend-playcanvas/SKILL.md). Storage approval does not establish visual quality, geometry correctness or runtime behavior. Retain requested iterations as exact external source/export/capture references rather than overwriting their only copies.
 
 ### Run the existing offline recipes
 

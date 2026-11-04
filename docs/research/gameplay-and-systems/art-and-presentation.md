@@ -2,7 +2,9 @@
 
 Current questions and proposed methods; no study or implementation is authorized by this record. Existing delivery/acceptance: [art direction](../../maintainers/art-direction.md) · [3d pixel art](../../maintainers/3d-pixel-art.md) · [game asset storage](../../maintainers/game-asset-storage.md). Earlier “not started” claims remain historical in the former backlog; consult these owners before selecting an experiment. Reuse valid evidence and keep required gates distinct from proposed research.
 
-## R01 / P0 — Can selected PlayCanvas deliver the desired grounded pixel-art scene on reference browsers?
+## R01 / P0 — Can selected PlayCanvas deliver the desired grounded plain-3D scene on reference browsers?
+
+The question originally asked about a pixel-art scene; the [October 31, 2026 direction](../../../art-direction/decisions.md#current-visual-requirements--october-31-2026) makes the target plain 3D models and textures.
 
 Investigation: After implementation authorization, build the [visual proof](../../../archive/03-design-proposals/visual-direction.md): wilderness terrain, plants, water, representative sprite/tool, daylight/dusk, pan/zoom and a small crowd. Measure frame percentiles, memory, download and first interaction; compare another renderer only for an evidenced blocker
 
@@ -10,9 +12,9 @@ Evidence needed: Creator finds the scene compelling and appropriately grounded; 
 
 Current qualification belongs to the linked delivery owners, not the former archive's “not started” snapshot. This question grants no new implementation or paid-experiment authority.
 
-## R02 / P0 — Which repeatable asset workflow delivers the accepted pixel-art style?
+## R02 / P0 — Which repeatable asset workflow delivers the accepted plain-3D style at generated-content scale?
 
-Investigation: Produce one character with idle/walk/use/rest and an outfit/tool variant; inspect palette, pixel density, pivots, feet, directions, attachments and shadow treatment during camera movement. Compare authored sprites, 3D-to-sprite and dimensional pixel-rendered sources where useful; retain editable source and verify a meaningful revision
+Investigation: Produce one character with idle/walk/use/rest and an outfit/tool variant; inspect palette, texture detail, pivots, feet, attachments, shadow treatment and moving-camera stability. Compare generated, library-sourced and authored 3D sources where useful; retain editable source and verify a meaningful revision
 
 Evidence needed: Record cleanup hours, consistency, action readability and asset size; select a production family before bulk asset creation. An attractive still image alone does not pass
 

@@ -1,6 +1,6 @@
 # Art assets
 
-Select sources against the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026): believable real-world proportions and forms for beautiful dimensional pixel art; reject visibly low-poly, blocky, cutesy and big-head/small-body designs. Existing acquired packs are preserved studies, not approved style suppliers. The [grounded creator shortlist](../research/3d-pixel-worlds/grounded-asset-creators.md) distinguishes new candidates from acquired or tested assets.
+Select sources against the [current visual requirements](../decisions.md#current-visual-requirements--october-31-2026): believable real-world proportions and forms for plain 3D models and textures with no pixel treatment (the pixel-art direction was superseded on October 31, 2026); reject visibly low-poly, blocky, cutesy and big-head/small-body designs. Existing acquired packs are preserved studies, not approved style suppliers. The [grounded creator shortlist](../research/3d-pixel-worlds/grounded-asset-creators.md) distinguishes new candidates from acquired or tested assets.
 
 The [current natural-source replacements](source-study/natural-replacements.md) use Poly Haven for most vegetation/props and credited other sources for animals, archery and the leather pack. That record owns exact licenses, preparation and current choices; [the dated archive](../studies/2026-10-17-natural-replacements/README.md) preserves all meaningful tested iterations.
 

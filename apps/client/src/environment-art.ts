@@ -2,8 +2,6 @@ import * as pc from 'playcanvas';
 import { intersectBox, type SceneryInstance } from '@open-legend/spatial';
 import { random } from './art';
 
-export type EnvironmentSurface = 'foliage' | 'bark' | 'stone' | 'ground' | 'masonry' | 'timber';
-
 /** Material names retained by the finite imported plant sources. Keep the
  * inspector and prop renderer consistent with offline scenery classification. */
 export const isFoliageMaterialName = (name: string): boolean =>
@@ -47,294 +45,26 @@ export function prepareFoliageLight(
   material.update();
 }
 
-/** Original stepped material clusters, not sampled lighting or per-pixel noise.
- * Leaf/bark plates repeat over two metres, with quiet ground over eight. */
-export function environmentSurfaceArt(kind: EnvironmentSurface): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = kind === 'foliage' || kind === 'bark' ? 32 : 64;
-  const size = canvas.width;
-  const ctx = canvas.getContext('2d')!;
-  const paint = (surface: EnvironmentSurface): void => {
-    ctx.fillStyle = '#808080';
-    ctx.fillRect(0, 0, size, size);
-    if (surface === 'masonry' || surface === 'timber') {
-      // Useful construction, not an all-over detail overlay: quiet block faces,
-      // staggered mortar or long boards, plus a few authored edge chips.
-      const rows = surface === 'masonry' ? 8 : 1;
-      for (let row = 0; row < rows; row++) {
-        const offset = row % 2 ? 8 : 0;
-        for (let x = -16; x < size; x += 16) {
-          const y = row * 8,
-            left = x + offset;
-          ctx.fillStyle = ['#858585', '#929292', '#7b7b7b'][(row + (x + 16) / 16) % 3]!;
-          ctx.fillRect(left + 1, y + 1, 15, surface === 'masonry' ? 7 : size);
-          ctx.fillStyle = '#626262';
-          ctx.fillRect(left, y, 1, surface === 'masonry' ? 8 : size);
-          if (surface === 'masonry') ctx.fillRect(left, y, 16, 1);
-          ctx.fillStyle = '#a4a4a4';
-          ctx.fillRect(left + 3, y + 1, 9, 1);
-        }
-      }
-      return;
-    }
-    if (surface === 'stone') {
-      // Broad geological planes with a few connected cracks. These follow the
-      // rigid surface at a fixed scale; no camera-driven noise or fake opening.
-      for (const [color, points] of [
-        [
-          '#969696',
-          [
-            [0, 0],
-            [43, 0],
-            [35, 13],
-            [18, 18],
-            [0, 11],
-          ],
-        ],
-        [
-          '#747474',
-          [
-            [0, 26],
-            [19, 20],
-            [39, 24],
-            [64, 17],
-            [64, 46],
-            [38, 41],
-            [17, 46],
-            [0, 42],
-          ],
-        ],
-        [
-          '#8a8a8a',
-          [
-            [0, 49],
-            [22, 47],
-            [35, 52],
-            [64, 50],
-            [64, 64],
-            [0, 64],
-          ],
-        ],
-      ] as const) {
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        points.forEach(([x, y], index) => (index ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.strokeStyle = '#5f5f5f';
-      ctx.lineWidth = 1;
-      for (const points of [
-        [
-          [0, 27],
-          [18, 21],
-          [39, 25],
-          [64, 18],
-        ],
-        [
-          [39, 25],
-          [35, 34],
-          [37, 41],
-        ],
-      ] as const) {
-        ctx.beginPath();
-        points.forEach(([x, y], index) =>
-          index ? ctx.lineTo(x + 0.5, y + 0.5) : ctx.moveTo(x + 0.5, y + 0.5),
-        );
-        ctx.stroke();
-      }
-      return;
-    }
-    // A small authored arrangement repeats at matching edges. Each mark is a
-    // connected cluster several texels wide, leaving the surrounding field quiet.
-    for (const dx of [-size, 0, size])
-      for (const dy of [-size, 0, size]) {
-        if (surface === 'foliage') {
-          for (const [x, y, w] of [
-            [1, 1, 7],
-            [13, -2, 8],
-            [24, 5, 7],
-            [6, 12, 8],
-            [18, 16, 9],
-            [-2, 23, 7],
-            [11, 26, 8],
-            [26, 29, 7],
-          ] as const) {
-            const px = x + dx,
-              py = y + dy,
-              width = w;
-            ctx.fillStyle = '#404040';
-            ctx.fillRect(px + 1, py + 4, width - 1, 3);
-            ctx.fillRect(px + 3, py + 7, width - 4, 1);
-            ctx.fillStyle = '#a8a8a8';
-            ctx.fillRect(px + 1, py + 2, width - 2, 3);
-            ctx.fillRect(px, py + 3, width, 1);
-            ctx.fillStyle = '#e0e0e0';
-            ctx.fillRect(px + 2, py + 1, width - 4, 2);
-            ctx.fillRect(px + 1, py + 2, 2, 1);
-          }
-        } else if (surface === 'bark') {
-          for (const [x, y, h] of [
-            [2, -3, 12],
-            [10, 8, 14],
-            [19, 1, 13],
-            [26, 20, 15],
-            [3, 19, 10],
-            [17, 25, 13],
-          ] as const) {
-            const px = x + dx,
-              py = y + dy,
-              height = h;
-            ctx.fillStyle = '#484848';
-            ctx.fillRect(px + 3, py + 2, 2, height - 2);
-            ctx.fillRect(px + 2, py + height - 1, 2, 2);
-            ctx.fillStyle = '#cccccc';
-            ctx.fillRect(px, py + 1, 2, height - 3);
-            ctx.fillRect(px + 1, py, 2, height - 5);
-          }
-        } else {
-          for (const [x, y, w, h] of [
-            [0, 3, 22, 10],
-            [30, 14, 24, 11],
-            [10, 35, 25, 12],
-            [45, 47, 23, 10],
-          ] as const) {
-            const px = x + dx,
-              py = y + dy,
-              width = w,
-              height = h;
-            ctx.fillStyle = '#7b7b7b';
-            ctx.fillRect(px + 3, py + height - 2, width - 7, 3);
-            ctx.fillStyle = '#999999';
-            ctx.fillRect(px + 3, py, width - 7, height);
-            ctx.fillRect(px, py + 3, width, height - 6);
-            ctx.fillStyle = '#a3a3a3';
-            ctx.fillRect(px + 5, py, width - 11, 2);
-          }
-        }
-      }
-  };
-  paint(kind);
-  if (kind === 'foliage') {
-    const leaves = ctx.getImageData(0, 0, size, size);
-    paint('bark');
-    const bark = ctx.getImageData(0, 0, size, size);
-    // One tiny shared tile holds leaves in red and bark in green. The geometry's
-    // existing authored brown/white trunks choose bark, retaining family colors.
-    for (let i = 0; i < leaves.data.length; i += 4) leaves.data[i + 1] = bark.data[i]!;
-    ctx.putImageData(leaves, 0, 0);
-  }
-  return canvas;
-}
-
-/** Attach fixed-density surface artwork to existing geometry. The caller owns
- * the shared texture/material lifetime; omitting this preserves prior colors.
- * Camera movement never changes coordinates, artwork, geometry or preparation. */
-export function prepareEnvironmentSurface(
+/** Quantizing the angle to a nearby point light makes broad concentric
+ * plateaus on a flat floor. Let ground illumination vary continuously; the old
+ * bands remain an explicit study comparison. */
+export function prepareGroundLighting(
   material: pc.StandardMaterial,
   device: pc.GraphicsDevice,
-  kind: EnvironmentSurface,
-  texture: pc.Texture,
 ): void {
-  if (kind === 'ground') {
-    // Quantizing the angle to a nearby point light makes broad concentric
-    // plateaus on a flat floor. Keep pixel sampling/paint, but let illumination
-    // vary continuously; the old bands remain an explicit study comparison.
-    const lambert = pc.ShaderChunks.get(device).get('lightDiffuseLambertPS')!;
-    const styled = material.shaderChunks.glsl.get('lightDiffuseLambertPS') ?? lambert;
-    material.shaderChunks.glsl.set(
-      'lightDiffuseLambertPS',
-      styled.replace('float getLightDiffuse(', 'float ol_styledGroundDiffuse(') +
-        lambert.replace('float getLightDiffuse(', 'float ol_continuousGroundDiffuse(') +
-        `
+  const lambert = pc.ShaderChunks.get(device).get('lightDiffuseLambertPS')!;
+  const styled = material.shaderChunks.glsl.get('lightDiffuseLambertPS') ?? lambert;
+  material.shaderChunks.glsl.set(
+    'lightDiffuseLambertPS',
+    styled.replace('float getLightDiffuse(', 'float ol_styledGroundDiffuse(') +
+      lambert.replace('float getLightDiffuse(', 'float ol_continuousGroundDiffuse(') +
+      `
       uniform float ol_groundLighting;
       float getLightDiffuse(vec3 n, vec3 v, vec3 l) {
         return ol_groundLighting > .5 ? ol_continuousGroundDiffuse(n,v,l)
           : ol_styledGroundDiffuse(n,v,l);
       }`,
-    );
-  }
-  texture.mipmaps = true;
-  texture.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
-  texture.magFilter = pc.FILTER_LINEAR;
-  texture.addressU = texture.addressV = pc.ADDRESS_REPEAT;
-  const declarations = material.shaderChunks.glsl.get('litUserDeclarationVS') ?? '';
-  const end = material.shaderChunks.glsl.get('litUserMainEndVS') ?? '';
-  const objectAttached = kind !== 'ground';
-  material.shaderChunks.glsl.set(
-    'litUserDeclarationVS',
-    `${declarations}\nvarying vec3 ol_environmentPosition;\nvarying vec3 ol_environmentNormal;`,
   );
-  material.shaderChunks.glsl.set(
-    'litUserMainEndVS',
-    `${end}
-     ol_environmentPosition = ${
-       objectAttached
-         ? 'vertex_position.xyz * vec3(length(dModelMatrix[0].xyz),length(dModelMatrix[1].xyz),length(dModelMatrix[2].xyz))'
-         : 'vPositionW'
-     };
-     ol_environmentNormal = vec3(0.0,1.0,0.0);
-     #ifdef NORMALS
-       ol_environmentNormal = ${objectAttached ? 'vertex_normal' : 'dNormalMatrix * vertex_normal'};
-     #endif`,
-  );
-  const diffuse =
-    material.shaderChunks.glsl.get('diffusePS') ?? pc.ShaderChunks.get(device).get('diffusePS')!;
-  const density = kind === 'ground' ? 8 : 16;
-  material.shaderChunks.glsl.set(
-    'diffusePS',
-    diffuse.replace('void getAlbedo()', 'void ol_environmentSourceAlbedo()') +
-      `
-      uniform sampler2D ol_environmentTile;
-      uniform float ol_surfaceEnabled;
-      uniform float ol_surfaceEdges;
-      uniform float ol_groundContrast;
-      varying vec3 ol_environmentPosition;
-      varying vec3 ol_environmentNormal;
-      vec4 ol_environmentSample(vec2 uv) {
-        // Keep the continuous footprint for mip selection even where adjusted
-        // coordinates leave cell interiors flat. Only magnification needs the
-        // one-display-pixel transition; minification uses the prepared mips.
-        vec2 dx = dFdx(uv), dy = dFdy(uv);
-        vec2 size = vec2(${texture.width.toFixed(1)});
-        vec2 texelDx = dx * size, texelDy = dy * size;
-        float footprint = max(length(texelDx),length(texelDy));
-        vec2 sampleUV = uv;
-        if (footprint < 1.0) {
-          vec2 pixel = uv * size - .5;
-          vec2 cell = floor(pixel), fraction = fract(pixel);
-          // Diagonal footprints can exceed one cell per axis: cap the ramp to
-          // avoid a seam at cell centers, then meet ordinary mip UVs smoothly.
-          vec2 width = clamp(abs(texelDx) + abs(texelDy),vec2(.0001),vec2(1.0));
-          vec2 coverage = ol_surfaceEdges > .5
-            ? clamp((fraction - .5) / width + .5,0.0,1.0)
-            : step(vec2(.5),fraction);
-          sampleUV = (cell + .5 + coverage) / size;
-          if (ol_surfaceEdges > .5)
-            sampleUV = mix(sampleUV,uv,smoothstep(.75,1.0,footprint));
-        }
-        return textureGrad(ol_environmentTile,sampleUV,dx,dy);
-      }
-      void getAlbedo() {
-        ol_environmentSourceAlbedo();
-        if (ol_surfaceEnabled < .5${kind === 'masonry' || kind === 'timber' || kind === 'stone' ? '' : ' || ol_surfaceEnabled > 1.5'}) return;
-        vec3 p = ol_environmentPosition * ${(density / texture.width).toFixed(3)};
-        vec3 weights = pow(abs(normalize(ol_environmentNormal)),vec3(10.0));
-        weights /= max(dot(weights,vec3(1.0)),.0001);
-        vec4 x = ol_environmentSample(p.zy);
-        vec4 y = ol_environmentSample(p.xz);
-        vec4 z = ol_environmentSample(p.xy);
-        float bark = ${kind === 'foliage' ? 'step(dAlbedo.g * .98,dAlbedo.r)' : '0.0'};
-        float field = dot(vec3(mix(x.r,x.g,bark),mix(y.r,y.g,bark),mix(z.r,z.g,bark)),weights);
-        // Continuous derivatives select the prepared mip chain. At subpixel
-        // coverage, taper contrast rather than flashing isolated bright cells.
-        float footprint = max(length(dFdx(p)),length(dFdy(p))) * ${texture.width.toFixed(1)};
-        float contrast = (1.0 - smoothstep(.75,1.75,footprint)) * ${kind === 'ground' ? 'ol_groundContrast' : '1.0'};
-        vec3 pigment = ${kind === 'foliage' ? 'mix(mix(vec3(.44,.57,.54),vec3(1.45,1.42,1.02),field),vec3(mix(.52,1.52,field)),bark)' : 'vec3(mix(.52,1.52,field))'};
-        dAlbedo *= mix(vec3(1.0),pigment,contrast);
-      }`,
-  );
-  material.setParameter('ol_environmentTile', texture);
   material.update();
 }
 
@@ -343,7 +73,6 @@ export function prepareEnvironmentSurface(
 export function groupedGroundArt(
   seed: number,
   earth = false,
-  pixelSurface = false,
   palette: 'meadow' | 'woodland' | 'understory' = 'meadow',
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
@@ -365,7 +94,6 @@ export function groupedGroundArt(
           : ['#77815b', '#7e855e', '#6e7954', '#838963'];
   ctx.fillStyle = colors[0]!;
   ctx.fillRect(0, 0, size, size);
-  const grid = pixelSurface ? 8 : 1;
   // Broad, low-contrast masses leave breathing room around people and supplies.
   for (let i = 0; i < 38; i++) {
     const x = rng() * size;
@@ -376,10 +104,7 @@ export function groupedGroundArt(
     for (let step = 0; step < 8; step++) {
       const a = (step * Math.PI * 2) / 8;
       const r = radius * (0.75 + rng() * 0.35);
-      points.push([
-        Math.round((x + Math.cos(a) * r) / grid) * grid,
-        Math.round((y + Math.sin(a) * r * 0.55) / grid) * grid,
-      ]);
+      points.push([Math.round(x + Math.cos(a) * r), Math.round(y + Math.sin(a) * r * 0.55)]);
     }
     // Matching opposite edges preserve the quiet regions when the scene samples
     // this repeating source continuously across its existing world tiles.
@@ -394,22 +119,9 @@ export function groupedGroundArt(
         ctx.fill();
       }
   }
-  // The pixel-surface treatment supplies its own connected material clusters;
-  // retain the earlier small flecks only in the original grouped comparison.
   ctx.fillStyle = earth ? '#938768' : '#64724d';
-  if (!pixelSurface)
-    for (let i = 0; i < (earth ? 90 : 360); i++)
-      ctx.fillRect(Math.floor(rng() * size), Math.floor(rng() * size), 2 + rng() * 3, 1);
-  if (pixelSurface) {
-    const cells = document.createElement('canvas');
-    cells.width = cells.height = size / grid;
-    const pixels = cells.getContext('2d')!;
-    pixels.imageSmoothingEnabled = false;
-    pixels.drawImage(canvas, 0, 0, cells.width, cells.height);
-    ctx.clearRect(0, 0, size, size);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(cells, 0, 0, size, size);
-  }
+  for (let i = 0; i < (earth ? 90 : 360); i++)
+    ctx.fillRect(Math.floor(rng() * size), Math.floor(rng() * size), 2 + rng() * 3, 1);
   return canvas;
 }
 

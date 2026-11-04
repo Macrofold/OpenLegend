@@ -1,6 +1,6 @@
 # Visual direction — grounded pixel art in a spatial world
 
-**Current bundled-world art direction:** the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026) supersede any broader style permission below: beautiful dimensional pixel art with believable real-world proportions; visibly low-poly, blocky, cutesy and big-head/small-body art is rejected. Preserve the historical technical comparisons without treating them as current style endorsements.
+**Current bundled-world art direction:** the [current visual requirements](../../art-direction/decisions.md#superseded-pixel-art-requirements--october-16-2026) supersede any broader style permission below: beautiful dimensional pixel art with believable real-world proportions; visibly low-poly, blocky, cutesy and big-head/small-body art is rejected. Preserve the historical technical comparisons without treating them as current style endorsements.
 
 ## World presentation ownership
 

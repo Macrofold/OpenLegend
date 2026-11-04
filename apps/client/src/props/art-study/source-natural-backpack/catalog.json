@@ -100,6 +100,16 @@
       "creator": "Wildfire Games"
     }
   ],
+  "attribution": [
+    {
+      "work": "Pack from 0 A.D.",
+      "creator": "Wildfire Games",
+      "url": "https://wildfiregames.com/",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "changes": "Adapted by OpenLegend; this version is also CC BY-SA 3.0."
+    }
+  ],
   "assets": [
     {
       "id": "natural-backpack-clear",

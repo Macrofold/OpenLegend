@@ -1,6 +1,6 @@
 # Maer Fen: Midjourney concept-art prompts
 
-**Current prompt constraint:** use believable anatomy and natural head-to-body proportions for beautiful dimensional pixel art. Reject visibly low-poly, blocky/Lego-like, cutesy, chibi and big-head/small-body designs; painted concepts follow the same [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Stylize color, brushwork and lighting without cartoon-proportion drift.
+**Current prompt constraint:** use believable anatomy and natural head-to-body proportions; the in-game target is plain 3D models and textures, not pixel art. Reject visibly low-poly, blocky/Lego-like, cutesy, chibi and big-head/small-body designs; painted concepts follow the same [current visual requirements](../decisions.md#current-visual-requirements--october-31-2026). Stylize color, brushwork and lighting without cartoon-proportion drift.
 
 [Midjourney guide](../midjourney/README.md) · Written 2026-09-27 for Midjourney V8.2. Painted concept art, not pixel art, following the [creative brief](../final-board/creative-brief.md). Made with the same method as the [Halven Rusk prompts](halven-rusk-midjourney.md).
 
@@ -95,7 +95,7 @@ For the workflow of cleaning a concept into a T-pose and building the model in a
 Full-body character reference of a river smuggler chief in his late thirties, front view, standing in a T-pose with arms straight out to the sides and feet shoulder-width apart, facing the viewer, on a plain light grey background. Compact and wiry, weathered olive-brown skin, shaved head, neat black mustache and short pointed chin beard flecked with grey, a small gold ring in his left ear. Dark oiled-leather jerkin over an indigo-grey wool tunic, reed-green hooded cloak thrown back over his shoulders, wide belt with a leather purse, a reed-cutter's hooked blade at his hip, soft leather boots. Even soft lighting without cast shadows, clean readable shapes and flat colour regions, gouache concept art, natural proportions --ar 3:2 --raw --s 50 --v 8.2 --no text, watermark, shadows
 ```
 
-**Why:** a plain background, even light, a front view and a symmetrical pose make cleanup and 3D reconstruction easier ([guide 06](../midjourney/06-game-concept-art.md#concepts-for-the-3d-pixel-art-pipeline)). The bow is left off because it complicates the silhouette; add it as a separate prop. **Watch for:** Midjourney drifting into an A-pose or a hero stance (use the Edit model with an instruction to straighten the arms); the cloak hiding the arms.
+**Why:** a plain background, even light, a front view and a symmetrical pose make cleanup and 3D reconstruction easier ([guide 06](../midjourney/06-game-concept-art.md#concepts-for-the-3d-model-pipeline)). The bow is left off because it complicates the silhouette; add it as a separate prop. **Watch for:** Midjourney drifting into an A-pose or a hero stance (use the Edit model with an instruction to straighten the arms); the cloak hiding the arms.
 
 ## 4. After Mike picks
 

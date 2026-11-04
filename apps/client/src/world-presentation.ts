@@ -1,7 +1,5 @@
 import * as pc from 'playcanvas';
 import type { ArtTreatment } from './art-treatment';
-import { PixelEffects } from './pixel-effects';
-import { ScenePixels } from './scene-pixels';
 import type { GameView } from '@open-legend/protocol';
 import { sunlightAtHour } from './sunlight';
 import type { ShadowQuality } from './world-renderer';
@@ -20,6 +18,12 @@ type CameraTargetImplementation = {
 };
 
 const SUNLIGHT_INTERPOLATION_SECONDS = 0.05;
+/** Firelight shadows are at full strength below the first daylight value and gone above the
+ * second, fading between them as the sun sets or rises. Beside sunlight a fire's second
+ * shadows are faint, and its six shadow faces took 11–21% of a daytime frame; by day its
+ * light therefore also passes through walls and floors.
+ * docs/world-presentation.md#sprite-lighting */
+const FIRE_SHADOW_DAYLIGHT = [0.1, 0.4] as const;
 
 /** Renderer-only approximations. Mechanical bodies, hearing and sight never use these shaders.
  * docs/world-presentation.md#sprite-lighting
@@ -141,6 +145,7 @@ export class WorldPresentation {
   private sunlightSeconds = 0;
   private sunlightFromSeconds = 0;
   private sunlightElapsed = 0;
+  private fireShadow = 1;
   private readonly updateSunlight = (dt: number): void => {
     const clock = this.sunlightSample?.clock;
     if (!clock || this.sunlightSeconds === clock.seconds) return;
@@ -157,10 +162,6 @@ export class WorldPresentation {
   private readonly frame: pc.CameraFrame;
   private readonly preparedTargets = new WeakSet<pc.RenderTarget>();
   private readonly preparedImplementations = new WeakSet<CameraTargetImplementation>();
-  private readonly pixels: ScenePixels;
-  private readonly updatePixels = (): void => this.pixels.update();
-  private effects?: PixelEffects;
-  private readonly effectSources = new Set<pc.RenderComponent>();
   constructor(
     private app: pc.Application,
     private camera: pc.Entity,
@@ -204,8 +205,6 @@ export class WorldPresentation {
     this.frame.grading.enabled = true;
     this.frame.grading.saturation = 1.05;
     this.frame.update();
-    this.pixels = new ScenePixels(app.graphicsDevice, camera.camera!);
-    app.on('prerender', this.updatePixels);
     app.on('update', this.updateSunlight);
   }
   private prepareCameraTarget(): void {
@@ -251,56 +250,12 @@ export class WorldPresentation {
     this.survivalAtmosphere = style.atmosphere === 'survival';
     const survival = this.survivalAtmosphere;
     const restrained = style.atmosphere === 'restrained';
-    this.frame.rendering.renderTargetScale =
-      style.sceneGrid === 'half' ? 0.5 : style.sceneGrid === 'third' ? 1 / 3 : 1;
     this.frame.rendering.samples = style.coverage === 'msaa4' ? 4 : 1;
-    this.pixels.setTreatment(style.sceneGrid, style.subjectDetail);
-    this.frame.rendering.renderFormats =
-      style.subjectDetail !== 'shared'
-        ? [pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F]
-        : [pc.PIXELFORMAT_111110F, pc.PIXELFORMAT_RGBA16F, pc.PIXELFORMAT_RGBA32F];
     this.frame.bloom.intensity = survival ? 0.018 : restrained ? 0.045 : 0.025;
     this.frame.grading.saturation = survival ? 0.88 : restrained ? 1.02 : 1.05;
     this.frame.grading.contrast = survival ? 1.03 : 1;
     this.frame.grading.brightness = restrained ? 1.025 : 1;
     this.frame.update();
-    // Compare a shared scene grid through the existing compositor. Captions
-    // remain at display resolution and the camera/picking mapping stays intact.
-    const pass = this.camera.camera!.framePasses.find(
-      (pass): pass is pc.FramePassCameraFrame => pass instanceof pc.FramePassCameraFrame,
-    );
-    if (pass) {
-      const sourceFilter =
-        style.sceneGrid.startsWith('pixels') ||
-        style.sceneGrid.startsWith('anchored') ||
-        style.sceneGrid.startsWith('metres')
-          ? pc.FILTER_LINEAR
-          : pc.FILTER_NEAREST;
-      pass.sceneTexture.minFilter = sourceFilter;
-      pass.sceneTexture.magFilter = sourceFilter;
-    }
-    if (style.effects === 'buffer' && !this.effects) {
-      this.effects = new PixelEffects(this.app, this.camera, this.protectionLayer);
-      for (const source of this.effectSources) this.effects.add(source);
-      this.effects.setBuffered(true);
-    } else if (style.effects === 'direct' && this.effects) {
-      this.effects.destroy();
-      this.effects = undefined;
-    }
-  }
-  addEffect(source: pc.RenderComponent): void {
-    this.effectSources.add(source);
-    this.effects?.add(source);
-  }
-  removeEffect(source: pc.RenderComponent): void {
-    this.effects?.remove(source);
-    this.effectSources.delete(source);
-  }
-  effectsDiagnostics() {
-    return this.effects?.diagnostics() ?? { buffered: false, sources: this.effectSources.size };
-  }
-  pixelDiagnostics() {
-    return this.pixels.diagnostics();
   }
   setShadowQuality(quality: ShadowQuality): boolean {
     if (this.shadowQuality === quality) return false;
@@ -346,7 +301,7 @@ export class WorldPresentation {
         vec3 q = (vPositionW - ol_revealCenter) / ol_revealSize;
         float edge = 1.0 - smoothstep(0.65, 1.35, length(q));
         dAlpha *= edge * ol_revealStrength;
-        // Stable screen-space stipple only at the soft fringe, not a temporal pattern over pixel art.
+        // Stable screen-space stipple only at the soft fringe, not a temporal pattern over the scene.
         float stipple = fract(dot(mod(floor(gl_FragCoord.xy), 4.0), vec2(0.25, 0.625)));
         if (dAlpha < stipple * 0.06) discard;
       }
@@ -415,8 +370,8 @@ export class WorldPresentation {
     }
     for (let index = 0; index < binding.meshes.length; index++) {
       const mesh = binding.meshes[index]!;
-      // Animated models own their separate pixel renderer. Do not borrow and
-      // retain a skeleton/morph lifetime merely to anticipate a static card.
+      // Animated models keep their live skins. Do not borrow and retain a
+      // skeleton/morph lifetime merely to anticipate a static card.
       if (mesh.skinInstance || mesh.morphInstance) continue;
       const hoverMesh = binding.sourceMeshes[index]?.mesh ?? mesh.mesh;
       const key = `${mesh.mesh.vertexBuffer!.format.renderingHashString}|${hoverMesh.vertexBuffer!.format.renderingHashString}|${binding.layer.id}|${!!binding.protection}`;
@@ -747,6 +702,13 @@ export class WorldPresentation {
       );
     this.sun.light!.intensity = (this.survivalAtmosphere ? 1.08 : 1.2) * daylight;
     this.sun.enabled = daylight > 0.001;
+    this.fireShadow = 1 - pc.math.smoothstep(...FIRE_SHADOW_DAYLIGHT, daylight);
+    for (const light of this.lights) this.shadeFire(light.light!);
+  }
+  private shadeFire(light: pc.LightComponent): void {
+    light.shadowIntensity = this.fireShadow;
+    // Faded out entirely, the light stops casting, so its shadow faces are not drawn.
+    light.castShadows = this.fireShadow > 0;
   }
   lighting(view: GameView, remembered: GameView['entities'] = view.entities): void {
     this.receiveSunlight(view);
@@ -773,9 +735,9 @@ export class WorldPresentation {
           color: new pc.Color(1, 0.64, 0.33),
           intensity: 2.8,
           range: 8,
-          // Every illuminating source needs occlusion, or secondary fires light
-          // through floors/walls. Quality bounds the selected count and shared atlas.
-          castShadows: true,
+          // While the sun is weak every illuminating source needs occlusion, or fires
+          // light through floors/walls; shadeFire sets casting from the daylight.
+          // Quality bounds the selected count and shared atlas.
           normalOffsetBias: 0.025,
           layers: [
             pc.LAYERID_WORLD,
@@ -784,6 +746,7 @@ export class WorldPresentation {
             this.foregroundLayer.id,
           ],
         });
+        this.shadeFire(light.light!);
         this.app.root.addChild(light);
         this.lights.push(light);
       }
@@ -796,11 +759,7 @@ export class WorldPresentation {
     for (const source of this.variantPreparations.keys()) this.releasePreparation(source);
     this.interactionMeshes.clear();
     this.hover = undefined;
-    this.app.off('prerender', this.updatePixels);
     this.app.off('update', this.updateSunlight);
-    this.pixels.destroy();
-    this.effects?.destroy();
-    this.effectSources.clear();
     this.frame.destroy();
     this.app.scene.layers.remove(this.layer);
     this.app.scene.layers.remove(this.characterLayer);

@@ -40,6 +40,7 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
   'scripts/stress-native.ts': 'Local native workload child with its existing workload lifecycle.',
   'scripts/assets/migration.ts': 'Local Git object inspection; no fetch/clone/pull.',
   'scripts/assets/inventory.ts': 'Local Git index inspection; no remote operation.',
+  'scripts/prepare-asset-survey.ts': 'Local macOS sips image reduction of fetched files only.',
   'scripts/decision-benchmark/escalation-load.ts':
     'Offline fixture load and local Git revision; external fetch is replaced by a throwing fixture.',
 };
@@ -67,6 +68,12 @@ export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
   ],
   'scripts/assets/inventory.ts': ['ls-files'],
   'scripts/decision-benchmark/escalation-load.ts': ['rev-parse', 'diff'],
+};
+
+/** Reviewed local programs other than Git and Node, named exactly; none reaches the network.
+ * A local runner may not choose its program at run time or run it through a shell. */
+export const localToolCommands: Readonly<Record<string, readonly string[]>> = {
+  'scripts/prepare-asset-survey.ts': ['sips'],
 };
 
 /** The only local Node children execute these checked-in files, never strings. */

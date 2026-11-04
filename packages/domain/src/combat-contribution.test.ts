@@ -154,11 +154,12 @@ describe('native optional contribution independent of target controller', () => 
       let { world } = fixture();
       const target = entityGet(world.entities, NPC_ID)!,
         p = worldPosition(target);
+      // Only a subject aim gives the flight an intended target; an exact point on the same body
+      // leaves it collateral. docs/projects/action-execution-and-skill-expression-tech-design.md#31-one-exact-released-ray-and-retained-source-facts
       world = command(world, {
         type: 'aim',
         manualExecution: true,
-        ...(intended ? { targetId: NPC_ID } : {}),
-        aimPoint: { x: p.x, y: p.y + 1.2, z: p.z },
+        ...(intended ? { targetId: NPC_ID } : { aimPoint: { x: p.x, y: p.y + 1.2, z: p.z } }),
       });
       world = advanceWorld(world, 18).world;
       const base = world;

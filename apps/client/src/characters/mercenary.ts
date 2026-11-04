@@ -6,8 +6,7 @@ import { MercenaryFaceResources } from './mercenary-face';
 import { ArtMaterials, type ArtTreatment, baselineArt } from '../art-treatment';
 import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
-import { WorldPresentation } from '../world-presentation';
-import { PixelCharacter } from './pixel-character';
+import { WorldPresentation, type RevealBinding } from '../world-presentation';
 import { CapeCloth, clothPassesForSize, type MercenaryClothData } from './mercenary-cloth';
 import { MercenaryMaterials } from './mercenary-materials';
 const mercenaryUrl = assetUrl('apps/client/src/characters/mercenary-assets/mercenary.glb');
@@ -104,8 +103,9 @@ export class MercenaryActor {
   readonly ready: Promise<boolean>;
   private node?: pc.Entity;
   private cloth?: CapeCloth;
-  private pixels?: PixelCharacter;
-  private strength = 0;
+  private binding?: RevealBinding;
+  private material?: pc.StandardMaterial;
+  private readonly bounds = new pc.BoundingSphere();
   private selected = false;
   private meshes: pc.MeshInstance[] = [];
   private disposed = false;
@@ -186,15 +186,12 @@ export class MercenaryActor {
       ...this.cloth.patches.flatMap((p) => renders(p.node)),
     ];
     this.meshes = components.flatMap((r) => r.meshInstances);
-    this.pixels = new PixelCharacter(
-      this.app,
-      this.camera,
-      this.presentation.layer,
-      this.presentation.foregroundLayer,
-      this.presentation.protectionLayer,
-      components,
-      node,
-    );
+    const material = this.meshes[0]?.material;
+    if (!(material instanceof pc.StandardMaterial)) throw new Error('Mercenary mesh missing');
+    this.material = material;
+    // Read-through, selection and protection borrow the live pose through the
+    // same per-mesh copies as the other rigged actors.
+    this.binding = this.presentation.addReveal(node, material, false, true, this.meshes);
     this.baseScale = node.getLocalScale().clone();
     this.applyBodyHeight();
     this.previousFoot.copy(this.parent.getPosition());
@@ -216,7 +213,6 @@ export class MercenaryActor {
     // Cloth is published in world coordinates. Reanchor it at the contracted
     // rig immediately, without rebuilding the garment or restarting model loading.
     this.cloth?.reset();
-    this.pixels?.usePhysicalExtent();
   }
   setVisible(visible: boolean): void {
     if (visible && !this.wanted) this.resetCloth = true;
@@ -234,10 +230,18 @@ export class MercenaryActor {
       mesh.visible = this.visible;
       mesh.castShadow = this.visible;
     }
-    if (!this.visible) {
-      this.strength = 0;
-      this.pixels?.setVisible(false);
-    }
+    if (!this.visible && this.binding && this.material)
+      this.presentation.updateReveal(
+        this.binding,
+        this.material,
+        this.parent.getPosition(),
+        this.width,
+        this.height,
+        0,
+        0,
+        false,
+        false,
+      );
   }
   update(
     view: EntityView,
@@ -252,7 +256,7 @@ export class MercenaryActor {
       anim = node?.anim;
     if (!node || !anim || !this.cloth || !this.wanted) return;
     const foot = this.parent.getPosition();
-    const sleeping = this.pixels ? !this.pixels.nearViewport(foot, this.decorativeSleeping) : false;
+    const sleeping = !this.nearViewport(foot, this.decorativeSleeping);
     if (sleeping !== this.decorativeSleeping) {
       this.decorativeSleeping = sleeping;
       if (!sleeping) this.resetCloth = true;
@@ -313,54 +317,66 @@ export class MercenaryActor {
       this.settling = Math.max(0, this.settling - 3);
       this.cloth.publish();
       if (this.settling > 0) return;
-      this.pixels?.prepareNeutralPose();
       this.setVisible(this.wanted);
     }
-    this.motion?.update(dt, moving, paused, art.motion, art.actionFixture);
+    this.motion?.update(dt, moving, paused, art.actionFixture);
     this.faces.preparePose(node);
     this.cloth.update(dt, !paused, art.cloth);
-    this.pixels?.setTreatment(
-      art.sampling,
-      art.edges,
-      ['restored', 'tailored', 'embroidered'].includes(art.mercenaryArt),
-    );
     this.selected = selected;
-    const targetStrength = selected ? 0 : reveal;
-    this.strength += (targetStrength - this.strength) * (1 - Math.exp(-Math.min(dt, 0.1) * 12));
-    if (Math.abs(this.strength - targetStrength) < 0.001) this.strength = targetStrength;
-    this.pixels?.update(foot, this.visible, this.strength, selected);
+    if (this.binding && this.material)
+      this.presentation.updateReveal(
+        this.binding,
+        this.material,
+        foot,
+        this.width,
+        this.height,
+        reveal,
+        Math.min(dt, 0.1),
+        this.visible,
+        selected,
+      );
+  }
+  /** Decorative pose and cloth sleep outside a margin around the view. */
+  private nearViewport(foot: pc.Vec3, sleeping: boolean): boolean {
+    const camera = this.camera.camera;
+    if (!camera) return true;
+    this.bounds.center.set(foot.x, foot.y + this.height / 2, foot.z);
+    this.bounds.radius = this.height * (sleeping ? 0.75 : 1);
+    return camera.frustum.containsSphere(this.bounds) > 0;
   }
   setReadThrough(strength: number): void {
-    this.strength = strength;
-    this.pixels?.update(this.parent.getPosition(), this.visible, strength, this.selected);
+    if (!this.binding || !this.material) return;
+    this.presentation.updateReveal(
+      this.binding,
+      this.material,
+      this.parent.getPosition(),
+      this.width,
+      this.height,
+      strength,
+      0,
+      this.visible,
+      this.selected,
+      true,
+    );
   }
   get revealStrength(): number {
-    return this.visible ? this.strength : 0;
+    return this.visible ? (this.binding?.strength ?? 0) : 0;
   }
   get outlineMeshes(): readonly pc.MeshInstance[] {
-    return this.pixels?.outlineMeshes ?? [];
-  }
-  get screenAnchor(): { x: number; y: number } | undefined {
-    return this.pixels?.anchor;
+    return this.meshes;
   }
   screenPoint(point: pc.Vec3): pc.Vec3 {
-    return this.pixels?.screenPoint(point) ?? this.camera.camera!.worldToScreen(point);
+    return this.camera.camera!.worldToScreen(point);
   }
   hit(from: pc.Vec3, to: pc.Vec3): { fraction: number; point: pc.Vec3 } | null {
-    // Invert the displayed image before testing the original model. Geometry and
-    // its world-depth range remain unchanged by the apparent-height correction.
-    const ray = this.pixels?.sourceRay(from, to) ?? { from, to };
     let nearest: number | null = null;
     for (const mesh of this.meshes) {
-      const hit = intersectBox(ray.from, ray.to, {
-        min: mesh.aabb.getMin(),
-        max: mesh.aabb.getMax(),
-      });
+      const hit = intersectBox(from, to, { min: mesh.aabb.getMin(), max: mesh.aabb.getMax() });
       if (hit !== null && (nearest === null || hit < nearest)) nearest = hit;
     }
     return nearest === null
       ? null
-      : { fraction: nearest, point: new pc.Vec3().lerp(ray.from, ray.to, nearest) };
+      : { fraction: nearest, point: new pc.Vec3().lerp(from, to, nearest) };
   }
   diagnostics() {
     return {
@@ -368,8 +384,7 @@ export class MercenaryActor {
       visible: this.visible,
       selected: this.selected,
       meshes: this.meshes.length,
-      representation: 'original-model-coarse-image',
-      pixels: this.pixels?.diagnostics(),
+      representation: 'original-model',
       displayScale,
       height: this.height,
       width: this.width,
@@ -383,8 +398,9 @@ export class MercenaryActor {
     };
   }
   private release(): void {
-    this.pixels?.destroy();
-    this.pixels = undefined;
+    if (this.binding) this.presentation.removeReveal(this.binding);
+    this.binding = undefined;
+    this.material = undefined;
     this.cloth?.destroy();
     this.cloth = undefined;
     if (this.node) this.faces.detach(this.node);

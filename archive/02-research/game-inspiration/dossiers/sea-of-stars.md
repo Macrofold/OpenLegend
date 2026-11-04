@@ -512,7 +512,7 @@ All sources were retrieved on **October 18, 2026**. Links appear beside the clai
 
 ## OpenLegend implications and alternatives
 
-These are interpretations of the evidence above. The accepted change is the visual direction recorded in the [art owner](../../../../art-direction/decisions.md#current-visual-requirements--october-16-2026); the following mechanical, narrative and production possibilities remain hypotheses.
+These are interpretations of the evidence above. The accepted change is the visual direction recorded in the [art owner](../../../../art-direction/decisions.md#superseded-pixel-art-requirements--october-16-2026); the following mechanical, narrative and production possibilities remain hypotheses.
 
 | Pattern worth studying                             | Why it can work                                                                                                               | What OpenLegend would need to resolve                                                                                                                                                                                 |
 | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

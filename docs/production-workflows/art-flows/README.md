@@ -67,7 +67,7 @@ add a profile only when their production or evaluation needs actually differ.
 
 ### 1. Establish the brief and available inputs
 
-Read root/path guidance, the [current visual requirements](../../../art-direction/decisions.md#current-visual-requirements--october-16-2026)
+Read root/path guidance, the [current visual requirements](../../../art-direction/decisions.md#current-visual-requirements--october-31-2026)
 and [creative brief](../../../art-direction/final-board/creative-brief.md). For UI work, also
 read the UI essentials and relevant [UI brief](../../ui-design-brief.md) sections. Read only
 needed profile and production chapters, not the entire research archive.
@@ -85,8 +85,9 @@ completion. State routine assumptions and continue. Search for existing usable s
 narrow missing reference gaps; do not repeat broad research that the request already settles.
 
 Preserve OpenLegend's grounded proportions, material craft and emotional range where relevant.
-A painted concept or high-resolution UI border is not required to become pixelated merely
-because the world uses dimensional pixel rendering. Evaluate how it sits beside the world.
+World art is plain 3D models and textures in a grounded stylized style with no pixel treatment, following the
+[current visual requirements](../../../art-direction/decisions.md#current-visual-requirements--october-31-2026);
+do not pixelate concepts, assets or UI. Evaluate how each result sits beside the world.
 A world style preference does not silently choose new UI ornament or typography.
 
 ### 2. Prepare access and the working location

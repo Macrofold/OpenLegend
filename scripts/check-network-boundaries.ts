@@ -15,6 +15,7 @@ import {
   localGitCommands,
   localNodeEntries,
   localProcessOwners,
+  localToolCommands,
   networkDependencies,
   rawNetworkOwners,
   sdkOwners,
@@ -670,6 +671,9 @@ export function inspectNetworkSource(
             options = node.arguments[2];
           const values = args && argv(args);
           const git = program && stringAt(program)?.every((value) => value === 'git');
+          const tools = localToolCommands[path];
+          const tool =
+            !!tools && !!program && !!stringAt(program)?.every((value) => tools.includes(value));
           const nodePolicy = localNodeEntries[path];
           const nodeProgram =
             program &&
@@ -712,6 +716,10 @@ export function inspectNetworkSource(
                   (noExternalDiff && noTextConversion)
                 );
               });
+          } else if (tool && command !== 'fork') {
+            // A reviewed local tool named by an exact literal, with an argument array; the
+            // shell and execPath checks below still apply.
+            allowed = !!values?.length;
           } else if (nodePolicy?.kind === command && nodeProgram && values?.length === 1) {
             const arguments_ = values[0]!;
             allowed =

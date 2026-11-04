@@ -1,6 +1,6 @@
 # Reference image gallery
 
-**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+**Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
 34 locally saved images, retrieved October 14, 2026. Open an image at its original size when judging pixel structure. These are published reference media, not captures of OpenLegend or proof of our rendering performance.
 

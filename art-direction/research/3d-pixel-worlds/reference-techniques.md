@@ -1,6 +1,6 @@
 # What the reference creators actually built
 
-**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+**Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
 Reviewed October 14, 2026. **Confirmed** below means supported by a creator, official documentation or the supplied transcript. **Observed** means visible in the saved media. **Proposed** means an OpenLegend recommendation. A screenshot cannot establish mesh topology, texture resolution, shader code or performance.
 

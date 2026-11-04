@@ -1,22 +1,14 @@
 import * as pc from 'playcanvas';
 
-export type MercenaryTiming = 'smooth' | 'held8' | 'held12';
-
-const clipNames = [
-  'Idle',
-  'Walk',
-  'WalkHeld8',
-  'WalkHeld12',
-  'SharpFixtureSmooth',
-  'SharpFixtureHeld',
-] as const;
+// The motion asset also carries held-pose clips from the superseded pixel-art
+// direction; plain 3D uses only the smooth clips.
+const clipNames = ['Idle', 'Walk', 'SharpFixtureSmooth'] as const;
 
 /** One evaluated pose feeds color, shadows, equipment and continuous fabric.
  * Travel and heading remain owned by the scene; these clips never move it.
  * docs/projects/3d-pixel-art-tech-design.md#7-animation-attachments-and-time */
 export class MercenaryMotion {
   private clip: (typeof clipNames)[number] = 'Idle';
-  private timing: MercenaryTiming = 'smooth';
   private fixture = false;
   constructor(
     private readonly anim: pc.AnimComponent,
@@ -56,29 +48,12 @@ export class MercenaryMotion {
     this.fixture = false;
     this.anim.update(0);
   }
-  update(
-    dt: number,
-    moving: boolean,
-    paused: boolean,
-    timing: MercenaryTiming,
-    actionFixture: boolean,
-  ): void {
-    const next = actionFixture
-      ? timing === 'smooth'
-        ? 'SharpFixtureSmooth'
-        : 'SharpFixtureHeld'
-      : moving
-        ? timing === 'held8'
-          ? 'WalkHeld8'
-          : timing === 'held12'
-            ? 'WalkHeld12'
-            : 'Walk'
-        : 'Idle';
+  update(dt: number, moving: boolean, paused: boolean, actionFixture: boolean): void {
+    const next = actionFixture ? 'SharpFixtureSmooth' : moving ? 'Walk' : 'Idle';
     if (next !== this.clip) {
       this.anim.baseLayer?.transition(next, actionFixture || this.fixture ? 0.04 : 0.1);
       this.clip = next;
     }
-    this.timing = timing;
     this.fixture = actionFixture;
     // A background-tab gap must not fast-forward a cosmetic gesture. Native
     // travel still follows the current permitted position independently.
@@ -88,7 +63,6 @@ export class MercenaryMotion {
     return {
       clip: this.clip,
       time: this.anim.baseLayer?.activeStateCurrentTime,
-      timing: this.timing,
       actionFixture: this.fixture,
       automaticUpdate: this.anim.playing,
     };

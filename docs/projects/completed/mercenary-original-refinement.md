@@ -6,7 +6,7 @@
 
 ## Authorized outcome
 
-Mike prefers the original model from before the block experiments and requests cleanup plus a taller, world-appropriate displayed size. Preserve the original GLB/source and both block trials. This supersedes using either block figure as the default; it does not approve a general art pipeline or require literal cubic anatomy. [MER10](../../maintainers/art/mercenary.md#original-model-refinement) owns the revision; [world presentation](../../world-presentation.md#animated-character-pixels) owns current behavior.
+Mike prefers the original model from before the block experiments and requests cleanup plus a taller, world-appropriate displayed size. Preserve the original GLB/source and both block trials. This supersedes using either block figure as the default; it does not approve a general art pipeline or require literal cubic anatomy. [MER10](../../maintainers/art/mercenary.md#original-model-refinement) owns the revision; [world presentation](../../world-presentation.md#animated-characters) owns current behavior.
 
 Continue in `/Users/mzw/.codex/worktrees/415f/OpenLegend` on `codex/mercenary-original-refinement`, branched from the preserved `codex/mercenary-voxel-art` checkpoint `631835866`. Base: `https://github.com/Macrofold/OpenLegend.git`, verified default `origin/main@0c12398e32e7c9578e18de07bbe79d39b4827208`. Rebase applied all nine existing commits unchanged, without conflicts; `git range-diff` confirms equivalent patches. The main checkout is unaffected.
 

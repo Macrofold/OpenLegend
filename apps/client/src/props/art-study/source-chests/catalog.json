@@ -28,6 +28,16 @@
       "credit": "Kenney Survival Kit, CC0; OpenLegend fits and repaints the source."
     }
   ],
+  "attribution": [
+    {
+      "work": "Production Gothic reward chest",
+      "creator": "Samfa12/Codex, created with Meshy",
+      "url": "https://github.com/Samfa12-tech/The-Horde-RT-demo/blob/d7e6d4018042c8b068f300aa5dbc9e1495daa448/ASSET_LICENSES.md",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Lid closed, fitted and repainted by OpenLegend."
+    }
+  ],
   "assets": [
     {
       "id": "chest-carved-lid",

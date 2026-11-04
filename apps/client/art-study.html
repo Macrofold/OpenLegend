@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Open Legend · 3D pixel-art study</title>
+    <title>Open Legend · 3D art study</title>
   </head>
   <body>
     <main class="study">
@@ -16,7 +16,10 @@
             Earlier rejected studies remain available as controls.
           </p>
         </div>
-        <a href="./scene-study.html">View the starting world</a>
+        <nav class="study-links" aria-label="Other studies">
+          <a href="./scene-study.html">View the starting world</a>
+          <a href="./asset-survey.html">World asset survey</a>
+        </nav>
       </header>
       <section class="study-controls" aria-label="Study controls">
         <label
@@ -86,20 +89,8 @@
           </select></label
         >
       </section>
-      <section class="study-controls" aria-label="Pixel comparison">
-        <label
-          >Pixel treatment
-          <select id="pixel-treatment">
-            <option value="balanced" selected>Grouped detail · 30 / 60 samples per metre</option>
-            <option value="small">Previous fine detail · 40 / 120 samples per metre</option>
-            <option value="30">Coarser · about 60 rows per adult</option>
-            <option value="20">Coarse · about 40 rows per adult</option>
-            <option value="40">Previous shared density · 80 rows per adult</option>
-            <option value="64">Earlier fine-detail control</option>
-            <option value="native">Smooth 3D control</option>
-          </select>
-        </label>
-        <p id="pixel-evidence" aria-live="polite"></p>
+      <section class="study-controls" aria-label="Display and motion">
+        <p id="display-evidence" aria-live="polite"></p>
         <p id="motion-evidence"></p>
         <button id="motion-consent" type="button" aria-pressed="false" hidden>
           Allow motion for this study

@@ -1,6 +1,10 @@
 # Art-study archive
 
+**Direction note:** the world-art studies from October 14 to 18, 2026 were made for the dimensional pixel-art direction, which Mike replaced with plain 3D models and textures on October 31, 2026 ([current requirements](../decisions.md#current-visual-requirements--october-31-2026), [why](../changelog/2026/2026-10-26.md#october-31-2026--plain-3d-models-replace-the-pixel-art-direction)). They remain preserved evidence.
+
 For new studies, use the [Standard or Higgsfield art flow](../../docs/production-workflows/art-flows/README.md) and [record/handoff outline](../../docs/production-workflows/art-flows/study-record.md). The [UI surface-language brief](ui-surface-language/brief.md) defines the requested border, panel and connector exploration. The [October 25 Higgsfield UI material-language study](2026-10-25-ui-material-language-higgsfield/README.md) holds sixteen rounds (12 material directions, Gildmoss variations, five rounds of one-off corner HUDs, and procedural panel glass with its cracks, stone, grain, light, bezel and colour) and the resulting production package, all archived privately.
+
+**World asset survey (2026-10-31):** the [survey record](2026-10-31-world-asset-survey/README.md) compares 545 objects, plants, ground and water surfaces, animals, building parts and whole buildings across nine families in an interactive page. Mike's picks there led to the grounded stylized direction he approved on November 1, 2026. On November 3 he ranked two free animal sets for it, WildMesh 3D first and _Fantasy Creatures_ second, and the game now uses their doe, stag, bear and wolf. It is not yet archived in S3.
 
 **Interface overhaul, direct method (2026-10-18 to 2026-10-26):** the [study record](2026-10-18-interface-direct-method/README.md) covers every round, the owner-selected Gildmoss design and its production package, all stored as private S3 collections with exact indexes.
 

@@ -2,30 +2,14 @@ import { studyPageUrl } from './asset-files';
 import * as pc from 'playcanvas';
 
 /** Finite local comparisons for the bundled wilderness art study. No saved
- * world or provider settings. docs/projects/3d-pixel-art-first-scene-plan.md */
+ * world or provider settings. The world always renders as plain 3D:
+ * art-direction/decisions.md#current-visual-requirements--october-31-2026 */
 export interface ArtTreatment {
   materials: 'original' | 'regions';
   lighting: 'smooth' | 'hard' | 'soft';
-  sampling: '40' | '60' | '80' | '96' | 'native' | 'screen';
-  sceneGrid:
-    | 'full'
-    | 'half'
-    | 'third'
-    | 'pixels2'
-    | 'pixels3'
-    | 'anchored2'
-    | 'anchored3'
-    | 'metres30'
-    | 'metres40'
-    | 'metres64';
-  surfaceArt: 'plain' | 'painted' | 'rigid';
-  surfaceEdges: 'sharp' | 'filtered';
   coverage: 'none' | 'msaa4';
-  subjectDetail: 'shared' | 'preserve' | 'small' | 'balanced';
   foliageLight: 'original' | 'diffuse';
   shadowSampling: 'screen' | 'fixed';
-  filtering: 'source' | 'nearest' | 'mip';
-  characterFiltering: 'source' | 'nearest' | 'mip';
   mercenaryArt:
     | 'original'
     | 'faithful'
@@ -35,70 +19,52 @@ export interface ArtTreatment {
     | 'tailored'
     | 'embroidered';
   hareArt: 'sprite' | 'field' | 'russet' | 'winter';
-  edges: 'none' | 'silhouette' | 'depth';
-  motion: 'smooth' | 'held8' | 'held12';
   cloth: 'flowing' | 'settled';
   assetSources: 'retained' | 'natural';
   environment: 'natural' | 'baseline' | 'grouped' | 'kenney' | 'quaternius' | 'study' | 'canopy';
   groundPalette: 'meadow' | 'woodland' | 'understory';
   groundLighting: 'banded' | 'diffuse';
-  vegetation: 'still' | 'smooth' | 'held';
+  wind: 'still' | 'light' | 'breezy' | 'gusty';
   atmosphere: 'baseline' | 'restrained' | 'survival';
-  effects: 'direct' | 'buffer';
   prop: 'authored' | 'generated' | 'carved' | 'banded' | 'cache' | 'grounded';
   actionFixture: boolean;
 }
 export const baselineArt: Readonly<ArtTreatment> = Object.freeze({
   materials: 'original',
   lighting: 'smooth',
-  sampling: '96',
-  sceneGrid: 'full',
-  surfaceArt: 'plain',
-  surfaceEdges: 'sharp',
   coverage: 'none',
-  subjectDetail: 'shared',
   foliageLight: 'original',
   shadowSampling: 'screen',
-  filtering: 'source',
-  characterFiltering: 'source',
   mercenaryArt: 'original',
   hareArt: 'sprite',
-  edges: 'none',
-  motion: 'smooth',
   cloth: 'flowing',
   assetSources: 'retained',
   environment: 'baseline',
   groundPalette: 'meadow',
   groundLighting: 'banded',
-  vegetation: 'still',
+  wind: 'still',
   atmosphere: 'baseline',
-  effects: 'direct',
   prop: 'authored',
   actionFixture: false,
 });
+/** The game's default presentation choices within the plain-3D renderer.
+ * Canopy trees and the carved crate follow Mike's October 31 study review. */
 export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   ...baselineArt,
   materials: 'regions',
   lighting: 'soft',
   assetSources: 'natural',
-  environment: 'natural',
+  environment: 'canopy',
   mercenaryArt: 'restored',
-  sampling: 'screen',
-  sceneGrid: 'metres30',
   hareArt: 'field',
   groundPalette: 'understory',
   groundLighting: 'diffuse',
-  vegetation: 'still',
+  wind: 'light',
   atmosphere: 'survival',
-  subjectDetail: 'balanced',
   foliageLight: 'diffuse',
-  motion: 'held12',
-  prop: 'grounded',
-  surfaceArt: 'rigid',
+  prop: 'carved',
   cloth: 'settled',
-  surfaceEdges: 'filtered',
   coverage: 'msaa4',
-  characterFiltering: 'mip',
   shadowSampling: 'fixed',
 });
 
@@ -111,9 +77,6 @@ export class ArtMaterials {
     this.update(baselineArt);
   }
   update(style: Readonly<ArtTreatment>): void {
-    this.device.scope
-      .resolve('ol_groundContrast')
-      .setValue(style.groundPalette === 'understory' ? 0.3 : 1);
     this.device.scope.resolve('ol_foliageLight').setValue(style.foliageLight === 'diffuse' ? 1 : 0);
     this.device.scope
       .resolve('ol_groundLighting')
@@ -122,12 +85,6 @@ export class ArtMaterials {
     this.settings[1] = style.lighting === 'smooth' ? 0 : style.lighting === 'hard' ? 1 : 2;
     this.settings[2] = 0.055;
     this.device.scope.resolve('ol_artStyle').setValue(this.settings);
-    this.device.scope
-      .resolve('ol_surfaceEnabled')
-      .setValue(style.surfaceArt === 'painted' ? 1 : style.surfaceArt === 'rigid' ? 2 : 0);
-    this.device.scope
-      .resolve('ol_surfaceEdges')
-      .setValue(style.surfaceEdges === 'filtered' ? 1 : 0);
     this.device.scope
       .resolve('ol_fixedShadowPattern')
       .setValue(style.shadowSampling === 'fixed' ? 1 : 0);
@@ -236,14 +193,23 @@ export class ArtMaterials {
   }
 }
 
-/** Optional developer panel, absent unless explicitly requested in a dev URL.
- * Its native labeled controls change presentation only; teardown owns listeners. */
+export interface ArtControls {
+  /** Show the current treatment after a change from outside the panel. */
+  refresh(): void;
+  remove(): void;
+}
+
+/** Optional developer panel, absent from production builds. The game shows it
+ * only for an explicit `?artLab` dev URL; the starting-world study requests it
+ * itself, so links between study pages keep it. Its native labeled controls
+ * change presentation only; teardown owns listeners. */
 export function mountArtControls(
   canvas: HTMLCanvasElement,
   apply: (style: ArtTreatment) => void,
   current: () => Readonly<ArtTreatment>,
-): () => void {
-  if (!import.meta.env.DEV || !new URLSearchParams(location.search).has('artLab')) return () => {};
+  requested = new URLSearchParams(location.search).has('artLab'),
+): ArtControls | undefined {
+  if (!import.meta.env.DEV || !requested) return undefined;
   const panel = document.createElement('details');
   panel.style.cssText =
     'position:fixed;right:12px;top:74px;z-index:30;background:#18251f;color:#eee4cb;padding:10px;max-height:75vh;overflow:auto;font:13px sans-serif;';
@@ -253,27 +219,9 @@ export function mountArtControls(
   const fields: { [K in keyof ArtTreatment]?: readonly ArtTreatment[K][] } = {
     materials: ['original', 'regions'],
     lighting: ['smooth', 'hard', 'soft'],
-    sampling: ['40', '60', '80', '96', 'native', 'screen'],
-    sceneGrid: [
-      'full',
-      'half',
-      'third',
-      'pixels2',
-      'pixels3',
-      'anchored2',
-      'anchored3',
-      'metres30',
-      'metres40',
-      'metres64',
-    ],
-    surfaceArt: ['plain', 'painted', 'rigid'],
-    surfaceEdges: ['sharp', 'filtered'],
     coverage: ['none', 'msaa4'],
-    subjectDetail: ['balanced', 'small', 'shared', 'preserve'],
     foliageLight: ['diffuse', 'original'],
     shadowSampling: ['screen', 'fixed'],
-    filtering: ['source', 'nearest', 'mip'],
-    characterFiltering: ['source', 'nearest', 'mip'],
     mercenaryArt: [
       'restored',
       'tailored',
@@ -284,42 +232,29 @@ export function mountArtControls(
       'graphic',
     ],
     hareArt: ['sprite', 'field', 'russet', 'winter'],
-    edges: ['none', 'silhouette', 'depth'],
-    motion: ['smooth', 'held8', 'held12'],
     cloth: ['flowing', 'settled'],
     assetSources: ['natural', 'retained'],
     environment: ['natural', 'canopy', 'study', 'baseline', 'grouped', 'kenney', 'quaternius'],
     groundPalette: ['understory', 'meadow', 'woodland'],
-    vegetation: ['still', 'smooth', 'held'],
+    wind: ['light', 'still', 'breezy', 'gusty'],
     atmosphere: ['survival', 'restrained', 'baseline'],
-    effects: ['direct', 'buffer'],
     prop: ['grounded', 'carved', 'banded', 'cache', 'authored', 'generated'],
   };
   const controls = new Map<keyof ArtTreatment, HTMLSelectElement>();
   const labels: Record<string, string> = {
     materials: 'Surface art',
     lighting: 'Light transitions',
-    sampling: 'Character detail',
-    sceneGrid: 'Scene sampling',
-    surfaceArt: 'Environment surface art',
-    surfaceEdges: 'Painted pixel edges',
     coverage: 'Silhouette coverage',
-    subjectDetail: 'People and small-object detail',
     foliageLight: 'Leaf light response',
     shadowSampling: 'Soft-shadow sample pattern',
-    filtering: 'Sprite texture filtering',
-    characterFiltering: 'Character texture filtering',
     mercenaryArt: 'Mercenary artwork',
     hareArt: 'Hare artwork',
-    edges: 'Character edges',
-    motion: 'Walking poses',
     cloth: 'Cape movement',
     assetSources: 'Asset sources',
     environment: 'Environment shapes',
     groundPalette: 'Ground palette',
-    vegetation: 'Grass movement',
+    wind: 'Wind',
     atmosphere: 'Color and bloom',
-    effects: 'Effects drawing',
     prop: 'Crate appearance',
   };
   const refresh = () => {
@@ -334,22 +269,7 @@ export function mountArtControls(
     for (const value of values) {
       const option = document.createElement('option');
       option.value = String(value);
-      option.textContent =
-        value === 'native'
-          ? '378 rows (detail control)'
-          : value === 'screen'
-            ? 'Full displayed detail (before scene sampling)'
-            : value === 'pixels2'
-              ? 'Single final grid: 2 display pixels'
-              : value === 'pixels3'
-                ? 'Single final grid: 3 display pixels'
-                : value === 'anchored2'
-                  ? 'World-anchored grid: 5 cm (orthographic)'
-                  : value === 'anchored3'
-                    ? 'World-anchored grid: 7.5 cm (orthographic)'
-                    : value === 'metres30' || value === 'metres40'
-                      ? `Fixed world density: ${value.slice(6)} samples/metre`
-                      : String(value);
+      option.textContent = String(value);
       select.append(option);
     }
     select.onchange = () => apply({ ...current(), [key]: select.value });
@@ -381,11 +301,11 @@ export function mountArtControls(
   if (studyUrl) {
     const study = document.createElement('a');
     study.href = studyUrl;
-    study.textContent = 'Open the Blender pixel-art study';
+    study.textContent = 'Open the individual asset study';
     study.style.cssText = 'display:block;margin-top:12px;color:inherit';
     panel.append(study);
   }
   document.body.append(panel);
   refresh();
-  return () => panel.remove();
+  return { refresh, remove: () => panel.remove() };
 }

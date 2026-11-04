@@ -9,7 +9,6 @@ import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
 import { studyAssets } from './study-assets';
 import { installLocomotion } from './model-animation';
-import { markPixelDetail, needsFinePixels } from './scene-pixels';
 const fieldUrl = assetUrl('apps/client/src/props/library-animals/hare-field.glb');
 const russetUrl = assetUrl('apps/client/src/props/library-animals/hare-russet.glb');
 const winterUrl = assetUrl('apps/client/src/props/library-animals/hare-winter.glb');
@@ -58,27 +57,24 @@ export class LibraryActors {
       source,
       this.presentation,
       this.camera,
-      (material) =>
-        this.prepare(material, needsFinePixels(source.width, source.height, source.width)),
+      (material) => this.prepare(material),
       () => this.actors.delete(actor),
     );
     this.actors.add(actor);
     return actor;
   }
-  private prepare(source: pc.StandardMaterial, fine: boolean): pc.StandardMaterial {
+  private prepare(source: pc.StandardMaterial): pc.StandardMaterial {
     const existing = this.prepared.get(source);
     if (existing) return existing;
     const material = new ShadowMaterial(this.sun).copy(source);
     setVisibilityStencil(material, personStencil);
     if (material.diffuseMap) {
-      // Fixed UV paint remains fixed when the camera moves. Mips suppress
-      // distant texture aliasing without repainting the authored artwork.
-      material.diffuseMap.magFilter = pc.FILTER_NEAREST;
+      // Plain 3D: smooth enlargement, with mips suppressing distant aliasing.
+      material.diffuseMap.magFilter = pc.FILTER_LINEAR;
       material.diffuseMap.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
       material.diffuseMap.anisotropy = 1;
     }
     this.art.prepare(material);
-    if (fine) markPixelDetail(material, this.app.graphicsDevice);
     material.update();
     this.prepared.set(source, material);
     return material;
@@ -211,7 +207,7 @@ export class LibraryActor {
     paused: boolean,
     reveal: number,
     selected: boolean,
-    art: Readonly<ArtTreatment>,
+    _art: Readonly<ArtTreatment>,
   ): void {
     const node = this.node;
     if (!this.visible || !node?.anim || !this.binding || !this.material) return;
@@ -231,13 +227,11 @@ export class LibraryActor {
       this.elapsed = this.sampled = 0;
     }
     if (!paused) this.elapsed += step;
-    const frequency = art.motion === 'held8' ? 8 : art.motion === 'held12' ? 12 : 0;
-    const sampled = frequency ? Math.floor(this.elapsed * frequency) / frequency : this.elapsed;
-    // Holding a pose (or pausing) needs no repeat skeleton evaluation. Rendering
-    // still follows current placement and reveal, independently of pose cadence.
-    const advance = Math.max(0, sampled - this.sampled);
+    // Pausing needs no repeat skeleton evaluation. Rendering still follows
+    // current placement and reveal.
+    const advance = Math.max(0, this.elapsed - this.sampled);
     if (changed || advance > 0) node.anim.update(advance);
-    this.sampled = sampled;
+    this.sampled = this.elapsed;
     this.presentation.updateReveal(
       this.binding,
       this.material,
@@ -270,9 +264,6 @@ export class LibraryActor {
   }
   get outlineMeshes(): readonly pc.MeshInstance[] {
     return this.meshes;
-  }
-  get screenAnchor(): undefined {
-    return undefined;
   }
   screenPoint(point: pc.Vec3): pc.Vec3 {
     return this.camera.camera!.worldToScreen(point);

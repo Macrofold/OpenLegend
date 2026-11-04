@@ -2,7 +2,7 @@
 
 Sea of Stars is a reference for expressive pixels, environmental invention, rich natural color, and light that gives a scene atmosphere and depth. OpenLegend carries those qualities into believable bodies, practical construction, coherent materials, and a wilderness capable of warmth, beauty, danger, and hardship. Its character proportions and cheerful cartoon exaggeration are outside this reference's scope.
 
-This study develops the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) and [creative brief](../../final-board/creative-brief.md). It establishes visual principles and review questions; renderer selection and gameplay implementation remain governed by their existing decisions. The [full Sea of Stars dossier](../../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) covers mechanics, narrative, production, business, and reception.
+This study develops the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) and [creative brief](../../final-board/creative-brief.md). It establishes visual principles and review questions; renderer selection and gameplay implementation remain governed by their existing decisions. The [full Sea of Stars dossier](../../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) covers mechanics, narrative, production, business, and reception.
 
 ## Evidence and reading boundaries
 

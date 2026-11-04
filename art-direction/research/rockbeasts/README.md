@@ -2,7 +2,7 @@
 
 Mike likes ROCKBEASTS' colors, lighting, animation and menus that belong to its world. Although it is not pixel art, it is a useful reference for how those qualities work together. OpenLegend can carry that coherence into its **beautiful dimensional pixel art and believable real-world proportions**. The endorsed qualities do not adopt ROCKBEASTS' cartoon anatomy, music-industry setting or rendering style.
 
-This study develops the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) and [creative brief](../../final-board/creative-brief.md). The companion [narrative case study](../../../docs/narrative/case-studies/rockbeasts.md) considers its characters and storytelling.
+This study develops the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) and [creative brief](../../final-board/creative-brief.md). The companion [narrative case study](../../../docs/narrative/case-studies/rockbeasts.md) considers its characters and storytelling.
 
 ## Evidence and reading boundaries
 

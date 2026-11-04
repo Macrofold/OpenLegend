@@ -66,35 +66,22 @@ function distribution(values: number[]) {
   };
 }
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+// The game sets this from its motion setting; the study follows the device preference.
+const applyMotionPreference = () => {
+  document.documentElement.dataset.reduceMotion = String(reducedMotion.matches);
+};
+applyMotionPreference();
 const stop = () => recorded.stops.find((item) => item.id === select('place').value)!;
 for (const item of recorded.stops) select('place').add(new Option(item.label, item.id));
 document.querySelector('#world-source')!.textContent = recorded.source;
 function treatment(): ArtTreatment {
-  const route = select('route').value;
   return {
-    ...candidateArt,
+    // These controls set only their own fields; keep the art panel's other choices.
+    // `scene` is unassigned until the first mount.
+    ...(scene?.artTreatment() ?? candidateArt),
     mercenaryArt: select('mercenary').value as ArtTreatment['mercenaryArt'],
-    sampling:
-      route === 'shared' || route === 'small' || route === 'balanced'
-        ? 'screen'
-        : route === 'family'
-          ? '60'
-          : '96',
-    sceneGrid:
-      route === 'control' || route === 'surface'
-        ? 'full'
-        : (select('world-density').value as ArtTreatment['sceneGrid']),
-    subjectDetail:
-      route === 'family'
-        ? 'preserve'
-        : route === 'small'
-          ? 'small'
-          : route === 'balanced'
-            ? 'balanced'
-            : 'shared',
     atmosphere: select('world-atmosphere').value as ArtTreatment['atmosphere'],
     groundLighting: select('world-ground-light').value as ArtTreatment['groundLighting'],
-    surfaceArt: route === 'control' ? 'plain' : 'rigid',
     assetSources: select('world-assets').value as ArtTreatment['assetSources'],
     groundPalette: ['natural', 'open'].includes(select('world-foliage').value)
       ? 'understory'
@@ -106,11 +93,9 @@ function treatment(): ArtTreatment {
           ? 'canopy'
           : 'study',
     foliageLight: select('world-foliage').value === 'original' ? 'original' : 'diffuse',
-    prop: 'grounded',
-    vegetation: 'still',
+    wind: select('world-wind').value as ArtTreatment['wind'],
     cloth: 'settled',
     actionFixture: action,
-    motion: select('world-motion').value as ArtTreatment['motion'],
   };
 }
 function setCamera(): void {
@@ -147,7 +132,9 @@ function publish(): void {
     map: recorded.map as unknown as GameView['map'],
     clock: {
       ...original.clock,
-      paused: !motion,
+      // Wind and grass move only while the world clock runs, as in the game; a reduced-motion
+      // preference keeps the study still unless staged walking is explicitly turned on.
+      paused: !motion && (select('world-wind').value === 'still' || reducedMotion.matches),
       // Keep low sun visibly above twilight so its long directional shadows
       // remain a useful comparison against the separate firelit dusk study.
       hour: light === 'day' ? 10 : light === 'low' ? 16 : 19.3,
@@ -218,6 +205,7 @@ function mount(): void {
       rememberCamera: false,
       notices: false,
       art: treatment(),
+      artControls: true,
       studyRelease: installedAssetRelease,
     },
   );
@@ -249,7 +237,6 @@ function update(now: number): void {
         {
           place: stop().label,
           light: select('world-light').value,
-          route: select('route').value,
           atmosphere: select('world-atmosphere').value,
           foliage: select('world-foliage').value,
           assetSources: select('world-assets').value,
@@ -285,7 +272,9 @@ function update(now: number): void {
   }
   if (motion && !document.hidden) {
     phase += Math.min(elapsed, 100) / 1000;
-    if (now - lastPublication > 100) {
+    // Match the game's 50 ms simulation publication (docs/architecture.md), so staged
+    // walking shows the same display smoothing between positions as play.
+    if (now - lastPublication >= 50) {
       publish();
       lastPublication = now;
     }
@@ -301,12 +290,13 @@ select('place').onchange = () => {
   status.textContent = stop().label;
 };
 select('world-light').onchange = publish;
+select('world-wind').onchange = () => {
+  scene.setArtTreatment(treatment());
+  publish();
+};
 for (const id of [
-  'route',
   'mercenary',
-  'world-density',
   'world-ground-light',
-  'world-motion',
   'world-atmosphere',
   'world-foliage',
   'world-assets',
@@ -354,13 +344,11 @@ const captureName = () =>
     'openlegend',
     stop().id,
     select('world-light').value,
-    select('route').value,
     select('world-atmosphere').value,
     select('world-foliage').value,
     select('world-assets').value,
     select('world-ground-light').value,
     fire ? 'fire' : 'no-fire',
-    select('world-density').value,
   ].join('-');
 button('capture').onclick = () => capture.image(captureName());
 button('record').onclick = () => {
@@ -412,14 +400,15 @@ window.addEventListener('resize', () =>
   cancelMeasurement('Viewport changed; the interrupted measurement was discarded.'),
 );
 const pauseForPreference = () => {
+  applyMotionPreference();
   if (reducedMotion.matches) {
     cancelMeasurement('Motion preference changed; the interrupted measurement was discarded.');
     motion = false;
     orbit = false;
     button('orbit').setAttribute('aria-pressed', 'false');
     button('motion').setAttribute('aria-pressed', 'false');
-    publish();
   }
+  publish();
 };
 reducedMotion.addEventListener('change', pauseForPreference);
 function dispose(): void {

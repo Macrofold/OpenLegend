@@ -27,7 +27,7 @@ Keep the current trait and its history distinct. A trait that changes or no long
 
 ## Make the appeal serve the game
 
-Use [Open Legend's art direction](../../art-direction/final-board/creative-brief.md): grounded form, deliberate pixel treatment, meaningful materials and beautiful light. Foil, iridescence, relief, etched metal, worn leather or translucent layers are candidate treatments; the reference does not select one universal science-fiction look.
+Use [Open Legend's art direction](../../art-direction/final-board/creative-brief.md): grounded form, meaningful materials and beautiful light (plain 3D since October 31, 2026). Foil, iridescence, relief, etched metal, worn leather or translucent layers are candidate treatments; the reference does not select one universal science-fiction look.
 
 Make the front readable without rotation, and make flipping available through ordinary keyboard and pointer controls. A reduced-motion or simpler rendering should preserve the same information. Rich reveals can be brief, skippable and revisitable; routine inspection should stay fast. A painful change deserves appropriate tone rather than automatic celebratory effects.
 

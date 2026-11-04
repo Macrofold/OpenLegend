@@ -1,6 +1,6 @@
 # Adapting the research to OpenLegend
 
-**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+**Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
 **Recommendation to test:** preserve the free camera and begin with complete animated geometry, controlled material colors and a deliberately designed realtime pixel renderer. The t3ssel8r follow-up broadens the earlier painted-texture proposal: lighting and sampling can generate the final pixel clusters. Painted materials and EthrA-inspired articulated sprites remain comparison alternatives. No new engine or universal voxel representation is selected.
 

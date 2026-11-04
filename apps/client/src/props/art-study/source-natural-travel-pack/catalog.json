@@ -22,6 +22,16 @@
       "creator": "Pablo Lizardo and Jarrhead"
     }
   ],
+  "attribution": [
+    {
+      "work": "Sintel backpack textured",
+      "creator": "Pablo Lizardo (model) and Jarrhead (textures)",
+      "url": "https://blendswap.com/blend/2138",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "changes": "Materials, size and small details adapted by OpenLegend."
+    }
+  ],
   "assets": [
     {
       "id": "natural-travel-pack-clear",

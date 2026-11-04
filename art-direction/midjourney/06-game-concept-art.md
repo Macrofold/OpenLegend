@@ -4,7 +4,7 @@
 
 Concept art does different jobs at different scales. Our [creative brief](../final-board/creative-brief.md) makes the same point: "Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result." Pick the shot type for the question you're trying to answer.
 
-**Art direction updated 2026-10-16:** beautiful dimensional pixel art requires believable real-world proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are explicitly rejected. Apply the [current requirements](../decisions.md#current-visual-requirements--october-16-2026) to every concept below, including painted concepts. The September software/parameter notes are historical, not newly verified product guidance.
+**Art direction updated 2026-10-31:** the in-game target is plain 3D models and textures with believable real-world proportions, replacing dimensional pixel art ([why](../changelog/2026/2026-10-26.md#october-31-2026--plain-3d-models-replace-the-pixel-art-direction)); visibly low-poly, blocky, cutesy and big-head/small-body designs are explicitly rejected. Apply the [current requirements](../decisions.md#current-visual-requirements--october-31-2026) to every concept below, including painted concepts. The September software/parameter notes are historical, not newly verified product guidance.
 
 | Shot type | Answers | Aspect ratio | Starting parameters (house) |
 | --- | --- | --- | --- |
@@ -90,11 +90,11 @@ Expression sheet of the same man as in the reference, head-and-shoulders, six ex
 
 ## Pixel art (for the record)
 
-- **These Midjourney templates produce concept art, not finished runtime pixels.** The selected dimensional pixel-art direction combines convincing source forms, deliberate material/face work and reviewed rendering. Merely reducing a simple low-poly model is insufficient; see the [creative brief](../final-board/creative-brief.md).
+- **These Midjourney templates produce concept art, not runtime art.** Pixel art is no longer the in-game target (superseded October 31, 2026); these notes remain for the record. See the [creative brief](../final-board/creative-brief.md).
 - Midjourney's "pixel art" tends toward "vivid contrasts and neon highlights," cyberpunk scenes and a "nostalgic and melancholy" mood rather than genuine low-resolution sprites (community, Midlibrary). The output is pseudo-pixel: the pixel grid isn't exact.
 - Older guides recommend `--v 4` and naming consoles or games ("SNES", "Metal Slug") (community). That's out of date, and naming games breaks our originality rule ([02](02-writing-prompts.md#artist-names-game-titles-and-franchises-house)).
 
-## Concepts for the 3D pixel-art pipeline
+## Concepts for the 3D model pipeline
 
 For an image-to-3D attempt, prepare a clean, consistent view of the selected design with believable anatomy, garment construction and material regions. Keep painted concept exploration separate from reconstruction input preparation; the [generation guidance](../research/3d-pixel-worlds/generative-pipeline.md) and [current pipeline specification](../../docs/projects/3d-pixel-art-asset-pipeline.md) distinguish proposed workflows from delivered tools.
 
@@ -106,4 +106,4 @@ Preserve natural adult head/body relationships without imposing one ratio on eve
 Clean detailed 3D character reference of [subject], believable adult anatomy and natural head-to-body proportions, [distinctive face and build], [garments with convincing construction and folds], [materials with clear restrained color regions], standing in an A-pose, front view, even diffuse lighting, plain light grey background, realistic scale --ar 2:3 --raw --s 50 --v 8.2 --no chibi, cartoon, blocky, faceted, cute, dithering, pixel
 ```
 
-This is a reconstruction-input template, not the required appearance of the final pixel art. Review the generated anatomy and equipment before conversion; a prompt's exclusions do not establish that its image passes. Painted concept art remains the default for design exploration.
+This is a reconstruction-input template, not the required appearance of the final in-game model. Review the generated anatomy and equipment before conversion; a prompt's exclusions do not establish that its image passes. Painted concept art remains the default for design exploration.

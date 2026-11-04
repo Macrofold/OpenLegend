@@ -1,6 +1,6 @@
 # Round three — Hades, pixels and painted worlds
 
-**Historical exploration:** retain the ratings and aspect-specific reactions below. New art choices follow the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026): believable proportions and beautiful dimensional pixel art, explicitly excluding visibly low-poly, blocky, cutesy and big-head/small-body styles.
+**Historical exploration:** retain the ratings and aspect-specific reactions below. New art choices follow the [current visual requirements](../decisions.md#superseded-pixel-art-requirements--october-16-2026): believable proportions and beautiful dimensional pixel art, explicitly excluding visibly low-poly, blocky, cutesy and big-head/small-body styles.
 
 [Open the board](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/round-03/index.html). Start with Hades and Hades II, then Transistor, Bastion, Ori, REPLACED and Tails Noir. All includes five returning pixel-art games with the earlier response displayed. These are qualitative comparisons, not a current popularity ranking.
 
