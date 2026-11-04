@@ -19,18 +19,18 @@ Commercial-use permission, copyright ownership, exclusivity and indemnity are di
 
 This is the proposed rights brief to use when comparing a license or requesting a quote. It does not assert that any candidate currently grants all of these rights.
 
-| Intended use | What must be established | Why it matters here |
-| --- | --- | --- |
-| Commercial browser game | Incorporation, hosting, delivery/cache copies and commercial play on the official service | A social-video subscription is not automatically a game license. |
-| Future ports and stores | Platforms, territories, term, distribution limits and any additional fees | Do not pay for console rights now if inappropriate, but understand the extension path. |
-| Demo, trailer, ads and crowdfunding | Promotional synchronization, paid advertising and publication after subscription expiry | A game license can leave marketing outside its scope. |
-| Player streaming and videos | Monetized gameplay, clips, reviews, VODs and a practical claims policy | Players should be able to show the game without routinely losing audio or revenue. |
-| Soundtrack album | Standalone audio distribution, sales, streaming, artwork/credits and revenue allocation | Permission to embed a song does not imply permission to sell the song itself. |
-| Editing and adaptive playback | Cuts, loops, fades, stems, arrangement changes and derived versions | Necessary edits should be anticipated in the license, not improvised after acquisition. |
-| Collaborators | Contractor access, seats, project transfer, secure source handoff and deletion obligations | Paying one seat may not authorize sharing the entire library with a team. |
-| Creator worlds and self-hosts | Exact sublicensing and distribution rights for official world packs and third-party operators | Open Legend has ambitions beyond one closed executable. |
-| Raw source or asset export | Whether source audio may leave our licensed production team at all | Publicly distributing a sample library is different from shipping a mixed effect in a game. |
-| Future operations | Successors, publisher/distributor grants, continued sales, patches, termination and replacement | A soundtrack should not become unusable because the project changes business arrangements. |
+| Intended use                        | What must be established                                                                        | Why it matters here                                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Commercial browser game             | Incorporation, hosting, delivery/cache copies and commercial play on the official service       | A social-video subscription is not automatically a game license.                            |
+| Future ports and stores             | Platforms, territories, term, distribution limits and any additional fees                       | Do not pay for console rights now if inappropriate, but understand the extension path.      |
+| Demo, trailer, ads and crowdfunding | Promotional synchronization, paid advertising and publication after subscription expiry         | A game license can leave marketing outside its scope.                                       |
+| Player streaming and videos         | Monetized gameplay, clips, reviews, VODs and a practical claims policy                          | Players should be able to show the game without routinely losing audio or revenue.          |
+| Soundtrack album                    | Standalone audio distribution, sales, streaming, artwork/credits and revenue allocation         | Permission to embed a song does not imply permission to sell the song itself.               |
+| Editing and adaptive playback       | Cuts, loops, fades, stems, arrangement changes and derived versions                             | Necessary edits should be anticipated in the license, not improvised after acquisition.     |
+| Collaborators                       | Contractor access, seats, project transfer, secure source handoff and deletion obligations      | Paying one seat may not authorize sharing the entire library with a team.                   |
+| Creator worlds and self-hosts       | Exact sublicensing and distribution rights for official world packs and third-party operators   | Open Legend has ambitions beyond one closed executable.                                     |
+| Raw source or asset export          | Whether source audio may leave our licensed production team at all                              | Publicly distributing a sample library is different from shipping a mixed effect in a game. |
+| Future operations                   | Successors, publisher/distributor grants, continued sales, patches, termination and replacement | A soundtrack should not become unusable because the project changes business arrangements.  |
 
 Do not demand the same expensive rights bundle from every supplier. For signature music, broad lasting control is valuable. For routine licensed effects, a sufficiently broad game-use license with no raw redistribution may be entirely adequate. Keep optional OST and creator-export rights visible so they cannot be assumed accidentally.
 

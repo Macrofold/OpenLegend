@@ -135,4 +135,3 @@ For voice, casting and dialogue authoring can explore together, but final record
 - **Limits and constraints:** [hearing and optional media](../limits/hearing-and-speech.md), [interface/presentation](../limits/interface.md), [AI execution](../limits/ai-execution.md) and the relevant action/asset inventory. No new audio quota, playback system or voice policy is selected here.
 - **Music/SFX sourcing and proposed production:** [current research](../research/audio/README.md), [musical direction](../research/audio/openlegend-direction.md) and [AUD01–AUD04](../maintainers/audio-production.md).
 - **Evidence:** [asset/audio research](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), [production cases](../../archive/02-research/ai-game-development/02-developer-case-studies.md) and actual topic reports under [verification](../verification.md).
-

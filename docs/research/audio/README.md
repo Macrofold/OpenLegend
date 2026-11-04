@@ -10,26 +10,26 @@ The [Open Legend music and sound direction](openlegend-direction.md) is the main
 
 ## Choose the appropriate route
 
-| Route | Best use here | Decision |
-| --- | --- | --- |
-| Commission a composer/producer | Identity themes, related arrangements, controlled revisions | Preferred starting investment: a small paid pilot, then a compact score if it succeeds |
-| AI music generation | Rapid musical exploration; potentially finished or producer-edited cues | Serious candidate; compare Suno and Stable Audio first, with the current eligibility/export conditions recorded below |
-| Direct artist license | An exceptional existing piece with a fitting identity | Good alternative when the artist can grant the needed composition/master, editing and release rights |
-| Stock/production music | Temporary coverage and specific secondary uses | Can be musically excellent; less control of identity and revision makes it a weaker foundation for this brief |
-| Free/CC/public-domain music | Selective reference, temporary or deliberate production use | Price does not establish quality or unrestricted permission; examine each composition and recording |
-| Paid/free SFX recordings | Movement, materials, weather, animals and practical actions | Recommended broad foundation, curated around real playable events |
-| Foley, field recording and synthesis | Tactile details and memorable exceptional sounds | Add selectively where ownership, specificity or sound character justifies the work |
-| Offline AI SFX | Difficult-to-source effects and creative variants | Optional source route; accept by listening, editability and actual rights |
-| Self-hosted audio models | Repeated production that demonstrably needs local control | Defer deployment work until a hosted comparison proves the output is worthwhile; weights and code can carry different licenses |
+| Route                                | Best use here                                                           | Decision                                                                                                                       |
+| ------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Commission a composer/producer       | Identity themes, related arrangements, controlled revisions             | Preferred starting investment: a small paid pilot, then a compact score if it succeeds                                         |
+| AI music generation                  | Rapid musical exploration; potentially finished or producer-edited cues | Serious candidate; compare Suno and Stable Audio first, with the current eligibility/export conditions recorded below          |
+| Direct artist license                | An exceptional existing piece with a fitting identity                   | Good alternative when the artist can grant the needed composition/master, editing and release rights                           |
+| Stock/production music               | Temporary coverage and specific secondary uses                          | Can be musically excellent; less control of identity and revision makes it a weaker foundation for this brief                  |
+| Free/CC/public-domain music          | Selective reference, temporary or deliberate production use             | Price does not establish quality or unrestricted permission; examine each composition and recording                            |
+| Paid/free SFX recordings             | Movement, materials, weather, animals and practical actions             | Recommended broad foundation, curated around real playable events                                                              |
+| Foley, field recording and synthesis | Tactile details and memorable exceptional sounds                        | Add selectively where ownership, specificity or sound character justifies the work                                             |
+| Offline AI SFX                       | Difficult-to-source effects and creative variants                       | Optional source route; accept by listening, editability and actual rights                                                      |
+| Self-hosted audio models             | Repeated production that demonstrably needs local control               | Defer deployment work until a hosted comparison proves the output is worthwhile; weights and code can carry different licenses |
 
 ## Evidence records
 
-| Question | Record |
-| --- | --- |
-| Can Suno music ship in a sold game? What are current AI quality, export and license options? | [AI music and sound generation](archive/2026/2026-11-04-ai-audio.md) |
-| How do indie, established RPG and AAA teams create distinctive music? How do we hire and budget? | [Original music production and commissioning](archive/2026/2026-11-04-music-production.md) |
-| Which free/paid libraries and recording routes fit games, browser delivery and creators? | [Stock, free and bespoke sound sourcing](archive/2026/2026-11-04-sound-sourcing.md) |
-| What rights and deliverables do we need, and how do they fit a browser game with open-source code? | [Rights, release scope and delivery](archive/2026/2026-11-04-rights-and-delivery.md) |
+| Question                                                                                           | Record                                                                                     |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Can Suno music ship in a sold game? What are current AI quality, export and license options?       | [AI music and sound generation](archive/2026/2026-11-04-ai-audio.md)                       |
+| How do indie, established RPG and AAA teams create distinctive music? How do we hire and budget?   | [Original music production and commissioning](archive/2026/2026-11-04-music-production.md) |
+| Which free/paid libraries and recording routes fit games, browser delivery and creators?           | [Stock, free and bespoke sound sourcing](archive/2026/2026-11-04-sound-sourcing.md)        |
+| What rights and deliverables do we need, and how do they fit a browser game with open-source code? | [Rights, release scope and delivery](archive/2026/2026-11-04-rights-and-delivery.md)       |
 
 The Suno answer is affirmative for eligible commercial output, with an authorized-download requirement and important free-origin/remix distinctions. The AI record preserves the current official pages' inconsistencies and gives a practical acquisition rule. A commercial license remains distinct from copyright protection, exclusivity and unrestricted downstream redistribution.
 

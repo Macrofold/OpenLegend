@@ -20,11 +20,11 @@ The distinctive part must be the writing: a memorable melodic vocabulary, charac
 
 Three initial thematic families are enough to investigate:
 
-| Family | Emotional job | Useful transformations |
-| --- | --- | --- |
-| Home and belonging | Fragile safety, shared effort, affection, the pleasure of returning | Solitary plucked version; warmer small-ensemble version; a restrained damaged/absent version when an actual known loss merits it |
-| Wilderness and possibility | Beauty, curiosity, exposure and the attraction of the unknown | Open exploration; ambiguous unease; discovery with a wider register and space |
-| History and consequence | Things outlasting the moment, wonder, regret, remembered deeds | Quiet older tune; tense fragment; intimate aftermath; occasional larger statement |
+| Family                     | Emotional job                                                       | Useful transformations                                                                                                           |
+| -------------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Home and belonging         | Fragile safety, shared effort, affection, the pleasure of returning | Solitary plucked version; warmer small-ensemble version; a restrained damaged/absent version when an actual known loss merits it |
+| Wilderness and possibility | Beauty, curiosity, exposure and the attraction of the unknown       | Open exploration; ambiguous unease; discovery with a wider register and space                                                    |
+| History and consequence    | Things outlasting the moment, wonder, regret, remembered deeds      | Quiet older tune; tense fragment; intimate aftermath; occasional larger statement                                                |
 
 These are editorial categories, not player stats, mandatory emotion assignments, or three permanent engine moods. They can share musical material. Do not attach an individual score to every generated person, activity, item or biome.
 
@@ -42,13 +42,13 @@ An emergent game does not need newly generated composition for every emergent ev
 
 After a successful pilot, start around **eight minutes of genuinely new composition**, with only the additional arrangements and edits required by the playable slice. This is a scope/budget example, not a runtime quota or a maximum for the game. If the actual pilot suggests a better scope, revise it before commissioning.
 
-| Asset family | Initial purpose | Handoff to request |
-| --- | --- | --- |
-| Identity statement | Establish the recognizable musical idea | A finished short cue, a spare version and a useful ending; a trailer edit only if the current marketing task needs it |
-| Exploration | Ordinary travel with sufficient space for the world | A few developed passages with clean entries/endings; seamless loops only for passages intended to loop |
-| Camp and companionship | A recognizable human center | A restrained related arrangement that tolerates conversation and repeated visits |
-| Known tension and conflict | Support the playable threat and its consequence | One purposeful tension/conflict family, with clean exit and limited alternates rather than a generic track per enemy |
-| Aftermath or discovery | Let a consequential moment register | A short related passage or ending that earns its attention |
+| Asset family               | Initial purpose                                     | Handoff to request                                                                                                    |
+| -------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Identity statement         | Establish the recognizable musical idea             | A finished short cue, a spare version and a useful ending; a trailer edit only if the current marketing task needs it |
+| Exploration                | Ordinary travel with sufficient space for the world | A few developed passages with clean entries/endings; seamless loops only for passages intended to loop                |
+| Camp and companionship     | A recognizable human center                         | A restrained related arrangement that tolerates conversation and repeated visits                                      |
+| Known tension and conflict | Support the playable threat and its consequence     | One purposeful tension/conflict family, with clean exit and limited alternates rather than a generic track per enemy  |
+| Aftermath or discovery     | Let a consequential moment register                 | A short related passage or ending that earns its attention                                                            |
 
 A phrase can serve several jobs through arrangement; the table is not five independent full-length song orders. Count alternate composition, editing and live performance honestly in the quote. A longer **12–18 minute** package becomes useful after the first slice shows what repeats too often or lacks coverage. Do not treat 30–60 minutes as a launch prerequisite.
 
@@ -107,7 +107,7 @@ Specific integration expectations to carry into the existing owner: music must n
 
 ## What I would spend and when
 
-The [commissioning study](archive/2026/2026-11-04-music-production.md#planning-budgets) shows dated survey evidence and explicit scenario arithmetic. Its **$500–1,500 pilot** and approximately **$3,500–7,500 eight-minute identity package** are planning allowances, not quotes or authorized purchases. A broader 15-minute package with selective performers and production is estimated at roughly **$9,000–18,500**. Sound design and source licenses remain separate; the [SFX study](archive/2026/2026-11-04-sound-sourcing.md#a-practical-first-sfx-commissioning-package) gives its own scoped allowances.
+The [commissioning study](archive/2026/2026-11-04-music-production.md#planning-budgets) shows dated survey evidence and explicit scenario arithmetic. Its **$500–1,500 pilot** and approximately **$3,500–7,500 eight-minute identity package** are planning allowances, not quotes or authorized purchases. A broader 15-minute package with selective performers and production is estimated at roughly **$9,000–18,500**. Sound design and source licenses remain separate; the [SFX study](archive/2026/2026-11-04-sound-sourcing.md#first-production-package-and-planning-allowances) gives its own scoped allowances.
 
 My practical sequence is to risk the pilot amount first, then fund the lean music package and a representative soundscape if they are promising. Keep the score small if the available budget is lower. A high-quality prototype does not need an album, a live orchestra, a permanent employee or a new middleware stack.
 

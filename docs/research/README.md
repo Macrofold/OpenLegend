@@ -10,4 +10,3 @@ Research informs decisions; it grants no implementation or spending authority. C
 - [Existing source research](../../archive/02-research/): historical sources indexed in place, read only for a relevant question.
 
 [Open decision owners](../maintainers/decisions/README.md) · [Verification](../verification.md) · [Benchmarks](../benchmarks/README.md)
-

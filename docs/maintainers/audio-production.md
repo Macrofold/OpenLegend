@@ -22,7 +22,7 @@ Reuse the [feedback production workflow](../production-workflows/audio-and-feedb
 
 ## AUD03 — Produce one representative soundscape
 
-- [ ] **Proposed:** use the [SFX sourcing plan](../research/audio/archive/2026/2026-11-04-sound-sourcing.md#a-practical-first-sfx-commissioning-package) for movement/materials, camp work, the selected threat, ambience and restrained interface feedback in one real play sequence.
+- [ ] **Proposed:** use the [SFX sourcing plan](../research/audio/archive/2026/2026-11-04-sound-sourcing.md#first-production-package-and-planning-allowances) for movement/materials, camp work, the selected threat, ambience and restrained interface feedback in one real play sequence.
 - **Dependencies:** supported native events and permitted listener evidence; a focused cue list; source rights under AUD02; a selected production budget if outside existing resources.
 - **Outcome:** coherent event families with useful variations and a comfortable whole-scene mix. Add original Foley/synthesis or offline AI only for a concrete benefit.
 - **Completion evidence:** review normal repetition, overlapping work/conflict, quiet recovery and conversation; inspect timing, fatigue, source removal/cancellation and audio-off understanding. Audio must not invent meaningful hidden actors/actions. A library purchase is not completion.

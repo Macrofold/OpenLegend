@@ -174,4 +174,3 @@ These are trial priorities, not dependencies between unrelated work. A motion tr
 Capability confidence is high where current primary documentation supplies an endpoint, model card, or artifact format. Comparative confidence for **OpenLegend output quality remains unmeasured**. The experiment should retain failures and count every generation and cleanup pass, including paid work that did not make the game. Sponsored credits, subscription allowance, cache-heavy token totals, and hypothetical API equivalents should remain separate from cash cost.
 
 The strongest principle is stable across providers: approve the visual intent, reuse coherent systems, generate bounded candidates, and judge them inside the finished experience. That is how the research turns into a better OpenLegend game instead of a larger folder of impressive but incompatible assets.
-
