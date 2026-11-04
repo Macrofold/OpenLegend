@@ -209,18 +209,34 @@ is independent of those tasks.
 | Official Kimodo v1.2                                       | Optional self-hosted route and a later upgrade candidate. Its checkpoint, skeleton/export behavior, dependencies, hardware, license and target mapping require their own qualification. Never silently substitute it for the hosted v1.1 pin.                                                |
 | MotionBricks                                               | Optional offline pose-conditioned transition authoring when a requested asset needs it. Bake and retarget the output through the same target checks. No runtime inference service is part of this workflow.                                                                                  |
 
-The initial candidate pin is Replicate version
-`17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545`
-for `Kimodo-SOMA-RP-v1.1`. Qualification starts with one natural-language segment of 2–5 seconds
-(maximum 10 seconds), one sample, 100 diffusion steps and postprocessing enabled. Periods delimit
-segments in this wrapper, so resolve a conversational request into one segment deliberately.
-Use `output_delivery=individual`; the API returns an array of output URIs. Download and preserve
-artifacts within one hour, retaining the prediction ID and status for polling/resume; an unknown
-submission outcome is not permission to retry a paid job. Prefer BVH as the initial source to
-inspect: the wrapper's GLB may contain animated empties without a Blender armature. These are
-candidate settings and export risks, not evidence that the target adapter or route is qualified;
-[tech design §11](../../projects/art-workflow-tech-design.md#11-nvidia-motion-authoring) owns the planned
-normalization and mapping contract.
+### Hosted Kimodo request profile
+
+This is the maintained request shape for one candidate; the walk illustrates the fields, not a requirement to replace an adequate clip. The [immutable deployment schema](https://replicate.com/sprited/kimodo/versions/17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545/api) defines the fields. The planned helper consumes this file; AF15 must implement it before these settings become an executable route.
+
+```json
+{
+  "version": "17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545",
+  "input": {
+    "prompt": "A person walks forward at an even pace",
+    "model": "Kimodo-SOMA-RP-v1.1",
+    "duration": 4,
+    "seed": 42,
+    "num_samples": 1,
+    "diffusion_steps": 100,
+    "postprocess": true,
+    "root_margin": 0.04,
+    "output_format": "bvh",
+    "output_delivery": "individual",
+    "include_auxiliary": true,
+    "filename_prefix": "openlegend_walk_c01",
+    "sample_index": 0,
+    "preview": true,
+    "image_size": 512
+  }
+}
+```
+
+Use one natural-language segment, normally 2–5 seconds and at most the upstream 10-second limit. Periods delimit segments in this wrapper; write a single clause. BVH is the initial source; a provider GLB needs separate evidence that it imports as a usable armature. The API returns an array of output URIs. Download and preserve required files within one hour, retaining the prediction ID for recovery. [Tech design §11.3](../../projects/art-workflow-tech-design.md#113-acquire-one-kimodo-candidate) owns bounded submission, artifact selection and recovery. No settings here imply a qualified target export.
 
 Prefer a repeatable CLI/API and headless conversion over requiring a Blender GUI plugin. Exact
 commands and mapping implementation belong to [tech design §11](../../projects/art-workflow-tech-design.md#11-nvidia-motion-authoring)

@@ -45,7 +45,9 @@ action timing; do not change gameplay durations to fit a generated performance.
 2. **New compatible human motion:** use the [default human-motion source](tools.md#human-motion-generation)
    once its pinned provider/version and the selected target rig are qualified. Describe the motion
    naturally, then retain the exact submitted prompt and resolved controls. Reuse a qualified route;
-   qualification is not a new review ritual for every compatible clip. Its full identity includes deployment/model, source format and rest profile, importer settings, target rest hierarchy and map revision ([technical contract](../../projects/art-workflow-tech-design.md#119-implementation-order-and-qualification)).
+   qualification is not a new review ritual for every compatible clip. The
+   [qualification contract](../../projects/art-workflow-tech-design.md#119-implementation-order-and-qualification)
+   defines which source or target changes need another check.
 3. **Other anatomy or an unavailable default route:** use an available clip library or Blender
    authoring appropriate to the selected rig. A user-selected source takes precedence when suitable.
    State the concrete access or compatibility gap and the route actually used; never silently
@@ -94,7 +96,10 @@ sources and preserve timing explicitly.
   idle/run authoring, not a reason to replace a better existing action.
 
 See [the implemented clip contract](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)
-for action selection, rest-pose retargeting and export details. The current single-action-per-file recipe above is established; multi-action or colliding-name source imports need the [AF15 selection fix](../../projects/art-workflow-tech-design.md#115-target-maps-and-two-pass-assembly) before the retained-clip example below is relied on.
+for action selection, rest-pose retargeting and export details. The current single-action-per-file
+recipe above is established; preserving already prepared target clips requires the planned
+[AF15 same-rig assembly and source-scoped selection](../../projects/art-workflow-tech-design.md#115-target-maps-and-two-pass-assembly)
+described below.
 
 ## Author a new human motion
 
@@ -104,7 +109,10 @@ source profiles defined in the tech design; those options are not installed comm
 1. Confirm the selected provider/version/target-rig qualification and available account, permission
    and bounded task budget. Pin the exact model revision; record its input controls, source skeleton,
    exported format, units, axes, time basis and applicable rights. Generate only the missing motion.
-2. Preserve the original motion source and receipt in the study's permitted working/archive location.
+2. Preserve each generation's original motion source, prepared `request.json` and `receipt.json`
+   once in the study's permitted working/archive location. Target candidates link that same source
+   when it is reused on another body; do not duplicate its paid job or charge. Keep target-specific
+   mapping, corrections and review in the [study record](study-record.md#construction-and-sources).
    An exported skeleton is source data, not the character's replacement rig. If the route produces
    BVH, the planned source-profile extension imports and normalizes it before retargeting; the current
    helper alone cannot consume it.
@@ -114,8 +122,8 @@ source profiles defined in the tech design; those options are not installed comm
    new gait on the final target rig. Keep editable target data when the planned option is available;
    a skeleton-only intermediate may not reimport as the required armature.
    Inspect contacts and deformation before assembling it with retained clips.
-4. Assemble only target-compatible clips and review the exported package below. Preserve existing
-   actions that the request did not replace. Keep the source and repeatable conversion settings so
+4. Assemble target-compatible clips with the planned `--same-rig` path and review the exported package
+   below. Preserve existing actions that the request did not replace. Keep the source and repeatable conversion settings so
    a failed fit can be corrected without another paid generation.
 
 A successful hosted prediction, a downloaded model or a promising preview does not close the
@@ -138,25 +146,30 @@ production source motion. Record rights for the actual conditioning poses and mo
 
 ## Assemble and review the target clips
 
-After AF15 delivers source-scoped action selection, the existing `clips` interface can assemble an
-adapted target clip with explicitly retained target actions. The example below is **planned until
-that fix passes**: current imports can rename colliding actions such as `Idle` to `Idle.001`, so
-matching `#ACTION` is not yet reliable for this case. It adds `Wave` to a model whose complete
-retained set is `Idle`, `Walk` and `Run`:
+The planned `clips --same-rig` path copies prepared actions without retargeting them again. It checks
+that keyed bones' hierarchy/rest transforms and the armature object transform match the target,
+then preserves their full action channels, including translations and scales. Source-scoped action
+selection also prevents colliding names such as `Idle.001` from breaking `#ACTION`. The example is
+**planned until AF15 delivers these checks and copying behavior**. It adds `Wave` to a model whose
+complete retained set is `Idle`, `Walk` and `Run`:
 
 ```sh
-"${B[@]}" clips --model "$MODEL" \
+"${B[@]}" clips --same-rig --model "$MODEL" \
   --clip Idle="$MODEL#Idle" --clip Walk="$MODEL#Walk" --clip Run="$MODEL#Run" \
   --clip Wave="$READY#Wave" --out "$OUT"
 ```
 
 Here `READY` is a verified full target-rig GLB, not a raw provider download. `Wave` demonstrates clip
 assembly and viewer review; playing it in the game requires the existing action/consumer route to
-dispatch it, which this procedure does not add. Name every action to keep;
-the helper does not preserve unnamed actions automatically. Do not pass a source profile or source bone map again,
-or trim already accepted gaits a second time. Reserve `--motion-only` for the final export when its
-consumer loads motion separately. Retain the measured facts for unchanged gaits and
-update the game's metadata only from the final accepted target clips: catalog `strides` alongside
+dispatch it, which this procedure does not add. Name every action to keep; the helper does not
+preserve unnamed actions automatically. `--same-rig` rejects source profiles, bone maps, `--stride`
+and `--in-place`; finish those operations before assembly. Reserve `--motion-only` for the final
+export when its consumer loads motion separately.
+
+The planned path carries existing `.clips.json` `seconds`/`groundSpeed` facts from each selected source
+action to its requested output name. Missing gait facts require remeasurement; never substitute zero
+or repeat accepted gait cleanup to hide the gap. Update the game's metadata only from the final
+accepted target clips: catalog `strides` alongside
 the animated file's hash, or the mercenary's values in
 [`mercenary.ts`](../../../apps/client/src/characters/mercenary.ts), under the existing integration workflow.
 

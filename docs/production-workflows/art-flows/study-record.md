@@ -47,12 +47,15 @@ For a UI kit with sliced raster parts, record fixed corners, repeated edges, joi
 Keep prompts and recipes, input revisions, the exact tool, model, mode and settings, and repeatable scripts. Separate observed metadata from inference. Proprietary or private source payloads and receipts stay in their permitted external locations; credentials never enter Git. A reconstructed layer is never described as an original layered source.
 
 For animation, record required, retained and new clips; the unchanged target model/rig revision;
-source provider and exact model/version pin; source skeleton, format, units/axes and time basis;
-input/output rights; conversion/bone-map revision and settings; and the retained source, final target
-artifacts and receipts at their permitted locations. Link existing qualification for that
-provider/version/target rig, or identify the missing check. Preserve target contact/loop/timing review,
-retained-clip coverage and measured gait facts. A successful provider job is not a qualified target
-export. See [Animation authoring](animation.md) for the procedure.
+conversion/bone-map revision and settings; root/loop policy, contact corrections and timing review;
+retained-clip coverage and measured gait facts; and exact editable/final target references.
+Each generated source keeps one preserved `request.json` and `receipt.json` under the
+[source-record contract](../../projects/art-workflow-tech-design.md#112-input-output-and-record-contract).
+Link these for submitted provider/model settings, job recovery and cost. Keep inspected source
+skeleton/format/units/axes/time basis and input/output rights with the shared source inventory;
+multiple target candidates reuse that source without copying its receipt or counting its charge
+twice. Link existing source/target qualification or identify the missing check. A successful
+provider job is not a qualified target export. See [Animation authoring](animation.md) for the procedure.
 
 ### Review and remaining gaps
 
