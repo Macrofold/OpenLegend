@@ -1,12 +1,12 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Receiving/frontier and compact-proof conversion are installed; AWS operating qualification remains open. | 2026-11-04   |
+| Status      | Current progress                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Receiving/frontier and compact-proof conversion are installed; the AWS normal-speed gate fails. | 2026-11-04   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
-**Current behavior and connected integration reconciled November 4, 2026.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Connected read, retention, correction/privacy and restoration checks pass. The [completed standard gate](../verification/performance/2026-10/bookkeeping-simplification.md#completed-standard-gate) has no runtime/storage failure or pause but fails normal-speed acceptance; BK12/BK16 retain cleanup sustainability and operating qualification. No scale pass is claimed.
+**Current behavior and connected integration reconciled November 4, 2026.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Connected read, retention, correction/privacy and restoration checks pass. The [completed-source AWS standard gate](../verification/performance/2026-10/bookkeeping-simplification.md#aws-operating-qualification) has no runtime/storage failure or pause but fails normal-speed acceptance; BK12/BK16 retain cleanup sustainability and operating qualification. No scale pass is claimed.
 
 ## 1. Outcome
 
@@ -129,7 +129,7 @@ Copying every received body would simplify deletion but multiply richer stable v
 
 No product decision is left open for this design. Numerical engineering envelopes are provisional and must be qualified; performance and human enjoyment are unproved, not unresolved architecture choices. Implementation is not authorized by this document alone.
 
-- Implementation and dependencies: [BK00–BK07 baseline](../maintainers/production-data.md#bookkeeping-simplification), [BK08–BK16 conversion](../maintainers/production-data.md#database-work-reduction), [BK17–BK19 representation](../maintainers/production-data.md#received-state-and-history-representation), [BK20–BK23 proposed batches and lifetime](../maintainers/production-data.md#received-batches-and-lifetime).
+- Implementation and dependencies: [BK00–BK07 baseline](../maintainers/production-data.md#bookkeeping-simplification), [BK08–BK16 conversion](../maintainers/production-data.md#database-work-reduction), [BK17–BK19 representation](../maintainers/production-data.md#received-state-and-history-representation), [BK20–BK23 batches and lifetime](../maintainers/production-data.md#received-batches-and-lifetime).
 - Limits and constraints: [persistence limits](../limits/persistence.md#bks-l01--direct-transactional-saving-target) distinguish current bounds and selected targets; [attention/memory policy](../worlds/base/attention.md) owns fictional retention.
 - Mechanisms, schema, removal map and step-by-step delivery: [technical design](bookkeeping-simplification-tech-design.md) and [runtime companion](bookkeeping-simplification-runtime-design.md).
 - Existing operating acceptance: [PS04-A SR04/SR07](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording); saving and privacy: [save/load](../save-and-load.md), [memory](../memory-architecture.md).
@@ -152,7 +152,7 @@ The [received-batch contract below](#11-received-batches-and-recent-history-life
 
 ## 11. Received batches and recent-history lifetime
 
-**Accepted design, November 4, 2026; receiving/frontier and compact-proof conversion installed; AWS qualification remains open.** [The batch companion](bookkeeping-simplification-batch-design.md) replaces per-partition recording with one exact receiver batch and replaces late-closed intervals with acquisition-ordered recent history. Actual successful checks, intermediate changes, uncertainty and independent detail clocks remain; one common viewing frame and coverage set need not become many separate records. Broad awareness, ten-slot base-world attention, native reactions and optional asynchronous cognition retain their current behavior.
+**Accepted design, November 4, 2026; receiving/frontier and compact-proof conversion installed; the AWS normal-speed gate fails.** [The batch companion](bookkeeping-simplification-batch-design.md) replaces per-partition recording with one exact receiver batch and replaces late-closed intervals with acquisition-ordered recent history. Actual successful checks, intermediate changes, uncertainty and independent detail clocks remain; one common viewing frame and coverage set need not become many separate records. Broad awareness, ten-slot base-world attention, native reactions and optional asynchronous cognition retain their current behavior.
 
 Ordinary recent expiry advances an exact personal eligibility frontier; physical storage disappears later in whole eligible blocks. Useful names, places, commitments and warranted accounts keep their own support. Correction remains precise and immediately fences pending output. This changes representation and routine maintenance, not who saw what or whether a character can remember an attended route. No automatic summary, continuous-visibility inference, world-event replay or new model cadence is introduced.
 

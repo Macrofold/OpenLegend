@@ -4,7 +4,7 @@ Part of the [performance contract](../performance.md). Read for the matching mec
 
 ## Compact transactional persistence
 
-**Current conversion awaits verification:** [BK20–BK23](../maintainers/production-data.md#received-batches-and-lifetime) and the [batch contract](../projects/bookkeeping-simplification-batch-design.md) extend the existing live-acceptance and ordered-save owners. Stable current content is separate from changing metadata; fresh identities bypass edit discovery; independent support and logical retention frontiers remove routine survivor searches. Optional indexing, quota eviction and physical collection run from changed/due/pressure work. Operating acceptance remains open.
+**Current conversion and connected checks complete; AWS operating gate fails:** [BK20–BK23](../maintainers/production-data.md#received-batches-and-lifetime) and the [batch contract](../projects/bookkeeping-simplification-batch-design.md) extend the existing live-acceptance and ordered-save owners. Stable current content is separate from changing metadata; fresh identities bypass edit discovery; independent support and logical retention frontiers remove routine survivor searches. Optional indexing, quota eviction and physical collection run from changed/due/pressure work. Operating acceptance remains open.
 
 The [bookkeeping implementation](../projects/bookkeeping-simplification-tech-design.md) uses direct transactions, explicit append batches and scoped ownership queries. The custom journal/application stage, live-object evidence-layout bindings and global retention mirrors are removed. [BK](../maintainers/production-data.md#bookkeeping-simplification) retains operating and lifecycle acceptance; reduced bookkeeping alone establishes no capacity pass.
 
