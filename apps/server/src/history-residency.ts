@@ -17,6 +17,7 @@ import {
   immutableDataSnapshot,
   selectTemporalPageOperations,
   temporalPageMutation,
+  temporalPageSelectionSource,
   EXPERIENCE_LIMITS,
   markPartialAppraisals,
   retiredObjectIds,
@@ -499,6 +500,7 @@ export function compactTemporalHistory(
 const savedTemporalOperations = new WeakSet<
   import('@open-legend/domain').TemporalHistoryOperation
 >();
+const savedTemporalEdits = new WeakSet<object>();
 const savedTemporalActors = new WeakMap<WorldState, ReadonlySet<string>>();
 const savedTemporalTails = new WeakMap<
   WorldState,
@@ -514,6 +516,9 @@ export function recordSavedTemporalPages(
   for (const page of pages) {
     changedActors.add(page.actorId);
     for (const operation of page.operations) savedTemporalOperations.add(operation);
+    const source = temporalPageSelectionSource(page);
+    if (source && temporalPageMutation(source) === 'edit')
+      savedTemporalEdits.add(source.operations);
   }
   for (const id of deleted) {
     const path = JSON.parse(id) as string[];
@@ -579,6 +584,12 @@ export function releaseSavedTemporalHistory(
     if (!actor) continue;
     const pending: import('@open-legend/domain').TemporalPage[] = [];
     for (const page of actor.pages) {
+      // A removal-only correction can retain exclusively old operations. Only
+      // acknowledgement of this exact edited selection makes it durable.
+      if (temporalPageMutation(page) === 'edit') {
+        if (!savedTemporalEdits.has(page.operations)) pending.push(page);
+        continue;
+      }
       const kept = page.operations.filter((operation) => !savedTemporalOperations.has(operation));
       if (!kept.length) continue;
       if (kept.length === page.operations.length) pending.push(page);

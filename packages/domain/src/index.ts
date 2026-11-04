@@ -175,6 +175,7 @@ export {
   updateWorld,
   appendedEventCount,
   appendedRecordCount,
+  recordAppendBase,
   appendSnapshot,
   freezeWorld,
   beginCommandBatch,

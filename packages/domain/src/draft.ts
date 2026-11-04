@@ -47,7 +47,7 @@ const drafts = new Immer({ autoFreeze: false });
 enablePatches();
 type EventLineage = { tip: WorldEvent[] };
 const eventLineages = new WeakMap<WorldEvent[], EventLineage>();
-type RecordLineage = { tip: unknown[] };
+type RecordLineage = { tip: unknown[]; base: unknown[] };
 const recordLineages = new WeakMap<unknown[], RecordLineage>();
 const admittedRecords = new WeakMap<WorldState, object[]>();
 const recordArrays = new WeakMap<WorldState, Map<object, Set<string>>>();
@@ -280,11 +280,17 @@ export function appendedRecordCount(previous: unknown[], next: unknown[]): numbe
     : undefined;
 }
 
+/** Exact root of this certified append branch. This alone proves no relationship
+ * to another array; consumers still check their own semantic placement lineage. */
+export function recordAppendBase(entries: unknown[]): readonly unknown[] | undefined {
+  return recordLineages.get(entries)?.base;
+}
+
 function recordAppend(before: unknown[], after: unknown[]): void {
   let lineage = recordLineages.get(before);
   if (!lineage || lineage.tip !== before) {
     // Forks start a distinct proof; losing an old optimization never certifies a false prefix.
-    lineage = { tip: before };
+    lineage = { tip: before, base: before };
     recordLineages.set(before, lineage);
   }
   lineage.tip = after;
@@ -1031,7 +1037,7 @@ export function finishWorld(
     if (!Array.isArray(next) || next.length < previous.length) continue;
     let lineage = recordLineages.get(previous);
     if (!lineage) {
-      lineage = { tip: previous };
+      lineage = { tip: previous, base: previous };
       recordLineages.set(previous, lineage);
     }
     if (lineage.tip === previous) {
@@ -1042,7 +1048,7 @@ export function finishWorld(
   for (const { before: previous, after: next } of sealedAppends) {
     let lineage = recordLineages.get(previous);
     if (!lineage) {
-      lineage = { tip: previous };
+      lineage = { tip: previous, base: previous };
       recordLineages.set(previous, lineage);
     }
     if (lineage.tip === previous) {

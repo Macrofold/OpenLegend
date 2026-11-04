@@ -1,5 +1,6 @@
 import {
   appendedRecordCount,
+  recordAppendBase,
   temporalPageMetadata,
   temporalPageReferences,
   temporalPageMutation,
@@ -30,7 +31,14 @@ export function captureTemporalPageChange(
   replacement = false,
 ): PendingTemporalPage {
   replacement ||= temporalPageMutation(after) === 'edit';
-  const appended = before ? appendedRecordCount(before.operations, after.operations) : 0;
+  let appended = before ? appendedRecordCount(before.operations, after.operations) : 0;
+  // A successful save can remove the acknowledged prefix while later operations
+  // remain in the same native container. Its certified placement lineage means
+  // every remaining operation is an unsaved suffix, not an edit of a SQL page.
+  if (before && appended === undefined && !replacement && residencyDescendsFrom(after, before)) {
+    before = undefined;
+    appended = 0;
+  }
   if (before && appended === undefined && !replacement)
     throw new Error('Temporal append has no certified predecessor.');
   const start = replacement ? 0 : (before?.operations.length ?? 0);
@@ -47,7 +55,7 @@ export function mergeTemporalPageIntent(
 ): PendingTemporalPage {
   if (!previous) return next;
   if (previous.after !== next.before && previous.after !== next.after) {
-    if (next.before && residencyDescendsFrom(next.before, previous.after))
+    if (residencyDescendsFrom(next.before ?? next.after, previous.after))
       return captureTemporalPageChange(
         undefined,
         next.after,
@@ -259,10 +267,23 @@ export function noteTemporalResidency(page: TemporalPage, previous: TemporalPage
   residencyPredecessors.set(page.operations, previous);
 }
 function residencyDescendsFrom(page: TemporalPage, previous: TemporalPage): boolean {
+  if (
+    page.actorId !== previous.actorId ||
+    page.physicalLife !== previous.physicalLife ||
+    page.epoch !== previous.epoch ||
+    page.id !== previous.id
+  )
+    return false;
   let at: TemporalPage | undefined = page;
   for (let depth = 0; at && depth < 8; depth++) {
     if (at === previous || at.operations === previous.operations) return true;
-    at = residencyPredecessors.get(at.operations);
+    // Only an actual acknowledged-prefix relocation admits an earlier append
+    // ancestor. A plain append cannot reset its unsaved prefix to a new page.
+    if (depth > 0 && appendedRecordCount(previous.operations, at.operations) !== undefined)
+      return true;
+    at =
+      residencyPredecessors.get(at.operations) ??
+      residencyPredecessors.get(recordAppendBase(at.operations) ?? at.operations);
   }
   return false;
 }
