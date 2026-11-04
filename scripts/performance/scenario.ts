@@ -9,6 +9,7 @@ import {
   worldSupport,
   activelyParticipates,
 } from '../../packages/domain/src/index.js';
+import { cloneValue } from '../../packages/domain/src/draft.js';
 import { commitContactImpact } from '../../packages/domain/src/contact-defense.js';
 import { emit } from '../../packages/domain/src/events.js';
 import { reconcileNativeExposure } from '../../packages/domain/src/native-response-controller.js';
@@ -395,16 +396,17 @@ export function populateScenario(
   scenario: Scenario,
 ): ScenarioPopulation {
   let world = input ?? createWorld(scenario.seed);
-  world = structuredClone(world);
   if (scenario.mapSize) {
-    const size = scenario.mapSize;
-    world.map.tiles = Array.from({ length: size }, (_, z) =>
-      Array.from({ length: size }, (_, x) => world.map.tiles[z]?.[x] ?? 'grass'),
-    );
-    world.map.width = world.map.height = size;
-    const terrain = world.map.spatial.surfaces.find((s) => s.id === 'terrain')!;
-    terrain.maxX = terrain.maxZ = size - 1;
-    world.map.spatial.revision++;
+    world = updateWorld(world, (draft) => {
+      const size = scenario.mapSize!;
+      draft.map.tiles = Array.from({ length: size }, (_, z) =>
+        Array.from({ length: size }, (_, x) => draft.map.tiles[z]?.[x] ?? 'grass'),
+      );
+      draft.map.width = draft.map.height = size;
+      const terrain = draft.map.spatial.surfaces.find((surface) => surface.id === 'terrain')!;
+      terrain.maxX = terrain.maxZ = size - 1;
+      draft.map.spatial.revision++;
+    });
   }
   const near = populateGroup(world, scenario, 0, 'near');
   if (!scenario.groupDistance) return near;
@@ -419,7 +421,9 @@ function populateGroup(
   groupId: string,
 ): ScenarioPopulation {
   const addedAnimalIds: string[] = [];
-  world.paused = false;
+  world = updateWorld(world, (draft) => {
+    draft.paused = false;
+  });
   const player = worldPosition(entityValues(world.entities).find((e) => e.kind === 'player')) ?? {
     y: 0,
     x: 0,
@@ -487,74 +491,77 @@ function populateGroup(
       throw new Error('Not enough unoccupied walkable tiles. Use a larger input world.');
   }
   // Custom objects exist only in this disposable fixture. No production admission rule is changed.
-  world = structuredClone(world);
-  // Fixture-only ordinary flight loops have staggered departure times and copied native bodies.
-  // The manifest records their exact routes; gameplay randomness is not consumed here.
-  const bird = entityGet(world.entities, 'bird-1')!;
-  if (scenario.birds && (!bird?.actor || bird.spatial.body.id !== 'bird'))
-    throw new Error('Synthetic flight fixtures require the starter native bird body.');
-  for (let index = 0; index < scenario.birds; index++) {
-    const id = `profile-${groupId}-bird-${index}`;
-    const x = anchor.x + (index % 6) * 0.5,
-      z = anchor.z + Math.floor(index / 6) * 0.5,
-      y = 5 + (index % 4) * 0.1;
-    if (x + 12 > world.map.width - 1 || z + 12 > world.map.height - 1)
-      throw new Error('The synthetic flight loop does not fit within the fixture map.');
-    const routeId = `${id}-loop`;
-    world.flightRoutes[routeId] = {
-      id: routeId,
-      body: { ...bird!.spatial.body },
-      speed: 0.6,
-      climbSpeed: 0.3,
-      continuation: { kind: 'loop' },
-      points: [
-        { position: { x, y, z }, waitSeconds: 0 },
-        { position: { x: x + 12, y, z }, waitSeconds: 0 },
-        { position: { x: x + 12, y, z: z + 12 }, waitSeconds: 0 },
-        { position: { x, y, z: z + 12 }, waitSeconds: 0 },
-      ],
-    };
-    entitySet(world.entities, id, {
-      ...structuredClone(bird),
-      id,
-      name: `Synthetic profile bird ${groupId} ${index}`,
-      placement: worldPlacement({ x, y, z }, null),
-      spatial: {
-        ...baseSpatial('bird'),
-        heading: 0,
-        flight: { routeId, next: 1, waitSeconds: (index * 7) % 53 },
-      },
-    });
-  }
-  let objectIndex = 0;
-  for (const group of scenario.objects) {
-    const definition = { ...group.definition, id: `${group.definition.id}-${groupId}` };
-    if (Object.hasOwn(world.itemDefinitions, definition.id))
-      throw new Error('Fixture material ID collision.');
-    world.itemDefinitions[definition.id] = definition;
-    for (let i = 0; i < group.count; i++) {
-      const id = `profile-${groupId}-object-${objectIndex++}`;
-      if (entityHas(world.entities, id)) throw new Error('Fixture entity ID collision.');
-      // Ground objects may share tiles; quantity=500 is distinct from 500 visible entities.
-      const position =
-        positions[
-          (scenario.layout === 'crowded' ? i % Math.min(9, positions.length) : objectIndex - 1) %
-            positions.length
-        ]!;
-      entitySet(world.entities, id, {
+  // Retain unchanged history identity through the normal mutation owner. A whole
+  // world clone would erase certified append ancestry before this setup is saved.
+  world = updateWorld(world, (draft) => {
+    // Fixture-only ordinary flight loops have staggered departure times and copied native bodies.
+    // The manifest records their exact routes; gameplay randomness is not consumed here.
+    const bird = entityGet(draft.entities, 'bird-1')!;
+    if (scenario.birds && (!bird?.actor || bird.spatial.body.id !== 'bird'))
+      throw new Error('Synthetic flight fixtures require the starter native bird body.');
+    for (let index = 0; index < scenario.birds; index++) {
+      const id = `profile-${groupId}-bird-${index}`;
+      const x = anchor.x + (index % 6) * 0.5,
+        z = anchor.z + Math.floor(index / 6) * 0.5,
+        y = 5 + (index % 4) * 0.1;
+      if (x + 12 > draft.map.width - 1 || z + 12 > draft.map.height - 1)
+        throw new Error('The synthetic flight loop does not fit within the fixture map.');
+      const routeId = `${id}-loop`;
+      draft.flightRoutes[routeId] = {
+        id: routeId,
+        body: { ...bird!.spatial.body },
+        speed: 0.6,
+        climbSpeed: 0.3,
+        continuation: { kind: 'loop' },
+        points: [
+          { position: { x, y, z }, waitSeconds: 0 },
+          { position: { x: x + 12, y, z }, waitSeconds: 0 },
+          { position: { x: x + 12, y, z: z + 12 }, waitSeconds: 0 },
+          { position: { x, y, z: z + 12 }, waitSeconds: 0 },
+        ],
+      };
+      entitySet(draft.entities, id, {
+        ...cloneValue(bird),
         id,
-        name: group.definition.name,
-        kind: 'resource',
-        spatial: baseSpatial('object'),
-        placement: worldPlacement(position, position.surfaceId),
-        resource: {
-          definitionId: definition.id,
-          quantity: group.quantity,
-          workSeconds: group.workSeconds,
+        name: `Synthetic profile bird ${groupId} ${index}`,
+        placement: worldPlacement({ x, y, z }, null),
+        spatial: {
+          ...baseSpatial('bird'),
+          heading: 0,
+          flight: { routeId, next: 1, waitSeconds: (index * 7) % 53 },
         },
       });
     }
-  }
+    let objectIndex = 0;
+    for (const group of scenario.objects) {
+      const definition = { ...group.definition, id: `${group.definition.id}-${groupId}` };
+      if (Object.hasOwn(draft.itemDefinitions, definition.id))
+        throw new Error('Fixture material ID collision.');
+      draft.itemDefinitions[definition.id] = definition;
+      for (let i = 0; i < group.count; i++) {
+        const id = `profile-${groupId}-object-${objectIndex++}`;
+        if (entityHas(draft.entities, id)) throw new Error('Fixture entity ID collision.');
+        // Ground objects may share tiles; quantity=500 is distinct from 500 visible entities.
+        const position =
+          positions[
+            (scenario.layout === 'crowded' ? i % Math.min(9, positions.length) : objectIndex - 1) %
+              positions.length
+          ]!;
+        entitySet(draft.entities, id, {
+          id,
+          name: group.definition.name,
+          kind: 'resource',
+          spatial: baseSpatial('object'),
+          placement: worldPlacement(position, position.surfaceId),
+          resource: {
+            definitionId: definition.id,
+            quantity: group.quantity,
+            workSeconds: group.workSeconds,
+          },
+        });
+      }
+    }
+  });
   return {
     world: prepareAnimalAlarms(world, scenario, groupId, addedAnimalIds),
     addedAnimalIds,

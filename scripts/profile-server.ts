@@ -10,6 +10,7 @@ import {
   entityHas,
   entityValues,
   materializeNativeValues,
+  updateWorld,
 } from '../packages/domain/src/index.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { chmod, copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -813,13 +814,22 @@ try {
     : [];
   // The diagnostic supplies method knowledge explicitly; it does not infer it
   // from body shape or manufacture an autonomous goal.
-  for (const actorId of routineActorIds)
-    for (const recipe of Object.values(seeded.recipes))
-      if (
-        recipe.source.kind === 'fixed-transform' &&
-        ['base:clean-fibers', 'base:twist-cord'].includes(recipe.source.definition.id)
-      )
-        learnRecipe(seeded, actorId, recipe.id, 'authored', 'diagnostic:routine-material-methods');
+  if (routineActorIds.length)
+    seeded = updateWorld(seeded, (draft) => {
+      for (const actorId of routineActorIds)
+        for (const recipe of Object.values(draft.recipes))
+          if (
+            recipe.source.kind === 'fixed-transform' &&
+            ['base:clean-fibers', 'base:twist-cord'].includes(recipe.source.definition.id)
+          )
+            learnRecipe(
+              draft,
+              actorId,
+              recipe.id,
+              'authored',
+              'diagnostic:routine-material-methods',
+            );
+    });
   const routineResources: Array<{
     actorId: string;
     id: string;
@@ -830,10 +840,12 @@ try {
   if (routineFixture) {
     // Replace synthetic inert roots, preserving the declared 100 added roots. These finite
     // ordinary patches make the scripted work possible without granting unseen inputs.
-    for (const entity of worldRootEntities(seeded)
+    const replacedRoots = worldRootEntities(seeded)
       .filter((entity) => entity.id.startsWith('profile-near-object-'))
-      .slice(0, routineActorIds.length * 2))
-      entityDelete(seeded.entities, entity.id);
+      .slice(0, routineActorIds.length * 2);
+    seeded = updateWorld(seeded, (draft) => {
+      for (const entity of replacedRoots) entityDelete(draft.entities, entity.id);
+    });
     if (travelFixture) {
       const placed = placeTravelResources(seeded, routineActorIds);
       seeded = placed.world;
@@ -899,8 +911,6 @@ try {
         }
       }
     }
-    // The ordinary spawn transition freezes its result; the final pause is fixture setup.
-    seeded = structuredClone(seeded);
     validateSpatialWorld(seeded);
     if (
       worldRootEntities(seeded).length - seedRoots.length !==
@@ -920,35 +930,37 @@ try {
         }>,
       }
     : undefined;
-  if (memoryHistory) {
-    seeded = structuredClone(seeded);
-    for (const [actorId, count, prefix] of [
-      [PLAYER_ID, 60, 'Profiler player observation'],
-      [NPC_ID, 25, 'Profiler resident observation'],
-    ] as const) {
-      const ids: string[] = [];
-      for (let i = 1; i <= count; i++) {
-        const id = appendMemory(seeded, actorId, {
-          kind: 'episode',
-          source: 'internal',
-          importance: 1,
-          entityIds: [actorId],
-          summary: `${prefix} ${String(i).padStart(3, '0')}: I observed a synthetic diagnostic marker${actorId === PLAYER_ID && i % 5 === 0 ? ' colored saffron' : ''}.`,
+  if (memoryHistory)
+    seeded = updateWorld(seeded, (draft) => {
+      for (const [actorId, count, prefix] of [
+        [PLAYER_ID, 60, 'Profiler player observation'],
+        [NPC_ID, 25, 'Profiler resident observation'],
+      ] as const) {
+        const ids: string[] = [];
+        for (let i = 1; i <= count; i++) {
+          const id = appendMemory(draft, actorId, {
+            kind: 'episode',
+            source: 'internal',
+            importance: 1,
+            entityIds: [actorId],
+            summary: `${prefix} ${String(i).padStart(3, '0')}: I observed a synthetic diagnostic marker${actorId === PLAYER_ID && i % 5 === 0 ? ' colored saffron' : ''}.`,
+          });
+          if (!id) throw new Error(`Could not seed personal fixture history for ${actorId}.`);
+          ids.push(id);
+        }
+        memoryHistory.people.push({
+          actorId,
+          prefix,
+          ids,
+          ...(actorId === PLAYER_ID ? { searchWord: 'saffron', searchCount: 12 } : {}),
         });
-        if (!id) throw new Error(`Could not seed personal fixture history for ${actorId}.`);
-        ids.push(id);
       }
-      memoryHistory.people.push({
-        actorId,
-        prefix,
-        ids,
-        ...(actorId === PLAYER_ID ? { searchWord: 'saffron', searchCount: 12 } : {}),
-      });
-    }
-  }
-  const longSoak = longSoakFixture
-    ? prepareLongSoak(seeded, routineResources, seconds, config.baseRatio)
-    : undefined;
+    });
+  let longSoak: ReturnType<typeof prepareLongSoak> | undefined;
+  if (longSoakFixture)
+    seeded = updateWorld(seeded, (draft) => {
+      longSoak = prepareLongSoak(draft, routineResources, seconds, config.baseRatio);
+    });
   if (longSoak && travelFixture)
     longSoak.resourceSchedule =
       'Finite assigned separated patches, with actual supported approach travel and ordinary return between cycles. No retargeting or replenishment.';
@@ -957,7 +969,9 @@ try {
   // Include the world's actual initial sensing/conditions in setup, before timing play.
   profilingStage = 'initial fixture preparation';
   const startupAt = performance.now();
-  prepareBaseInitialWorldState(seeded);
+  seeded = updateWorld(seeded, (draft) => {
+    prepareBaseInitialWorldState(draft);
+  });
   const startupPreparationMs = performance.now() - startupAt;
   profilingStage = 'initial fixture save';
   await store.commit(0, { world: seeded, speed: profileSpeed, manuallyPaused: true });

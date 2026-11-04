@@ -10,6 +10,7 @@ import { workspaceBindings } from './performance/workspace-bindings.js';
 import {
   advanceWorld,
   freezeWorld,
+  updateWorld,
   observeDomainCounters,
   type WorldState,
 } from '../packages/domain/src/index.js';
@@ -47,7 +48,15 @@ if (scenario) {
 }
 if (!world || !Number.isFinite(world.simTime) || !world.entities || !Array.isArray(world.events))
   throw new Error('Expected a SavedWorld or backup-world.ts backup containing a world snapshot.');
-world.paused = false;
+if (mutable) {
+  // Intentional native-only comparison: no saved incremental lineage consumes
+  // this detached builder. Ordinary scenarios preserve semantic-owner ancestry.
+  world = structuredClone(world);
+  world.paused = false;
+} else
+  world = updateWorld(world, (draft) => {
+    draft.paused = false;
+  });
 const initial = {
   simTime: world.simTime,
   entities: entityKeys(world.entities).length,

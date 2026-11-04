@@ -1214,7 +1214,7 @@ async function main() {
         report.scenario = scenario;
         report.targetPopulation = target;
       }
-      const population = populateScenario(structuredClone(world), scenario);
+      const population = populateScenario(world, scenario);
       const pressure = prepareNativePressure(population.world, scenario, population.addedAnimalIds);
       pressureFixture = pressure.fixture;
       cohortIds = new Set(population.addedAnimalIds);

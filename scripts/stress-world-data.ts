@@ -1,4 +1,4 @@
-import { entityValues } from '../packages/domain/src/index.js';
+import { entityGet, entityValues, updateWorld } from '../packages/domain/src/index.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { worldPosition } from '@open-legend/domain';
@@ -110,11 +110,14 @@ try {
   const people = entityValues(world.entities).filter(
     (entry) => entry.actor && entry.kind !== 'animal',
   );
-  people.forEach((entity, index) => {
-    entity.actor!.controller = index < targets.humans ? 'player' : 'npc';
-    entity.kind = index < targets.humans ? 'player' : 'npc';
-    if (index < targets.humans)
-      world.authorship.playerAccountIds[entity.id] = `stress-player-${index}`;
+  world = updateWorld(world, (draft) => {
+    people.forEach(({ id }, index) => {
+      const entity = entityGet(draft.entities, id)!;
+      entity.actor!.controller = index < targets.humans ? 'player' : 'npc';
+      entity.kind = index < targets.humans ? 'player' : 'npc';
+      if (index < targets.humans)
+        draft.authorship.playerAccountIds[entity.id] = `stress-player-${index}`;
+    });
   });
   world = freezeWorld(world);
   let revision = 0,
