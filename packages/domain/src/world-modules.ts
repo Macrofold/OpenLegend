@@ -1357,7 +1357,7 @@ export function validateWorldModules(world: WorldState): void {
   )
     throw new Error('Invalid selected normal-time rate.');
   validatePerceptionEvidenceState(world, originalObservations);
-  validateTemporalEvidenceState(world, originalObservations);
+  validateTemporalEvidenceState(world, world.experience?.temporal);
   for (const [actorId, revision] of Object.entries(world.experience?.privacyRevisions ?? {}))
     if (!isSafeRecordId(actorId) || !Number.isSafeInteger(revision) || revision < 0)
       throw new Error('Invalid personal evidence revision.');

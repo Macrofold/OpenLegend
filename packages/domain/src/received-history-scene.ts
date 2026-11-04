@@ -214,7 +214,8 @@ export function historicalSpatialMeasurements(
       facts.push({
         source: { entry, facet },
         order: selected.receipt.order,
-        batchOrder: selected.receipt.batchOrder,entryIndex: selected.receipt.entryIndex,
+        batchOrder: selected.receipt.batchOrder,
+        entryIndex: selected.receipt.entryIndex,
         acquisition: selected.receipt.acquisition,
         epoch: selected.receipt.epoch,
         physicalLife: selected.receipt.physicalLife,
@@ -233,7 +234,8 @@ export function historicalSpatialMeasurements(
       facts.push({
         source: { baseline, facet },
         order: selected.checkpoint.order,
-        batchOrder: selected.checkpoint.batchOrder,entryIndex: selected.checkpoint.entryIndex,
+        batchOrder: selected.checkpoint.batchOrder,
+        entryIndex: selected.checkpoint.entryIndex,
         acquisition: selected.checkpoint.acquisition,
         epoch: selected.checkpoint.epoch,
         physicalLife: selected.checkpoint.physicalLife,
@@ -255,7 +257,13 @@ export function historicalSpatialMeasurements(
         from(fact) <= request.through &&
         from(fact) <= through(fact),
     )
-    .sort((a, b) => through(b) - through(a) || b.order - a.order || b.batchOrder - a.batchOrder || b.entryIndex - a.entryIndex);
+    .sort(
+      (a, b) =>
+        through(b) - through(a) ||
+        b.order - a.order ||
+        b.batchOrder - a.batchOrder ||
+        b.entryIndex - a.entryIndex,
+    );
   const others = request.other
     ? bodies
         .filter((fact) => fact.subject === request.other)
@@ -399,7 +407,12 @@ export function historicalSpatialMeasurements(
   samples.sort((a, b) => {
     const first = position(a.support[0]!),
       second = position(b.support[0]!);
-    return a.at - b.at || first.order - second.order || first.batchOrder - second.batchOrder || first.entryIndex - second.entryIndex;
+    return (
+      a.at - b.at ||
+      first.order - second.order ||
+      first.batchOrder - second.batchOrder ||
+      first.entryIndex - second.entryIndex
+    );
   });
   let previousOther: { at: number; lower: number; support: HistoricalSpatialFact[] } | undefined;
   const previousEdges = new Map<

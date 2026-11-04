@@ -658,23 +658,42 @@ const pageStorage = (value: JsonRecord, world: WorldState | undefined) => {
   return encodeTemporalPage(value as unknown as import('@open-legend/domain').TemporalPage, world);
 };
 const temporalPageColumnTypes = {
-  actor_id: 'TEXT NOT NULL', physical_life: 'BIGINT NOT NULL', receipt_epoch: 'TEXT NOT NULL',
-  first_batch_order: 'BIGINT NOT NULL', first_entry: 'BIGINT NOT NULL', first_member: 'BIGINT NOT NULL',
-  last_batch_order: 'BIGINT NOT NULL', last_entry: 'BIGINT NOT NULL', last_member: 'BIGINT NOT NULL',
-  first_at: 'DOUBLE PRECISION NOT NULL', last_at: 'DOUBLE PRECISION NOT NULL',
-  entry_bytes: 'BIGINT NOT NULL', receipt_count: 'BIGINT NOT NULL', encoded_bytes: 'BIGINT NOT NULL',
-  charge_directory: 'TEXT NOT NULL', spatial_context: 'BIGINT NOT NULL',
-  subject_keys: 'TEXT[] NOT NULL', track_keys: 'TEXT[] NOT NULL', source_ids: 'TEXT[] NOT NULL',
-  individual_ids: 'TEXT[] NOT NULL', value_refs: 'TEXT[] NOT NULL', occurrence_keys: 'TEXT[] NOT NULL',
+  actor_id: 'TEXT NOT NULL',
+  physical_life: 'BIGINT NOT NULL',
+  receipt_epoch: 'TEXT NOT NULL',
+  first_batch_order: 'BIGINT NOT NULL',
+  first_entry: 'BIGINT NOT NULL',
+  first_member: 'BIGINT NOT NULL',
+  last_batch_order: 'BIGINT NOT NULL',
+  last_entry: 'BIGINT NOT NULL',
+  last_member: 'BIGINT NOT NULL',
+  first_at: 'DOUBLE PRECISION NOT NULL',
+  last_at: 'DOUBLE PRECISION NOT NULL',
+  entry_bytes: 'BIGINT NOT NULL',
+  receipt_count: 'BIGINT NOT NULL',
+  encoded_bytes: 'BIGINT NOT NULL',
+  charge_directory: 'TEXT NOT NULL',
+  spatial_context: 'BIGINT NOT NULL',
+  subject_keys: 'TEXT[] NOT NULL',
+  track_keys: 'TEXT[] NOT NULL',
+  source_ids: 'TEXT[] NOT NULL',
+  individual_ids: 'TEXT[] NOT NULL',
+  value_refs: 'TEXT[] NOT NULL',
+  occurrence_keys: 'TEXT[] NOT NULL',
   lookup_buckets: 'SMALLINT[] NOT NULL',
 };
 columns(
   'mind_temporal_pages',
-  Object.fromEntries(Object.entries(temporalPageColumnTypes).map(([name, sql]) => [name, {
-    sql,
-    value: (value: JsonRecord, _path: string[], world?: WorldState) =>
-      temporalPageColumns(pageStorage(value, world))[name],
-  }])),
+  Object.fromEntries(
+    Object.entries(temporalPageColumnTypes).map(([name, sql]) => [
+      name,
+      {
+        sql,
+        value: (value: JsonRecord, _path: string[], world?: WorldState) =>
+          temporalPageColumns(pageStorage(value, world))[name],
+      },
+    ]),
+  ),
   [
     ['actor_id', 'first_batch_order', 'first_entry', 'first_member', 'id'],
     ['actor_id', 'first_at', 'first_batch_order', 'first_entry', 'first_member', 'id'],
@@ -686,12 +705,62 @@ columns(
   {
     actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path.at(-1) },
     next_due: numberColumn('nextDue'),
-    expired_through_time: { sql: 'DOUBLE PRECISION', value: (value) => (value['frontier'] as JsonRecord | undefined)?.['expiredThroughTime'] ?? null },
-    pressure_batch_order: { sql: 'BIGINT', value: (value) => (((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['address'] as JsonRecord | undefined)?.['batchOrder'] ?? null },
-    pressure_entry: { sql: 'BIGINT', value: (value) => (((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['address'] as JsonRecord | undefined)?.['entryIndex'] ?? null },
-    pressure_member: { sql: 'BIGINT', value: (value) => (((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['address'] as JsonRecord | undefined)?.['memberIndex'] ?? null },
-    pressure_at: { sql: 'DOUBLE PRECISION', value: (value) => ((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['receivedAt'] ?? null },
-    pressure_order: { sql: 'BIGINT', value: (value) => ((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['order'] ?? null },
+    expired_through_time: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) =>
+        (value['frontier'] as JsonRecord | undefined)?.['expiredThroughTime'] ?? null,
+    },
+    pressure_batch_order: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (
+            (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+              | JsonRecord
+              | undefined
+          )?.['address'] as JsonRecord | undefined
+        )?.['batchOrder'] ?? null,
+    },
+    pressure_entry: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (
+            (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+              | JsonRecord
+              | undefined
+          )?.['address'] as JsonRecord | undefined
+        )?.['entryIndex'] ?? null,
+    },
+    pressure_member: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (
+            (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+              | JsonRecord
+              | undefined
+          )?.['address'] as JsonRecord | undefined
+        )?.['memberIndex'] ?? null,
+    },
+    pressure_at: {
+      sql: 'DOUBLE PRECISION',
+      value: (value) =>
+        (
+          (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+            | JsonRecord
+            | undefined
+        )?.['receivedAt'] ?? null,
+    },
+    pressure_order: {
+      sql: 'BIGINT',
+      value: (value) =>
+        (
+          (value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as
+            | JsonRecord
+            | undefined
+        )?.['order'] ?? null,
+    },
     logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
     receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
   },

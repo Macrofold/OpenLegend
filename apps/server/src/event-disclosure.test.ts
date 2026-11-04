@@ -24,6 +24,7 @@ import {
   currentReceivedObservations,
   experienceEntry,
   queryMemories,
+  temporalReceiptWithinPrefix,
 } from '@open-legend/domain';
 import { applyBodyEffects } from '../../../packages/domain/src/living.js';
 import { validateWorldModules } from '../../../packages/domain/src/world-modules.js';
@@ -535,7 +536,7 @@ describe('event-time observer facts', () => {
       laterSameTime.entries.some(
         (entry) =>
           entry.receipt.epoch === captured.receiptPrefix.epoch &&
-          entry.receipt.ordinal > captured.receiptPrefix.throughOrdinal,
+          !temporalReceiptWithinPrefix(entry.receipt, captured.receiptPrefix),
       ),
     ).toBe(true);
     const unfiltered = await store.memories.temporalHistory(
@@ -565,10 +566,8 @@ describe('event-time observer facts', () => {
         const page = await store.memories.temporalHistory(scope, query, service.world);
         expect(page.entries.length).toBeGreaterThan(0);
         expect(
-          page.entries.every(
-            (entry) =>
-              entry.receipt.epoch !== captured.receiptPrefix.epoch ||
-              entry.receipt.ordinal <= captured.receiptPrefix.throughOrdinal,
+          page.entries.every((entry) =>
+            temporalReceiptWithinPrefix(entry.receipt, captured.receiptPrefix),
           ),
         ).toBe(true);
         return page;

@@ -1,5 +1,11 @@
 import { WorkLane } from './work-lane.js';
-import { timed, beginTiming, endTiming, beginDatabaseQuery, finishDatabaseQuery } from './performance.js';
+import {
+  timed,
+  beginTiming,
+  endTiming,
+  beginDatabaseQuery,
+  finishDatabaseQuery,
+} from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';

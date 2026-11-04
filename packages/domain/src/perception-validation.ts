@@ -1,6 +1,7 @@
 import { validObservationExposure } from './perception-values.js';
 import { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
 import { canonicalJson } from './events.js';
+import { sameReceivedValueReference } from './received-values.js';
 import {
   currentFacetGet,
   currentFacetEntries,
@@ -111,7 +112,8 @@ export function validateReceivedValueState(
           !Number.isFinite(header.acquiredAt) ||
           header.acquiredAt < 0 ||
           header.acquiredAt > world.simTime ||
-          !Number.isSafeInteger(header.receivedOrder) || header.receivedOrder < 0 ||
+          !Number.isSafeInteger(header.receivedOrder) ||
+          header.receivedOrder < 0 ||
           !['sight', 'hearing', 'touch'].includes(header.modality) ||
           !validObservationDetector(header.detector) ||
           (header.channel !== undefined &&
@@ -262,7 +264,7 @@ export function validatePerceptionEvidenceState(
         contexts = new Set<string>();
       for (const group of contact.content.groups) {
         if (
-          !hasRecordFields(group, ['received', 'metadata'],['recordings']) ||
+          !hasRecordFields(group, ['received', 'metadata'], ['recordings']) ||
           !hasRecordFields(group.received, ['grant', 'fields']) ||
           !hasRecordFields(group.received.grant, [
             'subjectId',
@@ -391,12 +393,38 @@ export function validatePerceptionEvidenceState(
           if (contexts.has(context)) throw new Error('Duplicate current receipt partition.');
           contexts.add(context);
         }
-        if(group.recordings){
-          if(!Array.isArray(group.recordings))throw new Error('Invalid current recording bindings.');
-          const admitted=new Set<string>();
-          for(const recording of group.recordings){
-            validateTemporalCurrentGroupCheckpoint(recording,world.simTime,group.metadata.flatMap(partition=>partition.members));
-            for(const member of recording.members){const key=JSON.stringify([member.kind,member.part]);if(admitted.has(key))throw new Error('Duplicate current recording admission.');admitted.add(key);}
+        if (group.recordings) {
+          if (!Array.isArray(group.recordings))
+            throw new Error('Invalid current recording bindings.');
+          const admitted = new Set<string>();
+          for (const recording of group.recordings) {
+            validateTemporalCurrentGroupCheckpoint(
+              world,
+              recording,
+              world.simTime,
+              group.metadata.flatMap((partition) => partition.members),
+            );
+            if (
+              recording.lastSource.observer.actorId !== observerId ||
+              recording.lastSource.observer.physicalLife !== state.life ||
+              recording.binding.subject !== receivedTrackKey(grant.exposure, grant.channel)
+            )
+              throw new Error('Current recording belongs to another received track.');
+            for (const member of recording.members) {
+              const part = recording.binding.parts.find(
+                  (part) => part.kind === member.kind && part.part === member.part,
+                ),
+                field = group.received.fields[member.kind];
+              if (
+                !part ||
+                !field ||
+                !sameReceivedValueReference(part.facet.valueRef, field.value.reference)
+              )
+                throw new Error('Current recording names another received value.');
+              const key = JSON.stringify([member.kind, member.part]);
+              if (admitted.has(key)) throw new Error('Duplicate current recording admission.');
+              admitted.add(key);
+            }
           }
         }
         used.add(grant.original);

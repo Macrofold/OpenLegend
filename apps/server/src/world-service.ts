@@ -2032,12 +2032,7 @@ export class WorldService {
       nextAccountRetentionAt(this.world),
     ].filter((at): at is number => at !== null);
     const at = deadlines.length ? Math.min(...deadlines) : undefined;
-    if (
-      at === undefined ||
-      this.retentionTask ||
-      this.closed ||
-      this.paused
-    ) {
+    if (at === undefined || this.retentionTask || this.closed || this.paused) {
       clearTimeout(this.retentionTimer);
       this.retentionTimer = undefined;
       this.retentionWakeAt = undefined;
@@ -2075,7 +2070,8 @@ export class WorldService {
             const ids = this.store.captureRetentionActors?.(this.saved).recent ?? [];
             if (!ids.length) return;
             const recent = retireRecentHistory(this.saved, ids);
-            if (recent.state !== this.saved) await this.acceptProgress(recent.state, undefined, recent);
+            if (recent.state !== this.saved)
+              await this.acceptProgress(recent.state, undefined, recent);
           }, true);
           const captured = this.saved,
             generation = this.generation;
@@ -2091,13 +2087,23 @@ export class WorldService {
             );
           const actors = this.store.captureRetentionActors(captured);
           if (!actors.accounts.length) return;
-          const sources = this.store.memories.captureRetentionSourceWatch(captured.world.id, actors.accounts);
+          const sources = this.store.memories.captureRetentionSourceWatch(
+            captured.world.id,
+            actors.accounts,
+          );
           try {
-            const accounts = await this.store.prepareAccountRetention?.(captured, pending, cut, actors.accounts);
+            const accounts = await this.store.prepareAccountRetention?.(
+              captured,
+              pending,
+              cut,
+              actors.accounts,
+            );
             await this.mutate(async () => {
               if (this.generation !== generation || !this.pendingAdmissionOpen()) return;
               const changed = sources.changes();
-              const retained = accounts ? applyAccountRetentionPlan(this.saved, accounts, changed) : undefined;
+              const retained = accounts
+                ? applyAccountRetentionPlan(this.saved, accounts, changed)
+                : undefined;
               if (!retained) return;
               if (retained.stale) countMetric('retention.stalePreparations');
               if (retained.state !== this.saved)
@@ -2464,8 +2470,7 @@ export class WorldService {
             oldHistory.pages.every((chunk, index) => {
               const next = newHistory.pages[index]!;
               return (
-                chunk === next ||
-                (chunk.id === next.id && unchanged(chunk.operations, next.operations))
+                chunk === next || (chunk.id === next.id && unchanged(chunk.batches, next.batches))
               );
             }))));
     const supportsUnchanged =
@@ -2933,6 +2938,25 @@ export class WorldService {
       this.adoptDurableHistory(merged);
       this.saved = merged;
       const saved = { ...merged, world };
+      // The protected commit drains accepted work and may evict cold bodies.
+      // Keep the already verified canonical predecessors in the existing scoped
+      // edit preparation so residency cannot turn an erasure into a new append.
+      const previous = new Map(cleanup.previous);
+      const temporalBefore = new Map(previous.get('mind_temporal_pages'));
+      for (const actor of Object.values(merged.world.experience?.temporal?.actors ?? {}))
+        for (const page of actor.pages) {
+          const id = JSON.stringify([
+            'world',
+            'experience',
+            'temporal',
+            'actors',
+            page.actorId,
+            'pages',
+            page.id,
+          ]);
+          if (prepared.temporalPredecessors?.has(id)) temporalBefore.set(id, page);
+        }
+      if (temporalBefore.size) previous.set('mind_temporal_pages', temporalBefore);
       const ok = await this.commit(
         saved,
         changed.transition.invalidatedMemoryIds,
@@ -2941,7 +2965,7 @@ export class WorldService {
         undefined,
         undefined,
         undefined,
-        { ...cleanup, state: saved },
+        { ...cleanup, state: saved, previous },
       );
       return {
         ok,

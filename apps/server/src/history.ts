@@ -87,7 +87,8 @@ export function validateHistoryEvidence(
     for (const chunk of actor.pages)
       for (const batch of chunk.batches)
         for (const entry of batch.entries)
-          if (entry.kind === 'occurrence' && entry.receipt) receipts.set(entry.receipt.id, entry.receipt);
+          if (entry.kind === 'occurrence' && entry.receipt)
+            receipts.set(entry.receipt.id, entry.receipt);
   for (const [actor, entries] of Object.entries(world.experience?.awareness ?? {}))
     for (const entry of entries) {
       const payload = JSON.stringify(entry);

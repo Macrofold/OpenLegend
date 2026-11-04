@@ -25,3 +25,27 @@ export function validPersonalSourceRef(value: unknown): value is PersonalSourceR
 /** Exact local acquired-fact alias for existing correction/forgetting overlays. */
 export const personalFactAlias = (observationId: string, ordinal: number): string =>
   JSON.stringify(['perception-fact', observationId, ordinal]);
+
+/** Candidate routing only: the exact alias still governs semantic revocation. */
+export function parsePersonalFactAlias(
+  value: string,
+): { observationId: string; ordinal: number } | undefined {
+  if (!value.startsWith('["perception-fact",')) return;
+  try {
+    const parts: unknown = JSON.parse(value);
+    if (
+      !Array.isArray(parts) ||
+      parts.length !== 3 ||
+      parts[0] !== 'perception-fact' ||
+      typeof parts[1] !== 'string' ||
+      !parts[1] ||
+      !Number.isSafeInteger(parts[2]) ||
+      parts[2] < 0 ||
+      personalFactAlias(parts[1], parts[2]) !== value
+    )
+      return;
+    return { observationId: parts[1], ordinal: parts[2] };
+  } catch {
+    return;
+  }
+}

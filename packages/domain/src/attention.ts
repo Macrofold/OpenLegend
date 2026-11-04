@@ -739,9 +739,13 @@ export function updateAttention(
   const prepared = preparedAttentionSelections.get(entryIdentity);
   const annotations = readOnlyDraftView(state.annotations);
   const target = observer.actor.action?.targetId;
-  const reusable = prepared && prepared.observerId === observerId &&
-    prepared.life === owner.life && prepared.policy === nextPolicy &&
-    update.changedSourceIds !== undefined && isImmutableData(annotations) &&
+  const reusable =
+    prepared &&
+    prepared.observerId === observerId &&
+    prepared.life === owner.life &&
+    prepared.policy === nextPolicy &&
+    update.changedSourceIds !== undefined &&
+    isImmutableData(annotations) &&
     sameKeys(prepared.anchors, previousRelationAnchors);
   const refreshedSources = new Set(changed);
   if (reusable && prepared.annotations !== annotations) {
@@ -754,12 +758,22 @@ export function updateAttention(
   }
   if (reusable)
     for (const [key, candidate] of Object.entries(prepared.candidates))
-      if (selectedAttentionFamiliarity(world, observerId, candidate.subject) !== prepared.familiarities.get(key))
+      if (
+        selectedAttentionFamiliarity(world, observerId, candidate.subject) !==
+        prepared.familiarities.get(key)
+      )
         refreshedSources.add(candidate.sourceId);
-  if (reusable && !refreshedSources.size && !geometryChanged &&
-    prepared.annotations === annotations && prepared.target === target &&
+  if (
+    reusable &&
+    !refreshedSources.size &&
+    !geometryChanged &&
+    prepared.annotations === annotations &&
+    prepared.target === target &&
     prepared.explicit === readOnlyDraftView(state.explicit) &&
-    !entriesBefore.some((entry) => entry.stableUntil > prepared.at && entry.stableUntil <= world.simTime)) {
+    !entriesBefore.some(
+      (entry) => entry.stableUntil > prepared.at && entry.stableUntil <= world.simTime,
+    )
+  ) {
     countDomainWork('attentionSelectionsReused');
     return { before, after: before, subjects: prepared.subjects };
   }
@@ -1016,12 +1030,22 @@ export function updateAttention(
       for (const family of ['closing-body', 'closing-drop'] as const)
         state.relationDirty[relationKey(key, family)] = state.relationRevision;
   preparedAttentionSelections.set(readOnlyDraftView(state.entries), {
-    observerId, life: owner.life, policy: nextPolicy, at: world.simTime,
-    explicit: readOnlyDraftView(state.explicit), target,
-    annotations: readOnlyDraftView(state.annotations), candidates: candidateView,
-    familiarities: new Map(Object.entries(candidateView).map(([key, candidate]) =>
-      [key, selectedAttentionFamiliarity(world, observerId, candidate.subject)])),
-    subjects, anchors: attentionRelationKeys(world, observerId),
+    observerId,
+    life: owner.life,
+    policy: nextPolicy,
+    at: world.simTime,
+    explicit: readOnlyDraftView(state.explicit),
+    target,
+    annotations: readOnlyDraftView(state.annotations),
+    candidates: candidateView,
+    familiarities: new Map(
+      Object.entries(candidateView).map(([key, candidate]) => [
+        key,
+        selectedAttentionFamiliarity(world, observerId, candidate.subject),
+      ]),
+    ),
+    subjects,
+    anchors: attentionRelationKeys(world, observerId),
   });
   return {
     before,
@@ -1048,8 +1072,7 @@ function attentionRelationKeys(world: WorldState, observerId: string): Set<strin
   if (!bodyReads) return result;
   const entries = readOnlyDraftView(state.entries);
   for (const entry of entries)
-    if (bodyReads.nativeBody(entry.sourceId)?.field.id === entry.leaseId)
-      result.add(entry.key);
+    if (bodyReads.nativeBody(entry.sourceId)?.field.id === entry.leaseId) result.add(entry.key);
   const target = entityGet(world.entities, observerId)?.actor?.action?.targetId;
   for (const [key, value] of Object.entries(readOnlyDraftView(state.annotations))) {
     if (

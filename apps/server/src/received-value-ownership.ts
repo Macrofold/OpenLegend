@@ -1,10 +1,18 @@
-import { eligibleReceivedChargeDirectories, temporalPageReferences, type ReceivedChargeDirectory } from '@open-legend/domain';
+import {
+  eligibleReceivedChargeDirectories,
+  temporalPageReferences,
+  type ReceivedChargeDirectory,
+} from '@open-legend/domain';
 import { beginTiming, endTiming, countMetric } from './performance.js';
 import { sqlRowBatches } from './sql-rows.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import type { SqlDatabase } from './store.js';
-import { temporalBlockExpiredSql, temporalBlockMixedBoundarySql, temporalFrontierFromColumns } from './temporal-page-storage.js';
+import {
+  temporalBlockExpiredSql,
+  temporalBlockMixedBoundarySql,
+  temporalFrontierFromColumns,
+} from './temporal-page-storage.js';
 
 import { receivedCurrentOwnerTables as currentOwners } from './received-record-references.js';
 interface Owner {
@@ -89,10 +97,15 @@ export class ReceivedValueOwnership {
       await this.db.prepare('DELETE FROM received_value_uses WHERE world_id=?').run(worldId);
       const owners = [...currentOwners, 'mind_temporal_pages'];
       await this.db
-        .prepare(`INSERT INTO received_value_uses ${owners.map((table) =>
-          `SELECT p.world_id,'${table}',p.id,p.actor_id,v.value FROM ${table} p
-           CROSS JOIN LATERAL unnest(p.value_refs) v(value) WHERE p.world_id=?`
-        ).join(' UNION ALL ')} ON CONFLICT DO NOTHING`)
+        .prepare(
+          `INSERT INTO received_value_uses ${owners
+            .map(
+              (table) =>
+                `SELECT p.world_id,'${table}',p.id,p.actor_id,v.value FROM ${table} p
+           CROSS JOIN LATERAL unnest(p.value_refs) v(value) WHERE p.world_id=?`,
+            )
+            .join(' UNION ALL ')} ON CONFLICT DO NOTHING`,
+        )
         .run(...owners.map(() => worldId));
       await this.db
         .prepare('UPDATE mind_perception_values SET gc_candidate_seq=? WHERE world_id=?')
@@ -214,7 +227,9 @@ export class ReceivedValueOwnership {
         const actorCursor = this.actorCursor?.worldId === worldId ? this.actorCursor : undefined;
         // Select the oldest block before testing expiry. An actor with no expired
         // history costs one indexed seek, never a walk through its retained life.
-        const candidates = await this.db.prepare(`WITH actors AS MATERIALIZED (
+        const candidates = await this.db
+          .prepare(
+            `WITH actors AS MATERIALIZED (
           SELECT actor_id,expired_through_time,pressure_batch_order,pressure_entry,pressure_member,pressure_at,pressure_order,
             row_number() OVER(ORDER BY actor_id) AS cursor_order
           FROM mind_temporal_actors WHERE world_id=? ${actorCursor ? 'AND actor_id>?' : ''}
@@ -239,38 +254,59 @@ export class ReceivedValueOwnership {
             first_at,last_at,encoded_bytes,charge_directory
           FROM mind_temporal_pages WHERE world_id=? AND actor_id=a.actor_id
           ORDER BY first_batch_order,first_entry,first_member,id LIMIT 1
-        ) p ON TRUE`)
-          .all(worldId, ...(actorCursor ? [actorCursor.id] : []), worldId,
-            ...(valueCursor ? [valueCursor.sequence, valueCursor.id] : []), worldId);
-        const values = candidates.filter(row => Number(row['kind']) === 1).sort((a,b) => Number(a['cursor_order'])-Number(b['cursor_order']));
-        const actors = candidates.filter(row => Number(row['kind']) === 0).sort((a,b) => Number(a['cursor_order'])-Number(b['cursor_order']));
+        ) p ON TRUE`,
+          )
+          .all(
+            worldId,
+            ...(actorCursor ? [actorCursor.id] : []),
+            worldId,
+            ...(valueCursor ? [valueCursor.sequence, valueCursor.id] : []),
+            worldId,
+          );
+        const values = candidates
+          .filter((row) => Number(row['kind']) === 1)
+          .sort((a, b) => Number(a['cursor_order']) - Number(b['cursor_order']));
+        const actors = candidates
+          .filter((row) => Number(row['kind']) === 0)
+          .sort((a, b) => Number(a['cursor_order']) - Number(b['cursor_order']));
         // Time and pressure can jointly exhaust a boundary even when neither
         // scalar envelope proves it alone. Inspect its grouped metadata, never
         // its evidence bodies, through the same native eligibility owner.
         for (const actor of actors) {
           if (typeof actor['boundary_directory'] !== 'string') continue;
           const directory = JSON.parse(actor['boundary_directory']) as ReceivedChargeDirectory;
-          actor['eligible'] = eligibleReceivedChargeDirectories([directory], temporalFrontierFromColumns(actor)).length === 0;
+          actor['eligible'] =
+            eligibleReceivedChargeDirectories([directory], temporalFrontierFromColumns(actor))
+              .length === 0;
         }
-        const lastValue = values.at(-1), lastActor = actors.at(-1);
-        let nextValueCursor = values.length === 128 && lastValue
-          ? { worldId, sequence: Number(lastValue['sequence']), id: String(lastValue['id']) } : undefined;
-        let nextActorCursor = actors.length === 128 && lastActor
-          ? { worldId, id: String(lastActor['actor_id']) } : undefined;
+        const lastValue = values.at(-1),
+          lastActor = actors.at(-1);
+        let nextValueCursor =
+          values.length === 128 && lastValue
+            ? { worldId, sequence: Number(lastValue['sequence']), id: String(lastValue['id']) }
+            : undefined;
+        let nextActorCursor =
+          actors.length === 128 && lastActor
+            ? { worldId, id: String(lastActor['actor_id']) }
+            : undefined;
         const groups = [
-          actors.filter(row => row['id'] !== null && row['eligible'] === true),
-          values.filter(row => !protects(String(row['id']))),
+          actors.filter((row) => row['id'] !== null && row['eligible'] === true),
+          values.filter((row) => !protects(String(row['id']))),
         ];
         const chosen: Array<{ kind: number; id: string; bytes: number }> = [];
         let bytes = 0;
-        const blocked = [false,false], lastTaken: Array<Record<string,unknown> | undefined> = [];
+        const blocked = [false, false],
+          lastTaken: Array<Record<string, unknown> | undefined> = [];
         for (let turn = 0; turn < 128; turn++) {
           for (const kind of [this.firstCleanupKind, 1 - this.firstCleanupKind]) {
             if (blocked[kind]) continue;
             const row = groups[kind]![turn];
             if (!row) continue;
             const size = Number(row['bytes']);
-            if (chosen.length && bytes + size > 262144) { blocked[kind] = true; continue; }
+            if (chosen.length && bytes + size > 262144) {
+              blocked[kind] = true;
+              continue;
+            }
             chosen.push({ kind, id: String(row['id']), bytes: size });
             bytes += size;
             lastTaken[kind] = row;
@@ -279,12 +315,22 @@ export class ReceivedValueOwnership {
         // Byte admission must not restart at the same few busy actors forever.
         // Resume after the last serviced head; an oversized head gets its turn
         // under the existing one-record exception on a following slice.
-        if (blocked[0]) nextActorCursor = lastTaken[0]
-          ? { worldId, id: String(lastTaken[0]['actor_id']) } : actorCursor;
-        if (blocked[1]) nextValueCursor = lastTaken[1]
-          ? { worldId, sequence: Number(lastTaken[1]['sequence']), id: String(lastTaken[1]['id']) } : valueCursor;
+        if (blocked[0])
+          nextActorCursor = lastTaken[0]
+            ? { worldId, id: String(lastTaken[0]['actor_id']) }
+            : actorCursor;
+        if (blocked[1])
+          nextValueCursor = lastTaken[1]
+            ? {
+                worldId,
+                sequence: Number(lastTaken[1]['sequence']),
+                id: String(lastTaken[1]['id']),
+              }
+            : valueCursor;
         if (!chosen.length) return { row: undefined, nextValueCursor, nextActorCursor };
-        const row = await this.db.prepare(`WITH chosen AS MATERIALIZED (
+        const row = await this.db
+          .prepare(
+            `WITH chosen AS MATERIALIZED (
           SELECT * FROM jsonb_to_recordset(?::jsonb) c(kind integer,id text,bytes bigint)
         ), removed_uses AS (
           DELETE FROM received_value_uses u USING chosen c
@@ -318,8 +364,19 @@ export class ReceivedValueOwnership {
           (SELECT COALESCE(sum(bytes),0) FROM removed_chunks) AS chunk_bytes,
           (SELECT count(*) FROM removed_values) AS values_deleted,
           (SELECT count(*) FROM held) AS values_held,
-          (SELECT COALESCE(sum(bytes),0) FROM removed_values) AS value_bytes`)
-          .get(JSON.stringify(chosen), worldId, worldId, worldId, worldId, worldId, worldId, worldId, worldId);
+          (SELECT COALESCE(sum(bytes),0) FROM removed_values) AS value_bytes`,
+          )
+          .get(
+            JSON.stringify(chosen),
+            worldId,
+            worldId,
+            worldId,
+            worldId,
+            worldId,
+            worldId,
+            worldId,
+            worldId,
+          );
         return { row, nextValueCursor, nextActorCursor };
       });
       const { row, nextValueCursor, nextActorCursor } = completed;
@@ -331,8 +388,12 @@ export class ReceivedValueOwnership {
       countMetric('persistence.receivedValuesExamined', Number(row?.['examined_values'] ?? 0));
       countMetric('persistence.receivedValuesDeleted', Number(row?.['values_deleted'] ?? 0));
       countMetric('persistence.receivedValueBytesDeleted', Number(row?.['value_bytes'] ?? 0));
-      return Number(row?.['pages'] ?? 0) + Number(row?.['values_deleted'] ?? 0) +
-        Number(row?.['values_held'] ?? 0) + Number(!!nextValueCursor || !!nextActorCursor);
+      return (
+        Number(row?.['pages'] ?? 0) +
+        Number(row?.['values_deleted'] ?? 0) +
+        Number(row?.['values_held'] ?? 0) +
+        Number(!!nextValueCursor || !!nextActorCursor)
+      );
     } finally {
       endTiming('persistence.evidenceCleanup', mark);
     }

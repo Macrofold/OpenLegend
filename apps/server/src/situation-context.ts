@@ -155,13 +155,19 @@ const inlineFrame = (value: object, frame: unknown) => ({ ...value, frame });
 const temporalBaselineScope = (
   baseline: NonNullable<TemporalHistorySelection['baselines']>[number],
 ) => [
-    'checkpoint',
-    baseline.checkpoint.physicalLife, baseline.checkpoint.epoch, baseline.checkpoint.binding,
-    baseline.checkpoint.batchOrder, baseline.checkpoint.entryIndex,
-    baseline.forReceipt.physicalLife, baseline.forReceipt.epoch,
-    baseline.forReceipt.batchOrder, baseline.forReceipt.entryIndex, baseline.forReceipt.memberIndex,
-    baseline.availableAt,
-  ];
+  'checkpoint',
+  baseline.checkpoint.physicalLife,
+  baseline.checkpoint.epoch,
+  baseline.checkpoint.binding,
+  baseline.checkpoint.batchOrder,
+  baseline.checkpoint.entryIndex,
+  baseline.forReceipt.physicalLife,
+  baseline.forReceipt.epoch,
+  baseline.forReceipt.batchOrder,
+  baseline.forReceipt.entryIndex,
+  baseline.forReceipt.memberIndex,
+  baseline.availableAt,
+];
 const temporalBaselineHandle = (
   world: ExperiencePresentation,
   actorId: string,
@@ -244,7 +250,8 @@ function prepareTemporalHistoryForModel(
         'receipt',
         receipt.physicalLife,
         receipt.epoch,
-        receipt.batchOrder, receipt.entryIndex,
+        receipt.batchOrder,
+        receipt.entryIndex,
       ]),
       subject: receivedSubjectHandle(world, actorId, receipt.subject),
       ...(receipt.subjectIdentity
@@ -294,7 +301,8 @@ function prepareTemporalHistoryForModel(
       'receipt',
       baseline.forReceipt.physicalLife,
       baseline.forReceipt.epoch,
-      baseline.forReceipt.batchOrder, baseline.forReceipt.entryIndex,
+      baseline.forReceipt.batchOrder,
+      baseline.forReceipt.entryIndex,
     ]),
     ...temporalFactsForModel(
       world,
@@ -359,7 +367,12 @@ export function boundedTemporalHistoryForModel(
   const retained = selection.entries.slice(first),
     kept = new Set(
       retained.map(({ receipt }) =>
-        canonicalJson([receipt.physicalLife, receipt.epoch, receipt.batchOrder, receipt.entryIndex]),
+        canonicalJson([
+          receipt.physicalLife,
+          receipt.epoch,
+          receipt.batchOrder,
+          receipt.entryIndex,
+        ]),
       ),
     );
   const baselines: NonNullable<TemporalHistorySelection['baselines']> = [];
@@ -370,7 +383,8 @@ export function boundedTemporalHistoryForModel(
         canonicalJson([
           baseline.forReceipt.physicalLife,
           baseline.forReceipt.epoch,
-          baseline.forReceipt.batchOrder, baseline.forReceipt.entryIndex,
+          baseline.forReceipt.batchOrder,
+          baseline.forReceipt.entryIndex,
         ]),
       )
     )
@@ -691,7 +705,7 @@ function selectedBaselineFields(
 ) {
   return baseline.origins.map((origin, index) => ({
     origin,
-    facet: { ...baseline.checkpoint.facets[index]!, memberIndex: origin.memberIndex },
+    facet: baseline.checkpoint.facets[index]!,
     value: baseline.values[index]!,
     availability: baseline.checkpoint.availability?.find((group) =>
       group.fields.includes(baseline.checkpoint.facets[index]!.memberIndex),
@@ -713,13 +727,15 @@ function bindSituationHistory(
         'receipt',
         receipt.physicalLife,
         receipt.epoch,
-        receipt.batchOrder, receipt.entryIndex,
+        receipt.batchOrder,
+        receipt.entryIndex,
       ]);
     retentionReferences[handle] = {
       actorId,
       physicalLife: receipt.physicalLife,
       epoch: receipt.epoch,
-      batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex,
+      batchOrder: receipt.batchOrder,
+      entryIndex: receipt.entryIndex,
     };
     const previous = receiptDetails[handle];
     if (!previous) {
@@ -797,8 +813,13 @@ function bindSituationHistory(
       ...baseline,
       checkpoint: {
         ...baseline.checkpoint,
-        facets: held.map((value, memberIndex) => ({ ...value.facet, memberIndex })),
-        availability: groupedTemporalAvailability(held.map((value) => value.availability)),
+        facets: held.map((value) => value.facet),
+        availability: groupedTemporalAvailability(held.map((value) => value.availability)).map(
+          (group) => ({
+            ...group,
+            fields: group.fields.map((index) => held[index]!.facet.memberIndex),
+          }),
+        ),
       },
       values: held.map((value) => value.value),
       origins: held.map((value) => value.origin),
@@ -1739,7 +1760,8 @@ export async function expandSituation(
                   'receipt',
                   entry!.receipt.physicalLife,
                   entry!.receipt.epoch,
-                  entry!.receipt.batchOrder, entry!.receipt.entryIndex,
+                  entry!.receipt.batchOrder,
+                  entry!.receipt.entryIndex,
                 ]),
             facet: reference.memberIndex,
             ...(baseline

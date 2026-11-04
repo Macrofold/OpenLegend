@@ -21,36 +21,71 @@ export async function releaseUnusedTemporalSupports(
   db: SqlDatabase,
   removedAccounts: readonly string[] = [],
 ): Promise<{ state: SavedWorld; ids: string[] }> {
-  const groups = actorIds.flatMap(actorId => {
+  const groups = actorIds.flatMap((actorId) => {
     const supports = state.world.experience?.temporal?.actors[actorId]?.supports;
     if (!supports || !Object.keys(supports).length) return [];
     const keys = [...selectedRetainedIndividualEvidenceKeys(state.world, actorId)];
-    for (const document of Object.values(state.world.actorKnowledge?.[actorId] ?? {})) keys.push(...document.evidenceIds);
+    for (const document of Object.values(state.world.actorKnowledge?.[actorId] ?? {}))
+      keys.push(...document.evidenceIds);
     for (const record of state.world.knowledge[actorId] ?? []) {
       keys.push(record.evidenceId);
       if (record.sourceReceipt) keys.push(temporalReceiptId(record.sourceReceipt));
     }
     const held = new Set([...keys, ...selectedRecognitionSupportSourceIds(state.world, keys)]);
-    const candidates = Object.values(supports).map(capsule => ({capsule, aliases: temporalSupportAliases(capsule, state.world)}))
-      .filter(({capsule, aliases}) => !capsule.required &&
-        !capsule.values.some(value => value.kind === 'encounter-exposure' && value.exposure.kind === 'place') &&
-        !aliases.some(id => held.has(id)));
-    return candidates.length ? [{actorId, candidates}] : [];
+    const candidates = Object.values(supports)
+      .map((capsule) => ({ capsule, aliases: temporalSupportAliases(capsule, state.world) }))
+      .filter(
+        ({ capsule, aliases }) =>
+          !capsule.required &&
+          !capsule.values.some(
+            (value) => value.kind === 'encounter-exposure' && value.exposure.kind === 'place',
+          ) &&
+          !aliases.some((id) => held.has(id)),
+      );
+    return candidates.length ? [{ actorId, candidates }] : [];
   });
-  if (!groups.length) return {state, ids: []};
-  const removed = new Map(['mind_awareness','mind_memories','mind_summaries'].map(table => [table, removedAccounts]));
-  const surviving = await metadata.excluding(removed).survivingMembershipBatch(db, state.world.id,
-    groups.map(({actorId, candidates}) => ({actorId,
-      aliases: [...new Set(candidates.flatMap(candidate => candidate.aliases))], individualIds: [], includeRecent: false})));
-  const releases = groups.flatMap((group, index) => group.candidates
-    .filter(candidate => !candidate.aliases.some(id => surviving[index]!.aliases.has(id)))
-    .map(candidate => ({actorId: group.actorId, id: candidate.capsule.receipt.id})));
-  if (!releases.length) return {state, ids: []};
-  const world = updateWorld(state.world, draft => {
-    for (const release of releases) releaseTemporalSupport(draft, release.actorId, release.id);
-  }, {retainNativeValues: true});
-  return {state: {...state, world}, ids: releases.map(release => JSON.stringify(
-    ['world','experience','temporal','actors',release.actorId,'supports',release.id]))};
+  if (!groups.length) return { state, ids: [] };
+  const removed = new Map(
+    ['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => [table, removedAccounts]),
+  );
+  const surviving = await metadata.excluding(removed).survivingMembershipBatch(
+    db,
+    state.world.id,
+    groups.map(({ actorId, candidates }) => ({
+      actorId,
+      aliases: [...new Set(candidates.flatMap((candidate) => candidate.aliases))],
+      individualIds: [],
+      includeRecent: false,
+    })),
+    state.world,
+  );
+  const releases = groups.flatMap((group, index) =>
+    group.candidates
+      .filter((candidate) => !candidate.aliases.some((id) => surviving[index]!.aliases.has(id)))
+      .map((candidate) => ({ actorId: group.actorId, id: candidate.capsule.receipt.id })),
+  );
+  if (!releases.length) return { state, ids: [] };
+  const world = updateWorld(
+    state.world,
+    (draft) => {
+      for (const release of releases) releaseTemporalSupport(draft, release.actorId, release.id);
+    },
+    { retainNativeValues: true },
+  );
+  return {
+    state: { ...state, world },
+    ids: releases.map((release) =>
+      JSON.stringify([
+        'world',
+        'experience',
+        'temporal',
+        'actors',
+        release.actorId,
+        'supports',
+        release.id,
+      ]),
+    ),
+  };
 }
 
 /** Only an actual retirement batch pays for these exact reverse-membership reads.
@@ -223,6 +258,7 @@ export async function cleanupRetiredIndividuals(
       individualIds: candidate.ids.filter((id) => !candidate.individuals.has(id)),
       includeRecent: true,
     })),
+    after.world,
   );
   for (const [index, candidate] of candidates.entries()) {
     const { actorId, aliases, retained, individuals } = candidate;

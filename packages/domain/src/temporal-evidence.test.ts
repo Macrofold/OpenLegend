@@ -2,10 +2,7 @@ import { attentionCandidates } from './attention.js';
 import { receivedValueAt } from './received-values.js';
 import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
-import {
-  temporalPageReceipts,
-  materializeReceivedEntry,
-} from './temporal-frames.js';
+import { temporalPageReceipts, materializeReceivedEntry } from './temporal-frames.js';
 import { expect, it } from 'vitest';
 import { freeze } from 'immer';
 import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
@@ -66,12 +63,14 @@ function scene(seed = 41) {
 }
 
 function recordedBoundaries(world: ReturnType<typeof createWorld>, subject: string) {
-  return world.experience!.temporal!.actors[PLAYER_ID]!.pages.flatMap(page =>
-    page.batches.flatMap(batch => batch.entries.flatMap(entry => {
-      if (entry.kind !== 'boundary') return [];
-      const receipt = materializeReceivedEntry(batch, entry, new Set([subject]));
-      return receipt ? [{entry, receipt}] : [];
-    })),
+  return world.experience!.temporal!.actors[PLAYER_ID]!.pages.flatMap((page) =>
+    page.batches.flatMap((batch) =>
+      batch.entries.flatMap((entry) => {
+        if (entry.kind !== 'boundary') return [];
+        const receipt = materializeReceivedEntry(batch, entry, new Set([subject]));
+        return receipt ? [{ entry, receipt }] : [];
+      }),
+    ),
   );
 }
 
@@ -228,7 +227,7 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
   expect(newHistory.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
   expect(oldHistory.incomplete).toBe(true);
   expect(newHistory.incomplete).toBe(false);
-  validateTemporalEvidenceState(world);
+  validateTemporalEvidenceState(world, world.experience?.temporal);
   const restored = JSON.parse(JSON.stringify(world));
   expect(
     selectTemporalHistory(restored, PLAYER_ID, {
@@ -266,7 +265,8 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   const interrupted = selectTemporalHistory(world, PLAYER_ID, query);
   expect(
     recordedBoundaries(world, subject).some(
-      (operation) => operation.entry.reason === 'attention-exit' && operation.entry.receivedAt === 1,
+      (operation) =>
+        operation.entry.reason === 'attention-exit' && operation.entry.receivedAt === 1,
     ),
   ).toBe(true);
   expect(interrupted.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
@@ -282,12 +282,16 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   initializePerception(world, []);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
   const lost = selectTemporalHistory(world, PLAYER_ID, query);
-  const loss = recordedBoundaries(world, subject).find((operation) => operation.entry.reason === 'loss');
+  const loss = recordedBoundaries(world, subject).find(
+    (operation) => operation.entry.reason === 'loss',
+  );
   expect(loss).toBeDefined();
   expect(loss!.entry.receivedAt).toBe(3);
   expect(loss!.receipt.facets.some((facet) => facet.measuredThrough < 3)).toBe(true);
   expect(
-    recordedBoundaries(world, subject).some((operation) => operation.entry.reason === 'attention-exit'),
+    recordedBoundaries(world, subject).some(
+      (operation) => operation.entry.reason === 'attention-exit',
+    ),
   ).toBe(true);
   expect(lost.incomplete).toBe(true);
   world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 1;
@@ -391,9 +395,9 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
       values.map((value) => value.kind === 'personal-account' && value.data?.['array']),
     ),
   ).toEqual([[{ note: 'Before an array edit.' }], [{ note: 'After an array edit.' }]]);
-  validateTemporalEvidenceState(world);
+  validateTemporalEvidenceState(world, world.experience?.temporal);
   const restored = JSON.parse(JSON.stringify(world));
-  validateTemporalEvidenceState(restored);
+  validateTemporalEvidenceState(restored, restored.experience?.temporal);
   expect(selectTemporalHistory(restored, PLAYER_ID, query)).toEqual(selected);
 });
 
@@ -844,11 +848,11 @@ it('shares equal received values without granting another observer the earlier h
     expect(block.bytes).toBe(encoded(block));
   for (const actor of Object.values(world.experience!.temporal!.actors)) {
     for (const page of actor.pages) {
-      const entries = page.batches.flatMap(batch => batch.entries);
+      const entries = page.batches.flatMap((batch) => batch.entries);
       expect(page.bytes).toBe(entries.reduce((sum, entry) => sum + entry.charge.bytes, 0));
       expect(page.count).toBe(entries.reduce((sum, entry) => sum + entry.charge.count, 0));
       for (const entry of entries)
-        expect(entry.charge.bytes).toBe(encoded({...entry, charge: undefined}));
+        expect(entry.charge.bytes).toBe(encoded({ ...entry, charge: undefined }));
     }
     for (const capsule of Object.values(actor.supports ?? {}))
       expect(capsule.bytes).toBe(

@@ -552,9 +552,7 @@ export function recordSavedTemporalPages(
   }
   const tails = new Map<string, readonly import('@open-legend/domain').TemporalPage[]>();
   for (const [actorId, entries] of grouped) {
-    const ordered = [...entries.values()].sort(
-      (a, b) => compareTemporalPageOrder(b,a),
-    );
+    const ordered = [...entries.values()].sort((a, b) => compareTemporalPageOrder(b, a));
     const selected: import('@open-legend/domain').TemporalPage[] = [];
     let bytes = 0;
     for (const page of ordered) {
@@ -600,7 +598,7 @@ export function releaseSavedTemporalHistory(
         if (!savedTemporalEdits.has(page.batches)) pending.push(page);
         continue;
       }
-      const kept = page.batches.filter(batch => {
+      const kept = page.batches.filter((batch) => {
         const acknowledged = batch.batchOrder < acknowledgedBefore;
         if (acknowledged && page.appendClosed !== true)
           acknowledgedNative.add(batchKey(page, batch.batchOrder));
@@ -609,8 +607,17 @@ export function releaseSavedTemporalHistory(
       if (!kept.length) continue;
       if (kept.length === page.batches.length) pending.push(page);
       else {
-        const selected = immutableDataSnapshot(selectTemporalPageEntries(page,
-          kept.flatMap(batch => batch.entries.map(entry => ({ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex })))));
+        const selected = immutableDataSnapshot(
+          selectTemporalPageEntries(
+            page,
+            kept.flatMap((batch) =>
+              batch.entries.map((entry) => ({
+                batchOrder: batch.batchOrder,
+                entryIndex: entry.entryIndex,
+              })),
+            ),
+          ),
+        );
         noteTemporalResidency(selected, page);
         pending.push(selected);
       }
@@ -623,16 +630,12 @@ export function releaseSavedTemporalHistory(
         .filter(
           (page) =>
             present.has(page.id) ||
-            page.batches.every((batch) =>
-              acknowledgedNative.has(batchKey(page, batch.batchOrder)),
-            ),
+            page.batches.every((batch) => acknowledgedNative.has(batchKey(page, batch.batchOrder))),
         )
         .map((page) => [page.id, page]),
     );
     for (const page of pending) byId.set(page.id, page);
-    const pages = [...byId.values()].sort(
-      (a, b) => compareTemporalPageOrder(a,b),
-    );
+    const pages = [...byId.values()].sort((a, b) => compareTemporalPageOrder(a, b));
     if (
       pages.length !== actor.pages.length ||
       pages.some((page, index) => page !== actor.pages[index])

@@ -361,6 +361,7 @@ function admittedGeometry(
     revision: 1,
     observer: { actorId: input.observer.id, physicalLife: input.observer.actor!.physicalLife ?? 0 },
     acquiredAt: world.simTime,
+    receivedOrder: Number.MAX_SAFE_INTEGER,
     ...request,
     facets: request.facets.map((facet, ordinal) => ({
       ...facet,
@@ -958,7 +959,14 @@ function recordGeometryCheck(
   observerId: string,
   state: ReceivedGeometryState,
 ): void {
-  captureTemporalGeometry(world,observerId,receivedGeometryFeatures(state),state.supportedThrough,selectedTemporalPolicy(world).recent,createReceivedSample(world,observerId));
+  captureTemporalGeometry(
+    world,
+    observerId,
+    receivedGeometryFeatures(state),
+    state.supportedThrough,
+    selectedTemporalPolicy(world).recent,
+    createReceivedSample(world, observerId),
+  );
 }
 function finalizeGeometry(
   world: WorldState,
@@ -1570,7 +1578,7 @@ export function validateReceivedGeometryState(
       throw new Error('Invalid received boundary owner.');
   for (const feature of receivedGeometryFeatures(state))
     if (feature.recording)
-      validateTemporalCurrentGroupCheckpoint(feature.recording, world.simTime, [
+      validateTemporalCurrentGroupCheckpoint(world, feature.recording, world.simTime, [
         [feature.observation.facets[0]!.value.kind, 'value'],
       ]);
   for (const observation of observations) {

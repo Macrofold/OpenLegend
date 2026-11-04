@@ -1,5 +1,4 @@
 import { captureIdentityAllocations, inheritIdentityAllocations } from './identity-allocation.js';
-import { flushReceivedAcquisitionsForSnapshot } from './temporal-evidence.js';
 import { captureKnownPlaceEvidence } from './known-place-evidence.js';
 import {
   entityDraftAudit,
@@ -56,6 +55,19 @@ const recordArrays = new WeakMap<WorldState, Map<object, Set<string>>>();
 // table need not be frozen (which could freeze the parent's raw working buffers),
 // but it is not an externally editable builder baseline.
 const privateSnapshotDrafts = new WeakSet<WorldState>();
+const snapshotPreparations = new WeakMap<WorldState, () => void>();
+/** An active semantic mutation scope flushes its accepted prefix before a nested
+ * snapshot. Draft infrastructure neither imports that owner nor owns its data. */
+export function prepareWorldSnapshots(world: WorldState, prepare: () => void): () => void {
+  if (snapshotPreparations.has(world))
+    throw new Error('World snapshot preparation already has an owner.');
+  snapshotPreparations.set(world, prepare);
+  return () => snapshotPreparations.delete(world);
+}
+function prepareWorldSnapshot(world: WorldState): void {
+  snapshotPreparations.get(world)?.();
+}
+
 interface CommandBatchScope {
   /** One completed input, never a chain of earlier working drafts. */
   origin: WorldState;
@@ -417,7 +429,7 @@ export function freezeWorld(
   world: WorldState,
   options: { completedTransition?: boolean } = {},
 ): WorldState {
-  flushReceivedAcquisitionsForSnapshot(world);
+  prepareWorldSnapshot(world);
   const publish = pendingPublications.get(world);
   pendingPublications.delete(world);
   // Only the completion owner can certify no writes occurred after finishing its
@@ -727,7 +739,7 @@ interface WorldDraftOptions {
   materializeNativeEntities?: readonly string[];
 }
 export function draftWorld(world: WorldState, options: WorldDraftOptions = {}): WorldState {
-  flushReceivedAcquisitionsForSnapshot(world);
+  prepareWorldSnapshot(world);
   const batch = commandBatches.get(world);
   const inheritedEntities = batch && commandBatchEntities(world, batch);
   sealAppends(world);
@@ -822,7 +834,7 @@ export function finishWorld(
   world: WorldState,
   capturePatches?: (patches: readonly Patch[]) => void,
 ): WorldState {
-  flushReceivedAcquisitionsForSnapshot(world);
+  prepareWorldSnapshot(world);
   const batch = commandBatches.get(world);
   reconcileDraftSemantics(world);
   const batchEntities = batch && commandBatchEntities(world, batch);

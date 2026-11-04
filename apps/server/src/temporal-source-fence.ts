@@ -7,13 +7,18 @@ import {
   selectReceivedState,
   receivedPositionEligible,
   receivedStateEligible,
+  receivedValueAt,
+  temporalFacetEligible,
+  temporalRecentAt,
   type ReceivedAddress,
   type ReceivedFrontier,
   type TemporalPage,
   type TemporalHistorySelection,
   type TemporalSupportCapsule,
+  type TemporalReceipt,
 } from '@open-legend/domain';
 import type { RecordChanges } from './world-records.js';
+import type { TemporalHistoryReadContext } from './temporal-storage.js';
 
 type Selection = TemporalHistorySelection['entries'][number];
 export interface TemporalRowWitness {
@@ -48,6 +53,7 @@ export interface TemporalSourceWatch {
   collecting: boolean;
   deadline: number;
   clock?: () => number;
+  currentState?: () => boolean;
 }
 export const newTemporalSourceWatch = (): TemporalSourceWatch => ({
   rows: new Map(),
@@ -80,16 +86,134 @@ export function sameSupportedSelection(
     })
   );
 }
-function rowMatches(witness: TemporalRowWitness, payload: string, rows:TemporalSourceWatch['rows']): boolean {
+/** Current knowledge owns its seed independently of aged raw history. It still
+ * proves the exact selected state, pressure boundary and requested historical cut. */
+export function currentTemporalStateMatches(
+  context: TemporalHistoryReadContext,
+  state: TemporalStateWitness,
+): boolean {
+  if (
+    !receivedStateEligible(state.carrier, state.asOf, context.frontier) ||
+    !temporalRecentAt(state.asOf, context.at, context.maxAgeSeconds)
+  )
+    return false;
+  return context.currentSeeds.some(
+    (seed) =>
+      seed.binding === state.binding &&
+      seed.receipt.subject === state.subject &&
+      seed.receipt.actorId === state.carrier.actorId &&
+      seed.receipt.physicalLife === state.carrier.physicalLife &&
+      seed.receipt.epoch === state.carrier.epoch &&
+      seed.receipt.at <= state.asOf &&
+      stateReceiptMatches(context, state, seed.receipt),
+  );
+}
+function stateReceiptMatches(
+  context: TemporalHistoryReadContext,
+  state: TemporalStateWitness,
+  receipt: TemporalReceipt,
+): boolean {
+  return state.selection.receipt.facets.every((expected, index) => {
+    const facet = receipt.facets.find(
+      (facet) =>
+        facet.memberIndex === expected.memberIndex &&
+        canonicalJson(temporalReceiptForRead({ ...receipt, facets: [facet] }).facets[0]) ===
+          canonicalJson(expected),
+    );
+    if (!facet) return false;
+    const fragment = receivedValueAt(context.sources, facet),
+      value = fragment && materializeTemporalValue(facet, fragment, context.sources);
+    return (
+      !!value &&
+      canonicalJson(value) === canonicalJson(state.selection.values[index]) &&
+      temporalFacetEligible(context.disclosure, context.actorId, facet, value)
+    );
+  });
+}
+/** The next reception freezes the previous current seed. Follow that exact
+ * proof into the existing logical watch instead of cancelling a pending answer
+ * merely because an unchanged check advanced the live confirmation clock. */
+export function findTemporalStateCarrier(
+  context: TemporalHistoryReadContext,
+  state: TemporalStateWitness,
+  contains: (address: ReceivedAddress, memberIndex: number) => boolean,
+): { page: TemporalPage; state: TemporalStateWitness } | undefined {
+  if (
+    !receivedStateEligible(state.carrier, state.asOf, context.frontier) ||
+    !temporalRecentAt(state.asOf, context.at, context.maxAgeSeconds)
+  )
+    return;
+  const members = new Set(state.selection.receipt.facets.map((facet) => facet.memberIndex));
+  for (const page of context.pages) {
+    if (
+      page.actorId !== state.carrier.actorId ||
+      page.physicalLife !== state.carrier.physicalLife ||
+      page.epoch !== state.carrier.epoch
+    )
+      continue;
+    for (const batch of page.batches) {
+      if (
+        !batch.bindings.some(
+          (binding) => binding.id === state.binding && binding.subject === state.subject,
+        )
+      )
+        continue;
+      for (const entry of batch.entries) {
+        if (entry.receivedAt <= state.asOf) continue;
+        for (const coverage of entry.coverage) {
+          if (coverage.binding !== state.binding) continue;
+          for (const member of coverage.members) {
+            const carrier = {
+              actorId: batch.actorId,
+              physicalLife: batch.physicalLife,
+              epoch: batch.epoch,
+              batchOrder: batch.batchOrder,
+              entryIndex: entry.entryIndex,
+              memberIndex: member.memberIndex,
+            };
+            if (
+              !contains(carrier, carrier.memberIndex) ||
+              !receivedPositionEligible(carrier, entry.receivedAt, context.frontier)
+            )
+              continue;
+            const selected = selectReceivedState(page, carrier, {
+              binding: state.binding,
+              subject: state.subject,
+              asOf: state.asOf,
+              members,
+            });
+            if (selected && stateReceiptMatches(context, state, selected.receipt))
+              return { page, state: { ...state, carrier } };
+          }
+        }
+      }
+    }
+  }
+}
+function rowMatches(
+  witness: TemporalRowWitness,
+  payload: string,
+  rows: TemporalSourceWatch['rows'],
+): boolean {
   try {
     const row = JSON.parse(payload) as Record<string, unknown>;
-    if(witness.eligibility){
-      const frontier=row['frontier'] as ReceivedFrontier|undefined;
-      for(const logical of rows.get('temporal_logical')?.values()??[]){
-        for(const selected of logical.selections?.values()??[])
-          if(selected.receipt.facets.some(facet=>!receivedPositionEligible({...selected.receipt,memberIndex:facet.memberIndex},selected.receipt.at,frontier)))return false;
-        for(const state of logical.states?.values()??[])
-          if(!receivedStateEligible(state.carrier,state.asOf,frontier))return false;
+    if (witness.eligibility) {
+      const frontier = row['frontier'] as ReceivedFrontier | undefined;
+      for (const logical of rows.get('temporal_logical')?.values() ?? []) {
+        for (const selected of logical.selections?.values() ?? [])
+          if (
+            selected.receipt.facets.some(
+              (facet) =>
+                !receivedPositionEligible(
+                  { ...selected.receipt, memberIndex: facet.memberIndex },
+                  selected.receipt.at,
+                  frontier,
+                ),
+            )
+          )
+            return false;
+        for (const state of logical.states?.values() ?? [])
+          if (!receivedStateEligible(state.carrier, state.asOf, frontier)) return false;
       }
     }
     if (
@@ -111,22 +235,45 @@ function rowMatches(witness: TemporalRowWitness, payload: string, rows:TemporalS
 }
 /** Packing may choose a different first binding for a physical slice. Its
  * shared display defaults are not the causal identity of a selected fact. */
-export function temporalSelectionHeader(receipt:Selection['receipt']):unknown {
-  return [receipt.actorId,receipt.physicalLife,receipt.epoch,receipt.batchOrder,receipt.entryIndex,
-    receipt.at,receipt.order,receipt.change,receipt.required,receipt.origin??null];
+export function temporalSelectionHeader(receipt: Selection['receipt']): unknown {
+  return [
+    receipt.actorId,
+    receipt.physicalLife,
+    receipt.epoch,
+    receipt.batchOrder,
+    receipt.entryIndex,
+    receipt.at,
+    receipt.order,
+    receipt.change,
+    receipt.required,
+    receipt.origin ?? null,
+  ];
 }
 function logicalProjection(page: TemporalPage, expected: Selection): unknown[] {
-  const actual = selectReceivedReceiptMembers(page, expected.receipt,
-    new Set(expected.receipt.facets.map(facet=>facet.memberIndex)),
-    new Set([expected.receipt.subject,...(expected.receipt.contextSubjects??[])]));
+  const actual = selectReceivedReceiptMembers(
+    page,
+    expected.receipt,
+    new Set(expected.receipt.facets.map((facet) => facet.memberIndex)),
+    new Set([expected.receipt.subject, ...(expected.receipt.contextSubjects ?? [])]),
+  );
   if (!actual) return [];
-  return actual.facets.map(facet=>({header:temporalSelectionHeader(actual),facet}));
+  return actual.facets.map((facet) => ({ header: temporalSelectionHeader(actual), facet }));
 }
-function stateProjection(page:TemporalPage,expected:TemporalStateWitness):unknown[] {
-  const state=selectReceivedState(page,expected.carrier,{binding:expected.binding,
-    subject:expected.subject,asOf:expected.asOf,
-    members:new Set(expected.selection.receipt.facets.map(facet=>facet.memberIndex))});
-  return state?.receipt.facets.map(facet=>({binding:expected.binding,subject:expected.subject,asOf:expected.asOf,facet}))??[];
+function stateProjection(page: TemporalPage, expected: TemporalStateWitness): unknown[] {
+  const state = selectReceivedState(page, expected.carrier, {
+    binding: expected.binding,
+    subject: expected.subject,
+    asOf: expected.asOf,
+    members: new Set(expected.selection.receipt.facets.map((facet) => facet.memberIndex)),
+  });
+  return (
+    state?.receipt.facets.map((facet) => ({
+      binding: expected.binding,
+      subject: expected.subject,
+      asOf: expected.asOf,
+      facet,
+    })) ?? []
+  );
 }
 
 function nativeMatches(
@@ -139,14 +286,20 @@ function nativeMatches(
       const before = logicalProjection(intent.before, selection);
       if (
         before.length &&
-        (intent.deleted || canonicalJson(before) !== canonicalJson(logicalProjection(intent.after, selection)))
+        (intent.deleted ||
+          canonicalJson(before) !== canonicalJson(logicalProjection(intent.after, selection)))
       )
         return false;
     }
   for (const witness of rows.get('temporal_logical')?.values() ?? [])
     for (const expected of witness.states?.values() ?? []) {
-      const before=stateProjection(intent.before,expected);
-      if(before.length && (intent.deleted || canonicalJson(before)!==canonicalJson(stateProjection(intent.after,expected)))) return false;
+      const before = stateProjection(intent.before, expected);
+      if (
+        before.length &&
+        (intent.deleted ||
+          canonicalJson(before) !== canonicalJson(stateProjection(intent.after, expected)))
+      )
+        return false;
     }
   return true;
 }
@@ -181,9 +334,12 @@ function trackTemporalPhysicalPage(
         break;
       }
   if (!selected)
-    for(const witness of watch.rows.get('temporal_logical')?.values()??[])
-      for(const state of witness.states?.values()??[])
-        if(state.carrier.actorId===page.actorId && stateProjection(page,state).length) {selected=true;break;}
+    for (const witness of watch.rows.get('temporal_logical')?.values() ?? [])
+      for (const state of witness.states?.values() ?? [])
+        if (state.carrier.actorId === page.actorId && stateProjection(page, state).length) {
+          selected = true;
+          break;
+        }
   if (!selected) return true;
   watch.pendingBytes += Buffer.byteLength(id) + 256;
   if (watch.pendingBytes > maximumBytes) return false;
@@ -230,7 +386,7 @@ export function temporalWatchChanges(
     }
     return true;
   };
-  for (const intent of [...(changes.temporal?.values() ?? []),...(changes.temporalEdits ?? [])]) {
+  for (const intent of [...(changes.temporal?.values() ?? []), ...(changes.temporalEdits ?? [])]) {
     if (!nativeMatches(watch.rows, intent)) return false;
     if (watch.collecting && intent.replacement && intent.after.actorId === actorId) {
       watch.pendingBytes += intent.reservedBytes;
@@ -281,7 +437,7 @@ export function addTemporalWitness(
   }
   if (witness.states) {
     previous.states ??= new Map();
-    for(const entry of witness.states) previous.states.set(...entry);
+    for (const entry of witness.states) previous.states.set(...entry);
   }
   if (witness.supports) {
     previous.supports ??= new Map();

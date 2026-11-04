@@ -1,5 +1,8 @@
 import type { SqlDatabase } from '../../apps/server/src/store.js';
-import { eligibleReceivedChargeDirectories, type ReceivedChargeDirectory } from '@open-legend/domain';
+import {
+  eligibleReceivedChargeDirectories,
+  type ReceivedChargeDirectory,
+} from '@open-legend/domain';
 import {
   temporalBlockExpiredSql,
   temporalBlockMixedBoundarySql,
@@ -76,18 +79,25 @@ export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
     // exact metadata proof where age and pressure can jointly exhaust a block.
     let after: string | undefined;
     for (;;) {
-      const boundaries = await db.prepare(`SELECT p.id,p.encoded_bytes,p.charge_directory,
+      const boundaries = await db
+        .prepare(
+          `SELECT p.id,p.encoded_bytes,p.charge_directory,
           a.expired_through_time,a.pressure_batch_order,a.pressure_entry,a.pressure_member,a.pressure_at,a.pressure_order
         FROM mind_temporal_pages p JOIN mind_temporal_actors a ON a.world_id=p.world_id AND a.actor_id=p.actor_id
         WHERE p.world_id=? AND ${temporalBlockMixedBoundarySql('p', 'a')} ${after ? 'AND p.id>?' : ''}
-        ORDER BY p.id LIMIT 128`).all(worldId, ...(after ? [after] : []));
+        ORDER BY p.id LIMIT 128`,
+        )
+        .all(worldId, ...(after ? [after] : []));
       for (const row of boundaries) {
         debt.mixed_boundaries_examined++;
         const directory = JSON.parse(String(row['charge_directory'])) as ReceivedChargeDirectory;
-        if (eligibleReceivedChargeDirectories([directory], temporalFrontierFromColumns(row)).length) continue;
+        if (eligibleReceivedChargeDirectories([directory], temporalFrontierFromColumns(row)).length)
+          continue;
         const bytes = Number(row['encoded_bytes']);
-        debt.collectible_blocks++; debt.collectible_block_payload_bytes += bytes;
-        debt.partial_blocks--; debt.partial_block_payload_bytes -= bytes;
+        debt.collectible_blocks++;
+        debt.collectible_block_payload_bytes += bytes;
+        debt.partial_blocks--;
+        debt.partial_block_payload_bytes -= bytes;
       }
       if (boundaries.length < 128) break;
       after = String(boundaries.at(-1)!['id']);

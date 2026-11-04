@@ -5,6 +5,9 @@ import {
   installTemporalChargeDirectories,
   selectedTemporalPolicy,
   receivedDirectoryContains,
+  receivedDirectorySourceContains,
+  parseTemporalReceiptId,
+  parsePersonalFactAlias,
   receivedPositionEligible,
   materializeReceivedEntry,
   temporalReceiptAliases,
@@ -70,11 +73,16 @@ const selectedColumns: Record<(typeof indexedTables)[number], readonly string[]>
     'actor_id',
     'physical_life',
     'receipt_epoch',
-    'first_batch_order', 'first_entry', 'first_member',
-    'last_batch_order', 'last_entry', 'last_member',
+    'first_batch_order',
+    'first_entry',
+    'first_member',
+    'last_batch_order',
+    'last_entry',
+    'last_member',
     'first_at',
     'last_at',
-    'entry_bytes', 'charge_directory',
+    'entry_bytes',
+    'charge_directory',
     'receipt_count',
     'source_ids',
     'individual_ids',
@@ -120,6 +128,13 @@ export interface RetentionRow {
 }
 type Records = Map<string, RetentionRow>;
 const identity = (table: string, id: string) => JSON.stringify([table, id]);
+function directReceiptAlias(id: string): { sourceId: string; memberIndex?: number } | undefined {
+  const fact = parsePersonalFactAlias(id),
+    sourceId = fact?.observationId ?? id;
+  return parseTemporalReceiptId(sourceId)
+    ? { sourceId, ...(fact ? { memberIndex: fact.ordinal } : {}) }
+    : undefined;
+}
 const preparedMetadata = new WeakMap<RowChange, RetentionRow>();
 
 type MembershipKind = 'account-alias' | 'individual';
@@ -179,7 +194,7 @@ function nativePageMetadata(
   world?: WorldState,
 ): RetentionRow {
   const id = temporalPageRecordId(page.actorId, page.id);
-  const prepared = temporalPageMetadata(page, {world});
+  const prepared = temporalPageMetadata(page, { world });
   return {
     table: 'mind_temporal_pages',
     id,
@@ -191,8 +206,12 @@ function nativePageMetadata(
       actor_id: page.actorId,
       physical_life: page.physicalLife,
       receipt_epoch: page.epoch,
-      first_batch_order: prepared.firstBatchOrder, first_entry: prepared.firstEntry, first_member: prepared.firstMember,
-      last_batch_order: prepared.lastBatchOrder, last_entry: prepared.lastEntry, last_member: prepared.lastMember,
+      first_batch_order: prepared.firstBatchOrder,
+      first_entry: prepared.firstEntry,
+      first_member: prepared.firstMember,
+      last_batch_order: prepared.lastBatchOrder,
+      last_entry: prepared.lastEntry,
+      last_member: prepared.lastMember,
       first_at: prepared.firstAt,
       last_at: prepared.lastAt,
       entry_bytes: prepared.entryBytes,
@@ -219,12 +238,14 @@ function parseRetentionRow(row: Record<string, unknown>): RetentionRow {
 /** Native counters own append charges; only edits or actual exact dependencies
  * require the prior-account/source-version closure. */
 export function accountWriteNeedsRetentionClosure(
-  table: (typeof accountTables)[number], row: RowChange,
+  table: (typeof accountTables)[number],
+  row: RowChange,
 ): boolean {
   return !row.create || accountWriteHasRetentionDependencies(table, row);
 }
 export function accountWriteHasRetentionDependencies(
-  table: (typeof accountTables)[number], row: RowChange,
+  table: (typeof accountTables)[number],
+  row: RowChange,
 ): boolean {
   const support = metadata(table, row).columns['retention_metadata'] as AccountRetentionMetadata;
   return support.versions.length > 0 || support.learning.length > 0;
@@ -315,8 +336,12 @@ export class RetentionMetadata {
         })));
     if (!head || head.worldId !== worldId) throw new Error('Retention metadata world changed.');
     const projection = (table: Table) => {
-      const encoded = table === 'mind_temporal_pages' ? 't.encoded_bytes' :
-        accountTables.includes(table as (typeof accountTables)[number]) ? 't.logical_bytes' : 'octet_length(t.payload)';
+      const encoded =
+        table === 'mind_temporal_pages'
+          ? 't.encoded_bytes'
+          : accountTables.includes(table as (typeof accountTables)[number])
+            ? 't.logical_bytes'
+            : 'octet_length(t.payload)';
       return `SELECT '${table}' AS table_name,t.id,t.parent_id,t.position,t.actor_id,
         jsonb_build_object(${selectedColumns[table].flatMap((name) => [`'${name}'`, `t.${name}`]).join(',')}) AS columns,
         ${encoded} AS encoded_bytes`;
@@ -357,12 +382,10 @@ export class RetentionMetadata {
         changedAccounts.has(id) ||
         !accounts ||
         (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime) ||
-        (['optional', 'required', 'speech'] as const).some(
-          (key) => {
-            const target = experienceMaintenanceTarget(selection.world, key);
-            return accounts[key].bytes > target.maxBytes || accounts[key].count > target.maxRecords;
-          },
-        )
+        (['optional', 'required', 'speech'] as const).some((key) => {
+          const target = experienceMaintenanceTarget(selection.world, key);
+          return accounts[key].bytes > target.maxBytes || accounts[key].count > target.maxRecords;
+        })
       );
     });
     const accountNextDue = new Map<string, number | null>(),
@@ -371,10 +394,11 @@ export class RetentionMetadata {
     // Criteria keep their own lookahead; the native selector deduplicates them
     // before its single 64-account / 4 MiB allowance, rather than multiplying it.
     for (const table of accountTables) {
-      const overridden = new Map<string, Set<string>>(), changed = new Map<string, Set<string>>();
+      const overridden = new Map<string, Set<string>>(),
+        changed = new Map<string, Set<string>>();
       const mark = (target: Map<string, Set<string>>, actorId: string, id: string) => {
         let ids = target.get(actorId);
-        if (!ids) target.set(actorId, ids = new Set());
+        if (!ids) target.set(actorId, (ids = new Set()));
         ids.add(id);
       };
       for (const row of selection.changes.writes.get(table) ?? []) {
@@ -387,20 +411,29 @@ export class RetentionMetadata {
         mark(overridden, actorId, id);
         mark(changed, actorId, id);
       }
-      const requests = accountActors.map(actorId => {
+      const requests = accountActors.map((actorId) => {
         const accounts = selection.world.experience?.temporal?.actors[actorId]?.accounts;
         return {
-          actor_id: actorId, at: selection.world.simTime,
-          due: !accounts || (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime),
-          pressured: (['optional', 'required', 'speech'] as const).filter(pool => {
+          actor_id: actorId,
+          at: selection.world.simTime,
+          due:
+            !accounts || (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime),
+          pressured: (['optional', 'required', 'speech'] as const).filter((pool) => {
             const target = experienceMaintenanceTarget(selection.world, pool);
-            return !accounts || accounts[pool].bytes > target.maxBytes || accounts[pool].count > target.maxRecords;
+            return (
+              !accounts ||
+              accounts[pool].bytes > target.maxBytes ||
+              accounts[pool].count > target.maxRecords
+            );
           }),
-          overridden: [...(overridden.get(actorId) ?? [])], changed: [...(changed.get(actorId) ?? [])],
+          overridden: [...(overridden.get(actorId) ?? [])],
+          changed: [...(changed.get(actorId) ?? [])],
         };
       });
-      for (const batch of sqlRowBatches(requests.map(request => [request]))) {
-        const selected = await db.prepare(`WITH requested AS MATERIALIZED (
+      for (const batch of sqlRowBatches(requests.map((request) => [request]))) {
+        const selected = await db
+          .prepare(
+            `WITH requested AS MATERIALIZED (
           SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,at DOUBLE PRECISION,due BOOLEAN,
             pressured TEXT[],overridden TEXT[],changed TEXT[])
         ), scoped AS (
@@ -428,14 +461,26 @@ export class RetentionMetadata {
             WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.retention_class<>'sensory'
               AND t.active_or_protected=0 AND t.next_due_at>q.at AND NOT(t.id=ANY(q.overridden))
           ) next
-        ) SELECT * FROM scoped`).all(JSON.stringify(batch.map(([request]) => request)), worldId, worldId, worldId, worldId);
+        ) SELECT * FROM scoped`,
+          )
+          .all(
+            JSON.stringify(batch.map(([request]) => request)),
+            worldId,
+            worldId,
+            worldId,
+            worldId,
+          );
         const dueCounts = new Map<string, number>();
         for (const row of selected) {
           const actorId = String(row['actor_id']);
           if (row['criterion'] === 'deadline') {
-            const columns = row['columns'] as Record<string, unknown>, due = columns['next_due_at'];
+            const columns = row['columns'] as Record<string, unknown>,
+              due = columns['next_due_at'];
             if (due !== null && due !== undefined)
-              accountNextDue.set(actorId, Math.min(accountNextDue.get(actorId) ?? Infinity, Number(due)));
+              accountNextDue.set(
+                actorId,
+                Math.min(accountNextDue.get(actorId) ?? Infinity, Number(due)),
+              );
           } else {
             add([row]);
             if (row['criterion'] === 'due') {
@@ -501,11 +546,13 @@ export class RetentionMetadata {
     this.assertWorld(world.id);
     this.world = world;
     for (const [actorId, actor] of Object.entries(world.experience?.temporal?.actors ?? {})) {
-      const directories = [...this.records('mind_temporal_pages', actorId)].map(row => {
+      const directories = [...this.records('mind_temporal_pages', actorId)].map((row) => {
         const directory = row.columns['charge_directory'];
-        return (typeof directory === 'string' ? JSON.parse(directory) : directory) as ReceivedChargeDirectory;
+        return (
+          typeof directory === 'string' ? JSON.parse(directory) : directory
+        ) as ReceivedChargeDirectory;
       });
-      const reconstructed = {...actor};
+      const reconstructed = { ...actor };
       installTemporalChargeDirectories(reconstructed, directories);
       if (reconstructed.bytes !== actor.bytes || reconstructed.count !== actor.count)
         throw new Error('Complete retention preparation cannot use a resident history tail.');
@@ -583,7 +630,8 @@ export class RetentionMetadata {
       if (indexed.has(table))
         for (const row of rows) this.setLogical(metadata(table as Table, row));
     for (const intent of changes.temporal?.values() ?? [])
-      if (!intent.deleted) this.setLogical(nativePageMetadata(intent.after, intent.reservedBytes, this.world));
+      if (!intent.deleted)
+        this.setLogical(nativePageMetadata(intent.after, intent.reservedBytes, this.world));
   }
   private ancestor(table: string, ancestor: string): boolean {
     let parent = RECORD_PARENTS.get(table);
@@ -777,39 +825,96 @@ export class RetentionMetadataView {
       individualIds: readonly string[];
       includeRecent: boolean;
     }[],
+    nativeCut?: WorldState,
   ): Promise<Array<{ aliases: Set<string>; individuals: Set<string> }>> {
     const results = requests.map((request) => ({
-      aliases: new Set(
-        request.aliases.filter((id) => this.hasAlias(request.actorId, id)),
-      ),
+      aliases: new Set(request.aliases.filter((id) => this.hasAlias(request.actorId, id))),
       individuals: new Set(
         request.individualIds.filter((id) => this.hasIndividual(request.actorId, id)),
       ),
     }));
-    const world = this.owner.capturedWorld();
+    const world = nativeCut ?? this.owner.capturedWorld();
+    if (world && world.id !== worldId)
+      throw new Error('Personal retention native cut belongs to another world.');
+    for (const [key, request] of requests.entries()) {
+      if (!request.includeRecent) continue;
+      if (!world) throw new Error('Recent membership requires its captured native cut.');
+      const actor = world.experience?.temporal?.actors[request.actorId];
+      if (!actor) continue;
+      const cutoff = Math.max(
+        world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
+        actor.frontier?.expiredThroughTime ?? -Infinity,
+      );
+      for (const alias of request.aliases) {
+        const direct = directReceiptAlias(alias);
+        if (
+          direct &&
+          receivedDirectorySourceContains(
+            actor.recent,
+            request.actorId,
+            direct.sourceId,
+            direct.memberIndex,
+            cutoff,
+          )
+        )
+          results[key]!.aliases.add(alias);
+      }
+    }
     for (const [key, request] of requests.entries())
-      if (request.includeRecent && (request.aliases.some(id => !results[key]!.aliases.has(id)) ||
-        request.individualIds.some(id => !results[key]!.individuals.has(id)))) {
+      if (
+        request.includeRecent &&
+        (request.aliases.some((id) => !directReceiptAlias(id) && !results[key]!.aliases.has(id)) ||
+          request.individualIds.some((id) => !results[key]!.individuals.has(id)))
+      ) {
         if (!world) throw new Error('Recent membership requires its captured native cut.');
-        const pages = new Map((world.experience?.temporal?.actors[request.actorId]?.pages ?? [])
-          .map(page => [page.id, page]));
-        for (const intent of [...(this.changes?.temporalEdits ?? []), ...(this.changes?.temporal?.values() ?? [])])
+        const pages = new Map(
+          (world.experience?.temporal?.actors[request.actorId]?.pages ?? []).map((page) => [
+            page.id,
+            page,
+          ]),
+        );
+        for (const intent of [
+          ...(this.changes?.temporalEdits ?? []),
+          ...(this.changes?.temporal?.values() ?? []),
+        ])
           if (intent.after.actorId === request.actorId) {
             if (intent.deleted) pages.delete(intent.after.id);
             else pages.set(intent.after.id, intent.after);
           }
         for (const page of pages.values()) {
-          if (!this.deleted({table: 'mind_temporal_pages', id: temporalPageRecordId(page.actorId, page.id),
-            parent: JSON.stringify(['world','experience','temporal','actors',page.actorId,'pages'])}))
-            this.accumulateRecentMembership(page, world, world.receivedValues?.sources ?? {}, request, results[key]!);
-          if (request.aliases.every(id => results[key]!.aliases.has(id)) &&
-            request.individualIds.every(id => results[key]!.individuals.has(id))) break;
+          if (
+            !this.deleted({
+              table: 'mind_temporal_pages',
+              id: temporalPageRecordId(page.actorId, page.id),
+              parent: JSON.stringify([
+                'world',
+                'experience',
+                'temporal',
+                'actors',
+                page.actorId,
+                'pages',
+              ]),
+            })
+          )
+            this.accumulateRecentMembership(
+              page,
+              world,
+              world.receivedValues?.sources ?? {},
+              request,
+              results[key]!,
+            );
+          if (
+            request.aliases.every((id) => results[key]!.aliases.has(id)) &&
+            request.individualIds.every((id) => results[key]!.individuals.has(id))
+          )
+            break;
         }
       }
     const inputs = requests.flatMap((request, key) => {
       const { actorId, includeRecent } = request,
         result = results[key]!;
       const aliases = [...new Set(request.aliases.filter((id) => !result.aliases.has(id)))];
+      const recentAliases = aliases.filter((id) => !directReceiptAlias(id));
       const individuals = [
         ...new Set(request.individualIds.filter((id) => !result.individuals.has(id))),
       ];
@@ -848,13 +953,17 @@ export class RetentionMetadataView {
       const awareness = cold('mind_awareness'),
         memories = cold('mind_memories'),
         summaries = cold('mind_summaries');
-      const recent = includeRecent && cold('mind_temporal_pages');
+      const recent =
+        includeRecent &&
+        (recentAliases.length > 0 || individuals.length > 0) &&
+        cold('mind_temporal_pages');
       if (!awareness && !memories && !summaries && !recent) return [];
       return [
         {
           key,
           actor_id: actorId,
           aliases,
+          recent_aliases: recentAliases,
           individuals,
           awareness,
           memories,
@@ -866,15 +975,26 @@ export class RetentionMetadataView {
           excluded_segments: excluded('mind_temporal_pages'),
           buckets: [
             ...new Set([
-              ...aliases.map((id) => receiptLookupBucket('sourceIds', id)),
+              ...recentAliases.map((id) => receiptLookupBucket('sourceIds', id)),
               ...individuals.map((id) => receiptLookupBucket('individualIds', id)),
             ]),
           ],
-          age_floor: world ? Math.max(world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
-            world.experience?.temporal?.actors[actorId]?.frontier?.expiredThroughTime ?? -Infinity) : null,
-          pressure_batch: world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address.batchOrder ?? null,
-          pressure_entry: world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address.entryIndex ?? null,
-          pressure_member: world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address.memberIndex ?? null,
+          age_floor: world
+            ? Math.max(
+                world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
+                world.experience?.temporal?.actors[actorId]?.frontier?.expiredThroughTime ??
+                  -Infinity,
+              )
+            : null,
+          pressure_batch:
+            world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+              .batchOrder ?? null,
+          pressure_entry:
+            world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+              .entryIndex ?? null,
+          pressure_member:
+            world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+              .memberIndex ?? null,
         },
       ];
     });
@@ -913,7 +1033,7 @@ export class RetentionMetadataView {
       const rows = await db
         .prepare(
           `WITH requested AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) q(key int,actor_id text,aliases text[],individuals text[],
+          SELECT * FROM jsonb_to_recordset(?::jsonb) q(key int,actor_id text,aliases text[],recent_aliases text[],individuals text[],
             awareness boolean,memories boolean,summaries boolean,recent boolean,
             excluded_awareness text[],excluded_memories text[],excluded_summaries text[],excluded_segments text[],buckets smallint[],
             age_floor double precision,pressure_batch bigint,pressure_entry bigint,pressure_member bigint)
@@ -921,7 +1041,7 @@ export class RetentionMetadataView {
           SELECT q.key,t.id,t.encoded_bytes
           FROM requested q JOIN mind_temporal_pages t ON t.world_id=? AND t.actor_id=q.actor_id
           WHERE q.recent AND t.lookup_buckets && q.buckets
-            AND (t.source_ids && q.aliases OR t.individual_ids && q.individuals)
+            AND (t.source_ids && q.recent_aliases OR t.individual_ids && q.individuals)
             AND NOT(t.id=ANY(q.excluded_segments))
             AND t.last_at>q.age_floor AND (q.pressure_batch IS NULL OR
               (t.last_batch_order,t.last_entry,t.last_member)>(q.pressure_batch,q.pressure_entry,q.pressure_member))
@@ -950,68 +1070,132 @@ export class RetentionMetadataView {
           result.individuals.add(id);
         }
       }
-      const pageSizes = new Map(rows.filter(row => row['page_id'] !== null && row['page_id'] !== undefined)
-        .map(row => [String(row['page_id']), Number(row['page_bytes'])]));
+      const pageSizes = new Map(
+        rows
+          .filter((row) => row['page_id'] !== null && row['page_id'] !== undefined)
+          .map((row) => [String(row['page_id']), Number(row['page_bytes'])]),
+      );
       if (pageSizes.size) {
-        if (!world || pageSizes.size > maximumTemporalPreparationRows ||
-          [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) > 4 * 1024 * 1024)
+        if (
+          !world ||
+          pageSizes.size > maximumTemporalPreparationRows ||
+          [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) > 4 * 1024 * 1024
+        )
           throw new Error('Recent membership exceeds bounded block preparation.');
         const pages = new Map<string, TemporalPage>();
-        for (const row of await db.prepare('SELECT * FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
-          .all(worldId, [...pageSizes.keys()])) pages.set(String(row['id']), readTemporalPageRecord(row));
-        if (pages.size !== pageSizes.size) throw new Error('Recent membership block is unavailable.');
+        for (const row of await db
+          .prepare('SELECT * FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
+          .all(worldId, [...pageSizes.keys()]))
+          pages.set(String(row['id']), readTemporalPageRecord(row));
+        if (pages.size !== pageSizes.size)
+          throw new Error('Recent membership block is unavailable.');
         const sources: Record<string, ReceivedValueLookup[string]> = {};
-        const references = [...new Set([...pages.values()].flatMap(page => [...temporalPageReferences(page)]))];
+        const references = [
+          ...new Set([...pages.values()].flatMap((page) => [...temporalPageReferences(page)])),
+        ];
         for (const id of references) {
           const value = world.receivedValues?.sources[id];
           if (value) sources[id] = value;
         }
-        const missing = references.filter(id => !sources[id]);
+        const missing = references.filter((id) => !sources[id]);
         if (missing.length) {
-          const size = await db.prepare('SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])')
+          const size = await db
+            .prepare(
+              'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+            )
             .get(worldId, missing);
-          if (Number(size?.['bytes'] ?? 0) + [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) > 4 * 1024 * 1024)
+          if (
+            Number(size?.['bytes'] ?? 0) +
+              [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) >
+            4 * 1024 * 1024
+          )
             throw new Error('Recent membership values exceed bounded preparation.');
-          for (const row of await db.prepare('SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])')
-            .all(worldId, missing)) sources[String(row['source_id'])] = JSON.parse(String(row['payload'])) as ReceivedValueLookup[string];
-          if (missing.some(id => !sources[id])) throw new Error('Recent membership values are unavailable.');
+          for (const row of await db
+            .prepare(
+              'SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+            )
+            .all(worldId, missing))
+            sources[String(row['source_id'])] = JSON.parse(
+              String(row['payload']),
+            ) as ReceivedValueLookup[string];
+          if (missing.some((id) => !sources[id]))
+            throw new Error('Recent membership values are unavailable.');
         }
         for (const row of rows)
           if (row['page_id'] !== null && row['page_id'] !== undefined)
-            this.accumulateRecentMembership(pages.get(String(row['page_id']))!, world, sources,
-              requests[Number(row['key'])]!, results[Number(row['key'])]!);
+            this.accumulateRecentMembership(
+              pages.get(String(row['page_id']))!,
+              world,
+              sources,
+              requests[Number(row['key'])]!,
+              results[Number(row['key'])]!,
+            );
       }
     }
     return results;
   }
-  private accumulateRecentMembership(page: TemporalPage, world: WorldState, sources: ReceivedValueLookup,
-    request: {actorId: string; aliases: readonly string[]; individualIds: readonly string[]},
-    result: {aliases: Set<string>; individuals: Set<string>}): void {
+  private accumulateRecentMembership(
+    page: TemporalPage,
+    world: WorldState,
+    sources: ReceivedValueLookup,
+    request: { actorId: string; aliases: readonly string[]; individualIds: readonly string[] },
+    result: { aliases: Set<string>; individuals: Set<string> },
+  ): void {
     const actor = world.experience?.temporal?.actors[request.actorId];
     if (!actor || page.actorId !== request.actorId) return;
+    const requestedAliases = request.aliases.filter((id) => !directReceiptAlias(id));
     for (const batch of page.batches)
       for (const entry of batch.entries) {
-        const locator = {actorId: batch.actorId, physicalLife: batch.physicalLife, epoch: batch.epoch,
-          batchOrder: batch.batchOrder, entryIndex: entry.entryIndex};
-        if (!temporalRecentAt(entry.receivedAt, world.simTime, selectedTemporalPolicy(world).recent.maxAgeSeconds) ||
-          !receivedDirectoryContains(actor.recent, locator)) continue;
-        const eligible = (memberIndex: number) => receivedPositionEligible({...locator,memberIndex}, entry.receivedAt, actor.frontier) &&
-          (entry.kind === 'occurrence' || receivedDirectoryContains(actor.recent, locator, memberIndex));
+        const locator = {
+          actorId: batch.actorId,
+          physicalLife: batch.physicalLife,
+          epoch: batch.epoch,
+          batchOrder: batch.batchOrder,
+          entryIndex: entry.entryIndex,
+        };
+        if (
+          !temporalRecentAt(
+            entry.receivedAt,
+            world.simTime,
+            selectedTemporalPolicy(world).recent.maxAgeSeconds,
+          ) ||
+          !receivedDirectoryContains(actor.recent, locator)
+        )
+          continue;
+        const eligible = (memberIndex: number) =>
+          receivedPositionEligible({ ...locator, memberIndex }, entry.receivedAt, actor.frontier) &&
+          (entry.kind === 'occurrence' ||
+            receivedDirectoryContains(actor.recent, locator, memberIndex));
         if (entry.kind === 'occurrence' && !eligible(0)) continue;
-        const selected = entry.kind === 'occurrence' ? entry : {...entry, coverage: entry.coverage.flatMap(coverage => {
-          const members = coverage.members.filter(member => eligible(member.memberIndex));
-          return members.length ? [{...coverage,members}] : [];
-        })};
-        const subjects = selected.kind === 'occurrence' ? [undefined] :
-          [...new Set(selected.coverage.map(coverage => batch.bindings.find(binding => binding.id === coverage.binding)!.subject))]
-            .map(subject => new Set([subject]));
+        const selected =
+          entry.kind === 'occurrence'
+            ? entry
+            : {
+                ...entry,
+                coverage: entry.coverage.flatMap((coverage) => {
+                  const members = coverage.members.filter((member) => eligible(member.memberIndex));
+                  return members.length ? [{ ...coverage, members }] : [];
+                }),
+              };
+        const subjects =
+          selected.kind === 'occurrence'
+            ? [undefined]
+            : [
+                ...new Set(
+                  selected.coverage.map(
+                    (coverage) =>
+                      batch.bindings.find((binding) => binding.id === coverage.binding)!.subject,
+                  ),
+                ),
+              ].map((subject) => new Set([subject]));
         for (const subject of subjects) {
           const receipt = materializeReceivedEntry(batch, selected, subject);
           if (!receipt) continue;
           const aliases = new Set(temporalReceiptAliases(receipt, sources, world));
-          for (const alias of request.aliases) if (aliases.has(alias)) result.aliases.add(alias);
+          for (const alias of requestedAliases) if (aliases.has(alias)) result.aliases.add(alias);
           const individuals = new Set(temporalReceiptIndividualIds(receipt, sources));
-          for (const id of request.individualIds) if (individuals.has(id)) result.individuals.add(id);
+          for (const id of request.individualIds)
+            if (individuals.has(id)) result.individuals.add(id);
         }
       }
   }

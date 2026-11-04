@@ -4,7 +4,7 @@
 
 ## 1. Outcome, evidence and alternatives
 
-The subsequent [received-batch proposal](bookkeeping-simplification-batch-design.md) addresses the remaining per-partition append and storage-lifetime work exposed by the completed-source measurement. It is not installed; the BK17–BK19 contracts below still describe current execution.
+The accepted [received-batch design](bookkeeping-simplification-batch-design.md) replaces this foundation's span/check storage, late closure and SQL retirement mechanics. Its coordinated current-format conversion is in progress; the contracts below describe the predecessor representation and its source evidence, not an additional supported format.
 
 A person should receive their surroundings, notice a changing situation and remember a useful sequence without rebuilding thousands of proof objects merely to keep looking. An ordinary route can fade; a particular favor, learned name or promise can remain. Witnesses can disagree honestly because neither acquires the other's private knowledge. Responsive movement and remembered consequence are the payoff; a more elaborate memory simulation is not itself a feature.
 

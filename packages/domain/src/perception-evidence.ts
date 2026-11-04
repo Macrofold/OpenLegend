@@ -1372,200 +1372,222 @@ export function receiveCurrentChange(
   return withCurrentPerceptionBatch(world, observer.id, state, () => {
     const delta = receivedPhaseDeltas.get(state)!;
     const previousToken = delta.sampleToken;
-    const sampleToken = change.sampleToken ?? previousToken ??
-      (change.kind === 'sample' || change.kind === 'confirm' ? createReceivedSample(world,observer.id) : undefined);
+    const sampleToken =
+      change.sampleToken ??
+      previousToken ??
+      (change.kind === 'sample' || change.kind === 'confirm'
+        ? createReceivedSample(world, observer.id)
+        : undefined);
     if (sampleToken !== undefined) delta.sampleToken = sampleToken;
-    return withTemporalReceivedTransition(world, observer.id, () => {
-      try {
-      switch (change.kind) {
-        case 'sample': {
-          if ('source' in change) {
-            if (
-              !change.source.channel ||
-              !phaseChannelEligible(world, observer, change.source.channel)
-            )
-              throw new Error('Prepared reception uses an inactive channel.');
-            if (
-              change.source.detector.id !== change.source.channel.id ||
-              change.source.detector.version !== change.source.channel.version
-            )
-              throw new Error('Physical reception detector differs from its installed channel.');
-            if (
-              change.source.facets.some(
-                (facet) =>
-                  (facet.value.kind === 'body' ||
-                    facet.value.kind === 'location' ||
-                    facet.value.kind === 'observed-motion') &&
-                  facet.role !== 'direct',
-              )
-            )
-              throw new Error('Physical body and location samples require direct reception.');
-            return acquireReceivedObservation(world, observer, change.source);
-          }
-          if (!phaseChannelEligible(world, observer, change.channel))
-            throw new Error('Received sample uses an inactive channel.');
-          enrollReceivedCorrespondence(world, state, currentFacetAddress(change.key).subjectId);
-          if (!installReceivedSample(world, state, change.key, change.value, change.channel))
-            return;
-          const sourceId = currentFacetAddress(change.key).subjectId;
-          delta.reconciled = false;
-          delta.measured.add(sourceId);
-          const sample = change.value,
-            exposure = 'grant' in sample ? sample.grant.exposure : sample.exposure.episodeId;
-          if (sample.localSubject && delta.subjects.has(subjectKey(sample.localSubject))) {
-            let bindings = delta.selected.get(sourceId);
-            if (!bindings) delta.selected.set(sourceId, (bindings = new Map()));
-            bindings.set(receivedTrackKey(exposure, change.channel), {
-              exposure,
-              channel: change.channel,
-            });
-          }
-          recordCurrentReception(world, observer.id, state, sourceId, new Set([sample.value.kind]));
-          return;
-        }
-        case 'confirm': {
-          enrollReceivedCorrespondence(world, state, change.subjectId);
-          if (!phaseChannelEligible(world, observer, change.channel)) return;
-          const checked = currentConfirmGroups(
-            state,
-            change.subjectId,
-            change.channel,
-            change.through,
-            {
-              receivedAt: world.simTime,
-              receivedOrder: delta.sampleToken ?? temporalReceivedOrder(world, observer.id),
-              confirmedRevision: Math.max(
-                change.sight?.revision ?? 0,
-                state.visualConfirmation?.revision ?? 0,
-              ),
-              ...(state.visualConfirmation ? { frameRef: state.visualConfirmation.frameRef } : {}),
-            },
-            change.scopes,
-            change.exposures,
-            change.kinds,
-          );
-          if (!checked.length) return;
-          delta.reconciled = false;
-
-          if (
-            change.sight &&
-            change.sight.through >=
-              (currentContactGet(state, change.subjectId)?.sight?.through ?? -Infinity)
-          )
-            setCurrentSightCheck(state, change.subjectId, change.sight);
-          delta.checked.add(change.subjectId);
-          const tracks = delta.selected.get(change.subjectId);
-          if (tracks)
-            captureTemporalCurrent(
-              world,
-              observer.id,
-              checked.flatMap(({ group, partition }) => {
-                const grant = group.received.grant;
-                return tracks.has(receivedTrackKey(grant.exposure, grant.channel))
-                  ? [
-                      {
-                        subjectId: change.subjectId,
-                        group,
-                        partition,
-                        originalSource: currentContactGet(state, change.subjectId)!.content
-                          .originals[grant.original]!,
-                        checked: true,
-                        sampleToken: delta.sampleToken,
-                        entering: false,
-                        exiting: false,
-                      },
-                    ]
-                  : [];
-              }),
-              selectedTemporalPolicy(world).recent,
-            );
-          return;
-        }
-        case 'availability': {
-          const keys = [...(change.keys ?? [])];
-          const sourceIds = new Set([
-            ...(change.groups ?? []).map((source) => source.subjectId),
-            ...keys.map((key) => currentFacetAddress(key).subjectId),
-          ]);
-          for (const id of sourceIds) enrollReceivedCorrespondence(world, state, id);
-          if (change.state === 'ended') {
-            for (const source of change.groups ?? [])
-              for (const kind of Object.keys(source.group.received.fields))
-                keys.push(
-                  currentFacetKey(source.subjectId, kind, source.group.received.grant.channel),
-                );
-            for (const key of keys) {
-              const current = currentFacetGet(state, key);
-              if (!current) continue;
-              delta.reconciled = false;
-              delta.ended.add(current.grant.subjectId);
-            }
-            removeCurrentFacets(world, observer.id, keys, { requestReception: false });
-            return;
-          }
-          const coverage: import('./perception-current.js').CurrentGroupCoverage[] = (
-            change.groups ?? []
-          ).map((source) => ({
-            subjectId: source.subjectId,
-            fields: readOnlyDraftView(source.group.received.fields),
-          }));
-          const masks = new Map<object, { subjectId: string; kinds: Set<string> }>();
-          for (const key of keys) {
-            const field = currentFacetGet(state, key);
-            if (!field) continue;
-            const members = currentFacetMembership(state, field);
-            let mask = masks.get(members);
-            if (!mask)
-              masks.set(members, (mask = { subjectId: field.grant.subjectId, kinds: new Set() }));
-            mask.kinds.add(field.value.kind);
-          }
-          coverage.push(...[...masks].map(([fields, mask]) => ({ fields, ...mask })));
-          for (const covered of coverage) {
-            const contact = currentContactGet(state, covered.subjectId);
-            if (!contact) continue;
-            for (const group of contact.content.groups) {
-              if (readOnlyDraftView(group.received.fields) !== covered.fields) continue;
-              for (const partition of group.metadata) {
+    return withTemporalReceivedTransition(
+      world,
+      observer.id,
+      () => {
+        try {
+          switch (change.kind) {
+            case 'sample': {
+              if ('source' in change) {
                 if (
-                  partition.availability ||
-                  (change.at ?? world.simTime) <
-                    currentGroupTimes(group, partition).confirmedThrough
+                  !change.source.channel ||
+                  !phaseChannelEligible(world, observer, change.source.channel)
                 )
-                  continue;
-                const members = partition.members.filter(
-                  ([kind]) => !covered.kinds || covered.kinds.has(kind),
-                );
-                if (members.length && currentGroupRecordings(group, members).length)
-                  closeTemporalCurrentGroup(
-                    world,
-                    observer.id,
-                    covered.subjectId,
-                    group,
-                    'unchecked',
-                    members.length === partition.members.length
-                      ? partition
-                      : { ...partition, members },
+                  throw new Error('Prepared reception uses an inactive channel.');
+                if (
+                  change.source.detector.id !== change.source.channel.id ||
+                  change.source.detector.version !== change.source.channel.version
+                )
+                  throw new Error(
+                    'Physical reception detector differs from its installed channel.',
                   );
+                if (
+                  change.source.facets.some(
+                    (facet) =>
+                      (facet.value.kind === 'body' ||
+                        facet.value.kind === 'location' ||
+                        facet.value.kind === 'observed-motion') &&
+                      facet.role !== 'direct',
+                  )
+                )
+                  throw new Error('Physical body and location samples require direct reception.');
+                return acquireReceivedObservation(world, observer, change.source);
               }
+              if (!phaseChannelEligible(world, observer, change.channel))
+                throw new Error('Received sample uses an inactive channel.');
+              enrollReceivedCorrespondence(world, state, currentFacetAddress(change.key).subjectId);
+              if (!installReceivedSample(world, state, change.key, change.value, change.channel))
+                return;
+              const sourceId = currentFacetAddress(change.key).subjectId;
+              delta.reconciled = false;
+              delta.measured.add(sourceId);
+              const sample = change.value,
+                exposure = 'grant' in sample ? sample.grant.exposure : sample.exposure.episodeId;
+              if (sample.localSubject && delta.subjects.has(subjectKey(sample.localSubject))) {
+                let bindings = delta.selected.get(sourceId);
+                if (!bindings) delta.selected.set(sourceId, (bindings = new Map()));
+                bindings.set(receivedTrackKey(exposure, change.channel), {
+                  exposure,
+                  channel: change.channel,
+                });
+              }
+              recordCurrentReception(
+                world,
+                observer.id,
+                state,
+                sourceId,
+                new Set([sample.value.kind]),
+              );
+              return;
+            }
+            case 'confirm': {
+              enrollReceivedCorrespondence(world, state, change.subjectId);
+              if (!phaseChannelEligible(world, observer, change.channel)) return;
+              const checked = currentConfirmGroups(
+                state,
+                change.subjectId,
+                change.channel,
+                change.through,
+                {
+                  receivedAt: world.simTime,
+                  receivedOrder: delta.sampleToken ?? temporalReceivedOrder(world, observer.id),
+                  confirmedRevision: Math.max(
+                    change.sight?.revision ?? 0,
+                    state.visualConfirmation?.revision ?? 0,
+                  ),
+                  ...(state.visualConfirmation
+                    ? { frameRef: state.visualConfirmation.frameRef }
+                    : {}),
+                },
+                change.scopes,
+                change.exposures,
+                change.kinds,
+              );
+              if (!checked.length) return;
+              delta.reconciled = false;
+
+              if (
+                change.sight &&
+                change.sight.through >=
+                  (currentContactGet(state, change.subjectId)?.sight?.through ?? -Infinity)
+              )
+                setCurrentSightCheck(state, change.subjectId, change.sight);
+              delta.checked.add(change.subjectId);
+              const tracks = delta.selected.get(change.subjectId);
+              if (tracks)
+                captureTemporalCurrent(
+                  world,
+                  observer.id,
+                  checked.flatMap(({ group, partition }) => {
+                    const grant = group.received.grant;
+                    return tracks.has(receivedTrackKey(grant.exposure, grant.channel))
+                      ? [
+                          {
+                            subjectId: change.subjectId,
+                            group,
+                            partition,
+                            originalSource: currentContactGet(state, change.subjectId)!.content
+                              .originals[grant.original]!,
+                            checked: true,
+                            sampleToken: delta.sampleToken,
+                            entering: false,
+                            exiting: false,
+                          },
+                        ]
+                      : [];
+                  }),
+                  selectedTemporalPolicy(world).recent,
+                );
+              return;
+            }
+            case 'availability': {
+              const keys = [...(change.keys ?? [])];
+              const sourceIds = new Set([
+                ...(change.groups ?? []).map((source) => source.subjectId),
+                ...keys.map((key) => currentFacetAddress(key).subjectId),
+              ]);
+              for (const id of sourceIds) enrollReceivedCorrespondence(world, state, id);
+              if (change.state === 'ended') {
+                for (const source of change.groups ?? [])
+                  for (const kind of Object.keys(source.group.received.fields))
+                    keys.push(
+                      currentFacetKey(source.subjectId, kind, source.group.received.grant.channel),
+                    );
+                for (const key of keys) {
+                  const current = currentFacetGet(state, key);
+                  if (!current) continue;
+                  delta.reconciled = false;
+                  delta.ended.add(current.grant.subjectId);
+                }
+                removeCurrentFacets(world, observer.id, keys, { requestReception: false });
+                return;
+              }
+              const coverage: import('./perception-current.js').CurrentGroupCoverage[] = (
+                change.groups ?? []
+              ).map((source) => ({
+                subjectId: source.subjectId,
+                fields: readOnlyDraftView(source.group.received.fields),
+              }));
+              const masks = new Map<object, { subjectId: string; kinds: Set<string> }>();
+              for (const key of keys) {
+                const field = currentFacetGet(state, key);
+                if (!field) continue;
+                const members = currentFacetMembership(state, field);
+                let mask = masks.get(members);
+                if (!mask)
+                  masks.set(
+                    members,
+                    (mask = { subjectId: field.grant.subjectId, kinds: new Set() }),
+                  );
+                mask.kinds.add(field.value.kind);
+              }
+              coverage.push(...[...masks].map(([fields, mask]) => ({ fields, ...mask })));
+              for (const covered of coverage) {
+                const contact = currentContactGet(state, covered.subjectId);
+                if (!contact) continue;
+                for (const group of contact.content.groups) {
+                  if (readOnlyDraftView(group.received.fields) !== covered.fields) continue;
+                  for (const partition of group.metadata) {
+                    if (
+                      partition.availability ||
+                      (change.at ?? world.simTime) <
+                        currentGroupTimes(group, partition).confirmedThrough
+                    )
+                      continue;
+                    const members = partition.members.filter(
+                      ([kind]) => !covered.kinds || covered.kinds.has(kind),
+                    );
+                    if (members.length && currentGroupRecordings(group, members).length)
+                      closeTemporalCurrentGroup(
+                        world,
+                        observer.id,
+                        covered.subjectId,
+                        group,
+                        'unchecked',
+                        members.length === partition.members.length
+                          ? partition
+                          : { ...partition, members },
+                      );
+                  }
+                }
+              }
+              currentSetUnchecked(state, coverage, change.at ?? world.simTime);
+              return;
+            }
+            case 'occurrence': {
+              if (
+                change.contribution.channel &&
+                !phaseChannelEligible(world, observer, change.contribution.channel)
+              )
+                throw new Error('Prepared occurrence uses an inactive channel.');
+              const received = acquireReceivedObservation(world, observer, change.contribution);
+              return received;
             }
           }
-          currentSetUnchecked(state, coverage, change.at ?? world.simTime);
-          return;
+        } finally {
+          delta.sampleToken = previousToken;
         }
-        case 'occurrence': {
-          if (
-            change.contribution.channel &&
-            !phaseChannelEligible(world, observer, change.contribution.channel)
-          )
-            throw new Error('Prepared occurrence uses an inactive channel.');
-          const received = acquireReceivedObservation(world, observer, change.contribution);
-          return received;
-        }
-      }
-      } finally {
-        delta.sampleToken = previousToken;
-      }
-    }, sampleToken);
+      },
+      sampleToken,
+    );
   });
 }
 /** One detector phase or causal receiver boundary, including source construction. */
@@ -2019,7 +2041,8 @@ function installReceivedSample(
     closeCurrentMemberHistory(world, state, subject, compact.value.kind, channel, 'change');
   currentFacetSet(state, key, compact, {
     receivedAt: world.simTime,
-    receivedOrder: receivedPhaseDeltas.get(state)?.sampleToken ?? temporalReceivedOrder(world, observer.actorId),
+    receivedOrder:
+      receivedPhaseDeltas.get(state)?.sampleToken ?? temporalReceivedOrder(world, observer.actorId),
     confirmedRevision: compact.revision,
     ...(compact.value.reception?.kind === 'location'
       ? { frameRef: compact.value.reception.frameRef }
@@ -2162,7 +2185,8 @@ function acquireReceivedObservation(
         header: {
           observer: observerLife(observer),
           acquiredAt: world.simTime,
-          receivedOrder: receivedPhaseDeltas.get(state)?.sampleToken ?? createReceivedSample(world,observer.id),
+          receivedOrder:
+            receivedPhaseDeltas.get(state)?.sampleToken ?? createReceivedSample(world, observer.id),
           modality: input.modality,
           detector: { id: input.detector.id, version: input.detector.version },
           ...(input.channel ? { channel: input.channel } : {}),
@@ -3738,7 +3762,7 @@ export function reconcileVisualEvidence(
       const exposed = world.perceptionEpisodes?.[observer.id]?.[subject.id];
       if (subject.placement?.mode !== 'world') return;
       const placement = subject.placement;
-      const sampleToken = createReceivedSample(world,observer.id);
+      const sampleToken = createReceivedSample(world, observer.id);
       sampleTokens.set(subject.id, sampleToken);
       checkedSources.add(subject.id);
       if (detailed) detailedSources.add(subject.id);
@@ -3999,34 +4023,40 @@ export function reconcileVisualEvidence(
               detector,
               facets: [receivedInput(facet)],
             });
-          receiveCurrentSample(world, state, key, {
-            id: leaseId,
-            revision: 1,
-            observer: exposure.observer,
-            subjectId: subject.id,
-            subjectPhysicalLife: subject.actor ? (subject.actor.physicalLife ?? 0) : null,
-            ...(facet.kind === 'location'
-              ? {
-                  motionContinuityRevision: placement.motionContinuityRevision ?? 0,
-                  sourcePlacementRevision: placement.revision,
-                }
-              : {}),
-            exposure,
-            original: facetOriginal!,
-            originalOrdinal: facetOriginal!.facets.length === 1 ? 0 : ordinal,
-            modality: 'sight',
-            // Only this newly admitted original proves the same current value.
-            // A reused onset may predate a returning or changed detail.
-            value:
-              facetOriginal === admittedOriginal
-                ? facetOriginal!.facets[ordinal]!.value
-                : currentValue(facet),
-            valueMeasuredFrom: world.simTime,
-            valueMeasuredThrough: world.simTime,
-            valueAcquiredAt: world.simTime,
-            confirmedFrom: world.simTime,
-            confirmedThrough: world.simTime,
-          }, sampleToken);
+          receiveCurrentSample(
+            world,
+            state,
+            key,
+            {
+              id: leaseId,
+              revision: 1,
+              observer: exposure.observer,
+              subjectId: subject.id,
+              subjectPhysicalLife: subject.actor ? (subject.actor.physicalLife ?? 0) : null,
+              ...(facet.kind === 'location'
+                ? {
+                    motionContinuityRevision: placement.motionContinuityRevision ?? 0,
+                    sourcePlacementRevision: placement.revision,
+                  }
+                : {}),
+              exposure,
+              original: facetOriginal!,
+              originalOrdinal: facetOriginal!.facets.length === 1 ? 0 : ordinal,
+              modality: 'sight',
+              // Only this newly admitted original proves the same current value.
+              // A reused onset may predate a returning or changed detail.
+              value:
+                facetOriginal === admittedOriginal
+                  ? facetOriginal!.facets[ordinal]!.value
+                  : currentValue(facet),
+              valueMeasuredFrom: world.simTime,
+              valueMeasuredThrough: world.simTime,
+              valueAcquiredAt: world.simTime,
+              confirmedFrom: world.simTime,
+              confirmedThrough: world.simTime,
+            },
+            sampleToken,
+          );
         } else if (changed) {
           const {
             at: _at,
@@ -4039,19 +4069,25 @@ export function reconcileVisualEvidence(
             currentFacetOriginal(state, prior),
             prior.originalOrdinal,
           ).measuredThrough;
-          receiveCurrentSample(world, state, key, {
-            ...unchanged,
-            revision: prior.revision + 1,
-            value: currentValue(facet, priorLease?.value),
-            ...(world.simTime === initialAt ? {} : { at: world.simTime }),
-            ...(reacquired ? { confirmedFrom: world.simTime } : {}),
-            ...(facet.kind === 'location'
-              ? {
-                  motionContinuityRevision: placement.motionContinuityRevision ?? 0,
-                  sourcePlacementRevision: placement.revision,
-                }
-              : {}),
-          }, sampleToken);
+          receiveCurrentSample(
+            world,
+            state,
+            key,
+            {
+              ...unchanged,
+              revision: prior.revision + 1,
+              value: currentValue(facet, priorLease?.value),
+              ...(world.simTime === initialAt ? {} : { at: world.simTime }),
+              ...(reacquired ? { confirmedFrom: world.simTime } : {}),
+              ...(facet.kind === 'location'
+                ? {
+                    motionContinuityRevision: placement.motionContinuityRevision ?? 0,
+                    sourcePlacementRevision: placement.revision,
+                  }
+                : {}),
+            },
+            sampleToken,
+          );
         }
       });
       const storedLocation = currentNativeFacet(state, `${subject.id}:location`, {
@@ -4266,7 +4302,9 @@ function pruneLostBodyIndividuals(
 ): void {
   if (!candidates.size) return;
   const temporal = world.experience?.temporal?.actors[observerId];
-  const retained = new Set(temporal?.pages.flatMap((page) => page.individualIds) ?? []);
+  // Raw block envelopes may still include expired siblings. The world owner
+  // proves recent membership at the individual's exact newest logical address.
+  const retained = new Set<string>();
   for (const capsule of Object.values(temporal?.supports ?? {})) {
     const subject = capsule.receipt.subjectIdentity;
     if (subject?.kind === 'individual') retained.add(subject.individualId);
@@ -4391,7 +4429,10 @@ export function reconcileAttendedTemporalEvidence(
       at: lease.confirmedThrough,
       order: carrier.order,
       support: [
-        JSON.stringify({source:temporalReceiptSource(carrier.address),memberIndex:carrier.address.memberIndex}),
+        JSON.stringify({
+          source: temporalReceiptSource(carrier.address),
+          memberIndex: carrier.address.memberIndex,
+        }),
         JSON.stringify({ source: temporalReceiptSource(held.receipt), memberIndex }),
       ],
     });
@@ -4406,16 +4447,30 @@ export function reconcileAttendedTemporalEvidence(
 
 /** Incidental contact refers to the admitted raw member; its optional minimum
  * capsule is separate support for later meaningful recognition. */
-function currentRecordedCarrier(state:PerceptionEvidenceOwner,field:CurrentFacetRecord) {
-  const contact=currentContactGet(state,field.grant.subjectId);
-  const group=contact?.content.groups.find(group=>group.received.fields[field.value.kind]?.id===field.id &&
-    sameDefinitionPin(group.received.grant.channel,field.grant.channel));
-  if(!group)return;
-  for(const mark of currentGroupRecordings(group,[[field.value.kind,field.value.kind==='body'?'detail':'value']])) {
-    if(mark.gap||!mark.carrier)continue;
-    const member=mark.carrierMembers?.find(member=>member.partIndices.some(index=>
-      mark.binding.parts.some(part=>part.partIndex===index&&part.kind===field.value.kind)));
-    if(member)return {address:{...mark.carrier,memberIndex:member.memberIndex},order:mark.lastOrder};
+function currentRecordedCarrier(state: PerceptionEvidenceOwner, field: CurrentFacetRecord) {
+  const contact = currentContactGet(state, field.grant.subjectId);
+  const group = contact?.content.groups.find(
+    (group) =>
+      group.received.fields[field.value.kind]?.id === field.id &&
+      sameDefinitionPin(group.received.grant.channel, field.grant.channel),
+  );
+  if (!group) return;
+  for (const mark of currentGroupRecordings(group, [
+    [field.value.kind, field.value.kind === 'body' ? 'detail' : 'value'],
+  ])) {
+    if (mark.gap || !mark.carrier) continue;
+    const member = mark.carrierMembers?.find((member) =>
+      member.partIndices.some((index) =>
+        mark.binding.parts.some(
+          (part) => part.partIndex === index && part.kind === field.value.kind,
+        ),
+      ),
+    );
+    if (member)
+      return {
+        address: { ...mark.carrier, memberIndex: member.memberIndex },
+        order: mark.lastOrder,
+      };
   }
 }
 
@@ -4671,19 +4726,29 @@ export function acquireAwarenessObservation(
     // Only this actual acquisition may append received chronology. Encounter
     // wrappers and later memory admission reuse their already owned source.
     if (position === undefined || position < before) return observation;
-    const required = selectedRecordingReason(world, {
-      source: 'awareness', eventType: awareness.eventType, modality: awareness.modality,
-      triggerKind: awareness.triggerKind,
-      own: awareness.sourceId === observer.id || awareness.triggerKind === 'self_event',
-      hasExposure: !!awareness.exposure,
-      ...(awareness.exposure ? { exposureKind: awareness.exposure.kind } : {}),
-      consequence: awareness.triggerKind === 'self_event' || awareness.triggerKind === 'directed_action',
-    }) === 'required';
+    const required =
+      selectedRecordingReason(world, {
+        source: 'awareness',
+        eventType: awareness.eventType,
+        modality: awareness.modality,
+        triggerKind: awareness.triggerKind,
+        own: awareness.sourceId === observer.id || awareness.triggerKind === 'self_event',
+        hasExposure: !!awareness.exposure,
+        ...(awareness.exposure ? { exposureKind: awareness.exposure.kind } : {}),
+        consequence:
+          awareness.triggerKind === 'self_event' || awareness.triggerKind === 'directed_action',
+      }) === 'required';
     if (required || observation.context?.attended) {
       awareness.sourceReceipt = captureTemporalObservation(
-        world, observer.id, observation, [awareness.eventId, observation.id], required,
+        world,
+        observer.id,
+        observation,
+        [awareness.eventId, observation.id],
+        required,
         selectedTemporalPolicy(world).recent,
-        observation.context ? {contextSubjects: observation.context.subjects.map(subject => subject.track)} : {},
+        observation.context
+          ? { contextSubjects: observation.context.subjects.map((subject) => subject.track) }
+          : {},
       );
     }
     return observation;
@@ -5286,7 +5351,8 @@ export function validateObservationContribution(
     !Number.isSafeInteger(observation.observer.physicalLife) ||
     observation.observer.physicalLife < 0 ||
     !Number.isFinite(observation.acquiredAt) ||
-    !Number.isSafeInteger(observation.receivedOrder) || observation.receivedOrder < 0 ||
+    !Number.isSafeInteger(observation.receivedOrder) ||
+    observation.receivedOrder < 0 ||
     !['sight', 'hearing', 'touch'].includes(observation.modality) ||
     !validObservationDetector(observation.detector) ||
     (observation.channel !== undefined && !isDefinitionPin(observation.channel)) ||

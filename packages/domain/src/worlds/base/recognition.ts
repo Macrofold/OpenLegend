@@ -1103,7 +1103,11 @@ export function validRecognitionSupportKey(key: unknown): key is string {
     validateEvidenceSource(source);
     if (fact) {
       const field = isTemporalReceiptSource(source) ? 'memberIndex' : 'ordinal';
-      if (Object.keys(value).length !== 2 || !Number.isSafeInteger(value[field]) || value[field] < 0)
+      if (
+        Object.keys(value).length !== 2 ||
+        !Number.isSafeInteger(value[field]) ||
+        value[field] < 0
+      )
         return false;
     }
     return source.family === 'native-exposure' || source.family === 'native-response';

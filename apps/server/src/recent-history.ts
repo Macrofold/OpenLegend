@@ -152,7 +152,16 @@ export async function recentHistory(
     historyEpoch = service.historyEpoch;
   const query = request.query?.trim().toLocaleLowerCase() ?? '';
   const fence = digest([scopeKey(scope), head.generation, actorId, 'recent-observations', query]);
-  let before: { at: number; epoch: string; batchOrder: number; entryIndex: number; memberIndex: number; order: number } | undefined;
+  let before:
+    | {
+        at: number;
+        epoch: string;
+        batchOrder: number;
+        entryIndex: number;
+        memberIndex: number;
+        order: number;
+      }
+    | undefined;
   if (request.cursor) {
     try {
       const cursor = cursorSchema.parse(openCursor(request.cursor));
@@ -204,7 +213,8 @@ export async function recentHistory(
         'receipt',
         receipt.physicalLife,
         receipt.epoch,
-        receipt.batchOrder, receipt.entryIndex,
+        receipt.batchOrder,
+        receipt.entryIndex,
       ]),
       sourceKind: 'observation',
       fidelity: 'exact',
@@ -218,7 +228,8 @@ export async function recentHistory(
           actorId,
           physicalLife: receipt.physicalLife,
           epoch: receipt.epoch,
-          batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex,
+          batchOrder: receipt.batchOrder,
+          entryIndex: receipt.entryIndex,
         },
       }),
       text: `${receipt.change === 'loss' ? 'Lost contact; last received' : receipt.change === 'attention-exit' ? 'Last noted' : 'Received'}: ${text}`,
@@ -229,8 +240,12 @@ export async function recentHistory(
             fence,
             at: oldest.at,
             epoch: oldest.epoch,
-            batchOrder: oldest.batchOrder, entryIndex: oldest.entryIndex,
-            memberIndex: "memberIndex" in oldest ? oldest.memberIndex : Math.min(...oldest.facets.map(facet=>facet.memberIndex)),
+            batchOrder: oldest.batchOrder,
+            entryIndex: oldest.entryIndex,
+            memberIndex:
+              'memberIndex' in oldest
+                ? oldest.memberIndex
+                : Math.min(...oldest.facets.map((facet) => facet.memberIndex)),
             order: oldest.order,
           })
         : null,

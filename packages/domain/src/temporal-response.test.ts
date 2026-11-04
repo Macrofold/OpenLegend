@@ -18,7 +18,7 @@ import {
   type SituationProposalBinding,
 } from './response.js';
 import { selectedTemporalPolicy } from './world-composition.js';
-import { selectTemporalHistory } from './temporal-evidence.js';
+import { retainedTemporalReceipt, selectTemporalHistory } from './temporal-evidence.js';
 
 const empty = { talk: null, act: null, think: null, goal: null, plan: null };
 function setup() {
@@ -119,7 +119,10 @@ it('remembers a fallible source-linked interpretation and revokes it with its ac
   expect(memory.impression!.claims).toEqual([
     { kind: 'interpretation', text: 'That person seemed to be waiting for me.' },
   ]);
-  expect(memory.impression!.provenance[0]!.from).toBe(selected.receipt.ordinal);
+  expect(memory.impression!.provenance[0]!.from).toEqual({
+    batchOrder: selected.receipt.batchOrder,
+    entryIndex: selected.receipt.entryIndex,
+  });
   expect(memory.impression!.dependencies[0]).toMatchObject({
     source: { family: 'native-exposure', id: selected.receipt.id },
   });
@@ -169,10 +172,15 @@ it('retains a supplied current measurement even when recent history omits it and
     'response-current-point',
   );
   expect(result.outcome.ok, result.outcome.message).toBe(true);
-  const retained = selectTemporalHistory(result.world, NPC_ID, {
-    bytes: 1024 * 1024,
-    limit: 1000,
-  }).entries.at(-1)!;
+  const capsule = Object.values(
+    result.world.experience!.temporal!.actors[NPC_ID]!.supports ?? {},
+  ).find(
+    (support) =>
+      support.receipt.change === 'retained-state' &&
+      support.receipt.facets.some((facet) => facet.acquiredAt === 5),
+  )!;
+  expect(capsule).toBeDefined();
+  const retained = retainedTemporalReceipt(result.world, capsule.receipt)!;
   expect(retained.values[0]).toMatchObject({
     kind: 'location',
     location: { kind: 'point', point: { x: 4 } },

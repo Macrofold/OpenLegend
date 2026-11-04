@@ -188,8 +188,19 @@ export const DOMAIN_COUNTERS = [
   'visualSourcePreparations',
   'visualSourcePreparationReuses',
   'currentFacetMapCopies',
-  /** Performed native temporal append work, including tentative transitions. */
+  /** Installed received-batch flush boundaries, including tentative transitions. */
   'temporalOperationsAppended',
+  'receivedActualSampleTokens',
+  'receivedBatchesAppended',
+  'receivedBaselineEntries',
+  'receivedSampleEntries',
+  'receivedBoundaryEntries',
+  'receivedOccurrenceEntries',
+  'receivedLogicalMembersAdmitted',
+  'receivedLogicalMembersRejected',
+  'receivedBatchEncodedBytes',
+  'receivedBindingBytes',
+  'receivedSeedBytes',
   /** Logical covered fields for quota accounting, not the number of field visits. */
   'temporalFieldsAppended',
   'temporalGroupsVisited',

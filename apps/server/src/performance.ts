@@ -46,8 +46,10 @@ export function startPerformanceCapture(options: { runtimeMonitoring: boolean })
     runtimeMonitoring: options.runtimeMonitoring,
     samples: new Map(),
     counters: new Map(),
-    databaseQueries: new Map(), databaseRows: new Map(),
-    omittedDatabaseQueries: 0, omittedDatabaseRows: 0,
+    databaseQueries: new Map(),
+    databaseRows: new Map(),
+    omittedDatabaseQueries: 0,
+    omittedDatabaseRows: 0,
     gauges: new Map(),
     observers: new Set(),
     omitted: { durationEvents: 0, counterEvents: 0, gaugeEvents: 0 },
@@ -63,7 +65,8 @@ export function startPerformanceCapture(options: { runtimeMonitoring: boolean })
       owned.stopMonitoring = undefined;
       owned.samples.clear();
       owned.counters.clear();
-      owned.databaseQueries.clear(); owned.databaseRows.clear();
+      owned.databaseQueries.clear();
+      owned.databaseRows.clear();
       owned.gauges.clear();
       owned.observers.clear();
     }
@@ -172,21 +175,51 @@ export function beginDatabaseQuery(sql: string): { mark: TimingMark; key: string
   const owned = mark.capture;
   const key = createHash('sha256').update(sql).digest('hex').slice(0, 16);
   if (!owned.databaseQueries.has(key)) {
-    if (owned.databaseQueries.size >= 256) { owned.omittedDatabaseQueries++; return; }
+    if (owned.databaseQueries.size >= 256) {
+      owned.omittedDatabaseQueries++;
+      return;
+    }
     const first = /^\s*([A-Z]+)/iu.exec(sql)?.[1]?.toLowerCase() ?? 'other';
-    const kind = first === 'with' ? (/\b(?:INSERT|UPDATE|DELETE)\b/iu.test(sql) ? 'grouped-write' : 'select') : first;
-    const tables = [...new Set([...sql.matchAll(/\b(?:FROM|JOIN|UPDATE|INTO)\s+([a-z_][a-z_0-9.]*)/giu)].map(match => match[1]!.toLowerCase()))].sort().slice(0,32);
-    owned.databaseQueries.set(key, { kind, tables, calls:0, failed:0, returnedRows:0,
-      affectedRows: ['insert','update','delete'].includes(kind) ? 0 : null, elapsedMs:0 });
+    const kind =
+      first === 'with'
+        ? /\b(?:INSERT|UPDATE|DELETE)\b/iu.test(sql)
+          ? 'grouped-write'
+          : 'select'
+        : first;
+    const tables = [
+      ...new Set(
+        [...sql.matchAll(/\b(?:FROM|JOIN|UPDATE|INTO)\s+([a-z_][a-z_0-9.]*)/giu)].map((match) =>
+          match[1]!.toLowerCase(),
+        ),
+      ),
+    ]
+      .sort()
+      .slice(0, 32);
+    owned.databaseQueries.set(key, {
+      kind,
+      tables,
+      calls: 0,
+      failed: 0,
+      returnedRows: 0,
+      affectedRows: ['insert', 'update', 'delete'].includes(kind) ? 0 : null,
+      elapsedMs: 0,
+    });
   }
-  return {mark,key};
+  return { mark, key };
 }
-export function finishDatabaseQuery(query: ReturnType<typeof beginDatabaseQuery>, result?: {rows: readonly unknown[]; changes: number}): void {
+export function finishDatabaseQuery(
+  query: ReturnType<typeof beginDatabaseQuery>,
+  result?: { rows: readonly unknown[]; changes: number },
+): void {
   if (!query || !query.mark.capture.active || query.mark.capture !== capture) return;
   const tally = query.mark.capture.databaseQueries.get(query.key)!;
-  tally.calls++; tally.elapsedMs += elapsedTiming(query.mark) ?? 0;
+  tally.calls++;
+  tally.elapsedMs += elapsedTiming(query.mark) ?? 0;
   if (!result) tally.failed++;
-  else { tally.returnedRows += result.rows.length; if(tally.affectedRows !== null) tally.affectedRows += result.changes; }
+  else {
+    tally.returnedRows += result.rows.length;
+    if (tally.affectedRows !== null) tally.affectedRows += result.changes;
+  }
 }
 /** Rows/bytes already prepared by the canonical writer; never encode to count. */
 export function recordDatabaseRows(table: string, rows: number, bytes: number): void {
@@ -194,10 +227,14 @@ export function recordDatabaseRows(table: string, rows: number, bytes: number): 
   if (!owned) return;
   let entry = owned.databaseRows.get(table);
   if (!entry) {
-    if (owned.databaseRows.size >= 128) { owned.omittedDatabaseRows += rows; return; }
-    owned.databaseRows.set(table, entry = {rows:0,bytes:0});
+    if (owned.databaseRows.size >= 128) {
+      owned.omittedDatabaseRows += rows;
+      return;
+    }
+    owned.databaseRows.set(table, (entry = { rows: 0, bytes: 0 }));
   }
-  entry.rows += rows; entry.bytes += bytes;
+  entry.rows += rows;
+  entry.bytes += bytes;
 }
 export function gaugeMetric(name: string, value: number): void {
   const owned = capture;
@@ -331,8 +368,17 @@ export function performanceSnapshot() {
       counters: owned ? Object.fromEntries(owned.counters) : {},
       gauges: owned ? Object.fromEntries(owned.gauges) : {},
       database: {
-        queries: owned ? Object.fromEntries([...owned.databaseQueries].map(([key,value]) => [key,{...value,tables:[...value.tables]}])) : {},
-        prepared: owned ? Object.fromEntries([...owned.databaseRows].map(([key,value]) => [key,{...value}])) : {},
+        queries: owned
+          ? Object.fromEntries(
+              [...owned.databaseQueries].map(([key, value]) => [
+                key,
+                { ...value, tables: [...value.tables] },
+              ]),
+            )
+          : {},
+        prepared: owned
+          ? Object.fromEntries([...owned.databaseRows].map(([key, value]) => [key, { ...value }]))
+          : {},
         omittedQueries: owned?.omittedDatabaseQueries ?? 0,
         omittedPreparedRows: owned?.omittedDatabaseRows ?? 0,
       },

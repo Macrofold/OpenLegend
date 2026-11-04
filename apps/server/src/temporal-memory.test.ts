@@ -126,7 +126,8 @@ describe('bounded personal temporal storage', () => {
             .get(service.world.id, PLAYER_ID, sourceId))!['count'],
         ),
       ).toBe(0);
-    validateTemporalEvidenceState((await store.records.load(true))!.state.world);
+    const persistedAfterForget = (await store.records.load(true))!.state.world;
+    validateTemporalEvidenceState(persistedAfterForget, persistedAfterForget.experience?.temporal);
   });
 
   it('reclaims a revoked shared source after its last receipt while preserving another witness and a later append', async () => {
@@ -183,7 +184,12 @@ describe('bounded personal temporal storage', () => {
         .experience!.temporal!.actors[
           actorId
         ]!.pages.flatMap((chunk) => temporalPageReceipts(chunk))
-        .find((receipt) => receipt.epoch === locator.epoch && receipt.batchOrder === locator.batchOrder && receipt.entryIndex === locator.entryIndex)!;
+        .find(
+          (receipt) =>
+            receipt.epoch === locator.epoch &&
+            receipt.batchOrder === locator.batchOrder &&
+            receipt.entryIndex === locator.entryIndex,
+        )!;
     };
     const own = received(PLAYER_ID),
       witness = received(witnessId);
@@ -245,7 +251,7 @@ describe('bounded personal temporal storage', () => {
     ).toBeUndefined();
     expect(service.world.receivedValues!.sources[block as string]).toBeUndefined();
     const cold = (await store.records.load(true))!.state.world;
-    validateTemporalEvidenceState(cold);
+    validateTemporalEvidenceState(cold, cold.experience?.temporal);
     const remaining = await store.memories.temporalHistory(
       scope,
       { limit: 128, bytes: 262144 },
@@ -328,13 +334,14 @@ describe('bounded personal temporal storage', () => {
         Number(
           (await store.db
             .prepare(
-              'SELECT COALESCE(SUM(receipt_count),0) AS count FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND retired_revision IS NULL',
+              'SELECT receipt_count AS count FROM mind_temporal_actors WHERE world_id=? AND actor_id=?',
             )
             .get(service.world.id, PLAYER_ID))!['count'],
         ),
       ).toBeLessThanOrEqual(64);
       expect(currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.value.kind).toBe('body');
-      validateTemporalEvidenceState((await store.records.load(true))!.state.world);
+      const persistedPressure = (await store.records.load(true))!.state.world;
+      validateTemporalEvidenceState(persistedPressure, persistedPressure.experience?.temporal);
     } finally {
       policy.mockRestore();
     }
@@ -585,7 +592,7 @@ describe('bounded personal temporal storage', () => {
       /stopped|arrived at|destinationLabel/,
     );
     const cold = (await store.records.load(true))!.state.world;
-    validateTemporalEvidenceState(cold);
+    validateTemporalEvidenceState(cold, cold.experience?.temporal);
     expect(
       (
         await store.memories.temporalHistory(
@@ -836,7 +843,14 @@ describe('bounded personal temporal storage', () => {
         .filter((entry) => entry.receipt.subject === 'fixture-animal')
         .map((entry) => entry.values[0]),
     ).toHaveLength(5);
-    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, locators)).toBe(true);
+    const selectedById = new Map(selected.entries.map((entry) => [entry.receipt.id, entry]));
+    const currentSelection = (receipts: readonly TemporalReceiptLocator[]) =>
+      store.memories.temporalSelectionsCurrent(
+        scope,
+        receipts.map((receipt) => selectedById.get(temporalReceiptId(receipt))!),
+        () => temporalHistoryWindow(service.world, scope.actorId),
+      );
+    expect(await currentSelection(locators)).toBe(true);
     expect(
       (
         await store.memories.temporalHistory(
@@ -853,7 +867,14 @@ describe('bounded personal temporal storage', () => {
           scope,
           {
             subjects: ['fixture-animal'],
-            before: { epoch: last.epoch, batchOrder: last.batchOrder, entryIndex: last.entryIndex, memberIndex: last.facets[0]!.memberIndex, at: last.at, order: last.order },
+            before: {
+              epoch: last.epoch,
+              batchOrder: last.batchOrder,
+              entryIndex: last.entryIndex,
+              memberIndex: last.facets[0]!.memberIndex,
+              at: last.at,
+              order: last.order,
+            },
             bytes: 32768,
           },
           service.world,
@@ -861,7 +882,7 @@ describe('bounded personal temporal storage', () => {
       ).entries,
     ).toHaveLength(4);
     expect((await service.forgetRecentObservation(locators[2]!)).ok).toBe(true);
-    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [locators[2]!])).toBe(false);
+    expect(await currentSelection([locators[2]!])).toBe(false);
     expect(
       (
         await store.memories.temporalHistory(
@@ -886,7 +907,7 @@ describe('bounded personal temporal storage', () => {
     expect((await service.correctRecentObservation(locators[3]!, correcting.eventId)).ok).toBe(
       true,
     );
-    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [locators[3]!])).toBe(false);
+    expect(await currentSelection([locators[3]!])).toBe(false);
     expect(
       service.world.experience!.awareness[PLAYER_ID]!.some(
         (entry) => entry.eventId === correcting.eventId,
@@ -895,7 +916,7 @@ describe('bounded personal temporal storage', () => {
     await editWorld(service, (world) => {
       world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 2;
     });
-    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, locators)).toBe(false);
+    expect(await currentSelection([locators[0]!])).toBe(false);
     expect(
       (
         await store.memories.temporalHistory(
@@ -905,7 +926,7 @@ describe('bounded personal temporal storage', () => {
         )
       ).entries,
     ).toHaveLength(0);
-    validateTemporalEvidenceState(service.world);
+    validateTemporalEvidenceState(service.world, service.world.experience?.temporal);
   });
 
   it('restores exact retained receipt addresses and starts a distinct future address space', async () => {
@@ -951,7 +972,7 @@ describe('bounded personal temporal storage', () => {
     await service.restoreSave(saveId, randomUUID(), saved);
     expect(service.world.experience!.temporal!.namespace).not.toBe(oldNamespace);
     const stored = (await store.records.load(true))!.state.world;
-    validateTemporalEvidenceState(stored);
+    validateTemporalEvidenceState(stored, stored.experience?.temporal);
     const scope = {
       worldId: stored.id,
       actorId: PLAYER_ID,
@@ -961,7 +982,20 @@ describe('bounded personal temporal storage', () => {
           .get(stored.id))!['generation'],
       ),
     };
-    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [first])).toBe(true);
+    const restoredSelection = await store.memories.temporalHistory(
+      scope,
+      { subjects: ['restore-proof'], bytes: 32768 },
+      service.world,
+    );
+    const firstSelection = restoredSelection.entries.find(
+      (entry) => entry.receipt.id === temporalReceiptId(first),
+    )!;
+    expect(firstSelection).toBeDefined();
+    expect(
+      await store.memories.temporalSelectionsCurrent(scope, [firstSelection], () =>
+        temporalHistoryWindow(service.world, scope.actorId),
+      ),
+    ).toBe(true);
     expect((await service.control({ paused: false, clientId: 'temporal-memory-fixture' })).ok).toBe(
       true,
     );
@@ -1470,6 +1504,7 @@ describe('bounded personal temporal storage', () => {
       )
     ).entries;
     expect(full).toHaveLength(1);
+    expect(full[0]!.receipt.id).toBe(temporalReceiptId(locator));
     expect(full[0]!.values).toHaveLength(2);
     expect(
       await store.memories.temporalSelectionsCurrent(scope, full, () =>
@@ -1488,7 +1523,18 @@ describe('bounded personal temporal storage', () => {
     await editWorld(service, (world) => {
       world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 1;
     });
-    expect(await store.memories.temporalReceiptLocatorsCurrent(scope, [locator])).toBe(true);
+    expect(
+      await store.memories.temporalSelectionsCurrent(
+        scope,
+        [
+          {
+            receipt: { ...full[0]!.receipt, facets: [full[0]!.receipt.facets[0]!] },
+            values: [full[0]!.values[0]!],
+          },
+        ],
+        () => temporalHistoryWindow(service.world, scope.actorId),
+      ),
+    ).toBe(true);
     release();
     expect(await pending).toBe(false);
     const selected = full[0]!;

@@ -24,8 +24,8 @@ it('preserves original experience age when native conversion runs late', () => {
       physicalLife: 0,
       epoch: 'age-epoch',
       family: 'temporal-receipt' as const,
-      from: 0,
-      through: 0,
+      from: { batchOrder: 1, entryIndex: 0 },
+      through: { batchOrder: 1, entryIndex: 0 },
     },
   ];
   const dependencies = [{ kind: 'memory' as const, id: record.id, revision: 'a'.repeat(64) }];

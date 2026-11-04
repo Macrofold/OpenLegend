@@ -12,6 +12,7 @@ import {
 export {
   PERSONAL_EVIDENCE_PREPARATION,
   personalFactAlias,
+  parsePersonalFactAlias,
   validPersonalSourceRef,
   type PersonalSourceRef,
 } from './experience-source.js';

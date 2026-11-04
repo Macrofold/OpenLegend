@@ -81,7 +81,14 @@ export interface TemporalHistoryPage extends TemporalHistorySelection {
 export interface TemporalHistoryQuery {
   from?: number;
   through?: number;
-  before?: { epoch: string; batchOrder: number; entryIndex: number; memberIndex: number; at: number; order: number };
+  before?: {
+    epoch: string;
+    batchOrder: number;
+    entryIndex: number;
+    memberIndex: number;
+    at: number;
+    order: number;
+  };
   subjects?: readonly string[];
   includeGeometry?: boolean;
   physicalLife?: number;
@@ -105,7 +112,8 @@ export interface TemporalHistoryWindow {
 export function temporalHistoryWindow(world: WorldState, actorId: string): TemporalHistoryWindow {
   const actor = world.experience?.temporal?.actors[actorId];
   return {
-    contains: (locator, memberIndex) => !!actor && receivedDirectoryContains(actor.recent, locator, memberIndex),
+    contains: (locator, memberIndex) =>
+      !!actor && receivedDirectoryContains(actor.recent, locator, memberIndex),
     capture: (subjects) =>
       captureTemporalHistoryReadContext(world, actorId, { subjects: [...subjects] }),
     at: world.simTime,
@@ -141,8 +149,12 @@ export function captureTemporalHistoryReadContext(
   const pages = (actor?.pages ?? [])
     .filter(
       (page) =>
-        (!subjectSet || page.subjects.some((subject) => subjectSet.has(subject)) ||
-          selection.includeGeometry && page.batches.some(batch => batch.bindings.some(binding => binding.seed.spatialContext))),
+        !subjectSet ||
+        page.subjects.some((subject) => subjectSet.has(subject)) ||
+        (selection.includeGeometry &&
+          page.batches.some((batch) =>
+            batch.bindings.some((binding) => binding.seed.spatialContext),
+          )),
     )
     .map((page) => immutableDataSnapshot(page));
   const maximum = selectedAttentionPolicy(world).scene.candidateVisits;
@@ -152,7 +164,9 @@ export function captureTemporalHistoryReadContext(
     subjectSet,
     selection.includeGeometry,
   );
-  const currentSeeds = acquiredSeeds.slice(0, maximum).map((receipt) => immutableDataSnapshot(receipt));
+  const currentSeeds = acquiredSeeds
+    .slice(0, maximum)
+    .map((receipt) => immutableDataSnapshot(receipt));
   const sources: Record<string, ReceivedValueLookup[string]> = {};
   for (const chunk of pages)
     for (const id of temporalPageReferences(chunk)) {
@@ -300,17 +314,27 @@ export class MemoryRetentionError extends Error {
   override readonly name = 'MemoryRetentionError';
 }
 
-interface TemporalNeighborKey { key: string; life?: number; epoch?: string }
+interface TemporalNeighborKey {
+  key: string;
+  life?: number;
+  epoch?: string;
+}
 /** The same bounded seek serves subject discovery and exact held-state tracks.
  * Newer saved batches can never substitute for the caller's captured cut. */
 async function temporalNeighborPages(
-  db: SqlDatabase, scope: MemoryScope, kind: 'subjects' | 'tracks',
-  keys: readonly TemporalNeighborKey[], at: number, cut: TemporalReceiptPrefix,
+  db: SqlDatabase,
+  scope: MemoryScope,
+  kind: 'subjects' | 'tracks',
+  keys: readonly TemporalNeighborKey[],
+  at: number,
+  cut: TemporalReceiptPrefix,
 ): Promise<Record<string, unknown>[]> {
   if (!keys.length) return [];
   const column = kind === 'subjects' ? 'subject_keys' : 'track_keys';
-  const wanted = keys.map(key => ({ ...key, bucket: receiptLookupBuckets(kind, [key.key])[0]! }));
-  const seek = (following: boolean) => `SELECT p.id,p.encoded_bytes FROM wanted q CROSS JOIN LATERAL (
+  const wanted = keys.map((key) => ({ ...key, bucket: receiptLookupBuckets(kind, [key.key])[0]! }));
+  const seek = (
+    following: boolean,
+  ) => `SELECT p.id,p.encoded_bytes FROM wanted q CROSS JOIN LATERAL (
     SELECT id,encoded_bytes FROM mind_temporal_pages c
     WHERE c.world_id=? AND c.actor_id=? AND (q.life IS NULL OR c.physical_life=q.life)
       AND (q.epoch IS NULL OR c.receipt_epoch=q.epoch)
@@ -320,12 +344,15 @@ async function temporalNeighborPages(
     ORDER BY c.first_at ${following ? 'ASC' : 'DESC'},c.first_batch_order ${following ? 'ASC' : 'DESC'},
       c.first_entry ${following ? 'ASC' : 'DESC'},c.first_member ${following ? 'ASC' : 'DESC'},c.id ${following ? 'ASC' : 'DESC'} LIMIT 1
   ) p`;
-  const args = [scope.worldId,scope.actorId,at,cut.throughBatchOrder,cut.throughEntryIndex];
-  return db.prepare(`WITH wanted AS MATERIALIZED (
+  const args = [scope.worldId, scope.actorId, at, cut.throughBatchOrder, cut.throughEntryIndex];
+  return db
+    .prepare(
+      `WITH wanted AS MATERIALIZED (
       SELECT * FROM jsonb_to_recordset(?::jsonb) q(key text,bucket smallint,life bigint,epoch text)
     ), selected AS (${seek(false)} UNION ALL ${seek(true)})
-    SELECT DISTINCT id,encoded_bytes FROM selected`)
-    .all(JSON.stringify(wanted),...args,...args);
+    SELECT DISTINCT id,encoded_bytes FROM selected`,
+    )
+    .all(JSON.stringify(wanted), ...args, ...args);
 }
 
 /** Read metadata before bodies. The caller retains the same authority/privacy
@@ -347,7 +374,11 @@ export async function readTemporalHistory(
     .get(scope.worldId);
   if (head?.['generation'] !== scope.generation)
     throw new MemoryRetentionError('Temporal history changed before selection.');
-  const from = Math.max(query.from ?? 0, context.at - context.maxAgeSeconds, context.frontier?.expiredThroughTime ?? 0);
+  const from = Math.max(
+    query.from ?? 0,
+    context.at - context.maxAgeSeconds,
+    context.frontier?.expiredThroughTime ?? 0,
+  );
   const through = Math.min(query.through ?? context.at, context.at);
   const subjects = query.subjects ?? [];
   if (subjects.length > context.maximumSubjects)
@@ -355,7 +386,8 @@ export async function readTemporalHistory(
   const limit = Math.max(1, Math.min(128, query.limit ?? 128));
   const maxBytes = Math.max(1, Math.min(maximumPreparation, query.bytes ?? 8192));
   const metadata = await db
-    .prepare(`SELECT id,first_at,receipt_epoch,first_batch_order,first_entry,first_member,
+    .prepare(
+      `SELECT id,first_at,receipt_epoch,first_batch_order,first_entry,first_member,
         encoded_bytes FROM mind_temporal_pages c
       WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
       ${subjects.length ? `AND ((c.lookup_buckets && ?::smallint[] AND c.subject_keys && ?::text[])${query.includeGeometry ? ' OR c.spatial_context=1' : ''})` : ''}
@@ -363,21 +395,32 @@ export async function readTemporalHistory(
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
       ${cut ? 'AND (first_batch_order,first_entry)<=(?,?)' : ''}
       ${query.before ? 'AND (first_batch_order,first_entry,first_member)<(?,?,?)' : ''}
-      ORDER BY first_batch_order DESC,first_entry DESC,first_member DESC,id DESC LIMIT 129`)
-    .all(scope.worldId, scope.actorId, from, through,
+      ORDER BY first_batch_order DESC,first_entry DESC,first_member DESC,id DESC LIMIT 129`,
+    )
+    .all(
+      scope.worldId,
+      scope.actorId,
+      from,
+      through,
       ...(subjects.length ? [receiptLookupBuckets('subjects', subjects), subjects] : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
       ...(query.epoch === undefined ? [] : [query.epoch]),
       ...(cut ? [cut.throughBatchOrder, cut.throughEntryIndex] : []),
-      ...(query.before ? [query.before.batchOrder, query.before.entryIndex, query.before.memberIndex] : []));
+      ...(query.before
+        ? [query.before.batchOrder, query.before.entryIndex, query.before.memberIndex]
+        : []),
+    );
   const pages = new Map<string, TemporalPage>();
   const loadedRecords = new Set<string>();
   const selected: string[] = [];
   const sourceIds = new Set<string>();
   const metadataCursor = (row: Record<string, unknown>) => ({
-    at: Number(row['first_at']), order: Number(row['first_batch_order']),
-    epoch: String(row['receipt_epoch']), batchOrder: Number(row['first_batch_order']),
-    entryIndex: Number(row['first_entry']), memberIndex: Number(row['first_member']),
+    at: Number(row['first_at']),
+    order: Number(row['first_batch_order']),
+    epoch: String(row['receipt_epoch']),
+    batchOrder: Number(row['first_batch_order']),
+    entryIndex: Number(row['first_entry']),
+    memberIndex: Number(row['first_member']),
   });
   let metadataBefore: TemporalHistoryPage['nextBefore'];
   let preparationBytes = 0,
@@ -386,18 +429,22 @@ export async function readTemporalHistory(
   for (const row of metadata.slice(0, 128)) {
     const size = Number(row['encoded_bytes']);
     if (preparationBytes + size > maximumPreparation) {
-      incomplete = true; hasMore = true;
+      incomplete = true;
+      hasMore = true;
       if (!selected.length) metadataBefore = metadataCursor(row);
       break;
     }
     metadataBefore = metadataCursor(row);
-    selected.push(String(row['id'])); preparationBytes += size;
+    selected.push(String(row['id']));
+    preparationBytes += size;
   }
   const hydrate = async (ids: readonly string[]) => {
     if (!ids.length) return;
-    for (const row of await db.prepare(
-      'SELECT * FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
-    ).all(scope.worldId, scope.actorId, ids)) {
+    for (const row of await db
+      .prepare(
+        'SELECT * FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+      )
+      .all(scope.worldId, scope.actorId, ids)) {
       const page = readTemporalPageRecord(row);
       if (page.actorId !== scope.actorId) throw new MemoryRetentionError('Foreign temporal block.');
       pages.set(page.id, page);
@@ -409,70 +456,129 @@ export async function readTemporalHistory(
   // Its nearest neighboring block supplies only the original carried seed; native
   // selection still proves that seed's exact admission and availability range.
   if (subjects.length) {
-    const neighbors = await temporalNeighborPages(db, scope, 'subjects',
-      subjects.map(key => ({ key, life: query.physicalLife, epoch: query.epoch })), through, cut);
+    const neighbors = await temporalNeighborPages(
+      db,
+      scope,
+      'subjects',
+      subjects.map((key) => ({ key, life: query.physicalLife, epoch: query.epoch })),
+      through,
+      cut,
+    );
     const ids: string[] = [];
     for (const row of neighbors) {
       if (loadedRecords.has(String(row['id']))) continue;
       const bytes = Number(row['encoded_bytes']);
-      if (preparationBytes + bytes > maximumPreparation) { incomplete = true; break; }
-      preparationBytes += bytes; ids.push(String(row['id']));
+      if (preparationBytes + bytes > maximumPreparation) {
+        incomplete = true;
+        break;
+      }
+      preparationBytes += bytes;
+      ids.push(String(row['id']));
     }
     await hydrate(ids);
   }
   for (const page of context.pages)
-    if ((!subjects.length || query.includeGeometry || page.subjects.some(subject => subjects.includes(subject))) &&
+    if (
+      (!subjects.length ||
+        query.includeGeometry ||
+        page.subjects.some((subject) => subjects.includes(subject))) &&
       (query.physicalLife === undefined || page.physicalLife === query.physicalLife) &&
-      (query.epoch === undefined || page.epoch === query.epoch)) pages.set(page.id, page);
+      (query.epoch === undefined || page.epoch === query.epoch)
+    )
+      pages.set(page.id, page);
   const tracks = new Map<string, { track: string; life: number; epoch: string }>();
   const addTrack = (track: string | undefined, life: number, epoch: string) => {
     if (!track) return;
-    const key = JSON.stringify([track,life,epoch]);
-    if (tracks.size >= context.maximumOperations && !tracks.has(key)) { incomplete = true; return; }
+    const key = JSON.stringify([track, life, epoch]);
+    if (tracks.size >= context.maximumOperations && !tracks.has(key)) {
+      incomplete = true;
+      return;
+    }
     tracks.set(key, { track, life, epoch });
   };
   for (const interval of context.currentSeeds)
-    for (const facet of interval.receipt.facets) addTrack(facet.track, interval.receipt.physicalLife, interval.receipt.epoch);
-  for (const page of pages.values()) for (const batch of page.batches)
-    for (const binding of batch.bindings) {
-      if (subjects.length && !subjects.includes(binding.subject) && !(query.includeGeometry && binding.seed.spatialContext)) continue;
-      for (const part of binding.parts) addTrack(part.facet.track, batch.physicalLife, batch.epoch);
-    }
+    for (const facet of interval.receipt.facets)
+      addTrack(facet.track, interval.receipt.physicalLife, interval.receipt.epoch);
+  for (const page of pages.values())
+    for (const batch of page.batches)
+      for (const binding of batch.bindings) {
+        if (
+          subjects.length &&
+          !subjects.includes(binding.subject) &&
+          !(query.includeGeometry && binding.seed.spatialContext)
+        )
+          continue;
+        for (const part of binding.parts)
+          addTrack(part.facet.track, batch.physicalLife, batch.epoch);
+      }
   if (tracks.size) {
-    const neighbors = await temporalNeighborPages(db, scope, 'tracks',
-      [...tracks.values()].map(track => ({ key: track.track, life: track.life, epoch: track.epoch })), through, cut);
+    const neighbors = await temporalNeighborPages(
+      db,
+      scope,
+      'tracks',
+      [...tracks.values()].map((track) => ({
+        key: track.track,
+        life: track.life,
+        epoch: track.epoch,
+      })),
+      through,
+      cut,
+    );
     const ids: string[] = [];
     for (const row of neighbors) {
       if (loadedRecords.has(String(row['id']))) continue;
       const bytes = Number(row['encoded_bytes']);
-      if (preparationBytes + bytes > maximumPreparation) { incomplete = true; break; }
-      preparationBytes += bytes; ids.push(String(row['id']));
+      if (preparationBytes + bytes > maximumPreparation) {
+        incomplete = true;
+        break;
+      }
+      preparationBytes += bytes;
+      ids.push(String(row['id']));
     }
     await hydrate(ids);
   }
   // Pending members replace the same immutable logical coordinates. Physical
   // slices can share an entry, so overlay only their actual member intersection.
   const nativeMembers = new Map<string, Set<number>>();
-  for (const page of context.pages) for (const batch of page.batches) for (const entry of batch.entries) {
-    const key = JSON.stringify([page.physicalLife,page.epoch,batch.batchOrder,entry.entryIndex]);
-    let members = nativeMembers.get(key);
-    if (!members) nativeMembers.set(key, members = new Set());
-    for (const coverage of entry.coverage) for (const member of coverage.members) members.add(member.memberIndex);
-    for (const facet of entry.receipt?.facets ?? []) members.add(facet.memberIndex);
-    for (const member of entry.rejected ?? []) members.add(member.memberIndex);
-  }
-  for (const [id,page] of pages) {
+  for (const page of context.pages)
+    for (const batch of page.batches)
+      for (const entry of batch.entries) {
+        const key = JSON.stringify([
+          page.physicalLife,
+          page.epoch,
+          batch.batchOrder,
+          entry.entryIndex,
+        ]);
+        let members = nativeMembers.get(key);
+        if (!members) nativeMembers.set(key, (members = new Set()));
+        for (const coverage of entry.coverage)
+          for (const member of coverage.members) members.add(member.memberIndex);
+        for (const facet of entry.receipt?.facets ?? []) members.add(facet.memberIndex);
+        for (const member of entry.rejected ?? []) members.add(member.memberIndex);
+      }
+  for (const [id, page] of pages) {
     if (context.pages.includes(page)) continue;
     let changed = false;
-    const selections = page.batches.flatMap(batch => batch.entries.flatMap(entry => {
-      const replaced = nativeMembers.get(JSON.stringify([page.physicalLife,page.epoch,batch.batchOrder,entry.entryIndex]));
-      if (!replaced) return [{ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex }];
-      const all = [...entry.coverage.flatMap(coverage => coverage.members.map(member => member.memberIndex)),
-        ...(entry.receipt?.facets.map(facet => facet.memberIndex) ?? []), ...(entry.rejected?.map(member => member.memberIndex) ?? [])];
-      const kept = new Set(all.filter(member => !replaced.has(member)));
-      changed ||= kept.size !== all.length;
-      return kept.size ? [{ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex, members: kept }] : [];
-    }));
+    const selections = page.batches.flatMap((batch) =>
+      batch.entries.flatMap((entry) => {
+        const replaced = nativeMembers.get(
+          JSON.stringify([page.physicalLife, page.epoch, batch.batchOrder, entry.entryIndex]),
+        );
+        if (!replaced) return [{ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex }];
+        const all = [
+          ...entry.coverage.flatMap((coverage) =>
+            coverage.members.map((member) => member.memberIndex),
+          ),
+          ...(entry.receipt?.facets.map((facet) => facet.memberIndex) ?? []),
+          ...(entry.rejected?.map((member) => member.memberIndex) ?? []),
+        ];
+        const kept = new Set(all.filter((member) => !replaced.has(member)));
+        changed ||= kept.size !== all.length;
+        return kept.size
+          ? [{ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex, members: kept }]
+          : [];
+      }),
+    );
     if (!changed) continue;
     if (!selections.length) pages.delete(id);
     else pages.set(id, selectTemporalPageEntries(page, selections));
@@ -536,4 +642,3 @@ export async function readTemporalHistory(
   const nextBefore = hasMore ? (selection.examinedBefore ?? metadataBefore) : undefined;
   return { ...selection, incomplete, hasMore, ...(nextBefore ? { nextBefore } : {}) };
 }
-

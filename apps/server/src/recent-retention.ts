@@ -15,18 +15,30 @@ export function retireRecentHistory(
   state: SavedWorld,
   actorIds: readonly string[],
 ): PreparedMemoryRetention {
-  const world = updateWorld(state.world, (draft) => {
-    const policy = selectedTemporalPolicy(draft).recent;
-    for (const actorId of actorIds) {
-      const actor = draft.experience?.temporal?.actors[actorId];
-      if (!actor || (!actor.maintenanceDue && actor.bytes <= policy.maxBytes &&
-        actor.count <= policy.maxChanges && (actor.nextDue === null || actor.nextDue > draft.simTime))) continue;
-      const retired = advanceTemporalRecent(draft, actorId, policy);
-      if (retired.releasedIndividualIds.length)
-        selectedPruneObserverIndividuals(draft, actorId, {
-          releasedSourceIds: [], candidates: retired.releasedIndividualIds, retireRecent: true,
-        });
-    }
-  }, {retainNativeValues: true});
-  return {state: world === state.world ? state : {...state, world}, rows: new Map()};
+  const world = updateWorld(
+    state.world,
+    (draft) => {
+      const policy = selectedTemporalPolicy(draft).recent;
+      for (const actorId of actorIds) {
+        const actor = draft.experience?.temporal?.actors[actorId];
+        if (
+          !actor ||
+          (!actor.maintenanceDue &&
+            actor.bytes <= policy.maxBytes &&
+            actor.count <= policy.maxChanges &&
+            (actor.nextDue === null || actor.nextDue > draft.simTime))
+        )
+          continue;
+        const retired = advanceTemporalRecent(draft, actorId, policy);
+        if (retired.releasedIndividualIds.length)
+          selectedPruneObserverIndividuals(draft, actorId, {
+            releasedSourceIds: [],
+            candidates: retired.releasedIndividualIds,
+            retireRecent: true,
+          });
+      }
+    },
+    { retainNativeValues: true },
+  );
+  return { state: world === state.world ? state : { ...state, world }, rows: new Map() };
 }

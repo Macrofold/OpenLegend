@@ -171,7 +171,8 @@ export function recordObservationSupport(
   ) {
     // Historical proof keeps the receiving body's life and chronology. Reuse
     // owned proof; appending it now would invent a sensation in the new body.
-    const ordinals = request.sourceOrdinals ?? new Set(observation.facets.map((facet) => facet.ordinal));
+    const ordinals =
+      request.sourceOrdinals ?? new Set(observation.facets.map((facet) => facet.ordinal));
     const recent = temporalReceiptForSource(world, actorId, observation.id);
     const candidates = [
       ...(recent ? [recent] : []),
@@ -183,21 +184,27 @@ export function recordObservationSupport(
           actorId: receipt.actorId,
           physicalLife: receipt.physicalLife,
           epoch: receipt.epoch,
-          batchOrder: receipt.batchOrder,entryIndex: receipt.entryIndex,
+          batchOrder: receipt.batchOrder,
+          entryIndex: receipt.entryIndex,
         })),
     ];
     for (const locator of candidates) {
       if (locator.physicalLife !== observation.observer.physicalLife) continue;
       const retained = retainedTemporalReceipt(world, locator);
-      if (retained && observationReceiptMemberIndices(world, observation, ordinals, retained.receipt))
+      if (
+        retained &&
+        observationReceiptMemberIndices(world, observation, ordinals, retained.receipt)
+      )
         return locator;
     }
     return;
   }
-  const required=request.admission.kind==='retained-support'&&request.admission.required;
-  const policy=selectedTemporalPolicy(world)[required?'required':'optional'];
-  return retainTemporalObservationSupport(world,actorId,observation,request.sourceOrdinals,{
-    required,maxBytes:policy.maxBytes,maxRecords:policy.maxRecords,
+  const required = request.admission.kind === 'retained-support' && request.admission.required;
+  const policy = selectedTemporalPolicy(world)[required ? 'required' : 'optional'];
+  return retainTemporalObservationSupport(world, actorId, observation, request.sourceOrdinals, {
+    required,
+    maxBytes: policy.maxBytes,
+    maxRecords: policy.maxRecords,
   });
 }
 /** A sparse receipt has its own member ordinals. Retain logical original facts,
@@ -881,7 +888,8 @@ export function admitAutomaticExperience(
           temporalPageReceipts(chunk),
         ).find(
           (candidate) =>
-            candidate.epoch === locator!.epoch && candidate.batchOrder === locator!.batchOrder &&
+            candidate.epoch === locator!.epoch &&
+            candidate.batchOrder === locator!.batchOrder &&
             candidate.entryIndex === locator!.entryIndex,
         );
         if (receipt) {
@@ -1895,8 +1903,8 @@ export function rememberInterpretation(
       physicalLife: receipt.physicalLife,
       epoch: receipt.epoch,
       family: 'temporal-receipt',
-      from: {batchOrder:receipt.batchOrder,entryIndex:receipt.entryIndex},
-      through: {batchOrder:receipt.batchOrder,entryIndex:receipt.entryIndex},
+      from: { batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex },
+      through: { batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex },
     });
   }
   const policy = selectedTemporalPolicy(world);

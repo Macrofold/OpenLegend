@@ -13,6 +13,8 @@ import {
   temporalAccountAliasClosure,
   temporalPageReferences,
   selectedTemporalPolicy,
+  parsePersonalFactAlias,
+  parseTemporalReceiptId,
 } from '@open-legend/domain';
 import { digest } from './content-digest.js';
 import { readTemporalPageRecord } from './temporal-storage.js';
@@ -183,29 +185,87 @@ export async function prepareHistoryEdit(
           digest('native-origin'),
           worldId,
         );
-      const scope = JSON.stringify(
-        affected.map((row) => ({
+      const candidates = affected.map((row) => {
+        const source = String(row['source_id']);
+        const fact = parsePersonalFactAlias(source);
+        const lookup = fact?.observationId ?? source;
+        const position = parseTemporalReceiptId(lookup);
+        return {
           ...row,
-          lookup_bucket: receiptLookupBucket('sourceIds', String(row['source_id'])),
-        })),
-      );
+          actor_id: String(row['actor_id']),
+          lookup_source_id: lookup,
+          lookup_bucket: receiptLookupBucket('sourceIds', lookup),
+          ...(position ? { position, member_index: fact?.ordinal ?? null } : {}),
+        };
+      });
+      const scope = JSON.stringify(candidates.filter((candidate) => !candidate.position));
       // A creator correction must reach cold personal receipts too. Select the actor's
       // indexed source aliases before loading packed pages; shared blocks grant no access.
       if (world.experience.temporal) {
-        const selected = await db
-          .prepare(
-            `SELECT t.*,t.encoded_bytes AS bytes
+        const aliases = candidates.some((candidate) => !candidate.position)
+          ? await db
+              .prepare(
+                `SELECT t.id,t.encoded_bytes AS bytes
         FROM mind_temporal_pages t WHERE t.world_id=? AND t.last_at+?>? AND NOT (t.slot=ANY(?::text[])) AND EXISTS (
-          SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text,lookup_bucket smallint)
-          WHERE a.actor_id=t.actor_id AND t.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
-          )
-          .all(
-            worldId,
-            selectedTemporalPolicy(world).recent.maxAgeSeconds,
-            world.simTime,
-            [...loadedChunks],
-            scope,
-          );
+          SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text,lookup_source_id text,lookup_bucket smallint)
+          WHERE a.actor_id=t.actor_id AND t.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND t.source_ids @> ARRAY[a.lookup_source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
+              )
+              .all(
+                worldId,
+                selectedTemporalPolicy(world).recent.maxAgeSeconds,
+                world.simTime,
+                [...loadedChunks],
+                scope,
+              )
+          : [];
+        const direct = candidates
+          .filter((candidate) => candidate.position)
+          .map((candidate) => ({
+            actor_id: String(candidate.actor_id),
+            epoch: candidate.position!.epoch,
+            batch_order: candidate.position!.batchOrder,
+            entry_index: candidate.position!.entryIndex,
+            member_index: candidate.member_index,
+          }));
+        const addressed = direct.length
+          ? await db
+              .prepare(
+                `WITH requested AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id text,epoch text,batch_order bigint,entry_index bigint,member_index bigint)
+        ) SELECT DISTINCT p.id,p.encoded_bytes AS bytes FROM requested q CROSS JOIN LATERAL (
+          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
+            FROM mind_temporal_pages WHERE world_id=? AND actor_id=q.actor_id
+              AND (first_batch_order,first_entry,first_member)<=(q.batch_order,q.entry_index,COALESCE(q.member_index,-1))
+            ORDER BY first_batch_order DESC,first_entry DESC,first_member DESC,id DESC LIMIT 1)
+          UNION ALL
+          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
+            FROM mind_temporal_pages WHERE q.member_index IS NULL AND world_id=? AND actor_id=q.actor_id
+              AND first_batch_order=q.batch_order AND first_entry=q.entry_index)
+        ) p WHERE p.receipt_epoch=q.epoch
+          AND (p.last_batch_order,p.last_entry,p.last_member)>=(q.batch_order,q.entry_index,COALESCE(q.member_index,0))
+          AND NOT(p.slot=ANY(?::text[])) LIMIT 8193`,
+              )
+              .all(JSON.stringify(direct), worldId, worldId, [...loadedChunks])
+          : [];
+        const selectedMetadata = [
+          ...new Map([...aliases, ...addressed].map((row) => [String(row['id']), row])).values(),
+        ];
+        if (
+          chunkCount + selectedMetadata.length > 8192 ||
+          chunkBytes + selectedMetadata.reduce((sum, row) => sum + Number(row['bytes']), 0) >
+            4 * 1024 * 1024
+        )
+          throw new Error('Complete personal receipt correction exceeds bounded preparation.');
+        const selected = selectedMetadata.length
+          ? await db
+              .prepare(
+                'SELECT *,encoded_bytes AS bytes FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])',
+              )
+              .all(
+                worldId,
+                selectedMetadata.map((row) => String(row['id'])),
+              )
+          : [];
         chunkCount += selected.length;
         chunkBytes += selected.reduce((sum, row) => sum + Number(row['bytes']), 0);
         if (chunkCount > 8192 || chunkBytes > 4 * 1024 * 1024)
@@ -377,12 +437,40 @@ export async function prepareHistoryEdit(
       const actorId = String(source['actor_id']);
       let ids = affectedByActor.get(actorId);
       if (!ids) affectedByActor.set(actorId, (ids = new Set()));
-      ids.add(String(source['source_id']));
+      const id = String(source['source_id']);
+      ids.add(id);
+      if (!parseTemporalReceiptId(parsePersonalFactAlias(id)?.observationId ?? id))
+        ids.add(parsePersonalFactAlias(id)?.observationId ?? id);
     }
     const selectedPages = new Map<string, import('@open-legend/domain').TemporalPage>();
     for (const [actorId, sources] of affectedByActor)
       for (const page of world.experience.temporal?.actors[actorId]?.pages ?? [])
-        if (page.sourceIds.some((id) => sources.has(id)))
+        if (
+          page.sourceIds.some((id) => sources.has(id)) ||
+          [...sources].some((source) => {
+            const fact = parsePersonalFactAlias(source),
+              position = parseTemporalReceiptId(fact?.observationId ?? source);
+            return (
+              position &&
+              page.epoch === position.epoch &&
+              page.batches.some(
+                (batch) =>
+                  batch.batchOrder === position.batchOrder &&
+                  batch.entries.some(
+                    (entry) =>
+                      entry.entryIndex === position.entryIndex &&
+                      (fact === undefined ||
+                        entry.receipt?.facets.some(
+                          (member) => member.memberIndex === fact.ordinal,
+                        ) ||
+                        entry.coverage.some((coverage) =>
+                          coverage.members.some((member) => member.memberIndex === fact.ordinal),
+                        )),
+                  ),
+              )
+            );
+          })
+        )
           selectedPages.set(temporalPageRecordId(actorId, page.id), page);
     const temporalPredecessors = new Map<string, number>();
     const ids = [...selectedPages.keys()];
@@ -562,9 +650,7 @@ export async function historyEditPredecessorsCurrent(
   let found = 0;
   for (let at = 0; at < ids.length; at += 256)
     for (const row of await db
-      .prepare(
-        'SELECT id,revision FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])',
-      )
+      .prepare('SELECT id,revision FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
       .all(worldId, ids.slice(at, at + 256))) {
       if (expected.get(String(row['id'])) !== Number(row['revision'])) return false;
       found++;

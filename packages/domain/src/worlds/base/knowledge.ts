@@ -70,7 +70,14 @@ export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
 export interface ObserverIdentity {
   /** Last actual recent reference. Liveness only; never identity or recognition proof. */
-  recentReference?: { physicalLife: number; epoch: string; batchOrder: number; entryIndex: number; memberIndex: number; at: number };
+  recentReference?: {
+    physicalLife: number;
+    epoch: string;
+    batchOrder: number;
+    entryIndex: number;
+    memberIndex: number;
+    at: number;
+  };
   /** Current body-only local roles need no lasting allocation. */
   retained?: true;
   familiarity?: import('../../attention.js').FamiliarityState;
@@ -190,7 +197,11 @@ function retainNameEvidence(
     );
     const awareness = actual?.eventId === eventId ? actual : stored;
     const observation = awareness?.observation ?? stored?.observation;
-    const requested = observation && nameEvidenceIndices(observation.facets.map(facet => ({index: facet.ordinal, value: facet.value})));
+    const requested =
+      observation &&
+      nameEvidenceIndices(
+        observation.facets.map((facet) => ({ index: facet.ordinal, value: facet.value })),
+      );
     let selected: { receipt: TemporalReceiptLocator; memberIndices: number[] } | undefined;
     function* candidates() {
       // Native delivery and retained placement can use separate wrappers. Prefer
@@ -207,7 +218,8 @@ function retainNameEvidence(
       const retained = retainedTemporalReceipt(world, receipt);
       if (!retained) continue;
       const memberIndices = observation
-        ? requested && observationReceiptMemberIndices(world, observation, requested, retained.receipt)
+        ? requested &&
+          observationReceiptMemberIndices(world, observation, requested, retained.receipt)
         : [
             ...(nameEvidenceIndices(
               retained.values.map((value, index) => ({
@@ -233,7 +245,8 @@ function retainNameEvidence(
       });
       const retained = receipt && retainedTemporalReceipt(world, receipt);
       const memberIndices =
-        retained && observationReceiptMemberIndices(world, observation, requested, retained.receipt);
+        retained &&
+        observationReceiptMemberIndices(world, observation, requested, retained.receipt);
       if (receipt && memberIndices) selected = { receipt, memberIndices };
     }
     const alreadyHeld = selected && Object.hasOwn(supports, temporalReceiptId(selected.receipt));
@@ -326,18 +339,26 @@ export function observerIndividual(
 /** Incidental contact does not become its own everlasting proof owner. Ordinary
  * recent receipts can support its first familiarity points until they retire;
  * only independently useful personal knowledge retains sparse proof afterwards. */
-export function retainedIndividualEvidenceKeys(
-  world: WorldState, actorId: string,
-): string[] {
-  return retainedIdentityEvidenceKeys(world, actorId, undefined, pinnedIndividualIds(world, actorId));
+export function retainedIndividualEvidenceKeys(world: WorldState, actorId: string): string[] {
+  return retainedIdentityEvidenceKeys(
+    world,
+    actorId,
+    undefined,
+    pinnedIndividualIds(world, actorId),
+  );
 }
-function pinnedIndividualIds(world: WorldState, actorId: string, candidates?: readonly string[]): Set<string> {
+function pinnedIndividualIds(
+  world: WorldState,
+  actorId: string,
+  candidates?: readonly string[],
+): Set<string> {
   const pinned = new Set<string>();
   const documents = candidates
-    ? candidates.flatMap(individualId => {
-      const document = knowledgeDocument(world, actorId, {kind: 'individual', individualId});
-      return document ? [document] : [];
-    }) : Object.values(world.actorKnowledge?.[actorId] ?? {});
+    ? candidates.flatMap((individualId) => {
+        const document = knowledgeDocument(world, actorId, { kind: 'individual', individualId });
+        return document ? [document] : [];
+      })
+    : Object.values(world.actorKnowledge?.[actorId] ?? {});
   for (const document of documents)
     if (document.subjectId?.kind === 'individual' && document.text.trim())
       pinned.add(document.subjectId.individualId);
@@ -346,7 +367,10 @@ function pinnedIndividualIds(world: WorldState, actorId: string, candidates?: re
   return pinned;
 }
 function retainedIdentityEvidenceKeys(
-  world: WorldState, actorId: string, candidates: readonly string[] | undefined, pinned: ReadonlySet<string>,
+  world: WorldState,
+  actorId: string,
+  candidates: readonly string[] | undefined,
+  pinned: ReadonlySet<string>,
 ): string[] {
   const workEpisodes = new Set(
     entityGet(world.entities, actorId)
@@ -359,7 +383,9 @@ function retainedIdentityEvidenceKeys(
   );
   const keys: string[] = [];
   const identities = world.observerIdentities?.[actorId] ?? {};
-  const entries = candidates ? candidates.flatMap(key => identities[key] ? [[key, identities[key]!] as const] : []) : Object.entries(identities);
+  const entries = candidates
+    ? candidates.flatMap((key) => (identities[key] ? [[key, identities[key]!] as const] : []))
+    : Object.entries(identities);
   for (const [key, identity] of entries) {
     keys.push(...(identity.nameEvidenceIds ?? []));
     for (const profile of [identity.voice, identity.sight])
@@ -444,7 +470,8 @@ export function markRecentIndividualReferences(
       (previous.batchOrder > reference.batchOrder ||
         (previous.batchOrder === reference.batchOrder &&
           (previous.entryIndex > reference.entryIndex ||
-           (previous.entryIndex === reference.entryIndex && previous.memberIndex >= reference.memberIndex))))
+            (previous.entryIndex === reference.entryIndex &&
+              previous.memberIndex >= reference.memberIndex))))
     )
       continue;
     const next = { ...identity, recentReference: { ...reference } };
@@ -461,8 +488,7 @@ export function requestRecentIndividualRepair(
   if (!actor) return;
   const pending = new Set(actor.individualRepairs);
   for (const id of ids)
-    if (world.observerIdentities?.[actorId]?.[id]?.recentReference)
-      pending.add(id);
+    if (world.observerIdentities?.[actorId]?.[id]?.recentReference) pending.add(id);
   if (pending.size) {
     actor.individualRepairs = [...pending];
     if (actor.accounts)
@@ -510,8 +536,10 @@ function recentIndividualAvailable(
     reference.at + BASE_ATTENTION_POLICY.retention.recent.maxAgeSeconds <= world.simTime
   )
     return false;
-  return receivedPositionEligible(reference, reference.at, actor.frontier) &&
-    receivedDirectoryContains(actor.recent, {actorId, ...reference}, reference.memberIndex);
+  return (
+    receivedPositionEligible(reference, reference.at, actor.frontier) &&
+    receivedDirectoryContains(actor.recent, { actorId, ...reference }, reference.memberIndex)
+  );
 }
 
 /** Incidental contact follows its actual received member, not the latest time of
@@ -527,13 +555,24 @@ function recentFamiliarityRootAvailable(
   const source = recognitionSupportSources([root.sourceKey])[0];
   if (!source || !('family' in source)) return false;
   const locator = temporalReceiptLocatorFromSource(source);
-  if (!locator || locator.actorId !== actorId || !receivedDirectoryContains(actor.recent, locator)) return false;
+  if (!locator || locator.actorId !== actorId || !receivedDirectoryContains(actor.recent, locator))
+    return false;
   for (const key of root.support) {
-    const parsed = JSON.parse(/^(awareness|memory|summary):/u.test(key) ? 'null' : key) as
-      {source?: {id?: string}; memberIndex?: number} | null;
-    if (parsed?.source?.id === source.id && parsed.memberIndex !== undefined &&
-      (!receivedPositionEligible({...locator, memberIndex: parsed.memberIndex}, root.at, actor.frontier) ||
-        !receivedDirectoryContains(actor.recent, locator, parsed.memberIndex))) return false;
+    const parsed = JSON.parse(/^(awareness|memory|summary):/u.test(key) ? 'null' : key) as {
+      source?: { id?: string };
+      memberIndex?: number;
+    } | null;
+    if (
+      parsed?.source?.id === source.id &&
+      parsed.memberIndex !== undefined &&
+      (!receivedPositionEligible(
+        { ...locator, memberIndex: parsed.memberIndex },
+        root.at,
+        actor.frontier,
+      ) ||
+        !receivedDirectoryContains(actor.recent, locator, parsed.memberIndex))
+    )
+      return false;
   }
   return true;
 }
@@ -581,10 +620,12 @@ export function pruneObserverIndividuals(
     faded = true;
   }
   if (faded) {
-    advanceKnowledgeRevision(world, actorId);
+    // Routine familiarity changes native preference, not a deliberate name/note
+    // or new semantic knowledge. Retention is not a new thinking opportunity.
     // The raw frontier can retire a contact without a database account slice.
     // Wake the existing account owner once to release any now-unowned capsule.
-    if (actor?.accounts) actor.accounts.nextDue = Math.min(actor.accounts.nextDue ?? Infinity, world.simTime);
+    if (actor?.accounts)
+      actor.accounts.nextDue = Math.min(actor.accounts.nextDue ?? Infinity, world.simTime);
   }
   if (input.releasedSourceIds.length)
     revokeRecognitionEvidence(world, actorId, new Set(input.releasedSourceIds));
@@ -749,12 +790,14 @@ export function ensureBodyIndividual(
   });
   // The incoming grant, not a hidden entity ID, determines whether this is the
   // same observed body. Reacquisition must not borrow the prior stranger's role.
-  const continuous = previous && !previous.metadata.availability &&
+  const continuous =
+    previous &&
+    !previous.metadata.availability &&
     previous.grant.exposure === received.exposure &&
     previous.grant.subjectPhysicalLife === received.subjectPhysicalLife &&
     sameDefinitionPin(previous.grant.channel, received.channel);
   const existing = continuous
-    ? previous.field.localSubject ?? currentBodySubject(world, observerId, subjectId)
+    ? (previous.field.localSubject ?? currentBodySubject(world, observerId, subjectId))
     : undefined;
   if (existing) return existing;
   const encounterId = received.exposure;
@@ -1345,12 +1388,16 @@ export function validateObserverIdentities(world: WorldState): void {
           (!Array.isArray(identity.nameEvidenceIds) ||
             identity.nameEvidenceIds.some((source) => typeof source !== 'string' || !source))) ||
         (identity.recentReference !== undefined &&
-          (!Number.isSafeInteger(identity.recentReference.physicalLife) || identity.recentReference.physicalLife < 0 ||
+          (!Number.isSafeInteger(identity.recentReference.physicalLife) ||
+            identity.recentReference.physicalLife < 0 ||
             typeof identity.recentReference.epoch !== 'string' ||
             !identity.recentReference.epoch ||
-            !Number.isSafeInteger(identity.recentReference.batchOrder) || identity.recentReference.batchOrder < 0 ||
-            !Number.isSafeInteger(identity.recentReference.entryIndex) || identity.recentReference.entryIndex < 0 ||
-            !Number.isSafeInteger(identity.recentReference.memberIndex) || identity.recentReference.memberIndex < 0 ||
+            !Number.isSafeInteger(identity.recentReference.batchOrder) ||
+            identity.recentReference.batchOrder < 0 ||
+            !Number.isSafeInteger(identity.recentReference.entryIndex) ||
+            identity.recentReference.entryIndex < 0 ||
+            !Number.isSafeInteger(identity.recentReference.memberIndex) ||
+            identity.recentReference.memberIndex < 0 ||
             !Number.isFinite(identity.recentReference.at) ||
             identity.recentReference.at < 0 ||
             identity.recentReference.at > world.simTime)) ||

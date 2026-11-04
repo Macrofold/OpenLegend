@@ -41,15 +41,15 @@ function occurrenceReceipts(chunk: TemporalPage, previous?: TemporalPage): Occur
   if (cached) return cached;
   const prior = previous && occurrenceIndexes.get(previous.batches);
   const appended = prior && previous && appendedRecordCount(previous.batches, chunk.batches);
-  const receipts = appended !== undefined ? new Map(prior) : new Map<string,TemporalReceipt[]>();
+  const receipts = appended !== undefined ? new Map(prior) : new Map<string, TemporalReceipt[]>();
   for (const batch of chunk.batches.slice(appended === undefined ? 0 : previous!.batches.length))
     for (const entry of batch.entries) {
-      const receipt=entry.kind==='occurrence'?entry.receipt:undefined;
-      if (receipt?.origin?.kind!=='occurrence') continue;
-      const eventId=receipt.origin.eventId;
-      receipts.set(eventId,[...(receipts.get(eventId)??[]),receipt]);
+      const receipt = entry.kind === 'occurrence' ? entry.receipt : undefined;
+      if (receipt?.origin?.kind !== 'occurrence') continue;
+      const eventId = receipt.origin.eventId;
+      receipts.set(eventId, [...(receipts.get(eventId) ?? []), receipt]);
     }
-  if (immutable) occurrenceIndexes.set(chunk.batches,receipts);
+  if (immutable) occurrenceIndexes.set(chunk.batches, receipts);
   return receipts;
 }
 
@@ -94,8 +94,10 @@ export function receivedEventAccounts(
     options.index?.set(chunk.id, chunk);
     // A physical slice can share its batch number with another slice. Only
     // certified unchanged occurrence objects belong to the append predecessor.
-    const previousOccurrences = prior && appendedRecordCount(prior.batches,chunk.batches) !== undefined
-      ? occurrenceReceipts(prior) : undefined;
+    const previousOccurrences =
+      prior && appendedRecordCount(prior.batches, chunk.batches) !== undefined
+        ? occurrenceReceipts(prior)
+        : undefined;
     for (const eventId of wanted) {
       if (result.has(eventId) || forgotten.has(eventId)) continue;
       for (const receipt of occurrences.get(eventId) ?? []) {
@@ -128,7 +130,8 @@ export function receivedEventAccounts(
                       actorId,
                       physicalLife: receipt.physicalLife,
                       epoch: receipt.epoch,
-                      batchOrder: receipt.batchOrder,entryIndex: receipt.entryIndex,
+                      batchOrder: receipt.batchOrder,
+                      entryIndex: receipt.entryIndex,
                     },
                   ),
                   temporal: {
@@ -145,7 +148,8 @@ export function receivedEventAccounts(
                       actorId,
                       physicalLife: receipt.physicalLife,
                       epoch: receipt.epoch,
-                      batchOrder: receipt.batchOrder,entryIndex: receipt.entryIndex,
+                      batchOrder: receipt.batchOrder,
+                      entryIndex: receipt.entryIndex,
                     },
                   },
                 }),

@@ -1,4 +1,4 @@
-import {selectReceivedBindingParts} from './received-batches.js';
+import { selectReceivedBindingParts } from './received-batches.js';
 import {
   orderedRecordGet,
   orderedRecordSet,
@@ -159,7 +159,7 @@ export interface CurrentReceivedContent {
   fields: Record<string, CurrentStoredField>;
 }
 export interface CurrentReceivedGroup {
-  recordings?:readonly import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint[];
+  recordings?: readonly import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint[];
   received: CurrentReceivedContent;
   metadata: readonly CurrentPartPartition[];
 }
@@ -601,7 +601,11 @@ export function currentFacetSet(
         continue;
       const changed = mutableGroup(content, at);
       delete changed.received.fields[kind];
-      if(changed.recordings)changed.recordings=changed.recordings.flatMap(mark=>{const members=mark.members.filter(member=>member.kind!==kind);return members.length?[recordingWithMembers(mark,members)]:[];});
+      if (changed.recordings)
+        changed.recordings = changed.recordings.flatMap((mark) => {
+          const members = mark.members.filter((member) => member.kind !== kind);
+          return members.length ? [recordingWithMembers(mark, members)] : [];
+        });
       changed.metadata = changed.metadata.flatMap((partition) => {
         const members = partition.members.filter(([member]) => member !== kind);
         return members.length ? [partitionWithMembers(partition, members)] : [];
@@ -687,7 +691,12 @@ function mergePartitions(input: readonly CurrentPartPartition[]): CurrentPartPar
   }
   return merged;
 }
-function partitionWithMembers(partition:CurrentPartPartition,members:readonly CurrentMemberPart[]):CurrentPartPartition{return {...partition,members};}
+function partitionWithMembers(
+  partition: CurrentPartPartition,
+  members: readonly CurrentMemberPart[],
+): CurrentPartPartition {
+  return { ...partition, members };
+}
 function coveredPartitions(
   group: CurrentReceivedGroup,
   kinds: ReadonlySet<string> | undefined,
@@ -850,39 +859,100 @@ export function currentConfirmGroups(
     return checked;
   });
 }
-function recordingWithMembers(mark:import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint,members:typeof mark.members):typeof mark{
- if(members===mark.members)return mark;
- const parts=mark.binding.parts.filter(part=>members.some(member=>member.kind===part.kind&&member.part===part.part)),indices=new Set(parts.map(part=>part.partIndex));
- const carrierMembers=mark.carrierMembers?.flatMap(member=>{const partIndices=member.partIndices.filter(index=>indices.has(index));return partIndices.length?[{...member,partIndices}]:[];});
- const carrier=mark.carrier&&carrierMembers?.length?{...mark.carrier,memberIndex:carrierMembers[0]!.memberIndex}:undefined;
- const {carrier:_carrier,carrierMembers:_members,...base}=mark;
- return {...base,members,...(carrier?{carrier,carrierMembers}:{}),binding:selectReceivedBindingParts(mark.binding,indices)};
+function recordingWithMembers(
+  mark: import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint,
+  members: typeof mark.members,
+): typeof mark {
+  if (
+    mark.binding.parts.every((part) =>
+      members.some((member) => member.kind === part.kind && member.part === part.part),
+    )
+  )
+    return members === mark.members ? mark : { ...mark, members };
+  const parts = mark.binding.parts.filter((part) =>
+      members.some((member) => member.kind === part.kind && member.part === part.part),
+    ),
+    indices = new Set(parts.map((part) => part.partIndex));
+  const carrierMembers = mark.carrierMembers?.flatMap((member) => {
+    const partIndices = member.partIndices.filter((index) => indices.has(index));
+    return partIndices.length ? [{ ...member, partIndices }] : [];
+  });
+  const carrier =
+    mark.carrier && carrierMembers?.length
+      ? { ...mark.carrier, memberIndex: carrierMembers[0]!.memberIndex }
+      : undefined;
+  const { carrier: _carrier, carrierMembers: _members, ...base } = mark;
+  return {
+    ...base,
+    members,
+    ...(carrier ? { carrier, carrierMembers } : {}),
+    binding: selectReceivedBindingParts(mark.binding, indices),
+  };
 }
 
 export interface CurrentGroupRecordingUpdate {
- subjectId:string;fields:object;members?:readonly CurrentMemberPart[];recording:import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint|undefined;
+  subjectId: string;
+  fields: object;
+  members?: readonly CurrentMemberPart[];
+  recording: import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint | undefined;
 }
-export function currentGroupRecordings(group:CurrentReceivedGroup,members?:readonly CurrentMemberPart[]):import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint[]{
- return (group.recordings??[]).filter(mark=>!members||mark.members.some(member=>members.some(([kind,part])=>member.kind===kind&&member.part===part)));
+export function currentGroupRecordings(
+  group: CurrentReceivedGroup,
+  members?: readonly CurrentMemberPart[],
+): import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint[] {
+  return (group.recordings ?? []).filter(
+    (mark) =>
+      !members ||
+      mark.members.some((member) =>
+        members.some(([kind, part]) => member.kind === kind && member.part === part),
+      ),
+  );
 }
 /** Admission references are independent of freshness partitions. Updating them
  * never splits or merges sensory clocks or copies received values. */
-export function currentGroupsSetRecording(owner:PerceptionEvidenceOwner,updates:readonly CurrentGroupRecordingUpdate[]):void{
- withCurrentContactBatch(owner,()=>{
-  const bySubject=new Map<string,CurrentGroupRecordingUpdate[]>();for(const update of updates){const list=bySubject.get(update.subjectId);if(list)list.push(update);else bySubject.set(update.subjectId,[update]);}
-  for(const [id,changes]of bySubject){const contact=contactAt(owner.current,id);if(!contact)continue;
-   const groups=contact.content.groups.map(group=>{
-    let recordings=group.recordings;
-    for(const update of changes){if(readOnlyDraftView(group.received.fields)!==readOnlyDraftView(update.fields))continue;
-     const selected=(member:{kind:string;part:string})=>!update.members||update.members.some(([kind,part])=>member.kind===kind&&member.part===part);
-     const remaining=(recordings??[]).flatMap(mark=>{const members=mark.members.filter(member=>!selected(member));return !members.length?[]:members.length===mark.members.length?[mark]:[recordingWithMembers(mark,members)];});
-     if(update.recording)remaining.push(update.recording);recordings=remaining;
+export function currentGroupsSetRecording(
+  owner: PerceptionEvidenceOwner,
+  updates: readonly CurrentGroupRecordingUpdate[],
+): void {
+  withCurrentContactBatch(owner, () => {
+    const bySubject = new Map<string, CurrentGroupRecordingUpdate[]>();
+    for (const update of updates) {
+      const list = bySubject.get(update.subjectId);
+      if (list) list.push(update);
+      else bySubject.set(update.subjectId, [update]);
     }
-    return recordings===group.recordings?group:{...group,recordings};
-   });
-   if(groups.some((group,index)=>group!==contact.content.groups[index]))contactBatch(owner.current)!.contacts.set(id,{...contact,content:metadataContent(contact.content,groups)});
-  }
- });
+    for (const [id, changes] of bySubject) {
+      const contact = contactAt(owner.current, id);
+      if (!contact) continue;
+      const groups = contact.content.groups.map((group) => {
+        let recordings = group.recordings;
+        for (const update of changes) {
+          if (readOnlyDraftView(group.received.fields) !== readOnlyDraftView(update.fields))
+            continue;
+          const selected = (member: { kind: string; part: string }) =>
+            !update.members ||
+            update.members.some(([kind, part]) => member.kind === kind && member.part === part);
+          const remaining = (recordings ?? []).flatMap((mark) => {
+            const members = mark.members.filter((member) => !selected(member));
+            return !members.length
+              ? []
+              : members.length === mark.members.length
+                ? [mark]
+                : [recordingWithMembers(mark, members)];
+          });
+          if (update.recording)
+            remaining.push(recordingWithMembers(update.recording, update.recording.members));
+          recordings = remaining;
+        }
+        return recordings === group.recordings ? group : { ...group, recordings };
+      });
+      if (groups.some((group, index) => group !== contact.content.groups[index]))
+        contactBatch(owner.current)!.contacts.set(id, {
+          ...contact,
+          content: metadataContent(contact.content, groups),
+        });
+    }
+  });
 }
 /** Borrowed immutable member identity; confirmation/group metadata does not replace it. */
 export function currentFacetMembership(owner: CurrentReadOwner, input: CurrentFacetRecord): object {

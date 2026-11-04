@@ -208,20 +208,27 @@ export function historyAccountAtCut(
  * A saved row's presence is never a substitute for the current retention cut. */
 export function temporalHistoryAccountAvailable(
   cut: HistoryAccountCut,
-  account: Pick<
-    NonNullable<ReceivedEventAccount['temporal']>,
-    'receivedAt' | 'receipt'
-  >,
+  account: Pick<NonNullable<ReceivedEventAccount['temporal']>, 'receivedAt' | 'receipt'>,
 ): boolean {
-  if (account.receipt.actorId !== cut.actorId || !temporalRecentAt(account.receivedAt, cut.at, cut.maxAgeSeconds) ||
-    (cut.frontier?.expiredThroughTime !== null && cut.frontier?.expiredThroughTime !== undefined &&
+  if (
+    account.receipt.actorId !== cut.actorId ||
+    !temporalRecentAt(account.receivedAt, cut.at, cut.maxAgeSeconds) ||
+    (cut.frontier?.expiredThroughTime !== null &&
+      cut.frontier?.expiredThroughTime !== undefined &&
       account.receivedAt <= cut.frontier.expiredThroughTime) ||
-    !cut.recent || !receivedDirectoryContains(cut.recent, account.receipt)) return false;
+    !cut.recent ||
+    !receivedDirectoryContains(cut.recent, account.receipt)
+  )
+    return false;
   const pressure = cut.frontier?.pressureThrough?.address;
   // An occurrence is indivisible: a boundary inside this entry removes all of
   // its story grant. Sample members keep their separate native eligibility.
-  return !pressure || account.receipt.batchOrder > pressure.batchOrder ||
-    (account.receipt.batchOrder === pressure.batchOrder && account.receipt.entryIndex > pressure.entryIndex);
+  return (
+    !pressure ||
+    account.receipt.batchOrder > pressure.batchOrder ||
+    (account.receipt.batchOrder === pressure.batchOrder &&
+      account.receipt.entryIndex > pressure.entryIndex)
+  );
 }
 export function historyAccountAtCapturedCut(
   cut: HistoryAccountCut,

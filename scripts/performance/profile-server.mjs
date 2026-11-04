@@ -860,22 +860,34 @@ function metricDelta(before, after) {
   const counters = {};
   for (const [name, value] of Object.entries(after.runtime?.counters ?? {}))
     counters[name] = value - (before.runtime?.counters?.[name] ?? 0);
-  const database = { queries: {}, prepared: {},
-    omittedQueries: (after.runtime?.database?.omittedQueries ?? 0) - (before.runtime?.database?.omittedQueries ?? 0),
-    omittedPreparedRows: (after.runtime?.database?.omittedPreparedRows ?? 0) - (before.runtime?.database?.omittedPreparedRows ?? 0) };
-  for (const [key,value] of Object.entries(after.runtime?.database?.queries ?? {})) {
+  const database = {
+    queries: {},
+    prepared: {},
+    omittedQueries:
+      (after.runtime?.database?.omittedQueries ?? 0) -
+      (before.runtime?.database?.omittedQueries ?? 0),
+    omittedPreparedRows:
+      (after.runtime?.database?.omittedPreparedRows ?? 0) -
+      (before.runtime?.database?.omittedPreparedRows ?? 0),
+  };
+  for (const [key, value] of Object.entries(after.runtime?.database?.queries ?? {})) {
     const old = before.runtime?.database?.queries?.[key];
     const calls = value.calls - (old?.calls ?? 0);
     if (!calls) continue;
-    database.queries[key] = {...value, calls,
-      failed: value.failed - (old?.failed ?? 0), returnedRows: value.returnedRows - (old?.returnedRows ?? 0),
-      affectedRows: value.affectedRows === null ? null : value.affectedRows - (old?.affectedRows ?? 0),
-      elapsedMs: value.elapsedMs - (old?.elapsedMs ?? 0)};
+    database.queries[key] = {
+      ...value,
+      calls,
+      failed: value.failed - (old?.failed ?? 0),
+      returnedRows: value.returnedRows - (old?.returnedRows ?? 0),
+      affectedRows:
+        value.affectedRows === null ? null : value.affectedRows - (old?.affectedRows ?? 0),
+      elapsedMs: value.elapsedMs - (old?.elapsedMs ?? 0),
+    };
   }
-  for (const [key,value] of Object.entries(after.runtime?.database?.prepared ?? {})) {
+  for (const [key, value] of Object.entries(after.runtime?.database?.prepared ?? {})) {
     const old = before.runtime?.database?.prepared?.[key];
     const rows = value.rows - (old?.rows ?? 0);
-    if (rows) database.prepared[key] = {rows, bytes:value.bytes - (old?.bytes ?? 0)};
+    if (rows) database.prepared[key] = { rows, bytes: value.bytes - (old?.bytes ?? 0) };
   }
   return { counters, gauges: after.runtime?.gauges, metrics, database };
 }

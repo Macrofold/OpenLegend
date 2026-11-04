@@ -826,7 +826,8 @@ describe('bounded received situation', () => {
         ...source.receipt,
         id: `temporal-receipt-formatting-fixture-${ordinal}`,
         epoch: 'formatting-fixture',
-        ordinal,
+        batchOrder: ordinal,
+        entryIndex: 0,
         order: ordinal,
         at: 0,
         facets: [source.receipt.facets[0]!],
@@ -859,7 +860,7 @@ describe('bounded received situation', () => {
     const actual = page.entries.map((entry) =>
       Number(/Observed change (\d+)/.exec(entry.facts[0]!.value.text)![1]),
     );
-    expect(actual).toEqual(entries.slice(-actual.length).map((entry) => entry.receipt.ordinal));
+    expect(actual).toEqual(entries.slice(-actual.length).map((entry) => entry.receipt.batchOrder));
     expect(
       page.entries.every((entry) => entry.facts[0]!.value.text.endsWith('x'.repeat(500))),
     ).toBe(true);
@@ -889,7 +890,14 @@ describe('bounded received situation', () => {
         entries: [],
         incomplete: true,
         hasMore: true,
-        nextBefore: { at: 0, order: 44, epoch: 'issued-epoch', ordinal: 3 },
+        nextBefore: {
+          at: 0,
+          order: 44,
+          epoch: 'issued-epoch',
+          batchOrder: 3,
+          entryIndex: 0,
+          memberIndex: 0,
+        },
       }),
     );
     const page = (result.results[0] as { result: { coverage: string; entries: unknown[] } }).result;

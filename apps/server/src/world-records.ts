@@ -233,7 +233,9 @@ export function mergeRecordChanges(previous: RecordChanges, next: RecordChanges)
     temporal.set(key, mergeTemporalPageIntent(temporal.get(key), intent));
   return {
     ...(temporal.size ? { temporal } : {}),
-    ...((previous.temporalEdits?.length || next.temporalEdits?.length) ? { temporalEdits: [...(previous.temporalEdits ?? []), ...(next.temporalEdits ?? [])] } : {}),
+    ...(previous.temporalEdits?.length || next.temporalEdits?.length
+      ? { temporalEdits: [...(previous.temporalEdits ?? []), ...(next.temporalEdits ?? [])] }
+      : {}),
     writes: new Map(
       [...writes]
         .filter(([, rows]) => rows.size)
@@ -618,11 +620,16 @@ export class WorldRecords {
       if (next === undefined) {
         // Residency eviction is not deletion. The indexed collector owns shared values.
         if (node.table === 'mind_perception_values') return;
-        if (node.table === 'mind_temporal_pages' && !retirement?.previous.get(node.table)?.has(id)) return;
+        if (node.table === 'mind_temporal_pages' && !retirement?.previous.get(node.table)?.has(id))
+          return;
         if (node.table === 'mind_temporal_pages' && old !== undefined && !readOnlyMetadata) {
           const page = old as import('@open-legend/domain').TemporalPage;
           (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
-            before: page, after: page, replacement: true, deleted: true, reservedBytes: 0,
+            before: page,
+            after: page,
+            replacement: true,
+            deleted: true,
+            reservedBytes: 0,
           });
         }
         // Foreign keys remove this owned subtree, never another actor's records.
@@ -638,10 +645,15 @@ export class WorldRecords {
           const previousPage = old as import('@open-legend/domain').TemporalPage | undefined;
           if (!previousPage?.appendClosed) return;
           (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
-            before: previousPage, after: page, replacement: true, deleted: true, reservedBytes: 0,
+            before: previousPage,
+            after: page,
+            replacement: true,
+            deleted: true,
+            reservedBytes: 0,
           });
           const ids = changes.deletes.get(node.table) ?? [];
-          ids.push(id); changes.deletes.set(node.table, ids);
+          ids.push(id);
+          changes.deletes.set(node.table, ids);
           return;
         }
         const intent = captureTemporalPageChange(
@@ -1076,15 +1088,23 @@ export class WorldRecords {
         }
         const written = new Set((changes.writes.get(table) ?? []).map((row) => row.id));
         const deletes = new Set(changes.deletes.get(table) ?? []);
-        for (const id of ids) if (!written.has(id)) {
-          deletes.add(id);
-          if (table === 'mind_temporal_pages') {
-            const page = retirement?.previous.get(table)?.get(id) as import('@open-legend/domain').TemporalPage | undefined;
-            if (page) (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
-              before: page, after: page, replacement: true, deleted: true, reservedBytes: 0,
-            });
+        for (const id of ids)
+          if (!written.has(id)) {
+            deletes.add(id);
+            if (table === 'mind_temporal_pages') {
+              const page = retirement?.previous.get(table)?.get(id) as
+                | import('@open-legend/domain').TemporalPage
+                | undefined;
+              if (page)
+                (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
+                  before: page,
+                  after: page,
+                  replacement: true,
+                  deleted: true,
+                  reservedBytes: 0,
+                });
+            }
           }
-        }
         if (deletes.size) changes.deletes.set(table, [...deletes]);
       }
     }
@@ -1126,11 +1146,19 @@ export class WorldRecords {
       writes,
       rows: changes.rows + encodedPages.length,
       temporal: undefined,
-      temporalEdits: [...(changes.temporalEdits ?? []),
-        ...[...changes.temporal.values()].filter(intent => intent.replacement || intent.deleted)],
-      savedTemporalPages: [...(changes.savedTemporalPages ?? []), ...encodedPages.map((page) => page.native)],
+      temporalEdits: [
+        ...(changes.temporalEdits ?? []),
+        ...[...changes.temporal.values()].filter((intent) => intent.replacement || intent.deleted),
+      ],
+      savedTemporalPages: [
+        ...(changes.savedTemporalPages ?? []),
+        ...encodedPages.map((page) => page.native),
+      ],
       savedTemporalActors: [
-        ...new Set([...(changes.savedTemporalActors ?? []), ...[...changes.temporal.values()].map((intent) => intent.after.actorId)]),
+        ...new Set([
+          ...(changes.savedTemporalActors ?? []),
+          ...[...changes.temporal.values()].map((intent) => intent.after.actorId),
+        ]),
       ],
     };
     encodedTemporalCuts.set(changes, { acknowledgedBefore, changes: result });
@@ -1543,13 +1571,18 @@ export class WorldRecords {
       WORLD_RECORD_SCHEMA,
     );
     if (active && state.world.experience?.temporal)
-      restoreTemporalDirectories(state.world, await this.db.prepare(
-        `SELECT p.actor_id,p.physical_life,p.receipt_epoch,p.first_batch_order,p.first_entry,p.first_member,
+      restoreTemporalDirectories(
+        state.world,
+        await this.db
+          .prepare(
+            `SELECT p.actor_id,p.physical_life,p.receipt_epoch,p.first_batch_order,p.first_entry,p.first_member,
           p.last_batch_order,p.last_entry,p.last_member,p.charge_directory
         FROM mind_temporal_pages p JOIN mind_temporal_actors a ON a.world_id=p.world_id AND a.actor_id=p.actor_id
         WHERE p.world_id=? AND NOT ${temporalBlockExpiredSql('p', 'a')}
         ORDER BY p.actor_id,p.first_batch_order,p.first_entry,p.first_member,p.id`,
-      ).all(head.worldId));
+          )
+          .all(head.worldId),
+      );
     if (active && state.world.receivedValues) {
       const received = state.world.receivedValues;
       const temporal = state.world.experience?.temporal;
@@ -1601,8 +1634,9 @@ export class WorldRecords {
           received.sources[source.id] = source;
         }
     }
-    if (active) for (const actor of Object.values(state.world.experience?.temporal?.actors ?? {}))
-      for (const chunk of actor.pages) validateTemporalPageSources(chunk, state.world);
+    if (active)
+      for (const actor of Object.values(state.world.experience?.temporal?.actors ?? {}))
+        for (const chunk of actor.pages) validateTemporalPageSources(chunk, state.world);
     if (active) {
       await this.validateHistoricalMaterialOrigins(state);
       markPartialObjectHistory(state.world.entities);
@@ -2175,31 +2209,57 @@ export class WorldRecords {
 
 /** Reuse the canonical codec for database recovery and streamed checkpoints. */
 function compareTemporalRows(a: Record<string, unknown>, b: Record<string, unknown>): number {
-  return Number(a['first_batch_order']) - Number(b['first_batch_order']) ||
-    Number(a['first_entry']) - Number(b['first_entry']) || Number(a['first_member']) - Number(b['first_member']);
+  return (
+    Number(a['first_batch_order']) - Number(b['first_batch_order']) ||
+    Number(a['first_entry']) - Number(b['first_entry']) ||
+    Number(a['first_member']) - Number(b['first_member'])
+  );
 }
 /** Canonical directories are the only cold recent accounting input. This also
  * establishes the disjoint range invariant required by direct predecessor seeks. */
-function restoreTemporalDirectories(world: SavedWorld['world'], rows: readonly Record<string, unknown>[]): void {
+function restoreTemporalDirectories(
+  world: SavedWorld['world'],
+  rows: readonly Record<string, unknown>[],
+): void {
   const byActor = new Map<string, Record<string, unknown>[]>();
   for (const row of rows) {
-    const actorId = String(row['actor_id']), selected = byActor.get(actorId) ?? [];
-    if (!world.experience?.temporal?.actors[actorId]) throw new Error('Temporal block has no actor owner.');
-    selected.push(row); byActor.set(actorId, selected);
+    const actorId = String(row['actor_id']),
+      selected = byActor.get(actorId) ?? [];
+    if (!world.experience?.temporal?.actors[actorId])
+      throw new Error('Temporal block has no actor owner.');
+    selected.push(row);
+    byActor.set(actorId, selected);
   }
   for (const [actorId] of Object.entries(world.experience?.temporal?.actors ?? {})) {
     const selected = (byActor.get(actorId) ?? []).sort(compareTemporalRows);
     const directories: ReceivedChargeDirectory[] = [];
     let previous: [number, number, number] | undefined;
     for (const row of selected) {
-      const first: [number, number, number] = [Number(row['first_batch_order']),Number(row['first_entry']),Number(row['first_member'])];
-      const last: [number, number, number] = [Number(row['last_batch_order']),Number(row['last_entry']),Number(row['last_member'])];
-      const compare = (a: readonly number[], b: readonly number[]) => a[0]!-b[0]! || a[1]!-b[1]! || a[2]!-b[2]!;
-      if (![...first,...last].every(value => Number.isSafeInteger(value) && value >= 0) || compare(first,last)>0 || previous && compare(previous,first)>=0)
+      const first: [number, number, number] = [
+        Number(row['first_batch_order']),
+        Number(row['first_entry']),
+        Number(row['first_member']),
+      ];
+      const last: [number, number, number] = [
+        Number(row['last_batch_order']),
+        Number(row['last_entry']),
+        Number(row['last_member']),
+      ];
+      const compare = (a: readonly number[], b: readonly number[]) =>
+        a[0]! - b[0]! || a[1]! - b[1]! || a[2]! - b[2]!;
+      if (
+        ![...first, ...last].every((value) => Number.isSafeInteger(value) && value >= 0) ||
+        compare(first, last) > 0 ||
+        (previous && compare(previous, first) >= 0)
+      )
         throw new Error('Received block address ranges overlap or are invalid.');
       previous = last;
       const directory = JSON.parse(String(row['charge_directory'])) as ReceivedChargeDirectory;
-      if (directory.actorId !== actorId || directory.physicalLife !== Number(row['physical_life']) || directory.epoch !== row['receipt_epoch'])
+      if (
+        directory.actorId !== actorId ||
+        directory.physicalLife !== Number(row['physical_life']) ||
+        directory.epoch !== row['receipt_epoch']
+      )
         throw new Error('Foreign received charge directory.');
       directories.push(directory);
     }
@@ -2352,8 +2412,10 @@ export function assembleWorldRecords(
   if (!active && state.world.experience?.temporal) {
     for (const actor of Object.values(state.world.experience.temporal.actors))
       for (const page of actor.pages) validateTemporalPageSources(page, state.world);
-    restoreTemporalDirectories(state.world,
-      [...(groups.get('mind_temporal_pages')?.values() ?? [])].flat());
+    restoreTemporalDirectories(
+      state.world,
+      [...(groups.get('mind_temporal_pages')?.values() ?? [])].flat(),
+    );
   }
   if (active) {
     for (const records of Object.values(state.world.appraisals ?? {}))

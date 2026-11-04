@@ -18,7 +18,14 @@ import { readTemporalPageRecord, MemoryRetentionError } from './temporal-storage
 import { receiptLookupBucket } from './temporal-page-storage.js';
 import type { RetentionMetadataView } from './retention-metadata.js';
 
-type Reference = { physicalLife:number;epoch:string;batchOrder:number;entryIndex:number;memberIndex:number;at:number };
+type Reference = {
+  physicalLife: number;
+  epoch: string;
+  batchOrder: number;
+  entryIndex: number;
+  memberIndex: number;
+  at: number;
+};
 /** Sparse correction is exceptional: find only the latest matching retained
  * chunk for affected people, then inspect those bounded bodies once. Ordinary
  * prefix expiry and every other individual require no cold survivor lookup. */
@@ -111,13 +118,38 @@ export async function prepareIndividualReferenceRepairs(
     const actor = world.experience?.temporal?.actors[request.actor_id];
     for (const page of matching)
       for (const receipt of temporalPageReceipts(page)) {
-        if (!temporalRecentAt(receipt.at, world.simTime, selectedTemporalPolicy(world).recent.maxAgeSeconds)) continue;
+        if (
+          !temporalRecentAt(
+            receipt.at,
+            world.simTime,
+            selectedTemporalPolicy(world).recent.maxAgeSeconds,
+          )
+        )
+          continue;
         for (const facet of receipt.facets) {
-          if (!receivedPositionEligible({...receipt,memberIndex:facet.memberIndex},receipt.at,actor?.frontier) ||
-            !actor || !receivedDirectoryContains(actor.recent,receipt,facet.memberIndex) ||
-            !temporalReceiptIndividualIds({...receipt,facets:[facet]}, sources).includes(request.individual_id)) continue;
-          const candidate:Reference={physicalLife:receipt.physicalLife,epoch:receipt.epoch,batchOrder:receipt.batchOrder,entryIndex:receipt.entryIndex,memberIndex:facet.memberIndex,at:receipt.at};
-          if (!reference || compareReceivedPosition(candidate,reference)>0) reference=candidate;
+          if (
+            !receivedPositionEligible(
+              { ...receipt, memberIndex: facet.memberIndex },
+              receipt.at,
+              actor?.frontier,
+            ) ||
+            !actor ||
+            !receivedDirectoryContains(actor.recent, receipt, facet.memberIndex) ||
+            !temporalReceiptIndividualIds({ ...receipt, facets: [facet] }, sources).includes(
+              request.individual_id,
+            )
+          )
+            continue;
+          const candidate: Reference = {
+            physicalLife: receipt.physicalLife,
+            epoch: receipt.epoch,
+            batchOrder: receipt.batchOrder,
+            entryIndex: receipt.entryIndex,
+            memberIndex: facet.memberIndex,
+            at: receipt.at,
+          };
+          if (!reference || compareReceivedPosition(candidate, reference) > 0)
+            reference = candidate;
         }
       }
 

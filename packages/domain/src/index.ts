@@ -471,6 +471,8 @@ export {
   temporalReceiptSource,
   isTemporalReceiptSource,
   temporalReceiptLocatorFromSource,
+  parseTemporalReceiptId,
+  receivedDirectorySourceContains,
   retainTemporalObservationSupport,
   retainTemporalSupport,
   retainTemporalStateSupport,
@@ -559,10 +561,10 @@ export { nativeThinkingTimeChanges } from './thinking-inputs.js';
 
 export { boundActionItemIds } from './action-item-references.js';
 
-export {selectReceivedReceiptMembers,selectReceivedState} from './temporal-frames.js';
+export { selectReceivedReceiptMembers, selectReceivedState } from './temporal-frames.js';
 
-export {jsonByteLength} from './records.js';
+export { jsonByteLength } from './records.js';
 
 export * from './received-batches.js';
 
-export {receivedBatchStorageBytes,materializeReceivedBindingSeed} from './temporal-frames.js';
+export { receivedBatchStorageBytes, materializeReceivedBindingSeed } from './temporal-frames.js';

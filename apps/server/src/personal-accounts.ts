@@ -23,10 +23,18 @@ export const personalAccountRevision = (payload: string) =>
 
 /** Story evidence is an indivisible received occurrence, never a carried seed
  * or an inferred member of a broad sample. Physical block placement is irrelevant. */
-export function temporalStoryReceiptInPage(page: TemporalPage, locator: TemporalReceiptLocator): TemporalReceipt | undefined {
-  if (page.actorId !== locator.actorId || page.physicalLife !== locator.physicalLife || page.epoch !== locator.epoch) return;
-  const batch = page.batches.find(batch => batch.batchOrder === locator.batchOrder);
-  const entry = batch?.entries.find(entry => entry.entryIndex === locator.entryIndex);
+export function temporalStoryReceiptInPage(
+  page: TemporalPage,
+  locator: TemporalReceiptLocator,
+): TemporalReceipt | undefined {
+  if (
+    page.actorId !== locator.actorId ||
+    page.physicalLife !== locator.physicalLife ||
+    page.epoch !== locator.epoch
+  )
+    return;
+  const batch = page.batches.find((batch) => batch.batchOrder === locator.batchOrder);
+  const entry = batch?.entries.find((entry) => entry.entryIndex === locator.entryIndex);
   return entry?.kind === 'occurrence' ? entry.receipt : undefined;
 }
 
@@ -34,31 +42,67 @@ export function temporalStoryReceiptInPage(page: TemporalPage, locator: Temporal
  * age/pressure expiry changes only the actor frontier; its collector later
  * removes obsolete perspectives alongside wholly ineligible physical blocks. */
 export async function revokeTemporalStoryAccounts(
-  db: SqlDatabase, worldId: string, changes: RecordChanges,
+  db: SqlDatabase,
+  worldId: string,
+  changes: RecordChanges,
 ): Promise<void> {
-  const edits = [...(changes.temporalEdits ?? []), ...(changes.temporal?.values() ?? [])]
-    .filter(intent => intent.replacement || intent.deleted);
-  const oldBlocks = new Set<string>(), removed = new Map<string, TemporalReceiptLocator>();
+  const edits = [...(changes.temporalEdits ?? []), ...(changes.temporal?.values() ?? [])].filter(
+    (intent) => intent.replacement || intent.deleted,
+  );
+  const oldBlocks = new Set<string>(),
+    removed = new Map<string, TemporalReceiptLocator>();
   for (const intent of edits) {
     const before = intent.before ?? (intent.deleted ? intent.after : undefined);
     if (!before) throw new Error('Temporal erasure requires its exact canonical predecessor.');
-    oldBlocks.add(JSON.stringify(['world','experience','temporal','actors',before.actorId,'pages',before.id]));
-    const retained = new Map(intent.deleted ? [] : intent.after.batches.flatMap(batch =>
-      batch.entries.flatMap(entry => entry.kind === 'occurrence' && entry.receipt ? [[entry.receipt.id, canonicalJson(entry.receipt)] as const] : [])));
+    oldBlocks.add(
+      JSON.stringify([
+        'world',
+        'experience',
+        'temporal',
+        'actors',
+        before.actorId,
+        'pages',
+        before.id,
+      ]),
+    );
+    const retained = new Map(
+      intent.deleted
+        ? []
+        : intent.after.batches.flatMap((batch) =>
+            batch.entries.flatMap((entry) =>
+              entry.kind === 'occurrence' && entry.receipt
+                ? [[entry.receipt.id, canonicalJson(entry.receipt)] as const]
+                : [],
+            ),
+          ),
+    );
     for (const batch of before.batches)
       for (const entry of batch.entries)
-        if (entry.kind === 'occurrence' && entry.receipt && retained.get(entry.receipt.id) !== canonicalJson(entry.receipt))
-          removed.set(entry.receipt.id, {actorId: before.actorId, physicalLife: before.physicalLife,
-            epoch: before.epoch, batchOrder: batch.batchOrder, entryIndex: entry.entryIndex});
+        if (
+          entry.kind === 'occurrence' &&
+          entry.receipt &&
+          retained.get(entry.receipt.id) !== canonicalJson(entry.receipt)
+        )
+          removed.set(entry.receipt.id, {
+            actorId: before.actorId,
+            physicalLife: before.physicalLife,
+            epoch: before.epoch,
+            batchOrder: batch.batchOrder,
+            entryIndex: entry.entryIndex,
+          });
   }
   for (const id of changes.deletes.get('mind_temporal_pages') ?? [])
-    if (!oldBlocks.has(id)) throw new Error('Temporal deletion has no source-revocation predecessor.');
-  for (const batch of sqlRowBatches([...removed.values()].map(receipt => [receipt])))
-    await db.prepare(`DELETE FROM history_perspectives p USING jsonb_to_recordset(?::jsonb)
+    if (!oldBlocks.has(id))
+      throw new Error('Temporal deletion has no source-revocation predecessor.');
+  for (const batch of sqlRowBatches([...removed.values()].map((receipt) => [receipt])))
+    await db
+      .prepare(
+        `DELETE FROM history_perspectives p USING jsonb_to_recordset(?::jsonb)
       q("actorId" TEXT,"physicalLife" BIGINT,epoch TEXT,"batchOrder" BIGINT,"entryIndex" BIGINT)
       WHERE p.world_id=? AND p.actor_id=q."actorId" AND p.temporal_life=q."physicalLife"
         AND p.temporal_epoch=q.epoch AND p.temporal_batch_order=q."batchOrder"
-        AND p.temporal_entry_index=q."entryIndex"`)
+        AND p.temporal_entry_index=q."entryIndex"`,
+      )
       .run(JSON.stringify(batch.map(([receipt]) => receipt)), worldId);
 }
 
@@ -185,9 +229,12 @@ export function narrationSourceUnrevokedSql(alias = 'p'): string {
     AND NOT EXISTS(SELECT 1 FROM mind_corrections c WHERE c.world_id=${alias}.world_id
       AND c.actor_id=${alias}.actor_id AND c.source_id=${alias}.event_id)`;
 }
-const receiptBatchSql = (alias: string) => `(${alias}.payload::jsonb#>>'{account,receipt,batchOrder}')::bigint`;
-const receiptEntrySql = (alias: string) => `(${alias}.payload::jsonb#>>'{account,receipt,entryIndex}')::bigint`;
-const receiptPositionSql = (alias: string) => `(${receiptBatchSql(alias)},${receiptEntrySql(alias)},0::bigint)`;
+const receiptBatchSql = (alias: string) =>
+  `(${alias}.payload::jsonb#>>'{account,receipt,batchOrder}')::bigint`;
+const receiptEntrySql = (alias: string) =>
+  `(${alias}.payload::jsonb#>>'{account,receipt,entryIndex}')::bigint`;
+const receiptPositionSql = (alias: string) =>
+  `(${receiptBatchSql(alias)},${receiptEntrySql(alias)},0::bigint)`;
 /** Select the only possible physical container before testing sparse membership.
  * A missing receipt must not walk backwards through older retained blocks. */
 function storyTemporalBlockSql(alias: string): string {
@@ -256,7 +303,7 @@ export function storyTemporalPreparationBytesSql(alias = 'p'): string {
 function temporalStorySelection(stored: StoredStorySource, body: unknown) {
   if (stored.account.kind !== 'temporal' || typeof body !== 'string')
     throw new Error('Recent personal receipt is unavailable.');
-  const selected = JSON.parse(body) as {receipt: TemporalReceipt; values: TemporalValue[]};
+  const selected = JSON.parse(body) as { receipt: TemporalReceipt; values: TemporalValue[] };
   if (!selected.receipt) throw new Error('Recent personal receipt is unavailable.');
   return selected;
 }
@@ -353,9 +400,7 @@ export function storyTemporalReceipt(payload: string): TemporalReceiptLocator | 
 
 export function storyTemporalCut(
   payload: string,
-):
-  | { receivedAt: number; receipt: TemporalReceiptLocator; bytes: number }
-  | undefined {
+): { receivedAt: number; receipt: TemporalReceiptLocator; bytes: number } | undefined {
   const stored = JSON.parse(payload) as StoredStorySource;
   return stored.account?.kind === 'temporal'
     ? {

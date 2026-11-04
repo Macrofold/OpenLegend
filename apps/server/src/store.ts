@@ -1424,14 +1424,20 @@ export class SqlGameRepository implements GameRepository {
     const worldId = write.state.world.id;
     // Recent expiry no longer deletes individual rows. Its durable boundary is
     // still a productive reason to wake the existing bounded storage collector.
-    const recentFrontierAdvanced = write.changes.writes.get('mind_temporal_actors')?.some(row => {
+    const recentFrontierAdvanced = write.changes.writes.get('mind_temporal_actors')?.some((row) => {
       const actorId = (JSON.parse(row.id) as string[])[4]!;
       const before = write.before?.world.experience?.temporal?.actors[actorId]?.frontier;
       const after = write.state.world.experience?.temporal?.actors[actorId]?.frontier;
-      return after && (after.expiredThroughTime !== before?.expiredThroughTime ||
-        after.pressureThrough?.address.batchOrder !== before?.pressureThrough?.address.batchOrder ||
-        after.pressureThrough?.address.entryIndex !== before?.pressureThrough?.address.entryIndex ||
-        after.pressureThrough?.address.memberIndex !== before?.pressureThrough?.address.memberIndex);
+      return (
+        after &&
+        (after.expiredThroughTime !== before?.expiredThroughTime ||
+          after.pressureThrough?.address.batchOrder !==
+            before?.pressureThrough?.address.batchOrder ||
+          after.pressureThrough?.address.entryIndex !==
+            before?.pressureThrough?.address.entryIndex ||
+          after.pressureThrough?.address.memberIndex !==
+            before?.pressureThrough?.address.memberIndex)
+      );
     });
     // Wake only for new payloads or actual potential releases, not each save.
     if (

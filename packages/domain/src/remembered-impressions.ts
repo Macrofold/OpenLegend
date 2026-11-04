@@ -272,8 +272,8 @@ export interface ImpressionProvenanceSpan {
   physicalLife: number;
   epoch: string;
   family: 'temporal-receipt';
-  from: {batchOrder:number;entryIndex:number};
-  through: {batchOrder:number;entryIndex:number};
+  from: { batchOrder: number; entryIndex: number };
+  through: { batchOrder: number; entryIndex: number };
 }
 export type ImpressionClaim =
   | {
@@ -386,12 +386,17 @@ export function validImpressionSpan(value: unknown): value is ImpressionProvenan
     ordinal(span.physicalLife) &&
     text(span.epoch) &&
     span.family === 'temporal-receipt' &&
-    !!span.from && !!span.through &&
-    fields(span.from, ['batchOrder','entryIndex']) && fields(span.through, ['batchOrder','entryIndex']) &&
-    ordinal(span.from.batchOrder) && ordinal(span.from.entryIndex) &&
-    ordinal(span.through.batchOrder) && ordinal(span.through.entryIndex) &&
+    !!span.from &&
+    !!span.through &&
+    fields(span.from, ['batchOrder', 'entryIndex']) &&
+    fields(span.through, ['batchOrder', 'entryIndex']) &&
+    ordinal(span.from.batchOrder) &&
+    ordinal(span.from.entryIndex) &&
+    ordinal(span.through.batchOrder) &&
+    ordinal(span.through.entryIndex) &&
     (span.from.batchOrder < span.through.batchOrder ||
-      (span.from.batchOrder === span.through.batchOrder && span.from.entryIndex <= span.through.entryIndex))
+      (span.from.batchOrder === span.through.batchOrder &&
+        span.from.entryIndex <= span.through.entryIndex))
   );
 }
 
@@ -508,9 +513,11 @@ export function impressionAffected(
       span.epoch === source.epoch &&
       span.family === source.family &&
       (span.from.batchOrder < source.through.batchOrder ||
-        (span.from.batchOrder === source.through.batchOrder && span.from.entryIndex <= source.through.entryIndex)) &&
+        (span.from.batchOrder === source.through.batchOrder &&
+          span.from.entryIndex <= source.through.entryIndex)) &&
       (source.from.batchOrder < span.through.batchOrder ||
-        (source.from.batchOrder === span.through.batchOrder && source.from.entryIndex <= span.through.entryIndex)),
+        (source.from.batchOrder === span.through.batchOrder &&
+          source.from.entryIndex <= span.through.entryIndex)),
   );
 }
 
