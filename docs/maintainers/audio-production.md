@@ -8,9 +8,9 @@ Reuse the [feedback production workflow](../production-workflows/audio-and-feedb
 
 ## AUD01 — Compare a small original music pilot
 
-- [ ] **Proposed:** after selecting an audition budget, compare a paid composer pilot with a bounded set of eligible AI candidates using the [same-brief procedure](../research/audio/openlegend-direction.md#a-fair-bounded-audition).
-- **Dependencies:** a short world/scene brief, a representative playable slice or capture, suitable portfolios and current provider eligibility. Composer outreach and payments occur only when that production task is authorized.
-- **Outcome:** choose a musical lead and production route for a small first package, or record a concrete reason neither candidate is satisfactory.
+- [ ] **Proposed:** use the [bounded audition](../research/audio/openlegend-direction.md#a-fair-bounded-audition) to select a suitable composer-led, AI-led or direct-artist route. Compare routes when the choice remains unresolved; a paid head-to-head comparison is not required after one route meets the brief.
+- **Dependencies:** an audition budget, a short world/scene brief, a playable slice or capture, and the selected route's portfolio, input rights and provider eligibility as applicable. Outreach and payments occur when the production task is authorized.
+- **Outcome:** choose a musical lead and route for a small first package, with the quality/control/cost tradeoff recorded, or identify why the auditioned material is insufficient.
 - **Completion evidence:** full-cue and repeated in-context listening; motif recognition and emotional range; one meaningful revision; usable exports; total selection/editing time and cash; unresolved rights recorded. A preference benchmark or impressive isolated clip alone does not close this task.
 
 ## AUD02 — Clear rights and preserve the accepted source package
@@ -23,15 +23,15 @@ Reuse the [feedback production workflow](../production-workflows/audio-and-feedb
 ## AUD03 — Produce one representative soundscape
 
 - [ ] **Proposed:** use the [SFX sourcing plan](../research/audio/archive/2026/2026-11-04-sound-sourcing.md#first-production-package-and-planning-allowances) for movement/materials, camp work, the selected threat, ambience and restrained interface feedback in one real play sequence.
-- **Dependencies:** supported native events and permitted listener evidence; a focused cue list; source rights under AUD02; a selected production budget if outside existing resources.
+- **Dependencies:** supported native events and permitted listener evidence, a focused cue list, AUD02 rights and a selected budget. Prepare source assets or a capture mix first; where playback is missing, these inputs let AUD04 proceed before this task's final acceptance. SFX work does not depend on a music-pilot result.
 - **Outcome:** coherent event families with useful variations and a comfortable whole-scene mix. Add original Foley/synthesis or offline AI only for a concrete benefit.
-- **Completion evidence:** review normal repetition, overlapping work/conflict, quiet recovery and conversation; inspect timing, fatigue, source removal/cancellation and audio-off understanding. Audio must not invent meaningful hidden actors/actions. A library purchase is not completion.
+- **Completion evidence:** after any needed playback integration, review repetition, overlapping work/conflict, quiet recovery, conversation and audio-off understanding. Verify timing, fatigue and source cancellation/removal through the owning runtime checks. A capture mix supports preparation but does not establish in-play acceptance; audio must not invent hidden actors/actions.
 
 ## AUD04 — Scope and deliver only the needed playback integration
 
-- [ ] **Proposed preparation:** after the musical pilot identifies useful playback behavior, inspect the existing client presentation and specify the smallest implementation supporting accepted cues, entries/exits, silence, settings and lifecycle.
-- **Dependencies:** AUD01/AUD03 results, actual client integration and asset-delivery contracts. A new runtime implementation requires its own authorized task and applicable design/engineering workflow; this research does not supply an executable technical design.
-- **Outcome:** select simple authored playback first. Add synchronized stems, middleware or more elaborate transitions only for an evidenced requirement. World content/selection policy remains distinct from generic playback facilities.
+- [ ] **Proposed preparation:** use the available cue list, audition/capture assets and relevant music findings to inspect current playback and specify only missing support for cues, transitions, silence, settings and lifecycle.
+- **Dependencies:** inputs for the selected work: AUD01 music findings or preliminary AUD03 effects assets, plus actual client and asset-delivery contracts. Final AUD03 acceptance follows any needed integration. Implementation follows its authorized task and design/engineering workflow.
+- **Outcome:** record the selected cues' permitted trigger/selection inputs, entries/exits, stop/replacement behavior and delivery fallback before implementation. Reuse [world presentation](../world-presentation.md#boundaries-and-extension) and the [feedback workflow](../production-workflows/audio-and-feedback.md); create a focused design only for an uncovered capability. Keep world content/selection policy separate from generic playback. Stems or middleware require an evidenced need.
 - **Completion evidence when implementation is selected:** supported-browser activation/suspension/recovery, loaded-asset lifetime, loops/transitions, relevant decode/memory/transfer and overlap behavior, sound-off usability, and no private-fact disclosure. Route implementation and its checks to the existing presentation/hearing/UI owners rather than duplicating their task bodies here.
 
 ## Related work that remains separate

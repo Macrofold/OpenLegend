@@ -129,7 +129,7 @@ Use a shared baseline and explicit output locations. Review each handoff as it a
 
 ## Select tools by the stage they improve
 
-The language agent, image generator, mesh generator, rigging tool, authoring application and runtime renderer can be different tools. Record the complete route when comparing results. Use the [inspected skills and tooling](../../archive/02-research/ai-game-development/04-skills-and-tooling.md), [asset and audio assessment](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), and [character-model assessment](../../archive/02-research/ai-game-development/06-models-for-stories-and-characters.md) for dated candidates and compatibility details.
+The language agent, image generator, mesh generator, rigging tool, authoring application and runtime renderer can be different tools. Record the complete route when comparing results. Use the [tooling audit](../../archive/02-research/ai-game-development/04-skills-and-tooling.md), [visual/motion/speech assessment](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), [music/SFX research](../research/audio/README.md) and [character-model assessment](../../archive/02-research/ai-game-development/06-models-for-stories-and-characters.md) for dated candidates and compatibility details.
 
 Prefer a saved graph, editable material, export preset or narrow script when a repeated transformation is understood. A hosted service or local tool may execute that transformation; neither needs to become a universal workflow platform. Inspect unfamiliar skills and use the exact selected application/model version. A skill's example world laws or editor defaults do not become OpenLegend policy.
 
@@ -149,4 +149,4 @@ Keep observations, judgments and unperformed qualification distinct. The [verifi
 
 - **Implementation and studies:** existing [art direction](../maintainers/art-direction.md), [3D appearances](../maintainers/3d-pixel-art.md), [UIUX](../maintainers/ui-ux.md), [character experience](../maintainers/character-experience.md), and affected feature trackers. This handbook creates no competing task register.
 - **Limits and constraints:** existing [3D art](../limits/3d-pixel-art.md), [UI](../limits/ui-ux.md), [interface](../limits/interface.md), [AI execution](../limits/ai-execution.md), and feature-specific inventories. Workflow examples create no new numerical runtime or production quotas.
-- **Evidence and interpretation:** the [research collection](../../archive/02-research/ai-game-development/README.md). Source-specific claims and current tool details remain there; accepted game behavior stays in its existing specifications.
+- **Evidence and interpretation:** the [AI production collection](../../archive/02-research/ai-game-development/README.md) and [music/SFX research](../research/audio/README.md) own dated source/tool evidence; accepted game behavior stays in its existing specifications.

@@ -1,12 +1,12 @@
 # Music and sound direction for Open Legend
 
-**Research recommendation.** This is the proposed creative and production direction arising from the [audio sourcing research](README.md). It is not an accepted soundtrack, a procurement commitment or a runtime feature specification. The brief follows Mike's request for excellent, distinctive custom music, practical production and no requirement for procedural music generation. Sound-effect generation is optional too.
+**Proposed creative and production direction**, informed by the [audio sourcing research](README.md). The goal is excellent, distinctive music at a practical scale. Music can be authored offline; sound-effect generation is optional. Vendor/budget selection and listening remain production work.
 
 ## Recommended approach
 
-Give the score one musical author or small composer/producer team, use a recognizable family of original themes, and supplement good virtual instruments with a few expressive live performances. Test a properly licensed AI route seriously before committing the full score. Use free and paid recordings much more extensively for effects, with skilled editing, a little Foley and a handful of original sound signatures.
+Keep one musical lead responsible for recurring themes, coherence and revisions, whether cues are composed, generated or hybrid. My default is a composer-led pilot with a serious licensed AI comparison before expanding. Use good virtual instruments and selective live performance where they improve the result. For effects, use free/paid recordings, skilled editing, a little Foley and a few original signatures.
 
-This recommendation prioritizes coherent identity, useful revision and lasting control. It does not assume that an AI cue cannot be excellent, that a human commission is automatically good, or that free music lacks artistic merit. The first paid musical pilot and an honestly compared AI candidate should establish what we actually prefer. The [industry evidence](archive/2026/2026-11-04-music-production.md) shows several workable small-team methods; it does not prove a winner for an unheard Open Legend score.
+Select by musical identity, useful revision and lasting control. Neither price nor production method establishes quality. The [industry evidence](archive/2026/2026-11-04-music-production.md) supplies workable small-team methods; listening must establish what we prefer for Open Legend.
 
 The most useful compromise is **small scope with high authorship**: two or three excellent themes developed into a first package, rather than an hour of loosely related music. Spend on musical ideas, arrangement, performance and in-game listening. Additional tracks should answer a demonstrated emotional or repetition problem.
 
@@ -26,7 +26,7 @@ Three initial thematic families are enough to investigate:
 | Wilderness and possibility | Beauty, curiosity, exposure and the attraction of the unknown       | Open exploration; ambiguous unease; discovery with a wider register and space                                                    |
 | History and consequence    | Things outlasting the moment, wonder, regret, remembered deeds      | Quiet older tune; tense fragment; intimate aftermath; occasional larger statement                                                |
 
-These are editorial categories, not player stats, mandatory emotion assignments, or three permanent engine moods. They can share musical material. Do not attach an individual score to every generated person, activity, item or biome.
+These editorial families can share musical material; they do not require a separate score for every generated person, activity, item or biome.
 
 Humor should often come from timing and a lightly unexpected musical turn, not a joke sting announcing that a character is ridiculous. Danger needs musical teeth when it earns them, but every rabbit encounter should not summon an orchestra. Grief can be expressed through a familiar idea with something missing; it does not require continuous mournful music. Ordinary joy should be allowed to feel sincere.
 
@@ -72,16 +72,16 @@ Do not upload commissioned demos, third-party samples or reference recordings in
 
 ### A fair, bounded audition
 
-Use one short brief and the same two scenes: quiet exploration, then a tense rendering of the same musical idea. Source-label-blind listening reduces preference for a particular production method; rights and maintainability remain a separate review afterwards.
+Use one short brief: quiet exploration and a tense treatment of the same musical idea. Compare production routes when the choice remains unresolved. An AI-led or direct-artist audition can qualify on its own under the same acceptance criteria; a paid comparison is useful evidence, not a mandatory expense after a satisfactory route is found. Hide source labels during musical comparison, then assess rights and maintainability separately.
 
-- Shortlist a composer from existing relevant work, then pay for one 60–90 second pilot and an explicitly scoped alternate/revision. Do not ask several composers for unpaid custom demos.
-- Compare with a small number of properly licensed AI candidates from at most two serious providers. Use the same duration, instrumental restrictions, emotional brief and scene material. Set a curation time and spending allowance before generating; this research performs no such purchase or generation.
-- Match perceived listening level and compare both isolated and under game effects. Check exposed melody, ending and several repetitions, not just the strongest first 15 seconds.
+- For a composer pilot, quote one 60–90 second exploration cue, a short same-theme tension alternate, an ending/loop edit and one revision round. Select from existing portfolios; pay for custom work.
+- For an AI comparison, use a few eligible candidates from at most two providers, with the same durations, instrumental restrictions, brief and scenes. Set curation time and spending allowances before generating.
+- Match perceived level; listen to full cues and several repetitions, both isolated and under game effects. Include the same scene with effects/ambience alone to judge where music improves the experience and where silence works better.
 - Ask Mike and a few appropriate listeners what they remember later, which world the music suggests, whether it distracts, and where it feels emotionally false. These are qualitative judgments, not a statistical study or an artificial weighted quality score.
-- Request one meaningful revision: preserve the theme while making it more vulnerable or tense, and create a usable ending. Record whether the route can do this coherently.
+- Use the agreed revision round to preserve the theme while changing its emotional intensity or repairing an ending. Record whether the route can make the change coherently.
 - Count total generation, selection, cleanup, revision and delivery time per **accepted cue/minute**, including discarded candidates. Record cash separately from human time.
 
-Acceptance needs both a musical result we want and a production path we can maintain. A provider demo, a clean waveform, a machine-separated stem export or an invoice alone satisfies neither.
+Accept both the musical result and a maintainable production path. A capture mix can support the audition; final in-play timing, transitions and fatigue remain with the [whole-scene workflow](../../production-workflows/audio-and-feedback.md#5-mix-and-inspect-in-the-whole-scene).
 
 ## Sound effects: use recordings as ingredients
 
@@ -115,6 +115,4 @@ If cash is extremely limited, an AI-led route with careful selection and modest 
 
 ## Decision boundary and follow-through
 
-The research and recommendation are complete when the sources, tradeoffs and route to a small comparison are recorded. The remaining production choices are the budget, selected collaborator/provider and musical acceptance after listening. No unanswered choice prevents this research from being useful; none should be guessed as a completed purchase or delivered score.
-
-[AUD01–AUD04](../../maintainers/audio-production.md) track the proposed pilot, source/rights handoff, representative soundscape and any subsequently selected playback design. Existing voice/media and bard work retain their owners. This adds no requirement to generate music live, synthesize every effect, hire a large team or design a universal emotion engine.
+[AUD01–AUD04](../../maintainers/audio-production.md) own the proposed audition, rights/source handoff, representative soundscape and any needed playback design. The next choices are budget, production route and musical acceptance after listening. Existing voice/media and bard work retain their owners.

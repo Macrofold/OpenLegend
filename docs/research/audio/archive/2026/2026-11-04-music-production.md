@@ -69,11 +69,9 @@ Ask who wrote, performed, mixed and implemented the samples; what they can do di
 
 ### 3. Pay one composer for a bounded pilot
 
-After portfolio selection, commission one 60–90 second cue with a recognizable melodic idea, an exploration arrangement and a workable ending/loop transition. Include one revision round. Use an explicit pilot license and decide whether the fee is credited toward a larger commission. This tests the actual collaboration without asking shortlisted composers for unpaid speculative work.
+When selecting a composer, quote the [shared audition package](../../openlegend-direction.md#a-fair-bounded-audition): one 60–90 second exploration cue, a short same-theme tension alternate, an ending/loop edit and one revision round. Set an explicit pilot license and whether the fee is credited toward a larger commission. Pay for custom work after portfolio selection.
 
-The pilot should answer: Does this feel like our world? Is the melody memorable later? Can this person revise toward a clear note? Does the music remain pleasant under repeated play? Can they deliver usable edits and metadata?
-
-Compare against a bounded, properly licensed AI candidate and a good existing-catalog candidate if useful. Hide the source label from listeners during musical comparison, then score practical/legal suitability separately. Do not allow preference for either humans or AI to masquerade as a measured result.
+The shared procedure owns comparisons, meaningful revision, repeated listening and accepted-cue cost. A paid composer comparison is optional when an AI-led or direct-artist route already satisfies that brief; the recommendation does not require buying redundant evidence.
 
 ### 4. Commission a small reusable first package
 
@@ -93,7 +91,7 @@ These are **proposed planning allocations in USD**, not offers, fixed market pri
 
 | Package                                 | Illustrative arithmetic                                                                                                  |       Exact calculated range | Rounded planning allowance |
 | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------------------: | -------------------------: |
-| One paid pilot                          | One 60–90 second cue, one revision, a loop/end edit; proposed flat-fee range to negotiate                                | Not a per-minute calculation |             **$500–1,500** |
+| One paid pilot                          | One 60–90 second cue, short same-theme alternate, one revision and ending/loop edit; flat fee to negotiate               | Not a per-minute calculation |             **$500–1,500** |
 | Lean identity package                   | (8 new minutes × $300–600 + $600–1,600 production/editorial allowance) × 1.15                                            |                 $3,450–7,360 |     **About $3,500–7,500** |
 | Substantial first slice                 | (15 new minutes × $400–800 + $1,500–4,000 for selected live performance, editorial/implementation handoff and QA) × 1.15 |                $8,625–18,400 |    **About $9,000–18,500** |
 | Broader polished score after validation | (35 new minutes × $600–1,200 + $5,000–10,000 production/integration allowance) × 1.15                                    |               $29,900–59,800 |   **About $30,000–60,000** |
