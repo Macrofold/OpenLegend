@@ -69,4 +69,3 @@ Some requested sites limited access: Kickstarter and Sketchfab did not expose us
 ## Scope and completion
 
 This documentation task affected zero executable logic lines. Its plan was to verify the references and transcripts, preserve a credited image library, explain the techniques, connect them to the existing art/pipeline design, and validate the resulting documents and files. Those research deliverables are complete. Runtime experiments, paid generation and an engine change were outside this task; proposed experiments remain under [V3D01](../../../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision).
-

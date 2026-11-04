@@ -94,7 +94,7 @@ sources and preserve timing explicitly.
   idle/run authoring, not a reason to replace a better existing action.
 
 See [the implemented clip contract](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)
-for action selection, rest-pose retargeting and export details.
+for action selection, rest-pose retargeting and export details. The current single-action-per-file recipe above is established; multi-action or colliding-name source imports need the [AF15 selection fix](../../projects/art-workflow-tech-design.md#115-target-maps-and-two-pass-assembly) before the retained-clip example below is relied on.
 
 ## Author a new human motion
 
@@ -138,9 +138,11 @@ production source motion. Record rights for the actual conditioning poses and mo
 
 ## Assemble and review the target clips
 
-Once the new action is already adapted to the target skeleton and compatible time basis, an existing
-command can combine it with retained target actions. For example, adding `Wave` to a model whose
-complete retained set is `Idle`, `Walk` and `Run`:
+After AF15 delivers source-scoped action selection, the existing `clips` interface can assemble an
+adapted target clip with explicitly retained target actions. The example below is **planned until
+that fix passes**: current imports can rename colliding actions such as `Idle` to `Idle.001`, so
+matching `#ACTION` is not yet reliable for this case. It adds `Wave` to a model whose complete
+retained set is `Idle`, `Walk` and `Run`:
 
 ```sh
 "${B[@]}" clips --model "$MODEL" \
