@@ -1,5 +1,6 @@
 import {
   appendedRecordCount,
+  temporalOperationAppendOrder,
   recordAppendBase,
   temporalPageMetadata,
   temporalPageReferences,
@@ -120,14 +121,21 @@ export function encodeTemporalPage(page: TemporalPage, world: WorldState): Store
 export function packTemporalSave(
   intents: Iterable<PendingTemporalPage>,
   world: WorldState,
+  acknowledgedBefore: number | undefined,
 ): StoredTemporalPage[] {
   const result: StoredTemporalPage[] = [];
   for (const intent of intents) {
     const source = intent.after;
-    const operations = source.operations.slice(
-      intent.replacement ? 0 : (intent.before?.operations.length ?? 0),
-    );
-    if (intent.replacement) {
+    // The committed allocation cut is authoritative even when residency has
+    // changed native containers or an intent no longer has its old local prefix.
+    // Every new append has fresh causal order; opening a span is not its append.
+    const operations =
+      intent.replacement || acknowledgedBefore === undefined
+        ? source.operations
+        : source.operations.filter(
+            (operation) => temporalOperationAppendOrder(operation) >= acknowledgedBefore,
+          );
+    if (intent.replacement || (source.appendClosed === true && acknowledgedBefore === undefined)) {
       const kind = operations[0]?.kind;
       if (
         source.appendClosed !== true ||
@@ -150,9 +158,11 @@ export function packTemporalSave(
         ...selectTemporalPageOperations(source, operations, source.id, world),
         appendClosed: true as const,
       };
-      result.push({ ...encodeTemporalPage(page, world), replacement: true });
+      result.push({ ...encodeTemporalPage(page, world), replacement: intent.replacement });
       continue;
     }
+    if (source.appendClosed === true && operations.length)
+      throw new Error('An acknowledged physical temporal page cannot append operations.');
     const byKind = new Map<TemporalHistoryOperation['kind'], TemporalHistoryOperation[]>();
     for (const operation of operations) {
       let values = byKind.get(operation.kind);
@@ -319,11 +329,7 @@ function residencyDescendsFrom(page: TemporalPage, previous: TemporalPage): bool
 export function temporalPagePosition(page: TemporalPage): number {
   const first = page.operations[0];
   if (!first) throw new Error('Empty history page has no physical position.');
-  return first.kind === 'span'
-    ? first.closedOrder
-    : first.kind === 'check'
-      ? first.order
-      : first.receipt.order;
+  return temporalOperationAppendOrder(first);
 }
 
 /** Canonical ownership arrays are sets with a stable encoded order. */

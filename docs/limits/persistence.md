@@ -490,7 +490,7 @@ Physical cleanup uses indexed candidates and actual transactional owner/value us
 
 ## BKS-L03 — Coarse physical expiry target
 
-**Implemented · Restrictiveness: Safe.** Logical age expiry remains exact; an intersected oldest page can stay physically stored and conservatively charged until its final fact expires. This may shorten optional retained coverage by up to the preferred page size, subject to the existing whole-operation oversize exception. Pressure still retires whole oldest pages. Explicit correction/forgetting remains source-specific; required support has its independent admitted owner. No model work or summary guarantee is added. [Expiry](../projects/bookkeeping-simplification-tech-design.md#61-logical-eligibility-and-accounting).
+**Implemented · Restrictiveness: Safe.** Logical age expiry remains exact; an intersected oldest page can stay physically stored and conservatively charged until its final fact expires. This may shorten optional retained coverage by up to the preferred page size, subject to the existing whole-operation oversize exception. Pressure can retire whole oldest pages or trim an acknowledged boundary at whole-operation ordinals, under the existing limits. Explicit correction/forgetting remains source-specific; required support has its independent admitted owner. No model work or summary guarantee is added. [Expiry](../projects/bookkeeping-simplification-tech-design.md#61-logical-eligibility-and-accounting).
 
 ## BKS-L04 — Background collection target
 

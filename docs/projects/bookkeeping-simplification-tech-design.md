@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK17–BK19 source and connected checks are complete; operating qualification remains open. | 2026-11-03   |
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK17/BK19 connected scope complete; BK18 final storage integration and operating qualification open. | 2026-11-04   |
 
 **Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. Architecture used and implementation reconciled 2026-10-31 10:59 UTC on `codex/bookkeeping-runtime-01`, based on `39aa9775a5cf48e4318227410d0ab5625f92db9d`. [BK](../maintainers/production-data.md#bookkeeping-simplification) owns remaining qualification; concurrent unrelated work is outside this project. The [integration contract](attention-and-scenes-runtime-design.md#14-integration-contract-for-the-completed-bk-ru-and-vw-branches) coordinates BK with RU consumers and VW tooling without duplicating this implementation.
 
@@ -32,7 +32,7 @@ Ordinary native/player/NPC gameplay publishes its complete in-memory transition 
 
 ### Original replacement responsibilities
 
-| Current mechanism                                                                                    | Reason it exists                                                                         | Target disposition                                                                                                       |
+| Original mechanism                                                                                   | Reason it exists                                                                         | Target disposition                                                                                                       |
 | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `WorldService.saveProgress` and `backgroundSave`                                                     | Save native progress while simulation continues                                          | Keep the responsibility and current cadence; use direct table writes                                                     |
 | `WorldService.commit`, `store.commit`, canonical/history writers                                     | Atomic effects, history, receipt and revision                                            | Keep one shared direct transactional path                                                                                |

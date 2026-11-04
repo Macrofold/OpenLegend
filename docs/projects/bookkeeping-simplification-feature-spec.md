@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK17–BK19 source and connected checks are complete; operating qualification remains open. | 2026-11-03   |
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK17/BK19 connected scope complete; BK18 final storage integration and operating qualification open. | 2026-11-04   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 

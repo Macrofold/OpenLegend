@@ -48,6 +48,7 @@ import { assertAssetBinding, type AssetRevisionReference } from '@open-legend/as
 import {
   compactHistory,
   recordSavedTemporalPages,
+  acknowledgedTemporalOrder,
   releaseSavedTemporalHistory,
   inheritSavedTemporalTails,
   compactObjectHistory,
@@ -1106,6 +1107,7 @@ export class SqlGameRepository implements GameRepository {
   adoptHistory(original: SavedWorld, prepared: SavedWorld): void {
     if (original !== this.acceptedState || original.world.id !== prepared.world.id)
       throw new Error('Prepared history no longer matches the committed world.');
+    inheritSavedTemporalTails(original.world, prepared.world);
     this.acceptedState = prepared;
   }
   async hydrateHistory(
@@ -1115,6 +1117,7 @@ export class SqlGameRepository implements GameRepository {
   ): Promise<SavedWorld> {
     if (state !== this.acceptedState) throw new Error('Flush before materializing history.');
     const full = await this.records.withHistory(state, actorIds, sourceIds);
+    inheritSavedTemporalTails(state.world, full.world);
     this.acceptedState = full;
     return full;
   }
@@ -1122,6 +1125,7 @@ export class SqlGameRepository implements GameRepository {
     if (state !== this.acceptedState)
       throw new Error('Flush before materializing condition history.');
     const full = await this.records.withStatusEffectHistory(state);
+    inheritSavedTemporalTails(state.world, full.world);
     this.acceptedState = full;
     return full;
   }
@@ -1157,6 +1161,9 @@ export class SqlGameRepository implements GameRepository {
       // Accepted canonical records are immutable predecessors. Physical evidence
       // page layouts must survive the next diff, including direct store callers.
       freezeWorld(state.world);
+      // The validated SQL snapshot is already committed; publish its placement
+      // cut just like a successful writer, never an arbitrary live wrapper.
+      recordSavedTemporalPages(state.world, state.world, []);
       this.acceptedState = canonical.state;
       this.acceptedRevision = canonical.revision;
       return { revision: canonical.revision, state };
@@ -1239,12 +1246,22 @@ export class SqlGameRepository implements GameRepository {
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)
       : undefined;
-    const changes = this.records.materializeTemporalChanges(
+    const nativeChanges =
       prepared?.changes ??
-        timedSync('persistence.prepareRecords', () =>
-          this.records.prepare(this.acceptedState ?? undefined, state),
-        ),
+      timedSync('persistence.prepareRecords', () =>
+        this.records.prepare(this.acceptedState ?? undefined, state),
+      );
+    const sameWorldBaseline =
+      !historyProjection?.restore && this.acceptedState?.world.id === state.world.id;
+    const acknowledgedBefore = sameWorldBaseline
+      ? acknowledgedTemporalOrder(this.acceptedState!.world)
+      : undefined;
+    if (sameWorldBaseline && acknowledgedBefore === undefined)
+      throw new Error('The committed temporal allocation cut is unavailable.');
+    const changes = this.records.materializeTemporalChanges(
+      nativeChanges,
       state.world,
+      acknowledgedBefore,
     );
     if (historyProjection?.restore) {
       // Installation replaces recent history, including physically retained but
@@ -1254,6 +1271,7 @@ export class SqlGameRepository implements GameRepository {
       const replacement = this.records.materializeTemporalChanges(
         this.records.prepare(undefined, state, tables),
         state.world,
+        undefined,
       );
       for (const table of tables) {
         changes.rows -= changes.writes.get(table)?.length ?? 0;
@@ -1262,6 +1280,8 @@ export class SqlGameRepository implements GameRepository {
         changes.rows += rows.length;
         changes.deletes.delete(table);
       }
+      changes.savedTemporalPages = replacement.savedTemporalPages ?? [];
+      changes.savedTemporalActors = replacement.savedTemporalActors ?? [];
     }
     let committedRevision = expectedRevision;
     const write: TableWrite = {
@@ -1415,6 +1435,7 @@ export class SqlGameRepository implements GameRepository {
       write.restore ? undefined : write.before?.world,
       write.changes.savedTemporalPages ?? [],
       write.changes.deletes.get('mind_temporal_pages') ?? [],
+      write.changes.savedTemporalActors ?? [],
     );
     const worldId = write.state.world.id;
     // Wake only for new payloads or actual potential releases, not each save.

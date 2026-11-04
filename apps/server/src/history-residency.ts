@@ -17,6 +17,7 @@ import {
   immutableDataSnapshot,
   selectTemporalPageOperations,
   temporalPageMutation,
+  temporalOperationAppendOrder,
   temporalPageSelectionSource,
   EXPERIENCE_LIMITS,
   markPartialAppraisals,
@@ -497,25 +498,26 @@ export function compactTemporalHistory(
 /** Saved physical tails are the existing residency projection, never evidence
  * authority. Keeping their exact IDs prevents a native append container from
  * masquerading as one durable page during later correction or retirement. */
-const savedTemporalOperations = new WeakSet<
-  import('@open-legend/domain').TemporalHistoryOperation
->();
 const savedTemporalEdits = new WeakSet<object>();
-const savedTemporalActors = new WeakMap<WorldState, ReadonlySet<string>>();
-const savedTemporalTails = new WeakMap<
-  WorldState,
-  ReadonlyMap<string, readonly import('@open-legend/domain').TemporalPage[]>
->();
+interface SavedTemporalPlacement {
+  tails: ReadonlyMap<string, readonly import('@open-legend/domain').TemporalPage[]>;
+  actors: ReadonlySet<string>;
+  acknowledgedBefore: number;
+}
+const savedTemporalPlacement = new WeakMap<WorldState, SavedTemporalPlacement>();
+export function acknowledgedTemporalOrder(world: WorldState): number | undefined {
+  return savedTemporalPlacement.get(world)?.acknowledgedBefore;
+}
 export function recordSavedTemporalPages(
   world: WorldState,
   previous: WorldState | undefined,
   pages: readonly import('@open-legend/domain').TemporalPage[],
   deleted: readonly string[] = [],
+  actors: readonly string[] = [],
 ): void {
-  const changedActors = new Set<string>();
+  const changedActors = new Set<string>(actors);
   for (const page of pages) {
     changedActors.add(page.actorId);
-    for (const operation of page.operations) savedTemporalOperations.add(operation);
     const source = temporalPageSelectionSource(page);
     if (source && temporalPageMutation(source) === 'edit')
       savedTemporalEdits.add(source.operations);
@@ -525,7 +527,7 @@ export function recordSavedTemporalPages(
     if (path[4]) changedActors.add(path[4]);
   }
   const prior =
-    savedTemporalTails.get(previous!) ??
+    savedTemporalPlacement.get(previous!)?.tails ??
     new Map(
       Object.entries(previous?.experience?.temporal?.actors ?? {}).map(([actorId, actor]) => [
         actorId,
@@ -562,29 +564,37 @@ export function recordSavedTemporalPages(
     }
     tails.set(actorId, selected.reverse());
   }
-  savedTemporalTails.set(world, tails);
-  savedTemporalActors.set(world, changedActors);
+  savedTemporalPlacement.set(world, {
+    tails,
+    actors: changedActors,
+    acknowledgedBefore: world.nextId,
+  });
 }
 /** A save may finish while newer native changes already exist. Remove only the
- * identical acknowledged operations, retain every newer/edited operation, and
+ * committed append prefix, retain every newer/edited operation, and
  * install the bounded canonical tail without altering any personal charge. */
 export function releaseSavedTemporalHistory(
   world: WorldState,
   durable: WorldState | undefined,
 ): WorldState {
-  if (!durable) return world;
-  const tails = savedTemporalTails.get(durable);
-  if (!tails) return world;
+  if (!durable || durable.id !== world.id) return world;
+  const saved = savedTemporalPlacement.get(durable);
+  if (!saved) return world;
+  const { tails, acknowledgedBefore } = saved;
   const temporal = world.experience?.temporal;
   if (!temporal) return world;
   const actors = { ...temporal.actors };
   let changed = false;
-  for (const actorId of savedTemporalActors.get(durable) ?? []) {
+  for (const actorId of saved.actors) {
     const actor = temporal.actors[actorId];
     if (!actor) continue;
     const pending: import('@open-legend/domain').TemporalPage[] = [];
     const present = new Set(actor.pages.map((page) => page.id));
-    const acknowledgedNative = new Set<import('@open-legend/domain').TemporalHistoryOperation>();
+    const acknowledgedNative = new Set<string>();
+    const operationKey = (
+      page: import('@open-legend/domain').TemporalPage,
+      operation: import('@open-legend/domain').TemporalHistoryOperation,
+    ) => JSON.stringify([page.physicalLife, page.epoch, operation.ordinal]);
     for (const page of actor.pages) {
       // A removal-only correction can retain exclusively old operations. Only
       // acknowledgement of this exact edited selection makes it durable.
@@ -593,8 +603,9 @@ export function releaseSavedTemporalHistory(
         continue;
       }
       const kept = page.operations.filter((operation) => {
-        const acknowledged = savedTemporalOperations.has(operation);
-        if (acknowledged && page.appendClosed !== true) acknowledgedNative.add(operation);
+        const acknowledged = temporalOperationAppendOrder(operation) < acknowledgedBefore;
+        if (acknowledged && page.appendClosed !== true)
+          acknowledgedNative.add(operationKey(page, operation));
         return !acknowledged;
       });
       if (!kept.length) continue;
@@ -615,7 +626,9 @@ export function releaseSavedTemporalHistory(
         .filter(
           (page) =>
             present.has(page.id) ||
-            page.operations.every((operation) => acknowledgedNative.has(operation)),
+            page.operations.every((operation) =>
+              acknowledgedNative.has(operationKey(page, operation)),
+            ),
         )
         .map((page) => [page.id, page]),
     );
@@ -638,16 +651,12 @@ export function releaseSavedTemporalHistory(
     { temporalSavedPages: tails },
   );
   if (world === durable) {
-    savedTemporalTails.set(projected, tails);
-    savedTemporalActors.set(projected, savedTemporalActors.get(durable) ?? new Set());
+    savedTemporalPlacement.set(projected, saved);
   }
   return projected;
 }
 
 export function inheritSavedTemporalTails(from: WorldState | undefined, to: WorldState): void {
-  const tails = from && savedTemporalTails.get(from);
-  if (tails) {
-    savedTemporalTails.set(to, tails);
-    savedTemporalActors.set(to, savedTemporalActors.get(from!) ?? new Set());
-  }
+  const saved = from && savedTemporalPlacement.get(from);
+  if (saved) savedTemporalPlacement.set(to, saved);
 }

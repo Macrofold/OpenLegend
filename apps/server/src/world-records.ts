@@ -84,7 +84,10 @@ import {
   type RecordNode,
 } from './world-record-schema.js';
 
-const encodedTemporalCuts = new WeakMap<RecordChanges, RecordChanges>();
+const encodedTemporalCuts = new WeakMap<
+  RecordChanges,
+  { acknowledgedBefore: number | undefined; changes: RecordChanges }
+>();
 type Value = unknown;
 const personalMetadataTables = new Set([
   'mind_temporal_pages',
@@ -139,6 +142,8 @@ export interface RecordChanges {
   rows: number;
   temporal?: Map<string, PendingTemporalPage>;
   savedTemporalPages?: readonly import('@open-legend/domain').TemporalPage[];
+  /** Includes old-only native intents so successful acknowledgement also rebases them. */
+  savedTemporalActors?: readonly string[];
   /** Actor-permitted semantic expiry, never re-archived as an old source version. */
   expired?: Map<string, string[]>;
 }
@@ -1060,14 +1065,18 @@ export class WorldRecords {
     return changes;
   }
   /** Convert the detached native suffix once, outside simulation advancement. */
-  materializeTemporalChanges(changes: RecordChanges, world: SavedWorld['world']): RecordChanges {
+  materializeTemporalChanges(
+    changes: RecordChanges,
+    world: SavedWorld['world'],
+    acknowledgedBefore: number | undefined,
+  ): RecordChanges {
     if (!changes.temporal?.size) return changes;
     const cached = encodedTemporalCuts.get(changes);
-    if (cached) return cached;
+    if (cached && cached.acknowledgedBefore === acknowledgedBefore) return cached.changes;
     const writes = new Map(changes.writes);
     const rows = [...(writes.get('mind_temporal_pages') ?? [])];
     const node = RECORD_NODES.get('mind_temporal_pages')!;
-    const encodedPages = packTemporalSave(changes.temporal.values(), world);
+    const encodedPages = packTemporalSave(changes.temporal.values(), world, acknowledgedBefore);
     for (const encoded of encodedPages) {
       const page = encoded.native;
       const path = ['world', 'experience', 'temporal', 'actors', page.actorId, 'pages', page.id];
@@ -1093,8 +1102,11 @@ export class WorldRecords {
       rows: changes.rows + rows.length,
       temporal: undefined,
       savedTemporalPages: encodedPages.map((page) => page.native),
+      savedTemporalActors: [
+        ...new Set([...changes.temporal.values()].map((intent) => intent.after.actorId)),
+      ],
     };
-    encodedTemporalCuts.set(changes, result);
+    encodedTemporalCuts.set(changes, { acknowledgedBefore, changes: result });
     return result;
   }
   async write(

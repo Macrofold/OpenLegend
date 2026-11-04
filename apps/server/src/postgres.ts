@@ -325,10 +325,14 @@ export class PostgresDatabase implements SqlDatabase {
         );
         return { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
       } catch (error) {
-        const code = (error as { code?: string }).code;
-        // Do not leak SQL parameters or connection credentials in diagnostics.
-        throw new Error(
-          `PostgreSQL operation failed${code ? ` (${code})` : ''}. No automatic retry.`,
+        const reported = (error as { code?: unknown }).code;
+        const code =
+          typeof reported === 'string' && /^[A-Z0-9]{5}$/.test(reported) ? reported : undefined;
+        // SQLSTATE is safe operational metadata. Keep driver details, SQL values
+        // and credentials behind this boundary while preserving failure class.
+        throw Object.assign(
+          new Error(`PostgreSQL operation failed${code ? ` (${code})` : ''}. No automatic retry.`),
+          code ? { code } : {},
         );
       }
     };

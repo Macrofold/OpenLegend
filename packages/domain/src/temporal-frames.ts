@@ -117,6 +117,16 @@ export type TemporalWriteHeader = Omit<
   'id' | 'actorId' | 'physicalLife' | 'epoch' | 'facets'
 >;
 
+/** A span appends when it closes; its receipt keeps the earlier opening order.
+ * Received transitions are synchronous, so this allocation order cannot straddle
+ * a published/durable world cut. */
+export function temporalOperationAppendOrder(operation: TemporalHistoryOperation): number {
+  return operation.kind === 'span'
+    ? operation.closedOrder
+    : operation.kind === 'check'
+      ? operation.order
+      : operation.receipt.order;
+}
 export function temporalPageOperations(page: TemporalPage): readonly TemporalHistoryOperation[] {
   return readOnlyDraftView(page.operations);
 }
