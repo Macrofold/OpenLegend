@@ -4,6 +4,8 @@
 
 ## 1. Outcome, evidence and alternatives
 
+The subsequent [received-batch proposal](bookkeeping-simplification-batch-design.md) addresses the remaining per-partition append and storage-lifetime work exposed by the completed-source measurement. It is not installed; the BK17–BK19 contracts below still describe current execution.
+
 A person should receive their surroundings, notice a changing situation and remember a useful sequence without rebuilding thousands of proof objects merely to keep looking. An ordinary route can fade; a particular favor, learned name or promise can remain. Witnesses can disagree honestly because neither acquires the other's private knowledge. Responsive movement and remembered consequence are the payoff; a more elaborate memory simulation is not itself a feature.
 
 The completed-source diagnostic attributed substantial work to immutable graph preparation, current-field proof construction, history dictionaries and repeated retention reads. It recorded 158,901 expanded current fields, 1,239,908 encoded temporal slots and 316,836 account-header rows returned by 356 maintenance queries. These counters describe different work and cannot be added. The retired history sampled afterward contained 73,565,067 bytes of dictionary content and 38,813,344 bytes of JSON lookup indexes. Repeated indexes and baselines are not meaningful memories.

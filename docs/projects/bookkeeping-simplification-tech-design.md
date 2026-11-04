@@ -321,3 +321,9 @@ No blocking product question remains. The selected hybrid and direct writer are 
 ## 13. Compact representation
 
 The [compact reception companion](bookkeeping-simplification-reception-design.md) specifies the installed BK17–BK19 representation, algorithms, caller conversions and removal targets summarized above. Current-format schema 52 replaces chunk/dictionary storage; no old reader, second timeline, writer or model maintenance loop remains. Semantic and operating evidence are tracked separately by [BK17–BK19 and BK12/BK16](../maintainers/production-data.md#received-state-and-history-representation). Source implementation does not establish normal-speed or population qualification.
+
+## 14. Proposed received batches
+
+The [batch and lifetime companion](bookkeeping-simplification-batch-design.md) owns the November 4 proposed replacement of per-partition history appends, kind/container save fragmentation, late-span indexes and ordinary SQL retirement selection/updates. It extends existing receiving, temporal, current, retention and direct-writer owners. Current BK17–BK19 behavior remains as described above until conversion; no second format or store is selected.
+
+One exact receiving batch feeds current changes, dirty attention inputs and ordered recent evidence. Immutable mixed blocks retain compact first-use descriptors and shared substantial values. Bounded derived charge headers let the temporal actor owner advance exact eligibility without querying cold bodies; all readers apply that frontier before physical collection. Selected autobiographical account maintenance remains separate and batches requested scopes. The companion specifies tradeoffs, correction/save/restore races, source-removal targets and [BK20–BK23](../maintainers/production-data.md#received-batches-and-lifetime) acceptance. No further profiling or runtime change accompanied the design.
