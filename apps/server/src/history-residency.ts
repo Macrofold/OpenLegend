@@ -583,6 +583,8 @@ export function releaseSavedTemporalHistory(
     const actor = temporal.actors[actorId];
     if (!actor) continue;
     const pending: import('@open-legend/domain').TemporalPage[] = [];
+    const present = new Set(actor.pages.map((page) => page.id));
+    const acknowledgedNative = new Set<import('@open-legend/domain').TemporalHistoryOperation>();
     for (const page of actor.pages) {
       // A removal-only correction can retain exclusively old operations. Only
       // acknowledgement of this exact edited selection makes it durable.
@@ -590,7 +592,11 @@ export function releaseSavedTemporalHistory(
         if (!savedTemporalEdits.has(page.operations)) pending.push(page);
         continue;
       }
-      const kept = page.operations.filter((operation) => !savedTemporalOperations.has(operation));
+      const kept = page.operations.filter((operation) => {
+        const acknowledged = savedTemporalOperations.has(operation);
+        if (acknowledged && page.appendClosed !== true) acknowledgedNative.add(operation);
+        return !acknowledged;
+      });
       if (!kept.length) continue;
       if (kept.length === page.operations.length) pending.push(page);
       else {
@@ -601,7 +607,18 @@ export function releaseSavedTemporalHistory(
         pending.push(selected);
       }
     }
-    const byId = new Map((tails.get(actorId) ?? []).map((page) => [page.id, page]));
+    // An absent older tail may have been retired while this save was running.
+    // New physical pages may enter only while their exact acknowledged operations
+    // are still represented by the current native container being relocated.
+    const byId = new Map(
+      (tails.get(actorId) ?? [])
+        .filter(
+          (page) =>
+            present.has(page.id) ||
+            page.operations.every((operation) => acknowledgedNative.has(operation)),
+        )
+        .map((page) => [page.id, page]),
+    );
     for (const page of pending) byId.set(page.id, page);
     const pages = [...byId.values()].sort(
       (a, b) => temporalPagePosition(a) - temporalPagePosition(b) || a.id.localeCompare(b.id),

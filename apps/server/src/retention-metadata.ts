@@ -766,8 +766,15 @@ export class RetentionMetadata {
   }
 }
 
+/** The selected durable baseline became stale before a later preparation read.
+ * No removal may consume that proof; ordinary maintenance can select a new cut. */
+export class RetentionSnapshotChangedError extends Error {
+  override name = 'RetentionSnapshotChangedError';
+}
+
 /** A preparation owns only changed-row overlays, discarded on refusal/rollback. */
 export class RetentionMetadataView {
+  private readonly baselineRevision: number;
   private readonly writes = new Map<Table, Map<string, RetentionRow>>();
   private readonly membershipDelta = new Map<string, Memberships>();
   constructor(
@@ -775,6 +782,7 @@ export class RetentionMetadataView {
     private readonly changes?: RecordChanges,
     private readonly removed?: ReadonlyMap<string, readonly string[]>,
   ) {
+    this.baselineRevision = owner.revision;
     for (const [table, rows] of changes?.writes ?? [])
       if (indexed.has(table))
         this.writes.set(
@@ -1018,13 +1026,10 @@ export class RetentionMetadataView {
           FROM world_head h LEFT JOIN proofs p ON true WHERE h.id=1`,
         )
         .all(encoded, worldId, ...accountTables.map(() => worldId));
-      if (
-        !rows.length ||
-        rows.some(
-          (row) => row['world_id'] !== worldId || Number(row['revision']) !== this.owner.revision,
-        )
-      )
-        throw new Error('Personal retention membership snapshot changed.');
+      if (!rows.length || rows.some((row) => row['world_id'] !== worldId))
+        throw new Error('Personal retention membership belongs to another world.');
+      if (rows.some((row) => Number(row['revision']) !== this.baselineRevision))
+        throw new RetentionSnapshotChangedError('Personal retention membership snapshot changed.');
       for (const row of rows) {
         if (row['key'] === null) continue;
         const result = results[Number(row['key'])]!;

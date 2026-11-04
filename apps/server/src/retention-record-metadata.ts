@@ -11,6 +11,20 @@ import {
   type PersonalSourceRef,
 } from '@open-legend/domain';
 
+/** Request-owned semantic changes since a selected retention cut. These contain
+ * identities only; they neither encode rows nor own any source payload. */
+export interface RetainedActorSourceChanges {
+  invalidated: boolean;
+  accounts: ReadonlySet<string>;
+  dependentAccounts: ReadonlySet<string>;
+  temporalPages: ReadonlySet<string>;
+}
+export type RetainedSourceChanges = ReadonlyMap<string, RetainedActorSourceChanges>;
+export interface RetainedSourceWatch {
+  changes(): RetainedSourceChanges;
+  release(): void;
+}
+
 /** Small exact dependency projection, owned by the canonical personal record.
  * It is not a recalled body or a new grant. Keep the same native/personal
  * distinctions as MemoryRepository.writeSources. */

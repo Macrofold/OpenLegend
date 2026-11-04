@@ -33,10 +33,8 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions } from './history-residency.js';
 import { MemoryRetentionError, type PreparedMemoryRetention } from './temporal-storage.js';
 import { releaseUnusedTemporalSupports } from './retention-cleanup.js';
-import {
-  accountWriteHasRetentionDependencies,
-  type RetentionMetadataView,
-} from './retention-metadata.js';
+import type { RetentionMetadataView } from './retention-metadata.js';
+import type { RetainedSourceChanges } from './retention-record-metadata.js';
 
 const tables = {
   awareness: 'mind_awareness',
@@ -679,7 +677,7 @@ export async function prepareAccountRetentionPlan(
 export function applyAccountRetentionPlan(
   state: SavedWorld,
   plan: AccountRetentionPlan,
-  changesSinceCapture?: import('./world-records.js').RecordChanges,
+  changesSinceCapture: RetainedSourceChanges,
 ): PreparedMemoryRetention & { stale: boolean } {
   const rows = new Map<string, string[]>(),
     positions = new Map<string, Map<string, number>>();
@@ -697,23 +695,12 @@ export function applyAccountRetentionPlan(
     );
     for (const entry of actorPlan.writes)
       selected.add(recordId(actorId, entry.source, entryId(entry)));
-    const newDependency = Object.values(tables).some((table) =>
-      (changesSinceCapture?.writes.get(table) ?? []).some((row) => {
-        const path = JSON.parse(row.id) as string[];
-        return (
-          path[table === 'mind_memories' ? 2 : 3] === actorId &&
-          !selected.has(row.id) &&
-          accountWriteHasRetentionDependencies(table, row)
-        );
-      }),
-    );
+    const sourceChanges = changesSinceCapture.get(actorId);
     const changed =
-      newDependency ||
-      Object.values(tables).some(
-        (table) =>
-          (changesSinceCapture?.writes.get(table) ?? []).some((row) => selected.has(row.id)) ||
-          (changesSinceCapture?.deletes.get(table) ?? []).some((id) => selected.has(id)),
-      );
+      !sourceChanges ||
+      sourceChanges.invalidated ||
+      [...sourceChanges.dependentAccounts].some((id) => !selected.has(id)) ||
+      [...sourceChanges.accounts].some((id) => selected.has(id));
     if (
       !actor ||
       actor.epoch !== actorPlan.epoch ||

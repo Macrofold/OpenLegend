@@ -3,7 +3,9 @@ import { selectActorLiveReadCuts } from './actor-record-selection.js';
 import { releaseIdentityAllocationProof, preserveIdentityHighWater } from '@open-legend/domain';
 import { applyAccountRetentionPlan } from './account-retention.js';
 import { applyRecentRetention } from './recent-retention.js';
-import { mergeRecordChanges, retainedSourceTables } from './world-records.js';
+import { mergeRecordChanges } from './world-records.js';
+import { RetentionSnapshotChangedError } from './retention-metadata.js';
+import { LiveReadRevisionError } from './live-read-overlay.js';
 import {
   PendingWorldSave,
   LIVE_SAVE_INTERVAL_MS,
@@ -883,10 +885,12 @@ export class WorldService {
     // Shutdown is an explicit barrier. Start the captured prefix now so cancelled
     // paid work waiting for evidence can settle before the later final-save stage.
     if (this.pendingSave && !this.storageError)
-      void this.mutate(async () => {
-        await this.backgroundSave?.done;
-        await this.saveRequestedProgress();
-      }, true).catch((error) => this.failProgressSave(error));
+      this.runDetached(() => {
+        void this.mutate(async () => {
+          await this.backgroundSave?.done;
+          await this.saveRequestedProgress();
+        }, true).catch((error) => this.failProgressSave(error));
+      });
   }
   releaseHostWork(): void {
     this.stopAdmission();
@@ -901,6 +905,12 @@ export class WorldService {
   }
   private readonly mutationLane = new WorkLane('mutation');
   private mutationContext = new AsyncLocalStorage<{ active: boolean }>();
+  /** Detached work owns a new queue turn and no inherited request authority.
+   * Keeping the parent's live ALS token would let it bypass the single writer.
+   * docs/performance/scheduling.md#work-placement-and-buffering */
+  private runDetached<T>(operation: () => T): T {
+    return this.mutationContext.exit(() => this.authorityContext.run(undefined, operation));
+  }
   /** One coherent world mutation. Foreground arrivals ask native work to return
    * at its next boundary; ordinary acceptance never waits for the database. */
   private async mutate<T>(operation: () => Promise<T>, progress = false): Promise<T> {
@@ -2049,58 +2059,88 @@ export class WorldService {
       return;
     clearTimeout(this.retentionTimer);
     this.retentionWakeAt = wake;
-    this.retentionTimer = setTimeout(() => {
-      this.retentionTimer = undefined;
-      this.retentionWakeAt = undefined;
-      if (this.paused || this.storageError) return;
-      this.retentionTask = (async () => {
-        // Startup may already have due history, but its protected initialization
-        // still owns the world. Wait outside mutation before capturing that cut.
-        await this.ready;
-        if (this.closed || this.paused || this.storageError) return;
-        const captured = this.saved,
-          generation = this.generation;
-        const cut = this.captureLiveReadCuts();
-        const pending = cut.cuts.reduce((all, cut) => mergeRecordChanges(all, cut.changes), {
-          writes: new Map(),
-          deletes: new Map(),
-          rows: 0,
-        });
-        const [recent, accounts] = await Promise.all([
-          this.store.prepareRecentRetention!(captured, pending, cut),
-          this.store.prepareAccountRetention?.(captured, pending, cut),
-        ]);
-        await this.mutate(async () => {
-          if (this.generation !== generation || !this.pendingAdmissionOpen()) return;
-          const changed = this.store.records!.prepare(captured, this.saved, retainedSourceTables);
-          const retainedAccounts = accounts
-            ? applyAccountRetentionPlan(this.saved, accounts, changed)
-            : undefined;
-          const retained = applyRecentRetention(
-            retainedAccounts?.state ?? this.saved,
-            recent,
-            changed,
-          );
-          if (retainedAccounts) {
-            for (const [table, ids] of retainedAccounts.rows)
-              retained.rows.set(table, [...(retained.rows.get(table) ?? []), ...ids]);
-            retained.positions = retainedAccounts.positions;
-            retained.previous = retainedAccounts.previous;
-            retained.versions = retainedAccounts.versions;
+    this.retentionTimer = this.runDetached(() =>
+      setTimeout(() => {
+        this.retentionTimer = undefined;
+        this.retentionWakeAt = undefined;
+        if (this.paused || this.storageError) return;
+        this.retentionTask = (async () => {
+          // Startup may already have due history, but its protected initialization
+          // still owns the world. Wait outside mutation before capturing that cut.
+          await this.ready;
+          if (this.closed || this.paused || this.storageError) return;
+          const captured = this.saved,
+            generation = this.generation;
+          const cut = this.captureLiveReadCuts();
+          const pending = cut.cuts.reduce((all, cut) => mergeRecordChanges(all, cut.changes), {
+            writes: new Map(),
+            deletes: new Map(),
+            rows: 0,
+          });
+          if (!this.store.captureRetentionActors || !this.store.memories)
+            throw new Error(
+              'Background retention requires selected actor and retained-source owners.',
+            );
+          const actors = this.store.captureRetentionActors(captured);
+          const sources = this.store.memories.captureRetentionSourceWatch(captured.world.id, [
+            ...actors.recent,
+            ...actors.accounts,
+          ]);
+          try {
+            // Both preparations own this watch and reader work. A failed sibling
+            // cannot release the scope or start another slice while one still runs.
+            const [recentResult, accountResult] = await Promise.allSettled([
+              this.store.prepareRecentRetention!(captured, pending, cut, actors.recent),
+              this.store.prepareAccountRetention?.(captured, pending, cut, actors.accounts),
+            ]);
+            if (recentResult.status === 'rejected') throw recentResult.reason;
+            if (accountResult.status === 'rejected') throw accountResult.reason;
+            const recent = recentResult.value,
+              accounts = accountResult.value;
+            await this.mutate(async () => {
+              if (this.generation !== generation || !this.pendingAdmissionOpen()) return;
+              const changed = sources.changes();
+              const retainedAccounts = accounts
+                ? applyAccountRetentionPlan(this.saved, accounts, changed)
+                : undefined;
+              const retained = applyRecentRetention(
+                retainedAccounts?.state ?? this.saved,
+                recent,
+                changed,
+              );
+              if (retainedAccounts?.stale || retained.stale)
+                countMetric('retention.stalePreparations');
+              if (retainedAccounts) {
+                for (const [table, ids] of retainedAccounts.rows)
+                  retained.rows.set(table, [...(retained.rows.get(table) ?? []), ...ids]);
+                retained.positions = retainedAccounts.positions;
+                retained.previous = retainedAccounts.previous;
+                retained.versions = retainedAccounts.versions;
+              }
+              if (retained.state !== this.saved)
+                await this.acceptProgress(retained.state, undefined, retained);
+            }, true);
+          } finally {
+            sources.release();
           }
-          if (retained.state !== this.saved)
-            await this.acceptProgress(retained.state, undefined, retained);
-        }, true);
-      })()
-        .catch((error) => {
-          recordBackgroundFailure('memory-maintenance', error);
-        })
-        .finally(() => {
-          this.retentionTask = undefined;
-          // Dirty changes arriving during preparation remain represented in the index.
-          if (!this.storageError) this.scheduleRetention();
-        });
-    }, delay);
+        })()
+          .catch((error) => {
+            if (
+              error instanceof RetentionSnapshotChangedError ||
+              error instanceof LiveReadRevisionError
+            ) {
+              countMetric('retention.stalePreparations');
+              return;
+            }
+            recordBackgroundFailure('memory-maintenance', error);
+          })
+          .finally(() => {
+            this.retentionTask = undefined;
+            // Dirty changes arriving during preparation remain represented in the index.
+            if (!this.storageError) this.scheduleRetention();
+          });
+      }, delay),
+    );
     this.retentionTimer.unref?.();
   }
 
@@ -2135,20 +2175,22 @@ export class WorldService {
       0,
       LIVE_SAVE_INTERVAL_MS - (performance.now() - this.pendingSave.acceptedAt),
     );
-    const timer = setTimeout(() => {
-      void this.ready
-        .then(() => {
-          if (this.saveTimer !== timer || this.closed) return;
-          return this.mutate(async () => {
-            // A protected flush may cancel this timer while it waits for ready
-            // or mutation ownership. It cannot consume a newer batch's timer.
+    const timer = this.runDetached(() =>
+      setTimeout(() => {
+        void this.ready
+          .then(() => {
             if (this.saveTimer !== timer || this.closed) return;
-            this.saveTimer = undefined;
-            await this.saveRequestedProgress();
-          }, true);
-        })
-        .catch((error) => this.failProgressSave(error));
-    }, delay);
+            return this.mutate(async () => {
+              // A protected flush may cancel this timer while it waits for ready
+              // or mutation ownership. It cannot consume a newer batch's timer.
+              if (this.saveTimer !== timer || this.closed) return;
+              this.saveTimer = undefined;
+              await this.saveRequestedProgress();
+            }, true);
+          })
+          .catch((error) => this.failProgressSave(error));
+      }, delay),
+    );
     this.saveTimer = timer;
     timer.unref?.();
   }
@@ -2177,59 +2219,57 @@ export class WorldService {
     this.pendingSave = undefined;
     this.inFlightSave = pending;
     const startedAt = performance.now();
-    const done = this.mutationContext.exit(() =>
-      this.authorityContext.run(undefined, async () => {
-        try {
-          // Preparation and writes own this captured prefix. New live arrivals use
-          // another pending suffix and cannot reset its acceptance time.
-          await new Promise<void>((resolve) => setImmediate(resolve));
-          const revision = await timed('world.commit', () =>
-            this.store.commit(this.persistedRevision, snapshot, undefined, undefined, {
-              after: history.world,
-              prepared,
-              receipts: [...pending.receipts.values()],
-            }),
-          );
-          this.persistedRevision = revision;
-          // Adopt the same canonical temporal residency in the durable baseline;
-          // newer unsaved operations are rebased separately below.
-          const durableSnapshot = this.store.releaseHistory?.(snapshot) ?? snapshot;
-          this.persistedState = durableSnapshot;
-          this.persistedEvents = durableSnapshot.world.events;
-          this.persistedMemorySources = {
-            memories: durableSnapshot.world.memories,
-            experience: durableSnapshot.world.experience,
-            receivedValues: durableSnapshot.world.receivedValues,
-            perceptionEvidence: durableSnapshot.world.perceptionEvidence,
-          };
+    const done = this.runDetached(async () => {
+      try {
+        // Preparation and writes own this captured prefix. New live arrivals use
+        // another pending suffix and cannot reset its acceptance time.
+        await new Promise<void>((resolve) => setImmediate(resolve));
+        const revision = await timed('world.commit', () =>
+          this.store.commit(this.persistedRevision, snapshot, undefined, undefined, {
+            after: history.world,
+            prepared,
+            receipts: [...pending.receipts.values()],
+          }),
+        );
+        this.persistedRevision = revision;
+        // Adopt the same canonical temporal residency in the durable baseline;
+        // newer unsaved operations are rebased separately below.
+        const durableSnapshot = this.store.releaseHistory?.(snapshot) ?? snapshot;
+        this.persistedState = durableSnapshot;
+        this.persistedEvents = durableSnapshot.world.events;
+        this.persistedMemorySources = {
+          memories: durableSnapshot.world.memories,
+          experience: durableSnapshot.world.experience,
+          receivedValues: durableSnapshot.world.receivedValues,
+          perceptionEvidence: durableSnapshot.world.perceptionEvidence,
+        };
 
-          this.store.memories?.acceptedSettled(snapshot.world.id, pending.through);
-          this.publishDurable(revision, pending.through, snapshot.world);
-          void this.mutate(async () => {
-            if (this.store.releasedHistory && !this.storageError) {
-              const released = this.store.releasedHistory(this.saved);
-              if (released !== this.saved) this.installWorld(released, this.saved.world, undefined);
-            }
-          }, true).catch((error) => this.failProgressSave(error));
-
-          // Keep a bounded hot retry window across the save completion race. Pending
-          // outcomes are additionally charged to the finite save buffer.
-          for (const id of this.recentCommandResults.keys()) {
-            if (this.recentCommandResults.size <= 1024) break;
-            if (!this.pendingSave?.receipts.has(id) && !this.commandReceiptReaders.has(id))
-              this.recentCommandResults.delete(id);
+        this.store.memories?.acceptedSettled(snapshot.world.id, pending.through);
+        this.publishDurable(revision, pending.through, snapshot.world);
+        void this.mutate(async () => {
+          if (this.store.releasedHistory && !this.storageError) {
+            const released = this.store.releasedHistory(this.saved);
+            if (released !== this.saved) this.installWorld(released, this.saved.world, undefined);
           }
-        } catch (error) {
-          this.failProgressSave(error, false);
-        } finally {
-          this.backgroundSave = undefined;
-          // On failure retain accepted work in RAM; no native replay or silent rollback.
-          if (!this.storageError) this.inFlightSave = undefined;
-          this.notify(false);
-          if (!this.storageError) this.scheduleSave();
+        }, true).catch((error) => this.failProgressSave(error));
+
+        // Keep a bounded hot retry window across the save completion race. Pending
+        // outcomes are additionally charged to the finite save buffer.
+        for (const id of this.recentCommandResults.keys()) {
+          if (this.recentCommandResults.size <= 1024) break;
+          if (!this.pendingSave?.receipts.has(id) && !this.commandReceiptReaders.has(id))
+            this.recentCommandResults.delete(id);
         }
-      }),
-    );
+      } catch (error) {
+        this.failProgressSave(error, false);
+      } finally {
+        this.backgroundSave = undefined;
+        // On failure retain accepted work in RAM; no native replay or silent rollback.
+        if (!this.storageError) this.inFlightSave = undefined;
+        this.notify(false);
+        if (!this.storageError) this.scheduleSave();
+      }
+    });
     this.backgroundSave = { startedAt, sequence: pending.through, done };
   }
 
@@ -4149,7 +4189,10 @@ export class WorldService {
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
       const resuming = this.world.paused && !next.world.paused;
       const ok = await this.commit(next, undefined, 'unchanged');
-      if (ok && next.world.paused) void this.flush().catch((error) => this.failProgressSave(error));
+      if (ok && next.world.paused)
+        this.runDetached(() => {
+          void this.flush().catch((error) => this.failProgressSave(error));
+        });
       if (ok && resuming) this.clockStartedAt = performance.now();
       if (ok) this.scheduleRetention(true);
       return {

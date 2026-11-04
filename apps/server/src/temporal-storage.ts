@@ -4,6 +4,7 @@ import {
   decodeTemporalPageRow,
   temporalPageRecordId,
   temporalPageValueReferences,
+  retirableTemporalPage,
 } from './temporal-page-storage.js';
 import {
   selectedTemporalPolicy,
@@ -726,6 +727,11 @@ export async function prepareTemporalRetention(
     through: number;
   }> = [];
   const possibleSources = new Set<string>();
+  const blocked = new Set(pending?.deletes.get('mind_temporal_pages') ?? []);
+  if (!complete)
+    for (const row of pending?.writes.get('mind_temporal_pages') ?? []) blocked.add(row.id);
+  for (const intent of pending?.temporal?.values() ?? [])
+    blocked.add(temporalPageRecordId(intent.after.actorId, intent.after.id));
   for (const [actorId, actor] of Object.entries(temporal?.actors ?? {})) {
     if (
       !actor.maintenanceDue &&
@@ -734,6 +740,11 @@ export async function prepareTemporalRetention(
       (actor.nextDue === null || actor.nextDue > state.world.simTime)
     )
       continue;
+    for (const page of actor.pages)
+      if (!retirableTemporalPage(page)) blocked.add(temporalPageRecordId(actorId, page.id));
+    const deferred = actor.pages.filter((page) =>
+      blocked.has(temporalPageRecordId(actorId, page.id)),
+    );
     const metadata = new Map<string, ChunkMetadata>();
     for (const row of complete
       ? []
@@ -762,21 +773,27 @@ export async function prepareTemporalRetention(
         epoch: String(row['receipt_epoch']),
         ordinal: Number(row['first_ordinal']),
       });
+    for (const [id, header] of metadata) if (blocked.has(header.id)) metadata.delete(id);
     for (const chunk of actor.pages)
-      metadata.set(chunk.id, {
-        id: temporalPageRecordId(actorId, chunk.id),
-        position: metadata.get(chunk.id)?.position,
-        sourceId: chunk.id,
-        at: temporalPageLastReceivedAt(chunk),
-        through: temporalPageLastReceivedAt(chunk),
-        bytes: chunk.bytes,
-        count: chunk.count,
-        sources: [...temporalPageReferences(chunk)],
-        order: temporalOperationHeader(chunk, temporalPageOperations(chunk)[0]!).order,
-        epoch: chunk.epoch,
-        ordinal: chunk.fromOrdinal,
-      });
+      if (retirableTemporalPage(chunk) && !blocked.has(temporalPageRecordId(actorId, chunk.id)))
+        metadata.set(chunk.id, {
+          id: temporalPageRecordId(actorId, chunk.id),
+          position: metadata.get(chunk.id)?.position,
+          sourceId: chunk.id,
+          at: temporalPageLastReceivedAt(chunk),
+          through: temporalPageLastReceivedAt(chunk),
+          bytes: chunk.bytes,
+          count: chunk.count,
+          sources: [...temporalPageReferences(chunk)],
+          order: temporalOperationHeader(chunk, temporalPageOperations(chunk)[0]!).order,
+          epoch: chunk.epoch,
+          ordinal: chunk.fromOrdinal,
+        });
     const ordered = [...metadata.values()].sort(compareTemporalRetentionHeaders);
+    const deferredDue = deferred.reduce(
+      (at, page) => Math.min(at, temporalPageLastReceivedAt(page) + policy.maxAgeSeconds),
+      Infinity,
+    );
     const selected = selectTemporalRetirement(state.world, actorId, ordered);
     const ids = selected.retired.map((chunk) => chunk.sourceId),
       recordIds = selected.retired.map((chunk) => chunk.id);
@@ -785,7 +802,13 @@ export async function prepareTemporalRetention(
       bytes = actor.bytes - removedBytes,
       count = actor.count - removedCount,
       through = Math.max(0, ...selected.retired.map((chunk) => chunk.through)),
-      nextDue = selected.nextDue;
+      candidateDue = Math.min(selected.nextDue ?? Infinity, deferredDue),
+      nextDue =
+        deferred.length && (bytes > policy.maxBytes || count > policy.maxChanges)
+          ? state.world.simTime
+          : Number.isFinite(candidateDue)
+            ? candidateDue
+            : null;
     if (selected.partial && selected.boundary)
       partials.push({ actorId, metadata: selected.boundary });
     for (const chunk of selected.retired) {
@@ -793,6 +816,7 @@ export async function prepareTemporalRetention(
     }
     if (
       (bytes > policy.maxBytes || count > policy.maxChanges) &&
+      !deferred.length &&
       !partials.some((partial) => partial.actorId === actorId)
     )
       throw new MemoryRetentionError(

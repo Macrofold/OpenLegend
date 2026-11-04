@@ -20,6 +20,10 @@ export interface PendingTemporalPage {
   reservedBytes: number;
 }
 export const TEMPORAL_PAGE_TARGET_BYTES = 64 * 1024;
+/** Only an acknowledged, unedited physical page has an exact durable retirement target. */
+export function retirableTemporalPage(page: TemporalPage): boolean {
+  return page.appendClosed === true && temporalPageMutation(page) !== 'edit';
+}
 export const temporalPageRecordId = (actorId: string, id: string) =>
   JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'pages', id]);
 export const temporalPageIntentKey = (page: TemporalPage) =>
@@ -123,6 +127,32 @@ export function packTemporalSave(
     const operations = source.operations.slice(
       intent.replacement ? 0 : (intent.before?.operations.length ?? 0),
     );
+    if (intent.replacement) {
+      const kind = operations[0]?.kind;
+      if (
+        source.appendClosed !== true ||
+        !kind ||
+        operations.some((operation) => operation.kind !== kind)
+      )
+        throw new Error('A temporal replacement requires one existing homogeneous physical page.');
+      if (
+        intent.before &&
+        (intent.before.appendClosed !== true ||
+          intent.before.id !== source.id ||
+          intent.before.actorId !== source.actorId ||
+          intent.before.physicalLife !== source.physicalLife ||
+          intent.before.epoch !== source.epoch)
+      )
+        throw new Error('A temporal replacement has a different physical predecessor.');
+      // A correction replaces exactly one canonical row. Repartitioning it would
+      // reuse its ID for several rows and duplicate already saved operations.
+      const page = {
+        ...selectTemporalPageOperations(source, operations, source.id, world),
+        appendClosed: true as const,
+      };
+      result.push({ ...encodeTemporalPage(page, world), replacement: true });
+      continue;
+    }
     const byKind = new Map<TemporalHistoryOperation['kind'], TemporalHistoryOperation[]>();
     for (const operation of operations) {
       let values = byKind.get(operation.kind);
@@ -134,9 +164,7 @@ export function packTemporalSave(
       const flush = () => {
         if (!selected.length) return;
         const first = selected[0]!;
-        const id = intent.replacement
-          ? source.id
-          : JSON.stringify([source.physicalLife, source.epoch, kind, first.ordinal]);
+        const id = JSON.stringify([source.physicalLife, source.epoch, kind, first.ordinal]);
         const page = {
           ...selectTemporalPageOperations(source, selected, id, world),
           appendClosed: true as const,

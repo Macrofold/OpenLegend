@@ -4,14 +4,15 @@ import {
   temporalOpenReservationTotals,
   temporalPageLastReceivedAt,
   expireTemporalOpenRecordings,
-  appendedRecordCount,
   selectedPruneObserverIndividuals,
   selectedTemporalPolicy,
   retireTemporalOperations,
   updateWorld,
   type TemporalPage,
 } from '@open-legend/domain';
+import { retirableTemporalPage } from './temporal-page-storage.js';
 import type { RecordChanges } from './world-records.js';
+import type { RetainedSourceChanges } from './retention-record-metadata.js';
 import type { SqlDatabase, SavedWorld } from './store.js';
 import {
   selectTemporalRetirement,
@@ -72,8 +73,8 @@ const compareHeaders = (a: Header, b: Header) =>
   a.order - b.order ||
   (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
-/** Read preparation is outside mutation. Unsaved headers overlay the database,
- * including pages no longer resident; accepted appends never need early saves. */
+/** Read preparation selects acknowledged physical headers outside mutation.
+ * Pending edits exclude targets; native history stays charged until its normal save. */
 export async function prepareRecentRetention(
   db: SqlDatabase,
   state: SavedWorld,
@@ -84,6 +85,16 @@ export async function prepareRecentRetention(
     policy = selectedTemporalPolicy(world).recent;
   const result: RecentRetentionPlan = { worldId: world.id, at: world.simTime, actors: [] };
   if (!due.length) return result;
+  // Pending native containers are not durable page IDs. Editing or deleting them
+  // could race their in-flight prefix save. Their charges remain until that save
+  // publishes exact physical pages; the existing save/maintenance wakes retry.
+  const blocked = new Set(pending?.deletes.get('mind_temporal_pages') ?? []);
+  for (const row of pending?.writes.get('mind_temporal_pages') ?? []) blocked.add(row.id);
+  for (const intent of pending?.temporal?.values() ?? [])
+    blocked.add(temporalPageRecordId(intent.after.actorId, intent.after.id));
+  for (const actorId of due)
+    for (const page of world.experience!.temporal!.actors[actorId]!.pages)
+      if (!retirableTemporalPage(page)) blocked.add(temporalPageRecordId(actorId, page.id));
   const readHeaders = () =>
     db
       .prepare(
@@ -102,12 +113,11 @@ export async function prepareRecentRetention(
       .all(
         JSON.stringify(due.map((actor_id) => ({ actor_id }))),
         world.id,
-        pending?.deletes.get('mind_temporal_pages') ?? [],
+        [...blocked],
         headerSlice + 1,
       );
-  // This owner already folds exact pending/native headers below. Query their
-  // canonical metadata in the validated cut instead of expanding the same pending
-  // chunk bodies through SQL before its actor/frontier/limit selection.
+  // Read canonical metadata in the validated cut. Pending bodies cannot supply
+  // a durable target and must not expand before this bounded header selection.
   const rows = db.readMetadataBaseline
     ? await db.readMetadataBaseline(due, (baseline) => {
         if (baseline.worldId !== world.id)
@@ -141,21 +151,15 @@ export async function prepareRecentRetention(
     edges.set(actorId, header);
     byActor.get(actorId)!.set(header.sourceId, header);
   }
-  for (const row of pending?.writes.get('mind_temporal_pages') ?? []) {
-    const chunk = JSON.parse(row.payload) as TemporalPage;
-    const actor = byActor.get(chunk.actorId);
-    if (actor && !removed.has(row.id)) actor.set(chunk.id, nativeHeader(chunk.actorId, chunk));
-  }
-  for (const intent of pending?.temporal?.values() ?? []) {
-    const page = intent.after,
-      headers = byActor.get(page.actorId);
-    const id = temporalPageRecordId(page.actorId, page.id);
-    if (headers && !removed.has(id)) headers.set(page.id, nativeHeader(page.actorId, page));
-  }
   for (const actorId of due) {
     const actor = world.experience!.temporal!.actors[actorId]!;
     const headers = byActor.get(actorId)!;
-    for (const chunk of actor.pages) headers.set(chunk.id, nativeHeader(actorId, chunk));
+    const deferred = actor.pages.filter(
+      (page) => !retirableTemporalPage(page) || blocked.has(temporalPageRecordId(actorId, page.id)),
+    );
+    for (const chunk of actor.pages)
+      if (retirableTemporalPage(chunk) && !blocked.has(temporalPageRecordId(actorId, chunk.id)))
+        headers.set(chunk.id, nativeHeader(actorId, chunk));
     const hasMore = (counts.get(actorId) ?? 0) > headerSlice,
       edge = edges.get(actorId);
     // A hot tail beyond a cold-page gap cannot turn that gap into a retired
@@ -164,7 +168,11 @@ export async function prepareRecentRetention(
       .filter((header) => !hasMore || (edge && compareHeaders(header, edge) <= 0))
       .sort(compareHeaders);
     const open = temporalOpenReservationTotals(world, actorId);
-    if (!ordered.length && (actor.bytes > open.bytes || actor.count > open.count))
+    if (
+      !ordered.length &&
+      !deferred.length &&
+      (actor.bytes > open.bytes || actor.count > open.count)
+    )
       throw new MemoryRetentionError('Selected recent retirement headers are unavailable.');
     const plan: ActorPlan = {
       actorId,
@@ -197,10 +205,27 @@ export async function prepareRecentRetention(
     plan.nextDue = selected.nextDue;
     if (open.nextDue !== null && open.nextDue > world.simTime)
       plan.nextDue = Math.min(plan.nextDue ?? Infinity, open.nextDue);
-    plan.more = selected.needsMore;
+    const deferredDue = deferred.reduce(
+      (at, page) => Math.min(at, temporalPageLastReceivedAt(page) + policy.maxAgeSeconds),
+      Infinity,
+    );
+    if (deferredDue > world.simTime && Number.isFinite(deferredDue))
+      plan.nextDue = Math.min(plan.nextDue ?? Infinity, deferredDue);
+    const deferredPressure =
+      deferred.length > 0 &&
+      (actor.bytes -
+        open.expired.bytes -
+        plan.removed.reduce((sum, header) => sum + header.bytes, 0) >
+        policy.maxBytes ||
+        actor.count -
+          open.expired.count -
+          plan.removed.reduce((sum, header) => sum + header.count, 0) >
+          policy.maxChanges ||
+        deferredDue <= world.simTime);
+    plan.more = selected.needsMore || deferredPressure;
     if (selected.partial && selected.boundary) {
       const chunk = actor.pages.find((chunk) => chunk.id === selected.boundary!.sourceId);
-      if (!chunk) plan.more = true;
+      if (!chunk || !retirableTemporalPage(chunk)) plan.more = true;
       else {
         const expired = new Set<number>();
         const removedCount = selected.retired.reduce((sum, header) => sum + header.count, 0);
@@ -238,13 +263,12 @@ export async function prepareRecentRetention(
 export function applyRecentRetention(
   state: SavedWorld,
   plan: RecentRetentionPlan,
-  changesSinceCapture?: RecordChanges,
+  changesSinceCapture: RetainedSourceChanges,
 ): PreparedMemoryRetention & { stale: boolean } {
   const rows = new Map<string, string[]>();
   if (state.world.id !== plan.worldId) return { state, rows, stale: true };
   let stale = false;
   const accepted: ActorPlan[] = [];
-  const appendedBoundaries = new Set<ActorPlan>();
   for (const candidate of plan.actors) {
     const actor = state.world.experience?.temporal?.actors[candidate.actorId];
     if (
@@ -257,40 +281,25 @@ export function applyRecentRetention(
     }
     const partialCurrent =
       candidate.partial && actor.pages.find((chunk) => chunk.id === candidate.partial!.chunk.id);
-    // Only the native append proof allows a changed boundary to keep this plan.
-    // Its allocation/life and prefix coordinates must still name the same owner.
-    const appended =
+    // A physical page cannot append. Its exact immutable identity must still be
+    // the selected acknowledged version when this prepared trim is applied.
+    if (
       candidate.partial &&
-      partialCurrent &&
-      partialCurrent.order === candidate.partial.chunk.order &&
-      partialCurrent.epoch === candidate.partial.chunk.epoch &&
-      partialCurrent.physicalLife === candidate.partial.chunk.physicalLife &&
-      partialCurrent.fromOrdinal === candidate.partial.chunk.fromOrdinal &&
-      partialCurrent.fromAt === candidate.partial.chunk.fromAt &&
-      appendedRecordCount(candidate.partial.chunk.operations, partialCurrent.operations);
-    const partialAppend =
-      typeof appended === 'number' && (appended > 0 || partialCurrent === candidate.partial?.chunk);
-    const selected = new Set(candidate.removed.map((header) => header.id));
-    if (candidate.partial && !partialAppend)
-      selected.add(temporalPageRecordId(candidate.actorId, candidate.partial.chunk.id));
-    const changedSelected =
-      (changesSinceCapture?.writes.get('mind_temporal_pages') ?? []).some((row) =>
-        selected.has(row.id),
-      ) ||
-      (changesSinceCapture?.deletes.get('mind_temporal_pages') ?? []).some((id) =>
-        selected.has(id),
-      ) ||
-      [...(changesSinceCapture?.temporal?.values() ?? [])].some(
-        (intent) =>
-          selected.has(temporalPageRecordId(intent.after.actorId, intent.after.id)) &&
-          intent.replacement,
-      );
-
-    if (changedSelected) {
+      (partialCurrent !== candidate.partial.chunk || !retirableTemporalPage(partialCurrent))
+    ) {
       stale = true;
       continue;
     }
-    if (candidate.partial && !partialAppend && !actor.pages.includes(candidate.partial.chunk)) {
+    const selected = new Set(candidate.removed.map((header) => header.id));
+    if (candidate.partial)
+      selected.add(temporalPageRecordId(candidate.actorId, candidate.partial.chunk.id));
+    const sourceChanges = changesSinceCapture.get(candidate.actorId);
+    const changedSelected =
+      !sourceChanges ||
+      sourceChanges.invalidated ||
+      [...sourceChanges.temporalPages].some((id) => selected.has(id));
+
+    if (changedSelected) {
       stale = true;
       continue;
     }
@@ -299,7 +308,8 @@ export function applyRecentRetention(
         const current = actor.pages.find((chunk) => chunk.id === header.sourceId);
         return (
           current &&
-          (current.bytes !== header.bytes ||
+          (!retirableTemporalPage(current) ||
+            current.bytes !== header.bytes ||
             current.count !== header.count ||
             current.throughOrdinal !== header.throughOrdinal)
         );
@@ -308,8 +318,16 @@ export function applyRecentRetention(
       stale = true;
       continue;
     }
-    if (partialAppend && typeof appended === 'number' && appended > 0)
-      appendedBoundaries.add(candidate);
+    // Waiting for the ordinary save changes no personal state. Keep the existing
+    // due wake instead of publishing another empty retention update.
+    if (
+      candidate.more &&
+      !candidate.removed.length &&
+      !candidate.partial &&
+      !candidate.expiredOpen.bytes &&
+      !candidate.expiredOpen.count
+    )
+      continue;
     accepted.push(candidate);
   }
   if (!accepted.length) return { state, rows, stale };
@@ -344,9 +362,6 @@ export function applyRecentRetention(
         const policy = selectedTemporalPolicy(draft).recent;
         if (
           candidate.partial &&
-          // A later accepted suffix owns its own charges. Plan its pressure on
-          // the next slice instead of deleting observations never selected here.
-          !appendedBoundaries.has(candidate) &&
           expiredOpen.bytes >= candidate.expiredOpen.bytes &&
           expiredOpen.count >= candidate.expiredOpen.count &&
           (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges)

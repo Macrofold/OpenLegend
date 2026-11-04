@@ -24,8 +24,11 @@ import {
   type DerivedMemoryAllowance,
 } from './memory-derivatives.js';
 import { prepareAccountRetention } from './account-retention.js';
-import { accountObservationInputs } from './retention-record-metadata.js';
-import type { RetentionMetadataView } from './retention-metadata.js';
+import { accountObservationInputs, type RetainedSourceWatch } from './retention-record-metadata.js';
+import {
+  accountWriteHasRetentionDependencies,
+  type RetentionMetadataView,
+} from './retention-metadata.js';
 import { cleanupRetiredIndividuals } from './retention-cleanup.js';
 import {
   prepareSourceVersions,
@@ -133,7 +136,7 @@ import {
 import { z } from 'zod';
 import type { SqlDatabase, SavedWorld } from './store.js';
 import type { RecordChanges, RowChange } from './world-records.js';
-import { RECORD_ACTOR_PATHS } from './world-record-schema.js';
+import { RECORD_ACTOR_PATHS, RECORD_PARENTS } from './world-record-schema.js';
 
 export const MEMORY_SOURCE_ELIGIBILITY = `r.retention_class='memory' AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id AND f.actor_id=r.actor_id AND (f.source_id=r.id OR f.source_id=r.event_id))
     AND (r.source_kind<>'memory' OR ((r.memory_kind='impression' OR r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
@@ -148,6 +151,16 @@ export const MEMORY_SOURCE_TABLES = {
   summary: 'mind_summaries',
 } as const;
 const sourceTables = MEMORY_SOURCE_TABLES;
+const retainedAccountTables: ReadonlySet<string> = new Set(Object.values(sourceTables));
+const retainedActorOwners: ReadonlySet<string> = new Set([
+  ...Object.values(sourceTables).map((table) => RECORD_PARENTS.get(table)!),
+  'mind_temporal_actors',
+]);
+const retainedRootOwners: ReadonlySet<string> = new Set([
+  'data_world',
+  'experience_state',
+  'mind_temporal_state',
+]);
 export type MemoryChanges = Map<string, Set<string> | null> & {
   /** Transaction-local canonical creations, never a reusable eligibility cache. */
   newSources?: Map<string, Map<string, SourceKind>>;
@@ -626,6 +639,12 @@ interface CanonicalSourceWatch {
   expected: ReadonlyMap<string, string>;
   valid: boolean;
   temporal?: TemporalSourceWatch;
+  retention?: {
+    accounts: Set<string>;
+    dependentAccounts: Set<string>;
+    temporalPages: Set<string>;
+    budget: { rows: number; bytes: number; exceeded: boolean };
+  };
 }
 export interface KnownPlaceSource {
   memory: MemoryRecord;
@@ -902,6 +921,140 @@ export class MemoryRepository {
       },
     };
   }
+  /** Register before retention awaits its selected cold records. Existing live
+   * acceptance and durable publication feed this same finite watch, so settling
+   * a save or evicting a resident value cannot erase an intervening source edit.
+   * docs/projects/bookkeeping-simplification-reception-design.md#7-candidate-first-retention-and-sparse-source-versions */
+  captureRetentionSourceWatch(worldId: string, actorIds: readonly string[]): RetainedSourceWatch {
+    const budget = { rows: 0, bytes: 0, exceeded: false };
+    const watches = [...new Set(actorIds)].map(
+      (actorId): CanonicalSourceWatch => ({
+        worldId,
+        actorId,
+        tables: new Set(),
+        expected: new Map(),
+        valid: true,
+        retention: {
+          accounts: new Set(),
+          dependentAccounts: new Set(),
+          temporalPages: new Set(),
+          budget,
+        },
+      }),
+    );
+    for (const watch of watches) this.canonicalSourceFences.add(watch);
+    return {
+      changes: () =>
+        new Map(
+          watches.map((watch) => [
+            watch.actorId,
+            {
+              invalidated: !watch.valid || budget.exceeded || this.sourceEditPending(watch),
+              accounts: watch.retention!.accounts,
+              dependentAccounts: watch.retention!.dependentAccounts,
+              temporalPages: watch.retention!.temporalPages,
+            },
+          ]),
+        ),
+      release: () => {
+        for (const watch of watches) {
+          watch.valid = false;
+          this.canonicalSourceFences.delete(watch);
+          watch.retention!.accounts.clear();
+          watch.retention!.dependentAccounts.clear();
+          watch.retention!.temporalPages.clear();
+        }
+      },
+    };
+  }
+  /** Inspect already prepared semantic changes once, only for watched actors.
+   * Physical append pages and ordinary unrelated accounts are not invalidation. */
+  private trackRetentionSourceChanges(worldId: string, changes: RecordChanges): void {
+    const actors = new Map<string, CanonicalSourceWatch[]>();
+    for (const watch of this.canonicalSourceFences) {
+      if (
+        watch.worldId !== worldId ||
+        !watch.valid ||
+        !watch.retention ||
+        watch.retention.budget.exceeded
+      )
+        continue;
+      let selected = actors.get(watch.actorId);
+      if (!selected) actors.set(watch.actorId, (selected = []));
+      selected.push(watch);
+    }
+    if (!actors.size) return;
+    const forActor = (table: string, id: string) => {
+      const at = RECORD_ACTOR_PATHS.get(table);
+      return at === undefined ? undefined : actors.get((JSON.parse(id) as string[])[at]!);
+    };
+    const remember = (
+      watch: CanonicalSourceWatch,
+      kind: 'accounts' | 'dependentAccounts' | 'temporalPages',
+      id: string,
+    ) => {
+      const state = watch.retention!,
+        selected = state[kind];
+      if (selected.has(id) || state.budget.exceeded) return;
+      const bytes = Buffer.byteLength(id) + 64;
+      if (state.budget.rows >= RETRIEVAL_ROWS || state.budget.bytes + bytes > RETRIEVAL_BYTES) {
+        state.budget.exceeded = true;
+        return;
+      }
+      selected.add(id);
+      state.budget.rows++;
+      state.budget.bytes += bytes;
+    };
+    for (const [table, rows] of changes.writes) {
+      if (!retainedAccountTables.has(table) && table !== 'mind_temporal_pages') continue;
+      for (const row of rows) {
+        const selected = forActor(table, row.id);
+        if (!selected) continue;
+        if (table === 'mind_temporal_pages') {
+          // Saving a captured native append is not a later semantic edit. Native
+          // replacement intents and actual nonappend rewrites still invalidate.
+          if (!row.create && row.logicalRemoval !== false)
+            for (const watch of selected) remember(watch, 'temporalPages', row.id);
+        } else {
+          const dependent = accountWriteHasRetentionDependencies(
+            table as (typeof sourceTables)[SourceKind],
+            row,
+          );
+          for (const watch of selected) {
+            remember(watch, 'accounts', row.id);
+            if (dependent) remember(watch, 'dependentAccounts', row.id);
+          }
+        }
+      }
+    }
+    for (const edits of [changes.deletes, changes.expired])
+      for (const [table, ids] of edits ?? []) {
+        if (retainedRootOwners.has(table)) {
+          for (const watches of actors.values()) for (const watch of watches) watch.valid = false;
+          continue;
+        }
+        if (
+          !retainedActorOwners.has(table) &&
+          !retainedAccountTables.has(table) &&
+          table !== 'mind_temporal_pages'
+        )
+          continue;
+        for (const id of ids)
+          for (const watch of forActor(table, id) ?? []) {
+            if (retainedActorOwners.has(table)) watch.valid = false;
+            else
+              remember(watch, table === 'mind_temporal_pages' ? 'temporalPages' : 'accounts', id);
+          }
+      }
+    for (const intent of changes.temporal?.values() ?? [])
+      if (intent.replacement)
+        for (const watch of actors.get(intent.after.actorId) ?? [])
+          remember(
+            watch,
+            'temporalPages',
+            temporalPageRecordId(intent.after.actorId, intent.after.id),
+          );
+  }
   /** Use the same short source-watch owner for exact temporal dependencies.
    * Registration precedes SQL alignment; unrelated appends preserve these slots. */
   captureTemporalSourceFence(scope: MemoryScope, signal?: AbortSignal): TemporalSourceFence {
@@ -984,12 +1137,14 @@ export class MemoryRepository {
    * No historical revision ledger or source body is retained by these watches. */
   private invalidateSourceReads(worldId: string, changes: RecordChanges, restored = false): void {
     if (!this.canonicalSourceFences.size) return;
+    this.trackRetentionSourceChanges(worldId, changes);
     for (const fence of this.canonicalSourceFences) {
       if (fence.worldId !== worldId) continue;
       if (restored || changes.deletes.has('data_world')) {
         fence.valid = false;
         continue;
       }
+      if (fence.retention) continue;
       if (fence.temporal) {
         if (
           fence.valid &&

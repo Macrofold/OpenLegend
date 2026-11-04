@@ -363,19 +363,27 @@ export interface WorldStore {
   close(): Promise<void>;
 }
 
+export interface RetentionActors {
+  recent: readonly string[];
+  accounts: readonly string[];
+}
+
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   setRetainedValueLookup?(provider: (worldId: string) => Readonly<Record<string, unknown>>): void;
   setLiveReadCuts?(provider: LiveReadCutsProvider): void;
+  captureRetentionActors?(state: SavedWorld): RetentionActors;
   prepareRecentRetention?(
     state: SavedWorld,
     pending?: RecordChanges,
     cut?: LiveReadCuts,
+    actorIds?: readonly string[],
   ): Promise<RecentRetentionPlan>;
   prepareAccountRetention?(
     state: SavedWorld,
     pending: RecordChanges,
     cut?: LiveReadCuts,
+    actorIds?: readonly string[],
   ): Promise<AccountRetentionPlan>;
   eraseReceivedValues?(worldId: string, ids: readonly string[]): Promise<void>;
   prepareSourceEdit?(
@@ -594,15 +602,24 @@ export class SqlGameRepository implements GameRepository {
     this.liveReadCuts = provider;
     this.db.setLiveReadCuts?.(provider);
   }
+  /** Capture fair cohorts before asynchronous preparation so one finite source
+   * watch covers exactly the actors whose maintenance will consume its proof. */
+  captureRetentionActors(state: SavedWorld): RetentionActors {
+    return {
+      recent: this.retentionActors.select(state.world, 'recent'),
+      accounts: this.retentionActors.select(state.world, 'accounts'),
+    };
+  }
   async prepareAccountRetention(
     state: SavedWorld,
     pending: RecordChanges,
     cut?: LiveReadCuts,
+    actorIds?: readonly string[],
   ): Promise<AccountRetentionPlan> {
     const dueAt = nextAccountRetentionAt(state.world);
     if (dueAt === null || dueAt > state.world.simTime)
       return { worldId: state.world.id, actors: [], rows: new Map() };
-    const actors = this.retentionActors.select(state.world, 'accounts'),
+    const actors = actorIds ?? this.retentionActors.select(state.world, 'accounts'),
       selectedPending = selectActorRecordChanges(pending, actors);
     const metadata = new RetentionMetadata();
     const baseline = this.acceptedState;
@@ -639,19 +656,24 @@ export class SqlGameRepository implements GameRepository {
         },
       );
     };
+    const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+    // Candidate selection, reverse membership and source-version preparation must
+    // share the captured durable head even when an ordinary save finishes meanwhile.
+    const prepare = () => snapshot(operation);
     return cut && this.db.readAtCut
       ? this.db.readAtCut(
           selectActorLiveReadCuts(cut, actors, this.memories.captureSources.bind(this.memories)),
-          operation,
+          prepare,
         )
-      : (this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db))(operation);
+      : prepare();
   }
   prepareRecentRetention(
     state: SavedWorld,
     pending?: RecordChanges,
     cut?: LiveReadCuts,
+    actorIds?: readonly string[],
   ): Promise<RecentRetentionPlan> {
-    const actors = this.retentionActors.select(state.world, 'recent'),
+    const actors = actorIds ?? this.retentionActors.select(state.world, 'recent'),
       selectedPending = pending && selectActorRecordChanges(pending, actors);
     const operation = () => prepareRecentRetention(this.db, state, actors, selectedPending);
     return cut && this.db.readAtCut
