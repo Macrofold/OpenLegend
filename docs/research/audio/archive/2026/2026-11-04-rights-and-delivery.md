@@ -59,6 +59,8 @@ Practical implications: a commercially permitted AI track can still be useful in
 
 The route-specific research distinguishes provider permission from these copyright questions. It also distinguishes editing generated audio from independently composing a new work using an abstract mood brief. Re-recording an infringing melody would not solve the underlying problem.
 
+If a future release uses Steam, its current [Content Survey](https://partner.steamgames.com/doc/gettingstarted/contentsurvey?language=english) includes AI-assisted sound that ships with the game and is consumed by players. Fixed audio created during development belongs to its pre-generated category; live generation has additional disclosure and guardrail requirements. Disclosure does not waive infringement rules. Preserve production records now so a later store submission can describe the shipped content accurately. This is a future release consideration, not a requirement to move the browser game to Steam or generate music at runtime.
+
 ## Protect players' ability to share the game
 
 YouTube requires appropriate exclusive rights for Content ID references and excludes nonexclusive licensed material, Creative Commons/public-domain material, sound effects and production loops from eligible references in the ways described by its policy. Game OST references have publisher-specific requirements. This is an eligibility system, not proof that a track is lawful or unlawful to use. [Content ID policy](https://support.google.com/youtube/answer/2605065?hl=en).

@@ -6,6 +6,16 @@ Use sound, motion, visual effects and interface feedback together to make play e
 
 **Route:** action/experience brief → event and timing map → sound/motion/effect palette → editable assets → synchronized integration → full-scene mix and interaction review → useful variation and refinement.
 
+## Music and sound sourcing
+
+Music can be composed and produced offline as fixed assets. Procedural composition is not required for Open Legend, and sound-effect generation is optional. Authored tracks can still support responsive play through appropriate selection, silence and transitions. The [audio sourcing research](../research/audio/README.md) compares commissioned music, direct artist licenses, stock/free recordings, AI services and self-hosted models; its [Open Legend direction](../research/audio/openlegend-direction.md) is a proposed creative brief and small-package plan, not a qualified score or universal world policy.
+
+Select sources by their job. Signature music benefits from coherent themes, controlled revision and lasting rights; ordinary effects can use licensed recordings shaped into consistent action/material families. Test a bounded composer/AI pilot before expanding the score. Add stems only for a playback behavior that is actually selected. The [music commissioning study](../research/audio/archive/2026/2026-11-04-music-production.md) owns hiring, budget examples and production deliverables; the [SFX study](../research/audio/archive/2026/2026-11-04-sound-sourcing.md) owns source choices and vendor-specific boundaries.
+
+Before accepting a source, establish permission for the actual browser game, needed edits and collaborators, and distinguish trailers, player videos, soundtrack sales and creator/world exports. A commercial-use label does not answer every one of those questions. Apply the [rights and release brief](../research/audio/archive/2026/2026-11-04-rights-and-delivery.md), then retain exact masters, derivatives and acquisition evidence through the existing [asset workflow](../asset-workflow.md). Restricted audio is not automatically distributable with the open-source engine.
+
+[AUD01–AUD04](../maintainers/audio-production.md) tracks the proposed production follow-through. Offline audio procurement does not implement music playback, change mechanical hearing or select optional speech media.
+
 ## 1. Map the experience to actual events
 
 **Consume:** the selected action or scene, actual start/progress/outcome meanings, relevant interruption behavior, current presentation and the knowledge available to this participant.
@@ -123,4 +133,6 @@ For voice, casting and dialogue authoring can explore together, but final record
 
 - **Implementation:** the affected action tracker, [spatial/presentation work](../maintainers/spatial-world.md), [3D animation](../maintainers/3d-pixel-art.md), [UIUX](../maintainers/ui-ux.md), [hearing/media](../maintainers/hearing-and-speech.md) and [narration/conversations](../maintainers/narration-and-conversations.md), according to scope.
 - **Limits and constraints:** [hearing and optional media](../limits/hearing-and-speech.md), [interface/presentation](../limits/interface.md), [AI execution](../limits/ai-execution.md) and the relevant action/asset inventory. No new audio quota, playback system or voice policy is selected here.
+- **Music/SFX sourcing and proposed production:** [current research](../research/audio/README.md), [musical direction](../research/audio/openlegend-direction.md) and [AUD01–AUD04](../maintainers/audio-production.md).
 - **Evidence:** [asset/audio research](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), [production cases](../../archive/02-research/ai-game-development/02-developer-case-studies.md) and actual topic reports under [verification](../verification.md).
+

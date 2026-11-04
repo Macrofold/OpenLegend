@@ -20,6 +20,8 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 ## Game production methods
 
+[Music and sound production (AUD01–AUD04)](audio-production.md) connects the [audio sourcing research](../research/audio/README.md) and [proposed musical direction](../research/audio/openlegend-direction.md) to a bounded audition, rights/source handoff, representative soundscape and any selected playback work. Existing hearing, speech-media and asset owners retain their contracts.
+
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
 
 The [focused game-reference map](../../archive/02-research/game-inspiration/README.md#player-stories-authored-worlds-and-personal-meaning) routes narrative, collectible, art and marketing learnings to their existing design and production owners. Its concrete follow-up lives in ND01, ND04, ND30, ND38 and DG29/DG33/DG34 in [Future work needing design](needs-design.md); it is not another implementation queue.
@@ -226,3 +228,4 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 | Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                                                                               |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+
