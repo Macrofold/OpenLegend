@@ -103,8 +103,9 @@ described below.
 
 ## Author a new human motion
 
-This is the planned execution procedure for AF15/AF16. It extends the existing helper through the
-source profiles defined in the tech design; those options are not installed commands yet.
+Use this procedure after AF15 supplies the helper and AF16 qualifies the selected route. The
+[implementation and first-qualification sequence](../../projects/art-workflow-tech-design.md#119-implementation-order-and-qualification)
+owns those initial tasks; source-profile options below are not installed commands yet.
 
 1. Confirm the selected provider/version/target-rig qualification and available account, permission
    and bounded task budget. Pin the exact model revision; record its input controls, source skeleton,
