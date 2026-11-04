@@ -1,11 +1,14 @@
 /**
  * Model files for the offline asset recipes: binary glTF (GLB) read, posed, measured and written
- * without a 3D tool, into an external workspace. Shared by the asset survey and game-animal
- * recipes so both measure a model the same way.
+ * without a 3D tool, into an external workspace. Shared by the asset survey, asset library and
+ * game-animal recipes so they read and measure a model the same way.
  * docs/asset-workflow.md#edit-or-generate-art
  */
-import { existsSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, resolve } from 'node:path';
 
 /** Asset outputs belong outside every Git checkout (docs/asset-workflow.md#where-files-belong). */
 export function externalDirectory(value: string | undefined): string {
@@ -257,4 +260,493 @@ export function measure(gltf: Gltf) {
     return imageSize(bin.subarray(view.byteOffset, view.byteOffset + view.byteLength));
   });
   return { min, max, triangles: Math.round(triangles), textures };
+}
+
+// ---------------------------------------------------------------------------------------------
+// Reading a pack's glTF files into one self-contained binary model.
+
+/** Files by name within each pack. Some packs export glTF beside a shared Textures folder
+ * instead of beside each model; the shallowest file of that name is the pack's default. */
+const packFiles = new Map<string, Map<string, string>>();
+export function packFile(packRoot: string, name: string): string | undefined {
+  let files = packFiles.get(packRoot);
+  if (!files) {
+    files = new Map();
+    const walk = (directory: string) => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (!files!.has(entry.name) || path.length < files!.get(entry.name)!.length)
+          files!.set(entry.name, path);
+      }
+    };
+    walk(packRoot);
+    packFiles.set(packRoot, files);
+  }
+  return files.get(name);
+}
+function uriBytes(uri: string, directory: string, packRoot: string): Uint8Array {
+  if (uri.startsWith('data:')) return Buffer.from(uri.slice(uri.indexOf(',') + 1), 'base64');
+  const path = resolve(directory, decodeURIComponent(uri));
+  if (!path.startsWith(packRoot + '/')) throw new Error('A model reference escaped its pack.');
+  if (existsSync(path)) return readFileSync(path);
+  // Some exporters name a renamed image `name_png.png` while the pack holds `name.png`.
+  const fallback =
+    packFile(packRoot, basename(path)) ??
+    packFile(packRoot, basename(path).replace(/_(png|jpe?g)(\.[a-z]+)$/i, '$2'));
+  if (!fallback) throw new Error(`Missing ${uri} for a model in ${packRoot}`);
+  return readFileSync(fallback);
+}
+/** Images larger than 1024 px are reduced to 1024 px (macOS `sips`) so a lineup of trim-sheet
+ * models fits in GPU memory; identical images are reduced once. */
+const studyTextureLimit = 1024;
+const reduced = new Map<string, Uint8Array>();
+export function studyImage(bytes: Uint8Array): Uint8Array {
+  if (Math.max(...imageSize(bytes)) <= studyTextureLimit) return bytes;
+  const key = createHash('sha256').update(bytes).digest('hex');
+  const existing = reduced.get(key);
+  if (existing) return existing;
+  const directory = mkdtempSync(join(tmpdir(), 'openlegend-study-image-'));
+  try {
+    const extension = mime(bytes) === 'image/png' ? '.png' : '.jpg';
+    const input = join(directory, 'source' + extension);
+    const output = join(directory, 'reduced' + extension);
+    writeFileSync(input, bytes);
+    execFileSync('sips', ['-Z', String(studyTextureLimit), input, '--out', output], {
+      stdio: 'ignore',
+    });
+    const result = readFileSync(output);
+    reduced.set(key, result);
+    return result;
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+/** One binary buffer holding every buffer and image; external references become buffer views. */
+function embed(
+  json: Record<string, any>,
+  bin: Uint8Array | undefined,
+  directory: string,
+  packRoot: string,
+): Gltf {
+  const parts: Uint8Array[] = [];
+  let length = 0;
+  const append = (bytes: Uint8Array) => {
+    const offset = length;
+    parts.push(bytes);
+    length += align(bytes.byteLength);
+    return offset;
+  };
+  const buffers: Uint8Array[] = (json['buffers'] ?? []).map((buffer: any) =>
+    buffer.uri === undefined ? bin! : uriBytes(buffer.uri, directory, packRoot),
+  );
+  // Images already embedded in a source buffer keep their view unless the study limit reduces
+  // them; a reduced copy is appended and the original bytes are left unused.
+  const reducedEmbedded = new Map<any, Uint8Array>();
+  for (const image of json['images'] ?? []) {
+    if (image.uri !== undefined || image.bufferView === undefined) continue;
+    const view = json['bufferViews'][image.bufferView];
+    const start = view.byteOffset ?? 0;
+    const original = buffers[view.buffer]!.subarray(start, start + view.byteLength);
+    const bytes = studyImage(original);
+    if (bytes !== original) reducedEmbedded.set(image, bytes);
+  }
+  const offsets = buffers.map(append);
+  for (const view of json['bufferViews'] ?? []) {
+    view.byteOffset = (view.byteOffset ?? 0) + offsets[view.buffer];
+    view.buffer = 0;
+  }
+  for (const image of json['images'] ?? []) {
+    const bytes =
+      image.uri !== undefined
+        ? studyImage(uriBytes(image.uri, directory, packRoot))
+        : reducedEmbedded.get(image);
+    if (!bytes) continue;
+    json['bufferViews'] ??= [];
+    json['bufferViews'].push({
+      buffer: 0,
+      byteOffset: append(bytes),
+      byteLength: bytes.byteLength,
+    });
+    image.bufferView = json['bufferViews'].length - 1;
+    image.mimeType = image.mimeType ?? mime(bytes);
+    delete image.uri;
+  }
+  const combined = concat(parts);
+  json['buffers'] = [{ byteLength: combined.byteLength }];
+  // Name each image by its content so the study pages can share one GPU texture between
+  // models that embed the same trim sheet or colour atlas.
+  for (const image of json['images'] ?? []) {
+    const view = json['bufferViews'][image.bufferView];
+    const bytes = combined.subarray(view.byteOffset, view.byteOffset + view.byteLength);
+    image.name = `${image.name ?? 'image'}#${createHash('sha256').update(bytes).digest('hex').slice(0, 16)}`;
+  }
+  return { json, bin: combined };
+}
+
+/** A glTF or GLB file inside a pack as one self-contained model (see `embed`). */
+export function readGltf(path: string, packRoot: string): Gltf {
+  const bytes = readFileSync(path);
+  if (bytes.readUInt32LE(0) === 0x46546c67) {
+    const { json, bin } = parseGlb(bytes);
+    return embed(json, bin, dirname(path), packRoot);
+  }
+  return embed(JSON.parse(bytes.toString('utf8')), undefined, dirname(path), packRoot);
+}
+
+/** Appends image files to a self-contained model as textures; `finish` rewrites its one buffer.
+ * Each image is reduced like embedded ones and named by content, so the pages share the texture. */
+export function textureAppender({ json, bin }: Gltf) {
+  const parts = [bin];
+  let length = align(bin.byteLength);
+  return {
+    add(path: string): number {
+      const bytes = studyImage(readFileSync(path));
+      json['bufferViews'] ??= [];
+      json['bufferViews'].push({ buffer: 0, byteOffset: length, byteLength: bytes.byteLength });
+      parts.push(bytes);
+      length += align(bytes.byteLength);
+      (json['images'] ??= []).push({
+        bufferView: json['bufferViews'].length - 1,
+        mimeType: mime(bytes),
+        name: `${basename(path)}#${createHash('sha256').update(bytes).digest('hex').slice(0, 16)}`,
+      });
+      return (json['textures'] ??= []).push({ source: json['images'].length - 1 }) - 1;
+    },
+    finish(): Gltf {
+      const combined = concat(parts);
+      json['buffers'] = [{ byteLength: combined.byteLength }];
+      return { json, bin: combined };
+    },
+  };
+}
+
+// Godot writes colour parameters in sRGB; glTF factors are linear.
+export const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+/** A Godot resource file's `name = value` properties and the files its ExtResource values name,
+ * whose res:// paths start at the project folder. The pack is downloaded data, so a reference
+ * that leaves it is refused: no other local file may reach a published model. */
+export function godotResource(file: string, project: string, packDirectory: string) {
+  const text = readFileSync(file, 'utf8');
+  const paths = new Map<string, string>();
+  for (const [line] of text.matchAll(/^\[ext_resource .*\]$/gm)) {
+    const path = line.match(/ path="res:\/\/([^"]+)"/)?.[1];
+    const id = line.match(/ id="([^"]+)"/)?.[1];
+    if (path && id) paths.set(id, resolve(dirname(project), path));
+  }
+  const value = (name: string) => text.match(new RegExp(`^${name} = (.+)$`, 'm'))?.[1];
+  const resource = (name: string) => {
+    const path = paths.get(value(name)?.match(/ExtResource\("([^"]+)"\)/)?.[1] ?? '');
+    if (path && !path.startsWith(packDirectory + '/'))
+      throw new Error('A Godot resource reference escaped its pack.');
+    return path;
+  };
+  return { value, resource };
+}
+
+/** Fantasy Creatures ships its models untextured; each creature's Godot scene paints the body with
+ * a coat material at runtime. Its shader (addons/beasts/shaders/creature_coat.gdshaderinc) takes
+ * colour from the coat texture times a tint, roughness from 1 − alpha × smoothness and an optional
+ * OpenGL normal map; each of the model's materials is replaced, in order, with the coat named for
+ * it (wings, a harness or an ooze's contents have their own). glTF cannot read roughness from a
+ * colour texture's alpha. Most of each coat has alpha near 0.1 (the eagle's near 0.2), so roughness
+ * is the constant 0.9: the eagle's feathers come out slightly more matte, and the few glossier
+ * spots, such as eyes and noses, lose their gloss. Translucent wings are drawn opaque. */
+export function paintCoat(
+  { json, bin }: Gltf,
+  packDirectory: string,
+  coats: readonly string[],
+): Gltf {
+  const project = packFile(packDirectory, 'project.godot');
+  if (!project) throw new Error(`Missing project.godot in ${packDirectory}`);
+  const materials: any[] = json['materials'] ?? [];
+  if (materials.length !== coats.length)
+    throw new Error(`${coats.length} coats for a model with ${materials.length} materials.`);
+
+  const textures = textureAppender({ json, bin });
+  json['materials'] = materials.map((original, index) => {
+    const coat = coats[index]!;
+    const material = packFile(packDirectory, coat);
+    if (!material) throw new Error(`Missing ${coat} in ${packDirectory}`);
+    const { value, resource } = godotResource(material, project, packDirectory);
+    const coatImage = resource('shader_parameter/coat');
+    if (!coatImage) throw new Error(`${coat} names no coat texture.`);
+    const tint = value('shader_parameter/tint')
+      ?.match(/Color\(([^)]+)\)/)?.[1]!
+      .split(',')
+      .map(Number);
+    const smoothness = Number(value('shader_parameter/smoothness') ?? 1);
+    const normalMap =
+      value('shader_parameter/use_normal_map') === 'true'
+        ? resource('shader_parameter/normal_map')
+        : undefined;
+    return {
+      name: original.name,
+      ...(resource('shader')?.endsWith('_two_sided.gdshader') ? { doubleSided: true } : {}),
+      pbrMetallicRoughness: {
+        baseColorTexture: { index: textures.add(coatImage) },
+        baseColorFactor: [...(tint ?? [1, 1, 1]).slice(0, 3).map(linear), 1],
+        metallicFactor: 0,
+        roughnessFactor: Math.round((1 - 0.1 * smoothness) * 1e5) / 1e5,
+      },
+      ...(normalMap
+        ? {
+            normalTexture: {
+              index: textures.add(normalMap),
+              scale: Number(value('shader_parameter/normal_scale') ?? 1),
+            },
+          }
+        : {}),
+    };
+  });
+  // The exported material's specular extension does not reach the creator's coat shader.
+  const used = (json['extensionsUsed'] ?? []).filter(
+    (name: string) => name !== 'KHR_materials_specular',
+  );
+  if (used.length) json['extensionsUsed'] = used;
+  else delete json['extensionsUsed'];
+  return textures.finish();
+}
+/** Keeps only the accessors, images, textures and samplers that the meshes, skins, materials and
+ * animations use, and rewrites the binary buffer with one buffer view each. The survey's files
+ * also carry every source clip and each reduced image's unreduced original, and Sketchfab packs
+ * all clips' keyframes into a few shared views, so whole views cannot simply be kept. */
+export function compact({ json, bin }: Gltf): Gltf {
+  const kept = (list: any[] | undefined, used: Set<number>) => {
+    const order = [...used].sort((a, b) => a - b);
+    return {
+      items: order.map((index) => list![index]),
+      at: new Map(order.map((old, index) => [old, index])),
+    };
+  };
+  const accessorRefs: [object: any, key: string | number][] = [];
+  for (const mesh of json['meshes'] ?? [])
+    for (const primitive of mesh.primitives) {
+      for (const key of Object.keys(primitive.attributes))
+        accessorRefs.push([primitive.attributes, key]);
+      if (primitive.indices !== undefined) accessorRefs.push([primitive, 'indices']);
+      for (const target of primitive.targets ?? [])
+        for (const key of Object.keys(target)) accessorRefs.push([target, key]);
+    }
+  for (const skin of json['skins'] ?? [])
+    if (skin.inverseBindMatrices !== undefined) accessorRefs.push([skin, 'inverseBindMatrices']);
+  for (const animation of json['animations'] ?? [])
+    for (const sampler of animation.samplers)
+      accessorRefs.push([sampler, 'input'], [sampler, 'output']);
+  // Core and extension texture references both end in "Texture" (diffuseTexture, normalTexture).
+  const textureRefs: any[] = [];
+  const findTextures = (value: unknown, key = '') => {
+    if (Array.isArray(value)) value.forEach((entry) => findTextures(entry));
+    else if (value && typeof value === 'object') {
+      if (key.endsWith('Texture') && typeof (value as any).index === 'number')
+        textureRefs.push(value);
+      for (const [name, entry] of Object.entries(value)) findTextures(entry, name);
+    }
+  };
+  findTextures(json['materials'] ?? []);
+
+  const accessors = kept(json['accessors'], new Set(accessorRefs.map(([o, k]) => o[k])));
+  const textures = kept(json['textures'], new Set(textureRefs.map((ref) => ref.index)));
+  const images = kept(
+    json['images'],
+    new Set(textures.items.flatMap((texture) => texture.source ?? [])),
+  );
+  const samplers = kept(
+    json['samplers'],
+    new Set(textures.items.flatMap((texture) => texture.sampler ?? [])),
+  );
+  const vertexData = new Set(
+    (json['meshes'] ?? []).flatMap((mesh: any) =>
+      mesh.primitives.flatMap((primitive: any) =>
+        [primitive.attributes, ...(primitive.targets ?? [])].flatMap((map) =>
+          Object.values(map).map((index) => json['accessors'][index as number]),
+        ),
+      ),
+    ),
+  );
+
+  const parts: Uint8Array[] = [];
+  const views: any[] = [];
+  let length = 0;
+  const addView = (bytes: Uint8Array, view: object) => {
+    views.push({ buffer: 0, byteOffset: length, byteLength: bytes.byteLength, ...view });
+    parts.push(bytes);
+    length += align(bytes.byteLength);
+    return views.length - 1;
+  };
+  for (const accessor of accessors.items) {
+    // Neither source uses sparse accessors; copying one element by element would break it.
+    if (accessor.sparse) throw new Error('Sparse accessors are not supported.');
+    if (accessor.bufferView === undefined) continue;
+    const view = json['bufferViews'][accessor.bufferView];
+    const size = componentTypes[accessor.componentType]![0] * componentCounts[accessor.type]!;
+    // Vertex attribute elements must start on 4-byte boundaries.
+    const stride = vertexData.has(accessor) ? align(size) : size;
+    const from = view.byteStride ?? size;
+    const start = (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
+    const bytes = new Uint8Array(stride * accessor.count);
+    for (let element = 0; element < accessor.count; element++)
+      bytes.set(
+        bin.subarray(start + element * from, start + element * from + size),
+        element * stride,
+      );
+    accessor.bufferView = addView(bytes, {
+      ...(view.target !== undefined ? { target: view.target } : {}),
+      ...(stride !== size ? { byteStride: stride } : {}),
+    });
+    delete accessor.byteOffset;
+  }
+  for (const image of images.items) {
+    if (image.bufferView === undefined) continue;
+    const view = json['bufferViews'][image.bufferView];
+    const start = view.byteOffset ?? 0;
+    image.bufferView = addView(bin.subarray(start, start + view.byteLength), {});
+  }
+  json['bufferViews'] = views;
+  for (const [object, key] of accessorRefs) object[key] = accessors.at.get(object[key]);
+  for (const ref of textureRefs) ref.index = textures.at.get(ref.index);
+  for (const texture of textures.items) {
+    if (texture.source !== undefined) texture.source = images.at.get(texture.source);
+    if (texture.sampler !== undefined) texture.sampler = samplers.at.get(texture.sampler);
+  }
+  json['accessors'] = accessors.items;
+  json['textures'] = textures.items;
+  json['images'] = images.items;
+  json['samplers'] = samplers.items;
+  // glTF arrays, when present, may not be empty.
+  for (const key of ['textures', 'images', 'samplers', 'animations'])
+    if (!json[key]?.length) delete json[key];
+  const packed = concat(parts);
+  json['buffers'] = [{ byteLength: packed.byteLength }];
+  return { json, bin: packed };
+}
+
+/** A scene holding several separate objects (a pack exported as one file) as one model per object.
+ * Below any chain of single-child wrapper nodes, each child that holds a mesh becomes a piece. A
+ * piece keeps its wrapper ancestors, whose transforms often turn a Z-up export upright, its skin
+ * joints and their animation channels, and only the meshes, materials and buffer data it uses. A
+ * scene with fewer than two such children is returned whole, unnamed. */
+export function splitScene(gltf: Gltf): { name: string; gltf: Gltf }[] {
+  const nodes: any[] = gltf.json['nodes'] ?? [];
+  const scene = gltf.json['scenes']?.[gltf.json['scene'] ?? 0];
+  const chain: number[] = [];
+  let level: number[] = scene?.nodes ?? [];
+  while (
+    level.length === 1 &&
+    nodes[level[0]!].mesh === undefined &&
+    nodes[level[0]!].children?.length
+  ) {
+    chain.push(level[0]!);
+    level = nodes[level[0]!].children;
+  }
+  const holdsMesh = (index: number): boolean =>
+    nodes[index].mesh !== undefined || (nodes[index].children ?? []).some(holdsMesh);
+  const pieces = level.filter(holdsMesh);
+  if (pieces.length < 2) return [{ name: '', gltf }];
+  return pieces.map((piece) => ({
+    name: nodes[piece].name ?? `Piece ${piece}`,
+    gltf: keepSubtree(gltf, chain, piece),
+  }));
+}
+
+function keepSubtree(source: Gltf, chain: readonly number[], root: number): Gltf {
+  const json = structuredClone(source.json);
+  const nodes: any[] = json['nodes'];
+  const parents = new Map<number, number>();
+  nodes.forEach((node, index) => {
+    for (const child of node.children ?? []) parents.set(child, index);
+  });
+  const kept = new Set<number>(chain);
+  const keepUp = (index: number) => {
+    for (
+      let at: number | undefined = index;
+      at !== undefined && !kept.has(at);
+      at = parents.get(at)
+    )
+      kept.add(at);
+  };
+  const visit = (index: number) => {
+    kept.add(index);
+    for (const child of nodes[index].children ?? []) visit(child);
+  };
+  visit(root);
+  // Skinned meshes need their joints, which may sit outside the piece's own subtree.
+  for (const index of [...kept]) {
+    const skin = json['skins']?.[nodes[index].skin];
+    for (const joint of skin?.joints ?? []) keepUp(joint);
+    if (skin?.skeleton !== undefined) keepUp(skin.skeleton);
+  }
+  const order = [...kept].sort((a, b) => a - b);
+  const at = new Map(order.map((old, index) => [old, index]));
+  json['nodes'] = order.map((index) => nodes[index]);
+  for (const node of json['nodes']) {
+    if (node.children) node.children = node.children.filter((child: number) => kept.has(child));
+    node.children = node.children?.map((child: number) => at.get(child));
+    if (!node.children?.length) delete node.children;
+    delete node.camera;
+  }
+  delete json['cameras'];
+  // Joints outside the wrapper chain keep their own top node, so the scene lists every kept root.
+  json['scenes'] = [
+    { nodes: order.filter((index) => !kept.has(parents.get(index) ?? -1)).map((i) => at.get(i)) },
+  ];
+  json['scene'] = 0;
+
+  const remap = (list: any[] | undefined, used: Set<number>) => {
+    const order = [...used].sort((a, b) => a - b);
+    return { items: order.map((index) => list![index]), at: new Map(order.map((o, i) => [o, i])) };
+  };
+  const meshes = remap(
+    json['meshes'],
+    new Set(json['nodes'].flatMap((node: any) => node.mesh ?? [])),
+  );
+  const materials = remap(
+    json['materials'],
+    new Set(
+      meshes.items.flatMap((mesh: any) =>
+        mesh.primitives.flatMap((primitive: any) => primitive.material ?? []),
+      ),
+    ),
+  );
+  const skins = remap(
+    json['skins'],
+    new Set(json['nodes'].flatMap((node: any) => node.skin ?? [])),
+  );
+  for (const node of json['nodes']) {
+    if (node.mesh !== undefined) node.mesh = meshes.at.get(node.mesh);
+    if (node.skin !== undefined) node.skin = skins.at.get(node.skin);
+  }
+  for (const mesh of meshes.items)
+    for (const primitive of mesh.primitives)
+      if (primitive.material !== undefined)
+        primitive.material = materials.at.get(primitive.material);
+  for (const skin of skins.items) {
+    skin.joints = skin.joints.map((joint: number) => at.get(joint));
+    if (skin.skeleton !== undefined) skin.skeleton = at.get(skin.skeleton);
+  }
+  json['meshes'] = meshes.items;
+  json['materials'] = materials.items;
+  json['skins'] = skins.items;
+  json['animations'] = (json['animations'] ?? []).flatMap((animation: any) => {
+    const channels = animation.channels.filter((channel: any) => kept.has(channel.target.node));
+    if (!channels.length) return [];
+    const samplers = remap(
+      animation.samplers,
+      new Set(channels.map((channel: any) => channel.sampler)),
+    );
+    return [
+      {
+        ...animation,
+        channels: channels.map((channel: any) => ({
+          ...channel,
+          sampler: samplers.at.get(channel.sampler),
+          target: { ...channel.target, node: at.get(channel.target.node) },
+        })),
+        samplers: samplers.items,
+      },
+    ];
+  });
+  for (const key of ['materials', 'skins']) if (!json[key].length) delete json[key];
+  return compact({ json, bin: source.bin });
 }

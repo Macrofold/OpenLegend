@@ -6,6 +6,8 @@ For new studies, use the [Standard or Higgsfield art flow](../../docs/production
 
 **World asset survey (2026-10-31):** the [survey record](2026-10-31-world-asset-survey/README.md) compares 545 objects, plants, ground and water surfaces, animals, building parts and whole buildings across nine families in an interactive page. Mike's picks there led to the grounded stylized direction he approved on November 1, 2026. On November 3 he ranked two free animal sets for it, WildMesh 3D first and _Fantasy Creatures_ second, and the game now uses their doe, stag, bear and wolf. It is not yet archived in S3.
 
+**Asset library (2026-11-04):** the [library record](2026-11-04-asset-library/README.md) adds 2,989 pieces from 85 free packs (the rest of the Quaternius anchor line, _Fantasy Creatures_' monsters, Gruginski's village and dungeon kit, a mine kit, Poly Haven and ambientCG, Sketchfab and OpenGameArt models and Gruginski's weapons and items, including 202 weapon, shield and armour pieces) to the survey page, each marked a sure fit or on the fence, and lists 72 paid candidates with prices. It is not yet archived in S3, and 48 Sketchfab models remain queued.
+
 **Interface overhaul, direct method (2026-10-18 to 2026-10-26):** the [study record](2026-10-18-interface-direct-method/README.md) covers every round, the owner-selected Gildmoss design and its production package, all stored as private S3 collections with exact indexes.
 
 Every recoverable earlier capture is preserved here, including rejected work. Original review packages and filenames are unchanged. Source assets and alternate exports remain in their existing catalogs.

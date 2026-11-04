@@ -11,7 +11,7 @@
 
 ## Candidates
 
-The survey page (`apps/client/asset-survey.html`, linked from both existing study pages) shows 545 pieces in 28 subjects across four categories: the 512 reviewed on October 31, the four assembled buildings added on November 1, the 12 animals added on November 2, and the ten _Fantasy Creatures_ and seven WildMesh 3D animals added on November 3. It groups them into nine families. The [survey catalog](../../../apps/client/src/props/art-survey/catalog.json) holds each piece's real size, scale, triangle count, texture sizes, credit and exact prepared-file SHA-256.
+Since November 4, 2026 the page also shows the [asset library](../2026-11-04-asset-library/README.md), with its own marks and families; the figures below describe the survey alone. The survey page (`apps/client/asset-survey.html`, linked from both existing study pages) shows 545 pieces in 28 subjects across four categories: the 512 reviewed on October 31, the four assembled buildings added on November 1, the 12 animals added on November 2, and the ten _Fantasy Creatures_ and seven WildMesh 3D animals added on November 3. It groups them into nine families. The [survey catalog](../../../apps/client/src/props/art-survey/catalog.json) holds each piece's real size, scale, triangle count, texture sizes, credit and exact prepared-file SHA-256.
 
 | Family             | Sources                                                                                    | Status against the October 31 requirements                                    | Pieces |
 | ------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | -----: |

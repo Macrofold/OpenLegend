@@ -348,6 +348,75 @@ button.quiet {
 .survey-diagnostics {
   margin-top: 16px;
 }
+/* The library's marks: how sure the selection is that Mike will like a piece. */
+.badge.sure {
+  background: #b4e59a;
+}
+.badge.fence {
+  background: #ecd384;
+}
+.fit-why {
+  margin: 0;
+  color: #c3cdbb;
+  font-size: 12px;
+}
+.survey-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #d2d7c7;
+  font-size: 13px;
+}
+.survey-pager[hidden] {
+  display: none;
+}
+.survey-paid {
+  margin-top: 16px;
+  padding: 10px;
+  border: 1px solid #49604b;
+  background: #1d2f28;
+}
+.survey-paid summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.survey-paid-note {
+  max-width: 90ch;
+  color: #c3cdbb;
+  font-size: 13px;
+}
+.survey-paid h3 {
+  margin: 14px 0 6px;
+  font-size: 14px;
+}
+.survey-paid ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.survey-paid li {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #3f5543;
+  border-radius: 6px;
+  background: #22372e;
+}
+.survey-paid li p {
+  margin: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.survey-paid li small {
+  color: #b1bea9;
+  font-size: 12px;
+}
+.paid-title {
+  font-weight: 600;
+}
 @media (max-width: 1000px) {
   .survey-body {
     grid-template-columns: minmax(0, 1fr);

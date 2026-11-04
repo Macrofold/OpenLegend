@@ -9,12 +9,14 @@
     <main class="survey">
       <header class="survey-header">
         <div>
-          <p class="eyebrow">Open Legend · World asset survey</p>
+          <p class="eyebrow">Open Legend · World asset survey and library</p>
           <h1>Choose the look of the world</h1>
           <p>
-            Objects, environment, animals and buildings from six style families, shown at real size
-            under the same light. Like the pieces you want in the world and mark the family that
-            fits each subject best; your picks stay in this browser.
+            Objects, nature, animals, buildings, rooms, monsters and people at real size under the
+            same light: the October 31 survey's style families, and a library of whole free packs in
+            which every piece is marked either a sure fit or on the fence. Like the pieces you want
+            in the world and mark the family that fits each subject best; your picks stay in this
+            browser.
           </p>
         </div>
         <nav class="survey-links" aria-label="Other studies">
@@ -34,6 +36,13 @@
           </select></label
         >
         <label id="family-choice-label" hidden>Family<select id="family-choice"></select></label>
+        <label
+          >Marks<select id="fit">
+            <option value="all">All pieces</option>
+            <option value="sure">Sure you'll like</option>
+            <option value="fence">On the fence</option>
+          </select></label
+        >
         <fieldset class="survey-families" id="families">
           <legend>Families shown</legend>
         </fieldset>
@@ -65,6 +74,11 @@
         <button id="turn" type="button" aria-pressed="false">Turntable</button>
         <button id="labels-toggle" type="button" aria-pressed="true">Labels</button>
         <button id="reset-view" type="button">Reset view</button>
+        <div class="survey-pager" id="pager" role="group" aria-label="Pages" hidden>
+          <button id="page-previous" type="button">Previous</button>
+          <span id="page-status" aria-live="polite"></span>
+          <button id="page-next" type="button">Next</button>
+        </div>
       </section>
       <div class="survey-body">
         <section class="survey-stage" aria-label="3D comparison">
@@ -98,6 +112,15 @@
         class="survey-groups"
         aria-label="Pieces in this comparison"
       ></section>
+      <details class="survey-paid">
+        <summary id="paid-summary">Paid candidates</summary>
+        <p class="survey-paid-note">
+          Packs that cost money and look likely to fit, at the prices listed on November 4, 2026.
+          They are not downloaded or bought: buying is your decision. The marks mean the same as on
+          the cards.
+        </p>
+        <div id="paid-list"></div>
+      </details>
       <details class="survey-diagnostics">
         <summary>Rendering and loaded resources</summary>
         <button id="inspect-resources" type="button">Inspect resource use</button>
@@ -105,9 +128,11 @@
       </details>
       <footer>
         <p>
-          Every piece is a third-party model or texture shown as found, scaled to its stated real
-          size; textures above 1024 px are reduced for this survey. Family labels describe visual
-          style, not quality. Presence here is not approval for the game.
+          Every piece is a third-party model or texture shown as found; textures above 1024 px are
+          reduced. Survey pieces are scaled to a stated real size. Library pieces keep their makers'
+          size, rescaled by the survey's choices for the same kit, or by a power of ten when far
+          outside what their subject allows. Family labels describe visual style, not quality; marks
+          are a judgement of your taste, not a decision. Presence here is not approval for the game.
         </p>
         <p id="source-credits"></p>
       </footer>

@@ -9,18 +9,24 @@ import {
 import { BundledModels, destroyModelApplication } from './bundled-models';
 import { assetUrl, readAssetBytes } from './asset-files';
 import surveyCatalog from './props/art-survey/catalog.json';
+import libraryCatalog from './props/art-library/catalog.json';
 import './art-study.css';
 import './asset-survey.css';
 
-/** Developer survey of third-party styles for the art direction; no world, save or AI.
- * art-direction/studies/2026-10-31-world-asset-survey/README.md */
+/** Developer survey of third-party styles for the art direction, and the library of whole free
+ * packs that followed it; no world, save or AI.
+ * art-direction/studies/2026-10-31-world-asset-survey/README.md
+ * art-direction/studies/2026-11-04-asset-library/README.md */
 type Status = 'direction' | 'candidate' | 'current' | 'outside' | 'rejected';
+/** The library's confidence that Mike will like a piece: sure, or on the fence. */
+type Fit = 'sure' | 'fence';
 interface Family {
   id: string;
   label: string;
   source: string;
   status: Status;
   note: string;
+  color?: string;
 }
 interface Subject {
   id: string;
@@ -54,13 +60,47 @@ interface Item {
   credit?: string;
   maps?: SurfaceMaps | { wall: SurfaceMaps; roof: SurfaceMaps };
   options?: Record<string, string>;
+  fit?: Fit;
+  why?: string;
+  /** Animation clips the file keeps; the piece holds the first frame of a standing one. */
+  animations?: number;
 }
-const catalog = surveyCatalog as unknown as {
+/** A paid pack worth buying, listed with a link rather than downloaded. */
+interface Paid {
+  name: string;
+  creator: string;
+  url: string;
+  price: string;
+  license: string;
+  formats: string;
+  contents: string;
+  area: string;
+  fit: Fit;
+  why: string;
+}
+interface Catalog {
   families: Family[];
   categories: { id: string; label: string }[];
   subjects: Subject[];
   sources: Record<string, { creator: string; license: string; page: string }>;
   items: Item[];
+  paid?: Paid[];
+}
+const surveyCollection = surveyCatalog as unknown as Catalog;
+const libraryCollection = libraryCatalog as unknown as Catalog;
+/** The library adds families, categories and subjects by id and files pieces under the survey's
+ * own where they fit, so one page compares both. */
+const withNew = <T extends { id: string }>(known: T[], added: T[]) => [
+  ...known,
+  ...added.filter((entry) => !known.some((existing) => existing.id === entry.id)),
+];
+const catalog: Required<Catalog> = {
+  families: withNew(surveyCollection.families, libraryCollection.families),
+  categories: withNew(surveyCollection.categories, libraryCollection.categories),
+  subjects: withNew(surveyCollection.subjects, libraryCollection.subjects),
+  sources: { ...surveyCollection.sources, ...libraryCollection.sources },
+  items: [...surveyCollection.items, ...libraryCollection.items],
+  paid: libraryCollection.paid ?? [],
 };
 // Presentation colours that tell the families apart in the stage and cards.
 const familyColors: Record<string, string> = {
@@ -88,6 +128,12 @@ const familyOrder = new Map(catalog.families.map((family, index) => [family.id, 
 const subjectOrder = new Map(catalog.subjects.map((subject, index) => [subject.id, index]));
 const families = new Map(catalog.families.map((family) => [family.id, family]));
 const subjects = new Map(catalog.subjects.map((subject) => [subject.id, subject]));
+/** Survey families keep their colours above; library families carry their own. */
+const familyColor = (id: string) => families.get(id)?.color ?? familyColors[id]!;
+const fitLabels: Record<Fit, string> = { sure: 'Sure fit', fence: 'On the fence' };
+// A library subject can hold hundreds of pieces: more than GPU memory, or a viewer, can take in at
+// once, so a comparison shows one page of them.
+const pageSize = 36;
 
 function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -123,6 +169,8 @@ interface View {
   category: string;
   subject: string;
   family: string;
+  fit: 'all' | Fit;
+  page: number;
 }
 function initialView(): View {
   const hash = new URLSearchParams(location.hash.slice(1));
@@ -138,6 +186,9 @@ function initialView(): View {
         ? subject.id
         : catalog.subjects.find((entry) => entry.category === category)!.id,
     family: families.has(hash.get('family') ?? '') ? hash.get('family')! : 'polyhaven',
+    fit:
+      hash.get('fit') === 'sure' || hash.get('fit') === 'fence' ? (hash.get('fit') as Fit) : 'all',
+    page: Math.max(1, Math.floor(Number(hash.get('page'))) || 1),
   };
 }
 
@@ -292,7 +343,7 @@ class AssetSurvey {
     for (const label of fieldset.querySelectorAll('label')) label.remove();
     for (const family of catalog.families) {
       const label = document.createElement('label');
-      label.style.setProperty('--family', familyColors[family.id]!);
+      label.style.setProperty('--family', familyColor(family.id));
       const input = document.createElement('input');
       input.type = 'checkbox';
       input.checked = true;
@@ -300,6 +351,7 @@ class AssetSurvey {
       this.on(input, 'change', () => {
         if (input.checked) this.enabled.add(family.id);
         else this.enabled.delete(family.id);
+        this.view.page = 1;
         void this.show();
       });
       const swatch = document.createElement('span');
@@ -309,12 +361,27 @@ class AssetSurvey {
     }
     this.on(element('grouping'), 'change', () => {
       this.view.grouping = element<HTMLSelectElement>('grouping').value as View['grouping'];
+      this.view.page = 1;
       void this.show();
     });
     this.on(familyChoice, 'change', () => {
       this.view.family = familyChoice.value;
+      this.view.page = 1;
       void this.show();
     });
+    this.on(element('fit'), 'change', () => {
+      this.view.fit = element<HTMLSelectElement>('fit').value as View['fit'];
+      this.view.page = 1;
+      void this.show();
+    });
+    for (const [id, step] of [
+      ['page-previous', -1],
+      ['page-next', 1],
+    ] as const)
+      this.on(element(id), 'click', () => {
+        this.view.page += step;
+        void this.show();
+      });
     this.on(element('light'), 'change', () => this.light());
     this.on(element('reflections'), 'change', () => this.light());
     this.on(element('shading'), 'change', () => this.shading());
@@ -447,6 +514,7 @@ class AssetSurvey {
           this.view.subject = catalog.subjects.find(
             (subject) => subject.category === category.id,
           )!.id;
+          this.view.page = 1;
           void this.show();
         };
         return button;
@@ -460,7 +528,9 @@ class AssetSurvey {
         .map((subject) => {
           const button = document.createElement('button');
           button.type = 'button';
-          const items = catalog.items.filter((item) => item.subject === subject.id);
+          const items = catalog.items.filter(
+            (item) => item.subject === subject.id && this.marked(item),
+          );
           const liked = items.filter((item) => picks.liked[item.id]).length;
           button.append(subject.label);
           const count = document.createElement('span');
@@ -478,11 +548,13 @@ class AssetSurvey {
           button.onclick = () => {
             if (subject.id === this.view.subject) return;
             this.view.subject = subject.id;
+            this.view.page = 1;
             void this.show();
           };
           return button;
         }),
     );
+    element<HTMLSelectElement>('fit').value = this.view.fit;
     element<HTMLSelectElement>('grouping').value = this.view.grouping;
     element('family-choice-label').hidden = this.view.grouping !== 'family';
     element<HTMLSelectElement>('family-choice').value = this.view.family;
@@ -490,19 +562,27 @@ class AssetSurvey {
   }
 
   // ------------------------------------------------------------------ building a comparison
+  /** Whether a piece carries the chosen mark; the survey's own pieces carry none. */
+  private marked(item: Item): boolean {
+    return this.view.fit === 'all' || item.fit === this.view.fit;
+  }
   private selection(): { items: Item[]; groupKey: (item: Item) => string } {
     if (this.view.grouping === 'family') {
       const items = catalog.items
         .filter(
           (item) =>
             item.family === this.view.family &&
-            subjects.get(item.subject)!.category === this.view.category,
+            subjects.get(item.subject)!.category === this.view.category &&
+            this.marked(item),
         )
         .sort((a, b) => subjectOrder.get(a.subject)! - subjectOrder.get(b.subject)!);
       return { items, groupKey: (item) => item.subject };
     }
     const items = catalog.items
-      .filter((item) => item.subject === this.view.subject && this.enabled.has(item.family))
+      .filter(
+        (item) =>
+          item.subject === this.view.subject && this.enabled.has(item.family) && this.marked(item),
+      )
       .sort((a, b) => familyOrder.get(a.family)! - familyOrder.get(b.family)!);
     return { items, groupKey: (item) => item.family };
   }
@@ -510,17 +590,27 @@ class AssetSurvey {
     if (this.disposed) return;
     const epoch = ++this.epoch;
     this.buildPicker();
+    const { items: matching, groupKey } = this.selection();
+    const pages = Math.max(1, Math.ceil(matching.length / pageSize));
+    this.view.page = Math.min(this.view.page, pages);
+    const items = matching.slice((this.view.page - 1) * pageSize, this.view.page * pageSize);
+    element('pager').hidden = pages === 1;
+    element('page-status').textContent =
+      `${(this.view.page - 1) * pageSize + 1}–${(this.view.page - 1) * pageSize + items.length} of ${matching.length} pieces`;
+    element<HTMLButtonElement>('page-previous').disabled = this.view.page === 1;
+    element<HTMLButtonElement>('page-next').disabled = this.view.page === pages;
     history.replaceState(
       null,
       '',
       '#' +
-        new URLSearchParams(
-          this.view.grouping === 'family'
+        new URLSearchParams({
+          ...(this.view.grouping === 'family'
             ? { grouping: 'family', category: this.view.category, family: this.view.family }
-            : { category: this.view.category, subject: this.view.subject },
-        ).toString(),
+            : { category: this.view.category, subject: this.view.subject }),
+          ...(this.view.fit === 'all' ? {} : { fit: this.view.fit }),
+          ...(this.view.page === 1 ? {} : { page: String(this.view.page) }),
+        }).toString(),
     );
-    const { items, groupKey } = this.selection();
     if (this.pending) this.releaseLineup(this.pending);
     if (!items.length) {
       // A filtered-empty comparison clears the stage rather than leaving older pieces in view.
@@ -528,7 +618,10 @@ class AssetSurvey {
       this.lineup = undefined;
       element('labels').replaceChildren();
       element('family-groups').replaceChildren();
-      element('status').textContent = 'No pieces match the chosen families. Tick a family above.';
+      element('status').textContent =
+        this.view.fit === 'all'
+          ? 'No pieces match the chosen families. Tick a family above.'
+          : `No pieces here are marked “${fitLabels[this.view.fit].toLowerCase()}”. Choose All pieces under Marks, or another subject.`;
       this.canvas.dataset.ready = 'true';
       this.updateAutoRender();
       return;
@@ -1117,7 +1210,7 @@ class AssetSurvey {
             this.app.root.addChild(member.node);
             const label = document.createElement('span');
             label.className = 'survey-label';
-            label.style.setProperty('--family', familyColors[member.item.family]!);
+            label.style.setProperty('--family', familyColor(member.item.family));
             label.textContent = String(++number);
             labels.append(label);
             const placed: Placed = {
@@ -1138,7 +1231,7 @@ class AssetSurvey {
         const row = document.createElement('span');
         row.className = 'survey-row-label';
         const family = families.get(block.key);
-        const color = familyColors[family ? block.key : this.view.family]!;
+        const color = familyColor(family ? block.key : this.view.family);
         row.style.setProperty('--family', color);
         row.textContent = family ? family.label : subjects.get(block.key)!.label;
         labels.append(row);
@@ -1344,7 +1437,7 @@ class AssetSurvey {
         const family = families.get(key);
         const section = document.createElement('section');
         section.className = 'survey-group';
-        section.style.setProperty('--family', familyColors[family ? key : this.view.family]!);
+        section.style.setProperty('--family', familyColor(family ? key : this.view.family));
         const header = document.createElement('div');
         header.className = 'survey-group-header';
         const title = document.createElement('h2');
@@ -1398,7 +1491,7 @@ class AssetSurvey {
     const card = document.createElement('article');
     card.className = 'survey-card';
     card.dataset.id = item.id;
-    card.style.setProperty('--family', familyColors[item.family]!);
+    card.style.setProperty('--family', familyColor(item.family));
     card.classList.toggle('liked', !!picks.liked[item.id]);
     const title = document.createElement('h3');
     const number = document.createElement('span');
@@ -1412,6 +1505,12 @@ class AssetSurvey {
       badge.textContent = 'In game now';
       card.append(badge);
     }
+    if (item.fit) {
+      const badge = document.createElement('span');
+      badge.className = `badge ${item.fit}`;
+      badge.textContent = fitLabels[item.fit];
+      card.append(badge);
+    }
     const facts = document.createElement('small');
     const size = placed.max.clone().sub(placed.min);
     facts.textContent = [
@@ -1422,10 +1521,19 @@ class AssetSurvey {
         : item.kind === 'model'
           ? 'flat colours, no texture'
           : undefined,
+      item.animations
+        ? `${item.animations} animation${item.animations === 1 ? '' : 's'}`
+        : undefined,
     ]
       .filter(Boolean)
       .join(' · ');
     card.append(facts);
+    if (item.why) {
+      const why = document.createElement('p');
+      why.className = 'fit-why';
+      why.textContent = item.why;
+      card.append(why);
+    }
     const credit = document.createElement('p');
     credit.className = 'credit';
     const origin = item.source ? catalog.sources[item.source] : undefined;
@@ -1497,7 +1605,7 @@ class AssetSurvey {
         .map((family) => {
           const row = document.createElement('div');
           row.className = 'picks-family';
-          row.style.setProperty('--family', familyColors[family.id]!);
+          row.style.setProperty('--family', familyColor(family.id));
           const swatch = document.createElement('span');
           swatch.className = 'swatch';
           const name = document.createElement('span');
@@ -1700,6 +1808,51 @@ const sourceNames = [
 ];
 element('source-credits').textContent =
   `Sources: ${sourceNames.join(', ')}; earlier OpenLegend study adaptations keep their recorded credits.`;
+/** Paid packs are listed with links, not downloaded: buying one is Mike's decision. */
+function renderPaid(): void {
+  const paid = catalog.paid;
+  element('paid-summary').textContent = `Paid candidates (${paid.length})`;
+  element('paid-list').replaceChildren(
+    ...[...new Set(paid.map((entry) => entry.area))].map((area) => {
+      const section = document.createElement('section');
+      const heading = document.createElement('h3');
+      heading.textContent = area;
+      const list = document.createElement('ul');
+      list.append(
+        ...paid
+          .filter((entry) => entry.area === area)
+          .map((entry) => {
+            const row = document.createElement('li');
+            const title = document.createElement('p');
+            title.className = 'paid-title';
+            const link = document.createElement('a');
+            link.href = entry.url;
+            link.target = '_blank';
+            link.rel = 'noreferrer';
+            link.textContent = entry.name;
+            const badge = document.createElement('span');
+            badge.className = `badge ${entry.fit}`;
+            badge.textContent = fitLabels[entry.fit];
+            title.append(link, ' ', badge);
+            const facts = document.createElement('small');
+            facts.textContent = [entry.creator, entry.price, entry.formats, entry.license].join(
+              ' · ',
+            );
+            const contents = document.createElement('p');
+            contents.textContent = entry.contents;
+            const why = document.createElement('p');
+            why.className = 'fit-why';
+            why.textContent = entry.why;
+            row.append(title, facts, contents, why);
+            return row;
+          }),
+      );
+      section.append(heading, list);
+      return section;
+    }),
+  );
+}
+renderPaid();
 let survey = new AssetSurvey(element<HTMLCanvasElement>('survey-canvas'));
 // Local diagnostic hook for this developer inspection page.
 Object.assign(window, { assetSurvey: survey });

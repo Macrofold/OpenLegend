@@ -1,0 +1,3737 @@
+{
+  "study": "2026-11-04-asset-library",
+  "families": [
+    {
+      "id": "painted",
+      "label": "Painted community models",
+      "source": "Independent creators on Sketchfab and itch.io (CC0 or CC BY)",
+      "status": "candidate",
+      "note": "Hand-painted or painted-looking textures on naturally proportioned models, closest to WildMesh 3D and the Quaternius anchor.",
+      "color": "#f0a35e"
+    },
+    {
+      "id": "scans",
+      "label": "Museum and field scans",
+      "source": "Museum and field photogrammetry (CC0 or CC BY), other than Poly Haven",
+      "status": "candidate",
+      "note": "Scanned real objects: grounded references, more photographic than the anchor.",
+      "color": "#7fb3c8"
+    },
+    {
+      "id": "materials",
+      "label": "Photo materials",
+      "source": "ambientCG and Poly Haven texture sets (CC0)",
+      "status": "candidate",
+      "note": "Physically based ground, rock, wood, plaster and roofing materials shown as swatches, walls, floors and roofs.",
+      "color": "#c9a574"
+    },
+    {
+      "id": "stylized",
+      "label": "Stylized textured, other makers",
+      "source": "Other creators' textured kits close to the Quaternius look (CC0 or CC BY)",
+      "status": "candidate",
+      "note": "Softened, textured pieces from makers other than Quaternius.",
+      "color": "#c3d96f"
+    },
+    {
+      "id": "realistic",
+      "label": "Realistic game models",
+      "source": "Independent creators on Sketchfab (CC BY or CC0)",
+      "status": "candidate",
+      "note": "Physically based, naturally proportioned game models: closer to photographic than the anchor.",
+      "color": "#d9b8f0"
+    }
+  ],
+  "categories": [
+    {
+      "id": "interiors",
+      "label": "Rooms and workplaces"
+    },
+    {
+      "id": "monsters",
+      "label": "Monsters"
+    },
+    {
+      "id": "people",
+      "label": "People"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "potions",
+      "category": "objects",
+      "label": "Potions, herbs and alchemy supplies",
+      "note": "Bottles, flasks and ingredients at real size.",
+      "axis": "max"
+    },
+    {
+      "id": "kitchenware",
+      "category": "objects",
+      "label": "Cookware and tableware",
+      "note": "Pots, plates, cups and cutlery.",
+      "axis": "max"
+    },
+    {
+      "id": "instruments",
+      "category": "objects",
+      "label": "Instruments, games and toys",
+      "note": "Music, games and play.",
+      "axis": "max"
+    },
+    {
+      "id": "vehicles",
+      "category": "objects",
+      "label": "Carts, wagons and boats",
+      "note": "Vehicles at real length.",
+      "axis": "length"
+    },
+    {
+      "id": "decor",
+      "category": "objects",
+      "label": "Banners, signs, rugs and decor",
+      "note": "Hangings, signs and ornaments.",
+      "axis": "height"
+    },
+    {
+      "id": "materials",
+      "category": "objects",
+      "label": "Materials and resources",
+      "note": "Ingots, planks, rope, hides and other stock.",
+      "axis": "max"
+    },
+    {
+      "id": "misc",
+      "category": "objects",
+      "label": "Other props",
+      "note": "Props no other subject names.",
+      "axis": "max"
+    },
+    {
+      "id": "forge",
+      "category": "interiors",
+      "label": "Forge and workshops",
+      "note": "Anvils, benches, looms and racks.",
+      "axis": "height"
+    },
+    {
+      "id": "alchemy",
+      "category": "interiors",
+      "label": "Alchemy and apothecary",
+      "note": "Cauldrons, stills and bottle shelves.",
+      "axis": "height"
+    },
+    {
+      "id": "study",
+      "category": "interiors",
+      "label": "Library and study",
+      "note": "Bookcases, lecterns and desks.",
+      "axis": "height"
+    },
+    {
+      "id": "kitchen",
+      "category": "interiors",
+      "label": "Kitchen, pantry and tavern",
+      "note": "Hearths, ovens, counters and taps.",
+      "axis": "height"
+    },
+    {
+      "id": "bedroom",
+      "category": "interiors",
+      "label": "Bedroom and bath",
+      "note": "Beds, wardrobes, tubs and basins.",
+      "axis": "height"
+    },
+    {
+      "id": "chapel",
+      "category": "interiors",
+      "label": "Temple and ritual",
+      "note": "Altars, pews, bells and offerings.",
+      "axis": "height"
+    },
+    {
+      "id": "hall",
+      "category": "interiors",
+      "label": "Great hall and throne room",
+      "note": "Thrones, chandeliers and banquet pieces.",
+      "axis": "height"
+    },
+    {
+      "id": "stable",
+      "category": "interiors",
+      "label": "Farm, barn and stable",
+      "note": "Hay, troughs, saddles and hives.",
+      "axis": "height"
+    },
+    {
+      "id": "market",
+      "category": "interiors",
+      "label": "Shop and market",
+      "note": "Stalls, scales and displays.",
+      "axis": "height"
+    },
+    {
+      "id": "crops",
+      "category": "environment",
+      "label": "Crops and farm plants",
+      "note": "Field and garden plants at real height.",
+      "axis": "height"
+    },
+    {
+      "id": "desert",
+      "category": "environment",
+      "label": "Desert plants",
+      "note": "Cacti, succulents and dry shrubs.",
+      "axis": "height"
+    },
+    {
+      "id": "tropical",
+      "category": "environment",
+      "label": "Tropical and jungle plants",
+      "note": "Palms, bamboo and jungle growth.",
+      "axis": "height"
+    },
+    {
+      "id": "wetland",
+      "category": "environment",
+      "label": "Swamp and water plants",
+      "note": "Reeds, rushes and lily pads.",
+      "axis": "height"
+    },
+    {
+      "id": "snow",
+      "category": "environment",
+      "label": "Snow and ice",
+      "note": "Snowy plants, ice and frozen ground.",
+      "axis": "height"
+    },
+    {
+      "id": "caves",
+      "category": "environment",
+      "label": "Caves and crystals",
+      "note": "Cave formations, crystals and mineral rock.",
+      "axis": "height"
+    },
+    {
+      "id": "exotic",
+      "category": "animals",
+      "label": "Large and exotic animals",
+      "note": "Large grazers and animals of other climates.",
+      "axis": "height"
+    },
+    {
+      "id": "aquatic",
+      "category": "animals",
+      "label": "Fish, frogs and water animals",
+      "note": "Water animals at real length.",
+      "axis": "length"
+    },
+    {
+      "id": "beasts",
+      "category": "monsters",
+      "label": "Giant beasts and insects",
+      "note": "Giant spiders, insects, rats and monstrous animals.",
+      "axis": "length"
+    },
+    {
+      "id": "humanoids",
+      "category": "monsters",
+      "label": "Goblins, orcs and trolls",
+      "note": "Monstrous peoples at real height.",
+      "axis": "height"
+    },
+    {
+      "id": "undead",
+      "category": "monsters",
+      "label": "Skeletons, zombies and ghosts",
+      "note": "The returning dead.",
+      "axis": "height"
+    },
+    {
+      "id": "dragons",
+      "category": "monsters",
+      "label": "Dragons and serpents",
+      "note": "Dragons, wyverns and hydras at real length.",
+      "axis": "length"
+    },
+    {
+      "id": "elementals",
+      "category": "monsters",
+      "label": "Golems, elementals and slimes",
+      "note": "Made, elemental and formless beings.",
+      "axis": "height"
+    },
+    {
+      "id": "demons",
+      "category": "monsters",
+      "label": "Demons and fiends",
+      "note": "Demons, imps and gargoyles.",
+      "axis": "height"
+    },
+    {
+      "id": "mythic",
+      "category": "monsters",
+      "label": "Mythic creatures",
+      "note": "Griffins, centaurs, harpies and other legends.",
+      "axis": "height"
+    },
+    {
+      "id": "characters",
+      "category": "people",
+      "label": "People",
+      "note": "Whole characters and base bodies at real height.",
+      "axis": "height"
+    },
+    {
+      "id": "outfits",
+      "category": "people",
+      "label": "Outfits, hair and costume parts",
+      "note": "Clothing and hair parts for the base characters.",
+      "axis": "height"
+    },
+    {
+      "id": "fortifications",
+      "category": "buildings",
+      "label": "Castles and fortifications",
+      "note": "Towers, gates, battlements and siege pieces.",
+      "axis": "height"
+    },
+    {
+      "id": "ruins",
+      "category": "buildings",
+      "label": "Ruins, dungeons and crypts",
+      "note": "Ruined pieces, dungeon parts and tombs.",
+      "axis": "height"
+    },
+    {
+      "id": "monuments",
+      "category": "buildings",
+      "label": "Statues, shrines and monuments",
+      "note": "Statues, pillars, fountains and standing stones.",
+      "axis": "height"
+    },
+    {
+      "id": "village",
+      "category": "buildings",
+      "label": "Wells, docks and mills",
+      "note": "Village works and street pieces.",
+      "axis": "height"
+    }
+  ],
+  "ranges": {
+    "blades": [
+      0.15,
+      2.2
+    ],
+    "axes": [
+      0.2,
+      2.5
+    ],
+    "ranged": [
+      0.3,
+      3.5
+    ],
+    "shields": [
+      0.2,
+      2.5
+    ],
+    "tools": [
+      0.1,
+      3.5
+    ],
+    "containers": [
+      0.1,
+      2.5
+    ],
+    "furniture": [
+      0.2,
+      3.5
+    ],
+    "camp": [
+      0.1,
+      6
+    ],
+    "food": [
+      0.02,
+      1
+    ],
+    "trinkets": [
+      0.01,
+      1
+    ],
+    "potions": [
+      0.03,
+      1.2
+    ],
+    "kitchenware": [
+      0.03,
+      1
+    ],
+    "instruments": [
+      0.05,
+      2
+    ],
+    "vehicles": [
+      0.8,
+      30
+    ],
+    "decor": [
+      0.1,
+      6
+    ],
+    "materials": [
+      0.05,
+      3
+    ],
+    "misc": [
+      0.02,
+      6
+    ],
+    "forge": [
+      0.2,
+      4
+    ],
+    "alchemy": [
+      0.1,
+      3
+    ],
+    "study": [
+      0.2,
+      4
+    ],
+    "kitchen": [
+      0.05,
+      4
+    ],
+    "bedroom": [
+      0.2,
+      4
+    ],
+    "chapel": [
+      0.2,
+      6
+    ],
+    "hall": [
+      0.3,
+      8
+    ],
+    "stable": [
+      0.1,
+      5
+    ],
+    "market": [
+      0.3,
+      6
+    ],
+    "broadleaf": [
+      2,
+      30
+    ],
+    "conifers": [
+      2,
+      45
+    ],
+    "deadwood": [
+      0.2,
+      20
+    ],
+    "bushes": [
+      0.2,
+      4
+    ],
+    "groundcover": [
+      0.02,
+      2.5
+    ],
+    "rocks": [
+      0.03,
+      40
+    ],
+    "crops": [
+      0.05,
+      4
+    ],
+    "desert": [
+      0.1,
+      20
+    ],
+    "tropical": [
+      0.3,
+      35
+    ],
+    "wetland": [
+      0.1,
+      15
+    ],
+    "snow": [
+      0.05,
+      30
+    ],
+    "caves": [
+      0.05,
+      25
+    ],
+    "deer": [
+      0.6,
+      3
+    ],
+    "predators": [
+      0.3,
+      2.5
+    ],
+    "wildlife": [
+      0.05,
+      1.5
+    ],
+    "farm": [
+      0.2,
+      3
+    ],
+    "exotic": [
+      0.8,
+      6
+    ],
+    "aquatic": [
+      0.05,
+      5
+    ],
+    "beasts": [
+      0.1,
+      15
+    ],
+    "humanoids": [
+      0.5,
+      8
+    ],
+    "undead": [
+      0.4,
+      6
+    ],
+    "dragons": [
+      0.5,
+      40
+    ],
+    "elementals": [
+      0.2,
+      10
+    ],
+    "demons": [
+      0.3,
+      10
+    ],
+    "mythic": [
+      0.3,
+      12
+    ],
+    "characters": [
+      1,
+      2.5
+    ],
+    "outfits": [
+      0.05,
+      2.5
+    ],
+    "walls": [
+      0.3,
+      12
+    ],
+    "floors": [
+      0.2,
+      12
+    ],
+    "roofs": [
+      0.3,
+      20
+    ],
+    "openings": [
+      0.3,
+      8
+    ],
+    "fences": [
+      0.2,
+      10
+    ],
+    "buildings": [
+      2,
+      40
+    ],
+    "fortifications": [
+      1,
+      50
+    ],
+    "ruins": [
+      0.2,
+      30
+    ],
+    "monuments": [
+      0.3,
+      30
+    ],
+    "village": [
+      0.3,
+      30
+    ]
+  },
+  "shapes": {
+    "terrain": "ground",
+    "rocks": "ground",
+    "caves": "ground",
+    "snow": "ground",
+    "materials": "ground",
+    "walls": "wall",
+    "fortifications": "wall",
+    "ruins": "wall",
+    "floors": "floor",
+    "roofs": "roof"
+  },
+  "rules": [
+    {
+      "subject": "desert",
+      "match": "(dead |dry )?quiver ?(tree|trunk|branch|leaf)|ice ?plant|succulent"
+    },
+    {
+      "subject": "decor",
+      "match": "(lion|bull|horse|deer|stag|bear|wolf|shark|whale|elephant|bird|cat|dog|eagle|owl) (head|statue|bust|figurine|sculpture)|(carved|bronze|marble|wooden|stone|brass|ceramic) (elephant|horse|lion|bull|shark|whale|bird|cat|dog|owl|eagle|bust|statue|figure)|statues?(?![a-z])|bust(?![a-z])|figurine|sculpture"
+    },
+    {
+      "subject": "beasts",
+      "match": "spiderling|spider|broodmother|tarantula|scorpion|wasp|hornet|centipede|millipede|beetle|leech|giant ?rat|rat(?![a-z])|rats(?![a-z])|bats?(?![a-z])|mimic|giant ?worm|sandworm|mantis|warg|dire ?wolf"
+    },
+    {
+      "subject": "undead",
+      "match": "skeleton(?! ?key)|zombie|ghoul|ghost|wraith|lich(?![a-z])|mummy|vampire|undead|spectre|specter|banshee|revenant|necro"
+    },
+    {
+      "subject": "dragons",
+      "match": "dragon|wyvern|drake(?![a-z])|basilisk|hydra|serpent|wyrm|lizard ?(man|folk)"
+    },
+    {
+      "subject": "elementals",
+      "match": "golem|elemental|slime|ooze|wisps?(?![a-z])|treant|treefolk|ent(?![a-z])|blob(?![a-z])|jelly(?![a-z])"
+    },
+    {
+      "subject": "demons",
+      "match": "demon|imp(?![a-z])|devil|fiend|succubus|hell ?hound|gargoyle"
+    },
+    {
+      "subject": "mythic",
+      "match": "griffin|gryphon|harpy|centaur|minotaur|unicorn|phoenix|yeti|cyclops|chimera|pegasus|manticore|satyr|werewolf|kraken|mermaid|merfolk"
+    },
+    {
+      "subject": "humanoids",
+      "match": "goblin|hobgoblin|orcs?(?![a-z])|troll|ogre|kobold|gnoll|bugbear|giants?(?= ?([0-9]|$))"
+    },
+    {
+      "subject": "characters",
+      "match": "character|villager|peasant|townsfolk|npc(?![a-z])|adventurer|soldier|wizard|merchant ?(man|woman|character)|priest|monk(?![a-z])|bandit|thief|archer(?!y)|ranger|human|base ?(male|female|body|character|mesh)|man(?![a-z])|woman|male(?![a-z])|female"
+    },
+    {
+      "subject": "outfits",
+      "match": "outfit|costume|clothing|tunic|robe(?![a-z])|cloak|hood(?![a-z])|boots?(?![a-z])|gloves?(?![a-z])|trousers|pants(?![a-z])|dress(?![a-z])|hair(?![a-z])|hairstyle|beard|eyebrows?|hats?(?![a-z])"
+    },
+    {
+      "subject": "deer",
+      "match": "deer|doe(?![a-z])|stag(?![a-z])|fawn|elk(?![a-z])|moose|reindeer|caribou|antelope|pronghorn|gazelle|impala"
+    },
+    {
+      "subject": "exotic",
+      "match": "elephant|rhino|hippo|giraffe|camel|mammoth|bison|buffalo|yak(?![a-z])|zebra|kangaroo|gorilla"
+    },
+    {
+      "subject": "predators",
+      "match": "wolf|wolves|bears?(?![a-z])|fox(?![a-z])|foxes|lynx|cougar|puma|panther|tiger|lions?(?![a-z])|leopard|jaguar|hyena|coyote|jackal|wolverine"
+    },
+    {
+      "subject": "farm",
+      "match": "horse|pony|donkey|mule(?![a-z])|cows?(?![a-z])|bull(?![a-z])|ox(?![a-z])|oxen|sheep|ram(?![a-z])|lamb(?![a-z])|goat|pigs?(?![a-z])|piglet|chicken|hen(?![a-z])|rooster|duck|goose|geese|dogs?(?![a-z])|puppy|cats?(?![a-z])|kitten|alpaca|llama|turkey"
+    },
+    {
+      "subject": "aquatic",
+      "match": "fish(?!(erm|ing| ?(rack|net|trap|pole|rod|hook|basket|barrel|crate|knife|hat|monger|pile)))|salmon|trout|carp(?![a-z])|eel(?![a-z])|shark|frog|toad(?![a-z])|crab(?![a-z])|lobster|turtle|tortoise|walrus|octopus|squid|jellyfish|dolphin|whale|penguin"
+    },
+    {
+      "subject": "wildlife",
+      "match": "hare(?![a-z])|rabbit|bunny|squirrel|chipmunk|badger|beaver|otter|hedgehog|raccoon|skunk|mouse|mice(?![a-z])|bird|crow(?![a-z])|raven|owl(?![a-z])|eagle|hawk|falcon|vulture|sparrow|robin|pigeon|dove(?![a-z])|seagull|gull(?![a-z])|parrot|heron|swan(?![a-z])|stork|finch|woodpecker|snake|viper|cobra|lizard|gecko|insect|butterfly|moth(?![a-z])|bees?(?![a-z])|dragonfly|snail|boar(?![a-z])|monkey|ape(?![a-z])|weasel|ferret|mole(?![a-z])|possum"
+    },
+    {
+      "subject": "camp",
+      "match": "tents?(?![a-z])|campfire|camp ?fire|fire ?pit|bonfire|fire ?ring|torch|lantern|lamp(?! ?post)|lamps(?![a-z])|candle|brazier|bed ?roll|sleeping ?bag|camp(?![a-z])|cooking ?fire|spit(?![a-z])"
+    },
+    {
+      "subject": "forge",
+      "match": "anvil|bellows|forge|furnace|grindstone|whetstone|smelter|smithy|workbench|work ?bench|sawhorse|saw ?horse|loom(?![a-z])|spinning ?wheel|tool ?rack|weapon ?(rack|stand)|armou?r ?stand|kiln|lathe|tanning|drying ?rack|dummy"
+    },
+    {
+      "subject": "alchemy",
+      "match": "cauldron|alembic|retort|alchemy|alchemist|apothecary|crystal ?ball|potion ?(shelf|rack|table)|herb ?(rack|shelf|bundle)|distill|mortar|pestle|bottle ?rack|small ?bottles"
+    },
+    {
+      "subject": "study",
+      "match": "bookshelf|bookshelves|book ?case|lectern|book ?stand|desk(?![a-z])|scroll ?(rack|shelf|case)|inkwell|ink ?well|quill|globe(?![a-z])|easel|map ?table|chalkboard|blackboard|magnifying"
+    },
+    {
+      "subject": "bedroom",
+      "match": "beds?(?![a-z])|bunk|cot(?![a-z])|cradle|crib(?![a-z])|wardrobe|dresser|drawers?(?![a-z])|nightstand|night ?stand|bathtub|bath ?tub|tub(?![a-z])|wash ?basin|washbasin|wash ?stand|chamber ?pot|vanity|privy|toilet|commode"
+    },
+    {
+      "subject": "kitchen",
+      "match": "stove|oven|hearth|fireplace|kitchen|counter ?top|pantry|larder|butcher|chopping ?block|cutting ?board|rolling ?pin|bar ?counter|beer ?tap|sink(?![a-z])"
+    },
+    {
+      "subject": "chapel",
+      "match": "altar|pews?(?![a-z])|reliquary|offering|prayer|holy ?water|baptismal|bells?(?![a-z])|censer|incense|rosary|confessional|kneeler"
+    },
+    {
+      "subject": "hall",
+      "match": "throne|banquet ?table|long ?table|great ?table|chandelier|pedestal|podium|dais(?![a-z])|royal"
+    },
+    {
+      "subject": "stable",
+      "match": "hay(?![a-z])|hay ?bale|haystack|trough|saddle|stable|manger|horseshoe|yoke(?![a-z])|plough|plow(?![a-z])|churn|milk ?can|beehive|bee ?hive|coop(?![a-z])|feed ?(bag|bucket|sack)"
+    },
+    {
+      "subject": "market",
+      "match": "stalls?(?![a-z])|market|vendor|shop ?(sign|counter|stand)|scales?(?![a-z])|weighing|awning|display ?(case|table|stand)"
+    },
+    {
+      "subject": "furniture",
+      "match": "tables?(?! ?(knife|fork|spoon|plate))(?![a-z])|chairs?(?![a-z])|stools?(?![a-z])|bench(?![a-z])|benches|shelf|shelves|cabinet|cupboard|sofa|couch|armchair|seat(?![a-z])|ottoman|furniture|rocking ?chair"
+    },
+    {
+      "subject": "kitchenware",
+      "match": "table ?(knife|fork|spoon|plate)|plates?(?![a-z])|bowls?(?![a-z])|cups?(?![a-z])|mugs?(?![a-z])|goblet|tankard|spoon|forks?(?![a-z])|ladle|pans?(?![a-z])|kettle|teapot|pitcher|jugs?(?![a-z])|carafe|dish(?![a-z])|dishes|cutlery|tray(?![a-z])|platter|saucepan|tea ?set"
+    },
+    {
+      "subject": "potions",
+      "match": "potion|flask|vial|elixir|bottle|herbs?(?![a-z])|ingredient|reagent|phial|tincture"
+    },
+    {
+      "subject": "shields",
+      "match": "shield|armou?r|helmet|helm(?![a-z])|breastplate|chest ?plate|gauntlet|greaves?|pauldron|cuirass|chain ?mail|chainmail|mail ?shirt|buckler|vambrace|bracers?|gorget|visor"
+    },
+    {
+      "subject": "tools",
+      "match": "pick ?axe|mattock|shovel|spade|hoe(?![a-z])|rake(?![a-z])|scythe|sickle|pitch ?fork|saw(?![a-z])|handsaw|hand ?saw|chisel|tongs|trowel|broom|ladder|fishing|rod(?![a-z])|net(?![a-z])|tools?(?![a-z])|wrench|crowbar|sledge ?hammer|mallet|awl(?![a-z])|shears|scissors|needle|watering ?can|lockpick|pick(?![a-z])|hand ?drill|drill(?![a-z])|clamp|hand ?plane|hacksaw"
+    },
+    {
+      "subject": "blades",
+      "match": "sword|dagger|knife|knives|blade|sabre|saber|scimitar|katana|machete|cleaver|rapier|falchion|estoc|claymore|cutlass|dirk(?![a-z])|gladius|sheath|scabbard"
+    },
+    {
+      "subject": "axes",
+      "match": "axe(?![a-z])|axes(?![a-z])|hatchet|maces?(?![a-z])|hammer|maul(?![a-z])|club(?![a-z])|flail|morning ?star|warhammer|tomahawk|cudgel"
+    },
+    {
+      "subject": "ranged",
+      "match": "bows?(?![a-z])|longbow|shortbow|crossbow|arrows?(?![a-z])|quiver|spear|lance|halberd|polearm|pike(?![a-z])|glaive|trident|staff(?![a-z])|staves|wand(?![a-z])|javelin|sling(?![a-z])|harpoon|scepter|sceptre|pole ?axe"
+    },
+    {
+      "subject": "vehicles",
+      "match": "carts?(?![a-z])|wagon|carriage|wheelbarrow|wheel ?barrow|boat|ships?(?![a-z])|canoe|raft(?![a-z])|rowboat|sled(?![a-z])|sleigh|chariot|barge|wheel(?![a-z])"
+    },
+    {
+      "subject": "instruments",
+      "match": "lute|drums?(?![a-z])|flute|harp(?![a-z])|bagpipe|instrument|fiddle|violin|lyre|trumpet|dice(?![a-z])|chess|checkers|cards?(?![a-z])|toys?(?![a-z])|doll(?![a-z])|ball(?![a-z])|game ?board|dominoes|darts?(?![a-z])|sungka|mancala|board game"
+    },
+    {
+      "subject": "decor",
+      "match": "banner|flags?(?![a-z])|rugs?(?![a-z])|carpet|curtain|tapestry|painting|picture ?frame|portrait|signs?(?![a-z])|plaque|pillow|cushion|mirror|clock|wreath|garland|bunting|decoration|peg ?rack|coat ?rack|hook(?![a-z])"
+    },
+    {
+      "subject": "containers",
+      "match": "crate|barrel|chests?(?![a-z])|sack|bags?(?![a-z])|basket|box(?![a-z])|boxes|keg(?![a-z])|cask|urn(?![a-z])|jars?(?![a-z])|pots?(?![a-z])|amphora|bucket|coffer|pouch|vase|cage|backpack|satchel|strongbox|lid(?![a-z])"
+    },
+    {
+      "subject": "food",
+      "match": "food|bread|loaf|cheese|apples?(?! ?tree)|pear(?! ?tree)|fruit|vegetable|carrot|potato|onion|cabbage|turnip|beet(?![a-z])|leek|garlic|meat|ham(?![a-z])|steak|sausage|bacon|drumstick|eggs?(?![a-z])|pie(?![a-z])|cake|cookie|honey|wine|ale(?![a-z])|beer|mead(?![a-z])|drink|grapes?(?![a-z])|berry ?(bowl|basket)|berries|lemon|banana(?! ?(tree|plant))|croissant|jerky|soup|stew|porridge|corn ?cob|nuts?(?![a-z])"
+    },
+    {
+      "subject": "trinkets",
+      "match": "coins?(?![a-z])|gold(?![a-z])|gems?(?![a-z])|gemstone|jewel|rings?(?![a-z])|necklace|amulet|pendant|crown(?![a-z])|tiara|keys?(?![a-z])|book|scroll|maps?(?![a-z])|letter|envelope|chalice|idol(?![a-z])|relic|trophy|treasure|diamond|ruby|emerald|sapphire|brooch|signet|medal|figurine|hourglass|compass|spyglass|telescope|pocket ?watch|shells?(?![a-z])|spectacles"
+    },
+    {
+      "subject": "materials",
+      "match": "ingot|ores?(?![a-z])|planks?(?![a-z])|lumber|firewood|wood ?pile|stone ?block|hides?(?![a-z])|pelt|leather|cloth(?![a-z])|fabric|rope|chains?(?![a-z])|coal(?![a-z])|wool(?![a-z])|yarn|thread|nails?(?![a-z])|bones?(?![a-z])|feather|wax(?![a-z])|resin"
+    },
+    {
+      "subject": "fortifications",
+      "match": "castle|towers?(?![a-z])|turret|battlement|rampart|palisade|keep(?![a-z])|fort(?![a-z])|fortress|bastion|merlon|crenel|drawbridge|portcullis|gate ?house|barbican|watch ?tower|siege|catapult|trebuchet|ballista|cannon"
+    },
+    {
+      "subject": "ruins",
+      "match": "ruin|rubble|broken ?(wall|pillar|column|arch)|dungeon|crypt|tomb|catacomb|sarcophagus|coffin|graves?(?![a-z])|gravestone|tombstone|headstone|mausoleum"
+    },
+    {
+      "subject": "monuments",
+      "match": "statue|obelisk|monument|shrine|totem|pillar|column|fountain|stele|standing ?stone|menhir|runestone|memorial|plinth"
+    },
+    {
+      "subject": "village",
+      "match": "wells?(?![a-z])|dock|pier(?![a-z])|jetty|wharf|windmill|watermill|water ?wheel|mill(?![a-z])|lamp ?post|signpost|sign ?post|scarecrow|outhouse|hitching ?post|notice ?board"
+    },
+    {
+      "subject": "openings",
+      "match": "doors?(?![a-z])|door ?frame|doorway|windows?(?![a-z])|shutters?(?![a-z])|stairs?(?![a-z])|staircase|steps(?![a-z])|arch(?![a-z])|archway|trap ?door|hole ?cover|hatch(?![a-z])"
+    },
+    {
+      "subject": "roofs",
+      "match": "roofs?(?![a-z])|chimney|gable|shingles?(?![a-z])|thatch|eaves?(?![a-z])|dormer"
+    },
+    {
+      "subject": "floors",
+      "match": "floors?(?![a-z])|foundation|tiles?(?![a-z])|platform|deck(?![a-z])|decking|paving|cobble|balcony|ceiling"
+    },
+    {
+      "subject": "fences",
+      "match": "fence|gates?(?![a-z])|bridge|railing|rails?(?![a-z])|posts?(?![a-z])|barricade|hurdle|wattle|bollard|stile|picket"
+    },
+    {
+      "subject": "walls",
+      "match": "walls?(?![a-z])|beams?(?![a-z])|timber|brick|plaster|panel|support|corner|trim(?![a-z])|border|cover(?![a-z])|wood ?grid"
+    },
+    {
+      "subject": "buildings",
+      "match": "house|home(?![a-z])|cottage|hut(?![a-z])|cabin|barn(?![a-z])|shed(?![a-z])|tavern|inn(?![a-z])|shop(?![a-z])|church|chapel|temple|hall(?![a-z])|building|warehouse|granary|lodge|longhouse|manor"
+    },
+    {
+      "subject": "snow",
+      "match": "snow|ice(?![a-z])|icy(?![a-z])|frozen|glacier|icicle|tundra|frost|iceberg"
+    },
+    {
+      "subject": "crops",
+      "match": "wheat|corn(?![a-z])|maize|crops?(?![a-z])|pumpkin|tomato|lettuce|barley|rye(?![a-z])|oats(?![a-z])|hops?(?![a-z])|sunflower|vineyard|grape ?vine|flax|field(?![a-z])|farmland|furrow|melon|squash|bean ?stalk|sprout|seedling|(cabbage|carrot|potato) ?(plant|crop|patch)"
+    },
+    {
+      "subject": "caves",
+      "match": "crystal|stalagmite|stalactite|caves?(?![a-z])|cavern|geode|mineral|amethyst|quartz"
+    },
+    {
+      "subject": "conifers",
+      "match": "pine|firs?(?![a-z])|spruce|conifer|cedar|larch|cypress|redwood|sequoia|juniper|hemlock"
+    },
+    {
+      "subject": "tropical",
+      "match": "palms?(?![a-z])|banana ?(tree|plant)|bamboo|monstera|jungle|tropical|coconut|tree ?fern|cycad|bromeliad|mangrove|liana|ficus|kapok|anthurium|calathea|pachira"
+    },
+    {
+      "subject": "desert",
+      "match": "cactus|cacti|succulent|agave|aloe|yucca|joshua|desert|tumbleweed|saguaro|ocotillo|dry ?(bush|shrub|grass)|sagebrush"
+    },
+    {
+      "subject": "wetland",
+      "match": "reeds?(?![a-z])|cattail|bulrush|lily ?pad|lilypad|water ?lily|swamp|marsh|papyrus|rush(?![a-z])|rushes|bog(?![a-z])|duckweed"
+    },
+    {
+      "subject": "deadwood",
+      "match": "dead|stumps?(?![a-z])|logs?(?![a-z])|trunk|branch|twig|driftwood|fallen|snag(?![a-z])|rotten|roots?(?![a-z])"
+    },
+    {
+      "subject": "broadleaf",
+      "match": "trees?(?![a-z])|oak(?![a-z])|birch|maple|elm(?![a-z])|beech|willow|poplar|aspen|chestnut|linden|sycamore|acacia|hawthorn|alder|orchard|baobab"
+    },
+    {
+      "subject": "bushes",
+      "match": "bush|shrub|hedge|bramble|thicket|berry|holly|boxwood|thorn"
+    },
+    {
+      "subject": "groundcover",
+      "match": "grass|flowers?(?![a-z])|ferns?(?![a-z])|mushroom|toadstool|fungus|fungi|clover|weed|plants?(?![a-z])|petals?(?![a-z])|dandelion|daisy|tulip|roses?(?![a-z])|lavender|heather|moss|ivy(?![a-z])|vines?(?![a-z])|nettle|thistle|bluebell|poppy|lily(?![a-z])|orchid|leaves|leaf(?![a-z])"
+    },
+    {
+      "subject": "rocks",
+      "match": "rocks?(?![a-z])|boulder|stones?(?![a-z])|pebble|cliff|crag|mountain|outcrop|slate|scree|cairn"
+    },
+    {
+      "subject": "terrain",
+      "match": "ground|dirt|soil|mud(?![a-z])|sand(?![a-z])|gravel|forest ?floor|leaf ?litter|path(?![a-z])|asphalt|terrain|meadow"
+    },
+    {
+      "subject": "water",
+      "match": "water|river|lake|pond|waterfall|waves?(?![a-z])|ocean|puddle|stream|sea(?![a-z])"
+    }
+  ],
+  "maxTriangles": 150000,
+  "packs": [
+    {
+      "id": "quaternius-fantasy-props-megakit",
+      "title": "Fantasy Props MegaKit (Standard)",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/fantasy-props-megakit",
+      "family": "megakit",
+      "fit": "sure",
+      "why": "The anchor kit: Mike liked all 36 of its pieces shown in the survey.",
+      "include": "^extracted/Exports/glTF/.*\\.gltf$",
+      "subject": "misc"
+    },
+    {
+      "id": "quaternius-medieval-village-megakit",
+      "title": "Medieval Village MegaKit (Standard)",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/medieval-village-megakit",
+      "family": "megakit",
+      "fit": "sure",
+      "why": "The anchor kit: Mike approved the whole buildings assembled from it.",
+      "include": "^extracted/glTF/.*\\.gltf$",
+      "subject": "walls"
+    },
+    {
+      "id": "quaternius-stylized-nature-megakit",
+      "title": "Stylized Nature MegaKit (Standard)",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/stylized-nature-megakit",
+      "family": "megakit",
+      "fit": "sure",
+      "why": "Mike likes this kit's broadleaf trees, shrubs, grass, flowers and ferns.",
+      "include": "^extracted/glTF/.*\\.gltf$",
+      "subject": "groundcover",
+      "fits": [
+        {
+          "match": "pine",
+          "fit": "fence",
+          "why": "Mike found this kit's pines too cartoony, like Zelda."
+        },
+        {
+          "match": "twisted",
+          "fit": "fence",
+          "why": "Its twisting fantasy trunks lean further toward cartoon than the trees Mike liked."
+        },
+        {
+          "match": "dead",
+          "fit": "fence",
+          "why": "Mike liked scanned deadwood; this kit's has not been judged."
+        },
+        {
+          "match": "rock|pebble",
+          "fit": "fence",
+          "why": "No rock got a like in the survey, from any family."
+        }
+      ]
+    },
+    {
+      "id": "algumacoisaqq-fantasy-creatures",
+      "title": "Fantasy Creatures (Godot version)",
+      "creator": "Daniel Gruginski (algumacoisaqq)",
+      "license": "CC0 1.0",
+      "page": "https://algumacoisaqq.itch.io/fantasy-creatures-wolf-giant-rat-spider-wasp-centipede",
+      "family": "creatures",
+      "fit": "sure",
+      "why": "Mike's second choice for animals; its monsters share the same painted look.",
+      "include": "\\.glb$",
+      "coat": true,
+      "subject": "beasts"
+    },
+    {
+      "id": "algumacoisaqq-medieval-village-kit",
+      "title": "Medieval Village & Dungeon Kit (Godot version 0.3.0)",
+      "creator": "Daniel Gruginski (algumacoisaqq)",
+      "license": "CC0 1.0",
+      "page": "https://algumacoisaqq.itch.io/medieval-village-dungeon-kit",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "By the maker of Mike's second-choice animals: a large village, harbour, interior, dungeon and cave kit, built for a top-down camera, so it may look plain from street level.",
+      "include": "kit/models/(VK|VKI|VKT)/.*\\.glb$",
+      "exclude": "/(Test|Ground|Overlay)/|_[OXCF]{4}(_|\\.)",
+      "godotMaterials": "extracted/MedievalVillageKit_Godot/kit/materials",
+      "prefix": "(sm )?(vk[itv]? )?(prop )?(goblin |orc |poi )?",
+      "subject": "misc",
+      "rules": [
+        {
+          "subject": "openings",
+          "match": "leaf|door|hatch|window|shutter|stair|steps"
+        },
+        {
+          "subject": "village",
+          "match": "harbour|breakwater|crane|capstan|buoy|gangplank|anchor|fender|booth|cargo|bales|pier|dock|well|lean to|porch|build site"
+        },
+        {
+          "subject": "fortifications",
+          "match": "def(?![a-z])|bartizan|standin|gallery|passage|portal|entrance|vault|emblem|palisade|tower"
+        },
+        {
+          "subject": "forge",
+          "match": "bloomery|charcoal|cider press|clay pit|banker|pole lathe|anvil|kiln|furnace"
+        },
+        {
+          "subject": "village",
+          "match": "beacon|crier|dovecote|maypole|weathervane|pillory|stocks|pump|laundry|lavoir|washing line|stage|festoon|quay|shore|ramp|sluice|shack|slum|junk|millstone"
+        },
+        {
+          "subject": "forge",
+          "match": "dye vat|mash tun|shear legs|worktable|crucible|treadwheel|iron stock|display arms|goods rack|vein iron|mine set|sleeper|archery butt|scrap pile"
+        },
+        {
+          "subject": "stable",
+          "match": "skep|pen(?![a-z])|planter|creels|fish rack"
+        },
+        {
+          "subject": "chapel",
+          "match": "font|votive|urns|trophies"
+        },
+        {
+          "subject": "ruins",
+          "match": "pit |chasm|burrow|cocoon|colossus|apron|loot pile"
+        }
+      ],
+      "labelPrefix": "(sm )?(vk[itv]? )?(prop )?"
+    },
+    {
+      "id": "algumacoisaqq-medieval-weapons-items",
+      "title": "Medieval Weapons & Items (FBX version)",
+      "creator": "Daniel Gruginski (algumacoisaqq)",
+      "license": "CC0 1.0",
+      "page": "https://algumacoisaqq.itch.io/medieval-itens-pack",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "By the maker of Mike's second-choice animals, built the same way by AI-written Blender scripts: weapons and shields on shared atlases and items to lie on the ground, made for a top-down camera. Converted from FBX.",
+      "include": "^converted/.*\\.glb$",
+      "exclude": "_Rune\\.glb$",
+      "prefix": "(wpn |shd |it )?",
+      "labelPrefix": "(wpn |shd |it )?",
+      "subject": "misc",
+      "rules": [
+        {
+          "subject": "shields",
+          "match": "(buckler|heater|kite|knight ?shield|sunguard|tower)"
+        },
+        {
+          "subject": "shields",
+          "match": "(leather|studded leather|blackened studded leather|padded vest|chainmail|platemail|.* robe|(cloth|leather) gloves|iron gauntlets|shoes|(cloth|leather|heavy) boots)$"
+        },
+        {
+          "subject": "instruments",
+          "match": "war horn"
+        },
+        {
+          "subject": "containers",
+          "match": "(leather backpack|cloth sack)"
+        },
+        {
+          "subject": "materials",
+          "match": ".*\\bore$"
+        },
+        {
+          "subject": "trinkets",
+          "match": ".*\\b(necklace|locket|ring|signet|pendant|seal|whistle|garnet|ruby|sapphire|fetish|key|tome|scroll|gold|silver$)\\b"
+        },
+        {
+          "subject": "food",
+          "match": ".*\\b(meat|venison|fish|skewer|pumpkin)\\b"
+        },
+        {
+          "subject": "materials",
+          "match": ".*\\b(pelt|hide|antler|tusk|horn|fang|tail|gland|silk|wool|cotton|heartwood|chitin|leather|cloth|coal|timber|stone)\\b"
+        },
+        {
+          "subject": "potions",
+          "match": "(antidote|fireweed|yarrow|ghostpipe|goblin herb|wild garlic)"
+        },
+        {
+          "subject": "blades",
+          "match": "(flamberge|greatsword|rondel|orc cleaver)"
+        },
+        {
+          "subject": "axes",
+          "match": "(sunwarden|bearded axe|orc (war )?axe)"
+        },
+        {
+          "subject": "ranged",
+          "match": "(bolts?|quarterstaff|stormcaller|thornwood|wizard staff)$"
+        }
+      ],
+      "textures": [
+        {
+          "file": "/Shd_",
+          "material": "^M_Weapons$",
+          "color": "extracted/MedievalItems/Weapons/Textures/T_Shields.png"
+        },
+        {
+          "material": "^M_Weapons$",
+          "color": "extracted/MedievalItems/Weapons/Textures/T_Weapons.png"
+        },
+        {
+          "material": "^VK_Goods$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Goods_BC.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Goods_N.png"
+        },
+        {
+          "material": "^VK_Iron$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Iron_BC.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Iron_N.png"
+        },
+        {
+          "material": "^VK_Burlap$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Burlap_BC.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Burlap_N.png"
+        },
+        {
+          "material": "^VK_Rock$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Rock_BC.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Rock_N.png"
+        },
+        {
+          "material": "^VK_BarkOak$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VK_BarkOak_BC.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_BarkOak_N.png"
+        },
+        {
+          "material": "^VK_OreIronChunk$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VKX_VK_OreIronChunk_BaseColor.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_OreIron_N.png"
+        },
+        {
+          "material": "^VK_Wood$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Wood_BC.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Wood_N.png"
+        },
+        {
+          "material": "^VK_Paper$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Paper_BC.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Paper_N.png"
+        },
+        {
+          "material": "^VK_OreSilverChunk$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VKX_VK_OreSilverChunk_BaseColor.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_OreSilver_N.png"
+        },
+        {
+          "material": "^VK_StoneFresh$",
+          "color": "extracted/MedievalItems/Items/Textures/Kit/T_VKX_VK_StoneFresh_BaseColor.png",
+          "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Rock_N.png"
+        }
+      ]
+    },
+    {
+      "id": "quaternius-universal-base-characters",
+      "title": "Universal Base Characters (Standard)",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "page": "https://quaternius.itch.io/universal-base-characters",
+      "family": "megakit",
+      "fit": "sure",
+      "why": "The anchor line's people: hair and brows made for its base bodies.",
+      "include": "(Base Characters/Godot - UE/.*\\.gltf|Hairstyles/Origin at 0/glTF \\(Godot\\)/.*\\.gltf)$",
+      "subject": "characters",
+      "fits": [
+        {
+          "match": "superhero",
+          "fit": "fence",
+          "why": "The free tier holds only the muscular Superhero build; the Regular build that natural proportions call for is in the paid Source tier."
+        }
+      ]
+    },
+    {
+      "id": "quaternius-modular-character-outfits-fantasy",
+      "title": "Modular Character Outfits – Fantasy (Standard)",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "page": "https://quaternius.itch.io/modular-character-outfits-fantasy",
+      "family": "megakit",
+      "fit": "sure",
+      "why": "The anchor line's outfits, made for its base characters.",
+      "include": "glTF \\(Godot-Unreal\\)/(Outfits|Modular Parts)/.*\\.gltf$",
+      "rules": [
+        {
+          "subject": "outfits",
+          "match": "."
+        }
+      ],
+      "subject": "outfits"
+    },
+    {
+      "id": "quaternius-universal-animation-library",
+      "title": "Universal Animation Library (Standard)",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "page": "https://quaternius.itch.io/universal-animation-library",
+      "family": "megakit",
+      "fit": "sure",
+      "why": "The anchor line's animation library, shown on the mannequin that carries its free clips.",
+      "include": "Unreal-Godot/UAL1_Standard\\.glb$",
+      "rules": [
+        {
+          "subject": "characters",
+          "match": "."
+        }
+      ],
+      "subject": "characters",
+      "nameFromTitle": true
+    },
+    {
+      "id": "quaternius-universal-animation-library-2",
+      "title": "Universal Animation Library 2 (Standard)",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "page": "https://quaternius.itch.io/universal-animation-library-2",
+      "family": "megakit",
+      "fit": "sure",
+      "why": "The anchor line's second animation library, shown on its mannequins.",
+      "include": "(Unreal-Godot/UAL2_Standard|Mannequin_F)\\.glb$",
+      "rules": [
+        {
+          "subject": "characters",
+          "match": "."
+        }
+      ],
+      "subject": "characters"
+    },
+    {
+      "id": "polyhaven-models",
+      "title": "Poly Haven models",
+      "creator": "Poly Haven and its scan authors",
+      "license": "CC0 1.0",
+      "page": "https://polyhaven.com/models",
+      "family": "polyhaven",
+      "fit": "fence",
+      "why": "Photo-scanned: real-sized and grounded, but photographic rather than painted.",
+      "include": "\\.gltf$",
+      "subject": "misc",
+      "fits": [
+        {
+          "match": "fir|pine|spruce|dead|trunk|stump|branch|shrub|bush|berry|fern|root",
+          "fit": "sure",
+          "why": "Mike liked Poly Haven's scanned fir, dead trunks, shrub, berry bush and fern."
+        }
+      ],
+      "exclude": "console|ukulele|football|baseball|binder|binocular|bolt_cutter|blowtorch|bunsen|can_rusted|chemistry|cigarette|cleaner|dartboard|dustpan|screwdriver|gamepad|gnome|hamburger|hand_truck|extinguisher|payphone|life_jacket|lifebuoy|lightbulb|lubricant|measuring_tape|medical|jerrycan|toolbox|thermos|airduct|electric|industrial_pipes|pipes_plastic|fluorescent|oil_tin|gas_mask|compressor|overhead_crane|plastic|plunger|postcard|propane|lpg|oil_can|grenade|tire_pump|pliers|trashbag|lighter|microscope|suitcase|wheelchair|sea_marker|ocean_buoy|barber|coffee table|industrial|metal stool|outdoor table|desk lamp|school desk|wrench|tool cart|drill press|tool chest|alarm clock|telephone|ammo|cardboard|cement|compost|caged|long life|food cans|hose|welding|garden gloves|rubber boots|mousetrap|spray|seeding tray|bar chair|arm chair 01|green chair|ottoman|sofa 01"
+    },
+    {
+      "id": "polyhaven-textures",
+      "title": "Poly Haven textures",
+      "creator": "Poly Haven and its scan authors",
+      "license": "CC0 1.0",
+      "page": "https://polyhaven.com/textures",
+      "family": "materials",
+      "fit": "fence",
+      "why": "Photographic physically based material: grounded, but Mike has not liked a photo ground yet and painted textures are the target.",
+      "surfaces": true,
+      "rules": [
+        {
+          "subject": "roofs",
+          "match": "roof|shingles?|thatch"
+        },
+        {
+          "subject": "walls",
+          "match": "brick|walls?(?![a-z])|plaster|stucco|mortar|masonry|facade"
+        },
+        {
+          "subject": "floors",
+          "match": "floor|planks?|tiles?|cobble|paving|parquet|boards?(?![a-z])|pathway"
+        },
+        {
+          "subject": "snow",
+          "match": "snow|ice(?![a-z])|frost"
+        },
+        {
+          "subject": "materials",
+          "match": "bark|wood|leather|fabric|wicker|rope|chainmail|bamboo|logs?(?![a-z])|clay"
+        },
+        {
+          "subject": "rocks",
+          "match": "rocks?(?![a-z])|cliff|boulder|stone|slate|granite|sandstone|lava|basalt"
+        },
+        {
+          "subject": "terrain",
+          "match": "."
+        }
+      ],
+      "subject": "terrain"
+    },
+    {
+      "id": "ambientcg",
+      "title": "ambientCG materials",
+      "creator": "ambientCG (Lennart Demes)",
+      "license": "CC0 1.0",
+      "page": "https://ambientcg.com/",
+      "family": "materials",
+      "fit": "fence",
+      "why": "Photographic physically based material: grounded, but Mike has not liked a photo ground yet and painted textures are the target.",
+      "surfaces": true,
+      "rules": [
+        {
+          "subject": "roofs",
+          "match": "roof|shingles?|thatch"
+        },
+        {
+          "subject": "walls",
+          "match": "brick|walls?(?![a-z])|plaster|stucco|mortar|masonry|facade"
+        },
+        {
+          "subject": "floors",
+          "match": "floor|planks?|tiles?|cobble|paving|parquet|boards?(?![a-z])|pathway"
+        },
+        {
+          "subject": "snow",
+          "match": "snow|ice(?![a-z])|frost"
+        },
+        {
+          "subject": "materials",
+          "match": "bark|wood|leather|fabric|wicker|rope|chainmail|bamboo|logs?(?![a-z])|clay"
+        },
+        {
+          "subject": "rocks",
+          "match": "rocks?(?![a-z])|cliff|boulder|stone|slate|granite|sandstone|lava|basalt"
+        },
+        {
+          "subject": "terrain",
+          "match": "."
+        }
+      ],
+      "subject": "terrain"
+    },
+    {
+      "id": "loafbrr-mines-and-caves",
+      "title": "Mines and Cave Modular Set",
+      "creator": "loafbrr",
+      "license": "CC0 1.0",
+      "page": "https://loafbrr.itch.io/mines-and-cave-set",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "A mine and cave kit on shared trim sheets, built like the anchor kits; its light pieces may look faceted up close.",
+      "include": "gltf/Modular_Mine_Set\\.glb$",
+      "split": true,
+      "subject": "caves",
+      "textures": [
+        {
+          "material": "cart",
+          "color": "extracted/Textures/MineCarts/Mine_Carts_1k_Diffuse.png",
+          "normal": "extracted/Textures/MineCarts/Mine_Carts_1k_Normal.png",
+          "roughness": "extracted/Textures/MineCarts/Mine_Carts_1k_Roughness.png"
+        },
+        {
+          "material": "trim",
+          "color": "extracted/Textures/MineTrim/MineTrim_1k_Diffuse.png",
+          "normal": "extracted/Textures/MineTrim/MineTrim_1k_Normal.png",
+          "roughness": "extracted/Textures/MineTrim/MineTrim_1k_Roughness.png"
+        },
+        {
+          "material": "ground|walls",
+          "color": "extracted/Textures/MinesGround/Mines_Ground_1k_Diffuse.png",
+          "normal": "extracted/Textures/MinesGround/Mines_Ground_1k_Normal.png",
+          "roughness": "extracted/Textures/MinesGround/Mines_Ground_1k_Roughness.png"
+        }
+      ]
+    },
+    {
+      "id": "sketchfab-1774a072f1cd45bf9c0875c1a23919a7",
+      "title": "10 Bows and Cross Bows",
+      "creator": "Gintoki1234 (@Gintoki1234)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/1774a072f1cd45bf9c0875c1a23919a7",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Real bow and crossbow proportions in a physically based finish; candidates for the low-poly bow placeholders.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "ranged",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-29f57d035b6047838a01e3b593c79f4f",
+      "title": "Langeid Axe - Viking axe",
+      "creator": "frkmont1234 (@frkmont)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/29f57d035b6047838a01e3b593c79f4f",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A reconstructed Viking axe: grounded shape, realistic finish.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-2b4086035df94d9e88fd0f18d34b3872",
+      "title": "Realistic Animated Donkey 3D Model",
+      "creator": "WildMesh 3D (@WildMesh_3D)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/2b4086035df94d9e88fd0f18d34b3872",
+      "family": "wildmesh",
+      "fit": "fence",
+      "why": "WildMesh 3D's free realistic donkey: a species the painted set lacks, with photo-like hair.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "farm",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-787834f9caa2474d9f1814b807c072d7",
+      "title": "Realistic Animated Elk 3D Model",
+      "creator": "WildMesh 3D (@WildMesh_3D)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/787834f9caa2474d9f1814b807c072d7",
+      "family": "wildmesh",
+      "fit": "fence",
+      "why": "WildMesh 3D's free realistic version: the anatomy of Mike's first-choice animals, with photo-like fur instead of their painted coat.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "deer",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-b6172618aa304473a4cf7b9246c0a218",
+      "title": "Realistic Animated Doe 3D Model",
+      "creator": "WildMesh 3D (@WildMesh_3D)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/b6172618aa304473a4cf7b9246c0a218",
+      "family": "wildmesh",
+      "fit": "fence",
+      "why": "WildMesh 3D's free realistic version: the anatomy of Mike's first-choice animals, with photo-like fur instead of their painted coat.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "deer",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-b84b734847344cb6a81b9102a64ac63b",
+      "title": "Stylized Palm tree set",
+      "creator": "Parelaxel (@parelaxel)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/b84b734847344cb6a81b9102a64ac63b",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Stylized palms for coasts and tropics; not yet checked against the anchor.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "tropical",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-bb14c2bb679b4d0bb1c578a27e2ddabf",
+      "title": "Acacia tree",
+      "creator": "evolveduk (@evolveduk)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/bb14c2bb679b4d0bb1c578a27e2ddabf",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Natural acacia branching from a tree generator, with photographic textures.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "broadleaf",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-beb76533529845ed8d92d921a58c3517",
+      "title": "Workshop Tools – Hand-Painted Stylized Pack",
+      "creator": "Hermit1_CG (@victorbaibakov)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/beb76533529845ed8d92d921a58c3517",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted workshop tools; not yet compared with the anchor kit.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "tools",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-bffc3c87d2d148ff8533e1cc8a11c9f1",
+      "title": "Realistic Animated Bear 3D Model",
+      "creator": "WildMesh 3D (@WildMesh_3D)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/bffc3c87d2d148ff8533e1cc8a11c9f1",
+      "family": "wildmesh",
+      "fit": "fence",
+      "why": "WildMesh 3D's free realistic version: the anatomy of Mike's first-choice animals, with photo-like fur instead of their painted coat.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "predators",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-fd45191815c14261b873dcd8e32ed376",
+      "title": "Stylized Rocks and Cliffs Pack - Game Ready",
+      "creator": "3dmarkus.art (@3dmarkus.art)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/fd45191815c14261b873dcd8e32ed376",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted rocks and cliffs; no rock has a like yet.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "rocks",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-b98b8f64d935415aab0fe9b70074511f",
+      "title": "Medieval Shield",
+      "creator": "Artem Mykhailov (@CGArtem)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/b98b8f64d935415aab0fe9b70074511f",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted round shield with a carved iron rim and boss: grounded shape, close to the anchor.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-cb2e607fc7734e6fbf84211b6a65912f",
+      "title": "Weapon set",
+      "creator": "rudolfs (@rudolfs)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/cb2e607fc7734e6fbf84211b6a65912f",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted set (shield, axes, hammer, sword, dagger, spear, scythe, mace) on simple real shapes.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "blades",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-471f1dfb2d1d40d6994be92047de3645",
+      "title": "Medieval Shield",
+      "creator": "Kirhl (@Kirhl)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/471f1dfb2d1d40d6994be92047de3645",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A quartered round shield with painted planks and iron detail.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.414,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-2f2a744043044a11be8143b3e3d83341",
+      "title": "Stylized Axe",
+      "creator": "jellystuff (@jellystuff)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/2f2a744043044a11be8143b3e3d83341",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand axe with a bound wooden haft; Sketchfab's converted file has no texture, so it shows in flat colour.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-2a3aba2c1ef041168fab0c595e2e5882",
+      "title": "Medieval Wood Heater Shield",
+      "creator": "iedalton (@iedalton)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/2a3aba2c1ef041168fab0c595e2e5882",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A plain wooden heater shield with an iron rim.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.443,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-e4b1e2640ee44f149a5f57994716d491",
+      "title": "shield and sword",
+      "creator": "Mostafa (@patroo)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e4b1e2640ee44f149a5f57994716d491",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted wooden kite shield and an arming sword.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "shields",
+      "unit": 0.191,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-ad49cafef90c4b00a8a1e675e01fe487",
+      "title": "Axe in Stump | [Stylized]",
+      "creator": "XimovsYZ (@ximovsstudio)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/ad49cafef90c4b00a8a1e675e01fe487",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted axe left in a chopping stump.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.518,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-a0c1d59396094833b59f9bf12a16064b",
+      "title": "Rusty Bandit Weapon Kit - Single Texture",
+      "creator": "Jack Bronswijk (@Jack_Bronswijk)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/a0c1d59396094833b59f9bf12a16064b",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Rusty bandit swords, axes and maces sharing one texture, like the anchor's texture sets.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "blades",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-ad7aacac8cc64df2b0cbf0a8a2feebf4",
+      "title": "Medieval Sword and Shield Asset 1/2",
+      "creator": "Uğur Yakışık (@UgurYksk)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/ad7aacac8cc64df2b0cbf0a8a2feebf4",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted crusader kite shield and a sword.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.00799,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-e88fb2f729ec4e80886ad8e8448d7476",
+      "title": "Stylized Medieval Weapon Pack",
+      "creator": "Ata08 (@Atakhani)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e88fb2f729ec4e80886ad8e8448d7476",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted set of axes, spears and swords at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-87b441bd69ba4289ba71c3d2eb8086b9",
+      "title": "Hand Axe - [ Diablo II ]",
+      "creator": "Ole Gunnar Isager (@FrenchBaguette)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/87b441bd69ba4289ba71c3d2eb8086b9",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted hatchet with a worn haft: grounded and light.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.0167,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-bd46de8bbfd74b5cb821eb06ac668542",
+      "title": "Viking shield",
+      "creator": "kozachoks (@kozachoks)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/bd46de8bbfd74b5cb821eb06ac668542",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted wooden round shield with an iron boss and rim.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.0085,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-d848db788bc041ddab8a51c7836979d2",
+      "title": "Worn Round Shield",
+      "creator": "iedalton (@iedalton)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d848db788bc041ddab8a51c7836979d2",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A worn wooden round shield.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.4,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-ae1941da1a99487581f7e966d6793794",
+      "title": "Blue Heater Shields",
+      "creator": "IZ (@I.Z.)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/ae1941da1a99487581f7e966d6793794",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Three painted heraldic heater shields.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.0334,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-c84ba4e077bb4bfe935168ed9c7308f4",
+      "title": "hand paint weapon",
+      "creator": "ismailov.dima (@ismailov.dima)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/c84ba4e077bb4bfe935168ed9c7308f4",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted cleaver-sword and a small round shield, very light.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "blades",
+      "unit": 0.194,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-5f4743932844464885abb92ff79ccaf7",
+      "title": "Medieval stylized shield",
+      "creator": "s.navajon (@s.navajon)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/5f4743932844464885abb92ff79ccaf7",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted wooden round shield with iron fittings.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-106a3c79b827407890396feaf5110722",
+      "title": "Viking round shield",
+      "creator": "Damla Yagli (@ddamlayagli)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/106a3c79b827407890396feaf5110722",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A damaged painted round shield.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.0024,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-8847559a145a4135859966647c606190",
+      "title": "Stylized Axe - Barbarian",
+      "creator": "Miguel Fonseca (@Miguel.Fonseca)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/8847559a145a4135859966647c606190",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted bearded axe with an engraved head.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-4b26abeac2b84dfa86f5dd9d51bfc260",
+      "title": "Nordic Shield",
+      "creator": "Kelisei Ventura (@frankestudios71)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/4b26abeac2b84dfa86f5dd9d51bfc260",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A planked round shield with a steel boss; more realistic than painted.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-345f953df3b14ebf808d4711d8d75745",
+      "title": "Round shield",
+      "creator": "Mihail (@-wMw-)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/345f953df3b14ebf808d4711d8d75745",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted round shield with a red pattern and an iron boss.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-8c05f49feda84b888ff66ef3e5f78110",
+      "title": "Light wooden stylized bow",
+      "creator": "Anderson Oliveira (@anderson.paulo.pixel)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/8c05f49feda84b888ff66ef3e5f78110",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A plain wooden self bow; a candidate for the low-poly bow placeholder.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "ranged",
+      "unit": 0.457,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-f537f44fef284bee9ed606525fa071e8",
+      "title": "\"Lost Hatchet\"",
+      "creator": "LinkN7 (@LinkN152)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/f537f44fef284bee9ed606525fa071e8",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted hatchet with a worn haft, very light.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "excludePieces": "^circle",
+      "subject": "axes",
+      "unit": 0.0978,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-36bb4e0838cd4be68b0630bf8130ab06",
+      "title": "Round Shield (free model)",
+      "creator": "WixZ (@wixz42)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/36bb4e0838cd4be68b0630bf8130ab06",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted plank round shield with cut marks.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 1.81,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-112423ffd5ba441f80dcca5083dc4f71",
+      "title": "Medieval One Handed Mace",
+      "creator": "iedalton (@iedalton)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/112423ffd5ba441f80dcca5083dc4f71",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A one-handed flanged mace at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.174,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-c4c7d9fac267491ab6a53856ee7492d7",
+      "title": "Stylized Mace",
+      "creator": "Linomig (@linomig)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/c4c7d9fac267491ab6a53856ee7492d7",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted morning star with a wrapped grip.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.628,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-610aebdcddc4477f9500b3e558d70687",
+      "title": "Medieval one-handed viking axe 1",
+      "creator": "Pernach (@pernach)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/610aebdcddc4477f9500b3e558d70687",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A one-handed Viking axe at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.507,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-3d57ae70e5a84eaebaf8218d9b06825f",
+      "title": "Norse Axe",
+      "creator": "Kelisei Ventura (@frankestudios71)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/3d57ae70e5a84eaebaf8218d9b06825f",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A Norse bearded axe with a wrapped haft.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-fedbf609daa94166b0875bd9d65080c3",
+      "title": "Axe Remake",
+      "creator": "Mats de Wind (@matsdewind)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/fedbf609daa94166b0875bd9d65080c3",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A plain bearded axe, very light.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.304,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-531dea97660a4a37b6844eb1c2c8f098",
+      "title": "Simple Stylized Spear",
+      "creator": "Normal Map Enjoyer (@normalmapenjoyer)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/531dea97660a4a37b6844eb1c2c8f098",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A plain spear; a candidate for the low-poly spear placeholder.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "ranged",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-f3f8ae18ec8f4ff6a7e92bbe48a863a9",
+      "title": "Spear",
+      "creator": "bradley1 (@bradley1)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/f3f8ae18ec8f4ff6a7e92bbe48a863a9",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted leaf-bladed spear with a wrapped shaft.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "ranged",
+      "unit": 0.196,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-a8d29ed02c604d9e88ae849c4b65389c",
+      "title": "Stylised Weapon Rack",
+      "creator": "chaycespace (@chaycelynch)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/a8d29ed02c604d9e88ae849c4b65389c",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted wooden weapon rack.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "forge",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-27f3fa3562c2442bbfcbbd278d7b94bf",
+      "title": "Dwarven Axe",
+      "creator": "zhixson (@zhixson)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/27f3fa3562c2442bbfcbbd278d7b94bf",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted dwarven axe; its curved head leans toward fantasy.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.00269,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-ad3fa290fb674ad3b980d28b132752dd",
+      "title": "Medieval Axe 01",
+      "creator": "Willy Decarpentrie (@skudgee)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/ad3fa290fb674ad3b980d28b132752dd",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted felling axe with a red-wrapped haft.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.109,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-46c68918ea8a4d848a8f7d9a1faa11b3",
+      "title": "Stylized sword and shield",
+      "creator": "Avgust9 (@Avgust9)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/46c68918ea8a4d848a8f7d9a1faa11b3",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted round shield and sword; the rim is thick and slightly cartoony.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "shields",
+      "unit": 0.212,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-979c74bf5382499c9a39540665b7a0ef",
+      "title": "stylised Greatsword And Hammer",
+      "creator": "guillaume bolis (@guillaume.bolis)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/979c74bf5382499c9a39540665b7a0ef",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted greatsword and war hammer; the hammer is oversized.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "blades",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-bb3d01e7dfd941ecaa8757d59aa560b1",
+      "title": "Miner's Pickaxe",
+      "creator": "Alex Sanches (@ASanches)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/bb3d01e7dfd941ecaa8757d59aa560b1",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted miner's pickaxe, very light.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "tools",
+      "unit": 0.362,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-9f810654f8ea424d922035e3457d6804",
+      "title": "Stylized Javelin",
+      "creator": "Mateus Schwaab (@Mehrus)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/9f810654f8ea424d922035e3457d6804",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted javelin.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "ranged",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-40075591faf644fda9d004a38505b4a8",
+      "title": "A Small Stylized Cart With a Weapon Shop",
+      "creator": "Michał Solarek (@misiek13)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/40075591faf644fda9d004a38505b4a8",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted weapon seller's cart with racks and crates; heavy.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "market",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-4e62da9f06ac422c818b820be4a42718",
+      "title": "Medieval Merchant Stand Fantasy Weapon Shop",
+      "creator": "john (@hk6305122)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/4e62da9f06ac422c818b820be4a42718",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted weapon shop stall; heavy.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "market",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-076f65787dfa4b4288cd879c5ac66c6b",
+      "title": "Stylized Viking Knife.",
+      "creator": "Sam (@rawpuwnzl)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/076f65787dfa4b4288cd879c5ac66c6b",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted Viking knife and sheath.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "unit": 2.27,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-5168826a79334feeb32a20e70526caf8",
+      "title": "Viking Axe",
+      "creator": "Onur (@onurpearl)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/5168826a79334feeb32a20e70526caf8",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted Viking axe with an engraved head; slightly exaggerated.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-a5196192169d435882f7d58914071eed",
+      "title": "Stylized Viking Helmet",
+      "creator": "onlymorozov (@onlymorozov)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/a5196192169d435882f7d58914071eed",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted horned helmet; the ram horns lean toward fantasy.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-10fd97c7324743bba63649f2d4261bbc",
+      "title": "10 Maces/Clubs and War Hammers",
+      "creator": "Gintoki1234 (@Gintoki1234)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/10fd97c7324743bba63649f2d4261bbc",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Real-proportioned maces and war hammers in a physically based finish.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-31f7cd2d75914dc2af54a360039a1a05",
+      "title": "10 Polearms",
+      "creator": "Gintoki1234 (@Gintoki1234)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/31f7cd2d75914dc2af54a360039a1a05",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Real-proportioned polearms; candidates for the low-poly spear placeholders.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "ranged",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-022672498cd1481da0a1bd046c7d57b7",
+      "title": "10 Swords",
+      "creator": "Gintoki1234 (@Gintoki1234)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/022672498cd1481da0a1bd046c7d57b7",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Real-proportioned swords in a physically based finish.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "blades",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-85cd381ec24d4bd5b9c910053482b8f0",
+      "title": "10 Shields",
+      "creator": "Gintoki1234 (@Gintoki1234)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/85cd381ec24d4bd5b9c910053482b8f0",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Real-proportioned shields in a physically based finish.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-b8669282fa2e493c94d18c7252d46625",
+      "title": "10 Axes",
+      "creator": "Gintoki1234 (@Gintoki1234)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/b8669282fa2e493c94d18c7252d46625",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Real-proportioned axes in a physically based finish.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-hand-painted-axe",
+      "title": "Hand Painted Axe",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/hand-painted-axe",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted axe with a worn haft; very light. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "axes",
+      "unit": 0.088,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-hand-painted-axe-02",
+      "title": "Hand Painted Axe 02",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/hand-painted-axe-02",
+      "family": "painted",
+      "fit": "fence",
+      "why": "One hand-painted axe in four paints: clean, grunge and two high-contrast. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "axes",
+      "unit": 0.114,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w002-hand-painted-composite-axe",
+      "title": "[W002] Hand Painted - Composite Axe",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w002-hand-painted-composite-axe",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted bearded axe. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "axes",
+      "unit": 0.0857,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-low-poly-hand-painted-sword",
+      "title": "Low Poly Hand Painted Sword",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/low-poly-hand-painted-sword",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted arming sword; very light. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "blades",
+      "unit": 0.0428,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-stylized-woodcutting-axe",
+      "title": "Stylized Woodcutting Axe",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/stylized-woodcutting-axe",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted woodcutter's axe. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "axes",
+      "unit": 0.0963,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w001-hand-painted-composite-sword",
+      "title": "[W001] Hand Painted - Composite Sword",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w001-hand-painted-composite-sword",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted sword with a wrapped grip. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "blades",
+      "unit": 0.0909,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w003-composite-cleaver",
+      "title": "[W003] Composite Cleaver",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w003-composite-cleaver",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted cleaver-like blade. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "blades",
+      "unit": 0.0624,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w004-composite-mace",
+      "title": "[W004] Composite Mace",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w004-composite-mace",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted flanged mace. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "axes",
+      "unit": 0.475,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w005-hand-painted-composite-sword",
+      "title": "[W005] Hand Painted - Composite Sword",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w005-hand-painted-composite-sword",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted sword. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "blades",
+      "unit": 0.147,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w006-hand-painted-composite-sword",
+      "title": "[W006] Hand Painted - Composite Sword",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w006-hand-painted-composite-sword",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted sword. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "blades",
+      "unit": 0.113,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w007-mace",
+      "title": "[W007] Mace",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w007-mace",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted spiked mace. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "axes",
+      "unit": 0.157,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-w008-mace",
+      "title": "[W008] Mace",
+      "creator": "Price (OpenGameArt)",
+      "license": "CC0 1.0",
+      "page": "https://opengameart.org/content/w008-mace",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted mace. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "axes",
+      "unit": 0.171,
+      "nameFromTitle": true
+    },
+    {
+      "id": "oga-poleaxe-and-shield",
+      "title": "Poleaxe and Shield",
+      "creator": "Wolfgang Wozniak (Ouren on OpenGameArt)",
+      "license": "CC BY 3.0",
+      "page": "https://opengameart.org/content/poleaxe-and-shield",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted poleaxe and round shield. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "subject": "ranged",
+      "unit": 0.195
+    },
+    {
+      "id": "oga-bearded-viking-axe",
+      "title": "Bearded Viking Axe",
+      "creator": "Ulf (ulf on OpenGameArt)",
+      "license": "CC BY 3.0",
+      "page": "https://opengameart.org/content/bearded-viking-axe",
+      "family": "painted",
+      "fit": "fence",
+      "why": "An engraved bearded axe in new, used and old finishes; very low triangle count. Converted from the author's Blender file.",
+      "include": "^converted/.*\\.glb$",
+      "split": true,
+      "subject": "axes"
+    }
+  ],
+  "paid": [
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Fantasy Props MegaKit, Pro or Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/fantasy-props-megakit",
+      "price": "$9.99 Pro / $14.99 Source",
+      "license": "CC0 1.0",
+      "formats": "glTF, FBX, OBJ; Source adds .blend and engine projects",
+      "contents": "All 211 props (the free tier has 94): more weapons, shields, tools, stalls, chests, carts and banners, worn texture variants and collisions.",
+      "fit": "sure",
+      "why": "The anchor kit itself; Mike liked every piece of it shown so far."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Medieval Village MegaKit, Pro or Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/medieval-village-megakit",
+      "price": "$9.99 Pro / $14.99 Source",
+      "license": "CC0 1.0",
+      "formats": "glTF, FBX, OBJ; Source adds .blend",
+      "contents": "All 304 modular pieces (the free tier has about 170); Source's .blend files are the practical way to make the lighter corner posts and doors the game needs.",
+      "fit": "sure",
+      "why": "The anchor kit Mike's approved whole buildings came from."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Stylized Nature MegaKit, Pro or Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/stylized-nature-megakit",
+      "price": "$9.99 Pro / $14.99 Source",
+      "license": "CC0 1.0",
+      "formats": "glTF, FBX, OBJ; Source adds .blend and a grass wind shader",
+      "contents": "About 116 models: 40 trees with 7 swappable leaf types, 35 plants and flowers, 27 rocks, grass and bushes.",
+      "fit": "sure",
+      "why": "Mike likes its broadleaf trees, shrubs, grass and flowers; its pines stay on the fence."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Universal Base Characters, Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/universal-base-characters",
+      "price": "$19.99",
+      "license": "CC0 1.0",
+      "formats": "glTF, FBX, OBJ, rigged .blend",
+      "contents": "6 bodies in Regular, Teen and Superhero builds, 20 hairstyles, skin and eye shaders; humanoid rig, about 13,000 triangles.",
+      "fit": "sure",
+      "why": "The anchor line's people; the Regular build has the natural proportions the free Superhero tier lacks."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Modular Character Outfits – Fantasy, Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/modular-character-outfits-fantasy",
+      "price": "$20",
+      "license": "CC0 1.0",
+      "formats": "glTF, FBX, rigged .blend",
+      "contents": "12 outfits from about 70 parts (peasant, noble, wizard, ranger, knight and more), 3 texture variants each.",
+      "fit": "sure",
+      "why": "The anchor line's clothing for its base characters."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Universal Animation Library, Pro or Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/universal-animation-library",
+      "price": "$9.99 Pro / $14.99 Source",
+      "license": "CC0 1.0",
+      "formats": "FBX, GLB; Source adds the .blend rig",
+      "contents": "120+ humanoid clips (the free tier has 45): locomotion, combat, swimming, emotes, root-motion versions.",
+      "fit": "sure",
+      "why": "Made for the anchor characters."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Universal Animation Library 2, Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/universal-animation-library-2",
+      "price": "$14.99",
+      "license": "CC0 1.0",
+      "formats": "GLB, .blend",
+      "contents": "110–130 clips: farming, fishing, melee combos, climbing, zombie motion, idles and emotes.",
+      "fit": "sure",
+      "why": "Made for the anchor characters; covers work and social motion."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Bestiary – Dungeon Monsters Kit, Source",
+      "creator": "Quaternius",
+      "url": "https://quaternius.itch.io/bestiary-dungeon-monsters-kit",
+      "price": "$20 (a Standard zip may be free)",
+      "license": "Quaternius Asset License 1.0: game use allowed, files may not be redistributed",
+      "formats": "glTF, FBX, OBJ; Source adds .blend",
+      "contents": "7 armed monsters (goblin, skeleton, demon, lycan and others), 3 colours each, humanoid rig.",
+      "fit": "sure",
+      "why": "The anchor line's monsters; its licence keeps the files out of the public study collection."
+    },
+    {
+      "area": "The anchor kits (Quaternius)",
+      "name": "Quaternius Patreon (all Source kits)",
+      "creator": "Quaternius",
+      "url": "https://www.patreon.com/quaternius",
+      "price": "$20 a month for 30 credits (Source kits about 30% off)",
+      "license": "CC0 1.0 for the kits above",
+      "formats": "as above",
+      "contents": "Credits claim Source versions; patrons also get an all-in-one file of every pack.",
+      "fit": "sure",
+      "why": "The cheapest way to get every anchor kit's full version at once."
+    },
+    {
+      "area": "People and animation",
+      "name": "Human Basic Motions",
+      "creator": "Kevin Iglesias",
+      "url": "https://kevdev.itch.io/basic-motions",
+      "price": "$18 ($9 on sale)",
+      "license": "commercial use; terms not shown on the page",
+      "formats": "FBX, Unity, .blend",
+      "contents": "404 files: locomotion, swimming, sitting, sleeping, eating, looting, conversations, waving, cheering.",
+      "fit": "fence",
+      "why": "Style-neutral motion; retargeting to the Quaternius skeleton is unverified."
+    },
+    {
+      "area": "People and animation",
+      "name": "Human Crafting Animations",
+      "creator": "Kevin Iglesias",
+      "url": "https://kevdev.itch.io/human-villager-animations",
+      "price": "$25 ($65 for a four-pack bundle)",
+      "license": "commercial use; terms not shown on the page",
+      "formats": ".blend, Unity, Godot and Unreal downloads",
+      "contents": "322 files: chopping, ploughing, fishing, gathering, hammering, mining, sowing, skinning, watering.",
+      "fit": "fence",
+      "why": "Work loops for villagers; rig compatibility unverified."
+    },
+    {
+      "area": "People and animation",
+      "name": "Melee, Archer and Spellcasting animation packs",
+      "creator": "Kevin Iglesias",
+      "url": "https://kevdev.itch.io/",
+      "price": "$23 / $24 / $28",
+      "license": "commercial use; terms not shown on the page",
+      "formats": "FBX, Unity, .blend",
+      "contents": "One- and two-handed weapons, polearms, shields, bows and magic, with root-motion and in-place versions.",
+      "fit": "fence",
+      "why": "Covers guards, soldiers, hunters and mages; rig compatibility unverified."
+    },
+    {
+      "area": "Animals",
+      "name": "Ultimate 3D Animal Pack (100+ animals)",
+      "creator": "WildMesh 3D",
+      "url": "https://www.renderhub.com/wildmesh-3d/ultimate-3d-animal-pack",
+      "price": "$39.99 (normally $79.99)",
+      "license": "RenderHub Extended Use: commercial use, no file redistribution",
+      "formats": "FBX, .blend",
+      "contents": "Fox, boar, rabbit, lynx, raccoon, badger, beaver, crow, duck, goose, chicken, pheasant, trout, horse, donkey, cow, goat, cat, dogs, wolves, bears, deer and more; idle, walk, run, attack and death each.",
+      "fit": "fence",
+      "why": "The anatomy of Mike's first-choice animals, but with realistic rather than painted coats; would need a painted pass."
+    },
+    {
+      "area": "Animals",
+      "name": "Single realistic animals",
+      "creator": "WildMesh 3D",
+      "url": "https://www.renderhub.com/wildmesh-3d",
+      "price": "$10 each",
+      "license": "RenderHub Extended Use",
+      "formats": ".blend, FBX, OBJ, Unity",
+      "contents": "Moose, deer, elk, bighorn, doe, pronghorn, bear and others, rigged with many clips.",
+      "fit": "fence",
+      "why": "Same anatomy as the painted favourites; realistic coats."
+    },
+    {
+      "area": "Animals",
+      "name": "Animals Full Pack",
+      "creator": "PROTOFACTOR",
+      "url": "https://assetstore.unity.com/packages/3d/characters/animals/animals-full-pack-5032",
+      "price": "$149.99",
+      "license": "Unity Asset Store licence (no redistribution; must stop players extracting files)",
+      "formats": "Unity package",
+      "contents": "About 24 animals including bear, boar, fox, rabbit, wolf, deer, livestock, crow, pigeon, sparrow, gull, eagle and owl.",
+      "fit": "fence",
+      "why": "Natural anatomy in a dated semi-realistic finish, not painted."
+    },
+    {
+      "area": "Animals",
+      "name": "Forest Animals – Stylized Fantasy Characters",
+      "creator": "Holotna",
+      "url": "https://superhivemarket.com/products/forest-animals-stylized-fantasy-characters",
+      "price": "$9.99",
+      "license": "Royalty Free (no redistribution)",
+      "formats": ".blend, FBX, Unity",
+      "contents": "Badger, bear, boar, fox and wolf in 15 colours, 4 detail levels, 7 clips.",
+      "fit": "fence",
+      "why": "Cheap badger, boar and fox, but anime-style faces and low triangle counts risk a cartoon look."
+    },
+    {
+      "area": "Animals",
+      "name": "Stylized Fantasy Animals & Bugs Bundle",
+      "creator": "N-Hance Studio",
+      "url": "https://www.fab.com/listings/ab1bf772-1649-4ead-a52d-6f025324f210",
+      "price": "not verified (Fab blocked automated reading)",
+      "license": "Fab Standard (no redistribution; must stop players extracting files)",
+      "formats": "Unreal and Unity versions",
+      "contents": "21 creatures including fox, rabbit, beaver, raccoon, camel, ram, cobra, python and scorpion.",
+      "fit": "fence",
+      "why": "Hand-painted and broad, but probably more cartoonish than the anchor."
+    },
+    {
+      "area": "Animals",
+      "name": "Birds and Critters",
+      "creator": "3DRT",
+      "url": "https://assetstore.unity.com/packages/3d/characters/animals/3drt-birds-and-critters-25643",
+      "price": "$99",
+      "license": "Unity Asset Store licence",
+      "formats": "Unity package (single birds on Fab with FBX and glTF)",
+      "contents": "Gull, duck, stork, eagle, sparrow and swallow, animated.",
+      "fit": "fence",
+      "why": "Covers gulls and waterfowl the free sets lack; older semi-real look."
+    },
+    {
+      "area": "Animals",
+      "name": "SI – Animated Horse and Foal",
+      "creator": "Sheep in Try",
+      "url": "https://sheepintry.itch.io/si-animated-horse-and-foal",
+      "price": "$14.99",
+      "license": "not stated",
+      "formats": "FBX, Unity, Unreal",
+      "contents": "Horse, foal, saddle and bridle; 41 clips including trot, swim, jump and lie down.",
+      "fit": "fence",
+      "why": "Good mount animation; the geometry may look faceted."
+    },
+    {
+      "area": "Monsters",
+      "name": "Low Poly Character – Fantasy RPG line",
+      "creator": "Infinity PBR",
+      "url": "https://infinitypbr.itch.io/low-poly-goblin-unity",
+      "price": "$19.99 each",
+      "license": "not stated",
+      "formats": "Unity or Unreal packages",
+      "contents": "About 30 monsters: goblin, minotaur, gargoyle, mimic, bats, slime, skeleton, medusa, devils, giant worm.",
+      "fit": "fence",
+      "why": "Broad and cheap, but sold as low poly; check the previews for facets."
+    },
+    {
+      "area": "Monsters",
+      "name": "Treant and Dragon Monster Pack",
+      "creator": "Infinity PBR",
+      "url": "https://infinitypbr.itch.io/",
+      "price": "$55 treant / $75 dragons",
+      "license": "not stated",
+      "formats": "Unity package",
+      "contents": "A treant and dragons with shape variations and many clips.",
+      "fit": "fence",
+      "why": "Rare subjects in a semi-realistic finish, not painted."
+    },
+    {
+      "area": "Monsters",
+      "name": "Fantasy creature line (wyvern, dragons, griffon, werewolf, skeleton knight, kraken)",
+      "creator": "PROTOFACTOR",
+      "url": "https://sketchfab.com/protofactor",
+      "price": "wyvern about $34.99; full packs not verified",
+      "license": "Fab Standard or Unity licence",
+      "formats": "store files",
+      "contents": "Classic fantasy creatures with natural anatomy.",
+      "fit": "fence",
+      "why": "Natural anatomy with a dated MMO-style finish."
+    },
+    {
+      "area": "Monsters",
+      "name": "Stylized Fantasy Dragons Pack",
+      "creator": "N-Hance Studio",
+      "url": "https://www.fab.com/listings/d2cd19c2-0452-416f-ad8e-6bdb27ab4fff",
+      "price": "not verified",
+      "license": "Fab Standard",
+      "formats": "Unreal and Unity",
+      "contents": "Whelp, drake, dragon and elder dragon, hand-painted.",
+      "fit": "fence",
+      "why": "Possible drakes and wyverns; likely cartoonish."
+    },
+    {
+      "area": "Monsters",
+      "name": "Fantasy Monsters V2 Full Pack",
+      "creator": "ENTIGI",
+      "url": "https://assetstore.unity.com/packages/3d/characters/humanoids/fantasy/fantasy-monsters-v2-full-pack-ent-goblin-orc-shield-skull-31625",
+      "price": "$29",
+      "license": "Unity Asset Store licence",
+      "formats": "Unity package",
+      "contents": "Ent, goblin, orc and others, hand-painted (2016).",
+      "fit": "fence",
+      "why": "Old hand-painted pack; style unseen."
+    },
+    {
+      "area": "Nature",
+      "name": "Spruce Forest and Birch Forest – Game Ready with LODs",
+      "creator": "Silver Delivery",
+      "url": "https://silver-delivery.itch.io/spruce-forest-game-ready-with-lods",
+      "price": "$8.99 each ($4.49 on sale)",
+      "license": "creator's comment: commercial use, no resale",
+      "formats": ".blend, FBX, GLB, Unity, Godot",
+      "contents": "8 spruces and 4 birches with 4–5 detail levels, grass and bushes; about 545 vertices per tree.",
+      "fit": "fence",
+      "why": "The strongest conifer lead: painted in the Arcane style on natural species forms, very light."
+    },
+    {
+      "area": "Nature",
+      "name": "Paint Poly – Cliffs",
+      "creator": "Silver Delivery",
+      "url": "https://silver-delivery.itch.io/paint-poly-cliffs-lods-variation",
+      "price": "$6.99 ($3.49 on sale)",
+      "license": "not stated",
+      "formats": ".blend, FBX, GLB, Unity, Godot",
+      "contents": "4 cliffs with detail levels in normal, desert and dark colours.",
+      "fit": "fence",
+      "why": "Painted cliffs to match the spruce forest; no rock has a like yet."
+    },
+    {
+      "area": "Nature",
+      "name": "Stylized Foliage and Nature Pack (bundle)",
+      "creator": "Cratial 3D",
+      "url": "https://superhivemarket.com/products/stylized-foliage-and-nature-pack",
+      "price": "$39.99 (single kits $12.99–14.99)",
+      "license": "Royalty Free (no redistribution)",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "153 models of 52 real species: boreal, swamp and bog, arctic tundra and Roman garden plants, plus a conifer mini-kit.",
+      "fit": "fence",
+      "why": "Real species for biomes the free sets miss; look and triangle counts unconfirmed."
+    },
+    {
+      "area": "Nature",
+      "name": "Stylized Desert, Tropical, Pine Forest and Forest Nature Kits",
+      "creator": "Cratial 3D",
+      "url": "https://superhivemarket.com/products/stylized-desert-nature-kit",
+      "price": "$17.99 / $19.99 / $19.99 / $21.99",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "Saguaro and other cacti, yucca and creosote; palms, bananas and volcanic rock; pines, logs and ferns; broadleaf trees and flowers.",
+      "fit": "fence",
+      "why": "Species-accurate biome kits; check the pines and the palette against the anchor."
+    },
+    {
+      "area": "Nature",
+      "name": "Stylized Tree Collection",
+      "creator": "Cratial 3D",
+      "url": "https://superhivemarket.com/products/stylized-tree-collection",
+      "price": "$19.99 (each species kit $10.99)",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "18 trees: 6 birch, 6 maple, 6 oak, 3 leaf colours each.",
+      "fit": "fence",
+      "why": "Broadleaf species with textured bark; crowns not yet compared."
+    },
+    {
+      "area": "Nature",
+      "name": "Forest – Stylized Fantasy Environment",
+      "creator": "Holotna",
+      "url": "https://superhivemarket.com/products/forest-stylized-fantasy-environment",
+      "price": "$9.99",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, Unity",
+      "contents": "3 trees (478–1,610 triangles), bush, ferns, flowers, grass and ivy.",
+      "fit": "fence",
+      "why": "Within the nature budget and includes ivy."
+    },
+    {
+      "area": "Nature",
+      "name": "NatureForge Stylized Woodland",
+      "creator": "EmaceArt",
+      "url": "https://emaceart.itch.io/nature-essentials-stylized-woodland-environment",
+      "price": "$35 ($8.75 on sale)",
+      "license": "commercial use, no standalone redistribution",
+      "formats": "FBX, GLB, Unity, Godot, .blend",
+      "contents": "388 models: 26 trees, 13 crowns, 21 cliffs, 21 rocks, 75 fences, 14 bridges.",
+      "fit": "fence",
+      "why": "Large and cheap on sale; its twisted dark-fantasy crowns may be over-stylized."
+    },
+    {
+      "area": "Nature",
+      "name": "Fantasy Forest Environment",
+      "creator": "TriForge Assets",
+      "url": "https://assetstore.unity.com/packages/3d/environments/fantasy/fantasy-forest-environment-34245",
+      "price": "$24.50 ($49)",
+      "license": "Unity Asset Store licence",
+      "formats": "Unity package",
+      "contents": "120+ prefabs: conifers, deciduous and birch with autumn and winter versions, bushes, rocks, mushrooms.",
+      "fit": "fence",
+      "why": "Painted forest with seasons; tagged cartoony."
+    },
+    {
+      "area": "Nature",
+      "name": "The Illustrated Nature",
+      "creator": "Artkovski",
+      "url": "https://marketplace.unity.com/packages/3d/vegetation/the-illustrated-nature-153939",
+      "price": "$40",
+      "license": "Unity Asset Store licence",
+      "formats": "Unity package (built-in pipeline)",
+      "contents": "Painterly pine, birch, beech, shrubs and grass.",
+      "fit": "fence",
+      "why": "A painterly look whose shaders would not carry over."
+    },
+    {
+      "area": "Nature",
+      "name": "Stylized Pine Trees Pack",
+      "creator": "Laurent Augendre",
+      "url": "https://augendrelaurent.gumroad.com/l/ycbsc",
+      "price": "€10 personal / €19.99 indie",
+      "license": "licence file in the pack",
+      "formats": "FBX, SpeedTree",
+      "contents": "16 pines with 4 detail levels and a billboard.",
+      "fit": "fence",
+      "why": "Built in SpeedTree, so real branching is likely."
+    },
+    {
+      "area": "Nature",
+      "name": "Stylized Terrain Textures Vol. 1",
+      "creator": "Orc Powered Games",
+      "url": "https://orcpoweredgames.itch.io/stylized-terrain-textures-vol-1",
+      "price": "$4.99",
+      "license": "commercial use, no resale",
+      "formats": "20 PBR textures at 2K",
+      "contents": "Sand, dirt, grass and cliff (5 each).",
+      "fit": "fence",
+      "why": "A cheap painted ground option; ground has no like yet."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Stylized Medieval Village kit and house generator",
+      "creator": "Nico Hartl",
+      "url": "https://nico-hartl.itch.io/stylized-medieval-village",
+      "price": "$39.99 ($25.99 on sale)",
+      "license": "not stated on the page",
+      "formats": "FBX with LODs, glTF, .blend, Unreal",
+      "contents": "104 modules on a hand-painted 2K trim sheet; walls 300–2,500 triangles.",
+      "fit": "fence",
+      "why": "The closest painted modular look; roofs may lean storybook, and pieces exceed the building-part budget."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Stylized Tavern Generator",
+      "creator": "Nico Hartl",
+      "url": "https://superhivemarket.com/products/stylized-tavern-generator",
+      "price": "$39.99",
+      "license": "royalty free (add-on code GPL)",
+      "formats": "Blender library; exports GLB and FBX",
+      "contents": "390 pieces: walls, floors, roofs, cellar, tower, furniture and room props for full interiors.",
+      "fit": "fence",
+      "why": "A painterly tavern with interiors; made with AI help."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Stylized Medieval Village Props",
+      "creator": "Cratial 3D",
+      "url": "https://superhivemarket.com/products/stylized-village-accessories-pack",
+      "price": "$27.99 for 74 (sub-packs $8.99–12.99)",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "Market stalls, notice board, cart, forge, anvil, bellows, weapon rack, bridge, dock, fences, well, benches, signs, pillory, tombstones.",
+      "fit": "fence",
+      "why": "Covers market, forge, well, bridge and dock in one sculpted set."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Medieval Tavern Asset Pack",
+      "creator": "Cratial 3D",
+      "url": "https://superhivemarket.com/products/medieval-tavern-asset-pack",
+      "price": "$16.99",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "32 tavern pieces: bar, benches, chairs, tables, barrels, bottles, tankards, candle holders.",
+      "fit": "fence",
+      "why": "Tavern fill in the same family."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Traditional Japanese Asset Pack",
+      "creator": "Cratial 3D",
+      "url": "https://superhivemarket.com/products/traditional-japanese-asset-pack",
+      "price": "$19.99",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "Torii gates, lanterns, fences, gong, benches, pottery, cart.",
+      "fit": "fence",
+      "why": "East-Asian props; no buildings."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Village, Wooden Fort, Camp and Mine – Stylized Fantasy Environment",
+      "creator": "Holotna",
+      "url": "https://superhivemarket.com/products/village-stylized-fantasy-environment",
+      "price": "$15.99 / $15.99 / $15.99 / $12.99 (six-pack bundle $25 on GameDev Market)",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, Unity",
+      "contents": "10 cabins with interiors, a wooden fort and army camp, tents and bedrolls, mine carts, tracks and timber frames.",
+      "fit": "fence",
+      "why": "Light stylized cabins, fort and camp; may look plain."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Medieval Fantasy Castle Pack",
+      "creator": "LapaModels",
+      "url": "https://superhivemarket.com/products/medieval-fantasy-castle-pack",
+      "price": "$14.99",
+      "license": "Royalty Free",
+      "formats": "FBX, .blend",
+      "contents": "400+ pieces: towers, walls, gates, arches, bridges, roofs, battlements; one assembled castle.",
+      "fit": "fence",
+      "why": "A large, cheap castle kit; look and triangle counts unverified."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Snowy Village, Arabic and Egypt modular packs",
+      "creator": "3D Tudor",
+      "url": "https://superhivemarket.com/products/3dt-snowy-village-modular-pack-for-blender--game-design",
+      "price": "$9.99–34.99 / $18.99–34.99 / $5.99",
+      "license": "Royalty Free, tiered (one project up to 2,000 sales at Standard)",
+      "formats": ".blend, FBX, GLB, Unreal",
+      "contents": "A hand-painted winter village; a desert town with towers, arches and markets; a sandstone kit with docks and ships.",
+      "fit": "fence",
+      "why": "Painterly regional styles the free sets lack."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Paint Poly – Wooden Architecture",
+      "creator": "Silver Delivery",
+      "url": "https://silver-delivery.itch.io/paint-poly-wooden-architecture-game-ready",
+      "price": "$12.99 ($6.49 on sale)",
+      "license": "not stated",
+      "formats": ".blend, FBX, Unity",
+      "contents": "91 wooden building meshes, walls averaging 193 vertices.",
+      "fit": "fence",
+      "why": "Painted and within the building-part budget."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Village Interiors Kit and Village Exteriors Kit",
+      "creator": "3DForge",
+      "url": "https://assetstore.unity.com/packages/slug/17033",
+      "price": "$59.99 each",
+      "license": "Unity Asset Store licence",
+      "formats": "Unity package",
+      "contents": "About 2,500 interior meshes (tavern, blacksmith, farm, graveyard, dungeon) and exteriors (shrines, cemeteries, fishing village, city walls).",
+      "fit": "fence",
+      "why": "The broadest interior kit found; older semi-realistic look."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Medieval Harbor Asset Collection",
+      "creator": "PolyCrate",
+      "url": "https://superhivemarket.com/products/medieval-harbor-asset-collection",
+      "price": "$119.99",
+      "license": "Royalty Free",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "56 pieces: medieval ships, boats, piers, docks and harbour props.",
+      "fit": "fence",
+      "why": "The only full harbour set found; probably too realistic."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Fantasy interior props",
+      "creator": "CaptainCatSparrow",
+      "url": "https://captaincatsparrow.itch.io/fantasy-interior-props",
+      "price": "$9.99",
+      "license": "commercial use, no redistribution",
+      "formats": "zip",
+      "contents": "60 kitchen props on one shared texture set (92–3,208 triangles).",
+      "fit": "fence",
+      "why": "Shared texture and in-budget counts, like the anchor."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "Kingdom Bundle (Castle, Village, Farm)",
+      "creator": "Polyart Studio",
+      "url": "https://www.fab.com/bundles/e09bb5d4-1c13-4294-bb00-1149f8dea73d",
+      "price": "about $380 personal (not verified)",
+      "license": "Fab Standard",
+      "formats": "built for Unreal; may be Unreal-only",
+      "contents": "2,700+ assets including a castle, a village with interiors and a farm with animals.",
+      "fit": "fence",
+      "why": "The biggest kit with interiors, but likely the WoW-like look Mike finds too cartoony."
+    },
+    {
+      "area": "Buildings and interiors",
+      "name": "FANTASTIC – Village Pack",
+      "creator": "Tidal Flask",
+      "url": "https://www.fab.com/listings/52529a12-e88e-41a0-8834-b87306f20c24",
+      "price": "$49.99 on CGTrader; Fab price not verified",
+      "license": "Royalty Free (must stop players extracting files)",
+      "formats": "FBX",
+      "contents": "420+ assets: 83 modular parts, 14 buildings, 247 props, 90 food.",
+      "fit": "fence",
+      "why": "Large stylized set; may be more colourful than the anchor."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Medieval Collection Armory",
+      "creator": "Lore-3D",
+      "url": "https://www.cgtrader.com/3d-model-packs/medieval-complete-armory-collection",
+      "price": "$249.99",
+      "license": "Royalty Free (no-AI)",
+      "formats": ".blend, FBX, OBJ, glTF, Unity, Unreal",
+      "contents": "80 products: armour sets and helmets, axe, bow and quiver, crossbow, daggers, lance, swords, mace, pole axe, shield, spear and warhammer, each in 5 tiers from crude to noble.",
+      "fit": "fence",
+      "why": "The widest weapon and armour coverage at real proportions; realistic finish needing a painted pass."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Medieval Collection Campsites",
+      "creator": "Lore-3D",
+      "url": "https://www.cgtrader.com/3d-model-packs/medieval-campsite-collection",
+      "price": "$149.99",
+      "license": "Royalty Free (no-AI)",
+      "formats": "OBJ, FBX, .blend, glTF, Unity, Unreal",
+      "contents": "35–41 pieces: tents in 3 sizes, torches, lantern, bedroll, banners.",
+      "fit": "fence",
+      "why": "Same family as the armory."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Medieval Helmets Collection",
+      "creator": "brice-roussillon",
+      "url": "https://www.cgtrader.com/3d-model-collections/medieval-helmets-collection",
+      "price": "$69.99 ($15.99–22 each)",
+      "license": "Royalty Free",
+      "formats": "MAX, OBJ, FBX",
+      "contents": "16 helmets: barbute, bascinets with mail, armets, sallets, kettle, morion; articulated visors.",
+      "fit": "fence",
+      "why": "Accurate helmet types; realistic finish."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Medieval Stylized Weapons – AAA Quality",
+      "creator": "300Mind",
+      "url": "https://superhivemarket.com/products/medieval-stylized-weapons---aaa-quality",
+      "price": "$39.99 (axe pack $9.99)",
+      "license": "\"Creative Commons\", variant not named: verify",
+      "formats": "FBX, OBJ, .blend",
+      "contents": "20 weapons: swords, axes, hammers, pernachs and shields.",
+      "fit": "fence",
+      "why": "Semi-realistic; 3–10 times the object budget."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "3D Stylized Medieval Weapons",
+      "creator": "Jason C. Sharp",
+      "url": "https://jasoncsharp.itch.io/3d-stylized-medieval-weapons-assets-for-games",
+      "price": "$3.50 on sale ($5)",
+      "license": "commercial use, no resale",
+      "formats": "FBX",
+      "contents": "10 weapons including spear, halberd and woodcutter's axe.",
+      "fit": "fence",
+      "why": "A cheap spear and woodcutter's axe; style unverified."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Adventurous – Tools",
+      "creator": "SilverDelivery",
+      "url": "https://superhivemarket.com/products/adventurous-tools",
+      "price": "$14.99",
+      "license": "Royalty Free",
+      "formats": "FBX, GLB, Unity, Godot, .blend",
+      "contents": "32 tools: scythe, sickle, shovels, pickaxe, axes, hammers, anvil, saw, chisel, keys.",
+      "fit": "fence",
+      "why": "Painterly and light, but tagged toon."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Medieval Anvil Prop Pack – Stylized PBR",
+      "creator": "IterK",
+      "url": "https://www.fab.com/listings/1c68b597-b763-4132-ad40-ac0c2c2b3d90",
+      "price": "not verified",
+      "license": "Fab Standard",
+      "formats": "FBX, OBJ",
+      "contents": "Anvil, stump, hammers and brackets on two shared hand-painted 2K sets (112–2,836 triangles).",
+      "fit": "fence",
+      "why": "Budget and shared texture sets match the anchor's rules."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Stylized Farm Tools",
+      "creator": "Outstanding Move",
+      "url": "https://www.fab.com/listings/fc6dd206-36dc-49e8-b31d-011d5ef49907",
+      "price": "not verified",
+      "license": "Fab Standard",
+      "formats": "GLB, FBX, OBJ",
+      "contents": "Shovel, sickle, pitchfork, rake, hoe, wooden hammer, watering can.",
+      "fit": "fence",
+      "why": "Direct candidates for the low-poly shovel and scythe placeholders."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Stylized Human Siege Weapons",
+      "creator": "N-Hance Studio",
+      "url": "https://www.fab.com/listings/0ca8912a-1d9c-49f7-98ac-36fbcb6e0b03",
+      "price": "not verified",
+      "license": "Fab Standard",
+      "formats": "Unity and Unreal texture sets",
+      "contents": "Ballista, ram, catapult and trebuchet, animated.",
+      "fit": "fence",
+      "why": "The only stylized siege set; its RTS look may be too cartoony."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Stylized Medieval Weapon Set",
+      "creator": "Daniel Gigena",
+      "url": "https://daniel-gigena.itch.io/stylized-medieval-weapon-set",
+      "price": "$2 or more",
+      "license": "Creator licence (not verified)",
+      "formats": "not verified",
+      "contents": "Axes, hammer, dagger, spear and swords.",
+      "fit": "fence",
+      "why": "Plain shapes and soft painted colour: the closest paid weapons found to the anchor. Its licence allows games but not redistribution, so it stays out of the public study collection."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Stylized Medieval Weapon Pack",
+      "creator": "MaxHit Games",
+      "url": "https://maxhitgames.itch.io/stylized-medieval-weapon-pack",
+      "price": "$10 or more",
+      "license": "Creator licence (not verified)",
+      "formats": "Blender and FBX; 2K texture maps",
+      "contents": "10 weapons with shields.",
+      "fit": "fence",
+      "why": "Painted weapons at real proportions. Its licence allows games but not redistribution, so it stays out of the public study collection."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Medieval Stylized Weapon Pack",
+      "creator": "br3dartist",
+      "url": "https://br3dartist.itch.io/medieval-stylized-weapon-pack",
+      "price": "$5.99 or more",
+      "license": "Creator licence (not verified)",
+      "formats": "not verified",
+      "contents": "Hand-painted weapons, shields and bows.",
+      "fit": "fence",
+      "why": "Hand-painted; check the shields for a storybook look. Its licence allows games but not redistribution, so it stays out of the public study collection."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Stylized Fantasy Swords",
+      "creator": "VertexFrog",
+      "url": "https://vertexfrog.itch.io/stylized-fantasy-swords",
+      "price": "$5 or more",
+      "license": "Creator licence (not verified)",
+      "formats": "not verified",
+      "contents": "Hand-painted swords, from the same maker as a free sample.",
+      "fit": "fence",
+      "why": "Hand-painted but fantasy-leaning blades. Its licence allows games but not redistribution, so it stays out of the public study collection."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Fantasy Armory: Weapons Pack",
+      "creator": "Unity Asset Store seller",
+      "url": "https://marketplace.unity.com/packages/3d/props/weapons/fantasy-armory-weapons-pack-20708",
+      "price": "not verified",
+      "license": "Unity Asset Store EULA",
+      "formats": "Unity package",
+      "contents": "Over 120 swords, axes, maces, spears, bows, wands and shields with hand-drawn textures.",
+      "fit": "fence",
+      "why": "The widest painted weapon set found; likely the hand-painted MMO look Mike finds too cartoony. The Unity licence's extraction clause needs a decision first."
+    },
+    {
+      "area": "Weapons, armour and tools",
+      "name": "Forged Legends – Stylized Fantasy Weapon Collection",
+      "creator": "CGTrader seller",
+      "url": "https://www.cgtrader.com/3d-model-collections/forged-legends-stylized-fantasy-weapon-collection",
+      "price": "not verified",
+      "license": "CGTrader royalty-free licence",
+      "formats": "not verified",
+      "contents": "A collection of stylized fantasy weapons.",
+      "fit": "fence",
+      "why": "Unseen in detail; CGTrader's licence clause against extraction needs a decision first."
+    },
+    {
+      "area": "Items and props",
+      "name": "Stylized Fantasy Meat Pack",
+      "creator": "Xaven",
+      "url": "https://www.renderhub.com/xaven/stylized-fantasy-meat-pack",
+      "price": "$5.99",
+      "license": "Extended Use",
+      "formats": ".blend, FBX, OBJ",
+      "contents": "30 meats: ham, bacon, sausages, ribs, chicken legs, steaks (about 800 triangles each).",
+      "fit": "fence",
+      "why": "A candidate for the low-poly meat placeholder; its preview is marked AI-made."
+    },
+    {
+      "area": "Items and props",
+      "name": "Stylized Seafood Fish Pack",
+      "creator": "CGTrader seller",
+      "url": "https://www.cgtrader.com/3d-models/food/miscellaneous/stylized-seafood-fish-pack-7-hand-painted-cooking-fishing",
+      "price": "$10.89",
+      "license": "Royalty Free",
+      "formats": "not verified",
+      "contents": "Whole fish, salmon steak, fillet and others, painted.",
+      "fit": "fence",
+      "why": "A candidate for the low-poly fish placeholder."
+    },
+    {
+      "area": "Items and props",
+      "name": "Stylized Medieval & Dark Fantasy Props Mega Pack",
+      "creator": "Goe Realms Studio",
+      "url": "https://www.fab.com/listings/c37ca060-4095-411c-b02d-e06c6a0234c2",
+      "price": "not verified",
+      "license": "Fab Standard",
+      "formats": ".blend, FBX",
+      "contents": "97 props: barrels, buckets, sacks, crates, chests, bottles, a blacksmith workshop, tavern items, signs, altars, lighting.",
+      "fit": "fence",
+      "why": "The largest hand-painted container set; may read WoW-like."
+    },
+    {
+      "area": "Items and props",
+      "name": "Medieval Fishing Props, Vol. 1 and 2",
+      "creator": "3DreaMax Studio",
+      "url": "https://www.fab.com/listings/2bebe92d-8104-4b90-89c9-a138bc89d38b",
+      "price": "not verified",
+      "license": "Fab Standard",
+      "formats": "Unreal 5.6+",
+      "contents": "Nets, traps, buoys, fish (fresh, dried, cut), crab, hooks, drying racks.",
+      "fit": "fence",
+      "why": "The only medieval fishing set found; realistic and Unreal-packaged."
+    },
+    {
+      "area": "Items and props",
+      "name": "Medieval Musical Instruments",
+      "creator": "3DreaMax Studio",
+      "url": "https://www.fab.com/listings/ab3f1a0b-2e58-4788-9dba-3ccf34845b56",
+      "price": "not verified",
+      "license": "Fab Standard",
+      "formats": "Unreal 5.6+",
+      "contents": "36 instruments: harps, lyre, lute, cittern, psaltery, drums, timpani, bagpipes.",
+      "fit": "fence",
+      "why": "The only medieval instrument set found; realistic."
+    },
+    {
+      "area": "Items and props",
+      "name": "Books and Scrolls vol-02",
+      "creator": "JoltBug",
+      "url": "https://marketplace.unity.com/packages/3d/props/books-and-scrolls-vol-02-73737",
+      "price": "$10",
+      "license": "Unity Asset Store licence",
+      "formats": "Unity package",
+      "contents": "57 hand-painted books, map scrolls, candles, inkpot and quill.",
+      "fit": "fence",
+      "why": "Covers books and maps; from 2016."
+    },
+    {
+      "area": "Items and props",
+      "name": "Stylized Medieval Caravan set",
+      "creator": "siega",
+      "url": "https://siega.itch.io/stylized-medieval-caravan-set",
+      "price": "$15",
+      "license": "not stated",
+      "formats": "zip",
+      "contents": "Wagon (1,404 triangles), chest, barrels and boxes.",
+      "fit": "fence",
+      "why": "Within budget; the boxes may look faceted."
+    },
+    {
+      "area": "Items and props",
+      "name": "Medieval Stylized 3D Props",
+      "creator": "Game Over Assets",
+      "url": "https://game-over-assets.itch.io/medieval-stylized-3d-props",
+      "price": "$19.99",
+      "license": "not stated",
+      "formats": "Unity",
+      "contents": "66 props: chests, barrels, crates, cauldrons, anvil, tools, wheelbarrow, wagon, books, candles, coins, torches.",
+      "fit": "fence",
+      "why": "Broad, but buyers report broken archives."
+    }
+  ],
+  "pending": [
+    {
+      "id": "sketchfab-da574cba504e4b83a3293f3d3bd067fb",
+      "title": "medieval sword",
+      "creator": "LowSeb (@lowseb)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/da574cba504e4b83a3293f3d3bd067fb",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A light medieval sword in a physically based finish.",
+      "subject": "blades"
+    },
+    {
+      "id": "sketchfab-80c25af6364e446c88529d3c07728f9d",
+      "title": "Stylized Medieval village External furniture",
+      "creator": "Booba Booba (@tymoteuszrudzenka)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/80c25af6364e446c88529d3c07728f9d",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Stylized village furniture; style not yet checked against the anchor.",
+      "subject": "village",
+      "split": true
+    },
+    {
+      "id": "sketchfab-c3b896134b184ad9a52f542b0ad539da",
+      "title": "Stylized Handpainted Props",
+      "creator": "Luka van Opstal (@lukavopstal)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/c3b896134b184ad9a52f542b0ad539da",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted props; not yet compared with the anchor kit.",
+      "subject": "misc",
+      "split": true
+    },
+    {
+      "id": "sketchfab-a06dfdc919334bfc95de720ad98f4295",
+      "title": "Medieval Tavern (2k vertices) - free game asset",
+      "creator": "Andy Woodhead (@Andywoodhead)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/a06dfdc919334bfc95de720ad98f4295",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A light hand-painted tavern; its painted-in shadows bake light into the texture.",
+      "subject": "buildings"
+    },
+    {
+      "id": "sketchfab-ef55c796859a4da6ad7124fb5280e197",
+      "title": "Stone masons workshop - free game asset",
+      "creator": "Andy Woodhead (@Andywoodhead)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/ef55c796859a4da6ad7124fb5280e197",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A stonemason's workshop, a subject no kit covers; realistic finish.",
+      "subject": "buildings"
+    },
+    {
+      "id": "sketchfab-0f358eaab21d4e70836ad855de34c423",
+      "title": "Asset Pack - Blacksmith Equipment",
+      "creator": "Mike Farrant (@MikeFarrant)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/0f358eaab21d4e70836ad855de34c423",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A complete forge set; historical finish that would need a painted pass.",
+      "subject": "forge",
+      "split": true
+    },
+    {
+      "id": "sketchfab-e543a102465a4fbdb2eb89e3b8d3afb0",
+      "title": "Medieval Tools Set",
+      "creator": "Thangzy (@thangzy)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e543a102465a4fbdb2eb89e3b8d3afb0",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Forge tools in a semi-realistic finish.",
+      "subject": "forge",
+      "split": true
+    },
+    {
+      "id": "sketchfab-d93444656b204ddd8270b9a9be0d99ec",
+      "title": "The Blacksmith's",
+      "creator": "Aartee (@Aartee)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d93444656b204ddd8270b9a9be0d99ec",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "A stylized sculpted smithy; leans further from the anchor than its props.",
+      "subject": "buildings"
+    },
+    {
+      "id": "sketchfab-247c37e6a9694ae891398911876f0c14",
+      "title": "Throne Room",
+      "creator": "Uğur Yakışık (@UgurYksk)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/247c37e6a9694ae891398911876f0c14",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "The only free throne room found; many materials, realistic finish.",
+      "subject": "hall",
+      "split": true
+    },
+    {
+      "id": "sketchfab-377413861d004cd6b33680a948904b51",
+      "title": "Medieval Houses Asset",
+      "creator": "Uğur Yakışık (@UgurYksk)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/377413861d004cd6b33680a948904b51",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Three light medieval houses; finish not yet compared with the anchor.",
+      "subject": "buildings",
+      "split": true
+    },
+    {
+      "id": "sketchfab-62ccabc4e78b4822ac8c5af74fe9c66a",
+      "title": "Modular Dungeon Props",
+      "creator": "Tom (@just_polygons)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/62ccabc4e78b4822ac8c5af74fe9c66a",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "A small dungeon kit on a trim sheet, built the way the anchor kits are.",
+      "subject": "ruins",
+      "split": true
+    },
+    {
+      "id": "sketchfab-e86dd1bc858347f58d97330f258e0c9e",
+      "title": "Nord house",
+      "creator": "Linsort (@Linsort)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e86dd1bc858347f58d97330f258e0c9e",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "A nordic house with sculpted stylized forms.",
+      "subject": "buildings"
+    },
+    {
+      "id": "sketchfab-4099fd90094c400e987deb240078c38e",
+      "title": "Medieval Watchtower House",
+      "creator": "Krystian Zem (@Banketo)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/4099fd90094c400e987deb240078c38e",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted watchtower house; colour-only painting can read cartoony.",
+      "subject": "buildings"
+    },
+    {
+      "id": "sketchfab-d901a490ab2b4164b1db48bd6e3da519",
+      "title": "Spinning Wheel",
+      "creator": "marthayuill21 (@marthayuill21)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d901a490ab2b4164b1db48bd6e3da519",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "The only free spinning wheel found for a textiles room.",
+      "subject": "forge"
+    },
+    {
+      "id": "sketchfab-be36443ae66e487aaca4f84c014bff5a",
+      "title": "Goblin",
+      "creator": "C. Anastasiadis (@bagatir)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/be36443ae66e487aaca4f84c014bff5a",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A free, painted and animated goblin; its proportions may be exaggerated.",
+      "subject": "humanoids"
+    },
+    {
+      "id": "sketchfab-573e13159e7a4b2cad3fe34a1c754dcc",
+      "title": "Ape-like Goblin (Gameready)",
+      "creator": "Ivaskiv Grigory (@Livagof)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/573e13159e7a4b2cad3fe34a1c754dcc",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted goblin with a few clips; style not yet compared.",
+      "subject": "humanoids"
+    },
+    {
+      "id": "sketchfab-948938cd237d49a9868662213fa05543",
+      "title": "Hare (animated)",
+      "creator": "bluekiwi.dog (@bluekiwi.dog)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/948938cd237d49a9868662213fa05543",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "One of the few free hares with a natural form; fills a gap in the painted sets.",
+      "subject": "wildlife"
+    },
+    {
+      "id": "sketchfab-f1a74a0a076b403cb78be57efe31bea8",
+      "title": "Fennec Fox",
+      "creator": "Dylan Martínez Sánchez (@dylanmartinezs)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/f1a74a0a076b403cb78be57efe31bea8",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted fennec fox; proportions not yet checked.",
+      "subject": "predators"
+    },
+    {
+      "id": "sketchfab-745c105544784b9a80bbec49cccd1580",
+      "title": "Day 20 - Snowy Owl",
+      "creator": "Lilly! (@LillyanneTr)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/745c105544784b9a80bbec49cccd1580",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A free snowy owl, a bird the painted sets lack.",
+      "subject": "wildlife"
+    },
+    {
+      "id": "sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba",
+      "title": "Handpainted Tree Pack",
+      "creator": "rudolfs (@rudolfs)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d246b8b4439d44c6adc854ebc5ffc5ba",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted oak, pine, spruce and birch; check the crowns against natural growth.",
+      "subject": "broadleaf",
+      "split": true
+    },
+    {
+      "id": "sketchfab-46ac3c1a4c3645b1984a97568db54c5d",
+      "title": "Stylized pine tree pack",
+      "creator": "W_illness (@W_illness)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/46ac3c1a4c3645b1984a97568db54c5d",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Stylized study pines; check against the stacked-cone rejection.",
+      "subject": "conifers",
+      "split": true
+    },
+    {
+      "id": "sketchfab-35e96b479cf942ad9407eb01a11ffa3a",
+      "title": "Stylized palm / coconut tree pack",
+      "creator": "W_illness (@W_illness)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/35e96b479cf942ad9407eb01a11ffa3a",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Stylized palms and coconut trees for coasts.",
+      "subject": "tropical",
+      "split": true
+    },
+    {
+      "id": "sketchfab-80dec2fffb174051a5a88a404b760895",
+      "title": "Stylised Redwood Trees Pack (with LOD groups)",
+      "creator": "Parelaxel (@parelaxel)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/80dec2fffb174051a5a88a404b760895",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted redwoods; tall conifers with natural trunks.",
+      "subject": "conifers",
+      "split": true
+    },
+    {
+      "id": "sketchfab-f3e0a67b9ca243b09119177649f21e17",
+      "title": "Stone Pack",
+      "creator": "ashkan.fancy (@ashkan.fancy)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/f3e0a67b9ca243b09119177649f21e17",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Sculpted, painted rocks and rune stones; no rock has a like yet.",
+      "subject": "rocks",
+      "split": true
+    },
+    {
+      "id": "sketchfab-350e77196b424ebc8d28b8e7fc7b509e",
+      "title": "Acacia ( From \"Tree It\")",
+      "creator": "Paul (Sketchfab) (@paul_sketch)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/350e77196b424ebc8d28b8e7fc7b509e",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A light acacia for savanna; photographic textures.",
+      "subject": "broadleaf"
+    },
+    {
+      "id": "sketchfab-734c4537ca8547209a54df49f134824a",
+      "title": "Date palm and vegetation",
+      "creator": "Bársh (@borsh_and)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/734c4537ca8547209a54df49f134824a",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Date palms and oasis vegetation; tagged both hand-painted and cartoon.",
+      "subject": "tropical",
+      "split": true
+    },
+    {
+      "id": "sketchfab-031c99c42793439c9fa5a691c67d0da8",
+      "title": "Stylized Hand Painted Trees",
+      "creator": "Satendra Saraswat (@satendra5286)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/031c99c42793439c9fa5a691c67d0da8",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted trees; may lean toward a cartoon style.",
+      "subject": "broadleaf",
+      "split": true
+    },
+    {
+      "id": "sketchfab-f39dc69dbbfe49c68045bec2c16e03ba",
+      "title": "The Sword Of Victory",
+      "creator": "@ArmsMuseum",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/f39dc69dbbfe49c68045bec2c16e03ba",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-97575b982f5944baa0c9062d8107a983",
+      "title": "Decorative Battle Axe",
+      "creator": "@ArmsMuseum",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/97575b982f5944baa0c9062d8107a983",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-f0bfbca7a2804efd9cf77fd0f5a806aa",
+      "title": "Decorative Double-Bladed Battle Axe",
+      "creator": "@ArmsMuseum",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/f0bfbca7a2804efd9cf77fd0f5a806aa",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-80fa91fc8c974fd0acd2a55cc513edec",
+      "title": "Moonbrand (Early 14th C Arming Sword)",
+      "creator": "@oakeshott",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/80fa91fc8c974fd0acd2a55cc513edec",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-4c8da04032aa4d0386620148bb227ddc",
+      "title": "German Arming Sword",
+      "creator": "@oakeshott",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/4c8da04032aa4d0386620148bb227ddc",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-6e2aea6ce0a0421089652f18349502c1",
+      "title": "15th Century Dagger",
+      "creator": "@oakeshott",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/6e2aea6ce0a0421089652f18349502c1",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-13600dbd9c79478a8380bb90ff8b6df5",
+      "title": "1969.5 Helmet",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/13600dbd9c79478a8380bb90ff8b6df5",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-faca2ad557f64809b598c3a646a8804f",
+      "title": "1964.88 Armor for Man and Horse",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/faca2ad557f64809b598c3a646a8804f",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-d314c9a6abe444ffb22010310b7bae01",
+      "title": "1916.1723.a Crossbow Of Augustus I Of Saxony",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/d314c9a6abe444ffb22010310b7bae01",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-c54e6cbecf5e450d86052da35a86af6d",
+      "title": "1930.741 Book-Shaped Reliquary",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/c54e6cbecf5e450d86052da35a86af6d",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-7ef62203bf3349a5825fcd8b2dd1441a",
+      "title": "A sword from Small Market in Kraków",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/7ef62203bf3349a5825fcd8b2dd1441a",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-c4bd07612f424fcd9f516cbccc2554e6",
+      "title": "Closed helmet",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/c4bd07612f424fcd9f516cbccc2554e6",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-f8914000ccfe413298c332c4e43dcd83",
+      "title": "Mace",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/f8914000ccfe413298c332c4e43dcd83",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-c78c6d51fc084fb4979c885335196d9d",
+      "title": "Spearhead",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/c78c6d51fc084fb4979c885335196d9d",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "subject": "misc"
+    },
+    {
+      "id": "sketchfab-00d4f61c87b34179bea669bfb5d5280f",
+      "title": "Armor Stand - Stylized (PBR)",
+      "creator": "Wicked_Vixx (@tylukex)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/00d4f61c87b34179bea669bfb5d5280f",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Full plate armour on a stand in a physically based finish.",
+      "subject": "shields",
+      "note": "Left for a later round: this round fetched the painted weapons first."
+    },
+    {
+      "id": "sketchfab-d5a373b723f64878b9b866578ff0573c",
+      "title": "Set of Warhammers",
+      "creator": "Peter Nox (@Peter.Nox)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d5a373b723f64878b9b866578ff0573c",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A dozen war hammers and maces at real proportions.",
+      "subject": "axes",
+      "split": true,
+      "note": "Left for a later round: this round fetched the painted weapons first."
+    },
+    {
+      "id": "sketchfab-68fe42128e9b4cdf9719c2982f71b841",
+      "title": "Medieval Sword 15th century",
+      "creator": "Mkostal (@Mkostal)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/68fe42128e9b4cdf9719c2982f71b841",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A 15th-century longsword at real proportions.",
+      "subject": "blades",
+      "note": "Left for a later round: this round fetched the painted weapons first."
+    },
+    {
+      "id": "sketchfab-e733059e9edd414895109a75eed0d3b6",
+      "title": "Bec-de-Corbin (raven's beak) Polearm",
+      "creator": "Michael D. Theodore H. (@MichaelDtheodoreH)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e733059e9edd414895109a75eed0d3b6",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A bec-de-corbin polearm at real proportions.",
+      "subject": "ranged",
+      "note": "Left for a later round: this round fetched the painted weapons first."
+    },
+    {
+      "id": "sketchfab-0ae0f62030ad48d88364b327b7cd3fc3",
+      "title": "Paladin Shield [Free Download]",
+      "creator": "Efarys (@Efarys)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/0ae0f62030ad48d88364b327b7cd3fc3",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A metal kite shield with an embossed cross.",
+      "subject": "shields",
+      "note": "Left for a later round: this round fetched the painted weapons first."
+    },
+    {
+      "id": "sketchfab-7261d334924f4a9b835ef4b15c1e16d0",
+      "title": "Ancient Roman gladius sword",
+      "creator": "Samize (@samize)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/7261d334924f4a9b835ef4b15c1e16d0",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A Roman gladius and scabbard at real proportions.",
+      "subject": "blades",
+      "split": true,
+      "note": "Left for a later round: this round fetched the painted weapons first."
+    },
+    {
+      "id": "sketchfab-83217215a0c541b2956a8e87a4ae62fe",
+      "title": "Medieval Mace",
+      "creator": "Kama Modeling (@KamaModeling)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/83217215a0c541b2956a8e87a4ae62fe",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A spiked mace at real proportions.",
+      "subject": "axes",
+      "note": "Left for a later round: this round fetched the painted weapons first."
+    },
+    {
+      "id": "itch-vertexfrog-free-stylised-fantasy-weapons",
+      "title": "Free Stylised Fantasy Weapons",
+      "creator": "VertexFrog",
+      "license": "Not stated (the creator says in a comment they are free to use in commercial projects)",
+      "page": "https://vertexfrog.itch.io/free-stylised-fantasy-weapons",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Seven hand-painted weapons (axe, bow, shield, sword, mace, staff); leans toward fantasy.",
+      "subject": "blades",
+      "note": "No licence stated; ask the creator before use."
+    },
+    {
+      "id": "itch-niko-stylised-fantasy-weapons",
+      "title": "Stylised fantasy weapons pack!",
+      "creator": "niko-3d-models",
+      "license": "Not stated",
+      "page": "https://niko-3d-models.itch.io/stylised-fantasy-weapons-pack",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted axe, war hammer and sword at real proportions.",
+      "subject": "axes",
+      "note": "No licence stated; ask the creator before use."
+    }
+  ]
+}

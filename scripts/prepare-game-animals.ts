@@ -23,10 +23,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import {
-  align,
-  componentCounts,
-  componentTypes,
-  concat,
+  compact,
   externalDirectory,
   holdPose,
   measure,
@@ -165,120 +162,6 @@ function keepClips(json: Record<string, any>, animal: GameAnimal) {
     });
   if (json['animations'].length !== names.size)
     throw new Error(`${animal.id} lacks ${animal.idle} or ${animal.walk}.`);
-}
-
-/** Keeps only the accessors, images, textures and samplers that the meshes, skins, materials and
- * animations use, and rewrites the binary buffer with one buffer view each. The survey's files
- * also carry every source clip and each reduced image's unreduced original, and Sketchfab packs
- * all clips' keyframes into a few shared views, so whole views cannot simply be kept. */
-function compact({ json, bin }: Gltf): Gltf {
-  const kept = (list: any[] | undefined, used: Set<number>) => {
-    const order = [...used].sort((a, b) => a - b);
-    return {
-      items: order.map((index) => list![index]),
-      at: new Map(order.map((old, index) => [old, index])),
-    };
-  };
-  const accessorRefs: [object: any, key: string | number][] = [];
-  for (const mesh of json['meshes'] ?? [])
-    for (const primitive of mesh.primitives) {
-      for (const key of Object.keys(primitive.attributes))
-        accessorRefs.push([primitive.attributes, key]);
-      if (primitive.indices !== undefined) accessorRefs.push([primitive, 'indices']);
-      for (const target of primitive.targets ?? [])
-        for (const key of Object.keys(target)) accessorRefs.push([target, key]);
-    }
-  for (const skin of json['skins'] ?? [])
-    if (skin.inverseBindMatrices !== undefined) accessorRefs.push([skin, 'inverseBindMatrices']);
-  for (const animation of json['animations'] ?? [])
-    for (const sampler of animation.samplers)
-      accessorRefs.push([sampler, 'input'], [sampler, 'output']);
-  // Core and extension texture references both end in "Texture" (diffuseTexture, normalTexture).
-  const textureRefs: any[] = [];
-  const findTextures = (value: unknown, key = '') => {
-    if (Array.isArray(value)) value.forEach((entry) => findTextures(entry));
-    else if (value && typeof value === 'object') {
-      if (key.endsWith('Texture') && typeof (value as any).index === 'number')
-        textureRefs.push(value);
-      for (const [name, entry] of Object.entries(value)) findTextures(entry, name);
-    }
-  };
-  findTextures(json['materials'] ?? []);
-
-  const accessors = kept(json['accessors'], new Set(accessorRefs.map(([o, k]) => o[k])));
-  const textures = kept(json['textures'], new Set(textureRefs.map((ref) => ref.index)));
-  const images = kept(
-    json['images'],
-    new Set(textures.items.flatMap((texture) => texture.source ?? [])),
-  );
-  const samplers = kept(
-    json['samplers'],
-    new Set(textures.items.flatMap((texture) => texture.sampler ?? [])),
-  );
-  const vertexData = new Set(
-    (json['meshes'] ?? []).flatMap((mesh: any) =>
-      mesh.primitives.flatMap((primitive: any) =>
-        [primitive.attributes, ...(primitive.targets ?? [])].flatMap((map) =>
-          Object.values(map).map((index) => json['accessors'][index as number]),
-        ),
-      ),
-    ),
-  );
-
-  const parts: Uint8Array[] = [];
-  const views: any[] = [];
-  let length = 0;
-  const addView = (bytes: Uint8Array, view: object) => {
-    views.push({ buffer: 0, byteOffset: length, byteLength: bytes.byteLength, ...view });
-    parts.push(bytes);
-    length += align(bytes.byteLength);
-    return views.length - 1;
-  };
-  for (const accessor of accessors.items) {
-    // Neither source uses sparse accessors; copying one element by element would break it.
-    if (accessor.sparse) throw new Error('Sparse accessors are not supported.');
-    if (accessor.bufferView === undefined) continue;
-    const view = json['bufferViews'][accessor.bufferView];
-    const size = componentTypes[accessor.componentType]![0] * componentCounts[accessor.type]!;
-    // Vertex attribute elements must start on 4-byte boundaries.
-    const stride = vertexData.has(accessor) ? align(size) : size;
-    const from = view.byteStride ?? size;
-    const start = (view.byteOffset ?? 0) + (accessor.byteOffset ?? 0);
-    const bytes = new Uint8Array(stride * accessor.count);
-    for (let element = 0; element < accessor.count; element++)
-      bytes.set(
-        bin.subarray(start + element * from, start + element * from + size),
-        element * stride,
-      );
-    accessor.bufferView = addView(bytes, {
-      ...(view.target !== undefined ? { target: view.target } : {}),
-      ...(stride !== size ? { byteStride: stride } : {}),
-    });
-    delete accessor.byteOffset;
-  }
-  for (const image of images.items) {
-    if (image.bufferView === undefined) continue;
-    const view = json['bufferViews'][image.bufferView];
-    const start = view.byteOffset ?? 0;
-    image.bufferView = addView(bin.subarray(start, start + view.byteLength), {});
-  }
-  json['bufferViews'] = views;
-  for (const [object, key] of accessorRefs) object[key] = accessors.at.get(object[key]);
-  for (const ref of textureRefs) ref.index = textures.at.get(ref.index);
-  for (const texture of textures.items) {
-    if (texture.source !== undefined) texture.source = images.at.get(texture.source);
-    if (texture.sampler !== undefined) texture.sampler = samplers.at.get(texture.sampler);
-  }
-  json['accessors'] = accessors.items;
-  json['textures'] = textures.items;
-  json['images'] = images.items;
-  json['samplers'] = samplers.items;
-  // glTF arrays, when present, may not be empty.
-  for (const key of ['textures', 'images', 'samplers', 'animations'])
-    if (!json[key]?.length) delete json[key];
-  const packed = concat(parts);
-  json['buffers'] = [{ byteLength: packed.byteLength }];
-  return { json, bin: packed };
 }
 
 function writeOutput(relative: string, bytes: Uint8Array) {

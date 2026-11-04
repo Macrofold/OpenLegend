@@ -17,19 +17,8 @@
  * way, one metre-scale GLB per building.
  * docs/asset-workflow.md#edit-or-generate-art
  */
-import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import {
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import {
@@ -37,10 +26,12 @@ import {
   concat,
   externalDirectory,
   holdPose,
-  imageSize,
   measure,
   mime,
-  parseGlb,
+  packFile,
+  paintCoat,
+  readGltf,
+  studyImage,
   writeGlb,
   type Gltf,
 } from './model-files.js';
@@ -1504,133 +1495,6 @@ const subjects: PlannedSubject[] = [
   },
 ];
 
-// ---------------------------------------------------------------------------------------------
-// glTF reading, embedding and writing.
-
-/** Files by name within each pack. Some packs export glTF beside a shared Textures folder
- * instead of beside each model; the shallowest file of that name is the pack's default. */
-const packFiles = new Map<string, Map<string, string>>();
-function packFile(packRoot: string, name: string): string | undefined {
-  let files = packFiles.get(packRoot);
-  if (!files) {
-    files = new Map();
-    const walk = (directory: string) => {
-      for (const entry of readdirSync(directory, { withFileTypes: true })) {
-        const path = join(directory, entry.name);
-        if (entry.isDirectory()) walk(path);
-        else if (!files!.has(entry.name) || path.length < files!.get(entry.name)!.length)
-          files!.set(entry.name, path);
-      }
-    };
-    walk(packRoot);
-    packFiles.set(packRoot, files);
-  }
-  return files.get(name);
-}
-function uriBytes(uri: string, directory: string, packRoot: string): Uint8Array {
-  if (uri.startsWith('data:')) return Buffer.from(uri.slice(uri.indexOf(',') + 1), 'base64');
-  const path = resolve(directory, decodeURIComponent(uri));
-  if (!path.startsWith(packRoot)) throw new Error('A model reference escaped its pack.');
-  if (existsSync(path)) return readFileSync(path);
-  const fallback = packFile(packRoot, basename(path));
-  if (!fallback) throw new Error(`Missing ${uri} for a model in ${packRoot}`);
-  return readFileSync(fallback);
-}
-const surveyTextureLimit = 1024;
-const reduced = new Map<string, Uint8Array>();
-function surveyImage(bytes: Uint8Array): Uint8Array {
-  if (Math.max(...imageSize(bytes)) <= surveyTextureLimit) return bytes;
-  const key = createHash('sha256').update(bytes).digest('hex');
-  const existing = reduced.get(key);
-  if (existing) return existing;
-  const directory = mkdtempSync(join(tmpdir(), 'openlegend-survey-image-'));
-  try {
-    const extension = mime(bytes) === 'image/png' ? '.png' : '.jpg';
-    const input = join(directory, 'source' + extension);
-    const output = join(directory, 'reduced' + extension);
-    writeFileSync(input, bytes);
-    execFileSync('sips', ['-Z', String(surveyTextureLimit), input, '--out', output], {
-      stdio: 'ignore',
-    });
-    const result = readFileSync(output);
-    reduced.set(key, result);
-    return result;
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
-  }
-}
-
-/** One binary buffer holding every buffer and image; external references become buffer views. */
-function embed(
-  json: Record<string, any>,
-  bin: Uint8Array | undefined,
-  directory: string,
-  packRoot: string,
-): Gltf {
-  const parts: Uint8Array[] = [];
-  let length = 0;
-  const append = (bytes: Uint8Array) => {
-    const offset = length;
-    parts.push(bytes);
-    length += align(bytes.byteLength);
-    return offset;
-  };
-  const buffers: Uint8Array[] = (json['buffers'] ?? []).map((buffer: any) =>
-    buffer.uri === undefined ? bin! : uriBytes(buffer.uri, directory, packRoot),
-  );
-  // Images already embedded in a source buffer keep their view unless the survey limit reduces
-  // them; a reduced copy is appended and the original bytes are left unused.
-  const reducedEmbedded = new Map<any, Uint8Array>();
-  for (const image of json['images'] ?? []) {
-    if (image.uri !== undefined || image.bufferView === undefined) continue;
-    const view = json['bufferViews'][image.bufferView];
-    const start = view.byteOffset ?? 0;
-    const original = buffers[view.buffer]!.subarray(start, start + view.byteLength);
-    const bytes = surveyImage(original);
-    if (bytes !== original) reducedEmbedded.set(image, bytes);
-  }
-  const offsets = buffers.map(append);
-  for (const view of json['bufferViews'] ?? []) {
-    view.byteOffset = (view.byteOffset ?? 0) + offsets[view.buffer];
-    view.buffer = 0;
-  }
-  for (const image of json['images'] ?? []) {
-    const bytes =
-      image.uri !== undefined
-        ? surveyImage(uriBytes(image.uri, directory, packRoot))
-        : reducedEmbedded.get(image);
-    if (!bytes) continue;
-    json['bufferViews'] ??= [];
-    json['bufferViews'].push({
-      buffer: 0,
-      byteOffset: append(bytes),
-      byteLength: bytes.byteLength,
-    });
-    image.bufferView = json['bufferViews'].length - 1;
-    image.mimeType = image.mimeType ?? mime(bytes);
-    delete image.uri;
-  }
-  const combined = concat(parts);
-  json['buffers'] = [{ byteLength: combined.byteLength }];
-  // Name each image by its content so the survey page can share one GPU texture between
-  // models that embed the same trim sheet or colour atlas.
-  for (const image of json['images'] ?? []) {
-    const view = json['bufferViews'][image.bufferView];
-    const bytes = combined.subarray(view.byteOffset, view.byteOffset + view.byteLength);
-    image.name = `${image.name ?? 'image'}#${createHash('sha256').update(bytes).digest('hex').slice(0, 16)}`;
-  }
-  return { json, bin: combined };
-}
-
-function readGltf(path: string, packRoot: string): Gltf {
-  const bytes = readFileSync(path);
-  if (bytes.readUInt32LE(0) === 0x46546c67) {
-    const { json, bin } = parseGlb(bytes);
-    return embed(json, bin, dirname(path), packRoot);
-  }
-  return embed(JSON.parse(bytes.toString('utf8')), undefined, dirname(path), packRoot);
-}
-
 /** A building assembled from one pack's modular pieces. Each distinct piece's meshes are stored
  * once and reused by every node that places that piece; identical images, samplers, textures and
  * materials are shared, so the trim sheets most pieces use are embedded once per building. */
@@ -1933,7 +1797,7 @@ function readObj(path: string, pack: string): Gltf {
       },
     };
     if (texturePath && existsSync(texturePath)) {
-      const bytes = surveyImage(readFileSync(texturePath));
+      const bytes = studyImage(readFileSync(texturePath));
       json['bufferViews'].push({ buffer: 0, byteOffset: length, byteLength: bytes.byteLength });
       parts.push(bytes);
       length += align(bytes.byteLength);
@@ -1964,96 +1828,6 @@ function readObj(path: string, pack: string): Gltf {
   const bin = concat(parts);
   json['buffers'] = [{ byteLength: bin.byteLength }];
   return { json, bin };
-}
-
-/** Fantasy Creatures ships its models untextured; each creature's Godot scene paints the body with
- * a coat material at runtime. Its shader (addons/beasts/shaders/creature_coat.gdshaderinc) takes
- * colour from the coat texture times a tint, roughness from 1 − alpha × smoothness and an optional
- * OpenGL normal map; the model's single material is replaced with that one. glTF cannot read
- * roughness from a colour texture's alpha. Most of each coat has alpha near 0.1 (the eagle's near
- * 0.2), so roughness is the constant 0.9: the eagle's feathers come out slightly more matte, and
- * the few glossier spots, such as eyes and noses, lose their gloss. */
-function paintCoat({ json, bin }: Gltf, packDirectory: string, coat: string): Gltf {
-  const material = packFile(packDirectory, coat);
-  const project = packFile(packDirectory, 'project.godot');
-  if (!material || !project) throw new Error(`Missing ${coat} in ${packDirectory}`);
-  const materials: any[] = json['materials'] ?? [];
-  if (materials.length !== 1)
-    throw new Error(`${coat} paints one material; its model has ${materials.length}.`);
-  // Godot resources name their shader and textures by res:// paths from the project folder.
-  const text = readFileSync(material, 'utf8');
-  const paths = new Map<string, string>();
-  for (const [line] of text.matchAll(/^\[ext_resource .*\]$/gm)) {
-    const path = line.match(/ path="res:\/\/([^"]+)"/)?.[1];
-    const id = line.match(/ id="([^"]+)"/)?.[1];
-    if (path && id) paths.set(id, resolve(dirname(project), path));
-  }
-  const value = (name: string) => text.match(new RegExp(`^${name} = (.+)$`, 'm'))?.[1];
-  const resource = (name: string) => {
-    const path = paths.get(value(name)?.match(/ExtResource\("([^"]+)"\)/)?.[1] ?? '');
-    // The pack is downloaded data; it must not pull other local files into a published model.
-    if (path && !path.startsWith(packDirectory + '/'))
-      throw new Error('A coat reference escaped its pack.');
-    return path;
-  };
-  const coatImage = resource('shader_parameter/coat');
-  if (!coatImage) throw new Error(`${coat} names no coat texture.`);
-  const tint = value('shader_parameter/tint')
-    ?.match(/Color\(([^)]+)\)/)?.[1]!
-    .split(',')
-    .map(Number);
-  // Godot writes colour parameters in sRGB; glTF factors are linear.
-  const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-  const smoothness = Number(value('shader_parameter/smoothness') ?? 1);
-  const normalMap =
-    value('shader_parameter/use_normal_map') === 'true'
-      ? resource('shader_parameter/normal_map')
-      : undefined;
-
-  const parts = [bin];
-  let length = align(bin.byteLength);
-  const texture = (path: string) => {
-    const bytes = surveyImage(readFileSync(path));
-    json['bufferViews'].push({ buffer: 0, byteOffset: length, byteLength: bytes.byteLength });
-    parts.push(bytes);
-    length += align(bytes.byteLength);
-    // Named by content, like embedded glTF images, so the page can share the texture.
-    (json['images'] ??= []).push({
-      bufferView: json['bufferViews'].length - 1,
-      mimeType: mime(bytes),
-      name: `${basename(path)}#${sha256(bytes).slice(0, 16)}`,
-    });
-    return (json['textures'] ??= []).push({ source: json['images'].length - 1 }) - 1;
-  };
-  json['materials'] = [
-    {
-      name: materials[0].name,
-      ...(resource('shader')?.endsWith('_two_sided.gdshader') ? { doubleSided: true } : {}),
-      pbrMetallicRoughness: {
-        baseColorTexture: { index: texture(coatImage) },
-        baseColorFactor: [...(tint ?? [1, 1, 1]).slice(0, 3).map(linear), 1],
-        metallicFactor: 0,
-        roughnessFactor: round(1 - 0.1 * smoothness),
-      },
-      ...(normalMap
-        ? {
-            normalTexture: {
-              index: texture(normalMap),
-              scale: Number(value('shader_parameter/normal_scale') ?? 1),
-            },
-          }
-        : {}),
-    },
-  ];
-  // The exported material's specular extension does not reach the creator's coat shader.
-  const used = (json['extensionsUsed'] ?? []).filter(
-    (name: string) => name !== 'KHR_materials_specular',
-  );
-  if (used.length) json['extensionsUsed'] = used;
-  else delete json['extensionsUsed'];
-  const painted = concat(parts);
-  json['buffers'] = [{ byteLength: painted.byteLength }];
-  return { json, bin: painted };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -2233,7 +2007,7 @@ for (const subject of subjects)
       extname(source).toLowerCase() === '.obj'
         ? readObj(source, planned.pack)
         : readGltf(source, packDirectory);
-    const coated = planned.coat ? paintCoat(read, packDirectory, planned.coat) : read;
+    const coated = planned.coat ? paintCoat(read, packDirectory, [planned.coat]) : read;
     const gltf = planned.pose ? holdPose(coated, planned.pose) : coated;
     // Kenney Nature Kit marks its materials unlit; light it like every other family.
     for (const material of gltf.json['materials'] ?? [])
