@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                                                                                                                                                            | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The workflow pages, with simple and full paths and step options, the skills, art-direction seam, art tool and local model preview are delivered. The first proof run took Mike's five character sheets to rigged, animated models, not yet accepted; the wrapped-family test and a state-sheet prop remain. | 2026-11-01   |
+| In progress | Existing workflow helpers and preview are delivered; earlier art acceptance remains open. The NVIDIA motion-authoring design is specified; source intake, provider/rig qualification and generated-clip review are not implemented or demonstrated. | 2026-11-04 |
 
 This project redesigns how OpenLegend makes art: one procedure that turns a request such as "turn this character sheet into a rigged model for the game" into finished, reviewed, preserved files, with explicit tool defaults, explicit artistic latitude and no built-in look. Mike asks; an agent, or a junior artist following the pages, does the work; Mike decides at most three things per request.
 
@@ -10,7 +10,7 @@ The procedure itself lives in the [art workflow pages](../production-workflows/a
 
 ## Maintained records
 
-- **Implementation:** [AF04–AF09](../maintainers/art-direction.md#art-flow-follow-through) in the art-direction tracker.
+- **Implementation:** [Art-flow follow-through](../maintainers/art-direction.md#art-flow-follow-through), including AF14–AF17 for NVIDIA motion authoring. This tracker owns current progress; the design's stages define deliverables.
 - **Limits and constraints:** no new discretionary limits. Model budgets are the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) profile, the local preview applies the existing [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload) intake bound, and storage follows [AST](../limits/game-asset-storage.md). Spending follows the repository [spending policy](../../.agents/rules/verification.md#spending).
 - **Related contracts and designs:** [technical design](art-workflow-tech-design.md); the workflow pages ([README](../production-workflows/art-flows/README.md), [tools](../production-workflows/art-flows/tools.md), [profiles](../production-workflows/art-flows/profiles.md), [3D models](../production-workflows/art-flows/3d-models.md), [production](../production-workflows/art-flows/production.md), [study record](../production-workflows/art-flows/study-record.md)); the art direction's [current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance); the [runtime invention art contract](../invention-art-pipeline.md) and the proposed [generation and publication design](3d-pixel-art-asset-pipeline.md); rig families under [V3D05–V3D06](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
 
@@ -56,7 +56,7 @@ The pipeline should spend effort where OpenLegend differs from ordinary survival
 
 ## 3. Decisions
 
-Sections 3.1–3.5 come from the October 31, 2026 discussion and 3.6 from November 1.
+Sections 3.1–3.5 come from the October 31, 2026 discussion, 3.6 from November 1 and 3.7 from the NVIDIA design request researched November 4 UTC.
 
 ### 3.1 The outdated "artgen" skills
 
@@ -127,9 +127,53 @@ Two requests met on November 1. The prototype work merged into `main` made model
 - **Step options.** Concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format and critique each have a default per path, and naming one changes that step only, as in "a prototype, but with a polished walk".
 - **Supplied material skips what it answers.** A sheet or concept skips concepts, clean sheet views are cropped, a saved model starts at Finish, and a compatible rig and adequate materials are kept.
 - **Default clips.** An animated walking character gets `Idle`, `Walk` and `Run`: the prototype work's idle and walk plus the `Run` the game's loader requires, with named motions added. Mike confirmed on November 3 that a walk is expected by default.
-- **What no option removes.** A model the game will load keeps the file check, an animated character always carries the `Idle` and `Run` the game's loader requires, every 3D model gets one look in the game's renderer, and both paths preserve every meaningful output.
+- **What no option removes.** A model the game will load keeps the file check; a runtime-bound animated character carries the `Idle` and `Run` the game's loader requires. A standalone motion-source or library clip may contain only its named action and is checked as such; integration assembles the consumer's complete set. Every 3D model gets one look in the game's renderer, and both paths preserve every meaningful output.
 
 Most requests want either a quick usable look or finished art, and neither Mike nor a junior should decide every step. The simple path keeps a rigged person to about $1.75; the full path keeps the review points that caught the rejected mercenary iterations and the flattened Gildmoss export. The tradeoff: a prototype skips the fidelity sheet and the critique, so it is never evidence of acceptance or of family qualification. The step options are request words read by the agent, not provider settings or a service.
+
+### 3.7 NVIDIA motion authoring
+
+**Decision, November 4, 2026 UTC:** use NVIDIA motion generation as an offline authoring source within the existing workflow. The [research record](../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md) distinguishes the recently released **MotionBricks** pose-to-motion model from **Kimodo** text-to-motion. Neither has been run on OpenLegend assets in this design task. Public availability is established; our end-to-end qualification is not.
+
+#### Activation and defaults
+
+1. **Resolve whether motion is needed before choosing a provider.** Activate the animation procedure for an animation-only request, an explicitly animated character, or an accepted deliverable whose consumer requires clips. Concepts, UI, static models, rigid props, an unanimated rig and “for the game” by themselves do not trigger generation. `animations=none` remains an explicit override; if it conflicts with the named runtime consumer, report the unmet contract rather than silently generating clips.
+2. **Keep useful work.** Retain supplied meshes, skeletons, skin weights, materials, attachments and adequate clips. Reuse compatible family or already available licensed motion first. An animation-only request never reruns image generation, modeling or auto-rigging merely to obtain movement. An explicit source comparison may intentionally request fresh generation.
+3. **Default new human motion to Kimodo.** This is the selected authoring source for missing motions on compatible human bodies, after the exact provider/model/target route is qualified. Initially qualify the hosted `sprited/kimodo` SOMA-RP route because it avoids a local GPU and gated text-encoder setup. Its inspected model is v1.1, not official v1.2. Pin its deployment; no moving `latest` or undocumented model upgrade. Official SOMA-RP v1.2 is an optional local/self-hosted route, not a setup prerequisite for ordinary art work.
+4. **MotionBricks is optional.** Use it only when authored start/history and target poses make a transition worth generating. It does not take a text prompt or solve the surrounding scene. Supply production-safe poses, bake the result, then use the same retarget/finish/check path. Ordinary keying remains appropriate for a short transition. No need for a transition means no MotionBricks work.
+5. **Keep unsupported anatomy on its existing route.** Neither model becomes a default for wolves, bears, wings, cloth, facial animation, vehicles or arbitrary creatures. SOMA compatibility is a body/rig property, not a character's name or a world-specific species label. Specialist/library/Blender routes remain available.
+
+“Default” selects the first suitable new-motion source; it is not evidence of working credentials, a completed adapter, accepted art or general rig-family qualification. Before qualification, reuse existing clips where they meet the request and identify the missing generation capability. If a requested new clip cannot be made on the selected route, offer the concrete catalog/manual alternative and its cost/quality consequence. Do not silently call another provider, substitute v1.2 for v1.1, claim a preview video is a skeletal clip, or reroll after a paid failure. Ordinary offline correction and already-authorized work continue.
+
+#### The experience Mike and an artist should get
+
+Mike can say “give this person a hesitant wave,” “a rough carrying walk,” or “polish the existing run.” The agent identifies the target asset, reuses its body and existing work, states the motion, source, quality, expected cost and stopping point in the usual plan line, and performs the work. Technical model names and tokens are setup details, not questions Mike must answer for every clip. `tools.clips` can override the source; `motion=rough|polished` still controls finish quality and never doubles as a provider field.
+
+The simple path generates **one candidate for the missing action**, does the necessary import/retarget/contact check, previews it and preserves it with honest limitations. The full path adds deliberate acting, contact/transition cleanup and the existing critique/review. It does not automatically buy three motion generations: use one first draft unless alternatives are explicitly requested or a documented comparison needs them. A rough clip may have cosmetic limits; broken anatomy, wrong timing/scale, a missing required action or an unusable export is a failed result, not a prototype exemption.
+
+For a walking animated character, `Idle`, `Walk` and `Run` remain the default set; retain already adequate versions. The current runtime loader requires `Idle` and `Run`, while a selected catalog entry may additionally require its declared strides and strikes. New names such as `Offer` or `Work` are valid study/library assets but become runtime behavior only through an existing or separately designed action consumer. Adding a clip never creates an action, a new state, a hit or an item transfer.
+
+#### What to make first, and why
+
+The objective is a small repertoire of readable action meanings that supports this game's independent people, practical invention and persistent consequences. These are selection priorities for a requested study, not a mandate to produce a large clip pack or implement every repertoire proposal.
+
+| Priority | Useful motion | What makes it valuable | Scope boundary |
+| --- | --- | --- | --- |
+| First | The missing preparation, strike and recovery for an already playable dangerous action | Players can react, understand a miss and learn timing; responsiveness survives artistic polish | Existing action windows and outcomes control the presentation |
+| First | One real work action, such as attending the hearth or using an admitted tool, with interruption | Work and invention visibly use the actual tool, contact and material rather than an interchangeable emote | Choose the real action and its owner first; clip generation does not add crafting mechanics |
+| Next | Carrying, lowering or offering a real held object | Practical movement and social purpose become legible; one motion can support several authored objects with compatible grips | Native possession/transfer controls the object; paired actors and contact need review |
+| Next | A distinctive voluntary greeting, hesitation or small response | People have character without requiring unique movement sets for every NPC | Express authored/selected visible conduct; do not expose hidden beliefs or undisclosed identities |
+| Later, as needed | Sit/stand, reach or recovery transitions | Connect useful actions without abrupt posing | MotionBricks or hand-keying uses safe input poses and authored geometry; no new traversal system |
+
+Source/reference selection still follows the current world art direction. Neither a particular human style nor Threewater March's work vocabulary belongs inside the importer or a model-selection heuristic. The [repertoire review in the research record](../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md#5-fit-to-openlegend-and-rejected-complexity) and production handbook retain the broader coverage and meaning.
+
+#### Controls and acceptance
+
+- **No runtime inference:** generated output is an ordinary baked asset. Players need no NVIDIA GPU, model weights, account or network call for animation playback. The game uses its existing clip consumer; this design makes no runtime speedup claim.
+- **One position and outcome authority:** root policies, support, locomotion pacing, action time, cancellation and effect timing follow current game owners. A pleasing model trajectory cannot move the authoritative body, decide a contact or reveal unobserved action/state. A supplied object target is a constraint to check, not an inferred world fact.
+- **Rights are inputs:** production uses the SOMA route and appropriately licensed inputs. MotionBricks' bundled BONES samples and their derivatives are evaluation-only; SMPL-X Kimodo is excluded from production. Do not confuse permissive model terms with rights to every demo asset.
+- **Cheap recovery:** use the existing study record and provider job ID; recover a known job rather than resubmitting. Keep credentials out of artifacts. A timeout with unknown submission status is unresolved spend, not a free retry. Preserve the original output and editable correction so a revision does not require regeneration.
+- **Qualification is narrow:** a specific host/deployment, source format/rest convention and target rig/map pass a small real study before use becomes operational. Qualification of the mercenary does not qualify MPFB, another anatomy, every garment, all model versions or crowds. Existing V3D family and owner art acceptance stay separate.
 
 ## 4. Scenarios
 
@@ -147,7 +191,10 @@ Each scenario names its trigger, what Mike sees, the decision points and a meani
 5. **Resume.** A new thread receives `2026-11-02-mara-reed-3d/m02`. It reads the record's Resume section, recovers any outstanding job, fetches the archived files and continues at Stage 5 without regenerating.
 6. **Comparison.** _"Use both flows for a character appearance study."_ Shared inputs are frozen once; Standard and Higgsfield run independently with distinct IDs; one index compares coverage, quality, cost and Mike's involvement.
 7. **Creature.** _"A wolf for the game."_ A library or specialist source fitted to a nonhuman rig, with stalking, bite wind-up and recovery clips authored before idles; the threat check reads the bite from three sides.
-8. **Quick prototype.** _"A quick model of Tavin from this sheet."_ The plan line states the simple path: one Meshy candidate from the sheet's front view, the automatic rig with `Idle`, `Walk` and `Run`, the short check, about $1.75. The agent crops the front view, generates one candidate, rigs it once and adds the cast's `Walk` and `Run` with `clips`, reads the file report, looks at it beside the cast in the study viewer, uploads everything and stops; Mike sees the result, not a candidate sheet. _Failure:_ the coat splits with each stride in `Walk` and `Run`; the agent records it as a known limit of the prototype rather than reweighting, and a later "polish/finalize" takes it to the full path.
+8. **Quick prototype.** _"A quick animated walking model of Tavin from this sheet."_ The plan line states the simple path: one Meshy candidate from the sheet's front view, the automatic rig with `Idle`, `Walk` and `Run`, the short check, about $1.75 at the recorded provider rates. The agent crops the front view, generates one candidate, rigs it once and adds the cast's `Walk` and `Run` with `clips`, reads the file report, looks at it beside the cast in the study viewer, uploads everything and stops; Mike sees the result, not a candidate sheet. No Kimodo job is needed because reusable clips already answer the request. _Failure:_ the coat splits with each stride; record the cosmetic limitation, and a later "polish/finalize" takes it to the full path. A static model request does not inherit these animation steps.
+9. **Missing human action.** _"Give this existing rig a rough, hesitant offer of the basket."_ The agent checks whether a compatible clip exists, identifies the grip and target, and generates one missing clip through the qualified Kimodo route. It preserves the target body, retargets and corrects the grip, and shows the actual character at game scale. The clip is a study until an action consumer supports it. _Failure:_ the model gives a wave or the basket passes through the hand; correct a useful source or stop with the cause, not a paid retry loop or a successful-transfer claim.
+10. **Pose transition.** _"Smooth the rise from this supported resting pose."_ The target action and safe source poses are supplied. The artist tries ordinary keying or explicitly selects MotionBricks, bakes the transition and checks contacts and interruption. _Failure:_ only restricted demo poses are available; retain the setup and author safe poses, never ship a derivative of the demo.
+11. **No access or uncertain paid job.** The selected Kimodo host lacks authorized credentials, or a submitted job's response is lost. The agent completes the brief, maps and existing-clip reuse it can do, records the exact access or unknown-job state, and recovers through the provider. It does not create an account, invent a price or send a duplicate prediction.
 
 ## 5. Behaviour
 
@@ -158,6 +205,7 @@ The workflow pages own the procedure; in summary:
 - **Stages** ([README §4](../production-workflows/art-flows/README.md#4-the-seven-stages)): Brief, Explore, Prepare, Make, Finish, Check, Preserve, with decision points after Explore, Make and Check.
 - **Tools** ([tools](../production-workflows/art-flows/tools.md)): a dated default roster per stage, presets, overrides, how to estimate cost, and how to recover jobs.
 - **3D** ([3D models](../production-workflows/art-flows/3d-models.md)): build-route choice (library, family fit, image-to-3D, hybrid, hand-modelled), view rules, candidate checks, cleanup, rig routes, clips, consumer contract, budgets and in-game review.
+- **Motion** ([animation](../production-workflows/art-flows/animation.md)): conditional activation, reuse, Kimodo/MotionBricks source selection, source intake, target-preserving retargeting, timing/contacts, preview, preservation and qualification. Static requests skip this owner.
 - **Play checks** ([profiles](../production-workflows/art-flows/profiles.md#play-checks)): name, same thing, state, threat, construction and scale.
 - **Records** ([study record](../production-workflows/art-flows/study-record.md)): state, brief, candidates, decisions, interpretations, construction, review, cost and resume.
 
@@ -194,6 +242,9 @@ In scope: every offline art request, from concepts to production packages and th
 5. Candidates are reviewed in the game's own look at the default camera before acceptance, and the profile's play checks are recorded.
 6. The guidance checker passes and no link to the removed pages remains.
 7. A request chooses the simple or the full path in ordinary words and changes any single step (concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format, critique) without restating the rest; supplied material skips the steps it already answers.
+8. Static requests make no motion-provider calls; animation-only requests preserve the supplied character and adequate clips; a missing compatible human motion selects Kimodo only through a qualified route. Named overrides and actual fallback choices appear in the record.
+9. Generated motion becomes editable target-rig clips with correct units, timing and root policy. Review covers contact, loop/one-shot meaning, ordinary game-scale readability and relevant interruption, without changing gameplay semantics.
+10. Qualification records actual source/deployment/rig versions, correction effort, total spend including failures, exact retained artifacts and remaining limits. No source code, documentation or vendor claim alone marks a route working; MotionBricks remains optional.
 
 ## 9. Delivery stages
 
@@ -204,10 +255,11 @@ In scope: every offline art request, from concepts to production packages and th
 5. **Proposed, after the proof run:** the people family kit (AF10).
 6. **Proposed:** kit-character batches (AF11).
 7. **Simple and full paths (November 1):** the quality setting's two paths, the step options and what supplied material skips, reconciled with the prototype and finalize paths.
+8. **NVIDIA motion authoring (design November 4):** AF14 records the design; AF15 adds the bounded offline intake/retarget/preview support; AF16 qualifies the selected Kimodo route; AF17 covers an optional justified MotionBricks transition. See the [step-by-step technical plan](art-workflow-tech-design.md#11-nvidia-motion-authoring).
 
 ## 10. Open decisions and questions
 
-Each needs Mike unless marked otherwise; the recommendation is the agent's.
+Unresolved product decisions need Mike unless marked otherwise. OD7 is settled for source selection below; its execution qualification remains tracked separately.
 
 ### OD1 — Default generation platform
 
@@ -281,20 +333,20 @@ MPFB's other rigs (CMU, for motion capture, and Rigify) suit specialist cases.
 
 ### OD7 — Motion source for shared clips
 
-**Question:** where should the shared human clips come from?
+**Resolved design, November 4, 2026 UTC:** reuse suitable existing family/licensed clips first; use Kimodo as the default source for missing compatible human motions after route qualification. MotionBricks is optional for pose-driven transitions, with production-safe input poses. [§3.7](#37-nvidia-motion-authoring) owns the decision and [AF15–AF17](../maintainers/art-direction.md#art-flow-follow-through) own implementation/qualification. This settles the source policy, not the broader body-family choice or art acceptance.
 
-**Candidates:**
+**Alternatives considered before the NVIDIA investigation:**
 
 - Meshy's library of about 680 humanoid clips, one per rigging job through Higgsfield.
 - Mixamo: free with an Adobe sign-in, manual, humanoid only, and described as in maintenance mode.
 - Hand-keyed clips in Blender.
 - A motion-generation service such as Uthana or Hunyuan Motion.
 
-Blender 5.2 has no built-in retargeting, so any shared-clip source also needs a retargeting method: a constraint script, the free Rokoko plugin, or the paid Auto-Rig Pro.
+Any new source requires retargeting. The repository's existing `art-tool.py clips` already retargets in Blender with explicit bone maps and rest alignment, so a paid plugin is not a prerequisite. Its current source import does not support BVH; the NVIDIA extension is specified separately and not yet implemented.
 
 **What it decides:** the clip set's quality, rights and the effort per clip. The [tools page](../production-workflows/art-flows/tools.md#rigging-and-clips) lists the current options and their limits.
 
-**Recommendation:** decide after the proof run shows which source survives retargeting onto the chosen rig with the least repair; start with Meshy's library because it is already connected.
+**Why this choice:** keep the proven Meshy-derived library, gain text-directed ordinary/expressive motions where it is incomplete, and keep model setup outside the game. Qualify one hosted route and two target families before expanding sources. Existing library/manual alternatives remain valid when they answer the request more directly.
 
 **Proof-run evidence (October 31):** Meshy's library `Idle` (ID 0) and `Run_02` (ID 14) played correctly on all five automatic rigs, already in place, at one clip per 8-credit job, combined by `art-tool.py clips`. The [character motion study](../../art-direction/studies/2026-10-31-character-motion/README.md) then retargeted eight library clips (idle, walk, run, sprint, attack, punch, dodge, wave) onto those rigs and onto the mercenary's differently oriented rig with the same tool. Long skirts and cloaks split with the stride under automatic weights. On November 1 the same tool put those clips on the MPFB family rig of the 21 fitted study people, with a bone map and rest-pose alignment for their arms and legs ([library people](../../art-direction/studies/2026-10-31-character-motion/README.md#library-people)); Mike has not reviewed the result.
 

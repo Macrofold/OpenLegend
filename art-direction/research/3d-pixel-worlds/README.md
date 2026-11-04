@@ -20,6 +20,8 @@ For source selection, start with the [October 17 ranked survey](asset-source-sur
 
 The follow-up adds [realtime rendering and lighting](realtime-pixel-rendering.md), [texel splatting](texel-splatting.md), [animation tools and techniques](animation-tools-and-techniques.md), [tool and license notes](tool-and-license-notes.md), and a [complete video/source index](video-library.md).
 
+The [November 4 NVIDIA motion investigation](nvidia-animation-2026-11-04.md) distinguishes MotionBricks pose transitions from Kimodo text-directed human motion, verifies public access and license boundaries, and supplies the evidence for the [art workflow's selected offline authoring design](../../../docs/projects/art-workflow-feature-spec.md#37-nvidia-motion-authoring). Provider and target-rig qualification remain execution tasks.
+
 | Document                                                                                                                                             | What it answers                                                                                                                                                                                        |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | [Ranked source survey](asset-source-survey-2026-10-17.md)                                                                                            | Which free and paid collections best fit each world, with complete source and rights records.                                                                                                          |
@@ -67,3 +69,4 @@ Some requested sites limited access: Kickstarter and Sketchfab did not expose us
 ## Scope and completion
 
 This documentation task affected zero executable logic lines. Its plan was to verify the references and transcripts, preserve a credited image library, explain the techniques, connect them to the existing art/pipeline design, and validate the resulting documents and files. Those research deliverables are complete. Runtime experiments, paid generation and an engine change were outside this task; proposed experiments remain under [V3D01](../../../docs/maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision).
+
