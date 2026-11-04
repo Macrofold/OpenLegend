@@ -4,7 +4,7 @@
 
 ## 1. Which release, and what can we use?
 
-There are two relevant NVIDIA releases. **MotionBricks is the recent pose-to-motion release; Kimodo is the useful companion for text-to-motion authoring.** Confusing them would produce an unusable integration: a natural-language action is not a MotionBricks input.
+The design selects two complementary NVIDIA tools. **MotionBricks is the recent pose-to-motion release; Kimodo is the useful companion for text-to-motion authoring.** Confusing them would produce an unusable integration: a natural-language action is not a MotionBricks input. The related ARDY streaming model was also checked and is evaluated below as an alternative.
 
 | Model        | Public availability checked                                                                                                                              | Actual inputs and output                                                                                                                                       | OpenLegend decision                                                                                                                      |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -68,6 +68,10 @@ The [pinned Replicate API](https://replicate.com/sprited/kimodo/versions/1711124
 The immutable hosted version is `17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545`, explicitly selecting `Kimodo-SOMA-RP-v1.1`. Returned outputs are an array of file URIs; download and identify the files rather than assuming a fixed index. [Replicate removes API output files after one hour](https://replicate.com/docs/topics/predictions/output-files). A saved URL is not an archived source. Persist the job ID immediately, recover by ID, and never repeat an uncertain paid POST merely because its response was lost.
 
 For MotionBricks, a [community browser robot playground](https://townbox-motionbricks-playground.static.hf.space/index.html) demonstrates a possible ONNX-in-browser route. Its published roughly 369 MB model download, worker execution, 8 GB RAM recommendation and 50–250 ms claims were not measured here, and it is a robot demonstration. The community MLX reimplementation examined during research does not use NVIDIA's released pretrained weights; it is not evidence of a ready equivalent human Mac route. Neither justifies a browser-runtime dependency for this game.
+
+### Related model: ARDY
+
+NVIDIA's [ARDY repository](https://github.com/nv-tlabs/ardy) also publishes code, checkpoints and interactive demos. Its SOMA 30-Hz checkpoints are dated October 15, 2026. It accepts streaming text and kinematic constraints for interactive motion; the documented local setup includes PyTorch/CUDA and access to the gated Llama text encoder. Its Ubuntu/RTX 4090 setup is a tested configuration, not a proven minimum. **Design judgment:** retain it as a research alternative rather than adding another implementation stage. Our selected task is offline asset authoring, for which Kimodo already supplies the intended source contract and a concrete hosted candidate. A second streaming model has no demonstrated benefit for the first playable slice. This does not claim ARDY cannot produce useful baked motion, and no ARDY model or demo was run here.
 
 ## 5. Fit to OpenLegend and rejected complexity
 
