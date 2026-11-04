@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Received-batch conversion and connected checks are complete; operating qualification remains open. | 2026-11-04   |
+| Status      | Current progress                                                                                           | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Receiving/frontier conversion is installed; compact-proof storage and operating qualification remain open. | 2026-11-04   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
@@ -152,7 +152,7 @@ The [received-batch contract below](#11-received-batches-and-recent-history-life
 
 ## 11. Received batches and recent-history lifetime
 
-**Accepted design, November 4, 2026; coordinated source conversion implemented.** [The batch companion](bookkeeping-simplification-batch-design.md) replaces per-partition recording with one exact receiver batch and replaces late-closed intervals with acquisition-ordered recent history. Actual successful checks, intermediate changes, uncertainty and independent detail clocks remain; one common viewing frame and coverage set need not become many separate records. Broad awareness, ten-slot base-world attention, native reactions and optional asynchronous cognition retain their current behavior.
+**Accepted design, November 4, 2026; receiving/frontier conversion installed, compact-proof storage unfinished.** [The batch companion](bookkeeping-simplification-batch-design.md) replaces per-partition recording with one exact receiver batch and replaces late-closed intervals with acquisition-ordered recent history. Actual successful checks, intermediate changes, uncertainty and independent detail clocks remain; one common viewing frame and coverage set need not become many separate records. Broad awareness, ten-slot base-world attention, native reactions and optional asynchronous cognition retain their current behavior.
 
 Ordinary recent expiry advances an exact personal eligibility frontier; physical storage disappears later in whole eligible blocks. Useful names, places, commitments and warranted accounts keep their own support. Correction remains precise and immediately fences pending output. This changes representation and routine maintenance, not who saw what or whether a character can remember an attended route. No automatic summary, continuous-visibility inference, world-event replay or new model cadence is introduced.
 
