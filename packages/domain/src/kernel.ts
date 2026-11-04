@@ -50,7 +50,8 @@ import {
   nativeEntityGroups,
 } from './entity-index.js';
 import { NativeStatusPreparation } from './native-status-preparation.js';
-import type { TemporalEvidenceState } from './temporal-evidence.js';
+import type { TemporalEvidenceState, TemporalPage } from './temporal-evidence.js';
+import { temporalPageSelectionSource } from './temporal-frames.js';
 import { foragingProfile } from './native-foraging.js';
 import {
   nativeForagingDue,
@@ -6385,6 +6386,7 @@ function sameResidencyFields(before: object, after: object, except: readonly str
 function retainsTemporalHistory(
   before: TemporalEvidenceState | undefined,
   after: TemporalEvidenceState,
+  savedPages?: ReadonlyMap<string, readonly TemporalPage[]>,
 ): boolean {
   if (before === after) return true;
   if (!before || !sameResidencyFields(before, after, ['actors'])) return false;
@@ -6395,11 +6397,25 @@ function retainsTemporalHistory(
   for (const id of actors) {
     const prior = before.actors[id]!,
       retained = after.actors[id]!;
-    if (
-      !sameResidencyFields(prior, retained, ['chunks']) ||
-      !retainsHistory(prior.chunks, retained.chunks)
-    )
-      return false;
+    if (!sameResidencyFields(prior, retained, ['pages'])) return false;
+    if (prior.pages === retained.pages) continue;
+    const originals = new Set(prior.pages),
+      committed = new Set(savedPages?.get(id) ?? []);
+    for (const page of retained.pages) {
+      if (originals.has(page) || committed.has(page)) continue;
+      const source = temporalPageSelectionSource(page);
+      // Regrouping cannot alter a logical operation or its declaration meaning.
+      // Exact committed additions come only from the successful save's bounded tail.
+      if (
+        !source ||
+        !originals.has(source) ||
+        page.actorId !== source.actorId ||
+        page.physicalLife !== source.physicalLife ||
+        page.epoch !== source.epoch ||
+        !retainsHistory(source.operations, page.operations)
+      )
+        return false;
+    }
   }
   return true;
 }
@@ -6508,7 +6524,10 @@ export function preserveReceivedValuePreparation(
 export function projectWorldHistory(
   world: WorldState,
   projection: HistoryProjection,
-  options: { preview?: boolean } = {},
+  options: {
+    preview?: boolean;
+    temporalSavedPages?: ReadonlyMap<string, readonly TemporalPage[]>;
+  } = {},
 ): WorldState {
   const keys = Object.keys(projection);
   if (keys.some((key) => !historyProjectionFields.has(key)))
@@ -6541,7 +6560,11 @@ export function projectWorldHistory(
     (!projection.summaries ||
       retainsHistoryMap(world.experience!.summaries, projection.summaries)) &&
     (!projection.temporal ||
-      retainsTemporalHistory(world.experience?.temporal, projection.temporal)) &&
+      retainsTemporalHistory(
+        world.experience?.temporal,
+        projection.temporal,
+        options.temporalSavedPages,
+      )) &&
     (!projection.receivedValues ||
       retainsReceivedValueHistory(
         world,
@@ -8286,7 +8309,6 @@ function* updateEncounters(
         const observer = entityGet(readOnlyDraftView(world.entities), id)!;
         const encounterAt = observer.actor?.encounters?.nextAt;
         return (
-          !!world.experience?.temporal?.actors[id]?.geometryCaptureRepairDue ||
           (encounterAt !== undefined && encounterAt <= world.simTime) ||
           (!!observer.animal?.episode && observer.animal.episode.reviewAt <= world.simTime) ||
           Object.values(observer.actor?.contacts ?? {}).some(
@@ -8473,7 +8495,6 @@ function* updateEncounters(
         !(timing.sampledContact && timing.contact) &&
         !movingContacts &&
         !placesChanged &&
-        !world.experience?.temporal?.actors[actor.id]?.geometryCaptureRepairDue &&
         !(encounterDue !== undefined && encounterDue <= world.simTime)
       ) {
         countDomainWork('observersSkipped');

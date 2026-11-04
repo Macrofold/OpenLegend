@@ -1,6 +1,6 @@
 import type { WorldState } from './types.js';
 import type { ReceivedValueLookup } from './received-values.js';
-import type { TemporalChunk } from './temporal-evidence.js';
+import type { TemporalPage } from './temporal-evidence.js';
 import {
   selectedRecognitionSupportReader,
   selectedRecognitionSupportSourceIds,
@@ -20,9 +20,10 @@ export interface CapturedTemporalHistoryContext {
   readonly maximumCandidates?: number;
   readonly at?: number;
   readonly maxAgeSeconds?: number;
-  readonly chunks: readonly TemporalChunk[];
+  readonly pages: readonly TemporalPage[];
+  readonly open?: readonly import('./temporal-evidence.js').TemporalOpenInterval[];
   readonly releasedThrough?: number;
-  readonly retiredThrough?: { readonly chunkOrder: number; readonly ordinal: number };
+  readonly retiredThrough?: { readonly pageOrder: number; readonly ordinal: number };
   readonly recordingGap?: { readonly from: number; readonly through: number };
   readonly sources: ReceivedValueLookup;
   readonly disclosure: TemporalReadContext;

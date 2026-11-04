@@ -1,4 +1,9 @@
 import {
+  resetPreparedSourceVersionAccounting,
+  sourceVersionPreparationNeeded,
+  type SourceVersionPlan,
+} from './source-version-retention.js';
+import {
   prepareAccountRetentionPlan,
   nextAccountRetentionAt,
   type AccountRetentionPlan,
@@ -42,6 +47,9 @@ import { ASSET_TABLES, AssetRepository } from './asset-repository.js';
 import { assertAssetBinding, type AssetRevisionReference } from '@open-legend/assets';
 import {
   compactHistory,
+  recordSavedTemporalPages,
+  releaseSavedTemporalHistory,
+  inheritSavedTemporalTails,
   compactObjectHistory,
   compactAppraisalHistory,
   compactContributionHistory,
@@ -83,7 +91,7 @@ import {
   assertPrivacyPreserved,
 } from './privacy-ledger.js';
 import { ReceivedValueOwnership } from './received-value-ownership.js';
-import { evidenceEncodedBytesSql } from './evidence-segments.js';
+import { evidenceEncodedBytesSql } from './temporal-page-storage.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { GameView, IntelligenceCall } from '@open-legend/protocol';
@@ -169,7 +177,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '51';
+export const DATABASE_SCHEMA = '52';
 
 export interface AttemptBudget {
   id: string;
@@ -487,7 +495,12 @@ export class SqlGameRepository implements GameRepository {
     const rows = new Map<string, string[]>(),
       positions = new Map<string, Map<string, number>>(),
       previous = new Map<string, Map<string, unknown>>();
+    let preparedVersions: SourceVersionPlan | undefined;
     for (let round = 0; round < 4; round++) {
+      if (preparedVersions) {
+        const world = resetPreparedSourceVersionAccounting(state.world, preparedVersions);
+        if (world !== state.world) state = { ...state, world };
+      }
       if (!complete) this.records.stageRetirements(state, rows, positions, previous);
       // Retention joins only personal source changes. Preparing unrelated physical
       // and current-perception records again in each closure round repeats the save.
@@ -496,6 +509,7 @@ export class SqlGameRepository implements GameRepository {
         : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables);
       const metadata = await this.retentionView(state, changes, complete);
       const planned = await this.memories.prepareSourceVersionRetention(state, changes, metadata);
+      preparedVersions = planned.plan;
       const retained = await this.memories.prepareRetention(
         planned.state,
         complete,
@@ -516,7 +530,7 @@ export class SqlGameRepository implements GameRepository {
         previous.set(table, target);
       }
       state = retained.state;
-      if (state === planned.state) {
+      if (!sourceVersionPreparationNeeded(planned.state.world, state.world)) {
         if (complete) this.records.stageRetirements(state, rows, positions, previous);
         return { state, rows, positions, previous, versions: planned.plan };
       }
@@ -1013,12 +1027,15 @@ export class SqlGameRepository implements GameRepository {
     return released;
   }
   releasedHistory(state: SavedWorld): SavedWorld {
-    return {
-      ...state,
-      world: compactContributionHistory(
-        compactAppraisalHistory(compactObjectHistory(compactHistory(state.world))),
+    const world = compactContributionHistory(
+      compactAppraisalHistory(
+        compactObjectHistory(
+          compactHistory(releaseSavedTemporalHistory(state.world, this.acceptedState?.world)),
+        ),
       ),
-    };
+    );
+    inheritSavedTemporalTails(this.acceptedState?.world, world);
+    return { ...state, world };
   }
   /** Preparation half of a snapshot's commit, computed immediately inside the mutation queue
    * (no I/O); the transaction consumes it later, for example in a background save. */
@@ -1200,17 +1217,22 @@ export class SqlGameRepository implements GameRepository {
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)
       : undefined;
-    const changes =
+    const changes = this.records.materializeTemporalChanges(
       prepared?.changes ??
-      timedSync('persistence.prepareRecords', () =>
-        this.records.prepare(this.acceptedState ?? undefined, state),
-      );
+        timedSync('persistence.prepareRecords', () =>
+          this.records.prepare(this.acceptedState ?? undefined, state),
+        ),
+      state.world,
+    );
     if (historyProjection?.restore) {
       // Installation replaces recent history, including physically retained but
       // logically retired rows absent from the complete readable predecessor.
       // Reinsert the checkpoint's complete batches instead of diffing that gap.
-      const tables = new Set(['mind_temporal_chunks', 'mind_temporal_segments']);
-      const replacement = this.records.prepare(undefined, state, tables);
+      const tables = new Set(['mind_temporal_pages']);
+      const replacement = this.records.materializeTemporalChanges(
+        this.records.prepare(undefined, state, tables),
+        state.world,
+      );
       for (const table of tables) {
         changes.rows -= changes.writes.get(table)?.length ?? 0;
         const rows = replacement.writes.get(table) ?? [];
@@ -1366,13 +1388,19 @@ export class SqlGameRepository implements GameRepository {
   }
 
   private publishWorldTables(write: TableWrite, remoteSources?: PreparedMemorySources): void {
+    recordSavedTemporalPages(
+      write.state.world,
+      write.restore ? undefined : write.before?.world,
+      write.changes.savedTemporalPages ?? [],
+      write.changes.deletes.get('mind_temporal_pages') ?? [],
+    );
     const worldId = write.state.world.id;
     // Wake only for new payloads or actual potential releases, not each save.
     if (
       write.restore ||
       !write.before ||
       write.changes.writes.get('mind_perception_values')?.length ||
-      write.changes.deletes.get('mind_temporal_chunks')?.length ||
+      write.changes.deletes.get('mind_temporal_pages')?.length ||
       receivedCurrentOwnerTables.some(
         (table) =>
           write.changes.deletes.get(table)?.length ||

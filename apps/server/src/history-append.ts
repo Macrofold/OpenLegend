@@ -79,7 +79,9 @@ export function historyPerspectiveRow(
       account.payload,
       ...perspectiveColumns(source),
       event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
-      'chunkRecordId' in account ? account.chunkRecordId : null,
+      temporal?.receipt.physicalLife ?? null,
+      temporal?.receipt.epoch ?? null,
+      temporal?.receipt.ordinal ?? null,
     ],
   };
 }

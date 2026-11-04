@@ -1,3 +1,8 @@
+import {
+  noteTemporalResidency,
+  temporalPagePosition,
+  temporalPageRecordId,
+} from './temporal-page-storage.js';
 import { isImmutableData } from '@open-legend/domain';
 import {
   DerivedOwnerIndex,
@@ -9,6 +14,9 @@ import {
 import { cloneEntities, entityDelete, entityGet } from '@open-legend/domain';
 import {
   appendedRecordCount,
+  immutableDataSnapshot,
+  selectTemporalPageOperations,
+  temporalPageMutation,
   EXPERIENCE_LIMITS,
   markPartialAppraisals,
   retiredObjectIds,
@@ -18,7 +26,6 @@ import {
   updateWorld,
   freezeWorld,
   projectWorldHistory,
-  selectedTemporalPolicy,
   referencedReceivedValues,
   retainedAgreementEvidence,
   type WorldState,
@@ -32,7 +39,7 @@ export const HISTORY_TABLES = new Set([
   'mind_awareness',
   'mind_summaries',
   'activity_occurrences',
-  'mind_temporal_chunks',
+  'mind_temporal_pages',
 ]);
 // Awareness consumers needing more than the presentation tail use SQL source IDs.
 // This is placement, not eligibility: important incidents remain fully recallable.
@@ -403,16 +410,17 @@ export function compactHistory(
   return compactTemporalHistory(projected, options);
 }
 
+export const HOT_TEMPORAL_BYTES = 128 * 1024;
 const temporalOverflow = new DerivedOwnerIndex<
   NonNullable<NonNullable<WorldState['experience']>['temporal']>['actors'][string],
   number,
   ObjectIndexNode<number> | undefined
 >(
-  (actor) => actor.chunks.length,
+  (actor) => actor.pages.reduce((bytes, page) => bytes + page.bytes, 0),
   () => undefined,
   (tree, id, _before, after) => objectIndexSet(tree, id, after),
 );
-/** Placement only. Canonical chunks survive in SQL until the retention owner
+/** Placement only. Canonical pages survive in SQL until the retention owner
  * explicitly releases them, while native capture keeps only its bounded tail. */
 const sourcePlacements = new WeakMap<
   object,
@@ -427,7 +435,7 @@ export function compactTemporalHistory(
 ): WorldState {
   const temporal = world.experience?.temporal;
   if (!temporal && !world.receivedValues) return world;
-  const maximum = selectedTemporalPolicy(world).recent.residentChunks;
+  const maximum = HOT_TEMPORAL_BYTES;
   let changed = false;
   let actors = temporal?.actors;
   for (const [actorId] of objectIndexEntriesAfter(
@@ -435,11 +443,22 @@ export function compactTemporalHistory(
     maximum,
   )) {
     const actor = actors![actorId]!,
-      chunks = actor.chunks;
-    if (chunks.length > maximum) {
+      pages = actor.pages;
+    if (pages.reduce((bytes, page) => bytes + page.bytes, 0) > maximum) {
+      // Temporal pages carry native ordinals; residency must not assign new SQL positions.
+      let bytes = 0;
+      const retained: typeof pages = [];
+      for (let index = pages.length - 1; index >= 0; index--) {
+        const page = pages[index]!;
+        const durable = page.appendClosed === true && temporalPageMutation(page) !== 'edit';
+        if (!durable || !bytes || bytes + page.bytes <= maximum) {
+          retained.push(page);
+          if (durable) bytes += page.bytes;
+        }
+      }
+      if (retained.length === pages.length) continue;
       if (actors === temporal?.actors) actors = { ...actors };
-      // Temporal chunks carry native ordinals; residency must not assign new SQL positions.
-      actors![actorId] = { ...actor, chunks: chunks.slice(-maximum) };
+      actors![actorId] = { ...actor, pages: retained.reverse() };
       changed = true;
     }
   }
@@ -472,4 +491,135 @@ export function compactTemporalHistory(
     options,
   );
   return projected;
+}
+
+/** Saved physical tails are the existing residency projection, never evidence
+ * authority. Keeping their exact IDs prevents a native append container from
+ * masquerading as one durable page during later correction or retirement. */
+const savedTemporalOperations = new WeakSet<
+  import('@open-legend/domain').TemporalHistoryOperation
+>();
+const savedTemporalActors = new WeakMap<WorldState, ReadonlySet<string>>();
+const savedTemporalTails = new WeakMap<
+  WorldState,
+  ReadonlyMap<string, readonly import('@open-legend/domain').TemporalPage[]>
+>();
+export function recordSavedTemporalPages(
+  world: WorldState,
+  previous: WorldState | undefined,
+  pages: readonly import('@open-legend/domain').TemporalPage[],
+  deleted: readonly string[] = [],
+): void {
+  const changedActors = new Set<string>();
+  for (const page of pages) {
+    changedActors.add(page.actorId);
+    for (const operation of page.operations) savedTemporalOperations.add(operation);
+  }
+  for (const id of deleted) {
+    const path = JSON.parse(id) as string[];
+    if (path[4]) changedActors.add(path[4]);
+  }
+  const prior =
+    savedTemporalTails.get(previous!) ??
+    new Map(
+      Object.entries(previous?.experience?.temporal?.actors ?? {}).map(([actorId, actor]) => [
+        actorId,
+        actor.pages,
+      ]),
+    );
+  const removed = new Set(deleted),
+    grouped = new Map<string, Map<string, import('@open-legend/domain').TemporalPage>>();
+  for (const actorId of Object.keys(world.experience?.temporal?.actors ?? {}))
+    grouped.set(
+      actorId,
+      new Map(
+        (prior.get(actorId) ?? [])
+          .filter((page) => !removed.has(temporalPageRecordId(actorId, page.id)))
+          .map((page) => [page.id, page]),
+      ),
+    );
+  for (const page of pages) {
+    let actor = grouped.get(page.actorId);
+    if (!actor) grouped.set(page.actorId, (actor = new Map()));
+    actor.set(page.id, page);
+  }
+  const tails = new Map<string, readonly import('@open-legend/domain').TemporalPage[]>();
+  for (const [actorId, entries] of grouped) {
+    const ordered = [...entries.values()].sort(
+      (a, b) => temporalPagePosition(b) - temporalPagePosition(a) || b.id.localeCompare(a.id),
+    );
+    const selected: import('@open-legend/domain').TemporalPage[] = [];
+    let bytes = 0;
+    for (const page of ordered) {
+      if (bytes && bytes + page.bytes > HOT_TEMPORAL_BYTES) break;
+      selected.push(page);
+      bytes += page.bytes;
+    }
+    tails.set(actorId, selected.reverse());
+  }
+  savedTemporalTails.set(world, tails);
+  savedTemporalActors.set(world, changedActors);
+}
+/** A save may finish while newer native changes already exist. Remove only the
+ * identical acknowledged operations, retain every newer/edited operation, and
+ * install the bounded canonical tail without altering any personal charge. */
+export function releaseSavedTemporalHistory(
+  world: WorldState,
+  durable: WorldState | undefined,
+): WorldState {
+  if (!durable) return world;
+  const tails = savedTemporalTails.get(durable);
+  if (!tails) return world;
+  const temporal = world.experience?.temporal;
+  if (!temporal) return world;
+  const actors = { ...temporal.actors };
+  let changed = false;
+  for (const actorId of savedTemporalActors.get(durable) ?? []) {
+    const actor = temporal.actors[actorId];
+    if (!actor) continue;
+    const pending: import('@open-legend/domain').TemporalPage[] = [];
+    for (const page of actor.pages) {
+      const kept = page.operations.filter((operation) => !savedTemporalOperations.has(operation));
+      if (!kept.length) continue;
+      if (kept.length === page.operations.length) pending.push(page);
+      else {
+        const selected = immutableDataSnapshot(
+          selectTemporalPageOperations(page, kept, page.id, world),
+        );
+        noteTemporalResidency(selected, page);
+        pending.push(selected);
+      }
+    }
+    const byId = new Map((tails.get(actorId) ?? []).map((page) => [page.id, page]));
+    for (const page of pending) byId.set(page.id, page);
+    const pages = [...byId.values()].sort(
+      (a, b) => temporalPagePosition(a) - temporalPagePosition(b) || a.id.localeCompare(b.id),
+    );
+    if (
+      pages.length !== actor.pages.length ||
+      pages.some((page, index) => page !== actor.pages[index])
+    ) {
+      actors[actorId] = { ...actor, pages };
+      changed = true;
+    }
+  }
+  if (!changed) return world;
+  const projected = projectWorldHistory(
+    world,
+    { temporal: { ...temporal, actors } },
+    { temporalSavedPages: tails },
+  );
+  if (world === durable) {
+    savedTemporalTails.set(projected, tails);
+    savedTemporalActors.set(projected, savedTemporalActors.get(durable) ?? new Set());
+  }
+  return projected;
+}
+
+export function inheritSavedTemporalTails(from: WorldState | undefined, to: WorldState): void {
+  const tails = from && savedTemporalTails.get(from);
+  if (tails) {
+    savedTemporalTails.set(to, tails);
+    savedTemporalActors.set(to, savedTemporalActors.get(from!) ?? new Set());
+  }
 }

@@ -1,3 +1,5 @@
+import { temporalPageReferences } from '@open-legend/domain';
+import type { PendingTemporalPage } from './temporal-page-storage.js';
 import { RECORD_ACTOR_PATHS, RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
 import { mayReadLiveRecordTable, type LiveReadCuts } from './live-read-overlay.js';
 import type { RecordChanges, RowChange } from './world-records.js';
@@ -25,6 +27,7 @@ for (const table of RECORD_NODES.keys())
       readableAncestors.add(parent);
 
 interface ActorRows {
+  temporal: Map<string, PendingTemporalPage>;
   writes: Map<string, RowChange[]>;
   deletes: Map<string, string[]>;
   expired: Map<string, string[]>;
@@ -32,6 +35,7 @@ interface ActorRows {
   rows: number;
 }
 const actorRows = (): ActorRows => ({
+  temporal: new Map(),
   writes: new Map(),
   deletes: new Map(),
   expired: new Map(),
@@ -82,6 +86,12 @@ function indexChanges(changes: RecordChanges): SelectionIndex {
     if (!rows) index.actors.set(actor, (rows = actorRows()));
     return rows;
   };
+  for (const [key, intent] of changes.temporal ?? []) {
+    let actor = index.actors.get(intent.after.actorId);
+    if (!actor) index.actors.set(intent.after.actorId, (actor = actorRows()));
+    actor.temporal.set(key, intent);
+    for (const id of temporalPageReferences(intent.after)) actor.references.add(id);
+  }
   for (const [table, rows] of changes.writes) {
     // History has its audience-selected capture. Physical/configuration bodies
     // outside the SQL read owner's capability cannot contribute to this read.
@@ -141,13 +151,15 @@ export function selectActorRecordChanges(
     references = new Set<string>(),
     writes = new Map<string, RowChange[]>(),
     deletes = new Map<string, string[]>(),
-    expired = new Map<string, string[]>();
+    expired = new Map<string, string[]>(),
+    temporal = new Map<string, PendingTemporalPage>();
   let rows = 0;
   for (const input of referenceChanges)
     for (const group of selectedGroups(indexChanges(input), actors))
       for (const id of group.references) references.add(id);
   for (const group of selectedGroups(index, actors)) {
     rows += group.rows;
+    for (const [key, intent] of group.temporal) temporal.set(key, intent);
     for (const [table, values] of group.writes)
       for (const value of values) append(writes, table, value);
     for (const [source, target] of [
@@ -167,29 +179,24 @@ export function selectActorRecordChanges(
   // all erasure identities even when no selected pending owner introduces it.
   for (const id of index.shared.deletes.values()) append(deletes, 'mind_perception_values', id);
   for (const id of index.shared.expired.values()) append(expired, 'mind_perception_values', id);
-  return { writes, deletes, rows, ...(expired.size ? { expired } : {}) };
+  return {
+    writes,
+    deletes,
+    rows,
+    ...(temporal.size ? { temporal } : {}),
+    ...(expired.size ? { expired } : {}),
+  };
 }
 
-// The pending owner replaces the complete plan when an actor's version set changes.
-const sourceVersions = new WeakMap<SourceVersionPlan, Map<string, SourceVersionPlan['retained']>>();
+/** Select affected exact versions without retaining unrelated actor plans. */
 export function selectActorSourceVersions(
   plan: SourceVersionPlan | undefined,
   actorIds?: readonly string[],
 ): SourceVersionPlan | undefined {
   if (!plan || actorIds === undefined) return plan;
-  let groups = sourceVersions.get(plan);
-  if (!groups) {
-    groups = new Map<string, SourceVersionPlan['retained']>(
-      plan.actors.map((actor) => [actor, []]),
-    );
-    for (const row of plan.retained) groups.get(row.actorId)?.push(row);
-    sourceVersions.set(plan, groups);
-  }
-  const available = groups,
-    actors = [...new Set(actorIds)].filter((actor) => available.has(actor));
-  return actors.length
-    ? { actors, retained: actors.flatMap((actor) => available.get(actor)!) }
-    : undefined;
+  const selected = new Set(actorIds),
+    changes = plan.changes.filter((value) => selected.has(value.actorId));
+  return changes.length ? { changes } : undefined;
 }
 
 type HistorySelection = Array<{ event: PreparedHistoryRead['changed'][number]; order: number }>;

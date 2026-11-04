@@ -5,12 +5,12 @@ import {
   hasMemory,
   appendedRecordCount,
   selectedTemporalPolicy,
-  temporalChunkReceipt,
+  temporalPageReceipt,
   temporalRecentAt,
   type WorldState,
   type Awareness,
   type WorldEvent,
-  type TemporalChunk,
+  type TemporalPage,
 } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { receivedEventAccounts, type ReceivedEventAccount } from './received-event-accounts.js';
@@ -172,8 +172,8 @@ export interface HistoryAccountCut {
   readonly maxAgeSeconds: number;
   readonly forgotten: ReadonlySet<string>;
   readonly corrected: ReadonlySet<string>;
-  readonly frontier?: { readonly chunkOrder: number; readonly ordinal: number };
-  readonly chunks: ReadonlyMap<string, TemporalChunk>;
+  readonly frontier?: { readonly pageOrder: number; readonly ordinal: number };
+  readonly pages: readonly TemporalPage[];
 }
 /** Selected-actor history input owns bounded scalar/receipt references, never the
  * whole world or its shared received-value catalogue across a read wait. */
@@ -188,12 +188,12 @@ export function captureHistoryAccountCut(world: WorldState, actorId: string): Hi
     ...(actor?.retiredThrough
       ? {
           frontier: {
-            chunkOrder: actor.retiredThrough.chunkOrder,
+            pageOrder: actor.retiredThrough.pageOrder,
             ordinal: actor.retiredThrough.ordinal,
           },
         }
       : {}),
-    chunks: new Map(actor?.chunks.map((chunk) => [chunk.id, chunk])),
+    pages: actor?.pages ?? [],
   };
 }
 /** Saved and pending readers share current personal eligibility. An admitted
@@ -218,16 +218,11 @@ export function temporalHistoryAccountAvailable(
   cut: HistoryAccountCut,
   account: Pick<
     NonNullable<ReceivedEventAccount['temporal']>,
-    'receivedAt' | 'chunkOrder' | 'receipt'
+    'receivedAt' | 'pageOrder' | 'receipt'
   >,
 ): boolean {
   if (!temporalRecentAt(account.receivedAt, cut.at, cut.maxAgeSeconds)) return false;
-  const frontier = cut.frontier;
-  return (
-    !frontier ||
-    account.chunkOrder > frontier.chunkOrder ||
-    (account.chunkOrder === frontier.chunkOrder && account.receipt.ordinal > frontier.ordinal)
-  );
+  return true;
 }
 export function historyAccountAtCapturedCut(
   cut: HistoryAccountCut,
@@ -240,7 +235,7 @@ export function historyAccountAtCapturedCut(
   let index = changes && retiredHistoryInputs.get(changes);
   if (changes && !index) {
     index = new Map();
-    for (const table of ['mind_temporal_chunks', 'mind_awareness'])
+    for (const table of ['mind_temporal_pages', 'mind_awareness'])
       index.set(
         table,
         new Set([...(changes.deletes.get(table) ?? []), ...(changes.expired?.get(table) ?? [])]),
@@ -260,27 +255,15 @@ export function historyAccountAtCapturedCut(
   if (account.temporal) {
     const temporal = account.temporal;
     if (!temporalHistoryAccountAvailable(cut, temporal)) return;
-    const frontier = cut.frontier;
-    const id = JSON.stringify([
-      'world',
-      'experience',
-      'temporal',
-      'actors',
-      actorId,
-      'chunks',
-      temporal.chunkId,
-    ]);
-    if (index?.get('mind_temporal_chunks')?.has(id)) return;
-    const chunk = cut.chunks.get(temporal.chunkId);
+    const chunk = cut.pages.find(
+      (page) =>
+        page.physicalLife === temporal.receipt.physicalLife &&
+        page.epoch === temporal.receipt.epoch &&
+        temporalPageReceipt(page, temporal.receipt.ordinal) !== undefined,
+    );
     if (chunk) {
-      const receipt = temporalChunkReceipt(chunk, temporal.receipt.ordinal);
+      const receipt = temporalPageReceipt(chunk, temporal.receipt.ordinal);
       if (!receipt || !temporalRecentAt(receipt.at, cut.at, cut.maxAgeSeconds)) return;
-      if (
-        frontier &&
-        (chunk.order < frontier.chunkOrder ||
-          (chunk.order === frontier.chunkOrder && receipt.ordinal <= frontier.ordinal))
-      )
-        return;
     }
   }
   return account;

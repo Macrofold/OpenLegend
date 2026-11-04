@@ -1,13 +1,21 @@
-import { receiptLookupBucket } from './evidence-segments.js';
+import {
+  serializeTemporalPage,
+  temporalPageRecordId,
+  receiptLookupBucket,
+} from './temporal-page-storage.js';
 import type {
   WorldEvent,
   Appraisal,
   ReceivedValue,
   TemporalReceiptLocator,
 } from '@open-legend/domain';
-import { temporalAccountAliasClosure, selectedTemporalPolicy } from '@open-legend/domain';
+import {
+  temporalAccountAliasClosure,
+  temporalPageReferences,
+  selectedTemporalPolicy,
+} from '@open-legend/domain';
 import { digest } from './content-digest.js';
-import { readTemporalChunkRecord } from './temporal-storage.js';
+import { readTemporalPageRecord } from './temporal-storage.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions, historyMapPositions } from './history-residency.js';
 import { MEMORY_SOURCE_TABLES } from './memory-repository.js';
@@ -21,6 +29,8 @@ export interface PreparedHistoryEdit {
   state: SavedWorld;
   events: WorldEvent[];
   referencedEventIds: Set<string>;
+  temporalPredecessors?: ReadonlyMap<string, number>;
+  stale?: true;
 }
 
 /** Complete dependency closure for an explicit creator edit, never a recall candidate limit.
@@ -32,10 +42,20 @@ export async function prepareHistoryEdit(
   db: SqlDatabase,
   state: SavedWorld,
   selection: HistoryEditSelection,
+  revision: number,
 ): Promise<PreparedHistoryEdit> {
   const snapshot = db.readTransaction?.bind(db) ?? db.transaction.bind(db);
   return snapshot(async () => {
     const worldId = state.world.id;
+    const head = await db.prepare('SELECT revision FROM world_head WHERE world_id=?').get(worldId);
+    if (Number(head?.['revision']) !== revision)
+      return { state, events: [], referencedEventIds: new Set<string>(), stale: true };
+    if (
+      Object.values(state.world.experience?.temporal?.actors ?? {}).some((actor) =>
+        actor.pages.some((page) => page.appendClosed !== true),
+      )
+    )
+      throw new Error('Flush accepted temporal changes before preparing a durable history edit.');
     const eventIds = [...new Set(selection.eventIds ?? [])];
     const roots = (selection.sources ?? []).map(({ actorId, sourceId }) => ({
       actor_id: actorId,
@@ -126,7 +146,7 @@ export async function prepareHistoryEdit(
     let affected: Record<string, unknown>[] = [];
     const loadedChunks = new Set(
       Object.values(world.experience.temporal?.actors ?? {}).flatMap((actor) =>
-        actor.chunks.map((chunk) => chunk.id),
+        actor.pages.map((chunk) => chunk.id),
       ),
     );
     let chunkCount = 0,
@@ -169,17 +189,22 @@ export async function prepareHistoryEdit(
         })),
       );
       // A creator correction must reach cold personal receipts too. Select the actor's
-      // indexed source aliases before loading packed chunks; shared blocks grant no access.
+      // indexed source aliases before loading packed pages; shared blocks grant no access.
       if (world.experience.temporal) {
         const selected = await db
           .prepare(
-            `SELECT t.actor_id,t.source_id,t.payload,t.position,t.value_refs,t.segments,t.encoded_bytes AS bytes
-        FROM mind_temporal_chunks_read t WHERE t.world_id=? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
+            `SELECT t.*,t.encoded_bytes AS bytes
+        FROM mind_temporal_pages t WHERE t.world_id=? AND t.retired_revision IS NULL AND t.last_received_at+?>? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
           SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text,lookup_bucket smallint)
-          WHERE a.actor_id=t.actor_id AND EXISTS (SELECT 1 FROM mind_temporal_segments s
-            WHERE s.world_id=t.world_id AND s.parent_id=t.id AND s.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND s.source_ids @> ARRAY[a.source_id]::text[])) ORDER BY t.actor_id,t.position LIMIT 8193`,
+          WHERE a.actor_id=t.actor_id AND t.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
           )
-          .all(worldId, [...loadedChunks], scope);
+          .all(
+            worldId,
+            selectedTemporalPolicy(world).recent.maxAgeSeconds,
+            world.simTime,
+            [...loadedChunks],
+            scope,
+          );
         chunkCount += selected.length;
         chunkBytes += selected.reduce((sum, row) => sum + Number(row['bytes']), 0);
         if (chunkCount > 8192 || chunkBytes > 4 * 1024 * 1024)
@@ -200,14 +225,14 @@ export async function prepareHistoryEdit(
         for (const [actorId, rows] of owners) {
           const actor = temporal.actors[actorId];
           if (!actor) throw new Error('Cold personal receipt owner is unavailable.');
-          const chunks = new Map(actor.chunks.map((chunk) => [chunk.id, chunk]));
+          const pages = new Map(actor.pages.map((chunk) => [chunk.id, chunk]));
           for (const row of rows) {
-            const chunk = readTemporalChunkRecord(row);
-            chunks.set(chunk.id, chunk);
-            for (const id of chunk.sourceRefs) sources.add(id);
+            const chunk = readTemporalPageRecord(row);
+            pages.set(chunk.id, chunk);
+            for (const id of temporalPageReferences(chunk)) sources.add(id);
           }
-          const merged = [...chunks.values()].sort((a, b) => a.order - b.order);
-          temporal.actors[actorId] = { ...actor, chunks: merged };
+          const merged = [...pages.values()].sort((a, b) => a.order - b.order);
+          temporal.actors[actorId] = { ...actor, pages: merged };
         }
         const received = { ...world.receivedValues, sources: { ...world.receivedValues?.sources } };
         const missing = [...sources].filter((id) => !received.sources[id]);
@@ -346,7 +371,35 @@ export async function prepareHistoryEdit(
       if (rows.length || appraisals[actorId]) appraisals[actorId] = values;
     }
     if (world.appraisals || Object.keys(appraisals).length) world.appraisals = appraisals;
-    return { state: { ...state, world }, events, referencedEventIds };
+    const affectedByActor = new Map<string, Set<string>>();
+    for (const source of affected) {
+      const actorId = String(source['actor_id']);
+      let ids = affectedByActor.get(actorId);
+      if (!ids) affectedByActor.set(actorId, (ids = new Set()));
+      ids.add(String(source['source_id']));
+    }
+    const selectedPages = new Map<string, import('@open-legend/domain').TemporalPage>();
+    for (const [actorId, sources] of affectedByActor)
+      for (const page of world.experience.temporal?.actors[actorId]?.pages ?? [])
+        if (page.sourceIds.some((id) => sources.has(id)))
+          selectedPages.set(temporalPageRecordId(actorId, page.id), page);
+    const temporalPredecessors = new Map<string, number>();
+    const ids = [...selectedPages.keys()];
+    for (let at = 0; at < ids.length; at += 256)
+      for (const row of await db
+        .prepare(
+          'SELECT id,revision,payload FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[]) AND retired_revision IS NULL',
+        )
+        .all(worldId, ids.slice(at, at + 256))) {
+        const id = String(row['id']),
+          page = selectedPages.get(id)!;
+        if (String(row['payload']) !== serializeTemporalPage(page))
+          throw new Error('Prepared temporal predecessor differs from its canonical page.');
+        temporalPredecessors.set(id, Number(row['revision']));
+      }
+    if (temporalPredecessors.size !== selectedPages.size)
+      throw new Error('Prepared temporal predecessor is unavailable.');
+    return { state: { ...state, world }, events, referencedEventIds, temporalPredecessors };
   });
 }
 
@@ -444,31 +497,23 @@ export function mergeHistoryEditResidency(
       const actors = { ...temporal.actors };
       for (const [actorId, preparedActor] of Object.entries(cold.actors)) {
         const live = actors[actorId];
-        if (!live || live.chunks === preparedActor.chunks) continue;
-        const chunks = new Map(live.chunks.map((chunk) => [chunk.id, chunk]));
+        if (!live || live.pages === preparedActor.pages) continue;
+        const pages = new Map(live.pages.map((chunk) => [chunk.id, chunk]));
         const resident = new Set(
-          (baseline.world.experience?.temporal?.actors[actorId]?.chunks ?? []).map(
+          (baseline.world.experience?.temporal?.actors[actorId]?.pages ?? []).map(
             (chunk) => chunk.id,
           ),
         );
         const cutoff = world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds;
-        const frontier = live.retiredThrough;
-        for (const chunk of preparedActor.chunks)
-          if (
-            !chunks.has(chunk.id) &&
-            !resident.has(chunk.id) &&
-            chunk.throughAt >= cutoff &&
-            (!frontier ||
-              chunk.order > frontier.chunkOrder ||
-              (chunk.order === frontier.chunkOrder && chunk.throughOrdinal > frontier.ordinal))
-          ) {
-            chunks.set(chunk.id, chunk);
-            for (const id of chunk.sourceRefs) neededValues.add(id);
+        for (const chunk of preparedActor.pages)
+          if (!pages.has(chunk.id) && !resident.has(chunk.id) && chunk.throughAt >= cutoff) {
+            pages.set(chunk.id, chunk);
+            for (const id of temporalPageReferences(chunk)) neededValues.add(id);
           }
-        if (chunks.size !== live.chunks.length)
+        if (pages.size !== live.pages.length)
           actors[actorId] = {
             ...live,
-            chunks: [...chunks.values()].sort((a, b) => a.order - b.order),
+            pages: [...pages.values()].sort((a, b) => a.order - b.order),
           };
       }
       world.experience.temporal = { ...temporal, actors };
@@ -501,4 +546,27 @@ export function mergeHistoryEditResidency(
     }
   }
   return { ...current, world };
+}
+
+/** The creator's preparation may wait while ordinary play and retention continue.
+ * Recheck the exact selected immutable predecessors before adopting their bodies. */
+export async function historyEditPredecessorsCurrent(
+  db: SqlDatabase,
+  worldId: string,
+  prepared: PreparedHistoryEdit,
+): Promise<boolean> {
+  const expected = prepared.temporalPredecessors;
+  if (!expected?.size) return true;
+  const ids = [...expected.keys()];
+  let found = 0;
+  for (let at = 0; at < ids.length; at += 256)
+    for (const row of await db
+      .prepare(
+        'SELECT id,revision FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[]) AND retired_revision IS NULL',
+      )
+      .all(worldId, ids.slice(at, at + 256))) {
+      if (expected.get(String(row['id'])) !== Number(row['revision'])) return false;
+      found++;
+    }
+  return found === expected.size;
 }

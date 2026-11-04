@@ -140,8 +140,8 @@ it('persists receipt-only native movement before immediate recent browsing and d
   expect(service.world.experience!.summaries[PLAYER_ID]).toBe(
     before.experience!.summaries[PLAYER_ID],
   );
-  expect(service.world.experience!.temporal!.actors[PLAYER_ID]!.chunks).not.toBe(
-    before.experience!.temporal!.actors[PLAYER_ID]!.chunks,
+  expect(service.world.experience!.temporal!.actors[PLAYER_ID]!.pages).not.toBe(
+    before.experience!.temporal!.actors[PLAYER_ID]!.pages,
   );
   const durable = vi.spyOn(service, 'whenDurable');
   await service.flushMemorySources(PLAYER_ID, false);

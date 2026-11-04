@@ -1,5 +1,5 @@
 import type { CurrentContact, CurrentReceivedGroup } from '@open-legend/domain';
-import { isImmutableData } from '@open-legend/domain';
+import { isImmutableData, currentContactContentIdentity } from '@open-legend/domain';
 import type { JsonRecord } from './world-record-schema.js';
 
 // Assign every native field explicitly: adding one must also choose its storage
@@ -14,12 +14,8 @@ const contentColumns = {
   groups: 'split',
 } satisfies Record<keyof CurrentContactContent, string>;
 const groupColumns = {
-  grant: 'payload',
-  fields: 'payload',
-  times: 'metadata',
-  check: 'metadata',
-  availability: 'metadata',
-  recording: 'metadata',
+  received: 'payload',
+  metadata: 'metadata',
 } satisfies Record<keyof CurrentReceivedGroup, string>;
 void contactColumns;
 void contentColumns;
@@ -27,11 +23,11 @@ void groupColumns;
 type CurrentContactContent = CurrentContact['content'];
 type Content = Pick<CurrentContact, 'order'> & {
   content: Pick<CurrentContactContent, 'fieldOrder' | 'originals'> & {
-    groups: Array<Pick<CurrentReceivedGroup, 'grant' | 'fields'>>;
+    groups: Array<CurrentReceivedGroup['received']>;
   };
 };
 type Metadata = Pick<CurrentContact, 'sight'> & {
-  groups: Array<Pick<CurrentReceivedGroup, 'times' | 'check' | 'availability' | 'recording'>>;
+  groups: Array<CurrentReceivedGroup['metadata']>;
 };
 const contents = new WeakMap<CurrentContact, string>();
 const metadata = new WeakMap<CurrentContact, string>();
@@ -43,14 +39,7 @@ export function sameCurrentContactContent(a: CurrentContact, b: CurrentContact):
     isImmutableData(a) &&
     isImmutableData(b) &&
     a.order === b.order &&
-    a.content.fieldOrder === b.content.fieldOrder &&
-    a.content.originals === b.content.originals &&
-    a.content.groups.length === b.content.groups.length &&
-    a.content.groups.every(
-      (group, at) =>
-        group.grant === b.content.groups[at]!.grant &&
-        group.fields === b.content.groups[at]!.fields,
-    )
+    currentContactContentIdentity(a) === currentContactContentIdentity(b)
   );
 }
 export function currentContactPayload(contact: CurrentContact, previous?: CurrentContact): string {
@@ -66,7 +55,7 @@ export function currentContactPayload(contact: CurrentContact, previous?: Curren
     content: {
       fieldOrder: contact.content.fieldOrder,
       originals: contact.content.originals,
-      groups: contact.content.groups.map(({ grant, fields }) => ({ grant, fields })),
+      groups: contact.content.groups.map(({ received }) => received),
     },
   };
   const payload = JSON.stringify(body);
@@ -78,12 +67,7 @@ export function currentContactMetadata(contact: CurrentContact): string {
   if (cached !== undefined) return cached;
   const body: Metadata = {
     ...(contact.sight ? { sight: contact.sight } : {}),
-    groups: contact.content.groups.map(({ times, check, availability, recording }) => ({
-      times,
-      check,
-      ...(availability ? { availability } : {}),
-      ...(recording ? { recording } : {}),
-    })),
+    groups: contact.content.groups.map(({ metadata }) => metadata),
   };
   const payload = JSON.stringify(body);
   if (isImmutableData(contact)) metadata.set(contact, payload);
@@ -114,9 +98,25 @@ export function decodeCurrentContactRow(row: JsonRecord): CurrentContact {
     ) ||
     times.groups.some(
       (group) =>
-        !group ||
-        Object.keys(group).some(
-          (key) => !['times', 'check', 'availability', 'recording'].includes(key),
+        !Array.isArray(group) ||
+        group.some(
+          (partition) =>
+            !partition ||
+            Object.keys(partition).some(
+              (key) =>
+                ![
+                  'members',
+                  'times',
+                  'revision',
+                  'check',
+                  'availability',
+                  'recording',
+                  'receivedAt',
+                  'receivedOrder',
+                  'confirmedRevision',
+                  'frameRef',
+                ].includes(key),
+            ),
         ),
     )
   )
@@ -125,7 +125,10 @@ export function decodeCurrentContactRow(row: JsonRecord): CurrentContact {
     ...body,
     content: {
       ...body.content,
-      groups: body.content.groups.map((group, at) => ({ ...group, ...times.groups[at]! })),
+      groups: body.content.groups.map((received, at) => ({
+        received,
+        metadata: times.groups[at]!,
+      })),
     },
     ...(Object.hasOwn(times, 'sight') ? { sight: times.sight } : {}),
   };

@@ -1,3 +1,4 @@
+import { temporalPageReferences } from '@open-legend/domain';
 import { beginTiming, endTiming, countMetric } from './performance.js';
 import { sqlRowBatches } from './sql-rows.js';
 import { RECORD_NODES } from './world-record-schema.js';
@@ -18,8 +19,8 @@ export function receivedRowOwner(table: string, row: RowChange): Owner {
   const columns = Object.keys(RECORD_NODES.get(table)!.columns!);
   const references = row.extra[columns.indexOf('value_refs')] as string[];
   return {
-    kind: table === 'mind_temporal_segments' ? 'mind_temporal_chunks' : table,
-    id: table === 'mind_temporal_segments' ? row.parent : row.id,
+    kind: table,
+    id: row.id,
     actor: String(row.extra[columns.indexOf('actor_id')]),
     refs: references ?? [],
     ...(row.receivedValueAdditions
@@ -35,7 +36,7 @@ export class ReceivedValueOwnership {
 
   async initialize(): Promise<void> {
     await this.db.exec(`
-      CREATE INDEX IF NOT EXISTS retired_temporal_cleanup ON mind_temporal_chunks(world_id,retired_revision,id) WHERE retired_revision IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS retired_temporal_cleanup ON mind_temporal_pages(world_id,retired_revision,id) WHERE retired_revision IS NOT NULL;
       CREATE UNIQUE INDEX IF NOT EXISTS received_value_identity
         ON mind_perception_values(world_id,source_id);
       CREATE TABLE IF NOT EXISTS received_value_uses (
@@ -57,12 +58,12 @@ export class ReceivedValueOwnership {
 
   /** Startup/checkpoint integrity only; never a movement or command admission scan. */
   async validate(worldId: string): Promise<void> {
-    const expected = [...currentOwners, 'mind_temporal_segments']
+    const expected = [...currentOwners, 'mind_temporal_pages']
       .map((table) => {
-        const temporal = table === 'mind_temporal_segments';
-        return `SELECT p.world_id,'${temporal ? 'mind_temporal_chunks' : table}' AS owner_kind,${temporal ? 'p.parent_id' : 'p.id'} AS owner_id,p.actor_id,v.id AS value_id
+        const temporal = table === 'mind_temporal_pages';
+        return `SELECT p.world_id,'${temporal ? 'mind_temporal_pages' : table}' AS owner_kind,p.id AS owner_id,p.actor_id,v.id AS value_id
         FROM ${table} p CROSS JOIN LATERAL unnest(p.value_refs) v(id)
-        WHERE p.world_id=? ${temporal ? 'AND EXISTS(SELECT 1 FROM mind_temporal_chunks c WHERE c.world_id=p.world_id AND c.id=p.parent_id AND c.retired_revision IS NULL)' : ''}`;
+        WHERE p.world_id=? ${temporal ? 'AND p.retired_revision IS NULL' : ''}`;
       })
       .join(' UNION ');
     const mismatch = await this.db
@@ -86,15 +87,15 @@ export class ReceivedValueOwnership {
   ): Promise<void> {
     if (restore) {
       await this.db.prepare('DELETE FROM received_value_uses WHERE world_id=?').run(worldId);
-      for (const table of [...currentOwners, 'mind_temporal_segments'])
+      for (const table of [...currentOwners, 'mind_temporal_pages'])
         await this.db
           .prepare(
             `INSERT INTO received_value_uses
-          SELECT p.world_id,?,${table === 'mind_temporal_segments' ? 'p.parent_id' : 'p.id'},p.actor_id,v.value
+          SELECT p.world_id,?,p.id,p.actor_id,v.value
           FROM ${table} p CROSS JOIN LATERAL unnest(p.value_refs) v(value)
           WHERE p.world_id=? ON CONFLICT DO NOTHING`,
           )
-          .run(table === 'mind_temporal_segments' ? 'mind_temporal_chunks' : table, worldId);
+          .run(table, worldId);
       await this.db
         .prepare('UPDATE mind_perception_values SET gc_candidate_seq=? WHERE world_id=?')
         .run(revision, worldId);
@@ -102,50 +103,11 @@ export class ReceivedValueOwnership {
     }
 
     const replacements: Owner[] = [];
-    const appendChunks = new Map<string, Omit<Owner, 'refs'> & { refs: Set<string> }>();
-    const rebuildChunks = new Set<string>();
-    for (const table of currentOwners) {
+    for (const table of [...currentOwners, 'mind_temporal_pages']) {
       for (const row of changes.writes.get(table) ?? [])
         if (row.receivedUsesChanged !== false) replacements.push(receivedRowOwner(table, row));
       for (const id of changes.deletes.get(table) ?? [])
         replacements.push({ kind: table, id, actor: '', refs: [] });
-    }
-    for (const row of changes.writes.get('mind_temporal_segments') ?? []) {
-      if (!row.create && row.logicalRemoval !== false) rebuildChunks.add(row.parent);
-      const value = receivedRowOwner('mind_temporal_segments', row);
-      if (row.receivedValueAdditions) value.refs = [...row.receivedValueAdditions];
-      const prior = appendChunks.get(value.id);
-      if (prior) for (const id of value.refs) prior.refs.add(id);
-      else appendChunks.set(value.id, { ...value, refs: new Set(value.refs) });
-    }
-    for (const id of changes.deletes.get('mind_temporal_chunks') ?? [])
-      replacements.push({ kind: 'mind_temporal_chunks', id, actor: '', refs: [] });
-    for (const id of changes.deletes.get('mind_temporal_segments') ?? []) {
-      const path = JSON.parse(id) as string[];
-      rebuildChunks.add(JSON.stringify(path.slice(0, -2)));
-    }
-    if (rebuildChunks.size) {
-      const rows = await this.db
-        .prepare(
-          `SELECT p.parent_id,p.actor_id,
-          ARRAY(SELECT DISTINCT key FROM mind_temporal_segments s
-            CROSS JOIN LATERAL unnest(s.value_refs) v(key)
-            WHERE s.world_id=p.world_id AND s.parent_id=p.parent_id) AS refs
-        FROM mind_temporal_segments p WHERE p.world_id=? AND p.parent_id=ANY(?::text[])
-        GROUP BY p.world_id,p.parent_id,p.actor_id`,
-        )
-        .all(worldId, [...rebuildChunks]);
-      const selected = new Map(rows.map((row) => [String(row['parent_id']), row]));
-      for (const id of rebuildChunks) {
-        const row = selected.get(id);
-        replacements.push({
-          kind: 'mind_temporal_chunks',
-          id,
-          actor: String(row?.['actor_id'] ?? ''),
-          refs: (row?.['refs'] ?? []) as string[],
-        });
-        appendChunks.delete(id);
-      }
     }
 
     // Structural parent deletion is rare; scope the repair to its actual actors.
@@ -157,14 +119,14 @@ export class ReceivedValueOwnership {
       for (const id of changes.deletes.get(table) ?? [])
         removedActors.add((JSON.parse(id) as string[])[at]!);
     if (removedActors.size)
-      for (const table of [...currentOwners, 'mind_temporal_segments']) {
-        const kind = table === 'mind_temporal_segments' ? 'mind_temporal_chunks' : table;
+      for (const table of [...currentOwners, 'mind_temporal_pages']) {
+        const kind = table;
         const rows = await this.db
           .prepare(
             `SELECT DISTINCT u.owner_id FROM received_value_uses u
           WHERE u.world_id=? AND u.actor_id=ANY(?::text[]) AND u.owner_kind=?
           AND NOT EXISTS (SELECT 1 FROM ${table} p WHERE p.world_id=u.world_id
-            AND ${table === 'mind_temporal_segments' ? 'p.parent_id' : 'p.id'}=u.owner_id)`,
+            AND p.id=u.owner_id)`,
           )
           .all(worldId, [...removedActors], kind);
         for (const row of rows)
@@ -190,19 +152,6 @@ export class ReceivedValueOwnership {
         )
         .run(JSON.stringify(batch), worldId, revision, worldId, worldId);
     }
-    const appends = [...appendChunks.values()].map(({ refs, ...owner }) => ({
-      ...owner,
-      refs: [...refs],
-    }));
-    for (const rows of sqlRowBatches(appends.map((owner) => [owner])))
-      await this.db
-        .prepare(
-          `INSERT INTO received_value_uses
-        SELECT ?,x.kind,x.id,x.actor,v.id
-        FROM jsonb_to_recordset(?::jsonb) AS x(kind TEXT,id TEXT,actor TEXT,refs TEXT[])
-        CROSS JOIN LATERAL unnest(x.refs) v(id) ON CONFLICT DO NOTHING`,
-        )
-        .run(worldId, JSON.stringify(rows.map(([owner]) => owner)));
     const writtenValues = (changes.writes.get('mind_perception_values') ?? []).map(
       (row) => (JSON.parse(row.id) as string[]).at(-1)!,
     );
@@ -236,9 +185,11 @@ export class ReceivedValueOwnership {
     const cached = this.pendingReferenceIndexes.get(changes);
     if (cached) return cached;
     const retained = new Set<string>();
-    for (const table of [...currentOwners, 'mind_temporal_segments'])
+    for (const table of [...currentOwners, 'mind_temporal_pages'])
       for (const row of changes.writes.get(table) ?? [])
         for (const id of receivedRowOwner(table, row).refs) retained.add(id);
+    for (const intent of changes.temporal?.values() ?? [])
+      for (const id of temporalPageReferences(intent.after)) retained.add(id);
     for (const row of changes.writes.get('mind_perception_values') ?? [])
       retained.add((JSON.parse(row.id) as string[]).at(-1)!);
     this.pendingReferenceIndexes.set(changes, retained);
@@ -280,7 +231,7 @@ export class ReceivedValueOwnership {
             `WITH candidates AS MATERIALIZED (
           (SELECT id,0 AS kind,retired_revision AS sequence,
             octet_length(payload)+COALESCE((payload::json#>>'{storage,segmentBytes}')::bigint,0) AS bytes
-            FROM mind_temporal_chunks WHERE world_id=? AND retired_revision IS NOT NULL
+            FROM mind_temporal_pages WHERE world_id=? AND retired_revision IS NOT NULL
             ORDER BY retired_revision,id LIMIT 128)
           UNION ALL
           (SELECT source_id AS id,1 AS kind,gc_candidate_seq AS sequence,octet_length(payload) AS bytes
@@ -299,7 +250,7 @@ export class ReceivedValueOwnership {
           SELECT c.*,EXISTS(SELECT 1 FROM received_value_uses u WHERE u.world_id=? AND u.value_id=c.id) AS owned
             FROM chosen c WHERE c.kind=1
         ), removed_chunks AS (
-          DELETE FROM mind_temporal_chunks c USING chosen s
+          DELETE FROM mind_temporal_pages c USING chosen s
             WHERE c.world_id=? AND s.kind=0 AND c.id=s.id RETURNING s.bytes
         ), removed_values AS (
           DELETE FROM mind_perception_values p USING value_candidates v
@@ -314,7 +265,7 @@ export class ReceivedValueOwnership {
           RETURNING 1
         ) SELECT (SELECT count(*) FROM chosen) AS examined,
           (SELECT count(*) FROM value_candidates) AS examined_values,
-          (SELECT count(*) FROM removed_chunks) AS chunks,
+          (SELECT count(*) FROM removed_chunks) AS pages,
           (SELECT COALESCE(sum(bytes),0) FROM removed_chunks) AS chunk_bytes,
           (SELECT count(*) FROM removed_values) AS values_deleted,
           (SELECT count(*) FROM held)+(SELECT count(*) FROM held_protected) AS values_held,
@@ -340,13 +291,13 @@ export class ReceivedValueOwnership {
       const { row, nextCursor } = completed;
       this.firstCleanupKind = 1 - first;
       this.valueCursor = nextCursor;
-      countMetric('persistence.retiredChunksDeleted', Number(row?.['chunks'] ?? 0));
+      countMetric('persistence.retiredChunksDeleted', Number(row?.['pages'] ?? 0));
       countMetric('persistence.retiredChunkBytesDeleted', Number(row?.['chunk_bytes'] ?? 0));
       countMetric('persistence.receivedValuesExamined', Number(row?.['examined_values'] ?? 0));
       countMetric('persistence.receivedValuesDeleted', Number(row?.['values_deleted'] ?? 0));
       countMetric('persistence.receivedValueBytesDeleted', Number(row?.['value_bytes'] ?? 0));
       return (
-        Number(row?.['chunks'] ?? 0) +
+        Number(row?.['pages'] ?? 0) +
         Number(row?.['values_deleted'] ?? 0) +
         Number(row?.['values_held'] ?? 0) +
         Number(!!nextCursor)

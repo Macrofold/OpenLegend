@@ -2,9 +2,11 @@ import { personalFactAlias } from './experience-source.js';
 import { entityGet } from './entity-collection.js';
 import { readOnlyDraftView } from './draft.js';
 import { immutableDataSnapshot } from './records.js';
+import { orderedRecordSet } from './ordered-record.js';
 import { sameDefinitionPin } from './definition-pins.js';
 import {
   currentFacetGet,
+  currentGroupNativeFacet,
   currentFacetSupport,
   currentFacetTimes,
   currentContactEntries,
@@ -53,14 +55,19 @@ export interface CapturedCurrentSources {
   values: ReceivedValueLookup;
   motions: Record<string, { track: CurrentMotionSample; channel: DefinitionPin }>;
 }
-export function captureCurrentSources(world: WorldState, actorId: string): CapturedCurrentSources {
+export function captureCurrentSources(
+  world: WorldState,
+  actorId: string,
+  selection?: { sourceIds?: ReadonlySet<string>; kinds?: ReadonlySet<string> },
+): CapturedCurrentSources {
   const actor = entityGet(world.entities, actorId);
   if (!actor?.actor) throw new Error('A current source cut requires an observer.');
   const observer = { actorId, physicalLife: actor.actor.physicalLife ?? 0 },
     state = world.perceptionEvidence?.[actorId];
   const sources: CapturedCurrentSources['sources'] = {},
     values: Record<string, { value: NonNullable<ReturnType<typeof receivedValueAt>> }> = {},
-    subjects = new Map<string, ObserverSubject>();
+    subjects = new Map<string, ObserverSubject>(),
+    current: PerceptionEvidenceOwner['current'] = { size: 0 };
   const captureRef = (ref: ReceivedValueReference) => {
     if (typeof ref !== 'string' || Object.hasOwn(values, ref)) return;
     const value = receivedValueAt(world.receivedValues?.sources ?? {}, ref);
@@ -77,31 +84,53 @@ export function captureCurrentSources(world: WorldState, actorId: string): Captu
   };
   if (state?.life === observer.physicalLife) {
     for (const [id, contact] of currentContactEntries(state)) {
+      if (selection?.sourceIds && !selection.sourceIds.has(id)) continue;
       const groups: CurrentReceivedGroup[] = [];
       for (const raw of contact.content.groups) {
         const group = readOnlyDraftView(raw),
-          kinds = Object.keys(group.fields),
+          kinds = Object.keys(group.received.fields),
           representative = kinds.find((kind) => kind !== 'association') ?? kinds[0];
         if (!representative) continue;
-        const first = currentFacetGet(state, `${id}:${representative}`, {
-          channel: group.grant.channel,
-        });
+        const first = currentGroupNativeFacet(
+          group,
+          contact.content.originals[group.received.grant.original]!,
+          representative,
+        );
         if (!first || !currentLeaseEligible(world, actorId, first, { allowUnchecked: true }))
           continue;
         const association =
-          group.fields['association'] &&
-          currentFacetGet(state, `${id}:association`, { channel: group.grant.channel });
+          group.received.fields['association'] &&
+          currentGroupNativeFacet(
+            group,
+            contact.content.originals[group.received.grant.original]!,
+            'association',
+          );
         const dropAssociation =
           association &&
           !currentLeaseEligible(world, actorId, association, { allowUnchecked: true });
-        const fields = dropAssociation
-          ? Object.fromEntries(
-              Object.entries(group.fields).filter(([kind]) => kind !== 'association'),
-            )
-          : group.fields;
+        const fields =
+          dropAssociation || selection?.kinds
+            ? Object.fromEntries(
+                Object.entries(group.received.fields).filter(
+                  ([kind]) =>
+                    !(dropAssociation && kind === 'association') &&
+                    (!selection?.kinds || selection.kinds.has(kind)),
+                ),
+              )
+            : group.received.fields;
         if (!Object.keys(fields).length) continue;
-        groups.push(fields === group.fields ? group : { ...group, fields });
-        captureRef(contact.content.originals[group.grant.original]!.headerRef);
+        groups.push(
+          fields === group.received.fields
+            ? group
+            : {
+                received: { grant: group.received.grant, fields },
+                metadata: group.metadata.flatMap((partition) => {
+                  const members = partition.members.filter(([kind]) => Object.hasOwn(fields, kind));
+                  return members.length ? [{ ...partition, members }] : [];
+                }),
+              },
+        );
+        captureRef(contact.content.originals[group.received.grant.original]!.headerRef);
         for (const field of Object.values(fields)) {
           captureValue(field.value);
           addSubject(field.localSubject);
@@ -116,7 +145,33 @@ export function captureCurrentSources(world: WorldState, actorId: string): Captu
           }
         }
       }
-      if (groups.length) sources[id] = { order: contact.order, groups };
+      if (groups.length) {
+        sources[id] = { order: contact.order, groups };
+        const grants = new Set(groups.map((group) => group.received.grant.original));
+        const fieldKeys = new Set(
+          groups.flatMap((group) =>
+            Object.keys(group.received.fields).map((kind) =>
+              JSON.stringify([
+                kind,
+                group.received.grant.channel.id,
+                group.received.grant.channel.version,
+                group.received.grant.channel.digest,
+              ]),
+            ),
+          ),
+        );
+        orderedRecordSet(current, id, {
+          order: contact.order,
+          content: {
+            groups,
+            fieldOrder: contact.content.fieldOrder.filter((key) => fieldKeys.has(key)),
+            originals: Object.fromEntries(
+              Object.entries(contact.content.originals).filter(([key]) => grants.has(key)),
+            ),
+          },
+          ...(contact.sight ? { sight: contact.sight } : {}),
+        });
+      }
     }
   }
   const motions: CapturedCurrentSources['motions'] = {};
@@ -150,7 +205,7 @@ export function captureCurrentSources(world: WorldState, actorId: string): Captu
       reader: {
         observer,
         life: observer.physicalLife,
-        current: state?.current ?? { size: 0 },
+        current,
         ...(state?.visualConfirmation ? { visualConfirmation: state.visualConfirmation } : {}),
       },
       values,
@@ -168,9 +223,9 @@ function recordFor(
 ): CurrentFacetRecord | undefined {
   const allowed = captured.sources[id]?.groups.some(
     (group) =>
-      group.grant.exposure === exposure &&
-      sameDefinitionPin(group.grant.channel, channel) &&
-      !!group.fields[kind],
+      group.received.grant.exposure === exposure &&
+      sameDefinitionPin(group.received.grant.channel, channel) &&
+      !!group.received.fields[kind],
   );
   return allowed ? currentFacetGet(captured.reader, `${id}:${kind}`, { channel }) : undefined;
 }
@@ -359,10 +414,10 @@ export function captureCurrentSource(
     captured.sources[sourceId]?.groups
       .filter(
         (group) =>
-          group.grant.exposure === selection.exposure &&
-          sameDefinitionPin(group.grant.channel, selection.channel),
+          group.received.grant.exposure === selection.exposure &&
+          sameDefinitionPin(group.received.grant.channel, selection.channel),
       )
-      .flatMap((group) => Object.keys(group.fields)) ?? [],
+      .flatMap((group) => Object.keys(group.received.fields)) ?? [],
   );
   const records = [...available]
     .filter(

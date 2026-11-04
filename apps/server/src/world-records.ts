@@ -9,20 +9,23 @@ import {
 } from './received-record-references.js';
 import { liveEvidenceRowSql } from './world-record-schema.js';
 import {
-  evidenceSegmentDelta,
-  evidenceReadView,
-  validateReceiptPageSources,
-} from './evidence-segments.js';
+  captureTemporalPageChange,
+  mergeTemporalPageIntent,
+  packTemporalSave,
+  temporalPageIntentKey,
+  temporalPageRecordId,
+  temporalPagePosition,
+  validateTemporalPageSources,
+  type PendingTemporalPage,
+} from './temporal-page-storage.js';
 import { sqlRecordBatches, sqlRecordBatchesWithCount, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
-import {
-  readTemporalChunkRecord,
-  validateTemporalChunkValueReferences,
-} from './temporal-storage.js';
+import { readTemporalPageRecord, validateTemporalPageValueReferences } from './temporal-storage.js';
 import { hotEventDependencies } from './hot-events.js';
 import {
   HISTORY_TABLES,
   HOT_AWARENESS_ROWS,
+  HOT_TEMPORAL_BYTES,
   historyPositions,
   historyKey,
   materializedObjectHistory,
@@ -66,8 +69,10 @@ import {
   type Entity,
   type ItemInstance,
   selectedTemporalPolicy,
+  temporalOpenReservationTotals,
   selectedObserverIdentityKnowledge,
   type ReceivedValue,
+  temporalPageReferences,
   referencedReceivedValues,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
@@ -79,10 +84,10 @@ import {
   type RecordNode,
 } from './world-record-schema.js';
 
+const encodedTemporalCuts = new WeakMap<RecordChanges, RecordChanges>();
 type Value = unknown;
 const personalMetadataTables = new Set([
-  'mind_temporal_segments',
-  'mind_temporal_chunks',
+  'mind_temporal_pages',
   'mind_awareness',
   'mind_memories',
   'mind_summaries',
@@ -96,17 +101,18 @@ const personalMetadataFields = new Set([
   'retention_metadata',
   'account_revision',
   'retention_class',
+  'policy_priority',
+  'active_or_protected',
+  'next_due_at',
   'logical_bytes',
   'unresolved',
   'value_refs',
   'metadata',
-  'chunk_order',
+  'page_order',
 ]);
 const personalMetadataColumns = (node: RecordNode) =>
   personalMetadataTables.has(node.table)
-    ? Object.entries(node.columns ?? {}).filter(
-        ([name]) => node.table === 'mind_temporal_segments' || personalMetadataFields.has(name),
-      )
+    ? Object.entries(node.columns ?? {}).filter(([name]) => personalMetadataFields.has(name))
     : [];
 export interface RowChange {
   id: string;
@@ -125,11 +131,14 @@ export interface RowChange {
   /** Proved new references for an append-only page. */
   receivedValueAdditions?: readonly string[];
   receivedValueRemovals?: readonly string[];
+  temporalRanges?: import('@open-legend/domain').TemporalPageMetadata['spanRanges'];
 }
 export interface RecordChanges {
   writes: Map<string, RowChange[]>;
   deletes: Map<string, string[]>;
   rows: number;
+  temporal?: Map<string, PendingTemporalPage>;
+  savedTemporalPages?: readonly import('@open-legend/domain').TemporalPage[];
   /** Actor-permitted semantic expiry, never re-archived as an old source version. */
   expired?: Map<string, string[]>;
 }
@@ -203,7 +212,11 @@ export function mergeRecordChanges(previous: RecordChanges, next: RecordChanges)
     if (!selected) expired.set(table, (selected = new Set()));
     for (const id of ids) selected.add(id);
   }
+  const temporal = new Map(previous.temporal);
+  for (const [key, intent] of next.temporal ?? [])
+    temporal.set(key, mergeTemporalPageIntent(temporal.get(key), intent));
   return {
+    ...(temporal.size ? { temporal } : {}),
     writes: new Map(
       [...writes]
         .filter(([, rows]) => rows.size)
@@ -222,8 +235,7 @@ export const retainedSourceTables: ReadonlySet<string> = new Set([
   'mind_awareness',
   'mind_memories',
   'mind_summaries',
-  'mind_temporal_chunks',
-  'mind_temporal_segments',
+  'mind_temporal_pages',
   'mind_perception_values',
   'mind_temporal_supports',
 ]);
@@ -437,18 +449,29 @@ export class WorldRecords {
       CREATE TRIGGER received_value_immutable BEFORE UPDATE OF payload ON mind_perception_values
         FOR EACH ROW WHEN (OLD.payload::jsonb IS DISTINCT FROM NEW.payload::jsonb)
         EXECUTE FUNCTION reject_received_value_mutation()`);
-    for (const table of ['mind_temporal_chunks'])
-      await this.db.exec(
-        evidenceReadView(table, Object.keys(RECORD_NODES.get(table)!.columns ?? {})),
-      );
+    await this.db.exec(`CREATE TABLE IF NOT EXISTS mind_temporal_span_ranges (
+      world_id TEXT NOT NULL, page_id TEXT NOT NULL, actor_id TEXT NOT NULL,
+      physical_life BIGINT NOT NULL, receipt_epoch TEXT NOT NULL, track_id TEXT NOT NULL,
+      subject_key TEXT NOT NULL, channel_key TEXT NOT NULL, member_key TEXT NOT NULL,
+      first_at DOUBLE PRECISION NOT NULL,last_at DOUBLE PRECISION NOT NULL,
+      first_order BIGINT NOT NULL,last_order BIGINT NOT NULL,
+      PRIMARY KEY(world_id,page_id,track_id),
+      FOREIGN KEY(world_id,page_id) REFERENCES mind_temporal_pages(world_id,id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS temporal_span_member ON mind_temporal_span_ranges
+      (world_id,actor_id,physical_life,receipt_epoch,track_id,first_at,first_order,page_id);
+    CREATE INDEX IF NOT EXISTS temporal_span_subject ON mind_temporal_span_ranges
+      (world_id,actor_id,subject_key);
+    CREATE INDEX IF NOT EXISTS temporal_span_overlap ON mind_temporal_span_ranges
+      USING gist(numrange(first_at::numeric,last_at::numeric,'[]'));
+    CREATE INDEX IF NOT EXISTS temporal_page_buckets ON mind_temporal_pages USING gin(lookup_buckets)
+      WHERE retired_revision IS NULL`);
     const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
     await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
     // All receipt membership reads use the bounded lookup vocabulary plus exact
     // array checks; raw receipt/fact keys must not grow another GIN dictionary.
     await this.db.exec(`
-      DROP INDEX IF EXISTS mind_temporal_segments_occurrence_sources;
-      DROP INDEX IF EXISTS mind_temporal_segments_occurrence_individuals;
       CREATE INDEX IF NOT EXISTS mind_memories_recent ON mind_memories(world_id,at);
       CREATE INDEX IF NOT EXISTS mind_memories_unresolved ON mind_memories(world_id,parent_id,position) WHERE unresolved=1;
       CREATE INDEX IF NOT EXISTS mind_corrections_world_source ON mind_corrections(world_id,source_id,actor_id);
@@ -577,7 +600,7 @@ export class WorldRecords {
         const storedPosition = retirement.positions.get(node.table)?.get(id);
         if (storedPosition !== undefined) {
           oldPosition = position = storedPosition;
-          if (node.table === 'mind_temporal_chunks') slot = String(position);
+          if (node.table === 'mind_temporal_pages') slot = String(position);
         }
       }
       // Absence from a resident tail is not proof of absence from PostgreSQL.
@@ -595,6 +618,15 @@ export class WorldRecords {
         const ids = changes.deletes.get(node.table) ?? [];
         ids.push(id);
         changes.deletes.set(node.table, ids);
+        return;
+      }
+      if (node.table === 'mind_temporal_pages' && !readOnlyMetadata) {
+        const intent = captureTemporalPageChange(
+          old as import('@open-legend/domain').TemporalPage | undefined,
+          next as import('@open-legend/domain').TemporalPage,
+          retirement?.previous.get(node.table)?.has(id) === true,
+        );
+        (changes.temporal ??= new Map()).set(temporalPageIntentKey(intent.after), intent);
         return;
       }
       if (node.encode) {
@@ -643,7 +675,7 @@ export class WorldRecords {
             extra: Object.entries(node.columns ?? {}).map(([name, column]) =>
               contactMetadataOnly && name === 'value_refs'
                 ? []
-                : column.value(next as JsonRecord, path),
+                : column.value(next as JsonRecord, path, after.world),
             ),
           };
           if (
@@ -660,13 +692,6 @@ export class WorldRecords {
             row.receivedUsesChanged =
               nextRefs.length !== previousRefs.length ||
               nextRefs.some((id, at) => id !== previousRefs[at]);
-          }
-          if (node.table === 'mind_temporal_segments') {
-            const prepared = evidenceSegmentDelta(next as object);
-            const delta =
-              (old !== undefined || create) && prepared?.previous === old ? prepared : undefined;
-            row.logicalRemoval = delta?.logicalRemoval ?? !create;
-            if (delta) row.receivedValueAdditions = delta.additions;
           }
           if (
             receivedCurrentOwnerTables.includes(
@@ -1034,6 +1059,44 @@ export class WorldRecords {
     }
     return changes;
   }
+  /** Convert the detached native suffix once, outside simulation advancement. */
+  materializeTemporalChanges(changes: RecordChanges, world: SavedWorld['world']): RecordChanges {
+    if (!changes.temporal?.size) return changes;
+    const cached = encodedTemporalCuts.get(changes);
+    if (cached) return cached;
+    const writes = new Map(changes.writes);
+    const rows = [...(writes.get('mind_temporal_pages') ?? [])];
+    const node = RECORD_NODES.get('mind_temporal_pages')!;
+    const encodedPages = packTemporalSave(changes.temporal.values(), world);
+    for (const encoded of encodedPages) {
+      const page = encoded.native;
+      const path = ['world', 'experience', 'temporal', 'actors', page.actorId, 'pages', page.id];
+      rows.push({
+        id: temporalPageRecordId(page.actorId, page.id),
+        parent: recordId(path.slice(0, -2)),
+        slot: page.id,
+        position: temporalPagePosition(page),
+        payload: encoded.payload,
+        extra: Object.values(node.columns!).map((column) =>
+          column.value(page as unknown as JsonRecord, path, world),
+        ),
+        create: !encoded.replacement,
+        logicalRemoval: encoded.replacement === true,
+        ...(encoded.replacement ? {} : { receivedValueAdditions: encoded.metadata.references }),
+        temporalRanges: encoded.metadata.spanRanges,
+      });
+    }
+    writes.set('mind_temporal_pages', rows);
+    const result = {
+      ...changes,
+      writes,
+      rows: changes.rows + rows.length,
+      temporal: undefined,
+      savedTemporalPages: encodedPages.map((page) => page.native),
+    };
+    encodedTemporalCuts.set(changes, result);
+    return result;
+  }
   async write(
     worldId: string,
     revision: number,
@@ -1198,6 +1261,55 @@ export class WorldRecords {
     // Move physical children before deleting their old parent. Semantic containment
     // is restrictive; structural cascade ownership must never destroy those objects.
     await writes.flush();
+    const rangeColumns = [
+      'world_id',
+      'page_id',
+      'actor_id',
+      'physical_life',
+      'receipt_epoch',
+      'track_id',
+      'subject_key',
+      'channel_key',
+      'member_key',
+      'first_at',
+      'last_at',
+      'first_order',
+      'last_order',
+    ];
+    const pageWrites = changes.writes.get('mind_temporal_pages') ?? [];
+    const replacedRanges = pageWrites.filter((row) => !row.create).map((row) => row.id);
+    if (replacedRanges.length)
+      await this.db
+        .prepare(
+          'DELETE FROM mind_temporal_span_ranges WHERE world_id=? AND page_id=ANY(?::text[])',
+        )
+        .run(worldId, replacedRanges);
+    for (const batch of sqlRecordBatches(
+      rangeColumns,
+      pageWrites.flatMap((row) =>
+        (row.temporalRanges ?? []).map((range) => [
+          worldId,
+          row.id,
+          range.actorId,
+          range.physicalLife,
+          range.epoch,
+          range.trackId,
+          range.subject,
+          range.channel,
+          range.member,
+          range.firstAt,
+          range.lastAt,
+          range.firstOrder,
+          range.lastOrder,
+        ]),
+      ),
+    ))
+      await writes.add(
+        'mind_temporal_span_ranges',
+        `INSERT INTO mind_temporal_span_ranges (${rangeColumns.join(',')}) SELECT ${rangeColumns.map((column) => `incoming.${column}`).join(',')} FROM jsonb_populate_recordset(NULL::mind_temporal_span_ranges,?::jsonb) incoming`,
+        [batch],
+      );
+    await writes.flush();
     // Deleted objects may contain one another across separate delete batches.
     // Clear only their own placement records first, using the structural owner
     // index. A surviving child's placement remains restrictive unless its admitted
@@ -1236,8 +1348,8 @@ export class WorldRecords {
         const batch = ids.slice(offset, offset + 800);
         await writes.add(
           table,
-          table === 'mind_temporal_chunks'
-            ? `UPDATE mind_temporal_chunks SET retired_revision=${revision} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')}) AND retired_revision IS NULL`
+          table === 'mind_temporal_pages'
+            ? `UPDATE mind_temporal_pages SET retired_revision=${revision} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')}) AND retired_revision IS NULL`
             : `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
           [worldId, ...batch],
         );
@@ -1313,10 +1425,7 @@ export class WorldRecords {
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
     for (const table of RECORD_NODES.keys()) {
-      if (
-        active &&
-        ['mind_temporal_chunks', 'mind_perception_values', 'mind_temporal_segments'].includes(table)
-      ) {
+      if (active && ['mind_temporal_pages', 'mind_perception_values'].includes(table)) {
         groups.set(table, new Map());
         continue;
       }
@@ -1444,24 +1553,33 @@ export class WorldRecords {
     if (active && state.world.receivedValues) {
       const received = state.world.receivedValues;
       const temporal = state.world.experience?.temporal;
-      const maximum = selectedTemporalPolicy(state.world).recent.residentChunks;
+      const maximum = HOT_TEMPORAL_BYTES;
       // The append owner can point outside every actor's resident tail. Load its
       // one exact block with the existing batch; a cold pointer is not missing data.
       // docs/save-and-load.md#shared-temporal-evidence-continuation
       const references = new Set(referencedReceivedValues(state.world).keys());
-      const chunks = temporal
+      const pages = temporal
         ? await this.db
             .prepare(
-              `SELECT c.id,c.actor_id,c.position,c.payload,c.value_refs,c.segments
-        FROM mind_temporal_actors a CROSS JOIN LATERAL (
-          SELECT id,actor_id,position,payload,value_refs,segments FROM mind_temporal_chunks_read
-          WHERE world_id=a.world_id AND actor_id=a.actor_id ORDER BY position DESC LIMIT ?
-        ) c WHERE a.world_id=? ORDER BY c.actor_id,c.position`,
+              `SELECT c.* FROM mind_temporal_actors a CROSS JOIN LATERAL (
+          WITH RECURSIVE selected AS (
+            (SELECT p.*,p.logical_bytes AS resident_bytes FROM mind_temporal_pages p
+              WHERE p.world_id=a.world_id AND p.actor_id=a.actor_id AND p.retired_revision IS NULL
+              ORDER BY p.position DESC,p.id DESC LIMIT 1)
+            UNION ALL
+            SELECT next.*,prior.resident_bytes+next.logical_bytes FROM selected prior
+              CROSS JOIN LATERAL (SELECT p.* FROM mind_temporal_pages p
+                WHERE p.world_id=a.world_id AND p.actor_id=a.actor_id AND p.retired_revision IS NULL
+                  AND (p.position,p.id)<(prior.position,prior.id)
+                ORDER BY p.position DESC,p.id DESC LIMIT 1) next
+              WHERE prior.resident_bytes<?
+          ) SELECT * FROM selected
+        ) c WHERE a.world_id=? ORDER BY c.actor_id,c.position,c.id`,
             )
             .all(maximum, head.worldId)
         : [];
-      const byActor = new Map<string, typeof chunks>();
-      for (const row of chunks) {
+      const byActor = new Map<string, typeof pages>();
+      for (const row of pages) {
         const actorId = String(row['actor_id']);
         const selected = byActor.get(actorId) ?? [];
         selected.push(row);
@@ -1469,8 +1587,9 @@ export class WorldRecords {
       }
       for (const [actorId, actor] of Object.entries(temporal?.actors ?? {})) {
         const selected = byActor.get(actorId) ?? [];
-        actor.chunks = selected.map(readTemporalChunkRecord);
-        for (const chunk of actor.chunks) for (const id of chunk.sourceRefs) references.add(id);
+        actor.pages = selected.map(readTemporalPageRecord);
+        for (const chunk of actor.pages)
+          for (const id of temporalPageReferences(chunk)) references.add(id);
       }
       for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)
         for (const row of await this.db
@@ -1483,7 +1602,7 @@ export class WorldRecords {
         }
     }
     for (const actor of Object.values(state.world.experience?.temporal?.actors ?? {}))
-      for (const chunk of actor.chunks) validateReceiptPageSources(chunk, state.world);
+      for (const chunk of actor.pages) validateTemporalPageSources(chunk, state.world);
     if (active) {
       await this.validateHistoricalMaterialOrigins(state);
       markPartialObjectHistory(state.world.entities);
@@ -1538,7 +1657,7 @@ export class WorldRecords {
     const totals = await this.db
       .prepare(
         `SELECT actor_id,category,SUM(bytes) AS bytes,SUM(count) AS count FROM (
-      SELECT actor_id,'recent' AS category,SUM(logical_bytes) AS bytes,SUM(receipt_count) AS count FROM mind_temporal_chunks WHERE world_id=? AND retired_revision IS NULL GROUP BY actor_id
+      SELECT actor_id,'recent' AS category,SUM(logical_bytes) AS bytes,SUM(receipt_count) AS count FROM mind_temporal_pages WHERE world_id=? AND retired_revision IS NULL GROUP BY actor_id
       ${['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => `UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM ${table} WHERE world_id=? GROUP BY actor_id,retention_class`).join('\n')}
       UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
       UNION ALL SELECT actor_id,'required' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_learned_capabilities WHERE world_id=? AND payload::jsonb->>'source'<>'authored' GROUP BY actor_id
@@ -1605,9 +1724,13 @@ export class WorldRecords {
         const counter = category === 'recent' ? actor : actor.accounts?.[category];
         if (!counter) continue;
         const total = indexed.get(JSON.stringify([actorId, category]));
+        const open =
+          category === 'recent'
+            ? temporalOpenReservationTotals(state.world, actorId)
+            : { bytes: 0, count: 0 };
         if (
-          counter.bytes !== Number(total?.['bytes'] ?? 0) ||
-          counter.count !== Number(total?.['count'] ?? 0)
+          counter.bytes !== Number(total?.['bytes'] ?? 0) + open.bytes ||
+          counter.count !== Number(total?.['count'] ?? 0) + open.count
         )
           throw new Error('Retained personal counters disagree with their canonical records.');
       }
@@ -2064,25 +2187,12 @@ export function assembleWorldRecords(
   schema = WORLD_RECORD_SCHEMA,
 ): SavedWorld {
   let consumed = 0;
+  const personalRows: Array<{ node: RecordNode; row: JsonRecord; value: Value }> = [];
   const assemble = (node: RecordNode, row: JsonRecord): Value => {
     consumed++;
     const value: Value = node.decodeRow ? node.decodeRow(row) : JSON.parse(String(row['payload']));
-    if (personalMetadataTables.has(node.table)) {
-      const path = JSON.parse(String(row['id'])) as string[];
-      for (const [name, column] of personalMetadataColumns(node)) {
-        const expected = column.value(value as JsonRecord, path);
-        const actual =
-          typeof expected === 'number'
-            ? Number(row[name])
-            : /^BIGINT\[\]/.test(column.sql) && Array.isArray(row[name])
-              ? row[name].map(Number)
-              : row[name];
-        if (canonicalJson(actual) !== canonicalJson(expected))
-          throw new Error(
-            `Personal record ${node.table}.${name} lookup metadata disagrees with its record.`,
-          );
-      }
-    }
+    if (personalMetadataTables.has(node.table)) personalRows.push({ node, row, value });
+
     for (const [field, child] of Object.entries(node.children ?? {})) {
       const placeholder = field === '$' ? value : own(value, field);
       const children = groups.get(child.node.table)?.get(String(row['id'])) ?? [];
@@ -2107,17 +2217,19 @@ export function assembleWorldRecords(
                   : {};
         const slots = new Set<string>();
         for (const entry of children) {
-          const slot = String(entry[child.mode === 'list' ? 'position' : 'slot']);
+          const slot = String(
+            entry[
+              child.node.table === 'mind_temporal_pages'
+                ? 'slot'
+                : child.mode === 'list'
+                  ? 'position'
+                  : 'slot'
+            ],
+          );
           if (slots.has(slot))
             throw new Error('Duplicate gameplay record placement; recovery refused.');
           slots.add(slot);
           const entryValue = assemble(child.node, entry);
-          if (
-            child.node.table === 'mind_temporal_segments' &&
-            String((entryValue as JsonRecord)['start']) !==
-              (JSON.parse(String(entry['id'])) as string[]).at(-1)
-          )
-            throw new Error('Evidence segment identity disagrees with its ordinal.');
           if (child.mode === 'entity-map') {
             entitySet(
               target as SavedWorld['world']['entities'],
@@ -2173,9 +2285,9 @@ export function assembleWorldRecords(
       }
     }
     const result = node.decode ? node.decode(value) : value;
-    if (node.table === 'mind_temporal_chunks' && row['value_refs'] !== undefined)
-      validateTemporalChunkValueReferences(
-        result as unknown as import('@open-legend/domain').TemporalChunk,
+    if (node.table === 'mind_temporal_pages' && row['value_refs'] !== undefined)
+      validateTemporalPageValueReferences(
+        result as unknown as import('@open-legend/domain').TemporalPage,
         row['value_refs'],
       );
     if (
@@ -2192,6 +2304,22 @@ export function assembleWorldRecords(
   const roots = groups.get(schema.table)?.get('') ?? [];
   if (roots.length !== 1) throw new Error('Missing world control record; recovery refused.');
   const state = assemble(schema, roots[0]!) as SavedWorld;
+  for (const { node, row, value } of personalRows) {
+    const path = JSON.parse(String(row['id'])) as string[];
+    for (const [name, column] of personalMetadataColumns(node)) {
+      const expected = column.value(value as JsonRecord, path, state.world);
+      const actual =
+        typeof expected === 'number'
+          ? Number(row[name])
+          : /^BIGINT\[\]/.test(column.sql) && Array.isArray(row[name])
+            ? row[name].map(Number)
+            : row[name];
+      if (canonicalJson(actual) !== canonicalJson(expected))
+        throw new Error(
+          `Personal record ${node.table}.${name} lookup metadata disagrees with its record.`,
+        );
+    }
+  }
   if (active) {
     for (const records of Object.values(state.world.appraisals ?? {}))
       markPartialAppraisals(records);

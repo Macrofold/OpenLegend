@@ -1,30 +1,35 @@
 import { currentFacetEntries, currentFacetGet } from '@open-legend/domain';
 import {
   receiptLookupBuckets,
-  restoreEvidenceLayout,
-  receivedValueSql,
-} from './evidence-segments.js';
+  decodeTemporalPageRow,
+  temporalPageRecordId,
+  temporalPageValueReferences,
+} from './temporal-page-storage.js';
 import {
   selectedTemporalPolicy,
+  temporalOpenReservationTotals,
   temporalRecentAt,
   captureTemporalReadContext,
+  currentTemporalOpenIntervals,
+  temporalFacetValueReferences,
   type TemporalReadContext,
   canonicalJson,
   immutableDataSnapshot,
   appendedRecordCount,
   selectedAttentionPolicy,
   temporalFacetEligible,
-  retireTemporalChunks,
-  temporalChunkReceipts,
-  temporalChunkOperations,
+  retireTemporalPages,
+  temporalPageReceipts,
+  temporalPageOperations,
   temporalOperationHeader,
   temporalReceiptChangeCount,
-  temporalChunkConfirmationOperations,
-  temporalConfirmationChangeCount,
-  temporalChunkReferences,
+  temporalPageReferences,
+  temporalPageLastReceivedAt,
+  temporalOperationLastReceivedAt,
+  temporalMemberKey,
+  temporalPageSelection,
   selectCapturedTemporalHistory,
-  temporalFacetValueReferences,
-  retireTemporalReceipts,
+  retireTemporalOperations,
   temporalReceiptWithinPrefix,
   materializeTemporalValue,
   temporalReceiptForRead,
@@ -41,7 +46,7 @@ import {
   freezeWorld,
   preserveReceivedValuePreparation,
   type WorldState,
-  type TemporalChunk,
+  type TemporalPage,
   type TemporalEvidenceState,
   type TemporalHistorySelection,
   type ReceivedValue,
@@ -60,34 +65,28 @@ import { countMetric } from './performance.js';
 
 const maximumPreparation = 4 * 1024 * 1024;
 export const maximumTemporalPreparationRows = 8192;
-export const temporalChunkRecordId = (actorId: string, id: string) =>
-  JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'chunks', id]);
-/** Exact value membership is a derived column on the existing chunk, not a
- * second owner or one SQL row per received coordinate. */
-export function temporalChunkValueReferences(chunk: TemporalChunk): string[] {
-  return [...temporalChunkReferences(chunk)].sort();
-}
+export { temporalPageRecordId } from './temporal-page-storage.js';
+export { temporalPageValueReferences } from './temporal-page-storage.js';
 
 /** This projection controls payload reclamation, so a malformed saved index
  * must refuse before it can erase a still-owned value. */
-export function readTemporalChunkRecord(row: Record<string, unknown>): TemporalChunk {
-  const parsed = JSON.parse(String(row['payload']));
-  const chunk = restoreEvidenceLayout(parsed, row['segments']) as unknown as TemporalChunk;
-  validateTemporalChunkValueReferences(chunk, row['value_refs']);
+export function readTemporalPageRecord(row: Record<string, unknown>): TemporalPage {
+  const chunk = decodeTemporalPageRow(row);
+  validateTemporalPageValueReferences(chunk, row['value_refs']);
   return chunk;
 }
-export function validateTemporalChunkValueReferences(
-  chunk: TemporalChunk,
+export function validateTemporalPageValueReferences(
+  chunk: TemporalPage,
   references: unknown,
 ): void {
-  if (canonicalJson(references) !== canonicalJson(temporalChunkValueReferences(chunk)))
+  if (canonicalJson(references) !== canonicalJson(temporalPageValueReferences(chunk)))
     throw new MemoryRetentionError('Temporal value ownership metadata disagrees with its receipt.');
 }
-export function temporalChunkSourceId(actorId: string, recordId: string): string | undefined {
+export function temporalPageSourceId(actorId: string, recordId: string): string | undefined {
   const path = JSON.parse(recordId) as unknown;
   if (!Array.isArray(path) || typeof path.at(-1) !== 'string') return;
   const id = path.at(-1) as string;
-  return temporalChunkRecordId(actorId, id) === recordId ? id : undefined;
+  return temporalPageRecordId(actorId, id) === recordId ? id : undefined;
 }
 export interface PreparedMemoryRetention {
   state: SavedWorld;
@@ -120,12 +119,15 @@ export interface TemporalHistoryQuery {
 /** Captured actor-local read inputs. Blocks are copied only for this actor's
  * resident tail; the global received-value catalogue is never retained. */
 export interface TemporalHistoryWindow {
+  capture(subjects: ReadonlySet<string>): TemporalHistoryReadContext;
   readonly at: number;
   readonly maxAgeSeconds: number;
-  readonly retiredThrough?: { readonly chunkOrder: number; readonly ordinal: number };
+  readonly retiredThrough?: { readonly pageOrder: number; readonly ordinal: number };
 }
 export function temporalHistoryWindow(world: WorldState, actorId: string): TemporalHistoryWindow {
   return {
+    capture: (subjects) =>
+      captureTemporalHistoryReadContext(world, actorId, { subjects: [...subjects] }),
     at: world.simTime,
     maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
     retiredThrough: world.experience?.temporal?.actors[actorId]?.retiredThrough,
@@ -139,9 +141,11 @@ export interface TemporalHistoryReadContext {
   readonly maximumSubjects: number;
   readonly maximumOperations: number;
   readonly maximumCandidates: number;
-  readonly chunks: readonly TemporalChunk[];
+  readonly pages: readonly TemporalPage[];
+  readonly open: ReturnType<typeof currentTemporalOpenIntervals>;
+  readonly captureIncomplete: boolean;
   readonly releasedThrough?: number;
-  readonly retiredThrough?: { readonly chunkOrder: number; readonly ordinal: number };
+  readonly retiredThrough?: { readonly pageOrder: number; readonly ordinal: number };
   readonly recordingGap?: { readonly from: number; readonly through: number };
   readonly sources: ReceivedValueLookup;
   readonly disclosure: TemporalReadContext;
@@ -149,17 +153,50 @@ export interface TemporalHistoryReadContext {
 export function captureTemporalHistoryReadContext(
   world: WorldState,
   actorId: string,
+  selection: Pick<TemporalHistoryQuery, 'subjects' | 'from' | 'through' | 'includeGeometry'> = {},
 ): TemporalHistoryReadContext {
   const actor = world.experience?.temporal?.actors[actorId];
-  const chunks = (actor?.chunks ?? []).map((chunk) => immutableDataSnapshot(chunk));
+  const subjectSet = selection.subjects ? new Set(selection.subjects) : undefined;
+  const pages = (actor?.pages ?? [])
+    .filter(
+      (page) =>
+        (selection.from === undefined || page.throughAt >= selection.from) &&
+        (selection.through === undefined || page.fromAt <= selection.through) &&
+        (!subjectSet || page.subjects.some((subject) => subjectSet.has(subject))),
+    )
+    .map((page) => immutableDataSnapshot(page));
+  const maximum = selectedAttentionPolicy(world).scene.candidateVisits;
+  const acquiredOpen = currentTemporalOpenIntervals(
+    world,
+    actorId,
+    subjectSet,
+    selection.includeGeometry,
+  );
+  const open = acquiredOpen.slice(0, maximum).map((receipt) => immutableDataSnapshot(receipt));
   const sources: Record<string, ReceivedValueLookup[string]> = {};
-  for (const chunk of chunks)
-    for (const id of temporalChunkReferences(chunk)) {
+  for (const chunk of pages)
+    for (const id of temporalPageReferences(chunk)) {
       const source = world.receivedValues?.sources[id];
       if (!source) continue;
       sources[id] = { value: immutableDataSnapshot(source.value) };
     }
+  for (const interval of open)
+    for (const field of interval.receipt.facets)
+      for (const id of temporalFacetValueReferences(field)) {
+        const source = world.receivedValues?.sources[id];
+        if (source) sources[id] = { value: immutableDataSnapshot(source.value) };
+      }
+  for (const interval of open)
+    for (const seed of interval.terminal) {
+      const reference = seed.reception?.kind === 'body' ? seed.reception.poseRef : undefined;
+      if (typeof reference === 'string') {
+        const source = world.receivedValues?.sources[reference];
+        if (source) sources[reference] = { value: immutableDataSnapshot(source.value) };
+      }
+    }
   return {
+    open,
+    captureIncomplete: acquiredOpen.length > open.length,
     worldId: world.id,
     actorId,
     at: world.simTime,
@@ -167,7 +204,7 @@ export function captureTemporalHistoryReadContext(
     maximumSubjects: selectedAttentionPolicy(world).maximumCapacity,
     maximumOperations: selectedAttentionPolicy(world).scene.historyReceipts,
     maximumCandidates: selectedAttentionPolicy(world).scene.candidateVisits,
-    chunks,
+    pages,
     ...(actor?.retiredThrough ? { retiredThrough: { ...actor.retiredThrough } } : {}),
     ...(actor?.releasedThrough === undefined ? {} : { releasedThrough: actor.releasedThrough }),
     ...(actor?.recordingGap ? { recordingGap: { ...actor.recordingGap } } : {}),
@@ -221,17 +258,17 @@ export function receivedValueReleaseCandidates(
   if (before?.experience?.temporal !== after.experience?.temporal)
     for (const [actorId, actor] of Object.entries(before?.experience?.temporal?.actors ?? {})) {
       const next = after.experience?.temporal?.actors[actorId];
-      if (actor.chunks === next?.chunks) continue;
-      const chunks = new Map((next?.chunks ?? []).map((chunk) => [chunk.id, chunk]));
-      for (const chunk of actor.chunks) {
-        const retained = chunks.get(chunk.id);
+      if (actor.pages === next?.pages) continue;
+      const pages = new Map((next?.pages ?? []).map((chunk) => [chunk.id, chunk]));
+      for (const chunk of actor.pages) {
+        const retained = pages.get(chunk.id);
         if (
           chunk === retained ||
-          (retained && appendedRecordCount(chunk.entries, retained.entries) !== undefined)
+          (retained && appendedRecordCount(chunk.operations, retained.operations) !== undefined)
         )
           continue;
         // A surviving block ID can still lose an individual payload ordinal.
-        for (const id of chunk.sourceRefs) candidates.add(id);
+        for (const id of temporalPageReferences(chunk)) candidates.add(id);
       }
     }
   if (before?.receivedValues !== after.receivedValues) {
@@ -316,12 +353,15 @@ export function selectTemporalRetirement(
 ) {
   const actor = world.experience!.temporal!.actors[actorId]!;
   const policy = selectedTemporalPolicy(world).recent;
-  let bytes = actor.bytes,
-    count = actor.count;
+  const open = temporalOpenReservationTotals(world, actorId);
+  let bytes = actor.bytes - open.bytes,
+    count = actor.count - open.count;
   const retired: TemporalRetentionHeader[] = [];
   for (let index = 0; index < ordered.length; index++) {
     const chunk = ordered[index]!;
-    const pressure = bytes > policy.maxBytes || count > policy.maxChanges;
+    const pressure =
+      bytes + open.bytes - open.expired.bytes > policy.maxBytes ||
+      count + open.count - open.expired.count > policy.maxChanges;
     if (temporalRecentAt(chunk.through, world.simTime, policy.maxAgeSeconds) && !pressure)
       return {
         retired,
@@ -389,10 +429,14 @@ export async function readTemporalHistory(
     .prepare(
       `SELECT id,logical_bytes,receipt_count,
       first_at,first_order,receipt_epoch,first_ordinal,
-      encoded_bytes FROM mind_temporal_chunks_read c
-    WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=? AND last_at+?>?
-      ${context.retiredThrough ? 'AND (chunk_order>? OR (chunk_order=? AND last_ordinal>?))' : ''}
-      ${subjects.length ? `AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND ((s.lookup_buckets && ?::smallint[] AND s.subjects && ?::text[])${query.includeGeometry ? ' OR s.spatial_context=1' : ''}))` : ''}
+      encoded_bytes FROM mind_temporal_pages c
+    WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=? AND last_received_at+?>?
+      AND c.retired_revision IS NULL
+      AND (c.kind<>'span' OR EXISTS(SELECT 1 FROM mind_temporal_span_ranges r
+        WHERE r.world_id=c.world_id AND r.actor_id=c.actor_id AND r.page_id=c.id
+          AND numrange(r.first_at::numeric,r.last_at::numeric,'[]') && numrange(?::numeric,?::numeric,'[]')
+          ${subjects.length ? `AND (r.subject_key=ANY(?::text[])${query.includeGeometry ? ' OR c.spatial_context=1' : ''})` : ''}))
+      ${subjects.length ? `AND ((c.lookup_buckets && ?::smallint[] AND c.subjects && ?::text[])${query.includeGeometry ? ' OR c.spatial_context=1' : ''})` : ''}
       ${query.measurements ? 'AND last_supported_at>=? AND first_measured_at<=?' : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
@@ -407,13 +451,9 @@ export async function readTemporalHistory(
       through,
       context.maxAgeSeconds,
       context.at,
-      ...(context.retiredThrough
-        ? [
-            context.retiredThrough.chunkOrder,
-            context.retiredThrough.chunkOrder,
-            context.retiredThrough.ordinal,
-          ]
-        : []),
+      from,
+      through,
+      ...(subjects.length ? [subjects] : []),
       ...(subjects.length ? [receiptLookupBuckets('subjects', subjects), subjects] : []),
       ...(query.measurements ? [query.measurements.from, query.measurements.through] : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
@@ -439,7 +479,7 @@ export async function readTemporalHistory(
         : []),
       limit + 1,
     );
-  const chunks = new Map<string, TemporalChunk>();
+  const pages = new Map<string, TemporalPage>();
   const selected: string[] = [];
   const sourceIds = new Set<string>();
   const metadataCursor = (row: Record<string, unknown>) => ({
@@ -451,7 +491,7 @@ export async function readTemporalHistory(
   let metadataBefore: TemporalHistoryPage['nextBefore'];
   let preparationBytes = 0,
     count = 0,
-    incomplete = metadata.length > limit || !!context.recordingGap,
+    incomplete = metadata.length > limit || !!context.recordingGap || context.captureIncomplete,
     hasMore = metadata.length > limit;
   for (const row of metadata.slice(0, limit)) {
     const size = Number(row['encoded_bytes']);
@@ -474,15 +514,15 @@ export async function readTemporalHistory(
   if (selected.length)
     for (const row of await db
       .prepare(
-        'SELECT payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+        'SELECT * FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
       )
       .all(scope.worldId, scope.actorId, selected)) {
-      const chunk = readTemporalChunkRecord(row);
+      const chunk = readTemporalPageRecord(row);
       if (chunk.actorId !== scope.actorId)
         throw new MemoryRetentionError('Foreign temporal chunk.');
-      chunks.set(chunk.id, chunk);
+      pages.set(chunk.id, chunk);
     }
-  for (const chunk of context.chunks)
+  for (const chunk of context.pages)
     if (
       chunk.throughAt >= from &&
       chunk.fromAt <= through &&
@@ -492,17 +532,109 @@ export async function readTemporalHistory(
       (query.physicalLife === undefined || chunk.physicalLife === query.physicalLife) &&
       (query.epoch === undefined || chunk.epoch === query.epoch) &&
       (!query.cut ||
-        temporalChunkReceipts(chunk).some((receipt) =>
+        temporalPageReceipts(chunk).some((receipt) =>
           temporalReceiptWithinPrefix(receipt, query.cut!),
         ))
     ) {
-      chunks.set(chunk.id, chunk);
+      pages.set(chunk.id, chunk);
     }
-  // A bounded chunk is self-contained: its checkpoints and intervening scalar
-  // assignments can support a selected suffix without another chunk chain.
-  for (const chunk of chunks.values())
-    for (const id of temporalChunkReferences(chunk)) sourceIds.add(id);
-  preparationBytes = [...chunks.values()].reduce(
+  // Successful support and measurement may precede the requested range. Seek
+  // exact member neighbors in SQL, rather than replaying every older check page.
+  const members = new Map<
+    string,
+    { member: string; bucket: number; life: number; epoch: string; at: number; order: number }
+  >();
+  for (const receipt of [
+    ...context.open.map((interval) => interval.receipt),
+    ...[...pages.values()].flatMap((page) => temporalPageReceipts(page)),
+  ])
+    for (const field of receipt.facets) {
+      if (members.size >= context.maximumOperations) {
+        incomplete = true;
+        break;
+      }
+      const member = temporalMemberKey(receipt, field.ordinal);
+      members.set(member, {
+        member,
+        bucket: receiptLookupBuckets('members', [member])[0]!,
+        life: receipt.physicalLife,
+        epoch: receipt.epoch,
+        at: through,
+        order: query.cut?.throughOrder ?? Number.MAX_SAFE_INTEGER,
+      });
+    }
+  if (members.size) {
+    const neighbors = await db
+      .prepare(
+        `WITH wanted AS MATERIALIZED (
+      SELECT * FROM jsonb_to_recordset(?::jsonb) q(member text,bucket smallint,life bigint,epoch text,at double precision,"order" bigint)
+    ), selected AS (
+      SELECT p.id,p.encoded_bytes FROM wanted q CROSS JOIN LATERAL (
+        SELECT c.id,c.encoded_bytes FROM mind_temporal_pages c
+        WHERE c.world_id=? AND c.actor_id=? AND c.physical_life=q.life AND c.receipt_epoch=q.epoch
+          AND c.kind='check' AND c.retired_revision IS NULL
+          AND c.lookup_buckets @> ARRAY[q.bucket]::smallint[] AND c.member_keys @> ARRAY[q.member]::text[]
+          AND (c.first_at,c.first_order)<=(q.at,q."order")
+        ORDER BY c.first_at DESC,c.first_order DESC,c.id DESC LIMIT 1
+      ) p
+      UNION ALL
+      SELECT p.id,p.encoded_bytes FROM wanted q CROSS JOIN LATERAL (
+        SELECT c.id,c.encoded_bytes FROM mind_temporal_pages c
+        WHERE c.world_id=? AND c.actor_id=? AND c.physical_life=q.life AND c.receipt_epoch=q.epoch
+          AND c.kind='check' AND c.retired_revision IS NULL
+          AND c.lookup_buckets @> ARRAY[q.bucket]::smallint[] AND c.member_keys @> ARRAY[q.member]::text[]
+          AND (c.first_at,c.first_order)>(q.at,q."order")
+        ORDER BY c.first_at,c.first_order,c.id LIMIT 1
+      ) p
+    ) SELECT DISTINCT id,encoded_bytes FROM selected`,
+      )
+      .all(
+        JSON.stringify([...members.values()]),
+        scope.worldId,
+        scope.actorId,
+        scope.worldId,
+        scope.actorId,
+      );
+    const newIds: string[] = [];
+    for (const row of neighbors)
+      if (!pages.has(String(row['id']))) {
+        preparationBytes += Number(row['encoded_bytes']);
+        if (preparationBytes > maximumPreparation) {
+          incomplete = true;
+          break;
+        }
+        newIds.push(String(row['id']));
+      }
+    if (newIds.length)
+      for (const row of await db
+        .prepare(
+          'SELECT * FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+        )
+        .all(scope.worldId, scope.actorId, newIds)) {
+        const page = readTemporalPageRecord(row);
+        pages.set(String(row['id']), page);
+      }
+  }
+  // Captured native operations replace the same logical durable operations before
+  // limits. Physical page names differ after save packing and grant no identity.
+  const nativeKeys = new Set(
+    context.pages.flatMap((page) =>
+      page.operations.map((op) => JSON.stringify([page.physicalLife, page.epoch, op.ordinal])),
+    ),
+  );
+  for (const [id, page] of pages) {
+    if (context.pages.includes(page)) continue;
+    const kept = page.operations.filter(
+      (op) => !nativeKeys.has(JSON.stringify([page.physicalLife, page.epoch, op.ordinal])),
+    );
+    if (!kept.length) pages.delete(id);
+    else if (kept.length !== page.operations.length)
+      pages.set(id, temporalPageSelection(page, kept, page.id));
+  }
+  // Each selected page decodes without a predecessor-page replay chain.
+  for (const chunk of pages.values())
+    for (const id of temporalPageReferences(chunk)) sourceIds.add(id);
+  preparationBytes = [...pages.values()].reduce(
     (bytes, chunk) => bytes + Buffer.byteLength(JSON.stringify(chunk)),
     0,
   );
@@ -547,7 +679,7 @@ export async function readTemporalHistory(
   }
 
   const selection = selectCapturedTemporalHistory(
-    { ...context, chunks: [...chunks.values()], sources },
+    { ...context, pages: [...pages.values()], sources },
     { ...query, from, through, limit, bytes: maxBytes, operations: context.maximumOperations },
   );
   incomplete ||= selection.incomplete;
@@ -606,13 +738,13 @@ export async function prepareTemporalRetention(
     for (const row of complete
       ? []
       : retainedMetadata
-        ? [...retainedMetadata.rows('mind_temporal_chunks', actorId)].map<Record<string, unknown>>(
+        ? [...retainedMetadata.rows('mind_temporal_pages', actorId)].map<Record<string, unknown>>(
             (row) => ({
               ...row.columns,
               id: row.id,
               position: row.position,
               encoded_bytes: row.encodedBytes,
-              source_refs: [] as string[],
+              value_refs: [] as string[],
             }),
           )
         : [])
@@ -621,26 +753,26 @@ export async function prepareTemporalRetention(
         position: Number(row['position']),
         encodedBytes: Number(row['encoded_bytes']),
         sourceId: String(row['source_id']),
-        at: Number(row['first_at']),
-        through: Number(row['last_at']),
+        at: Number(row['last_received_at']),
+        through: Number(row['last_received_at']),
         bytes: Number(row['logical_bytes']),
         count: Number(row['receipt_count']),
-        sources: retainedMetadata ? [] : (row['source_refs'] as string[]),
+        sources: retainedMetadata ? [] : (row['value_refs'] as string[]),
         order: Number(row['first_order']),
         epoch: String(row['receipt_epoch']),
         ordinal: Number(row['first_ordinal']),
       });
-    for (const chunk of actor.chunks)
+    for (const chunk of actor.pages)
       metadata.set(chunk.id, {
-        id: temporalChunkRecordId(actorId, chunk.id),
+        id: temporalPageRecordId(actorId, chunk.id),
         position: metadata.get(chunk.id)?.position,
         sourceId: chunk.id,
-        at: chunk.fromAt,
-        through: chunk.throughAt,
+        at: temporalPageLastReceivedAt(chunk),
+        through: temporalPageLastReceivedAt(chunk),
         bytes: chunk.bytes,
         count: chunk.count,
-        sources: chunk.sourceRefs,
-        order: temporalOperationHeader(chunk, temporalChunkOperations(chunk)[0]!).order,
+        sources: [...temporalPageReferences(chunk)],
+        order: temporalOperationHeader(chunk, temporalPageOperations(chunk)[0]!).order,
         epoch: chunk.epoch,
         ordinal: chunk.fromOrdinal,
       });
@@ -658,9 +790,6 @@ export async function prepareTemporalRetention(
       partials.push({ actorId, metadata: selected.boundary });
     for (const chunk of selected.retired) {
       for (const source of chunk.sources) possibleSources.add(source);
-      for (const segment of retainedMetadata.segments(chunk.id))
-        for (const source of segment.columns['source_refs'] as string[])
-          possibleSources.add(source);
     }
     if (
       (bytes > policy.maxBytes || count > policy.maxChanges) &&
@@ -672,10 +801,7 @@ export async function prepareTemporalRetention(
     if (ids.length || actor.maintenanceDue || actor.nextDue !== nextDue) {
       retired.push({ actorId, ids, bytes: removedBytes, count: removedCount, nextDue, through });
       if (recordIds.length)
-        rows.set('mind_temporal_chunks', [
-          ...(rows.get('mind_temporal_chunks') ?? []),
-          ...recordIds,
-        ]);
+        rows.set('mind_temporal_pages', [...(rows.get('mind_temporal_pages') ?? []), ...recordIds]);
     }
   }
   if (!retired.length && !partials.length && !possibleSources.size) return { state, rows };
@@ -684,7 +810,7 @@ export async function prepareTemporalRetention(
         state.world,
         (draft) => {
           for (const release of retired)
-            retireTemporalChunks(
+            retireTemporalPages(
               draft,
               release.actorId,
               release.ids,
@@ -698,15 +824,15 @@ export async function prepareTemporalRetention(
     : state.world;
   if (partials.length) {
     // A logical chunk can span several receptions. Expire the exact old prefix,
-    // not its still-recent suffix, and hydrate only the boundary chunks selected
+    // not its still-recent suffix, and hydrate only the boundary pages selected
     // above. Existing semantic retirement also revokes their old perspective rows.
-    const chunks = new Map<string, TemporalChunk>();
+    const pages = new Map<string, TemporalPage>();
     const coldIds: string[] = [];
     for (const { actorId, metadata } of partials) {
-      const resident = world.experience!.temporal!.actors[actorId]!.chunks.find(
+      const resident = world.experience!.temporal!.actors[actorId]!.pages.find(
         (chunk) => chunk.id === metadata.sourceId,
       );
-      if (resident) chunks.set(metadata.id, resident);
+      if (resident) pages.set(metadata.id, resident);
       else {
         if (complete || metadata.encodedBytes === undefined)
           throw new MemoryRetentionError('Recent expiry has no complete boundary chunk.');
@@ -718,20 +844,18 @@ export async function prepareTemporalRetention(
       throw new MemoryRetentionError('Recent expiry exceeds bounded preparation.');
     if (coldIds.length)
       for (const row of await db
-        .prepare(
-          'SELECT id,payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND id=ANY(?::text[])',
-        )
+        .prepare('SELECT * FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
         .all(world.id, coldIds)) {
-        const chunk = immutableDataSnapshot(readTemporalChunkRecord(row));
-        chunks.set(String(row['id']), chunk);
-        remember('mind_temporal_chunks', String(row['id']), chunk);
+        const chunk = immutableDataSnapshot(readTemporalPageRecord(row));
+        pages.set(String(row['id']), chunk);
+        remember('mind_temporal_pages', String(row['id']), chunk);
       }
     const missing = new Set<string>();
     for (const { actorId, metadata } of partials) {
-      const chunk = chunks.get(metadata.id);
+      const chunk = pages.get(metadata.id);
       if (!chunk || chunk.actorId !== actorId || chunk.id !== metadata.sourceId)
         throw new MemoryRetentionError('Recent expiry boundary chunk is unavailable.');
-      for (const id of chunk.sourceRefs) {
+      for (const id of temporalPageReferences(chunk)) {
         possibleSources.add(id);
         if (!world.receivedValues?.sources[id]) missing.add(id);
       }
@@ -767,93 +891,60 @@ export async function prepareTemporalRetention(
         for (const [id, block] of loaded) draft.receivedValues!.sources[id] = block;
         for (const { actorId, metadata, followingAt } of partials) {
           const actor = draft.experience!.temporal!.actors[actorId]!;
-          const chunk = chunks.get(metadata.id)!;
-          if (!actor.chunks.some((current) => current.id === chunk.id)) {
-            actor.chunks.push({ ...chunk });
-            actor.chunks.sort((a, b) => a.fromAt - b.fromAt || a.fromOrdinal - b.fromOrdinal);
+          const chunk = pages.get(metadata.id)!;
+          if (!actor.pages.some((current) => current.id === chunk.id)) {
+            actor.pages.push({ ...chunk });
+            actor.pages.sort((a, b) => a.fromAt - b.fromAt || a.fromOrdinal - b.fromOrdinal);
           }
-          const actual = temporalChunkReceipts(chunk),
-            expired = new Set<number>(),
-            confirmations = new Map<number, number>();
-          for (const operation of temporalChunkConfirmationOperations(chunk))
-            confirmations.set(
-              operation.receipt,
-              (confirmations.get(operation.receipt) ?? 0) +
-                temporalConfirmationChangeCount([operation]),
-            );
+          const actual = temporalPageOperations(chunk),
+            expired = new Set<number>();
           const excessCount = Math.max(0, actor.count - policy.maxChanges),
-            quotaPressure = actor.bytes > policy.maxBytes || excessCount > 0;
+            excessBytes = Math.max(0, actor.bytes - policy.maxBytes);
+          const quotaPressure = excessBytes > 0 || excessCount > 0;
           let releasedCount = 0,
+            releasedBytes = 0,
             first: (typeof actual)[number] | undefined;
-          for (const receipt of actual) {
+          for (const operation of actual) {
             if (
-              temporalRecentAt(receipt.at, world.simTime, policy.maxAgeSeconds) &&
-              releasedCount >= excessCount
+              temporalRecentAt(
+                temporalOperationLastReceivedAt(operation),
+                world.simTime,
+                policy.maxAgeSeconds,
+              ) &&
+              releasedCount >= excessCount &&
+              releasedBytes >= excessBytes
             ) {
-              first = receipt;
+              first = operation;
               break;
             }
-            expired.add(receipt.ordinal);
-            releasedCount +=
-              temporalReceiptChangeCount(receipt) + (confirmations.get(receipt.ordinal) ?? 0);
+            expired.add(operation.ordinal);
+            releasedCount += operation.charge.count;
+            releasedBytes += operation.charge.bytes;
           }
           const followingDue =
             followingAt === undefined ? null : followingAt + policy.maxAgeSeconds;
           if (expired.size)
-            retireTemporalReceipts(
+            retireTemporalOperations(
               draft,
               actorId,
               chunk.id,
               expired,
-              first ? first.at + policy.maxAgeSeconds : followingDue,
+              first ? temporalOperationLastReceivedAt(first) + policy.maxAgeSeconds : followingDue,
             );
           else if (!quotaPressure)
-            throw new MemoryRetentionError('Recent expiry metadata disagrees with its receipts.');
-          // Packed charge can change when a prefix needs carried state. A byte
-          // allowance smaller than a page gets one newest-operation fallback,
-          // rather than repeatedly replaying and repacking each prior receipt.
-          if (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
-            const current = actor.chunks.find((value) => value.id === chunk.id),
-              retained = current && temporalChunkReceipts(current),
-              newest = retained?.at(-1);
-            if (followingAt === undefined && current && newest && retained && retained.length > 1)
-              retireTemporalReceipts(
-                draft,
-                actorId,
-                current.id,
-                new Set(retained.slice(0, -1).map((receipt) => receipt.ordinal)),
-                newest.at + policy.maxAgeSeconds,
-              );
-            if (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
-              const remaining = actor.chunks.find((value) => value.id === chunk.id);
-              if (!remaining)
-                throw new MemoryRetentionError(
-                  'Required native recording cannot fit the qualified recent-history envelope.',
-                );
-              retireTemporalChunks(
-                draft,
-                actorId,
-                [remaining.id],
-                { bytes: remaining.bytes, count: remaining.count },
-                followingDue,
-                remaining.throughAt,
-              );
-            }
-          }
-          if (quotaPressure && !actor.chunks.some((current) => current.id === chunk.id)) {
+            throw new MemoryRetentionError('Recent expiry metadata disagrees with its operations.');
+          if (quotaPressure && !actor.pages.some((page) => page.id === chunk.id))
             actor.recordingGap = {
-              from: actor.recordingGap?.from ?? actual.at(-1)!.at,
+              from: actor.recordingGap?.from ?? temporalOperationLastReceivedAt(actual.at(-1)!),
               through: draft.simTime,
             };
-            actor.geometryCaptureRepairDue = true;
-          }
-          rows.set('mind_temporal_chunks', [
-            ...(rows.get('mind_temporal_chunks') ?? []),
+          rows.set('mind_temporal_pages', [
+            ...(rows.get('mind_temporal_pages') ?? []),
             metadata.id,
           ]);
           if (metadata.position !== undefined) {
-            let held = positions.get('mind_temporal_chunks');
-            if (!held) positions.set('mind_temporal_chunks', (held = new Map()));
+            let held = positions.get('mind_temporal_pages');
+            if (!held) positions.set('mind_temporal_pages', (held = new Map()));
             held.set(metadata.id, metadata.position);
           }
         }

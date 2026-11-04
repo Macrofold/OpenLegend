@@ -12,6 +12,7 @@ import {
   temporalWatchChanges,
   installTemporalWitnesses,
   addTemporalWitness,
+  addTemporalPhysicalWitness,
   sameSupportedSelection,
   type TemporalSourceWatch,
 } from './temporal-source-fence.js';
@@ -32,13 +33,13 @@ import {
   type SourceVersionPlan,
 } from './source-version-retention.js';
 import { randomUUID } from 'node:crypto';
-import { evidenceEncodedBytesSql } from './evidence-segments.js';
+import { evidenceEncodedBytesSql, receiptLookupBuckets } from './temporal-page-storage.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalHistory,
-  readTemporalChunkRecord,
-  temporalChunkRecordId,
+  readTemporalPageRecord,
+  temporalPageRecordId,
   prepareTemporalRetention,
   type TemporalHistoryPage,
   captureTemporalHistoryReadContext,
@@ -111,18 +112,16 @@ import {
   temporalFieldAvailability,
   type TemporalValue,
   type TemporalFragment,
-  temporalChunkReceipt,
-  temporalChunkCheckpoint,
-  temporalReceiptEntries,
-  temporalCheckpointEntries,
-  temporalConfirmationsForFacet,
-  temporalConfirmationEntries,
-  temporalConfirmationReference,
-  applyTemporalConfirmation,
+  temporalPageReceipt,
+  temporalPageReceipts,
+  temporalPageOperations,
+  temporalAdvanceSeed,
+  temporalSeedFacet,
+  temporalFacetEligible,
+  temporalReceiptId,
   temporalReceiptForRead,
   materializeTemporalValue,
   type TemporalFacetReference,
-  type TemporalFrameEntry,
   temporalKnownPlaceCapsules,
   selectedAttentionPolicy,
   validExperienceSummary,
@@ -306,6 +305,15 @@ export function* sourceDerivationDependencies(
     yield* native(observationDependencies(manifest.observations), manifest.coverageKey);
   } else if (kind === 'memory') {
     const memory = JSON.parse(entry.row.payload) as MemoryRecord;
+    if (memory.manifest) {
+      yield* personal(memory.manifest.coverage, memory.manifest.coverageKey);
+      for (const group of memory.manifest.speech) yield* personal(group.sources, group.supportKey);
+      yield* native(
+        observationDependencies(memory.manifest.observations),
+        memory.manifest.coverageKey,
+      );
+    }
+
     for (const dependency of memory.impression?.dependencies ?? []) {
       if ('kind' in dependency) yield* personal([dependency], 'impression-origin');
       else yield* native([dependency], 'impression-origin');
@@ -910,6 +918,7 @@ export class MemoryRepository {
     const release = () => {
       fence.valid = false;
       temporal.pending = [];
+      temporal.nativePending = [];
       temporal.rows.clear();
       temporal.ancestors.clear();
       this.canonicalSourceFences.delete(fence);
@@ -940,6 +949,7 @@ export class MemoryRepository {
         if (input === validatedInput) return true;
         temporal.collecting = true;
         temporal.pending = [];
+        temporal.nativePending = [];
         temporal.pendingBytes = 0;
         const work = (async () => {
           return (
@@ -955,6 +965,7 @@ export class MemoryRepository {
         })().finally(() => {
           temporal.collecting = false;
           temporal.pending = [];
+          temporal.nativePending = [];
           temporal.pendingBytes = 0;
         });
         pending = work;
@@ -1200,7 +1211,7 @@ export class MemoryRepository {
       table.startsWith('mind_') &&
       !table.startsWith('mind_perception_') &&
       !/^mind_(exposure|visible_objects|visible_people|visible_places)(?:_owners)?$/.test(table) &&
-      !/^mind_temporal_(state|actors|chunks|segments)$/.test(table);
+      !/^mind_temporal_(state|actors|pages|segments)$/.test(table);
     const mark = (id: string) => {
       const path = JSON.parse(id) as string[];
       const actor = path[path[1] === 'experience' ? (path[2] === 'temporal' ? 4 : 3) : 2];
@@ -1328,7 +1339,7 @@ export class MemoryRepository {
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,derived_kind TEXT NOT NULL,derived_id TEXT NOT NULL,source_kind TEXT NOT NULL,source_id TEXT NOT NULL,source_revision TEXT NOT NULL,support_key TEXT NOT NULL,source_life BIGINT NOT NULL,facet_ordinal BIGINT NOT NULL,alias_id TEXT NOT NULL,
         PRIMARY KEY(world_id,actor_id,derived_kind,derived_id,source_kind,source_id,source_revision,support_key,source_life,facet_ordinal,alias_id));
       CREATE INDEX IF NOT EXISTS mind_dependency_world_source ON mind_source_dependencies(world_id,source_id,actor_id,derived_id);
-      CREATE INDEX IF NOT EXISTS mind_dependency_reverse ON mind_source_dependencies(world_id,actor_id,source_id);
+      CREATE INDEX IF NOT EXISTS mind_dependency_reverse ON mind_source_dependencies(world_id,actor_id,source_kind,source_id,source_revision);
       CREATE INDEX IF NOT EXISTS mind_dependency_alias_reverse ON mind_source_dependencies(world_id,actor_id,alias_id);
       CREATE INDEX IF NOT EXISTS mind_dependency_world_alias ON mind_source_dependencies(world_id,alias_id,actor_id,derived_id);
       CREATE TABLE IF NOT EXISTS mind_source_versions (
@@ -1377,10 +1388,15 @@ export class MemoryRepository {
       ALTER TABLE memory_vectors ALTER COLUMN embedding SET STORAGE PLAIN;
       CREATE INDEX IF NOT EXISTS memory_vector_scope ON memory_vectors(world_id,actor_id,generation,model,dimensions,source_id,source_revision);
     `);
+    for (const table of ['mind_awareness', 'mind_memories', 'mind_summaries'])
+      await this.db.exec(`CREATE INDEX IF NOT EXISTS ${table}_retention_candidates
+        ON ${table}(world_id,actor_id,retention_class,policy_priority,at,source_id COLLATE "C")
+        WHERE active_or_protected=0 AND retention_class<>'sensory';
+        CREATE INDEX IF NOT EXISTS ${table}_retention_due
+        ON ${table}(world_id,actor_id,next_due_at)
+        WHERE active_or_protected=0 AND retention_class<>'sensory';`);
     await this.lexical.initialize();
     await initializeMemoryDerivatives(this.db);
-    await this.db.exec(`CREATE INDEX IF NOT EXISTS temporal_segment_lookup
-      ON mind_temporal_segments USING GIN(lookup_buckets);`);
   }
   temporalHistory(
     scope: MemoryScope,
@@ -1423,9 +1439,7 @@ export class MemoryRepository {
       // knowledge already owns its minimum support; only actual account/support
       // changes may enter this exceptional source-revocation closure.
       const exceptionalRows = new Map(
-        [...rows].filter(
-          ([table]) => table !== 'mind_temporal_chunks' && table !== 'mind_temporal_segments',
-        ),
+        [...rows].filter(([table]) => table !== 'mind_temporal_pages'),
       );
       const cleaned = await cleanupRetiredIndividuals(
         state,
@@ -1470,44 +1484,31 @@ export class MemoryRepository {
     watch: TemporalSourceWatch,
     baselines: NonNullable<TemporalHistorySelection['baselines']>,
   ): Promise<boolean> {
-    if (!selections.length && !baselines.length)
-      return installTemporalWitnesses(watch, new Map(), RETRIEVAL_BYTES);
-    const selected = [
-      ...selections.map((selection) => ({
-        kind: 'receipt' as const,
-        selection,
-        source: selection.receipt,
-        at: selection.receipt.at,
-        values: selection.values,
-      })),
-      ...baselines.map((selection) => ({
-        kind: 'checkpoint' as const,
-        selection,
-        source: selection.checkpoint,
-        at: selection.availableAt,
-        values: selection.values,
-      })),
-    ];
+    // Selected current state is represented by the same logical receipt as its
+    // eventual closed interval. No saved physical page or forced save is needed.
+    const selected = [...selections];
+    for (const baseline of baselines) {
+      const { pageId: _pageId, ...header } = baseline.checkpoint;
+      selected.push({
+        receipt: { ...header, id: temporalReceiptId(header), change: 'baseline', required: false },
+        values: baseline.values,
+      });
+    }
+    if (!selected.length) return installTemporalWitnesses(watch, new Map(), RETRIEVAL_BYTES);
     if (
       selected.length > RETRIEVAL_ROWS ||
-      Buffer.byteLength(JSON.stringify({ selections, baselines })) > RETRIEVAL_BYTES ||
+      Buffer.byteLength(JSON.stringify(selected)) > RETRIEVAL_BYTES ||
       selected.some(
-        (value) =>
-          value.source.actorId !== scope.actorId ||
-          value.source.facets.length !== value.values.length ||
-          !Number.isFinite(value.at) ||
-          (value.kind === 'receipt' &&
-            !value.source.facets.length &&
-            (value.selection.receipt.change !== 'receiver-frame' ||
-              !value.selection.receipt.receiverFrame)) ||
-          (value.kind === 'checkpoint' &&
-            (!value.source.facets.length ||
-              value.selection.origins.length !== value.values.length)),
+        (item) =>
+          item.receipt.actorId !== scope.actorId ||
+          item.receipt.facets.length !== item.values.length,
       )
     )
       return false;
+    const subjects = new Set(selected.map((item) => item.receipt.subject));
+    const window = currentWindow(),
+      native = window.capture(subjects);
     return this.snapshot(scope, async () => {
-      const window = currentWindow();
       if (
         (
           await this.db
@@ -1516,453 +1517,344 @@ export class MemoryRepository {
         )?.['generation'] !== scope.generation
       )
         return false;
-      const locators = selected.map((value, key) => ({
-        key,
-        kind: value.kind,
-        actorId: value.source.actorId,
-        physicalLife: value.source.physicalLife,
-        epoch: value.source.epoch,
-        at: value.at,
-        ordinal:
-          value.kind === 'receipt'
-            ? value.selection.receipt.ordinal
-            : value.selection.forReceipt.ordinal,
-        owner:
-          value.kind === 'checkpoint'
-            ? temporalChunkRecordId(scope.actorId, value.selection.checkpoint.chunkId)
-            : null,
-      }));
-      const owners = await this.db
+      const ordinals = [...new Set(selected.map((item) => item.receipt.ordinal))];
+      const members = selected.flatMap((item) =>
+        item.receipt.facets.map((field) =>
+          JSON.stringify([
+            scope.actorId,
+            item.receipt.physicalLife,
+            item.receipt.epoch,
+            item.receipt.ordinal,
+            field.ordinal,
+          ]),
+        ),
+      );
+      const buckets = receiptLookupBuckets('members', members);
+      const metadata = await this.db
         .prepare(
-          `WITH requested AS (
-        SELECT * FROM jsonb_to_recordset(?::jsonb)
-          q(key int,kind text,"actorId" text,"physicalLife" bigint,epoch text,ordinal bigint,at double precision,owner text)
-      ) SELECT q.key,'chunk' AS kind,c.id,c.encoded_bytes FROM requested q
-        CROSS JOIN LATERAL(SELECT c.id,${evidenceEncodedBytesSql('c')} AS encoded_bytes
-          FROM mind_temporal_chunks c WHERE c.retired_revision IS NULL AND c.world_id=? AND c.actor_id=q."actorId"
-            AND c.physical_life=q."physicalLife" AND c.receipt_epoch=q.epoch
-            AND c.first_ordinal<=q.ordinal ${window.retiredThrough ? 'AND (c.chunk_order>? OR (c.chunk_order=? AND q.ordinal>?))' : ''} AND q.at+?>? AND(q.owner IS NULL OR c.id=q.owner)
-            AND EXISTS(SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id
-              AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
-          ORDER BY c.first_ordinal DESC LIMIT 1)c
-        UNION ALL SELECT q.key,'support' AS kind,s.id,octet_length(s.payload) AS encoded_bytes FROM requested q
-        JOIN mind_temporal_supports s ON q.kind='receipt' AND s.world_id=? AND s.actor_id=q."actorId"
-          AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal`,
+          `SELECT id,encoded_bytes FROM mind_temporal_pages
+        WHERE world_id=? AND actor_id=? AND retired_revision IS NULL AND last_received_at+?>?
+          AND (physical_life,receipt_epoch) IN (SELECT q.life,q.epoch FROM jsonb_to_recordset(?::jsonb)q(life bigint,epoch text))
+          AND (receipt_ordinals && ?::bigint[] OR (lookup_buckets && ?::smallint[] AND member_keys && ?::text[]))
+        ORDER BY first_at,first_order,id LIMIT ?`,
         )
         .all(
-          JSON.stringify(locators),
           scope.worldId,
-          ...(window.retiredThrough
-            ? [
-                window.retiredThrough.chunkOrder,
-                window.retiredThrough.chunkOrder,
-                window.retiredThrough.ordinal,
-              ]
-            : []),
+          scope.actorId,
           window.maxAgeSeconds,
           window.at,
-          scope.worldId,
+          JSON.stringify(
+            selected.map((item) => ({
+              life: item.receipt.physicalLife,
+              epoch: item.receipt.epoch,
+            })),
+          ),
+          ordinals,
+          buckets,
+          members,
+          RETRIEVAL_ROWS + 1,
         );
-      const unique = new Map(owners.map((owner) => [`${owner['kind']}:${owner['id']}`, owner]));
-      const preparationBytes = [...unique.values()].reduce(
-        (bytes, owner) => bytes + Number(owner['encoded_bytes']),
+      let preparationBytes = metadata.reduce(
+        (bytes, row) => bytes + Number(row['encoded_bytes']),
         0,
       );
-      if (preparationBytes > RETRIEVAL_BYTES) return false;
-      const chunkIds = [...unique.values()]
-        .filter((owner) => owner['kind'] === 'chunk')
-        .map((owner) => String(owner['id']));
-      const supportIds = [...unique.values()]
-        .filter((owner) => owner['kind'] === 'support')
-        .map((owner) => String(owner['id']));
-      const chunks = new Map<string, ReturnType<typeof readTemporalChunkRecord>>();
-      if (chunkIds.length)
+      if (metadata.length > RETRIEVAL_ROWS || preparationBytes > RETRIEVAL_BYTES) return false;
+      const ids = metadata.map((row) => String(row['id'])),
+        pages = [...native.pages];
+      if (ids.length)
         for (const row of await this.db
           .prepare(
-            'SELECT id,payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+            'SELECT * FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
           )
-          .all(scope.worldId, scope.actorId, chunkIds))
-          chunks.set(String(row['id']), readTemporalChunkRecord(row));
+          .all(scope.worldId, scope.actorId, ids))
+          pages.push(readTemporalPageRecord(row));
+      const receipts = [
+        ...native.open.map((interval) => interval.receipt),
+        ...pages.flatMap(temporalPageReceipts),
+      ];
+      const supportIds = selected.map((item) => temporalReceiptId(item.receipt));
       const supports = new Map<string, TemporalSupportCapsule>();
-      if (supportIds.length)
-        for (const row of await this.db
-          .prepare(
-            'SELECT id,payload FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
-          )
-          .all(scope.worldId, scope.actorId, supportIds))
-          supports.set(
-            String(row['id']),
-            JSON.parse(String(row['payload'])) as TemporalSupportCapsule,
-          );
-      const valid = new Set<number>(),
-        supported = new Map<number, string>();
-      for (const owner of owners)
-        if (owner['kind'] === 'support') {
-          const key = Number(owner['key']),
-            expected = selected[key]!,
-            capsule = supports.get(String(owner['id']));
-          if (
-            expected.kind === 'receipt' &&
-            capsule &&
-            sameSupportedSelection(capsule, expected.selection)
-          ) {
-            valid.add(key);
-            supported.set(key, String(owner['id']));
-          }
-        }
-      const references = new Set<string>();
-      const declarations = new Map<
-        string,
-        {
-          owner: string;
-          ordinal: number;
-          value: TemporalFrameEntry;
-          projections?: Map<string, TemporalFrameEntry>;
-        }
-      >();
-      const chunkSelections = new Map<
-        number,
-        {
-          ownerId: string;
-          references: string[];
-          fields: Array<{ reference: TemporalFacetReference; value: TemporalValue }>;
-        }
-      >();
-      const addReference = (id: string): string => {
-        references.add(id);
-        return id;
-      };
-      const addDeclarations = (
-        owner: string,
-        values: readonly TemporalFrameEntry[],
-        facets: readonly number[],
-      ) => {
-        for (const value of values) {
-          const id = JSON.stringify([owner, value.ordinal]);
-          let held = declarations.get(id);
-          if (!held) declarations.set(id, (held = { owner, ordinal: value.ordinal, value }));
-          if (
-            value.kind === 'change' ||
-            value.kind === 'checkpoint' ||
-            value.kind === 'confirmation' ||
-            (value.kind === 'dictionary' && value.value[0] === 'members')
-          ) {
-            const selected =
-              value.kind === 'dictionary' && value.value[0] === 'members'
-                ? value.value[1].flatMap((field, position) => (field ? [position] : []))
-                : facets;
-            held.projections ??= new Map();
-            held.projections.set(JSON.stringify(selected), value);
-          }
-        }
-      };
-      for (const owner of owners)
-        if (owner['kind'] === 'chunk' && !valid.has(Number(owner['key']))) {
-          const key = Number(owner['key']),
-            expected = selected[key]!,
-            ownerId = String(owner['id']),
-            chunk = chunks.get(ownerId);
-          if (!chunk) continue;
-          const actual =
-            expected.kind === 'receipt'
-              ? temporalChunkReceipt(chunk, expected.source.ordinal)
-              : temporalChunkCheckpoint(chunk, expected.source.ordinal);
-          if (!actual) continue;
-          const {
-            facets: _actualFacets,
-            sourceIds: _aliases,
-            availability: _actualAvailability,
-            ...actualHeader
-          } = actual as typeof actual & { availability?: unknown };
-          const {
-            facets: _expectedFacets,
-            sourceIds: _expectedAliases,
-            availability: _expectedAvailability,
-            ...expectedHeader
-          } = expected.source as typeof expected.source & { availability?: unknown };
-          if (canonicalJson(actualHeader) !== canonicalJson(expectedHeader)) continue;
-          const needed: string[] = [],
-            fields: Array<{ reference: TemporalFacetReference; value: TemporalValue }> = [],
-            proofs: Array<{
-              kind: 'checkpoint' | 'receipt';
-              ordinal: number;
-              facetOrdinal: number;
-            }> = [];
-          let matches = true;
-          if (expected.kind === 'checkpoint') {
-            const suffix = temporalChunkReceipt(chunk, expected.selection.forReceipt.ordinal);
-            if (
-              !suffix ||
-              suffix.actorId !== expected.selection.forReceipt.actorId ||
-              suffix.physicalLife !== expected.selection.forReceipt.physicalLife ||
-              suffix.epoch !== expected.selection.forReceipt.epoch ||
-              suffix.at !== expected.selection.availableAt ||
-              actual.at > suffix.at
-            ) {
-              matches = false;
-            } else addDeclarations(ownerId, temporalReceiptEntries(chunk, suffix.ordinal, []), []);
-            addDeclarations(ownerId, temporalCheckpointEntries(chunk, actual.ordinal, []), []);
-          } else addDeclarations(ownerId, temporalReceiptEntries(chunk, actual.ordinal, []), []);
-          for (const [index, facet] of expected.source.facets.entries()) {
-            if (!matches) break;
-            const origin =
-              expected.kind === 'receipt'
-                ? {
-                    kind: 'receipt' as const,
-                    ordinal: expected.source.ordinal,
-                    facetOrdinal: facet.ordinal,
-                  }
-                : expected.selection.origins[index]!;
-            const originSource =
-              origin.kind === 'receipt'
-                ? temporalChunkReceipt(chunk, origin.ordinal)
-                : temporalChunkCheckpoint(chunk, origin.ordinal);
-            if (
-              expected.kind === 'checkpoint' &&
-              (!originSource ||
-                originSource.subject !== expected.source.subject ||
-                originSource.at > expected.at ||
-                originSource.at < expected.source.at ||
-                (origin.kind === 'receipt' &&
-                  origin.ordinal >= expected.selection.forReceipt.ordinal))
-            ) {
-              matches = false;
-              break;
-            }
-            const owned = originSource?.facets.find(
-                (owned) => owned.ordinal === origin.facetOrdinal,
-              ),
-              expectedFacet =
-                expected.kind === 'checkpoint' ? { ...facet, ordinal: origin.facetOrdinal } : facet;
-            if (!owned) {
-              matches = false;
-              break;
-            }
-            const metadata = (reference: TemporalFacetReference) =>
-              (({ reception: _reception, ...fields }) => fields)(reference);
-            if (canonicalJson(metadata(owned)) !== canonicalJson(expectedFacet)) {
-              const confirmations = temporalConfirmationsForFacet(
-                chunk,
-                {
-                  ...expectedFacet,
-                  ...(owned.reception ? { reception: owned.reception } : {}),
-                },
-                owned,
-              );
-              const confirmed = confirmations.reduce(applyTemporalConfirmation, owned);
-              if (
-                !confirmations.length ||
-                canonicalJson(metadata(confirmed)) !== canonicalJson(expectedFacet)
-              ) {
-                matches = false;
-                break;
-              }
-              for (const confirmation of confirmations) {
-                const fields = [confirmation.fieldOrdinal];
-                addDeclarations(
-                  ownerId,
-                  temporalConfirmationEntries(chunk, confirmation.entryOrdinal, fields),
-                  fields,
-                );
-                for (const reference of temporalFacetValueReferences(
-                  temporalConfirmationReference(confirmation),
-                ))
-                  needed.push(addReference(reference));
-              }
-            }
-            if (expected.kind === 'checkpoint') {
-              const state = expected.selection.checkpoint.availability?.find((group) =>
-                  group.fields.includes(facet.ordinal),
-                ),
-                availability = expected.selection.origins[index]!.availability;
-              if (!!state !== !!availability) {
-                matches = false;
-                break;
-              }
-              if (availability) {
-                const support =
-                    availability.kind === 'checkpoint'
-                      ? temporalChunkCheckpoint(chunk, availability.ordinal)
-                      : temporalChunkReceipt(chunk, availability.ordinal),
-                  field = support?.facets.find(
-                    (reference) => reference.ordinal === availability.facetOrdinal,
-                  ),
-                  actualState =
-                    support &&
-                    ('chunkId' in support
-                      ? support.availability?.find((group) =>
-                          group.fields.includes(availability.facetOrdinal),
-                        )
-                      : temporalFieldAvailability(support, availability.facetOrdinal));
-                if (
-                  !support ||
-                  !field ||
-                  support.subject !== expected.source.subject ||
-                  support.at > expected.at ||
-                  canonicalJson(
-                    actualState && { reason: actualState.reason, at: actualState.at },
-                  ) !== canonicalJson(state && { reason: state.reason, at: state.at })
-                ) {
-                  matches = false;
-                  break;
-                }
-                const fields = [availability.facetOrdinal];
-                addDeclarations(
-                  ownerId,
-                  availability.kind === 'checkpoint'
-                    ? temporalCheckpointEntries(chunk, availability.ordinal, fields)
-                    : temporalReceiptEntries(chunk, availability.ordinal, fields),
-                  fields,
-                );
-                for (const reference of temporalFacetValueReferences(field))
-                  needed.push(addReference(reference));
-              }
-            }
-            for (const reference of temporalFacetValueReferences(owned))
-              needed.push(addReference(reference));
-            fields.push({ reference: owned, value: expected.values[index]! });
-            proofs.push(origin);
-          }
-          if (!matches) continue;
-          for (const proof of proofs) {
-            const facets = [proof.facetOrdinal];
-            addDeclarations(
-              ownerId,
-              proof.kind === 'receipt'
-                ? temporalReceiptEntries(chunk, proof.ordinal, facets)
-                : temporalCheckpointEntries(chunk, proof.ordinal, facets),
-              facets,
-            );
-          }
-          chunkSelections.set(key, { ownerId, references: needed, fields });
-        }
-      const matching = new Map<string, Record<string, unknown>>(),
-        sources: Record<string, { value: TemporalFragment }> = {};
-      if (references.size) {
-        const args = [scope.worldId, [...references]];
-        const sizes = await this.db
-          .prepare(
-            `SELECT SUM(octet_length((payload::json->'value')::text)) AS bytes
-          FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])`,
-          )
-          .get(...args);
-        if (preparationBytes + Number(sizes?.['bytes'] ?? 0) > RETRIEVAL_BYTES) return false;
-        for (const row of await this.db
-          .prepare(
-            `SELECT source_id,id AS owner_id,(payload::json->'value')::text AS payload
-          FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])`,
-          )
-          .all(...args)) {
-          if (typeof row['payload'] !== 'string') continue;
-          const id = String(row['source_id']);
-          sources[id] = { value: JSON.parse(row['payload']) as TemporalFragment };
-          matching.set(id, row);
-        }
-      }
-      const live = currentWindow();
-      for (const [key, entry] of chunkSelections)
-        if (
-          temporalRecentAt(selected[key]!.at, live.at, live.maxAgeSeconds) &&
-          entry.references.every((id) => matching.has(id)) &&
-          entry.fields.every(({ reference, value }) => {
-            const fragment = receivedValueAt(sources, reference);
-            return (
-              fragment !== undefined &&
-              fragment !== null &&
-              canonicalJson(materializeTemporalValue(reference, fragment, sources)) ===
-                canonicalJson(value)
-            );
-          })
+      const supportSize = await this.db
+        .prepare(
+          'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
         )
-          valid.add(key);
-      if (valid.size !== selected.length) return false;
-      const rows: TemporalSourceWatch['rows'] = new Map();
-      for (const [key, id] of supported) {
-        const expected = selected[key]!;
-        if (expected.kind === 'receipt')
-          addTemporalWitness(rows, 'mind_temporal_supports', id, {
-            supports: new Map([
-              [
-                canonicalJson([
-                  expected.source.ordinal,
-                  expected.source.facets.map((facet) => facet.ordinal),
-                ]),
-                expected.selection,
-              ],
-            ]),
-          });
+        .get(scope.worldId, scope.actorId, supportIds);
+      preparationBytes += Number(supportSize?.['bytes'] ?? 0);
+      if (preparationBytes > RETRIEVAL_BYTES) return false;
+      for (const row of await this.db
+        .prepare(
+          'SELECT payload FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
+        )
+        .all(scope.worldId, scope.actorId, supportIds)) {
+        const capsule = JSON.parse(String(row['payload'])) as TemporalSupportCapsule;
+        supports.set(capsule.receipt.id, capsule);
       }
-      for (const { ownerId } of chunkSelections.values()) {
-        const chunk = chunks.get(ownerId)!;
-        addTemporalWitness(rows, 'mind_temporal_chunks', ownerId, {
-          header: new Map(
-            (['id', 'actorId', 'physicalLife', 'epoch'] as const).map((field) => [
-              field,
-              canonicalJson(chunk[field]),
-            ]),
+      const memberKey = (receipt: TemporalReceiptLocator, ordinal: number) =>
+        JSON.stringify([
+          receipt.actorId,
+          receipt.physicalLife,
+          receipt.epoch,
+          receipt.ordinal,
+          ordinal,
+        ]);
+      const requestedMembers = new Set(
+        selected.flatMap((item) =>
+          item.receipt.facets.map((field) => memberKey(item.receipt, field.ordinal)),
+        ),
+      );
+      const references = [
+        ...new Set([
+          ...selected.flatMap((item) => item.receipt.facets.flatMap(temporalFacetValueReferences)),
+          ...receipts.flatMap((receipt) =>
+            receipt.facets
+              .filter((field) => requestedMembers.has(memberKey(receipt, field.ordinal)))
+              .flatMap(temporalFacetValueReferences),
           ),
-        });
-      }
-      if (declarations.size) {
-        const pages = await this.db
-          .prepare(
-            `SELECT q.owner,q.ordinal,s.id FROM jsonb_to_recordset(?::jsonb)q(owner text,ordinal bigint)
-          CROSS JOIN LATERAL(SELECT s.id,s.payload FROM mind_temporal_segments s WHERE s.world_id=? AND s.parent_id=q.owner
-            AND s.position<=q.ordinal ORDER BY s.position DESC LIMIT 1)s WHERE(s.payload::jsonb->>'end')::bigint>q.ordinal`,
-          )
-          .all(
-            JSON.stringify(
-              [...declarations.values()].map(({ owner, ordinal }) => ({ owner, ordinal })),
+          ...pages.flatMap((page) =>
+            page.declarations.flatMap((declaration) =>
+              declaration.seeds.flatMap((seed) => {
+                const member = declaration.members[seed.member];
+                return member &&
+                  requestedMembers.has(memberKey(member.locator, member.memberOrdinal)) &&
+                  seed.reception?.kind === 'body' &&
+                  typeof seed.reception.poseRef === 'string'
+                  ? [seed.reception.poseRef]
+                  : [];
+              }),
             ),
-            scope.worldId,
-          );
-        if (pages.length !== declarations.size) return false;
-        for (const row of pages) {
-          const ordinal = Number(row['ordinal']),
-            value = declarations.get(JSON.stringify([row['owner'], ordinal]))!;
+          ),
+          ...pages.flatMap((page) =>
+            temporalPageOperations(page).flatMap((operation) =>
+              operation.kind === 'span'
+                ? operation.terminal.flatMap((seed) =>
+                    requestedMembers.has(memberKey(operation.receipt, seed.member)) &&
+                    seed.reception?.kind === 'body' &&
+                    typeof seed.reception.poseRef === 'string'
+                      ? [seed.reception.poseRef]
+                      : [],
+                  )
+                : [],
+            ),
+          ),
+        ]),
+      ];
+      const sources = { ...native.sources };
+      const missing = references.filter((id) => !sources[id]);
+      if (missing.length) {
+        const size = await this.db
+          .prepare(
+            'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+          )
+          .get(scope.worldId, missing);
+        preparationBytes += Number(size?.['bytes'] ?? 0);
+        if (preparationBytes > RETRIEVAL_BYTES) return false;
+        for (const row of await this.db
+          .prepare(
+            'SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+          )
+          .all(scope.worldId, missing))
+          sources[String(row['source_id'])] = JSON.parse(String(row['payload']));
+      }
+      // Match only requested read projections while preserving their raw received
+      // frame for value reconstruction. Page-local seeds advance in order through
+      // the existing clock owner; a support-only check cannot erase measurement.
+      const expectedFields = new Map<
+        string,
+        Map<
+          string,
+          | {
+              field: TemporalFacetReference;
+              receivedAt: number;
+              page?: import('@open-legend/domain').TemporalPage;
+            }
+          | undefined
+        >
+      >();
+      for (const item of selected)
+        for (const [index, field] of item.receipt.facets.entries()) {
+          const key = memberKey(item.receipt, field.ordinal);
+          let fields = expectedFields.get(key);
+          if (!fields) expectedFields.set(key, (fields = new Map()));
+          fields.set(canonicalJson([field, item.values[index]]), undefined);
+        }
+      const baseFields = new Map<string, TemporalFacetReference>();
+      const tryMatch = (
+        key: string,
+        candidate: TemporalFacetReference,
+        receivedAt: number,
+        page?: import('@open-legend/domain').TemporalPage,
+      ) => {
+        const expected = expectedFields.get(key);
+        if (!expected) return;
+        const projected = temporalReceiptForRead({ ...selected[0]!.receipt, facets: [candidate] })
+          .facets[0]!;
+        const fragment = receivedValueAt(sources, candidate),
+          value = fragment && materializeTemporalValue(candidate, fragment, sources);
+        if (!value) return;
+        const proof = canonicalJson([projected, value]),
+          prior = expected.get(proof);
+        if (expected.has(proof) && (!prior || prior.receivedAt < receivedAt))
+          expected.set(proof, { field: candidate, receivedAt, ...(page ? { page } : {}) });
+      };
+      for (const receipt of receipts)
+        for (const field of receipt.facets) {
+          const key = memberKey(receipt, field.ordinal);
+          if (!requestedMembers.has(key)) continue;
+          baseFields.set(key, field);
+          tryMatch(key, field, receipt.at);
+        }
+      for (const interval of native.open)
+        for (const seed of interval.terminal) {
+          const key = memberKey(interval.receipt, seed.member),
+            base = baseFields.get(key);
+          if (base) tryMatch(key, temporalSeedFacet(base, seed), seed.receivedAt);
+        }
+      for (const page of pages) {
+        const declarations = new Map(
+          page.declarations.map((declaration) => [
+            declaration.id,
+            {
+              declaration,
+              seeds: new Map(declaration.seeds.map((seed) => [seed.member, seed])),
+              selected: declaration.members.flatMap((member, position) =>
+                requestedMembers.has(memberKey(member.locator, member.memberOrdinal))
+                  ? [{ member, position, key: memberKey(member.locator, member.memberOrdinal) }]
+                  : [],
+              ),
+            },
+          ]),
+        );
+        for (const { declaration, seeds, selected: members } of declarations.values())
+          for (const item of members) {
+            const base = baseFields.get(item.key),
+              seed = seeds.get(item.position);
+            if (base && seed)
+              tryMatch(item.key, temporalSeedFacet(base, seed), seed.receivedAt, page);
+          }
+        for (const operation of temporalPageOperations(page)) {
+          if (operation.kind === 'span') {
+            for (const seed of operation.terminal) {
+              const key = memberKey(operation.receipt, seed.member),
+                base = baseFields.get(key);
+              if (base) tryMatch(key, temporalSeedFacet(base, seed), seed.receivedAt, page);
+            }
+          } else if (operation.kind === 'check')
+            for (const stamp of operation.stamps) {
+              const held = declarations.get(stamp.declaration);
+              if (!held) continue;
+              for (const item of held.selected) {
+                const base = baseFields.get(item.key),
+                  seed = held.seeds.get(item.position);
+                if (!base || !seed) continue;
+                const next = temporalAdvanceSeed(
+                  seed,
+                  item.member,
+                  stamp,
+                  operation.at,
+                  operation.order,
+                );
+                held.seeds.set(item.position, next);
+                tryMatch(item.key, temporalSeedFacet(base, next), next.receivedAt, page);
+              }
+            }
+        }
+      }
+      const rows: TemporalSourceWatch['rows'] = new Map();
+      let recentDeadline = Infinity;
+      for (const expected of selected) {
+        const locator = expected.receipt,
+          capsule = supports.get(temporalReceiptId(locator));
+        if (capsule && sameSupportedSelection(capsule, expected)) {
           addTemporalWitness(
             rows,
-            'mind_temporal_segments',
-            String(row['id']),
-            value.projections
-              ? {
-                  projectedSlots: new Map([
-                    [
-                      ordinal,
-                      new Map(
-                        [...value.projections].map(([facets, entry]) => [
-                          facets,
-                          canonicalJson(entry),
-                        ]),
-                      ),
-                    ],
-                  ]),
-                }
-              : { slots: new Map([[ordinal, canonicalJson(value.value)]]) },
+            'mind_temporal_supports',
+            JSON.stringify([
+              'world',
+              'experience',
+              'temporal',
+              'actors',
+              scope.actorId,
+              'supports',
+              capsule.receipt.id,
+            ]),
+            { supports: new Map([[canonicalJson(locator), expected]]) },
           );
+          continue;
         }
-      }
-      const neededReferences = new Set(
-        [...chunkSelections.values()].flatMap((value) => value.references),
-      );
-      for (const id of neededReferences) {
-        const row = matching.get(id)!;
-        addTemporalWitness(rows, 'mind_perception_values', String(row['owner_id']), {
-          header: new Map([
-            ['id', canonicalJson(id)],
-            ['value', canonicalJson(sources[id]!.value)],
-          ]),
+        const parts = receipts.filter(
+          (receipt) =>
+            receipt.actorId === locator.actorId &&
+            receipt.physicalLife === locator.physicalLife &&
+            receipt.epoch === locator.epoch &&
+            receipt.ordinal === locator.ordinal,
+        );
+        const first = parts[0];
+        if (!first) return false;
+        const actual = {
+          ...first,
+          facets: [
+            ...new Map(
+              parts.flatMap((receipt) => receipt.facets).map((field) => [field.ordinal, field]),
+            ).values(),
+          ],
+        };
+        const header = (receipt: typeof actual) => {
+          const {
+            facets: _facets,
+            sourceIds: _sourceIds,
+            availability: _availability,
+            ...head
+          } = temporalReceiptForRead(receipt);
+          return head;
+        };
+        if (canonicalJson(header(actual)) !== canonicalJson(header(locator))) return false;
+        for (const [index, field] of locator.facets.entries()) {
+          const matched = expectedFields
+            .get(memberKey(locator, field.ordinal))
+            ?.get(canonicalJson([field, expected.values[index]]));
+          if (!matched) return false;
+          if (!temporalRecentAt(matched.receivedAt, currentWindow().at, window.maxAgeSeconds))
+            return false;
+          recentDeadline = Math.min(recentDeadline, matched.receivedAt + window.maxAgeSeconds);
+          if (matched.page) addTemporalPhysicalWitness(rows, matched.page);
+          const openOwns = native.open.some(
+            (interval) =>
+              memberKey(interval.receipt, field.ordinal) === memberKey(locator, field.ordinal) &&
+              interval.receipt.facets.some((owned) => owned.ordinal === field.ordinal),
+          );
+          if (!openOwns)
+            for (const page of pages)
+              if (
+                page.appendClosed === true &&
+                temporalPageReceipts(page).some(
+                  (receipt) =>
+                    memberKey(receipt, field.ordinal) === memberKey(locator, field.ordinal) &&
+                    receipt.facets.some((owned) => owned.ordinal === field.ordinal),
+                )
+              )
+                addTemporalPhysicalWitness(rows, page);
+          const fragment = receivedValueAt(sources, matched.field),
+            value = fragment && materializeTemporalValue(matched.field, fragment, sources);
+          if (
+            !value ||
+            canonicalJson(value) !== canonicalJson(expected.values[index]) ||
+            !temporalFacetEligible(native.disclosure, scope.actorId, matched.field, value)
+          )
+            return false;
+        }
+        const key = JSON.stringify([
+          scope.actorId,
+          locator.physicalLife,
+          locator.epoch,
+          locator.ordinal,
+        ]);
+        addTemporalWitness(rows, 'temporal_logical', key, {
+          selections: new Map([[key, expected]]),
         });
       }
-
       const installed = installTemporalWitnesses(watch, rows, RETRIEVAL_BYTES);
       if (installed) {
-        watch.deadline = Math.min(
-          Infinity,
-          ...[...chunkSelections.keys()]
-            .filter((key) => !supported.has(key))
-            .map((key) => selected[key]!.at + window.maxAgeSeconds),
-        );
+        watch.deadline = recentDeadline;
         watch.clock = () => currentWindow().at;
       }
       return installed;
@@ -1988,10 +1880,10 @@ export class MemoryRepository {
         q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
         WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
           EXISTS (SELECT 1 FROM LATERAL (
-            SELECT last_ordinal FROM mind_temporal_chunks c
+            SELECT last_ordinal FROM mind_temporal_pages c
             WHERE c.retired_revision IS NULL AND c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
-              AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
-              AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
+              AND c.receipt_epoch=q.epoch
+              AND c.receipt_ordinals @> ARRAY[q.ordinal]
             ORDER BY c.first_ordinal DESC LIMIT 1
           ) current WHERE current.last_ordinal>=q.ordinal)
           OR EXISTS (SELECT 1 FROM mind_temporal_supports s WHERE s.world_id=? AND s.actor_id=q."actorId"
@@ -2031,7 +1923,6 @@ export class MemoryRepository {
       queuedInvalidation = true;
       return cleanup.add(table, sql, params);
     };
-    const preparedActors = new Set(versions?.actors ?? []);
     const affected: MemoryChanges = new Map();
     affected.newSources = new Map();
     const erased = (changes.writes.get('mind_forgotten') ?? []).map((row) => ({
@@ -2112,10 +2003,8 @@ export class MemoryRepository {
           if (versions && directIds.has(id) && expired.has(id) && !replacementIds.has(id)) {
             const path = JSON.parse(id) as string[],
               actorId = path[RECORD_ACTOR_PATHS.get(table)!]!;
-            if (preparedActors.has(actorId)) {
-              old.push({ id, actor_id: actorId, source_id: path.at(-1)! });
-              continue;
-            }
+            old.push({ id, actor_id: actorId, source_id: path.at(-1)! });
+            continue;
           }
           lookup.push(id);
         }
@@ -2136,23 +2025,50 @@ export class MemoryRepository {
           touch(String(row['actor_id']), String(row['source_id']));
           if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
         }
-        if (archive && !versions && old.length) {
-          const candidates = old.map((row) => ({
-            actor_id: String(row['actor_id']),
-            id: String(row['source_id']),
-            revision: String(row['account_revision']),
-          }));
-          await cleanup.flush();
-          const required = await this.db
-            .prepare(
-              `SELECT 1 AS required FROM jsonb_to_recordset(?::jsonb)q(actor_id text,id text,revision text) JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=q.actor_id AND d.source_kind=? AND d.source_id=q.id AND d.source_revision=q.revision LIMIT 1`,
+        if (archive && old.length) {
+          const secured = new Set(
+            (versions?.changes ?? [])
+              .filter((change) => change.desired)
+              .map((change) =>
+                JSON.stringify([change.actorId, change.kind, change.id, change.revision]),
+              ),
+          );
+          const candidates = old
+            .filter(
+              (row) =>
+                !secured.has(
+                  JSON.stringify([
+                    row['actor_id'],
+                    kind,
+                    row['source_id'],
+                    row['account_revision'],
+                  ]),
+                ),
             )
-            .get(JSON.stringify(candidates), worldId, kind);
-          if (required)
-            throw new Error(
-              'Exact source closure must be prepared before replacing retained evidence.',
-            );
+            .map((row) => ({
+              actor_id: String(row['actor_id']),
+              id: String(row['source_id']),
+              revision: String(row['account_revision']),
+            }));
+          if (candidates.length) {
+            await cleanup.flush();
+            const required = await this.db
+              .prepare(
+                `SELECT 1 AS required
+              FROM jsonb_to_recordset(?::jsonb)q(actor_id text,id text,revision text)
+              JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=q.actor_id
+                AND d.source_kind=? AND d.source_id=q.id AND d.source_revision=q.revision
+              WHERE NOT EXISTS(SELECT 1 FROM mind_source_versions v WHERE v.world_id=d.world_id
+                AND v.actor_id=q.actor_id AND v.source_kind=d.source_kind AND v.source_id=q.id AND v.revision=q.revision) LIMIT 1`,
+              )
+              .get(JSON.stringify(candidates), worldId, kind);
+            if (required)
+              throw new Error(
+                'Exact source closure must be prepared before replacing retained evidence.',
+              );
+          }
         }
+
         const released = old.filter((row) => expired.has(String(row['id'])));
         const keys = JSON.stringify(
           released.map((row) => ({
@@ -4516,7 +4432,7 @@ export class MemoryRepository {
           ...(await this.db
             .prepare(
               `SELECT p.event_id,p.payload,${storyTemporalPreparationBytesSql()} AS preparation_bytes FROM history_perspectives p
-          WHERE p.world_id=? AND p.actor_id=? AND p.temporal_chunk_id IS NOT NULL
+          WHERE p.world_id=? AND p.actor_id=? AND p.temporal_ordinal IS NOT NULL
             AND p.event_id=ANY(?::text[]) AND (SELECT generation FROM world_head WHERE world_id=?)=?
             AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id AND f.source_id=p.event_id)`,
             )

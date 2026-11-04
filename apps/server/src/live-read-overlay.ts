@@ -1,7 +1,13 @@
+import { temporalPageReferences } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
 import { mergeRowChange, type RecordChanges, type RowChange } from './world-records.js';
-import type { SourceVersionPlan } from './source-version-retention.js';
+import {
+  mergeSourceVersionChanges,
+  sourceVersionKey,
+  type SourceVersionPlan,
+  type SourceVersionChange,
+} from './source-version-retention.js';
 import {
   historyAccountAtCapturedCut,
   type PreparedHistoryRead,
@@ -10,7 +16,6 @@ import {
 import { historyEventRow, historyPerspectiveRow } from './history-append.js';
 import { receivedCurrentOwnerTables } from './received-record-references.js';
 import { receivedRowOwner } from './received-value-ownership.js';
-import { evidenceReadSelect } from './evidence-segments.js';
 import { LexicalPreparationError } from './lexical-projection.js';
 import {
   MEMORY_SOURCE_ELIGIBILITY,
@@ -79,7 +84,9 @@ const perspectiveColumns = [
   'target_id',
   'speech_peer_id',
   'response_action',
-  'temporal_chunk_id',
+  'temporal_life',
+  'temporal_epoch',
+  'temporal_ordinal',
 ];
 const versionColumns = [
   'world_id',
@@ -95,7 +102,7 @@ const versionColumns = [
 const record = (columns: readonly string[], values: readonly unknown[]) =>
   Object.fromEntries(columns.map((column, index) => [column, values[index]]));
 const keyColumns: Record<string, readonly string[]> = {
-  mind_temporal_chunks_read: ['world_id', 'id'],
+  mind_temporal_pages: ['world_id', 'id'],
   received_value_uses: ['world_id', 'owner_kind', 'owner_id', 'value_id'],
   recall_sources: ['world_id', 'actor_id', 'id', 'source_kind'],
   recall_place_capsules: ['world_id', 'actor_id', 'owner_id', 'owner_kind', 'capsule_key'],
@@ -169,33 +176,28 @@ export class LiveReadOverlay {
   }
   metadataBaseline(actorIds: readonly string[]): MetadataBaseline {
     const selected = new Set(actorIds),
-      versions = new Map<string, SourceVersionPlan['retained']>();
-    for (const cut of this.cuts) {
-      const plan = cut.versions;
-      if (!plan) continue;
-      for (const id of plan.actors) if (selected.has(id)) versions.set(id, []);
-      for (const row of plan.retained) {
-        if (!selected.has(row.actorId)) continue;
-        // Retention consumes identity/category/charge, never archived prose.
-        // Do not pin or serialize a source body for a metadata-only read.
-        versions.get(row.actorId)?.push({
-          actorId: row.actorId,
-          kind: row.kind,
-          id: row.id,
-          revision: row.revision,
-          category: row.category,
-          bytes: row.bytes,
-        });
+      changes = new Map<string, SourceVersionChange>();
+    for (const cut of this.cuts)
+      for (const incoming of cut.versions?.changes ?? []) {
+        if (!selected.has(incoming.actorId)) continue;
+        const value = {
+          ...incoming,
+          desired: incoming.desired && {
+            category: incoming.desired.category,
+            bytes: incoming.desired.bytes,
+          },
+        };
+        const id = sourceVersionKey(value),
+          prior = changes.get(id);
+        changes.set(id, prior ? mergeSourceVersionChanges(prior, value) : value);
       }
-    }
     return {
       worldId: this.cut.worldId,
       revision: this.revision,
-      ...(versions.size
-        ? { versions: { actors: [...versions.keys()], retained: [...versions.values()].flat() } }
-        : {}),
+      ...(changes.size ? { versions: { changes: [...changes.values()] } } : {}),
     };
   }
+
   private table(name: string): PendingTable {
     let table = this.tables.get(name);
     if (!table)
@@ -251,7 +253,7 @@ export class LiveReadOverlay {
     if (this.actorValues) return this.actorValues;
     const values = new Set<string>();
     if (this.actor)
-      for (const table of [...receivedCurrentOwnerTables, 'mind_temporal_segments']) {
+      for (const table of [...receivedCurrentOwnerTables, 'mind_temporal_pages']) {
         const fields = Object.keys(RECORD_NODES.get(table)!.columns ?? {}),
           actor = fields.indexOf('actor_id'),
           refs = fields.indexOf('value_refs');
@@ -262,6 +264,10 @@ export class LiveReadOverlay {
               values.add(id);
           }
       }
+    for (const cut of this.cuts)
+      for (const intent of cut.changes.temporal?.values() ?? [])
+        if (!this.actor || intent.after.actorId === this.actor.actorId)
+          for (const id of temporalPageReferences(intent.after)) values.add(id);
     this.actorValues = values;
     return values;
   }
@@ -408,8 +414,7 @@ export class LiveReadOverlay {
   private history(name: string): void {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
     for (const table of [
-      'mind_temporal_chunks',
-      'mind_temporal_segments',
+      'mind_temporal_pages',
       'mind_awareness',
       'mind_awareness_owners',
       'mind_forgotten',
@@ -420,43 +425,32 @@ export class LiveReadOverlay {
     }
     for (const cut of this.cuts) {
       if (name === 'mind_source_versions' && cut.versions) {
-        const plan = cut.versions,
-          table = this.table(name),
-          previous = new Map(table.rows);
-        for (const actor of plan.actors) {
-          if (this.actor && actor !== this.actor.actorId) continue;
-          for (const kind of Object.keys(MEMORY_SOURCE_TABLES))
-            this.removeScope(name, {
-              world_id: this.cut.worldId,
-              actor_id: actor,
-              source_kind: kind,
-            });
-        }
-        for (const retained of plan.retained) {
-          if (this.actor && retained.actorId !== this.actor.actorId) continue;
+        for (const change of cut.versions.changes) {
+          if (this.actor && change.actorId !== this.actor.actorId) continue;
           const value: Record<string, unknown> = {
             world_id: this.cut.worldId,
-            actor_id: retained.actorId,
-            source_kind: retained.kind,
-            source_id: retained.id,
-            revision: retained.revision,
-            retention_class: retained.category,
-            logical_bytes: retained.bytes,
+            actor_id: change.actorId,
+            source_kind: change.kind,
+            source_id: change.id,
+            revision: change.revision,
           };
-          const old = previous.get(rowKey(table.keys, value));
-          if (old)
-            Object.assign(value, old, {
-              retention_class: retained.category,
-              logical_bytes: retained.bytes,
-            });
-          if (retained.payload !== undefined)
+          if (!change.desired) {
+            this.remove(name, value);
+            continue;
+          }
+          Object.assign(value, {
+            retention_class: change.desired.category,
+            logical_bytes: change.desired.bytes,
+          });
+          if (change.desired.payload !== undefined)
             Object.assign(value, {
-              payload: retained.payload,
+              payload: change.desired.payload,
               retired_revision: this.revision + 1,
             });
           this.put(name, value);
         }
       }
+
       const input = cut.history;
       if (!input) continue;
       for (const id of input.removed) {
@@ -512,52 +506,33 @@ export class LiveReadOverlay {
     }
   }
   private valueUses(): void {
-    for (const cut of this.cuts) {
-      for (const table of [...receivedCurrentOwnerTables, 'mind_temporal_segments']) {
+    for (const cut of this.cuts)
+      for (const table of [...receivedCurrentOwnerTables, 'mind_temporal_pages']) {
         for (const row of cut.changes.writes.get(table) ?? []) {
           if (row.receivedUsesChanged === false) continue;
           const owner = receivedRowOwner(table, row);
           if (this.actor && owner.actor !== this.actor.actorId) continue;
-          if (table !== 'mind_temporal_segments')
-            this.removeScope('received_value_uses', {
-              world_id: this.cut.worldId,
-              owner_kind: owner.kind,
-              owner_id: owner.id,
-            });
-          else if (!row.create && row.logicalRemoval !== false)
-            this.rebuildValueOwners.add(owner.id);
-          for (const id of owner.additions ?? owner.refs)
+          this.removeScope('received_value_uses', {
+            world_id: this.cut.worldId,
+            owner_kind: table,
+            owner_id: owner.id,
+          });
+          for (const id of owner.refs)
             this.put('received_value_uses', {
               world_id: this.cut.worldId,
-              owner_kind: owner.kind,
+              owner_kind: table,
               owner_id: owner.id,
               actor_id: owner.actor,
               value_id: id,
             });
         }
-        if (table !== 'mind_temporal_segments')
-          for (const id of cut.changes.deletes.get(table) ?? [])
-            this.removeScope('received_value_uses', {
-              world_id: this.cut.worldId,
-              owner_kind: table,
-              owner_id: id,
-            });
+        for (const id of cut.changes.deletes.get(table) ?? [])
+          this.removeScope('received_value_uses', {
+            world_id: this.cut.worldId,
+            owner_kind: table,
+            owner_id: id,
+          });
       }
-      for (const id of cut.changes.deletes.get('mind_temporal_segments') ?? [])
-        this.rebuildValueOwners.add(JSON.stringify((JSON.parse(id) as string[]).slice(0, -2)));
-    }
-    for (const id of this.netDeletes('mind_temporal_chunks'))
-      this.removeScope('received_value_uses', {
-        world_id: this.cut.worldId,
-        owner_kind: 'mind_temporal_chunks',
-        owner_id: id,
-      });
-    for (const id of this.rebuildValueOwners)
-      this.removeScope('received_value_uses', {
-        world_id: this.cut.worldId,
-        owner_kind: 'mind_temporal_chunks',
-        owner_id: id,
-      });
   }
   private ensure(name: string): void {
     if (this.prepared.has(name)) return;
@@ -608,8 +583,6 @@ export class LiveReadOverlay {
     if (!prepared) {
       const names = [...RECORD_NODES.keys(), ...Object.keys(keyColumns)];
       const needed = new Set(names.filter((name) => references(sql, name)));
-      if (needed.has('mind_temporal_chunks_read'))
-        for (const name of ['mind_temporal_chunks', 'mind_temporal_segments']) needed.add(name);
       if (needed.has('recall_sources'))
         for (const name of ['mind_forgotten', 'mind_corrections', 'mind_source_dependencies'])
           needed.add(name);
@@ -617,25 +590,9 @@ export class LiveReadOverlay {
         for (const name of [...Object.values(MEMORY_SOURCE_TABLES), 'mind_source_versions'])
           needed.add(name);
       for (const name of needed) this.ensure(name);
-      if (this.rebuildValueOwners.size)
-        for (const name of ['mind_temporal_chunks', 'mind_temporal_segments']) {
-          needed.add(name);
-          this.ensure(name);
-        }
       const ctes: string[] = [],
         values: unknown[] = [];
       for (const name of needed) {
-        if (name === 'mind_temporal_chunks_read') {
-          if (
-            this.tables.has('mind_temporal_chunks') ||
-            this.tables.has('mind_temporal_segments') ||
-            this.removedAncestors('mind_temporal_chunks').length
-          )
-            ctes.push(
-              `mind_temporal_chunks_read AS NOT MATERIALIZED (${evidenceReadSelect('mind_temporal_chunks', Object.keys(RECORD_NODES.get('mind_temporal_chunks')!.columns ?? {}))})`,
-            );
-          continue;
-        }
         const table = this.tables.get(name),
           ancestors = this.removedAncestors(name);
         const historyCuts =
@@ -644,8 +601,6 @@ export class LiveReadOverlay {
                 actor_id: cut.actorId,
                 at: cut.at,
                 max_age_seconds: cut.maxAgeSeconds,
-                chunk_order: cut.frontier?.chunkOrder ?? null,
-                ordinal: cut.frontier?.ordinal ?? null,
               }))
             : [];
         if (!table && !ancestors.length && !historyCuts.length) continue;
@@ -683,16 +638,6 @@ export class LiveReadOverlay {
               WHERE to_jsonb(base)->>field.key IS DISTINCT FROM field.value))`;
         }
         let additional = '';
-        if (name === 'received_value_uses' && this.rebuildValueOwners.size) {
-          values.push(this.cut.worldId, [...this.rebuildValueOwners]);
-          additional = ` UNION ALL SELECT DISTINCT s.world_id,'mind_temporal_chunks'::text,s.parent_id,s.actor_id,v.value
-            FROM mind_temporal_segments s JOIN mind_temporal_chunks c ON c.world_id=s.world_id AND c.id=s.parent_id
-            CROSS JOIN LATERAL unnest(s.value_refs) v(value) WHERE s.world_id=? AND s.parent_id=ANY(?::text[]) AND c.retired_revision IS NULL`;
-          if (this.actor) {
-            values.push(this.actor.actorId);
-            additional += ' AND s.actor_id=?';
-          }
-        }
         ctes.push(`${raw} AS NOT MATERIALIZED (
           SELECT base.* FROM open_legend.${name} base WHERE NOT EXISTS (SELECT 1 FROM ${input} incoming WHERE ${match})
             AND NOT EXISTS (SELECT 1 FROM ${removedRows} incoming WHERE ${match})${exclusion}
@@ -700,19 +645,14 @@ export class LiveReadOverlay {
             LEFT JOIN open_legend.${name} base ON ${match}${additional})`);
         if (name === 'history_perspectives' && historyCuts.length) {
           values.push(JSON.stringify(historyCuts));
-          // Personal grants expire at their received-time/frontier cut even if
-          // the payload is cold and bounded physical retirement has not run yet.
-          // Filter before callers rank/page/limit; archived world events remain.
+          // Age eligibility is independent from physical page order. Exact
+          // retired page access is checked by the account's logical source read.
           ctes.push(`history_perspectives AS NOT MATERIALIZED (
             SELECT base.* FROM __live_history_raw base WHERE NOT EXISTS (
               SELECT 1 FROM jsonb_to_recordset(?::jsonb) AS cut(actor_id TEXT,at DOUBLE PRECISION,
-                max_age_seconds DOUBLE PRECISION,chunk_order BIGINT,ordinal BIGINT)
+                max_age_seconds DOUBLE PRECISION)
               WHERE base.actor_id=cut.actor_id AND base.payload::jsonb#>>'{account,kind}'='temporal'
-                AND (NOT COALESCE((base.payload::jsonb#>>'{account,receivedAt}')::double precision+cut.max_age_seconds>cut.at,false)
-                  OR (cut.chunk_order IS NOT NULL AND
-                    ((base.payload::jsonb#>>'{account,chunkOrder}')::bigint<cut.chunk_order OR
-                    ((base.payload::jsonb#>>'{account,chunkOrder}')::bigint=cut.chunk_order AND
-                      (base.payload::jsonb#>>'{account,receipt,ordinal}')::bigint<=cut.ordinal))))))`);
+                AND NOT COALESCE((base.payload::jsonb#>>'{account,receivedAt}')::double precision+cut.max_age_seconds>cut.at,false)))`);
         }
         if (name === 'mind_source_dependencies') {
           const personal = Object.entries(MEMORY_SOURCE_TABLES)

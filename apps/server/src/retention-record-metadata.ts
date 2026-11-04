@@ -1,5 +1,8 @@
 import {
   observationDependencies,
+  selectedAccountRetentionSelection,
+  experienceRetentionDue,
+  type WorldState,
   observationLearningSources,
   ownedObservationSources,
   recognitionSupportSources,
@@ -78,5 +81,15 @@ export function accountRetentionMetadata(entry: ExperienceEntry): AccountRetenti
     learning: learning.flatMap((source) =>
       'kind' in source ? [{ kind: source.kind, id: source.id }] : [],
     ),
+  };
+}
+
+/** One projection shared by writes, pending selection and current-format validation. */
+export function accountSelectionMetadata(world: WorldState, entry: ExperienceEntry) {
+  const selection = selectedAccountRetentionSelection(world, entry);
+  return {
+    policy_priority: selection.priority,
+    active_or_protected: Number(selection.protected),
+    next_due_at: experienceRetentionDue(world, entry),
   };
 }

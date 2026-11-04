@@ -1,6 +1,6 @@
 import { recordObservationSupport, observationReceiptOrdinals } from '../../experience.js';
 import { currentFacetValues } from '../../perception-current.js';
-import { currentFacetGet, currentFacetGrant } from '../../perception-current.js';
+import { currentNativeFacet, currentFacetGrant } from '../../perception-current.js';
 import { entityGet } from '../../entity-collection.js';
 import { hasMemory } from '../../living.js';
 import { accessiblePossession } from '../../object-access.js';
@@ -63,7 +63,7 @@ export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
 export interface ObserverIdentity {
   /** Last actual recent reference. Liveness only; never identity or recognition proof. */
-  recentReference?: { epoch: string; ordinal: number; chunkOrder: number; at: number };
+  recentReference?: { epoch: string; ordinal: number; pageOrder: number; at: number };
   /** Current body-only local roles need no lasting allocation. */
   retained?: true;
   familiarity?: import('../../attention.js').FamiliarityState;
@@ -363,16 +363,23 @@ export function associateBodyFamiliarity(
   sourceId: string,
 ): void {
   const owner = world.perceptionEvidence?.[observerId];
-  const body = currentFacetGet(owner, `${sourceId}:body`, { modality: 'sight' });
+  const body = currentNativeFacet(owner, `${sourceId}:body`, { modality: 'sight' });
   const association =
     owner &&
     body &&
-    currentFacetGet(owner, `${sourceId}:association`, {
+    currentNativeFacet(owner, `${sourceId}:association`, {
       channel: currentFacetGrant(owner, body).channel,
     });
   const local = currentBodyLocalSubject(world, observerId, sourceId);
   const matched = currentBodyAssociation(world, observerId, sourceId);
-  if (!owner || !body || !association || association.bodyLeaseId !== body.id || !local || !matched)
+  if (
+    !owner ||
+    !body ||
+    !association ||
+    association.field.bodyLeaseId !== body.field.id ||
+    !local ||
+    !matched
+  )
     return;
   const from = observerIndividual(world, observerId, local),
     to = observerIndividual(world, observerId, matched);
@@ -386,7 +393,7 @@ export function associateBodyFamiliarity(
       observationFactKey(
         world,
         currentFacetOriginal(owner, association),
-        association.originalOrdinal,
+        association.field.originalOrdinal,
       ),
     ),
   );
@@ -410,7 +417,7 @@ export function markRecentIndividualReferences(
     if (
       previous &&
       previous.epoch === reference.epoch &&
-      previous.chunkOrder >= reference.chunkOrder &&
+      previous.pageOrder >= reference.pageOrder &&
       previous.ordinal >= reference.ordinal
     )
       continue;
@@ -422,14 +429,14 @@ export function markRecentIndividualReferences(
 export function requestRecentIndividualRepair(
   world: WorldState,
   actorId: string,
-  chunkOrder: number,
+  pageOrder: number,
   ids: readonly string[],
 ): void {
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   const pending = new Set(actor.individualRepairs);
   for (const id of ids)
-    if (world.observerIdentities?.[actorId]?.[id]?.recentReference?.chunkOrder === chunkOrder)
+    if (world.observerIdentities?.[actorId]?.[id]?.recentReference?.pageOrder === pageOrder)
       pending.add(id);
   if (pending.size) {
     actor.individualRepairs = [...pending];
@@ -481,8 +488,8 @@ function recentIndividualAvailable(
   const frontier = actor.retiredThrough;
   return (
     !frontier ||
-    reference.chunkOrder > frontier.chunkOrder ||
-    (reference.chunkOrder === frontier.chunkOrder && reference.ordinal > frontier.ordinal)
+    reference.pageOrder > frontier.pageOrder ||
+    (reference.pageOrder === frontier.pageOrder && reference.ordinal > frontier.ordinal)
   );
 }
 
@@ -1270,8 +1277,8 @@ export function validateObserverIdentities(world: WorldState): void {
             !identity.recentReference.epoch ||
             !Number.isSafeInteger(identity.recentReference.ordinal) ||
             identity.recentReference.ordinal < 0 ||
-            !Number.isSafeInteger(identity.recentReference.chunkOrder) ||
-            identity.recentReference.chunkOrder < 0 ||
+            !Number.isSafeInteger(identity.recentReference.pageOrder) ||
+            identity.recentReference.pageOrder < 0 ||
             !Number.isFinite(identity.recentReference.at) ||
             identity.recentReference.at < 0 ||
             identity.recentReference.at > world.simTime)) ||

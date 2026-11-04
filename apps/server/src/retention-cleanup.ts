@@ -6,7 +6,7 @@ import {
   selectedRecognitionSupportSourceIds,
   releaseTemporalSupport,
   temporalSupportAliases,
-  temporalEntryMetadataReader,
+  temporalPageMetadata,
   updateWorld,
   type ExperienceEntry,
 } from '@open-legend/domain';
@@ -151,7 +151,7 @@ export async function cleanupRetiredIndividuals(
           selected.individuals.add(individual);
       }
   }
-  const retiredChunks = new Set(rows.get('mind_temporal_chunks') ?? []);
+  const retiredChunks = new Set(rows.get('mind_temporal_pages') ?? []);
   const retiredSupports = new Set(rows.get('mind_temporal_supports') ?? []);
   for (const [actorId, history] of Object.entries(before.world.experience?.temporal?.actors ?? {}))
     for (const capsule of Object.values(history.supports ?? {}))
@@ -177,16 +177,16 @@ export async function cleanupRetiredIndividuals(
             value.individuals.add(facet.subject.individualId);
       }
   if (retiredChunks.size) {
-    for (const chunkId of retiredChunks)
-      for (const row of metadata.priorSegments(chunkId)) {
-        const value = actor(row.actorId);
-        for (const id of row.columns['occurrence_source_ids'] as string[]) value.sources.add(id);
-        for (const id of row.columns['occurrence_individual_ids'] as string[])
-          value.individuals.add(id);
-      }
+    for (const pageId of retiredChunks) {
+      const row = metadata.prior('mind_temporal_pages', pageId);
+      if (!row) continue;
+      const value = actor(row.actorId);
+      for (const id of row.columns['source_ids'] as string[]) value.sources.add(id);
+      for (const id of row.columns['individual_ids'] as string[]) value.individuals.add(id);
+    }
     const temporal = before.world.experience?.temporal;
     for (const [actorId, history] of Object.entries(temporal?.actors ?? {}))
-      for (const chunk of history.chunks) {
+      for (const chunk of history.pages) {
         if (
           !retiredChunks.has(
             JSON.stringify([
@@ -195,7 +195,7 @@ export async function cleanupRetiredIndividuals(
               'temporal',
               'actors',
               actorId,
-              'chunks',
+              'pages',
               chunk.id,
             ]),
           )
@@ -227,12 +227,10 @@ export async function cleanupRetiredIndividuals(
         if (value.kind === 'association' && value.subject.kind === 'individual')
           individuals.add(value.subject.individualId);
     }
-    for (const chunk of history?.chunks ?? []) {
+    for (const chunk of history?.pages ?? []) {
       // Actual occurrences own source membership. A checkpoint's explicit
       // subject identity also retains that person; carried proof aliases do not.
-      const metadata = temporalEntryMetadataReader(chunk, { world, sources })(
-        chunk.entries.filter((entry) => entry.kind === 'change' || entry.kind === 'checkpoint'),
-      );
+      const metadata = temporalPageMetadata(chunk, { world, sources });
       for (const id of metadata.occurrenceSourceIds) retained.add(id);
       for (const id of metadata.occurrenceIndividualIds) individuals.add(id);
     }

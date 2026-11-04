@@ -1,6 +1,7 @@
 import { appendTemporalReceipt } from '../../../packages/domain/src/temporal-evidence.js';
 import { temporalHistoryWindow } from './temporal-storage.js';
-import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
+import { decodeTemporalPageRow } from './temporal-page-storage.js';
+import { temporalPageReceipts, temporalPageReferences } from '@open-legend/domain';
 import { validateTemporalEvidenceState } from '../../../packages/domain/src/temporal-validation.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as worldComposition from '../../../packages/domain/src/world-composition.js';
@@ -33,7 +34,6 @@ import {
   advanceWorld,
   currentBodyObservation,
   type Command,
-  type TemporalChunk,
   type TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { appendMemory, acquireExposure } from '../../../packages/domain/src/events.js';
@@ -182,7 +182,7 @@ describe('bounded personal temporal storage', () => {
       return service.world
         .experience!.temporal!.actors[
           actorId
-        ]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk))
+        ]!.pages.flatMap((chunk) => temporalPageReceipts(chunk))
         .find((receipt) => receipt.epoch === locator.epoch && receipt.ordinal === locator.ordinal)!;
     };
     const own = received(PLAYER_ID),
@@ -196,12 +196,12 @@ describe('bounded personal temporal storage', () => {
       (
         await store.db
           .prepare(
-            'SELECT payload FROM mind_temporal_chunks_read WHERE world_id=? AND source_refs @> ARRAY[?]::text[]',
+            'SELECT * FROM mind_temporal_pages WHERE world_id=? AND value_refs @> ARRAY[?]::text[]',
           )
           .all(service.world.id, block)
       ).flatMap((row) => {
-        const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
-        return temporalChunkReceipts(chunk).filter((receipt) =>
+        const chunk = decodeTemporalPageRow(row);
+        return temporalPageReceipts(chunk).filter((receipt) =>
           receipt.facets.some((reference) => reference.valueRef === block),
         );
       });
@@ -310,7 +310,11 @@ describe('bounded personal temporal storage', () => {
         service.world,
       );
       const positions = recent.entries.flatMap(({ values }) =>
-        values.flatMap((value) => (value.kind === 'body' ? [value.body.position.x] : [])),
+        values.flatMap((value) =>
+          value.kind === 'location' && value.location.kind === 'point'
+            ? [value.location.point.x]
+            : [],
+        ),
       );
       expect(recent.incomplete).toBe(true);
       expect(positions.at(-1)).toBe(8);
@@ -323,7 +327,7 @@ describe('bounded personal temporal storage', () => {
         Number(
           (await store.db
             .prepare(
-              'SELECT COALESCE(SUM(receipt_count),0) AS count FROM mind_temporal_chunks WHERE world_id=? AND actor_id=? AND retired_revision IS NULL',
+              'SELECT COALESCE(SUM(receipt_count),0) AS count FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND retired_revision IS NULL',
             )
             .get(service.world.id, PLAYER_ID))!['count'],
         ),
@@ -487,7 +491,11 @@ describe('bounded personal temporal storage', () => {
     expect(movementText).not.toContain('Berry bush');
     expect(walkingText).not.toMatch(/going to|intends to|destinationLabel/);
     const receivedPoints = walking.entries.flatMap(({ values }) =>
-      values.flatMap((value) => (value.kind === 'body' ? [value.body.position.x] : [])),
+      values.flatMap((value) =>
+        value.kind === 'location' && value.location.kind === 'point'
+          ? [value.location.point.x]
+          : [],
+      ),
     );
     expect(new Set(receivedPoints).size).toBeGreaterThan(2);
     const workAt = service.world.simTime;
@@ -768,7 +776,7 @@ describe('bounded personal temporal storage', () => {
         .entries,
     ).toHaveLength(0);
   });
-  it('selects original actor receipts from cold chunks and fences expired receipt membership', async () => {
+  it('selects original actor receipts from cold pages and fences expired receipt membership', async () => {
     const { store, service } = await setup();
     const locators = await editWorld(service, (world) => {
       const result = [];
@@ -1369,7 +1377,7 @@ describe('bounded personal temporal storage', () => {
       { subjects: ['fixture-large-source'], limit: 1, bytes: 1024 },
       service.world,
     );
-    // Packed chunks can skip an oversized receipt and return an older complete
+    // Packed pages can skip an oversized receipt and return an older complete
     // one in the same page; the cursor still must reach the remaining history.
     expect(first.entries).toHaveLength(1);
     expect(first.entries[0]!.values[0]).toMatchObject({ text: 'Later short observation' });

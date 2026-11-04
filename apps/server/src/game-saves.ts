@@ -63,7 +63,7 @@ export function recoveryFile(payload: unknown, checksum: unknown): string {
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return pointer.data.file;
 }
-export const SAVE_FORMAT = 'development-2026-11-01-live-saves';
+export const SAVE_FORMAT = 'development-2026-11-03-reception-pages';
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
   format: string;
@@ -698,10 +698,8 @@ export class GameSaves {
     );
     // A rewind replaces the recent history, including retired batches awaiting
     // cleanup. Their children cascade; the same transaction installs the complete
-    // restored chunks and rebuilds reverse uses before any reader can observe it.
-    await this.db
-      .prepare('DELETE FROM mind_temporal_chunks WHERE world_id=?')
-      .run(current.world.id);
+    // restored pages and rebuilds reverse uses before any reader can observe it.
+    await this.db.prepare('DELETE FROM mind_temporal_pages WHERE world_id=?').run(current.world.id);
     for (const table of [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES]) {
       await this.db.prepare(`DELETE FROM ${table} WHERE world_id=?`).run(current.world.id);
       const originalRows =

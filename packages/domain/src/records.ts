@@ -154,3 +154,62 @@ export function immutableDataSnapshot<T>(
   };
   return copy(value) as T;
 }
+
+const jsonSizes = new WeakMap<object, number>();
+/** Exact JSON UTF-8 charge without allocating the serialized payload. Only
+ * proved immutable graphs share their size; mutable drafts are measured live. */
+export function jsonByteLength(value: unknown): number {
+  const stringBytes = (text: string) => {
+    let bytes = 2;
+    for (let index = 0; index < text.length; index++) {
+      const code = text.charCodeAt(index);
+      if (
+        code === 34 ||
+        code === 92 ||
+        code === 8 ||
+        code === 9 ||
+        code === 10 ||
+        code === 12 ||
+        code === 13
+      )
+        bytes += 2;
+      else if (code < 32) bytes += 6;
+      else if (code < 128) bytes++;
+      else if (code < 2048) bytes += 2;
+      else if (code >= 0xd800 && code <= 0xdbff) {
+        const next = text.charCodeAt(index + 1);
+        if (next >= 0xdc00 && next <= 0xdfff) {
+          bytes += 4;
+          index++;
+        } else bytes += 6;
+      } else if (code >= 0xdc00 && code <= 0xdfff) bytes += 6;
+      else bytes += 3;
+    }
+    return bytes;
+  };
+  const measure = (input: unknown): number => {
+    if (input === null) return 4;
+    if (typeof input === 'string') return stringBytes(input);
+    if (typeof input === 'number') return Number.isFinite(input) ? String(input).length : 4;
+    if (typeof input === 'boolean') return input ? 4 : 5;
+    if (typeof input !== 'object') return 0;
+    const cached = jsonSizes.get(input);
+    if (cached !== undefined) return cached;
+    let bytes = 2,
+      count = 0;
+    if (Array.isArray(input))
+      for (let index = 0; index < input.length; index++) {
+        bytes += (count++ ? 1 : 0) + (measure(input[index]) || 4);
+      }
+    else
+      for (const key of Object.keys(input)) {
+        const field = (input as Record<string, unknown>)[key],
+          size = measure(field);
+        if (size === 0) continue;
+        bytes += (count++ ? 1 : 0) + stringBytes(key) + 1 + size;
+      }
+    if (isImmutableData(input)) jsonSizes.set(input, bytes);
+    return bytes;
+  };
+  return measure(value);
+}

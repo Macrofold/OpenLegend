@@ -1,3 +1,4 @@
+import { temporalReceivedOrder } from './temporal-evidence.js';
 import { sensesFor } from './perception.js';
 import { definitionPin } from './world-modules.js';
 import { attentionCandidates } from './attention.js';
@@ -170,6 +171,11 @@ function scene(count: number, capacity = 10) {
         owner,
         `${id}:${value.kind}`,
         compactCurrentFacet(owner, lease, definitionPin(fixtureSight(world))),
+        {
+          receivedAt: world.simTime,
+          receivedOrder: temporalReceivedOrder(world, PLAYER_ID),
+          confirmedRevision: lease.revision,
+        },
       );
     }
   }
@@ -539,6 +545,11 @@ describe('received detailed attention', () => {
       owner,
       `${id}:location`,
       compactCurrentFacet(owner, updated, definitionPin(fixtureSight(world))),
+      {
+        receivedAt: world.simTime,
+        receivedOrder: temporalReceivedOrder(world, PLAYER_ID),
+        confirmedRevision: updated.revision,
+      },
     );
     updateAttention(world, PLAYER_ID, { changedSourceIds: [id] });
     acknowledgeAttention(world, PLAYER_ID, provided);
@@ -650,8 +661,21 @@ describe('received detailed attention', () => {
     ]);
     updateAttention(world, PLAYER_ID, { changedSourceIds: [neighbor!.sourceId] });
     world.simTime = 30;
-    currentFacetSet(owner, `${neighbor!.sourceId}:body`, { ...body, id: `${body.id}-returned` });
-    currentFacetSet(owner, `${neighbor!.sourceId}:location`, location);
+    currentFacetSet(
+      owner,
+      `${neighbor!.sourceId}:body`,
+      { ...body, id: `${body.id}-returned` },
+      {
+        receivedAt: world.simTime,
+        receivedOrder: temporalReceivedOrder(world, PLAYER_ID),
+        confirmedRevision: body.revision,
+      },
+    );
+    currentFacetSet(owner, `${neighbor!.sourceId}:location`, location, {
+      receivedAt: world.simTime,
+      receivedOrder: temporalReceivedOrder(world, PLAYER_ID),
+      confirmedRevision: location.revision,
+    });
     updateAttention(world, PLAYER_ID, { changedSourceIds: [neighbor!.sourceId] });
     applyAttentionRelationEvaluations(world, PLAYER_ID, [clear]);
     world.simTime = 130;

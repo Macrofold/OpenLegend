@@ -8,6 +8,7 @@ import { readOnlyDraftView } from './draft.js';
 import { canonicalJson } from './events.js';
 import { immutableDataSnapshot, isImmutableData, jsonText } from './records.js';
 import { subjectKey, type ObserverSubject } from './knowledge.js';
+import type { ReceivedValueReference } from './received-values.js';
 import type { DefinitionPin } from './world-modules.js';
 import type {
   LiveFacetSupport,
@@ -59,12 +60,12 @@ export interface CurrentFacetSelector {
 const sameChannel = (a: DefinitionPin, b: DefinitionPin) =>
   a.id === b.id && a.version === b.version && a.digest === b.digest;
 const selectedGroup = (
-  group: Pick<CurrentReceivedGroup, 'grant'>,
+  group: { received: CurrentReceivedContent },
   selector?: CurrentFacetSelector,
 ) =>
-  (!selector?.modality || group.grant.modality === selector.modality) &&
-  (!selector?.channel || sameChannel(group.grant.channel, selector.channel)) &&
-  (!selector?.exposure || group.grant.exposure === selector.exposure);
+  (!selector?.modality || group.received.grant.modality === selector.modality) &&
+  (!selector?.channel || sameChannel(group.received.grant.channel, selector.channel)) &&
+  (!selector?.exposure || group.received.grant.exposure === selector.exposure);
 /** Observer/life is supplied by the owning view; this is the exact received track within it. */
 export function receivedTrackKey(exposure: string, channel: DefinitionPin): string {
   return JSON.stringify([exposure, channel.id, channel.version, channel.digest]);
@@ -99,7 +100,7 @@ const fieldAddress = (key: string): [string, DefinitionPin] => {
   const [kind, id, version, digest] = JSON.parse(key) as [string, string, number, string];
   return [kind, { id, version, digest }];
 };
-export type CurrentStoredField = Omit<LiveFacetSupport, EnvelopeMetadata> & {
+export type CurrentStoredField = Omit<LiveFacetSupport, EnvelopeMetadata | 'revision'> & {
   originalOrdinal: number;
 };
 /** A current group partitions held fields with identical actual receipt/check semantics.
@@ -137,16 +138,56 @@ export interface CurrentAvailability {
   state: 'unchecked';
   at: number;
 }
-export function currentGroupTimes(group: CurrentReceivedGroup): CurrentFacetTimes {
-  return expandedTimes(readOnlyDraftView(group.times));
+export type CurrentReceivedPart = 'value' | 'detail' | 'pose';
+export type CurrentMemberPart = readonly [kind: string, part: CurrentReceivedPart];
+export interface CurrentReceptionStamp {
+  receivedAt: number;
+  receivedOrder: number;
+  confirmedRevision: number;
+  frameRef?: ReceivedValueReference;
 }
-export interface CurrentReceivedGroup {
+export interface CurrentPartPartition extends CurrentReceptionStamp {
+  members: readonly CurrentMemberPart[];
+  times: CurrentGroupTimes;
+  revision: number;
+  check: 'broad' | 'detail' | 'none';
   availability?: CurrentAvailability;
   recording?: import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint;
+}
+export interface CurrentReceivedContent {
   grant: CurrentFacetGrant;
-  times: CurrentGroupTimes;
-  check: 'broad' | 'detail' | 'none';
   fields: Record<string, CurrentStoredField>;
+}
+export interface CurrentReceivedGroup {
+  received: CurrentReceivedContent;
+  metadata: readonly CurrentPartPartition[];
+}
+export interface CurrentGroupSelection {
+  group: CurrentReceivedGroup;
+  partition: CurrentPartPartition;
+}
+export function currentFieldParts(field: CurrentStoredField): readonly CurrentReceivedPart[] {
+  return field.value.kind === 'body' ? ['detail', 'pose'] : ['value'];
+}
+export function currentGroupMetadata(
+  group: CurrentReceivedGroup,
+  kind: string,
+  part?: CurrentReceivedPart,
+): CurrentPartPartition | undefined {
+  const selected =
+    part ?? (group.received.fields[kind]?.value.kind === 'body' ? 'detail' : 'value');
+  return readOnlyDraftView(group.metadata).find((partition) =>
+    partition.members.some(([member, memberPart]) => member === kind && selected === memberPart),
+  );
+}
+export function currentGroupTimes(
+  group: CurrentReceivedGroup,
+  partition: CurrentPartPartition = group.metadata[0]!,
+): CurrentFacetTimes {
+  return expandedTimes(readOnlyDraftView(partition.times));
+}
+export function currentGroupSelections(group: CurrentReceivedGroup): CurrentGroupSelection[] {
+  return readOnlyDraftView(group.metadata).map((partition) => ({ group, partition }));
 }
 export interface CurrentSightCheck {
   through: number;
@@ -167,6 +208,7 @@ export interface CurrentContact {
 }
 /** Selected read product. Routing, original and timing live once on the native group. */
 export type CurrentFacetRecord = CurrentStoredField & {
+  revision: number;
   availability?: CurrentAvailability;
   grant: CurrentFacetGrant;
   originalSource: ReceivedObservation;
@@ -191,12 +233,33 @@ export type CurrentFacetProof = Pick<
   | 'confirmedThrough'
   | 'poseSupport'
 >;
-const views = new WeakMap<CurrentContactContent, Map<string, CurrentFacetRecord>>();
+// The mutation owner certifies metadata-only successors. The codec can reuse content
+// without comparing every received field, even when clock masks split and merge.
+const contentOrigins = new WeakMap<CurrentContactContent, object>();
+function contentIdentity(content: CurrentContactContent): object {
+  const known = contentOrigins.get(content);
+  if (known) return known;
+  if (!isImmutableData(content)) return content;
+  const certificate = Object.freeze({});
+  contentOrigins.set(content, certificate);
+  return certificate;
+}
+export function currentContactContentIdentity(contact: CurrentContact): object {
+  return contentIdentity(readOnlyDraftView(readOnlyDraftView(contact).content));
+}
+function metadataContent(
+  prior: CurrentContactContent,
+  groups: CurrentReceivedGroup[],
+): CurrentContactContent {
+  const next = { ...prior, groups };
+  contentOrigins.set(next, contentIdentity(prior));
+  return next;
+}
 export function currentFacetCheckScope(
   kind: string,
   modality: LiveFacetSupport['modality'],
   presenceOnly = false,
-): CurrentReceivedGroup['check'] {
+): CurrentPartPartition['check'] {
   if (modality !== 'sight') return 'none';
   return !presenceOnly &&
     ['description', 'carried', 'pile-contents', 'public-attributes'].includes(kind)
@@ -223,12 +286,16 @@ export function withCurrentContactBatch<T>(owner: PerceptionEvidenceOwner, work:
   try {
     const result = work();
     contactBatches.delete(key);
-    for (const [id, contact] of batch.contacts)
-      orderedRecordSet(
-        owner.current,
-        id,
-        contact && immutableDataSnapshot(contact, readOnlyDraftView),
-      );
+    for (const [id, contact] of batch.contacts) {
+      const snapshot = contact && immutableDataSnapshot(contact, readOnlyDraftView);
+      if (snapshot && contact) {
+        const origin = contentIdentity(contact.content);
+        // A first receiving batch may still refer to its editable content. Seal
+        // an opaque certificate, not that builder or an old payload graph.
+        contentOrigins.set(snapshot.content, isImmutableData(origin) ? origin : Object.freeze({}));
+      }
+      orderedRecordSet(owner.current, id, snapshot);
+    }
     return result;
   } finally {
     contactBatches.delete(key);
@@ -268,7 +335,13 @@ function mutableContact(
 function mutableGroup(content: CurrentContactContent, at: number): CurrentReceivedGroup {
   const group = content.groups[at]!;
   if (mutableGroups.has(group)) return group;
-  const copy = { ...readOnlyDraftView(group), fields: { ...readOnlyDraftView(group.fields) } };
+  const copy: CurrentReceivedGroup = {
+    received: {
+      ...readOnlyDraftView(group.received),
+      fields: { ...readOnlyDraftView(group.received.fields) },
+    },
+    metadata: [...readOnlyDraftView(group.metadata)],
+  };
   mutableGroups.add(copy);
   content.groups[at] = copy;
   return copy;
@@ -289,63 +362,95 @@ export function setCurrentSightCheck(
     if (contact) contactBatch(owner.current)!.contacts.set(id, { ...contact, sight });
   });
 }
-/** Read one admitted native member, including a completed earlier phase value. */
+/** Borrowed native input; no copied field, expanded clocks or proof is constructed. */
+export interface CurrentNativeFacet {
+  field: CurrentStoredField;
+  grant: CurrentFacetGrant;
+  originalSource: ReceivedObservation;
+  metadata: CurrentPartPartition;
+}
+export function currentGroupNativeFacet(
+  group: CurrentReceivedGroup,
+  originalSource: ReceivedObservation,
+  kind: string,
+  partition = currentGroupMetadata(group, kind),
+): CurrentNativeFacet | undefined {
+  const received = readOnlyDraftView(readOnlyDraftView(group).received),
+    field = readOnlyDraftView(received.fields)[kind];
+  if (!field || !partition) return;
+  return {
+    field: readOnlyDraftView(field),
+    grant: readOnlyDraftView(received.grant),
+    originalSource: readOnlyDraftView(originalSource),
+    metadata: readOnlyDraftView(partition),
+  };
+}
+export function currentNativeFacetTimes(input: CurrentNativeFacet): CurrentFacetTimes {
+  return expandedTimes(readOnlyDraftView(input.metadata.times));
+}
+/** Rich projection is explicit and reserved for a selected proof/support consumer. */
+export function projectCurrentFacet(input: CurrentNativeFacet): CurrentFacetRecord {
+  return {
+    ...input.field,
+    revision: input.metadata.revision,
+    grant: input.grant,
+    originalSource: input.originalSource,
+    times: expandedTimes(input.metadata.times),
+    ...(input.metadata.availability ? { availability: input.metadata.availability } : {}),
+  };
+}
 export function currentGroupFacetRecord(
   group: CurrentReceivedGroup,
   originalSource: ReceivedObservation,
   kind: string,
+  partition?: CurrentPartPartition,
 ): CurrentFacetRecord | undefined {
-  const source = readOnlyDraftView(group),
-    field = readOnlyDraftView(source.fields)[kind];
-  if (!field) return;
-  return {
-    ...readOnlyDraftView(field),
-    grant: readOnlyDraftView(source.grant),
-    originalSource: readOnlyDraftView(originalSource),
-    times: expandedTimes(readOnlyDraftView(source.times)),
-    ...(source.availability ? { availability: source.availability } : {}),
-  };
+  const input = currentGroupNativeFacet(group, originalSource, kind, partition);
+  return input && projectCurrentFacet(input);
+}
+export function currentContactNativeFacet(
+  contact: CurrentContact,
+  kind: string,
+  selector?: CurrentFacetSelector,
+): CurrentNativeFacet | undefined {
+  const content = readOnlyDraftView(readOnlyDraftView(contact).content);
+  let selected: CurrentReceivedGroup | undefined;
+  for (const raw of readOnlyDraftView(content.groups)) {
+    const group = readOnlyDraftView(raw);
+    if (!selectedGroup(group, selector) || !readOnlyDraftView(group.received.fields)[kind])
+      continue;
+    if (selected) return;
+    selected = group;
+  }
+  if (!selected) return;
+  const original = readOnlyDraftView(content.originals)[selected.received.grant.original];
+  if (!original) throw new Error('A current group has no acquired original.');
+  return currentGroupNativeFacet(selected, original, kind);
+}
+export function currentNativeFacet(
+  owner: CurrentReadOwner | undefined,
+  key: string,
+  selector?: CurrentFacetSelector,
+): CurrentNativeFacet | undefined {
+  if (!owner) return;
+  const address = currentFacetAddress(key),
+    contact = currentContactGet(owner, address.subjectId);
+  return (
+    contact &&
+    currentContactNativeFacet(
+      contact,
+      address.kind,
+      address.channel ? { ...selector, channel: address.channel } : selector,
+    )
+  );
 }
 function fieldView(
   contact: CurrentContact,
   kind: string,
   selector?: CurrentFacetSelector,
 ): CurrentFacetRecord | undefined {
-  const content = readOnlyDraftView(readOnlyDraftView(contact).content);
-  const reusable = isImmutableData(content);
-  if (reusable && selector?.channel) {
-    const cached = views.get(content)?.get(fieldIdentity(kind, selector.channel));
-    if (cached) return selectedGroup(cached, selector) ? cached : undefined;
-  }
-  const matching = readOnlyDraftView(content.groups).filter(
-    (group) => selectedGroup(group, selector) && !!readOnlyDraftView(group.fields)[kind],
-  );
-  if (matching.length !== 1) return;
-  const cacheKey = fieldIdentity(kind, matching[0]!.grant.channel);
-  const cached = reusable && views.get(content)?.get(cacheKey);
-  if (cached) return cached;
-  for (const stored of matching) {
-    const group = readOnlyDraftView(stored),
-      field = readOnlyDraftView(group.fields)[kind];
-    if (!field) continue;
-    const grant = readOnlyDraftView(group.grant),
-      originalSource = readOnlyDraftView(content.originals)[grant.original];
-    if (!originalSource) throw new Error('A current group has no acquired original.');
-    const fields = {
-      ...readOnlyDraftView(field),
-      grant,
-      originalSource: readOnlyDraftView(originalSource),
-      times: expandedTimes(readOnlyDraftView(group.times)),
-      ...(group.availability ? { availability: group.availability } : {}),
-    };
-    const value = reusable ? immutableDataSnapshot(fields, readOnlyDraftView) : fields;
-    if (reusable) {
-      let cache = views.get(content);
-      if (!cache) views.set(content, (cache = new Map()));
-      cache.set(cacheKey, value);
-    }
-    return value;
-  }
+  const input = currentContactNativeFacet(contact, kind, selector);
+  return input && projectCurrentFacet(input);
 }
 export function currentContactFacetGet(
   contacts: PerceptionEvidenceOwner['current'] | undefined,
@@ -373,8 +478,9 @@ export function currentFacetGet(
 }
 export function currentFacetTimes(
   _owner: CurrentReadOwner,
-  input: CurrentFacetRecord,
+  input: CurrentFacetRecord | CurrentNativeFacet,
 ): CurrentFacetTimes {
+  if ('field' in input) return currentNativeFacetTimes(input);
   const value = readOnlyDraftView(input),
     base = readOnlyDraftView(value.times);
   return {
@@ -388,6 +494,7 @@ export function currentFacetTimes(
 function fieldValues(input: CurrentFacetRecord): CurrentStoredField {
   const {
     availability: _availability,
+    revision: _revision,
     grant: _grant,
     originalSource: _source,
     times: _times,
@@ -409,31 +516,94 @@ const equalGrant = (a: CurrentFacetGrant, b: CurrentFacetGrant) =>
   a.exposure === b.exposure &&
   a.modality === b.modality &&
   sameChannel(a.channel, b.channel);
+export function sameCurrentFacetContent(a: CurrentFacetRecord, b: CurrentFacetRecord): boolean {
+  return (
+    equalGrant(a.grant, b.grant) && canonicalJson(fieldValues(a)) === canonicalJson(fieldValues(b))
+  );
+}
+export function currentFacetSet(
+  owner: PerceptionEvidenceOwner,
+  key: string,
+  value: undefined,
+): void;
+export function currentFacetSet(
+  owner: PerceptionEvidenceOwner,
+  key: string,
+  value: CurrentFacetRecord,
+  received: CurrentReceptionStamp,
+): void;
 export function currentFacetSet(
   owner: PerceptionEvidenceOwner,
   key: string,
   value: CurrentFacetRecord | undefined,
+  received?: CurrentReceptionStamp,
 ): void {
   withCurrentContactBatch(owner, () => {
     const address = currentFacetAddress(key),
       kind = address.kind,
-      id = address.subjectId;
-    const channel = value?.grant.channel ?? address.channel;
+      id = address.subjectId,
+      channel = value?.grant.channel ?? address.channel;
+    if (value && !received)
+      throw new Error('Current installation requires its actual receiving boundary.');
+    const priorContact = contactAt(owner.current, id);
+    if (value && priorContact && channel) {
+      const input = readOnlyDraftView(value),
+        candidate = fieldValues(input);
+      const groups = priorContact.content.groups.map((group) => {
+        const held = group.received.fields[kind];
+        if (
+          !held ||
+          !equalGrant(group.received.grant, input.grant) ||
+          (held !== candidate && canonicalJson(held) !== canonicalJson(candidate))
+        )
+          return group;
+        const times = packedTimes(currentFacetTimes(owner, input));
+        return coveredPartitions(group, new Set([kind]), (partition) => {
+          const next: CurrentPartPartition = {
+            ...partition,
+            ...received!,
+            times,
+            revision: input.revision,
+            ...(input.availability ? { availability: input.availability } : {}),
+          };
+          if (!input.availability) delete next.availability;
+          return samePartition(next, partition) ? partition : next;
+        });
+      });
+      const sameField = priorContact.content.groups.some((group) => {
+        const held = group.received.fields[kind];
+        return (
+          held &&
+          equalGrant(group.received.grant, input.grant) &&
+          (held === candidate || canonicalJson(held) === canonicalJson(candidate))
+        );
+      });
+      if (sameField) {
+        if (groups.some((group, at) => group !== priorContact.content.groups[at]))
+          contactBatch(owner.current)!.contacts.set(id, {
+            ...priorContact,
+            content: metadataContent(priorContact.content, groups),
+          });
+        return;
+      }
+    }
     const contact = mutableContact(owner, id, !!value);
     if (!contact) return;
     const content = contact.content;
-    views.delete(content);
     for (let at = content.groups.length - 1; at >= 0; at--) {
       const group = content.groups[at]!;
       if (
-        (channel && !sameChannel(group.grant.channel, channel)) ||
-        !Object.hasOwn(group.fields, kind)
+        (channel && !sameChannel(group.received.grant.channel, channel)) ||
+        !Object.hasOwn(group.received.fields, kind)
       )
         continue;
       const changed = mutableGroup(content, at);
-      delete changed.fields[kind];
-      delete changed.recording;
-      if (!Object.keys(changed.fields).length) content.groups.splice(at, 1);
+      delete changed.received.fields[kind];
+      changed.metadata = changed.metadata.flatMap((partition) => {
+        const members = partition.members.filter(([member]) => member !== kind);
+        return members.length ? [partitionWithMembers(partition, members)] : [];
+      });
+      if (!Object.keys(changed.received.fields).length) content.groups.splice(at, 1);
     }
     const identity = channel && fieldIdentity(kind, channel);
     if (value) {
@@ -452,25 +622,25 @@ export function currentFacetSet(
         throw new Error('A current observation identity has conflicting acquired facts.');
       content.originals[grant.original] ??= immutableDataSnapshot(source, readOnlyDraftView);
       if (!content.fieldOrder.includes(identity!)) content.fieldOrder.push(identity!);
-      const existing = content.groups.findIndex(
-        (group) =>
-          group.availability?.at === input.availability?.at &&
-          group.check === check &&
-          equalGrant(group.grant, grant) &&
-          equalTimes(group.times, times),
-      );
-      const field = fieldValues(input);
+      const field = fieldValues(input),
+        members = currentFieldParts(field).map((part) => [kind, part] as const),
+        partition: CurrentPartPartition = {
+          ...received!,
+          members,
+          times,
+          revision: input.revision,
+          check,
+          ...(input.availability ? { availability: input.availability } : {}),
+        };
+      const existing = content.groups.findIndex((group) => equalGrant(group.received.grant, grant));
       if (existing >= 0) {
         const group = mutableGroup(content, existing);
-        group.fields[kind] = field;
-        delete group.recording;
+        group.received.fields[kind] = field;
+        group.metadata = mergePartitions([...group.metadata, partition]);
       } else {
-        const group = {
-          grant,
-          times,
-          check,
-          fields: { [kind]: field },
-          ...(input.availability ? { availability: input.availability } : {}),
+        const group: CurrentReceivedGroup = {
+          received: { grant, fields: { [kind]: field } },
+          metadata: [partition],
         };
         mutableGroups.add(group);
         content.groups.push(group);
@@ -483,35 +653,87 @@ export function currentFacetSet(
       contactBatch(owner.current)!.contacts.set(id, undefined);
       return;
     }
-    const owned = new Set(content.groups.map((group) => group.grant.original));
+    const owned = new Set(content.groups.map((group) => group.received.grant.original));
     for (const original of Object.keys(content.originals))
       if (!owned.has(original)) delete content.originals[original];
   });
 }
-/** The same mask split serves partial successful checks and unresolved coverage. */
-function coveredGroups(
+function samePartition(a: CurrentPartPartition, b: CurrentPartPartition): boolean {
+  return (
+    a.receivedAt === b.receivedAt &&
+    a.receivedOrder === b.receivedOrder &&
+    a.confirmedRevision === b.confirmedRevision &&
+    a.frameRef === b.frameRef &&
+    a.revision === b.revision &&
+    a.check === b.check &&
+    a.availability?.at === b.availability?.at &&
+    a.recording === b.recording &&
+    equalTimes(a.times, b.times)
+  );
+}
+function mergePartitions(input: readonly CurrentPartPartition[]): CurrentPartPartition[] {
+  const merged: CurrentPartPartition[] = [];
+  for (const partition of input) {
+    const at = merged.findIndex((held) => samePartition(held, partition));
+    if (at < 0) merged.push(partition);
+    else merged[at] = { ...merged[at]!, members: [...merged[at]!.members, ...partition.members] };
+  }
+  return merged;
+}
+function partitionWithMembers(
+  partition: CurrentPartPartition,
+  members: readonly CurrentMemberPart[],
+): CurrentPartPartition {
+  const next = { ...partition, members };
+  if (partition.recording) {
+    const mark = partition.recording,
+      held = mark.members.filter((member) =>
+        members.some(([kind, part]) => member.kind === kind && member.part === part),
+      );
+    if (!held.length) delete next.recording;
+    else {
+      if (held.length === mark.members.length) next.recording = mark;
+      else {
+        const { coverage: _coverage, ...binding } = mark;
+        next.recording = {
+          ...binding,
+          members: held,
+          count: new Set(held.map((member) => member.ordinal)).size,
+          reservedBytes: held.reduce((total, member) => total + member.bytes, 0),
+        };
+      }
+    }
+  }
+  return next;
+}
+function coveredPartitions(
   group: CurrentReceivedGroup,
   kinds: ReadonlySet<string> | undefined,
-  change: (group: CurrentReceivedGroup) => CurrentReceivedGroup,
-): CurrentReceivedGroup[] {
-  if (!kinds) return [change(group)];
-  const all = Object.keys(group.fields),
-    covered = all.filter((kind) => kinds.has(kind));
-  if (!covered.length) return [group];
-  if (covered.length === all.length) return [change(group)];
-  const split = (selected: boolean) => {
-    const next = {
-      ...group,
-      fields: Object.fromEntries(
-        all
-          .filter((kind) => kinds.has(kind) === selected)
-          .map((kind) => [kind, group.fields[kind]!]),
+  change: (partition: CurrentPartPartition) => CurrentPartPartition,
+  selectPart: (member: CurrentMemberPart) => boolean = () => true,
+): CurrentReceivedGroup {
+  let changed = false;
+  const metadata = group.metadata.flatMap((partition) => {
+    const selected = ([kind, part]: CurrentMemberPart) =>
+      (!kinds || kinds.has(kind)) && selectPart([kind, part]);
+    const covered = partition.members.filter(selected);
+    if (!covered.length) return [partition];
+    if (covered.length === partition.members.length) {
+      const next = change(partition);
+      changed ||= next !== partition;
+      return [next];
+    }
+    const next = change(partitionWithMembers(partition, covered));
+    changed = true;
+    return [
+      partitionWithMembers(
+        partition,
+        partition.members.filter((member) => !selected(member)),
       ),
-    };
-    delete next.recording;
-    return next;
-  };
-  return [split(false), change(split(true))];
+      next,
+    ];
+  });
+  return changed ? { received: group.received, metadata: mergePartitions(metadata) } : group;
 }
 export interface CurrentGroupCoverage {
   subjectId: string;
@@ -542,86 +764,108 @@ export function currentSetUnchecked(
     for (const [id, masks] of bySubject) {
       const contact = contactAt(owner.current, id);
       if (!contact) continue;
-      let changed = false;
-      const groups = contact.content.groups.flatMap((group) => {
-        const fields = readOnlyDraftView(group.fields);
-        if (
-          !masks.has(fields) ||
-          at < expandedTimes(group.times).confirmedThrough ||
-          (group.availability && group.availability.at <= at)
-        )
-          return [group];
-        changed = true;
-        return coveredGroups(group, masks.get(fields), (covered) => {
-          const next = { ...covered, availability: { state: 'unchecked' as const, at } };
+      const groups = contact.content.groups.map((group) => {
+        const fields = readOnlyDraftView(group.received.fields);
+        if (!masks.has(fields)) return group;
+        return coveredPartitions(group, masks.get(fields), (partition) => {
+          if (
+            at < expandedTimes(partition.times).confirmedThrough ||
+            (partition.availability && partition.availability.at <= at)
+          )
+            return partition;
+          const next = { ...partition, availability: { state: 'unchecked' as const, at } };
           delete next.recording;
           return next;
         });
       });
-      if (changed)
+      if (groups.some((group, at) => group !== contact.content.groups[at]))
         contactBatch(owner.current)!.contacts.set(id, {
           ...contact,
-          content: { ...contact.content, groups },
+          content: metadataContent(contact.content, groups),
         });
     }
   });
 }
-/** Successful support changes only covered group metadata; measurement times stay independent. */
+/** Successful support changes metadata only; measurement remains independent. */
 export function currentConfirmGroups(
   owner: PerceptionEvidenceOwner,
   subjectId: string,
   channel: DefinitionPin,
   through: number,
+  received: CurrentReceptionStamp,
   scopes?: ReadonlySet<string>,
   exposures?: ReadonlySet<string>,
   kinds?: ReadonlySet<string>,
-): CurrentReceivedGroup[] {
+): CurrentGroupSelection[] {
   return withCurrentContactBatch(owner, () => {
     const prior = contactAt(owner.current, subjectId);
     if (!prior) return [];
-    let changed = false;
-    const checked: CurrentReceivedGroup[] = [];
-    const groups = prior.content.groups.flatMap((raw) => {
-      const group = readOnlyDraftView(raw);
+    const checked: CurrentGroupSelection[] = [];
+    const groups = prior.content.groups.map((group) => {
       if (
-        !sameChannel(group.grant.channel, channel) ||
-        (scopes && !scopes.has(group.check)) ||
-        (exposures && !exposures.has(group.grant.exposure))
+        !sameChannel(group.received.grant.channel, channel) ||
+        (exposures && !exposures.has(group.received.grant.exposure))
       )
-        return [group];
-      const previous = expandedTimes(group.times);
-      if (
-        through < previous.confirmedThrough ||
-        (group.availability && through < group.availability.at)
-      )
-        return [group];
-      const result = coveredGroups(group, kinds, (covered) => {
-        const times = expandedTimes(covered.times);
-        let next = covered;
-        if (times.confirmedThrough < through || covered.availability) {
-          next = {
-            ...covered,
-            times: packedTimes({
-              ...times,
-              ...(covered.availability ? { confirmedFrom: through } : {}),
-              confirmedThrough: through,
-            }),
-          };
-          if (covered.availability) {
-            delete next.availability;
-            delete next.recording;
+        return group;
+      const partitions: CurrentPartPartition[] = [];
+      const next = coveredPartitions(
+        group,
+        kinds,
+        (partition) => {
+          const times = expandedTimes(partition.times);
+          if (
+            (scopes && !scopes.has(partition.check)) ||
+            through < times.confirmedThrough ||
+            (partition.availability && through < partition.availability.at)
+          )
+            return partition;
+          let updated = partition;
+          if (
+            times.confirmedThrough < through ||
+            partition.availability ||
+            partition.confirmedRevision < received.confirmedRevision
+          ) {
+            updated = {
+              ...partition,
+              ...received,
+              times: packedTimes({
+                ...times,
+                ...(partition.availability ? { confirmedFrom: through } : {}),
+                confirmedThrough: through,
+              }),
+            };
+            if (partition.availability) {
+              delete updated.availability;
+              delete updated.recording;
+            }
           }
-        }
-        checked.push(next);
-        return next;
-      });
-      changed ||= result.length !== 1 || result[0] !== group;
-      return result;
+          partitions.push(updated);
+          return updated;
+        },
+        ([, part]) => part !== 'pose',
+      );
+      for (const partition of partitions) {
+        const actual = next.metadata.find((held) =>
+          held.members.some(([kind, part]) =>
+            partition.members.some(
+              ([otherKind, otherPart]) => kind === otherKind && part === otherPart,
+            ),
+          ),
+        )!;
+        checked.push({
+          group: next,
+          partition:
+            actual.members.length === partition.members.length
+              ? actual
+              : partitionWithMembers(actual, partition.members),
+        });
+      }
+      return next;
     });
-    if (changed)
+    if (groups.some((group, at) => group !== prior.content.groups[at]))
       contactBatch(owner.current)!.contacts.set(subjectId, {
         ...prior,
-        content: { ...prior.content, groups },
+        content: metadataContent(prior.content, groups),
       });
     return checked;
   });
@@ -629,38 +873,53 @@ export function currentConfirmGroups(
 export interface CurrentGroupRecordingUpdate {
   subjectId: string;
   fields: object;
-  recording: CurrentReceivedGroup['recording'];
+  members?: readonly CurrentMemberPart[];
+  recording: CurrentPartPartition['recording'];
 }
-/** A recorder updates only checkpoints on the memberships it actually received. */
 export function currentGroupsSetRecording(
   owner: PerceptionEvidenceOwner,
   updates: readonly CurrentGroupRecordingUpdate[],
 ): void {
   withCurrentContactBatch(owner, () => {
-    const bySubject = new Map<string, Map<object, CurrentReceivedGroup['recording']>>();
+    const bySubject = new Map<string, CurrentGroupRecordingUpdate[]>();
     for (const update of updates) {
-      let fields = bySubject.get(update.subjectId);
-      if (!fields) bySubject.set(update.subjectId, (fields = new Map()));
-      fields.set(readOnlyDraftView(update.fields), update.recording);
+      const list = bySubject.get(update.subjectId) ?? [];
+      list.push(update);
+      bySubject.set(update.subjectId, list);
     }
     for (const [id, updates] of bySubject) {
       const contact = contactAt(owner.current, id);
       if (!contact) continue;
-      let changed = false;
       const groups = contact.content.groups.map((group) => {
-        const fields = readOnlyDraftView(group.fields);
-        if (!updates.has(fields) || group.recording === updates.get(fields)) return group;
-        changed = true;
-        const updated = { ...group },
-          recording = updates.get(fields);
-        if (recording) updated.recording = recording;
-        else delete updated.recording;
-        return updated;
+        let metadata = group.metadata;
+        for (const update of updates) {
+          if (readOnlyDraftView(group.received.fields) !== readOnlyDraftView(update.fields))
+            continue;
+          metadata = metadata.flatMap((partition) => {
+            const selected = (member: CurrentMemberPart) =>
+              !update.members ||
+              update.members.some(([kind, part]) => kind === member[0] && part === member[1]);
+            const members = partition.members.filter(selected);
+            if (!members.length || partition.recording === update.recording) return [partition];
+            const rest = partition.members.filter((member) => !selected(member));
+            const next = partitionWithMembers(partition, members);
+            if (update.recording)
+              next.recording = partitionWithMembers(
+                { ...next, recording: update.recording },
+                members,
+              ).recording;
+            else delete next.recording;
+            return rest.length ? [partitionWithMembers(partition, rest), next] : [next];
+          });
+        }
+        return metadata === group.metadata
+          ? group
+          : { received: group.received, metadata: mergePartitions(metadata) };
       });
-      if (changed)
+      if (groups.some((group, at) => group !== contact.content.groups[at]))
         contactBatch(owner.current)!.contacts.set(id, {
           ...contact,
-          content: { ...contact.content, groups },
+          content: metadataContent(contact.content, groups),
         });
     }
   });
@@ -672,11 +931,11 @@ export function currentFacetMembership(owner: CurrentReadOwner, input: CurrentFa
     contact = currentContactGet(owner, grant.subjectId);
   const group = contact?.content.groups.find(
     (group) =>
-      sameChannel(group.grant.channel, grant.channel) &&
-      group.fields[record.value.kind]?.id === record.id,
+      sameChannel(group.received.grant.channel, grant.channel) &&
+      group.received.fields[record.value.kind]?.id === record.id,
   );
   if (!group) throw new Error('Received field has no current membership.');
-  return readOnlyDraftView(group.fields);
+  return readOnlyDraftView(group.received.fields);
 }
 export function currentContactEntries(owner: CurrentReadOwner): Array<[string, CurrentContact]> {
   const index = readOnlyDraftView(owner).current,
@@ -715,7 +974,7 @@ export function currentFacetEntries(
     if (
       !exposures ||
       readOnlyDraftView(readOnlyDraftView(entry[1]).content).groups.some((group) =>
-        exposures.has(group.grant.exposure),
+        exposures.has(group.received.grant.exposure),
       )
     )
       contacts.push(entry);
@@ -770,32 +1029,27 @@ export function currentFacetObserver(owner: CurrentReadOwner): ObserverLife {
 }
 export function currentFacetGrant(
   _owner: CurrentReadOwner,
-  input: CurrentFacetRecord,
+  input: CurrentFacetRecord | CurrentNativeFacet,
 ): CurrentFacetGrant {
   return readOnlyDraftView(readOnlyDraftView(input).grant);
 }
 export function currentFacetOriginal(
   _owner: CurrentReadOwner,
-  input: CurrentFacetRecord,
+  input: CurrentFacetRecord | CurrentNativeFacet,
 ): ReceivedObservation {
   return readOnlyDraftView(readOnlyDraftView(input).originalSource);
 }
-const exposures = new WeakMap<CurrentFacetRecord, ObservationExposure>();
 export function currentFacetExposure(
   owner: CurrentReadOwner,
-  input: CurrentFacetRecord,
+  input: CurrentFacetRecord | CurrentNativeFacet,
 ): ObservationExposure {
-  const record = readOnlyDraftView(input),
-    observer = currentFacetObserver(owner),
-    episodeId = currentFacetGrant(owner, record).exposure,
-    reusable = isImmutableData(record) && isImmutableData(observer),
-    cached = reusable && exposures.get(record);
-  if (cached && cached.observer === observer && cached.episodeId === episodeId) return cached;
-  const value = { observer, episodeId, track: receivedTrackKey(episodeId, input.grant.channel) };
-  if (!reusable) return value;
-  const snapshot = immutableDataSnapshot(value, readOnlyDraftView);
-  exposures.set(record, snapshot);
-  return snapshot;
+  const observer = currentFacetObserver(owner),
+    grant = currentFacetGrant(owner, input);
+  return {
+    observer,
+    episodeId: grant.exposure,
+    track: receivedTrackKey(grant.exposure, grant.channel),
+  };
 }
 export function updateCurrentFacetTimes(
   owner: CurrentReadOwner,
@@ -866,7 +1120,6 @@ export function completePerceptionOriginal(
       if (!contact || !Object.hasOwn(contact.content.originals, key)) continue;
       const draft = mutableContact(owner, id, false)!;
       draft.content.originals[key] = completed;
-      views.delete(draft.content);
     }
   });
 }
@@ -926,16 +1179,13 @@ export function compactCurrentFacet(
 
 /** Candidate identity comes from an acquired track, including non-body signals.
  * Inspect only the three candidate-bearing members per group; never flatten rich detail. */
-const attentionSources = new WeakMap<object, readonly CurrentFacetRecord[]>();
 export function receivedAttentionSources(
   owner: CurrentReadOwner,
   sourceId: string,
-): readonly CurrentFacetRecord[] {
+): readonly CurrentNativeFacet[] {
   const contact = currentContactGet(owner, sourceId);
   if (!contact) return [];
   const content = readOnlyDraftView(contact.content);
-  const cached = isImmutableData(content) && attentionSources.get(content);
-  if (cached) return cached;
   const channels = new Map<
     string,
     { kind: string; rank: number; channel: import('./world-modules.js').DefinitionPin }
@@ -943,26 +1193,26 @@ export function receivedAttentionSources(
   const kinds = ['body', 'contact', 'detected'] as const;
   for (const source of readOnlyDraftView(content.groups)) {
     const group = readOnlyDraftView(source),
-      channel = group.grant.channel;
+      channel = group.received.grant.channel;
     const key = JSON.stringify([channel.id, channel.version, channel.digest]);
     for (let rank = 0; rank < kinds.length; rank++) {
       const kind = kinds[rank]!;
-      if (group.fields[kind] && (!channels.has(key) || rank < channels.get(key)!.rank))
+      if (group.received.fields[kind] && (!channels.has(key) || rank < channels.get(key)!.rank))
         channels.set(key, { kind, rank, channel });
     }
   }
   const result = [...channels.values()].flatMap(
-    ({ kind, channel }) => currentFacetGet(owner, currentFacetKey(sourceId, kind, channel)) ?? [],
+    ({ kind, channel }) =>
+      currentNativeFacet(owner, currentFacetKey(sourceId, kind, channel)) ?? [],
   );
-  if (isImmutableData(content)) attentionSources.set(content, result);
   return result;
 }
 export function receivedAttentionSource(
   owner: CurrentReadOwner,
   sourceId: string,
   leaseId: string,
-): CurrentFacetRecord | undefined {
-  return receivedAttentionSources(owner, sourceId).find((source) => source.id === leaseId);
+): CurrentNativeFacet | undefined {
+  return receivedAttentionSources(owner, sourceId).find((source) => source.field.id === leaseId);
 }
 
 export interface CurrentTrackSelection {
@@ -979,7 +1229,7 @@ export type SelectedReceivedTracks = Map<string, Map<string, SelectedReceivedTra
 function addSelectedTrack(
   tracks: SelectedReceivedTracks,
   sourceId: string,
-  source: CurrentFacetRecord,
+  source: CurrentNativeFacet,
 ): void {
   let held = tracks.get(sourceId);
   if (!held) tracks.set(sourceId, (held = new Map()));
@@ -1004,7 +1254,7 @@ export function currentSelectionSubjects(
       continue;
     for (const subject of [
       resolvedSubjects ? resolvedSubjects.get(entry.exposure.track) : entry.subject,
-      source.localSubject,
+      source.field.localSubject,
     ])
       if (subject) subjects.add(subjectKey(subject));
   }
@@ -1026,7 +1276,7 @@ export function currentTracksForSubjects(
         receivedTrackKey(source.grant.exposure, source.grant.channel),
       );
       if (
-        [source.localSubject, resolved].some(
+        [source.field.localSubject, resolved].some(
           (subject) => subject !== undefined && subjects.has(subjectKey(subject)),
         )
       )

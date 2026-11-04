@@ -1,46 +1,46 @@
 import {
   receivedTrackKey,
   currentFacetObserver,
+  currentNativeFacet,
+  currentNativeFacetTimes,
+  currentFacetTimes,
+  currentFacetKey,
+  projectCurrentFacet,
+  sameCurrentFacetContent,
   currentGroupFacetRecord,
   currentGroupsSetRecording,
-  currentFacetProof,
   currentFacetSupport,
   currentContactEntries,
+  currentContactGet,
+  currentGroupTimes,
+  type CurrentPartPartition,
+  type CurrentFacetTimes,
+  type CurrentMemberPart,
 } from './perception-current.js';
 import {
-  appendTemporalFrameReceipt,
-  prepareTemporalFrameReceipt,
-  temporalChunkReceipts,
-  temporalChunkOperations,
-  temporalChunkCheckpointOperations,
+  temporalPageReceipts,
+  temporalPageOperations,
   temporalOperationHeader,
-  temporalCheckpointHeader,
-  temporalOperationFacet,
-  temporalChunkReceipt,
+  temporalOperationLogicalBytes,
+  temporalDeclarationSourceIds,
+  temporalClockSourceIds,
+  temporalPageReceipt,
   temporalReceiptValues,
-  type TemporalWriteHeader,
-  temporalChunkReferences,
-  replaceTemporalChunkReceipts,
-  type TemporalFrameEntry,
-  type TemporalCheckpointFields,
-  type TemporalCheckpointBuilder,
+  temporalPageReferences,
+  temporalCheckedFacet,
+  temporalSeedFacet,
+  markTemporalPageEdited,
+  replaceTemporalPageReceipts,
+  temporalPageMetadata,
+  appendTemporalPageOperation,
+  type TemporalHistoryOperation,
+  type TemporalHistoryInput,
+  temporalOperationLogicalCount,
+  selectTemporalPageOperations,
+  type TemporalCheckDeclaration,
+  type TemporalCheckSeed,
   type TemporalCheckpoint,
-  type TemporalCheckpointDraft,
   type TemporalCheckpointAvailability,
-  type TemporalConfirmation,
-  temporalConfirmationPositions,
-  temporalCheckGroupMembership,
-  temporalCurrentMembershipPresent,
-  type TemporalCheckGroup,
-  temporalEntryCheckpoints,
-  temporalEntryConfirmations,
-  visitTemporalConfirmations,
-  temporalChunkConfirmationOperations,
-  temporalConfirmationHeader,
-  temporalConfirmationSubject,
-  temporalConfirmationField,
-  temporalEntryMetadataReader,
-  temporalCheckpointForRead,
 } from './temporal-frames.js';
 import {
   temporalRecognitionSupportSourceIds,
@@ -50,17 +50,15 @@ import {
   type TemporalReadSource,
 } from './temporal-read-context.js';
 import { nextId } from './data.js';
-import { currentReceivedGeometry } from './received-geometry.js';
 import {
   retainReceivedValue,
-  sameReceivedValueReference,
   type ReceivedValueReference,
   receivedValueAt,
   type ReceivedValueState,
   type ReceivedValueLookup,
   type ReceivedValueFragment,
 } from './received-values.js';
-import { cloneValue, readOnlyDraftView, touchNativeEvidence, appendSnapshot } from './draft.js';
+import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
@@ -75,7 +73,7 @@ import {
   temporalKnownPlaceCapsules,
 } from './known-place-evidence.js';
 import { personalFactAlias } from './experience-source.js';
-import { immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
+import { immutableDataSnapshot, jsonEncoding, jsonText, jsonByteLength } from './records.js';
 import {
   selectedRecognitionSupportSourceIds,
   selectedMarkRecentIndividualReferences,
@@ -92,7 +90,6 @@ import {
   materializeObservedBody,
   receivedObservationFrame,
   receivedBodyParts,
-  currentFacetConfirmation,
   contributionFactKey,
   selectedTemporalCurrentGroups,
 } from './perception-evidence.js';
@@ -162,6 +159,8 @@ interface TemporalValueProjection {
   reception?: TemporalReception;
 }
 export interface TemporalFacetReference extends TemporalValueReference {
+  /** Stable received member track, independent of value and physical packing. */
+  track?: string;
   support?: ReceivedFacetProof;
   /** A body read combines a new pose with independently received outward detail. */
   detailSupport?: {
@@ -229,8 +228,10 @@ export interface TemporalReceipt extends TemporalReceiptLocator {
   sourceIds: string[];
   facets: TemporalFacetReference[];
 }
-export interface TemporalChunk {
+export interface TemporalPage {
   id: string;
+  /** Physical saved pages are immutable append destinations after recovery. */
+  appendClosed?: true;
   /** Allocation order survives cold residency and physical batch layout. */
   order: number;
   actorId: string;
@@ -246,21 +247,45 @@ export interface TemporalChunk {
   sourceRefs: string[];
   bytes: number;
   count: number;
-  entries: TemporalFrameEntry[];
-  nextEntryOrdinal: number;
+  operations: TemporalHistoryOperation[];
+  declarations: TemporalCheckDeclaration[];
 }
+type NativeEvidenceSource = Extract<
+  EvidenceSource,
+  { family: 'native-exposure' | 'native-response' }
+>;
 /** Native current-group recording cursor, never another value or permission store. */
 export interface TemporalCurrentGroupCheckpoint {
   epoch: string;
-  chunkId: string;
-  entryOrdinal: number;
+  openingOrdinal: number;
+  acquisition: number;
+  admittedAt: number;
+  admittedOrder: number;
+  started: CurrentFacetTimes;
+  startedSource: NativeEvidenceSource;
+  startedFrame?: ObservationFrame;
+  lastFrame?: ObservationFrame;
+  lastTimes: CurrentFacetTimes;
+  lastSource: NativeEvidenceSource;
+  lastAt: number;
+  lastOrder: number;
+  members: readonly {
+    kind: string;
+    part: 'value' | 'detail' | 'pose';
+    ordinal: number;
+    bytes: number;
+  }[];
   count: number;
   through: number;
-  revision: number;
+  startedMeasurementRevision: number;
+  lastMeasurementRevision: number;
+  coverage?: { id: number; memberOrdinals: readonly number[]; measurement: boolean };
+  reservedBytes: number;
 }
 export interface TemporalCurrentGroupInput {
   subjectId: string;
   group: CurrentReceivedGroup;
+  partition: CurrentPartPartition;
   originalSource: ReceivedObservation;
   checked: boolean;
   entering: boolean;
@@ -271,7 +296,7 @@ export interface TemporalActorHistory {
   epoch: string;
   nextOrdinal: number;
   /** Resident append/tail only. The repository owns cold chunks and indexed retirement. */
-  chunks: TemporalChunk[];
+  pages: TemporalPage[];
   bytes: number;
   count: number;
   nextDue: number | null;
@@ -279,15 +304,9 @@ export interface TemporalActorHistory {
   /** Conservative unavailable-prefix coverage, not a ledger of fictional sensory losses. */
   releasedThrough?: number;
   /** Exact logical prefix frontier; physical rows may be collected later. */
-  retiredThrough?: { chunkOrder: number; ordinal: number; at: number };
+  retiredThrough?: { pageOrder: number; ordinal: number; at: number };
   /** Finite exceptional sparse-edit work, coalesced by the existing retention owner. */
   individualRepairs?: string[];
-  /** Last recorded support of an actual current geometry acquisition. This is
-   * bookkeeping only; its source retains the typed value and original times. */
-  geometryCaptures: Record<string, { confirmedThrough: number }>;
-  /** A recording gap or restored timeline needs repair at its next native phase. */
-  geometryCaptureRepairDue?: true;
-  lastReceiverFrame?: ObservationFrame;
   recordingGap?: { from: number; through: number };
   /** Sparse exact qualifying contact support, not an autobiographical archive. */
   supports?: Record<string, TemporalSupportCapsule>;
@@ -322,15 +341,8 @@ export interface TemporalRetentionPolicy {
   maxAgeSeconds: number;
   maxBytes: number;
   maxChanges: number;
-  chunkBytes: number;
 }
 export interface TemporalCaptureInput {
-  confirmations?: readonly TemporalConfirmation[];
-  checks?: readonly TemporalCheckGroup[];
-  checkpointFields?: (
-    subjects: ReadonlySet<string>,
-    includeFeatures: boolean,
-  ) => readonly TemporalCheckpointFields[];
   availabilityAt?: number;
   availability?: TemporalCheckpointAvailability[];
   receiverFrame?: ObservationFrame;
@@ -369,8 +381,9 @@ export interface TemporalCaptureInput {
   >;
 }
 
-const encoder = new TextEncoder();
-const byteLength = (value: unknown) => encoder.encode(JSON.stringify(value)).byteLength;
+/** Native buffer granularity bounds work; it is not authored memory policy. */
+const TEMPORAL_NATIVE_PAGE_BYTES = 64 * 1024;
+const byteLength = jsonByteLength;
 function valueEncoding(value: TemporalFragment): { json: string; bytes: number } {
   const held = readOnlyDraftView(value);
   // Encode common geometry components once through their existing immutable
@@ -487,23 +500,11 @@ function valueLogicalBytes(
 }
 
 export function temporalReceiptLogicalBytes(receipt: TemporalReceipt): number {
-  return (
-    jsonEncoding(readOnlyDraftView(receipt)).bytes -
-    receipt.facets.reduce((bytes, reference) => bytes + receptionBytes(reference), 0)
-  );
+  return jsonEncoding(readOnlyDraftView(receipt)).bytes - 0;
 }
 
-export function temporalChunkLogicalBytes(
-  chunk: TemporalChunk,
-  sources: ReceivedValueLookup,
-): number {
-  let bytes = byteLength(chunk);
-  for (const valueRef of temporalChunkReferences(chunk)) {
-    const fragment = receivedValueAt(sources, valueRef);
-    if (!fragment) throw new Error('Temporal accounting requires its selected values.');
-    bytes += jsonEncoding(fragment).bytes;
-  }
-  return bytes;
+export function temporalPageLogicalBytes(page: TemporalPage, sources: ReceivedValueLookup): number {
+  return page.operations.reduce((sum, operation) => sum + operation.charge.bytes, 0);
 }
 
 export function temporalSupportLogicalBytes(capsule: TemporalSupportCapsule): number {
@@ -600,18 +601,16 @@ function actorHistory(
       physicalLife: life,
       epoch: `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`,
       nextOrdinal: 0,
-      chunks: [],
+      pages: [],
       bytes: 0,
       count: 0,
       nextDue: null,
       maintenanceDue: false,
-      geometryCaptures: {},
     };
   } else if (actor.physicalLife !== life) {
     actor.physicalLife = life;
     actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
     actor.nextOrdinal = 0;
-    actor.geometryCaptures = {};
   }
   return { state: temporal, actor };
 }
@@ -621,6 +620,91 @@ export function temporalActorHistory(
 ): TemporalActorHistory | undefined {
   return actorHistory(world, actorId)?.actor;
 }
+type OpenRecordingEntry =
+  | {
+      kind: 'contact';
+      subjectId: string;
+      group: CurrentReceivedGroup;
+      partition: CurrentPartPartition;
+      mark: TemporalCurrentGroupCheckpoint;
+    }
+  | { kind: 'geometry'; feature: TemporalGeometryFeature; mark: TemporalCurrentGroupCheckpoint };
+/** Traverse the existing current owners, never received fields or proof facades. */
+function* openRecordingEntries(world: WorldState, actorId: string): Generator<OpenRecordingEntry> {
+  const owner = world.perceptionEvidence?.[actorId];
+  if (!owner) return;
+  for (const [subjectId, contact] of currentContactEntries(owner))
+    for (const group of contact.content.groups)
+      for (const partition of group.metadata)
+        if (partition.recording)
+          yield { kind: 'contact', subjectId, group, partition, mark: partition.recording };
+  for (const features of [owner.geometry?.fragments ?? [], owner.geometry?.boundaries ?? []])
+    for (const feature of features)
+      if (feature.recording) yield { kind: 'geometry', feature, mark: feature.recording };
+}
+/** Held reservations and their expiry are metadata beside closed page charges.
+ * Age starts at actual recording admission or its latest actual received check. */
+export function temporalOpenReservationTotals(
+  world: WorldState,
+  actorId: string,
+): {
+  bytes: number;
+  count: number;
+  expired: { bytes: number; count: number };
+  nextDue: number | null;
+} {
+  const age = selectedTemporalPolicy(world).recent.maxAgeSeconds;
+  let bytes = 0,
+    count = 0,
+    nextDue: number | null = null;
+  const expired = { bytes: 0, count: 0 };
+  for (const { mark } of openRecordingEntries(world, actorId)) {
+    bytes += mark.reservedBytes;
+    count += mark.count;
+    const due = Math.max(mark.admittedAt, mark.lastAt) + age;
+    nextDue = Math.min(nextDue ?? Infinity, due);
+    if (due <= world.simTime) {
+      expired.bytes += mark.reservedBytes;
+      expired.count += mark.count;
+    }
+  }
+  return { bytes, count, expired, nextDue };
+}
+/** Ordinary recent maintenance expires only still-due recording. Current values,
+ * grants and targeting survive; no closure or observation is manufactured. */
+export function expireTemporalOpenRecordings(
+  world: WorldState,
+  actorId: string,
+): { bytes: number; count: number } {
+  const actor = world.experience?.temporal?.actors[actorId],
+    owner = world.perceptionEvidence?.[actorId];
+  const released = { bytes: 0, count: 0 };
+  if (!actor || !owner) return released;
+  const age = selectedTemporalPolicy(world).recent.maxAgeSeconds;
+  const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
+  for (const entry of openRecordingEntries(world, actorId)) {
+    if (Math.max(entry.mark.admittedAt, entry.mark.lastAt) + age > world.simTime) continue;
+    released.bytes += entry.mark.reservedBytes;
+    released.count += entry.mark.count;
+    if (entry.kind === 'contact')
+      updates.push({
+        subjectId: entry.subjectId,
+        fields: entry.group.received.fields,
+        members: entry.partition.members,
+        recording: undefined,
+      });
+    else delete entry.feature.recording;
+  }
+  if (!released.bytes && !released.count) return released;
+  touchNativeEvidence(world, 'temporal', actorId);
+  touchNativeEvidence(world, 'perception', actorId);
+  if (updates.length) currentGroupsSetRecording(owner, updates);
+  actor.bytes -= released.bytes;
+  actor.count -= released.count;
+  if (actor.bytes < 0 || actor.count < 0)
+    throw new Error('Expired recording reservation accounting underflow.');
+  return released;
+}
 /** Restore starts a new append address space without replaying any perception. */
 export function beginTemporalReceiptEpoch(world: WorldState, namespace: string): void {
   touchNativeEvidence(world, 'temporal');
@@ -629,11 +713,23 @@ export function beginTemporalReceiptEpoch(world: WorldState, namespace: string):
   if (!namespace.trim() || namespace.length > 64)
     throw new Error('A receipt timeline requires its admitted namespace.');
   temporal.namespace = namespace;
-  for (const actor of Object.values(temporal.actors)) {
-    actor.geometryCaptureRepairDue = true;
+  for (const [actorId, actor] of Object.entries(temporal.actors)) {
+    const owner = world.perceptionEvidence?.[actorId];
+    if (owner)
+      for (const [subjectId, contact] of currentContactEntries(owner))
+        for (const group of contact.content.groups)
+          closeTemporalCurrentGroup(world, actorId, subjectId, group, 'attention-exit');
+    if (owner?.geometry)
+      for (const feature of [...owner.geometry.fragments, ...owner.geometry.boundaries])
+        closeTemporalGeometry(
+          world,
+          actorId,
+          feature,
+          owner.geometry.supportedThrough,
+          'attention-exit',
+        );
     actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
     actor.nextOrdinal = 0;
-    actor.geometryCaptures = {};
   }
 }
 const acquisitionBatches = new WeakMap<
@@ -662,6 +758,143 @@ export function withTemporalAcquisition<T>(
   }
 }
 /** Called only with already received values. Admission never reads a hidden source entity. */
+/** A page holds native intent. Physical packing/encoding belongs to the detached save cut. */
+function appendHistoryOperation(
+  world: WorldState,
+  actorId: string,
+  input: TemporalHistoryInput,
+  policy: TemporalRetentionPolicy,
+  required: boolean,
+  declarations:
+    | readonly TemporalCheckDeclaration[]
+    | (() => readonly TemporalCheckDeclaration[]) = [],
+  reservation = 0,
+  reservationCount = 0,
+): boolean {
+  const owned = actorHistory(world, actorId);
+  if (!owned) return false;
+  const actor = owned.actor;
+  const added = temporalOperationLogicalBytes(input, world.receivedValues?.sources ?? {});
+  const previous = actor.pages.at(-1),
+    newPage =
+      !previous ||
+      previous.appendClosed === true ||
+      previous.epoch !== actor.epoch ||
+      previous.bytes + added > TEMPORAL_NATIVE_PAGE_BYTES;
+  const targetDeclarations = newPage ? [] : previous.declarations;
+  let preparedDeclarations: readonly TemporalCheckDeclaration[] = [];
+  if (
+    input.kind === 'check' &&
+    input.stamps.some((stamp) => !targetDeclarations.some((d) => d.id === stamp.declaration))
+  )
+    preparedDeclarations = typeof declarations === 'function' ? declarations() : declarations;
+  const allDeclarations = [...targetDeclarations, ...preparedDeclarations];
+  const count = temporalOperationLogicalCount(input, allDeclarations);
+  const operation: TemporalHistoryOperation = { ...input, charge: { bytes: added, count } };
+  if (
+    !required &&
+    (actor.bytes + added - reservation >
+      policy.maxBytes * (1 + selectedTemporalPolicy(world).maintenanceHeadroom) ||
+      actor.count + count >
+        policy.maxChanges * (1 + selectedTemporalPolicy(world).maintenanceHeadroom))
+  ) {
+    actor.recordingGap = {
+      from: actor.recordingGap?.from ?? world.simTime,
+      through: world.simTime,
+    };
+    actor.maintenanceDue = true;
+    return false;
+  }
+  let page: TemporalPage;
+  if (!previous || newPage) {
+    page = {
+      id: nextId(world, 'temporal-page'),
+      order: world.nextId,
+      actorId,
+      physicalLife: actor.physicalLife,
+      epoch: actor.epoch,
+      fromOrdinal: operation.ordinal,
+      throughOrdinal: operation.ordinal,
+      fromAt: world.simTime,
+      throughAt: world.simTime,
+      subjects: [],
+      sourceIds: [],
+      individualIds: [],
+      sourceRefs: [],
+      bytes: 0,
+      count: 0,
+      operations: [],
+      declarations: [],
+    };
+    actor.pages.push(page);
+  } else page = previous;
+  // Declarations are native immutable membership. Physical page packing supplies exact predecessor seeds.
+  for (const declaration of preparedDeclarations)
+    if (!page.declarations.some((d) => d.id === declaration.id)) {
+      page.declarations.push(immutableDataSnapshot(declaration, readOnlyDraftView));
+      for (const alias of temporalDeclarationSourceIds(declaration))
+        if (!page.sourceIds.includes(alias)) page.sourceIds.push(alias);
+      for (const seed of declaration.seeds)
+        if (
+          seed.reception?.kind === 'body' &&
+          typeof seed.reception.poseRef === 'string' &&
+          !page.sourceRefs.includes(seed.reception.poseRef)
+        )
+          page.sourceRefs.push(seed.reception.poseRef);
+    }
+  appendTemporalPageOperation(page, operation, world);
+  const header = temporalOperationHeader(page, operation);
+  page.fromAt = Math.min(page.fromAt, header.at);
+  page.throughAt = Math.max(page.throughAt, world.simTime);
+  page.throughOrdinal = operation.ordinal;
+  if (operation.kind !== 'check') {
+    for (const subject of [operation.receipt.subject, ...(operation.receipt.contextSubjects ?? [])])
+      if (!page.subjects.includes(subject)) page.subjects.push(subject);
+    for (const alias of temporalReceiptAliases(
+      operation.receipt,
+      world.receivedValues?.sources ?? {},
+      world,
+    ))
+      if (!page.sourceIds.includes(alias)) page.sourceIds.push(alias);
+    for (const ref of operation.receipt.facets.flatMap(temporalFacetValueReferences))
+      if (!page.sourceRefs.includes(ref)) page.sourceRefs.push(ref);
+    const individuals = temporalReceiptIndividualIds(
+      operation.receipt,
+      world.receivedValues?.sources ?? {},
+    );
+    for (const id of individuals) if (!page.individualIds.includes(id)) page.individualIds.push(id);
+    selectedMarkRecentIndividualReferences(world, actorId, individuals, {
+      epoch: actor.epoch,
+      ordinal: operation.ordinal,
+      pageOrder: page.order,
+      at: header.at,
+    });
+  } else
+    for (const stamp of operation.stamps) {
+      const declaration = page.declarations.find((d) => d.id === stamp.declaration);
+      if (declaration && !page.subjects.includes(declaration.subject))
+        page.subjects.push(declaration.subject);
+      if (!page.sourceIds.includes(stamp.confirmation.id))
+        page.sourceIds.push(stamp.confirmation.id);
+    }
+  if (operation.kind === 'span')
+    for (const seed of operation.terminal)
+      for (const alias of temporalClockSourceIds(seed))
+        if (!page.sourceIds.includes(alias)) page.sourceIds.push(alias);
+  page.bytes += added;
+  page.count += count;
+  actor.bytes += added - reservation;
+  actor.count += count - reservationCount;
+  const due = header.at + policy.maxAgeSeconds;
+  actor.nextDue = actor.nextDue === null ? due : Math.min(actor.nextDue, due);
+  actor.maintenanceDue =
+    actor.bytes > policy.maxBytes ||
+    actor.count > policy.maxChanges ||
+    (actor.nextDue !== null && actor.nextDue <= world.simTime);
+  countDomainWork('temporalOperationsAppended');
+  chargeWork({ effects: 1, outputBytes: added });
+  return true;
+}
 export function appendTemporalReceipt(
   world: WorldState,
   actorId: string,
@@ -669,379 +902,69 @@ export function appendTemporalReceipt(
   policy: TemporalRetentionPolicy,
   acquisition?: number,
 ): TemporalReceiptLocator | undefined {
-  if (input.facets.some((facet) => 'value' in facet && facet.value.kind === 'observed-motion'))
-    input = {
-      ...input,
-      facets: input.facets.flatMap<TemporalCaptureInput['facets'][number]>((facet) => {
-        if ('received' in facet || facet.value.kind !== 'observed-motion') return [facet];
-        return [facet.value.earlier, facet.value.later].map((sample) => ({
-          value: { kind: 'location' as const, location: sample.location, frame: sample.frame },
-          role: facet.role,
-          asOf: sample.measuredThrough,
-          measuredFrom: sample.measuredFrom,
-          measuredThrough: sample.measuredThrough,
-          acquiredAt: sample.acquiredAt,
-          original: sample.original,
-          receivedFrom: sample.confirmation,
-          support: {
-            original: sample.original,
-            confirmation: sample.confirmation,
-            confirmedFrom: sample.confirmedFrom,
-            confirmedThrough: sample.confirmedThrough,
-            ...(sample.aliases ? { aliases: sample.aliases } : {}),
-          },
-        }));
-      }),
-    };
-  if (
-    !input.facets.length &&
-    !(
-      input.change === 'receiver-frame' &&
-      (input.receiverFrame || input.confirmations?.length || input.checks?.length)
-    )
-  )
-    return;
+  if (!input.facets.length) return;
   const owned = actorHistory(world, actorId);
   if (!owned) return;
-  const { actor, state: temporal } = owned;
+  const actor = owned.actor,
+    ordinal = actor.nextOrdinal++,
+    order = temporalReceivedOrder(world, actorId);
+  const facets: TemporalFacetReference[] = input.facets.flatMap((facet, memberOrdinal) => {
+    const projection =
+      'received' in facet ? facet.received.projection : splitTemporalValue(facet.value);
+    const metadata =
+      'received' in facet
+        ? (({ received, ...rest }) => rest)(facet)
+        : (({ value, retainedValue, ...rest }) => rest)(facet);
+    const preferred = 'received' in facet ? facet.received.reference : facet.retainedValue;
+    const retained = retainReceivedValue(world, projection.value, preferred);
+    let reception = projection.reception;
+    if (reception?.kind === 'body' && reception.pose)
+      reception = { kind: 'body', pose: reception.pose };
+    return [
+      {
+        ...metadata,
+        valueRef: retained.reference,
+        ordinal: memberOrdinal,
+        ...(reception ? { reception } : {}),
+      },
+    ];
+  });
   const batch = acquisitionBatches.get(world)?.get(actorId);
-  if (batch?.frame && !input.receiverFrame) input = { ...input, receiverFrame: batch.frame };
-  let addedSourceBytes = 0;
-  const ordinal = actor.nextOrdinal++;
-  // Append only compact operation metadata and exact selected field references.
-  // Proof objects are interned once by the frame writer; a complete received
-  // envelope is materialized only for a consumer that actually asks for it.
-  const header: TemporalWriteHeader = {
-    ordinal,
-    at: world.simTime,
-    order: world.nextId,
-    acquisition: batch?.acquisition ?? acquisition ?? ordinal,
-    ...(input.availability?.length ? { availability: input.availability } : {}),
-    ...(['loss', 'unchecked', 'attention-exit'].includes(input.change)
-      ? { availabilityAt: input.availabilityAt ?? world.simTime }
-      : {}),
-    ...(input.facets.length &&
-    input.facets.every((facet) => {
-      const kind = 'received' in facet ? facet.received.projection.value.kind : facet.value.kind;
-      return kind === 'surface-patch' || kind === 'physical-boundary';
-    })
-      ? { spatialContext: true as const }
-      : {}),
-    ...(input.receiverFrame ? { receiverFrame: input.receiverFrame } : {}),
-    ...(actor.recordingGap ? { coverageGap: actor.recordingGap } : {}),
-    ...(input.origin ? { origin: input.origin } : {}),
-    subject: input.subject,
-    ...(input.contextSubjects?.length || input.confirmations?.length || input.checks?.length
-      ? {
-          contextSubjects: [
-            ...new Set([
-              ...(input.contextSubjects ?? []),
-              ...(input.confirmations ?? []).map((value) => value.subject),
-              ...(input.checks ?? []).map((value) => value.subject),
-            ]),
-          ],
-        }
-      : {}),
-    ...(input.subjectIdentity ? { subjectIdentity: input.subjectIdentity } : {}),
-    change: input.change,
-    required: input.required === true,
-    sourceIds: [...new Set(input.sourceIds ?? [])],
-  };
-  const fields: TemporalFacetReference[] = input.facets.map((facet, ordinal) => {
-    let projected: TemporalValueProjection;
-    let retainedValue: TemporalValueReference | undefined;
-    let metadata: Omit<TemporalFacetReference, 'ordinal' | 'valueRef' | 'reception'>;
-    if ('received' in facet) {
-      const { received, ...fields } = facet;
-      projected = received.projection;
-      retainedValue = received.reference;
-      if (receivedValueAt(world.receivedValues?.sources ?? {}, retainedValue) !== projected.value)
-        throw new Error('The selected current temporal value changed before capture.');
-      metadata = fields;
-    } else {
-      const { value, retainedValue: preferred, ...fields } = facet;
-      projected = splitTemporalValue(value);
-      retainedValue = preferred;
-      metadata = fields;
-    }
-    const retained = retainReceivedValue(world, projected.value, retainedValue);
-    addedSourceBytes += retained.addedBytes;
-    let reception = projected.reception;
-    if (reception?.kind === 'body' && reception.pose) {
-      const pose = retainReceivedValue(world, { kind: 'body-pose', pose: reception.pose });
-      addedSourceBytes += pose.addedBytes;
-      reception = {
-        kind: 'body',
-        poseRef: pose.reference,
-      };
-    }
-    return {
-      ...metadata,
-      valueRef: retained.reference,
-      ...(reception ? { reception } : {}),
-      ordinal,
-    };
-  });
-  const dependencies = {
-    id: temporalReceiptId({ epoch: actor.epoch, ordinal }),
-    sourceIds: header.sourceIds,
-    ...(header.subjectIdentity ? { subjectIdentity: header.subjectIdentity } : {}),
-    facets: fields,
-  };
-  const headers = {
-    subjects: [...new Set([header.subject, ...(header.contextSubjects ?? [])])],
-    sourceIds: [
-      ...new Set([
-        ...header.sourceIds,
-        ...temporalReceiptAliases(dependencies, world.receivedValues?.sources ?? {}, world),
-      ]),
-    ],
-    individualIds: temporalReceiptIndividualIds(dependencies, world.receivedValues?.sources ?? {}),
-    sourceRefs: [
-      ...new Set(fields.flatMap(temporalFacetValueReferences).map((reference) => reference)),
-    ],
-  };
-  const headerKeys = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
-  const changes =
-    temporalChangeCount(header.change, fields.length) +
-    (input.confirmations?.length ?? 0) +
-    (input.checks ?? []).reduce((count, group) => count + (group.declareOnly ? 0 : group.count), 0);
-  const prepareAppend = (chunk: TemporalChunk) => {
-    const plan = prepareTemporalFrameReceipt(
-      chunk,
-      header,
-      fields,
-      input.checkpointFields ?? temporalCurrentCheckpoints(world, actorId),
-      input.confirmations,
-      input.checks,
-    );
-    const entries = plan.entries;
-    const checkpointFacets = plan.checkpoints.flatMap((checkpoint) => checkpoint.facets);
-    const confirmationFields = (input.confirmations ?? []).map(temporalConfirmationReference);
-    // Only newly declared memberships have dependencies to add to this chunk.
-    // Existing declarations already own that closure; a later stamp is O(groups).
-    const checkDependencies = { facets: plan.checkFields, sourceIds: [] };
-    const checkSources = temporalReceiptAliases(
-      checkDependencies,
-      world.receivedValues?.sources ?? {},
-      world,
-    );
-    const checkIndividuals = temporalReceiptIndividualIds(
-      checkDependencies,
-      world.receivedValues?.sources ?? {},
-    );
-    const checkValues = plan.checkFields.flatMap(temporalFacetValueReferences);
-    const completeHeaders = {
-      subjects: [
-        ...new Set([
-          ...plan.checkpoints.map((checkpoint) => checkpoint.subject),
-          ...(input.confirmations ?? []).map((value) => value.subject),
-          ...(input.checks ?? []).map((value) => value.subject),
-          ...headers.subjects,
-        ]),
-      ],
-      sourceIds: [
-        ...new Set([
-          ...plan.checkpoints.flatMap((checkpoint) =>
-            temporalReceiptAliases(
-              { ...checkpoint, facets: [...checkpoint.facets], sourceIds: [] },
-              world.receivedValues?.sources ?? {},
-              world,
-            ),
-          ),
-          ...temporalReceiptAliases(
-            { facets: confirmationFields, sourceIds: [] },
-            world.receivedValues?.sources ?? {},
-            world,
-          ),
-          ...checkSources,
-          ...headers.sourceIds,
-        ]),
-      ],
-      individualIds: [
-        ...new Set([
-          ...plan.checkpoints.flatMap((checkpoint) =>
-            temporalReceiptIndividualIds(
-              { facets: [...checkpoint.facets], subjectIdentity: checkpoint.subjectIdentity },
-              world.receivedValues?.sources ?? {},
-            ),
-          ),
-          ...temporalReceiptIndividualIds(
-            { facets: confirmationFields },
-            world.receivedValues?.sources ?? {},
-          ),
-          ...checkIndividuals,
-          ...headers.individualIds,
-        ]),
-      ],
-      sourceRefs: [
-        ...new Set([
-          ...[...checkpointFacets, ...confirmationFields]
-            .flatMap(temporalFacetValueReferences)
-            .map((reference) => reference),
-          ...checkValues,
-          ...headers.sourceRefs,
-        ]),
-      ],
-    };
-    const additions = Object.fromEntries(
-      headerKeys.map((key) => [
-        key,
-        completeHeaders[key].filter((value) => !readOnlyDraftView(chunk[key]).includes(value)),
-      ]),
-    ) as typeof headers;
-    const held = readOnlyDraftView(chunk);
-    const previousValues = temporalChunkReferences(held);
-    const addedValues = new Set<string>();
-    let valueBytes = 0;
-    for (const reference of new Set([
-      ...[...fields, ...checkpointFacets, ...confirmationFields].flatMap(
-        temporalFacetValueReferences,
-      ),
-      ...checkValues,
-    ])) {
-      const key = reference;
-      if (addedValues.has(key) || previousValues.has(reference)) continue;
-      addedValues.add(key);
-      const value = receivedValueAt(world.receivedValues?.sources ?? {}, reference);
-      if (!value) throw new Error('Temporal append has no received source.');
-      valueBytes += jsonEncoding(value).bytes;
-    }
-    let delta =
-      byteLength((entries.at(-1)?.ordinal ?? held.nextEntryOrdinal - 1) + 1) -
-      byteLength(held.nextEntryOrdinal) +
-      valueBytes +
-      entries.reduce((sum, entry) => sum + jsonEncoding(entry).bytes, 0) +
-      Math.max(0, entries.length - (held.entries.length ? 0 : 1));
-    delta +=
-      byteLength(header.at) -
-      byteLength(held.throughAt) +
-      byteLength(header.ordinal) -
-      byteLength(held.throughOrdinal) +
-      byteLength(held.count + changes) -
-      byteLength(held.count);
-    for (const key of headerKeys) {
-      let count = held[key].length;
-      for (const value of additions[key]) delta += byteLength(value) + (count++ > 0 ? 1 : 0);
-    }
-    const base = held.bytes + delta;
-    let bytes = base;
-    for (let n = 0; n < 4; n++) {
-      const next = base + byteLength(bytes) - byteLength(held.bytes);
-      if (next === bytes) break;
-      bytes = next;
-    }
-    return { entries, additions, bytes };
-  };
-  let created = false;
-  let chunk = actor.chunks.at(-1),
-    append = chunk && chunk.epoch === actor.epoch ? prepareAppend(chunk) : undefined;
-  if (
-    !chunk ||
-    chunk.epoch !== actor.epoch ||
-    !temporalRecentAt(chunk.throughAt, world.simTime, policy.maxAgeSeconds) ||
-    (chunk.count > 0 && append && append.bytes > policy.chunkBytes)
-  ) {
-    const order = world.nextId;
-    chunk = {
-      id: nextId(world, 'temporal-chunk'),
-      order,
-      actorId,
-      physicalLife: actor.physicalLife,
-      epoch: actor.epoch,
-      fromOrdinal: header.ordinal,
-      throughOrdinal: header.ordinal,
-      fromAt: header.at,
-      throughAt: header.at,
-      subjects: [],
-      sourceIds: [],
-      individualIds: [],
-      sourceRefs: [],
-      bytes: 0,
-      count: 0,
-      entries: [],
-      nextEntryOrdinal: 0,
-    };
-    initialBytes(chunk);
-    created = true;
-    append = prepareAppend(chunk);
-  }
-  if (!append) throw new Error('A temporal append has no complete byte charge.');
-  if (!input.required && append.bytes > policy.chunkBytes) {
-    actor.recordingGap = {
-      from: actor.recordingGap?.from ?? world.simTime,
-      through: world.simTime,
-    };
-    actor.geometryCaptureRepairDue = true;
-    return;
-  }
-  const headroom = selectedTemporalPolicy(world).maintenanceHeadroom;
-  if (
-    !input.required &&
-    (actor.bytes + append.bytes - (created ? 0 : chunk.bytes) > policy.maxBytes * (1 + headroom) ||
-      actor.count + changes > policy.maxChanges * (1 + headroom))
-  ) {
-    actor.recordingGap = {
-      from: actor.recordingGap?.from ?? world.simTime,
-      through: world.simTime,
-    };
-    actor.geometryCaptureRepairDue = true;
-    actor.maintenanceDue = true;
-    return;
-  }
-  if (created) {
-    actor.bytes += chunk.bytes;
-    actor.chunks.push(chunk);
-  }
-  const previousBytes = chunk.bytes;
-  appendTemporalFrameReceipt(chunk, header, fields, world, append.entries);
-  chunk.count += changes;
-  chunk.throughAt = header.at;
-  chunk.throughOrdinal = header.ordinal;
-  for (const key of headerKeys)
-    if (append.additions[key].length)
-      chunk[key] = appendSnapshot(readOnlyDraftView(chunk[key]), append.additions[key], world) ?? [
-        ...chunk[key],
-        ...append.additions[key],
-      ];
-  chunk.bytes = append.bytes;
-  actor.bytes += append.bytes - previousBytes;
-  actor.count += changes;
-  selectedMarkRecentIndividualReferences(world, actorId, headers.individualIds, {
-    epoch: actor.epoch,
-    ordinal: header.ordinal,
-    chunkOrder: chunk.order,
-    at: header.at,
-  });
-  countDomainWork('temporalOperationsAppended');
-  countDomainWork(
-    'temporalFieldsAppended',
-    fields.length +
-      (input.confirmations?.length ?? 0) +
-      (input.checks ?? []).reduce(
-        (count, group) => count + (group.declareOnly ? 0 : group.count),
-        0,
-      ),
-  );
-  if (!input.required) delete actor.recordingGap;
-  const due = chunk.fromAt + policy.maxAgeSeconds;
-  actor.nextDue = actor.nextDue === null ? due : Math.min(actor.nextDue, due);
-  actor.maintenanceDue =
-    actor.bytes > policy.maxBytes ||
-    actor.count > policy.maxChanges ||
-    (actor.nextDue !== null && actor.nextDue <= world.simTime);
-  chargeWork({
-    effects: 1,
-    tests: input.facets.length,
-    outputBytes:
-      append.entries.reduce((sum, entry) => sum + jsonEncoding(entry).bytes, 0) + addedSourceBytes,
-  });
-  return {
+  const receipt: TemporalReceipt = {
     actorId,
     physicalLife: actor.physicalLife,
     epoch: actor.epoch,
-    ordinal: header.ordinal,
+    ordinal,
+    id: temporalReceiptId({ epoch: actor.epoch, ordinal }),
+    at: world.simTime,
+    order,
+    acquisition: batch?.acquisition ?? acquisition ?? ordinal,
+    subject: input.subject,
+    change: input.change,
+    required: input.required === true,
+    sourceIds: [...new Set(input.sourceIds ?? [])],
+    facets,
+    ...(input.subjectIdentity ? { subjectIdentity: input.subjectIdentity } : {}),
+    ...((input.receiverFrame ?? batch?.frame)
+      ? { receiverFrame: input.receiverFrame ?? batch?.frame }
+      : {}),
+    ...(input.origin ? { origin: input.origin } : {}),
+    ...(input.contextSubjects ? { contextSubjects: [...input.contextSubjects] } : {}),
+    ...(input.availability ? { availability: input.availability } : {}),
+    ...(input.availabilityAt === undefined ? {} : { availabilityAt: input.availabilityAt }),
+    ...(actor.recordingGap ? { coverageGap: actor.recordingGap } : {}),
   };
+  if (
+    !appendHistoryOperation(
+      world,
+      actorId,
+      { kind: 'occurrence', ordinal, receipt },
+      policy,
+      input.required === true,
+    )
+  )
+    return;
+  return { actorId, physicalLife: actor.physicalLife, epoch: actor.epoch, ordinal };
 }
 
 export function temporalSpatialContextValue(
@@ -1052,57 +975,6 @@ export function temporalSpatialContextValue(
 
 /** Minimal state for tracks actually referenced by this chunk. Copies neither
  * older routes nor a broad scene, and never remeasures an existing field. */
-function temporalCheckpointFeatures(
-  world: WorldState,
-  actorId: string,
-  includeFeatures: boolean,
-): TemporalCheckpointFields[] {
-  const groups = new Map<string, TemporalFacetReference[]>();
-  const include = (subject: string, reference: TemporalFacetReference) => {
-    const value = receivedValueAt(world.receivedValues?.sources ?? {}, reference);
-    const expanded =
-      value && materializeTemporalValue(reference, value, world.receivedValues?.sources ?? {});
-    if (!expanded || !temporalFacetEligible(world, actorId, reference, expanded)) return;
-    let facets = groups.get(subject);
-    if (!facets) groups.set(subject, (facets = []));
-    facets.push({ ...reference, ordinal: facets.length });
-  };
-  if (includeFeatures) {
-    const geometry = currentReceivedGeometry(world, actorId);
-    for (const observation of geometry.observations)
-      for (const facet of observation.facets) {
-        if (!temporalSpatialContextValue(facet.value)) continue;
-        const projection = splitTemporalValue(facet.value),
-          retained = retainReceivedValue(world, projection.value);
-        if (retained.addedBytes) chargeWork({ outputBytes: retained.addedBytes });
-        const subject =
-          observation.origin.kind === 'exposure'
-            ? observation.origin.episodeId
-            : observation.origin.eventId;
-        include(subject, {
-          valueRef: retained.reference,
-          ordinal: 0,
-          role: facet.role,
-          asOf: facet.asOf,
-          measuredFrom: facet.measuredFrom,
-          measuredThrough: facet.measuredThrough,
-          acquiredAt: facet.acquiredAt,
-          confirmedThrough: geometry.supportedThrough,
-          original: contributionFactKey(observation, facet.ordinal),
-          receivedFrom: {
-            family: 'native-exposure',
-            id: observation.id,
-            revision: observation.revision,
-            observer: observation.observer,
-          },
-          ...(facet.support ? { support: facet.support } : {}),
-          ...(projection.reception ? { reception: projection.reception } : {}),
-        });
-      }
-  }
-  return [...groups].map(([subject, facets]) => ({ subject, facets }));
-}
-
 function temporalChangeCount(change: TemporalReceipt['change'], fields: number): number {
   return change === 'loss' ||
     change === 'unchecked' ||
@@ -1118,44 +990,9 @@ export function temporalReceiptChangeCount(receipt: {
   return temporalChangeCount(receipt.change, receipt.facets.length);
 }
 
-/** Actual failed checks close one subject's affected fields together. Last
- * values are references to received samples, not new measurements on loss. */
-export function captureTemporalAvailability(
-  world: WorldState,
-  actorId: string,
-  leases: readonly LiveFacetSupport[],
-  policy: TemporalRetentionPolicy,
-  options: { change?: 'loss' | 'unchecked' | 'attention-exit'; at?: number } = {},
-): void {
-  const groups = new Map<string, LiveFacetSupport[]>();
-  for (const lease of leases) {
-    const group = groups.get(lease.exposure.track) ?? [];
-    group.push(lease);
-    groups.set(lease.exposure.track, group);
-  }
-  const acquisition = world.experience?.temporal?.actors[actorId]?.nextOrdinal;
-  for (const [subject, group] of groups)
-    appendTemporalReceipt(
-      world,
-      actorId,
-      {
-        subject,
-        change: options.change ?? 'loss',
-        ...(options.at !== undefined ? { availabilityAt: options.at } : {}),
-        ...(group.find((lease) => lease.localSubject)?.localSubject
-          ? { subjectIdentity: group.find((lease) => lease.localSubject)!.localSubject }
-          : {}),
-        sourceIds: [...new Set(group.map((lease) => lease.original.id))],
-        facets: group.map((lease) => temporalFacetInput(world, lease)),
-      },
-      policy,
-      acquisition,
-    );
-}
-
 function temporalFacetProofInput(lease: CurrentFacetProof, body: boolean) {
-  // This synchronous input is interned/detached by the compact frame writer;
-  // copying the same observer again for every selected field adds no authority.
+  // Selected proof construction borrows the immutable observer identity;
+  // copying it for every field adds no authority.
   const observer = readOnlyDraftView(lease.observer);
   const fact = (value: CurrentFacetProof): ObservationFactKey => ({
     source: {
@@ -1251,7 +1088,6 @@ export function captureTemporalSnapshot(
   world: WorldState,
   actorId: string,
   snapshot: CapturedCurrentFacet,
-  policy: TemporalRetentionPolicy,
 ): TemporalReceiptLocator | undefined {
   if (snapshot.observer.actorId !== actorId) return;
   const proof = (value: ReceivedFacetProof): ReceivedFacetProof => ({
@@ -1270,208 +1106,549 @@ export function captureTemporalSnapshot(
     const { description: _description, ...body } = value.body;
     value = { kind: 'body', body };
   }
-  return appendTemporalReceipt(
-    world,
-    actorId,
-    {
-      subject: snapshot.exposure.track,
-      ...(snapshot.localSubject ? { subjectIdentity: snapshot.localSubject } : {}),
-      change: 'baseline',
-      availability: [
-        ...(snapshot.availability || snapshot.poseSupport?.availability
-          ? [
-              {
-                reason: 'unchecked' as const,
-                at: Math.min(
-                  snapshot.availability?.at ?? Infinity,
-                  snapshot.poseSupport?.availability?.at ?? Infinity,
-                ),
-                fields: [0],
+  const input: TemporalCaptureInput = {
+    subject: snapshot.exposure.track,
+    ...(snapshot.localSubject ? { subjectIdentity: snapshot.localSubject } : {}),
+    change: 'baseline',
+    availability: [
+      ...(snapshot.availability || snapshot.poseSupport?.availability
+        ? [
+            {
+              reason: 'unchecked' as const,
+              at: Math.min(
+                snapshot.availability?.at ?? Infinity,
+                snapshot.poseSupport?.availability?.at ?? Infinity,
+              ),
+              fields: [0],
+            },
+          ]
+        : []),
+      ...(description?.availability
+        ? [{ reason: 'unchecked' as const, at: description.availability.at, fields: [1] }]
+        : []),
+    ],
+    required: false,
+    sourceIds: [
+      snapshot.original.source.id,
+      snapshot.confirmation.id,
+      ...(snapshot.originalAliases ?? []),
+    ],
+    facets: [
+      {
+        value,
+        support:
+          snapshot.value.kind === 'body' && snapshot.poseSupport
+            ? proof(snapshot.poseSupport)
+            : {
+                original: snapshot.original,
+                confirmation: snapshot.confirmation,
+                confirmedFrom: snapshot.confirmedFrom,
+                confirmedThrough: snapshot.confirmedThrough,
+                ...(snapshot.originalAliases ? { aliases: snapshot.originalAliases } : {}),
               },
-            ]
-          : []),
-        ...(description?.availability
-          ? [{ reason: 'unchecked' as const, at: description.availability.at, fields: [1] }]
-          : []),
-      ],
-      required: false,
-      sourceIds: [
-        snapshot.original.source.id,
-        snapshot.confirmation.id,
-        ...(snapshot.originalAliases ?? []),
-      ],
-      facets: [
-        {
-          value,
-          support:
-            snapshot.value.kind === 'body' && snapshot.poseSupport
-              ? proof(snapshot.poseSupport)
-              : {
+        ...(snapshot.value.kind === 'body' && snapshot.poseSupport
+          ? {
+              detailSupport: {
+                proof: {
                   original: snapshot.original,
                   confirmation: snapshot.confirmation,
                   confirmedFrom: snapshot.confirmedFrom,
                   confirmedThrough: snapshot.confirmedThrough,
                   ...(snapshot.originalAliases ? { aliases: snapshot.originalAliases } : {}),
                 },
-          ...(snapshot.value.kind === 'body' && snapshot.poseSupport
-            ? {
-                detailSupport: {
-                  proof: {
-                    original: snapshot.original,
-                    confirmation: snapshot.confirmation,
-                    confirmedFrom: snapshot.confirmedFrom,
-                    confirmedThrough: snapshot.confirmedThrough,
-                    ...(snapshot.originalAliases ? { aliases: snapshot.originalAliases } : {}),
-                  },
-                  role: snapshot.role,
-                  from: snapshot.valueMeasuredFrom,
-                  through: snapshot.valueMeasuredThrough,
-                  acquiredAt: snapshot.valueAcquiredAt,
-                },
-                poseFrame: snapshot.poseSupport.frame,
-              }
-            : {}),
-          role:
-            snapshot.value.kind === 'body' && snapshot.poseSupport
-              ? snapshot.poseSupport.role
-              : snapshot.role,
-          asOf: snapshot.poseSupport?.poseMeasuredThrough ?? snapshot.valueMeasuredThrough,
-          measuredFrom: snapshot.poseSupport?.poseMeasuredFrom ?? snapshot.valueMeasuredFrom,
-          measuredThrough:
-            snapshot.poseSupport?.poseMeasuredThrough ?? snapshot.valueMeasuredThrough,
-          acquiredAt: snapshot.poseSupport?.poseAcquiredAt ?? snapshot.valueAcquiredAt,
-          original: snapshot.poseSupport?.original ?? snapshot.original,
-          receivedFrom: snapshot.poseSupport?.confirmation ?? snapshot.confirmation,
-        },
-        ...(description && snapshot.value.kind === 'body'
-          ? [
-              {
-                value: {
-                  kind: 'description' as const,
-                  text: snapshot.value.body.description ?? '',
-                },
-                role: description.role,
-                support: proof(description),
-                asOf: description.descriptionMeasuredThrough,
-                measuredFrom: description.descriptionMeasuredFrom,
-                measuredThrough: description.descriptionMeasuredThrough,
-                acquiredAt: description.descriptionAcquiredAt,
-                original: description.original,
-                receivedFrom: description.confirmation,
+                role: snapshot.role,
+                from: snapshot.valueMeasuredFrom,
+                through: snapshot.valueMeasuredThrough,
+                acquiredAt: snapshot.valueAcquiredAt,
               },
-            ]
-          : []),
-      ],
-    },
-    policy,
+              poseFrame: snapshot.poseSupport.frame,
+            }
+          : {}),
+        role:
+          snapshot.value.kind === 'body' && snapshot.poseSupport
+            ? snapshot.poseSupport.role
+            : snapshot.role,
+        asOf: snapshot.poseSupport?.poseMeasuredThrough ?? snapshot.valueMeasuredThrough,
+        measuredFrom: snapshot.poseSupport?.poseMeasuredFrom ?? snapshot.valueMeasuredFrom,
+        measuredThrough: snapshot.poseSupport?.poseMeasuredThrough ?? snapshot.valueMeasuredThrough,
+        acquiredAt: snapshot.poseSupport?.poseAcquiredAt ?? snapshot.valueAcquiredAt,
+        original: snapshot.poseSupport?.original ?? snapshot.original,
+        receivedFrom: snapshot.poseSupport?.confirmation ?? snapshot.confirmation,
+      },
+      ...(description && snapshot.value.kind === 'body'
+        ? [
+            {
+              value: {
+                kind: 'description' as const,
+                text: snapshot.value.body.description ?? '',
+              },
+              role: description.role,
+              support: proof(description),
+              asOf: description.descriptionMeasuredThrough,
+              measuredFrom: description.descriptionMeasuredFrom,
+              measuredThrough: description.descriptionMeasuredThrough,
+              acquiredAt: description.descriptionAcquiredAt,
+              original: description.original,
+              receivedFrom: description.confirmation,
+            },
+          ]
+        : []),
+    ],
+  };
+  const capsule = retainTemporalCaptureSupport(
+    world,
+    actorId,
+    input,
+    selectedTemporalPolicy(world).optional,
   );
+  return capsule?.receipt;
 }
 
-/** Expand only a genuinely new admitted native group. Actual confirmation stamps
- * reuse its immutable member declaration without reading those members again. */
-interface RecordedNativeGroup {
-  records: CurrentFacetRecord[];
-  leases: LiveFacetSupport[];
-  facets: TemporalFacetReference[];
-  inputs: TemporalCaptureInput['facets'];
-}
-function materializeNativeGroup(
+const receivingTransitions = new WeakMap<WorldState, Map<string, { order?: number }>>();
+/** One received transition shares its causal boundary across close, install and check. */
+export function withTemporalReceivedTransition<T>(
   world: WorldState,
-  owner: PerceptionEvidenceOwner,
-  input: TemporalCurrentGroupInput,
-): RecordedNativeGroup {
-  const group = readOnlyDraftView(input.group),
-    fields = readOnlyDraftView(group.fields);
-  const records: CurrentFacetRecord[] = [],
-    leases: LiveFacetSupport[] = [],
-    facets: TemporalFacetReference[] = [],
-    inputs: TemporalCaptureInput['facets'] = [];
-  for (const kind of Object.keys(fields)) {
-    const record = currentGroupFacetRecord(group, input.originalSource, kind);
-    if (!record) continue;
-    countDomainWork('temporalCaptureFieldsExpanded');
-    const raw = currentFacetSupport(owner, record);
-    const check = currentFacetConfirmation(owner, record, raw.confirmedThrough);
-    const lease = check
-      ? {
-          ...raw,
-          revision: Math.max(raw.revision, check.revision),
-          confirmedThrough: check.through,
-        }
-      : raw;
-    const value = temporalFacetInput(world, lease);
-    if (!('received' in value)) throw new Error('Native group lost its acquired value.');
-    const { received, ...metadata } = value;
-    records.push(record);
-    leases.push(lease);
-    inputs.push(value);
+  actorId: string,
+  work: () => T,
+): T {
+  let actors = receivingTransitions.get(world);
+  if (actors?.has(actorId)) return work();
+  if (!actors) receivingTransitions.set(world, (actors = new Map()));
+  actors.set(actorId, {});
+  try {
+    return work();
+  } finally {
+    actors.delete(actorId);
+    if (!actors.size) receivingTransitions.delete(world);
+  }
+}
+export function temporalReceivedOrder(world: WorldState, actorId: string): number {
+  const transition = receivingTransitions.get(world)?.get(actorId);
+  if (transition?.order !== undefined) return transition.order;
+  const order = world.nextId;
+  nextId(world, 'received-order');
+  if (transition) transition.order = order;
+  return order;
+}
+/** Only selected consumers and closing boundaries project received values. */
+function currentGroupReceipt(
+  world: WorldState,
+  actorId: string,
+  subjectId: string,
+  group: CurrentReceivedGroup,
+  partition: CurrentPartPartition,
+): TemporalReceipt | undefined {
+  const mark = partition.recording,
+    owner = world.perceptionEvidence?.[actorId];
+  if (!mark || !owner) return;
+  const original = currentContactGet(owner, subjectId)?.content.originals[
+    group.received.grant.original
+  ];
+  if (!original) return;
+  const facets: TemporalFacetReference[] = [];
+  for (const member of mark.members) {
+    if (!partition.members.some(([kind, part]) => kind === member.kind && part === member.part))
+      continue;
+    const record = currentGroupFacetRecord(group, original, member.kind, partition);
+    if (!record) throw new Error('An open interval has no received member.');
+    const lease = currentFacetSupport(owner, record);
+    const input = temporalFacetInput(world, {
+      ...lease,
+      ...mark.started,
+      revision: mark.startedSource.revision,
+    });
+    if (!('received' in input)) throw new Error('Current recording lost its received value.');
+    const { received, ...metadata } = input;
+    // The raw acquisition pose remains original evidence. Current location owns newer poses.
+    const measurementSource: NativeEvidenceSource = {
+      ...mark.startedSource,
+      id: record.id,
+      revision: mark.startedMeasurementRevision,
+    };
     facets.push({
       ...metadata,
       ...received.reference,
+      track: JSON.stringify([
+        receivedTrackKey(group.received.grant.exposure, group.received.grant.channel),
+        member.kind,
+        member.part,
+      ]),
+      ordinal: member.ordinal,
+      ...(member.part === 'detail' ? {} : { receivedFrom: measurementSource }),
       ...(received.projection.reception ? { reception: received.projection.reception } : {}),
-      ordinal: facets.length,
     });
   }
-  return { records, leases, facets, inputs };
+  if (!facets.length) return;
+  return {
+    actorId,
+    physicalLife: currentFacetObserver(owner).physicalLife,
+    epoch: mark.epoch,
+    ordinal: mark.openingOrdinal,
+    id: temporalReceiptId({ epoch: mark.epoch, ordinal: mark.openingOrdinal }),
+    at: mark.admittedAt,
+    order: mark.admittedOrder,
+    acquisition: mark.acquisition,
+    subject: receivedTrackKey(group.received.grant.exposure, group.received.grant.channel),
+    change: 'baseline',
+    required: false,
+    sourceIds: [],
+    facets,
+    ...(mark.startedFrame ? { receiverFrame: mark.startedFrame } : {}),
+    ...(partition.availability
+      ? {
+          availability: groupedTemporalAvailability(
+            facets.map(() => ({ reason: 'unchecked', at: partition.availability!.at })),
+          ),
+        }
+      : {}),
+  };
 }
-/** Chunk boundaries preserve only the already selected native tracks. A generic
- * occurrence between sense phases must not scan broad contacts or lose the
- * selected baseline merely because it, rather than sight, started the chunk. */
-function temporalCurrentCheckpoints(
+export interface TemporalOpenInterval {
+  receipt: TemporalReceipt;
+  terminal: readonly TemporalCheckSeed[];
+}
+export function currentTemporalOpenIntervals(
   world: WorldState,
   actorId: string,
-  inputs?: readonly TemporalCurrentGroupInput[],
-  materialize?: (input: TemporalCurrentGroupInput) => RecordedNativeGroup,
-): TemporalCheckpointBuilder {
-  let byTrack: Map<string, TemporalCurrentGroupInput[]> | undefined;
-  return (subjects: ReadonlySet<string>, includeFeatures: boolean): TemporalCheckpointFields[] => {
-    if (!byTrack) {
-      byTrack = new Map();
-      const owner = world.perceptionEvidence?.[actorId];
-      for (const input of inputs ?? (owner ? selectedTemporalCurrentGroups(owner) : [])) {
-        const subject = receivedTrackKey(input.group.grant.exposure, input.group.grant.channel),
-          held = byTrack.get(subject);
-        if (held) held.push(input);
-        else byTrack.set(subject, [input]);
+  subjects?: ReadonlySet<string>,
+  includeGeometry = false,
+): TemporalOpenInterval[] {
+  const owner = world.perceptionEvidence?.[actorId];
+  if (!owner) return [];
+  const receipts: TemporalOpenInterval[] = [];
+  for (const [subjectId, contact] of currentContactEntries(owner))
+    for (const group of contact.content.groups) {
+      if (
+        subjects &&
+        !subjects.has(subjectId) &&
+        !subjects.has(receivedTrackKey(group.received.grant.exposure, group.received.grant.channel))
+      )
+        continue;
+      for (const partition of group.metadata) {
+        const receipt = currentGroupReceipt(world, actorId, subjectId, group, partition);
+        if (receipt && partition.recording)
+          receipts.push({
+            receipt,
+            terminal: currentTerminal(
+              world,
+              actorId,
+              subjectId,
+              group,
+              partition.recording,
+              partition.members,
+            ),
+          });
       }
     }
-    const selected = new Map<
-      string,
-      {
-        facets: TemporalFacetReference[];
-        subjectIdentity?: ObserverSubject;
-        availability: Array<TemporalAvailabilityState | undefined>;
-      }
-    >();
-    for (const subject of subjects)
-      for (const input of byTrack.get(subject) ?? []) {
-        let held = selected.get(subject);
-        if (!held) selected.set(subject, (held = { facets: [], availability: [] }));
-        const expanded = materialize
-          ? materialize(input)
-          : materializeNativeGroup(world, world.perceptionEvidence![actorId]!, input);
-        held.subjectIdentity ??= expanded.records.find(
-          (record) => record.localSubject,
-        )?.localSubject;
-        for (const facet of expanded.facets) {
-          held.facets.push({ ...facet, ordinal: held.facets.length });
-          held.availability.push(
-            input.group.availability
-              ? { reason: 'unchecked', at: input.group.availability.at }
-              : undefined,
-          );
-        }
-      }
-    const result: TemporalCheckpointFields[] = [...selected].map(([subject, held]) => ({
-      subject,
-      ...(held.subjectIdentity ? { subjectIdentity: held.subjectIdentity } : {}),
-      facets: held.facets,
-      ...(held.availability.some((value) => value !== undefined)
-        ? { availability: groupedTemporalAvailability(held.availability) }
+  const geometry = owner.geometry;
+  if (geometry)
+    for (const feature of [...geometry.fragments, ...geometry.boundaries]) {
+      const receipt = geometryReceipt(world, actorId, feature);
+      if (receipt && (includeGeometry || !subjects || subjects.has(receipt.subject)))
+        receipts.push({ receipt, terminal: geometryTerminal(feature) });
+    }
+  return receipts;
+}
+function selectedRecordingMembers(
+  mark: TemporalCurrentGroupCheckpoint,
+  parts: readonly CurrentMemberPart[],
+) {
+  // The current owner has already established exact partition membership.
+  if (mark.members.length === parts.length) return mark.members;
+  return mark.members.filter((member) =>
+    parts.some(([kind, part]) => member.kind === kind && member.part === part),
+  );
+}
+function transferReservation(
+  mark: TemporalCurrentGroupCheckpoint,
+  parts: readonly CurrentMemberPart[],
+) {
+  const members = selectedRecordingMembers(mark, parts);
+  return {
+    bytes: members.reduce((total, member) => total + member.bytes, 0),
+    count: new Set(members.map((member) => member.ordinal)).size,
+  };
+}
+function currentTerminal(
+  world: WorldState,
+  actorId: string,
+  subjectId: string,
+  group: CurrentReceivedGroup,
+  mark: TemporalCurrentGroupCheckpoint,
+  parts: readonly CurrentMemberPart[],
+): TemporalCheckSeed[] {
+  const original = currentContactGet(world.perceptionEvidence![actorId], subjectId)?.content
+    .originals[group.received.grant.original];
+  if (!original) throw new Error('A closing interval has no original support.');
+  return selectedRecordingMembers(mark, parts).map((member) => {
+    const field = group.received.fields[member.kind]!;
+    return {
+      member: member.ordinal,
+      part: member.part,
+      receivedAt: mark.lastAt,
+      order: mark.lastOrder,
+      support: {
+        original: contributionFactKey(
+          { ...original, observer: currentFacetObserver(world.perceptionEvidence![actorId]!) },
+          field.originalOrdinal,
+        ),
+        confirmation: directSource(mark.lastSource, field.id),
+        confirmedFrom: mark.lastTimes.confirmedFrom,
+        confirmedThrough: mark.lastTimes.confirmedThrough,
+      },
+      measuredFrom: mark.lastTimes.valueMeasuredFrom,
+      measuredThrough: mark.lastTimes.valueMeasuredThrough,
+      acquiredAt: mark.lastTimes.valueAcquiredAt,
+      receivedFrom: directSource(mark.lastSource, field.id, mark.lastMeasurementRevision),
+      ...(mark.lastFrame && field.value.kind === 'location'
+        ? { reception: { kind: 'location' as const, frame: mark.lastFrame } }
         : {}),
-    }));
-    result.push(...temporalCheckpointFeatures(world, actorId, includeFeatures));
-    return result;
+    };
+  });
+}
+/** An accepted open reservation makes closure mandatory even under optional pressure. */
+export function closeTemporalCurrentGroup(
+  world: WorldState,
+  actorId: string,
+  subjectId: string,
+  group: CurrentReceivedGroup,
+  reason: TemporalReceipt['change'],
+  partition?: CurrentPartPartition,
+): void {
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (!actor) return;
+  for (const part of partition ? [partition] : group.metadata) {
+    const mark = part.recording;
+    if (!mark) continue;
+    const receipt = currentGroupReceipt(world, actorId, subjectId, group, part);
+    if (!receipt) throw new Error('An open recording has no current authority.');
+    const reservation = transferReservation(mark, part.members);
+    const accepted = appendHistoryOperation(
+      world,
+      actorId,
+      {
+        kind: 'span',
+        ordinal: actor.nextOrdinal++,
+        receipt,
+        terminal: currentTerminal(world, actorId, subjectId, group, mark, part.members),
+        closedAt: world.simTime,
+        closedOrder: temporalReceivedOrder(world, actorId),
+        reason,
+      },
+      selectedTemporalPolicy(world).recent,
+      true,
+      [],
+      reservation.bytes,
+      reservation.count,
+    );
+    if (!accepted) throw new Error('Accepted current history could not close.');
+    currentGroupsSetRecording(world.perceptionEvidence![actorId]!, [
+      { subjectId, fields: group.received.fields, members: part.members, recording: undefined },
+    ]);
+  }
+}
+function measurementChanged(
+  times: CurrentFacetTimes,
+  mark: TemporalCurrentGroupCheckpoint,
+  revision: number,
+): boolean {
+  return (
+    revision !== mark.lastMeasurementRevision ||
+    times.valueMeasuredFrom !== mark.lastTimes.valueMeasuredFrom ||
+    times.valueMeasuredThrough !== mark.lastTimes.valueMeasuredThrough ||
+    times.valueAcquiredAt !== mark.lastTimes.valueAcquiredAt
+  );
+}
+function sameCoverage(
+  coverage: NonNullable<TemporalCurrentGroupCheckpoint['coverage']>,
+  ordinals: readonly number[],
+  measurement: boolean,
+): boolean {
+  return (
+    coverage.measurement === measurement &&
+    (coverage.memberOrdinals === ordinals ||
+      (coverage.memberOrdinals.length === ordinals.length &&
+        coverage.memberOrdinals.every((ordinal, at) => ordinal === ordinals[at])))
+  );
+}
+function directSource(
+  source: NativeEvidenceSource,
+  id: string,
+  revision = source.revision,
+): NativeEvidenceSource {
+  return { ...source, id, revision };
+}
+function currentDeclaration(
+  world: WorldState,
+  actorId: string,
+  original: ReceivedObservation,
+  group: CurrentReceivedGroup,
+  mark: TemporalCurrentGroupCheckpoint,
+  members: TemporalCurrentGroupCheckpoint['members'],
+  id: number,
+): TemporalCheckDeclaration {
+  const observer = currentFacetObserver(world.perceptionEvidence![actorId]!);
+  return {
+    id,
+    subject: receivedTrackKey(group.received.grant.exposure, group.received.grant.channel),
+    members: members.map((member) => {
+      const field = group.received.fields[member.kind]!;
+      return {
+        locator: {
+          actorId,
+          physicalLife: observer.physicalLife,
+          epoch: mark.epoch,
+          ordinal: mark.openingOrdinal,
+        },
+        memberOrdinal: member.ordinal,
+        part: member.part,
+        original: contributionFactKey(
+          { ...original, observer: currentFacetObserver(world.perceptionEvidence![actorId]!) },
+          field.originalOrdinal,
+        ),
+        role: original.facets[field.originalOrdinal]?.role ?? 'direct',
+        confirmationIdentity: { family: 'native-exposure' as const, id: field.id, observer },
+        revisionFloor: mark.lastMeasurementRevision,
+      };
+    }),
+    seeds: members.map((member, index) => {
+      const field = group.received.fields[member.kind]!,
+        fact = contributionFactKey(
+          { ...original, observer: currentFacetObserver(world.perceptionEvidence![actorId]!) },
+          field.originalOrdinal,
+        );
+      return {
+        member: index,
+        part: member.part,
+        receivedAt: mark.lastAt,
+        order: mark.lastOrder,
+        support: {
+          original: fact,
+          confirmation: directSource(mark.lastSource, field.id),
+          confirmedFrom: mark.lastTimes.confirmedFrom,
+          confirmedThrough: mark.lastTimes.confirmedThrough,
+        },
+        measuredFrom: mark.lastTimes.valueMeasuredFrom,
+        measuredThrough: mark.lastTimes.valueMeasuredThrough,
+        acquiredAt: mark.lastTimes.valueAcquiredAt,
+        receivedFrom: directSource(mark.lastSource, field.id, mark.lastMeasurementRevision),
+        ...(mark.lastFrame && field.value.kind === 'location'
+          ? { reception: { kind: 'location' as const, frame: mark.lastFrame } }
+          : {}),
+      };
+    }),
+  };
+}
+function reserveOpenReceipt(world: WorldState, receipt: TemporalReceipt): number[] {
+  // Price each possible standalone close once at admission. Maximum numeric widths
+  // cover later clocks/revisions/frames; immutable values and source identities stay fixed.
+  // Native JSON numbers need at most 25 characters; a small negative fraction
+  // reserves that width for clocks and frame components without encoding scratch.
+  const far = -0.0000012345678901234567,
+    sequence = Number.MAX_SAFE_INTEGER;
+  const revisionBound = (source: EvidenceSource): EvidenceSource =>
+    source.family === 'native-exposure' || source.family === 'native-response'
+      ? { ...source, revision: sequence }
+      : source.family === 'private-condition' && typeof source.revision === 'number'
+        ? { ...source, revision: sequence }
+        : source;
+  return receipt.facets.map((facet) => {
+    const proof = facet.detailSupport?.proof ?? facet.support;
+    if (!proof) throw new Error('Open recording has no direct proof.');
+    const terminal: TemporalCheckSeed = {
+      member: facet.ordinal,
+      part: facet.detailSupport ? 'detail' : 'value',
+      receivedAt: far,
+      order: sequence,
+      support: {
+        original: proof.original,
+        confirmation: revisionBound(proof.confirmation),
+        confirmedFrom: far,
+        confirmedThrough: far,
+      },
+      measuredFrom: far,
+      measuredThrough: far,
+      acquiredAt: far,
+      receivedFrom: revisionBound(proof.confirmation),
+      ...(facet.reception?.kind === 'location'
+        ? {
+            reception: {
+              kind: 'location' as const,
+              frame: {
+                positionAtObservation: { x: far, y: far, z: far },
+                forwardAtObservation: far,
+              },
+            },
+          }
+        : {}),
+    };
+    return temporalOperationLogicalBytes(
+      {
+        kind: 'span',
+        ordinal: sequence,
+        receipt: { ...receipt, facets: [facet] },
+        terminal: [terminal],
+        closedAt: far,
+        closedOrder: sequence,
+        reason: 'attention-exit',
+      },
+      world.receivedValues?.sources ?? {},
+    );
+  });
+}
+function admitOpen(
+  world: WorldState,
+  actor: TemporalActorHistory,
+  mark: TemporalCurrentGroupCheckpoint,
+  policy: TemporalRetentionPolicy,
+): boolean {
+  const headroom = 1 + selectedTemporalPolicy(world).maintenanceHeadroom;
+  if (
+    actor.bytes + mark.reservedBytes > policy.maxBytes * headroom ||
+    actor.count + mark.count > policy.maxChanges * headroom
+  ) {
+    actor.recordingGap = {
+      from: actor.recordingGap?.from ?? world.simTime,
+      through: world.simTime,
+    };
+    actor.maintenanceDue = true;
+    return false;
+  }
+  actor.bytes += mark.reservedBytes;
+  actor.count += mark.count;
+  const due = Math.max(mark.admittedAt, mark.lastAt) + policy.maxAgeSeconds;
+  actor.nextDue = actor.nextDue === null ? due : Math.min(actor.nextDue, due);
+  return true;
+}
+function recordingMark(
+  actor: TemporalActorHistory,
+  at: number,
+  order: number,
+  times: CurrentFacetTimes,
+  source: NativeEvidenceSource,
+  measurementRevision: number,
+  parts: readonly CurrentMemberPart[],
+  acquisition?: number,
+): TemporalCurrentGroupCheckpoint {
+  const openingOrdinal = actor.nextOrdinal++;
+  return {
+    epoch: actor.epoch,
+    openingOrdinal,
+    acquisition: acquisition ?? openingOrdinal,
+    admittedAt: at,
+    admittedOrder: order,
+    started: times,
+    startedSource: source,
+    startedMeasurementRevision: measurementRevision,
+    lastTimes: times,
+    lastSource: source,
+    lastAt: at,
+    lastOrder: order,
+    lastMeasurementRevision: measurementRevision,
+    members: parts.map(([kind, part], ordinal) => ({ kind, part, ordinal, bytes: 0 })),
+    count: parts.length,
+    through: times.confirmedThrough,
+    reservedBytes: 0,
   };
 }
 export function captureTemporalCurrent(
@@ -1479,181 +1656,169 @@ export function captureTemporalCurrent(
   actorId: string,
   inputs: readonly TemporalCurrentGroupInput[],
   policy: TemporalRetentionPolicy,
-  contactSubjects: ReadonlySet<string> = new Set(),
-): Array<{
-  subjectId: string;
-  receipt: TemporalReceiptLocator;
-  body?: LiveFacetSupport;
-  bodyOrdinal?: number;
-}> {
-  if (!inputs.length) return [];
+): void {
   const owned = actorHistory(world, actorId),
     owner = world.perceptionEvidence?.[actorId];
-  if (!owned || !owner) return [];
-  // A lost recording interval needs a new baseline for every selected group.
-  // Geometry repair alone cannot invalidate unrelated current chronology.
-  const rebaseline = owned.actor.recordingGap !== undefined;
-  const frameRef = owner.visualConfirmation?.frameRef;
-  const receiverFrame = frameRef ? receivedObservationFrame(world, frameRef) : undefined;
-  const frameChanged =
-    !!receiverFrame &&
-    (!owned.actor.lastReceiverFrame ||
-      jsonText(receiverFrame) !== jsonText(owned.actor.lastReceiverFrame));
-  const acquisition = owned.actor.nextOrdinal;
-  const captured: ReturnType<typeof captureTemporalCurrent> = [];
-  const checks: Array<{
-    input: TemporalCurrentGroupInput;
-    check: TemporalCheckGroup;
-    through: number;
-    revision: number;
-  }> = [];
-  let materialized: Map<TemporalCurrentGroupInput, RecordedNativeGroup> | undefined;
-  const nativeFields = (input: TemporalCurrentGroupInput) => {
-    materialized ??= new Map();
-    let held = materialized.get(input);
-    if (!held) materialized.set(input, (held = materializeNativeGroup(world, owner, input)));
-    return held;
-  };
-  const checkpointFields = temporalCurrentCheckpoints(world, actorId, inputs, nativeFields);
-  const marks: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
-  const mark = (
-    input: TemporalCurrentGroupInput,
-    check: TemporalCheckGroup,
-    through: number,
-    revision: number,
-  ) => {
-    const chunk = readOnlyDraftView(owned.actor.chunks).at(-1);
-    const membership = chunk && temporalCheckGroupMembership(chunk, check);
-    if (chunk && membership)
-      marks.push({
-        subjectId: input.subjectId,
-        fields: input.group.fields,
-        recording: {
-          epoch: owned.actor.epoch,
-          chunkId: chunk.id,
-          entryOrdinal: membership.entryOrdinal,
-          count: membership.count,
-          through,
-          revision,
-        },
-      });
-  };
-  for (const input of inputs) {
-    countDomainWork('temporalGroupsVisited');
-    const group = readOnlyDraftView(input.group),
-      fields = readOnlyDraftView(group.fields);
-    const prior =
-      !rebaseline && group.recording?.epoch === owned.actor.epoch ? group.recording : undefined;
-    const forceContact = contactSubjects.has(input.subjectId) && fields.body !== undefined;
-    // Actual value/member mutation clears this checkpoint in the current owner.
-    // A same-phase re-score cannot turn a previously consumed sample mask into
-    // another baseline; only its still-current group identity matters here.
-    const baseline = !prior || input.entering || input.exiting || forceContact;
-    if (!baseline && !input.checked) continue;
-    let representative: CurrentFacetRecord | undefined;
-    for (const kind in fields) {
-      representative = currentGroupFacetRecord(group, input.originalSource, kind);
-      break;
-    }
-    if (!representative) continue;
-    const proof = currentFacetProof(owner, representative);
-    const confirmation = currentFacetConfirmation(owner, representative, proof.confirmedThrough);
-    const through = confirmation?.through ?? proof.confirmedThrough;
-    const materialize = () => nativeFields(input);
-    const source: EvidenceSource = {
-      family: 'native-exposure',
-      id: representative.id,
-      revision: Math.max(representative.revision, confirmation?.revision ?? 0),
-      observer: currentFacetObserver(owner),
-    };
-    if (!baseline && through <= prior.through && source.revision === prior.revision) continue;
-    const check: TemporalCheckGroup = {
-      subject: receivedTrackKey(group.grant.exposure, group.grant.channel),
-      confirmation: source,
-      from: proof.confirmedFrom,
-      through,
-      count: prior?.count ?? 0,
-      fields: () => materialize().facets,
-      membershipKey: group.fields,
-      ...(fields.body ? { detail: [source.revision, proof.confirmedFrom, through] as const } : {}),
-      ...(prior
-        ? { membership: { chunkId: prior.chunkId, entryOrdinal: prior.entryOrdinal } }
-        : {}),
-    };
-    if (baseline) {
-      const selected = materialize();
-      if (!selected.facets.length) continue;
-      check.count = selected.facets.length;
-      check.declareOnly = true;
-      check.useReceiptFields = true;
-      const bodyOrdinal = selected.records.findIndex((record) => record.value.kind === 'body');
-      const identity = selected.records.find((record) => record.localSubject)?.localSubject;
-      const locator = appendTemporalReceipt(
-        world,
-        actorId,
-        {
-          subject: receivedTrackKey(group.grant.exposure, group.grant.channel),
-          checkpointFields,
-          ...(identity ? { subjectIdentity: identity } : {}),
-          ...(receiverFrame ? { receiverFrame } : {}),
-          change: input.exiting
-            ? 'attention-exit'
-            : group.availability?.state === 'unchecked'
-              ? 'unchecked'
-              : input.entering || !prior
-                ? 'baseline'
-                : 'change',
-          ...(group.availability?.state === 'unchecked'
-            ? { availabilityAt: group.availability.at }
-            : {}),
-          sourceIds: [input.originalSource.id],
-          facets: selected.inputs,
-          checks: [check],
-        },
-        policy,
-        acquisition,
-      );
-      if (locator) {
-        mark(input, check, through, source.revision);
-        captured.push({
-          subjectId: input.subjectId,
-          receipt: locator,
-          ...(bodyOrdinal >= 0 ? { body: selected.leases[bodyOrdinal], bodyOrdinal } : {}),
-        });
+  if (!owned || !owner) return;
+  withTemporalReceivedTransition(world, actorId, () => {
+    const actor = owned.actor;
+    for (const input of inputs) {
+      const { group } = input;
+      const members = input.partition.members.filter(([, part]) => part !== 'pose');
+      if (!members.length) continue;
+      const partition =
+        members.length === input.partition.members.length
+          ? input.partition
+          : { ...input.partition, members };
+      if (input.exiting) {
+        closeTemporalCurrentGroup(
+          world,
+          actorId,
+          input.subjectId,
+          group,
+          'attention-exit',
+          partition,
+        );
+        continue;
       }
-    } else checks.push({ input, check, through, revision: source.revision });
-  }
-  if (checks.length || (frameChanged && inputs.some((input) => !input.exiting))) {
-    const locator = appendTemporalReceipt(
-      world,
-      actorId,
-      {
-        subject: JSON.stringify(['receiver', owned.actor.physicalLife]),
-        contextSubjects: [
-          ...new Set(
-            inputs.map((input) =>
-              receivedTrackKey(input.group.grant.exposure, input.group.grant.channel),
-            ),
-          ),
+      if (partition.availability) continue;
+      const firstField = group.received.fields[members[0]![0]];
+      if (!firstField) throw new Error('Received coverage has no current field.');
+      const times = currentGroupTimes(group, partition),
+        source: NativeEvidenceSource = {
+          family: 'native-exposure',
+          id: firstField.id,
+          revision: Math.max(partition.revision, partition.confirmedRevision),
+          observer: currentFacetObserver(owner),
+        },
+        frame =
+          partition.frameRef === undefined
+            ? undefined
+            : receivedObservationFrame(world, partition.frameRef);
+      let mark = partition.recording;
+      if (mark && mark.epoch !== actor.epoch)
+        throw new Error('Current state has a different recording epoch.');
+      if (!mark && !input.checked && !input.entering) continue;
+      if (!mark) {
+        if (!input.checked && !input.entering) continue;
+        const order = temporalReceivedOrder(world, actorId);
+        mark = recordingMark(
+          actor,
+          world.simTime,
+          order,
+          times,
+          source,
+          partition.revision,
+          members,
+          acquisitionBatches.get(world)?.get(actorId)?.acquisition,
+        );
+        mark.lastAt = partition.receivedAt;
+        mark.lastOrder = partition.receivedOrder;
+        if (frame) {
+          mark.startedFrame = frame;
+          mark.lastFrame = frame;
+        }
+        const receipt = currentGroupReceipt(world, actorId, input.subjectId, group, {
+          ...partition,
+          recording: mark,
+        });
+        if (!receipt) throw new Error('Current admission has no received values.');
+        const charges = reserveOpenReceipt(world, receipt);
+        mark.members = mark.members.map((member, at) => ({ ...member, bytes: charges[at]! }));
+        mark.reservedBytes = charges.reduce((total, bytes) => total + bytes, 0);
+        if (!admitOpen(world, actor, mark, policy)) continue;
+        currentGroupsSetRecording(owner, [
+          { subjectId: input.subjectId, fields: group.received.fields, members, recording: mark },
+        ]);
+        // This admitted baseline already contains the actual successful check at this boundary.
+        continue;
+      }
+      if (!input.checked) continue;
+      const selected = selectedRecordingMembers(mark, members),
+        ordinals =
+          selected === mark.members && mark.coverage
+            ? mark.coverage.memberOrdinals
+            : selected.map((member) => member.ordinal);
+      if (!selected.length) continue;
+      const measurement = measurementChanged(times, mark, partition.revision);
+      if (
+        mark.lastAt === world.simTime &&
+        !measurement &&
+        mark.lastTimes.confirmedFrom === times.confirmedFrom &&
+        mark.lastTimes.confirmedThrough === times.confirmedThrough &&
+        mark.lastSource.revision === source.revision
+      )
+        continue;
+      const coverage =
+        mark.coverage && sameCoverage(mark.coverage, ordinals, measurement)
+          ? mark.coverage
+          : { id: actor.nextOrdinal++, memberOrdinals: ordinals, measurement };
+      const ordinal = actor.nextOrdinal++,
+        order = temporalReceivedOrder(world, actorId);
+      const op = {
+        kind: 'check' as const,
+        ordinal,
+        at: world.simTime,
+        order,
+        acquisition: acquisitionBatches.get(world)?.get(actorId)?.acquisition ?? ordinal,
+        stamps: [
+          {
+            declaration: coverage.id,
+            confirmation: source,
+            confirmedFrom: times.confirmedFrom,
+            confirmedThrough: times.confirmedThrough,
+            ...(frame ? { frame } : {}),
+            ...(measurement
+              ? {
+                  measurement: {
+                    measuredFrom: times.valueMeasuredFrom,
+                    measuredThrough: times.valueMeasuredThrough,
+                    acquiredAt: times.valueAcquiredAt,
+                    receivedFrom: directSource(source, firstField.id, partition.revision),
+                  },
+                }
+              : {}),
+          },
         ],
-        change: 'receiver-frame',
-        checkpointFields,
-        ...(receiverFrame ? { receiverFrame } : {}),
-        facets: [],
-        checks: checks.map((value) => value.check),
-      },
-      policy,
-      acquisition,
-    );
-    if (locator)
-      for (const value of checks) mark(value.input, value.check, value.through, value.revision);
-    if (locator && receiverFrame) owned.actor.lastReceiverFrame = receiverFrame;
-  } else if (captured.length && receiverFrame) owned.actor.lastReceiverFrame = receiverFrame;
-  if (marks.length) {
-    touchNativeEvidence(world, 'perception', actorId);
-    currentGroupsSetRecording(owner, marks);
-  }
-  return captured;
+      };
+      if (
+        appendHistoryOperation(world, actorId, op, policy, false, () => [
+          currentDeclaration(
+            world,
+            actorId,
+            input.originalSource,
+            group,
+            mark!,
+            selected,
+            coverage.id,
+          ),
+        ])
+      ) {
+        const next = {
+          ...mark,
+          coverage,
+          through: times.confirmedThrough,
+          lastTimes: times,
+          lastSource: source,
+          lastAt: world.simTime,
+          lastOrder: order,
+          lastMeasurementRevision: partition.revision,
+          ...(frame ? { lastFrame: frame } : {}),
+        };
+        currentGroupsSetRecording(owner, [
+          { subjectId: input.subjectId, fields: group.received.fields, members, recording: next },
+        ]);
+      } else
+        closeTemporalCurrentGroup(
+          world,
+          actorId,
+          input.subjectId,
+          group,
+          'attention-exit',
+          partition,
+        );
+    }
+  });
 }
 
 export function captureTemporalObservation(
@@ -1671,13 +1836,6 @@ export function captureTemporalObservation(
     confirmedThrough?: number;
   } = {},
 ): TemporalReceiptLocator | undefined {
-  const history = world.experience?.temporal?.actors[actorId];
-  const previous =
-    observation.facets.length === 1 &&
-    (observation.facets[0]!.value.kind === 'surface-patch' ||
-      observation.facets[0]!.value.kind === 'physical-boundary')
-      ? history?.geometryCaptures[observation.id]
-      : undefined;
   const locator = appendTemporalReceipt(
     world,
     actorId,
@@ -1712,74 +1870,282 @@ export function captureTemporalObservation(
     },
     policy,
   );
-  if (
-    locator &&
-    observation.facets.length === 1 &&
-    (observation.facets[0]!.value.kind === 'surface-patch' ||
-      observation.facets[0]!.value.kind === 'physical-boundary')
-  ) {
-    const actor = world.experience!.temporal!.actors[actorId]!;
-    actor.geometryCaptures[observation.id] = {
-      confirmedThrough: Math.max(
-        previous?.confirmedThrough ?? 0,
-        options.confirmedThrough ?? observation.facets[0]!.measuredThrough,
-      ),
-    };
-  }
   return locator;
 }
 
-/** Only a native receiver's held interval may extend an original geometry fact.
- * Compact boundary receipts keep that proof when the live view is replaced. */
-export function finalizeTemporalGeometrySupport(
-  world: WorldState,
-  actorId: string,
-  observations: readonly ObservationContribution[],
-  through: number,
-  policy: TemporalRetentionPolicy,
-): void {
-  const actor = world.experience?.temporal?.actors[actorId];
-  if (!actor) return;
-  for (const observation of observations) {
-    const held = actor.geometryCaptures[observation.id];
-    if (!held || through <= (held.confirmedThrough ?? observation.acquiredAt)) continue;
-    captureTemporalObservation(world, actorId, observation, [observation.id], false, policy, {
-      change: 'change',
-      confirmedThrough: through,
-    });
-  }
+export interface TemporalGeometryFeature {
+  observation: ObservationContribution;
+  recording?: TemporalCurrentGroupCheckpoint;
 }
-
-/** Watermarks follow the bounded current geometry. They grant no source retention. */
-export function reconcileTemporalGeometryCaptures(
+function geometryReceipt(
+  _world: WorldState,
+  actorId: string,
+  feature: TemporalGeometryFeature,
+): TemporalReceipt | undefined {
+  const mark = feature.recording;
+  if (!mark) return;
+  const observation = feature.observation;
+  const facets: TemporalFacetReference[] = observation.facets.map((facet) => {
+    const { value, reception } = splitTemporalValue(facet.value),
+      original = contributionFactKey(observation, facet.ordinal);
+    // Current geometry already owns the validated value. A selected read must not mutate the shared pool.
+    return {
+      valueRef: value,
+      ordinal: facet.ordinal,
+      track: JSON.stringify([observation.origin, facet.ordinal]),
+      role: facet.role,
+      asOf: facet.measuredThrough,
+      measuredFrom: facet.measuredFrom,
+      measuredThrough: facet.measuredThrough,
+      acquiredAt: facet.acquiredAt,
+      original,
+      receivedFrom: original.source,
+      confirmedThrough: mark.started.confirmedThrough,
+      support: {
+        original,
+        confirmation: mark.startedSource,
+        confirmedFrom: mark.started.confirmedFrom,
+        confirmedThrough: mark.started.confirmedThrough,
+      },
+      ...(reception ? { reception } : {}),
+    };
+  });
+  return {
+    actorId,
+    physicalLife: observation.observer.physicalLife,
+    epoch: mark.epoch,
+    ordinal: mark.openingOrdinal,
+    id: temporalReceiptId({ epoch: mark.epoch, ordinal: mark.openingOrdinal }),
+    at: mark.admittedAt,
+    order: mark.admittedOrder,
+    acquisition: mark.acquisition,
+    subject:
+      observation.origin.kind === 'exposure'
+        ? observation.origin.episodeId
+        : observation.origin.eventId,
+    change: 'baseline',
+    required: false,
+    sourceIds: [],
+    spatialContext: true,
+    origin: observation.origin,
+    facets,
+  };
+}
+function geometryDeclaration(
+  actorId: string,
+  feature: TemporalGeometryFeature,
+  mark: TemporalCurrentGroupCheckpoint,
+  id: number,
+): TemporalCheckDeclaration {
+  const observation = feature.observation;
+  return {
+    id,
+    subject:
+      observation.origin.kind === 'exposure'
+        ? observation.origin.episodeId
+        : observation.origin.eventId,
+    members: observation.facets.map((facet) => ({
+      locator: {
+        actorId,
+        physicalLife: observation.observer.physicalLife,
+        epoch: mark.epoch,
+        ordinal: mark.openingOrdinal,
+      },
+      memberOrdinal: facet.ordinal,
+      part: 'value',
+      original: contributionFactKey(observation, facet.ordinal),
+      role: facet.role,
+    })),
+    seeds: observation.facets.map((facet, member) => ({
+      member,
+      part: 'value',
+      receivedAt: mark.lastAt,
+      order: mark.lastOrder,
+      support: {
+        original: contributionFactKey(observation, facet.ordinal),
+        confirmation: mark.lastSource,
+        confirmedFrom: mark.lastTimes.confirmedFrom,
+        confirmedThrough: mark.lastTimes.confirmedThrough,
+      },
+      measuredFrom: facet.measuredFrom,
+      measuredThrough: facet.measuredThrough,
+      acquiredAt: facet.acquiredAt,
+      receivedFrom: contributionFactKey(observation, facet.ordinal).source,
+    })),
+  };
+}
+export function captureTemporalGeometry(
   world: WorldState,
   actorId: string,
-  active: ReadonlySet<string>,
+  feature: TemporalGeometryFeature,
+  through: number,
+  checked = true,
+): boolean {
+  const actor = actorHistory(world, actorId)?.actor;
+  if (!actor) return false;
+  return withTemporalReceivedTransition(world, actorId, () => {
+    const observation = feature.observation,
+      facet = observation.facets[0];
+    if (!facet) return false;
+    const source: NativeEvidenceSource = {
+      family: 'native-exposure',
+      id: observation.id,
+      revision: observation.revision,
+      observer: observation.observer,
+    };
+    let mark = feature.recording;
+    if (!mark) {
+      if (!checked) return false;
+      const order = temporalReceivedOrder(world, actorId);
+      const started: CurrentFacetTimes = {
+        valueMeasuredFrom: facet.measuredFrom,
+        valueMeasuredThrough: facet.measuredThrough,
+        valueAcquiredAt: facet.acquiredAt,
+        confirmedFrom: facet.measuredFrom,
+        confirmedThrough: through,
+      };
+      mark = recordingMark(
+        actor,
+        world.simTime,
+        order,
+        started,
+        source,
+        observation.revision,
+        observation.facets.map((member) => [member.value.kind, 'value']),
+        acquisitionBatches.get(world)?.get(actorId)?.acquisition,
+      );
+      const receipt = geometryReceipt(world, actorId, { observation, recording: mark });
+      if (!receipt) throw new Error('Current geometry admission has no received value.');
+      const charges = reserveOpenReceipt(world, receipt);
+      mark.members = mark.members.map((member, at) => ({
+        ...member,
+        ordinal: observation.facets[at]!.ordinal,
+        bytes: charges[at]!,
+      }));
+      mark.reservedBytes = charges.reduce((total, bytes) => total + bytes, 0);
+      if (!admitOpen(world, actor, mark, selectedTemporalPolicy(world).recent)) return false;
+      feature.recording = mark;
+      return true;
+    }
+    if (mark.epoch !== actor.epoch)
+      throw new Error('Current geometry has a different recording epoch.');
+    if (!checked || through <= mark.through) return true;
+    const coverage = mark.coverage ?? {
+      id: actor.nextOrdinal++,
+      memberOrdinals: mark.members.map((member) => member.ordinal),
+      measurement: false,
+    };
+    const ordinal = actor.nextOrdinal++,
+      order = temporalReceivedOrder(world, actorId);
+    const accepted = appendHistoryOperation(
+      world,
+      actorId,
+      {
+        kind: 'check',
+        ordinal,
+        at: world.simTime,
+        order,
+        acquisition: acquisitionBatches.get(world)?.get(actorId)?.acquisition ?? ordinal,
+        stamps: [
+          {
+            declaration: coverage.id,
+            confirmation: source,
+            confirmedFrom: mark.lastTimes.confirmedFrom,
+            confirmedThrough: through,
+          },
+        ],
+      },
+      selectedTemporalPolicy(world).recent,
+      false,
+      () => [geometryDeclaration(actorId, feature, mark!, coverage.id)],
+    );
+    if (!accepted) {
+      closeTemporalGeometry(world, actorId, feature, mark.through, 'attention-exit');
+      return false;
+    }
+    feature.recording = {
+      ...mark,
+      coverage,
+      through,
+      lastAt: world.simTime,
+      lastOrder: order,
+      lastTimes: { ...mark.lastTimes, confirmedThrough: through },
+    };
+    return true;
+  });
+}
+function geometryTerminal(feature: TemporalGeometryFeature): TemporalCheckSeed[] {
+  const mark = feature.recording;
+  if (!mark) return [];
+  return feature.observation.facets.map((facet) => ({
+    member: facet.ordinal,
+    part: 'value',
+    receivedAt: mark.lastAt,
+    order: mark.lastOrder,
+    support: {
+      original: contributionFactKey(feature.observation, facet.ordinal),
+      confirmation: mark.lastSource,
+      confirmedFrom: mark.lastTimes.confirmedFrom,
+      confirmedThrough: mark.lastTimes.confirmedThrough,
+    },
+    measuredFrom: facet.measuredFrom,
+    measuredThrough: facet.measuredThrough,
+    acquiredAt: facet.acquiredAt,
+    receivedFrom: contributionFactKey(feature.observation, facet.ordinal).source,
+  }));
+}
+export function closeTemporalGeometry(
+  world: WorldState,
+  actorId: string,
+  feature: TemporalGeometryFeature,
+  _through: number,
+  reason: TemporalReceipt['change'] = 'loss',
 ): void {
-  touchNativeEvidence(world, 'temporal', actorId);
-  const actor = world.experience?.temporal?.actors[actorId];
-  if (!actor) return;
-  for (const [id, capture] of Object.entries(actor.geometryCaptures)) {
-    if (!id.startsWith('perception-observation-')) continue;
-    if (!active.has(id)) delete actor.geometryCaptures[id];
-  }
+  const actor = world.experience?.temporal?.actors[actorId],
+    mark = feature.recording;
+  if (!actor || !mark) return;
+  const receipt = geometryReceipt(world, actorId, feature);
+  if (!receipt) throw new Error('Acquired geometry lost its recording value.');
+  const terminal = geometryTerminal(feature);
+  if (
+    !appendHistoryOperation(
+      world,
+      actorId,
+      {
+        kind: 'span',
+        ordinal: actor.nextOrdinal++,
+        receipt,
+        terminal,
+        closedAt: world.simTime,
+        closedOrder: temporalReceivedOrder(world, actorId),
+        reason,
+      },
+      selectedTemporalPolicy(world).recent,
+      true,
+      [],
+      mark.reservedBytes,
+      mark.count,
+    )
+  )
+    throw new Error('Accepted geometry history could not close.');
+  delete feature.recording;
 }
 
 /** Server-selected cold retirement totals are applied by this same native semantic owner. */
-export function retireTemporalChunks(
+export function retireTemporalPages(
   world: WorldState,
   actorId: string,
   ids: readonly string[],
   totals: { bytes: number; count: number },
   nextDue: number | null,
   releasedThrough?: number,
-  frontier?: { chunkOrder: number; ordinal: number },
+  frontier?: { pageOrder: number; ordinal: number },
 ): void {
   touchNativeEvidence(world, 'temporal', actorId);
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   const removed = new Set(ids);
-  actor.chunks = actor.chunks.filter((chunk) => !removed.has(chunk.id));
+  actor.pages = actor.pages.filter((chunk) => !removed.has(chunk.id));
   actor.bytes = Math.max(0, actor.bytes - totals.bytes);
   actor.count = Math.max(0, actor.count - totals.count);
   actor.nextDue = nextDue;
@@ -1788,8 +2154,8 @@ export function retireTemporalChunks(
   if (
     frontier &&
     (!actor.retiredThrough ||
-      frontier.chunkOrder > actor.retiredThrough.chunkOrder ||
-      (frontier.chunkOrder === actor.retiredThrough.chunkOrder &&
+      frontier.pageOrder > actor.retiredThrough.pageOrder ||
+      (frontier.pageOrder === actor.retiredThrough.pageOrder &&
         frontier.ordinal > actor.retiredThrough.ordinal))
   )
     actor.retiredThrough = { ...frontier, at: releasedThrough ?? world.simTime };
@@ -1801,29 +2167,6 @@ export function retireTemporalChunks(
 
 /** Only a rewritten native declaration can invalidate its current group's
  * recorder cursor. Missing cold chunks remain hints, never evidence authority. */
-function invalidateChangedRecordingMemberships(
-  world: WorldState,
-  actorId: string,
-  chunk: TemporalChunk,
-): void {
-  const owner = world.perceptionEvidence?.[actorId];
-  if (!owner) return;
-  const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
-  for (const [subjectId, contact] of currentContactEntries(owner))
-    for (const group of contact.content.groups) {
-      const mark = group.recording;
-      if (
-        mark?.chunkId === chunk.id &&
-        !temporalCurrentMembershipPresent(chunk, mark.entryOrdinal, mark.count)
-      )
-        updates.push({ subjectId, fields: group.fields, recording: undefined });
-    }
-  if (updates.length) {
-    touchNativeEvidence(world, 'perception', actorId);
-    currentGroupsSetRecording(owner, updates);
-  }
-}
-
 type TemporalAvailabilityState = Omit<TemporalCheckpointAvailability, 'fields'>;
 export function temporalAvailability(
   change: TemporalReceipt['change'],
@@ -1868,230 +2211,51 @@ export function groupedTemporalAvailability(
   });
   return [...groups.values()];
 }
-const temporalStateValue = (value: { kind: string }) =>
-  !['event', 'speech', 'sound', 'personal-account'].includes(value.kind);
-function temporalStateFieldKey(value: TemporalValue, reference: TemporalFacetReference): string {
-  // An acquired appearance and a later independently received position are
-  // different state. Carrying the latter must not erase the former.
-  return temporalSpatialContextValue(value)
-    ? JSON.stringify([value.kind, reference.original])
-    : value.kind;
-}
-/** Prefix retirement carries only state needed by the retained suffix. A carried
- * point has the suffix's coverage boundary and keeps its original sample time;
- * it is never an earlier route entry. No current-world value fills this replay. */
-function checkpointsForRetainedReceipts(
+/** Retire exact outer operations without rewriting surviving observations. */
+export function retireTemporalOperations(
   world: WorldState,
   actorId: string,
-  chunk: TemporalChunk,
-  remaining: readonly TemporalReceipt[],
-): Array<TemporalCheckpoint | TemporalCheckpointDraft> {
-  if (!remaining.length) return [];
-  const old = temporalEntryCheckpoints(chunk),
-    actual = temporalChunkReceipts(chunk),
-    sources = world.receivedValues?.sources ?? {};
-  const anchors = new Map<string, TemporalReceipt>();
-  for (const receipt of remaining)
-    for (const subject of [receipt.subject, ...(receipt.contextSubjects ?? [])])
-      if (!anchors.has(subject)) anchors.set(subject, receipt);
-  const spatial = remaining.find(
-    (receipt) =>
-      receipt.spatialContext ||
-      receipt.change === 'receiver-frame' ||
-      receipt.facets.some(
-        (facet) => facet.reception?.kind === 'body' || facet.reception?.kind === 'location',
-      ),
-  );
-  const previous = new Map<string, TemporalCheckpoint>();
-  for (const checkpoint of old) {
-    if (!previous.has(checkpoint.subject)) previous.set(checkpoint.subject, checkpoint);
-    if (
-      spatial &&
-      !anchors.has(checkpoint.subject) &&
-      checkpoint.facets.some((reference) => {
-        const value = receivedValueAt(sources, reference);
-        return value && temporalSpatialContextValue(value);
-      })
-    )
-      anchors.set(checkpoint.subject, spatial);
-  }
-  type Field = { reference: TemporalFacetReference; value: TemporalValue };
-  type ReplayState = {
-    anchor: TemporalReceipt;
-    subjectIdentity?: ObserverSubject;
-    fields: Map<string, Field>;
-    values: Map<string, Set<string>>;
-    availability: Map<string, TemporalAvailabilityState>;
-  };
-  const states = new Map<string, ReplayState>(
-    [...anchors].map(([subject, anchor]) => [
-      subject,
-      {
-        anchor,
-        fields: new Map<string, Field>(),
-        values: new Map<string, Set<string>>(),
-        availability: new Map<string, TemporalAvailabilityState>(),
-      },
-    ]),
-  );
-  const valueKey = (reference: TemporalValueReference): string =>
-    typeof reference.valueRef === 'string' ? reference.valueRef : jsonText(reference.valueRef);
-  const valueKeys = (reference: TemporalFacetReference): string[] => [
-    valueKey(reference),
-    ...(reference.reception?.kind === 'body' && reference.reception.poseRef
-      ? [valueKey({ valueRef: reference.reception.poseRef })]
-      : []),
-  ];
-  const include = (
-    state: ReplayState,
-    reference: TemporalFacetReference,
-    unavailable?: TemporalAvailabilityState,
-  ) => {
-    const fragment = receivedValueAt(sources, reference);
-    if (!fragment || !temporalStateValue(fragment)) return;
-    const value = materializeTemporalValue(reference, fragment, sources);
-    if (!value || !temporalFacetEligible(world, actorId, reference, value)) return;
-    const key = temporalStateFieldKey(value, reference),
-      prior = state.fields.get(key);
-    if (prior) {
-      for (const previous of valueKeys(prior.reference)) {
-        const keys = state.values.get(previous)!;
-        keys.delete(key);
-        if (!keys.size) state.values.delete(previous);
-      }
-    }
-    state.fields.set(key, { reference, value });
-    for (const id of valueKeys(reference)) {
-      let keys = state.values.get(id);
-      if (!keys) state.values.set(id, (keys = new Set()));
-      keys.add(key);
-    }
-    if (unavailable) state.availability.set(key, unavailable);
-    else state.availability.delete(key);
-  };
-  for (const [subject, state] of states) {
-    const checkpoint = previous.get(subject);
-    state.subjectIdentity = checkpoint?.subjectIdentity;
-    for (const reference of checkpoint?.facets ?? [])
-      include(
-        state,
-        reference,
-        checkpoint?.availability?.find((group) => group.fields.includes(reference.ordinal)),
-      );
-  }
-  // Route each received operation once. A subject's first retained operation is
-  // its coverage boundary; replay never scans unrelated tracks for that subject.
-  for (const receipt of actual) {
-    const state = states.get(receipt.subject);
-    if (!state || receipt.ordinal >= state.anchor.ordinal) continue;
-    if (receipt.subjectIdentity) state.subjectIdentity = receipt.subjectIdentity;
-    for (const reference of receipt.facets)
-      include(state, reference, temporalFieldAvailability(receipt, reference.ordinal));
-  }
-  // Confirmation decoding is page-wide work, not work repeated for every track.
-  // Select the subject before expanding proofs, then match its exact shared value.
-  visitTemporalConfirmations(
-    chunk,
-    (subject, receiptOrdinal) => {
-      const state = states.get(subject);
-      return !!state && receiptOrdinal <= state.anchor.ordinal;
-    },
-    (confirmation) => {
-      const state = states.get(confirmation.subject)!;
-      if (confirmation.through > state.anchor.at) return;
-      const keys = state.values.get(valueKey(confirmation.reference));
-      if (!keys?.size) return;
-      const dependency = temporalConfirmationReference(confirmation);
-      for (const key of keys) {
-        const field = state.fields.get(key)!;
-        if (temporalFacetEligible(world, actorId, dependency, field.value))
-          field.reference = applyTemporalConfirmation(field.reference, confirmation);
-      }
-    },
-  );
-  const result: Array<TemporalCheckpoint | TemporalCheckpointDraft> = [];
-  for (const [subject, state] of states) {
-    const { anchor, fields, availability } = state;
-    if (anchor.subject === subject)
-      for (const reference of anchor.facets) {
-        const fragment = receivedValueAt(sources, reference);
-        if (!fragment || !temporalStateValue(fragment)) continue;
-        const value = materializeTemporalValue(reference, fragment, sources);
-        if (value) fields.delete(temporalStateFieldKey(value, reference));
-      }
-    if (!fields.size) continue;
-    const checkpoint = previous.get(subject);
-    result.push({
-      chunkId: chunk.id,
-      actorId,
-      physicalLife: chunk.physicalLife,
-      epoch: chunk.epoch,
-      ...(checkpoint ? { ordinal: checkpoint.ordinal } : {}),
-      acquisition: anchor.acquisition,
-      at: anchor.at,
-      order: anchor.order,
-      subject,
-      ...(state.subjectIdentity ? { subjectIdentity: state.subjectIdentity } : {}),
-      sourceIds: [],
-      facets: [...fields.values()].map(({ reference }, ordinal) => ({ ...reference, ordinal })),
-      availability: groupedTemporalAvailability(
-        [...fields.keys()].map((key) => availability.get(key)),
-      ),
-    });
-  }
-  return result;
-}
-
-/** Expiry can cut inside an open logical chunk. Physical pages keep stable
- * ordinals; deleting a prefix does not keep its expired payload alive. */
-export function retireTemporalReceipts(
-  world: WorldState,
-  actorId: string,
-  chunkId: string,
+  pageId: string,
   ordinals: ReadonlySet<number>,
   nextDue: number | null,
 ): void {
-  const temporal = world.experience?.temporal,
-    actor = temporal?.actors[actorId];
-  const chunk = actor?.chunks.find((chunk) => chunk.id === chunkId);
-  if (!temporal || !actor || !chunk || !ordinals.size) return;
-  const actual = temporalChunkReceipts(chunk),
-    removed: TemporalReceipt[] = [],
-    remaining: TemporalReceipt[] = [];
-  for (const receipt of actual) (ordinals.has(receipt.ordinal) ? removed : remaining).push(receipt);
+  const actor = world.experience?.temporal?.actors[actorId],
+    page = actor?.pages.find((page) => page.id === pageId);
+  if (!actor || !page || !ordinals.size) return;
+  const removed = page.operations.filter((op) => ordinals.has(op.ordinal));
   if (!removed.length) return;
   touchNativeEvidence(world, 'temporal', actorId);
-  const oldBytes = chunk.bytes,
-    oldCount = chunk.count;
-  const checkpoints = checkpointsForRetainedReceipts(world, actorId, chunk, remaining);
-  replaceTemporalChunkReceipts(chunk, remaining, world, checkpoints);
-  if (remaining.length) {
-    refreshChunk(chunk, world);
-    invalidateChangedRecordingMemberships(world, actorId, chunk);
-  } else {
-    actor.chunks = actor.chunks.filter((value) => value.id !== chunkId);
-    chunk.count = 0;
-    chunk.bytes = 0;
+  const oldBytes = page.bytes,
+    oldCount = page.count;
+  page.operations = page.operations.filter((op) => !ordinals.has(op.ordinal));
+  const used = new Set(
+    page.operations.flatMap((op) =>
+      op.kind === 'check' ? op.stamps.map((stamp) => stamp.declaration) : [],
+    ),
+  );
+  page.declarations = page.declarations.filter((declaration) => used.has(declaration.id));
+  markTemporalPageEdited(page);
+  if (page.operations.length) refreshTemporalPage(page, world);
+  else {
+    actor.pages = actor.pages.filter((candidate) => candidate.id !== page.id);
+    page.bytes = 0;
+    page.count = 0;
   }
-  actor.bytes -= oldBytes - chunk.bytes;
-  actor.count -= oldCount - chunk.count;
+  actor.bytes -= oldBytes - page.bytes;
+  actor.count -= oldCount - page.count;
   actor.releasedThrough = Math.max(
     actor.releasedThrough ?? 0,
-    ...removed.map((receipt) => receipt.at),
+    ...removed.map((op) =>
+      op.kind === 'span' ? op.closedAt : op.kind === 'check' ? op.at : op.receipt.at,
+    ),
   );
-  if (!remaining.length || removed.every((receipt) => receipt.ordinal < remaining[0]!.ordinal)) {
-    const ordinal = Math.max(...removed.map((receipt) => receipt.ordinal));
-    if (
-      !actor.retiredThrough ||
-      chunk.order > actor.retiredThrough.chunkOrder ||
-      (chunk.order === actor.retiredThrough.chunkOrder && ordinal > actor.retiredThrough.ordinal)
-    )
-      actor.retiredThrough = {
-        chunkOrder: chunk.order,
-        ordinal,
-        at: Math.max(...removed.map((receipt) => receipt.at)),
-      };
-  }
+  const ordinal = Math.max(...removed.map((op) => op.ordinal));
+  if (
+    !actor.retiredThrough ||
+    page.order > actor.retiredThrough.pageOrder ||
+    (page.order === actor.retiredThrough.pageOrder && ordinal > actor.retiredThrough.ordinal)
+  )
+    actor.retiredThrough = { pageOrder: page.order, ordinal, at: actor.releasedThrough };
   actor.nextDue = nextDue;
   const policy = selectedTemporalPolicy(world).recent;
   actor.maintenanceDue =
@@ -2182,7 +2346,17 @@ export function selectTemporalHistory(
   return selectCapturedTemporalHistory(
     {
       actorId,
-      chunks: actor.chunks,
+      pages: actor.pages,
+      open: currentTemporalOpenIntervals(
+        world,
+        actorId,
+        query.subjects
+          ? new Set(query.subjects)
+          : query.subject
+            ? new Set([query.subject])
+            : undefined,
+        query.includeGeometry,
+      ),
       releasedThrough: actor.releasedThrough,
       retiredThrough: actor.retiredThrough,
       sources: world.receivedValues?.sources ?? {},
@@ -2196,216 +2370,363 @@ export function selectTemporalHistory(
     query,
   );
 }
+function logicalMemberKey(locator: TemporalReceiptLocator, member: number): string {
+  return JSON.stringify([
+    locator.actorId,
+    locator.physicalLife,
+    locator.epoch,
+    locator.ordinal,
+    member,
+  ]);
+}
+/** Selected intervals are self-contained. Checks amend clocks, never replay values. */
 export function selectCapturedTemporalHistory(
   context: CapturedTemporalHistoryContext,
   query: TemporalHistoryQuery = {},
 ): TemporalHistorySelection {
-  if (context.at !== undefined && context.maxAgeSeconds !== undefined)
-    query = {
-      ...query,
-      from: Math.max(query.from ?? 0, context.at - context.maxAgeSeconds),
-      through: Math.min(query.through ?? context.at, context.at),
-    };
-  const limit = query.limit ?? 128,
-    maxBytes = query.bytes ?? 8192;
-  const entries: TemporalHistorySelection['entries'] = [];
-  const workLimit = query.operations ?? context.maximumOperations ?? limit;
-  let examined = 0;
-  let examinedBefore: TemporalHistorySelection['examinedBefore'];
-  let bytes = 0,
+  const from = Math.max(
+      query.from ?? 0,
+      context.at !== undefined && context.maxAgeSeconds !== undefined
+        ? context.at - context.maxAgeSeconds
+        : 0,
+    ),
+    through = Math.min(query.through ?? Infinity, context.at ?? Infinity);
+  const subjects = query.subjects ?? (query.subject ? [query.subject] : []),
+    limit = query.limit ?? 128,
+    maxBytes = query.bytes ?? 8192,
+    maxWork = query.operations ?? context.maximumOperations ?? limit,
+    maxCandidates = context.maximumCandidates ?? maxWork * 4;
+  let work = 0,
+    candidates = 0,
+    bytes = 0,
     hasMore = false,
     incomplete =
-      context.releasedThrough !== undefined &&
-      (query.from === undefined || query.from <= context.releasedThrough);
-  if (
-    context.recordingGap &&
-    (query.through === undefined || query.through >= context.recordingGap.from)
-  )
-    incomplete = true;
-  const actorId = context.actorId;
-  const subjects = query.subjects ?? (query.subject ? [query.subject] : []);
-  let candidates = 0;
-  const maximumCandidates = context.maximumCandidates ?? workLimit * 4;
-  const chunks = context.chunks.filter(
-    (chunk) =>
-      chunk.actorId === actorId &&
-      (!context.retiredThrough ||
-        chunk.order > context.retiredThrough.chunkOrder ||
-        (chunk.order === context.retiredThrough.chunkOrder &&
-          chunk.throughOrdinal > context.retiredThrough.ordinal)) &&
-      (!query.epoch || chunk.epoch === query.epoch) &&
-      (query.physicalLife === undefined || chunk.physicalLife === query.physicalLife) &&
-      (query.from === undefined || chunk.throughAt >= query.from) &&
-      (query.through === undefined || chunk.fromAt <= query.through) &&
-      (!subjects.length ||
-        query.includeGeometry ||
-        chunk.subjects.some((subject) => subjects.includes(subject))),
-  );
-  type Cursor = {
-    chunk: TemporalChunk;
-    operations: ReturnType<typeof temporalChunkOperations>;
-    position: number;
-    header?: ReturnType<typeof temporalOperationHeader>;
+      (context.releasedThrough !== undefined && from <= context.releasedThrough) ||
+      (context.recordingGap !== undefined && through >= context.recordingGap.from);
+  const selected: Array<{
+    receipt: TemporalReceipt;
+    closedOrder: number;
+    closedAt: number;
+    reason?: TemporalReceipt['change'];
+  }> = [];
+  const add = (
+    receipt: TemporalReceipt,
+    closedAt: number,
+    closedOrder: number,
+    reason?: TemporalReceipt['change'],
+  ) => {
+    if (
+      temporalReadSourceRevoked(context.disclosure, context.actorId, receipt.id) ||
+      receipt.actorId !== context.actorId ||
+      (query.physicalLife !== undefined && receipt.physicalLife !== query.physicalLife) ||
+      (query.epoch && receipt.epoch !== query.epoch) ||
+      receipt.at > through ||
+      closedAt < from ||
+      (query.cut && !temporalReceiptWithinPrefix(receipt, query.cut)) ||
+      (subjects.length &&
+        !subjects.includes(receipt.subject) &&
+        !receipt.contextSubjects?.some((subject) => subjects.includes(subject)) &&
+        !(query.includeGeometry && receipt.spatialContext))
+    )
+      return;
+    if (
+      query.before &&
+      (receipt.at > query.before.at ||
+        (receipt.at === query.before.at &&
+          (receipt.order > query.before.order ||
+            (receipt.order === query.before.order && receipt.ordinal >= query.before.ordinal))))
+    )
+      return;
+    selected.push({ receipt, closedAt, closedOrder, ...(reason ? { reason } : {}) });
   };
-  const cursors: Cursor[] = chunks.map((chunk) => {
-    const operations = temporalChunkOperations(chunk);
-    return { chunk, operations, position: operations.length - 1 };
-  });
-  const compare = (
-    left: ReturnType<typeof temporalOperationHeader>,
-    right: ReturnType<typeof temporalOperationHeader>,
-  ) =>
-    right.at - left.at ||
-    right.order - left.order ||
-    right.epoch.localeCompare(left.epoch) ||
-    right.ordinal - left.ordinal;
-  function* selectedOperations() {
-    // Merge page-local order, decoding only one compact header per active page.
-    // No complete receipt/proof graph is built merely to sort a narrow query.
-    while (true) {
-      let selected: Cursor | undefined;
-      for (const cursor of cursors) {
-        if (cursor.position < 0) continue;
-        if (!cursor.header) {
-          if (++candidates > maximumCandidates) {
-            incomplete = true;
-            hasMore = true;
-            return;
-          }
-          cursor.header = temporalOperationHeader(
-            cursor.chunk,
-            cursor.operations[cursor.position]!,
-          );
-        }
-        if (!selected || compare(cursor.header, selected.header!) < 0) selected = cursor;
+  for (const interval of context.open ?? []) {
+    if (++candidates > maxCandidates) {
+      incomplete = true;
+      hasMore = true;
+      break;
+    }
+    add(interval.receipt, Infinity, Infinity);
+  }
+  receiptPages: for (const page of [...context.pages].sort(
+    (a, b) => b.throughAt - a.throughAt || b.order - a.order,
+  )) {
+    if (
+      page.actorId !== context.actorId ||
+      page.fromAt > through ||
+      (subjects.length &&
+        !query.includeGeometry &&
+        !page.subjects.some((subject) => subjects.includes(subject)))
+    )
+      continue;
+    const operations = temporalPageOperations(page);
+    for (let index = operations.length - 1; index >= 0; index--) {
+      if (++candidates > maxCandidates) {
+        incomplete = true;
+        hasMore = true;
+        break receiptPages;
       }
-      if (!selected) return;
-      const header = selected.header!,
-        operation = selected.operations[selected.position--]!;
-      selected.header = undefined;
-      if (
-        (!context.retiredThrough ||
-          selected.chunk.order > context.retiredThrough.chunkOrder ||
-          (selected.chunk.order === context.retiredThrough.chunkOrder &&
-            header.ordinal > context.retiredThrough.ordinal)) &&
-        (context.at === undefined ||
-          context.maxAgeSeconds === undefined ||
-          temporalRecentAt(header.at, context.at, context.maxAgeSeconds)) &&
-        (!query.cut || temporalReceiptWithinPrefix({ ...header, facets: [] }, query.cut)) &&
-        (query.from === undefined || header.at >= query.from) &&
-        (query.through === undefined || header.at <= query.through) &&
-        (!subjects.length ||
-          (query.includeGeometry && header.spatialContext) ||
-          subjects.includes(header.subject) ||
-          header.contextSubjects?.some((subject) => subjects.includes(subject))) &&
-        (!query.before ||
-          header.at < query.before.at ||
-          (header.at === query.before.at &&
-            (header.order < query.before.order ||
-              (header.order === query.before.order &&
-                (header.epoch < query.before.epoch ||
-                  (header.epoch === query.before.epoch &&
-                    header.ordinal < query.before.ordinal))))))
-      )
-        yield { chunk: selected.chunk, operation, header };
+      const op = operations[index]!;
+      if (op.kind !== 'check')
+        add(
+          op.receipt,
+          op.kind === 'span' ? op.closedAt : op.receipt.at,
+          op.kind === 'span' ? op.closedOrder : op.receipt.order + 1,
+          op.kind === 'span' ? op.reason : undefined,
+        );
     }
   }
-  const examinedFrames = new Set<string>();
-  for (const { chunk, operation, header } of selectedOperations()) {
+  selected.sort(
+    (a, b) =>
+      b.receipt.at - a.receipt.at ||
+      b.receipt.order - a.receipt.order ||
+      b.receipt.ordinal - a.receipt.ordinal,
+  );
+  const clocks = new Map<string, { at: number; order: number; field: TemporalFacetReference }>();
+  const desired = new Map<
+    string,
+    {
+      receipt: TemporalReceipt;
+      field: TemporalFacetReference;
+      closedOrder: number;
+      closedAt: number;
+    }
+  >();
+  const chosenReceipts = new Set<string>();
+  let preparationWork = 0;
+  // Choose the output prefix before resolving clocks. An ordinary broad scene
+  // must return a useful bounded prefix instead of spending its whole allowance
+  // preparing clocks for fields it can never emit.
+  for (const item of selected) {
+    const receiptKey = JSON.stringify([
+      item.receipt.physicalLife,
+      item.receipt.epoch,
+      item.receipt.ordinal,
+    ]);
+    if (!chosenReceipts.has(receiptKey)) {
+      if (chosenReceipts.size >= limit || preparationWork >= maxWork) {
+        incomplete = true;
+        hasMore = true;
+        break;
+      }
+      chosenReceipts.add(receiptKey);
+      preparationWork++;
+    }
+    for (const field of item.receipt.facets) {
+      const key = logicalMemberKey(item.receipt, field.ordinal);
+      if (desired.has(key)) continue;
+      if (preparationWork >= maxWork) {
+        incomplete = true;
+        hasMore = true;
+        break;
+      }
+      preparationWork++;
+      desired.set(key, {
+        receipt: item.receipt,
+        field,
+        closedOrder: item.closedOrder,
+        closedAt: item.closedAt,
+      });
+    }
+  }
+  const acceptSeed = (key: string, seed: TemporalCheckSeed) => {
+    const target = desired.get(key);
+    if (
+      !target ||
+      seed.receivedAt > through ||
+      seed.order >= target.closedOrder ||
+      (query.cut && seed.order > query.cut.throughOrder)
+    )
+      return;
+    const previous = clocks.get(key);
+    if (
+      !previous ||
+      previous.at < seed.receivedAt ||
+      (previous.at === seed.receivedAt && previous.order < seed.order)
+    )
+      clocks.set(key, {
+        at: seed.receivedAt,
+        order: seed.order,
+        field: temporalSeedFacet(target.field, seed),
+      });
+  };
+  for (const interval of context.open ?? [])
+    for (const seed of interval.terminal)
+      acceptSeed(logicalMemberKey(interval.receipt, seed.member), seed);
+  type CheckAt = {
+    at: number;
+    order: number;
+    stamp: import('./temporal-frames.js').TemporalCheckStamp;
+  };
+  const checks = new Map<
+    string,
+    { declaration: TemporalCheckDeclaration; support?: CheckAt; measurement?: CheckAt }
+  >();
+  const pages = [...context.pages].sort((a, b) => b.throughAt - a.throughAt || b.order - a.order);
+  clockPages: for (const page of pages) {
+    for (const declaration of page.declarations) {
+      const key = JSON.stringify([page.physicalLife, page.epoch, declaration.id]);
+      let needed = false;
+      for (const seed of declaration.seeds) {
+        if (++candidates > maxCandidates) {
+          incomplete = true;
+          hasMore = true;
+          break clockPages;
+        }
+        const member = declaration.members[seed.member];
+        if (!member) continue;
+        const memberKey = logicalMemberKey(member.locator, member.memberOrdinal);
+        if (!desired.has(memberKey)) continue;
+        needed = true;
+        acceptSeed(memberKey, seed);
+      }
+      if (needed && !checks.has(key)) checks.set(key, { declaration });
+    }
+    for (let index = page.operations.length - 1; index >= 0; index--) {
+      const operation = page.operations[index]!;
+      if (++candidates > maxCandidates) {
+        incomplete = true;
+        hasMore = true;
+        break clockPages;
+      }
+      if (operation.kind === 'span') {
+        for (const seed of operation.terminal)
+          acceptSeed(logicalMemberKey(operation.receipt, seed.member), seed);
+        continue;
+      }
+      if (
+        operation.kind !== 'check' ||
+        operation.at > through ||
+        (query.cut &&
+          (operation.order > query.cut.throughOrder ||
+            (page.epoch === query.cut.epoch && operation.ordinal > query.cut.throughOrdinal)))
+      )
+        continue;
+      for (const stamp of operation.stamps) {
+        const held = checks.get(JSON.stringify([page.physicalLife, page.epoch, stamp.declaration]));
+        if (!held) continue;
+        const newer = (prior: CheckAt | undefined) =>
+          !prior ||
+          operation.at > prior.at ||
+          (operation.at === prior.at && operation.order > prior.order);
+        if (newer(held.support)) held.support = { at: operation.at, order: operation.order, stamp };
+        if (stamp.measurement && newer(held.measurement))
+          held.measurement = { at: operation.at, order: operation.order, stamp };
+      }
+    }
+  }
+  for (const held of checks.values()) {
+    const latest = held.support;
+    if (!latest) continue;
+    for (const member of held.declaration.members) {
+      const key = logicalMemberKey(member.locator, member.memberOrdinal),
+        target = desired.get(key);
+      if (!target || latest.order < target.receipt.order || latest.order >= target.closedOrder)
+        continue;
+      const prior = clocks.get(key);
+      if (
+        prior &&
+        (prior.at > latest.at || (prior.at === latest.at && prior.order >= latest.order))
+      )
+        continue;
+      const measurement =
+        held.measurement && (!prior || held.measurement.order > prior.order)
+          ? held.measurement.stamp.measurement
+          : undefined;
+      const { measurement: _oldMeasurement, ...support } = latest.stamp;
+      const field = temporalCheckedFacet(prior?.field ?? target.field, member, undefined, {
+        ...support,
+        ...(measurement ? { measurement } : {}),
+      });
+      clocks.set(key, { at: latest.at, order: latest.order, field });
+    }
+  }
+  const entries: TemporalHistorySelection['entries'] = [];
+  let examinedBefore: TemporalHistorySelection['examinedBefore'];
+  const emitted = new Set<string>(),
+    groupedFields = new Map<string, Map<number, TemporalFacetReference>>();
+  for (const item of selected) {
+    const key = JSON.stringify([
+      item.receipt.physicalLife,
+      item.receipt.epoch,
+      item.receipt.ordinal,
+    ]);
+    let fields = groupedFields.get(key);
+    if (!fields) groupedFields.set(key, (fields = new Map()));
+    for (const field of item.receipt.facets)
+      if (desired.has(logicalMemberKey(item.receipt, field.ordinal)))
+        fields.set(field.ordinal, field);
+  }
+  for (const item of selected) {
+    const identity = JSON.stringify([
+      item.receipt.physicalLife,
+      item.receipt.epoch,
+      item.receipt.ordinal,
+    ]);
+    if (emitted.has(identity)) continue;
+    emitted.add(identity);
+    if (!chosenReceipts.has(identity)) continue;
     if (entries.length >= limit) {
       incomplete = true;
       hasMore = true;
       break;
     }
-    const receipt: TemporalReceipt = { ...header, facets: [] };
-    const frameKey = JSON.stringify([receipt.physicalLife, receipt.epoch, receipt.acquisition]);
-    if (!examinedFrames.has(frameKey)) {
-      examinedFrames.add(frameKey);
-      if (++examined > workLimit) {
+    const facets: TemporalFacetReference[] = [],
+      values: TemporalValue[] = [];
+    for (const original of groupedFields.get(identity)!.values()) {
+      if (++work > maxWork) {
         incomplete = true;
         hasMore = true;
         break;
       }
-    }
-    if (receipt.coverageGap) incomplete = true;
-    const values: TemporalValue[] = [];
-    const references: TemporalFacetReference[] = [];
-    // Skipping an oversized operation leaves coverage incomplete, but only
-    // exhausted examination work stops selection of older usable operations.
-    let missing = false,
-      exhausted = false;
-    for (let position = 0; position < operation.facets.length; position++) {
-      if (++examined > workLimit) {
-        incomplete = true;
-        hasMore = true;
-        exhausted = true;
-        break;
-      }
-      const reference = temporalOperationFacet(chunk, operation, position);
-      receipt.facets.push(reference);
-      if (
-        query.measurements &&
-        (reference.measuredFrom > query.measurements.through ||
-          (reference.confirmedThrough ?? reference.measuredThrough) < query.measurements.from)
-      )
+      const key = logicalMemberKey(item.receipt, original.ordinal),
+        clock = clocks.get(key),
+        target = desired.get(key);
+      if (item.receipt.at < from && target?.closedAt === Infinity && (!clock || clock.at < from))
         continue;
-      const fragment = retainedValueAt(context.sources, reference);
-      if (!fragment) {
-        incomplete = true;
-        missing = true;
-        continue;
+      const field = clock?.field ?? original;
+      if (query.measurements) {
+        const overlaps = (start: number, end: number) =>
+          start <= query.measurements!.through && end >= query.measurements!.from;
+        if (
+          !overlaps(
+            field.measuredFrom,
+            field.support?.confirmedThrough ?? field.confirmedThrough ?? field.measuredThrough,
+          ) &&
+          !(
+            field.detailSupport &&
+            overlaps(field.detailSupport.from, field.detailSupport.proof.confirmedThrough)
+          )
+        )
+          continue;
       }
-      const value = materializeTemporalValue(reference, fragment, context.sources);
+      const fragment = receivedValueAt(context.sources, field),
+        value = fragment && materializeTemporalValue(field, fragment, context.sources);
       if (!value) {
         incomplete = true;
-        missing = true;
         continue;
       }
       if (query.kinds && !query.kinds.includes(value.kind)) continue;
-      if (!temporalFacetEligible(context.disclosure, actorId, reference, value)) {
+      if (!temporalFacetEligible(context.disclosure, context.actorId, field, value)) {
         incomplete = true;
         continue;
       }
+      facets.push(field);
       values.push(value);
-      references.push(reference);
     }
-    if (exhausted) break;
-    if (missing || (!values.length && receipt.change !== 'receiver-frame')) {
-      examinedBefore = {
-        epoch: receipt.epoch,
-        ordinal: receipt.ordinal,
-        at: receipt.at,
-        order: receipt.order,
-      };
-      continue;
-    }
-    const selectedReceipt = temporalReceiptForRead(
-      selectTemporalReceiptFacets(receipt, references, context.sources, context.disclosure),
-    );
-    const size = byteLength({ receipt: selectedReceipt, values });
+    if (work > maxWork) break;
+    if (!facets.length) continue;
+    const receipt = temporalReceiptForRead(
+        selectTemporalReceiptFacets(item.receipt, facets, context.sources, context.disclosure),
+      ),
+      size = byteLength({ receipt, values });
     if (bytes + size > maxBytes) {
       incomplete = true;
       hasMore = true;
-      // An individually oversized operation cannot fit any page. Skip it whole;
-      // an ordinary operation that only exceeds this page remains behind its
-      // cursor and must be offered on the next page.
       if (size <= maxBytes) break;
-      examinedBefore = {
-        epoch: receipt.epoch,
-        ordinal: receipt.ordinal,
-        at: receipt.at,
-        order: receipt.order,
-      };
       continue;
     }
-    if (
-      receipt.change === 'loss' ||
-      receipt.change === 'unchecked' ||
-      receipt.change === 'attention-exit'
-    )
-      incomplete = true;
     bytes += size;
-    entries.push({ receipt: cloneValue(selectedReceipt), values: cloneValue(values) });
+    entries.push({ receipt: cloneValue(receipt), values: cloneValue(values) });
     examinedBefore = {
       epoch: receipt.epoch,
       ordinal: receipt.ordinal,
@@ -2413,258 +2734,27 @@ export function selectCapturedTemporalHistory(
       order: receipt.order,
     };
   }
-  entries.reverse();
-  const baselines: NonNullable<TemporalHistorySelection['baselines']> = [];
-  const stateKey = temporalStateFieldKey;
-  const scalar = temporalStateValue;
-  for (const chunk of chunks) {
-    const selected = entries.filter(
-      (entry) =>
-        entry.receipt.physicalLife === chunk.physicalLife &&
-        entry.receipt.epoch === chunk.epoch &&
-        entry.receipt.ordinal >= chunk.fromOrdinal &&
-        entry.receipt.ordinal <= chunk.throughOrdinal,
+  const supportedThrough = new Map<string, number>();
+  for (const item of selected) {
+    supportedThrough.set(
+      item.receipt.subject,
+      Math.max(supportedThrough.get(item.receipt.subject) ?? -Infinity, item.closedAt),
     );
-    if (!selected.length) continue;
-    const actual = temporalChunkOperations(chunk);
-    for (const checkpointOperation of temporalChunkCheckpointOperations(chunk)) {
-      if (++candidates > maximumCandidates) {
-        incomplete = true;
-        break;
-      }
-      const checkpoint = temporalCheckpointHeader(chunk, checkpointOperation);
-      let feature = false;
-      // A feature checkpoint is relevant only when the caller requested geometry.
-      // Decode its fields below under the same allowance as ordinary operations.
-      if (query.includeGeometry && checkpointOperation.facets.length) {
-        if (++examined > workLimit) {
-          incomplete = true;
-          break;
-        }
-        const reference = temporalOperationFacet(chunk, checkpointOperation, 0),
-          value = receivedValueAt(context.sources, reference);
-        feature = !!value && temporalSpatialContextValue(value);
-      }
-      const anchor = selected.find(
-        (entry) =>
-          entry.receipt.subject === checkpoint.subject ||
-          entry.receipt.contextSubjects?.includes(checkpoint.subject) ||
-          (query.includeGeometry && feature),
-      );
-      if (!anchor || checkpoint.at > anchor.receipt.at) continue;
-      if (query.cut && checkpoint.order > query.cut.throughOrder) continue;
-      const assigned = new Set(
-        anchor.receipt.subject === checkpoint.subject
-          ? anchor.values.flatMap((value, index) =>
-              scalar(value) ? [stateKey(value, anchor.receipt.facets[index]!)] : [],
-            )
-          : [],
-      );
-      const held = new Map<
-        string,
-        {
-          reference: TemporalFacetReference;
-          value: TemporalValue;
-          availability?: TemporalAvailabilityState;
-          origin: NonNullable<TemporalHistorySelection['baselines']>[number]['origins'][number];
-        }
-      >();
-      let complete = true;
-      for (let index = actual.length - 1; index >= 0; index--) {
-        if (++candidates > maximumCandidates) {
-          complete = false;
-          break;
-        }
-        const operation = actual[index]!,
-          receipt = temporalOperationHeader(chunk, operation);
-        if (
-          receipt.subject !== checkpoint.subject ||
-          receipt.ordinal >= anchor.receipt.ordinal ||
-          receipt.at < checkpoint.at
-        )
-          continue;
-        if (receipt.origin?.kind === 'occurrence') continue;
-        for (let position = 0; position < operation.facets.length; position++) {
-          if (++examined > workLimit) {
-            complete = false;
-            break;
-          }
-          const reference = temporalOperationFacet(chunk, operation, position);
-          // Pose assignment is recognizable from its personal reception before
-          // payload work. It cannot crowd out unrelated last-known scalar state.
-          if (
-            (reference.reception?.kind === 'body' || reference.reception?.kind === 'location') &&
-            (assigned.has('pose') || held.has('pose'))
-          )
-            continue;
-          const fragment = receivedValueAt(context.sources, reference),
-            value = fragment && materializeTemporalValue(reference, fragment, context.sources);
-          if (!value) {
-            complete = false;
-            break;
-          }
-          if (!scalar(value)) continue;
-          const key = stateKey(value, reference);
-          if (assigned.has(key) || held.has(key)) continue;
-          if (temporalFacetEligible(context.disclosure, actorId, reference, value))
-            held.set(key, {
-              reference,
-              value,
-              availability: temporalFieldAvailability(receipt, reference.ordinal),
-              origin: {
-                kind: 'receipt',
-                ordinal: receipt.ordinal,
-                facetOrdinal: reference.ordinal,
-                ...(temporalFieldAvailability(receipt, reference.ordinal)
-                  ? {
-                      availability: {
-                        kind: 'receipt' as const,
-                        ordinal: receipt.ordinal,
-                        facetOrdinal: reference.ordinal,
-                      },
-                    }
-                  : {}),
-              },
-            });
-        }
-        if (!complete) break;
-      }
-      if (!complete) {
-        incomplete = true;
-        continue;
-      }
-      for (let position = 0; position < checkpointOperation.facets.length; position++) {
-        if (++examined > workLimit) {
-          complete = false;
-          break;
-        }
-        const reference = temporalOperationFacet(chunk, checkpointOperation, position);
-        const fragment = receivedValueAt(context.sources, reference),
-          value = fragment && materializeTemporalValue(reference, fragment, context.sources);
-        if (!value) {
-          complete = false;
-          break;
-        }
-        const key = stateKey(value, reference);
-        if (assigned.has(key) || held.has(key)) continue;
-        if (temporalFacetEligible(context.disclosure, actorId, reference, value))
-          held.set(key, {
-            reference,
-            value,
-            availability: checkpoint.availability?.find((group) =>
-              group.fields.includes(reference.ordinal),
-            ),
-            origin: {
-              kind: 'checkpoint',
-              ordinal: checkpoint.ordinal,
-              facetOrdinal: reference.ordinal,
-              ...(checkpoint.availability?.some((group) => group.fields.includes(reference.ordinal))
-                ? {
-                    availability: {
-                      kind: 'checkpoint' as const,
-                      ordinal: checkpoint.ordinal,
-                      facetOrdinal: reference.ordinal,
-                    },
-                  }
-                : {}),
-            },
-          });
-      }
-      if (!complete) {
-        incomplete = true;
-        continue;
-      }
-      confirmationReplay: for (const operation of temporalChunkConfirmationOperations(chunk)) {
-        if (++candidates > maximumCandidates) {
-          complete = false;
-          break;
-        }
-        const header = temporalConfirmationHeader(chunk, operation);
-        if (
-          header.receiptOrdinal > anchor.receipt.ordinal ||
-          header.at > anchor.receipt.at ||
-          (query.cut &&
-            (header.order > query.cut.throughOrder ||
-              (chunk.epoch === query.cut.epoch &&
-                header.receiptOrdinal > query.cut.throughOrdinal)))
-        )
-          continue;
-        for (let group = 0; group < operation.subjects.length; group++) {
-          if (++candidates > maximumCandidates) {
-            complete = false;
-            break confirmationReplay;
-          }
-          if (temporalConfirmationSubject(chunk, operation, group) !== checkpoint.subject) continue;
-          for (const position of temporalConfirmationPositions(operation.subjects[group]!)) {
-            if (++examined > workLimit) {
-              complete = false;
-              break confirmationReplay;
-            }
-            const confirmation = temporalConfirmationField(chunk, operation, group, position);
-            if (confirmation.through > anchor.receipt.at) continue;
-            const dependency = temporalConfirmationReference(confirmation);
-            for (const field of held.values()) {
-              if (!temporalFacetEligible(context.disclosure, actorId, dependency, field.value))
-                continue;
-              const next = applyTemporalConfirmation(field.reference, confirmation);
-              if (next !== field.reference) field.reference = next;
-            }
-          }
-        }
-      }
-      if (!complete) {
-        incomplete = true;
-        continue;
-      }
-      const fields = [...held.values()].filter(
-        (field) =>
-          (!query.kinds || query.kinds.includes(field.value.kind)) &&
-          (!query.measurements ||
-            ((field.reference.support?.confirmedThrough ??
-              field.reference.confirmedThrough ??
-              field.reference.measuredThrough) >= query.measurements.from &&
-              field.reference.measuredFrom <= query.measurements.through)),
-      );
-      if (!fields.length) continue;
-      const baseline = {
-        checkpoint: temporalCheckpointForRead({
-          ...checkpoint,
-          facets: fields.map((field, ordinal) => ({ ...field.reference, ordinal })),
-          availability: groupedTemporalAvailability(fields.map((field) => field.availability)),
-        }),
-        values: fields.map((field) => field.value),
-        forReceipt: {
-          actorId: anchor.receipt.actorId,
-          physicalLife: anchor.receipt.physicalLife,
-          epoch: anchor.receipt.epoch,
-          ordinal: anchor.receipt.ordinal,
-        },
-        availableAt: anchor.receipt.at,
-        origins: fields.map((field) => field.origin),
-      };
-      const size = byteLength(baseline);
-      if (bytes + size > maxBytes) {
-        incomplete = true;
-        continue;
-      }
-      bytes += size;
-      baselines.push(cloneValue(baseline));
-    }
+    if (
+      item.closedAt >= from &&
+      item.closedAt <= through &&
+      item.reason &&
+      ['loss', 'unchecked', 'attention-exit'].includes(item.reason)
+    )
+      incomplete = true;
   }
-  const selectedEntries =
-    query.kinds || query.measurements
-      ? entries.filter(
-          (entry) =>
-            entry.values.length ||
-            baselines.some((baseline) => sameReceiptAddress(entry.receipt, baseline.forReceipt)),
-        )
-      : entries;
+  if ([...supportedThrough.values()].some((at) => at < through)) incomplete = true;
+  entries.reverse();
   return {
-    entries: selectedEntries,
-    ...(baselines.length ? { baselines } : {}),
+    entries,
+    incomplete,
+    ...(hasMore ? { hasMore } : {}),
     ...(examinedBefore ? { examinedBefore } : {}),
-    incomplete: incomplete || selectedEntries.length === 0,
-    hasMore,
   };
 }
 
@@ -2686,8 +2776,8 @@ export function invalidateTemporalEvidence(
       releaseTemporalSupport(world, actorId, id);
       released.add(id);
     }
-  for (const chunk of actor.chunks) {
-    const removed = temporalChunkReceipts(chunk).filter(
+  for (const chunk of actor.pages) {
+    const removed = temporalPageReceipts(chunk).filter(
       (receipt) =>
         sourceIds.has(receipt.id) ||
         (receipt.sourceIds.some((id) => sourceIds.has(id)) &&
@@ -2703,19 +2793,18 @@ export function invalidateTemporalEvidence(
     );
     const previousCount = chunk.count;
     const deleted = new Set(removed.map((receipt) => receipt.ordinal));
-    replaceTemporalChunkReceipts(
+    replaceTemporalPageReceipts(
       chunk,
-      temporalChunkReceipts(chunk).filter((receipt) => !deleted.has(receipt.ordinal)),
+      temporalPageReceipts(chunk).filter((receipt) => !deleted.has(receipt.ordinal)),
       world,
     );
     // Exact stored byte totals are recomputed only for touched resident chunks; cold rows use repository retirement.
     const previousBytes = chunk.bytes;
-    refreshChunk(chunk, world);
-    if (chunk.count) invalidateChangedRecordingMemberships(world, actorId, chunk);
+    refreshTemporalPage(chunk, world);
     actor.count -= previousCount - chunk.count;
     actor.bytes -= previousBytes - chunk.bytes;
   }
-  actor.chunks = actor.chunks.filter((chunk) => chunk.count > 0);
+  actor.pages = actor.pages.filter((chunk) => chunk.count > 0);
   const sources = readOnlyDraftView(world.receivedValues?.sources ?? {});
   // A surviving receipt can contain an independently received fact beside a
   // route whose earlier proof was revoked. Remove that facet, not its siblings.
@@ -2727,11 +2816,11 @@ export function invalidateTemporalEvidence(
   return released;
 }
 
-function refreshChunk(chunk: TemporalChunk, world: WorldState): void {
-  const metadata = temporalEntryMetadataReader(chunk, {
+function refreshTemporalPage(chunk: TemporalPage, world: WorldState): void {
+  const metadata = temporalPageMetadata(chunk, {
     sources: world.receivedValues?.sources ?? {},
     world,
-  })(chunk.entries);
+  });
   chunk.subjects = metadata.subjects;
   chunk.sourceIds = metadata.sourceIds;
   chunk.individualIds = metadata.individualIds;
@@ -2742,11 +2831,11 @@ function refreshChunk(chunk: TemporalChunk, world: WorldState): void {
     chunk.bytes = 0;
     return;
   }
-  chunk.fromOrdinal = metadata.ordinals[0]!;
-  chunk.throughOrdinal = metadata.ordinals.at(-1)!;
+  chunk.fromOrdinal = chunk.operations[0]!.ordinal;
+  chunk.throughOrdinal = chunk.operations.at(-1)!.ordinal;
   chunk.fromAt = metadata.firstAt!;
   chunk.throughAt = metadata.lastAt!;
-  initialBytes(chunk, () => temporalChunkLogicalBytes(chunk, world.receivedValues?.sources ?? {}));
+  initialBytes(chunk, () => temporalPageLogicalBytes(chunk, world.receivedValues?.sources ?? {}));
 }
 
 type TemporalFieldOwner = {
@@ -2797,6 +2886,73 @@ function revokeTemporalFields(
   return { facets, changed };
 }
 
+/** Withdraw only recorded history. Current sensing/targeting remains its own grant. */
+function revokeOpenTemporalFields(
+  world: WorldState,
+  actorId: string,
+  revoked: (
+    value: TemporalValue,
+    reference: TemporalFieldDependencies,
+    owner: TemporalFieldOwner,
+  ) => boolean,
+): void {
+  const actor = world.experience?.temporal?.actors[actorId],
+    owner = world.perceptionEvidence?.[actorId];
+  if (!actor || !owner) return;
+  const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
+  for (const [subjectId, contact] of currentContactEntries(owner))
+    for (const group of contact.content.groups)
+      for (const partition of group.metadata) {
+        const mark = partition.recording;
+        if (!mark) continue;
+        const receipt = currentGroupReceipt(world, actorId, subjectId, group, partition);
+        if (!receipt) throw new Error('Open history has no current received owner.');
+        const removed = new Set<number>();
+        for (const reference of receipt.facets) {
+          const fragment = receivedValueAt(world.receivedValues?.sources ?? {}, reference),
+            value =
+              fragment &&
+              materializeTemporalValue(reference, fragment, world.receivedValues?.sources ?? {});
+          if (value && revoked(value, reference, receipt)) removed.add(reference.ordinal);
+        }
+        if (!removed.size) continue;
+        const members = mark.members.filter((member) => removed.has(member.ordinal));
+        actor.bytes -= members.reduce((sum, member) => sum + member.bytes, 0);
+        actor.count -= members.length;
+        updates.push({
+          subjectId,
+          fields: group.received.fields,
+          members: members.map((member) => [member.kind, member.part] as const),
+          recording: undefined,
+        });
+      }
+  if (updates.length) {
+    touchNativeEvidence(world, 'perception', actorId);
+    currentGroupsSetRecording(owner, updates);
+  }
+  const geometry = owner.geometry;
+  if (geometry)
+    for (const feature of [...geometry.fragments, ...geometry.boundaries]) {
+      const mark = feature.recording;
+      if (!mark) continue;
+      const receipt = geometryReceipt(world, actorId, feature);
+      if (!receipt) continue;
+      const remove = receipt.facets.some((reference) => {
+        const fragment = receivedValueAt(world.receivedValues?.sources ?? {}, reference),
+          value =
+            fragment &&
+            materializeTemporalValue(reference, fragment, world.receivedValues?.sources ?? {});
+        return !!value && revoked(value, reference, receipt);
+      });
+      if (remove) {
+        touchNativeEvidence(world, 'perception', actorId);
+        actor.bytes -= mark.reservedBytes;
+        actor.count -= mark.count;
+        delete feature.recording;
+      }
+    }
+}
+
 /** Remove a revoked interpretation while preserving independent direct words and measurements. */
 export function invalidateTemporalFacets(
   world: WorldState,
@@ -2811,12 +2967,13 @@ export function invalidateTemporalFacets(
   const temporal = world.experience?.temporal;
   const actor = temporal?.actors[actorId];
   if (!temporal || !actor) return;
-  for (const chunk of actor.chunks) {
+  revokeOpenTemporalFields(world, actorId, revoked);
+  for (const chunk of actor.pages) {
     const previousBytes = chunk.bytes,
       previousCount = chunk.count;
     let changed = false;
     const retained: TemporalReceipt[] = [];
-    for (const stored of readOnlyDraftView(temporalChunkReceipts(chunk))) {
+    for (const stored of readOnlyDraftView(temporalPageReceipts(chunk))) {
       const receipt = readOnlyDraftView(stored);
       const selection = revokeTemporalFields(world, receipt, revoked),
         facets = selection.facets;
@@ -2840,132 +2997,24 @@ export function invalidateTemporalFacets(
         retained.push(receipt);
       }
     }
-    const checkpoints = temporalEntryCheckpoints(chunk).flatMap((checkpoint) => {
-      const selection = revokeTemporalFields(world, checkpoint, revoked);
-      changed ||= selection.changed;
-      return selection.facets.length
-        ? [
-            {
-              ...checkpoint,
-              facets: selection.facets,
-              availability: checkpoint.availability
-                ?.map((group) => ({
-                  ...group,
-                  fields: group.fields.filter((ordinal) =>
-                    selection.facets.some((field) => field.ordinal === ordinal),
-                  ),
-                }))
-                .filter((group) => group.fields.length),
-            },
-          ]
-        : [];
-    });
-    const confirmations = temporalEntryConfirmations(chunk).filter((confirmation) => {
-      const reference = temporalConfirmationReference(confirmation),
-        fragment = receivedValueAt(world.receivedValues?.sources ?? {}, reference),
-        value =
-          fragment &&
-          materializeTemporalValue(reference, fragment, world.receivedValues?.sources ?? {});
-      const remove = !!value && revoked(value, reference, { facets: [reference], sourceIds: [] });
-      changed ||= remove;
-      return !remove;
-    });
     if (!changed) continue;
     selectedRequestRecentIndividualRepair(world, actorId, chunk.order, chunk.individualIds);
-    replaceTemporalChunkReceipts(chunk, retained, world, checkpoints, confirmations);
-    refreshChunk(chunk, world);
-    if (chunk.count) invalidateChangedRecordingMemberships(world, actorId, chunk);
+    replaceTemporalPageReceipts(chunk, retained, world);
+    refreshTemporalPage(chunk, world);
     actor.bytes -= previousBytes - chunk.bytes;
     actor.count -= previousCount - chunk.count;
   }
-  actor.chunks = actor.chunks.filter((chunk) => chunk.count > 0);
+  actor.pages = actor.pages.filter((chunk) => chunk.count > 0);
 }
 
 export function temporalSourceIds(receipt: TemporalReceipt): EvidenceSource[] {
   return receipt.facets.flatMap((facet) => (facet.original ? [facet.original.source] : []));
 }
 
-/** A confirmation advances support for one exact received variant only. It
- * never changes when its value was measured or acquired. */
-export function applyTemporalConfirmation(
-  reference: TemporalFacetReference,
-  value: TemporalConfirmation,
-): TemporalFacetReference {
-  const sameValue = sameReceivedValueReference(reference.valueRef, value.reference.valueRef);
-  const detail = reference.detailSupport,
-    confirmedDetail = value.detailSupport;
-  if (
-    sameValue &&
-    detail &&
-    confirmedDetail &&
-    jsonText(detail.proof.original) === jsonText(confirmedDetail.proof.original) &&
-    confirmedDetail.proof.confirmedFrom <= detail.proof.confirmedThrough &&
-    confirmedDetail.proof.confirmedThrough >= detail.proof.confirmedThrough
-  ) {
-    return { ...reference, detailSupport: confirmedDetail };
-  }
-  const samePose =
-    reference.reception?.kind === 'body' &&
-    reference.reception.poseRef !== undefined &&
-    sameReceivedValueReference(reference.reception.poseRef, value.reference.valueRef);
-  if (
-    (!sameValue && !samePose) ||
-    !reference.original ||
-    jsonText(reference.original) !== jsonText(value.original) ||
-    (!samePose &&
-      !(
-        reference.reception === value.reception ||
-        (reference.reception &&
-          value.reception &&
-          jsonText(reference.reception) === jsonText(value.reception))
-      )) ||
-    value.from >
-      (reference.support?.confirmedThrough ??
-        reference.confirmedThrough ??
-        reference.measuredThrough) ||
-    value.through <
-      (reference.support?.confirmedThrough ??
-        reference.confirmedThrough ??
-        reference.measuredThrough)
-  )
-    return reference;
-  return {
-    ...reference,
-    receivedFrom: value.confirmation,
-    support: {
-      original: value.original,
-      confirmation: value.confirmation,
-      confirmedFrom: value.from,
-      confirmedThrough: value.through,
-    },
-    ...(value.detailSupport ? { detailSupport: value.detailSupport } : {}),
-  };
-}
-
 export type TemporalFieldDependencies = Pick<
   TemporalFacetReference,
   'valueRef' | 'reception' | 'original' | 'receivedFrom' | 'support' | 'detailSupport'
 > & { ordinal?: number };
-/** Confirmations share exact field/source dependency accounting with assignments;
- * they carry no new value measurement or acquisition. */
-export function temporalConfirmationReference(
-  value: TemporalConfirmation,
-): TemporalFieldDependencies {
-  return {
-    ...value.reference,
-    ...(value.reception ? { reception: value.reception } : {}),
-    original: value.original,
-    receivedFrom: value.confirmation,
-    support: {
-      original: value.original,
-      confirmation: value.confirmation,
-      confirmedFrom: value.from,
-      confirmedThrough: value.through,
-    },
-    ...(value.detailSupport ? { detailSupport: value.detailSupport } : {}),
-  };
-}
-
 /** Value-owned provenance is shared by expanded reads and compact metadata reads. */
 export function temporalValueDependencyAliases(
   value: TemporalValue,
@@ -3073,9 +3122,10 @@ export function temporalAccountAliasClosure(
       groups.set(alias, linked);
     }
   };
-  for (const chunk of actor?.chunks ?? [])
-    for (const receipt of temporalChunkReceipts(chunk)) add(receipt);
+  for (const chunk of actor?.pages ?? [])
+    for (const receipt of temporalPageReceipts(chunk)) add(receipt);
   for (const support of Object.values(actor?.supports ?? {})) add(support.receipt, support.values);
+  for (const interval of currentTemporalOpenIntervals(world, actorId)) add(interval.receipt);
   const selected = new Set(sourceIds),
     queue = [...selected],
     visited = new Set<string[]>();
@@ -3158,10 +3208,10 @@ export function temporalReceiptForSource(
   actorId: string,
   sourceId: string,
 ): TemporalReceiptLocator | undefined {
-  const chunks = world.experience?.temporal?.actors[actorId]?.chunks ?? [];
+  const chunks = world.experience?.temporal?.actors[actorId]?.pages ?? [];
   const maxAge = selectedTemporalPolicy(world).recent.maxAgeSeconds;
   for (let index = chunks.length - 1; index >= 0; index--)
-    for (const receipt of temporalChunkReceipts(chunks[index]!))
+    for (const receipt of temporalPageReceipts(chunks[index]!))
       if (
         temporalRecentAt(receipt.at, world.simTime, maxAge) &&
         receipt.sourceIds.includes(sourceId)
@@ -3191,9 +3241,11 @@ export function hasRetainedTemporalSource(
     sourceIds: readonly string[];
     id?: string;
   }) => temporalReceiptAliases(owner, sources, world).includes(sourceId);
-  for (const chunk of actor.chunks) {
+  for (const { receipt } of currentTemporalOpenIntervals(world, actorId))
+    if (receipt.id === sourceId || includes(receipt)) return true;
+  for (const chunk of actor.pages) {
     if (chunk.throughAt <= cutoff || !chunk.sourceIds.includes(sourceId)) continue;
-    const actual = temporalChunkReceipts(chunk).filter((receipt) =>
+    const actual = temporalPageReceipts(chunk).filter((receipt) =>
       temporalRecentAt(
         receipt.at,
         world.simTime,
@@ -3201,15 +3253,16 @@ export function hasRetainedTemporalSource(
       ),
     );
     if (actual.some(includes)) return true;
-    const retained = new Set(actual.map((receipt) => receipt.ordinal));
-    for (const confirmation of temporalEntryConfirmations(chunk))
-      if (
-        retained.has(confirmation.receiptOrdinal) &&
-        includes({ facets: [temporalConfirmationReference(confirmation)], sourceIds: [] })
-      )
-        return true;
-    for (const checkpoint of checkpointsForRetainedReceipts(world, actorId, chunk, actual))
-      if (includes(checkpoint)) return true;
+    for (const op of temporalPageOperations(chunk))
+      if (op.kind === 'check' && op.at > cutoff)
+        for (const stamp of op.stamps)
+          if (
+            stamp.confirmation.id === sourceId ||
+            chunk.declarations
+              .find((d) => d.id === stamp.declaration)
+              ?.members.some((member) => member.original.source.id === sourceId)
+          )
+            return true;
   }
   return false;
 }
@@ -3267,27 +3320,45 @@ function sameReceiptAddress(receipt: TemporalReceipt, locator: TemporalReceiptLo
     receipt.ordinal === locator.ordinal
   );
 }
-function findTemporalReceipt(
-  actor: TemporalActorHistory,
+function nativeTemporalReceipt(
+  world: WorldState,
   locator: TemporalReceiptLocator,
-): TemporalReceipt | undefined {
-  const chunks = readOnlyDraftView(actor.chunks);
-  // Contact retention normally asks for the just-appended receipt. Chunk bounds
-  // also prune older epochs/lives without flattening every retained receipt.
-  for (let index = chunks.length - 1; index >= 0; index--) {
-    const chunk = readOnlyDraftView(chunks[index]!);
-    if (
-      chunk.actorId !== locator.actorId ||
-      chunk.physicalLife !== locator.physicalLife ||
-      chunk.epoch !== locator.epoch ||
-      locator.ordinal < chunk.fromOrdinal ||
-      locator.ordinal > chunk.throughOrdinal
-    )
-      continue;
-    const receipt = temporalChunkReceipt(chunk, locator.ordinal);
-    if (receipt) return sameReceiptAddress(receipt, locator) ? receipt : undefined;
-  }
-  return undefined;
+): { receipt: TemporalReceipt; receivedAt: number } | undefined {
+  const actor = world.experience?.temporal?.actors[locator.actorId];
+  if (!actor) return;
+  let receipt: TemporalReceipt | undefined,
+    terminal: readonly TemporalCheckSeed[] = [],
+    receivedAt = 0;
+  const open = currentTemporalOpenIntervals(world, locator.actorId).find((interval) =>
+    sameReceiptAddress(interval.receipt, locator),
+  );
+  if (open) {
+    receipt = open.receipt;
+    terminal = open.terminal;
+  } else
+    for (const page of actor.pages) {
+      if (page.physicalLife !== locator.physicalLife || page.epoch !== locator.epoch) continue;
+      const operation = page.operations.find(
+        (operation) => operation.kind !== 'check' && sameReceiptAddress(operation.receipt, locator),
+      );
+      if (operation && operation.kind !== 'check') {
+        receipt = operation.receipt;
+        terminal = operation.kind === 'span' ? operation.terminal : [];
+        break;
+      }
+    }
+  if (!receipt) return;
+  receivedAt = Math.max(receipt.at, ...terminal.map((seed) => seed.receivedAt));
+  return {
+    receipt: {
+      ...receipt,
+      facets: receipt.facets.map((field) => {
+        const seed = terminal.find((seed) => seed.member === field.ordinal);
+        return seed ? temporalSeedFacet(field, seed) : field;
+      }),
+    },
+    receivedAt,
+  };
 }
 /** Resolve an already owned receipt. Cold callers supply their separately scoped
  * captured body at the server admission boundary instead of expanding all history. */
@@ -3299,11 +3370,12 @@ export function retainedTemporalReceipt(
   const actor = temporal?.actors[locator.actorId];
   if (!temporal || !actor) return;
   const support = actor.supports?.[temporalReceiptId(locator)];
-  const heldReceipt = findTemporalReceipt(actor, locator);
+  const native = nativeTemporalReceipt(world, locator);
+  const heldReceipt = native?.receipt;
   const receipt =
     heldReceipt &&
     temporalRecentAt(
-      heldReceipt.at,
+      native!.receivedAt,
       world.simTime,
       selectedTemporalPolicy(world).recent.maxAgeSeconds,
     )
@@ -3374,10 +3446,15 @@ export function retainTemporalSupport(
       return;
     return actor.supports![id];
   }
-  const receipt = findTemporalReceipt(actor, locator);
+  const native = nativeTemporalReceipt(world, locator),
+    receipt = native?.receipt;
   if (
     !receipt ||
-    !temporalRecentAt(receipt.at, world.simTime, selectedTemporalPolicy(world).recent.maxAgeSeconds)
+    !temporalRecentAt(
+      native!.receivedAt,
+      world.simTime,
+      selectedTemporalPolicy(world).recent.maxAgeSeconds,
+    )
   )
     return;
   const selected =
@@ -3406,13 +3483,9 @@ export function retainTemporalSupport(
     world.receivedValues?.sources ?? {},
     world,
   );
-  selectedReceipt.facets = selectedReceipt.facets.map((facet) => {
-    const reception = facet.reception;
-    if (reception?.kind !== 'body' || !reception.poseRef) return facet;
-    const pose = receivedValueAt(world.receivedValues?.sources ?? {}, reception.poseRef);
-    if (pose?.kind !== 'body-pose') throw new Error('Retained support has no received pose.');
-    return { ...facet, reception: { kind: 'body' as const, pose: pose.pose } };
-  });
+  selectedReceipt.facets = selectedReceipt.facets.map((facet) =>
+    standaloneTemporalFacet(facet, world.receivedValues?.sources ?? {}),
+  );
   const capsule: TemporalSupportCapsule = {
     receipt: immutableDataSnapshot(
       {
@@ -3486,6 +3559,130 @@ function admitTemporalSupport(
 
 /** Explicitly retain previously received state without creating sensory history.
  * Its source address belongs to this capsule; measurement and availability remain original. */
+/** Lasting support owns its minimal pose after recent/shared values are reclaimed. */
+function standaloneTemporalFacet(
+  reference: TemporalFacetReference,
+  sources: ReceivedValueLookup,
+): TemporalFacetReference {
+  const reception = reference.reception;
+  if (reception?.kind !== 'body' || !reception.poseRef) return reference;
+  const pose = receivedValueAt(sources, reception.poseRef);
+  if (pose?.kind !== 'body-pose') throw new Error('Retained support has no received pose.');
+  return { ...reference, reception: { kind: 'body', pose: pose.pose } };
+}
+function retainTemporalCaptureSupport(
+  world: WorldState,
+  actorId: string,
+  input: TemporalCaptureInput,
+  options: { required?: boolean; maxBytes: number; maxRecords: number },
+): TemporalSupportCapsule | undefined {
+  const actor = actorHistory(world, actorId)?.actor;
+  if (!actor) return;
+  const ordinal = actor.nextOrdinal++,
+    values: TemporalFragment[] = [];
+  const facets: TemporalFacetReference[] = input.facets.map((field, ordinal) => {
+    const projection =
+      'received' in field ? field.received.projection : splitTemporalValue(field.value);
+    const metadata =
+      'received' in field
+        ? (({ received, ...rest }) => rest)(field)
+        : (({ value, retainedValue, ...rest }) => rest)(field);
+    const retained = retainReceivedValue(
+      world,
+      projection.value,
+      'received' in field ? field.received.reference : field.retainedValue,
+    );
+    values.push(immutableDataSnapshot(projection.value, readOnlyDraftView));
+    return standaloneTemporalFacet(
+      {
+        ...metadata,
+        valueRef: retained.reference,
+        ordinal,
+        ...(projection.reception ? { reception: projection.reception } : {}),
+      },
+      world.receivedValues?.sources ?? {},
+    );
+  });
+  const receipt: TemporalReceipt = {
+    actorId,
+    physicalLife: actor.physicalLife,
+    epoch: actor.epoch,
+    ordinal,
+    id: temporalReceiptId({ epoch: actor.epoch, ordinal }),
+    at: world.simTime,
+    order: temporalReceivedOrder(world, actorId),
+    acquisition: ordinal,
+    subject: input.subject,
+    change: 'retained-state',
+    required: options.required === true,
+    sourceIds: input.sourceIds ?? [],
+    facets,
+    ...(input.subjectIdentity ? { subjectIdentity: input.subjectIdentity } : {}),
+    ...(input.availability ? { availability: input.availability } : {}),
+  };
+  return admitTemporalSupport(
+    world,
+    actorId,
+    {
+      receipt: immutableDataSnapshot(receipt, readOnlyDraftView),
+      values,
+      bytes: 0,
+      required: options.required === true,
+    },
+    options,
+  );
+}
+export function retainTemporalCurrentSupport(
+  world: WorldState,
+  actorId: string,
+  record: CurrentFacetRecord,
+  options: { required?: boolean; maxBytes: number; maxRecords: number },
+): TemporalSupportCapsule | undefined {
+  const owner = world.perceptionEvidence?.[actorId];
+  if (!owner) return;
+  const native = currentNativeFacet(
+    owner,
+    currentFacetKey(record.grant.subjectId, record.value.kind, record.grant.channel),
+    { exposure: record.grant.exposure },
+  );
+  if (
+    !native ||
+    native.field.id !== record.id ||
+    native.metadata.revision !== record.revision ||
+    native.originalSource.id !== record.originalSource.id ||
+    native.originalSource.revision !== record.originalSource.revision ||
+    native.field.originalOrdinal !== record.originalOrdinal
+  )
+    return;
+  const owned = projectCurrentFacet(native),
+    receivedTimes = currentFacetTimes(owner, record),
+    ownedTimes = currentNativeFacetTimes(native);
+  if (
+    !sameCurrentFacetContent(owned, record) ||
+    (Object.keys(ownedTimes) as Array<keyof CurrentFacetTimes>).some(
+      (key) => receivedTimes[key] !== ownedTimes[key],
+    )
+  )
+    return;
+  // Selection keys choose the member; value, grant and dates come only from its current owner.
+  const lease = currentFacetSupport(owner, owned),
+    facet = temporalFacetInput(world, lease);
+  return retainTemporalCaptureSupport(
+    world,
+    actorId,
+    {
+      subject: receivedTrackKey(owned.grant.exposure, owned.grant.channel),
+      change: 'baseline',
+      facets: [facet],
+      ...(owned.localSubject ? { subjectIdentity: owned.localSubject } : {}),
+      ...(owned.availability
+        ? { availability: [{ reason: 'unchecked', at: owned.availability.at, fields: [0] }] }
+        : {}),
+    },
+    options,
+  );
+}
+
 export function retainTemporalStateSupport(
   world: WorldState,
   actorId: string,
@@ -3543,7 +3740,7 @@ export function retainTemporalStateSupport(
     sourceIds: [
       JSON.stringify([
         'temporal-checkpoint',
-        baseline.checkpoint.chunkId,
+        baseline.checkpoint.pageId,
         baseline.checkpoint.ordinal,
       ]),
     ],

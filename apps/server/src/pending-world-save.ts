@@ -1,4 +1,10 @@
-import type { SourceVersionPlan, RetainedSourceVersion } from './source-version-retention.js';
+import { mergeTemporalPageIntent, type PendingTemporalPage } from './temporal-page-storage.js';
+import {
+  mergeSourceVersionChanges,
+  sourceVersionKey,
+  type SourceVersionPlan,
+  type SourceVersionChange,
+} from './source-version-retention.js';
 import { jsonText } from '@open-legend/domain';
 import { RECORD_NODES } from './world-record-schema.js';
 import { Buffer } from 'node:buffer';
@@ -60,18 +66,18 @@ const rowBytes = (table: string, row: RowChange) => {
  * and command outcomes survive working-set eviction. No second gameplay authority.
  * docs/projects/bookkeeping-simplification-runtime-design.md#62-accept-buffer-save */
 export class PendingWorldSave {
+  private readonly temporal = new Map<string, PendingTemporalPage>();
   private readonly tables = new Map<string, Map<string, Entry>>();
   private readonly children: ChildIndex = new Map();
-  private readonly versionActors = new Map<
+  private readonly versionChanges = new Map<
     string,
-    { retained: RetainedSourceVersion[]; bytes: number }
+    { change: SourceVersionChange; bytes: number }
   >();
   private preparedVersions?: SourceVersionPlan;
   get versions(): SourceVersionPlan | undefined {
-    if (!this.versionActors.size) return undefined;
+    if (!this.versionChanges.size) return undefined;
     return (this.preparedVersions ??= {
-      actors: [...this.versionActors.keys()],
-      retained: [...this.versionActors.values()].flatMap((value) => value.retained),
+      changes: [...this.versionChanges.values()].map((value) => value.change),
     });
   }
   private readonly expired = new Map<string, Set<string>>();
@@ -95,6 +101,13 @@ export class PendingWorldSave {
     const edits = new Map<string, Map<string, Entry | undefined>>();
     const stagedChildren: ChildIndex = new Map();
     let charge = this.bytes;
+    const temporalChanges = new Map<string, PendingTemporalPage>();
+    for (const [key, incoming] of changes.temporal ?? []) {
+      const prior = this.temporal.get(key);
+      const merged = mergeTemporalPageIntent(prior, incoming);
+      charge += merged.reservedBytes - (prior?.reservedBytes ?? 0);
+      temporalChanges.set(key, merged);
+    }
     const effective = (table: string, id: string) =>
       edits.get(table)?.has(id) ? edits.get(table)!.get(id) : this.tables.get(table)?.get(id);
     const stage = (table: string, id: string, entry: Entry | undefined) => {
@@ -139,34 +152,14 @@ export class PendingWorldSave {
           deletedCreate: prior?.row?.create ?? prior?.deletedCreate ?? false,
         });
       }
-    const versionChanges = new Map<string, { retained: RetainedSourceVersion[]; bytes: number }>();
-    if (versions) {
-      const byActor = new Map<string, RetainedSourceVersion[]>();
-      for (const value of versions.retained) {
-        const rows = byActor.get(value.actorId) ?? [];
-        rows.push(value);
-        byActor.set(value.actorId, rows);
-      }
-      for (const actor of versions.actors) {
-        const priorVersions = new Map(
-          (this.versionActors.get(actor)?.retained ?? []).map((value) => [
-            JSON.stringify([value.kind, value.id, value.revision]),
-            value,
-          ]),
-        );
-        const retained = (byActor.get(actor) ?? []).map((value) => {
-          const prior = priorVersions.get(JSON.stringify([value.kind, value.id, value.revision]));
-          return value.payload === undefined && prior?.payload !== undefined
-            ? { ...value, payload: prior.payload }
-            : value;
-        });
-        const bytes =
-          Buffer.byteLength(actor) +
-          64 +
-          retained.reduce((sum, value) => sum + Buffer.byteLength(JSON.stringify(value)), 0);
-        versionChanges.set(actor, { retained, bytes });
-        charge += bytes - (this.versionActors.get(actor)?.bytes ?? 0);
-      }
+    const versionChanges = new Map<string, { change: SourceVersionChange; bytes: number }>();
+    for (const incoming of versions?.changes ?? []) {
+      const id = sourceVersionKey(incoming),
+        prior = versionChanges.get(id) ?? this.versionChanges.get(id);
+      const change = prior ? mergeSourceVersionChanges(prior.change, incoming) : incoming;
+      const bytes = Buffer.byteLength(id) + Buffer.byteLength(JSON.stringify(change)) + 64;
+      versionChanges.set(id, { change, bytes });
+      charge += bytes - (prior?.bytes ?? 0);
     }
     // Events and their personal perspectives have their own archive owner; charge
     // their admitted input once, independently of replacement current rows.
@@ -198,7 +191,8 @@ export class PendingWorldSave {
           if (!entries?.size) this.tables.delete(table);
         }
       }
-    for (const [actor, value] of versionChanges) this.versionActors.set(actor, value);
+    for (const [key, intent] of temporalChanges) this.temporal.set(key, intent);
+    for (const [id, value] of versionChanges) this.versionChanges.set(id, value);
     if (versionChanges.size) this.preparedVersions = undefined;
     for (const [table, ids] of changes.expired ?? []) {
       let entries = this.expired.get(table);
@@ -233,6 +227,7 @@ export class PendingWorldSave {
         }
       }
     return (this.capturedChanges = {
+      ...(this.temporal.size ? { temporal: new Map(this.temporal) } : {}),
       writes,
       deletes,
       rows,

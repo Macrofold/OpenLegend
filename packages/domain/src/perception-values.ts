@@ -47,6 +47,41 @@ export const validPerceivedPoint = (value: unknown): value is Position =>
   'y' in value &&
   'z' in value &&
   [value.x, value.y, value.z].every(Number.isFinite);
+/** Bind a common successful check to its declared member without changing source family/version type. */
+export function evidenceSourceWithIdentity(
+  source: EvidenceSource,
+  identity?: Omit<EvidenceSource, 'revision'>,
+  minimumRevision = 0,
+): EvidenceSource {
+  if (identity && identity.family !== source.family)
+    throw new Error('A received check changed its evidence source family.');
+  const id = identity?.id ?? source.id,
+    observer = identity?.observer ?? source.observer;
+  switch (source.family) {
+    case 'native-exposure':
+    case 'native-response':
+      return {
+        family: source.family,
+        id,
+        observer,
+        revision: Math.max(source.revision, minimumRevision),
+      };
+    case 'private-condition':
+      return {
+        family: source.family,
+        id,
+        observer,
+        revision:
+          typeof source.revision === 'number'
+            ? Math.max(source.revision, minimumRevision)
+            : source.revision,
+      };
+    case 'awareness':
+    case 'memory':
+    case 'action-result':
+      return { family: source.family, id, observer, revision: source.revision };
+  }
+}
 export function validateEvidenceSource(source: EvidenceSource): void {
   if (
     !source ||

@@ -101,6 +101,7 @@ import { decisionFeelings } from './appraisal-context.js';
 
 import {
   captureTemporalHistoryReadContext,
+  temporalHistoryWindow,
   type TemporalHistoryReadContext,
   type TemporalHistoryQuery,
 } from './temporal-storage.js';
@@ -125,7 +126,7 @@ async function validateCapturedSituation(
       !(await sourceFence.validate(
         selections,
         () => ({
-          at: service.world.simTime,
+          ...temporalHistoryWindow(service.world, evidenceScope.actorId),
           maxAgeSeconds: capturedSituation.historyMaxAgeSeconds,
         }),
         Object.values(capturedSituation.baselineDetails),
@@ -440,7 +441,6 @@ export async function prepareDecision(
   let sourceFence: TemporalSourceFence | undefined;
   let prepared = false;
   try {
-    await service.prepareCognitionEvidence(actorId);
     await service.flushMemorySources(actorId);
     const readWorld = () => service.world;
     const generation = service.generation;
@@ -479,12 +479,14 @@ export async function prepareDecision(
       includeCurrentConversation ||
       requiredIds.some((id) => service.worldEvent(id)?.type === 'speech');
     const initialWorldId = readWorld().id;
-    const initialHistory = captureTemporalHistoryReadContext(readWorld(), actorId);
     const receiptPrefix = captureTemporalReceiptPrefix(readWorld(), actorId);
     const historyPolicy = selectedAttentionPolicy(readWorld()).scene;
     const historySubjects = currentDetailedAttention(readWorld(), actorId).map(
       (entry) => entry.exposure.track,
     );
+    const initialHistory = captureTemporalHistoryReadContext(readWorld(), actorId, {
+      subjects: historySubjects,
+    });
     const capturedSituation = captureSituation(readWorld(), actorId, jobId, {
       entries: [],
       incomplete: true,

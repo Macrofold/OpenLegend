@@ -7,6 +7,7 @@ import {
   currentFacetCheckScope,
   currentFacetKey,
   currentFieldIdentity,
+  currentFieldParts,
   receivedTrackKey,
   type CurrentContact,
 } from './perception-current.js';
@@ -37,7 +38,10 @@ import {
 } from './perception-evidence.js';
 import { validateDetectionSupportState } from './perception-support.js';
 import { validateReceivedGeometryState } from './received-geometry.js';
-import { validateTemporalFragment } from './temporal-validation.js';
+import {
+  validateTemporalCurrentGroupCheckpoint,
+  validateTemporalFragment,
+} from './temporal-validation.js';
 import { hasRecordFields, isSafeRecordId, jsonEncoding } from './records.js';
 import { validObserverSubject } from './knowledge.js';
 import { readOnlyDraftView } from './draft.js';
@@ -257,12 +261,9 @@ export function validatePerceptionEvidenceState(
         contexts = new Set<string>();
       for (const group of contact.content.groups) {
         if (
-          !hasRecordFields(
-            group,
-            ['grant', 'times', 'check', 'fields'],
-            ['recording', 'availability'],
-          ) ||
-          !hasRecordFields(group.grant, [
+          !hasRecordFields(group, ['received', 'metadata']) ||
+          !hasRecordFields(group.received, ['grant', 'fields']) ||
+          !hasRecordFields(group.received.grant, [
             'subjectId',
             'subjectPhysicalLife',
             'original',
@@ -270,94 +271,139 @@ export function validatePerceptionEvidenceState(
             'modality',
             'channel',
           ]) ||
-          !isDefinitionPin(group.grant.channel) ||
-          group.grant.subjectId !== subjectId ||
+          !isDefinitionPin(group.received.grant.channel) ||
+          group.received.grant.subjectId !== subjectId ||
           !isSafeRecordId(subjectId) ||
-          (group.grant.subjectPhysicalLife !== null &&
-            (!Number.isSafeInteger(group.grant.subjectPhysicalLife) ||
-              group.grant.subjectPhysicalLife < 0)) ||
-          typeof group.grant.exposure !== 'string' ||
-          !group.grant.exposure ||
-          !['sight', 'hearing', 'touch'].includes(group.grant.modality) ||
-          typeof group.grant.original !== 'string' ||
-          !Object.hasOwn(contact.content.originals, group.grant.original) ||
-          !Array.isArray(group.times) ||
-          group.times.length < 1 ||
-          group.times.length > 5 ||
-          group.times[0] === null ||
-          group.times.at(-1) === null ||
-          group.times.some(
-            (value) =>
-              value !== null &&
-              (typeof value !== 'number' ||
-                !Number.isFinite(value) ||
-                value < 0 ||
-                value > world.simTime),
-          ) ||
-          !group.fields ||
-          typeof group.fields !== 'object' ||
-          Array.isArray(group.fields) ||
-          !Object.keys(group.fields).length
+          (group.received.grant.subjectPhysicalLife !== null &&
+            (!Number.isSafeInteger(group.received.grant.subjectPhysicalLife) ||
+              group.received.grant.subjectPhysicalLife < 0)) ||
+          typeof group.received.grant.exposure !== 'string' ||
+          !group.received.grant.exposure ||
+          !['sight', 'hearing', 'touch'].includes(group.received.grant.modality) ||
+          typeof group.received.grant.original !== 'string' ||
+          !Object.hasOwn(contact.content.originals, group.received.grant.original) ||
+          !group.received.fields ||
+          typeof group.received.fields !== 'object' ||
+          Array.isArray(group.received.fields) ||
+          !Object.keys(group.received.fields).length ||
+          !Array.isArray(group.metadata) ||
+          !group.metadata.length
         )
           throw new Error('Invalid acquired current group.');
-        const sourceHeader = receivedObservationHeader(
-          world,
-          contact.content.originals[group.grant.original]!,
-        );
-        // An acquired identity can be heard and then associated with the exact
-        // currently seen body. Its source remains hearing; the body-bound view
-        // does not manufacture another physical acquisition through vision.
+        const grant = group.received.grant,
+          sourceHeader = receivedObservationHeader(
+            world,
+            contact.content.originals[grant.original]!,
+          );
         if (
           sourceHeader.channel &&
-          !sameDefinitionPin(sourceHeader.channel, group.grant.channel) &&
-          Object.keys(group.fields).some((kind) => kind !== 'association')
+          !sameDefinitionPin(sourceHeader.channel, grant.channel) &&
+          Object.keys(group.received.fields).some((kind) => kind !== 'association')
         )
           throw new Error('Current group channel disagrees with its received source.');
-        const recording = group.recording;
-        if (
-          recording !== undefined &&
-          (!hasRecordFields(recording, [
-            'epoch',
-            'chunkId',
-            'entryOrdinal',
-            'count',
-            'through',
-            'revision',
-          ]) ||
-            !Number.isSafeInteger(recording.revision) ||
-            recording.revision < 0 ||
-            !isSafeRecordId(recording.epoch) ||
-            !isSafeRecordId(recording.chunkId) ||
-            !Number.isSafeInteger(recording.entryOrdinal) ||
-            recording.entryOrdinal < 0 ||
-            !Number.isSafeInteger(recording.count) ||
-            recording.count < 1 ||
-            recording.count > Object.keys(group.fields).length ||
-            !Number.isFinite(recording.through) ||
-            recording.through < 0 ||
-            recording.through > world.simTime)
-        )
-          throw new Error('Invalid current recording checkpoint.');
-        const availability = group.availability;
-        if (
-          availability !== undefined &&
-          (!hasRecordFields(availability, ['state', 'at']) ||
-            availability.state !== 'unchecked' ||
-            !Number.isFinite(availability.at) ||
-            availability.at < 0 ||
-            availability.at > world.simTime)
-        )
-          throw new Error('Invalid current availability.');
-        const context = canonicalJson([group.grant, group.times, group.check, group.availability]);
-        if (contexts.has(context)) throw new Error('Duplicate current receipt group.');
-        contexts.add(context);
-        used.add(group.grant.original);
-        for (const [kind, field] of Object.entries(group.fields)) {
+        const heldParts = new Set<string>();
+        for (const partition of group.metadata) {
           if (
-            kinds.has(currentFieldIdentity(kind, group.grant.channel)) ||
+            !hasRecordFields(
+              partition,
+              [
+                'members',
+                'times',
+                'revision',
+                'check',
+                'receivedAt',
+                'receivedOrder',
+                'confirmedRevision',
+              ],
+              ['recording', 'availability', 'frameRef'],
+            ) ||
+            typeof partition.revision !== 'number' ||
+            !Number.isSafeInteger(partition.revision) ||
+            partition.revision < 0 ||
+            typeof partition.receivedAt !== 'number' ||
+            !Number.isFinite(partition.receivedAt) ||
+            partition.receivedAt < 0 ||
+            partition.receivedAt > world.simTime ||
+            typeof partition.receivedOrder !== 'number' ||
+            !Number.isSafeInteger(partition.receivedOrder) ||
+            partition.receivedOrder < 0 ||
+            typeof partition.confirmedRevision !== 'number' ||
+            !Number.isSafeInteger(partition.confirmedRevision) ||
+            partition.confirmedRevision < 0 ||
+            (partition.frameRef !== undefined &&
+              (!validReceivedReference(partition.frameRef) ||
+                !validObservationFrame(receivedObservationFrame(world, partition.frameRef)))) ||
+            !Array.isArray(partition.members) ||
+            !partition.members.length ||
+            !Array.isArray(partition.times) ||
+            partition.times.length < 1 ||
+            partition.times.length > 5 ||
+            partition.times[0] === null ||
+            partition.times.at(-1) === null ||
+            partition.times.some(
+              (value) =>
+                value !== null &&
+                (typeof value !== 'number' ||
+                  !Number.isFinite(value) ||
+                  value < 0 ||
+                  value > world.simTime),
+            )
+          )
+            throw new Error('Invalid current part metadata.');
+          for (const address of partition.members) {
+            if (
+              !Array.isArray(address) ||
+              address.length !== 2 ||
+              typeof address[0] !== 'string' ||
+              !Object.hasOwn(group.received.fields, address[0]) ||
+              !currentFieldParts(group.received.fields[address[0]]!).includes(address[1])
+            )
+              throw new Error('Invalid current part membership.');
+            if (partition.check !== currentFacetCheckScope(address[0], grant.modality))
+              throw new Error('Current part check scope disagrees with its field.');
+            const key = JSON.stringify(address);
+            if (heldParts.has(key)) throw new Error('Duplicate current part membership.');
+            heldParts.add(key);
+          }
+          const availability = partition.availability;
+          if (
+            availability !== undefined &&
+            (!hasRecordFields(availability, ['state', 'at']) ||
+              availability.state !== 'unchecked' ||
+              typeof availability.at !== 'number' ||
+              !Number.isFinite(availability.at) ||
+              availability.at < 0 ||
+              availability.at > world.simTime)
+          )
+            throw new Error('Invalid current availability.');
+          if (partition.recording)
+            validateTemporalCurrentGroupCheckpoint(
+              partition.recording,
+              world.simTime,
+              partition.members,
+            );
+          const context = canonicalJson([
+            grant,
+            partition.times,
+            partition.revision,
+            partition.receivedAt,
+            partition.receivedOrder,
+            partition.confirmedRevision,
+            partition.frameRef,
+            partition.check,
+            availability,
+            partition.recording,
+          ]);
+          if (contexts.has(context)) throw new Error('Duplicate current receipt partition.');
+          contexts.add(context);
+        }
+        used.add(grant.original);
+        for (const [kind, field] of Object.entries(group.received.fields)) {
+          if (
+            kinds.has(currentFieldIdentity(kind, grant.channel)) ||
             !hasRecordFields(
               field,
-              ['id', 'revision', 'value', 'originalOrdinal'],
+              ['id', 'value', 'originalOrdinal'],
               [
                 'bodyLeaseId',
                 'localSubject',
@@ -366,10 +412,10 @@ export function validatePerceptionEvidenceState(
               ],
             ) ||
             kind !== field.value.kind ||
-            group.check !== currentFacetCheckScope(kind, group.grant.modality)
+            currentFieldParts(field).some((part) => !heldParts.has(JSON.stringify([kind, part])))
           )
             throw new Error('Invalid current group membership.');
-          kinds.add(currentFieldIdentity(kind, group.grant.channel));
+          kinds.add(currentFieldIdentity(kind, grant.channel));
         }
       }
       if (

@@ -204,6 +204,7 @@ import { resolveKnownPlaceMove } from './known-places.js';
 import type { StoryJob } from './history.js';
 import {
   prepareHistoryEdit,
+  historyEditPredecessorsCurrent,
   mergeHistoryEditResidency,
   type HistoryEditSelection,
   type PreparedHistoryEdit,
@@ -329,7 +330,6 @@ import {
   createBaseStartingWorld,
   baseWorldInitialConstructionSeeds,
   updateWorld,
-  captureCurrentGeometrySupport,
   appendedEventCount,
   freezeWorld,
   forgetExperience,
@@ -2191,13 +2191,16 @@ export class WorldService {
             }),
           );
           this.persistedRevision = revision;
-          this.persistedState = snapshot;
-          this.persistedEvents = snapshot.world.events;
+          // Adopt the same canonical temporal residency in the durable baseline;
+          // newer unsaved operations are rebased separately below.
+          const durableSnapshot = this.store.releaseHistory?.(snapshot) ?? snapshot;
+          this.persistedState = durableSnapshot;
+          this.persistedEvents = durableSnapshot.world.events;
           this.persistedMemorySources = {
-            memories: snapshot.world.memories,
-            experience: snapshot.world.experience,
-            receivedValues: snapshot.world.receivedValues,
-            perceptionEvidence: snapshot.world.perceptionEvidence,
+            memories: durableSnapshot.world.memories,
+            experience: durableSnapshot.world.experience,
+            receivedValues: durableSnapshot.world.receivedValues,
+            perceptionEvidence: durableSnapshot.world.perceptionEvidence,
           };
 
           this.store.memories?.acceptedSettled(snapshot.world.id, pending.through);
@@ -2367,6 +2370,14 @@ export class WorldService {
     await this.saveRequestedProgress();
     await this.backgroundSave?.done;
     if (this.storageError) throw new Error(this.storageError);
+    // Normalize the acknowledged native prefix to exact physical pages before
+    // an editor adopts a complete durable predecessor. Hydrated edits then
+    // replace canonical page identities instead of native append containers.
+    if (this.store.releasedHistory) {
+      const original = this.saved,
+        released = this.store.releasedHistory(original);
+      if (released !== original) this.installWorld(released, original.world, undefined);
+    }
     // Residency can change while a prefix saves; it is not a new gameplay cut.
     // Rebind only after every accepted cut is durable and mutation is excluded.
     if (this.persistedState && this.saved !== this.persistedState)
@@ -2421,16 +2432,17 @@ export class WorldService {
       oldHistory = oldTemporal?.actors[actorId],
       newHistory = newTemporal?.actors[actorId];
     const chunksUnchanged =
-      oldHistory?.chunks === newHistory?.chunks ||
-      (!oldHistory?.chunks.length && !newHistory?.chunks.length) ||
+      oldHistory?.pages === newHistory?.pages ||
+      (!oldHistory?.pages.length && !newHistory?.pages.length) ||
       (!includeAppends &&
         (!oldHistory ||
           (!!newHistory &&
-            newHistory.chunks.length >= oldHistory.chunks.length &&
-            oldHistory.chunks.every((chunk, index) => {
-              const next = newHistory.chunks[index]!;
+            newHistory.pages.length >= oldHistory.pages.length &&
+            oldHistory.pages.every((chunk, index) => {
+              const next = newHistory.pages[index]!;
               return (
-                chunk === next || (chunk.id === next.id && unchanged(chunk.entries, next.entries))
+                chunk === next ||
+                (chunk.id === next.id && unchanged(chunk.operations, next.operations))
               );
             }))));
     const supportsUnchanged =
@@ -2792,7 +2804,11 @@ export class WorldService {
       release!();
       this.pendingSourceEdits.delete(key);
     };
-    await this.flush();
+    const editCut = await this.mutate(async () => {
+      await this.flushAcceptedProgress();
+      return { state: this.saved, revision: this.persistedRevision };
+    }, true);
+    const original = editCut.state;
     if (privateActor && !this.mayInspectPrivate(privateActor.actorId, privateActor.scope)) {
       finish();
       return {
@@ -2801,7 +2817,6 @@ export class WorldService {
         message: 'Human-private character content is unavailable to this principal.',
       };
     }
-    const original = this.saved;
     const inputs = new Map(
       [...actors].map((actor) => [
         actor,
@@ -2813,8 +2828,17 @@ export class WorldService {
     );
     const prepared =
       this.store.records && this.store.adoptHistory
-        ? await prepareHistoryEdit(this.store.records.db, original, selection)
+        ? await prepareHistoryEdit(this.store.records.db, original, selection, editCut.revision)
         : { state: original, events: [], referencedEventIds: new Set<string>() };
+    if ('stale' in prepared && prepared.stale) {
+      if (!retainedDenial) finish();
+      return {
+        ok: false,
+        code: 'stale',
+        message: 'The world changed while preparing this edit. Refresh and try again.',
+        revision: this.viewRevision,
+      };
+    }
     freezeWorld(prepared.state.world);
     const proposed = prepare(prepared.state.world, prepared);
     if (!('transition' in proposed)) {
@@ -2850,6 +2874,16 @@ export class WorldService {
             input.privacy !== this.world.experience?.privacyRevisions?.[actor],
         ) ||
         (privateActor && !this.mayInspectPrivate(privateActor.actorId, privateActor.scope))
+      )
+        return {
+          ok: false,
+          code: 'stale',
+          message: 'The world changed while preparing this edit. Refresh and try again.',
+          revision: this.viewRevision,
+        };
+      if (
+        this.store.records &&
+        !(await historyEditPredecessorsCurrent(this.store.records.db, worldId, prepared))
       )
         return {
           ok: false,
@@ -3145,25 +3179,6 @@ export class WorldService {
     this.assertScope(scope, scope.actorId === actorId ? 'play' : 'inspect');
     if (!stillPrivate()) throw new Error('Private action history changed during inspection.');
     return result;
-  }
-
-  /** Close only already-received terrain support before a private decision read.
-   * This records the existing interval; it neither looks again nor advances time. */
-  async prepareCognitionEvidence(actorId: string): Promise<void> {
-    this.assertSourceReadsAvailable(actorId);
-    await this.mutate(async () => {
-      await this.ready;
-      const world = updateWorld(
-        this.world,
-        (draft) => captureCurrentGeometrySupport(draft, actorId),
-        { retainNativeValues: true },
-      );
-      if (
-        world !== this.world &&
-        !(await this.commit({ ...this.saved, world }, undefined, 'append'))
-      )
-        throw new Error(this.storageError ?? 'Received terrain support could not be saved.');
-    });
   }
 
   async prepareActivityLearning(actorId: string) {

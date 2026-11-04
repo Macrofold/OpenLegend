@@ -1,5 +1,5 @@
 import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-index.js';
-import { temporalChunkReferences } from './temporal-frames.js';
+import { temporalPageReferences } from './temporal-frames.js';
 import { nextId } from './data.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { readOnlyDraftView, touchNativeEvidence, recordMapChangesBetween } from './draft.js';
@@ -13,7 +13,7 @@ import type {
   ReceivedObservationHeader,
 } from './perception-evidence.js';
 import type { TemporalFragment } from './temporal-evidence.js';
-import type { CurrentContact } from './perception-current.js';
+import { currentContactContentIdentity, type CurrentContact } from './perception-current.js';
 import {
   orderedRecordGet,
   orderedRecordChangedKeys,
@@ -103,7 +103,10 @@ export function retainReceivedValue(
       valueBytes: encoded.bytes,
     };
   // Inline small changing measurements; sharing rich/stable bodies still pays for itself.
-  if (held.kind !== 'body' && encoded.bytes <= 192)
+  if (
+    ['body-pose', 'location', 'observation-frame', 'observation-header'].includes(held.kind) ||
+    (held.kind !== 'body' && encoded.bytes <= 192)
+  )
     return {
       reference: immutableDataSnapshot(held, readOnlyDraftView),
       addedBytes: 0,
@@ -255,17 +258,29 @@ function referenceDelta(previous?: CountedReferences) {
 }
 /** One current contact owns only its held groups and their acquired originals. */
 export function receivedContactValueReferences(input: CurrentContact): ReceivedValueReferences {
-  const contact = readOnlyDraftView(readOnlyDraftView(input).content),
-    cached = contactReferences.get(contact);
-  if (cached) return cached;
-  const refs = new Set<string>();
-  for (const source of Object.values(readOnlyDraftView(contact.originals)))
-    for (const id of receivedObservationValueReferences(readOnlyDraftView(source))) refs.add(id);
-  for (const raw of readOnlyDraftView(contact.groups))
-    for (const field of Object.values(readOnlyDraftView(readOnlyDraftView(raw).fields)))
-      for (const id of receivedFacetValueReferences(readOnlyDraftView(field).value)) refs.add(id);
-  if (isImmutableData(contact)) contactReferences.set(contact, refs);
-  return refs;
+  const contact = readOnlyDraftView(input),
+    content = readOnlyDraftView(contact.content),
+    identity = currentContactContentIdentity(contact);
+  let stable = contactReferences.get(identity);
+  if (!stable) {
+    const refs = new Set<string>();
+    for (const source of Object.values(readOnlyDraftView(content.originals)))
+      for (const id of receivedObservationValueReferences(readOnlyDraftView(source))) refs.add(id);
+    for (const raw of readOnlyDraftView(content.groups))
+      for (const field of Object.values(readOnlyDraftView(readOnlyDraftView(raw).received.fields)))
+        for (const id of receivedFacetValueReferences(readOnlyDraftView(field).value)) refs.add(id);
+    stable = refs;
+    if (isImmutableData(contact) && isImmutableData(identity))
+      contactReferences.set(identity, refs);
+  }
+  // A check can replace its receiver frame without replacing acquired content.
+  // Stable payload discovery reuses the mutation owner's identity certificate.
+  let result: Set<string> | undefined;
+  for (const group of readOnlyDraftView(content.groups))
+    for (const partition of readOnlyDraftView(group.metadata))
+      if (typeof partition.frameRef === 'string' && !stable.has(partition.frameRef))
+        (result ??= new Set(stable)).add(partition.frameRef);
+  return result ?? stable;
 }
 function frameReferences(frame: ReceivedValueReference | undefined) {
   return frame ? collectReferences(typeof frame === 'string' ? [frame] : []) : undefined;
@@ -395,16 +410,16 @@ export function referencedReceivedValues(world: WorldState): ReceivedValueRefere
       actor = held && readOnlyDraftView(held);
     const keys: string[] = [];
     if (actor) {
-      for (const input of readOnlyDraftView(actor.chunks)) {
+      for (const input of readOnlyDraftView(actor.pages)) {
         const chunk = readOnlyDraftView(input);
         const key = JSON.stringify(['temporal', actorId, chunk.id]),
           old = objectIndexGet(owners, key);
         keys.push(key);
         updateOwner(
           key,
-          old?.identity === chunk.entries
+          old?.identity === chunk.operations
             ? old
-            : { identity: chunk.entries, references: temporalChunkReferences(chunk) },
+            : { identity: chunk.operations, references: temporalPageReferences(chunk) },
         );
       }
     }

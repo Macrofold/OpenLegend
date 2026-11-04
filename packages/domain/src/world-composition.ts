@@ -78,6 +78,7 @@ import {
   baseAttentionCapacity,
   baseAttributeAffectsObservation,
   baseRecordingReason,
+  baseAccountRetentionSelection,
 } from './worlds/base/attention.js';
 import type { RecordingInput } from './attention.js';
 import { sightingNarration } from './worlds/base/event-presentation.js';
@@ -94,6 +95,13 @@ export function selectedAttentionPolicy(world: WorldState) {
 }
 export function selectedTemporalPolicy(world: WorldState) {
   return selectedAttentionPolicy(world).retention;
+}
+export function selectedAccountRetentionSelection(
+  world: WorldState,
+  entry: import('./types.js').ExperienceEntry,
+) {
+  selectedCreationProfileForWorld(world);
+  return baseAccountRetentionSelection(entry);
 }
 export function selectedRecordingReason(world: WorldState, input: RecordingInput) {
   selectedCreationProfileForWorld(world);
@@ -192,11 +200,11 @@ export function selectedObserverIdentityKnowledge(
 export function selectedRequestRecentIndividualRepair(
   world: WorldState,
   actorId: string,
-  chunkOrder: number,
+  pageOrder: number,
   ids: readonly string[],
 ): void {
   selectedCreationProfileForWorld(world);
-  requestRecentIndividualRepair(world, actorId, chunkOrder, ids);
+  requestRecentIndividualRepair(world, actorId, pageOrder, ids);
 }
 export function selectedRepairRecentIndividualReferences(
   world: WorldState,

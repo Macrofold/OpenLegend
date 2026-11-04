@@ -12,16 +12,16 @@ import {
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
-import { accountRetentionMetadata } from './retention-record-metadata.js';
+import { accountRetentionMetadata, accountSelectionMetadata } from './retention-record-metadata.js';
 import {
   receivedRecordReferences,
   receivedCurrentOwnerTables,
 } from './received-record-references.js';
 import {
-  encodeEvidenceOwner,
-  decodeEvidenceOwner,
-  serializeEvidenceSegment,
-} from './evidence-segments.js';
+  encodeTemporalPage,
+  decodeTemporalPageRow,
+  serializeTemporalPage,
+} from './temporal-page-storage.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
@@ -32,7 +32,10 @@ export interface RecordNode {
   /** This map's key is its personal actor; descendants inherit that ownership. */
   actorOwner?: boolean;
   children?: Record<string, RecordCollection>;
-  columns?: Record<string, { sql: string; value: (value: JsonRecord, path: string[]) => unknown }>;
+  columns?: Record<
+    string,
+    { sql: string; value: (value: JsonRecord, path: string[], world?: WorldState) => unknown }
+  >;
   indexes?: string[][];
   uniqueIndexes?: string[][];
   constraints?: string[];
@@ -317,23 +320,13 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         privacyRevisions: actorMap('mind_privacy_revisions'),
         temporal: one('mind_temporal_state', {
           actors: actorMap('mind_temporal_actors', {
-            chunks: {
-              ...list('mind_temporal_chunks', 'id'),
+            pages: {
+              ...list('mind_temporal_pages', 'id'),
               orderKey: 'order',
               node: {
-                table: 'mind_temporal_chunks',
-                children: {
-                  // Every decoded chunk owns its complete batch collection, even when
-                  // the actor's other chunks are cold. New suffix IDs are absent.
-                  entries: {
-                    ...list('mind_temporal_segments', 'start'),
-                    orderKey: 'start',
-                    complete: true,
-                    node: { table: 'mind_temporal_segments', serialize: serializeEvidenceSegment },
-                  },
-                },
-                encode: (value, previous, world) => encodeEvidenceOwner(value, previous, world),
-                decode: (value) => decodeEvidenceOwner(value),
+                table: 'mind_temporal_pages',
+                decodeRow: decodeTemporalPageRow,
+                serialize: serializeTemporalPage,
               },
             },
             supports: map('mind_temporal_supports'),
@@ -532,6 +525,34 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
                 value,
               } as unknown as ExperienceEntry),
       },
+      ...Object.fromEntries(
+        [
+          ['policy_priority', 'BIGINT NOT NULL'],
+          ['active_or_protected', 'BIGINT NOT NULL'],
+          ['next_due_at', 'DOUBLE PRECISION'],
+        ].map(([name, sql]) => [
+          name!,
+          {
+            sql: sql!,
+            value: (value: JsonRecord, _path: string[], world?: WorldState) => {
+              if (!world)
+                throw new Error('Account selection projection requires its selected world.');
+              const source =
+                table === 'mind_awareness'
+                  ? 'awareness'
+                  : table === 'mind_summaries'
+                    ? 'summary'
+                    : 'memory';
+              return accountSelectionMetadata(world, {
+                source,
+                value,
+              } as unknown as ExperienceEntry)[
+                name as 'policy_priority' | 'active_or_protected' | 'next_due_at'
+              ];
+            },
+          },
+        ]),
+      ),
       retention_reason: {
         sql: 'TEXT',
         value: (value) =>
@@ -595,7 +616,6 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
     },
     [
       ['actor_id', 'at', 'source_id'],
-      ['actor_id', 'retention_class', 'at', 'source_id'],
       ['actor_id', 'source_id'],
       ...(table === 'mind_memories' ? [['actor_id', 'event_id']] : []),
       ...(table === 'mind_awareness'
@@ -632,99 +652,115 @@ columns(
     ['actor_id', 'slot'],
   ],
 );
-const receiptIndex = (value: JsonRecord) =>
-  (
-    value['storage'] as {
-      index: Pick<
-        import('./evidence-segments.js').ReceiptSegmentIndex,
-        'firstOrder' | 'lastOrder' | 'firstMeasured' | 'lastSupported'
-      >;
-    }
-  ).index;
+const pageStorage = (value: JsonRecord, world: WorldState | undefined) => {
+  if (!world) throw new Error('Temporal page projection requires its captured world.');
+  return encodeTemporalPage(value as unknown as import('@open-legend/domain').TemporalPage, world);
+};
 columns(
-  'mind_temporal_chunks',
+  'mind_temporal_pages',
   {
-    chunk_order: { ...numberColumn('order'), sql: 'BIGINT NOT NULL' },
+    page_order: { ...numberColumn('order'), sql: 'BIGINT NOT NULL' },
     retired_revision: { sql: 'BIGINT', value: () => null },
     actor_id: { sql: 'TEXT NOT NULL', value: (value) => value['actorId'] },
     source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' },
     physical_life: { ...numberColumn('physicalLife'), sql: 'BIGINT NOT NULL' },
     receipt_epoch: { ...textColumn('epoch'), sql: 'TEXT NOT NULL' },
+    kind: {
+      sql: 'TEXT NOT NULL',
+      value: (value) => String((value['operations'] as Array<{ kind: string }>)[0]!.kind),
+    },
     first_ordinal: { ...numberColumn('fromOrdinal'), sql: 'BIGINT NOT NULL' },
     last_ordinal: { ...numberColumn('throughOrdinal'), sql: 'BIGINT NOT NULL' },
     first_order: {
       sql: 'BIGINT NOT NULL',
-      value: (value) => receiptIndex(value).firstOrder,
+      value: (value, _path, world) => pageStorage(value, world).metadata.firstOrder,
     },
     last_order: {
       sql: 'BIGINT NOT NULL',
-      value: (value) => receiptIndex(value).lastOrder,
+      value: (value, _path, world) => pageStorage(value, world).metadata.lastOrder,
     },
-    first_at: { ...numberColumn('fromAt'), sql: 'DOUBLE PRECISION NOT NULL' },
-    last_at: { ...numberColumn('throughAt'), sql: 'DOUBLE PRECISION NOT NULL' },
-    first_measured_at: {
+    first_at: {
       sql: 'DOUBLE PRECISION NOT NULL',
-      value: (value) => receiptIndex(value).firstMeasured,
+      value: (value, _path, world) => pageStorage(value, world).metadata.firstAt,
+    },
+    last_at: {
+      sql: 'DOUBLE PRECISION NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.lastAt,
+    },
+    last_received_at: {
+      sql: 'DOUBLE PRECISION NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.lastReceivedAt,
+    },
+    first_measured_at: {
+      sql: 'DOUBLE PRECISION',
+      value: (value, _path, world) => pageStorage(value, world).metadata.firstMeasured ?? null,
     },
     last_supported_at: {
-      sql: 'DOUBLE PRECISION NOT NULL',
-      value: (value) => receiptIndex(value).lastSupported,
+      sql: 'DOUBLE PRECISION',
+      value: (value, _path, world) => pageStorage(value, world).metadata.lastSupported ?? null,
     },
     logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
     receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
+    encoded_bytes: {
+      sql: 'BIGINT NOT NULL',
+      value: (value) => Buffer.byteLength(serializeTemporalPage(value)),
+    },
+    subjects: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.subjects,
+    },
+    member_keys: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.members,
+    },
+    value_refs: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.references,
+    },
+    source_ids: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.sourceIds,
+    },
+    individual_ids: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.individualIds,
+    },
+    occurrence_source_ids: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.occurrenceSourceIds,
+    },
+    occurrence_individual_ids: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).metadata.occurrenceIndividualIds,
+    },
+    lookup_buckets: {
+      sql: 'SMALLINT[] NOT NULL',
+      value: (value, _path, world) => pageStorage(value, world).lookupBuckets,
+    },
+    receipt_ordinals: {
+      sql: 'BIGINT[] NOT NULL',
+      value: (value) => [
+        ...new Set(
+          (value as unknown as import('@open-legend/domain').TemporalPage).operations.flatMap(
+            (op) => (op.kind === 'check' ? [] : [op.receipt.ordinal]),
+          ),
+        ),
+      ],
+    },
+    spatial_context: {
+      sql: 'BIGINT NOT NULL',
+      value: (value, _path, world) => Number(pageStorage(value, world).metadata.spatialContext),
+    },
   },
   [
-    ['actor_id', 'first_at', 'first_order', 'receipt_epoch', 'first_ordinal'],
+    // Match both directions of the exact-member neighbor seek through its stable tie.
+    ['actor_id', 'physical_life', 'receipt_epoch', 'kind', 'first_at', 'first_order', 'id'],
     ['actor_id', 'position'],
     ['actor_id', 'source_id'],
     ['actor_id', 'physical_life', 'receipt_epoch', 'first_ordinal'],
     ['actor_id', 'last_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
+    ['actor_id', 'last_received_at', 'page_order', 'last_ordinal'],
     ['actor_id', 'last_supported_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
-  ],
-);
-const segmentReceiptIndex = (value: JsonRecord) =>
-  value['index'] as import('./evidence-segments.js').ReceiptSegmentIndex;
-columns(
-  'mind_temporal_segments',
-  {
-    actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[4] },
-    first_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => value['start'] },
-    last_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => Number(value['end']) - 1 },
-    subjects: { sql: 'TEXT[] NOT NULL', value: (value) => segmentReceiptIndex(value).subjects },
-    source_refs: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value) => segmentReceiptIndex(value).sourceRefs,
-    },
-    value_refs: { sql: 'TEXT[] NOT NULL', value: (value) => segmentReceiptIndex(value).references },
-    source_ids: { sql: 'TEXT[] NOT NULL', value: (value) => segmentReceiptIndex(value).sourceIds },
-    individual_ids: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value) => segmentReceiptIndex(value).individualIds,
-    },
-    occurrence_source_ids: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value) => segmentReceiptIndex(value).occurrenceSourceIds,
-    },
-    occurrence_individual_ids: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value) => segmentReceiptIndex(value).occurrenceIndividualIds,
-    },
-    lookup_buckets: {
-      sql: 'SMALLINT[] NOT NULL',
-      value: (value) => segmentReceiptIndex(value).lookupBuckets,
-    },
-    receipt_ordinals: {
-      sql: 'BIGINT[] NOT NULL',
-      value: (value) => segmentReceiptIndex(value).ordinals,
-    },
-    spatial_context: {
-      sql: 'BIGINT NOT NULL',
-      value: (value) => Number(segmentReceiptIndex(value).spatialContext),
-    },
-  },
-  [
-    ['actor_id', 'parent_id', 'first_ordinal'],
-    ['actor_id', 'spatial_context', 'parent_id'],
   ],
 );
 columns(
@@ -844,9 +880,7 @@ RECORD_NODES.get('activity_occurrences')!.constraints = ['CHECK (octet_length(pa
 
 /** Physical debris is never canonical evidence, including checkpoint/startup reads. */
 export function liveEvidenceRowSql(table: string, alias = 't'): string {
-  if (table === 'mind_temporal_chunks') return `${alias}.retired_revision IS NULL`;
-  if (table === 'mind_temporal_segments')
-    return `EXISTS(SELECT 1 FROM mind_temporal_chunks live_parent WHERE live_parent.world_id=${alias}.world_id AND live_parent.id=${alias}.parent_id AND live_parent.retired_revision IS NULL)`;
+  if (table === 'mind_temporal_pages') return `${alias}.retired_revision IS NULL`;
   if (table === 'mind_perception_values')
     return `EXISTS(SELECT 1 FROM received_value_uses live_use WHERE live_use.world_id=${alias}.world_id AND live_use.value_id=${alias}.source_id)`;
   return '';

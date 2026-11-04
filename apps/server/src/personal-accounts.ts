@@ -4,24 +4,17 @@ import {
   receivedEventEvidence,
   receivedEventAwareness,
   temporalReceiptId,
-  temporalChunkReceipt,
-  TEMPORAL_CHANGE_DICTIONARY_FIELDS,
-  TEMPORAL_CHANGE_DICTIONARY_ARRAY_FIELDS,
-  TEMPORAL_FACET_DICTIONARY_FIELDS,
-  TEMPORAL_FACET_REFERENCE_FIELDS,
-  TEMPORAL_DICTIONARY_REFERENCE_FIELDS,
-  TEMPORAL_FIELD,
+  temporalPageReceipt,
   canonicalJson,
   type Awareness,
   type EventEvidence,
   type TemporalReceipt,
   type TemporalReceiptLocator,
   type TemporalValue,
-  type TemporalFrameOwner,
+  type TemporalPage,
 } from '@open-legend/domain';
 import type { StorySource } from './history.js';
-import { temporalChunkRecordId } from './temporal-storage.js';
-import { evidenceEncodedBytesSql, receivedValueSql } from './evidence-segments.js';
+import { evidenceEncodedBytesSql, receivedValueSql } from './temporal-page-storage.js';
 import type { RecordChanges } from './world-records.js';
 import type { SqlDatabase } from './store.js';
 import { sqlRowBatches } from './sql-rows.js';
@@ -30,27 +23,27 @@ export const personalAccountRevision = (payload: string) =>
   createHash('sha256').update(payload).digest('hex');
 
 /** Logical retirement releases personal grants now; physical chunk collection may
- * happen later. Shortened surviving chunks release only their removed receipts.
+ * happen later. Shortened surviving pages release only their removed receipts.
  * Semantic revocation and independent retained support have their own owners. */
 export async function retireTemporalStoryAccounts(
   db: SqlDatabase,
   worldId: string,
   changes: RecordChanges,
 ): Promise<void> {
-  const removedChunks = new Set(changes.deletes.get('mind_temporal_chunks') ?? []);
+  const removedChunks = new Set(changes.deletes.get('mind_temporal_pages') ?? []);
   const changedChunks = new Set(
-    (changes.writes.get('mind_temporal_segments') ?? [])
+    (changes.writes.get('mind_temporal_pages') ?? [])
       .filter((row) => !row.create && row.logicalRemoval !== false)
-      .map((row) => row.parent),
+      .map((row) => row.id),
   );
-  for (const id of changes.deletes.get('mind_temporal_segments') ?? [])
-    changedChunks.add(JSON.stringify((JSON.parse(id) as string[]).slice(0, -2)));
   for (const id of removedChunks) changedChunks.delete(id);
   for (const rows of sqlRowBatches([...removedChunks].map((id) => [id])))
     await db
       .prepare(
-        `DELETE FROM history_perspectives
-         WHERE world_id=? AND temporal_chunk_id=ANY(?::text[])`,
+        `DELETE FROM history_perspectives p USING mind_temporal_pages c
+      WHERE c.world_id=? AND c.id=ANY(?::text[]) AND p.world_id=c.world_id AND p.actor_id=c.actor_id
+        AND p.temporal_life=c.physical_life AND p.temporal_epoch=c.receipt_epoch
+        AND p.temporal_ordinal=ANY(c.receipt_ordinals)`,
       )
       .run(
         worldId,
@@ -60,11 +53,12 @@ export async function retireTemporalStoryAccounts(
     await db
       .prepare(
         `DELETE FROM history_perspectives p
-       WHERE p.world_id=? AND p.temporal_chunk_id=ANY(?::text[])
-         AND p.payload::jsonb#>>'{account,kind}'='temporal'
-         AND NOT EXISTS (SELECT 1 FROM mind_temporal_segments s
-           WHERE s.world_id=p.world_id AND s.parent_id=p.temporal_chunk_id
-             AND s.receipt_ordinals @> ARRAY[(p.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])`,
+      WHERE p.world_id=? AND p.temporal_ordinal IS NOT NULL
+        AND EXISTS(SELECT 1 FROM mind_temporal_pages changed WHERE changed.world_id=p.world_id AND changed.id=ANY(?::text[])
+          AND changed.actor_id=p.actor_id AND changed.physical_life=p.temporal_life AND changed.receipt_epoch=p.temporal_epoch)
+        AND NOT EXISTS(SELECT 1 FROM mind_temporal_pages c WHERE c.world_id=p.world_id AND c.actor_id=p.actor_id
+          AND c.physical_life=p.temporal_life AND c.receipt_epoch=p.temporal_epoch
+          AND c.retired_revision IS NULL AND c.receipt_ordinals @> ARRAY[p.temporal_ordinal])`,
       )
       .run(
         worldId,
@@ -132,7 +126,7 @@ interface TemporalAccountReference {
   revision: string;
   receipt: TemporalReceiptLocator;
   receivedAt: number;
-  chunkOrder: number;
+  pageOrder: number;
   bytes: number;
 }
 type AccountReference = PersonalAccountReference | TemporalAccountReference;
@@ -171,7 +165,7 @@ export function encodeTemporalStoryAccount(
     revision: personalAccountRevision(canonicalJson(source.evidence)),
     receipt: temporal.receipt,
     receivedAt: temporal.receivedAt,
-    chunkOrder: temporal.chunkOrder,
+    pageOrder: temporal.pageOrder,
     bytes: temporal.bytes,
   };
   const stored: StoredStorySource = {
@@ -186,7 +180,6 @@ export function encodeTemporalStoryAccount(
     payload: JSON.stringify(stored),
     account,
     body: undefined,
-    chunkRecordId: temporalChunkRecordId(temporal.receipt.actorId, temporal.chunkId),
   };
 }
 
@@ -205,11 +198,11 @@ export function storyAccountAvailableSql(alias = 'p'): string {
     revision = `${alias}.payload::jsonb#>>'{account,revision}'`;
   return `(${narrationSourceUnrevokedSql(alias)} AND (EXISTS (SELECT 1 FROM mind_awareness a WHERE ${kind}='awareness' AND a.world_id=${alias}.world_id AND a.actor_id=${alias}.actor_id AND a.source_id=${alias}.event_id AND a.account_revision=${revision})
     OR EXISTS (SELECT 1 FROM mind_source_versions v WHERE v.world_id=${alias}.world_id AND v.actor_id=${alias}.actor_id AND v.source_kind=${kind} AND v.source_id=${alias}.event_id AND v.revision=${revision})
-    OR EXISTS (SELECT 1 FROM mind_temporal_chunks c JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
-      WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.id=${alias}.temporal_chunk_id AND c.retired_revision IS NULL
+    OR EXISTS (SELECT 1 FROM mind_temporal_pages c
+      WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.retired_revision IS NULL
         AND c.actor_id=${alias}.actor_id AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::bigint
         AND c.receipt_epoch=${alias}.payload::jsonb#>>'{account,receipt,epoch}'
-        AND s.receipt_ordinals @> ARRAY[(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])))`;
+        AND c.receipt_ordinals @> ARRAY[(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])))`;
 }
 
 /** One correlated indexed body lookup per already-selected perspective. Exact actor,
@@ -218,24 +211,6 @@ export function storyAccountAvailableSql(alias = 'p'): string {
 export function storyAccountSql(alias = 'p'): string {
   const revision = `${alias}.payload::jsonb #>> '{account,revision}'`;
   const kind = `${alias}.payload::jsonb #>> '{account,kind}'`;
-  const scalar = TEMPORAL_CHANGE_DICTIONARY_FIELDS.map(
-    (field) => `SELECT (r.change->>'${field}')::bigint AS ordinal FROM selected r`,
-  );
-  const arrays = TEMPORAL_CHANGE_DICTIONARY_ARRAY_FIELDS.map(
-    (field) =>
-      `SELECT value::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements_text(r.change->'${field}')`,
-  );
-  const facets = TEMPORAL_FACET_DICTIONARY_FIELDS.map(
-    (field) =>
-      `SELECT (f.value->>${field})::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') f(value)`,
-  );
-  const references = TEMPORAL_FACET_REFERENCE_FIELDS.map(
-    (field) =>
-      `SELECT (f.value#>>'{${field}}')::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') f(value)`,
-  );
-  const dictionaryLinks = Object.entries(TEMPORAL_DICTIONARY_REFERENCE_FIELDS)
-    .flatMap(([kind, fields]) => Object.keys(fields).map((field) => `('${kind}','${field}')`))
-    .join(',');
   return `(SELECT account.payload FROM (
     SELECT a.payload FROM mind_awareness a WHERE ${kind}='awareness'
       AND a.world_id=${alias}.world_id AND a.actor_id=${alias}.actor_id
@@ -245,47 +220,21 @@ export function storyAccountSql(alias = 'p'): string {
       AND v.actor_id=${alias}.actor_id AND v.source_kind=${kind}
       AND v.source_id=${alias}.event_id AND v.revision=${revision}
     UNION ALL
-    SELECT body.payload FROM mind_temporal_chunks c CROSS JOIN LATERAL (
-      WITH RECURSIVE selected AS MATERIALIZED (
-        SELECT e.value AS change FROM mind_temporal_segments s
-        CROSS JOIN LATERAL json_array_elements(s.payload::json->'values') e(value)
-        WHERE s.world_id=c.world_id AND s.parent_id=c.id
-          AND s.receipt_ordinals @> ARRAY[(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint]
-          AND e.value->>'kind'='change'
-          AND (e.value->>'receipt')::bigint=(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint
-      ), needed AS (
-        SELECT (r.change->>'frame')::bigint AS ordinal FROM selected r
-        UNION ${[...scalar, ...arrays, ...facets, ...references].join(' UNION ')}
-      ), closure(ordinal) AS (
-        SELECT ordinal FROM needed WHERE ordinal IS NOT NULL
-        UNION
-        SELECT (e.entry#>>ARRAY['value','1',link.field])::bigint
-        FROM closure n JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
-          AND s.first_ordinal<=n.ordinal AND s.last_ordinal>=n.ordinal
-        CROSS JOIN LATERAL (SELECT s.payload::json->'values'->(n.ordinal-s.first_ordinal)::int AS entry) e
-        JOIN (VALUES ${dictionaryLinks}) link(kind,field)
-          ON e.entry->>'kind'='dictionary' AND e.entry#>>'{value,0}'=link.kind
-      ), dependencies AS MATERIALIZED (
-        SELECT s.payload::json->'values'->(n.ordinal-s.first_ordinal)::int AS entry
-        FROM closure n JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
-          AND s.first_ordinal<=n.ordinal AND s.last_ordinal>=n.ordinal
-        WHERE n.ordinal IS NOT NULL
-      ), entries AS (
-        SELECT entry FROM dependencies UNION ALL SELECT change AS entry FROM selected
-      ), selected_values AS (
-        SELECT f.ordinal,${receivedValueSql('c.world_id', "d.entry->'value'->1")} AS value
-        FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') WITH ORDINALITY f(value,ordinal)
-        JOIN dependencies d ON (d.entry->>'ordinal')::bigint=(f.value#>>'{${TEMPORAL_FIELD.value}}')::bigint
-      ) SELECT json_build_object('owner',json_build_object(
-          'id',c.source_id,'actorId',c.actor_id,'physicalLife',c.physical_life,'epoch',c.receipt_epoch,'order',c.chunk_order,
-          'entries',(SELECT json_agg(entry ORDER BY (entry->>'ordinal')::bigint) FROM entries)),
-          'values',COALESCE((SELECT json_agg(value ORDER BY ordinal) FROM selected_values WHERE value->>'kind' IN ('event','sound')),'[]'::json))::text AS payload
-      WHERE EXISTS (SELECT 1 FROM selected)
-    ) body
-      WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.id=${alias}.temporal_chunk_id
-      AND c.actor_id=${alias}.actor_id
-      AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::int
-      AND c.receipt_epoch=${alias}.payload::jsonb#>>'{account,receipt,epoch}'
+    SELECT json_build_object('owner',json_build_object(
+      'id',c.source_id,'actorId',c.actor_id,'physicalLife',c.physical_life,'epoch',c.receipt_epoch,
+      'order',c.page_order,'operations',json_build_array(o.operation),'declarations','[]'::json),
+      'values',COALESCE((SELECT json_agg(${receivedValueSql('c.world_id', "f.value->'valueRef'")})
+        FROM json_array_elements(o.operation->'receipt'->'facets') f(value)
+        WHERE ${receivedValueSql('c.world_id', "f.value->'valueRef'")}->>'kind' IN ('event','sound')),'[]'::json))::text AS payload
+      FROM mind_temporal_pages c
+      CROSS JOIN LATERAL (SELECT operation FROM json_array_elements(c.payload::json->'operations') operation
+        WHERE operation->>'kind'='occurrence'
+          AND (operation#>>'{receipt,ordinal}')::bigint=(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint) o
+      WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.actor_id=${alias}.actor_id
+        AND c.retired_revision IS NULL
+        AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::int
+        AND c.receipt_epoch=${alias}.payload::jsonb#>>'{account,receipt,epoch}'
+        AND c.receipt_ordinals @> ARRAY[(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint]
   ) account LIMIT 1)`;
 }
 
@@ -293,8 +242,9 @@ export function storyAccountSql(alias = 'p'): string {
  * may change physical addresses, so this charge must not be saved on a receipt. */
 export function storyTemporalPreparationBytesSql(alias = 'p'): string {
   return `((${alias}.payload::jsonb#>>'{account,bytes}')::bigint +
-    (SELECT ${evidenceEncodedBytesSql('c')} FROM mind_temporal_chunks c
-      WHERE c.world_id=${alias}.world_id AND c.id=${alias}.temporal_chunk_id
+    (SELECT ${evidenceEncodedBytesSql('c')} FROM mind_temporal_pages c
+      WHERE c.world_id=${alias}.world_id AND c.retired_revision IS NULL
+        AND c.receipt_ordinals @> ARRAY[(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint]
         AND c.actor_id=${alias}.actor_id
         AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::int
         AND c.receipt_epoch=${alias}.payload::jsonb#>>'{account,receipt,epoch}'))`;
@@ -304,25 +254,25 @@ function temporalStorySelection(stored: StoredStorySource, body: unknown) {
   if (stored.account.kind !== 'temporal' || typeof body !== 'string')
     throw new Error('Recent personal receipt is unavailable.');
   const selected = JSON.parse(body) as {
-    owner: TemporalFrameOwner & { order: number };
+    owner: TemporalPage;
     values: TemporalValue[];
   };
-  const receipt = temporalChunkReceipt(selected.owner, stored.account.receipt.ordinal);
+  const receipt = temporalPageReceipt(selected.owner, stored.account.receipt.ordinal);
   if (!receipt) throw new Error('Recent personal receipt is unavailable.');
-  return { receipt, values: selected.values, chunkOrder: selected.owner.order };
+  return { receipt, values: selected.values, pageOrder: selected.owner.order };
 }
 
 function decodeTemporalStoryAccount(
   stored: StoredStorySource & { account: TemporalAccountReference },
-  selected: { receipt: TemporalReceipt; values: TemporalValue[]; chunkOrder: number },
+  selected: { receipt: TemporalReceipt; values: TemporalValue[]; pageOrder: number },
 ): StorySource {
   if (
     !Number.isSafeInteger(stored.account.bytes) ||
     stored.account.bytes < 1 ||
     !Number.isFinite(stored.account.receivedAt) ||
     stored.account.receivedAt < 0 ||
-    !Number.isSafeInteger(stored.account.chunkOrder) ||
-    stored.account.chunkOrder < 0 ||
+    !Number.isSafeInteger(stored.account.pageOrder) ||
+    stored.account.pageOrder < 0 ||
     Buffer.byteLength(JSON.stringify({ receipt: selected.receipt, values: selected.values })) !==
       stored.account.bytes
   )
@@ -335,7 +285,7 @@ function decodeTemporalStoryAccount(
     receipt.epoch !== locator.epoch ||
     receipt.ordinal !== locator.ordinal ||
     receipt.at !== stored.account.receivedAt ||
-    selected.chunkOrder !== stored.account.chunkOrder ||
+    selected.pageOrder !== stored.account.pageOrder ||
     receipt.origin?.kind !== 'occurrence' ||
     receipt.origin.eventId !== stored.id
   )
@@ -407,13 +357,13 @@ export function storyTemporalReceipt(payload: string): TemporalReceiptLocator | 
 export function storyTemporalCut(
   payload: string,
 ):
-  | { receivedAt: number; chunkOrder: number; receipt: TemporalReceiptLocator; bytes: number }
+  | { receivedAt: number; pageOrder: number; receipt: TemporalReceiptLocator; bytes: number }
   | undefined {
   const stored = JSON.parse(payload) as StoredStorySource;
   return stored.account?.kind === 'temporal'
     ? {
         receivedAt: stored.account.receivedAt,
-        chunkOrder: stored.account.chunkOrder,
+        pageOrder: stored.account.pageOrder,
         receipt: stored.account.receipt,
         bytes: stored.account.bytes,
       }
@@ -440,7 +390,7 @@ export function storedStoryAccount(
   accounts: ReadonlyMap<string, string>,
   temporal?: {
     receipts: ReadonlyMap<string, TemporalReceipt>;
-    chunkOrders: ReadonlyMap<string, number>;
+    pageOrders: ReadonlyMap<string, number>;
     sources: Readonly<Record<string, import('@open-legend/domain').ReceivedValue>>;
   },
 ) {
@@ -454,7 +404,7 @@ export function storedStoryAccount(
       { ...source, account },
       {
         receipt,
-        chunkOrder: temporal!.chunkOrders.get(receipt.id)!,
+        pageOrder: temporal!.pageOrders.get(receipt.id)!,
         values: receipt.facets
           .map((ref) => receivedValueAt(temporal!.sources, ref))
           .flatMap((value) => (value?.kind === 'event' || value?.kind === 'sound' ? [value] : [])),

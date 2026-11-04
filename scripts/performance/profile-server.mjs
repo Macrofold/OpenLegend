@@ -130,7 +130,7 @@ function recentOwnerCensus(world) {
     id,
     bytes: actor.bytes,
     count: actor.count,
-    residentChunks: actor.chunks.length,
+    residentPages: actor.pages.length,
     releasedThrough: actor.releasedThrough ?? null,
     recordingGap: actor.recordingGap ? { ...actor.recordingGap } : null,
     accounts: actor.accounts
@@ -146,11 +146,11 @@ function recentOwnerCensus(world) {
       : null,
     nextAccountMaintenanceAt: actor.accounts?.nextDue ?? null,
   }));
-  const totals = { actors: actors.length, bytes: 0, count: 0, residentChunks: 0 };
+  const totals = { actors: actors.length, bytes: 0, count: 0, residentPages: 0 };
   for (const actor of actors) {
     totals.bytes += actor.bytes;
     totals.count += actor.count;
-    totals.residentChunks += actor.residentChunks;
+    totals.residentPages += actor.residentPages;
   }
   return { actors, totals };
 }

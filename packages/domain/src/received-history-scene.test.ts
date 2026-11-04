@@ -3,7 +3,7 @@ import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
 import { emptyEntities, entityGet, entitySet } from './entity-collection.js';
 import { setSpatialPosition } from './spatial-state.js';
 import { initializePerception } from './kernel.js';
-import { captureCurrentGeometrySupport, currentBodyObservation } from './perception-evidence.js';
+import { currentBodyObservation } from './perception-evidence.js';
 import { currentReceivedGeometry } from './received-geometry.js';
 import { captureTemporalReceiptPrefix, selectTemporalHistory } from './temporal-evidence.js';
 import { historicalSpatialMeasurements } from './received-history-scene.js';
@@ -114,8 +114,8 @@ it('measures retained body/edge history only through actually captured support i
     last.boundaries.some((edge) => (edge.measurement.endpointChange?.decreaseLower ?? 0) > 2),
   ).toBe(true);
   const support = last.boundaries[0]!.support;
-  if (!('entry' in support)) throw new Error('Expected the actual later issued terrain receipt.');
-  expect(history.entries[support.entry]!.receipt.at).toBe(3);
+  if (!('entry' in support)) throw new Error('Expected the original received terrain interval.');
+  expect(history.entries[support.entry]!.receipt.at).toBe(0);
   expect(history.entries[support.entry]!.receipt.facets[support.facet]).toMatchObject({
     measuredFrom: 0,
     measuredThrough: 0,
@@ -131,7 +131,15 @@ it('measures retained body/edge history only through actually captured support i
     { anchor: subject, from: 2, through: 2, radius: 30 },
     128,
   );
-  expect(earlier.samples.find((sample) => sample.at === 2)!.boundaries).toEqual([]);
+  const capturedBoundary = earlier.samples.find((sample) => sample.at === 2)!.boundaries[0];
+  expect(capturedBoundary).toBeDefined();
+  const capturedSupport = capturedBoundary!.support;
+  if (!('entry' in capturedSupport)) throw new Error('Expected captured received geometry.');
+  expect(earlierCut.entries[capturedSupport.entry]!.receipt.at).toBe(0);
+  expect(
+    earlierCut.entries[capturedSupport.entry]!.receipt.facets[capturedSupport.facet]!
+      .confirmedThrough,
+  ).toBe(2);
   const restored = JSON.parse(JSON.stringify(world));
   expect(
     historicalSpatialMeasurements(
@@ -150,18 +158,17 @@ it('measures retained body/edge history only through actually captured support i
   expect(exhausted.coverage).toBe('partial');
 });
 
-it('uses an ongoing received geometry interval sealed at the decision cut without looking again', () => {
+it('uses an ongoing received geometry interval at the decision cut without looking again', () => {
   const { world, bodies } = scene();
   const anchor = bodies[0]!,
     subject = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.track;
   world.simTime = 2;
   setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
-  captureCurrentGeometrySupport(world, PLAYER_ID);
+
   const prefix = captureTemporalReceiptPrefix(world, PLAYER_ID);
   const count = world.experience!.temporal!.actors[PLAYER_ID]!.count;
-  captureCurrentGeometrySupport(world, PLAYER_ID);
-  expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(count);
+
   const history = selectTemporalHistory(world, PLAYER_ID, {
     subjects: [subject],
     cut: prefix,
@@ -177,8 +184,9 @@ it('uses an ongoing received geometry interval sealed at the decision cut withou
   const sample = result.samples.find((sample) => sample.at === 2)!;
   expect(sample.boundaries.length).toBeGreaterThan(0);
   const source = sample.boundaries[0]!.support;
-  if (!('entry' in source)) throw new Error('Expected the actual sealed terrain receipt.');
-  expect(history.entries[source.entry]!.receipt.at).toBe(2);
+  if (!('entry' in source)) throw new Error('Expected the original received terrain interval.');
+  expect(history.entries[source.entry]!.receipt.at).toBe(0);
+  expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(count);
   expect(history.entries[source.entry]!.receipt.facets[source.facet]).toMatchObject({
     acquiredAt: 0,
     measuredFrom: 0,
@@ -187,7 +195,7 @@ it('uses an ongoing received geometry interval sealed at the decision cut withou
   });
 });
 
-it('refuses a counterpart position when actual changes share one timestamp without a common ordering sample', () => {
+it('pairs an actual common received phase and refuses unrelated same-time competing positions', () => {
   const { world, bodies } = scene();
   const anchor = bodies[0]!,
     other = bodies[1]!;
@@ -207,7 +215,9 @@ it('refuses a counterpart position when actual changes share one timestamp witho
   const positions = history.entries
     .filter((entry) => entry.receipt.subject === second)
     .flatMap((entry) =>
-      entry.values.flatMap((value) => (value.kind === 'body' ? value.body.position.x : [])),
+      entry.values.flatMap((value) =>
+        value.kind === 'location' && value.location.kind === 'point' ? value.location.point.x : [],
+      ),
     );
   expect(positions).toContain(17);
   expect(positions).toContain(19);
@@ -216,5 +226,21 @@ it('refuses a counterpart position when actual changes share one timestamp witho
     { anchor: first, other: second, from: 2, through: 2, radius: 30 },
     128,
   );
-  expect(result.samples.find((sample) => sample.at === 2)!.other?.status).toBe('unavailable');
+  expect(result.samples.find((sample) => sample.at === 2)!.other?.status).toBe('complete');
+  // Removing the common phase from the supplied read product must restore
+  // uncertainty; sorting two same-time positions cannot establish a relationship.
+  const independent = {
+    ...history,
+    entries: history.entries.map((entry) =>
+      entry.receipt.subject === second
+        ? { ...entry, receipt: { ...entry.receipt, acquisition: entry.receipt.acquisition + 1000 } }
+        : entry,
+    ),
+  };
+  const ambiguous = historicalSpatialMeasurements(
+    independent,
+    { anchor: first, other: second, from: 2, through: 2, radius: 30 },
+    128,
+  );
+  expect(ambiguous.samples.find((sample) => sample.at === 2)!.other?.status).toBe('unavailable');
 });

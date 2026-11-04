@@ -32,21 +32,42 @@ interface Fact {
   source: HistoricalSpatialFact;
   order: number;
   ordinal: number;
+  acquisition: number;
+  epoch: string;
+  physicalLife: number;
   availableAt?: number;
   unavailableAt?: number;
   subject: string;
   reference: TemporalFacetReference;
   value: TemporalValue;
 }
-type BodyFact = Fact & { value: Extract<TemporalValue, { kind: 'body' }> };
+type LocationFact = Fact & { value: Extract<TemporalValue, { kind: 'location' }> };
+type BodyFact = Fact & {
+  value: Extract<TemporalValue, { kind: 'body' }>;
+  detail?: BodyFact;
+  position?: LocationFact;
+};
 type BoundaryFact = Fact & { value: Extract<TemporalValue, { kind: 'physical-boundary' }> };
 
+const detailFrom = (fact: BodyFact) =>
+  Math.max(
+    fact.reference.detailSupport?.from ?? fact.reference.measuredFrom,
+    fact.reference.detailSupport?.proof.confirmedFrom ??
+      fact.reference.support?.confirmedFrom ??
+      fact.reference.measuredFrom,
+    fact.availableAt ?? -Infinity,
+  );
+const detailThrough = (fact: BodyFact) =>
+  fact.reference.detailSupport?.proof.confirmedThrough ??
+  fact.reference.support?.confirmedThrough ??
+  fact.reference.confirmedThrough ??
+  fact.reference.measuredThrough;
 const from = (fact: Fact) =>
   Math.max(
     fact.reference.measuredFrom,
     fact.reference.support?.confirmedFrom ?? fact.reference.measuredFrom,
     fact.value.kind === 'body'
-      ? (fact.reference.detailSupport?.proof.confirmedFrom ?? -Infinity)
+      ? detailFrom((fact as BodyFact).detail ?? (fact as BodyFact))
       : -Infinity,
     fact.availableAt ?? -Infinity,
   );
@@ -56,7 +77,7 @@ const through = (fact: Fact) =>
       fact.reference.confirmedThrough ??
       fact.reference.measuredThrough,
     fact.value.kind === 'body'
-      ? (fact.reference.detailSupport?.proof.confirmedThrough ?? Infinity)
+      ? detailThrough((fact as BodyFact).detail ?? (fact as BodyFact))
       : Infinity,
   );
 const supports = (fact: Fact, at: number) =>
@@ -64,32 +85,89 @@ const supports = (fact: Fact, at: number) =>
 const originalKey = (fact: Fact) =>
   JSON.stringify(fact.reference.original ?? [fact.source, fact.reference.ordinal]);
 const proof = (fact: Fact): HistoricalSpatialFact => fact.source;
-
-function geometry(fact: BodyFact, at: number, facts: Fact[]): ReceivedBodyGeometry {
-  const location = facts.find(
-    (candidate) =>
-      (('entry' in candidate.source &&
-        'entry' in fact.source &&
-        candidate.source.entry === fact.source.entry) ||
-        ('baseline' in candidate.source &&
-          'baseline' in fact.source &&
-          candidate.source.baseline === fact.source.baseline)) &&
-      candidate.value.kind === 'location' &&
-      candidate.value.location.kind === 'point' &&
-      candidate.value.location.point.x === fact.value.body.position.x &&
-      candidate.value.location.point.y === fact.value.body.position.y &&
-      candidate.value.location.point.z === fact.value.body.position.z &&
-      supports(candidate, at),
-  );
+const trackKey = (fact: Fact) => JSON.stringify([fact.physicalLife, fact.epoch, fact.subject]);
+const acquisitionKey = (fact: Fact) =>
+  JSON.stringify([fact.physicalLife, fact.epoch, fact.acquisition]);
+function bodyProofs(fact: BodyFact): HistoricalSpatialFact[] {
+  return fact.detail && JSON.stringify(fact.detail.source) !== JSON.stringify(fact.source)
+    ? [fact.source, fact.detail.source]
+    : [fact.source];
+}
+/** Join only selected personal evidence. Position changes never replace or freshen appearance. */
+function receivedBodySamples(facts: readonly Fact[], request: HistoricalSpatialRequest) {
+  const details = new Map<string, BodyFact[]>(),
+    samples: BodyFact[] = [];
+  for (const fact of facts)
+    if (fact.value.kind === 'body') {
+      const body = fact as BodyFact;
+      if ((body.reference.detailSupport?.role ?? body.reference.role) !== 'direct') continue;
+      const key = trackKey(body),
+        held = details.get(key) ?? [];
+      if (detailFrom(body) <= detailThrough(body)) held.push(body);
+      details.set(key, held);
+      samples.push(body); // Its raw acquisition pose remains a separately dated actual observation.
+    }
+  for (const held of details.values())
+    held.sort((a, b) => detailThrough(a) - detailThrough(b) || detailFrom(a) - detailFrom(b));
+  for (const fact of facts) {
+    if (
+      fact.value.kind !== 'location' ||
+      fact.value.location.kind !== 'point' ||
+      fact.reference.role !== 'direct' ||
+      (fact.subject !== request.anchor && fact.subject !== request.other)
+    )
+      continue;
+    const at = Math.min(through(fact), request.through);
+    if (!supports(fact, at)) continue;
+    const held = details.get(trackKey(fact)) ?? [];
+    let low = 0,
+      high = held.length;
+    while (low < high) {
+      const middle = (low + high) >>> 1;
+      if (detailThrough(held[middle]!) < at) low = middle + 1;
+      else high = middle;
+    }
+    const candidates: BodyFact[] = [];
+    for (let index = low; index < held.length; index++) {
+      const detail = held[index]!;
+      if (detailFrom(detail) > at) break;
+      if (at < (detail.unavailableAt ?? Infinity)) candidates.push(detail);
+    }
+    if (!candidates.length) continue;
+    const paired = candidates.filter((detail) => acquisitionKey(detail) === acquisitionKey(fact)),
+      choices = paired.length ? paired : candidates,
+      detail = choices[0]!;
+    // A conflicting same-time shape cannot become a precise body by sorting it.
+    if (
+      choices.some(
+        (candidate) =>
+          candidate.value.body.radius !== detail.value.body.radius ||
+          candidate.value.body.height !== detail.value.body.height,
+      )
+    )
+      continue;
+    samples.push({
+      ...fact,
+      value: { kind: 'body', body: { ...detail.value.body, position: fact.value.location.point } },
+      detail,
+      position: fact as LocationFact,
+    });
+  }
+  return samples;
+}
+function geometry(fact: BodyFact, at: number): ReceivedBodyGeometry {
+  const detail = fact.detail ?? fact,
+    location = fact.position;
   return {
     body: fact.value.body,
     sample: {
-      valueMeasuredFrom: fact.reference.measuredFrom,
-      valueMeasuredThrough: fact.reference.measuredThrough,
-      valueSupportedFrom: from(fact),
-      valueSupportedThrough: at,
+      valueMeasuredFrom: detail.reference.detailSupport?.from ?? detail.reference.measuredFrom,
+      valueMeasuredThrough:
+        detail.reference.detailSupport?.through ?? detail.reference.measuredThrough,
+      valueSupportedFrom: detailFrom(detail),
+      valueSupportedThrough: Math.min(detailThrough(detail), at),
     },
-    ...(location?.value.kind === 'location'
+    ...(location
       ? {
           location: {
             location: location.value.location,
@@ -136,6 +214,10 @@ export function historicalSpatialMeasurements(
         source: { entry, facet },
         order: selected.receipt.order,
         ordinal: selected.receipt.ordinal,
+        acquisition: selected.receipt.acquisition,
+        epoch: selected.receipt.epoch,
+        physicalLife: selected.receipt.physicalLife,
+        availableAt: selected.receipt.at,
         unavailableAt: selected.receipt.availability?.find((group) =>
           group.fields.includes(reference.ordinal),
         )?.at,
@@ -151,6 +233,9 @@ export function historicalSpatialMeasurements(
         source: { baseline, facet },
         order: selected.checkpoint.order,
         ordinal: selected.checkpoint.ordinal,
+        acquisition: selected.checkpoint.acquisition,
+        epoch: selected.checkpoint.epoch,
+        physicalLife: selected.checkpoint.physicalLife,
         availableAt: selected.availableAt,
         unavailableAt: selected.checkpoint.availability?.find((group) =>
           group.fields.includes(reference.ordinal),
@@ -160,7 +245,7 @@ export function historicalSpatialMeasurements(
         value,
       });
     }
-  const bodies = facts.filter((fact): fact is BodyFact => fact.value.kind === 'body');
+  const bodies = receivedBodySamples(facts, request);
   const anchors = bodies
     .filter(
       (fact) =>
@@ -175,6 +260,13 @@ export function historicalSpatialMeasurements(
         .filter((fact) => fact.subject === request.other)
         .sort((a, b) => from(b) - from(a) || b.reference.acquiredAt - a.reference.acquiredAt)
     : [];
+  const othersByPhase = new Map<string, BodyFact[]>();
+  for (const other of others) {
+    const key = acquisitionKey(other),
+      group = othersByPhase.get(key) ?? [];
+    group.push(other);
+    othersByPhase.set(key, group);
+  }
   const boundaries = facts.filter(
     (fact): fact is BoundaryFact => fact.value.kind === 'physical-boundary',
   );
@@ -205,6 +297,9 @@ export function historicalSpatialMeasurements(
     const at = Math.min(through(anchor), request.through);
     if (!supports(anchor, at)) continue;
     const sampleKey = JSON.stringify([
+      anchor.physicalLife,
+      anchor.epoch,
+      anchor.acquisition,
       at,
       anchor.value.body.position,
       anchor.value.body.radius,
@@ -214,16 +309,18 @@ export function historicalSpatialMeasurements(
     seen.add(sampleKey);
     const sample: (typeof samples)[number] = {
       at,
-      support: [proof(anchor)],
+      support: bodyProofs(anchor),
       boundaries: [],
       boundaryCoverage: 'selected-retained',
     };
-    const anchorGeometry = geometry(anchor, at, facts);
+    const anchorGeometry = geometry(anchor, at);
     if (request.other) {
       sample.other = { status: 'unavailable' };
       let compatible: BodyFact | undefined;
       let conflict = false;
-      for (const other of others) {
+      const samePhase = othersByPhase.get(acquisitionKey(anchor)) ?? [],
+        counterparts = samePhase.some((candidate) => supports(candidate, at)) ? samePhase : others;
+      for (const other of counterparts) {
         if (!remaining) {
           incomplete = true;
           conflict = true;
@@ -231,6 +328,8 @@ export function historicalSpatialMeasurements(
         }
         remaining--;
         if (!supports(other, at)) continue;
+        // A shared actual receiver phase can pair independent subjects. Otherwise
+        // different same-time endpoints stay ambiguous rather than sorted into a story.
         // Two different positions at one timestamp have no ordering relationship
         // to this anchor measurement. Never pick whichever happened to sort first.
         if (
@@ -250,8 +349,8 @@ export function historicalSpatialMeasurements(
         compatible ??= other;
       }
       if (compatible && !conflict) {
-        sample.other = receivedSeparation(anchorGeometry, geometry(compatible, at, facts));
-        if (sample.other.status === 'complete') sample.support.push(proof(compatible));
+        sample.other = receivedSeparation(anchorGeometry, geometry(compatible, at));
+        if (sample.other.status === 'complete') sample.support.push(...bodyProofs(compatible));
       }
     }
 
@@ -274,7 +373,12 @@ export function historicalSpatialMeasurements(
     }
     const usedBoundaries = new Set<string>();
     for (const boundary of found.values) {
-      if (!supports(boundary, at)) continue;
+      if (
+        boundary.epoch !== anchor.epoch ||
+        boundary.physicalLife !== anchor.physicalLife ||
+        !supports(boundary, at)
+      )
+        continue;
       const key = originalKey(boundary);
       if (usedBoundaries.has(key)) continue;
       usedBoundaries.add(key);
@@ -339,7 +443,7 @@ export function historicalSpatialMeasurements(
       previousEdges.set(key, {
         at: sample.at,
         lower: measurement.lower,
-        support: [direct[0]!, edge.support],
+        support: [...direct, edge.support],
       });
     }
   }

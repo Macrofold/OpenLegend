@@ -1376,7 +1376,7 @@ export function validateWorldModules(world: WorldState): void {
         const body = receivedAttentionSource(owner, annotation.sourceId, annotation.leaseId);
         if (
           !body ||
-          body.id !== annotation.leaseId ||
+          body.field.id !== annotation.leaseId ||
           annotation.exposure.track !==
             receivedTrackKey(
               currentFacetGrant(owner, body).exposure,

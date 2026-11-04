@@ -3,7 +3,7 @@ import { currentFacetEntries } from './perception-current.js';
 import { DerivedOwnerIndex } from './derived-owner-index.js';
 import { objectIndexSet, objectIndexEntriesAtLeast, type ObjectIndexNode } from './object-index.js';
 import { applyInnerRecordChanges, type InnerRecordChange } from './mind.js';
-import { temporalChunkReceipts } from './temporal-frames.js';
+import { temporalPageReceipts } from './temporal-frames.js';
 import {
   experienceEntryKey,
   experienceSourceReference,
@@ -233,7 +233,7 @@ export function recordSnapshotSupport(
   snapshot: import('./perception-evidence.js').CapturedCurrentFacet,
 ): import('./temporal-evidence.js').TemporalReceiptLocator | undefined {
   if (!supportOwnerEligible(world, actorId, snapshot.observer, { kind: 'deliberate' })) return;
-  return captureTemporalSnapshot(world, actorId, snapshot, selectedTemporalPolicy(world).recent);
+  return captureTemporalSnapshot(world, actorId, snapshot);
 }
 
 export const EXPERIENCE_LIMITS = {
@@ -898,8 +898,8 @@ export function admitAutomaticExperience(
       if (locator && entry.source !== 'summary') entry.value.sourceReceipt = locator;
       if (locator && awareness?.exposure?.kind === 'place') {
         const temporal = world.experience!.temporal!;
-        const receipt = temporal.actors[actorId]!.chunks.flatMap((chunk) =>
-          temporalChunkReceipts(chunk),
+        const receipt = temporal.actors[actorId]!.pages.flatMap((chunk) =>
+          temporalPageReceipts(chunk),
         ).find(
           (candidate) =>
             candidate.epoch === locator!.epoch && candidate.ordinal === locator!.ordinal,

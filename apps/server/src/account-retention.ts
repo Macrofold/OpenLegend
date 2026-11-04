@@ -13,6 +13,7 @@ import {
   awarenessMemory,
   summaryMemory,
   selectedTemporalPolicy,
+  selectedAccountRetentionSelection,
   updateWorld,
   expireExperience,
   hasMemory,
@@ -78,12 +79,6 @@ const sourceEntries = (world: WorldState, actorId: string): ExperienceEntry[] =>
     value,
   })),
 ];
-const retentionRank = (reason: unknown) =>
-  reason === 'deliberate' ? 2 : reason === 'consequence' || reason === 'learning' ? 1 : 0;
-const active = (entry: ExperienceEntry) =>
-  entry.source === 'memory' &&
-  (entry.value.obligation?.status === 'active' ||
-    (entry.value.kind === 'commitment' && !entry.value.resolved));
 
 /** Lasting records use the same exact source tables and mutation owner. Retired
  * records are physically reclaimed by the encompassing world transaction. */
@@ -121,30 +116,6 @@ export async function prepareAccountRetention(
         (draft) => {
           ensureExperienceAccounting(draft, actorId);
           const value = draft.experience!.temporal!.actors[actorId]!.accounts!;
-          if (retainedMetadata) {
-            for (const entry of sourceEntries(world, actorId)) {
-              const total = value[accountClass(entry)];
-              total.bytes -= encodedExperienceBytes(entry);
-              total.count--;
-            }
-            for (const category of ['optional', 'required', 'speech'] as const) {
-              const total = totals.get(category);
-              value[category].bytes += total?.bytes ?? 0;
-              value[category].count += total?.count ?? 0;
-            }
-            const archives = {
-              optional: { bytes: 0, count: 0 },
-              required: { bytes: 0, count: 0 },
-              speech: { bytes: 0, count: 0 },
-            };
-            for (const version of retainedMetadata.sourceVersions(actorId)) {
-              archives[version.category].bytes += version.bytes;
-              archives[version.category].count++;
-              value[version.category].bytes += version.bytes;
-              value[version.category].count++;
-            }
-            value.archives = archives;
-          }
           value.nextDue = 0;
         },
         { retainNativeValues: true },
@@ -222,17 +193,9 @@ export async function prepareAccountRetention(
         bytes: Number(row['logical_bytes']),
         category: row['retention_class'] as Candidate['category'],
         position: Number(row['position']),
-        rank: retentionRank(row['retention_reason']),
-        active: Number(row['unresolved']) === 1,
-        due:
-          row['expires_at'] !== null
-            ? Math.min(Number(row['weaken_at'] ?? Infinity), Number(row['expires_at']))
-            : row['retention_class'] === 'speech' || Number(row['unresolved']) === 1
-              ? null
-              : Number(row['at']) +
-                (row['retention_class'] === 'required'
-                  ? policy.aftermathSeconds
-                  : policy.recent.maxAgeSeconds),
+        rank: Number(row['policy_priority']),
+        active: Number(row['active_or_protected']) === 1,
+        due: row['next_due_at'] === null ? null : Number(row['next_due_at']),
       });
     }
     for (const entry of sourceEntries(world, actorId)) {
@@ -252,12 +215,8 @@ export async function prepareAccountRetention(
         category: accountClass(entry),
         position: old?.position ?? Number.MAX_SAFE_INTEGER,
         due: experienceRetentionDue(world, entry),
-        rank: retentionRank(
-          entry.source === 'memory'
-            ? (entry.value.impression?.reason ?? entry.value.retention?.reason)
-            : entry.value.retention?.reason,
-        ),
-        active: active(entry),
+        rank: selectedAccountRetentionSelection(world, entry).priority,
+        active: selectedAccountRetentionSelection(world, entry).protected,
         value: entry,
       });
     }
@@ -265,9 +224,16 @@ export async function prepareAccountRetention(
       selectedCandidates: Candidate[] = [];
     const ordered = [...candidates.values()].sort(
       (a, b) =>
-        a.rank - b.rank || a.at - b.at || a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id),
+        a.rank - b.rank ||
+        a.at - b.at ||
+        (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0) ||
+        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
     );
     let nextDue: number | null = selectedRecognitionMaintenanceDue(world, actorId);
+    const savedDeadline = retainedMetadata.accountDeadline(actorId);
+    if (savedDeadline !== null) nextDue = Math.min(nextDue ?? Infinity, savedDeadline);
+    let moreCandidates = false,
+      selectedBytes = 0;
     for (const candidate of ordered) {
       const budget = experienceMaintenanceTarget(world, candidate.category),
         pressure =
@@ -275,7 +241,17 @@ export async function prepareAccountRetention(
           projected[candidate.category].count > budget.maxRecords;
       if (candidate.active) continue;
       if (pressure || (candidate.due !== null && candidate.due <= now)) {
+        if (candidate.bytes > maximumPreparationBytes)
+          throw new MemoryRetentionError('One personal memory exceeds bounded preparation.');
+        if (
+          selectedCandidates.length === 64 ||
+          selectedBytes + candidate.bytes > maximumPreparationBytes
+        ) {
+          moreCandidates = true;
+          break;
+        }
         selectedCandidates.push(candidate);
+        selectedBytes += candidate.bytes;
         projected[candidate.category].bytes -= candidate.bytes;
         projected[candidate.category].count--;
       } else if (candidate.due !== null) nextDue = Math.min(nextDue ?? Infinity, candidate.due);
@@ -287,7 +263,17 @@ export async function prepareAccountRetention(
           projected[key].count > policy[key].maxRecords,
       )
     )
-      throw new MemoryRetentionError('Active personal support exceeds reserved durable capacity.');
+      moreCandidates = true;
+    if (
+      retainedMetadata.moreAccountCandidates(actorId) &&
+      ((accounts.nextDue !== null && accounts.nextDue <= now) ||
+        (['optional', 'required', 'speech'] as const).some(
+          (pool) =>
+            projected[pool].bytes > experienceMaintenanceTarget(world, pool).maxBytes ||
+            projected[pool].count > experienceMaintenanceTarget(world, pool).maxRecords,
+        ))
+    )
+      moreCandidates = true;
     const totals = structuredClone(accounts);
     for (let offset = 0; offset < selectedCandidates.length; ) {
       const batch: Candidate[] = [];
@@ -500,7 +486,9 @@ export async function prepareAccountRetention(
     world = updateWorld(
       world,
       (draft) => {
-        draft.experience!.temporal!.actors[actorId]!.accounts!.nextDue = nextDue;
+        draft.experience!.temporal!.actors[actorId]!.accounts!.nextDue = moreCandidates
+          ? now
+          : nextDue;
       },
       { retainNativeValues: true },
     );
@@ -863,8 +851,7 @@ export function applyAccountRetentionPlan(
   );
   const acceptedActors = new Set(ready.map((actor) => actor.actorId));
   const versions = plan.versions && {
-    actors: plan.versions.actors.filter((id) => acceptedActors.has(id)),
-    retained: plan.versions.retained.filter((version) => acceptedActors.has(version.actorId)),
+    changes: plan.versions.changes.filter((version) => acceptedActors.has(version.actorId)),
   };
   return {
     state: { ...state, world },

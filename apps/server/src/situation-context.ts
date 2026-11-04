@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   captureEvidenceCut,
   captureCurrentSources,
+  currentGroupMetadata,
   captureCurrentSource,
   receivedTrackKey,
   currentSelectionTracks,
@@ -158,7 +159,7 @@ const temporalBaselineHandle = (
 ) =>
   permittedSourceHandle(world, actorId, [
     'checkpoint',
-    baseline.checkpoint.chunkId,
+    baseline.checkpoint.pageId,
     baseline.checkpoint.ordinal,
     baseline.forReceipt.ordinal,
   ]);
@@ -296,7 +297,7 @@ function prepareTemporalHistoryForModel(
       actorId,
       baseline.checkpoint.facets,
       baseline.values,
-      ['checkpoint', baseline.checkpoint.chunkId, baseline.checkpoint.ordinal],
+      ['checkpoint', baseline.checkpoint.pageId, baseline.checkpoint.ordinal],
       frame,
       frames,
       suppliedFacts,
@@ -477,12 +478,20 @@ function receivedTrack(
 ): SituationCurrentTrack | undefined {
   const group = current.sources[sourceId]?.groups.find(
     (group) =>
-      receivedTrackKey(group.grant.exposure, group.grant.channel) === track &&
+      receivedTrackKey(group.received.grant.exposure, group.received.grant.channel) === track &&
       (leaseId
-        ? ['body', 'contact', 'detected'].some((kind) => group.fields[kind]?.id === leaseId)
-        : group.grant.modality === 'sight' && group.fields['body']),
+        ? ['body', 'contact', 'detected'].some(
+            (kind) => group.received.fields[kind]?.id === leaseId,
+          )
+        : group.received.grant.modality === 'sight' && group.received.fields['body']),
   );
-  return group && { sourceId, exposure: group.grant.exposure, channel: group.grant.channel };
+  return (
+    group && {
+      sourceId,
+      exposure: group.received.grant.exposure,
+      channel: group.received.grant.channel,
+    }
+  );
 }
 interface SituationBodyRead {
   actorId: string;
@@ -524,10 +533,10 @@ function situationBodyFacts(
       read.current.sources[id]?.groups
         .filter(
           (group) =>
-            group.grant.exposure === selectedTrack.exposure &&
-            sameDefinitionPin(group.grant.channel, selectedTrack.channel),
+            group.received.grant.exposure === selectedTrack.exposure &&
+            sameDefinitionPin(group.received.grant.channel, selectedTrack.channel),
         )
-        .flatMap((group) => Object.keys(group.fields) as SensoryFacet['kind'][]) ?? [],
+        .flatMap((group) => Object.keys(group.received.fields) as SensoryFacet['kind'][]) ?? [],
     );
     if (fields.has('location')) fields.add('observed-motion');
     captured = { kinds: [...fields], facts: new Map() };
@@ -564,11 +573,12 @@ function situationBodyFacts(
       selectedTrack &&
       read.current.sources[id]?.groups.find(
         (group) =>
-          group.grant.exposure === selectedTrack.exposure &&
-          sameDefinitionPin(group.grant.channel, selectedTrack.channel) &&
-          group.fields[facet.value.kind]?.id === facet.id,
+          group.received.grant.exposure === selectedTrack.exposure &&
+          sameDefinitionPin(group.received.grant.channel, selectedTrack.channel) &&
+          group.received.fields[facet.value.kind]?.id === facet.id,
       );
-    const acquiredAt = group && (group.times[2] ?? group.times[0]);
+    const metadata = group && currentGroupMetadata(group, facet.value.kind);
+    const acquiredAt = metadata && (metadata.times[2] ?? metadata.times[0]);
     if (
       cueFacts.has(canonicalJson(facet.original)) ||
       (facet.value.kind === 'observed-motion' &&
@@ -923,12 +933,20 @@ export function captureSituation(
   const policy = selectedAttentionPolicy(world).scene,
     scene = receivedScene(world, actorId),
     frame = captureModelSpatialFrame(world, actorId);
-  const geometry = currentReceivedGeometry(world, actorId);
-  const current = captureCurrentSources(world, actorId);
+  const geometry = currentReceivedGeometry(world, actorId),
+    entries = currentDetailedAttention(world, actorId),
+    candidates = attentionCandidates(world, actorId);
+  // Preserve the permitted expansion envelope, including broad bodies and
+  // non-spatial communication candidates outside detailed attention. Required
+  // represented observations retain their separate exact acquisition grant below.
+  const current = captureCurrentSources(world, actorId, {
+    sourceIds: new Set([
+      ...scene.bodies.keys(),
+      ...Object.values(candidates).map((candidate) => candidate.sourceId),
+    ]),
+  });
   const phaseCut = captureEvidenceCut(world, actorId, { acquired: geometry.observations });
   const cut = { ...phaseCut, current: [] as CapturedCurrentFacet[] };
-  const entries = currentDetailedAttention(world, actorId),
-    candidates = attentionCandidates(world, actorId);
   const visualTracks = new Map(
     [...scene.bodies].flatMap(([id, body]) => {
       const track = receivedTrack(current, id, body.track);
@@ -980,8 +998,8 @@ export function captureSituation(
     if (!subject) continue;
     const groups = current.sources[track.sourceId]!.groups.filter(
       (group) =>
-        group.grant.exposure === track.exposure &&
-        sameDefinitionPin(group.grant.channel, track.channel),
+        group.received.grant.exposure === track.exposure &&
+        sameDefinitionPin(group.received.grant.channel, track.channel),
     );
     const binding = bodyBindings.get(track.sourceId);
     const boundSubject =
@@ -993,14 +1011,14 @@ export function captureSituation(
       boundSubject ||
       groups.some((group) => {
         const local = ['body', 'contact', 'detected'].some((kind) => {
-          const field = group.fields[kind];
+          const field = group.received.fields[kind];
           return (
             field?.id === candidate.leaseId &&
             field.localSubject !== undefined &&
             sameSubject(field.localSubject, subject)
           );
         });
-        const association = group.fields['association'],
+        const association = group.received.fields['association'],
           value = association && receivedValueAt(current.values, association.value.reference);
         return local || (value?.kind === 'association' && sameSubject(value.subject, subject));
       });
@@ -1013,8 +1031,8 @@ export function captureSituation(
     if (
       current.sources[track.sourceId]?.groups.some(
         (group) =>
-          group.grant.exposure === track.exposure &&
-          sameDefinitionPin(group.grant.channel, track.channel),
+          group.received.grant.exposure === track.exposure &&
+          sameDefinitionPin(group.received.grant.channel, track.channel),
       )
     )
       selectedTracks.set(currentTrackKey(track), track);

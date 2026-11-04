@@ -1,4 +1,5 @@
 import type { AttentionPolicy, RecordingInput, RecordingReason } from '../../attention.js';
+import type { ExperienceEntry } from '../../types.js';
 import type { Entity, WorldState } from '../../types.js';
 import { readAttribute } from '../../world-modules.js';
 import { FOCUS } from './attributes.js';
@@ -64,8 +65,6 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
       maxAgeSeconds: 21_600,
       maxBytes: 8 * 1024 * 1024,
       maxChanges: 131_072,
-      chunkBytes: 65_536,
-      residentChunks: 2,
     },
     optional: { maxBytes: 4 * 1024 * 1024, maxRecords: 2048 },
     required: { maxBytes: 4 * 1024 * 1024, maxRecords: 512 },
@@ -132,4 +131,20 @@ export function baseRecordingReason(world: WorldState, input: RecordingInput): R
     return 'optional';
   if (input.source === 'summary' || (input.source === 'memory' && input.own)) return 'optional';
   return input.consequence ? 'optional' : 'none';
+}
+
+/** Retention preference belongs to this world's memory policy. Lower ranks leave first. */
+export function baseAccountRetentionSelection(entry: ExperienceEntry) {
+  const reason =
+    entry.source === 'memory'
+      ? (entry.value.impression?.reason ?? entry.value.retention?.reason)
+      : entry.value.retention?.reason;
+  return {
+    priority:
+      reason === 'deliberate' ? 2 : reason === 'consequence' || reason === 'learning' ? 1 : 0,
+    protected:
+      entry.source === 'memory' &&
+      (entry.value.obligation?.status === 'active' ||
+        (entry.value.kind === 'commitment' && !entry.value.resolved)),
+  };
 }

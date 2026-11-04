@@ -1,23 +1,24 @@
+import { sqlRowBatches } from './sql-rows.js';
 import {
   accountClass,
   ensureExperienceAccounting,
   updateWorld,
-  validPersonalSourceRef,
   appendedRecordCount,
   type WorldState,
   type ExperienceEntry,
   type PersonalSourceRef,
 } from '@open-legend/domain';
+import {
+  accountRetentionMetadata,
+  type AccountRetentionMetadata,
+} from './retention-record-metadata.js';
 import { personalAccountRevision } from './personal-accounts.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { RecordChanges } from './world-records.js';
-import {
-  accountWriteNeedsRetentionClosure,
-  type RetentionMetadataView,
-} from './retention-metadata.js';
+import { type RetentionMetadataView } from './retention-metadata.js';
 
 type Category = 'optional' | 'required' | 'speech';
-interface VersionKey {
+export interface VersionKey {
   actorId: string;
   kind: string;
   id: string;
@@ -28,9 +29,40 @@ export interface RetainedSourceVersion extends VersionKey {
   category: Category;
   bytes: number;
 }
+export interface SourceVersionState {
+  category: Category;
+  bytes: number;
+}
+export interface SourceVersionChange extends VersionKey {
+  expectedPrior: SourceVersionState | null;
+  desired: (SourceVersionState & { payload?: string }) | null;
+}
 export interface SourceVersionPlan {
-  actors: string[];
-  retained: RetainedSourceVersion[];
+  changes: SourceVersionChange[];
+}
+export const sourceVersionKey = (value: VersionKey) =>
+  JSON.stringify([value.actorId, value.kind, value.id, value.revision]);
+/** Pending cuts compose old expected state through to latest desired state. */
+export function mergeSourceVersionChanges(
+  before: SourceVersionChange,
+  after: SourceVersionChange,
+): SourceVersionChange {
+  if (
+    sourceVersionKey(before) !== sourceVersionKey(after) ||
+    (before.desired?.category ?? null) !== (after.expectedPrior?.category ?? null) ||
+    (before.desired?.bytes ?? null) !== (after.expectedPrior?.bytes ?? null)
+  )
+    throw new Error('Exact source-version plan does not continue its accepted predecessor.');
+  return {
+    ...after,
+    expectedPrior: before.expectedPrior,
+    desired: after.desired && {
+      ...after.desired,
+      ...(after.desired.payload === undefined && before.desired?.payload !== undefined
+        ? { payload: before.desired.payload }
+        : {}),
+    },
+  };
 }
 /** Restore owns complete canonical accounts. Original saved bytes are validated
  * first; this projection removes archive bodies that current privacy/owners no longer retain. */
@@ -153,168 +185,355 @@ export async function prepareSourceVersions(
   actorIds?: readonly string[],
 ): Promise<{ state: SavedWorld; plan: SourceVersionPlan }> {
   const selected = actorIds && new Set(actorIds);
-  const actors = new Set<string>(),
-    future = new Map<string, Category>(),
-    versionGroups = new Map<string, Array<{ sourceId: string; revision: string }>>(),
-    changedRecords = new Map<string, { all: string[]; previous: Map<string, string[]> }>();
-  const changed = (actorId: string, kind: string, recordId: string, previous: boolean) => {
-    let records = changedRecords.get(actorId);
-    if (!records) {
-      records = { all: [], previous: new Map() };
-      changedRecords.set(actorId, records);
-    }
-    records.all.push(recordId);
-    if (previous) {
-      const ids = records.previous.get(kind) ?? [];
-      ids.push(recordId);
-      records.previous.set(kind, ids);
-    }
+  type Changed = {
+    actorId: string;
+    kind: keyof typeof tables;
+    recordId: string;
+    prior: ReturnType<RetentionMetadataView['prior']>;
+    next?: ExperienceEntry;
   };
-  const needed = (actorId: string, source: PersonalSourceRef, category: Category) => {
-    if (state.world.experience?.forgotten[actorId]?.includes(source.id)) return;
-    const id = key({ actorId, kind: source.kind, id: source.id, revision: source.revision });
-    const old = future.get(id);
-    if (old === undefined) {
-      const scope = JSON.stringify([actorId, source.kind]),
-        versions = versionGroups.get(scope) ?? [];
-      versions.push({ sourceId: source.id, revision: source.revision });
-      versionGroups.set(scope, versions);
-    }
-    if (old === undefined || priority(category) > priority(old)) future.set(id, category);
+  const changed: Changed[] = [];
+  const affected = new Map<string, VersionKey>();
+  const include = (actorId: string, source: PersonalSourceRef) => {
+    if (!Object.hasOwn(tables, source.kind)) return;
+    const value = { actorId, kind: source.kind, id: source.id, revision: source.revision };
+    affected.set(key(value), value);
   };
-  for (const [kind, table] of Object.entries(tables)) {
-    for (const id of changes.deletes.get(table) ?? []) {
-      const path = JSON.parse(id) as string[];
-      const actorId = path[kind === 'memory' ? 2 : 3]!;
-      if (selected && !selected.has(actorId)) continue;
-      actors.add(actorId);
-      changed(actorId, kind, id, true);
-    }
-    for (const row of changes.writes.get(table) ?? []) {
-      const path = JSON.parse(row.id) as string[],
+  for (const [kind, table] of Object.entries(tables) as Array<
+    [keyof typeof tables, (typeof tables)[keyof typeof tables]]
+  >) {
+    const writes = new Map((changes.writes.get(table) ?? []).map((row) => [row.id, row]));
+    for (const recordId of new Set([...(changes.deletes.get(table) ?? []), ...writes.keys()])) {
+      const path = JSON.parse(recordId) as string[],
         actorId = path[kind === 'memory' ? 2 : 3]!;
       if (selected && !selected.has(actorId)) continue;
-      const value = JSON.parse(row.payload) as ExperienceEntry['value'];
-      const manifest = 'manifest' in value ? value.manifest : undefined;
-      const sources = 'sources' in value ? value.sources : [];
-      if (accountWriteNeedsRetentionClosure(table, row)) actors.add(actorId);
-      changed(actorId, kind, row.id, !row.create);
-      if ('kind' in value && value.kind === 'impression') continue;
-      const category = accountClass({ source: kind, value } as ExperienceEntry);
-      for (const source of [...(sources ?? []), ...(manifest?.coverage ?? [])])
-        if (validPersonalSourceRef(source)) needed(actorId, source, category);
+      const row = writes.get(recordId);
+      let prior = metadata.prior(table, recordId);
+      if (!row?.create && !prior) {
+        // A previously accepted but unsaved account is absent from the durable
+        // metadata baseline. Select its exact prior metadata through the live cut.
+        const old = await db
+          .prepare(
+            `SELECT id,parent_id,position,source_id,account_revision,retention_metadata,
+          retention_class,logical_bytes,octet_length(payload) AS encoded_bytes FROM ${table}
+          WHERE world_id=? AND actor_id=? AND id=?`,
+          )
+          .get(state.world.id, actorId, recordId);
+        if (old)
+          prior = {
+            table,
+            id: recordId,
+            parent: String(old['parent_id']),
+            position: Number(old['position']),
+            actorId,
+            columns: old,
+            encodedBytes: Number(old['encoded_bytes']),
+          };
+        else if (row)
+          row.create = true; // Exact captured absence proves this new account, including nonempty manifests.
+        else if (!changes.expired?.get(table)?.includes(recordId))
+          throw new Error('Changed account requires its exact previous metadata.');
+      }
+      const next = row
+        ? ({ source: kind, value: JSON.parse(row.payload) } as ExperienceEntry)
+        : undefined;
+      changed.push({ actorId, kind, recordId, prior, ...(next ? { next } : {}) });
+      if (prior) {
+        include(actorId, {
+          kind,
+          id: String(prior.columns['source_id']),
+          revision: String(prior.columns['account_revision']),
+        });
+        for (const source of (prior.columns['retention_metadata'] as AccountRetentionMetadata)
+          .versions)
+          include(actorId, source);
+      }
+      if (next)
+        for (const source of accountRetentionMetadata(next).versions) include(actorId, source);
     }
   }
-  const retained: RetainedSourceVersion[] = [];
-  let world = state.world;
-  for (const actorId of actors) {
-    const candidates = new Map(
-      metadata.sourceVersions(actorId).map((value) => [key(value), value]),
-    );
-    for (const { source, category } of metadata.versionDependencies(actorId))
-      needed(actorId, source, category);
-    for (const [kind, table] of Object.entries(tables)) {
-      const ids = changedRecords.get(actorId)?.previous.get(kind) ?? [];
-      if (!ids.length) continue;
-      const versions = versionGroups.get(JSON.stringify([actorId, kind])) ?? [];
-      if (!versions.length) continue;
-      // Select exact retained versions before reading their bodies. Expiring unrelated
-      // accounts from independent pools can exceed one read without retaining a byte.
-      const wanted = new Set(
-        versions.map((value) => JSON.stringify([value.sourceId, value.revision])),
+  // Learning aliases acquire their exact revision from this captured current cut.
+  // Existing flattened reverse links already contain exact revisions for cold owners.
+  for (const item of changed) {
+    const inputs = [
+      ...(item.prior
+        ? (item.prior.columns['retention_metadata'] as AccountRetentionMetadata).learning
+        : []),
+      ...(item.next ? accountRetentionMetadata(item.next).learning : []),
+    ];
+    for (const source of inputs) {
+      const replacement = changed.find(
+        (other) =>
+          other.actorId === item.actorId &&
+          other.kind === source.kind &&
+          (other.next
+            ? other.next.source === 'awareness'
+              ? other.next.value.eventId
+              : other.next.value.id
+            : other.prior?.columns['source_id']) === source.id,
       );
-      const selected = ids.flatMap((id) => {
-        const row = metadata.prior(
-          table as 'mind_awareness' | 'mind_memories' | 'mind_summaries',
-          id,
-        );
-        return row &&
-          wanted.has(JSON.stringify([row.columns['source_id'], row.columns['account_revision']]))
-          ? [{ id, bytes: row.encodedBytes }]
-          : [];
-      });
-      for (let offset = 0; offset < selected.length; ) {
-        const batch: string[] = [];
-        let bytes = 0;
-        while (offset < selected.length) {
-          const row = selected[offset]!,
-            size = Number(row['bytes']);
-          if (batch.length && bytes + size > 4 * 1024 * 1024) break;
-          if (size > 4 * 1024 * 1024)
-            throw new Error('Exact source closure exceeds bounded preparation.');
-          batch.push(String(row['id']));
-          bytes += size;
-          offset++;
-        }
-        const read = () =>
-          db
-            .prepare(
-              `SELECT source_id,payload FROM ${table} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
-            )
-            .all(world.id, actorId, batch);
-        for (const row of await (db.readForActor
-          ? db.readForActor(world.id, actorId, read)
-          : read())) {
-          const payload = String(row['payload']);
-          const value = {
-            actorId,
-            kind,
+      const revision = replacement?.next
+        ? personalAccountRevision(JSON.stringify(replacement.next.value))
+        : replacement?.prior?.columns['account_revision'];
+      if (revision) {
+        include(item.actorId, { ...source, revision: String(revision) });
+        continue;
+      }
+      const table = tables[source.kind as keyof typeof tables];
+      if (!table) continue;
+      const found = await db
+        .prepare(
+          `SELECT account_revision FROM ${table} WHERE world_id=? AND actor_id=? AND source_id=?`,
+        )
+        .get(state.world.id, item.actorId, source.id);
+      if (!found) throw new Error('Exact learned-identity source is unavailable.');
+      include(item.actorId, { ...source, revision: String(found['account_revision']) });
+    }
+  }
+  const future = new Map<string, Category>();
+  const needed = (value: VersionKey, category: Category) => {
+    if (state.world.experience?.forgotten[value.actorId]?.includes(value.id)) return;
+    const id = key(value),
+      old = future.get(id);
+    if (old === undefined || priority(category) > priority(old)) future.set(id, category);
+  };
+  const keys = [...affected.values()];
+  const changedOwners = changed.map((item) => ({
+    actor_id: item.actorId,
+    kind: item.kind,
+    id: item.next
+      ? item.next.source === 'awareness'
+        ? item.next.value.eventId
+        : item.next.value.id
+      : item.prior
+        ? String(item.prior.columns['source_id'])
+        : (JSON.parse(item.recordId) as string[]).at(-1)!,
+  }));
+  const currentRevisions = new Set(
+    changed.flatMap((item) =>
+      item.next
+        ? [
+            key({
+              actorId: item.actorId,
+              kind: item.kind,
+              id: item.next.source === 'awareness' ? item.next.value.eventId : item.next.value.id,
+              revision: personalAccountRevision(JSON.stringify(item.next.value)),
+            }),
+          ]
+        : [],
+    ),
+  );
+  const archives = new Map<string, RetainedSourceVersion>();
+  for (let offset = 0; offset < keys.length; offset += 256) {
+    const batch = keys.slice(offset, offset + 256).map((value) => ({
+      actor_id: value.actorId,
+      kind: value.kind,
+      id: value.id,
+      revision: value.revision,
+    }));
+    const accountUnion = Object.entries(tables)
+      .map(
+        ([kind, table]) =>
+          `SELECT '${kind}' AS kind,actor_id,source_id,retention_class FROM ${table} WHERE world_id=?`,
+      )
+      .join(' UNION ALL ');
+    const rows = await db
+      .prepare(
+        `WITH requested AS (
+      SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text,revision text)
+    ), changed AS (SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text)),
+    accounts AS (${accountUnion})
+    SELECT DISTINCT q.actor_id,q.kind,q.id,q.revision,a.retention_class
+    FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=q.actor_id
+      AND d.source_kind=q.kind AND d.source_id=q.id AND d.source_revision=q.revision
+    JOIN accounts a ON a.actor_id=d.actor_id AND a.kind=d.derived_kind AND a.source_id=d.derived_id
+    WHERE a.retention_class<>'sensory' AND NOT EXISTS(SELECT 1 FROM changed c WHERE c.actor_id=d.actor_id AND c.kind=d.derived_kind AND c.id=d.derived_id)`,
+      )
+      .all(
+        JSON.stringify(batch),
+        JSON.stringify(changedOwners),
+        ...Object.keys(tables).map(() => state.world.id),
+        state.world.id,
+      );
+    for (const row of rows)
+      needed(
+        {
+          actorId: String(row['actor_id']),
+          kind: String(row['kind']),
+          id: String(row['id']),
+          revision: String(row['revision']),
+        },
+        row['retention_class'] as Category,
+      );
+    const old = await db
+      .prepare(
+        `SELECT v.actor_id,v.source_kind,v.source_id,v.revision,v.retention_class,v.logical_bytes
+      FROM mind_source_versions v JOIN jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text,revision text)
+      ON v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision WHERE v.world_id=?`,
+      )
+      .all(JSON.stringify(batch), state.world.id);
+    for (const row of old) {
+      const value = {
+        actorId: String(row['actor_id']),
+        kind: String(row['source_kind']),
+        id: String(row['source_id']),
+        revision: String(row['revision']),
+        category: row['retention_class'] as Category,
+        bytes: Number(row['logical_bytes']),
+      };
+      archives.set(key(value), value);
+    }
+  }
+  for (const item of changed)
+    if (item.next) {
+      const meta = accountRetentionMetadata(item.next),
+        category = accountClass(item.next);
+      for (const source of meta.versions) needed({ actorId: item.actorId, ...source }, category);
+      for (const source of meta.learning)
+        for (const value of keys)
+          if (
+            value.actorId === item.actorId &&
+            value.kind === source.kind &&
+            value.id === source.id
+          )
+            needed(value, category);
+    }
+  const oldOwners = new Map(
+    changed.flatMap((item) =>
+      item.prior
+        ? [
+            [
+              key({
+                actorId: item.actorId,
+                kind: item.kind,
+                id: String(item.prior.columns['source_id']),
+                revision: String(item.prior.columns['account_revision']),
+              }),
+              item,
+            ] as const,
+          ]
+        : [],
+    ),
+  );
+  const bodyGroups = new Map<
+    string,
+    { actorId: string; kind: keyof typeof tables; items: Changed[] }
+  >();
+  for (const value of keys) {
+    const id = key(value),
+      owner = oldOwners.get(id);
+    if (!future.has(id) || archives.has(id) || currentRevisions.has(id) || !owner) continue;
+    const groupKey = JSON.stringify([value.actorId, owner.kind]);
+    let group = bodyGroups.get(groupKey);
+    if (!group)
+      bodyGroups.set(groupKey, (group = { actorId: value.actorId, kind: owner.kind, items: [] }));
+    group.items.push(owner);
+  }
+  const archivedBodies = new Map<string, string>();
+  for (const group of bodyGroups.values())
+    for (let offset = 0; offset < group.items.length; ) {
+      const batch: Changed[] = [];
+      let bytes = 0;
+      while (offset < group.items.length) {
+        const item = group.items[offset]!,
+          size = item.prior!.encodedBytes;
+        if (size > 4 * 1024 * 1024)
+          throw new Error('Exact source closure exceeds bounded preparation.');
+        if (batch.length && bytes + size > 4 * 1024 * 1024) break;
+        batch.push(item);
+        bytes += size;
+        offset++;
+      }
+      const wanted = new Map(batch.map((item) => [item.recordId, item]));
+      for (const row of await db
+        .prepare(
+          `SELECT id,source_id,account_revision,payload FROM ${tables[group.kind]}
+      WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
+        )
+        .all(state.world.id, group.actorId, [...wanted.keys()])) {
+        const item = wanted.get(String(row['id']));
+        if (!item || item.prior!.columns['account_revision'] !== row['account_revision'])
+          throw new Error('Selected exact source changed before retention.');
+        archivedBodies.set(
+          key({
+            actorId: group.actorId,
+            kind: group.kind,
             id: String(row['source_id']),
-            revision: personalAccountRevision(payload),
-            payload,
-            category: 'optional' as Category,
-            bytes: Buffer.byteLength(payload),
-          };
-          if (!wanted.has(JSON.stringify([value.id, value.revision])))
-            throw new Error('Selected exact source changed before retention.');
-          candidates.set(key(value), value);
-        }
+            revision: String(row['account_revision']),
+          }),
+          String(row['payload']),
+        );
+      }
+      if (
+        batch.some(
+          (item) =>
+            !archivedBodies.has(
+              key({
+                actorId: item.actorId,
+                kind: item.kind,
+                id: String(item.prior!.columns['source_id']),
+                revision: String(item.prior!.columns['account_revision']),
+              }),
+            ),
+        )
+      )
+        throw new Error('Selected exact source changed before retention.');
+    }
+  const plan: SourceVersionPlan = { changes: [] };
+  for (const value of keys) {
+    const id = key(value),
+      old = archives.get(id),
+      category = future.get(id);
+    // An unchanged current source needs no second archived body.
+    const isOldChanged = oldOwners.has(id) && !currentRevisions.has(id);
+    if (!old && (!category || !isOldChanged)) continue;
+    let desired: SourceVersionChange['desired'] = null;
+    if (category) {
+      if (old) desired = { category, bytes: old.bytes };
+      else {
+        const payload = archivedBodies.get(id);
+        if (payload === undefined)
+          throw new Error('Selected exact source changed before retention.');
+        desired = { category, bytes: Buffer.byteLength(payload), payload };
       }
     }
-    for (const value of candidates.values()) {
-      const category = future.get(key(value));
-      if (!category) continue;
-      const charged = { ...value, category };
-      retained.push(charged);
-    }
+    if (old && desired && old.category === desired.category && old.bytes === desired.bytes)
+      continue;
+    plan.changes.push({
+      ...value,
+      expectedPrior: old ? { category: old.category, bytes: old.bytes } : null,
+      desired,
+    });
   }
-  const plan = { actors: [...actors], retained };
-  world = applySourceVersionAccounting(world, plan);
-  return {
-    state: world === state.world ? state : { ...state, world },
-    plan,
-  };
+  const world = applySourceVersionAccounting(state.world, plan);
+  return { state: world === state.world ? state : { ...state, world }, plan };
 }
 
-/** One accounting owner applies a prepared archive set to the latest native
- * state. Unrelated recent suffix charges are preserved during background work. */
+/** Apply each exact archive delta once on native acceptance. Saving only persists it. */
 export function applySourceVersionAccounting(
   world: WorldState,
   plan: SourceVersionPlan,
 ): WorldState {
-  const totalsByActor = new Map<string, ReturnType<typeof zero>>();
-  for (const value of plan.retained) {
-    let totals = totalsByActor.get(value.actorId);
-    if (!totals) totalsByActor.set(value.actorId, (totals = zero()));
-    totals[value.category].bytes += value.bytes;
-    totals[value.category].count++;
-  }
+  if (!plan.changes.length) return world;
   return updateWorld(
     world,
     (draft) => {
-      for (const actorId of plan.actors) {
-        const totals = totalsByActor.get(actorId) ?? zero();
-        const old = draft.experience?.temporal?.actors[actorId]?.accounts?.archives ?? zero();
-        if (JSON.stringify(old) === JSON.stringify(totals)) continue;
-        ensureExperienceAccounting(draft, actorId);
-        const accounts = draft.experience!.temporal!.actors[actorId]!.accounts!;
-        for (const category of ['optional', 'required', 'speech'] as const) {
-          accounts[category].bytes += totals[category].bytes - old[category].bytes;
-          accounts[category].count += totals[category].count - old[category].count;
-          if (accounts[category].bytes < 0 || accounts[category].count < 0)
-            throw new Error('Exact archived support accounting underflow.');
-        }
-        accounts.archives = totals;
+      for (const change of plan.changes) {
+        ensureExperienceAccounting(draft, change.actorId);
+        const accounts = draft.experience!.temporal!.actors[change.actorId]!.accounts!;
+        accounts.archives ??= zero();
+        for (const [value, direction] of [
+          [change.expectedPrior, -1],
+          [change.desired, 1],
+        ] as const)
+          if (value) {
+            for (const totals of [accounts, accounts.archives]) {
+              totals[value.category].bytes += direction * value.bytes;
+              totals[value.category].count += direction;
+              if (totals[value.category].bytes < 0 || totals[value.category].count < 0)
+                throw new Error('Exact archived support accounting underflow.');
+            }
+          }
         accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
       }
     },
@@ -322,39 +541,74 @@ export function applySourceVersionAccounting(
   );
 }
 
-/** Applied beside canonical records in their existing transaction, never later
- * as a best-effort archive cleanup. The prepared actor set owns the complete replacement. */
+/** A multi-round candidate starts its next preparation from the unchanged
+ * durable archive charges. This never runs on an accepted publication. */
+export function resetPreparedSourceVersionAccounting(
+  world: WorldState,
+  plan: SourceVersionPlan,
+): WorldState {
+  return applySourceVersionAccounting(world, {
+    changes: plan.changes.map((change) => ({
+      ...change,
+      expectedPrior: change.desired && {
+        category: change.desired.category,
+        bytes: change.desired.bytes,
+      },
+      desired: change.expectedPrior,
+    })),
+  });
+}
+
+/** Sparse archive mutations share the existing world transaction; unrelated versions survive. */
 export async function applySourceVersions(
   db: SqlDatabase,
   worldId: string,
   revision: number,
   plan: SourceVersionPlan,
 ): Promise<void> {
-  for (const actorId of plan.actors) {
-    const retained = plan.retained.filter((value) => value.actorId === actorId);
-    const keys = retained.map((value) => ({
-      kind: value.kind,
-      id: value.id,
-      revision: value.revision,
-    }));
+  if (!plan.changes.length) return;
+  const rows = plan.changes.map((change) => ({
+    actor_id: change.actorId,
+    kind: change.kind,
+    id: change.id,
+    revision: change.revision,
+    old_class: change.expectedPrior?.category ?? null,
+    old_bytes: change.expectedPrior?.bytes ?? null,
+    category: change.desired?.category ?? null,
+    bytes: change.desired?.bytes ?? null,
+    payload: change.desired?.payload ?? null,
+  }));
+  for (const batch of sqlRowBatches(rows.map((row) => [row]))) {
+    const encoded = JSON.stringify(batch.map(([row]) => row));
+    const shape =
+      'actor_id text,kind text,id text,revision text,old_class text,old_bytes bigint,category text,bytes bigint,payload text';
+    const conflict = await db
+      .prepare(
+        `SELECT 1 AS conflict FROM jsonb_to_recordset(?::jsonb)q(${shape})
+      LEFT JOIN mind_source_versions v ON v.world_id=? AND v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision
+      WHERE (v.retention_class,v.logical_bytes) IS DISTINCT FROM(q.old_class,q.old_bytes) LIMIT 1`,
+      )
+      .get(encoded, worldId);
+    if (conflict) throw new Error('Exact archived support changed before saving.');
     await db
       .prepare(
-        `DELETE FROM mind_source_versions v WHERE world_id=? AND actor_id=? AND source_kind IN ('awareness','memory','summary') AND NOT EXISTS(SELECT 1 FROM jsonb_to_recordset(?::jsonb)q(kind text,id text,revision text)WHERE q.kind=v.source_kind AND q.id=v.source_id AND q.revision=v.revision)`,
+        `DELETE FROM mind_source_versions v USING jsonb_to_recordset(?::jsonb)q(${shape})
+      WHERE v.world_id=? AND v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision AND q.category IS NULL`,
       )
-      .run(worldId, actorId, JSON.stringify(keys));
-    if (retained.length)
-      await db
-        .prepare(
-          `UPDATE mind_source_versions v SET retention_class=q.category,logical_bytes=q.bytes FROM jsonb_to_recordset(?::jsonb)q(kind text,id text,revision text,category text,bytes bigint) WHERE v.world_id=? AND v.actor_id=? AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision AND (v.retention_class,v.logical_bytes) IS DISTINCT FROM(q.category,q.bytes)`,
-        )
-        .run(JSON.stringify(retained), worldId, actorId);
-    const inserted = retained.filter((value) => value.payload !== undefined);
-    if (inserted.length)
-      await db
-        .prepare(
-          `INSERT INTO mind_source_versions(world_id,actor_id,source_kind,source_id,revision,payload,retired_revision,retention_class,logical_bytes) SELECT ?,?,q.kind,q.id,q.revision,q.payload,?,q.category,q.bytes FROM jsonb_to_recordset(?::jsonb)q(kind text,id text,revision text,payload text,category text,bytes bigint)
+      .run(encoded, worldId);
+    await db
+      .prepare(
+        `UPDATE mind_source_versions v SET retention_class=q.category,logical_bytes=q.bytes FROM jsonb_to_recordset(?::jsonb)q(${shape})
+      WHERE v.world_id=? AND v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision AND q.category IS NOT NULL AND q.payload IS NULL`,
+      )
+      .run(encoded, worldId);
+    await db
+      .prepare(
+        `INSERT INTO mind_source_versions(world_id,actor_id,source_kind,source_id,revision,payload,retired_revision,retention_class,logical_bytes)
+      SELECT ?,q.actor_id,q.kind,q.id,q.revision,q.payload,?,q.category,q.bytes FROM jsonb_to_recordset(?::jsonb)q(${shape})
+      WHERE q.category IS NOT NULL AND q.payload IS NOT NULL
       ON CONFLICT(world_id,actor_id,source_kind,source_id,revision)DO UPDATE SET retention_class=excluded.retention_class,logical_bytes=excluded.logical_bytes`,
-        )
-        .run(worldId, actorId, revision, JSON.stringify(inserted));
+      )
+      .run(worldId, revision, encoded);
   }
 }

@@ -1,5 +1,5 @@
 import { temporalHistoryWindow } from './temporal-storage.js';
-import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
+import { temporalPageReceipts, temporalPageReferences } from '@open-legend/domain';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import * as worldComposition from '../../../packages/domain/src/world-composition.js';
 import {
@@ -136,7 +136,6 @@ it('retrieves independent shared terrain from cold storage for both outgoing and
       });
       initializePerception(world, []);
     });
-  await service.prepareCognitionEvidence(PLAYER_ID);
   await service.flushMemorySources(PLAYER_ID);
   const scope = {
     worldId: service.world.id,
@@ -147,8 +146,8 @@ it('retrieves independent shared terrain from cold storage for both outgoing and
   const subjects = [...previous.map((entry) => entry.exposure.episodeId), subject];
   const ids = new Set<string>();
   const resident = new Set(
-    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
-      temporalChunkReceipts(chunk).map((receipt) => receipt.id),
+    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.pages.flatMap((chunk) =>
+      temporalPageReceipts(chunk).map((receipt) => receipt.id),
     ),
   );
   for (const subject of subjects) {
@@ -234,7 +233,6 @@ it('reads historical native distances through cold actor receipts, including a l
     world.map.spatial.revision++;
     initializePerception(world, []);
   });
-  await service.prepareCognitionEvidence(PLAYER_ID);
   await service.flushMemorySources(PLAYER_ID);
   const head = await store.records.head(),
     scope = { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation };
@@ -276,8 +274,8 @@ it('reads historical native distances through cold actor receipts, including a l
     }),
   ).toBe(true);
   const residentIds = new Set(
-    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
-      temporalChunkReceipts(chunk).map((receipt) => receipt.id),
+    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.pages.flatMap((chunk) =>
+      temporalPageReceipts(chunk).map((receipt) => receipt.id),
     ),
   );
   expect(history.entries.some((entry) => !residentIds.has(entry.receipt.id))).toBe(true);

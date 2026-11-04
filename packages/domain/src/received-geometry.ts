@@ -41,9 +41,12 @@ import {
 } from './received-scene.js';
 import { selectedAttentionPolicy, selectedTemporalPolicy } from './world-composition.js';
 import {
-  finalizeTemporalGeometrySupport,
-  reconcileTemporalGeometryCaptures,
+  captureTemporalGeometry,
+  withTemporalReceivedTransition,
+  closeTemporalGeometry,
+  type TemporalCurrentGroupCheckpoint,
 } from './temporal-evidence.js';
+import { validateTemporalCurrentGroupCheckpoint } from './temporal-validation.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { jsonEncoding, hasRecordFields } from './records.js';
@@ -74,9 +77,12 @@ interface FeatureExtent {
   v0: number;
   v1: number;
 }
-interface GeometryFragment extends FeatureExtent {
-  key: string;
+export interface ReceivedGeometryFeature {
   observation: ObservationContribution;
+  recording?: TemporalCurrentGroupCheckpoint;
+}
+interface GeometryFragment extends FeatureExtent, ReceivedGeometryFeature {
+  key: string;
 }
 export interface ReceivedGeometryState {
   inputRevision: number;
@@ -96,7 +102,7 @@ export interface ReceivedGeometryState {
   featureCursor?: BoundsQueryCursor;
   anchorCursor: number;
   fragments: GeometryFragment[];
-  boundaries: ObservationContribution[];
+  boundaries: ReceivedGeometryFeature[];
   boundaryKeys: string[];
   finished: boolean;
   unknown: boolean;
@@ -451,6 +457,14 @@ export function refreshReceivedGeometry(
   world: WorldState,
   observerId: string,
 ): { acquired: ObservationContribution[]; changed: boolean } {
+  return withTemporalReceivedTransition(world, observerId, () =>
+    refreshGeometry(world, observerId),
+  );
+}
+function refreshGeometry(
+  world: WorldState,
+  observerId: string,
+): { acquired: ObservationContribution[]; changed: boolean } {
   const input = receptor(world, observerId),
     owner = world.perceptionEvidence?.[observerId];
   if (!input || !owner) {
@@ -481,6 +495,7 @@ export function refreshReceivedGeometry(
     if (previous.basis === input.basis && previous.supportedThrough !== world.simTime) {
       owner.geometry!.supportedThrough = world.simTime;
       owner.geometry!.inputRevision = world.sensory?.revision ?? 0;
+      recordGeometryCheck(world, observerId, owner.geometry!);
       return { acquired: [], changed: true };
     }
     return { acquired: [], changed: false };
@@ -513,6 +528,7 @@ export function refreshReceivedGeometry(
     if (previous.supportedThrough === world.simTime) return { acquired: [], changed: false };
     owner.geometry!.supportedThrough = world.simTime;
     owner.geometry!.inputRevision = world.sensory?.revision ?? 0;
+    recordGeometryCheck(world, observerId, owner.geometry!);
     return { acquired: [], changed: true };
   }
   const state: ReceivedGeometryState = {
@@ -778,7 +794,12 @@ export function refreshReceivedGeometry(
         policy.maxBytes - state.bytes,
       );
     if (!result || state.bytes + result.bytes > policy.maxBytes) return;
-    const fragment = { ...candidate.extent, key, observation: result.observation };
+    const fragment: GeometryFragment = {
+      ...candidate.extent,
+      key,
+      observation: result.observation,
+      ...(retained && candidate.old?.recording ? { recording: candidate.old.recording } : {}),
+    };
     state.fragments.push(fragment);
     selected.set(key, fragment);
     state.bytes += result.bytes;
@@ -875,11 +896,11 @@ export function refreshReceivedGeometry(
         },
         dropLower: lower,
       };
-      const oldValue = old?.facets[0]?.value;
+      const oldValue = old?.observation.facets[0]?.value;
       const retained =
         oldValue?.kind === 'physical-boundary' &&
         JSON.stringify(oldValue.boundary) === JSON.stringify(value)
-          ? { observation: old!, bytes: jsonEncoding(old!).bytes }
+          ? { observation: old!.observation, bytes: jsonEncoding(old!.observation).bytes }
           : undefined;
       const result =
         retained ??
@@ -896,7 +917,10 @@ export function refreshReceivedGeometry(
         state.unknown = true;
         continue;
       }
-      state.boundaries.push(result.observation);
+      state.boundaries.push({
+        observation: result.observation,
+        ...(retained && old?.recording ? { recording: old.recording } : {}),
+      });
       state.boundaryKeys.push(key);
       state.bytes += result.bytes;
       if (!retained) acquired.push(result.observation);
@@ -909,49 +933,49 @@ export function refreshReceivedGeometry(
   )
     state.finished = true;
   state.complete = state.finished && !state.unknown;
-  owner.geometry = state;
   if (previous) {
     const kept = new Set(geometryObservations(state).map((observation) => observation.id));
-    finalizeTemporalGeometrySupport(
-      world,
-      observerId,
-      geometryObservations(previous).filter((observation) => !kept.has(observation.id)),
-      previous.supportedThrough,
-      selectedTemporalPolicy(world).recent,
-    );
+    for (const feature of receivedGeometryFeatures(previous))
+      if (!kept.has(feature.observation.id))
+        closeTemporalGeometry(world, observerId, { ...feature }, previous.supportedThrough, 'loss');
   }
+  owner.geometry = state;
+  recordGeometryCheck(world, observerId, owner.geometry);
   markAttentionRelationsDirty(world, observerId, ['closing-drop']);
   return { acquired, changed: true };
 }
+export function receivedGeometryFeatures(state: ReceivedGeometryState): ReceivedGeometryFeature[] {
+  return [...state.fragments, ...state.boundaries];
+}
 function geometryObservations(state: ReceivedGeometryState): ObservationContribution[] {
-  const held = readOnlyDraftView(state);
-  return [
-    ...readOnlyDraftView(held.fragments).map((fragment) =>
-      readOnlyDraftView(readOnlyDraftView(fragment).observation),
-    ),
-    ...readOnlyDraftView(held.boundaries).map(readOnlyDraftView),
-  ];
+  return receivedGeometryFeatures(readOnlyDraftView(state)).map((feature) =>
+    readOnlyDraftView(feature.observation),
+  );
+}
+function recordGeometryCheck(
+  world: WorldState,
+  observerId: string,
+  state: ReceivedGeometryState,
+): void {
+  for (const feature of receivedGeometryFeatures(state))
+    captureTemporalGeometry(world, observerId, feature, state.supportedThrough, true);
 }
 function finalizeGeometry(
   world: WorldState,
   observerId: string,
   state: ReceivedGeometryState,
 ): void {
-  finalizeTemporalGeometrySupport(
-    world,
-    observerId,
-    geometryObservations(state),
-    state.supportedThrough,
-    selectedTemporalPolicy(world).recent,
-  );
+  for (const feature of receivedGeometryFeatures(state))
+    closeTemporalGeometry(world, observerId, feature, state.supportedThrough, 'loss');
 }
 export function endReceivedGeometry(world: WorldState, observerId: string): void {
-  const owner = world.perceptionEvidence?.[observerId];
-  if (!owner?.geometry) return;
-  finalizeGeometry(world, observerId, owner.geometry);
-  delete owner.geometry;
-  reconcileTemporalGeometryCaptures(world, observerId, new Set());
-  markAttentionRelationsDirty(world, observerId, ['closing-drop']);
+  return withTemporalReceivedTransition(world, observerId, () => {
+    const owner = world.perceptionEvidence?.[observerId];
+    if (!owner?.geometry) return;
+    finalizeGeometry(world, observerId, owner.geometry);
+    delete owner.geometry;
+    markAttentionRelationsDirty(world, observerId, ['closing-drop']);
+  });
 }
 /** Ordinary motion keeps the last received context until its actual due check.
  * Life, detector, geometry or policy replacement still withdraws current grants. */
@@ -996,50 +1020,56 @@ export function revokeReceivedGeometryEvidence(
   observerId: string,
   affected: ReadonlySet<string>,
 ): void {
-  const state = world.perceptionEvidence?.[observerId]?.geometry;
-  if (!state) return;
-  const revoked = (id: string, ordinal = 0) =>
-    affected.has(id) ||
-    affected.has(`awareness:${id}`) ||
-    affected.has(`memory:${id}`) ||
-    affected.has(`summary:${id}`) ||
-    affected.has(personalFactAlias(id, ordinal));
-  const removed = new Set(
-    state.fragments
-      .filter((fragment) => revoked(fragment.observation.id))
-      .map((fragment) => fragment.observation.id),
-  );
-  const retained = state.boundaries.filter((observation) => {
-    const value = observation.facets[0]?.value;
-    return (
-      !revoked(observation.id) &&
-      value?.kind === 'physical-boundary' &&
-      [value.boundary.nearSurface.support, value.boundary.farSurface.support].every(
-        (support) =>
-          !removed.has(support.source.id) && !revoked(support.source.id, support.ordinal),
-      )
+  return withTemporalReceivedTransition(world, observerId, () => {
+    const state = world.perceptionEvidence?.[observerId]?.geometry;
+    if (!state) return;
+    const revoked = (id: string, ordinal = 0) =>
+      affected.has(id) ||
+      affected.has(`awareness:${id}`) ||
+      affected.has(`memory:${id}`) ||
+      affected.has(`summary:${id}`) ||
+      affected.has(personalFactAlias(id, ordinal));
+    const removed = new Set(
+      state.fragments
+        .filter((fragment) => revoked(fragment.observation.id))
+        .map((fragment) => fragment.observation.id),
     );
+    const retained = state.boundaries.filter(({ observation }) => {
+      const value = observation.facets[0]?.value;
+      return (
+        !revoked(observation.id) &&
+        value?.kind === 'physical-boundary' &&
+        [value.boundary.nearSurface.support, value.boundary.farSurface.support].every(
+          (support) =>
+            !removed.has(support.source.id) && !revoked(support.source.id, support.ordinal),
+        )
+      );
+    });
+    if (!removed.size && retained.length === state.boundaries.length) return;
+    const ids = new Set(retained.map((feature) => feature.observation.id));
+    for (const feature of receivedGeometryFeatures(state))
+      if (
+        removed.has(feature.observation.id) ||
+        (feature.observation.facets[0]?.value.kind === 'physical-boundary' &&
+          !ids.has(feature.observation.id))
+      )
+        closeTemporalGeometry(world, observerId, feature, state.supportedThrough, 'loss');
+    state.boundaryKeys = state.boundaryKeys.filter((_, i) =>
+      ids.has(state.boundaries[i]!.observation.id),
+    );
+    state.boundaries = retained;
+    state.fragments = state.fragments.filter((fragment) => !removed.has(fragment.observation.id));
+    state.bytes = geometryObservations(state).reduce(
+      (bytes, observation) => bytes + jsonEncoding(observation).bytes,
+      0,
+    );
+    state.generation++;
+    state.finished = false;
+    state.unknown = true;
+    state.complete = false;
+    delete state.featureCursor;
+    markAttentionRelationsDirty(world, observerId, ['closing-drop']);
   });
-  if (!removed.size && retained.length === state.boundaries.length) return;
-  const ids = new Set(retained.map((observation) => observation.id));
-  state.boundaryKeys = state.boundaryKeys.filter((_, i) => ids.has(state.boundaries[i]!.id));
-  state.boundaries = retained;
-  state.fragments = state.fragments.filter((fragment) => !removed.has(fragment.observation.id));
-  reconcileTemporalGeometryCaptures(
-    world,
-    observerId,
-    new Set(geometryObservations(state).map((observation) => observation.id)),
-  );
-  state.bytes = geometryObservations(state).reduce(
-    (bytes, observation) => bytes + jsonEncoding(observation).bytes,
-    0,
-  );
-  state.generation++;
-  state.finished = false;
-  state.unknown = true;
-  state.complete = false;
-  delete state.featureCursor;
-  markAttentionRelationsDirty(world, observerId, ['closing-drop']);
 }
 
 function bodyProof(body: ReceivedSceneBody): ObservationFactKey[] {
@@ -1517,7 +1547,11 @@ export function validateReceivedGeometryState(
   );
   for (const fragment of state.fragments) {
     if (
-      !hasRecordFields(fragment, ['featureId', 'u0', 'u1', 'v0', 'v1', 'key', 'observation']) ||
+      !hasRecordFields(
+        fragment,
+        ['featureId', 'u0', 'u1', 'v0', 'v1', 'key', 'observation'],
+        ['recording'],
+      ) ||
       typeof fragment.featureId !== 'string' ||
       !fragment.featureId ||
       [fragment.u0, fragment.u1, fragment.v0, fragment.v1].some(
@@ -1531,6 +1565,14 @@ export function validateReceivedGeometryState(
     )
       throw new Error('Invalid received feature extent.');
   }
+  for (const feature of state.boundaries)
+    if (!hasRecordFields(feature, ['observation'], ['recording']))
+      throw new Error('Invalid received boundary owner.');
+  for (const feature of receivedGeometryFeatures(state))
+    if (feature.recording)
+      validateTemporalCurrentGroupCheckpoint(feature.recording, world.simTime, [
+        [feature.observation.facets[0]!.value.kind, 'value'],
+      ]);
   for (const observation of observations) {
     validateObservationContribution(observation, originals);
     if (

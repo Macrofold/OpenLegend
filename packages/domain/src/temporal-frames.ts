@@ -1,291 +1,104 @@
-import { appendSnapshot, isAppendBuffer, readOnlyDraftView } from './draft.js';
-import { immutableDataSnapshot, isImmutableData, jsonText } from './records.js';
 import type { WorldState } from './types.js';
 import type {
   EvidenceSource,
   ObservationFactKey,
-  ObservationOrigin,
-  ReceivedFacetProof,
   ObservationFrame,
 } from './perception-evidence.js';
-import type { ObserverSubject } from './knowledge.js';
+import type { ReceivedValueLookup } from './received-values.js';
 import type {
-  TemporalChunk,
-  TemporalFacetReference,
+  TemporalPage,
   TemporalReceipt,
-  TemporalReception,
-  TemporalValueReference,
+  TemporalReceiptLocator,
+  TemporalFacetReference,
+  TemporalValue,
   TemporalFieldDependencies,
 } from './temporal-evidence.js';
 import {
-  temporalConfirmationReference,
-  temporalReceiptId,
+  temporalFacetValueReferences,
+  temporalReceiptAliases,
+  temporalReceiptIndividualIds,
   temporalReceiptChangeCount,
-  temporalSpatialContextValue,
-  temporalValueDependencyAliases,
-  temporalValueIndividualId,
+  materializeTemporalValue,
+  temporalReceiptId,
 } from './temporal-evidence.js';
-import { personalFactAlias } from './experience-source.js';
-import {
-  receivedValueAt,
-  type ReceivedValueLookup,
-  type ReceivedValueReference,
-  sameReceivedValueReference,
-} from './received-values.js';
-import { countDomainWork } from './diagnostic-counters.js';
-import type { TemporalReadSource } from './temporal-read-context.js';
+import { evidenceSourceWithIdentity } from './perception-values.js';
+import { receivedValueAt } from './received-values.js';
+import { immutableDataSnapshot, jsonByteLength } from './records.js';
+import { appendSnapshot, readOnlyDraftView } from './draft.js';
+import type { ObserverSubject } from './knowledge.js';
 
-/** A chunk is one append collection. Dictionary/frame declarations are written
- * once, so saving a suffix never repeats its starting context. Addresses issued
- * to consumers use acquisition/operation identity, never these storage offsets. */
-interface DictionaryKinds {
-  sourceIdentity: readonly [
-    family: EvidenceSource['family'],
-    id: string,
-    observer?: EvidenceSource['observer'],
-  ];
-  text: string;
-  received: ReceivedValueReference;
-  identity: ObserverSubject;
-  source: EvidenceSource;
-  fact: ObservationFactKey;
-  proof: ReceivedFacetProof;
-  origin: ObservationOrigin;
-  reception: TemporalReception;
-  detail: NonNullable<TemporalFacetReference['detailSupport']>;
-  checkDetail: {
-    role: TemporalFacetReference['role'];
-    original: ObservationFactKey;
-    identity: DictionaryKinds['sourceIdentity'];
-    from: number;
-    through: number;
-    acquiredAt: number;
-    aliases?: string[];
-  };
-  view: ObservationFrame;
-  members: readonly (TemporalPackedConfirmation | null)[];
-}
-type DictionaryValue = {
-  [K in keyof DictionaryKinds]: { kind: K; value: DictionaryKinds[K] };
-}[keyof DictionaryKinds];
-/** Fixed tuple slots are the native authority and current JSON format. Rich
- * proof/source objects are selected read products, never a parallel store. */
-interface StoredDictionaryKinds
-  extends Omit<DictionaryKinds, 'source' | 'fact' | 'proof' | 'detail' | 'checkDetail'> {
-  sourceIdentity: readonly [
-    family: EvidenceSource['family'],
-    id: string,
-    observer?: EvidenceSource['observer'],
-  ];
-  source: readonly [identity: number, revision: EvidenceSource['revision']];
-  fact: readonly [source: number, ordinal: number];
-  proof: readonly [
-    original: number,
-    confirmation: number,
-    from: number,
-    through: number,
-    aliases?: string[],
-  ];
-  detail: readonly [
-    proof: number,
-    from: number,
-    through: number,
-    acquiredAt: number,
-    role: TemporalFacetReference['role'],
-  ];
-  checkDetail: readonly [
-    original: number,
-    identity: number,
-    from: number,
-    through: number,
-    acquiredAt: number,
-    role: TemporalFacetReference['role'],
-    aliases?: string[],
-  ];
-}
-type StoredDictionaryValue = {
-  [K in keyof StoredDictionaryKinds]: readonly [kind: K, value: StoredDictionaryKinds[K]];
-}[keyof StoredDictionaryKinds];
-export const TEMPORAL_DICTIONARY_REFERENCE_FIELDS = {
-  source: { 0: 'sourceIdentity' },
-  fact: { 0: 'source' },
-  proof: { 0: 'fact', 1: 'source' },
-  detail: { 0: 'proof' },
-  checkDetail: { 0: 'fact', 1: 'sourceIdentity' },
-} as const;
-export const TEMPORAL_FIELD = {
-  value: 0,
-  original: 1,
-  source: 2,
-  details: 3,
-  pose: 4,
-  reception: 5,
-  ordinal: 6,
-  from: 7,
-  through: 8,
-  role: 9,
-  at: 10,
-  acquired: 11,
-  confirmed: 12,
-  support: 13,
-  poseFrame: 14,
-} as const;
-/** Null holes preserve fixed slots; trailing defaults are absent. The common
- * value/original/source/detail bindings precede rare timing/reception overrides. */
-export type TemporalPackedFacet = readonly [
-  value: number,
-  original?: number | null,
-  source?: number | null,
-  details?: number | null,
-  pose?: number | null,
-  reception?: number | null,
-  ordinal?: number | null,
-  from?: number | null,
-  through?: number | null,
-  role?: Exclude<TemporalFacetReference['role'], 'direct'> | null,
-  at?: number | null,
-  acquired?: number | null,
-  confirmed?: number | null,
-  support?: number | null,
-  poseFrame?: number | null,
-];
-export type TemporalPackedConfirmation = TemporalPackedFacet;
-function compactField(value: [...TemporalPackedFacet]): TemporalPackedFacet {
-  while (value.length > 1 && value.at(-1) == null) value.pop();
-  for (let at = 1; at < value.length; at++) value[at] ??= null;
-  return value as unknown as TemporalPackedFacet;
-}
-function packedFieldOrdinal(input: TemporalPackedFacet, ordinal: number): TemporalPackedFacet {
-  const row = [...input];
-  row[6] = ordinal;
-  for (let at = 1; at < row.length; at++) row[at] ??= null;
-  return row as unknown as TemporalPackedFacet;
-}
-export interface TemporalConfirmation {
-  subject: string;
-  reference: TemporalValueReference;
-  reception?: TemporalReception;
+/** Logical members survive packing, expiry clipping and page replacement. */
+export interface TemporalCheckMember {
+  locator: TemporalReceiptLocator;
+  memberOrdinal: number;
   original: ObservationFactKey;
-  confirmation: EvidenceSource;
-  from: number;
-  through: number;
-  detailSupport?: TemporalFacetReference['detailSupport'];
+  role: TemporalFacetReference['role'];
+  part?: 'detail' | 'pose' | 'value';
+  confirmationIdentity?: Omit<EvidenceSource, 'revision'>;
+  revisionFloor?: number;
 }
-/** Borrowed current fields for one synchronous write. Common actual checks are
- * prepared once; no rich per-field confirmation envelopes are retained. */
-export interface TemporalCheckGroup {
-  subject: string;
-  confirmation: EvidenceSource;
-  from: number;
-  through: number;
-  count: number;
-  /** First baseline owns this immutable template without another check event. */
-  declareOnly?: true;
-  useReceiptFields?: true;
-  fields: () => readonly TemporalFacetReference[];
-  membershipKey: object;
-  membership?: { chunkId: string; entryOrdinal: number };
-  /** Actual appearance check tuple; member identity/role lives in its declaration. */
-  detail?: readonly [revision: EvidenceSource['revision'], from: number, through: number];
-}
-export interface TemporalConfirmationRead extends TemporalConfirmation {
-  entryOrdinal: number;
-  fieldOrdinal: number;
-  receiptOrdinal: number;
-  acquisition: number;
-  at: number;
+export interface TemporalCheckSeed {
+  member: number;
+  part?: 'detail' | 'pose' | 'value';
+  receivedAt: number;
   order: number;
+  support: NonNullable<TemporalFacetReference['support']>;
+  measuredFrom: number;
+  measuredThrough: number;
+  acquiredAt: number;
+  receivedFrom?: EvidenceSource;
+  reception?: TemporalFacetReference['reception'];
+  poseFrame?: ObservationFrame;
 }
-export interface TemporalConfirmationDependency {
+export interface TemporalCheckDeclaration {
+  id: number;
   subject: string;
-  sourceIds: [];
-  confirmation: true;
-  from: number;
-  through: number;
-  facets: TemporalFieldDependencies[];
+  members: readonly TemporalCheckMember[];
+  seeds: readonly TemporalCheckSeed[];
 }
-function packedEntryFields(entry: TemporalFrameEntry): readonly TemporalPackedFacet[] {
-  return entry.kind === 'change' || entry.kind === 'checkpoint'
-    ? entry.facets
-    : entry.kind === 'confirmation'
-      ? []
-      : entry.kind === 'dictionary' && entry.value[0] === 'members'
-        ? entry.value[1].filter((field): field is TemporalPackedConfirmation => field !== null)
-        : [];
+export interface TemporalCheckStamp {
+  declaration: number;
+  confirmation: EvidenceSource;
+  confirmedFrom: number;
+  confirmedThrough: number;
+  measurement?: {
+    measuredFrom: number;
+    measuredThrough: number;
+    acquiredAt: number;
+    receivedFrom: EvidenceSource;
+  };
+  frame?: ObservationFrame;
 }
-export type TemporalFrameEntry =
-  | { ordinal: number; kind: 'dictionary'; value: StoredDictionaryValue }
+export type TemporalHistoryInput =
   | {
       ordinal: number;
-      kind: 'confirmation';
-      frame: number;
-      receipt: number;
-      order?: number;
-      subjects: Array<{
-        subject: number;
-        /** One actual check stamp; member source identities and measured values are stable. */
-        check: readonly [
-          revision: EvidenceSource['revision'],
-          from?: number | null,
-          through?: number | null,
-        ];
-        detail?: readonly [revision: EvidenceSource['revision'], from: number, through: number];
-        /** Immutable field membership is declared once in this logical chunk. */
-        members: number;
-        count: number;
-        offset: number;
-        /** Sparse original addresses for narrowed/corrected read products. */
-        ordinals?: number[];
-        /** Selected membership positions; absence means the complete declared set. */
-        mask?: number[];
-      }>;
+      kind: 'span';
+      receipt: TemporalReceipt;
+      terminal: readonly TemporalCheckSeed[];
+      closedAt: number;
+      closedOrder: number;
+      reason: TemporalReceipt['change'];
     }
+  | { ordinal: number; kind: 'occurrence'; receipt: TemporalReceipt }
   | {
       ordinal: number;
-      kind: 'checkpoint';
-      frame: number;
-      identity?: number;
-      order?: number;
-      subject: number;
-      availability?: TemporalCheckpointAvailability[];
-      facets: TemporalPackedFacet[];
-    }
-  | {
-      ordinal: number;
-      kind: 'frame';
-      acquisition: number;
+      kind: 'check';
       at: number;
       order: number;
-      receiverFrame?: ObservationFrame;
-      coverageGap?: { from: number; through: number };
-    }
-  | {
-      ordinal: number;
-      kind: 'change';
-      receipt: number;
-      frame: number;
-      order?: number;
-      subject: number;
-      contexts?: number[];
-      identity?: number;
-      origin?: number;
-      change: TemporalReceipt['change'];
-      availabilityAt?: number;
-      availability?: TemporalCheckpointAvailability[];
-      spatialContext?: true;
-      required?: true;
-      sources?: number[];
-      memberships?: number[];
-      facets: TemporalPackedFacet[];
+      acquisition: number;
+      stamps: readonly TemporalCheckStamp[];
     };
-export type TemporalFrameOwner = Pick<
-  TemporalChunk,
-  'id' | 'actorId' | 'physicalLife' | 'epoch' | 'entries'
->;
-/** Reconstruction state at a real track-entry opportunity, not another
- * acquisition or an address to observations before this chunk's coverage. */
+export type TemporalHistoryOperation = TemporalHistoryInput & {
+  charge: { bytes: number; count: number };
+};
+/** Checkpoints are selected read products, never saved rollover baselines. */
+export interface TemporalCheckpointAvailability {
+  reason: 'unavailable' | 'unchecked' | 'released';
+  at: number;
+  fields: number[];
+}
 export interface TemporalCheckpoint {
-  chunkId: string;
+  pageId: string;
   actorId: string;
   physicalLife: number;
   epoch: string;
@@ -299,2000 +112,635 @@ export interface TemporalCheckpoint {
   facets: TemporalFacetReference[];
   availability?: TemporalCheckpointAvailability[];
 }
-export interface TemporalCheckpointAvailability {
-  reason: 'unavailable' | 'unchecked' | 'released';
-  at: number;
-  fields: number[];
-}
-export interface TemporalCheckpointFields {
-  subjectIdentity?: ObserverSubject;
-  /** Existing retained reconstruction may have its own equal-time order. */
-  order?: number;
-  subject: string;
-  facets: readonly TemporalFacetReference[];
-  availability?: TemporalCheckpointAvailability[];
-}
-export type TemporalCheckpointDraft = Omit<TemporalCheckpoint, 'ordinal'>;
-export type TemporalCheckpointBuilder = (
-  subjects: ReadonlySet<string>,
-  includeFeatures: boolean,
-) => readonly TemporalCheckpointFields[];
-type TemporalFrameWriter = TemporalFrameOwner & Pick<TemporalChunk, 'nextEntryOrdinal'>;
-/** Native writes need only operation metadata. Expanded actor/life/id/proof
- * envelopes are lazy read products of the compact entries, never append input. */
 export type TemporalWriteHeader = Omit<
   TemporalReceipt,
   'id' | 'actorId' | 'physicalLife' | 'epoch' | 'facets'
 >;
-/** The storage query and native materializer share this dependency contract.
- * Queries select declarations; only the native decoder interprets their values. */
-export const TEMPORAL_CHANGE_DICTIONARY_FIELDS = ['subject', 'identity', 'origin'] as const;
-export const TEMPORAL_CHANGE_DICTIONARY_ARRAY_FIELDS = ['contexts', 'sources'] as const;
-export const TEMPORAL_FACET_DICTIONARY_FIELDS = [1, 2, 13, 5, 3, 14] as const;
-export const TEMPORAL_FACET_REFERENCE_FIELDS = [0, 4] as const;
-interface FrameIndex {
-  id: string;
-  actorId: string;
-  physicalLife: number;
-  epoch: string;
-  length: number;
-  entries: Map<number, TemporalFrameEntry>;
-  dictionary: Map<string, number>;
-  decodedDictionary: Map<number, DictionaryKinds[keyof DictionaryKinds]>;
-  frames: Map<number, number>;
-  receipts: Map<number, TemporalReceipt>;
-  headers: Map<number, Omit<TemporalReceipt, 'facets'>>;
-  operations: Map<number, Extract<TemporalFrameEntry, { kind: 'change' }>>;
-  operationOrder: Array<Extract<TemporalFrameEntry, { kind: 'change' }>>;
-  checkpoints: Map<number, Extract<TemporalFrameEntry, { kind: 'checkpoint' }>>;
-  decodedCheckpoints: Map<number, TemporalCheckpoint>;
-  subjects: Set<string>;
-  featureScope: boolean;
-  confirmations: Map<number, Extract<TemporalFrameEntry, { kind: 'confirmation' }>>;
-  references: Set<string>;
+
+export function temporalPageOperations(page: TemporalPage): readonly TemporalHistoryOperation[] {
+  return readOnlyDraftView(page.operations);
 }
-const indexes = new WeakMap<object, FrameIndex>();
-function key(value: StoredDictionaryValue): string {
-  return jsonText(value);
+export function temporalPageReceipts(page: TemporalPage): TemporalReceipt[] {
+  return temporalPageOperations(page).flatMap((op) => (op.kind === 'check' ? [] : [op.receipt]));
 }
-function dictionary<K extends keyof DictionaryKinds>(
-  index: FrameIndex,
-  at: number,
-  kind: K,
-): DictionaryKinds[K] {
-  const entry = index.entries.get(at);
-  if (entry?.kind !== 'dictionary' || entry.value[0] !== kind)
-    throw new Error('Temporal frame has an invalid dictionary reference.');
-  const prior = index.decodedDictionary.get(at);
-  if (prior !== undefined) return prior as DictionaryKinds[K];
-  const stored = entry.value;
-  let value: DictionaryKinds[keyof DictionaryKinds];
-  switch (stored[0]) {
-    case 'source': {
-      const identity = dictionary(index, stored[1][0], 'sourceIdentity');
-      value = {
-        family: identity[0],
-        id: identity[1],
-        revision: stored[1][1],
-        observer: identity[2] ?? { actorId: index.actorId, physicalLife: index.physicalLife },
-      } as EvidenceSource;
-      break;
-    }
-    case 'fact':
-      value = { source: dictionary(index, stored[1][0], 'source'), ordinal: stored[1][1] };
-      break;
-    case 'proof':
-      value = {
-        original: dictionary(index, stored[1][0], 'fact'),
-        confirmation: dictionary(index, stored[1][1], 'source'),
-        confirmedFrom: stored[1][2],
-        confirmedThrough: stored[1][3],
-        ...(stored[1][4] ? { aliases: stored[1][4] } : {}),
-      };
-      break;
-    case 'detail':
-      value = {
-        proof: dictionary(index, stored[1][0], 'proof'),
-        from: stored[1][1],
-        through: stored[1][2],
-        acquiredAt: stored[1][3],
-        role: stored[1][4],
-      };
-      break;
-    case 'checkDetail':
-      value = {
-        original: dictionary(index, stored[1][0], 'fact'),
-        identity: dictionary(index, stored[1][1], 'sourceIdentity'),
-        from: stored[1][2],
-        through: stored[1][3],
-        acquiredAt: stored[1][4],
-        role: stored[1][5],
-        ...(stored[1][6] ? { aliases: stored[1][6] } : {}),
-      };
-      break;
-    default:
-      value = stored[1];
-  }
-  const complete = immutableDataSnapshot(value, readOnlyDraftView);
-  index.decodedDictionary.set(at, complete);
-  return complete as DictionaryKinds[K];
-}
-export function temporalDictionaryDependencies(
-  entry: TemporalFrameEntry,
-): Array<{ ordinal: number; kind: keyof DictionaryKinds }> {
-  if (entry.kind !== 'dictionary') return [];
-  if (entry.value[0] === 'members') {
-    const links: Array<{ ordinal: number; kind: keyof DictionaryKinds }> = [];
-    for (const field of entry.value[1]) {
-      if (!field) continue;
-      for (const slot of TEMPORAL_FACET_REFERENCE_FIELDS)
-        if (field[slot] != null) links.push({ ordinal: field[slot], kind: 'received' });
-      for (const [slot, kind] of [
-        [1, 'fact'],
-        [2, 'sourceIdentity'],
-        [3, 'checkDetail'],
-        [5, 'reception'],
-      ] as const)
-        if (field[slot] != null) links.push({ ordinal: field[slot], kind });
-    }
-    return links;
-  }
-  const links =
-    TEMPORAL_DICTIONARY_REFERENCE_FIELDS[
-      entry.value[0] as keyof typeof TEMPORAL_DICTIONARY_REFERENCE_FIELDS
-    ];
-  return links
-    ? Object.entries(links).map(([slot, kind]) => ({
-        ordinal: (entry.value[1] as readonly number[])[Number(slot)]!,
-        kind,
-      }))
-    : [];
-}
-export function temporalDictionaryValue(
-  chunk: TemporalFrameOwner,
-  ordinal: number,
-): DictionaryValue {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    entry = index.entries.get(ordinal);
-  if (entry?.kind !== 'dictionary') throw new Error('Temporal dictionary entry is unavailable.');
-  const kind = entry.value[0];
-  return { kind, value: dictionary(index, ordinal, kind) } as DictionaryValue;
-}
-export function temporalOperationHeader(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'change' }>,
-): Omit<TemporalReceipt, 'facets'> {
-  return operationHeader(chunk, entry, frameIndex(readOnlyDraftView(chunk)));
-}
-function operationHeader(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'change' }>,
-  index: FrameIndex,
-): Omit<TemporalReceipt, 'facets'> {
-  const prior = index.headers.get(entry.receipt);
-  if (prior) return prior;
-  const frame = index.entries.get(entry.frame);
-  if (frame?.kind !== 'frame') throw new Error('Temporal change has no acquisition frame.');
-  const header = immutableDataSnapshot<Omit<TemporalReceipt, 'facets'>>({
-    id: temporalReceiptId({ epoch: chunk.epoch, ordinal: entry.receipt }),
-    actorId: chunk.actorId,
-    physicalLife: chunk.physicalLife,
-    epoch: chunk.epoch,
-    ordinal: entry.receipt,
-    acquisition: frame.acquisition,
-    at: frame.at,
-    order: entry.order ?? frame.order,
-    ...(frame.receiverFrame ? { receiverFrame: frame.receiverFrame } : {}),
-    ...(frame.coverageGap ? { coverageGap: frame.coverageGap } : {}),
-    subject: dictionary(index, entry.subject, 'text'),
-    ...(entry.contexts
-      ? { contextSubjects: entry.contexts.map((at) => dictionary(index, at, 'text')) }
-      : {}),
-    ...(entry.identity !== undefined
-      ? { subjectIdentity: dictionary(index, entry.identity, 'identity') }
-      : {}),
-    ...(entry.origin !== undefined ? { origin: dictionary(index, entry.origin, 'origin') } : {}),
-    change: entry.change,
-    ...(['unchecked', 'loss', 'attention-exit'].includes(entry.change)
-      ? { availabilityAt: entry.availabilityAt ?? frame.at }
-      : {}),
-    ...(entry.availability?.length ? { availability: entry.availability } : {}),
-    required: entry.required === true,
-    ...(entry.spatialContext ? { spatialContext: true } : {}),
-    sourceIds: (entry.sources ?? []).map((at) => dictionary(index, at, 'text')),
-  });
-  index.headers.set(entry.receipt, header);
-  return header;
-}
-function decode(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'change' }>,
-  index: FrameIndex,
-): TemporalReceipt {
-  const frame = index.entries.get(entry.frame);
-  if (frame?.kind !== 'frame') throw new Error('Temporal change has no acquisition frame.');
-  return immutableDataSnapshot({
-    ...operationHeader(chunk, entry, index),
-    facets: decodeFacets(entry.facets, frame, index),
-  });
-}
-/** Header selection precedes field/proof decoding. The index is derived from one
- * bounded page and reused by immutable identity; callers charge each visited
- * operation and decoded field to their existing preparation allowance. */
-export function temporalChunkOperations(
-  chunk: TemporalFrameOwner,
-): readonly Extract<TemporalFrameEntry, { kind: 'change' }>[] {
-  return frameIndex(readOnlyDraftView(chunk)).operationOrder;
-}
-export function temporalChunkCheckpointOperations(
-  chunk: TemporalFrameOwner,
-): Iterable<Extract<TemporalFrameEntry, { kind: 'checkpoint' }>> {
-  return frameIndex(readOnlyDraftView(chunk)).checkpoints.values();
-}
-export function temporalOperationFacet(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'change' | 'checkpoint' }>,
-  position: number,
-): TemporalFacetReference {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    frame = index.entries.get(entry.frame),
-    facet = entry.facets[position];
-  if (frame?.kind !== 'frame' || !facet)
-    throw new Error('Temporal operation has no selected field.');
-  return decodeFacets([packedFieldOrdinal(facet, facet[6] ?? position)], frame, index)[0]!;
-}
-export function temporalCheckpointHeader(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'checkpoint' }>,
-): Omit<TemporalCheckpoint, 'facets'> {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    frame = index.entries.get(entry.frame);
-  if (frame?.kind !== 'frame') throw new Error('Temporal checkpoint has no entry frame.');
-  return {
-    chunkId: chunk.id,
-    actorId: chunk.actorId,
-    physicalLife: chunk.physicalLife,
-    epoch: chunk.epoch,
-    ordinal: entry.ordinal,
-    acquisition: frame.acquisition,
-    at: frame.at,
-    order: entry.order ?? frame.order,
-    subject: dictionary(index, entry.subject, 'text'),
-    ...(entry.identity !== undefined
-      ? { subjectIdentity: dictionary(index, entry.identity, 'identity') }
-      : {}),
-    sourceIds: [],
-    ...(entry.availability?.length ? { availability: entry.availability } : {}),
-  };
-}
-function fieldReception(
-  index: FrameIndex,
-  field: TemporalPackedFacet,
-): TemporalReception | undefined {
-  return field[4] != null
-    ? { kind: 'body', poseRef: dictionary(index, field[4], 'received') }
-    : field[5] != null
-      ? dictionary(index, field[5], 'reception')
-      : undefined;
-}
-function decodeFacets(
-  facets: readonly TemporalPackedFacet[],
-  frame: Extract<TemporalFrameEntry, { kind: 'frame' }>,
-  index: FrameIndex,
-): TemporalFacetReference[] {
-  return facets.map((facet, ordinal): TemporalFacetReference => {
-    const reception = fieldReception(index, facet);
-    const poseFrame =
-      facet[14] != null
-        ? dictionary(index, facet[14], 'view')
-        : reception?.kind === 'body'
-          ? frame.receiverFrame
-          : undefined;
-    return {
-      valueRef: dictionary(index, facet[0]!, 'received'),
-      ordinal: facet[6] ?? ordinal,
-      role: facet[9] ?? 'direct',
-      asOf: facet[10] ?? frame.at,
-      measuredThrough: facet[8] ?? frame.at,
-      measuredFrom: facet[7] ?? facet[8] ?? frame.at,
-      acquiredAt: facet[11] ?? frame.at,
-      ...(facet[12] != null ? { confirmedThrough: facet[12] } : {}),
-      ...(facet[1] != null ? { original: dictionary(index, facet[1], 'fact') } : {}),
-      ...(facet[2] != null ? { receivedFrom: dictionary(index, facet[2], 'source') } : {}),
-      ...(facet[13] != null ? { support: dictionary(index, facet[13], 'proof') } : {}),
-      ...(facet[3] != null ? { detailSupport: dictionary(index, facet[3], 'detail') } : {}),
-      ...(reception ? { reception } : {}),
-      ...(poseFrame ? { poseFrame } : {}),
-    };
-  });
-}
-function decodedCheckpoint(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'checkpoint' }>,
-  index: FrameIndex,
-): TemporalCheckpoint {
-  let checkpoint = index.decodedCheckpoints.get(entry.ordinal);
-  if (!checkpoint) {
-    const frame = index.entries.get(entry.frame);
-    if (frame?.kind !== 'frame') throw new Error('Temporal checkpoint has no entry frame.');
-    checkpoint = immutableDataSnapshot({
-      chunkId: chunk.id,
-      actorId: chunk.actorId,
-      physicalLife: chunk.physicalLife,
-      epoch: chunk.epoch,
-      ordinal: entry.ordinal,
-      acquisition: frame.acquisition,
-      at: frame.at,
-      order: entry.order ?? frame.order,
-      subject: dictionary(index, entry.subject, 'text'),
-      ...(entry.identity !== undefined
-        ? { subjectIdentity: dictionary(index, entry.identity, 'identity') }
-        : {}),
-      sourceIds: [],
-      facets: decodeFacets(entry.facets, frame, index),
-      ...(entry.availability?.length ? { availability: entry.availability } : {}),
-    });
-    index.decodedCheckpoints.set(entry.ordinal, checkpoint);
-  }
-  return checkpoint;
-}
-function frameIndex(chunk: TemporalFrameOwner): FrameIndex {
-  const entries = readOnlyDraftView(chunk.entries);
-  const reusable = isImmutableData(entries) || isAppendBuffer(entries);
-  let index = reusable ? indexes.get(entries) : undefined;
-  if (
-    index &&
-    (index.id !== chunk.id ||
-      index.actorId !== chunk.actorId ||
-      index.physicalLife !== chunk.physicalLife ||
-      index.epoch !== chunk.epoch)
-  )
-    index = undefined;
-  if (!index)
-    index = {
-      id: chunk.id,
-      actorId: chunk.actorId,
-      physicalLife: chunk.physicalLife,
-      epoch: chunk.epoch,
-      length: 0,
-      entries: new Map(),
-      dictionary: new Map(),
-      decodedDictionary: new Map(),
-      frames: new Map(),
-      receipts: new Map(),
-      headers: new Map(),
-      operations: new Map(),
-      operationOrder: [],
-      checkpoints: new Map(),
-      decodedCheckpoints: new Map(),
-      subjects: new Set(),
-      featureScope: false,
-      confirmations: new Map(),
-      references: new Set(),
-    };
-  for (let at = index.length; at < entries.length; at++) {
-    const entry = readOnlyDraftView(entries[at]!);
-    if (index.entries.has(entry.ordinal)) throw new Error('Duplicate temporal storage ordinal.');
-    index.entries.set(entry.ordinal, entry);
-    if (entry.kind === 'dictionary') index.dictionary.set(key(entry.value), entry.ordinal);
-    else if (entry.kind === 'frame') {
-      if (index.frames.has(entry.acquisition))
-        throw new Error('Duplicate acquisition in temporal chunk.');
-      index.frames.set(entry.acquisition, entry.ordinal);
-    } else if (entry.kind === 'change') {
-      if (index.operations.has(entry.receipt)) throw new Error('Duplicate temporal operation.');
-      index.operations.set(entry.receipt, entry);
-      index.operationOrder.push(entry);
-    } else if (entry.kind === 'checkpoint') {
-      index.checkpoints.set(entry.ordinal, entry);
-    } else if (entry.kind === 'confirmation') {
-      index.confirmations.set(entry.ordinal, entry);
-    } else throw new Error('Unsupported temporal frame entry.');
-  }
-  // A narrowed older operation may refer to newly appended declarations. Index
-  // the complete immutable declaration set before resolving any references.
-  for (let at = index.length; at < entries.length; at++) {
-    const entry = readOnlyDraftView(entries[at]!);
-    if (entry.kind === 'dictionary' && entry.value[0] === 'members') {
-      for (const facet of packedEntryFields(entry)) {
-        for (const slot of TEMPORAL_FACET_REFERENCE_FIELDS) {
-          const reference = facet[slot];
-          if (reference == null) continue;
-          const value = dictionary(index, reference, 'received');
-          if (typeof value === 'string') index.references.add(value);
-        }
-        index.featureScope ||= facet[4] != null || facet[5] != null;
-      }
-    }
-    if (entry.kind !== 'change' && entry.kind !== 'checkpoint' && entry.kind !== 'confirmation')
-      continue;
-    if (entry.kind === 'confirmation')
-      for (const group of entry.subjects)
-        index.subjects.add(dictionary(index, group.subject, 'text'));
-    else index.subjects.add(dictionary(index, entry.subject, 'text'));
-    if (entry.kind === 'change') {
-      for (const subject of entry.contexts ?? [])
-        index.subjects.add(dictionary(index, subject, 'text'));
-      index.featureScope ||=
-        entry.spatialContext === true ||
-        !!entry.contexts?.length ||
-        entry.change === 'receiver-frame' ||
-        entry.facets.some(
-          (facet) =>
-            facet[4] != null ||
-            facet[14] != null ||
-            (facet[5] != null &&
-              ['body', 'location'].includes(dictionary(index, facet[5], 'reception').kind)),
-        );
-    }
-    for (const facet of packedEntryFields(entry))
-      for (const field of TEMPORAL_FACET_REFERENCE_FIELDS) {
-        const reference = facet[field];
-        if (reference == null) continue;
-        const value = dictionary(index, reference, 'received');
-        if (typeof value === 'string') index.references.add(value);
-      }
-    index.featureScope ||= packedEntryFields(entry).some(
-      (field) => field[4] != null || field[14] != null || field[5] != null,
-    );
-  }
-  index.length = entries.length;
-  if (reusable) indexes.set(entries, index);
-  return index;
-}
-function decodedReceipt(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'change' }>,
-  index: FrameIndex,
-): TemporalReceipt {
-  let receipt = index.receipts.get(entry.receipt);
-  if (!receipt) {
-    receipt = decode(chunk, entry, index);
-    index.receipts.set(entry.receipt, receipt);
-  }
-  return receipt;
-}
-/** Pure read products. No reader appends evidence or resolves hidden world data. */
-export function temporalChunkReceipts(chunk: TemporalFrameOwner): TemporalReceipt[] {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  return [...index.operations.values()].map((entry) => decodedReceipt(chunk, entry, index));
-}
-export function temporalChunkReceipt(
-  chunk: TemporalFrameOwner,
+export function temporalPageReceipt(
+  page: TemporalPage,
   ordinal: number,
 ): TemporalReceipt | undefined {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    entry = index.operations.get(ordinal);
-  return entry && decodedReceipt(chunk, entry, index);
+  for (const op of temporalPageOperations(page))
+    if (op.kind !== 'check' && op.receipt.ordinal === ordinal) return op.receipt;
+  return undefined;
 }
-/** Capture watermarks need only exact value/reception addresses. Do not decode
- * all proof dictionaries, or every prior receipt in the chunk, to retain them. */
-export function temporalReceiptValues(
-  chunk: TemporalFrameOwner,
-  ordinal: number,
-): Array<TemporalValueReference & { reception?: TemporalReception }> {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    entry = index.operations.get(ordinal);
-  if (!entry) return [];
-  return entry.facets.map((facet) => ({
-    valueRef: dictionary(index, facet[0]!, 'received'),
-    ...(facet[4] != null
-      ? {
-          reception: {
-            kind: 'body' as const,
-            poseRef: dictionary(index, facet[4]!, 'received'),
-          },
-        }
-      : facet[5] != null
-        ? { reception: dictionary(index, facet[5], 'reception') }
-        : {}),
-  }));
-}
-export function temporalEntryCheckpoints(
-  chunk: TemporalFrameOwner,
-  entries: readonly TemporalFrameEntry[] = chunk.entries,
-): TemporalCheckpoint[] {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  return entries.flatMap((entry) =>
-    entry.kind === 'checkpoint' ? [decodedCheckpoint(chunk, entry, index)] : [],
-  );
-}
-export function temporalChunkCheckpoint(
-  chunk: TemporalFrameOwner,
-  ordinal: number,
-): TemporalCheckpoint | undefined {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    entry = index.checkpoints.get(ordinal);
-  return entry && decodedCheckpoint(chunk, entry, index);
-}
-export function temporalChunkConfirmationOperations(
-  chunk: TemporalFrameOwner,
-): Iterable<Extract<TemporalFrameEntry, { kind: 'confirmation' }>> {
-  return frameIndex(readOnlyDraftView(chunk)).confirmations.values();
-}
-export function temporalConfirmationHeader(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
-) {
-  return confirmationHeader(frameIndex(readOnlyDraftView(chunk)), entry);
-}
-function confirmationHeader(
-  index: FrameIndex,
-  entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
-) {
-  const frame = index.entries.get(entry.frame);
-  if (frame?.kind !== 'frame') throw new Error('Temporal confirmation has no acquisition frame.');
+export function temporalOperationHeader(
+  page: TemporalPage,
+  op: TemporalHistoryOperation,
+): Omit<TemporalReceipt, 'facets'> {
+  if (op.kind !== 'check') return op.receipt;
   return {
-    entryOrdinal: entry.ordinal,
-    receiptOrdinal: entry.receipt,
-    acquisition: frame.acquisition,
-    at: frame.at,
-    order: entry.order ?? frame.order,
-  };
-}
-function checkedSource(
-  index: FrameIndex,
-  identity: DictionaryKinds['sourceIdentity'],
-  revision: EvidenceSource['revision'],
-): EvidenceSource {
-  return {
-    family: identity[0],
-    id: identity[1],
-    revision,
-    observer: identity[2] ?? { actorId: index.actorId, physicalLife: index.physicalLife },
-  } as EvidenceSource;
-}
-type StoredCheckGroup = Extract<TemporalFrameEntry, { kind: 'confirmation' }>['subjects'][number];
-function checkMembers(
-  index: FrameIndex,
-  group: StoredCheckGroup,
-): readonly (TemporalPackedConfirmation | null)[] {
-  return dictionary(index, group.members, 'members');
-}
-/** Current-format cursor validation resolves native identities once at loading,
- * never again on each successful group check. */
-export function temporalMembershipBindings(
-  chunk: TemporalFrameOwner,
-  ordinal: number,
-): Array<{
-  valueRef: ReceivedValueReference;
-  original: ObservationFactKey;
-  sourceId: string;
-  reception?: TemporalReception;
-}> {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  return dictionary(index, ordinal, 'members').flatMap((field) =>
-    field
-      ? [
-          {
-            valueRef: dictionary(index, field[0], 'received'),
-            original: dictionary(index, field[1]!, 'fact'),
-            sourceId: dictionary(index, field[2]!, 'sourceIdentity')[1],
-            ...(fieldReception(index, field) ? { reception: fieldReception(index, field) } : {}),
-          },
-        ]
-      : [],
-  );
-}
-export function temporalConfirmationPositions(group: StoredCheckGroup): readonly number[] {
-  return group.mask ?? Array.from({ length: group.count }, (_, at) => at);
-}
-function checkFieldOrdinal(group: StoredCheckGroup, position: number): number {
-  return group.ordinals?.[position] ?? group.offset + position;
-}
-export function temporalConfirmationSubject(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
-  group: number,
-): string {
-  const value = entry.subjects[group];
-  if (!value) throw new Error('Temporal confirmation has no subject.');
-  return dictionary(frameIndex(readOnlyDraftView(chunk)), value.subject, 'text');
-}
-export function temporalConfirmationField(
-  chunk: TemporalFrameOwner,
-  entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
-  group: number,
-  position: number,
-): TemporalConfirmationRead {
-  return confirmationField(frameIndex(readOnlyDraftView(chunk)), entry, group, position);
-}
-function confirmationField(
-  index: FrameIndex,
-  entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
-  group: number,
-  position: number,
-): TemporalConfirmationRead {
-  const value = entry.subjects[group],
-    field = value && checkMembers(index, value)[position];
-  if (!value || !field) throw new Error('Temporal confirmation has no selected field.');
-  const header = confirmationHeader(index, entry),
-    fieldOrdinal = checkFieldOrdinal(value, position);
-  const reception = fieldReception(index, field);
-  return {
-    ...header,
-    fieldOrdinal,
-    subject: dictionary(index, value.subject, 'text'),
-    reference: { valueRef: dictionary(index, field[0]!, 'received') },
-    ...(reception ? { reception } : {}),
-    original: dictionary(index, field[1]!, 'fact'),
-    confirmation: checkedSource(
-      index,
-      dictionary(index, field[2]!, 'sourceIdentity'),
-      value.check[0],
-    ),
-    from: value.check[1] ?? header.at,
-    through: value.check[2] ?? header.at,
-    ...(field[3] != null ? { detailSupport: checkedDetails(index, field[3], value.detail) } : {}),
-  };
-}
-function checkedDetails(
-  index: FrameIndex,
-  at: number,
-  stamp: Extract<TemporalFrameEntry, { kind: 'confirmation' }>['subjects'][number]['detail'],
-): NonNullable<TemporalFacetReference['detailSupport']> {
-  if (!stamp) throw new Error('A checked detail has no actual check stamp.');
-  const base = dictionary(index, at, 'checkDetail');
-  return {
-    proof: {
-      original: base.original,
-      confirmation: checkedSource(index, base.identity, stamp[0]),
-      confirmedFrom: stamp[1],
-      confirmedThrough: stamp[2],
-      ...(base.aliases ? { aliases: base.aliases } : {}),
-    },
-    from: base.from,
-    through: base.through,
-    acquiredAt: base.acquiredAt,
-    role: base.role,
-  };
-}
-export function temporalEntryConfirmations(
-  chunk: TemporalFrameOwner,
-  entries: readonly TemporalFrameEntry[] = chunk.entries,
-): TemporalConfirmationRead[] {
-  return entryConfirmations(frameIndex(readOnlyDraftView(chunk)), entries);
-}
-/** Select a track before decoding its field proofs. One synchronous visit also
- * shares preparation for mutable/cold chunks, whose identity is not reusable. */
-export function visitTemporalConfirmations(
-  chunk: TemporalFrameOwner,
-  selected: (subject: string, receiptOrdinal: number) => boolean,
-  visit: (value: TemporalConfirmationRead) => void,
-): void {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  for (const entry of chunk.entries) {
-    if (entry.kind !== 'confirmation') continue;
-    for (let group = 0; group < entry.subjects.length; group++) {
-      const subject = entry.subjects[group]!;
-      if (!selected(dictionary(index, subject.subject, 'text'), entry.receipt)) continue;
-      for (const field of temporalConfirmationPositions(subject))
-        visit(confirmationField(index, entry, group, field));
-    }
-  }
-}
-function entryConfirmations(
-  index: FrameIndex,
-  entries: readonly TemporalFrameEntry[],
-): TemporalConfirmationRead[] {
-  // Cold/raw chunks deliberately have no reusable identity cache. One synchronous
-  // read still shares its prepared declarations across every selected field.
-  return entries.flatMap((entry) =>
-    entry.kind === 'confirmation'
-      ? entry.subjects.flatMap((group, g) =>
-          temporalConfirmationPositions(group).map((p) => confirmationField(index, entry, g, p)),
-        )
-      : [],
-  );
-}
-export function temporalConfirmationsForFacet(
-  chunk: TemporalFrameOwner,
-  reference: TemporalFacetReference,
-  prior: TemporalFacetReference,
-): TemporalConfirmationRead[] {
-  const support = reference.support,
-    detail = reference.detailSupport;
-  if (!support && !detail) return [];
-  const same = (a: object | undefined, b: object | undefined) =>
-    a === b || !!(a && b && jsonText(a) === jsonText(b));
-  const values = temporalEntryConfirmations(chunk),
-    selected: TemporalConfirmationRead[] = [];
-  let mainFound =
-      !support ||
-      (same(prior.support, support) && same(prior.receivedFrom, reference.receivedFrom)),
-    detailFound = !detail || same(prior.detailSupport, detail);
-  for (let index = values.length - 1; index >= 0 && (!mainFound || !detailFound); index--) {
-    const value = values[index]!;
-    const sameValue = sameReceivedValueReference(value.reference.valueRef, reference.valueRef);
-    const samePose =
-      reference.reception?.kind === 'body' &&
-      reference.reception.poseRef !== undefined &&
-      sameReceivedValueReference(reference.reception.poseRef, value.reference.valueRef);
-    const main =
-      !mainFound &&
-      support &&
-      (sameValue || samePose) &&
-      (samePose || same(value.reception, reference.reception)) &&
-      same(value.original, reference.original) &&
-      same(value.original, support.original) &&
-      same(value.confirmation, support.confirmation) &&
-      value.from === support.confirmedFrom &&
-      value.through === support.confirmedThrough &&
-      (reference.confirmedThrough === undefined || reference.confirmedThrough === value.through);
-    const appearance =
-      !detailFound &&
-      sameValue &&
-      detail &&
-      value.detailSupport &&
-      same(detail, value.detailSupport);
-    if (main || appearance) {
-      selected.push(value);
-      mainFound ||= !!main;
-      detailFound ||= !!appearance;
-    }
-  }
-  return selected;
-}
-export function temporalConfirmationChangeCount(entries: readonly TemporalFrameEntry[]): number {
-  return entries.reduce(
-    (count, entry) =>
-      count +
-      (entry.kind === 'confirmation'
-        ? entry.subjects.reduce((n, subject) => n + (subject.mask?.length ?? subject.count), 0)
-        : 0),
-    0,
-  );
-}
-function confirmationDependencies(value: TemporalConfirmationRead): TemporalConfirmationDependency {
-  return {
-    subject: value.subject,
+    actorId: page.actorId,
+    physicalLife: page.physicalLife,
+    epoch: page.epoch,
+    id: temporalReceiptId({ epoch: page.epoch, ordinal: op.ordinal }),
+    ordinal: op.ordinal,
+    at: op.at,
+    order: op.order,
+    acquisition: op.acquisition,
+    subject: JSON.stringify(['receiver', page.physicalLife]),
+    change: 'receiver-frame',
+    required: false,
     sourceIds: [],
-    confirmation: true,
-    from: value.from,
-    through: value.through,
-    facets: [temporalConfirmationReference(value)],
+    contextSubjects: [
+      ...new Set(
+        op.stamps
+          .map((stamp) => page.declarations.find((d) => d.id === stamp.declaration)?.subject)
+          .filter((s): s is string => s !== undefined),
+      ),
+    ],
   };
 }
-export function temporalCheckpointForRead(checkpoint: TemporalCheckpoint): TemporalCheckpoint {
-  if (!checkpoint.facets.some((facet) => facet.reception !== undefined)) return checkpoint;
-  return {
-    ...checkpoint,
-    facets: checkpoint.facets.map(({ reception: _reception, ...facet }) => facet),
-  };
+export function temporalOperationFacet(
+  _page: TemporalPage,
+  op: Exclude<TemporalHistoryOperation, { kind: 'check' }>,
+  position: number,
+): TemporalFacetReference {
+  return op.receipt.facets[position]!;
 }
-/** Every persisted state dependency uses this visitor, including reconstruction
- * fields that are intentionally absent from the occurrence/receipt index. */
-export function temporalEntryDependencies(
-  chunk: TemporalFrameOwner,
-  entries: readonly TemporalFrameEntry[] = chunk.entries,
-): Array<TemporalReceipt | TemporalCheckpoint | TemporalConfirmationDependency> {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  return entries.flatMap<TemporalReceipt | TemporalCheckpoint | TemporalConfirmationDependency>(
-    (entry) =>
-      entry.kind === 'confirmation'
-        ? entryConfirmations(index, [entry]).map(confirmationDependencies)
-        : entry.kind === 'checkpoint'
-          ? [decodedCheckpoint(chunk, entry, index)]
-          : entry.kind === 'change'
-            ? [decodedReceipt(chunk, entry, index)]
-            : [],
-  );
+export function temporalReceiptValues(
+  receipt: TemporalReceipt,
+  sources: ReceivedValueLookup,
+): TemporalValue[] {
+  return receipt.facets.flatMap((field) => {
+    const value = receivedValueAt(sources, field);
+    const full = value && materializeTemporalValue(field, value, sources);
+    return full ? [full] : [];
+  });
+}
+function clockValueReferences(seed: TemporalCheckSeed): string[] {
+  const pose = seed.reception?.kind === 'body' ? seed.reception.poseRef : undefined;
+  return typeof pose === 'string' ? [pose] : [];
+}
+export function temporalPageReferences(page: TemporalPage): ReadonlySet<string> {
+  const references = new Set<string>();
+  for (const operation of temporalPageOperations(page)) {
+    if (operation.kind === 'check') continue;
+    for (const field of operation.receipt.facets)
+      for (const reference of temporalFacetValueReferences(field)) references.add(reference);
+    // A closing span may carry a newer independently received pose proof than
+    // its admitted baseline, so its terminal clock closure is also a real owner.
+    if (operation.kind === 'span')
+      for (const seed of operation.terminal)
+        for (const reference of clockValueReferences(seed)) references.add(reference);
+  }
+  for (const declaration of page.declarations)
+    for (const seed of declaration.seeds)
+      for (const reference of clockValueReferences(seed)) references.add(reference);
+  return references;
 }
 
-export interface TemporalEntryMetadata {
-  /** Native logical bounds/count; physical index consumers omit these fields. */
-  firstAt: number | undefined;
-  lastAt: number | undefined;
-  changes: number;
-  firstOrder: number | undefined;
-  lastOrder: number | undefined;
-  firstMeasured: number;
-  lastSupported: number;
-  confirmations: number;
-  spatialContext: boolean;
-  ordinals: number[];
-  references: string[];
+export interface TemporalPageMetadata {
   subjects: string[];
   sourceIds: string[];
   individualIds: string[];
   sourceRefs: string[];
+  references: string[];
+  members: string[];
+  spanRanges: TemporalSpanRange[];
   occurrenceSourceIds: string[];
   occurrenceIndividualIds: string[];
-}
-
-interface TemporalMemberMetadata {
-  aliases: Set<string>;
-  individuals: Set<string>;
-  references: Set<string>;
-  blocks: Map<string, object>;
+  ordinals: number[];
+  changes: number;
+  firstAt?: number;
+  lastAt?: number;
+  firstOrder?: number;
+  lastOrder?: number;
+  firstMeasured?: number;
+  lastSupported?: number;
+  lastReceivedAt?: number;
   spatialContext: boolean;
-  contextual?: boolean;
 }
-const memberMetadata = new WeakMap<
-  object,
-  Partial<
-    Record<
-      'structural' | 'received',
-      {
-        mask: string;
-        value: TemporalMemberMetadata;
-      }
-    >
-  >
->();
-/** One synchronous read prepares declarations once, then visits only packed
- * scalar metadata. Storage indexing must not reconstruct received accounts or
- * clone proof trees merely to recover their IDs. The optional source context is
- * required for complete value-owned aliases and validates exact value closure.
- * docs/projects/attention-and-scenes-runtime-design.md#61-segmented-physical-layout */
-export function temporalEntryMetadataReader(
-  chunk: TemporalFrameOwner,
-  context?: { sources: ReceivedValueLookup; world: TemporalReadSource },
-): (entries: readonly TemporalFrameEntry[]) => TemporalEntryMetadata {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  const declaration = <K extends keyof StoredDictionaryKinds>(at: number, kind: K) => {
-    const entry = index.entries.get(at);
-    if (entry?.kind !== 'dictionary' || entry.value[0] !== kind)
-      throw new Error('Temporal frame has an invalid dictionary reference.');
-    return entry.value[1] as StoredDictionaryKinds[K];
-  };
-  const text = (at: number) => declaration(at, 'text');
-  const valueAliases = new Map<object, string[]>();
-  // Declaration metadata is independent of successful-check stamps. Cold page
-  // preparation parses its exact dependency closure once, then reuses it.
-  const memberships = new Map<string, TemporalMemberMetadata>();
-  return (entries) => {
-    const subjects = new Set<string>(),
-      aliases = new Set<string>(),
-      individuals = new Set<string>(),
-      occurrenceAliases = new Set<string>(),
-      occurrenceIndividuals = new Set<string>(),
-      references = new Set<string>(),
-      ordinals: number[] = [];
-    const seenMemberships = new Set<string>();
-    let firstAt: number | undefined,
-      lastAt: number | undefined,
-      changes = 0,
-      firstOrder: number | undefined,
-      lastOrder: number | undefined,
-      firstMeasured = Infinity,
-      lastSupported = -Infinity,
-      confirmations = 0,
-      spatialContext = false;
-    let occurrence = false;
-    const addAlias = (id: string, target?: TemporalMemberMetadata) => {
-      (target?.aliases ?? aliases).add(id);
-      if (!target && occurrence) occurrenceAliases.add(id);
-    };
-    const addIndividual = (id: string, target?: TemporalMemberMetadata) => {
-      (target?.individuals ?? individuals).add(id);
-      if (!target && occurrence) occurrenceIndividuals.add(id);
-    };
-    const source = (at: number) => declaration(declaration(at, 'source')[0], 'sourceIdentity')[1];
-    const fact = (at: number, target?: TemporalMemberMetadata) => {
-      const value = declaration(at, 'fact'),
-        id = source(value[0]);
-      addAlias(id, target);
-      addAlias(personalFactAlias(id, value[1]), target);
-    };
-    const proof = (at: number, target?: TemporalMemberMetadata) => {
-      const value = declaration(at, 'proof');
-      fact(value[0], target);
-      addAlias(source(value[1]), target);
-      for (const alias of value[4] ?? []) addAlias(alias, target);
-    };
-    const reference = (block: ReceivedValueReference, target?: TemporalMemberMetadata) => {
-      if (typeof block === 'string') (target?.references ?? references).add(block);
-      const fragment = context && receivedValueAt(context.sources, block);
-      if (context && !fragment)
-        throw new Error('Receipt page index requires complete received source support.');
-      if (target && typeof block === 'string' && fragment) target.blocks.set(block, fragment);
-      return fragment;
-    };
-    const field = (
-      value: TemporalPackedFacet | TemporalPackedConfirmation,
-      receiptId?: string,
-      ordinal?: number,
-      confirmation = false,
-      target?: TemporalMemberMetadata,
-    ) => {
-      const fragment = reference(declaration(value[0], 'received'), target);
-      const reception = value[5] == null ? undefined : declaration(value[5], 'reception');
-      if (value[4] != null) reference(declaration(value[4]!, 'received'), target);
-      else if (reception?.kind === 'body' && reception.poseRef)
-        reference(reception.poseRef, target);
-      if (receiptId != null && ordinal != null)
-        addAlias(personalFactAlias(receiptId, ordinal), target);
-      if (value[1] != null) fact(value[1]!, target);
-      if (value[13] != null) proof(value[13], target);
-      // A confirmation's implicit field proof precedes independent detail
-      // support. Preserve that canonical alias order without building the proof.
-      if (confirmation) {
-        if (value[2] != null) addAlias(declaration(value[2], 'sourceIdentity')[1], target);
-      }
-      if (value[3] != null) {
-        if (confirmation) {
-          const detail = declaration(value[3], 'checkDetail');
-          fact(detail[0], target);
-          addAlias(declaration(detail[1], 'sourceIdentity')[1], target);
-          for (const alias of detail[6] ?? []) addAlias(alias, target);
-        } else proof(declaration(value[3], 'detail')[0], target);
-      }
-      if (!confirmation && value[2] != null) addAlias(source(value[2]), target);
-      if (fragment && context) {
-        if (target) target.spatialContext ||= temporalSpatialContextValue(fragment);
-        else spatialContext ||= temporalSpatialContextValue(fragment);
-        // Only these complete scalar fragments have value-owned aliases or
-        // identity. Geometry reception does not authorize an unrelated value.
-        if (
-          value[4] == null &&
-          reception == null &&
-          (fragment.kind === 'association' ||
-            fragment.kind === 'claim' ||
-            fragment.kind === 'physical-boundary' ||
-            fragment.kind === 'event')
-        ) {
-          if (target && fragment.kind === 'association') target.contextual = true;
-          let held = valueAliases.get(fragment);
-          if (!held) {
-            held = temporalValueDependencyAliases(fragment, context.world);
-            valueAliases.set(fragment, held);
-          }
-          for (const alias of held) addAlias(alias, target);
-          const individual = temporalValueIndividualId(fragment);
-          if (individual != null) addIndividual(individual, target);
-        }
-      }
-    };
-    for (const entry of entries) {
-      if (entry.kind !== 'change' && entry.kind !== 'checkpoint' && entry.kind !== 'confirmation')
-        continue;
-      occurrence = entry.kind === 'change';
-      const frame = index.entries.get(entry.frame);
-      if (frame?.kind !== 'frame') throw new Error('Temporal change has no acquisition frame.');
-      if (entry.kind === 'confirmation') {
-        for (const group of entry.subjects) {
-          subjects.add(text(group.subject));
-          const count = group.mask?.length ?? group.count;
-          confirmations += count;
-          changes += count;
-          firstMeasured = Math.min(firstMeasured, group.check[1] ?? frame.at);
-          lastSupported = Math.max(lastSupported, group.check[2] ?? frame.at);
-          const key = `${group.members}:${group.mask?.join(',') ?? '*'}`;
-          if (seenMemberships.has(key)) continue;
-          seenMemberships.add(key);
-          const declaration = index.entries.get(group.members)!;
-          const sharedKind = context ? 'received' : 'structural';
-          const sharedMask = group.mask?.join(',') ?? '*';
-          const reusable = isImmutableData(declaration);
-          const shared = reusable ? memberMetadata.get(declaration)?.[sharedKind] : undefined;
-          let reusableShared = shared?.mask === sharedMask ? shared.value : undefined;
-          if (reusableShared && context)
-            for (const [id, fragment] of reusableShared.blocks)
-              if (receivedValueAt(context.sources, id) !== fragment) {
-                reusableShared = undefined;
-                break;
-              }
-          let held = memberships.get(key) ?? reusableShared;
-          if (!held) {
-            held = {
-              aliases: new Set(),
-              individuals: new Set(),
-              references: new Set(),
-              blocks: new Map(),
-              spatialContext: false,
-            };
-            for (const position of temporalConfirmationPositions(group))
-              field(checkMembers(index, group)[position]!, undefined, undefined, true, held);
-            if (reusable && !held.contextual) {
-              const saved = memberMetadata.get(declaration) ?? {};
-              saved[sharedKind] = { mask: sharedMask, value: held };
-              memberMetadata.set(declaration, saved);
-            }
-          }
-          memberships.set(key, held);
-          for (const id of held.aliases) aliases.add(id);
-          for (const id of held.individuals) individuals.add(id);
-          for (const id of held.references) references.add(id);
-          spatialContext ||= held.spatialContext;
-        }
-        continue;
-      }
-      subjects.add(text(entry.subject));
-      if (entry.identity != null) {
-        const identity = declaration(entry.identity, 'identity');
-        if (identity.kind === 'individual') {
-          addIndividual(identity.individualId);
-          // A carried track's acquired person role is still an actual user of
-          // that individual. This does not renew its old sample/source aliases.
-          if (entry.kind === 'checkpoint') occurrenceIndividuals.add(identity.individualId);
-        }
-      }
-      let receiptId: string | undefined;
-      if (entry.kind === 'change') {
-        firstAt ??= frame.at;
-        lastAt = frame.at;
-        changes += temporalReceiptChangeCount(entry);
-        firstOrder ??= entry.order ?? frame.order;
-        lastOrder = entry.order ?? frame.order;
-        ordinals.push(entry.receipt);
-        spatialContext ||= entry.spatialContext === true;
-        for (const subject of entry.contexts ?? []) subjects.add(text(subject));
-        for (const alias of entry.sources ?? []) addAlias(text(alias));
-        receiptId = temporalReceiptId({ epoch: chunk.epoch, ordinal: entry.receipt });
-        addAlias(receiptId);
-
-        if (!entry.facets.length) {
-          firstMeasured = Math.min(firstMeasured, frame.at);
-          lastSupported = Math.max(lastSupported, frame.at);
-        }
-      }
-      for (let position = 0; position < entry.facets.length; position++) {
-        const value = entry.facets[position]!;
-        if (entry.kind === 'change') {
-          firstMeasured = Math.min(firstMeasured, value[7] ?? value[8] ?? frame.at);
-          lastSupported = Math.max(lastSupported, value[12] ?? value[8] ?? frame.at);
-        }
-        field(value, receiptId, value[6] ?? position);
-      }
-    }
-    return {
-      firstAt,
-      lastAt,
-      changes,
-      firstOrder,
-      lastOrder,
-      firstMeasured: Number.isFinite(firstMeasured) ? firstMeasured : 0,
-      lastSupported: Number.isFinite(lastSupported) ? lastSupported : 0,
-      confirmations,
-      spatialContext,
-      ordinals,
-      references: [...references].sort(),
-      subjects: [...subjects],
-      sourceIds: [...aliases],
-      individualIds: [...individuals],
-      sourceRefs: [...references.keys()],
-      occurrenceSourceIds: [...occurrenceAliases],
-      occurrenceIndividualIds: [...occurrenceIndividuals],
-    };
-  };
-}
-/** Exact self-contained physical closure for one personal operation. This never
- * includes unrelated observations merely because they share a storage page. */
-export function projectTemporalOperation(
-  entry: TemporalFrameEntry,
-  facetOrdinals: readonly number[],
-): TemporalFrameEntry {
-  if (entry.kind === 'dictionary' && entry.value[0] === 'members') {
-    const selected = new Set(facetOrdinals);
-    return {
-      ...entry,
-      value: [
-        'members',
-        entry.value[1].map((field, position) => (selected.has(position) ? field : null)),
-      ],
-    };
-  }
-  if (entry.kind === 'confirmation') {
-    const selected = new Set(facetOrdinals);
-    return {
-      ...entry,
-      subjects: entry.subjects.flatMap((group) => {
-        const mask = temporalConfirmationPositions(group).filter((position) =>
-          selected.has(checkFieldOrdinal(group, position)),
-        );
-        return mask.length ? [{ ...group, mask }] : [];
-      }),
-    };
-  }
-  if (entry.kind !== 'change' && entry.kind !== 'checkpoint') return entry;
-  const selected = new Set(facetOrdinals),
-    header =
-      entry.kind === 'change'
-        ? (({
-            sources: _aliases,
-            memberships: _memberships,
-            availability: _availability,
-            ...rest
-          }) => rest)(entry)
-        : (({ availability: _availability, ...rest }) => rest)(entry),
-    availability = entry.availability?.flatMap((row) => {
-      const fields = row.fields.filter((field) => selected.has(field));
-      return fields.length ? [{ ...row, fields }] : [];
-    });
-  return {
-    ...header,
-    ...(availability?.length ? { availability } : {}),
-    facets: entry.facets.flatMap((facet, index) => {
-      const ordinal = facet[6] ?? index;
-      return selected.has(ordinal) ? [packedFieldOrdinal(facet, ordinal)] : [];
-    }),
-  };
-}
-function entryDependencies(
-  index: FrameIndex,
-  change: Extract<TemporalFrameEntry, { kind: 'change' | 'checkpoint' | 'confirmation' }>,
-  projected: ReadonlyMap<number, TemporalFrameEntry> = new Map(),
-): Set<number> {
-  const ordinals = new Set<number>([change.ordinal, change.frame]);
-  if (change.kind === 'confirmation')
-    for (const group of change.subjects) {
-      ordinals.add(group.subject);
-      ordinals.add(group.members);
-    }
-  else {
-    ordinals.add(change.subject);
-    if (change.identity !== undefined) ordinals.add(change.identity);
-  }
-  if (change.kind === 'change') {
-    for (const ordinal of change.memberships ?? []) ordinals.add(ordinal);
-    for (const field of TEMPORAL_CHANGE_DICTIONARY_FIELDS)
-      if (change[field] != null) ordinals.add(change[field]);
-    for (const field of TEMPORAL_CHANGE_DICTIONARY_ARRAY_FIELDS)
-      for (const ordinal of change[field] ?? []) ordinals.add(ordinal);
-  }
-  for (const facet of packedEntryFields(change)) {
-    for (const field of TEMPORAL_FACET_REFERENCE_FIELDS)
-      if (facet[field] != null) ordinals.add(facet[field]);
-    for (const field of TEMPORAL_FACET_DICTIONARY_FIELDS)
-      if (facet[field] != null) ordinals.add(facet[field]);
-  }
-  // A selected proof brings only its typed declarations. Each dependency kind
-  // descends toward a source, so neither a cycle nor an unrelated page is read.
-  for (const ordinal of ordinals) {
-    const entry =
-      ordinal === change.ordinal ? change : (projected.get(ordinal) ?? index.entries.get(ordinal));
-    if (!entry) throw new Error('Temporal frame declaration is unavailable.');
-    for (const dependency of temporalDictionaryDependencies(entry)) {
-      const target = index.entries.get(dependency.ordinal);
-      if (target?.kind !== 'dictionary' || target.value[0] !== dependency.kind)
-        throw new Error('Temporal frame has an invalid nested dictionary reference.');
-      ordinals.add(dependency.ordinal);
-    }
-  }
-  return ordinals;
-}
-export function temporalReceiptEntries(
-  chunk: TemporalFrameOwner,
-  receiptOrdinal: number,
-  facetOrdinals?: readonly number[],
-): TemporalFrameEntry[] {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    original = index.operations.get(receiptOrdinal);
-  if (!original) return [];
-  const change = facetOrdinals
-    ? (projectTemporalOperation(original, facetOrdinals) as typeof original)
-    : original;
-  return [...entryDependencies(index, change)]
-    .sort((a, b) => a - b)
-    .map((ordinal) => (ordinal === change.ordinal ? change : index.entries.get(ordinal)!));
-}
-export function temporalCheckpointEntries(
-  chunk: TemporalFrameOwner,
-  ordinal: number,
-  facetOrdinals?: readonly number[],
-): TemporalFrameEntry[] {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    original = index.checkpoints.get(ordinal);
-  if (!original) return [];
-  const checkpoint = facetOrdinals
-    ? (projectTemporalOperation(original, facetOrdinals) as typeof original)
-    : original;
-  return [...entryDependencies(index, checkpoint)]
-    .sort((a, b) => a - b)
-    .map((at) => (at === ordinal ? checkpoint : index.entries.get(at)!));
-}
-export function temporalConfirmationEntries(
-  chunk: TemporalFrameOwner,
-  ordinal: number,
-  fieldOrdinals?: readonly number[],
-): TemporalFrameEntry[] {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    original = index.confirmations.get(ordinal);
-  if (!original) return [];
-  const entry = fieldOrdinals
-    ? (projectTemporalOperation(original, fieldOrdinals) as typeof original)
-    : original;
-  const selected = new Map<number, Set<number>>();
-  for (const group of entry.subjects) {
-    let positions = selected.get(group.members);
-    if (!positions) selected.set(group.members, (positions = new Set()));
-    for (const position of temporalConfirmationPositions(group)) positions.add(position);
-  }
-  const projected = new Map(
-    [...selected].map(([ordinal, positions]) => [
-      ordinal,
-      projectTemporalOperation(index.entries.get(ordinal)!, [...positions]),
+export function temporalClockSourceIds(seed: TemporalCheckSeed): string[] {
+  return [
+    ...new Set([
+      seed.support.original.source.id,
+      seed.support.confirmation.id,
+      ...(seed.support.aliases ?? []),
+      ...(seed.receivedFrom ? [seed.receivedFrom.id] : []),
     ]),
-  );
-  return [...entryDependencies(index, entry, projected)]
-    .sort((a, b) => a - b)
-    .map((at) => (at === ordinal ? entry : (projected.get(at) ?? index.entries.get(at)!)));
+  ];
 }
-export function temporalEntryReceipts(
-  chunk: TemporalFrameOwner,
-  entries: readonly TemporalFrameEntry[],
-): TemporalReceipt[] {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  return entries.flatMap((entry) =>
-    entry.kind === 'change' ? [decodedReceipt(chunk, entry, index)] : [],
-  );
-}
-function packFacets(
-  fields: readonly TemporalFacetReference[],
-  header: Extract<TemporalFrameEntry, { kind: 'frame' }>,
-  intern: (value: DictionaryValue) => number,
-): TemporalPackedFacet[] {
-  return fields.map((facet, at) =>
-    compactField([
-      intern({ kind: 'received', value: facet.valueRef }),
-      facet.original ? intern({ kind: 'fact', value: facet.original }) : null,
-      facet.receivedFrom ? intern({ kind: 'source', value: facet.receivedFrom }) : null,
-      facet.detailSupport ? intern({ kind: 'detail', value: facet.detailSupport }) : null,
-      facet.reception?.kind === 'body' && facet.reception.poseRef
-        ? intern({ kind: 'received', value: facet.reception.poseRef })
-        : null,
-      facet.reception && !(facet.reception.kind === 'body' && facet.reception.poseRef)
-        ? intern({ kind: 'reception', value: facet.reception })
-        : null,
-      facet.ordinal !== at ? facet.ordinal : null,
-      facet.measuredFrom !== facet.measuredThrough ? facet.measuredFrom : null,
-      facet.measuredThrough !== header.at ? facet.measuredThrough : null,
-      facet.role !== 'direct' ? facet.role : null,
-      facet.asOf !== header.at ? facet.asOf : null,
-      facet.acquiredAt !== header.at ? facet.acquiredAt : null,
-      facet.confirmedThrough ?? null,
-      facet.support ? intern({ kind: 'proof', value: facet.support }) : null,
-      facet.poseFrame &&
-      (!header.receiverFrame || jsonText(facet.poseFrame) !== jsonText(header.receiverFrame))
-        ? intern({ kind: 'view', value: facet.poseFrame })
-        : null,
-    ]),
-  );
-}
-
-function dictionaryWriter(base: FrameIndex, start: number) {
-  const additions: TemporalFrameEntry[] = [],
-    dictionary = new Map<string, number>(),
-    supplied = new Map<DictionaryValue['kind'], WeakMap<object, number>>();
-  let ordinal = start;
-  const next = () => ordinal++;
-  const intern = (value: DictionaryValue): number => {
-    // One synchronous writer cannot change its inputs. Repeated references to
-    // the same fact/proof therefore need neither recursive packing nor JSON
-    // comparison again; equal distinct objects still use the exact dictionary.
-    const object = typeof value.value === 'object' ? value.value : undefined;
-    let identities = object && supplied.get(value.kind);
-    const previous = object && identities?.get(object);
-    if (previous !== undefined) return previous;
-    if (object && !identities) supplied.set(value.kind, (identities = new WeakMap()));
-    let stored: StoredDictionaryValue;
-    switch (value.kind) {
-      case 'source': {
-        const { family, id, revision, observer } = value.value;
-        const identity = intern({
-          kind: 'sourceIdentity',
-          value:
-            observer.actorId === base.actorId && observer.physicalLife === base.physicalLife
-              ? [family, id]
-              : [family, id, observer],
-        });
-        stored = ['source', [identity, revision]];
-        break;
-      }
-      case 'fact':
-        stored = [
-          'fact',
-          [intern({ kind: 'source', value: value.value.source }), value.value.ordinal],
-        ];
-        break;
-      case 'proof': {
-        const row: StoredDictionaryKinds['proof'] = value.value.aliases
-          ? [
-              intern({ kind: 'fact', value: value.value.original }),
-              intern({ kind: 'source', value: value.value.confirmation }),
-              value.value.confirmedFrom,
-              value.value.confirmedThrough,
-              value.value.aliases,
-            ]
-          : [
-              intern({ kind: 'fact', value: value.value.original }),
-              intern({ kind: 'source', value: value.value.confirmation }),
-              value.value.confirmedFrom,
-              value.value.confirmedThrough,
-            ];
-        stored = ['proof', row];
-        break;
-      }
-      case 'detail':
-        stored = [
-          'detail',
-          [
-            intern({ kind: 'proof', value: value.value.proof }),
-            value.value.from,
-            value.value.through,
-            value.value.acquiredAt,
-            value.value.role,
-          ],
-        ];
-        break;
-      case 'checkDetail': {
-        const row: StoredDictionaryKinds['checkDetail'] = [
-          intern({ kind: 'fact', value: value.value.original }),
-          intern({ kind: 'sourceIdentity', value: value.value.identity }),
-          value.value.from,
-          value.value.through,
-          value.value.acquiredAt,
-          value.value.role,
-          ...(value.value.aliases ? ([value.value.aliases] as [string[]]) : ([] as [])),
-        ];
-        stored = ['checkDetail', row];
-        break;
-      }
-      default:
-        stored = [value.kind, value.value] as StoredDictionaryValue;
-    }
-    const encoded = key(stored),
-      known = dictionary.get(encoded) ?? base.dictionary.get(encoded);
-    if (known !== undefined) {
-      if (object) identities!.set(object, known);
-      return known;
-    }
-    const entry: TemporalFrameEntry = immutableDataSnapshot(
-      { ordinal: next(), kind: 'dictionary', value: stored },
-      readOnlyDraftView,
-    );
-    additions.push(entry);
-    dictionary.set(encoded, entry.ordinal);
-    if (object) identities!.set(object, entry.ordinal);
-    return entry.ordinal;
-  };
-  return { additions, intern, next };
-}
-function packTemporalReceipt(
-  chunk: TemporalFrameWriter,
-  receipt: TemporalWriteHeader,
-  fields: readonly TemporalFacetReference[],
-  base: FrameIndex,
-  operationOrdinal?: number,
-  checkpoints: readonly TemporalCheckpointFields[] = [],
-  confirmations: readonly TemporalConfirmation[] = [],
-  checks: readonly TemporalCheckGroup[] = [],
-  checkFields: TemporalFacetReference[] = [],
-): TemporalFrameEntry[] {
-  const { additions, intern, next } = dictionaryWriter(base, chunk.nextEntryOrdinal);
-  let frame = base.frames.get(receipt.acquisition);
-  let header =
-    frame === undefined
-      ? undefined
-      : (base.entries.get(frame) as Extract<TemporalFrameEntry, { kind: 'frame' }>);
-  if (frame === undefined) {
-    const entry: Extract<TemporalFrameEntry, { kind: 'frame' }> = {
-      ordinal: next(),
-      kind: 'frame',
-      acquisition: receipt.acquisition,
-      at: receipt.at,
-      order: receipt.order,
-      ...(receipt.receiverFrame ? { receiverFrame: receipt.receiverFrame } : {}),
-      ...(receipt.coverageGap ? { coverageGap: receipt.coverageGap } : {}),
-    };
-    additions.push(immutableDataSnapshot(entry, readOnlyDraftView));
-    frame = entry.ordinal;
-    header = entry;
-  }
-  if (!header) throw new Error('Temporal append has no frame header.');
-  const subject = intern({ kind: 'text', value: receipt.subject });
-  const contexts = receipt.contextSubjects?.map((value) => intern({ kind: 'text', value }));
-  const identity =
-    receipt.subjectIdentity && intern({ kind: 'identity', value: receipt.subjectIdentity });
-  const origin = receipt.origin && intern({ kind: 'origin', value: receipt.origin });
-  const sources = receipt.sourceIds.map((value) => intern({ kind: 'text', value }));
-
-  for (const checkpoint of checkpoints)
-    if (checkpoint.facets.length) {
-      const subject = intern({ kind: 'text', value: checkpoint.subject }),
-        identity =
-          checkpoint.subjectIdentity &&
-          intern({ kind: 'identity', value: checkpoint.subjectIdentity }),
-        facets = packFacets(checkpoint.facets, header, intern);
-      additions.push(
-        immutableDataSnapshot({
-          ordinal: next(),
-          kind: 'checkpoint',
-          frame,
-          subject,
-          ...(identity !== undefined ? { identity } : {}),
-          facets,
-          ...(checkpoint.availability?.length ? { availability: checkpoint.availability } : {}),
-          ...((checkpoint.order ?? receipt.order) !== header.order
-            ? { order: checkpoint.order ?? receipt.order }
-            : {}),
-        }),
-      );
-    }
-  const facets = packFacets(fields, header, intern);
-  const memberships: number[] = [];
-  if (confirmations.length || checks.length) {
-    const subjects = packConfirmations(
-      confirmations,
-      header,
-      intern,
-      checks,
-      chunk,
-      base,
-      fields,
-      memberships,
-      checkFields,
-    );
-    if (subjects.length)
-      additions.push(
-        immutableDataSnapshot({
-          ordinal: next(),
-          kind: 'confirmation',
-          frame,
-          receipt: receipt.ordinal,
-          ...(receipt.order !== header.order ? { order: receipt.order } : {}),
-          subjects,
-        }),
-      );
-  }
-  additions.push(
-    immutableDataSnapshot({
-      ordinal: operationOrdinal ?? next(),
-      kind: 'change',
-      receipt: receipt.ordinal,
-      frame,
-      subject,
-      ...(receipt.order !== header.order ? { order: receipt.order } : {}),
-      ...(contexts?.length ? { contexts } : {}),
-      ...(identity !== undefined ? { identity } : {}),
-      ...(origin !== undefined ? { origin } : {}),
-      change: receipt.change,
-      ...(receipt.availabilityAt !== undefined && receipt.availabilityAt !== header.at
-        ? { availabilityAt: receipt.availabilityAt }
-        : {}),
-      ...(receipt.availability?.length ? { availability: receipt.availability } : {}),
-      ...(receipt.spatialContext ? { spatialContext: true } : {}),
-      ...(receipt.required ? { required: true } : {}),
-      ...(sources.length ? { sources } : {}),
-      ...(memberships.length ? { memberships } : {}),
-      facets,
-    }),
-  );
-
-  return additions;
-}
-const checkMemberships = new WeakMap<object, { chunkId: string; ordinal: number; count: number }>();
-const completeMemberships = new WeakMap<object, number>();
-function completeNativeMembership(entry: TemporalFrameEntry | undefined, count: number): boolean {
-  if (
-    entry?.kind !== 'dictionary' ||
-    entry.value[0] !== 'members' ||
-    entry.value[1].length !== count
-  )
-    return false;
-  let held = completeMemberships.get(entry);
-  if (held === undefined) {
-    held = entry.value[1].every((member) => member !== null) ? count : -1;
-    if (isImmutableData(entry)) completeMemberships.set(entry, held);
-  }
-  return held === count;
-}
-/** An erasure can keep a declaration's native address while removing siblings.
- * Such a narrowed read product cannot stand for the complete current group. */
-export function temporalCurrentMembershipPresent(
-  chunk: TemporalFrameOwner,
-  ordinal: number,
-  count: number,
-): boolean {
-  return completeNativeMembership(frameIndex(readOnlyDraftView(chunk)).entries.get(ordinal), count);
-}
-export function temporalCheckGroupMembership(
-  chunk: TemporalFrameOwner,
-  value: TemporalCheckGroup,
-): { entryOrdinal: number; count: number } | undefined {
-  const held = checkMemberships.get(value.membershipKey);
-  if (!held || held.chunkId !== chunk.id) return;
-  const entry = frameIndex(readOnlyDraftView(chunk)).entries.get(held.ordinal);
-  return entry?.kind === 'dictionary' && entry.value[0] === 'members'
-    ? { entryOrdinal: held.ordinal, count: held.count }
-    : undefined;
-}
-function packConfirmations(
-  confirmations: readonly TemporalConfirmation[],
-  header: Extract<TemporalFrameEntry, { kind: 'frame' }>,
-  intern: (value: DictionaryValue) => number,
-  checks: readonly TemporalCheckGroup[] = [],
-  scope: Pick<TemporalFrameOwner, 'id' | 'actorId' | 'physicalLife'>,
-  index: FrameIndex,
-  receiptFields: readonly TemporalFacetReference[] = [],
-  declarations: number[] = [],
-  preparedFields: TemporalFacetReference[] = [],
-): Extract<TemporalFrameEntry, { kind: 'confirmation' }>['subjects'] {
-  const groups = new Map<
-    string,
-    Omit<StoredCheckGroup, 'members' | 'count' | 'offset'> & {
-      fields: TemporalPackedConfirmation[];
-    }
-  >();
-  const identity = (source: EvidenceSource): DictionaryKinds['sourceIdentity'] =>
-    source.observer.actorId === scope.actorId && source.observer.physicalLife === scope.physicalLife
-      ? [source.family, source.id]
-      : [source.family, source.id, source.observer];
-  const groupFor = (
-    subject: string,
-    confirmation: EvidenceSource,
-    from: number,
-    through: number,
-    detail?: TemporalConfirmation['detailSupport'],
-  ) => {
-    const detailStamp =
-      detail &&
-      ([
-        detail.proof.confirmation.revision,
-        detail.proof.confirmedFrom,
-        detail.proof.confirmedThrough,
-      ] as const);
-    const key = JSON.stringify([subject, confirmation.revision, from, through, detailStamp]);
-    let group = groups.get(key);
-    if (!group) {
-      const check: Array<EvidenceSource['revision'] | null> = [
-        confirmation.revision,
-        from === header.at ? null : from,
-        through === header.at ? null : through,
-      ];
-      while (check.length > 1 && check.at(-1) === null) check.pop();
-      groups.set(
-        key,
-        (group = {
-          subject: intern({ kind: 'text', value: subject }),
-          check: check as unknown as Extract<
-            TemporalFrameEntry,
-            { kind: 'confirmation' }
-          >['subjects'][number]['check'],
-          ...(detailStamp ? { detail: detailStamp } : {}),
-          fields: [],
-        }),
-      );
-    }
-    return group;
-  };
-  const detailBase = (detail: TemporalConfirmation['detailSupport']) =>
-    detail
-      ? intern({
-          kind: 'checkDetail',
-          value: {
-            original: detail.proof.original,
-            identity: identity(detail.proof.confirmation),
-            from: detail.from,
-            through: detail.through,
-            acquiredAt: detail.acquiredAt,
-            role: detail.role,
-            ...(detail.proof.aliases ? { aliases: detail.proof.aliases } : {}),
-          },
-        })
-      : null;
-  const receptionFields = (
-    reception: TemporalReception | undefined,
-  ): [number | null, number | null] =>
-    reception?.kind === 'body' && reception.poseRef
-      ? [intern({ kind: 'received', value: reception.poseRef }), null]
-      : [null, reception ? intern({ kind: 'reception', value: reception }) : null];
-  for (const value of confirmations) {
-    const group = groupFor(
-      value.subject,
-      value.confirmation,
-      value.from,
-      value.through,
-      value.detailSupport,
-    );
-    group.fields.push(
-      compactField([
-        intern({ kind: 'received', value: value.reference.valueRef }),
-        intern({ kind: 'fact', value: value.original }),
-        intern({ kind: 'sourceIdentity', value: identity(value.confirmation) }),
-        detailBase(value.detailSupport),
-        ...receptionFields(value.reception),
-        'fieldOrdinal' in value ? (value as TemporalConfirmationRead).fieldOrdinal : null,
+export function temporalDeclarationSourceIds(declaration: TemporalCheckDeclaration): string[] {
+  return [
+    ...new Set([
+      ...declaration.seeds.flatMap(temporalClockSourceIds),
+      ...declaration.members.flatMap((member) => [
+        member.original.source.id,
+        ...(member.confirmationIdentity ? [member.confirmationIdentity.id] : []),
       ]),
-    );
-  }
-  let offset = 0;
-  const packed: StoredCheckGroup[] = [...groups.values()].map(({ fields, ...group }) => {
-    const ordinals = fields.map((field, at) => field[6] ?? offset + at);
-    const members = fields.map((field) => {
-      if (field[6] == null) return field;
-      const value = [...field] as [...TemporalPackedFacet];
-      value[6] = null;
-      return compactField(value);
-    });
-    const result: StoredCheckGroup = {
-      ...group,
-      members: intern({ kind: 'members', value: members }),
-      count: members.length,
-      offset,
-      ...(ordinals.some((ordinal, at) => ordinal !== offset + at) ? { ordinals } : {}),
-    };
-    offset += members.length;
-    return result;
-  });
-  for (const value of checks) {
-    const requested =
-      value.membership?.chunkId === scope.id ? value.membership.entryOrdinal : undefined;
-    const cached = checkMemberships.get(value.membershipKey);
-    const existing = requested ?? (cached?.chunkId === scope.id ? cached.ordinal : undefined);
-    const declaration = existing === undefined ? undefined : index.entries.get(existing);
-    let members: number;
-    const count = value.count;
-    if (!value.declareOnly && completeNativeMembership(declaration, count)) {
-      members = existing!;
-      countDomainWork('temporalMembershipDeclarationsReused');
-    } else {
-      // An invalidated group's baseline owns fresh membership. A previous
-      // declaration may have been narrowed in place by erasure or retirement.
-      const selected = value.useReceiptFields ? receiptFields : value.fields();
-      if (selected.length !== count)
-        throw new Error('Native check membership changed before capture.');
-      countDomainWork('temporalMembershipFieldsPacked', selected.length);
-      const fields = selected.map((field) => {
-        const original = field.original ?? field.support?.original;
-        const source =
-          field.detailSupport?.proof.confirmation ??
-          field.receivedFrom ??
-          field.support?.confirmation;
-        if (!original || !source)
-          throw new Error('A group check needs actual acquired field support.');
-        return compactField([
-          intern({ kind: 'received', value: field.valueRef }),
-          intern({ kind: 'fact', value: original }),
-          intern({ kind: 'sourceIdentity', value: identity(source) }),
-          detailBase(field.detailSupport),
-          ...receptionFields(field.reception),
-        ]);
-      });
-      members = intern({ kind: 'members', value: fields });
-      if (!value.declareOnly) preparedFields.push(...selected);
-    }
-    checkMemberships.set(value.membershipKey, { chunkId: scope.id, ordinal: members, count });
-    if (value.declareOnly) {
-      declarations.push(members);
+    ]),
+  ];
+}
+/** A closure bounds the recorded interval; it is not a fresh sensory receipt. */
+export function temporalOperationLastReceivedAt(operation: TemporalHistoryOperation): number {
+  if (operation.kind === 'check') return operation.at;
+  let received = operation.receipt.at;
+  if (operation.kind === 'span')
+    for (const seed of operation.terminal) received = Math.max(received, seed.receivedAt);
+  return received;
+}
+export function temporalPageLastReceivedAt(page: TemporalPage): number {
+  let received = 0;
+  for (const operation of temporalPageOperations(page))
+    received = Math.max(received, temporalOperationLastReceivedAt(operation));
+  return received;
+}
+export function temporalPageMetadata(
+  page: TemporalPage,
+  options: { sources?: ReceivedValueLookup; world: WorldState },
+): TemporalPageMetadata {
+  const sources = options.sources ?? {},
+    ops = temporalPageOperations(page),
+    receipts = temporalPageReceipts(page),
+    refs = temporalPageReferences(page);
+  const subjects = new Set<string>(),
+    aliases = new Set<string>(),
+    individuals = new Set<string>(),
+    members = new Set<string>(),
+    spanRanges: TemporalSpanRange[] = [];
+  const declarations = new Map(
+      page.declarations.map((declaration) => [declaration.id, declaration]),
+    ),
+    usedDeclarations = new Set<number>();
+  let firstMeasured = Infinity,
+    lastSupported = -Infinity,
+    firstAt = Infinity,
+    lastAt = -Infinity,
+    firstOrder = Infinity,
+    lastOrder = -Infinity,
+    spatialContext = false;
+  for (const op of ops) {
+    const header = temporalOperationHeader(page, op);
+    firstAt = Math.min(firstAt, header.at);
+    lastAt = Math.max(lastAt, header.at, op.kind === 'span' ? op.closedAt : -Infinity);
+    firstOrder = Math.min(firstOrder, header.order);
+    lastOrder = Math.max(lastOrder, header.order);
+    if (op.kind === 'check') {
+      for (const stamp of op.stamps) {
+        if (!declarations.has(stamp.declaration))
+          throw new Error('Temporal check has no declaration.');
+        usedDeclarations.add(stamp.declaration);
+        aliases.add(stamp.confirmation.id);
+        lastSupported = Math.max(lastSupported, stamp.confirmedThrough);
+      }
       continue;
     }
-    const detail = value.detail;
-    const check: Array<EvidenceSource['revision'] | null> = [
-      value.confirmation.revision,
-      value.from === header.at ? null : value.from,
-      value.through === header.at ? null : value.through,
-    ];
-    while (check.length > 1 && check.at(-1) === null) check.pop();
-    packed.push({
-      subject: intern({ kind: 'text', value: value.subject }),
-      check: check as unknown as StoredCheckGroup['check'],
-      ...(detail ? { detail } : {}),
-      members,
-      count,
-      offset,
-    });
-    offset += count;
+    const receipt = op.receipt;
+    subjects.add(receipt.subject);
+    for (const subject of receipt.contextSubjects ?? []) subjects.add(subject);
+    for (const alias of temporalReceiptAliases(receipt, sources, options.world)) aliases.add(alias);
+    for (const id of temporalReceiptIndividualIds(receipt, sources)) individuals.add(id);
+    spatialContext ||= receipt.spatialContext === true;
+    for (const field of receipt.facets) {
+      firstMeasured = Math.min(firstMeasured, field.measuredFrom);
+      lastSupported = Math.max(lastSupported, field.confirmedThrough ?? field.measuredThrough);
+      const member = temporalMemberKey(receipt, field.ordinal);
+      members.add(member);
+      if (op.kind === 'span')
+        spanRanges.push({
+          actorId: page.actorId,
+          physicalLife: page.physicalLife,
+          epoch: page.epoch,
+          trackId:
+            field.track ??
+            JSON.stringify([receipt.subject, field.original?.ordinal ?? field.ordinal]),
+          subject: receipt.subject,
+          channel: field.original?.source.family ?? '',
+          member,
+          firstAt: receipt.at,
+          lastAt: op.closedAt,
+          firstOrder: receipt.order,
+          lastOrder: op.closedOrder,
+        });
+    }
+    if (op.kind === 'span')
+      for (const seed of op.terminal) {
+        for (const alias of temporalClockSourceIds(seed)) aliases.add(alias);
+        lastSupported = Math.max(lastSupported, seed.support.confirmedThrough);
+      }
   }
-  return packed;
-}
-export function prepareTemporalFrameReceipt(
-  chunk: TemporalFrameWriter,
-  receipt: TemporalWriteHeader,
-  fields: readonly TemporalFacetReference[],
-  buildCheckpoints?: TemporalCheckpointBuilder,
-  confirmations: readonly TemporalConfirmation[] = [],
-  checks: readonly TemporalCheckGroup[] = [],
-): {
-  entries: TemporalFrameEntry[];
-  checkpoints: readonly TemporalCheckpointFields[];
-  confirmations: readonly TemporalConfirmation[];
-  checkFields: readonly TemporalFacetReference[];
-} {
-  const index = frameIndex(readOnlyDraftView(chunk));
-  const subjects = new Set(
-    [
-      receipt.subject,
-      ...(receipt.contextSubjects ?? []),
-      ...confirmations.map((value) => value.subject),
-      ...checks.map((value) => value.subject),
-    ].filter((subject) => !index.subjects.has(subject)),
-  );
-  const includeFeatures =
-    !index.featureScope &&
-    (receipt.spatialContext === true ||
-      confirmations.some((value) => value.reception !== undefined) ||
-      checks.some((check) => check.detail !== undefined) ||
-      fields.some((facet) => facet.reception !== undefined || facet.poseFrame !== undefined) ||
-      !!receipt.contextSubjects?.length ||
-      receipt.change === 'receiver-frame');
-  let checkpoints =
-    buildCheckpoints && (subjects.size || includeFeatures)
-      ? buildCheckpoints(subjects, includeFeatures).filter((checkpoint) => checkpoint.facets.length)
-      : [];
-  if (fields.length && checkpoints.some((checkpoint) => checkpoint.subject === receipt.subject)) {
-    // A native baseline assigns one admitted group, not necessarily its whole
-    // track. Carry the other held groups across a chunk boundary while sharing
-    // exact assignments already owned by this operation.
-    const assignment = ({ ordinal: _ordinal, ...value }: TemporalFacetReference) => jsonText(value);
-    const assigned = new Set(fields.map(assignment));
-    checkpoints = checkpoints
-      .map((checkpoint) => {
-        if (checkpoint.subject !== receipt.subject) return checkpoint;
-        const facets = checkpoint.facets.filter((field) => !assigned.has(assignment(field)));
-        const kept = new Set(facets.map((field) => field.ordinal));
-        const { availability, ...rest } = checkpoint;
-        const narrowed = availability
-          ?.map((group) => ({ ...group, fields: group.fields.filter((at) => kept.has(at)) }))
-          .filter((group) => group.fields.length);
-        return { ...rest, facets, ...(narrowed?.length ? { availability: narrowed } : {}) };
-      })
-      .filter((checkpoint) => checkpoint.facets.length);
+  // Membership/provenance discovery follows declarations once, not stamps × fields.
+  for (const id of usedDeclarations) {
+    const declaration = declarations.get(id)!;
+    subjects.add(declaration.subject);
+    for (const alias of temporalDeclarationSourceIds(declaration)) aliases.add(alias);
+    for (const member of declaration.members)
+      members.add(temporalMemberKey(member.locator, member.memberOrdinal));
   }
-  const checkFields: TemporalFacetReference[] = [];
+  const occurrence = receipts.filter((receipt) => receipt.change === 'occurrence');
   return {
-    entries: packTemporalReceipt(
-      chunk,
-      receipt,
-      fields,
-      index,
-      undefined,
-      checkpoints,
-      confirmations,
-      checks,
-      checkFields,
-    ),
-    checkpoints,
-    confirmations,
-    checkFields,
+    members: [...members],
+    spanRanges: mergeSpanRanges(spanRanges),
+    occurrenceSourceIds: [
+      ...new Set(
+        occurrence.flatMap((receipt) => temporalReceiptAliases(receipt, sources, options.world)),
+      ),
+    ],
+    occurrenceIndividualIds: [
+      ...new Set(occurrence.flatMap((receipt) => temporalReceiptIndividualIds(receipt, sources))),
+    ],
+    subjects: [...subjects],
+    sourceIds: [...aliases],
+    individualIds: [...individuals],
+    sourceRefs: [...refs],
+    references: [...refs],
+    ordinals: receipts.map((receipt) => receipt.ordinal),
+    changes: ops.reduce((sum, operation) => sum + operation.charge.count, 0),
+    ...(Number.isFinite(firstAt) ? { firstAt, lastAt, firstOrder, lastOrder } : {}),
+    lastReceivedAt: temporalPageLastReceivedAt(page),
+    ...(Number.isFinite(firstMeasured) ? { firstMeasured } : {}),
+    ...(Number.isFinite(lastSupported) ? { lastSupported } : {}),
+    spatialContext,
   };
 }
-export function temporalChunkReferences(chunk: TemporalFrameOwner): ReadonlySet<string> {
-  return frameIndex(readOnlyDraftView(chunk)).references;
-}
-export function appendTemporalFrameReceipt(
-  chunk: TemporalFrameWriter,
-  receipt: TemporalWriteHeader,
-  fields: readonly TemporalFacetReference[],
-  world?: WorldState,
-  prepared?: TemporalFrameEntry[],
-): void {
-  const entries = readOnlyDraftView(chunk.entries),
-    base = frameIndex(readOnlyDraftView(chunk));
-  const additions = prepared ?? prepareTemporalFrameReceipt(chunk, receipt, fields).entries;
-  for (const entry of additions)
-    chunk.nextEntryOrdinal = Math.max(chunk.nextEntryOrdinal, entry.ordinal + 1);
-  chunk.entries = appendSnapshot(entries, additions, world) ?? [...entries, ...additions];
-  const nextEntries = readOnlyDraftView(chunk.entries);
-  const index: FrameIndex =
-    nextEntries === entries && isAppendBuffer(entries)
-      ? base
-      : {
-          id: base.id,
-          actorId: base.actorId,
-          physicalLife: base.physicalLife,
-          epoch: base.epoch,
-          length: base.length,
-          entries: new Map(base.entries),
-          dictionary: new Map(base.dictionary),
-          decodedDictionary: new Map(base.decodedDictionary),
-          frames: new Map(base.frames),
-          receipts: new Map(base.receipts),
-          headers: new Map(base.headers),
-          operations: new Map(base.operations),
-          operationOrder: [...base.operationOrder],
-          checkpoints: new Map(base.checkpoints),
-          decodedCheckpoints: new Map(base.decodedCheckpoints),
-          subjects: new Set(base.subjects),
-          featureScope: base.featureScope,
-          confirmations: new Map(base.confirmations),
-          references: new Set(base.references),
-        };
-  for (const entry of additions) {
-    index.entries.set(entry.ordinal, entry);
-    if (entry.kind === 'dictionary') index.dictionary.set(key(entry.value), entry.ordinal);
-    else if (entry.kind === 'frame') index.frames.set(entry.acquisition, entry.ordinal);
-    else if (entry.kind === 'change') {
-      index.operations.set(entry.receipt, entry);
-      index.operationOrder.push(entry);
-    } else if (entry.kind === 'checkpoint') {
-      index.checkpoints.set(entry.ordinal, entry);
-      index.subjects.add(dictionary(index, entry.subject, 'text'));
-    } else {
-      index.confirmations.set(entry.ordinal, entry);
-      for (const group of entry.subjects)
-        index.subjects.add(dictionary(index, group.subject, 'text'));
-    }
-  }
-  const touched = new Set<string>();
-  index.subjects.add(receipt.subject);
-  for (const subject of receipt.contextSubjects ?? []) index.subjects.add(subject);
-  index.featureScope ||=
-    receipt.spatialContext === true ||
-    fields.some((facet) => facet.reception !== undefined || facet.poseFrame !== undefined) ||
-    !!receipt.contextSubjects?.length ||
-    receipt.change === 'receiver-frame';
-  const packedFields = additions.flatMap(packedEntryFields);
-  index.featureScope ||= packedFields.some((field) => field[4] != null || field[5] != null);
-  for (const facet of packedFields)
-    for (const field of TEMPORAL_FACET_REFERENCE_FIELDS) {
-      const packed = facet[field];
-      if (packed == null) continue;
-      const value = dictionary(index, packed, 'received');
-      if (typeof value === 'string') index.references.add(value);
-    }
-  index.length = nextEntries.length;
-  if (isImmutableData(nextEntries) || isAppendBuffer(nextEntries)) indexes.set(nextEntries, index);
-}
-/** Correction/prefix expiry rewrites only this bounded chunk; logical personal
- * addresses remain stable and unused dictionary/body metadata actually leaves. */
-export function replaceTemporalChunkReceipts(
-  chunk: TemporalFrameWriter,
+/** Sparse edits keep exact logical identities and remove only their check members. */
+export function replaceTemporalPageReceipts(
+  page: TemporalPage,
   receipts: readonly TemporalReceipt[],
   _world?: WorldState,
-  checkpoints: readonly (TemporalCheckpoint | TemporalCheckpointDraft)[] = temporalEntryCheckpoints(
-    chunk,
-  ),
-  confirmations: readonly TemporalConfirmationRead[] = temporalEntryConfirmations(chunk).filter(
-    (value) => receipts.some((receipt) => receipt.ordinal === value.receiptOrdinal),
-  ),
 ): void {
-  const base = frameIndex(readOnlyDraftView(chunk));
-  const index: FrameIndex = {
-    ...base,
-    entries: new Map(base.entries),
-    dictionary: new Map(base.dictionary),
-    decodedDictionary: new Map(base.decodedDictionary),
-    frames: new Map(base.frames),
-  };
-  const changes: Array<
-    Extract<TemporalFrameEntry, { kind: 'change' | 'checkpoint' | 'confirmation' }>
-  > = [];
-  let nextEntryOrdinal = chunk.nextEntryOrdinal;
-  for (const receipt of receipts) {
-    const original = base.operations.get(receipt.ordinal);
-    if (
-      original &&
-      (decodedReceipt(chunk, original, base) === receipt ||
-        jsonText(decodedReceipt(chunk, original, base)) === jsonText(receipt))
-    ) {
-      changes.push(original);
-      continue;
-    }
-    const additions = packTemporalReceipt(
-      { ...chunk, nextEntryOrdinal },
-      receipt,
-      receipt.facets,
-      index,
-      original?.ordinal,
-    );
-    for (const entry of additions) {
-      nextEntryOrdinal = Math.max(nextEntryOrdinal, entry.ordinal + 1);
-      index.entries.set(entry.ordinal, entry);
-      if (entry.kind === 'dictionary') index.dictionary.set(key(entry.value), entry.ordinal);
-      else if (entry.kind === 'frame') index.frames.set(entry.acquisition, entry.ordinal);
-      else if (entry.kind === 'change' || entry.kind === 'checkpoint') changes.push(entry);
-    }
-  }
-  if (receipts.length)
-    for (const checkpoint of checkpoints) {
-      const original =
-        'ordinal' in checkpoint ? base.checkpoints.get(checkpoint.ordinal) : undefined;
-      if (
-        ('ordinal' in checkpoint && !original) ||
-        checkpoint.chunkId !== chunk.id ||
-        checkpoint.actorId !== chunk.actorId ||
-        checkpoint.physicalLife !== chunk.physicalLife ||
-        checkpoint.epoch !== chunk.epoch
-      )
-        throw new Error('Foreign temporal checkpoint replacement.');
-      if (original && jsonText(decodedCheckpoint(chunk, original, base)) === jsonText(checkpoint)) {
-        changes.push(original);
-        continue;
-      }
-      if (!checkpoint.facets.length) continue;
-      const frame = index.frames.get(checkpoint.acquisition),
-        header = frame === undefined ? undefined : index.entries.get(frame);
-      if (header?.kind !== 'frame' || header.at !== checkpoint.at)
-        throw new Error('Temporal checkpoint has no actual retained entry frame.');
-      const { additions, intern, next } = dictionaryWriter(index, nextEntryOrdinal);
-      const subject = intern({ kind: 'text', value: checkpoint.subject }),
-        identity =
-          checkpoint.subjectIdentity &&
-          intern({ kind: 'identity', value: checkpoint.subjectIdentity }),
-        facets = packFacets(checkpoint.facets, header, intern);
-      const change: Extract<TemporalFrameEntry, { kind: 'checkpoint' }> = {
-        ordinal: original?.ordinal ?? next(),
-        kind: 'checkpoint',
-        frame: header.ordinal,
-        subject,
-        ...(identity !== undefined ? { identity } : {}),
-        facets,
-        ...(checkpoint.availability?.length ? { availability: checkpoint.availability } : {}),
-        ...(checkpoint.order !== header.order ? { order: checkpoint.order } : {}),
-      };
-      additions.push(change);
-      for (const entry of additions) {
-        nextEntryOrdinal = Math.max(nextEntryOrdinal, entry.ordinal + 1);
-        index.entries.set(entry.ordinal, entry);
-        if (entry.kind === 'dictionary') index.dictionary.set(key(entry.value), entry.ordinal);
-      }
-      changes.push(change);
-    }
-  const groups = new Map<number, TemporalConfirmationRead[]>();
-  for (const value of confirmations) {
-    const held = groups.get(value.entryOrdinal) ?? [];
-    if (!groups.has(value.entryOrdinal)) groups.set(value.entryOrdinal, held);
-    held.push(value);
-  }
-  for (const [ordinal, values] of groups) {
-    const original = base.confirmations.get(ordinal);
-    if (!original) throw new Error('Foreign temporal confirmation replacement.');
-    if (!receipts.some((receipt) => receipt.ordinal === original.receipt)) continue;
-    const previous = temporalEntryConfirmations(chunk, [original]);
-    if (jsonText(previous) === jsonText(values)) {
-      changes.push(original);
-      continue;
-    }
-    const previousFields = new Map(previous.map((field) => [field.fieldOrdinal, field]));
-    if (
-      values.every((field) => {
-        const prior = previousFields.get(field.fieldOrdinal);
-        return prior !== undefined && jsonText(prior) === jsonText(field);
+  const selected = new Map(receipts.map((receipt) => [receipt.ordinal, receipt]));
+  const removed = new Set<string>();
+  for (const receipt of temporalPageReceipts(page))
+    for (const field of receipt.facets)
+      if (!selected.get(receipt.ordinal)?.facets.some((next) => next.ordinal === field.ordinal))
+        removed.add(temporalMemberKey(receipt, field.ordinal));
+  page.operations = temporalPageOperations(page).flatMap<TemporalHistoryOperation>((op) => {
+    if (op.kind === 'check') return [op];
+    const receipt = selected.get(op.receipt.ordinal);
+    return receipt ? [{ ...op, receipt }] : [];
+  });
+  if (removed.size) {
+    page.declarations = page.declarations
+      .map((declaration) => {
+        const retained = declaration.members.flatMap((member, index) =>
+          removed.has(temporalMemberKey(member.locator, member.memberOrdinal))
+            ? []
+            : [{ member, index }],
+        );
+        return {
+          ...declaration,
+          members: retained.map((item) => item.member),
+          seeds: retained.flatMap((item, member) => {
+            const seed = declaration.seeds.find((seed) => seed.member === item.index);
+            return seed ? [{ ...seed, member }] : [];
+          }),
+        };
       })
-    ) {
-      // Erasure narrows an existing declaration at its native address. Moving
-      // the surviving members to a new declaration would revoke an unrelated
-      // pending selected read solely because its sibling was forgotten.
-      const change = projectTemporalOperation(
-        original,
-        values.map((field) => field.fieldOrdinal),
-      ) as typeof original;
-      index.entries.set(ordinal, change);
-      changes.push(change);
-      continue;
-    }
-    const header = index.entries.get(original.frame);
-    if (header?.kind !== 'frame') throw new Error('Temporal confirmation has no retained frame.');
-    const { additions, intern } = dictionaryWriter(index, nextEntryOrdinal),
-      subjects = packConfirmations(values, header, intern, [], chunk, index);
-    const change: Extract<TemporalFrameEntry, { kind: 'confirmation' }> = { ...original, subjects };
-    for (const entry of additions) {
-      nextEntryOrdinal = Math.max(nextEntryOrdinal, entry.ordinal + 1);
-      index.entries.set(entry.ordinal, entry);
-      if (entry.kind === 'dictionary') index.dictionary.set(key(entry.value), entry.ordinal);
-    }
-    index.entries.set(ordinal, change);
-    changes.push(change);
+      .filter((declaration) => declaration.members.length);
+    const ids = new Set(page.declarations.map((declaration) => declaration.id));
+    page.operations = page.operations.flatMap<TemporalHistoryOperation>((op) => {
+      if (op.kind !== 'check') return [op];
+      const stamps = op.stamps.filter((stamp) => ids.has(stamp.declaration));
+      return stamps.length ? [{ ...op, stamps }] : [];
+    });
   }
-  const memberSelections = new Map<number, Set<number>>();
-  for (const change of changes)
-    if (change.kind === 'confirmation')
-      for (const group of change.subjects) {
-        let selected = memberSelections.get(group.members);
-        if (!selected) memberSelections.set(group.members, (selected = new Set()));
-        for (const position of temporalConfirmationPositions(group)) selected.add(position);
-      }
-  for (const [ordinal, selected] of memberSelections) {
-    const entry = index.entries.get(ordinal)!;
-    const narrowed = projectTemporalOperation(entry, [...selected]);
-    index.entries.set(ordinal, narrowed);
-    index.decodedDictionary.delete(ordinal);
-    if (entry.kind === 'dictionary' && narrowed.kind === 'dictionary') {
-      index.dictionary.delete(key(entry.value));
-      index.dictionary.set(key(narrowed.value), ordinal);
-    }
-  }
-  const retained = new Set<number>();
-  for (const change of changes)
-    for (const ordinal of entryDependencies(index, change)) retained.add(ordinal);
-  // The replacement is complete owned data. Prove its container now so the
-  // following metadata/accounting reads share one derived frame preparation.
-  chunk.entries = immutableDataSnapshot(
-    [...retained]
-      .sort((a, b) => a - b)
-      .map((ordinal) => immutableDataSnapshot(index.entries.get(ordinal)!, readOnlyDraftView)),
+  page.operations = page.operations.map((operation) => ({
+    ...operation,
+    charge: {
+      bytes: temporalOperationLogicalBytes(operation, _world?.receivedValues?.sources ?? {}),
+      count: temporalOperationLogicalCount(operation, page.declarations),
+    },
+  }));
+  markTemporalPageEdited(page);
+}
+export function appendTemporalPageOperation(
+  page: TemporalPage,
+  operation: TemporalHistoryOperation,
+  world: WorldState,
+): void {
+  const held = readOnlyDraftView(page.operations),
+    next = immutableDataSnapshot(operation, readOnlyDraftView);
+  page.operations = appendSnapshot(held, [next], world) ?? [...held, next];
+}
+
+export interface TemporalSpanRange {
+  actorId: string;
+  physicalLife: number;
+  epoch: string;
+  trackId: string;
+  subject: string;
+  channel: string;
+  member: string;
+  firstAt: number;
+  lastAt: number;
+  firstOrder: number;
+  lastOrder: number;
+}
+export function temporalMemberKey(locator: TemporalReceiptLocator, memberOrdinal: number): string {
+  return JSON.stringify([
+    locator.actorId,
+    locator.physicalLife,
+    locator.epoch,
+    locator.ordinal,
+    memberOrdinal,
+  ]);
+}
+const temporalSelections = new WeakMap<
+  readonly TemporalHistoryOperation[],
+  { source: TemporalPage; declarations: TemporalPage['declarations'] }
+>();
+/** Only this semantic selection owner can certify regrouped declarations and
+ * predecessor seeds. The caller must still verify exact ordered operations. */
+export function temporalPageSelectionSource(page: TemporalPage): TemporalPage | undefined {
+  const proof = temporalSelections.get(page.operations);
+  return proof?.declarations === page.declarations ? proof.source : undefined;
+}
+/** A physical suffix borrows only declarations it actually uses. Its seeds are
+ * advanced through preceding native checks, never through a newer current view. */
+export function temporalPageSelection(
+  page: TemporalPage,
+  operations: readonly TemporalHistoryOperation[],
+  id: string = page.id,
+): TemporalPage {
+  const first = operations[0];
+  if (!first) throw new Error('An empty temporal page has no saved meaning.');
+  const ids = new Set(
+    operations.flatMap((op) =>
+      op.kind === 'check' ? op.stamps.map((stamp) => stamp.declaration) : [],
+    ),
   );
-  chunk.nextEntryOrdinal = nextEntryOrdinal;
+  type Prior = {
+    support?: {
+      op: Extract<TemporalHistoryOperation, { kind: 'check' }>;
+      stamp: TemporalCheckStamp;
+    };
+    measurement?: {
+      op: Extract<TemporalHistoryOperation, { kind: 'check' }>;
+      stamp: TemporalCheckStamp;
+    };
+    frame?: { op: Extract<TemporalHistoryOperation, { kind: 'check' }>; stamp: TemporalCheckStamp };
+  };
+  const predecessors = new Map<number, Prior>();
+  // One compact header pass, independent of declaration/member cardinality.
+  for (const op of temporalPageOperations(page)) {
+    if (op.ordinal >= first.ordinal) break;
+    if (op.kind !== 'check') continue;
+    for (const stamp of op.stamps) {
+      if (!ids.has(stamp.declaration)) continue;
+      const prior = predecessors.get(stamp.declaration) ?? {};
+      prior.support = { op, stamp };
+      if (stamp.measurement) prior.measurement = { op, stamp };
+      if (stamp.frame) prior.frame = { op, stamp };
+      predecessors.set(stamp.declaration, prior);
+    }
+  }
+  const declarations = page.declarations
+    .filter((d) => ids.has(d.id))
+    .map((declaration) => {
+      const prior = predecessors.get(declaration.id);
+      const seeds = declaration.seeds.map((seed) => {
+        const member = declaration.members[seed.member];
+        if (!member) throw new Error('Temporal seed has no member.');
+        let next = seed;
+        if (prior?.measurement) {
+          const { op, stamp } = prior.measurement;
+          next = temporalAdvanceSeed(next, member, stamp, op.at, op.order);
+        }
+        if (prior?.frame) {
+          const { op, stamp } = prior.frame,
+            { measurement: _measurement, ...frameStamp } = stamp;
+          next = temporalAdvanceSeed(next, member, frameStamp, op.at, op.order);
+        }
+        if (prior?.support) {
+          const { op, stamp } = prior.support,
+            { measurement: _measurement, frame: _frame, ...supportStamp } = stamp;
+          next = temporalAdvanceSeed(next, member, supportStamp, op.at, op.order);
+        }
+        return next;
+      });
+      return { ...declaration, seeds };
+    });
+  // A read-only cut keeps conservative candidate directories. Consumers inspect
+  // only selected operations; canonical encoding always rebuilds directories with the world.
+  const selected = {
+    ...page,
+    id,
+    operations: immutableDataSnapshot([...operations]),
+    declarations: immutableDataSnapshot(declarations),
+    fromOrdinal: operations[0]!.ordinal,
+    throughOrdinal: operations.at(-1)!.ordinal,
+    count: operations.reduce((sum, op) => sum + op.charge.count, 0),
+    bytes: operations.reduce((sum, op) => sum + op.charge.bytes, 0),
+  };
+  temporalSelections.set(selected.operations, {
+    source: page,
+    declarations: selected.declarations,
+  });
+  return selected;
+}
+export function selectTemporalPageOperations(
+  page: TemporalPage,
+  operations: readonly TemporalHistoryOperation[],
+  id: string,
+  world: WorldState,
+): TemporalPage {
+  const selected = temporalPageSelection(page, operations, id),
+    metadata = temporalPageMetadata(selected, {
+      world,
+      sources: world.receivedValues?.sources ?? {},
+    });
+  return {
+    ...selected,
+    fromAt: metadata.firstAt!,
+    throughAt: metadata.lastAt!,
+    subjects: metadata.subjects,
+    sourceIds: metadata.sourceIds,
+    individualIds: metadata.individualIds,
+    sourceRefs: metadata.sourceRefs,
+  };
+}
+
+function checkedConfirmation(
+  member: TemporalCheckMember,
+  stamp: TemporalCheckStamp,
+): EvidenceSource {
+  return evidenceSourceWithIdentity(
+    stamp.confirmation,
+    member.confirmationIdentity,
+    member.revisionFloor,
+  );
+}
+/** Advance a predecessor using the same proof, clock and frame rules as selected reads. */
+export function temporalAdvanceSeed(
+  seed: TemporalCheckSeed,
+  member: TemporalCheckMember,
+  stamp: TemporalCheckStamp,
+  receivedAt: number,
+  order: number,
+): TemporalCheckSeed {
+  return {
+    ...seed,
+    part: member.part ?? seed.part,
+    receivedAt,
+    order,
+    support: {
+      original: member.original,
+      confirmation: checkedConfirmation(member, stamp),
+      confirmedFrom: stamp.confirmedFrom,
+      confirmedThrough: stamp.confirmedThrough,
+    },
+    ...(stamp.measurement
+      ? {
+          measuredFrom: stamp.measurement.measuredFrom,
+          measuredThrough: stamp.measurement.measuredThrough,
+          acquiredAt: stamp.measurement.acquiredAt,
+          receivedFrom: evidenceSourceWithIdentity(
+            stamp.measurement.receivedFrom,
+            member.confirmationIdentity,
+          ),
+        }
+      : {}),
+    ...(stamp.frame && seed.reception?.kind === 'location'
+      ? { reception: { kind: 'location' as const, frame: stamp.frame } }
+      : {}),
+    ...(stamp.frame && (member.part ?? seed.part) === 'pose' && seed.poseFrame
+      ? { poseFrame: stamp.frame }
+      : {}),
+  };
+}
+/** One projection rule for native/cold reads and current-source revalidation. */
+export function temporalCheckedFacet(
+  base: TemporalFacetReference,
+  member: TemporalCheckMember,
+  seed: TemporalCheckSeed | undefined,
+  stamp: TemporalCheckStamp,
+): TemporalFacetReference {
+  const prior = seed ? temporalSeedFacet(base, { ...seed, part: member.part ?? seed.part }) : base,
+    support = {
+      original: member.original,
+      confirmation: checkedConfirmation(member, stamp),
+      confirmedFrom: stamp.confirmedFrom,
+      confirmedThrough: stamp.confirmedThrough,
+    };
+  if (member.part === 'detail' && prior.detailSupport) {
+    return {
+      ...prior,
+      detailSupport: {
+        ...prior.detailSupport,
+        proof: support,
+        ...(stamp.measurement
+          ? {
+              from: stamp.measurement.measuredFrom,
+              through: stamp.measurement.measuredThrough,
+              acquiredAt: stamp.measurement.acquiredAt,
+            }
+          : {}),
+      },
+    };
+  }
+  return {
+    ...prior,
+    confirmedThrough: stamp.confirmedThrough,
+    support,
+    ...(stamp.measurement
+      ? {
+          measuredFrom: stamp.measurement.measuredFrom,
+          measuredThrough: stamp.measurement.measuredThrough,
+          asOf: stamp.measurement.measuredThrough,
+          acquiredAt: stamp.measurement.acquiredAt,
+          receivedFrom: evidenceSourceWithIdentity(
+            stamp.measurement.receivedFrom,
+            member.confirmationIdentity,
+          ),
+        }
+      : {}),
+    ...(stamp.frame && prior.reception?.kind === 'location'
+      ? { reception: { kind: 'location' as const, frame: stamp.frame } }
+      : {}),
+    ...(stamp.frame && member.part === 'pose' && prior.poseFrame ? { poseFrame: stamp.frame } : {}),
+  };
+}
+
+function mergeSpanRanges(ranges: readonly TemporalSpanRange[]): TemporalSpanRange[] {
+  const groups = new Map<string, TemporalSpanRange>();
+  for (const range of ranges) {
+    const prior = groups.get(range.trackId);
+    if (!prior) groups.set(range.trackId, { ...range });
+    else {
+      prior.firstAt = Math.min(prior.firstAt, range.firstAt);
+      prior.lastAt = Math.max(prior.lastAt, range.lastAt);
+      prior.firstOrder = Math.min(prior.firstOrder, range.firstOrder);
+      prior.lastOrder = Math.max(prior.lastOrder, range.lastOrder);
+    }
+  }
+  return [...groups.values()];
+}
+const editedPages = new WeakSet<object>();
+export function temporalPageMutation(page: TemporalPage): 'append' | 'edit' {
+  return editedPages.has(readOnlyDraftView(page.operations)) ? 'edit' : 'append';
+}
+export function markTemporalPageEdited(page: TemporalPage): void {
+  page.operations = immutableDataSnapshot(page.operations, readOnlyDraftView);
+  editedPages.add(readOnlyDraftView(page.operations));
+}
+
+export function temporalSeedFacet(
+  base: TemporalFacetReference,
+  seed: TemporalCheckSeed,
+): TemporalFacetReference {
+  if (seed.part === 'detail' && base.detailSupport)
+    return {
+      ...base,
+      detailSupport: {
+        ...base.detailSupport,
+        proof: seed.support,
+        from: seed.measuredFrom,
+        through: seed.measuredThrough,
+        acquiredAt: seed.acquiredAt,
+      },
+    };
+  return {
+    ...base,
+    measuredFrom: seed.measuredFrom,
+    measuredThrough: seed.measuredThrough,
+    asOf: seed.measuredThrough,
+    acquiredAt: seed.acquiredAt,
+    receivedFrom: seed.receivedFrom,
+    support: seed.support,
+    confirmedThrough: seed.support.confirmedThrough,
+    ...(seed.reception && base.reception?.kind === 'location' ? { reception: seed.reception } : {}),
+    ...(seed.poseFrame ? { poseFrame: seed.poseFrame } : {}),
+  };
+}
+
+export function temporalOperationLogicalCount(
+  operation: TemporalHistoryInput,
+  declarations: readonly TemporalCheckDeclaration[],
+): number {
+  if (operation.kind !== 'check') return temporalReceiptChangeCount(operation.receipt);
+  let count = 0;
+  for (const stamp of operation.stamps) {
+    const declaration = declarations.find((d) => d.id === stamp.declaration);
+    if (!declaration) throw new Error('An exact check has no declaration.');
+    count += new Set(
+      declaration.members.map((member) =>
+        JSON.stringify([member.locator.epoch, member.locator.ordinal, member.memberOrdinal]),
+      ),
+    ).size;
+  }
+  return count;
+}
+
+export function temporalOperationLogicalBytes(
+  operation: TemporalHistoryInput | TemporalHistoryOperation,
+  sources: ReceivedValueLookup,
+): number {
+  const { charge: _charge, ...input } = operation as TemporalHistoryOperation;
+  if (input.kind === 'check') return jsonByteLength(input);
+  let bytes = jsonByteLength(input);
+  for (const reference of new Set(input.receipt.facets.flatMap(temporalFacetValueReferences))) {
+    const value = receivedValueAt(sources, reference);
+    if (!value) throw new Error('A received interval has no owned value.');
+    bytes += jsonByteLength(value);
+  }
+  return bytes;
 }

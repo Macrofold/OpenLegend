@@ -1,5 +1,5 @@
 import { nativeText, jsonText, temporalRecentAt } from '@open-legend/domain';
-import { temporalChunkReceipts } from '@open-legend/domain';
+import { temporalPageReceipts } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
@@ -55,7 +55,6 @@ import {
   storyTemporalCut,
   retireTemporalStoryAccounts,
 } from './personal-accounts.js';
-import { temporalChunkSourceId } from './temporal-storage.js';
 import type { ReceivedEventAccount } from './received-event-accounts.js';
 import type {
   TranscriptPage,
@@ -85,12 +84,12 @@ export function validateHistoryEvidence(
   const accounts = new Map<string, string>();
   const temporal = world.experience?.temporal;
   const receipts = new Map<string, TemporalReceipt>();
-  const chunkOrders = new Map<string, number>();
+  const pageOrders = new Map<string, number>();
   for (const actor of Object.values(temporal?.actors ?? {}))
-    for (const chunk of actor.chunks)
-      for (const receipt of temporalChunkReceipts(chunk)) {
+    for (const chunk of actor.pages)
+      for (const receipt of temporalPageReceipts(chunk)) {
         receipts.set(receipt.id, receipt);
-        chunkOrders.set(receipt.id, chunk.order);
+        pageOrders.set(receipt.id, chunk.order);
       }
   for (const [actor, entries] of Object.entries(world.experience?.awareness ?? {}))
     for (const entry of entries) {
@@ -127,7 +126,7 @@ export function validateHistoryEvidence(
       world.id,
       String(row['actor_id']),
       accounts,
-      { receipts, chunkOrders, sources: world.receivedValues?.sources ?? {} },
+      { receipts, pageOrders, sources: world.receivedValues?.sources ?? {} },
     );
     if (
       row['world_id'] !== world.id ||
@@ -245,6 +244,7 @@ export class HistoryRepository {
   ): Promise<T> {
     if (!this.sourceAccess(worldId, actorId)) throw new MemoryPreparationError();
     const privacy = this.sourceAccessRevision(worldId, actorId);
+    const eligibility = `${this.narrationRevision}:${this.bannerSourceEpochs.get(actorId) ?? 0}`;
     const read = () =>
       this.db.readTransaction ? this.db.readTransaction(operation) : this.db.transaction(operation);
     const value = await (this.db.readForActor
@@ -252,7 +252,8 @@ export class HistoryRepository {
       : read());
     if (
       !this.sourceAccess(worldId, actorId) ||
-      privacy !== this.sourceAccessRevision(worldId, actorId)
+      privacy !== this.sourceAccessRevision(worldId, actorId) ||
+      eligibility !== `${this.narrationRevision}:${this.bannerSourceEpochs.get(actorId) ?? 0}`
     )
       throw new MemoryPreparationError();
     return value;
@@ -331,8 +332,7 @@ export class HistoryRepository {
       if (actor) actors.add(actor);
     };
     for (const table of [
-      'mind_temporal_chunks',
-      'mind_temporal_segments',
+      'mind_temporal_pages',
       'mind_awareness',
       'mind_memories',
       'mind_summaries',
@@ -348,10 +348,14 @@ export class HistoryRepository {
         if (
           table === 'mind_forgotten' ||
           table === 'mind_corrections' ||
-          (!row.create && row.logicalRemoval !== false && table === 'mind_temporal_segments')
+          (!row.create && row.logicalRemoval !== false && table === 'mind_temporal_pages')
         )
           mark(row.id);
     }
+    for (const intent of changes.temporal?.values() ?? [])
+      if (intent.replacement) actors.add(intent.after.actorId);
+    for (const actorId of actors)
+      this.bannerSourceEpochs.set(actorId, (this.bannerSourceEpochs.get(actorId) ?? 0) + 1);
     for (const [key, entry] of this.narrationReads) {
       const [, , actorId] = JSON.parse(key) as string[];
       if (
@@ -364,7 +368,6 @@ export class HistoryRepository {
       // Known absence cannot become a banner through removing a source. Preserve
       // it while expiring only positive/in-flight results for the affected actor.
       this.narrationReads.delete(key);
-      this.bannerSourceEpochs.set(actorId, (this.bannerSourceEpochs.get(actorId) ?? 0) + 1);
     }
   }
 
@@ -437,7 +440,7 @@ export class HistoryRepository {
          ON p.world_id=e.world_id AND p.event_id=e.id
          WHERE e.world_id=? AND e.response_id=? AND p.actor_id=?
          AND p.event_type='speech' AND p.source_id=? AND p.target_id=p.actor_id
-         AND e.payload::jsonb #>> '{data,utteranceId}'=? ORDER BY e.position,e.id LIMIT 16`,
+         AND e.payload::jsonb #>> '{data,utteranceId}'=? AND ${storyAccountAvailableSql()} ORDER BY e.position,e.id LIMIT 16`,
         )
         .all(worldId, responseId, actorId, npcId, `${responseId}:${localId}`);
       return rows
@@ -487,11 +490,11 @@ export class HistoryRepository {
       CREATE TABLE IF NOT EXISTS history_perspectives (
         world_id TEXT NOT NULL,event_id TEXT NOT NULL,actor_id TEXT NOT NULL,payload TEXT NOT NULL,
         position BIGINT NOT NULL,event_type TEXT NOT NULL,source_id TEXT,target_id TEXT,
-        speech_peer_id TEXT,response_action BOOLEAN NOT NULL,temporal_chunk_id TEXT,
-        PRIMARY KEY(world_id,event_id,actor_id),
-        FOREIGN KEY(world_id,temporal_chunk_id) REFERENCES mind_temporal_chunks(world_id,id)
-          ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED);
-      CREATE INDEX IF NOT EXISTS history_perspective_temporal_chunk ON history_perspectives(world_id,temporal_chunk_id) WHERE temporal_chunk_id IS NOT NULL;
+        speech_peer_id TEXT,response_action BOOLEAN NOT NULL,
+        temporal_life BIGINT,temporal_epoch TEXT,temporal_ordinal BIGINT,
+        PRIMARY KEY(world_id,event_id,actor_id));
+      CREATE INDEX IF NOT EXISTS history_perspective_temporal ON history_perspectives
+        (world_id,actor_id,temporal_life,temporal_epoch,temporal_ordinal) WHERE temporal_ordinal IS NOT NULL;
       CREATE TABLE IF NOT EXISTS story_context_sources (
         world_id TEXT NOT NULL,narration_id TEXT NOT NULL,owner_id TEXT NOT NULL,event_id TEXT NOT NULL,
         PRIMARY KEY(world_id,narration_id,owner_id,event_id));
@@ -654,18 +657,14 @@ export class HistoryRepository {
         if (retained)
           for (const row of await this.db
             .prepare(
-              `SELECT p.actor_id,p.payload,p.temporal_chunk_id,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=?`,
+              `SELECT p.actor_id,p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=?`,
             )
             .all(world.id, event.id)) {
             const actorId = String(row['actor_id']),
               payload = String(row['payload']);
             retainedPerspectives.set(actorId, storySourceRow(row));
             const temporalCut = storyTemporalCut(payload);
-            const chunkId =
-              typeof row['temporal_chunk_id'] === 'string'
-                ? temporalChunkSourceId(actorId, row['temporal_chunk_id'])
-                : undefined;
-            if (chunkId && temporalCut) retainedTemporal.set(actorId, { chunkId, ...temporalCut });
+            if (temporalCut) retainedTemporal.set(actorId, temporalCut);
           }
         removedEvents += await this.removeEvent(world.id, event.id);
       }
@@ -833,7 +832,7 @@ export class HistoryRepository {
           const account = encodeStoryAccount(source, entry);
           await this.db
             .prepare(
-              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_chunk_id=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
+              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_life=NULL,temporal_epoch=NULL,temporal_ordinal=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
             )
             .run(account.payload, ...perspectiveColumns(source), world.id, entry.eventId, actorId);
           for (const principal of this.principals.filter((p) => p.actorId === actorId))
@@ -1126,12 +1125,13 @@ export class HistoryRepository {
     if (!job.sources.length) return true;
     if (!this.sourceAccess(worldId, job.actorId)) return false;
     const privacy = this.sourceAccessRevision(worldId, job.actorId);
+    const eligibility = `${this.narrationRevision}:${this.bannerSourceEpochs.get(job.actorId) ?? 0}`;
     const read = () =>
       this.db
         .prepare(
           `SELECT p.event_id,p.payload FROM history_perspectives p
         WHERE p.world_id=? AND p.actor_id=? AND p.event_id IN (${job.sources.map(() => '?').join(',')})
-          AND ${narrationSourceUnrevokedSql()}`,
+          AND ${storyAccountAvailableSql()}`,
         )
         .all(worldId, job.actorId, ...job.sources.map((source) => source.id));
     const rows = await (this.db.readForActor
@@ -1139,7 +1139,8 @@ export class HistoryRepository {
       : read());
     if (
       !this.sourceAccess(worldId, job.actorId) ||
-      privacy !== this.sourceAccessRevision(worldId, job.actorId)
+      privacy !== this.sourceAccessRevision(worldId, job.actorId) ||
+      eligibility !== `${this.narrationRevision}:${this.bannerSourceEpochs.get(job.actorId) ?? 0}`
     )
       return false;
     const current = new Map(rows.map((row) => [String(row['event_id']), String(row['payload'])]));
@@ -1158,7 +1159,7 @@ export class HistoryRepository {
       const rows = await this.db
         .prepare(
           `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? AND p.position<=?
-          AND ${narrationSourceUnrevokedSql()} ORDER BY p.position DESC,p.event_id DESC LIMIT 12`,
+          AND ${storyAccountAvailableSql()} ORDER BY p.position DESC,p.event_id DESC LIMIT 12`,
         )
         .all(worldId, job.actorId, job.item.order);
       return rows

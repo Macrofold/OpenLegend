@@ -2,7 +2,11 @@ import { attentionCandidates } from './attention.js';
 import { receivedValueAt } from './received-values.js';
 import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
-import { temporalChunkReceipts, temporalChunkReferences } from './temporal-frames.js';
+import {
+  temporalPageReceipts,
+  temporalPageOperations,
+  temporalOperationLogicalBytes,
+} from './temporal-frames.js';
 import { expect, it } from 'vitest';
 import { freeze } from 'immer';
 import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
@@ -39,7 +43,7 @@ import {
   beginTemporalReceiptEpoch,
   captureTemporalReceiptPrefix,
   temporalReceiptWithinPrefix,
-  retireTemporalChunks,
+  retireTemporalPages,
   materializeTemporalValue,
   temporalReceiptForRead,
   type TemporalValue,
@@ -60,6 +64,14 @@ function scene(seed = 41) {
   )![0];
   expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
   return world;
+}
+
+function closedSpans(world: ReturnType<typeof createWorld>, subject: string) {
+  return world.experience!.temporal!.actors[PLAYER_ID]!.pages.flatMap((page) =>
+    temporalPageOperations(page).flatMap((operation) =>
+      operation.kind === 'span' && operation.receipt.subject === subject ? [operation] : [],
+    ),
+  );
 }
 
 it('binds history to the captured receipt prefix even when later measurements share its game time', () => {
@@ -139,18 +151,21 @@ it('retains intermediate actually received movement and its exact last sample on
     limit: 1000,
   });
   const positions = selected.entries.flatMap(({ values }) =>
-    values.flatMap((value) => (value.kind === 'body' ? [value.body.position.x] : [])),
+    values.flatMap((value) =>
+      value.kind === 'location' && value.location.kind === 'point' ? [value.location.point.x] : [],
+    ),
   );
   expect(positions).toEqual(expect.arrayContaining([3, 4, 5]));
-  const lostBody = selected.entries.find(
-    ({ receipt, values }) =>
-      receipt.change === 'loss' && values.some((value) => value.kind === 'body'),
+  const loss = closedSpans(world, exposure).find(
+    (operation) =>
+      operation.reason === 'loss' &&
+      operation.receipt.facets.some((facet) => facet.measuredThrough === 2),
   )!;
-  expect(lostBody.receipt.at).toBe(3);
-  expect(
-    lostBody.receipt.facets[lostBody.values.findIndex((value) => value.kind === 'body')]!
-      .measuredThrough,
-  ).toBe(2);
+  expect(loss).toBeDefined();
+  expect(loss.closedAt).toBe(3);
+  expect(loss.receipt.at).toBe(2);
+  expect(loss.terminal.some((seed) => seed.measuredThrough === 2)).toBe(true);
+  expect(selected.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
   expect(selected.incomplete).toBe(true);
 });
 
@@ -200,7 +215,12 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
     });
   const oldHistory = read(firstBody.exposure.track),
     newHistory = read(secondBody.exposure.track);
-  expect(oldHistory.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(true);
+  expect(
+    closedSpans(world, firstBody.exposure.track).some(
+      (operation) => operation.reason === 'loss' && operation.closedAt === 1,
+    ),
+  ).toBe(true);
+  expect(oldHistory.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
   expect(oldHistory.entries.every(({ receipt }) => receipt.at <= 1)).toBe(true);
   expect(newHistory.entries.length).toBeGreaterThan(0);
   expect(newHistory.entries.every(({ receipt }) => receipt.at === 2)).toBe(true);
@@ -243,7 +263,11 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   ]);
   const query = { subject, limit: 1000, bytes: 1024 * 1024 };
   const interrupted = selectTemporalHistory(world, PLAYER_ID, query);
-  expect(interrupted.entries.some(({ receipt }) => receipt.change === 'attention-exit')).toBe(true);
+  expect(
+    closedSpans(world, subject).some(
+      (operation) => operation.reason === 'attention-exit' && operation.closedAt === 1,
+    ),
+  ).toBe(true);
   expect(interrupted.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeDefined();
   world.simTime = 2;
@@ -257,15 +281,18 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   initializePerception(world, []);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
   const lost = selectTemporalHistory(world, PLAYER_ID, query);
-  const loss = lost.entries.find(({ receipt }) => receipt.change === 'loss');
+  const loss = closedSpans(world, subject).find((operation) => operation.reason === 'loss');
   expect(loss).toBeDefined();
-  expect(loss!.receipt.at).toBe(3);
+  expect(loss!.closedAt).toBe(3);
   expect(loss!.receipt.facets.some((facet) => facet.measuredThrough < 3)).toBe(true);
-  expect(lost.entries.some(({ receipt }) => receipt.change === 'attention-exit')).toBe(true);
+  expect(
+    closedSpans(world, subject).some((operation) => operation.reason === 'attention-exit'),
+  ).toBe(true);
+  expect(lost.incomplete).toBe(true);
   world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 1;
   const actor = world.experience!.temporal!.actors[PLAYER_ID]!,
-    retired = [...actor.chunks];
-  retireTemporalChunks(
+    retired = [...actor.pages];
+  retireTemporalPages(
     world,
     PLAYER_ID,
     retired.map((chunk) => chunk.id),
@@ -337,7 +364,7 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
       },
       selectedTemporalPolicy(world).recent,
     );
-    return temporalChunkReceipts(world.experience!.temporal!.actors[PLAYER_ID]!.chunks.at(-1)!).at(
+    return temporalPageReceipts(world.experience!.temporal!.actors[PLAYER_ID]!.pages.at(-1)!).at(
       -1,
     )!.facets[0]!;
   };
@@ -665,7 +692,7 @@ it('keeps an actually heard unseen voice separate from a previously seen body', 
   ).toBe(false);
 });
 
-it('retains only the exact qualifying contact capsule when familiarity uses a temporal source', () => {
+it('retains minimal qualifying contact support and extends a separate capsule without duplicate accounting', () => {
   const world = scene(45);
   const supports = Object.values(world.experience!.temporal!.actors[PLAYER_ID]!.supports ?? {});
   expect(supports.length).toBeGreaterThan(0);
@@ -688,27 +715,53 @@ it('retains only the exact qualifying contact capsule when familiarity uses a te
   ).toBeUndefined();
   const temporal = world.experience!.temporal!;
   const actor = temporal.actors[PLAYER_ID]!;
-  const original = actor.chunks
-    .flatMap((chunk) => temporalChunkReceipts(chunk))
-    .find((receipt) => receipt.id === support.receipt.id)!;
-  const additional = original.facets.find(
-    (facet) => !support.receipt.facets.some((held) => held.ordinal === facet.ordinal),
+  expect(
+    actor.pages
+      .flatMap((page) => temporalPageReceipts(page))
+      .some((receipt) => receipt.id === support.receipt.id),
+  ).toBe(false);
+  const received = appendTemporalReceipt(
+    world,
+    PLAYER_ID,
+    {
+      subject: 'received-two-part-note',
+      change: 'occurrence',
+      facets: ['Primary received text', 'Additional received text'].map((text, ordinal) => ({
+        value: {
+          kind: 'personal-account' as const,
+          source: 'memory' as const,
+          id: `received-part-${ordinal}`,
+          text,
+        },
+        role: 'direct' as const,
+        asOf: world.simTime,
+        measuredFrom: world.simTime,
+        measuredThrough: world.simTime,
+        acquiredAt: world.simTime,
+      })),
+    },
+    selectedTemporalPolicy(world).recent,
   )!;
-  expect(additional).toBeDefined();
-  const additionalKind = receivedValueAt(world.receivedValues?.sources ?? {}, additional)!.kind;
-  const before = { ...actor.accounts!.optional };
-  const extended = retainTemporalSupport(world, support.receipt, {
-    facetOrdinals: [additional.ordinal],
+  const first = retainTemporalSupport(world, received, {
+    facetOrdinals: [0],
     maxBytes: 4 * 1024 * 1024,
     maxRecords: 2048,
   })!;
-  expect(extended.values.map((value) => value.kind)).toEqual(
-    expect.arrayContaining(['body', additionalKind]),
-  );
+  expect(first.values).toHaveLength(1);
+  const before = { ...actor.accounts!.optional };
+  const extended = retainTemporalSupport(world, received, {
+    facetOrdinals: [1],
+    maxBytes: 4 * 1024 * 1024,
+    maxRecords: 2048,
+  })!;
+  expect(extended.values.map((value) => value.kind === 'personal-account' && value.text)).toEqual([
+    'Primary received text',
+    'Additional received text',
+  ]);
   expect(actor.accounts!.optional.count).toBe(before.count);
-  expect(actor.accounts!.optional.bytes).toBe(before.bytes - support.bytes + extended.bytes);
+  expect(actor.accounts!.optional.bytes).toBe(before.bytes - first.bytes + extended.bytes);
   expect(
-    retainTemporalSupport(world, support.receipt, {
+    retainTemporalSupport(world, received, {
       facetOrdinals: [9999],
       maxBytes: 4 * 1024 * 1024,
       maxRecords: 2048,
@@ -801,11 +854,17 @@ it('shares equal received values without granting another observer the earlier h
   for (const block of Object.values(world.receivedValues!.sources))
     expect(block.bytes).toBe(encoded(block));
   for (const actor of Object.values(world.experience!.temporal!.actors)) {
-    for (const chunk of actor.chunks) {
-      let supportBytes = 0;
-      for (const valueRef of temporalChunkReferences(chunk))
-        supportBytes += encoded(world.receivedValues!.sources[valueRef]!.value);
-      expect(chunk.bytes).toBe(encoded(chunk) + supportBytes);
+    for (const page of actor.pages) {
+      expect(page.bytes).toBe(
+        temporalPageOperations(page).reduce((sum, operation) => sum + operation.charge.bytes, 0),
+      );
+      expect(page.count).toBe(
+        temporalPageOperations(page).reduce((sum, operation) => sum + operation.charge.count, 0),
+      );
+      for (const operation of temporalPageOperations(page))
+        expect(operation.charge.bytes).toBe(
+          temporalOperationLogicalBytes(operation, world.receivedValues?.sources ?? {}),
+        );
     }
     for (const capsule of Object.values(actor.supports ?? {}))
       expect(capsule.bytes).toBe(
@@ -888,21 +947,36 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
         f.value.kind === 'body',
     )!.valueMeasuredThrough,
   ).toBe(originalTime);
+  const currentBodyObservationBeforeLoss = currentBodyObservation(world, PLAYER_ID, NPC_ID)!;
   world.simTime = 5;
   setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), {
     continuity: 'physical',
   });
   initializePerception(world, []);
-  const losses = selectTemporalHistory(world, PLAYER_ID, {
+  const losses = closedSpans(world, currentBodyObservationBeforeLoss.exposure.track).filter(
+    (operation) => operation.reason === 'loss',
+  );
+  expect(losses.length).toBeGreaterThan(0);
+  expect(
+    losses.some(
+      (operation) =>
+        operation.closedAt === 5 &&
+        operation.receipt.facets.some((facet) => facet.measuredThrough === 4),
+    ),
+  ).toBe(true);
+  const remembered = selectTemporalHistory(world, PLAYER_ID, {
+    subject: currentBodyObservationBeforeLoss.exposure.track,
     bytes: 1024 * 1024,
     limit: 1000,
-  }).entries.filter(
-    ({ receipt, values }) => receipt.change === 'loss' && values.some((v) => v.kind === 'body'),
-  );
-  const loss = losses.at(-1)!;
+  });
   expect(
-    loss.receipt.facets[loss.values.findIndex((value) => value.kind === 'body')]!.measuredThrough,
-  ).toBe(4);
+    remembered.entries.some(({ receipt, values }) =>
+      receipt.facets.some(
+        (facet, index) =>
+          values[index]?.kind === 'body' && facet.detailSupport?.through === originalTime,
+      ),
+    ),
+  ).toBe(true);
   validatePerceptionEvidenceState(JSON.parse(JSON.stringify(world)));
 });
 
