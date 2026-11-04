@@ -576,6 +576,26 @@ function retainedSelection(
   if (discovery) result.push({ key: discovery.key, basis: 'discovery' });
   return result;
 }
+interface PreparedAttentionSelection {
+  observerId: string;
+  life: number;
+  policy: string;
+  at: number;
+  explicit: readonly string[];
+  target?: string;
+  annotations: Readonly<Record<string, AttentionAnnotation>>;
+  candidates: Record<string, AttentionCandidate>;
+  familiarities: ReadonlyMap<string, number>;
+  subjects: ReadonlyMap<string, ObserverSubject>;
+  anchors: ReadonlySet<string>;
+}
+// Selection arrays survive unrelated current-clock updates. This preparation is
+// disposable and only reused with immutable inputs and the receiving owner's
+// explicit dirty set; it is neither saved attention nor another knowledge store.
+const preparedAttentionSelections = new WeakMap<object, PreparedAttentionSelection>();
+function sameKeys(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  return a.size === b.size && [...a].every((key) => b.has(key));
+}
 /** Change-fed native selection. A cold call alone enumerates the current body keys.
  * It never reads a source's live entity properties to score received evidence. */
 export function updateAttention(
@@ -587,9 +607,7 @@ export function updateAttention(
     owner = owned(world, observerId);
   if (!observer?.actor || !owner) return { before: [], after: [] };
   const state = stateFor(world, observerId)!;
-  const previousRelationAnchors = new Set(
-    attentionRelationAnchors(world, observerId).map((entry) => entry.key),
-  );
+  const previousRelationAnchors = attentionRelationKeys(world, observerId);
   const entriesBefore = readOnlyDraftView(state.entries).map((entry) => readOnlyDraftView(entry));
   const before = entriesBefore.map((entry) => entry.sourceId);
   const policy = selectedAttentionPolicy(world);
@@ -717,8 +735,45 @@ export function updateAttention(
       geometryChanged = true;
     }
   }
-  const candidateView = attentionCandidates(world, observerId),
-    bodyReads = prepareCurrentBodyReadScope(world, observerId);
+  const entryIdentity = readOnlyDraftView(state.entries);
+  const prepared = preparedAttentionSelections.get(entryIdentity);
+  const annotations = readOnlyDraftView(state.annotations);
+  const target = observer.actor.action?.targetId;
+  const reusable = prepared && prepared.observerId === observerId &&
+    prepared.life === owner.life && prepared.policy === nextPolicy &&
+    update.changedSourceIds !== undefined && isImmutableData(annotations) &&
+    sameKeys(prepared.anchors, previousRelationAnchors);
+  const refreshedSources = new Set(changed);
+  if (reusable && prepared.annotations !== annotations) {
+    // Presentation acknowledgements can change salience without a sensory
+    // change. Reuse only candidates whose actual annotation stayed unchanged.
+    for (const [key, annotation] of annotationEntries)
+      if (prepared.annotations[key] !== annotation) refreshedSources.add(annotation.sourceId);
+    for (const [key, annotation] of Object.entries(prepared.annotations))
+      if (!Object.hasOwn(annotations, key)) refreshedSources.add(annotation.sourceId);
+  }
+  if (reusable)
+    for (const [key, candidate] of Object.entries(prepared.candidates))
+      if (selectedAttentionFamiliarity(world, observerId, candidate.subject) !== prepared.familiarities.get(key))
+        refreshedSources.add(candidate.sourceId);
+  if (reusable && !refreshedSources.size && !geometryChanged &&
+    prepared.annotations === annotations && prepared.target === target &&
+    prepared.explicit === readOnlyDraftView(state.explicit) &&
+    !entriesBefore.some((entry) => entry.stableUntil > prepared.at && entry.stableUntil <= world.simTime)) {
+    countDomainWork('attentionSelectionsReused');
+    return { before, after: before, subjects: prepared.subjects };
+  }
+  let candidateView: Record<string, AttentionCandidate>;
+  if (reusable) {
+    candidateView = { ...prepared.candidates };
+    for (const [key, candidate] of Object.entries(candidateView))
+      if (refreshedSources.has(candidate.sourceId)) delete candidateView[key];
+    const refreshedKeys = Object.entries(annotations)
+      .filter(([, annotation]) => refreshedSources.has(annotation.sourceId))
+      .map(([key]) => key);
+    Object.assign(candidateView, attentionCandidates(world, observerId, refreshedKeys));
+  } else candidateView = attentionCandidates(world, observerId);
+  const bodyReads = prepareCurrentBodyReadScope(world, observerId);
   // Only an acquired subject can join channels. Keep a received visual body as
   // its representative so physical relation anchors never borrow an anonymous
   // signal's routing ID. Other tracks still carry their own times and proofs.
@@ -952,16 +1007,22 @@ export function updateAttention(
     // depends on that anchor's own geometry, not an unrelated moving neighbor.
     markAttentionRelationsDirty(world, observerId, ['closing-body']);
     const anchors = new Set(
-      attentionRelationAnchors(world, observerId)
-        .filter((entry) => changedGeometryKeys.has(entry.key))
-        .map((entry) => entry.key),
+      [...attentionRelationKeys(world, observerId)].filter((key) => changedGeometryKeys.has(key)),
     );
     if (anchors.size) markAttentionRelationsDirty(world, observerId, ['closing-drop'], anchors);
   }
-  for (const entry of attentionRelationAnchors(world, observerId))
-    if (!previousRelationAnchors.has(entry.key))
+  for (const key of attentionRelationKeys(world, observerId))
+    if (!previousRelationAnchors.has(key))
       for (const family of ['closing-body', 'closing-drop'] as const)
-        state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
+        state.relationDirty[relationKey(key, family)] = state.relationRevision;
+  preparedAttentionSelections.set(readOnlyDraftView(state.entries), {
+    observerId, life: owner.life, policy: nextPolicy, at: world.simTime,
+    explicit: readOnlyDraftView(state.explicit), target,
+    annotations: readOnlyDraftView(state.annotations), candidates: candidateView,
+    familiarities: new Map(Object.entries(candidateView).map(([key, candidate]) =>
+      [key, selectedAttentionFamiliarity(world, observerId, candidate.subject)])),
+    subjects, anchors: attentionRelationKeys(world, observerId),
+  });
   return {
     before,
     after: state.entries.map((entry) => entry.sourceId),
@@ -975,6 +1036,31 @@ export function currentDetailedAttention(
 ): readonly AttentionEntry[] {
   const state = owned(world, observerId)?.attention;
   return state ? readOnlyDraftView(readOnlyDraftView(state).entries) : [];
+}
+/** Scheduling needs eligible keys, never descriptions or reconstructed proofs.
+ * Work/direct anchors outside detail slots retain the same received-body guard. */
+function attentionRelationKeys(world: WorldState, observerId: string): Set<string> {
+  const owner = owned(world, observerId),
+    state = owner?.attention,
+    result = new Set([SELF_RELATION_KEY]);
+  if (!state) return result;
+  const bodyReads = prepareCurrentBodyReadScope(world, observerId);
+  if (!bodyReads) return result;
+  const entries = readOnlyDraftView(state.entries);
+  for (const entry of entries)
+    if (bodyReads.nativeBody(entry.sourceId)?.field.id === entry.leaseId)
+      result.add(entry.key);
+  const target = entityGet(world.entities, observerId)?.actor?.action?.targetId;
+  for (const [key, value] of Object.entries(readOnlyDraftView(state.annotations))) {
+    if (
+      !result.has(key) &&
+      (value.sourceId === target ||
+        (value.direct && (value.directThrough ?? Infinity) > world.simTime)) &&
+      bodyReads.nativeBody(value.sourceId)?.field.id === value.leaseId
+    )
+      result.add(key);
+  }
+  return result;
 }
 /** Relation context is independent of descriptive attention slots. Work/direct
  * anchors are still only current received bodies; a stale action target grants nothing. */
@@ -1123,10 +1209,10 @@ export function markAttentionRelationsDirty(
   if (!state) return;
   touchNativeEvidence(world, 'perception', observerId);
   state.relationRevision++;
-  for (const entry of attentionRelationAnchors(world, observerId))
-    if (!anchors || anchors.has(entry.key))
+  for (const key of attentionRelationKeys(world, observerId))
+    if (!anchors || anchors.has(key))
       for (const family of families)
-        state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
+        state.relationDirty[relationKey(key, family)] = state.relationRevision;
 }
 /** Only live selected continuations need clock work. Unselected expired cues are
  * cleared by the existing update owner before they can be ranked again. */
@@ -1139,14 +1225,14 @@ export function nextAttentionWorkAt(world: WorldState, observerId: string): numb
   const latches = readOnlyDraftView(state.latches);
   const policy = selectedAttentionPolicy(world).relation;
   let next = Infinity;
-  for (const entry of attentionRelationAnchors(world, observerId)) {
-    const candidate = candidates[entry.key];
+  for (const anchorKey of attentionRelationKeys(world, observerId)) {
+    const candidate = candidates[anchorKey];
     if (candidate?.urgency && candidate.urgencyThrough !== undefined)
       next = Math.min(next, candidate.urgencyThrough);
     if (candidate?.direct && candidate.directThrough !== undefined)
       next = Math.min(next, candidate.directThrough);
     for (const family of ['closing-body', 'closing-drop'] as const) {
-      const key = relationKey(entry.key, family);
+      const key = relationKey(anchorKey, family);
       if (dirty[key] !== undefined) next = Math.min(next, state.nextRelationAt);
       const latch = latches[key];
       if (latch?.active && latch.clearSince !== undefined)

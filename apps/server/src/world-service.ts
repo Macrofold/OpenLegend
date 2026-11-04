@@ -2,7 +2,7 @@ import { nextRecentRetentionAt, nextAccountRetentionAt } from './retention-deadl
 import { selectActorLiveReadCuts } from './actor-record-selection.js';
 import { releaseIdentityAllocationProof, preserveIdentityHighWater } from '@open-legend/domain';
 import { applyAccountRetentionPlan } from './account-retention.js';
-import { applyRecentRetention } from './recent-retention.js';
+import { retireRecentHistory } from './recent-retention.js';
 import { mergeRecordChanges } from './world-records.js';
 import { RetentionSnapshotChangedError } from './retention-metadata.js';
 import { LiveReadRevisionError } from './live-read-overlay.js';
@@ -2036,8 +2036,7 @@ export class WorldService {
       at === undefined ||
       this.retentionTask ||
       this.closed ||
-      this.paused ||
-      !this.store.prepareRecentRetention
+      this.paused
     ) {
       clearTimeout(this.retentionTimer);
       this.retentionTimer = undefined;
@@ -2069,6 +2068,15 @@ export class WorldService {
           // still owns the world. Wait outside mutation before capturing that cut.
           await this.ready;
           if (this.closed || this.paused || this.storageError) return;
+          // Settle native recent eligibility before optional account I/O. This
+          // transition consults resident charge headers and creates no SQL plan.
+          await this.mutate(async () => {
+            if (!this.pendingAdmissionOpen()) return;
+            const ids = this.store.captureRetentionActors?.(this.saved).recent ?? [];
+            if (!ids.length) return;
+            const recent = retireRecentHistory(this.saved, ids);
+            if (recent.state !== this.saved) await this.acceptProgress(recent.state, undefined, recent);
+          }, true);
           const captured = this.saved,
             generation = this.generation;
           const cut = this.captureLiveReadCuts();
@@ -2082,41 +2090,16 @@ export class WorldService {
               'Background retention requires selected actor and retained-source owners.',
             );
           const actors = this.store.captureRetentionActors(captured);
-          const sources = this.store.memories.captureRetentionSourceWatch(captured.world.id, [
-            ...actors.recent,
-            ...actors.accounts,
-          ]);
+          if (!actors.accounts.length) return;
+          const sources = this.store.memories.captureRetentionSourceWatch(captured.world.id, actors.accounts);
           try {
-            // Both preparations own this watch and reader work. A failed sibling
-            // cannot release the scope or start another slice while one still runs.
-            const [recentResult, accountResult] = await Promise.allSettled([
-              this.store.prepareRecentRetention!(captured, pending, cut, actors.recent),
-              this.store.prepareAccountRetention?.(captured, pending, cut, actors.accounts),
-            ]);
-            if (recentResult.status === 'rejected') throw recentResult.reason;
-            if (accountResult.status === 'rejected') throw accountResult.reason;
-            const recent = recentResult.value,
-              accounts = accountResult.value;
+            const accounts = await this.store.prepareAccountRetention?.(captured, pending, cut, actors.accounts);
             await this.mutate(async () => {
               if (this.generation !== generation || !this.pendingAdmissionOpen()) return;
               const changed = sources.changes();
-              const retainedAccounts = accounts
-                ? applyAccountRetentionPlan(this.saved, accounts, changed)
-                : undefined;
-              const retained = applyRecentRetention(
-                retainedAccounts?.state ?? this.saved,
-                recent,
-                changed,
-              );
-              if (retainedAccounts?.stale || retained.stale)
-                countMetric('retention.stalePreparations');
-              if (retainedAccounts) {
-                for (const [table, ids] of retainedAccounts.rows)
-                  retained.rows.set(table, [...(retained.rows.get(table) ?? []), ...ids]);
-                retained.positions = retainedAccounts.positions;
-                retained.previous = retainedAccounts.previous;
-                retained.versions = retainedAccounts.versions;
-              }
+              const retained = accounts ? applyAccountRetentionPlan(this.saved, accounts, changed) : undefined;
+              if (!retained) return;
+              if (retained.stale) countMetric('retention.stalePreparations');
               if (retained.state !== this.saved)
                 await this.acceptProgress(retained.state, undefined, retained);
             }, true);

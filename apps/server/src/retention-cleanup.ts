@@ -6,7 +6,6 @@ import {
   selectedRecognitionSupportSourceIds,
   releaseTemporalSupport,
   temporalSupportAliases,
-  temporalPageMetadata,
   updateWorld,
   type ExperienceEntry,
 } from '@open-legend/domain';
@@ -17,72 +16,41 @@ import type { RetentionMetadataView } from './retention-metadata.js';
  * grant. Dropping a profile cannot leave its old sparse proof charged forever. */
 export async function releaseUnusedTemporalSupports(
   state: SavedWorld,
-  actorId: string,
+  actorIds: readonly string[],
   metadata: RetentionMetadataView,
   db: SqlDatabase,
   removedAccounts: readonly string[] = [],
 ): Promise<{ state: SavedWorld; ids: string[] }> {
-  const supports = state.world.experience?.temporal?.actors[actorId]?.supports;
-  if (!supports || !Object.keys(supports).length) return { state, ids: [] };
-  const keys: string[] = [];
-  keys.push(...selectedRetainedIndividualEvidenceKeys(state.world, actorId));
-  for (const document of Object.values(state.world.actorKnowledge?.[actorId] ?? {}))
-    keys.push(...document.evidenceIds);
-  for (const record of state.world.knowledge[actorId] ?? []) {
-    keys.push(record.evidenceId);
-    if (record.sourceReceipt) keys.push(temporalReceiptId(record.sourceReceipt));
-  }
-  const held = new Set([...keys, ...selectedRecognitionSupportSourceIds(state.world, keys)]);
-  const candidates = Object.values(supports)
-    .map((capsule) => ({ capsule, aliases: temporalSupportAliases(capsule, state.world) }))
-    .filter(
-      ({ capsule, aliases }) =>
-        !capsule.required &&
-        !capsule.values.some(
-          (value) => value.kind === 'encounter-exposure' && value.exposure.kind === 'place',
-        ) &&
-        !aliases.some((id) => held.has(id)),
-    );
-  if (!candidates.length) return { state, ids: [] };
-  const aliases = [...new Set(candidates.flatMap(({ aliases }) => aliases))];
-  const retained = new Set<string>();
-  {
-    const removed = new Map(
-      ['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => [
-        table,
-        removedAccounts,
-      ]),
-    );
-    const current = metadata.excluding(removed);
-    const surviving = await current.survivingMembership(
-      db,
-      state.world.id,
-      actorId,
-      aliases,
-      [],
-      false,
-    );
-    for (const id of surviving.aliases) retained.add(id);
-  }
-  const ids = candidates
-    .filter(({ aliases }) => !aliases.some((id) => retained.has(id)))
-    .map(({ capsule }) => capsule.receipt.id);
-  if (!ids.length) return { state, ids };
-  return {
-    state: {
-      ...state,
-      world: updateWorld(
-        state.world,
-        (draft) => {
-          for (const id of ids) releaseTemporalSupport(draft, actorId, id);
-        },
-        { retainNativeValues: true },
-      ),
-    },
-    ids: ids.map((id) =>
-      JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'supports', id]),
-    ),
-  };
+  const groups = actorIds.flatMap(actorId => {
+    const supports = state.world.experience?.temporal?.actors[actorId]?.supports;
+    if (!supports || !Object.keys(supports).length) return [];
+    const keys = [...selectedRetainedIndividualEvidenceKeys(state.world, actorId)];
+    for (const document of Object.values(state.world.actorKnowledge?.[actorId] ?? {})) keys.push(...document.evidenceIds);
+    for (const record of state.world.knowledge[actorId] ?? []) {
+      keys.push(record.evidenceId);
+      if (record.sourceReceipt) keys.push(temporalReceiptId(record.sourceReceipt));
+    }
+    const held = new Set([...keys, ...selectedRecognitionSupportSourceIds(state.world, keys)]);
+    const candidates = Object.values(supports).map(capsule => ({capsule, aliases: temporalSupportAliases(capsule, state.world)}))
+      .filter(({capsule, aliases}) => !capsule.required &&
+        !capsule.values.some(value => value.kind === 'encounter-exposure' && value.exposure.kind === 'place') &&
+        !aliases.some(id => held.has(id)));
+    return candidates.length ? [{actorId, candidates}] : [];
+  });
+  if (!groups.length) return {state, ids: []};
+  const removed = new Map(['mind_awareness','mind_memories','mind_summaries'].map(table => [table, removedAccounts]));
+  const surviving = await metadata.excluding(removed).survivingMembershipBatch(db, state.world.id,
+    groups.map(({actorId, candidates}) => ({actorId,
+      aliases: [...new Set(candidates.flatMap(candidate => candidate.aliases))], individualIds: [], includeRecent: false})));
+  const releases = groups.flatMap((group, index) => group.candidates
+    .filter(candidate => !candidate.aliases.some(id => surviving[index]!.aliases.has(id)))
+    .map(candidate => ({actorId: group.actorId, id: candidate.capsule.receipt.id})));
+  if (!releases.length) return {state, ids: []};
+  const world = updateWorld(state.world, draft => {
+    for (const release of releases) releaseTemporalSupport(draft, release.actorId, release.id);
+  }, {retainNativeValues: true});
+  return {state: {...state, world}, ids: releases.map(release => JSON.stringify(
+    ['world','experience','temporal','actors',release.actorId,'supports',release.id]))};
 }
 
 /** Only an actual retirement batch pays for these exact reverse-membership reads.
@@ -217,8 +185,7 @@ export async function cleanupRetiredIndividuals(
   for (const [actorId, candidate] of affected) {
     const retained = new Set<string>(),
       individuals = new Set<string>();
-    const history = world.experience?.temporal?.actors[actorId],
-      sources = world.receivedValues?.sources ?? {};
+    const history = world.experience?.temporal?.actors[actorId];
     for (const capsule of Object.values(history?.supports ?? {})) {
       for (const id of temporalSupportAliases(capsule, world)) retained.add(id);
       if (capsule.receipt.subjectIdentity?.kind === 'individual')
@@ -227,13 +194,8 @@ export async function cleanupRetiredIndividuals(
         if (value.kind === 'association' && value.subject.kind === 'individual')
           individuals.add(value.subject.individualId);
     }
-    for (const chunk of history?.pages ?? []) {
-      // Actual occurrences own source membership. A checkpoint's explicit
-      // subject identity also retains that person; carried proof aliases do not.
-      const metadata = temporalPageMetadata(chunk, { world, sources });
-      for (const id of metadata.occurrenceSourceIds) retained.add(id);
-      for (const id of metadata.occurrenceIndividualIds) individuals.add(id);
-    }
+    // Recent warm and cold membership share the exact age/member frontier in
+    // survivingMembershipBatch; a physical block's coarse arrays are not proof.
     const aliases = [...candidate.sources],
       ids = [...candidate.individuals];
     for (const [source, entries] of [

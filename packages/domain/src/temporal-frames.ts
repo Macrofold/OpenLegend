@@ -1,756 +1,187 @@
 import type { WorldState } from './types.js';
-import type {
-  EvidenceSource,
-  ObservationFactKey,
-  ObservationFrame,
-} from './perception-evidence.js';
+import type { EvidenceSource, ObservationFrame } from './perception-evidence.js';
 import type { ReceivedValueLookup } from './received-values.js';
-import type {
-  TemporalPage,
-  TemporalReceipt,
-  TemporalReceiptLocator,
-  TemporalFacetReference,
-  TemporalValue,
-  TemporalFieldDependencies,
-} from './temporal-evidence.js';
-import {
-  temporalFacetValueReferences,
-  temporalReceiptAliases,
-  temporalReceiptIndividualIds,
-  temporalReceiptChangeCount,
-  materializeTemporalValue,
-  temporalReceiptId,
-} from './temporal-evidence.js';
-import { evidenceSourceWithIdentity } from './perception-values.js';
+import type { TemporalPage, TemporalReceipt, TemporalReceiptLocator, TemporalFacetReference, TemporalValue } from './temporal-evidence.js';
+import { temporalFacetValueReferences, temporalReceiptAliases, temporalReceiptIndividualIds, materializeTemporalValue, temporalReceiptId, temporalValueLogicalBytes } from './temporal-evidence.js';
 import { receivedValueAt } from './received-values.js';
 import { immutableDataSnapshot, jsonByteLength } from './records.js';
 import { appendSnapshot, readOnlyDraftView } from './draft.js';
 import type { ObserverSubject } from './knowledge.js';
+import {selectReceivedBindingParts,mergeReceivedBindings} from './received-batches.js';
+import type { ReceivedBatch, ReceivedBinding, ReceivedCoverage, ReceivedEntry, ReceivedPosition, ReceivedChargeDirectory, ReceivedChargeProjection,ReceivedAddress } from './received-batches.js';
 
-/** Logical members survive packing, expiry clipping and page replacement. */
-export interface TemporalCheckMember {
-  locator: TemporalReceiptLocator;
-  memberOrdinal: number;
-  original: ObservationFactKey;
-  role: TemporalFacetReference['role'];
-  part?: 'detail' | 'pose' | 'value';
-  confirmationIdentity?: Omit<EvidenceSource, 'revision'>;
-  revisionFloor?: number;
+export interface TemporalCheckpointAvailability { reason:'unavailable'|'unchecked'|'released'; at:number; fields:number[]; }
+export interface TemporalCheckpoint extends TemporalReceiptLocator {
+ pageId:string;binding?:number; acquisition:number; at:number; order:number; subject:string; subjectIdentity?:ObserverSubject; sourceIds:[]; facets:TemporalFacetReference[];availability?:TemporalCheckpointAvailability[];
 }
-export interface TemporalCheckSeed {
-  member: number;
-  part?: 'detail' | 'pose' | 'value';
-  receivedAt: number;
-  order: number;
-  support: NonNullable<TemporalFacetReference['support']>;
-  measuredFrom: number;
-  measuredThrough: number;
-  acquiredAt: number;
-  receivedFrom?: EvidenceSource;
-  reception?: TemporalFacetReference['reception'];
-  poseFrame?: ObservationFrame;
-}
-export interface TemporalCheckDeclaration {
-  id: number;
-  subject: string;
-  members: readonly TemporalCheckMember[];
-  seeds: readonly TemporalCheckSeed[];
-}
-export interface TemporalCheckStamp {
-  declaration: number;
-  confirmation: EvidenceSource;
-  confirmedFrom: number;
-  confirmedThrough: number;
-  measurement?: {
-    measuredFrom: number;
-    measuredThrough: number;
-    acquiredAt: number;
-    receivedFrom: EvidenceSource;
-  };
-  frame?: ObservationFrame;
-}
-export type TemporalHistoryInput =
-  | {
-      ordinal: number;
-      kind: 'span';
-      receipt: TemporalReceipt;
-      terminal: readonly TemporalCheckSeed[];
-      closedAt: number;
-      closedOrder: number;
-      reason: TemporalReceipt['change'];
-    }
-  | { ordinal: number; kind: 'occurrence'; receipt: TemporalReceipt }
-  | {
-      ordinal: number;
-      kind: 'check';
-      at: number;
-      order: number;
-      acquisition: number;
-      stamps: readonly TemporalCheckStamp[];
-    };
-export type TemporalHistoryOperation = TemporalHistoryInput & {
-  charge: { bytes: number; count: number };
-};
-/** Checkpoints are selected read products, never saved rollover baselines. */
-export interface TemporalCheckpointAvailability {
-  reason: 'unavailable' | 'unchecked' | 'released';
-  at: number;
-  fields: number[];
-}
-export interface TemporalCheckpoint {
-  pageId: string;
-  actorId: string;
-  physicalLife: number;
-  epoch: string;
-  ordinal: number;
-  acquisition: number;
-  at: number;
-  order: number;
-  subject: string;
-  subjectIdentity?: ObserverSubject;
-  sourceIds: [];
-  facets: TemporalFacetReference[];
-  availability?: TemporalCheckpointAvailability[];
-}
-export type TemporalWriteHeader = Omit<
-  TemporalReceipt,
-  'id' | 'actorId' | 'physicalLife' | 'epoch' | 'facets'
->;
+export type TemporalWriteHeader=Omit<TemporalReceipt,'id'|'actorId'|'physicalLife'|'epoch'|'facets'>;
+const edited=new WeakSet<TemporalPage>();
+const selectionSources=new WeakMap<object,TemporalPage>();
+export function temporalPageSelectionSource(page:TemporalPage):TemporalPage|undefined{return selectionSources.get(page.batches);}
+export function markTemporalPageEdited(page:TemporalPage):void{edited.add(page);}
+export function temporalPageMutation(page:TemporalPage):'append'|'edit'{return edited.has(page)?'edit':'append';}
+export function temporalMemberKey(locator:TemporalReceiptLocator,memberIndex:number):string{return JSON.stringify([locator.actorId,locator.physicalLife,locator.epoch,locator.batchOrder,locator.entryIndex,memberIndex]);}
+export function temporalPageBatches(page:TemporalPage):readonly ReceivedBatch[]{return readOnlyDraftView(page.batches);}
+export function temporalPageLastReceivedAt(page:TemporalPage):number{return Math.max(0,...page.batches.flatMap(batch=>batch.entries.map(entry=>entry.receivedAt)));}
 
-/** A span appends when it closes; its receipt keeps the earlier opening order.
- * Received transitions are synchronous, so this allocation order cannot straddle
- * a published/durable world cut. */
-export function temporalOperationAppendOrder(operation: TemporalHistoryOperation): number {
-  return operation.kind === 'span'
-    ? operation.closedOrder
-    : operation.kind === 'check'
-      ? operation.order
-      : operation.receipt.order;
+function clockFacet(facet:TemporalFacetReference,coverage:ReceivedCoverage,frames:readonly ObservationFrame[],part:'value'|'detail'|'pose'='value'):TemporalFacetReference{
+ const clock=coverage.clock;if(!clock)return facet;
+ const detail=part==='detail'&&facet.detailSupport,proof=detail?detail.proof:facet.support,source=clock.confirmation;
+ const updatedProof=proof?{...proof,confirmation:{...source,id:proof.confirmation.id},confirmedFrom:clock.confirmedFrom,confirmedThrough:clock.confirmedThrough}:undefined;
+ const measurement=clock.measurement;
+ return {...facet,
+  ...(detail?{detailSupport:{...detail,proof:updatedProof!,...(measurement?{from:measurement.measuredFrom,through:measurement.measuredThrough,acquiredAt:measurement.acquiredAt}:{})}}:{confirmedThrough:clock.confirmedThrough,...(updatedProof?{support:updatedProof}:{}),...(measurement?{asOf:measurement.measuredThrough,measuredFrom:measurement.measuredFrom,measuredThrough:measurement.measuredThrough,acquiredAt:measurement.acquiredAt,receivedFrom:{...measurement.receivedFrom,id:facet.receivedFrom?.id??measurement.receivedFrom.id}}:{})}),
+  ...(clock.frame!==undefined&&facet.reception?.kind==='location'?{reception:{kind:'location' as const,frame:frames[clock.frame]!}}:{}),
+ };
 }
-export function temporalPageOperations(page: TemporalPage): readonly TemporalHistoryOperation[] {
-  return readOnlyDraftView(page.operations);
+/** Only consumers expand stable proof parts with their compact predecessor
+ * clocks. Successful checking itself never constructs these facet envelopes. */
+export function materializeReceivedBindingSeed(binding:ReceivedBinding,partIndices?:ReadonlySet<number>):TemporalReceipt{
+ const facets=new Map<number,TemporalFacetReference>();let at=binding.seed.at,order=binding.seed.order;
+ for(const part of binding.parts){if(partIndices&&!partIndices.has(part.partIndex))continue;
+  const predecessor=binding.predecessors?.find(predecessor=>predecessor.partIndices.includes(part.partIndex));
+  if(predecessor){at=Math.max(at,predecessor.at);order=Math.max(order,predecessor.order);}
+  const facet=predecessor?clockFacet(part.facet,{binding:binding.id,members:[],clock:{...predecessor.clock,...(predecessor.frame?{frame:0}:{})}},predecessor.frame?[predecessor.frame]:[],part.part):part.facet;
+  const prior=facets.get(part.logicalMember);
+  if(!prior)facets.set(part.logicalMember,{...facet,memberIndex:part.logicalMember});
+  else if(part.part==='pose')facets.set(part.logicalMember,{...prior,...facet,memberIndex:part.logicalMember,detailSupport:prior.detailSupport??(prior.support?{proof:prior.support,role:prior.role,from:prior.measuredFrom,through:prior.measuredThrough,acquiredAt:prior.acquiredAt}:undefined)});
+  else if(part.part==='detail')facets.set(part.logicalMember,{...prior,valueRef:facet.valueRef,detailSupport:facet.detailSupport??(facet.support?{proof:facet.support,role:facet.role,from:facet.measuredFrom,through:facet.measuredThrough,acquiredAt:facet.acquiredAt}:undefined)});
+ }
+ return {...binding.seed,at,order,facets:[...facets.values()]};
 }
-export function temporalPageReceipts(page: TemporalPage): TemporalReceipt[] {
-  return temporalPageOperations(page).flatMap((op) => (op.kind === 'check' ? [] : [op.receipt]));
-}
-export function temporalPageReceipt(
-  page: TemporalPage,
-  ordinal: number,
-): TemporalReceipt | undefined {
-  for (const op of temporalPageOperations(page))
-    if (op.kind !== 'check' && op.receipt.ordinal === ordinal) return op.receipt;
-  return undefined;
-}
-export function temporalOperationHeader(
-  page: TemporalPage,
-  op: TemporalHistoryOperation,
-): Omit<TemporalReceipt, 'facets'> {
-  if (op.kind !== 'check') return op.receipt;
-  return {
-    actorId: page.actorId,
-    physicalLife: page.physicalLife,
-    epoch: page.epoch,
-    id: temporalReceiptId({ epoch: page.epoch, ordinal: op.ordinal }),
-    ordinal: op.ordinal,
-    at: op.at,
-    order: op.order,
-    acquisition: op.acquisition,
-    subject: JSON.stringify(['receiver', page.physicalLife]),
-    change: 'receiver-frame',
-    required: false,
-    sourceIds: [],
-    contextSubjects: [
-      ...new Set(
-        op.stamps
-          .map((stamp) => page.declarations.find((d) => d.id === stamp.declaration)?.subject)
-          .filter((s): s is string => s !== undefined),
-      ),
-    ],
-  };
-}
-export function temporalOperationFacet(
-  _page: TemporalPage,
-  op: Exclude<TemporalHistoryOperation, { kind: 'check' }>,
-  position: number,
-): TemporalFacetReference {
-  return op.receipt.facets[position]!;
-}
-export function temporalReceiptValues(
-  receipt: TemporalReceipt,
-  sources: ReceivedValueLookup,
-): TemporalValue[] {
-  return receipt.facets.flatMap((field) => {
-    const value = receivedValueAt(sources, field);
-    const full = value && materializeTemporalValue(field, value, sources);
-    return full ? [full] : [];
-  });
-}
-function clockValueReferences(seed: TemporalCheckSeed): string[] {
-  const pose = seed.reception?.kind === 'body' ? seed.reception.poseRef : undefined;
-  return typeof pose === 'string' ? [pose] : [];
-}
-export function temporalPageReferences(page: TemporalPage): ReadonlySet<string> {
-  const references = new Set<string>();
-  for (const operation of temporalPageOperations(page)) {
-    if (operation.kind === 'check') continue;
-    for (const field of operation.receipt.facets)
-      for (const reference of temporalFacetValueReferences(field)) references.add(reference);
-    // A closing span may carry a newer independently received pose proof than
-    // its admitted baseline, so its terminal clock closure is also a real owner.
-    if (operation.kind === 'span')
-      for (const seed of operation.terminal)
-        for (const reference of clockValueReferences(seed)) references.add(reference);
+/** Materialize selected logical members only. Shared predecessor seeds keep their
+ * original dates; a sample changes only its exact supplied clocks and coverage. */
+export function materializeReceivedEntry(batch:ReceivedBatch,entry:ReceivedEntry,subjects?:ReadonlySet<string>):TemporalReceipt|undefined{
+ if(entry.receipt){
+  if(subjects&&!subjects.has(entry.receipt.subject)&&!entry.receipt.contextSubjects?.some(subject=>subjects.has(subject)))return;
+  return entry.receipt;
+ }
+ const facets:TemporalFacetReference[]=[],selected:ReceivedBinding[]=[],logicalFacets=new Map<number,TemporalFacetReference>();
+ for(const coverage of entry.coverage){
+  const binding=batch.bindings.find(binding=>binding.id===coverage.binding);
+  if(!binding)throw new Error('Received coverage has no binding.');
+  if(subjects&&!subjects.has(binding.subject))continue;
+  selected.push(binding);
+  for(const member of coverage.members){
+   const parts=member.partIndices.map(index=>binding.parts.find(part=>part.partIndex===index));
+   if(parts.some(part=>!part))throw new Error('Received coverage names an absent part.');
+   // Current decomposition puts appearance and position in separate logical
+   // facets. Co-covered detail/pose parts preserve their independent support.
+   let facet=clockFacet(materializeReceivedBindingSeed(binding,new Set([parts[0]!.partIndex])).facets[0]??parts[0]!.facet,coverage,batch.frames,parts[0]!.part);
+   for(const part of parts.slice(1)){
+    const other=clockFacet(materializeReceivedBindingSeed(binding,new Set([part!.partIndex])).facets[0]??part!.facet,coverage,batch.frames,part!.part);
+    if(part!.part==='pose')facet={...other,detailSupport:facet.detailSupport??(facet.support?{proof:facet.support,role:facet.role,from:facet.measuredFrom,through:facet.measuredThrough,acquiredAt:facet.acquiredAt}:undefined)};
+    else if(part!.part==='detail')facet={...facet,detailSupport:other.detailSupport??{proof:other.support!,role:other.role,from:other.measuredFrom,through:other.measuredThrough,acquiredAt:other.acquiredAt}};
+   }
+   const received={...facet,memberIndex:member.memberIndex},prior=logicalFacets.get(member.memberIndex);
+   const detail=parts.find(part=>part!.part==='detail'),pose=parts.find(part=>part!.part==='pose');
+   if(!prior)logicalFacets.set(member.memberIndex,received);
+   else if(pose)logicalFacets.set(member.memberIndex,{...prior,...received,detailSupport:prior.detailSupport??(prior.support?{proof:prior.support,role:prior.role,from:prior.measuredFrom,through:prior.measuredThrough,acquiredAt:prior.acquiredAt}:undefined)});
+   else if(detail)logicalFacets.set(member.memberIndex,{...prior,valueRef:received.valueRef,detailSupport:received.detailSupport??(received.support?{proof:received.support,role:received.role,from:received.measuredFrom,through:received.measuredThrough,acquiredAt:received.acquiredAt}:undefined)});
+   else logicalFacets.set(member.memberIndex,received);
   }
-  for (const declaration of page.declarations)
-    for (const seed of declaration.seeds)
-      for (const reference of clockValueReferences(seed)) references.add(reference);
-  return references;
+ }
+ if(!selected.length)return;
+ facets.push(...[...logicalFacets].sort((a,b)=>a[0]-b[0]).map(([,facet])=>facet));
+ const seed=selected[0]!.seed;
+ return {...seed,actorId:batch.actorId,physicalLife:batch.physicalLife,epoch:batch.epoch,batchOrder:batch.batchOrder,entryIndex:entry.entryIndex,id:temporalReceiptId({epoch:batch.epoch,batchOrder:batch.batchOrder,entryIndex:entry.entryIndex}),at:entry.receivedAt,order:entry.order,acquisition:batch.batchOrder,subject:selected[0]!.subject,contextSubjects:[...new Set(selected.map(binding=>binding.subject))],change:entry.kind==='boundary'?entry.reason??'unchecked':entry.kind==='baseline'?'baseline':'change',required:entry.required,facets,sourceIds:[...new Set(selected.flatMap(binding=>binding.seed.sourceIds))],...(entry.kind==='boundary'?{availabilityAt:entry.receivedAt,availability:entry.coverage.flatMap(coverage=>{const reason=coverage.boundary??entry.reason;return reason==='loss'||reason==='unchecked'||reason==='attention-exit'?[{reason:reason==='loss'?'unavailable' as const:reason==='unchecked'?'unchecked' as const:'released' as const,at:entry.receivedAt,fields:coverage.members.map(member=>member.memberIndex).filter(index=>logicalFacets.has(index))}].filter(state=>state.fields.length):[];})}:{})};
 }
-
+export function temporalPageReceipts(page:TemporalPage):TemporalReceipt[]{return page.batches.flatMap(batch=>batch.entries.flatMap(entry=>{const receipt=materializeReceivedEntry(batch,entry);return receipt?[receipt]:[];}));}
+export function temporalPageReceipt(page:TemporalPage,locator:TemporalReceiptLocator):TemporalReceipt|undefined{
+ if(page.actorId!==locator.actorId||page.physicalLife!==locator.physicalLife||page.epoch!==locator.epoch)return;
+ const batch=page.batches.find(batch=>batch.batchOrder===locator.batchOrder),entry=batch?.entries.find(entry=>entry.entryIndex===locator.entryIndex);
+ return batch&&entry?materializeReceivedEntry(batch,entry):undefined;
+}
+export function temporalReceiptValues(receipt:TemporalReceipt,sources:ReceivedValueLookup):TemporalValue[]{return receipt.facets.flatMap(facet=>{const fragment=receivedValueAt(sources,facet.valueRef);const value=fragment&&materializeTemporalValue(facet,fragment,sources);return value?[value]:[];});}
+export function temporalPageReferences(page:TemporalPage):ReadonlySet<string>{
+ const refs=new Set<string>();for(const batch of page.batches){for(const binding of batch.bindings)for(const part of binding.parts)for(const ref of temporalFacetValueReferences(part.facet))refs.add(ref);for(const entry of batch.entries)for(const facet of entry.receipt?.facets??[])for(const ref of temporalFacetValueReferences(facet))refs.add(ref);}return refs;
+}
 export interface TemporalPageMetadata {
-  subjects: string[];
-  sourceIds: string[];
-  individualIds: string[];
-  sourceRefs: string[];
-  references: string[];
-  members: string[];
-  spanRanges: TemporalSpanRange[];
-  occurrenceSourceIds: string[];
-  occurrenceIndividualIds: string[];
-  ordinals: number[];
-  changes: number;
-  firstAt?: number;
-  lastAt?: number;
-  firstOrder?: number;
-  lastOrder?: number;
-  firstMeasured?: number;
-  lastSupported?: number;
-  lastReceivedAt?: number;
-  spatialContext: boolean;
+ firstBatchOrder:number|null;firstEntry:number|null;firstMember:number|null;lastBatchOrder:number|null;lastEntry:number|null;lastMember:number|null;firstAt:number|null;lastAt:number|null;entryBytes:number;count:number;subjects:string[];tracks:string[];sourceIds:string[];individualIds:string[];occurrenceKeys:string[];references:string[];spatialContext:boolean;chargeDirectory:ReceivedChargeDirectory;
 }
-export function temporalClockSourceIds(seed: TemporalCheckSeed): string[] {
-  return [
-    ...new Set([
-      seed.support.original.source.id,
-      seed.support.confirmation.id,
-      ...(seed.support.aliases ?? []),
-      ...(seed.receivedFrom ? [seed.receivedFrom.id] : []),
-    ]),
-  ];
+/** Build exact charge projections once per used binding. Repeated samples refer
+ * to these projections; their directory contains one header per entry. */
+const bindingChargeProjections=new WeakMap<object,ReceivedChargeProjection>();
+export function receivedBindingChargeProjection(binding:ReceivedBinding,sources:ReceivedValueLookup):ReceivedChargeProjection{
+  const existing=binding.charges??bindingChargeProjections.get(binding.parts);if(existing)return existing;
+  const logical=new Map<number,typeof binding.parts[number][]>();for(const part of binding.parts){const held=logical.get(part.logicalMember);if(held)held.push(part);else logical.set(part.logicalMember,[part]);}
+  const projection:ReceivedChargeProjection={id:JSON.stringify([binding.id,binding.parts.map(part=>part.partIndex)]),binding:binding.id,members:[...logical].map(([logicalMember,parts])=>{
+   const closures=new Map<string,number>();for(const part of parts)for(const reference of temporalFacetValueReferences(part.facet)){const value=receivedValueAt(sources,reference);if(value)closures.set(reference,jsonByteLength(value));}
+   return {logicalMember,partIndices:parts.map(part=>part.partIndex),bytes:jsonByteLength(parts.map(part=>({...part.facet,valueRef:undefined,reception:part.facet.reception?.kind==='body'?{kind:'body',poseRef:undefined}:part.facet.reception}))),count:1,individualIds:temporalReceiptIndividualIds({...binding.seed,facets:parts.map(part=>part.facet)},sources),closures:[...closures].map(([key,bytes])=>({key,bytes}))};
+  })};
+  const owned=immutableDataSnapshot(projection,readOnlyDraftView);bindingChargeProjections.set(binding.parts,owned);return owned;
 }
-export function temporalDeclarationSourceIds(declaration: TemporalCheckDeclaration): string[] {
-  return [
-    ...new Set([
-      ...declaration.seeds.flatMap(temporalClockSourceIds),
-      ...declaration.members.flatMap((member) => [
-        member.original.source.id,
-        ...(member.confirmationIdentity ? [member.confirmationIdentity.id] : []),
-      ]),
-    ]),
-  ];
-}
-/** A closure bounds the recorded interval; it is not a fresh sensory receipt. */
-export function temporalOperationLastReceivedAt(operation: TemporalHistoryOperation): number {
-  if (operation.kind === 'check') return operation.at;
-  let received = operation.receipt.at;
-  if (operation.kind === 'span')
-    for (const seed of operation.terminal) received = Math.max(received, seed.receivedAt);
-  return received;
-}
-export function temporalPageLastReceivedAt(page: TemporalPage): number {
-  let received = 0;
-  for (const operation of temporalPageOperations(page))
-    received = Math.max(received, temporalOperationLastReceivedAt(operation));
-  return received;
-}
-export function temporalPageMetadata(
-  page: TemporalPage,
-  options: { sources?: ReceivedValueLookup; world: WorldState },
-): TemporalPageMetadata {
-  const sources = options.sources ?? {},
-    ops = temporalPageOperations(page),
-    receipts = temporalPageReceipts(page),
-    refs = temporalPageReferences(page);
-  const subjects = new Set<string>(),
-    aliases = new Set<string>(),
-    individuals = new Set<string>(),
-    members = new Set<string>(),
-    spanRanges: TemporalSpanRange[] = [];
-  const declarations = new Map(
-      page.declarations.map((declaration) => [declaration.id, declaration]),
-    ),
-    usedDeclarations = new Set<number>();
-  let firstMeasured = Infinity,
-    lastSupported = -Infinity,
-    firstAt = Infinity,
-    lastAt = -Infinity,
-    firstOrder = Infinity,
-    lastOrder = -Infinity,
-    spatialContext = false;
-  for (const op of ops) {
-    const header = temporalOperationHeader(page, op);
-    firstAt = Math.min(firstAt, header.at);
-    lastAt = Math.max(lastAt, header.at, op.kind === 'span' ? op.closedAt : -Infinity);
-    firstOrder = Math.min(firstOrder, header.order);
-    lastOrder = Math.max(lastOrder, header.order);
-    if (op.kind === 'check') {
-      for (const stamp of op.stamps) {
-        if (!declarations.has(stamp.declaration))
-          throw new Error('Temporal check has no declaration.');
-        usedDeclarations.add(stamp.declaration);
-        aliases.add(stamp.confirmation.id);
-        lastSupported = Math.max(lastSupported, stamp.confirmedThrough);
-      }
-      continue;
-    }
-    const receipt = op.receipt;
-    subjects.add(receipt.subject);
-    for (const subject of receipt.contextSubjects ?? []) subjects.add(subject);
-    for (const alias of temporalReceiptAliases(receipt, sources, options.world)) aliases.add(alias);
-    for (const id of temporalReceiptIndividualIds(receipt, sources)) individuals.add(id);
-    spatialContext ||= receipt.spatialContext === true;
-    for (const field of receipt.facets) {
-      firstMeasured = Math.min(firstMeasured, field.measuredFrom);
-      lastSupported = Math.max(lastSupported, field.confirmedThrough ?? field.measuredThrough);
-      const member = temporalMemberKey(receipt, field.ordinal);
-      members.add(member);
-      if (op.kind === 'span')
-        spanRanges.push({
-          actorId: page.actorId,
-          physicalLife: page.physicalLife,
-          epoch: page.epoch,
-          trackId:
-            field.track ??
-            JSON.stringify([receipt.subject, field.original?.ordinal ?? field.ordinal]),
-          subject: receipt.subject,
-          channel: field.original?.source.family ?? '',
-          member,
-          firstAt: receipt.at,
-          lastAt: op.closedAt,
-          firstOrder: receipt.order,
-          lastOrder: op.closedOrder,
-        });
-    }
-    if (op.kind === 'span')
-      for (const seed of op.terminal) {
-        for (const alias of temporalClockSourceIds(seed)) aliases.add(alias);
-        lastSupported = Math.max(lastSupported, seed.support.confirmedThrough);
-      }
-  }
-  // Membership/provenance discovery follows declarations once, not stamps × fields.
-  for (const id of usedDeclarations) {
-    const declaration = declarations.get(id)!;
-    subjects.add(declaration.subject);
-    for (const alias of temporalDeclarationSourceIds(declaration)) aliases.add(alias);
-    for (const member of declaration.members)
-      members.add(temporalMemberKey(member.locator, member.memberOrdinal));
-  }
-  const occurrence = receipts.filter((receipt) => receipt.change === 'occurrence');
-  return {
-    members: [...members],
-    spanRanges: mergeSpanRanges(spanRanges),
-    occurrenceSourceIds: [
-      ...new Set(
-        occurrence.flatMap((receipt) => temporalReceiptAliases(receipt, sources, options.world)),
-      ),
-    ],
-    occurrenceIndividualIds: [
-      ...new Set(occurrence.flatMap((receipt) => temporalReceiptIndividualIds(receipt, sources))),
-    ],
-    subjects: [...subjects],
-    sourceIds: [...aliases],
-    individualIds: [...individuals],
-    sourceRefs: [...refs],
-    references: [...refs],
-    ordinals: receipts.map((receipt) => receipt.ordinal),
-    changes: ops.reduce((sum, operation) => sum + operation.charge.count, 0),
-    ...(Number.isFinite(firstAt) ? { firstAt, lastAt, firstOrder, lastOrder } : {}),
-    lastReceivedAt: temporalPageLastReceivedAt(page),
-    ...(Number.isFinite(firstMeasured) ? { firstMeasured } : {}),
-    ...(Number.isFinite(lastSupported) ? { lastSupported } : {}),
-    spatialContext,
-  };
-}
-/** Sparse edits keep exact logical identities and remove only their check members. */
-export function replaceTemporalPageReceipts(
-  page: TemporalPage,
-  receipts: readonly TemporalReceipt[],
-  _world?: WorldState,
-): void {
-  const selected = new Map(receipts.map((receipt) => [receipt.ordinal, receipt]));
-  const removed = new Set<string>();
-  for (const receipt of temporalPageReceipts(page))
-    for (const field of receipt.facets)
-      if (!selected.get(receipt.ordinal)?.facets.some((next) => next.ordinal === field.ordinal))
-        removed.add(temporalMemberKey(receipt, field.ordinal));
-  page.operations = temporalPageOperations(page).flatMap<TemporalHistoryOperation>((op) => {
-    if (op.kind === 'check') return [op];
-    const receipt = selected.get(op.receipt.ordinal);
-    return receipt ? [{ ...op, receipt }] : [];
+export function receivedBatchChargeDirectory(batch:ReceivedBatch,sources:ReceivedValueLookup):ReceivedChargeDirectory{
+ const projections=batch.bindings.map(binding=>receivedBindingChargeProjection(binding,sources));
+ const entries=batch.entries.map(entry=>{
+  const uses=entry.coverage.map(coverage=>{
+   const projection=projections.find(item=>item.binding===coverage.binding)!;
+   const members=coverage.members.map(member=>projection.members.find(projected=>projected.partIndices.some(index=>member.partIndices.includes(index)))!.logicalMember);
+   return {projection:projection.id,memberIndices:coverage.members.map(member=>member.memberIndex),...(members.length===projection.members.length&&members.every((member,index)=>member===index)?{}:{members})};
   });
-  if (removed.size) {
-    page.declarations = page.declarations
-      .map((declaration) => {
-        const retained = declaration.members.flatMap((member, index) =>
-          removed.has(temporalMemberKey(member.locator, member.memberOrdinal))
-            ? []
-            : [{ member, index }],
-        );
-        return {
-          ...declaration,
-          members: retained.map((item) => item.member),
-          seeds: retained.flatMap((item, member) => {
-            const seed = declaration.seeds.find((seed) => seed.member === item.index);
-            return seed ? [{ ...seed, member }] : [];
-          }),
-        };
-      })
-      .filter((declaration) => declaration.members.length);
-    const ids = new Set(page.declarations.map((declaration) => declaration.id));
-    page.operations = page.operations.flatMap<TemporalHistoryOperation>((op) => {
-      if (op.kind !== 'check') return [op];
-      const stamps = op.stamps.filter((stamp) => ids.has(stamp.declaration));
-      return stamps.length ? [{ ...op, stamps }] : [];
-    });
+  const groupedUses=new Map<string,{projection:string;memberIndices:number[];members:number[]}>();
+  for(const use of uses){const projection=projections.find(projection=>projection.id===use.projection)!;const members=use.members??projection.members.map(member=>member.logicalMember);let held=groupedUses.get(use.projection);if(!held)groupedUses.set(use.projection,held={projection:use.projection,memberIndices:[],members:[]});for(let index=0;index<use.memberIndices.length;index++)if(!held.memberIndices.includes(use.memberIndices[index]!)){held.memberIndices.push(use.memberIndices[index]!);held.members.push(members[index]!);}}
+  uses.length=0;uses.push(...groupedUses.values());
+  if(entry.receipt){
+   const id=JSON.stringify(['entry',batch.batchOrder,entry.entryIndex]);
+   const projection:ReceivedChargeProjection={id,binding:-1,members:entry.receipt.facets.map(facet=>{const atoms=new Map<string,number>();for(const reference of temporalFacetValueReferences(facet)){const value=receivedValueAt(sources,reference);if(value)atoms.set(reference,jsonByteLength(value));}return {logicalMember:facet.memberIndex,partIndices:[facet.memberIndex],bytes:0,count:entry.kind==='boundary'?0:1,individualIds:temporalReceiptIndividualIds({...entry.receipt!,facets:[facet]},sources),closures:[...atoms].map(([key,bytes])=>({key,bytes}))};})};
+   projections.push(projection);uses.push({projection:id,memberIndices:entry.receipt.facets.map(facet=>facet.memberIndex)});
   }
-  page.operations = page.operations.map((operation) => ({
-    ...operation,
-    charge: {
-      bytes: temporalOperationLogicalBytes(operation, _world?.receivedValues?.sources ?? {}),
-      count: temporalOperationLogicalCount(operation, page.declarations),
-    },
-  }));
-  markTemporalPageEdited(page);
+  return {batchOrder:batch.batchOrder,entryIndex:entry.entryIndex,at:entry.receivedAt,order:entry.order,bytes:entry.charge.bytes,count:entry.charge.count,...(entry.kind==='occurrence'?{indivisible:true as const}:{}),...(entry.rejected?.length?{holes:entry.rejected.map(hole=>hole.memberIndex)}:{}),uses};
+ });
+ return {actorId:batch.actorId,physicalLife:batch.physicalLife,epoch:batch.epoch,projections,entries};
 }
-export function appendTemporalPageOperation(
-  page: TemporalPage,
-  operation: TemporalHistoryOperation,
-  world: WorldState,
-): void {
-  const held = readOnlyDraftView(page.operations),
-    next = immutableDataSnapshot(operation, readOnlyDraftView);
-  page.operations = appendSnapshot(held, [next], world) ?? [...held, next];
+export function temporalPageMetadata(page:TemporalPage,options:{world?:WorldState;sources?:ReceivedValueLookup}={}):TemporalPageMetadata{
+ const sources=options.sources??options.world?.receivedValues?.sources??{},subjects=new Set<string>(),tracks=new Set<string>(),aliases=new Set<string>(),individuals=new Set<string>(),occurrences=new Set<string>();let first:ReceivedPosition|undefined,last:ReceivedPosition|undefined,firstAt=Infinity,lastAt=-Infinity,entryBytes=0,count=0,spatialContext=false;
+ const directories=page.batches.map(batch=>receivedBatchChargeDirectory(batch,sources));
+ for(const batch of page.batches){for(const binding of batch.bindings){subjects.add(binding.subject);spatialContext ||=binding.seed.spatialContext===true;for(const part of binding.parts)if(part.facet.track)tracks.add(part.facet.track);for(const id of temporalReceiptAliases({...binding.seed,facets:binding.parts.map(part=>part.facet)},sources,options.world))aliases.add(id);for(const id of temporalReceiptIndividualIds({...binding.seed,facets:binding.parts.map(part=>part.facet)},sources))individuals.add(id);}
+ for(const entry of batch.entries){for(const gap of entry.rejected??[]){subjects.add(gap.subject);for(const alias of gap.sourceIds)aliases.add(alias);}const members=entry.receipt?.facets.map(facet=>facet.memberIndex)??entry.coverage.flatMap(coverage=>coverage.members.map(member=>member.memberIndex));const coordinates=[...members,...(entry.rejected?.map(member=>member.memberIndex)??[])],min=coordinates.length?Math.min(...coordinates):0,max=coordinates.length?Math.max(...coordinates):0;const low={batchOrder:batch.batchOrder,entryIndex:entry.entryIndex,memberIndex:min},high={batchOrder:batch.batchOrder,entryIndex:entry.entryIndex,memberIndex:max};first??=low;last=high;firstAt=Math.min(firstAt,entry.receivedAt);lastAt=Math.max(lastAt,entry.receivedAt);entryBytes+=entry.charge.bytes;count+=entry.charge.count;if(entry.receipt){subjects.add(entry.receipt.subject);spatialContext ||=entry.receipt.spatialContext===true;for(const id of temporalReceiptAliases(entry.receipt,sources,options.world))aliases.add(id);for(const id of temporalReceiptIndividualIds(entry.receipt,sources))individuals.add(id);if(entry.kind==='occurrence')occurrences.add(entry.receipt.id);}}
+ }
+ return {firstBatchOrder:first?.batchOrder??null,firstEntry:first?.entryIndex??null,firstMember:first?.memberIndex??null,lastBatchOrder:last?.batchOrder??null,lastEntry:last?.entryIndex??null,lastMember:last?.memberIndex??null,firstAt:Number.isFinite(firstAt)?firstAt:null,lastAt:Number.isFinite(lastAt)?lastAt:null,entryBytes,count,subjects:[...subjects],tracks:[...tracks],sourceIds:[...aliases],individualIds:[...individuals],occurrenceKeys:[...occurrences],references:[...temporalPageReferences(page)],spatialContext,chargeDirectory:{actorId:page.actorId,physicalLife:page.physicalLife,epoch:page.epoch,projections:directories.flatMap(directory=>directory.projections).filter((projection,index,all)=>all.findIndex(item=>item.id===projection.id)===index),entries:directories.flatMap(directory=>directory.entries)}};
 }
-
-export interface TemporalSpanRange {
-  actorId: string;
-  physicalLife: number;
-  epoch: string;
-  trackId: string;
-  subject: string;
-  channel: string;
-  member: string;
-  firstAt: number;
-  lastAt: number;
-  firstOrder: number;
-  lastOrder: number;
+export interface ReceivedEntrySelection{batchOrder:number;entryIndex:number;members?:ReadonlySet<number>}
+export function selectTemporalPageEntries(page:TemporalPage,selections:readonly ReceivedEntrySelection[]):TemporalPage{
+ const selected=new Map(selections.map(selection=>[JSON.stringify([selection.batchOrder,selection.entryIndex]),selection.members]));
+ const batches=page.batches.flatMap(batch=>{
+  const bindings=new Set<number>();const entries=batch.entries.flatMap(entry=>{const key=JSON.stringify([batch.batchOrder,entry.entryIndex]);if(!selected.has(key))return [];const members=selected.get(key),coverage=entry.coverage.flatMap(covered=>{const kept=members?covered.members.filter(member=>members.has(member.memberIndex)):covered.members;if(!kept.length)return [];bindings.add(covered.binding);return [{...covered,members:kept}];});const receipt=entry.receipt&&{...entry.receipt,facets:members?entry.receipt.facets.filter(facet=>members.has(facet.memberIndex)):entry.receipt.facets};const rejected=entry.rejected&&(members?entry.rejected.filter(member=>members.has(member.memberIndex)):entry.rejected);if(!coverage.length&&!receipt?.facets.length&&!rejected?.length)return [];const allMembers=entry.receipt?.facets.map(facet=>facet.memberIndex)??entry.coverage.flatMap(coverage=>coverage.members.map(member=>member.memberIndex));const first=allMembers.length?Math.min(...allMembers):0;const keptMembers=receipt?.facets.map(facet=>facet.memberIndex)??coverage.flatMap(coverage=>coverage.members.map(member=>member.memberIndex));return [{...entry,coverage,charge:{bytes:entry.charge.bytes,count:entry.kind==='boundary'?0:new Set(keptMembers).size},...(receipt?{receipt}:{}),...(rejected?{rejected}:{})}];});
+  return entries.length?[{...batch,entries,bindings:batch.bindings.filter(binding=>bindings.has(binding.id)).map(binding=>{const used=new Set(entries.flatMap(entry=>entry.coverage.filter(coverage=>coverage.binding===binding.id).flatMap(coverage=>coverage.members.flatMap(member=>member.partIndices))));return selectReceivedBindingParts(binding,used);})}]:[];
+ });
+ const entries=batches.flatMap(batch=>batch.entries),subjects=new Set<string>(),sourceIds=new Set<string>(),individualIds=new Set<string>();
+ for(const batch of batches){for(const binding of batch.bindings){subjects.add(binding.subject);for(const id of binding.seed.sourceIds)sourceIds.add(id);if(binding.seed.subjectIdentity?.kind==='individual')individualIds.add(binding.seed.subjectIdentity.individualId);for(const part of binding.parts){if(part.facet.original)sourceIds.add(part.facet.original.source.id);if(part.facet.support)sourceIds.add(part.facet.support.confirmation.id);}}for(const entry of batch.entries){for(const gap of entry.rejected??[]){subjects.add(gap.subject);for(const id of gap.sourceIds)sourceIds.add(id);}if(entry.receipt){subjects.add(entry.receipt.subject);for(const id of entry.receipt.sourceIds)sourceIds.add(id);}}}
+ const ownedBatches=immutableDataSnapshot(batches,readOnlyDraftView);selectionSources.set(ownedBatches,page);
+ const result={...page,batches:ownedBatches,bytes:entries.reduce((sum,entry)=>sum+entry.charge.bytes,0),count:entries.reduce((sum,entry)=>sum+entry.charge.count,0),fromAt:entries.length?Math.min(...entries.map(entry=>entry.receivedAt)):0,throughAt:entries.length?Math.max(...entries.map(entry=>entry.receivedAt)):0,subjects:[...subjects],sourceIds:[...sourceIds],individualIds:[...individualIds],sourceRefs:[] as string[]};result.sourceRefs=[...temporalPageReferences(result)];return result;
 }
-export function temporalMemberKey(locator: TemporalReceiptLocator, memberOrdinal: number): string {
-  return JSON.stringify([
-    locator.actorId,
-    locator.physicalLife,
-    locator.epoch,
-    locator.ordinal,
-    memberOrdinal,
-  ]);
+/** Sparse source edits retain canonical sample clocks, kinds and predecessor
+ * seeds. Only the affected logical masks are narrowed; survivors keep addresses. */
+export function replaceTemporalPageReceipts(page:TemporalPage,receipts:readonly TemporalReceipt[],_world:WorldState):void{
+ const byAddress=new Map(receipts.map(receipt=>[JSON.stringify([receipt.batchOrder,receipt.entryIndex]),receipt]));
+ const selections:ReceivedEntrySelection[]=page.batches.flatMap(batch=>batch.entries.flatMap(entry=>{const receipt=byAddress.get(JSON.stringify([batch.batchOrder,entry.entryIndex]));return receipt?[{batchOrder:batch.batchOrder,entryIndex:entry.entryIndex,members:new Set(receipt.facets.map(facet=>facet.memberIndex))}]:[];}));
+ const selected=selectTemporalPageEntries(page,selections);
+ page.batches=selected.batches.map(batch=>({...batch,entries:batch.entries.map(entry=>{const receipt=entry.receipt&&byAddress.get(JSON.stringify([batch.batchOrder,entry.entryIndex]));return receipt?{...entry,receipt}:entry;})}));
+ markTemporalPageEdited(page);
 }
-const temporalSelections = new WeakMap<
-  readonly TemporalHistoryOperation[],
-  { source: TemporalPage; declarations: TemporalPage['declarations'] }
->();
-/** Only this semantic selection owner can certify regrouped declarations and
- * predecessor seeds. The caller must still verify exact ordered operations. */
-export function temporalPageSelectionSource(page: TemporalPage): TemporalPage | undefined {
-  const proof = temporalSelections.get(page.operations);
-  return proof?.declarations === page.declarations ? proof.source : undefined;
+export function selectReceivedReceiptMembers(page:TemporalPage,locator:TemporalReceiptLocator,members?:ReadonlySet<number>,subjects?:ReadonlySet<string>):TemporalReceipt|undefined{
+ if(page.actorId!==locator.actorId||page.physicalLife!==locator.physicalLife||page.epoch!==locator.epoch)return;
+ const batch=page.batches.find(batch=>batch.batchOrder===locator.batchOrder),entry=batch?.entries.find(entry=>entry.entryIndex===locator.entryIndex);if(!batch||!entry)return;
+ const receipt=materializeReceivedEntry(batch,entry,subjects);if(!receipt)return;
+ const facets=members?receipt.facets.filter(facet=>members.has(facet.memberIndex)):receipt.facets;return facets.length?{...receipt,facets}:undefined;
 }
-/** A physical suffix borrows only declarations it actually uses. Its seeds are
- * advanced through preceding native checks, never through a newer current view. */
-export function temporalPageSelection(
-  page: TemporalPage,
-  operations: readonly TemporalHistoryOperation[],
-  id: string = page.id,
-): TemporalPage {
-  const first = operations[0];
-  if (!first) throw new Error('An empty temporal page has no saved meaning.');
-  const ids = new Set(
-    operations.flatMap((op) =>
-      op.kind === 'check' ? op.stamps.map((stamp) => stamp.declaration) : [],
-    ),
-  );
-  type Prior = {
-    support?: {
-      op: Extract<TemporalHistoryOperation, { kind: 'check' }>;
-      stamp: TemporalCheckStamp;
-    };
-    measurement?: {
-      op: Extract<TemporalHistoryOperation, { kind: 'check' }>;
-      stamp: TemporalCheckStamp;
-    };
-    frame?: { op: Extract<TemporalHistoryOperation, { kind: 'check' }>; stamp: TemporalCheckStamp };
-  };
-  const predecessors = new Map<number, Prior>();
-  // One compact header pass, independent of declaration/member cardinality.
-  for (const op of temporalPageOperations(page)) {
-    if (op.ordinal >= first.ordinal) break;
-    if (op.kind !== 'check') continue;
-    for (const stamp of op.stamps) {
-      if (!ids.has(stamp.declaration)) continue;
-      const prior = predecessors.get(stamp.declaration) ?? {};
-      prior.support = { op, stamp };
-      if (stamp.measurement) prior.measurement = { op, stamp };
-      if (stamp.frame) prior.frame = { op, stamp };
-      predecessors.set(stamp.declaration, prior);
-    }
-  }
-  const declarations = page.declarations
-    .filter((d) => ids.has(d.id))
-    .map((declaration) => {
-      const prior = predecessors.get(declaration.id);
-      const seeds = declaration.seeds.map((seed) => {
-        const member = declaration.members[seed.member];
-        if (!member) throw new Error('Temporal seed has no member.');
-        let next = seed;
-        if (prior?.measurement) {
-          const { op, stamp } = prior.measurement;
-          next = temporalAdvanceSeed(next, member, stamp, op.at, op.order);
-        }
-        if (prior?.frame) {
-          const { op, stamp } = prior.frame,
-            { measurement: _measurement, ...frameStamp } = stamp;
-          next = temporalAdvanceSeed(next, member, frameStamp, op.at, op.order);
-        }
-        if (prior?.support) {
-          const { op, stamp } = prior.support,
-            { measurement: _measurement, frame: _frame, ...supportStamp } = stamp;
-          next = temporalAdvanceSeed(next, member, supportStamp, op.at, op.order);
-        }
-        return next;
-      });
-      return { ...declaration, seeds };
-    });
-  // A read-only cut keeps conservative candidate directories. Consumers inspect
-  // only selected operations; canonical encoding always rebuilds directories with the world.
-  const selected = {
-    ...page,
-    id,
-    operations: immutableDataSnapshot([...operations]),
-    declarations: immutableDataSnapshot(declarations),
-    fromOrdinal: operations[0]!.ordinal,
-    throughOrdinal: operations.at(-1)!.ordinal,
-    count: operations.reduce((sum, op) => sum + op.charge.count, 0),
-    bytes: operations.reduce((sum, op) => sum + op.charge.bytes, 0),
-  };
-  temporalSelections.set(selected.operations, {
-    source: page,
-    declarations: selected.declarations,
-  });
-  return selected;
+/** Carried state has a carrier and requested cut; it is never a surviving old
+ * raw receipt. Proof clocks and values remain those actually captured in its seed. */
+export function selectReceivedState(page:TemporalPage,carrier:ReceivedAddress,selection:{binding:number;subject:string;asOf:number;members?:ReadonlySet<number>}):{receipt:TemporalReceipt;carrier:TemporalReceiptLocator;availableAt:number;binding:number}|undefined{
+ const batch=page.batches.find(batch=>batch.batchOrder===carrier.batchOrder),entry=batch?.entries.find(entry=>entry.entryIndex===carrier.entryIndex);if(!batch||!entry||batch.actorId!==carrier.actorId||batch.physicalLife!==carrier.physicalLife||batch.epoch!==carrier.epoch||entry.receivedAt<=selection.asOf)return;
+ const binding=batch.bindings.find(binding=>binding.id===selection.binding&&binding.subject===selection.subject&&binding.seed.at<=selection.asOf);if(!binding)return;
+ const coverage=entry.coverage.filter(coverage=>coverage.binding===binding.id);if(!coverage.some(coverage=>coverage.members.some(member=>member.memberIndex===carrier.memberIndex)))return;const logical=new Set(coverage.flatMap(coverage=>coverage.members.flatMap(member=>member.partIndices.map(index=>binding.parts.find(part=>part.partIndex===index)!.logicalMember))));
+ const facets=materializeReceivedBindingSeed(binding).facets.filter(facet=>logical.has(facet.memberIndex)&&(!selection.members||selection.members.has(facet.memberIndex)));if(!facets.length)return;
+ return {receipt:{...binding.seed,facets},carrier,availableAt:selection.asOf,binding:binding.id};
 }
-export function selectTemporalPageOperations(
-  page: TemporalPage,
-  operations: readonly TemporalHistoryOperation[],
-  id: string,
-  world: WorldState,
-): TemporalPage {
-  const selected = temporalPageSelection(page, operations, id),
-    metadata = temporalPageMetadata(selected, {
-      world,
-      sources: world.receivedValues?.sources ?? {},
-    });
-  return {
-    ...selected,
-    fromAt: metadata.firstAt!,
-    throughAt: metadata.lastAt!,
-    subjects: metadata.subjects,
-    sourceIds: metadata.sourceIds,
-    individualIds: metadata.individualIds,
-    sourceRefs: metadata.sourceRefs,
-  };
-}
-
-function checkedConfirmation(
-  member: TemporalCheckMember,
-  stamp: TemporalCheckStamp,
-): EvidenceSource {
-  return evidenceSourceWithIdentity(
-    stamp.confirmation,
-    member.confirmationIdentity,
-    member.revisionFloor,
-  );
-}
-/** Advance a predecessor using the same proof, clock and frame rules as selected reads. */
-export function temporalAdvanceSeed(
-  seed: TemporalCheckSeed,
-  member: TemporalCheckMember,
-  stamp: TemporalCheckStamp,
-  receivedAt: number,
-  order: number,
-): TemporalCheckSeed {
-  return {
-    ...seed,
-    part: member.part ?? seed.part,
-    receivedAt,
-    order,
-    support: {
-      original: member.original,
-      confirmation: checkedConfirmation(member, stamp),
-      confirmedFrom: stamp.confirmedFrom,
-      confirmedThrough: stamp.confirmedThrough,
-    },
-    ...(stamp.measurement
-      ? {
-          measuredFrom: stamp.measurement.measuredFrom,
-          measuredThrough: stamp.measurement.measuredThrough,
-          acquiredAt: stamp.measurement.acquiredAt,
-          receivedFrom: evidenceSourceWithIdentity(
-            stamp.measurement.receivedFrom,
-            member.confirmationIdentity,
-          ),
-        }
-      : {}),
-    ...(stamp.frame && seed.reception?.kind === 'location'
-      ? { reception: { kind: 'location' as const, frame: stamp.frame } }
-      : {}),
-    ...(stamp.frame && (member.part ?? seed.part) === 'pose' && seed.poseFrame
-      ? { poseFrame: stamp.frame }
-      : {}),
-  };
-}
-/** One projection rule for native/cold reads and current-source revalidation. */
-export function temporalCheckedFacet(
-  base: TemporalFacetReference,
-  member: TemporalCheckMember,
-  seed: TemporalCheckSeed | undefined,
-  stamp: TemporalCheckStamp,
-): TemporalFacetReference {
-  const prior = seed ? temporalSeedFacet(base, { ...seed, part: member.part ?? seed.part }) : base,
-    support = {
-      original: member.original,
-      confirmation: checkedConfirmation(member, stamp),
-      confirmedFrom: stamp.confirmedFrom,
-      confirmedThrough: stamp.confirmedThrough,
-    };
-  if (member.part === 'detail' && prior.detailSupport) {
-    return {
-      ...prior,
-      detailSupport: {
-        ...prior.detailSupport,
-        proof: support,
-        ...(stamp.measurement
-          ? {
-              from: stamp.measurement.measuredFrom,
-              through: stamp.measurement.measuredThrough,
-              acquiredAt: stamp.measurement.acquiredAt,
-            }
-          : {}),
-      },
-    };
-  }
-  return {
-    ...prior,
-    confirmedThrough: stamp.confirmedThrough,
-    support,
-    ...(stamp.measurement
-      ? {
-          measuredFrom: stamp.measurement.measuredFrom,
-          measuredThrough: stamp.measurement.measuredThrough,
-          asOf: stamp.measurement.measuredThrough,
-          acquiredAt: stamp.measurement.acquiredAt,
-          receivedFrom: evidenceSourceWithIdentity(
-            stamp.measurement.receivedFrom,
-            member.confirmationIdentity,
-          ),
-        }
-      : {}),
-    ...(stamp.frame && prior.reception?.kind === 'location'
-      ? { reception: { kind: 'location' as const, frame: stamp.frame } }
-      : {}),
-    ...(stamp.frame && member.part === 'pose' && prior.poseFrame ? { poseFrame: stamp.frame } : {}),
-  };
-}
-
-function mergeSpanRanges(ranges: readonly TemporalSpanRange[]): TemporalSpanRange[] {
-  const groups = new Map<string, TemporalSpanRange>();
-  for (const range of ranges) {
-    const prior = groups.get(range.trackId);
-    if (!prior) groups.set(range.trackId, { ...range });
-    else {
-      prior.firstAt = Math.min(prior.firstAt, range.firstAt);
-      prior.lastAt = Math.max(prior.lastAt, range.lastAt);
-      prior.firstOrder = Math.min(prior.firstOrder, range.firstOrder);
-      prior.lastOrder = Math.max(prior.lastOrder, range.lastOrder);
-    }
-  }
-  return [...groups.values()];
-}
-const editedPages = new WeakSet<object>();
-export function temporalPageMutation(page: TemporalPage): 'append' | 'edit' {
-  return editedPages.has(readOnlyDraftView(page.operations)) ? 'edit' : 'append';
-}
-export function markTemporalPageEdited(page: TemporalPage): void {
-  page.operations = immutableDataSnapshot(page.operations, readOnlyDraftView);
-  editedPages.add(readOnlyDraftView(page.operations));
-}
-
-export function temporalSeedFacet(
-  base: TemporalFacetReference,
-  seed: TemporalCheckSeed,
-): TemporalFacetReference {
-  if (seed.part === 'detail' && base.detailSupport)
-    return {
-      ...base,
-      detailSupport: {
-        ...base.detailSupport,
-        proof: seed.support,
-        from: seed.measuredFrom,
-        through: seed.measuredThrough,
-        acquiredAt: seed.acquiredAt,
-      },
-    };
-  return {
-    ...base,
-    measuredFrom: seed.measuredFrom,
-    measuredThrough: seed.measuredThrough,
-    asOf: seed.measuredThrough,
-    acquiredAt: seed.acquiredAt,
-    receivedFrom: seed.receivedFrom,
-    support: seed.support,
-    confirmedThrough: seed.support.confirmedThrough,
-    ...(seed.reception && base.reception?.kind === 'location' ? { reception: seed.reception } : {}),
-    ...(seed.poseFrame ? { poseFrame: seed.poseFrame } : {}),
-  };
-}
-
-export function temporalOperationLogicalCount(
-  operation: TemporalHistoryInput,
-  declarations: readonly TemporalCheckDeclaration[],
-): number {
-  if (operation.kind !== 'check') return temporalReceiptChangeCount(operation.receipt);
-  let count = 0;
-  for (const stamp of operation.stamps) {
-    const declaration = declarations.find((d) => d.id === stamp.declaration);
-    if (!declaration) throw new Error('An exact check has no declaration.');
-    count += new Set(
-      declaration.members.map((member) =>
-        JSON.stringify([member.locator.epoch, member.locator.ordinal, member.memberOrdinal]),
-      ),
-    ).size;
-  }
-  return count;
-}
-
-export function temporalOperationLogicalBytes(
-  operation: TemporalHistoryInput | TemporalHistoryOperation,
-  sources: ReceivedValueLookup,
-): number {
-  const { charge: _charge, ...input } = operation as TemporalHistoryOperation;
-  if (input.kind === 'check') return jsonByteLength(input);
-  let bytes = jsonByteLength(input);
-  for (const reference of new Set(input.receipt.facets.flatMap(temporalFacetValueReferences))) {
-    const value = receivedValueAt(sources, reference);
-    if (!value) throw new Error('A received interval has no owned value.');
-    bytes += jsonByteLength(value);
-  }
-  return bytes;
+export function appendTemporalPageBatch(page:TemporalPage,batch:ReceivedBatch,world?:WorldState):void{const value=immutableDataSnapshot(batch,readOnlyDraftView);page.batches=appendSnapshot(page.batches,[value],world)??[...page.batches,value];}
+const batchStorageBytes=new WeakMap<ReceivedBatch,number>();
+/** Operational native-buffer estimate composes cached immutable descriptors.
+ * The save packer still enforces the actual encoded block and hard record limits. */
+export function receivedBatchStorageBytes(batch:ReceivedBatch):number{
+ const cached=batchStorageBytes.get(batch);if(cached!==undefined)return cached;
+ let bytes=jsonByteLength({...batch,bindings:[],entries:[]})+batch.entries.reduce((sum,entry)=>sum+jsonByteLength(entry)+1,0);
+ for(const binding of batch.bindings)bytes+=jsonByteLength({...binding,parts:[],charges:undefined})+jsonByteLength(binding.parts)+(binding.charges?jsonByteLength(binding.charges):0)+16;
+ batchStorageBytes.set(batch,bytes);return bytes;
 }

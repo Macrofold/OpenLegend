@@ -435,13 +435,17 @@ export {
   temporalSupportLogicalBytes,
   receivedTemporalFragment,
   temporalActorHistory,
-  temporalOpenReservationTotals,
-  expireTemporalOpenRecordings,
   beginTemporalReceiptEpoch,
   temporalReceiptChangeCount,
   temporalSpatialContextValue,
   retireTemporalPages,
-  retireTemporalOperations,
+  retireTemporalEntries,
+  advanceTemporalRecent,
+  receivedDirectoryContains,
+  restoreReceivedRecentDirectory,
+  installTemporalChargeDirectories,
+  eligibleReceivedChargeDirectories,
+  receivedRecentDirectories,
   captureTemporalReceiptPrefix,
   temporalReceiptWithinPrefix,
   selectTemporalHistory,
@@ -466,11 +470,13 @@ export {
   retainedTemporalReceipt,
   temporalReceiptSource,
   isTemporalReceiptSource,
+  temporalReceiptLocatorFromSource,
+  retainTemporalObservationSupport,
   retainTemporalSupport,
   retainTemporalStateSupport,
   retainTemporalCurrentSupport,
-  currentTemporalOpenIntervals,
-  type TemporalOpenInterval,
+  captureTemporalCurrentSeeds,
+  type TemporalCurrentSeed,
   closeTemporalCurrentGroup,
   captureTemporalGeometry,
   closeTemporalGeometry,
@@ -552,3 +558,11 @@ export {
 export { nativeThinkingTimeChanges } from './thinking-inputs.js';
 
 export { boundActionItemIds } from './action-item-references.js';
+
+export {selectReceivedReceiptMembers,selectReceivedState} from './temporal-frames.js';
+
+export {jsonByteLength} from './records.js';
+
+export * from './received-batches.js';
+
+export {receivedBatchStorageBytes,materializeReceivedBindingSeed} from './temporal-frames.js';

@@ -115,7 +115,7 @@ export function* sqlRowBatches(rows: Iterable<unknown[]>): Generator<unknown[][]
 export function* sqlRecordBatchesWithCount(
   columns: readonly string[],
   rows: Iterable<unknown[]>,
-): Generator<{ payload: string; rows: number }> {
+): Generator<{ payload: string; rows: number; bytes: number }> {
   let batch: string[] = [],
     bytes = 2;
   // Only encoded text escapes; trusted fixed-column rows reuse one transport object.
@@ -133,14 +133,14 @@ export function* sqlRecordBatchesWithCount(
       batch.length &&
       ((batch.length + 1) * columns.length > parameterBatchLimit || bytes + size + 1 > 262144)
     ) {
-      yield { payload: `[${batch.join(',')}]`, rows: batch.length };
+      yield { payload: `[${batch.join(',')}]`, rows: batch.length, bytes };
       batch = [];
       bytes = 2;
     }
     bytes += size + (batch.length ? 1 : 0);
     batch.push(encoded);
   }
-  if (batch.length) yield { payload: `[${batch.join(',')}]`, rows: batch.length };
+  if (batch.length) yield { payload: `[${batch.join(',')}]`, rows: batch.length, bytes };
 }
 
 export async function insertRows(

@@ -81,7 +81,8 @@ export function historyPerspectiveRow(
       event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
       temporal?.receipt.physicalLife ?? null,
       temporal?.receipt.epoch ?? null,
-      temporal?.receipt.ordinal ?? null,
+      temporal?.receipt.batchOrder ?? null,
+      temporal?.receipt.entryIndex ?? null,
     ],
   };
 }

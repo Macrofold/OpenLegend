@@ -1,5 +1,5 @@
 import { WorkLane } from './work-lane.js';
-import { timed, beginTiming, endTiming } from './performance.js';
+import { timed, beginTiming, endTiming, beginDatabaseQuery, finishDatabaseQuery } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
@@ -295,6 +295,7 @@ export class PostgresDatabase implements SqlDatabase {
     return overlay;
   }
   async query(sql: string, params: unknown[] = []) {
+    const template = sql;
     const execute = async () => {
       await this.ready;
       if (this.failed)
@@ -316,6 +317,7 @@ export class PostgresDatabase implements SqlDatabase {
       }
       let index = 0;
       const translated = sql.replace(/\?/g, () => `$${++index}`);
+      const diagnostic = beginDatabaseQuery(template);
       try {
         const result = await timed('postgres.statement', () =>
           (this.transactionContext.getStore()?.active
@@ -323,8 +325,11 @@ export class PostgresDatabase implements SqlDatabase {
             : this.client
           ).query(translated, params),
         );
-        return { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
+        const value = { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
+        finishDatabaseQuery(diagnostic, value);
+        return value;
       } catch (error) {
+        finishDatabaseQuery(diagnostic);
         const reported = (error as { code?: unknown }).code;
         const code =
           typeof reported === 'string' && /^[A-Z0-9]{5}$/.test(reported) ? reported : undefined;

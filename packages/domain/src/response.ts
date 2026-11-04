@@ -810,7 +810,8 @@ export function commitActorResponse(
               captured.receipt.actorId !== actorId ||
               locator.physicalLife !== captured.receipt.physicalLife ||
               locator.epoch !== captured.receipt.epoch ||
-              locator.ordinal !== captured.receipt.ordinal
+              locator.batchOrder !== captured.receipt.batchOrder ||
+              locator.entryIndex !== captured.receipt.entryIndex
             ) {
               available = false;
               break;

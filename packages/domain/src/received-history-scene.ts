@@ -31,7 +31,8 @@ export type HistoricalSpatialFact =
 interface Fact {
   source: HistoricalSpatialFact;
   order: number;
-  ordinal: number;
+  batchOrder: number;
+  entryIndex: number;
   acquisition: number;
   epoch: string;
   physicalLife: number;
@@ -83,7 +84,7 @@ const through = (fact: Fact) =>
 const supports = (fact: Fact, at: number) =>
   from(fact) <= at && at <= through(fact) && at < (fact.unavailableAt ?? Infinity);
 const originalKey = (fact: Fact) =>
-  JSON.stringify(fact.reference.original ?? [fact.source, fact.reference.ordinal]);
+  JSON.stringify(fact.reference.original ?? [fact.source, fact.reference.memberIndex]);
 const proof = (fact: Fact): HistoricalSpatialFact => fact.source;
 const trackKey = (fact: Fact) => JSON.stringify([fact.physicalLife, fact.epoch, fact.subject]);
 const acquisitionKey = (fact: Fact) =>
@@ -213,13 +214,13 @@ export function historicalSpatialMeasurements(
       facts.push({
         source: { entry, facet },
         order: selected.receipt.order,
-        ordinal: selected.receipt.ordinal,
+        batchOrder: selected.receipt.batchOrder,entryIndex: selected.receipt.entryIndex,
         acquisition: selected.receipt.acquisition,
         epoch: selected.receipt.epoch,
         physicalLife: selected.receipt.physicalLife,
         availableAt: selected.receipt.at,
         unavailableAt: selected.receipt.availability?.find((group) =>
-          group.fields.includes(reference.ordinal),
+          group.fields.includes(reference.memberIndex),
         )?.at,
         subject: selected.receipt.subject,
         reference,
@@ -232,13 +233,13 @@ export function historicalSpatialMeasurements(
       facts.push({
         source: { baseline, facet },
         order: selected.checkpoint.order,
-        ordinal: selected.checkpoint.ordinal,
+        batchOrder: selected.checkpoint.batchOrder,entryIndex: selected.checkpoint.entryIndex,
         acquisition: selected.checkpoint.acquisition,
         epoch: selected.checkpoint.epoch,
         physicalLife: selected.checkpoint.physicalLife,
         availableAt: selected.availableAt,
         unavailableAt: selected.checkpoint.availability?.find((group) =>
-          group.fields.includes(reference.ordinal),
+          group.fields.includes(reference.memberIndex),
         )?.at,
         subject: selected.checkpoint.subject,
         reference,
@@ -254,7 +255,7 @@ export function historicalSpatialMeasurements(
         from(fact) <= request.through &&
         from(fact) <= through(fact),
     )
-    .sort((a, b) => through(b) - through(a) || b.order - a.order || b.ordinal - a.ordinal);
+    .sort((a, b) => through(b) - through(a) || b.order - a.order || b.batchOrder - a.batchOrder || b.entryIndex - a.entryIndex);
   const others = request.other
     ? bodies
         .filter((fact) => fact.subject === request.other)
@@ -398,7 +399,7 @@ export function historicalSpatialMeasurements(
   samples.sort((a, b) => {
     const first = position(a.support[0]!),
       second = position(b.support[0]!);
-    return a.at - b.at || first.order - second.order || first.ordinal - second.ordinal;
+    return a.at - b.at || first.order - second.order || first.batchOrder - second.batchOrder || first.entryIndex - second.entryIndex;
   });
   let previousOther: { at: number; lower: number; support: HistoricalSpatialFact[] } | undefined;
   const previousEdges = new Map<
@@ -429,7 +430,7 @@ export function historicalSpatialMeasurements(
         'entry' in edge.support
           ? selection.entries[edge.support.entry]!.receipt.facets[edge.support.facet]!
           : selection.baselines![edge.support.baseline]!.checkpoint.facets[edge.support.facet]!;
-      const key = JSON.stringify(reference.original ?? [edge.support, reference.ordinal]),
+      const key = JSON.stringify(reference.original ?? [edge.support, reference.memberIndex]),
         previous = previousEdges.get(key),
         measurement = edge.measurement;
       if (measurement.lower === undefined || measurement.upper === undefined) continue;

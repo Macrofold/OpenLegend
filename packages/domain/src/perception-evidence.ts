@@ -51,7 +51,9 @@ import {
   withTemporalAcquisition,
   withTemporalReceivedTransition,
   temporalReceivedOrder,
+  createReceivedSample,
   captureTemporalCurrent,
+  captureTemporalObservation,
   closeTemporalCurrentGroup,
   retainTemporalCurrentSupport,
   type TemporalCurrentGroupInput,
@@ -145,6 +147,7 @@ import {
   type CurrentAvailability,
   type CurrentReceivedGroup,
   currentConfirmGroups,
+  currentGroupRecordings,
   withCurrentContactBatch,
   currentFacetAddress,
   type CurrentFacetSelector,
@@ -458,6 +461,8 @@ export interface ObservationContribution {
   observer: ObserverLife;
   origin: ObservationOrigin;
   acquiredAt: number;
+  /** Actual reception order; objective occurrence order remains in origin. */
+  receivedOrder: number;
   modality: 'sight' | 'hearing' | 'touch';
   channel?: import('./world-modules.js').DefinitionPin;
   detector: { id: string; version: number };
@@ -487,12 +492,12 @@ export interface ReceivedObservationFacet {
 }
 export type ReceivedObservationHeader = Pick<
   ObservationContribution,
-  'observer' | 'acquiredAt' | 'modality' | 'detector' | 'channel'
+  'observer' | 'acquiredAt' | 'receivedOrder' | 'modality' | 'detector' | 'channel'
 >;
 export interface ReceivedObservation
   extends Omit<
     ObservationContribution,
-    'facets' | 'observer' | 'acquiredAt' | 'modality' | 'detector'
+    'facets' | 'observer' | 'acquiredAt' | 'receivedOrder' | 'modality' | 'detector'
   > {
   headerRef: ReceivedValueReference;
   facets: ReceivedObservationFacet[];
@@ -1300,7 +1305,7 @@ export type ReceivedCurrentSample = (
     })
 ) & { value: SensoryFacet | ReceivedFacetValue };
 /** Detector adapters supply exact coverage; missing input is never inferred as loss. */
-export type ReceivedCurrentChange =
+export type ReceivedCurrentChange = (
   | { kind: 'sample'; source: ReceivedObservationInput }
   | {
       kind: 'sample';
@@ -1325,8 +1330,10 @@ export type ReceivedCurrentChange =
       state: 'unchecked' | 'ended';
       at?: number;
     }
-  | { kind: 'occurrence'; contribution: ReceivedObservationInput };
+  | { kind: 'occurrence'; contribution: ReceivedObservationInput }
+) & { sampleToken?: number };
 interface ReceivedPhaseDelta {
+  sampleToken?: number;
   frameRef?: import('./received-values.js').ReceivedValueReference;
   measured: Set<string>;
   checked: Set<string>;
@@ -1362,9 +1369,14 @@ export function receiveCurrentChange(
   change: ReceivedCurrentChange,
 ): ReceivedObservation | undefined {
   const state = owner(world, observer);
-  return withCurrentPerceptionBatch(world, observer.id, state, () =>
-    withTemporalReceivedTransition(world, observer.id, () => {
-      const delta = receivedPhaseDeltas.get(state)!;
+  return withCurrentPerceptionBatch(world, observer.id, state, () => {
+    const delta = receivedPhaseDeltas.get(state)!;
+    const previousToken = delta.sampleToken;
+    const sampleToken = change.sampleToken ?? previousToken ??
+      (change.kind === 'sample' || change.kind === 'confirm' ? createReceivedSample(world,observer.id) : undefined);
+    if (sampleToken !== undefined) delta.sampleToken = sampleToken;
+    return withTemporalReceivedTransition(world, observer.id, () => {
+      try {
       switch (change.kind) {
         case 'sample': {
           if ('source' in change) {
@@ -1421,7 +1433,7 @@ export function receiveCurrentChange(
             change.through,
             {
               receivedAt: world.simTime,
-              receivedOrder: temporalReceivedOrder(world, observer.id),
+              receivedOrder: delta.sampleToken ?? temporalReceivedOrder(world, observer.id),
               confirmedRevision: Math.max(
                 change.sight?.revision ?? 0,
                 state.visualConfirmation?.revision ?? 0,
@@ -1458,6 +1470,7 @@ export function receiveCurrentChange(
                         originalSource: currentContactGet(state, change.subjectId)!.content
                           .originals[grant.original]!,
                         checked: true,
+                        sampleToken: delta.sampleToken,
                         entering: false,
                         exiting: false,
                       },
@@ -1522,7 +1535,7 @@ export function receiveCurrentChange(
                 const members = partition.members.filter(
                   ([kind]) => !covered.kinds || covered.kinds.has(kind),
                 );
-                if (members.length && partition.recording)
+                if (members.length && currentGroupRecordings(group, members).length)
                   closeTemporalCurrentGroup(
                     world,
                     observer.id,
@@ -1549,8 +1562,11 @@ export function receiveCurrentChange(
           return received;
         }
       }
-    }),
-  );
+      } finally {
+        delta.sampleToken = previousToken;
+      }
+    }, sampleToken);
+  });
 }
 /** One detector phase or causal receiver boundary, including source construction. */
 export function withReceivedChanges<T>(world: WorldState, observer: Entity, work: () => T): T {
@@ -1570,6 +1586,7 @@ function receiveCurrentSample(
   state: PerceptionEvidenceOwner,
   key: string,
   value: ReceivedCurrentSample,
+  sampleToken?: number,
 ): void {
   const observer = entityGet(world.entities, currentFacetObserver(state).actorId)!;
   const body =
@@ -1590,7 +1607,7 @@ function receiveCurrentSample(
             value.modality,
             receivedObservationHeader(world, value.original).detector.id,
           );
-  receiveCurrentChange(world, observer, { kind: 'sample', key, value, channel });
+  receiveCurrentChange(world, observer, { kind: 'sample', key, value, channel, sampleToken });
 }
 function attentionTracks(
   state: PerceptionEvidenceOwner,
@@ -1910,7 +1927,7 @@ function closeCurrentMemberHistory(
       continue;
     for (const partition of group.metadata) {
       const members = partition.members.filter(([member]) => member === kind);
-      if (members.length && partition.recording)
+      if (members.length && currentGroupRecordings(group, members).length)
         closeTemporalCurrentGroup(
           world,
           currentFacetObserver(state).actorId,
@@ -1986,6 +2003,11 @@ function installReceivedSample(
     'grant' in value
       ? ({ ...value, value: storedValue } as CurrentFacetRecord)
       : compactCurrentFacet(state, { ...value, value: storedValue } as LiveFacetSupport, channel);
+  if (compact.value.kind === 'body' && compact.grant.modality === 'sight') {
+    const local = selectedBodyIndividual(world, observer.actorId, subject, compact.grant);
+    if (local) compact.localSubject = local;
+    else delete compact.localSubject;
+  }
   touchNativeEvidence(world, 'perception', currentFacetObserver(state).actorId);
   if (unresolved) compact.availability = unresolved;
   else delete compact.availability;
@@ -1997,7 +2019,7 @@ function installReceivedSample(
     closeCurrentMemberHistory(world, state, subject, compact.value.kind, channel, 'change');
   currentFacetSet(state, key, compact, {
     receivedAt: world.simTime,
-    receivedOrder: temporalReceivedOrder(world, observer.actorId),
+    receivedOrder: receivedPhaseDeltas.get(state)?.sampleToken ?? temporalReceivedOrder(world, observer.actorId),
     confirmedRevision: compact.revision,
     ...(compact.value.reception?.kind === 'location'
       ? { frameRef: compact.value.reception.frameRef }
@@ -2084,7 +2106,7 @@ export function observationFactKey(
  * docs/projects/perspective-perception-tech-design.md#three-representations-one-observation */
 export type ReceivedObservationInput = Omit<
   ObservationContribution,
-  'id' | 'revision' | 'observer' | 'acquiredAt' | 'facets'
+  'id' | 'revision' | 'observer' | 'acquiredAt' | 'receivedOrder' | 'facets'
 > & {
   facets: Array<
     Omit<ObservationFacet, 'ordinal' | 'acquiredAt'> & {
@@ -2140,6 +2162,7 @@ function acquireReceivedObservation(
         header: {
           observer: observerLife(observer),
           acquiredAt: world.simTime,
+          receivedOrder: receivedPhaseDeltas.get(state)?.sampleToken ?? createReceivedSample(world,observer.id),
           modality: input.modality,
           detector: { id: input.detector.id, version: input.detector.version },
           ...(input.channel ? { channel: input.channel } : {}),
@@ -3295,6 +3318,7 @@ function recordCurrentReception(
           partition:
             members.length === partition.members.length ? partition : { ...partition, members },
           originalSource: contact.content.originals[grant.original]!,
+          sampleToken: receivedPhaseDeltas.get(state)?.sampleToken,
           checked: true,
           entering: false,
           exiting: false,
@@ -3706,14 +3730,16 @@ export function reconcileVisualEvidence(
     receiveCurrentChange(world, observer, { kind: 'availability', keys: lostKeys, state: 'ended' });
     const checkedSources = new Set<string>(),
       detailedSources = new Set<string>(),
-      reacquiredFields = new Set<string>(),
-      unboundBodies = new Set<string>();
+      reacquiredFields = new Set<string>();
+    const sampleTokens = new Map<string, number>();
     const processSubject = (subject: Entity, detailed: boolean) => {
       chargeWork({ tests: 1 });
       delete state.gaps[subject.id];
       const exposed = world.perceptionEpisodes?.[observer.id]?.[subject.id];
       if (subject.placement?.mode !== 'world') return;
       const placement = subject.placement;
+      const sampleToken = createReceivedSample(world,observer.id);
+      sampleTokens.set(subject.id, sampleToken);
       checkedSources.add(subject.id);
       if (detailed) detailedSources.add(subject.id);
       const token = sourceToken?.(subject.id),
@@ -3734,7 +3760,6 @@ export function reconcileVisualEvidence(
           retiredMotion.add(subject.id);
           attentionChanges.add(subject.id);
         }
-        if (subject.actor && !heldBody.field.localSubject) unboundBodies.add(subject.id);
         return;
       }
       const prepared = prepareVisualSourceValues(
@@ -4001,7 +4026,7 @@ export function reconcileVisualEvidence(
             valueAcquiredAt: world.simTime,
             confirmedFrom: world.simTime,
             confirmedThrough: world.simTime,
-          });
+          }, sampleToken);
         } else if (changed) {
           const {
             at: _at,
@@ -4026,12 +4051,9 @@ export function reconcileVisualEvidence(
                   sourcePlacementRevision: placement.revision,
                 }
               : {}),
-          });
+          }, sampleToken);
         }
       });
-      const storedBody = currentNativeFacet(state, `${subject.id}:body`, { modality: 'sight' }),
-        currentBody = storedBody && readOnlyDraftView(storedBody.field);
-      if (subject.actor && currentBody && !currentBody.localSubject) unboundBodies.add(subject.id);
       const storedLocation = currentNativeFacet(state, `${subject.id}:location`, {
           modality: 'sight',
         }),
@@ -4098,12 +4120,14 @@ export function reconcileVisualEvidence(
       frameRevision: frameChanged ? revision : priorConfirmation!.frameRevision,
     };
     const channel = receivedChannelPin(world, observer, 'sight', detector.id);
-    for (const id of checkedSources)
+    for (const id of checkedSources) {
+      if (detailedSources.has(id)) continue;
       receiveCurrentChange(world, observer, {
         kind: 'confirm',
         subjectId: id,
         channel,
         through: world.simTime,
+        sampleToken: sampleTokens.get(id),
         scopes: new Set(['broad']),
         exposures: new Set([
           currentNativeFacet(state, `${id}:body`, { modality: 'sight' })?.grant.exposure ?? '',
@@ -4119,13 +4143,18 @@ export function reconcileVisualEvidence(
             }
           : {}),
       });
+    }
+    const confirmedDetails = new Set<string>();
     const confirmDetailed = () => {
-      for (const id of detailedSources)
+      for (const id of detailedSources) {
+        if (confirmedDetails.has(id)) continue;
+        confirmedDetails.add(id);
         receiveCurrentChange(world, observer, {
           kind: 'confirm',
           subjectId: id,
           channel,
           through: world.simTime,
+          sampleToken: sampleTokens.get(id),
           scopes: new Set(['broad', 'detail']),
           exposures: new Set([
             currentNativeFacet(state, `${id}:body`, { modality: 'sight' })?.grant.exposure ?? '',
@@ -4141,6 +4170,7 @@ export function reconcileVisualEvidence(
             },
           },
         });
+      }
     };
     confirmDetailed();
     if (!measuredSubjects && hasMemory(observer)) {
@@ -4157,20 +4187,6 @@ export function reconcileVisualEvidence(
         }
     }
     confirmDetailed();
-    // A broad body becomes eligible only after this completed phase installs its
-    // confirmation. Bind its local person now, including people outside detail;
-    // server reads must never create identities or require an extra sight sample.
-    if (hasMemory(observer))
-      for (const id of unboundBodies) {
-        const body = currentNativeFacet(state, `${id}:body`, { modality: 'sight' });
-        if (!body || body.field.localSubject) continue;
-        const localSubject = selectedBodyIndividual(world, observer.id, id);
-        if (localSubject)
-          receiveCurrentSample(world, state, `${id}:body`, {
-            ...projectCurrentFacet(body),
-            localSubject,
-          });
-      }
     retireCurrentMotion(world, observer.id, retiredMotion);
     pruneLostBodyIndividuals(world, observer.id, lostIndividuals);
     refreshMotionExpiry(state);
@@ -4356,6 +4372,8 @@ export function reconcileAttendedTemporalEvidence(
     if (!body || body.availability) continue;
     const lease = effectiveCurrentFacetSupport(world, observerId, body);
     if (lease.confirmedThrough !== world.simTime) continue;
+    const carrier = currentRecordedCarrier(state, body);
+    if (!carrier) continue;
     const held = retainTemporalCurrentSupport(
       world,
       observerId,
@@ -4363,16 +4381,19 @@ export function reconcileAttendedTemporalEvidence(
       selectedTemporalPolicy(world).optional,
     );
     if (!held) continue;
-    const ordinal = held.receipt.facets[0]?.ordinal;
-    if (ordinal === undefined) {
+    const memberIndex = held.receipt.facets[0]?.memberIndex;
+    if (memberIndex === undefined) {
       releaseTemporalSupport(world, observerId, held.receipt.id);
       continue;
     }
     const credited = selectedCreditAttentionContact(world, observerId, subject, {
-      sourceKey: JSON.stringify(temporalReceiptSource(held.receipt)),
+      sourceKey: JSON.stringify(temporalReceiptSource(carrier.address)),
       at: lease.confirmedThrough,
-      order: held.receipt.order,
-      support: [JSON.stringify({ source: temporalReceiptSource(held.receipt), ordinal })],
+      order: carrier.order,
+      support: [
+        JSON.stringify({source:temporalReceiptSource(carrier.address),memberIndex:carrier.address.memberIndex}),
+        JSON.stringify({ source: temporalReceiptSource(held.receipt), memberIndex }),
+      ],
     });
     if (!credited) releaseTemporalSupport(world, observerId, held.receipt.id);
   }
@@ -4381,6 +4402,21 @@ export function reconcileAttendedTemporalEvidence(
   // selection/promotion pass in this received phase.
   const geometry = capturedReceivedFeatureHistory(world, observerId, newGeometry);
   return geometry;
+}
+
+/** Incidental contact refers to the admitted raw member; its optional minimum
+ * capsule is separate support for later meaningful recognition. */
+function currentRecordedCarrier(state:PerceptionEvidenceOwner,field:CurrentFacetRecord) {
+  const contact=currentContactGet(state,field.grant.subjectId);
+  const group=contact?.content.groups.find(group=>group.received.fields[field.value.kind]?.id===field.id &&
+    sameDefinitionPin(group.received.grant.channel,field.grant.channel));
+  if(!group)return;
+  for(const mark of currentGroupRecordings(group,[[field.value.kind,field.value.kind==='body'?'detail':'value']])) {
+    if(mark.gap||!mark.carrier)continue;
+    const member=mark.carrierMembers?.find(member=>member.partIndices.some(index=>
+      mark.binding.parts.some(part=>part.partIndex===index&&part.kind===field.value.kind)));
+    if(member)return {address:{...mark.carrier,memberIndex:member.memberIndex},order:mark.lastOrder};
+  }
 }
 
 /** Physical loss ends availability immediately; episode/familiarity continuity is separate. */
@@ -4627,9 +4663,31 @@ export function acquireAwarenessObservation(
   if (awareness.modality === 'internal') return;
   const observer = entityGet(world.entities, awareness.actorId);
   if (!observer?.actor) return;
-  return withReceivedChanges(world, observer, () =>
-    prepareAwarenessObservation(world, event, awareness, receivedPoint),
-  );
+  return withReceivedChanges(world, observer, () => {
+    const before = owner(world, observer).received.length;
+    const observation = prepareAwarenessObservation(world, event, awareness, receivedPoint);
+    if (!observation || !hasMemory(observer)) return observation;
+    const position = owner(world, observer).receipts[observationAcquisitionKey(observation)];
+    // Only this actual acquisition may append received chronology. Encounter
+    // wrappers and later memory admission reuse their already owned source.
+    if (position === undefined || position < before) return observation;
+    const required = selectedRecordingReason(world, {
+      source: 'awareness', eventType: awareness.eventType, modality: awareness.modality,
+      triggerKind: awareness.triggerKind,
+      own: awareness.sourceId === observer.id || awareness.triggerKind === 'self_event',
+      hasExposure: !!awareness.exposure,
+      ...(awareness.exposure ? { exposureKind: awareness.exposure.kind } : {}),
+      consequence: awareness.triggerKind === 'self_event' || awareness.triggerKind === 'directed_action',
+    }) === 'required';
+    if (required || observation.context?.attended) {
+      awareness.sourceReceipt = captureTemporalObservation(
+        world, observer.id, observation, [awareness.eventId, observation.id], required,
+        selectedTemporalPolicy(world).recent,
+        observation.context ? {contextSubjects: observation.context.subjects.map(subject => subject.track)} : {},
+      );
+    }
+    return observation;
+  });
 }
 function prepareAwarenessObservation(
   world: WorldState,
@@ -5228,6 +5286,7 @@ export function validateObservationContribution(
     !Number.isSafeInteger(observation.observer.physicalLife) ||
     observation.observer.physicalLife < 0 ||
     !Number.isFinite(observation.acquiredAt) ||
+    !Number.isSafeInteger(observation.receivedOrder) || observation.receivedOrder < 0 ||
     !['sight', 'hearing', 'touch'].includes(observation.modality) ||
     !validObservationDetector(observation.detector) ||
     (observation.channel !== undefined && !isDefinitionPin(observation.channel)) ||

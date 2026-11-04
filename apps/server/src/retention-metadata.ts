@@ -1,17 +1,25 @@
 import {
-  selectedTemporalPolicy,
-  temporalOpenReservationTotals,
-  temporalPageLastReceivedAt,
+  experienceMaintenanceTarget,
   selectedObserverIdentityKnowledge,
-  temporalPageOperations,
-  temporalOperationHeader,
+  temporalPageMetadata,
+  installTemporalChargeDirectories,
+  selectedTemporalPolicy,
+  receivedDirectoryContains,
+  receivedPositionEligible,
+  materializeReceivedEntry,
+  temporalReceiptAliases,
+  temporalReceiptIndividualIds,
+  temporalPageReferences,
+  temporalRecentAt,
+  type TemporalPage,
+  type ReceivedValueLookup,
+  type ReceivedChargeDirectory,
   type WorldState,
 } from '@open-legend/domain';
 import {
   maximumTemporalPreparationRows,
-  selectTemporalRetirement,
   temporalPageRecordId,
-  type TemporalRetentionHeader,
+  readTemporalPageRecord,
 } from './temporal-storage.js';
 import { RECORD_NODES, RECORD_PARENTS, liveEvidenceRowSql } from './world-record-schema.js';
 import type { RecordChanges, RowChange } from './world-records.js';
@@ -20,9 +28,9 @@ import type { AccountRetentionMetadata } from './retention-record-metadata.js';
 import { countMetric } from './performance.js';
 import { receiptLookupBucket } from './temporal-page-storage.js';
 import type { MetadataBaseline } from './live-read-overlay.js';
+import { sqlRowBatches } from './sql-rows.js';
 
 interface RetentionSelection {
-  recentActors: readonly string[];
   changes: RecordChanges;
   world: WorldState;
   previous?: WorldState;
@@ -60,16 +68,13 @@ const selectedColumns: Record<(typeof indexedTables)[number], readonly string[]>
   mind_memories: [...accountColumns, 'unresolved', 'expires_at', 'weaken_at'],
   mind_temporal_pages: [
     'actor_id',
-    'source_id',
     'physical_life',
     'receipt_epoch',
-    'first_ordinal',
-    'last_ordinal',
-    'first_order',
+    'first_batch_order', 'first_entry', 'first_member',
+    'last_batch_order', 'last_entry', 'last_member',
     'first_at',
     'last_at',
-    'last_received_at',
-    'logical_bytes',
+    'entry_bytes', 'charge_directory',
     'receipt_count',
     'source_ids',
     'individual_ids',
@@ -117,14 +122,12 @@ type Records = Map<string, RetentionRow>;
 const identity = (table: string, id: string) => JSON.stringify([table, id]);
 const preparedMetadata = new WeakMap<RowChange, RetentionRow>();
 
-type MembershipKind = 'account-alias' | 'recent-alias' | 'individual';
+type MembershipKind = 'account-alias' | 'individual';
 type Memberships = Map<MembershipKind, Map<string, number>>;
 function rowMembership(row: RetentionRow): Array<[MembershipKind, Iterable<string>]> {
-  if (row.table === 'mind_temporal_pages')
-    return [
-      ['recent-alias', row.columns['source_ids'] as string[]],
-      ['individual', row.columns['individual_ids'] as string[]],
-    ];
+  // Physical block membership is only a candidate index. An expired sibling's
+  // aliases cannot prove personal retention for a still-live boundary block.
+  if (row.table === 'mind_temporal_pages') return [];
   if (!accountTables.includes(row.table as (typeof accountTables)[number])) return [];
   const aliases =
     row.columns['kind'] === 'impression'
@@ -173,8 +176,10 @@ function metadata(table: Table, row: RowChange): RetentionRow {
 function nativePageMetadata(
   page: import('@open-legend/domain').TemporalPage,
   reservation: number,
+  world?: WorldState,
 ): RetentionRow {
   const id = temporalPageRecordId(page.actorId, page.id);
+  const prepared = temporalPageMetadata(page, {world});
   return {
     table: 'mind_temporal_pages',
     id,
@@ -184,19 +189,14 @@ function nativePageMetadata(
     encodedBytes: reservation,
     columns: {
       actor_id: page.actorId,
-      source_id: page.id,
       physical_life: page.physicalLife,
       receipt_epoch: page.epoch,
-      first_ordinal: page.fromOrdinal,
-      last_ordinal: page.throughOrdinal,
-      first_order:
-        page.operations[0]?.kind === 'check'
-          ? page.operations[0].order
-          : page.operations[0]?.receipt.order,
-      first_at: page.fromAt,
-      last_at: page.throughAt,
-      last_received_at: temporalPageLastReceivedAt(page),
-      logical_bytes: page.bytes,
+      first_batch_order: prepared.firstBatchOrder, first_entry: prepared.firstEntry, first_member: prepared.firstMember,
+      last_batch_order: prepared.lastBatchOrder, last_entry: prepared.lastEntry, last_member: prepared.lastMember,
+      first_at: prepared.firstAt,
+      last_at: prepared.lastAt,
+      entry_bytes: prepared.entryBytes,
+      charge_directory: JSON.stringify(prepared.chargeDirectory),
       receipt_count: page.count,
       source_ids: page.sourceIds,
       individual_ids: page.individualIds,
@@ -215,36 +215,16 @@ function parseRetentionRow(row: Record<string, unknown>): RetentionRow {
     encodedBytes: Number(row['encoded_bytes']),
   };
 }
-function retentionHeader(row: RetentionRow): TemporalRetentionHeader {
-  const c = row.columns;
-  return {
-    id: row.id,
-    position: row.position,
-    encodedBytes: row.encodedBytes,
-    sourceId: String(c['source_id']),
-    at: Number(c['first_at']),
-    through: Number(c['last_received_at']),
-    bytes: Number(c['logical_bytes']),
-    count: Number(c['receipt_count']),
-    sources: [],
-    order: Number(c['first_order']),
-    epoch: String(c['receipt_epoch']),
-    ordinal: Number(c['last_ordinal']),
-  };
-}
 
-/** Native counters account ordinary appends. A prior account edit or actual
- * dependency is the shared boundary for capturing cold accounts and replacing
- * their exact version closure; an empty manifest does not change that closure. */
+/** Native counters own append charges; only edits or actual exact dependencies
+ * require the prior-account/source-version closure. */
 export function accountWriteNeedsRetentionClosure(
-  table: (typeof accountTables)[number],
-  row: RowChange,
+  table: (typeof accountTables)[number], row: RowChange,
 ): boolean {
   return !row.create || accountWriteHasRetentionDependencies(table, row);
 }
 export function accountWriteHasRetentionDependencies(
-  table: (typeof accountTables)[number],
-  row: RowChange,
+  table: (typeof accountTables)[number], row: RowChange,
 ): boolean {
   const support = metadata(table, row).columns['retention_metadata'] as AccountRetentionMetadata;
   return support.versions.length > 0 || support.learning.length > 0;
@@ -280,6 +260,7 @@ function deletedAncestor(
  * after preparation; no complete cold-history mirror lives in the repository. */
 export class RetentionMetadata {
   private worldId?: string;
+  private world?: WorldState;
   private logical = new Map<Table, Records>();
   private actors = new Map<Table, Map<string, Set<string>>>();
   private readonly membership = new Map<string, Memberships>();
@@ -290,6 +271,7 @@ export class RetentionMetadata {
 
   clear(): void {
     this.worldId = undefined;
+    this.world = undefined;
     this.logical.clear();
     this.actors.clear();
     this.membership.clear();
@@ -308,6 +290,7 @@ export class RetentionMetadata {
     actorIds: readonly string[],
     selection: RetentionSelection,
   ): Promise<RetentionSnapshot> {
+    this.world = selection.world;
     return db.readMetadataBaseline
       ? db.readMetadataBaseline(actorIds, (baseline) =>
           this.captureBaseline(db, worldId, actorIds, selection, baseline),
@@ -332,7 +315,8 @@ export class RetentionMetadata {
         })));
     if (!head || head.worldId !== worldId) throw new Error('Retention metadata world changed.');
     const projection = (table: Table) => {
-      const encoded = 'octet_length(t.payload)';
+      const encoded = table === 'mind_temporal_pages' ? 't.encoded_bytes' :
+        accountTables.includes(table as (typeof accountTables)[number]) ? 't.logical_bytes' : 'octet_length(t.payload)';
       return `SELECT '${table}' AS table_name,t.id,t.parent_id,t.position,t.actor_id,
         jsonb_build_object(${selectedColumns[table].flatMap((name) => [`'${name}'`, `t.${name}`]).join(',')}) AS columns,
         ${encoded} AS encoded_bytes`;
@@ -345,7 +329,6 @@ export class RetentionMetadata {
         if (value.table === 'mind_temporal_pages') countMetric('retention.segmentMetadataRows');
       }
     };
-    const policy = selectedTemporalPolicy(selection.world);
     // Account/version closure is independent of recent sensory quota. Only actual
     // account maintenance or edits need its complete dependency metadata.
     const changedAccounts = new Set<string>();
@@ -375,202 +358,96 @@ export class RetentionMetadata {
         !accounts ||
         (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime) ||
         (['optional', 'required', 'speech'] as const).some(
-          (key) =>
-            accounts[key].bytes > policy[key].maxBytes ||
-            accounts[key].count > policy[key].maxRecords,
+          (key) => {
+            const target = experienceMaintenanceTarget(selection.world, key);
+            return accounts[key].bytes > target.maxBytes || accounts[key].count > target.maxRecords;
+          },
         )
       );
     });
     const accountNextDue = new Map<string, number | null>(),
       accountMore = new Set<string>();
-    for (const actorId of accountActors) {
-      const accounts = selection.world.experience?.temporal?.actors[actorId]?.accounts;
-      const due =
-        !accounts || (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime);
-      const pressured = (['optional', 'required', 'speech'] as const).filter(
-        (pool) =>
-          !accounts ||
-          accounts[pool].bytes > policy[pool].maxBytes ||
-          accounts[pool].count > policy[pool].maxRecords,
-      );
-      for (const table of accountTables) {
-        const overridden = new Set([
-          ...(selection.changes.deletes.get(table) ?? []),
-          ...(selection.changes.writes.get(table) ?? []).map((row) => row.id),
-        ]);
-        // Only exact old rows are needed by replacement/source-version planning.
-        const changed = [
-          ...new Set([
-            ...(selection.changes.deletes.get(table) ?? []),
-            ...(selection.changes.writes.get(table) ?? [])
-              .filter((row) => !row.create)
-              .map((row) => row.id),
-          ]),
-        ];
-        if (changed.length)
-          add(
-            await db
-              .prepare(
-                `${projection(table)} FROM ${table} t
-          WHERE t.world_id=? AND t.actor_id=? AND t.id=ANY(?::text[])`,
-              )
-              .all(worldId, actorId, changed),
-          );
-        const criteria = [
-          ...(due ? [{ sql: 't.next_due_at<=?', params: [selection.world.simTime] }] : []),
-          ...pressured.map((pool) => ({ sql: 't.retention_class=?', params: [pool] })),
-        ];
-        for (const criterion of criteria) {
-          const page = await db
-            .prepare(
-              `${projection(table)} FROM ${table} t
-            WHERE t.world_id=? AND t.actor_id=? AND t.retention_class<>'sensory'
-            AND t.active_or_protected=0 AND NOT(t.id=ANY(?::text[])) AND ${criterion.sql}
-            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT 65`,
-            )
-            .all(worldId, actorId, [...overridden], ...criterion.params);
-          add(page);
-          if (page.length === 65 && criterion.sql === 't.next_due_at<=?') accountMore.add(actorId);
+    // Each table consumes the whole selected scope in one indexed query family.
+    // Criteria keep their own lookahead; the native selector deduplicates them
+    // before its single 64-account / 4 MiB allowance, rather than multiplying it.
+    for (const table of accountTables) {
+      const overridden = new Map<string, Set<string>>(), changed = new Map<string, Set<string>>();
+      const mark = (target: Map<string, Set<string>>, actorId: string, id: string) => {
+        let ids = target.get(actorId);
+        if (!ids) target.set(actorId, ids = new Set());
+        ids.add(id);
+      };
+      for (const row of selection.changes.writes.get(table) ?? []) {
+        const actorId = metadata(table, row).actorId;
+        mark(overridden, actorId, row.id);
+        if (!row.create) mark(changed, actorId, row.id);
+      }
+      for (const id of selection.changes.deletes.get(table) ?? []) {
+        const actorId = (JSON.parse(id) as string[])[table === 'mind_memories' ? 2 : 3]!;
+        mark(overridden, actorId, id);
+        mark(changed, actorId, id);
+      }
+      const requests = accountActors.map(actorId => {
+        const accounts = selection.world.experience?.temporal?.actors[actorId]?.accounts;
+        return {
+          actor_id: actorId, at: selection.world.simTime,
+          due: !accounts || (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime),
+          pressured: (['optional', 'required', 'speech'] as const).filter(pool => {
+            const target = experienceMaintenanceTarget(selection.world, pool);
+            return !accounts || accounts[pool].bytes > target.maxBytes || accounts[pool].count > target.maxRecords;
+          }),
+          overridden: [...(overridden.get(actorId) ?? [])], changed: [...(changed.get(actorId) ?? [])],
+        };
+      });
+      for (const batch of sqlRowBatches(requests.map(request => [request]))) {
+        const selected = await db.prepare(`WITH requested AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,at DOUBLE PRECISION,due BOOLEAN,
+            pressured TEXT[],overridden TEXT[],changed TEXT[])
+        ), scoped AS (
+          ${projection(table)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
+            SELECT t.* FROM ${table} t WHERE q.due AND t.world_id=? AND t.actor_id=q.actor_id
+              AND t.retention_class<>'sensory' AND t.active_or_protected=0 AND t.next_due_at<=q.at
+              AND NOT(t.id=ANY(q.overridden))
+            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT 65
+          ) t
+          UNION ALL
+          ${projection(table)},'pressure'::text AS criterion FROM requested q
+          CROSS JOIN LATERAL unnest(q.pressured) pool(kind) CROSS JOIN LATERAL (
+            SELECT t.* FROM ${table} t WHERE t.world_id=? AND t.actor_id=q.actor_id
+              AND t.retention_class=pool.kind AND t.active_or_protected=0 AND NOT(t.id=ANY(q.overridden))
+            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT 65
+          ) t
+          UNION ALL
+          ${projection(table)},'changed'::text AS criterion FROM requested q JOIN ${table} t
+            ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=ANY(q.changed)
+          UNION ALL
+          SELECT '${table}',NULL::text,NULL::text,NULL::bigint,q.actor_id,
+            jsonb_build_object('next_due_at',next.due),0::bigint,'deadline'::text
+          FROM requested q CROSS JOIN LATERAL (
+            SELECT MIN(t.next_due_at) AS due FROM ${table} t
+            WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.retention_class<>'sensory'
+              AND t.active_or_protected=0 AND t.next_due_at>q.at AND NOT(t.id=ANY(q.overridden))
+          ) next
+        ) SELECT * FROM scoped`).all(JSON.stringify(batch.map(([request]) => request)), worldId, worldId, worldId, worldId);
+        const dueCounts = new Map<string, number>();
+        for (const row of selected) {
+          const actorId = String(row['actor_id']);
+          if (row['criterion'] === 'deadline') {
+            const columns = row['columns'] as Record<string, unknown>, due = columns['next_due_at'];
+            if (due !== null && due !== undefined)
+              accountNextDue.set(actorId, Math.min(accountNextDue.get(actorId) ?? Infinity, Number(due)));
+          } else {
+            add([row]);
+            if (row['criterion'] === 'due') {
+              const count = (dueCounts.get(actorId) ?? 0) + 1;
+              dueCounts.set(actorId, count);
+              if (count === 65) accountMore.add(actorId);
+            }
+          }
         }
-        const next = await db
-          .prepare(
-            `SELECT MIN(next_due_at) AS due FROM ${table}
-          WHERE world_id=? AND actor_id=? AND retention_class<>'sensory' AND active_or_protected=0
-          AND next_due_at>? AND NOT(id=ANY(?::text[]))`,
-          )
-          .get(worldId, actorId, selection.world.simTime, [...overridden]);
-        if (next?.['due'] !== null && next?.['due'] !== undefined)
-          accountNextDue.set(
-            actorId,
-            Math.min(accountNextDue.get(actorId) ?? Infinity, Number(next['due'])),
-          );
       }
     }
 
-    const retired = selection.changes.deletes.get('mind_temporal_pages') ?? [];
-    const ownerDeleted = (actorId: string) =>
-      deletedAncestor(
-        selection.changes,
-        'mind_temporal_pages',
-        JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'pages']),
-      );
-    for (const actorId of actorIds) {
-      const wholeOwner = ownerDeleted(actorId);
-      const actor =
-        selection.world.experience?.temporal?.actors[actorId] ??
-        (wholeOwner ? selection.previous?.experience?.temporal?.actors[actorId] : undefined);
-      if (!actor) continue;
-      if (!wholeOwner && !selection.recentActors.includes(actorId)) continue;
-      const overrides = new Map<string, TemporalRetentionHeader>();
-      for (const row of wholeOwner
-        ? []
-        : (selection.changes.writes.get('mind_temporal_pages') ?? [])) {
-        const value = metadata('mind_temporal_pages', row);
-        if (
-          value.actorId === actorId &&
-          !deletedBy(selection.changes, value.table, value.id, value.parent)
-        )
-          overrides.set(value.id, retentionHeader(value));
-      }
-      if (!wholeOwner)
-        for (const intent of selection.changes.temporal?.values() ?? []) {
-          if (intent.after.actorId !== actorId) continue;
-          const value = nativePageMetadata(intent.after, intent.reservedBytes);
-          if (!deletedBy(selection.changes, value.table, value.id, value.parent))
-            overrides.set(value.id, retentionHeader(value));
-        }
-      for (const chunk of wholeOwner ? [] : actor.pages) {
-        const id = temporalPageRecordId(actorId, chunk.id);
-        const parent = JSON.stringify([
-          'world',
-          'experience',
-          'temporal',
-          'actors',
-          actorId,
-          'pages',
-        ]);
-        if (deletedBy(selection.changes, 'mind_temporal_pages', id, parent)) continue;
-        overrides.set(id, {
-          id,
-          sourceId: chunk.id,
-          at: chunk.fromAt,
-          through: temporalPageLastReceivedAt(chunk),
-          bytes: chunk.bytes,
-          count: chunk.count,
-          sources: chunk.sourceRefs,
-          order: temporalOperationHeader(chunk, temporalPageOperations(chunk)[0]!).order,
-          epoch: chunk.epoch,
-          ordinal: chunk.throughOrdinal,
-        });
-      }
-      let cursor: TemporalRetentionHeader | undefined;
-      const cold = new Map<string, RetentionRow>();
-      for (;;) {
-        // A small keyset page is just an input. The semantic selector, not the
-        // preparation ceiling, determines which parents need their segment arrays.
-        const page = await db
-          .prepare(
-            `${projection('mind_temporal_pages')}
-          FROM mind_temporal_pages t WHERE t.world_id=? AND t.actor_id=?
-          AND t.retired_revision IS NULL AND NOT(t.id=ANY(?::text[]))
-          ${cursor ? 'AND (t.last_received_at,t.last_ordinal,t.id) > (?,?,?)' : ''}
-          ORDER BY t.last_received_at,t.last_ordinal,t.id LIMIT 33`,
-          )
-          .all(
-            worldId,
-            actorId,
-            [...retired, ...overrides.keys()],
-            ...(cursor ? [cursor.through, cursor.ordinal, cursor.id] : []),
-          );
-        countMetric('retention.headersExamined', page.length);
-        if (page.length > maximumTemporalPreparationRows + 1)
-          throw new Error('Recent retirement header cohort exceeds bounded preparation.');
-        const hasMore = page.length > 32;
-        const included = page.slice(0, 32);
-        for (const row of included) {
-          const value = parseRetentionRow(row);
-          cold.set(value.id, value);
-        }
-        const last = included.at(-1);
-        cursor = last ? retentionHeader(parseRetentionRow(last)) : cursor;
-        const ordered = [...[...cold.values()].map(retentionHeader), ...overrides.values()]
-          .filter(
-            (header) =>
-              !hasMore ||
-              (cursor &&
-                (header.through < cursor.through ||
-                  (header.through === cursor.through &&
-                    (header.ordinal < cursor.ordinal ||
-                      (header.ordinal === cursor.ordinal && header.id <= cursor.id))))),
-          )
-          .sort(
-            (a, b) =>
-              a.through - b.through ||
-              a.ordinal - b.ordinal ||
-              (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
-          );
-        if (wholeOwner) {
-          for (const value of cold.values()) {
-            rows.set(identity(value.table, value.id), value);
-          }
-          cold.clear();
-          if (hasMore) continue;
-          break;
-        }
-        const picked = selectTemporalRetirement(selection.world, actorId, ordered, !hasMore);
-        if (picked.needsMore) continue;
-        countMetric('retention.evictionHeaders', picked.retired.length);
-        for (const header of picked.retired) {
-          const value = cold.get(header.id);
-          if (value) rows.set(identity(value.table, value.id), value);
-        }
-        if (picked.boundary) {
-          const value = cold.get(picked.boundary.id);
-          if (value) rows.set(identity(value.table, value.id), value);
-        }
-        break;
-      }
-    }
     const changed = (table: Table) => [
       ...new Set([
         ...(selection.changes.deletes.get(table) ?? []),
@@ -599,7 +476,9 @@ export class RetentionMetadata {
     };
   }
   initialize(snapshot: Awaited<ReturnType<RetentionMetadata['capture']>>): void {
+    const world = this.world;
     this.clear();
+    this.world = world;
     this.worldId = snapshot.worldId;
     this.revision = snapshot.revision;
     for (const row of snapshot.rows) {
@@ -609,9 +488,10 @@ export class RetentionMetadata {
     this.accountNextDue = new Map(snapshot.accountNextDue);
     this.accountMore = new Set(snapshot.accountMore);
   }
-  initializeEmpty(worldId: string): void {
+  initializeEmpty(world: WorldState): void {
     this.clear();
-    this.worldId = worldId;
+    this.worldId = world.id;
+    this.world = world;
   }
   /** A restore's copied arrays have no residency certificate. Their independent
    * saved counters must prove every world-owned source is present; a boolean
@@ -619,15 +499,15 @@ export class RetentionMetadata {
    * archived bodies retain GameSaves' separately validated version ownership. */
   assertCandidateCoverage(world: WorldState): void {
     this.assertWorld(world.id);
+    this.world = world;
     for (const [actorId, actor] of Object.entries(world.experience?.temporal?.actors ?? {})) {
-      const open = temporalOpenReservationTotals(world, actorId);
-      let bytes = open.bytes,
-        count = open.count;
-      for (const row of this.records('mind_temporal_pages', actorId)) {
-        bytes += Number(row.columns['logical_bytes']);
-        count += Number(row.columns['receipt_count']);
-      }
-      if (bytes !== actor.bytes || count !== actor.count)
+      const directories = [...this.records('mind_temporal_pages', actorId)].map(row => {
+        const directory = row.columns['charge_directory'];
+        return (typeof directory === 'string' ? JSON.parse(directory) : directory) as ReceivedChargeDirectory;
+      });
+      const reconstructed = {...actor};
+      installTemporalChargeDirectories(reconstructed, directories);
+      if (reconstructed.bytes !== actor.bytes || reconstructed.count !== actor.count)
         throw new Error('Complete retention preparation cannot use a resident history tail.');
       const totals = {
         optional: { bytes: 0, count: 0 },
@@ -703,7 +583,7 @@ export class RetentionMetadata {
       if (indexed.has(table))
         for (const row of rows) this.setLogical(metadata(table as Table, row));
     for (const intent of changes.temporal?.values() ?? [])
-      this.setLogical(nativePageMetadata(intent.after, intent.reservedBytes));
+      if (!intent.deleted) this.setLogical(nativePageMetadata(intent.after, intent.reservedBytes, this.world));
   }
   private ancestor(table: string, ancestor: string): boolean {
     let parent = RECORD_PARENTS.get(table);
@@ -713,8 +593,8 @@ export class RetentionMetadata {
     }
     return false;
   }
-  fromRecords(worldId: string, changes: RecordChanges): void {
-    this.initializeEmpty(worldId);
+  fromRecords(world: WorldState, changes: RecordChanges): void {
+    this.initializeEmpty(world);
     this.changed(changes);
   }
 
@@ -764,6 +644,9 @@ export class RetentionMetadata {
   moreAccountCandidates(actorId: string): boolean {
     return this.accountMore.has(actorId);
   }
+  capturedWorld(): WorldState | undefined {
+    return this.world;
+  }
 }
 
 /** The selected durable baseline became stale before a later preparation read.
@@ -790,9 +673,10 @@ export class RetentionMetadataView {
           new Map(rows.map((row) => [row.id, metadata(table as Table, row)])),
         );
     for (const intent of changes?.temporal?.values() ?? []) {
+      if (intent.deleted) continue;
       let pages = this.writes.get('mind_temporal_pages');
       if (!pages) this.writes.set('mind_temporal_pages', (pages = new Map()));
-      const row = nativePageMetadata(intent.after, intent.reservedBytes);
+      const row = nativePageMetadata(intent.after, intent.reservedBytes, owner.capturedWorld());
       pages.set(row.id, row);
     }
     const touched = new Map<string, RetentionRow>();
@@ -817,7 +701,7 @@ export class RetentionMetadataView {
         }
     }
   }
-  private deleted(row: RetentionRow): boolean {
+  private deleted(row: Pick<RetentionRow, 'table' | 'id' | 'parent'>): boolean {
     return (
       !!(this.removed && deletedBy({ deletes: this.removed }, row.table, row.id, row.parent)) ||
       !!(this.changes && deletedBy(this.changes, row.table, row.id, row.parent))
@@ -857,11 +741,8 @@ export class RetentionMetadataView {
       0
     );
   }
-  private hasAlias(actorId: string, id: string, includeRecent: boolean): boolean {
-    return (
-      this.has(actorId, 'account-alias', id) ||
-      (includeRecent && this.has(actorId, 'recent-alias', id))
-    );
+  private hasAlias(actorId: string, id: string): boolean {
+    return this.has(actorId, 'account-alias', id);
   }
   private hasIndividual(actorId: string, id: string): boolean {
     return this.has(actorId, 'individual', id);
@@ -899,12 +780,32 @@ export class RetentionMetadataView {
   ): Promise<Array<{ aliases: Set<string>; individuals: Set<string> }>> {
     const results = requests.map((request) => ({
       aliases: new Set(
-        request.aliases.filter((id) => this.hasAlias(request.actorId, id, request.includeRecent)),
+        request.aliases.filter((id) => this.hasAlias(request.actorId, id)),
       ),
       individuals: new Set(
         request.individualIds.filter((id) => this.hasIndividual(request.actorId, id)),
       ),
     }));
+    const world = this.owner.capturedWorld();
+    for (const [key, request] of requests.entries())
+      if (request.includeRecent && (request.aliases.some(id => !results[key]!.aliases.has(id)) ||
+        request.individualIds.some(id => !results[key]!.individuals.has(id)))) {
+        if (!world) throw new Error('Recent membership requires its captured native cut.');
+        const pages = new Map((world.experience?.temporal?.actors[request.actorId]?.pages ?? [])
+          .map(page => [page.id, page]));
+        for (const intent of [...(this.changes?.temporalEdits ?? []), ...(this.changes?.temporal?.values() ?? [])])
+          if (intent.after.actorId === request.actorId) {
+            if (intent.deleted) pages.delete(intent.after.id);
+            else pages.set(intent.after.id, intent.after);
+          }
+        for (const page of pages.values()) {
+          if (!this.deleted({table: 'mind_temporal_pages', id: temporalPageRecordId(page.actorId, page.id),
+            parent: JSON.stringify(['world','experience','temporal','actors',page.actorId,'pages'])}))
+            this.accumulateRecentMembership(page, world, world.receivedValues?.sources ?? {}, request, results[key]!);
+          if (request.aliases.every(id => results[key]!.aliases.has(id)) &&
+            request.individualIds.every(id => results[key]!.individuals.has(id))) break;
+        }
+      }
     const inputs = requests.flatMap((request, key) => {
       const { actorId, includeRecent } = request,
         result = results[key]!;
@@ -969,6 +870,11 @@ export class RetentionMetadataView {
               ...individuals.map((id) => receiptLookupBucket('individualIds', id)),
             ]),
           ],
+          age_floor: world ? Math.max(world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
+            world.experience?.temporal?.actors[actorId]?.frontier?.expiredThroughTime ?? -Infinity) : null,
+          pressure_batch: world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address.batchOrder ?? null,
+          pressure_entry: world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address.entryIndex ?? null,
+          pressure_member: world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address.memberIndex ?? null,
         },
       ];
     });
@@ -997,7 +903,8 @@ export class RetentionMetadataView {
         return `SELECT q.key,
           ARRAY(SELECT id FROM unnest(q.aliases) id WHERE t.kind IS DISTINCT FROM 'impression' AND
             (id=t.source_id OR id=t.event_id OR jsonb_exists(t.retention_metadata->'aliases',id))) AS aliases,
-          ARRAY(SELECT id FROM unnest(q.individuals) id WHERE id=ANY(t.individual_ids)) AS individuals
+          ARRAY(SELECT id FROM unnest(q.individuals) id WHERE id=ANY(t.individual_ids)) AS individuals,
+          NULL::text AS page_id,0::bigint AS page_bytes
           FROM requested q JOIN ${table} t ON t.world_id=? AND t.actor_id=q.actor_id
           WHERE q.${suffix} AND NOT(t.id=ANY(q.excluded_${suffix})) AND
             (t.source_id=ANY(q.aliases) OR t.event_id=ANY(q.aliases) OR
@@ -1008,21 +915,22 @@ export class RetentionMetadataView {
           `WITH requested AS MATERIALIZED (
           SELECT * FROM jsonb_to_recordset(?::jsonb) q(key int,actor_id text,aliases text[],individuals text[],
             awareness boolean,memories boolean,summaries boolean,recent boolean,
-            excluded_awareness text[],excluded_memories text[],excluded_summaries text[],excluded_segments text[],buckets smallint[])
+            excluded_awareness text[],excluded_memories text[],excluded_summaries text[],excluded_segments text[],buckets smallint[],
+            age_floor double precision,pressure_batch bigint,pressure_entry bigint,pressure_member bigint)
         ), recent_pages AS MATERIALIZED (
-          SELECT q.key,q.aliases,q.individuals,t.source_ids,t.individual_ids
+          SELECT q.key,t.id,t.encoded_bytes
           FROM requested q JOIN mind_temporal_pages t ON t.world_id=? AND t.actor_id=q.actor_id
           WHERE q.recent AND t.lookup_buckets && q.buckets
             AND (t.source_ids && q.aliases OR t.individual_ids && q.individuals)
             AND NOT(t.id=ANY(q.excluded_segments))
+            AND t.last_at>q.age_floor AND (q.pressure_batch IS NULL OR
+              (t.last_batch_order,t.last_entry,t.last_member)>(q.pressure_batch,q.pressure_entry,q.pressure_member))
             AND ${liveEvidenceRowSql('mind_temporal_pages')}
         ), proofs AS (
           ${accountQueries.join(' UNION ALL ')}
-          UNION ALL SELECT key,
-            ARRAY(SELECT id FROM unnest(aliases) id WHERE id=ANY(source_ids)),
-            ARRAY(SELECT id FROM unnest(individuals) id WHERE id=ANY(individual_ids))
+          UNION ALL SELECT key,ARRAY[]::text[],ARRAY[]::text[],id,encoded_bytes
           FROM recent_pages
-        ) SELECT h.world_id,h.revision,p.key,p.aliases,p.individuals
+        ) SELECT h.world_id,h.revision,p.key,p.aliases,p.individuals,p.page_id,p.page_bytes
           FROM world_head h LEFT JOIN proofs p ON true WHERE h.id=1`,
         )
         .all(encoded, worldId, ...accountTables.map(() => worldId));
@@ -1042,7 +950,69 @@ export class RetentionMetadataView {
           result.individuals.add(id);
         }
       }
+      const pageSizes = new Map(rows.filter(row => row['page_id'] !== null && row['page_id'] !== undefined)
+        .map(row => [String(row['page_id']), Number(row['page_bytes'])]));
+      if (pageSizes.size) {
+        if (!world || pageSizes.size > maximumTemporalPreparationRows ||
+          [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) > 4 * 1024 * 1024)
+          throw new Error('Recent membership exceeds bounded block preparation.');
+        const pages = new Map<string, TemporalPage>();
+        for (const row of await db.prepare('SELECT * FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
+          .all(worldId, [...pageSizes.keys()])) pages.set(String(row['id']), readTemporalPageRecord(row));
+        if (pages.size !== pageSizes.size) throw new Error('Recent membership block is unavailable.');
+        const sources: Record<string, ReceivedValueLookup[string]> = {};
+        const references = [...new Set([...pages.values()].flatMap(page => [...temporalPageReferences(page)]))];
+        for (const id of references) {
+          const value = world.receivedValues?.sources[id];
+          if (value) sources[id] = value;
+        }
+        const missing = references.filter(id => !sources[id]);
+        if (missing.length) {
+          const size = await db.prepare('SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])')
+            .get(worldId, missing);
+          if (Number(size?.['bytes'] ?? 0) + [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) > 4 * 1024 * 1024)
+            throw new Error('Recent membership values exceed bounded preparation.');
+          for (const row of await db.prepare('SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])')
+            .all(worldId, missing)) sources[String(row['source_id'])] = JSON.parse(String(row['payload'])) as ReceivedValueLookup[string];
+          if (missing.some(id => !sources[id])) throw new Error('Recent membership values are unavailable.');
+        }
+        for (const row of rows)
+          if (row['page_id'] !== null && row['page_id'] !== undefined)
+            this.accumulateRecentMembership(pages.get(String(row['page_id']))!, world, sources,
+              requests[Number(row['key'])]!, results[Number(row['key'])]!);
+      }
     }
     return results;
+  }
+  private accumulateRecentMembership(page: TemporalPage, world: WorldState, sources: ReceivedValueLookup,
+    request: {actorId: string; aliases: readonly string[]; individualIds: readonly string[]},
+    result: {aliases: Set<string>; individuals: Set<string>}): void {
+    const actor = world.experience?.temporal?.actors[request.actorId];
+    if (!actor || page.actorId !== request.actorId) return;
+    for (const batch of page.batches)
+      for (const entry of batch.entries) {
+        const locator = {actorId: batch.actorId, physicalLife: batch.physicalLife, epoch: batch.epoch,
+          batchOrder: batch.batchOrder, entryIndex: entry.entryIndex};
+        if (!temporalRecentAt(entry.receivedAt, world.simTime, selectedTemporalPolicy(world).recent.maxAgeSeconds) ||
+          !receivedDirectoryContains(actor.recent, locator)) continue;
+        const eligible = (memberIndex: number) => receivedPositionEligible({...locator,memberIndex}, entry.receivedAt, actor.frontier) &&
+          (entry.kind === 'occurrence' || receivedDirectoryContains(actor.recent, locator, memberIndex));
+        if (entry.kind === 'occurrence' && !eligible(0)) continue;
+        const selected = entry.kind === 'occurrence' ? entry : {...entry, coverage: entry.coverage.flatMap(coverage => {
+          const members = coverage.members.filter(member => eligible(member.memberIndex));
+          return members.length ? [{...coverage,members}] : [];
+        })};
+        const subjects = selected.kind === 'occurrence' ? [undefined] :
+          [...new Set(selected.coverage.map(coverage => batch.bindings.find(binding => binding.id === coverage.binding)!.subject))]
+            .map(subject => new Set([subject]));
+        for (const subject of subjects) {
+          const receipt = materializeReceivedEntry(batch, selected, subject);
+          if (!receipt) continue;
+          const aliases = new Set(temporalReceiptAliases(receipt, sources, world));
+          for (const alias of request.aliases) if (aliases.has(alias)) result.aliases.add(alias);
+          const individuals = new Set(temporalReceiptIndividualIds(receipt, sources));
+          for (const id of request.individualIds) if (individuals.has(id)) result.individuals.add(id);
+        }
+      }
   }
 }

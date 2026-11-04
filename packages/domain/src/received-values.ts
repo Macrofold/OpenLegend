@@ -417,9 +417,9 @@ export function referencedReceivedValues(world: WorldState): ReceivedValueRefere
         keys.push(key);
         updateOwner(
           key,
-          old?.identity === chunk.operations
+          old?.identity === chunk.batches
             ? old
-            : { identity: chunk.operations, references: temporalPageReferences(chunk) },
+            : { identity: chunk.batches, references: temporalPageReferences(chunk) },
         );
       }
     }

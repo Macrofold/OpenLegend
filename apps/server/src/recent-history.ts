@@ -21,7 +21,9 @@ const cursorSchema = z
     fence: z.string(),
     at: z.number().finite(),
     epoch: z.string(),
-    ordinal: z.number().int().nonnegative(),
+    batchOrder: z.number().int().nonnegative(),
+    entryIndex: z.number().int().nonnegative(),
+    memberIndex: z.number().int().nonnegative(),
     order: z.number().int().nonnegative(),
   })
   .strict();
@@ -99,7 +101,8 @@ const editReferenceSchema = z
         actorId: z.string(),
         physicalLife: z.number().int().nonnegative(),
         epoch: z.string(),
-        ordinal: z.number().int().nonnegative(),
+        batchOrder: z.number().int().nonnegative(),
+        entryIndex: z.number().int().nonnegative(),
       })
       .strict(),
   })
@@ -149,7 +152,7 @@ export async function recentHistory(
     historyEpoch = service.historyEpoch;
   const query = request.query?.trim().toLocaleLowerCase() ?? '';
   const fence = digest([scopeKey(scope), head.generation, actorId, 'recent-observations', query]);
-  let before: { at: number; epoch: string; ordinal: number; order: number } | undefined;
+  let before: { at: number; epoch: string; batchOrder: number; entryIndex: number; memberIndex: number; order: number } | undefined;
   if (request.cursor) {
     try {
       const cursor = cursorSchema.parse(openCursor(request.cursor));
@@ -201,7 +204,7 @@ export async function recentHistory(
         'receipt',
         receipt.physicalLife,
         receipt.epoch,
-        receipt.ordinal,
+        receipt.batchOrder, receipt.entryIndex,
       ]),
       sourceKind: 'observation',
       fidelity: 'exact',
@@ -215,7 +218,7 @@ export async function recentHistory(
           actorId,
           physicalLife: receipt.physicalLife,
           epoch: receipt.epoch,
-          ordinal: receipt.ordinal,
+          batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex,
         },
       }),
       text: `${receipt.change === 'loss' ? 'Lost contact; last received' : receipt.change === 'attention-exit' ? 'Last noted' : 'Received'}: ${text}`,
@@ -226,7 +229,8 @@ export async function recentHistory(
             fence,
             at: oldest.at,
             epoch: oldest.epoch,
-            ordinal: oldest.ordinal,
+            batchOrder: oldest.batchOrder, entryIndex: oldest.entryIndex,
+            memberIndex: "memberIndex" in oldest ? oldest.memberIndex : Math.min(...oldest.facets.map(facet=>facet.memberIndex)),
             order: oldest.order,
           })
         : null,

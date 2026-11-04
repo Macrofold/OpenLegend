@@ -88,8 +88,8 @@ import {
   selectedRetainRecognitionEvidence,
 } from './world-composition.js';
 import {
+  retainTemporalObservationSupport,
   appendTemporalReceipt,
-  captureTemporalObservation,
   captureTemporalSnapshot,
   invalidateTemporalEvidence,
   invalidateTemporalFacets,
@@ -161,7 +161,7 @@ export function recordObservationSupport(
   request: {
     sourceIds: readonly string[];
     admission: RecordingSupportAdmission;
-    ordinals?: ReadonlySet<number>;
+    sourceOrdinals?: ReadonlySet<number>;
   },
 ): import('./temporal-evidence.js').TemporalReceiptLocator | undefined {
   if (!supportOwnerEligible(world, actorId, observation.observer, request.admission)) return;
@@ -171,7 +171,7 @@ export function recordObservationSupport(
   ) {
     // Historical proof keeps the receiving body's life and chronology. Reuse
     // owned proof; appending it now would invent a sensation in the new body.
-    const ordinals = request.ordinals ?? new Set(observation.facets.map((facet) => facet.ordinal));
+    const ordinals = request.sourceOrdinals ?? new Set(observation.facets.map((facet) => facet.ordinal));
     const recent = temporalReceiptForSource(world, actorId, observation.id);
     const candidates = [
       ...(recent ? [recent] : []),
@@ -183,30 +183,26 @@ export function recordObservationSupport(
           actorId: receipt.actorId,
           physicalLife: receipt.physicalLife,
           epoch: receipt.epoch,
-          ordinal: receipt.ordinal,
+          batchOrder: receipt.batchOrder,entryIndex: receipt.entryIndex,
         })),
     ];
     for (const locator of candidates) {
       if (locator.physicalLife !== observation.observer.physicalLife) continue;
       const retained = retainedTemporalReceipt(world, locator);
-      if (retained && observationReceiptOrdinals(world, observation, ordinals, retained.receipt))
+      if (retained && observationReceiptMemberIndices(world, observation, ordinals, retained.receipt))
         return locator;
     }
     return;
   }
-  return captureTemporalObservation(
-    world,
-    actorId,
-    observation,
-    [...request.sourceIds],
-    request.admission.kind === 'retained-support' && request.admission.required,
-    selectedTemporalPolicy(world).recent,
-    request.ordinals ? { ordinals: request.ordinals } : {},
-  );
+  const required=request.admission.kind==='retained-support'&&request.admission.required;
+  const policy=selectedTemporalPolicy(world)[required?'required':'optional'];
+  return retainTemporalObservationSupport(world,actorId,observation,request.sourceOrdinals,{
+    required,maxBytes:policy.maxBytes,maxRecords:policy.maxRecords,
+  });
 }
 /** A sparse receipt has its own member ordinals. Retain logical original facts,
  * never assume that their observation offsets survived packing unchanged. */
-export function observationReceiptOrdinals(
+export function observationReceiptMemberIndices(
   world: WorldState,
   observation: import('./perception-evidence.js').ObservationContribution,
   ordinals: ReadonlySet<number>,
@@ -223,7 +219,7 @@ export function observationReceiptOrdinals(
     const key = canonicalJson(facet.original);
     if (!wanted.has(key)) continue;
     found.add(key);
-    selected.push(facet.ordinal);
+    selected.push(facet.memberIndex);
   }
   return found.size === wanted.size ? selected : undefined;
 }
@@ -827,25 +823,8 @@ export function admitAutomaticExperience(
     const attended = observations.some((observation) => observation.context?.attended === true);
     if (reason !== 'none' || attended) {
       const id = entry.source === 'awareness' ? entry.value.eventId : entry.value.id;
-      let locator: import('./temporal-evidence.js').TemporalReceiptLocator | undefined;
-      if (reason === 'required' || attended)
-        for (const observation of observations) {
-          const captured = captureTemporalObservation(
-            world,
-            actorId,
-            observation,
-            [id, observation.id],
-            reason === 'required',
-            policy,
-            observation.context
-              ? {
-                  contextSubjects: observation.context.subjects.map((subject) => subject.track),
-                }
-              : {},
-          );
-          locator ??= captured;
-        }
-      if (!locator && (awareness || memory)) {
+      let locator = awareness?.sourceReceipt;
+      if (!locator && reason !== 'none' && (awareness || memory)) {
         const at = awareness?.at ?? memory!.at;
         locator = appendTemporalReceipt(
           world,
@@ -902,7 +881,8 @@ export function admitAutomaticExperience(
           temporalPageReceipts(chunk),
         ).find(
           (candidate) =>
-            candidate.epoch === locator!.epoch && candidate.ordinal === locator!.ordinal,
+            candidate.epoch === locator!.epoch && candidate.batchOrder === locator!.batchOrder &&
+            candidate.entryIndex === locator!.entryIndex,
         );
         if (receipt) {
           const ordinals = receipt.facets
@@ -913,9 +893,9 @@ export function admitAutomaticExperience(
                 (value?.kind === 'encounter-exposure' && value.exposure.kind === 'place')
               );
             })
-            .map((facet) => facet.ordinal);
+            .map((facet) => facet.memberIndex);
           retainTemporalSupport(world, locator, {
-            facetOrdinals: ordinals,
+            memberIndices: ordinals,
             ...selectedTemporalPolicy(world).optional,
           });
         }
@@ -1915,8 +1895,8 @@ export function rememberInterpretation(
       physicalLife: receipt.physicalLife,
       epoch: receipt.epoch,
       family: 'temporal-receipt',
-      from: receipt.ordinal,
-      through: receipt.ordinal,
+      from: {batchOrder:receipt.batchOrder,entryIndex:receipt.entryIndex},
+      through: {batchOrder:receipt.batchOrder,entryIndex:receipt.entryIndex},
     });
   }
   const policy = selectedTemporalPolicy(world);

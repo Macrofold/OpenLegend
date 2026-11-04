@@ -1,7 +1,9 @@
 import {
   noteTemporalResidency,
-  temporalPagePosition,
+  compareTemporalPageOrder,
+  temporalPageResidentBytes,
   temporalPageRecordId,
+  type PendingTemporalPage,
 } from './temporal-page-storage.js';
 import { isImmutableData } from '@open-legend/domain';
 import {
@@ -15,10 +17,8 @@ import { cloneEntities, entityDelete, entityGet } from '@open-legend/domain';
 import {
   appendedRecordCount,
   immutableDataSnapshot,
-  selectTemporalPageOperations,
+  selectTemporalPageEntries,
   temporalPageMutation,
-  temporalOperationAppendOrder,
-  temporalPageSelectionSource,
   EXPERIENCE_LIMITS,
   markPartialAppraisals,
   retiredObjectIds,
@@ -418,7 +418,7 @@ const temporalOverflow = new DerivedOwnerIndex<
   number,
   ObjectIndexNode<number> | undefined
 >(
-  (actor) => actor.pages.reduce((bytes, page) => bytes + page.bytes, 0),
+  (actor) => actor.pages.reduce((bytes, page) => bytes + temporalPageResidentBytes(page), 0),
   () => undefined,
   (tree, id, _before, after) => objectIndexSet(tree, id, after),
 );
@@ -446,16 +446,16 @@ export function compactTemporalHistory(
   )) {
     const actor = actors![actorId]!,
       pages = actor.pages;
-    if (pages.reduce((bytes, page) => bytes + page.bytes, 0) > maximum) {
-      // Temporal pages carry native ordinals; residency must not assign new SQL positions.
+    if (pages.reduce((bytes, page) => bytes + temporalPageResidentBytes(page), 0) > maximum) {
+      // Temporal pages carry native logical addresses; residency must not assign new SQL positions.
       let bytes = 0;
       const retained: typeof pages = [];
       for (let index = pages.length - 1; index >= 0; index--) {
         const page = pages[index]!;
         const durable = page.appendClosed === true && temporalPageMutation(page) !== 'edit';
-        if (!durable || !bytes || bytes + page.bytes <= maximum) {
+        if (!durable || !bytes || bytes + temporalPageResidentBytes(page) <= maximum) {
           retained.push(page);
-          if (durable) bytes += page.bytes;
+          if (durable) bytes += temporalPageResidentBytes(page);
         }
       }
       if (retained.length === pages.length) continue;
@@ -514,13 +514,13 @@ export function recordSavedTemporalPages(
   pages: readonly import('@open-legend/domain').TemporalPage[],
   deleted: readonly string[] = [],
   actors: readonly string[] = [],
+  edits: readonly PendingTemporalPage[] = [],
 ): void {
   const changedActors = new Set<string>(actors);
-  for (const page of pages) {
-    changedActors.add(page.actorId);
-    const source = temporalPageSelectionSource(page);
-    if (source && temporalPageMutation(source) === 'edit')
-      savedTemporalEdits.add(source.operations);
+  for (const page of pages) changedActors.add(page.actorId);
+  for (const edit of edits) {
+    changedActors.add(edit.after.actorId);
+    savedTemporalEdits.add(edit.after.batches);
   }
   for (const id of deleted) {
     const path = JSON.parse(id) as string[];
@@ -553,14 +553,14 @@ export function recordSavedTemporalPages(
   const tails = new Map<string, readonly import('@open-legend/domain').TemporalPage[]>();
   for (const [actorId, entries] of grouped) {
     const ordered = [...entries.values()].sort(
-      (a, b) => temporalPagePosition(b) - temporalPagePosition(a) || b.id.localeCompare(a.id),
+      (a, b) => compareTemporalPageOrder(b,a),
     );
     const selected: import('@open-legend/domain').TemporalPage[] = [];
     let bytes = 0;
     for (const page of ordered) {
-      if (bytes && bytes + page.bytes > HOT_TEMPORAL_BYTES) break;
+      if (bytes && bytes + temporalPageResidentBytes(page) > HOT_TEMPORAL_BYTES) break;
       selected.push(page);
-      bytes += page.bytes;
+      bytes += temporalPageResidentBytes(page);
     }
     tails.set(actorId, selected.reverse());
   }
@@ -571,7 +571,7 @@ export function recordSavedTemporalPages(
   });
 }
 /** A save may finish while newer native changes already exist. Remove only the
- * committed append prefix, retain every newer/edited operation, and
+ * committed append prefix, retain every newer/edited batch, and
  * install the bounded canonical tail without altering any personal charge. */
 export function releaseSavedTemporalHistory(
   world: WorldState,
@@ -591,55 +591,54 @@ export function releaseSavedTemporalHistory(
     const pending: import('@open-legend/domain').TemporalPage[] = [];
     const present = new Set(actor.pages.map((page) => page.id));
     const acknowledgedNative = new Set<string>();
-    const operationKey = (
-      page: import('@open-legend/domain').TemporalPage,
-      operation: import('@open-legend/domain').TemporalHistoryOperation,
-    ) => JSON.stringify([page.physicalLife, page.epoch, operation.ordinal]);
+    const batchKey = (page: import('@open-legend/domain').TemporalPage, batchOrder: number) =>
+      JSON.stringify([page.physicalLife, page.epoch, batchOrder]);
     for (const page of actor.pages) {
-      // A removal-only correction can retain exclusively old operations. Only
-      // acknowledgement of this exact edited selection makes it durable.
+      // A newer sparse correction must survive an older save acknowledgement.
+      // Empty edited blocks are retained until that exact deletion commits.
       if (temporalPageMutation(page) === 'edit') {
-        if (!savedTemporalEdits.has(page.operations)) pending.push(page);
+        if (!savedTemporalEdits.has(page.batches)) pending.push(page);
         continue;
       }
-      const kept = page.operations.filter((operation) => {
-        const acknowledged = temporalOperationAppendOrder(operation) < acknowledgedBefore;
+      const kept = page.batches.filter(batch => {
+        const acknowledged = batch.batchOrder < acknowledgedBefore;
         if (acknowledged && page.appendClosed !== true)
-          acknowledgedNative.add(operationKey(page, operation));
+          acknowledgedNative.add(batchKey(page, batch.batchOrder));
         return !acknowledged;
       });
       if (!kept.length) continue;
-      if (kept.length === page.operations.length) pending.push(page);
+      if (kept.length === page.batches.length) pending.push(page);
       else {
-        const selected = immutableDataSnapshot(
-          selectTemporalPageOperations(page, kept, page.id, world),
-        );
+        const selected = immutableDataSnapshot(selectTemporalPageEntries(page,
+          kept.flatMap(batch => batch.entries.map(entry => ({ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex })))));
         noteTemporalResidency(selected, page);
         pending.push(selected);
       }
     }
     // An absent older tail may have been retired while this save was running.
-    // New physical pages may enter only while their exact acknowledged operations
+    // New physical pages may enter only while their exact acknowledged batches
     // are still represented by the current native container being relocated.
     const byId = new Map(
       (tails.get(actorId) ?? [])
         .filter(
           (page) =>
             present.has(page.id) ||
-            page.operations.every((operation) =>
-              acknowledgedNative.has(operationKey(page, operation)),
+            page.batches.every((batch) =>
+              acknowledgedNative.has(batchKey(page, batch.batchOrder)),
             ),
         )
         .map((page) => [page.id, page]),
     );
     for (const page of pending) byId.set(page.id, page);
     const pages = [...byId.values()].sort(
-      (a, b) => temporalPagePosition(a) - temporalPagePosition(b) || a.id.localeCompare(b.id),
+      (a, b) => compareTemporalPageOrder(a,b),
     );
     if (
       pages.length !== actor.pages.length ||
       pages.some((page, index) => page !== actor.pages[index])
     ) {
+      // The recent charge directory has no physical placement. Preserve it
+      // verbatim, including later expiry, corrections and uncommitted headers.
       actors[actorId] = { ...actor, pages };
       changed = true;
     }

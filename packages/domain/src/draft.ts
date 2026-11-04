@@ -1,4 +1,5 @@
 import { captureIdentityAllocations, inheritIdentityAllocations } from './identity-allocation.js';
+import { flushReceivedAcquisitionsForSnapshot } from './temporal-evidence.js';
 import { captureKnownPlaceEvidence } from './known-place-evidence.js';
 import {
   entityDraftAudit,
@@ -416,6 +417,7 @@ export function freezeWorld(
   world: WorldState,
   options: { completedTransition?: boolean } = {},
 ): WorldState {
+  flushReceivedAcquisitionsForSnapshot(world);
   const publish = pendingPublications.get(world);
   pendingPublications.delete(world);
   // Only the completion owner can certify no writes occurred after finishing its
@@ -725,6 +727,7 @@ interface WorldDraftOptions {
   materializeNativeEntities?: readonly string[];
 }
 export function draftWorld(world: WorldState, options: WorldDraftOptions = {}): WorldState {
+  flushReceivedAcquisitionsForSnapshot(world);
   const batch = commandBatches.get(world);
   const inheritedEntities = batch && commandBatchEntities(world, batch);
   sealAppends(world);
@@ -819,6 +822,7 @@ export function finishWorld(
   world: WorldState,
   capturePatches?: (patches: readonly Patch[]) => void,
 ): WorldState {
+  flushReceivedAcquisitionsForSnapshot(world);
   const batch = commandBatches.get(world);
   reconcileDraftSemantics(world);
   const batchEntities = batch && commandBatchEntities(world, batch);

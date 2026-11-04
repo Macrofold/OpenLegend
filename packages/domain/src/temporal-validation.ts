@@ -2,13 +2,7 @@ import { canonicalJson } from './events.js';
 import { validReceivedTrackKey } from './perception-values.js';
 import { receivedValueAt } from './received-values.js';
 import { orderedRecordEntries } from './ordered-record.js';
-import {
-  temporalPageOperations,
-  temporalPageMetadata,
-  temporalOperationLogicalCount,
-  temporalOperationLogicalBytes,
-  type TemporalCheckpointAvailability,
-} from './temporal-frames.js';
+import {temporalPageMetadata,materializeReceivedEntry,materializeReceivedBindingSeed,temporalPageMutation,type TemporalCheckpointAvailability} from './temporal-frames.js';
 import type { WorldState } from './types.js';
 import type {
   TemporalEvidenceState,
@@ -37,6 +31,7 @@ import {
   temporalReceiptId,
   materializeTemporalValue,
   temporalPageLogicalBytes,
+  installTemporalChargeDirectories,
   temporalSupportLogicalBytes,
   receivedTemporalFragment,
 } from './temporal-evidence.js';
@@ -78,7 +73,7 @@ function validateFieldAvailability(
 ): void {
   if (!Array.isArray(groups)) throw new Error('Invalid retained field availability.');
   const assigned = new Set<number>(),
-    fields = new Set(facets.map((facet) => facet.ordinal));
+    fields = new Set(facets.map((facet) => facet.memberIndex));
   for (const group of groups) {
     if (
       !record(group) ||
@@ -98,212 +93,6 @@ function validateFieldAvailability(
       assigned.add(field);
     }
   }
-}
-
-/** The same exact clock payload is used by page seeds and span terminals. */
-function validateClockSeed(
-  value: unknown,
-  observer: ObserverLife,
-  at: number,
-  order: number,
-  sources: import('./received-values.js').ReceivedValueLookup,
-): asserts value is import('./temporal-frames.js').TemporalCheckSeed {
-  if (
-    !record(value) ||
-    !hasRecordFields(
-      value,
-      ['member', 'receivedAt', 'order', 'support', 'measuredFrom', 'measuredThrough', 'acquiredAt'],
-      ['receivedFrom', 'reception', 'poseFrame', 'part'],
-    ) ||
-    !ordinal(value['member']) ||
-    !finite(value['receivedAt']) ||
-    value['receivedAt'] < 0 ||
-    value['receivedAt'] > at ||
-    !ordinal(value['order']) ||
-    value['order'] > order ||
-    !finite(value['measuredFrom']) ||
-    !finite(value['measuredThrough']) ||
-    !finite(value['acquiredAt']) ||
-    value['measuredFrom'] < 0 ||
-    value['measuredFrom'] > value['measuredThrough'] ||
-    value['measuredThrough'] > value['acquiredAt'] ||
-    value['acquiredAt'] > value['receivedAt'] ||
-    (value['poseFrame'] !== undefined && !validObservationFrame(value['poseFrame'])) ||
-    (value['part'] !== undefined && !['value', 'detail', 'pose'].includes(String(value['part'])))
-  )
-    throw new Error('Invalid retained exact clocks.');
-  validateReceivedFacetProof(value['support'], observer, value['receivedAt']);
-  if (value['receivedFrom']) {
-    validateEvidenceSource(value['receivedFrom']);
-    const source = value['receivedFrom'] as import('./perception-evidence.js').EvidenceSource;
-    if (
-      source.observer.actorId !== observer.actorId ||
-      source.observer.physicalLife !== observer.physicalLife
-    )
-      throw new Error('Foreign retained measurement.');
-  }
-  const reception = value['reception'] as TemporalFacetReference['reception'];
-  if (reception) {
-    if (reception.kind === 'location') {
-      if (!validObservationFrame(reception.frame))
-        throw new Error('Invalid retained receiver frame.');
-    } else if (reception.kind === 'body') {
-      if (reception.poseRef) {
-        const pose = receivedValueAt(sources, reception.poseRef);
-        if (pose?.kind !== 'body-pose') throw new Error('Unavailable retained body pose.');
-        validateObservedBodyPose(pose.pose);
-      } else if (reception.pose) validateObservedBodyPose(reception.pose);
-      else throw new Error('Invalid retained body reception.');
-    } else throw new Error('Invalid retained reception.');
-  }
-}
-
-/** Current recording is an annotation of held members, never a saved page cursor. */
-export function validateTemporalCurrentGroupCheckpoint(
-  value: unknown,
-  now: number,
-  parts: readonly (readonly [string, 'value' | 'detail' | 'pose'])[],
-): asserts value is import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint {
-  if (
-    !record(value) ||
-    !hasRecordFields(
-      value,
-      [
-        'epoch',
-        'openingOrdinal',
-        'acquisition',
-        'admittedAt',
-        'admittedOrder',
-        'started',
-        'startedSource',
-        'lastTimes',
-        'lastSource',
-        'lastAt',
-        'lastOrder',
-        'members',
-        'count',
-        'through',
-        'startedMeasurementRevision',
-        'lastMeasurementRevision',
-        'reservedBytes',
-      ],
-      ['coverage', 'startedFrame', 'lastFrame'],
-    ) ||
-    typeof value['epoch'] !== 'string' ||
-    !value['epoch'] ||
-    !ordinal(value['openingOrdinal']) ||
-    !ordinal(value['acquisition']) ||
-    value['acquisition'] > value['openingOrdinal'] ||
-    !finite(value['admittedAt']) ||
-    value['admittedAt'] < 0 ||
-    value['admittedAt'] > now ||
-    !ordinal(value['admittedOrder']) ||
-    !ordinal(value['startedMeasurementRevision']) ||
-    !ordinal(value['lastMeasurementRevision']) ||
-    !ordinal(value['reservedBytes']) ||
-    !ordinal(value['count']) ||
-    !finite(value['through']) ||
-    value['through'] < 0 ||
-    value['through'] > now ||
-    !Array.isArray(value['members']) ||
-    !value['members'].length ||
-    !record(value['started'])
-  )
-    throw new Error('Invalid current recording annotation.');
-  const times = value['started'];
-  if (
-    !hasRecordFields(times, [
-      'valueMeasuredFrom',
-      'valueMeasuredThrough',
-      'valueAcquiredAt',
-      'confirmedFrom',
-      'confirmedThrough',
-    ]) ||
-    !Object.values(times).every(finite) ||
-    Number(times['valueMeasuredFrom']) < 0 ||
-    Number(times['valueMeasuredFrom']) > Number(times['valueMeasuredThrough']) ||
-    Number(times['valueMeasuredThrough']) > Number(times['valueAcquiredAt']) ||
-    Number(times['valueAcquiredAt']) > value['admittedAt'] ||
-    Number(times['confirmedFrom']) < 0 ||
-    Number(times['confirmedFrom']) > Number(times['confirmedThrough']) ||
-    Number(times['confirmedThrough']) > now
-  )
-    throw new Error('Invalid current recording start clocks.');
-  validateEvidenceSource(value['startedSource']);
-  validateEvidenceSource(value['lastSource']);
-  if (value['startedFrame'] !== undefined && !validObservationFrame(value['startedFrame']))
-    throw new Error('Invalid initial recording receiver frame.');
-  if (value['lastFrame'] !== undefined && !validObservationFrame(value['lastFrame']))
-    throw new Error('Invalid current recording receiver frame.');
-  if (
-    !finite(value['lastAt']) ||
-    value['lastAt'] < 0 ||
-    value['lastAt'] > now ||
-    !ordinal(value['lastOrder']) ||
-    !record(value['lastTimes']) ||
-    !hasRecordFields(value['lastTimes'], [
-      'valueMeasuredFrom',
-      'valueMeasuredThrough',
-      'valueAcquiredAt',
-      'confirmedFrom',
-      'confirmedThrough',
-    ]) ||
-    !Object.values(value['lastTimes']).every(finite)
-  )
-    throw new Error('Invalid current recording predecessor.');
-  const last = value['lastTimes'];
-  if (
-    Number(last['valueMeasuredFrom']) < 0 ||
-    Number(last['valueMeasuredFrom']) > Number(last['valueMeasuredThrough']) ||
-    Number(last['valueMeasuredThrough']) > Number(last['valueAcquiredAt']) ||
-    Number(last['valueAcquiredAt']) > value['lastAt'] ||
-    Number(last['confirmedFrom']) < 0 ||
-    Number(last['confirmedFrom']) > Number(last['confirmedThrough']) ||
-    Number(last['confirmedThrough']) > value['lastAt']
-  )
-    throw new Error('Invalid current recording predecessor clocks.');
-
-  const kinds = new Set<string>(),
-    seen = new Set<string>(),
-    ordinals = new Set<number>();
-  for (const member of value['members']) {
-    if (
-      !record(member) ||
-      !hasRecordFields(member, ['kind', 'part', 'ordinal', 'bytes']) ||
-      typeof member['kind'] !== 'string' ||
-      !['value', 'detail', 'pose'].includes(String(member['part'])) ||
-      !ordinal(member['bytes']) ||
-      member['bytes'] <= 0 ||
-      !ordinal(member['ordinal']) ||
-      ordinals.has(member['ordinal']) ||
-      !parts.some(([kind, part]) => kind === member['kind'] && part === member['part'])
-    )
-      throw new Error('Invalid current recording member.');
-    const id = JSON.stringify([member['kind'], member['part']]);
-    if (seen.has(id)) throw new Error('Duplicate current recording member.');
-    seen.add(id);
-    ordinals.add(member['ordinal']);
-    kinds.add(member['kind']);
-  }
-  if (
-    seen.size !== parts.length ||
-    value['count'] !== kinds.size ||
-    value['reservedBytes'] !==
-      value['members'].reduce((sum, member) => sum + Number(member['bytes']), 0)
-  )
-    throw new Error('Current recording does not cover its exact held partition.');
-  const coverage = value['coverage'];
-  if (
-    coverage !== undefined &&
-    (!record(coverage) ||
-      !hasRecordFields(coverage, ['id', 'memberOrdinals', 'measurement']) ||
-      !ordinal(coverage['id']) ||
-      typeof coverage['measurement'] !== 'boolean' ||
-      !Array.isArray(coverage['memberOrdinals']) ||
-      new Set(coverage['memberOrdinals']).size !== coverage['memberOrdinals'].length ||
-      coverage['memberOrdinals'].some((member) => !ordinal(member) || !ordinals.has(member)))
-  )
-    throw new Error('Invalid current recording coverage declaration.');
 }
 
 export function validateTemporalValue(
@@ -415,649 +204,66 @@ function validateReceiver(value: TemporalValue, observer: ObserverLife, acquired
 /** Validates retained exact receipts, not a second interpretation of world truth.
  * Resident tails may omit cold chunks, so counters must cover at least the tail;
  * the repository audits complete canonical totals within its load snapshot. */
-export function validateTemporalEvidenceState(
-  world: WorldState,
-  originals = new Map<string, string>(),
-): void {
-  const value = world.experience?.temporal;
-  if (value === undefined) return;
-  const maximumContextSubjects = selectedAttentionPolicy(world).maximumCapacity * 2;
-  if (
-    !record(value) ||
-    value.version !== 1 ||
-    typeof value.namespace !== 'string' ||
-    !isSafeRecordId(value.namespace) ||
-    !hasRecordFields(value, ['version', 'namespace', 'actors']) ||
-    !record(value.actors)
-  )
-    throw new Error('Invalid temporal evidence owner.');
-  const temporal: TemporalEvidenceState = value;
-  const sources = world.receivedValues?.sources ?? {};
-  for (const [actorId, actor] of Object.entries(temporal.actors)) {
-    if (
-      !isSafeRecordId(actorId) ||
-      !record(actor) ||
-      !ordinal(actor.physicalLife) ||
-      typeof actor.epoch !== 'string' ||
-      !actor.epoch ||
-      !ordinal(actor.nextOrdinal) ||
-      !ordinal(actor.bytes) ||
-      !ordinal(actor.count) ||
-      !Array.isArray(actor.pages) ||
-      typeof actor.maintenanceDue !== 'boolean' ||
-      (actor.nextDue !== null && (!finite(actor.nextDue) || actor.nextDue < 0))
-    )
-      throw new Error('Invalid personal temporal owner.');
-    if (
-      actor.recordingGap !== undefined &&
-      (!record(actor.recordingGap) ||
-        !finite(actor.recordingGap.from) ||
-        !finite(actor.recordingGap.through) ||
-        actor.recordingGap.from < 0 ||
-        actor.recordingGap.through < actor.recordingGap.from ||
-        actor.recordingGap.through > world.simTime)
-    )
-      throw new Error('Invalid recording coverage gap.');
-    let bytes = 0,
-      count = 0;
-    const chunks = new Set<string>(),
-      receiptKeys = new Map<string, Set<number>>();
-    const validateReference = (reference: {
-      valueRef: import('./received-values.js').ReceivedValueReference;
-    }) => {
-      const fragment = receivedTemporalFragment(receivedValueAt(sources, reference));
-      if (!fragment) throw new Error('Unavailable retained temporal fragment.');
-      return fragment;
-    };
-    if (
-      actor.releasedThrough !== undefined &&
-      (!finite(actor.releasedThrough) ||
-        actor.releasedThrough < 0 ||
-        actor.releasedThrough > world.simTime)
-    )
-      throw new Error('Invalid temporal unavailable prefix.');
-    if (
-      actor.individualRepairs !== undefined &&
-      (!Array.isArray(actor.individualRepairs) ||
-        new Set(actor.individualRepairs).size !== actor.individualRepairs.length ||
-        actor.individualRepairs.some((id) => !isSafeRecordId(id)))
-    )
-      throw new Error('Invalid pending individual reference repair.');
-    if (
-      actor.retiredThrough !== undefined &&
-      (!record(actor.retiredThrough) ||
-        !ordinal(actor.retiredThrough.pageOrder) ||
-        !ordinal(actor.retiredThrough.ordinal) ||
-        !finite(actor.retiredThrough.at) ||
-        actor.retiredThrough.at < 0 ||
-        actor.retiredThrough.at > world.simTime)
-    )
-      throw new Error('Invalid temporal retention frontier.');
-    if (actor.accounts !== undefined) {
-      if (
-        !record(actor.accounts) ||
-        Object.keys(actor.accounts).some(
-          (key) => !['nextDue', 'optional', 'required', 'speech', 'archives'].includes(key),
-        )
-      )
-        throw new Error('Invalid retained account counters.');
-      if (
-        actor.accounts.nextDue !== null &&
-        (!finite(actor.accounts.nextDue) || actor.accounts.nextDue < 0)
-      )
-        throw new Error('Invalid account retention deadline.');
-      if (
-        actor.accounts.archives !== undefined &&
-        (!record(actor.accounts.archives) ||
-          Object.keys(actor.accounts.archives).length !== 3 ||
-          ['optional', 'required', 'speech'].some(
-            (key) => !Object.hasOwn(actor.accounts!.archives!, key),
-          ))
-      )
-        throw new Error('Invalid exact source closure counters.');
-      for (const key of ['optional', 'required', 'speech'] as const) {
-        const counter = actor.accounts[key];
-        if (!record(counter) || !ordinal(counter.bytes) || !ordinal(counter.count))
-          throw new Error('Invalid retained account counter.');
-        const archive = actor.accounts.archives?.[key];
-        if (
-          archive &&
-          (!record(archive) ||
-            !ordinal(archive.bytes) ||
-            !ordinal(archive.count) ||
-            archive.bytes > counter.bytes ||
-            archive.count > counter.count)
-        )
-          throw new Error('Invalid exact source closure charge.');
-      }
-    }
-    const validateFields = (
-      receipt: Pick<TemporalReceipt, 'facets' | 'at' | 'physicalLife'>,
-      fragments?: TemporalFragment[],
-    ) => {
-      const ordinals = new Set<number>();
-      receipt.facets.forEach((facet: TemporalFacetReference, index: number) => {
-        if (facet.poseFrame !== undefined && !validObservationFrame(facet.poseFrame))
-          throw new Error('Invalid received pose viewpoint.');
-        if (!ordinal(facet.ordinal) || ordinals.has(facet.ordinal))
-          throw new Error('Invalid temporal fact ordinal.');
-        ordinals.add(facet.ordinal);
-        const fragment = fragments ? fragments[index] : validateReference(facet);
-        if (fragments) validateTemporalFragment(fragment, originals);
-        if (!fragment) throw new Error('Unavailable retained temporal fragment.');
-        const value = validateStoredValue(
-          facet,
-          fragment,
-          originals,
-          { actorId, physicalLife: receipt.physicalLife },
-          receipt.at,
-          sources,
-        );
-        if (
-          !['direct', 'inference', 'testimony'].includes(facet.role) ||
-          !finite(facet.asOf) ||
-          facet.asOf < 0 ||
-          !finite(facet.measuredFrom) ||
-          !finite(facet.measuredThrough) ||
-          !finite(facet.acquiredAt) ||
-          facet.measuredFrom < 0 ||
-          facet.measuredFrom > facet.measuredThrough ||
-          facet.measuredThrough > facet.acquiredAt ||
-          facet.acquiredAt > receipt.at ||
-          facet.asOf !== facet.measuredThrough ||
-          facet.asOf > receipt.at
-        )
-          throw new Error('Invalid temporal measurement interval.');
-        if (facet.detailSupport) {
-          const detail = facet.detailSupport;
-          if (
-            value.kind !== 'body' ||
-            !hasRecordFields(detail, ['proof', 'role', 'from', 'through', 'acquiredAt']) ||
-            !['direct', 'inference', 'testimony'].includes(detail.role) ||
-            ![detail.from, detail.through, detail.acquiredAt].every(finite) ||
-            detail.from < 0 ||
-            detail.from > detail.through ||
-            detail.through > detail.acquiredAt ||
-            detail.acquiredAt > receipt.at
-          )
-            throw new Error('Invalid independent outward detail support.');
-          validateReceivedFacetProof(
-            detail.proof,
-            { actorId, physicalLife: receipt.physicalLife },
-            receipt.at,
-          );
-        }
-        validateReceiver(value, { actorId, physicalLife: receipt.physicalLife }, facet.acquiredAt);
-        if (facet.confirmedThrough !== undefined) {
-          if (
-            !finite(facet.confirmedThrough) ||
-            facet.confirmedThrough < facet.measuredThrough ||
-            facet.confirmedThrough > receipt.at ||
-            !facet.original ||
-            (facet.support !== undefined &&
-              facet.support.confirmedThrough !== facet.confirmedThrough)
-          )
-            throw new Error('Invalid held geometry confirmation.');
-        }
-        for (const source of [
-          facet.original?.source,
-          facet.receivedFrom,
-          facet.support?.original.source,
-          facet.support?.confirmation,
-        ])
-          if (source) {
-            validateEvidenceSource(source);
-            if (
-              source.observer.actorId !== actorId ||
-              source.observer.physicalLife !== receipt.physicalLife
-            )
-              throw new Error('Foreign temporal original.');
-          }
-        if (facet.original && !ordinal(facet.original.ordinal))
-          throw new Error('Invalid temporal original ordinal.');
-      });
-    };
-    const validateReceipt = (receipt: TemporalReceipt, fragments?: TemporalFragment[]) => {
-      if (
-        !record(receipt) ||
-        receipt.actorId !== actorId ||
-        !ordinal(receipt.physicalLife) ||
-        typeof receipt.epoch !== 'string' ||
-        !receipt.epoch ||
-        !ordinal(receipt.ordinal) ||
-        !ordinal(receipt.acquisition) ||
-        receipt.acquisition > receipt.ordinal ||
-        receipt.id !== temporalReceiptId(receipt) ||
-        !finite(receipt.at) ||
-        receipt.at < 0 ||
-        receipt.at > world.simTime ||
-        !ordinal(receipt.order) ||
-        (receipt.receiverFrame !== undefined && !validObservationFrame(receipt.receiverFrame)) ||
-        (receipt.coverageGap !== undefined &&
-          (!finite(receipt.coverageGap.from) ||
-            !finite(receipt.coverageGap.through) ||
-            receipt.coverageGap.from < 0 ||
-            receipt.coverageGap.from > receipt.coverageGap.through ||
-            receipt.coverageGap.through > receipt.at)) ||
-        !temporalSubject(receipt.subject) ||
-        (receipt.contextSubjects !== undefined &&
-          (!strings(receipt.contextSubjects) ||
-            !receipt.contextSubjects.every(temporalSubject) ||
-            receipt.contextSubjects.length > maximumContextSubjects)) ||
-        (receipt.subjectIdentity !== undefined && !validObserverSubject(receipt.subjectIdentity)) ||
-        ![
-          'baseline',
-          'change',
-          'loss',
-          'unchecked',
-          'occurrence',
-          'attention-exit',
-          'receiver-frame',
-          'retained-state',
-        ].includes(receipt.change) ||
-        (receipt.availabilityAt !== undefined &&
-          (!['loss', 'unchecked', 'attention-exit'].includes(receipt.change) ||
-            !finite(receipt.availabilityAt) ||
-            receipt.availabilityAt < 0 ||
-            receipt.availabilityAt > receipt.at)) ||
-        (receipt.change === 'retained-state' && !fragments) ||
-        (receipt.spatialContext !== undefined && receipt.spatialContext !== true) ||
-        typeof receipt.required !== 'boolean' ||
-        !strings(receipt.sourceIds) ||
-        !Array.isArray(receipt.facets) ||
-        (!receipt.facets.length && receipt.change !== 'receiver-frame')
-      )
-        throw new Error('Invalid personal temporal receipt.');
-      if (receipt.origin) {
-        const origin = receipt.origin;
-        if (!record(origin)) throw new Error('Invalid temporal receipt origin.');
-        if (origin.kind === 'occurrence') {
-          if (
-            !isSafeRecordId(origin.eventId) ||
-            !finite(origin.at) ||
-            origin.at < 0 ||
-            origin.at > receipt.at ||
-            !ordinal(origin.order)
-          )
-            throw new Error('Invalid temporal occurrence origin.');
-        } else if (
-          origin.kind !== 'exposure' ||
-          typeof origin.episodeId !== 'string' ||
-          !origin.episodeId ||
-          typeof origin.detectorId !== 'string' ||
-          !origin.detectorId ||
-          !finite(origin.measuredFrom) ||
-          !finite(origin.measuredThrough) ||
-          origin.measuredFrom < 0 ||
-          origin.measuredFrom > origin.measuredThrough ||
-          origin.measuredThrough > receipt.at
-        )
-          throw new Error('Invalid temporal exposure origin.');
-        if (origin.kind === 'exposure' && origin.source) {
-          validateEvidenceSource(origin.source);
-          if (
-            origin.source.observer.actorId !== actorId ||
-            origin.source.observer.physicalLife !== receipt.physicalLife
-          )
-            throw new Error('Foreign temporal origin source.');
-        }
-      }
-      if (
-        receipt.spatialContext &&
-        receipt.facets.some((reference, index) => {
-          const fragment = fragments?.[index] ?? validateReference(reference);
-          return fragment.kind !== 'surface-patch' && fragment.kind !== 'physical-boundary';
-        })
-      )
-        throw new Error('Invalid received feature context.');
-      validateFields(receipt, fragments);
-      if (receipt.availability)
-        validateFieldAvailability(receipt.availability, receipt.facets, receipt.at);
-    };
-    if (actor.supports !== undefined) {
-      if (!record(actor.supports)) throw new Error('Invalid temporal support owner.');
-      for (const [id, capsule] of Object.entries(actor.supports)) {
-        if (
-          !record(capsule) ||
-          capsule.receipt.id !== id ||
-          !ordinal(capsule.bytes) ||
-          typeof capsule.required !== 'boolean' ||
-          !Array.isArray(capsule.values) ||
-          capsule.values.length !== capsule.receipt.facets.length
-        )
-          throw new Error('Invalid temporal support capsule.');
-        validateReceipt(capsule.receipt, capsule.values);
-        if (capsule.bytes !== temporalSupportLogicalBytes(capsule))
-          throw new Error('Invalid temporal support charge.');
-      }
-    }
-    for (const page of actor.pages) {
-      if (
-        !record(page) ||
-        !isSafeRecordId(page.id) ||
-        chunks.has(page.id) ||
-        !ordinal(page.order) ||
-        page.actorId !== actorId ||
-        !ordinal(page.physicalLife) ||
-        typeof page.epoch !== 'string' ||
-        !page.epoch ||
-        !ordinal(page.fromOrdinal) ||
-        !ordinal(page.throughOrdinal) ||
-        page.fromOrdinal > page.throughOrdinal ||
-        !finite(page.fromAt) ||
-        !finite(page.throughAt) ||
-        page.fromAt < 0 ||
-        page.fromAt > page.throughAt ||
-        page.throughAt > world.simTime ||
-        !ordinal(page.bytes) ||
-        !ordinal(page.count) ||
-        (page.appendClosed !== undefined && page.appendClosed !== true) ||
-        !Array.isArray(page.operations) ||
-        !page.operations.length ||
-        !Array.isArray(page.declarations) ||
-        !strings(page.subjects) ||
-        !page.subjects.every(temporalSubject) ||
-        !strings(page.sourceIds) ||
-        !strings(page.individualIds) ||
-        !strings(page.sourceRefs)
-      )
-        throw new Error('Invalid personal temporal page.');
-      chunks.add(page.id);
-      bytes += page.bytes;
-      count += page.count;
-      const declarations = new Map<number, (typeof page.declarations)[number]>(),
-        used = new Set<number>();
-      for (const declaration of page.declarations) {
-        if (
-          !record(declaration) ||
-          !hasRecordFields(declaration, ['id', 'subject', 'members', 'seeds']) ||
-          !ordinal(declaration.id) ||
-          declarations.has(declaration.id) ||
-          !temporalSubject(declaration.subject) ||
-          !Array.isArray(declaration.members) ||
-          !declaration.members.length ||
-          !Array.isArray(declaration.seeds)
-        )
-          throw new Error('Invalid temporal check declaration.');
-        const members = new Set<string>();
-        for (const member of declaration.members) {
-          if (
-            !record(member) ||
-            !hasRecordFields(
-              member,
-              ['locator', 'memberOrdinal', 'original', 'role'],
-              ['part', 'confirmationIdentity', 'revisionFloor'],
-            ) ||
-            !record(member.locator) ||
-            member.locator.actorId !== actorId ||
-            member.locator.physicalLife !== page.physicalLife ||
-            member.locator.epoch !== page.epoch ||
-            !ordinal(member.locator.ordinal) ||
-            !ordinal(member.memberOrdinal) ||
-            !record(member.original) ||
-            !ordinal(member.original.ordinal) ||
-            typeof member.role !== 'string' ||
-            !['direct', 'inference', 'testimony'].includes(member.role)
-          )
-            throw new Error('Invalid temporal check member.');
-          validateEvidenceSource(member.original.source);
-          if (
-            (member.part !== undefined &&
-              !['value', 'detail', 'pose'].includes(String(member.part))) ||
-            (member.revisionFloor !== undefined && !ordinal(member.revisionFloor))
-          )
-            throw new Error('Invalid temporal check part.');
-          if (member.confirmationIdentity) {
-            if (!record(member.confirmationIdentity))
-              throw new Error('Invalid temporal check identity.');
-            const identity = {
-              ...member.confirmationIdentity,
-              revision: member.revisionFloor ?? 1,
-            };
-            validateEvidenceSource(identity);
-            if (
-              identity.observer.actorId !== actorId ||
-              identity.observer.physicalLife !== page.physicalLife
-            )
-              throw new Error('Foreign temporal check identity.');
-          }
 
-          if (
-            member.original.source.observer.actorId !== actorId ||
-            member.original.source.observer.physicalLife !== page.physicalLife
-          )
-            throw new Error('Foreign temporal check original.');
-          const id = JSON.stringify([
-            member.locator.epoch,
-            member.locator.ordinal,
-            member.memberOrdinal,
-          ]);
-          if (members.has(id)) throw new Error('Duplicate temporal check member.');
-          members.add(id);
-        }
-        const seeds = new Set<number>();
-        for (const seed of declaration.seeds) {
-          validateClockSeed(
-            seed,
-            { actorId, physicalLife: page.physicalLife },
-            world.simTime,
-            Number.MAX_SAFE_INTEGER,
-            sources,
-          );
-          if (seed.member >= declaration.members.length || seeds.has(seed.member))
-            throw new Error('Invalid temporal predecessor membership.');
-          const member = declaration.members[seed.member]!;
-          if (canonicalJson(seed.support.original) !== canonicalJson(member.original))
-            throw new Error('Temporal predecessor has another original.');
-          seeds.add(seed.member);
-        }
-        if (seeds.size !== declaration.members.length)
-          throw new Error('Temporal checks require self-contained predecessor clocks.');
-        declarations.set(declaration.id, declaration);
-      }
-      let priorOrdinal = -1;
-      for (const operation of temporalPageOperations(page)) {
-        if (!record(operation) || !ordinal(operation.ordinal) || operation.ordinal <= priorOrdinal)
-          throw new Error('Invalid temporal operation order.');
-        priorOrdinal = operation.ordinal;
-        if (
-          !record(operation.charge) ||
-          !hasRecordFields(operation.charge, ['bytes', 'count']) ||
-          !ordinal(operation.charge.bytes) ||
-          operation.charge.bytes <= 0 ||
-          !ordinal(operation.charge.count) ||
-          operation.charge.count <= 0 ||
-          operation.charge.count !== temporalOperationLogicalCount(operation, page.declarations) ||
-          operation.charge.bytes !== temporalOperationLogicalBytes(operation, sources)
-        )
-          throw new Error('Invalid temporal operation charge.');
-        if (operation.kind === 'check') {
-          if (
-            !hasRecordFields(operation, [
-              'ordinal',
-              'kind',
-              'at',
-              'order',
-              'acquisition',
-              'stamps',
-              'charge',
-            ]) ||
-            !finite(operation.at) ||
-            operation.at < 0 ||
-            operation.at > world.simTime ||
-            !ordinal(operation.order) ||
-            !ordinal(operation.acquisition) ||
-            operation.acquisition > operation.ordinal ||
-            !Array.isArray(operation.stamps) ||
-            !operation.stamps.length
-          )
-            throw new Error('Invalid received temporal check.');
-          for (const stamp of operation.stamps) {
-            const declaration = declarations.get(stamp.declaration);
-            if (
-              !record(stamp) ||
-              !hasRecordFields(
-                stamp,
-                ['declaration', 'confirmation', 'confirmedFrom', 'confirmedThrough'],
-                ['measurement', 'frame'],
-              ) ||
-              !declaration ||
-              !finite(stamp.confirmedFrom) ||
-              !finite(stamp.confirmedThrough) ||
-              stamp.confirmedFrom < 0 ||
-              stamp.confirmedFrom > stamp.confirmedThrough ||
-              stamp.confirmedThrough > operation.at ||
-              (stamp.frame !== undefined && !validObservationFrame(stamp.frame))
-            )
-              throw new Error('Invalid exact check clocks.');
-            validateEvidenceSource(stamp.confirmation);
-            if (
-              stamp.confirmation.observer.actorId !== actorId ||
-              stamp.confirmation.observer.physicalLife !== page.physicalLife
-            )
-              throw new Error('Foreign temporal confirmation.');
-            for (const seed of declaration.seeds)
-              if (seed.order > operation.order || seed.receivedAt > operation.at)
-                throw new Error('Temporal seed is later than its check.');
-            if (stamp.measurement) {
-              const measured = stamp.measurement;
-              if (
-                !record(measured) ||
-                !hasRecordFields(measured, [
-                  'measuredFrom',
-                  'measuredThrough',
-                  'acquiredAt',
-                  'receivedFrom',
-                ]) ||
-                !finite(measured.measuredFrom) ||
-                !finite(measured.measuredThrough) ||
-                !finite(measured.acquiredAt) ||
-                measured.measuredFrom < 0 ||
-                measured.measuredFrom > measured.measuredThrough ||
-                measured.measuredThrough > measured.acquiredAt ||
-                measured.acquiredAt > operation.at
-              )
-                throw new Error('Invalid exact measurement clocks.');
-              validateEvidenceSource(measured.receivedFrom);
-              if (
-                measured.receivedFrom.observer.actorId !== actorId ||
-                measured.receivedFrom.observer.physicalLife !== page.physicalLife
-              )
-                throw new Error('Foreign temporal measurement.');
-            }
-            used.add(declaration.id);
-          }
-        } else if (operation.kind === 'span' || operation.kind === 'occurrence') {
-          if (
-            !hasRecordFields(
-              operation,
-              operation.kind === 'span'
-                ? [
-                    'ordinal',
-                    'kind',
-                    'receipt',
-                    'charge',
-                    'closedAt',
-                    'closedOrder',
-                    'reason',
-                    'terminal',
-                  ]
-                : ['ordinal', 'kind', 'receipt', 'charge'],
-            )
-          )
-            throw new Error('Invalid temporal retained value.');
-          const receipt = operation.receipt;
-          validateReceipt(receipt);
-          if (receipt.physicalLife !== page.physicalLife || receipt.epoch !== page.epoch)
-            throw new Error('Foreign temporal page receipt.');
-          const receiptKey = JSON.stringify([receipt.physicalLife, receipt.epoch, receipt.ordinal]);
-          const retainedMembers = receiptKeys.get(receiptKey) ?? new Set<number>();
-          for (const field of receipt.facets) {
-            if (retainedMembers.has(field.ordinal))
-              throw new Error('Duplicate temporal logical member.');
-            retainedMembers.add(field.ordinal);
-          }
-          receiptKeys.set(receiptKey, retainedMembers);
-          if (
-            operation.kind === 'span' &&
-            (!finite(operation.closedAt) ||
-              operation.closedAt < receipt.at ||
-              operation.closedAt > world.simTime ||
-              !ordinal(operation.closedOrder) ||
-              operation.closedOrder < receipt.order)
-          )
-            throw new Error('Invalid temporal span boundary.');
-          if (operation.kind === 'span') {
-            if (
-              !Array.isArray(operation.terminal) ||
-              operation.terminal.length !== receipt.facets.length
-            )
-              throw new Error('Closed span requires exact terminal clocks.');
-            const terminalMembers = new Set<number>();
-            for (const seed of operation.terminal) {
-              validateClockSeed(
-                seed,
-                { actorId, physicalLife: page.physicalLife },
-                operation.closedAt,
-                operation.closedOrder,
-                sources,
-              );
-              const field = receipt.facets.find((field) => field.ordinal === seed.member);
-              if (!field || terminalMembers.has(seed.member))
-                throw new Error('Invalid closed span terminal membership.');
-              const original =
-                seed.part === 'detail' ? field.detailSupport?.proof.original : field.original;
-              if (canonicalJson(original) !== canonicalJson(seed.support.original))
-                throw new Error('Terminal clock has another original.');
-              terminalMembers.add(seed.member);
-            }
-          }
-        } else throw new Error('Unsupported temporal operation.');
-      }
-      if (used.size !== declarations.size)
-        throw new Error('Unreferenced temporal check declaration.');
-      const meta = temporalPageMetadata(page, { world, sources });
-      const same = (a: readonly string[], b: readonly string[]) =>
-        a.length === b.length && a.every((id) => b.includes(id));
-      if (
-        !same(meta.subjects, page.subjects) ||
-        !same(meta.sourceIds, page.sourceIds) ||
-        !same(meta.individualIds, page.individualIds) ||
-        !same(meta.sourceRefs, page.sourceRefs) ||
-        meta.changes !== page.count ||
-        page.bytes !== temporalPageLogicalBytes(page, sources) ||
-        page.fromOrdinal !== page.operations[0]!.ordinal ||
-        page.throughOrdinal !== page.operations.at(-1)!.ordinal ||
-        meta.firstAt !== page.fromAt ||
-        meta.lastAt !== page.throughAt
-      )
-        throw new Error('Temporal page metadata disagrees with its canonical operations.');
-      if (
-        page.epoch === actor.epoch &&
-        page.physicalLife === actor.physicalLife &&
-        page.throughOrdinal >= actor.nextOrdinal
-      )
-        throw new Error('Temporal receipt counter precedes its retained tail.');
-    }
-    const current = world.perceptionEvidence?.[actorId]?.current;
-    if (current)
-      for (const [, contact] of orderedRecordEntries(current))
-        for (const group of contact.content.groups)
-          for (const partition of group.metadata) {
-            const mark = partition.recording;
-            if (!mark) continue;
-            validateTemporalCurrentGroupCheckpoint(mark, world.simTime, partition.members);
-            if (
-              mark.epoch !== actor.epoch ||
-              mark.openingOrdinal >= actor.nextOrdinal ||
-              mark.startedSource.observer.actorId !== actorId ||
-              mark.startedSource.observer.physicalLife !== actor.physicalLife
-            )
-              throw new Error('Current recording belongs to another reception epoch.');
-            bytes += mark.reservedBytes;
-            count += mark.count;
-          }
-    if (bytes > actor.bytes || count > actor.count)
-      throw new Error('Understated temporal retention counters.');
+export function validateTemporalCurrentGroupCheckpoint(value:unknown,now:number,parts:readonly (readonly [string,'value'|'detail'|'pose'])[]):asserts value is import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint{
+ const mark=value as import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint;
+ if(!record(mark)||typeof mark.epoch!=='string'||!mark.epoch||!record(mark.binding)||!ordinal(mark.binding.id)||!Array.isArray(mark.binding.parts)||!Array.isArray(mark.members)||!mark.members.length||!finite(mark.lastAt)||mark.lastAt>now||!ordinal(mark.lastOrder)||!ordinal(mark.lastMeasurementRevision)||typeof mark.gap!=='boolean'||!mark.members.every(member=>parts.some(([kind,part])=>member.kind===kind&&member.part===part)))throw new Error('Invalid active recording binding.');
+ validateEvidenceSource(mark.lastSource);
+ if(mark.lastSource.observer.actorId!==mark.binding.seed.actorId||mark.lastSource.observer.physicalLife!==mark.binding.seed.physicalLife||mark.epoch!==mark.binding.seed.epoch)throw new Error('Recording binding has another owner.');
+ if(mark.lastToken!==undefined&&!ordinal(mark.lastToken))throw new Error('Invalid received sample token.');
+}
+function validateReceipt(world:WorldState,receipt:TemporalReceipt,actorId:string,values?:readonly TemporalFragment[]):void{
+ if(!record(receipt)||receipt.actorId!==actorId||!ordinal(receipt.physicalLife)||typeof receipt.epoch!=='string'||!ordinal(receipt.batchOrder)||!ordinal(receipt.entryIndex)||receipt.id!==temporalReceiptId(receipt)||!finite(receipt.at)||receipt.at<0||receipt.at>world.simTime||!ordinal(receipt.order)||!ordinal(receipt.acquisition)||!temporalSubject(receipt.subject)||typeof receipt.required!=='boolean'||!strings(receipt.sourceIds)||!Array.isArray(receipt.facets)||!receipt.facets.length||!['baseline','change','loss','unchecked','occurrence','attention-exit','receiver-frame','retained-state'].includes(receipt.change))throw new Error('Invalid received receipt.');
+ const members=new Set<number>(),observer={actorId,physicalLife:receipt.physicalLife},sources=world.receivedValues?.sources??{};
+ receipt.facets.forEach((facet,index)=>{
+  if(!ordinal(facet.memberIndex)||members.has(facet.memberIndex)||!['direct','inference','testimony'].includes(facet.role)||![facet.asOf,facet.measuredFrom,facet.measuredThrough,facet.acquiredAt].every(finite)||facet.measuredFrom<0||facet.measuredThrough<facet.measuredFrom||facet.measuredThrough>facet.acquiredAt||facet.acquiredAt>receipt.at)throw new Error('Invalid received logical member.');members.add(facet.memberIndex);
+  const fragment=values?.[index]??receivedTemporalFragment(receivedValueAt(sources,facet.valueRef));if(!fragment)throw new Error('Received member has no retained value.');validateTemporalFragment(fragment);
+  for(const source of [facet.original?.source,facet.receivedFrom,facet.support?.confirmation,facet.support?.original.source,facet.detailSupport?.proof.confirmation,facet.detailSupport?.proof.original.source])if(source){validateEvidenceSource(source);if(source.observer.actorId!==actorId||source.observer.physicalLife!==receipt.physicalLife)throw new Error('Foreign received source.');}
+  if(facet.support)validateReceivedFacetProof(facet.support,observer,receipt.at);
+  if(facet.detailSupport)validateReceivedFacetProof(facet.detailSupport.proof,observer,receipt.at);
+  validateStoredValue(facet,fragment,new Map(),observer,receipt.at,sources);
+ });
+ if(receipt.receiverFrame&&!validObservationFrame(receipt.receiverFrame))throw new Error('Invalid received frame.');
+ if(receipt.subjectIdentity&&!validObserverSubject(receipt.subjectIdentity))throw new Error('Invalid acquired subject.');
+ if(receipt.availability)validateFieldAvailability(receipt.availability,receipt.facets,receipt.at);
+}
+export function validateTemporalPage(world:WorldState,page:import('./temporal-evidence.js').TemporalPage,actorId=page.actorId):void{
+ if(!record(page)||page.actorId!==actorId||!isSafeRecordId(page.id)||!ordinal(page.physicalLife)||!ordinal(page.order)||typeof page.epoch!=='string'||!Array.isArray(page.batches)||!page.batches.length&&temporalPageMutation(page)!=='edit')throw new Error('Invalid received history block.');
+ let priorOrder=-1;const addresses=new Set<string>();
+ for(const batch of page.batches){
+  if(batch.actorId!==actorId||batch.physicalLife!==page.physicalLife||batch.epoch!==page.epoch||!ordinal(batch.batchOrder)||batch.batchOrder<priorOrder||!Array.isArray(batch.frames)||batch.frames.some(frame=>!validObservationFrame(frame))||!Array.isArray(batch.bindings)||!Array.isArray(batch.entries))throw new Error('Invalid received batch.');priorOrder=batch.batchOrder;
+  const bindings=new Map<number,typeof batch.bindings[number]>();
+  for(const binding of batch.bindings){
+   if(!ordinal(binding.id)||bindings.has(binding.id)||!temporalSubject(binding.subject)||!Array.isArray(binding.parts)||!binding.parts.length||binding.seed.actorId!==actorId||binding.seed.physicalLife!==batch.physicalLife||binding.seed.epoch!==batch.epoch||binding.seed.subject!==binding.subject)throw new Error('Invalid received binding.');
+   bindings.set(binding.id,binding);const indices=new Set<number>(),members=new Set<string>();
+   for(const part of binding.parts){const key=JSON.stringify([part.logicalMember,part.kind,part.part]);if(!ordinal(part.partIndex)||indices.has(part.partIndex)||members.has(key)||!ordinal(part.logicalMember)||typeof part.kind!=='string'||!['value','detail','pose'].includes(part.part))throw new Error('Invalid received binding part.');indices.add(part.partIndex);members.add(key);}
+   const predecessorParts=new Set<number>();
+   for(const predecessor of binding.predecessors??[]){const clock=predecessor.clock;if(!finite(predecessor.at)||predecessor.at<binding.seed.at||predecessor.at>world.simTime||!ordinal(predecessor.order)||!Array.isArray(predecessor.partIndices)||!predecessor.partIndices.length||predecessor.partIndices.some(index=>!indices.has(index)||predecessorParts.has(index))||new Set(predecessor.partIndices).size!==predecessor.partIndices.length||predecessor.frame&&!validObservationFrame(predecessor.frame))throw new Error('Invalid received predecessor mask.');for(const index of predecessor.partIndices)predecessorParts.add(index);validateEvidenceSource(clock.confirmation);if(clock.confirmation.observer.actorId!==actorId||clock.confirmation.observer.physicalLife!==batch.physicalLife||!finite(clock.confirmedFrom)||!finite(clock.confirmedThrough)||clock.confirmedFrom>clock.confirmedThrough||clock.confirmedThrough>predecessor.at)throw new Error('Invalid predecessor clocks.');if(clock.measurement){const measurement=clock.measurement;validateEvidenceSource(measurement.receivedFrom);if(![measurement.measuredFrom,measurement.measuredThrough,measurement.acquiredAt].every(finite)||measurement.measuredFrom>measurement.measuredThrough||measurement.measuredThrough>measurement.acquiredAt||measurement.acquiredAt>predecessor.at)throw new Error('Invalid predecessor measurement.');}}
+   if(binding.charges){const projection=binding.charges;if(projection.id!==JSON.stringify([binding.id,binding.parts.map(part=>part.partIndex)])||projection.binding!==binding.id||!Array.isArray(projection.members)||projection.members.some(member=>!ordinal(member.logicalMember)||!ordinal(member.bytes)||member.count!==1||!Array.isArray(member.partIndices)||!member.partIndices.length||member.partIndices.some(index=>!binding.parts.some(part=>part.partIndex===index&&part.logicalMember===member.logicalMember))||!strings(member.individualIds)||!Array.isArray(member.closures)||member.closures.some(atom=>typeof atom.key!=='string'||!ordinal(atom.bytes))))throw new Error('Invalid received charge projection.');}
+   validateReceipt(world,materializeReceivedBindingSeed(binding),actorId);
   }
+
+  let previous=-1;
+  for(const entry of batch.entries){const address=JSON.stringify([batch.batchOrder,entry.entryIndex]);if(!ordinal(entry.entryIndex)||entry.entryIndex<=previous||addresses.has(address)||!ordinal(entry.order)||!finite(entry.receivedAt)||entry.receivedAt>world.simTime||!['baseline','sample','boundary','occurrence'].includes(entry.kind)||typeof entry.required!=='boolean'||!Array.isArray(entry.coverage)||!record(entry.charge)||!ordinal(entry.charge.bytes)||!ordinal(entry.charge.count))throw new Error('Invalid received entry.');addresses.add(address);previous=entry.entryIndex;
+   if(entry.sampleToken!==undefined&&!ordinal(entry.sampleToken))throw new Error('Invalid sample token.');
+   const members=new Map<number,{binding:number;parts:Set<number>}>();
+   for(const coverage of entry.coverage){const binding=bindings.get(coverage.binding);if(!binding||!Array.isArray(coverage.members)||!coverage.members.length)throw new Error('Invalid received coverage binding.');for(const member of coverage.members){if(!ordinal(member.memberIndex)||!Array.isArray(member.partIndices)||!member.partIndices.length||new Set(member.partIndices).size!==member.partIndices.length||member.partIndices.some(index=>!binding.parts.some(part=>part.partIndex===index))||(members.has(member.memberIndex)&&(members.get(member.memberIndex)!.binding!==binding.id||member.partIndices.some(index=>members.get(member.memberIndex)!.parts.has(index)))))throw new Error('Overlapping received member mask.');const held=members.get(member.memberIndex);if(held)for(const index of member.partIndices)held.parts.add(index);else members.set(member.memberIndex,{binding:binding.id,parts:new Set(member.partIndices)});}if(coverage.boundary!==undefined&&(entry.kind!=='boundary'||!['change','loss','unchecked','attention-exit','receiver-frame'].includes(coverage.boundary)))throw new Error('Invalid received boundary mask.');const clock=coverage.clock;if(clock){validateEvidenceSource(clock.confirmation);if(clock.confirmation.observer.actorId!==actorId||clock.confirmation.observer.physicalLife!==batch.physicalLife||!finite(clock.confirmedFrom)||!finite(clock.confirmedThrough)||clock.confirmedFrom>clock.confirmedThrough||clock.confirmedThrough>entry.receivedAt||clock.frame!==undefined&&(!ordinal(clock.frame)||!batch.frames[clock.frame]))throw new Error('Invalid received support clocks.');if(clock.measurement){const measurement=clock.measurement;validateEvidenceSource(measurement.receivedFrom);if(![measurement.measuredFrom,measurement.measuredThrough,measurement.acquiredAt].every(finite)||measurement.measuredFrom>measurement.measuredThrough||measurement.measuredThrough>measurement.acquiredAt||measurement.acquiredAt>entry.receivedAt)throw new Error('Invalid received measurement clocks.');}}
+   }
+   for(const hole of entry.rejected??[]){if(!ordinal(hole.memberIndex)||members.has(hole.memberIndex)||!temporalSubject(hole.subject)||!Array.isArray(hole.parts)||!strings(hole.sourceIds))throw new Error('Invalid rejected received coverage.');members.set(hole.memberIndex,{binding:hole.binding,parts:new Set(hole.partIndices)});}
+   if(entry.receipt){if(entry.receipt.batchOrder!==batch.batchOrder||entry.receipt.entryIndex!==entry.entryIndex)throw new Error('Occurrence has another logical address.');validateReceipt(world,entry.receipt,actorId);}
+   else {const receipt=materializeReceivedEntry(batch,entry);if(receipt)validateReceipt(world,receipt,actorId);}
+  }
+ }
+ const metadata=temporalPageMetadata(page,{world});if(page.count!==metadata.count||page.bytes!==metadata.entryBytes||canonicalJson(page.subjects)!==canonicalJson(metadata.subjects)||canonicalJson(page.sourceIds)!==canonicalJson(metadata.sourceIds)||canonicalJson(page.sourceRefs)!==canonicalJson(metadata.references))throw new Error('Received block projections disagree with payload.');
+}
+export function validateTemporalEvidenceState(world:WorldState,value:TemporalEvidenceState|undefined):void{
+ if(value===undefined)return;if(!record(value)||value.version!==1||typeof value.namespace!=='string'||!record(value.actors))throw new Error('Invalid received history owner.');
+ for(const [actorId,actor]of Object.entries(value.actors)){
+  if(!ordinal(actor.physicalLife)||typeof actor.epoch!=='string'||!Array.isArray(actor.pages)||!ordinal(actor.bytes)||!ordinal(actor.count)||!record(actor.recent)||!Array.isArray(actor.recent.blocks))throw new Error('Invalid received actor history.');
+  for(const page of actor.pages)validateTemporalPage(world,page,actorId);
+  const reconstructed={...actor};installTemporalChargeDirectories(reconstructed,actor.recent.blocks);
+  if(reconstructed.bytes!==actor.bytes||reconstructed.count!==actor.count||canonicalJson(reconstructed.recent.closures)!==canonicalJson(actor.recent.closures))throw new Error('Recent charge directory disagrees with actor totals.');
+  for(const [id,capsule]of Object.entries(actor.supports??{})){if(capsule.receipt.id!==id||!Array.isArray(capsule.values)||capsule.values.length!==capsule.receipt.facets.length||!ordinal(capsule.bytes)||typeof capsule.required!=='boolean')throw new Error('Invalid retained support capsule.');validateReceipt(world,capsule.receipt,actorId,capsule.values);if(capsule.bytes!==temporalSupportLogicalBytes(capsule))throw new Error('Retained support charge disagrees.');}
+  const frontier=actor.frontier;if(frontier&&(frontier.expiredThroughTime!==null&&(!finite(frontier.expiredThroughTime)||frontier.expiredThroughTime>world.simTime)||frontier.pressureThrough&&(!ordinal(frontier.pressureThrough.address.batchOrder)||!ordinal(frontier.pressureThrough.address.entryIndex)||!ordinal(frontier.pressureThrough.address.memberIndex)||!finite(frontier.pressureThrough.receivedAt)||!ordinal(frontier.pressureThrough.order))))throw new Error('Invalid received eligibility frontier.');
+ }
 }

@@ -35,6 +35,7 @@ import { MemoryRetentionError, type PreparedMemoryRetention } from './temporal-s
 import { releaseUnusedTemporalSupports } from './retention-cleanup.js';
 import type { RetentionMetadataView } from './retention-metadata.js';
 import type { RetainedSourceChanges } from './retention-record-metadata.js';
+import { sqlRowBatches } from './sql-rows.js';
 
 const tables = {
   awareness: 'mind_awareness',
@@ -95,20 +96,19 @@ export async function prepareAccountRetention(
   const rows = new Map<string, string[]>(),
     positions = new Map<string, Map<string, number>>();
   let world = state.world;
+  const bodyReads: Array<{actorId: string; candidate: Candidate}> = [];
+  const applications: Array<{actorId: string; apply: () => Promise<void>}> = [];
+  const priorSupports = new Map(actorIds.map(actorId => [actorId,
+    Object.keys(world.experience?.temporal?.actors[actorId]?.supports ?? {})]));
+  world = updateWorld(world, draft => {
+    for (const actorId of actorIds) selectedExpireRecognitionSeeds(draft, actorId);
+  }, {retainNativeValues: true});
+  const released = await releaseUnusedTemporalSupports({...state, world}, actorIds, retainedMetadata, db);
+  world = released.state.world;
+  if (released.ids.length) rows.set('mind_temporal_supports', released.ids);
   const prepareActor = async (actorId: string) => {
     let accounts = world.experience!.temporal!.actors[actorId]!.accounts;
     if (!accounts) {
-      const totals = new Map<string, { bytes: number; count: number }>();
-      if (retainedMetadata)
-        for (const table of Object.values(tables))
-          for (const row of retainedMetadata.rows(table, actorId)) {
-            const category = String(row.columns['retention_class']);
-            if (category === 'sensory') continue;
-            const total = totals.get(category) ?? { bytes: 0, count: 0 };
-            total.bytes += Number(row.columns['logical_bytes']);
-            total.count++;
-            totals.set(category, total);
-          }
       world = updateWorld(
         world,
         (draft) => {
@@ -123,35 +123,13 @@ export async function prepareAccountRetention(
     if (
       (accounts.nextDue === null || accounts.nextDue > now) &&
       (['optional', 'required', 'speech'] as const).every(
-        (key) =>
-          accounts![key].bytes <= policy[key].maxBytes &&
-          accounts![key].count <= policy[key].maxRecords,
+        (key) => {
+          const target = experienceMaintenanceTarget(world, key);
+          return accounts![key].bytes <= target.maxBytes && accounts![key].count <= target.maxRecords;
+        },
       )
     )
       return;
-    const priorSupportIds = Object.keys(
-      world.experience!.temporal!.actors[actorId]!.supports ?? {},
-    );
-    world = updateWorld(
-      world,
-      (draft) => {
-        selectedExpireRecognitionSeeds(draft, actorId);
-      },
-      { retainNativeValues: true },
-    );
-    const released = await releaseUnusedTemporalSupports(
-      { ...state, world },
-      actorId,
-      retainedMetadata,
-      db,
-    );
-    world = released.state.world;
-    if (released.ids.length)
-      rows.set('mind_temporal_supports', [
-        ...(rows.get('mind_temporal_supports') ?? []),
-        ...released.ids,
-      ]);
-    accounts = world.experience!.temporal!.actors[actorId]!.accounts!;
     const metadata = complete
       ? []
       : retainedMetadata
@@ -272,47 +250,14 @@ export async function prepareAccountRetention(
         ))
     )
       moreCandidates = true;
+    for (const candidate of selectedCandidates)
+      if (!candidate.value) bodyReads.push({actorId, candidate});
+    applications.push({actorId, apply: async () => {
     const totals = structuredClone(accounts);
-    for (let offset = 0; offset < selectedCandidates.length; ) {
-      const batch: Candidate[] = [];
-      let coldBytes = 0;
-      while (offset < selectedCandidates.length) {
-        const candidate = selectedCandidates[offset]!;
-        const bytes = candidate.value ? 0 : candidate.bytes;
-        if (batch.length && coldBytes + bytes > maximumPreparationBytes) break;
-        if (bytes > maximumPreparationBytes)
-          throw new MemoryRetentionError('One personal memory exceeds bounded preparation.');
-        batch.push(candidate);
-        coldBytes += bytes;
-        offset++;
-      }
-      // Independent retained pools can together exceed one bounded read. Retire
-      // their selected bodies a batch at a time in this same prepared world; only
-      // the encompassing world transaction publishes their combined effects.
-      let preparationBytes = 0;
-      const hydrated: Candidate[] = [];
-      for (const kind of Object.keys(tables) as Kind[]) {
-        const needed = batch.filter((candidate) => candidate.kind === kind && !candidate.value);
-        const ids = needed.map((candidate) => candidate.recordId);
-        if (!ids.length) continue;
-        preparationBytes += needed.reduce((bytes, candidate) => bytes + candidate.bytes, 0);
-        if (preparationBytes > maximumPreparationBytes)
-          throw new MemoryRetentionError('Personal memory retention exceeds bounded preparation.');
-        for (const row of await db
-          .prepare(
-            `SELECT source_id,payload FROM ${tables[kind]} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
-          )
-          .all(world.id, actorId, ids)) {
-          const candidate = candidates.get(JSON.stringify([kind, String(row['source_id'])]));
-          if (candidate) {
-            candidate.value = {
-              source: kind,
-              value: JSON.parse(String(row['payload'])),
-            } as ExperienceEntry;
-            hydrated.push(candidate);
-          }
-        }
-      }
+    if (selectedCandidates.length) {
+      // Selection already applies the single per-actor account/byte allowance;
+      // table-batched hydration does not multiply it by retention class.
+      const batch = selectedCandidates;
       const canRecall = hasMemory(entityGet(world.entities, actorId));
       const expired: ExperienceEntry[] = [],
         replacements: MemoryRecord[] = [];
@@ -345,24 +290,27 @@ export async function prepareAccountRetention(
               physicalLife: number;
               epoch: string;
               family: 'temporal-receipt';
-              from: number;
-              through: number;
+              from: {batchOrder: number; entryIndex: number};
+              through: {batchOrder: number; entryIndex: number};
             }
           >();
           for (const receipt of locators) {
             const key = JSON.stringify([receipt.actorId, receipt.physicalLife, receipt.epoch]),
               prior = spans.get(key);
             if (prior) {
-              prior.from = Math.min(prior.from, receipt.ordinal);
-              prior.through = Math.max(prior.through, receipt.ordinal);
+              const position = {batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex};
+              if (position.batchOrder < prior.from.batchOrder ||
+                (position.batchOrder === prior.from.batchOrder && position.entryIndex < prior.from.entryIndex)) prior.from = position;
+              if (position.batchOrder > prior.through.batchOrder ||
+                (position.batchOrder === prior.through.batchOrder && position.entryIndex > prior.through.entryIndex)) prior.through = position;
             } else
               spans.set(key, {
                 actorId,
                 physicalLife: receipt.physicalLife,
                 epoch: receipt.epoch,
                 family: 'temporal-receipt',
-                from: receipt.ordinal,
-                through: receipt.ordinal,
+                from: {batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex},
+                through: {batchOrder: receipt.batchOrder, entryIndex: receipt.entryIndex},
               });
           }
           const personal = {
@@ -479,7 +427,6 @@ export async function prepareAccountRetention(
         },
         { retainNativeValues: true },
       );
-      for (const candidate of hydrated) delete candidate.value;
     }
     world = updateWorld(
       world,
@@ -490,34 +437,45 @@ export async function prepareAccountRetention(
       },
       { retainNativeValues: true },
     );
-    const finalSupports = await releaseUnusedTemporalSupports(
-      { ...state, world },
-      actorId,
-      retainedMetadata,
-      db,
-      Object.values(tables).flatMap((table) => rows.get(table) ?? []),
-    );
-    world = finalSupports.state.world;
-    const remaining = world.experience!.temporal!.actors[actorId]!.supports ?? {};
-    const removed = priorSupportIds
-      .filter((id) => !remaining[id])
-      .map((id) =>
-        JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'supports', id]),
-      );
-    if (removed.length)
-      rows.set('mind_temporal_supports', [
-        ...new Set([
-          ...(rows.get('mind_temporal_supports') ?? []),
-          ...removed,
-          ...finalSupports.ids,
-        ]),
-      ]);
+    }});
   };
   for (const actorId of actorIds) {
     const operation = () => prepareActor(actorId);
     if (db.readForActor) await db.readForActor(world.id, actorId, operation);
     else await operation();
   }
+  // Candidate metadata and pending overrides already selected exact cold keys.
+  // Hydrate them together by table, rather than opening one read per actor/kind.
+  const hydrate = async () => {
+    for (const kind of Object.keys(tables) as Kind[]) {
+      const requested = bodyReads.filter(read => read.candidate.kind === kind);
+      if (!requested.length) continue;
+      const selected = new Map(requested.map(read => [read.candidate.recordId, read.candidate]));
+      for (const batch of sqlRowBatches(requested.map(read => [{actor_id: read.actorId, id: read.candidate.recordId}])))
+        for (const row of await db.prepare(`SELECT t.id,t.payload FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,id TEXT)
+          JOIN ${tables[kind]} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=q.id`)
+          .all(JSON.stringify(batch.map(([request]) => request)), world.id)) {
+          const candidate = selected.get(String(row['id']))!;
+          candidate.value = {source: kind, value: JSON.parse(String(row['payload']))} as ExperienceEntry;
+        }
+    }
+  };
+  if (bodyReads.length) {
+    if (db.readMetadataBaseline) await db.readMetadataBaseline(actorIds, hydrate);
+    else await hydrate();
+  }
+  for (const application of applications)
+    if (db.readForActor) await db.readForActor(world.id, application.actorId, application.apply);
+    else await application.apply();
+  const finalSupports = await releaseUnusedTemporalSupports({...state, world}, actorIds, retainedMetadata, db,
+    Object.values(tables).flatMap(table => rows.get(table) ?? []));
+  world = finalSupports.state.world;
+  const removedSupports = new Set([...(rows.get('mind_temporal_supports') ?? []), ...finalSupports.ids]);
+  for (const [actorId, ids] of priorSupports)
+    for (const id of ids)
+      if (!world.experience?.temporal?.actors[actorId]?.supports?.[id])
+        removedSupports.add(JSON.stringify(['world','experience','temporal','actors',actorId,'supports',id]));
+  if (removedSupports.size) rows.set('mind_temporal_supports', [...removedSupports]);
   return { state: world === state.world ? state : { ...state, world }, rows, positions };
 }
 

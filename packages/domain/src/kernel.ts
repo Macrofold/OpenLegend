@@ -6404,15 +6404,14 @@ function retainsTemporalHistory(
     for (const page of retained.pages) {
       if (originals.has(page) || committed.has(page)) continue;
       const source = temporalPageSelectionSource(page);
-      // Regrouping cannot alter a logical operation or its declaration meaning.
-      // Exact committed additions come only from the successful save's bounded tail.
+      // The native selection owner certifies this exact immutable subset.
+      // Committed additions come only from the successful save's bounded tail.
       if (
         !source ||
         !originals.has(source) ||
         page.actorId !== source.actorId ||
         page.physicalLife !== source.physicalLife ||
-        page.epoch !== source.epoch ||
-        !retainsHistory(source.operations, page.operations)
+        page.epoch !== source.epoch
       )
         return false;
     }

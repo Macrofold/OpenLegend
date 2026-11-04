@@ -86,7 +86,8 @@ const perspectiveColumns = [
   'response_action',
   'temporal_life',
   'temporal_epoch',
-  'temporal_ordinal',
+  'temporal_batch_order',
+  'temporal_entry_index',
 ];
 const versionColumns = [
   'world_id',
@@ -113,8 +114,10 @@ const keyColumns: Record<string, readonly string[]> = {
     'owner_id',
     'physical_life',
     'receipt_epoch',
-    'first_ordinal',
-    'last_ordinal',
+    'first_batch_order',
+    'first_entry',
+    'last_batch_order',
+    'last_entry',
   ],
   history_events: ['world_id', 'id'],
   history_perspectives: ['world_id', 'event_id', 'actor_id'],
@@ -366,8 +369,10 @@ export class LiveReadOverlay {
                     owner_kind: 'memory',
                     physical_life: span.physicalLife,
                     receipt_epoch: span.epoch,
-                    first_ordinal: span.from,
-                    last_ordinal: span.through,
+                    first_batch_order: span.from.batchOrder,
+                    first_entry: span.from.entryIndex,
+                    last_batch_order: span.through.batchOrder,
+                    last_entry: span.through.entryIndex,
                   });
               }
             }

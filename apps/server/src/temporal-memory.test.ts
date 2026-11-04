@@ -183,7 +183,7 @@ describe('bounded personal temporal storage', () => {
         .experience!.temporal!.actors[
           actorId
         ]!.pages.flatMap((chunk) => temporalPageReceipts(chunk))
-        .find((receipt) => receipt.epoch === locator.epoch && receipt.ordinal === locator.ordinal)!;
+        .find((receipt) => receipt.epoch === locator.epoch && receipt.batchOrder === locator.batchOrder && receipt.entryIndex === locator.entryIndex)!;
     };
     const own = received(PLAYER_ID),
       witness = received(witnessId);
@@ -209,7 +209,8 @@ describe('bounded personal temporal storage', () => {
       actorId: receipt.actorId,
       physicalLife: receipt.physicalLife,
       epoch: receipt.epoch,
-      ordinal: receipt.ordinal,
+      batchOrder: receipt.batchOrder,
+      entryIndex: receipt.entryIndex,
     });
     expect((await service.forgetRecentObservation(address(own))).ok).toBe(true);
     expect((await owners()).some((receipt) => receipt.actorId === witnessId)).toBe(true);
@@ -253,7 +254,7 @@ describe('bounded personal temporal storage', () => {
     expect(JSON.stringify(remaining)).toContain('A later independent statement.');
   });
 
-  it('retains the newest whole operations under recent-recording pressure without replacing movement with endpoints', async () => {
+  it('retains the newest logical received members under pressure without replacing movement with endpoints', async () => {
     const { store, service } = await setup();
     await useNearCampSight(service);
     await editWorld(service, (world) => {
@@ -277,9 +278,9 @@ describe('bounded personal temporal storage', () => {
     const subject = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.track,
       firstAt = service.world.simTime,
       installed = selectedTemporalPolicy(service.world);
-    // This receiving operation includes nineteen held-field confirmations and one
-    // position change. Fit several whole operations while still forcing a prefix
-    // release, without changing the bundled world's production allowance.
+    // Received confirmations and position changes share their batch. Retain a
+    // bounded suffix of complete logical members while forcing prefix release,
+    // without changing the bundled world's production allowance.
     const policy = vi.spyOn(worldComposition, 'selectedTemporalPolicy').mockReturnValue({
       ...installed,
       recent: { ...installed.recent, maxChanges: 64 },
@@ -809,7 +810,8 @@ describe('bounded personal temporal storage', () => {
           actorId: receipt.actorId,
           physicalLife: receipt.physicalLife,
           epoch: receipt.epoch,
-          ordinal: receipt.ordinal,
+          batchOrder: receipt.batchOrder,
+          entryIndex: receipt.entryIndex,
         });
       }
       return result;
@@ -851,7 +853,7 @@ describe('bounded personal temporal storage', () => {
           scope,
           {
             subjects: ['fixture-animal'],
-            before: { epoch: last.epoch, ordinal: last.ordinal, at: last.at, order: last.order },
+            before: { epoch: last.epoch, batchOrder: last.batchOrder, entryIndex: last.entryIndex, memberIndex: last.facets[0]!.memberIndex, at: last.at, order: last.order },
             bytes: 32768,
           },
           service.world,
@@ -1442,7 +1444,7 @@ describe('bounded personal temporal storage', () => {
       )!;
       expect(
         retainTemporalSupport(world, receipt, {
-          facetOrdinals: [0],
+          memberIndices: [0],
           required: true,
           maxBytes: policy.required.maxBytes,
           maxRecords: policy.required.maxRecords,

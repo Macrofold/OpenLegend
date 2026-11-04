@@ -19,6 +19,7 @@ import {
 } from './received-record-references.js';
 import {
   encodeTemporalPage,
+  temporalPageColumns,
   decodeTemporalPageRow,
   serializeTemporalPage,
 } from './temporal-page-storage.js';
@@ -656,111 +657,28 @@ const pageStorage = (value: JsonRecord, world: WorldState | undefined) => {
   if (!world) throw new Error('Temporal page projection requires its captured world.');
   return encodeTemporalPage(value as unknown as import('@open-legend/domain').TemporalPage, world);
 };
+const temporalPageColumnTypes = {
+  actor_id: 'TEXT NOT NULL', physical_life: 'BIGINT NOT NULL', receipt_epoch: 'TEXT NOT NULL',
+  first_batch_order: 'BIGINT NOT NULL', first_entry: 'BIGINT NOT NULL', first_member: 'BIGINT NOT NULL',
+  last_batch_order: 'BIGINT NOT NULL', last_entry: 'BIGINT NOT NULL', last_member: 'BIGINT NOT NULL',
+  first_at: 'DOUBLE PRECISION NOT NULL', last_at: 'DOUBLE PRECISION NOT NULL',
+  entry_bytes: 'BIGINT NOT NULL', receipt_count: 'BIGINT NOT NULL', encoded_bytes: 'BIGINT NOT NULL',
+  charge_directory: 'TEXT NOT NULL', spatial_context: 'BIGINT NOT NULL',
+  subject_keys: 'TEXT[] NOT NULL', track_keys: 'TEXT[] NOT NULL', source_ids: 'TEXT[] NOT NULL',
+  individual_ids: 'TEXT[] NOT NULL', value_refs: 'TEXT[] NOT NULL', occurrence_keys: 'TEXT[] NOT NULL',
+  lookup_buckets: 'SMALLINT[] NOT NULL',
+};
 columns(
   'mind_temporal_pages',
-  {
-    page_order: { ...numberColumn('order'), sql: 'BIGINT NOT NULL' },
-    retired_revision: { sql: 'BIGINT', value: () => null },
-    actor_id: { sql: 'TEXT NOT NULL', value: (value) => value['actorId'] },
-    source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' },
-    physical_life: { ...numberColumn('physicalLife'), sql: 'BIGINT NOT NULL' },
-    receipt_epoch: { ...textColumn('epoch'), sql: 'TEXT NOT NULL' },
-    kind: {
-      sql: 'TEXT NOT NULL',
-      value: (value) => String((value['operations'] as Array<{ kind: string }>)[0]!.kind),
-    },
-    first_ordinal: { ...numberColumn('fromOrdinal'), sql: 'BIGINT NOT NULL' },
-    last_ordinal: { ...numberColumn('throughOrdinal'), sql: 'BIGINT NOT NULL' },
-    first_order: {
-      sql: 'BIGINT NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.firstOrder,
-    },
-    last_order: {
-      sql: 'BIGINT NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.lastOrder,
-    },
-    first_at: {
-      sql: 'DOUBLE PRECISION NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.firstAt,
-    },
-    last_at: {
-      sql: 'DOUBLE PRECISION NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.lastAt,
-    },
-    last_received_at: {
-      sql: 'DOUBLE PRECISION NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.lastReceivedAt,
-    },
-    first_measured_at: {
-      sql: 'DOUBLE PRECISION',
-      value: (value, _path, world) => pageStorage(value, world).metadata.firstMeasured ?? null,
-    },
-    last_supported_at: {
-      sql: 'DOUBLE PRECISION',
-      value: (value, _path, world) => pageStorage(value, world).metadata.lastSupported ?? null,
-    },
-    logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
-    receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
-    encoded_bytes: {
-      sql: 'BIGINT NOT NULL',
-      value: (value) => Buffer.byteLength(serializeTemporalPage(value)),
-    },
-    subjects: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.subjects,
-    },
-    member_keys: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.members,
-    },
-    value_refs: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.references,
-    },
-    source_ids: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.sourceIds,
-    },
-    individual_ids: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.individualIds,
-    },
-    occurrence_source_ids: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.occurrenceSourceIds,
-    },
-    occurrence_individual_ids: {
-      sql: 'TEXT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).metadata.occurrenceIndividualIds,
-    },
-    lookup_buckets: {
-      sql: 'SMALLINT[] NOT NULL',
-      value: (value, _path, world) => pageStorage(value, world).lookupBuckets,
-    },
-    receipt_ordinals: {
-      sql: 'BIGINT[] NOT NULL',
-      value: (value) => [
-        ...new Set(
-          (value as unknown as import('@open-legend/domain').TemporalPage).operations.flatMap(
-            (op) => (op.kind === 'check' ? [] : [op.receipt.ordinal]),
-          ),
-        ),
-      ],
-    },
-    spatial_context: {
-      sql: 'BIGINT NOT NULL',
-      value: (value, _path, world) => Number(pageStorage(value, world).metadata.spatialContext),
-    },
-  },
+  Object.fromEntries(Object.entries(temporalPageColumnTypes).map(([name, sql]) => [name, {
+    sql,
+    value: (value: JsonRecord, _path: string[], world?: WorldState) =>
+      temporalPageColumns(pageStorage(value, world))[name],
+  }])),
   [
-    // Match both directions of the exact-member neighbor seek through its stable tie.
-    ['actor_id', 'physical_life', 'receipt_epoch', 'kind', 'first_at', 'first_order', 'id'],
+    ['actor_id', 'first_batch_order', 'first_entry', 'first_member', 'id'],
+    ['actor_id', 'first_at', 'first_batch_order', 'first_entry', 'first_member', 'id'],
     ['actor_id', 'position'],
-    ['actor_id', 'source_id'],
-    ['actor_id', 'physical_life', 'receipt_epoch', 'first_ordinal'],
-    ['actor_id', 'last_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
-    ['actor_id', 'last_received_at', 'page_order', 'last_ordinal'],
-    ['actor_id', 'last_supported_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
   ],
 );
 columns(
@@ -768,10 +686,16 @@ columns(
   {
     actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path.at(-1) },
     next_due: numberColumn('nextDue'),
+    expired_through_time: { sql: 'DOUBLE PRECISION', value: (value) => (value['frontier'] as JsonRecord | undefined)?.['expiredThroughTime'] ?? null },
+    pressure_batch_order: { sql: 'BIGINT', value: (value) => (((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['address'] as JsonRecord | undefined)?.['batchOrder'] ?? null },
+    pressure_entry: { sql: 'BIGINT', value: (value) => (((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['address'] as JsonRecord | undefined)?.['entryIndex'] ?? null },
+    pressure_member: { sql: 'BIGINT', value: (value) => (((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['address'] as JsonRecord | undefined)?.['memberIndex'] ?? null },
+    pressure_at: { sql: 'DOUBLE PRECISION', value: (value) => ((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['receivedAt'] ?? null },
+    pressure_order: { sql: 'BIGINT', value: (value) => ((value['frontier'] as JsonRecord | undefined)?.['pressureThrough'] as JsonRecord | undefined)?.['order'] ?? null },
     logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
     receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
   },
-  [['next_due', 'actor_id']],
+  [['next_due', 'actor_id'], ['actor_id']],
 );
 columns(
   'mind_perception_values',
@@ -819,14 +743,18 @@ columns(
       sql: 'TEXT NOT NULL',
       value: (value) => (value['receipt'] as JsonRecord)['epoch'],
     },
-    receipt_ordinal: {
+    batch_order: {
       sql: 'BIGINT NOT NULL',
-      value: (value) => (value['receipt'] as JsonRecord)['ordinal'],
+      value: (value) => (value['receipt'] as JsonRecord)['batchOrder'],
+    },
+    entry_index: {
+      sql: 'BIGINT NOT NULL',
+      value: (value) => (value['receipt'] as JsonRecord)['entryIndex'],
     },
   },
   [
     ['actor_id', 'source_id'],
-    ['actor_id', 'physical_life', 'receipt_epoch', 'receipt_ordinal'],
+    ['actor_id', 'physical_life', 'receipt_epoch', 'batch_order', 'entry_index'],
   ],
 );
 columns(
@@ -878,10 +806,10 @@ RECORD_NODES.get('activity_methods')!.uniqueIndexes = [['signature_key']];
 RECORD_NODES.get('activity_methods')!.constraints = ['CHECK (octet_length(payload)<=32768)'];
 RECORD_NODES.get('activity_occurrences')!.constraints = ['CHECK (octet_length(payload)<=32768)'];
 
-/** Physical debris is never canonical evidence, including checkpoint/startup reads. */
+/** Ownerless pooled values are debris. Temporal blocks remain canonical until
+ * collection; personal readers apply actor frontiers to their logical entries. */
 export function liveEvidenceRowSql(table: string, alias = 't'): string {
-  if (table === 'mind_temporal_pages') return `${alias}.retired_revision IS NULL`;
   if (table === 'mind_perception_values')
     return `EXISTS(SELECT 1 FROM received_value_uses live_use WHERE live_use.world_id=${alias}.world_id AND live_use.value_id=${alias}.source_id)`;
-  return '';
+  return 'TRUE';
 }

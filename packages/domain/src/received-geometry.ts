@@ -42,6 +42,7 @@ import {
 import { selectedAttentionPolicy, selectedTemporalPolicy } from './world-composition.js';
 import {
   captureTemporalGeometry,
+  createReceivedSample,
   withTemporalReceivedTransition,
   closeTemporalGeometry,
   type TemporalCurrentGroupCheckpoint,
@@ -957,8 +958,7 @@ function recordGeometryCheck(
   observerId: string,
   state: ReceivedGeometryState,
 ): void {
-  for (const feature of receivedGeometryFeatures(state))
-    captureTemporalGeometry(world, observerId, feature, state.supportedThrough, true);
+  captureTemporalGeometry(world,observerId,receivedGeometryFeatures(state),state.supportedThrough,selectedTemporalPolicy(world).recent,createReceivedSample(world,observerId));
 }
 function finalizeGeometry(
   world: WorldState,

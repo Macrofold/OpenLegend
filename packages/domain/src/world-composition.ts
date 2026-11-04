@@ -200,11 +200,10 @@ export function selectedObserverIdentityKnowledge(
 export function selectedRequestRecentIndividualRepair(
   world: WorldState,
   actorId: string,
-  pageOrder: number,
   ids: readonly string[],
 ): void {
   selectedCreationProfileForWorld(world);
-  requestRecentIndividualRepair(world, actorId, pageOrder, ids);
+  requestRecentIndividualRepair(world, actorId, ids);
 }
 export function selectedRepairRecentIndividualReferences(
   world: WorldState,
@@ -317,9 +316,14 @@ export function selectedOutwardBodyName(world: WorldState, entity: import('./typ
   selectedCreationProfileForWorld(world);
   return outwardBodyName(world, entity);
 }
-export function selectedBodyIndividual(world: WorldState, observerId: string, subjectId: string) {
+export function selectedBodyIndividual(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  received: import('./perception-current.js').CurrentFacetGrant,
+) {
   selectedCreationProfileForWorld(world);
-  return ensureBodyIndividual(world, observerId, subjectId);
+  return ensureBodyIndividual(world, observerId, subjectId, received);
 }
 
 /** The selected world owns understood warning grammar and its stated duration. */

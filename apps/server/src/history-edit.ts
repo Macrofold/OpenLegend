@@ -113,9 +113,10 @@ export async function prepareHistoryEdit(
       const impressions = await db
         .prepare(
           `SELECT DISTINCT s.actor_id,s.owner_id AS source_id FROM mind_impression_spans s
-        JOIN jsonb_to_recordset(?::jsonb) q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
+        JOIN jsonb_to_recordset(?::jsonb) q("actorId" text,"physicalLife" bigint,epoch text,"batchOrder" bigint,"entryIndex" bigint)
           ON s.actor_id=q."actorId" AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch
-            AND s.first_ordinal<=q.ordinal AND s.last_ordinal>=q.ordinal WHERE s.world_id=?`,
+            AND (s.first_batch_order,s.first_entry)<=(q."batchOrder",q."entryIndex")
+            AND (s.last_batch_order,s.last_entry)>=(q."batchOrder",q."entryIndex") WHERE s.world_id=?`,
         )
         .all(JSON.stringify(selection.receipts), worldId);
       roots.push(
@@ -194,7 +195,7 @@ export async function prepareHistoryEdit(
         const selected = await db
           .prepare(
             `SELECT t.*,t.encoded_bytes AS bytes
-        FROM mind_temporal_pages t WHERE t.world_id=? AND t.retired_revision IS NULL AND t.last_received_at+?>? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
+        FROM mind_temporal_pages t WHERE t.world_id=? AND t.last_at+?>? AND NOT (t.slot=ANY(?::text[])) AND EXISTS (
           SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text,lookup_bucket smallint)
           WHERE a.actor_id=t.actor_id AND t.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
           )
@@ -218,7 +219,7 @@ export async function prepareHistoryEdit(
         for (const row of selected) {
           const actorId = String(row['actor_id']),
             rows = owners.get(actorId) ?? [];
-          loadedChunks.add(String(row['source_id']));
+          loadedChunks.add(String(row['slot']));
           rows.push(row);
           owners.set(actorId, rows);
         }
@@ -388,7 +389,7 @@ export async function prepareHistoryEdit(
     for (let at = 0; at < ids.length; at += 256)
       for (const row of await db
         .prepare(
-          'SELECT id,revision,payload FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[]) AND retired_revision IS NULL',
+          'SELECT id,revision,payload FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])',
         )
         .all(worldId, ids.slice(at, at + 256))) {
         const id = String(row['id']),
@@ -562,7 +563,7 @@ export async function historyEditPredecessorsCurrent(
   for (let at = 0; at < ids.length; at += 256)
     for (const row of await db
       .prepare(
-        'SELECT id,revision FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[]) AND retired_revision IS NULL',
+        'SELECT id,revision FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])',
       )
       .all(worldId, ids.slice(at, at + 256))) {
       if (expected.get(String(row['id'])) !== Number(row['revision'])) return false;

@@ -1,6 +1,9 @@
-import { recordObservationSupport, observationReceiptOrdinals } from '../../experience.js';
+import { receivedPositionEligible } from '../../received-batches.js';
+import { recordObservationSupport, observationReceiptMemberIndices } from '../../experience.js';
 import { currentFacetValues } from '../../perception-current.js';
 import { currentNativeFacet, currentFacetGrant } from '../../perception-current.js';
+import type { CurrentFacetGrant } from '../../perception-current.js';
+import { sameDefinitionPin } from '../../definition-pins.js';
 import { entityGet } from '../../entity-collection.js';
 import { hasMemory } from '../../living.js';
 import { accessiblePossession } from '../../object-access.js';
@@ -34,8 +37,11 @@ import {
   temporalReceiptSource,
   temporalReceiptId,
   retainedTemporalReceipt,
+  receivedDirectoryContains,
+  temporalReceiptLocatorFromSource,
   type TemporalValue,
   type TemporalReceiptLocator,
+  type TemporalActorHistory,
 } from '../../temporal-evidence.js';
 import { BASE_ATTENTION_POLICY } from './attention.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
@@ -45,6 +51,7 @@ import {
   associateIndividualFamiliarity,
   revokeRecognitionEvidence,
   recognitionSeedDeadline,
+  recognitionSupportSources,
   validateRecognition,
   type RecognitionKnowledge,
 } from './recognition.js';
@@ -63,7 +70,7 @@ export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
 export interface ObserverIdentity {
   /** Last actual recent reference. Liveness only; never identity or recognition proof. */
-  recentReference?: { epoch: string; ordinal: number; pageOrder: number; at: number };
+  recentReference?: { physicalLife: number; epoch: string; batchOrder: number; entryIndex: number; memberIndex: number; at: number };
   /** Current body-only local roles need no lasting allocation. */
   retained?: true;
   familiarity?: import('../../attention.js').FamiliarityState;
@@ -142,8 +149,8 @@ export function commitObserverIdentity(
   }
   return true;
 }
-function nameEvidenceOrdinals(
-  facets: readonly { ordinal: number; value: Pick<TemporalValue, 'kind'> }[],
+function nameEvidenceIndices(
+  facets: readonly { index: number; value: Pick<TemporalValue, 'kind'> }[],
 ): Set<number> | undefined {
   const speech = facets.filter((facet) => facet.value.kind === 'speech');
   const described = facets.filter((facet) =>
@@ -158,10 +165,10 @@ function nameEvidenceOrdinals(
   // named-source edits may instead retain their actual described/physical source.
   if (!primary.length) return;
   return new Set([
-    ...primary.map((facet) => facet.ordinal),
+    ...primary.map((facet) => facet.index),
     ...facets
       .filter((facet) => ['perceived-feature', 'association'].includes(facet.value.kind))
-      .map((facet) => facet.ordinal),
+      .map((facet) => facet.index),
   ]);
 }
 /** A name learned from actual words keeps those exact words and their permitted
@@ -183,8 +190,8 @@ function retainNameEvidence(
     );
     const awareness = actual?.eventId === eventId ? actual : stored;
     const observation = awareness?.observation ?? stored?.observation;
-    const requested = observation && nameEvidenceOrdinals(observation.facets);
-    let selected: { receipt: TemporalReceiptLocator; ordinals: number[] } | undefined;
+    const requested = observation && nameEvidenceIndices(observation.facets.map(facet => ({index: facet.ordinal, value: facet.value})));
+    let selected: { receipt: TemporalReceiptLocator; memberIndices: number[] } | undefined;
     function* candidates() {
       // Native delivery and retained placement can use separate wrappers. Prefer
       // their exact common receipt before searching older sparse capsules.
@@ -199,25 +206,25 @@ function retainNameEvidence(
       considered.add(temporalReceiptId(receipt));
       const retained = retainedTemporalReceipt(world, receipt);
       if (!retained) continue;
-      const ordinals = observation
-        ? requested && observationReceiptOrdinals(world, observation, requested, retained.receipt)
+      const memberIndices = observation
+        ? requested && observationReceiptMemberIndices(world, observation, requested, retained.receipt)
         : [
-            ...(nameEvidenceOrdinals(
+            ...(nameEvidenceIndices(
               retained.values.map((value, index) => ({
                 value,
-                ordinal: retained.receipt.facets[index]!.ordinal,
+                index: retained.receipt.facets[index]!.memberIndex,
               })),
             ) ?? []),
           ];
-      if (ordinals?.length) {
-        selected = { receipt, ordinals };
+      if (memberIndices?.length) {
+        selected = { receipt, memberIndices };
         break;
       }
     }
     if (!selected && observation && requested?.size) {
       const receipt = recordObservationSupport(world, observerId, observation, {
         sourceIds: [eventId],
-        ordinals: requested,
+        sourceOrdinals: requested,
         admission: {
           kind: 'retained-support',
           owner: observationFactKey(world, observation, requested.values().next().value!).source,
@@ -225,16 +232,16 @@ function retainNameEvidence(
         },
       });
       const retained = receipt && retainedTemporalReceipt(world, receipt);
-      const ordinals =
-        retained && observationReceiptOrdinals(world, observation, requested, retained.receipt);
-      if (receipt && ordinals) selected = { receipt, ordinals };
+      const memberIndices =
+        retained && observationReceiptMemberIndices(world, observation, requested, retained.receipt);
+      if (receipt && memberIndices) selected = { receipt, memberIndices };
     }
     const alreadyHeld = selected && Object.hasOwn(supports, temporalReceiptId(selected.receipt));
     const held =
       selected &&
       retainTemporalSupport(world, selected.receipt, {
         ...BASE_ATTENTION_POLICY.retention.optional,
-        facetOrdinals: selected.ordinals,
+        memberIndices: selected.memberIndices,
       });
     if (!held) {
       for (const id of created) releaseTemporalSupport(world, observerId, id);
@@ -319,13 +326,28 @@ export function observerIndividual(
 /** Incidental contact does not become its own everlasting proof owner. Ordinary
  * recent receipts can support its first familiarity points until they retire;
  * only independently useful personal knowledge retains sparse proof afterwards. */
-export function retainedIndividualEvidenceKeys(world: WorldState, actorId: string): string[] {
+export function retainedIndividualEvidenceKeys(
+  world: WorldState, actorId: string,
+): string[] {
+  return retainedIdentityEvidenceKeys(world, actorId, undefined, pinnedIndividualIds(world, actorId));
+}
+function pinnedIndividualIds(world: WorldState, actorId: string, candidates?: readonly string[]): Set<string> {
   const pinned = new Set<string>();
-  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
+  const documents = candidates
+    ? candidates.flatMap(individualId => {
+      const document = knowledgeDocument(world, actorId, {kind: 'individual', individualId});
+      return document ? [document] : [];
+    }) : Object.values(world.actorKnowledge?.[actorId] ?? {});
+  for (const document of documents)
     if (document.subjectId?.kind === 'individual' && document.text.trim())
       pinned.add(document.subjectId.individualId);
   for (const record of world.minds?.[actorId]?.records ?? [])
     if (record.subjectId?.kind === 'individual') pinned.add(record.subjectId.individualId);
+  return pinned;
+}
+function retainedIdentityEvidenceKeys(
+  world: WorldState, actorId: string, candidates: readonly string[] | undefined, pinned: ReadonlySet<string>,
+): string[] {
   const workEpisodes = new Set(
     entityGet(world.entities, actorId)
       ?.actor?.agency.plan?.steps.flatMap((step) =>
@@ -336,7 +358,9 @@ export function retainedIndividualEvidenceKeys(world: WorldState, actorId: strin
       .filter((id): id is string => typeof id === 'string'),
   );
   const keys: string[] = [];
-  for (const [key, identity] of Object.entries(world.observerIdentities?.[actorId] ?? {})) {
+  const identities = world.observerIdentities?.[actorId] ?? {};
+  const entries = candidates ? candidates.flatMap(key => identities[key] ? [[key, identities[key]!] as const] : []) : Object.entries(identities);
+  for (const [key, identity] of entries) {
     keys.push(...(identity.nameEvidenceIds ?? []));
     for (const profile of [identity.voice, identity.sight])
       for (const sample of profile?.samples ?? []) keys.push(sample.sourceKey, ...sample.support);
@@ -417,8 +441,10 @@ export function markRecentIndividualReferences(
     if (
       previous &&
       previous.epoch === reference.epoch &&
-      previous.pageOrder >= reference.pageOrder &&
-      previous.ordinal >= reference.ordinal
+      (previous.batchOrder > reference.batchOrder ||
+        (previous.batchOrder === reference.batchOrder &&
+          (previous.entryIndex > reference.entryIndex ||
+           (previous.entryIndex === reference.entryIndex && previous.memberIndex >= reference.memberIndex))))
     )
       continue;
     const next = { ...identity, recentReference: { ...reference } };
@@ -429,14 +455,13 @@ export function markRecentIndividualReferences(
 export function requestRecentIndividualRepair(
   world: WorldState,
   actorId: string,
-  pageOrder: number,
   ids: readonly string[],
 ): void {
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   const pending = new Set(actor.individualRepairs);
   for (const id of ids)
-    if (world.observerIdentities?.[actorId]?.[id]?.recentReference?.pageOrder === pageOrder)
+    if (world.observerIdentities?.[actorId]?.[id]?.recentReference)
       pending.add(id);
   if (pending.size) {
     actor.individualRepairs = [...pending];
@@ -485,12 +510,32 @@ function recentIndividualAvailable(
     reference.at + BASE_ATTENTION_POLICY.retention.recent.maxAgeSeconds <= world.simTime
   )
     return false;
-  const frontier = actor.retiredThrough;
-  return (
-    !frontier ||
-    reference.pageOrder > frontier.pageOrder ||
-    (reference.pageOrder === frontier.pageOrder && reference.ordinal > frontier.ordinal)
-  );
+  return receivedPositionEligible(reference, reference.at, actor.frontier) &&
+    receivedDirectoryContains(actor.recent, {actorId, ...reference}, reference.memberIndex);
+}
+
+/** Incidental contact follows its actual received member, not the latest time of
+ * some other subject in a mixed batch. Independently learned roots bypass this
+ * recent-only check through their own retained support above. */
+function recentFamiliarityRootAvailable(
+  actor: TemporalActorHistory | undefined,
+  actorId: string,
+  root: import('../../attention.js').FamiliarityRoot,
+  cutoff: number,
+): boolean {
+  if (!actor || root.at <= cutoff) return false;
+  const source = recognitionSupportSources([root.sourceKey])[0];
+  if (!source || !('family' in source)) return false;
+  const locator = temporalReceiptLocatorFromSource(source);
+  if (!locator || locator.actorId !== actorId || !receivedDirectoryContains(actor.recent, locator)) return false;
+  for (const key of root.support) {
+    const parsed = JSON.parse(/^(awareness|memory|summary):/u.test(key) ? 'null' : key) as
+      {source?: {id?: string}; memberIndex?: number} | null;
+    if (parsed?.source?.id === source.id && parsed.memberIndex !== undefined &&
+      (!receivedPositionEligible({...locator, memberIndex: parsed.memberIndex}, root.at, actor.frontier) ||
+        !receivedDirectoryContains(actor.recent, locator, parsed.memberIndex))) return false;
+  }
+  return true;
 }
 
 /** Retention calls once for an actual retirement batch; native loss can supply
@@ -503,13 +548,16 @@ export function pruneObserverIndividuals(
     releasedSourceIds: readonly string[];
     retainedIndividualIds?: ReadonlySet<string>;
     candidates?: readonly string[];
+    /** Exact recent release IDs permit full retirement semantics for this subset. */
+    retireRecent?: true;
   },
 ): number {
   const identities = world.observerIdentities?.[actorId];
   if (!identities) return 0;
   // Learned profiles/names own their small facts independently. Incidental
   // contacts do not become a permanent catalogue when their recent prefix ends.
-  const held = new Set(retainedIndividualEvidenceKeys(world, actorId));
+  const notePins = pinnedIndividualIds(world, actorId, input.candidates);
+  const held = new Set(retainedIdentityEvidenceKeys(world, actorId, input.candidates, notePins));
   const actor = world.experience?.temporal?.actors[actorId];
   const cutoff = world.simTime - BASE_ATTENTION_POLICY.retention.recent.maxAgeSeconds;
   let faded = false;
@@ -521,8 +569,7 @@ export function pruneObserverIndividuals(
       (root) =>
         root.required ||
         held.has(root.sourceKey) ||
-        (root.at > cutoff &&
-          (actor?.retiredThrough === undefined || root.at >= actor.retiredThrough.at)),
+        recentFamiliarityRootAvailable(actor, actorId, root, cutoff),
     );
     if (remaining.length === roots.length) continue;
     const next = cloneValue(identity!);
@@ -533,15 +580,27 @@ export function pruneObserverIndividuals(
     identities[key] = next;
     faded = true;
   }
-  if (faded) advanceKnowledgeRevision(world, actorId);
+  if (faded) {
+    advanceKnowledgeRevision(world, actorId);
+    // The raw frontier can retire a contact without a database account slice.
+    // Wake the existing account owner once to release any now-unowned capsule.
+    if (actor?.accounts) actor.accounts.nextDue = Math.min(actor.accounts.nextDue ?? Infinity, world.simTime);
+  }
   if (input.releasedSourceIds.length)
     revokeRecognitionEvidence(world, actorId, new Set(input.releasedSourceIds));
-  const retainedPins = new Set(input.retainedIndividualIds);
-  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
-    if (document.subjectId?.kind === 'individual' && document.text.trim())
-      retainedPins.add(document.subjectId.individualId);
-  for (const record of world.minds?.[actorId]?.records ?? [])
-    if (record.subjectId?.kind === 'individual') retainedPins.add(record.subjectId.individualId);
+  const retainedPins = new Set([...notePins, ...(input.retainedIndividualIds ?? [])]);
+  // Another learned person's minimum proof can still name this local subject.
+  // These owned capsules are independent of the raw prefix being retired.
+  for (const capsule of Object.values(actor?.supports ?? {})) {
+    if (capsule.receipt.subjectIdentity?.kind === 'individual')
+      retainedPins.add(capsule.receipt.subjectIdentity.individualId);
+    for (const value of capsule.values) {
+      if (value.kind === 'association' && value.subject.kind === 'individual')
+        retainedPins.add(value.subject.individualId);
+      if (value.kind === 'event' && value.sourceSubject?.kind === 'individual')
+        retainedPins.add(value.sourceSubject.individualId);
+    }
+  }
   const pinned = new Set(retainedPins);
   for (const lease of currentFacetValues(world.perceptionEvidence?.[actorId])) {
     if (lease.localSubject?.kind === 'individual') pinned.add(lease.localSubject.individualId);
@@ -572,7 +631,7 @@ export function pruneObserverIndividuals(
     // solely for its current body. Return it to current-only ownership so later
     // body loss does not mistake the obsolete retained flag for personal memory.
     if (
-      !input.candidates &&
+      (!input.candidates || input.retireRecent) &&
       identity?.retained &&
       !learned &&
       !retainedPins.has(key) &&
@@ -590,7 +649,7 @@ export function pruneObserverIndividuals(
       identity.authored ||
       pinned.has(key) ||
       recentIndividualAvailable(world, actorId, identity) ||
-      (input.candidates && identity.retained) ||
+      (input.candidates && !input.retireRecent && identity.retained) ||
       identity.nickname ||
       identity.givenName ||
       identity.voice?.authored ||
@@ -666,13 +725,14 @@ export function currentBodySubject(
     return local;
   return subjects.at(-1);
 }
-/** Called only by actual body observation after its lease has been installed.
+/** Called by actual validated body reception before its historical binding freezes.
  * Seeing an unfamiliar body permits a continuous local subject, never a face profile
  * or a join to an authored acquaintance with the same private physical route. */
 export function ensureBodyIndividual(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  received: CurrentFacetGrant,
 ): ObserverSubject | undefined {
   const observer = entityGet(world.entities, observerId);
   if (
@@ -680,12 +740,24 @@ export function ensureBodyIndividual(
     !hasMemory(observer) ||
     !entityGet(world.entities, subjectId)?.actor ||
     observerId === subjectId ||
-    !currentBodyGrant(world, observerId, subjectId)
+    received.modality !== 'sight' ||
+    received.subjectId !== subjectId
   )
     return undefined;
-  const existing = currentBodySubject(world, observerId, subjectId);
+  const previous = currentNativeFacet(world.perceptionEvidence?.[observerId], `${subjectId}:body`, {
+    channel: received.channel,
+  });
+  // The incoming grant, not a hidden entity ID, determines whether this is the
+  // same observed body. Reacquisition must not borrow the prior stranger's role.
+  const continuous = previous && !previous.metadata.availability &&
+    previous.grant.exposure === received.exposure &&
+    previous.grant.subjectPhysicalLife === received.subjectPhysicalLife &&
+    sameDefinitionPin(previous.grant.channel, received.channel);
+  const existing = continuous
+    ? previous.field.localSubject ?? currentBodySubject(world, observerId, subjectId)
+    : undefined;
   if (existing) return existing;
-  const encounterId = world.perceptionEpisodes?.[observerId]?.[subjectId];
+  const encounterId = received.exposure;
   if (!encounterId) return undefined;
   const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
   const individualId = allocateObserverIndividual(world, observerId);
@@ -1273,12 +1345,12 @@ export function validateObserverIdentities(world: WorldState): void {
           (!Array.isArray(identity.nameEvidenceIds) ||
             identity.nameEvidenceIds.some((source) => typeof source !== 'string' || !source))) ||
         (identity.recentReference !== undefined &&
-          (typeof identity.recentReference.epoch !== 'string' ||
+          (!Number.isSafeInteger(identity.recentReference.physicalLife) || identity.recentReference.physicalLife < 0 ||
+            typeof identity.recentReference.epoch !== 'string' ||
             !identity.recentReference.epoch ||
-            !Number.isSafeInteger(identity.recentReference.ordinal) ||
-            identity.recentReference.ordinal < 0 ||
-            !Number.isSafeInteger(identity.recentReference.pageOrder) ||
-            identity.recentReference.pageOrder < 0 ||
+            !Number.isSafeInteger(identity.recentReference.batchOrder) || identity.recentReference.batchOrder < 0 ||
+            !Number.isSafeInteger(identity.recentReference.entryIndex) || identity.recentReference.entryIndex < 0 ||
+            !Number.isSafeInteger(identity.recentReference.memberIndex) || identity.recentReference.memberIndex < 0 ||
             !Number.isFinite(identity.recentReference.at) ||
             identity.recentReference.at < 0 ||
             identity.recentReference.at > world.simTime)) ||

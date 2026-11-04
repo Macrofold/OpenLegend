@@ -11,7 +11,6 @@ import {
 import { RetentionActorSelection } from './retention-deadlines.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { selectActorLiveReadCuts, selectActorRecordChanges } from './actor-record-selection.js';
-import { prepareRecentRetention, type RecentRetentionPlan } from './recent-retention.js';
 import type { LiveReadCuts, LiveReadCutsProvider, MetadataBaseline } from './live-read-overlay.js';
 import { receivedCurrentOwnerTables } from './received-record-references.js';
 import { retentionDueActors, recentRetentionDue } from './temporal-storage.js';
@@ -179,7 +178,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '52';
+export const DATABASE_SCHEMA = '53';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(
@@ -380,12 +379,6 @@ export interface GameRepository extends WorldStore {
   setRetainedValueLookup?(provider: (worldId: string) => Readonly<Record<string, unknown>>): void;
   setLiveReadCuts?(provider: LiveReadCutsProvider): void;
   captureRetentionActors?(state: SavedWorld): RetentionActors;
-  prepareRecentRetention?(
-    state: SavedWorld,
-    pending?: RecordChanges,
-    cut?: LiveReadCuts,
-    actorIds?: readonly string[],
-  ): Promise<RecentRetentionPlan>;
   prepareAccountRetention?(
     state: SavedWorld,
     pending: RecordChanges,
@@ -633,7 +626,6 @@ export class SqlGameRepository implements GameRepository {
     const operation = async () => {
       metadata.initialize(
         await metadata.capture(this.db, state.world.id, actors, {
-          recentActors: [],
           changes: selectedPending,
           world: state.world,
           previous: baseline?.world,
@@ -674,22 +666,6 @@ export class SqlGameRepository implements GameRepository {
         )
       : prepare();
   }
-  prepareRecentRetention(
-    state: SavedWorld,
-    pending?: RecordChanges,
-    cut?: LiveReadCuts,
-    actorIds?: readonly string[],
-  ): Promise<RecentRetentionPlan> {
-    const actors = actorIds ?? this.retentionActors.select(state.world, 'recent'),
-      selectedPending = pending && selectActorRecordChanges(pending, actors);
-    const operation = () => prepareRecentRetention(this.db, state, actors, selectedPending);
-    return cut && this.db.readAtCut
-      ? this.db.readAtCut(
-          selectActorLiveReadCuts(cut, actors, this.memories.captureSources.bind(this.memories)),
-          operation,
-        )
-      : operation();
-  }
   async eraseReceivedValues(worldId: string, ids: readonly string[]): Promise<void> {
     await this.receivedOwnership.erase(worldId, ids);
   }
@@ -701,7 +677,7 @@ export class SqlGameRepository implements GameRepository {
     const metadata = new RetentionMetadata();
     if (complete) {
       metadata.fromRecords(
-        state.world.id,
+        state.world,
         this.records.captureMetadataRecords(state, retainedSourceTables),
       );
       metadata.assertCandidateCoverage(state.world);
@@ -712,7 +688,7 @@ export class SqlGameRepository implements GameRepository {
     const due = [...retentionDueActors(state.world)];
     const actors = new Set([...due, ...retentionChangedActors(changes, state.world)]);
     if (!accepted || !actors.size) {
-      metadata.initializeEmpty(state.world.id);
+      metadata.initializeEmpty(state.world);
       return metadata.view(state.world.id, changes);
     }
     const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
@@ -726,13 +702,10 @@ export class SqlGameRepository implements GameRepository {
         await this.records.proveRecordCreates(state.world.id, revision, table, candidates);
       }
       const selected = new Set([...due, ...retentionChangedActors(changes, state.world)]);
-      if (!selected.size) metadata.initializeEmpty(state.world.id);
+      if (!selected.size) metadata.initializeEmpty(state.world);
       else
         metadata.initialize(
           await metadata.capture(this.db, state.world.id, [...selected], {
-            recentActors: [...selected].filter((actorId) =>
-              recentRetentionDue(state.world, actorId),
-            ),
             changes,
             world: state.world,
             previous: accepted.world,
@@ -1446,14 +1419,27 @@ export class SqlGameRepository implements GameRepository {
       write.changes.savedTemporalPages ?? [],
       write.changes.deletes.get('mind_temporal_pages') ?? [],
       write.changes.savedTemporalActors ?? [],
+      write.changes.temporalEdits ?? [],
     );
     const worldId = write.state.world.id;
+    // Recent expiry no longer deletes individual rows. Its durable boundary is
+    // still a productive reason to wake the existing bounded storage collector.
+    const recentFrontierAdvanced = write.changes.writes.get('mind_temporal_actors')?.some(row => {
+      const actorId = (JSON.parse(row.id) as string[])[4]!;
+      const before = write.before?.world.experience?.temporal?.actors[actorId]?.frontier;
+      const after = write.state.world.experience?.temporal?.actors[actorId]?.frontier;
+      return after && (after.expiredThroughTime !== before?.expiredThroughTime ||
+        after.pressureThrough?.address.batchOrder !== before?.pressureThrough?.address.batchOrder ||
+        after.pressureThrough?.address.entryIndex !== before?.pressureThrough?.address.entryIndex ||
+        after.pressureThrough?.address.memberIndex !== before?.pressureThrough?.address.memberIndex);
+    });
     // Wake only for new payloads or actual potential releases, not each save.
     if (
       write.restore ||
       !write.before ||
       write.changes.writes.get('mind_perception_values')?.length ||
       write.changes.deletes.get('mind_temporal_pages')?.length ||
+      recentFrontierAdvanced ||
       receivedCurrentOwnerTables.some(
         (table) =>
           write.changes.deletes.get(table)?.length ||
@@ -1574,7 +1560,7 @@ export class SqlGameRepository implements GameRepository {
     if (sources.versions)
       await this.memories.applySourceVersionPlan(state.world.id, revision, sources.versions);
     await this.records.write(state.world.id, revision, changes, sharedWrites);
-    await this.history.retireTemporalAccounts(state.world.id, changes);
+    await this.history.revokeTemporalAccounts(state.world.id, changes);
     await this.memories.writeSources(state.world.id, changes, affected, sources);
     if (this.records.needsHotPrune) await this.records.pruneActiveEvents(state);
     await this.memories.reconcile(state.world.id, affected);

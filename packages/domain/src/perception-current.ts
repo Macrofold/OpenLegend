@@ -1,3 +1,4 @@
+import {selectReceivedBindingParts} from './received-batches.js';
 import {
   orderedRecordGet,
   orderedRecordSet,
@@ -152,13 +153,13 @@ export interface CurrentPartPartition extends CurrentReceptionStamp {
   revision: number;
   check: 'broad' | 'detail' | 'none';
   availability?: CurrentAvailability;
-  recording?: import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint;
 }
 export interface CurrentReceivedContent {
   grant: CurrentFacetGrant;
   fields: Record<string, CurrentStoredField>;
 }
 export interface CurrentReceivedGroup {
+  recordings?:readonly import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint[];
   received: CurrentReceivedContent;
   metadata: readonly CurrentPartPartition[];
 }
@@ -336,6 +337,7 @@ function mutableGroup(content: CurrentContactContent, at: number): CurrentReceiv
   const group = content.groups[at]!;
   if (mutableGroups.has(group)) return group;
   const copy: CurrentReceivedGroup = {
+    ...readOnlyDraftView(group),
     received: {
       ...readOnlyDraftView(group.received),
       fields: { ...readOnlyDraftView(group.received.fields) },
@@ -599,6 +601,7 @@ export function currentFacetSet(
         continue;
       const changed = mutableGroup(content, at);
       delete changed.received.fields[kind];
+      if(changed.recordings)changed.recordings=changed.recordings.flatMap(mark=>{const members=mark.members.filter(member=>member.kind!==kind);return members.length?[recordingWithMembers(mark,members)]:[];});
       changed.metadata = changed.metadata.flatMap((partition) => {
         const members = partition.members.filter(([member]) => member !== kind);
         return members.length ? [partitionWithMembers(partition, members)] : [];
@@ -666,7 +669,6 @@ function samePartition(a: CurrentPartPartition, b: CurrentPartPartition): boolea
     a.revision === b.revision &&
     a.check === b.check &&
     a.availability?.at === b.availability?.at &&
-    a.recording === b.recording &&
     equalTimes(a.times, b.times) &&
     // Inline receiver frames can be equal but detached by current-format JSON.
     // Coalesce their clock masks by value without refreshing either part.
@@ -685,32 +687,7 @@ function mergePartitions(input: readonly CurrentPartPartition[]): CurrentPartPar
   }
   return merged;
 }
-function partitionWithMembers(
-  partition: CurrentPartPartition,
-  members: readonly CurrentMemberPart[],
-): CurrentPartPartition {
-  const next = { ...partition, members };
-  if (partition.recording) {
-    const mark = partition.recording,
-      held = mark.members.filter((member) =>
-        members.some(([kind, part]) => member.kind === kind && member.part === part),
-      );
-    if (!held.length) delete next.recording;
-    else {
-      if (held.length === mark.members.length) next.recording = mark;
-      else {
-        const { coverage: _coverage, ...binding } = mark;
-        next.recording = {
-          ...binding,
-          members: held,
-          count: new Set(held.map((member) => member.ordinal)).size,
-          reservedBytes: held.reduce((total, member) => total + member.bytes, 0),
-        };
-      }
-    }
-  }
-  return next;
-}
+function partitionWithMembers(partition:CurrentPartPartition,members:readonly CurrentMemberPart[]):CurrentPartPartition{return {...partition,members};}
 function coveredPartitions(
   group: CurrentReceivedGroup,
   kinds: ReadonlySet<string> | undefined,
@@ -738,7 +715,7 @@ function coveredPartitions(
       next,
     ];
   });
-  return changed ? { received: group.received, metadata: mergePartitions(metadata) } : group;
+  return changed ? { ...group, metadata: mergePartitions(metadata) } : group;
 }
 export interface CurrentGroupCoverage {
   subjectId: string;
@@ -779,7 +756,6 @@ export function currentSetUnchecked(
           )
             return partition;
           const next = { ...partition, availability: { state: 'unchecked' as const, at } };
-          delete next.recording;
           return next;
         });
       });
@@ -841,7 +817,6 @@ export function currentConfirmGroups(
             };
             if (partition.availability) {
               delete updated.availability;
-              delete updated.recording;
             }
           }
           partitions.push(updated);
@@ -875,59 +850,39 @@ export function currentConfirmGroups(
     return checked;
   });
 }
-export interface CurrentGroupRecordingUpdate {
-  subjectId: string;
-  fields: object;
-  members?: readonly CurrentMemberPart[];
-  recording: CurrentPartPartition['recording'];
+function recordingWithMembers(mark:import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint,members:typeof mark.members):typeof mark{
+ if(members===mark.members)return mark;
+ const parts=mark.binding.parts.filter(part=>members.some(member=>member.kind===part.kind&&member.part===part.part)),indices=new Set(parts.map(part=>part.partIndex));
+ const carrierMembers=mark.carrierMembers?.flatMap(member=>{const partIndices=member.partIndices.filter(index=>indices.has(index));return partIndices.length?[{...member,partIndices}]:[];});
+ const carrier=mark.carrier&&carrierMembers?.length?{...mark.carrier,memberIndex:carrierMembers[0]!.memberIndex}:undefined;
+ const {carrier:_carrier,carrierMembers:_members,...base}=mark;
+ return {...base,members,...(carrier?{carrier,carrierMembers}:{}),binding:selectReceivedBindingParts(mark.binding,indices)};
 }
-export function currentGroupsSetRecording(
-  owner: PerceptionEvidenceOwner,
-  updates: readonly CurrentGroupRecordingUpdate[],
-): void {
-  withCurrentContactBatch(owner, () => {
-    const bySubject = new Map<string, CurrentGroupRecordingUpdate[]>();
-    for (const update of updates) {
-      const list = bySubject.get(update.subjectId) ?? [];
-      list.push(update);
-      bySubject.set(update.subjectId, list);
+
+export interface CurrentGroupRecordingUpdate {
+ subjectId:string;fields:object;members?:readonly CurrentMemberPart[];recording:import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint|undefined;
+}
+export function currentGroupRecordings(group:CurrentReceivedGroup,members?:readonly CurrentMemberPart[]):import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint[]{
+ return (group.recordings??[]).filter(mark=>!members||mark.members.some(member=>members.some(([kind,part])=>member.kind===kind&&member.part===part)));
+}
+/** Admission references are independent of freshness partitions. Updating them
+ * never splits or merges sensory clocks or copies received values. */
+export function currentGroupsSetRecording(owner:PerceptionEvidenceOwner,updates:readonly CurrentGroupRecordingUpdate[]):void{
+ withCurrentContactBatch(owner,()=>{
+  const bySubject=new Map<string,CurrentGroupRecordingUpdate[]>();for(const update of updates){const list=bySubject.get(update.subjectId);if(list)list.push(update);else bySubject.set(update.subjectId,[update]);}
+  for(const [id,changes]of bySubject){const contact=contactAt(owner.current,id);if(!contact)continue;
+   const groups=contact.content.groups.map(group=>{
+    let recordings=group.recordings;
+    for(const update of changes){if(readOnlyDraftView(group.received.fields)!==readOnlyDraftView(update.fields))continue;
+     const selected=(member:{kind:string;part:string})=>!update.members||update.members.some(([kind,part])=>member.kind===kind&&member.part===part);
+     const remaining=(recordings??[]).flatMap(mark=>{const members=mark.members.filter(member=>!selected(member));return !members.length?[]:members.length===mark.members.length?[mark]:[recordingWithMembers(mark,members)];});
+     if(update.recording)remaining.push(update.recording);recordings=remaining;
     }
-    for (const [id, updates] of bySubject) {
-      const contact = contactAt(owner.current, id);
-      if (!contact) continue;
-      const groups = contact.content.groups.map((group) => {
-        let metadata = group.metadata;
-        for (const update of updates) {
-          if (readOnlyDraftView(group.received.fields) !== readOnlyDraftView(update.fields))
-            continue;
-          metadata = metadata.flatMap((partition) => {
-            const selected = (member: CurrentMemberPart) =>
-              !update.members ||
-              update.members.some(([kind, part]) => kind === member[0] && part === member[1]);
-            const members = partition.members.filter(selected);
-            if (!members.length || partition.recording === update.recording) return [partition];
-            const rest = partition.members.filter((member) => !selected(member));
-            const next = partitionWithMembers(partition, members);
-            if (update.recording)
-              next.recording = partitionWithMembers(
-                { ...next, recording: update.recording },
-                members,
-              ).recording;
-            else delete next.recording;
-            return rest.length ? [partitionWithMembers(partition, rest), next] : [next];
-          });
-        }
-        return metadata === group.metadata
-          ? group
-          : { received: group.received, metadata: mergePartitions(metadata) };
-      });
-      if (groups.some((group, at) => group !== contact.content.groups[at]))
-        contactBatch(owner.current)!.contacts.set(id, {
-          ...contact,
-          content: metadataContent(contact.content, groups),
-        });
-    }
-  });
+    return recordings===group.recordings?group:{...group,recordings};
+   });
+   if(groups.some((group,index)=>group!==contact.content.groups[index]))contactBatch(owner.current)!.contacts.set(id,{...contact,content:metadataContent(contact.content,groups)});
+  }
+ });
 }
 /** Borrowed immutable member identity; confirmation/group metadata does not replace it. */
 export function currentFacetMembership(owner: CurrentReadOwner, input: CurrentFacetRecord): object {

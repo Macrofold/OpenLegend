@@ -99,7 +99,7 @@ export function validateReceivedValueState(
           !hasRecordFields(fragment, ['kind', 'header']) ||
           !hasRecordFields(
             header,
-            ['observer', 'acquiredAt', 'modality', 'detector'],
+            ['observer', 'acquiredAt', 'receivedOrder', 'modality', 'detector'],
             ['channel'],
           ) ||
           !hasRecordFields(header.observer, ['actorId', 'physicalLife']) ||
@@ -111,6 +111,7 @@ export function validateReceivedValueState(
           !Number.isFinite(header.acquiredAt) ||
           header.acquiredAt < 0 ||
           header.acquiredAt > world.simTime ||
+          !Number.isSafeInteger(header.receivedOrder) || header.receivedOrder < 0 ||
           !['sight', 'hearing', 'touch'].includes(header.modality) ||
           !validObservationDetector(header.detector) ||
           (header.channel !== undefined &&
@@ -261,7 +262,7 @@ export function validatePerceptionEvidenceState(
         contexts = new Set<string>();
       for (const group of contact.content.groups) {
         if (
-          !hasRecordFields(group, ['received', 'metadata']) ||
+          !hasRecordFields(group, ['received', 'metadata'],['recordings']) ||
           !hasRecordFields(group.received, ['grant', 'fields']) ||
           !hasRecordFields(group.received.grant, [
             'subjectId',
@@ -315,7 +316,7 @@ export function validatePerceptionEvidenceState(
                 'receivedOrder',
                 'confirmedRevision',
               ],
-              ['recording', 'availability', 'frameRef'],
+              ['availability', 'frameRef'],
             ) ||
             typeof partition.revision !== 'number' ||
             !Number.isSafeInteger(partition.revision) ||
@@ -376,12 +377,6 @@ export function validatePerceptionEvidenceState(
               availability.at > world.simTime)
           )
             throw new Error('Invalid current availability.');
-          if (partition.recording)
-            validateTemporalCurrentGroupCheckpoint(
-              partition.recording,
-              world.simTime,
-              partition.members,
-            );
           const context = canonicalJson([
             grant,
             partition.times,
@@ -392,10 +387,17 @@ export function validatePerceptionEvidenceState(
             partition.frameRef,
             partition.check,
             availability,
-            partition.recording,
           ]);
           if (contexts.has(context)) throw new Error('Duplicate current receipt partition.');
           contexts.add(context);
+        }
+        if(group.recordings){
+          if(!Array.isArray(group.recordings))throw new Error('Invalid current recording bindings.');
+          const admitted=new Set<string>();
+          for(const recording of group.recordings){
+            validateTemporalCurrentGroupCheckpoint(recording,world.simTime,group.metadata.flatMap(partition=>partition.members));
+            for(const member of recording.members){const key=JSON.stringify([member.kind,member.part]);if(admitted.has(key))throw new Error('Duplicate current recording admission.');admitted.add(key);}
+          }
         }
         used.add(grant.original);
         for (const [kind, field] of Object.entries(group.received.fields)) {

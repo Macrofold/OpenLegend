@@ -1,4 +1,4 @@
-import { recordObservationSupport, observationReceiptOrdinals } from '../../experience.js';
+import { recordObservationSupport, observationReceiptMemberIndices } from '../../experience.js';
 import { cloneValue, readOnlyDraftView } from '../../draft.js';
 import { entityGet, entityValues } from '../../entity-collection.js';
 import {
@@ -912,13 +912,13 @@ export function retainRecognitionEvidence(
     if (!modalities.length && !hasContact) continue;
     let receipt = temporalReceiptForSource(world, observerId, evidence.eventId);
     let retained = receipt && retainedTemporalReceipt(world, receipt);
-    let ordinals =
+    let memberIndices =
       retained &&
-      observationReceiptOrdinals(world, evidence.observation, requested, retained.receipt);
-    if (!ordinals && modalities.length && requested.size) {
+      observationReceiptMemberIndices(world, evidence.observation, requested, retained.receipt);
+    if (!memberIndices && modalities.length && requested.size) {
       receipt = recordObservationSupport(world, observerId, evidence.observation, {
         sourceIds: [evidence.eventId],
-        ordinals: requested,
+        sourceOrdinals: requested,
         admission: {
           kind: 'retained-support',
           owner: observationFactKey(world, evidence.observation, requested.values().next().value!)
@@ -927,19 +927,19 @@ export function retainRecognitionEvidence(
         },
       });
       retained = receipt && retainedTemporalReceipt(world, receipt);
-      ordinals =
+      memberIndices =
         retained &&
-        observationReceiptOrdinals(world, evidence.observation, requested, retained.receipt);
+        observationReceiptMemberIndices(world, evidence.observation, requested, retained.receipt);
     }
     const alreadyHeld =
       receipt &&
       world.experience?.temporal?.actors[observerId]?.supports?.[temporalReceiptId(receipt)];
     const held =
       receipt &&
-      ordinals &&
+      memberIndices &&
       modalities.length > 0 &&
       retainTemporalSupport(world, receipt, {
-        facetOrdinals: ordinals,
+        memberIndices,
         ...BASE_ATTENTION_POLICY.retention.optional,
       });
     const proof = held ? held.receipt : !modalities.length ? receipt : undefined;
@@ -1099,13 +1099,13 @@ export function validRecognitionSupportKey(key: unknown): key is string {
       );
     if (!value || typeof value !== 'object') return false;
     const fact = 'source' in value;
-    if (
-      fact &&
-      (Object.keys(value).length !== 2 || !Number.isSafeInteger(value.ordinal) || value.ordinal < 0)
-    )
-      return false;
     const source = fact ? value.source : value;
     validateEvidenceSource(source);
+    if (fact) {
+      const field = isTemporalReceiptSource(source) ? 'memberIndex' : 'ordinal';
+      if (Object.keys(value).length !== 2 || !Number.isSafeInteger(value[field]) || value[field] < 0)
+        return false;
+    }
     return source.family === 'native-exposure' || source.family === 'native-response';
   } catch {
     return false;

@@ -5,12 +5,11 @@ import {
   hasMemory,
   appendedRecordCount,
   selectedTemporalPolicy,
-  temporalPageReceipt,
   temporalRecentAt,
+  receivedDirectoryContains,
   type WorldState,
   type Awareness,
   type WorldEvent,
-  type TemporalPage,
 } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { receivedEventAccounts, type ReceivedEventAccount } from './received-event-accounts.js';
@@ -172,8 +171,8 @@ export interface HistoryAccountCut {
   readonly maxAgeSeconds: number;
   readonly forgotten: ReadonlySet<string>;
   readonly corrected: ReadonlySet<string>;
-  readonly frontier?: { readonly pageOrder: number; readonly ordinal: number };
-  readonly pages: readonly TemporalPage[];
+  readonly frontier: import('@open-legend/domain').TemporalActorHistory['frontier'];
+  readonly recent: import('@open-legend/domain').TemporalActorHistory['recent'] | undefined;
 }
 /** Selected-actor history input owns bounded scalar/receipt references, never the
  * whole world or its shared received-value catalogue across a read wait. */
@@ -185,15 +184,8 @@ export function captureHistoryAccountCut(world: WorldState, actorId: string): Hi
     maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
     forgotten: new Set(world.experience?.forgotten[actorId]),
     corrected: new Set(Object.keys(world.experience?.corrections?.[actorId] ?? {})),
-    ...(actor?.retiredThrough
-      ? {
-          frontier: {
-            pageOrder: actor.retiredThrough.pageOrder,
-            ordinal: actor.retiredThrough.ordinal,
-          },
-        }
-      : {}),
-    pages: actor?.pages ?? [],
+    frontier: actor?.frontier,
+    recent: actor?.recent,
   };
 }
 /** Saved and pending readers share current personal eligibility. An admitted
@@ -218,11 +210,18 @@ export function temporalHistoryAccountAvailable(
   cut: HistoryAccountCut,
   account: Pick<
     NonNullable<ReceivedEventAccount['temporal']>,
-    'receivedAt' | 'pageOrder' | 'receipt'
+    'receivedAt' | 'receipt'
   >,
 ): boolean {
-  if (!temporalRecentAt(account.receivedAt, cut.at, cut.maxAgeSeconds)) return false;
-  return true;
+  if (account.receipt.actorId !== cut.actorId || !temporalRecentAt(account.receivedAt, cut.at, cut.maxAgeSeconds) ||
+    (cut.frontier?.expiredThroughTime !== null && cut.frontier?.expiredThroughTime !== undefined &&
+      account.receivedAt <= cut.frontier.expiredThroughTime) ||
+    !cut.recent || !receivedDirectoryContains(cut.recent, account.receipt)) return false;
+  const pressure = cut.frontier?.pressureThrough?.address;
+  // An occurrence is indivisible: a boundary inside this entry removes all of
+  // its story grant. Sample members keep their separate native eligibility.
+  return !pressure || account.receipt.batchOrder > pressure.batchOrder ||
+    (account.receipt.batchOrder === pressure.batchOrder && account.receipt.entryIndex > pressure.entryIndex);
 }
 export function historyAccountAtCapturedCut(
   cut: HistoryAccountCut,
@@ -255,16 +254,6 @@ export function historyAccountAtCapturedCut(
   if (account.temporal) {
     const temporal = account.temporal;
     if (!temporalHistoryAccountAvailable(cut, temporal)) return;
-    const chunk = cut.pages.find(
-      (page) =>
-        page.physicalLife === temporal.receipt.physicalLife &&
-        page.epoch === temporal.receipt.epoch &&
-        temporalPageReceipt(page, temporal.receipt.ordinal) !== undefined,
-    );
-    if (chunk) {
-      const receipt = temporalPageReceipt(chunk, temporal.receipt.ordinal);
-      if (!receipt || !temporalRecentAt(receipt.at, cut.at, cut.maxAgeSeconds)) return;
-    }
   }
   return account;
 }

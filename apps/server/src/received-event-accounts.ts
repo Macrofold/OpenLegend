@@ -1,6 +1,5 @@
 import { receivedValueAt } from '@open-legend/domain';
 import {
-  temporalPageReceipts,
   receivedEventEvidence,
   receivedEventAwareness,
   currentReceivedObservationSources,
@@ -25,7 +24,6 @@ export interface ReceivedEventAccount {
   temporal?: {
     receipt: TemporalReceiptLocator;
     receivedAt: number;
-    pageOrder: number;
     bytes: number;
   };
 }
@@ -33,28 +31,26 @@ export interface ReceivedEventAccount {
 /** One observer reader's last immutable roots provide append lineage. The weak
  * lookup stores offsets only; accepted receipts remain the sole evidence owner. */
 export type ReceivedEventAccountIndex = Map<string, TemporalPage>;
-type OccurrenceOffsets = Map<string, number[]>;
-const occurrenceIndexes = new WeakMap<object, OccurrenceOffsets>();
-function occurrenceOffsets(chunk: TemporalPage, previous?: TemporalPage): OccurrenceOffsets {
-  const receipts = temporalPageReceipts(chunk);
-  const immutable = isImmutableData(chunk.operations);
-  const cached = immutable && occurrenceIndexes.get(chunk.operations);
+type OccurrenceReceipts = Map<string, TemporalReceipt[]>;
+const occurrenceIndexes = new WeakMap<object, OccurrenceReceipts>();
+/** Only actual occurrences have history accounts. Movement/check entries need
+ * neither proof materialization nor value hydration to answer this query. */
+function occurrenceReceipts(chunk: TemporalPage, previous?: TemporalPage): OccurrenceReceipts {
+  const immutable = isImmutableData(chunk.batches);
+  const cached = immutable && occurrenceIndexes.get(chunk.batches);
   if (cached) return cached;
-  const prior = previous && occurrenceIndexes.get(previous.operations);
-  const appended = prior && previous && appendedRecordCount(previous.operations, chunk.operations);
-  const offsets = appended !== undefined ? new Map(prior) : new Map<string, number[]>();
-  const start = appended === undefined ? 0 : temporalPageReceipts(previous!).length;
-  for (let index = start; index < receipts.length; index++) {
-    const origin = receipts[index]!.origin;
-    if (origin?.kind !== 'occurrence') continue;
-    const known = offsets.get(origin.eventId);
-    offsets.set(origin.eventId, known ? [...known, index] : [index]);
-  }
-  // Keep immutable cuts independent. Only the sparse event-key map is copied on
-  // append; motion receipts are neither rescanned nor hydrated. Unknown/forked/
-  // replaced vectors rebuild instead of trusting a matching chunk ID.
-  if (immutable) occurrenceIndexes.set(chunk.operations, offsets);
-  return offsets;
+  const prior = previous && occurrenceIndexes.get(previous.batches);
+  const appended = prior && previous && appendedRecordCount(previous.batches, chunk.batches);
+  const receipts = appended !== undefined ? new Map(prior) : new Map<string,TemporalReceipt[]>();
+  for (const batch of chunk.batches.slice(appended === undefined ? 0 : previous!.batches.length))
+    for (const entry of batch.entries) {
+      const receipt=entry.kind==='occurrence'?entry.receipt:undefined;
+      if (receipt?.origin?.kind!=='occurrence') continue;
+      const eventId=receipt.origin.eventId;
+      receipts.set(eventId,[...(receipts.get(eventId)??[]),receipt]);
+    }
+  if (immutable) occurrenceIndexes.set(chunk.batches,receipts);
+  return receipts;
 }
 
 /** Select only this actor's already received account. Current reception can feed
@@ -94,18 +90,16 @@ export function receivedEventAccounts(
       ? previous?.pages.find((value) => value.id === chunk.id)
       : undefined;
     if (prior === chunk) continue;
-    const offsets = occurrenceOffsets(chunk, options.index?.get(chunk.id) ?? prior);
+    const occurrences = occurrenceReceipts(chunk, options.index?.get(chunk.id) ?? prior);
     options.index?.set(chunk.id, chunk);
-    const lower =
-      prior && appendedRecordCount(prior.operations, chunk.operations) !== undefined
-        ? temporalPageReceipts(prior).length
-        : 0;
+    // A physical slice can share its batch number with another slice. Only
+    // certified unchanged occurrence objects belong to the append predecessor.
+    const previousOccurrences = prior && appendedRecordCount(prior.batches,chunk.batches) !== undefined
+      ? occurrenceReceipts(prior) : undefined;
     for (const eventId of wanted) {
       if (result.has(eventId) || forgotten.has(eventId)) continue;
-      for (const offset of offsets.get(eventId) ?? []) {
-        if (offset < lower || offset >= temporalPageReceipts(chunk).length || result.has(eventId))
-          continue;
-        const receipt = temporalPageReceipts(chunk)[offset]!;
+      for (const receipt of occurrences.get(eventId) ?? []) {
+        if (result.has(eventId) || previousOccurrences?.get(eventId)?.includes(receipt)) continue;
         const values = receipt.facets.flatMap((reference) => {
           const fragment = receivedValueAt(world.receivedValues?.sources ?? {}, reference);
           if (!fragment || (fragment.kind !== 'event' && fragment.kind !== 'sound')) return [];
@@ -134,12 +128,11 @@ export function receivedEventAccounts(
                       actorId,
                       physicalLife: receipt.physicalLife,
                       epoch: receipt.epoch,
-                      ordinal: receipt.ordinal,
+                      batchOrder: receipt.batchOrder,entryIndex: receipt.entryIndex,
                     },
                   ),
                   temporal: {
                     receivedAt: receipt.at,
-                    pageOrder: chunk.order,
                     bytes: Buffer.byteLength(
                       JSON.stringify({
                         receipt,
@@ -152,7 +145,7 @@ export function receivedEventAccounts(
                       actorId,
                       physicalLife: receipt.physicalLife,
                       epoch: receipt.epoch,
-                      ordinal: receipt.ordinal,
+                      batchOrder: receipt.batchOrder,entryIndex: receipt.entryIndex,
                     },
                   },
                 }),

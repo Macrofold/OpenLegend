@@ -254,8 +254,10 @@ export function validateExperienceManifest(
           receipt.physicalLife < 0 ||
           typeof receipt.epoch !== 'string' ||
           !receipt.epoch ||
-          !Number.isSafeInteger(receipt.ordinal) ||
-          receipt.ordinal < 0,
+          !Number.isSafeInteger(receipt.batchOrder) ||
+          receipt.batchOrder < 0 ||
+          !Number.isSafeInteger(receipt.entryIndex) ||
+          receipt.entryIndex < 0,
       ) ||
       new Set(manifest.receipts.map((receipt) => canonicalJson(receipt))).size !==
         manifest.receipts.length)

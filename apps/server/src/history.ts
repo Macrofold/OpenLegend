@@ -1,5 +1,4 @@
 import { nativeText, jsonText, temporalRecentAt } from '@open-legend/domain';
-import { temporalPageReceipts } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
@@ -53,7 +52,7 @@ import {
   storySourceRow,
   storedStoryAccount,
   storyTemporalCut,
-  retireTemporalStoryAccounts,
+  revokeTemporalStoryAccounts,
 } from './personal-accounts.js';
 import type { ReceivedEventAccount } from './received-event-accounts.js';
 import type {
@@ -84,13 +83,11 @@ export function validateHistoryEvidence(
   const accounts = new Map<string, string>();
   const temporal = world.experience?.temporal;
   const receipts = new Map<string, TemporalReceipt>();
-  const pageOrders = new Map<string, number>();
   for (const actor of Object.values(temporal?.actors ?? {}))
     for (const chunk of actor.pages)
-      for (const receipt of temporalPageReceipts(chunk)) {
-        receipts.set(receipt.id, receipt);
-        pageOrders.set(receipt.id, chunk.order);
-      }
+      for (const batch of chunk.batches)
+        for (const entry of batch.entries)
+          if (entry.kind === 'occurrence' && entry.receipt) receipts.set(entry.receipt.id, entry.receipt);
   for (const [actor, entries] of Object.entries(world.experience?.awareness ?? {}))
     for (const entry of entries) {
       const payload = JSON.stringify(entry);
@@ -126,7 +123,7 @@ export function validateHistoryEvidence(
       world.id,
       String(row['actor_id']),
       accounts,
-      { receipts, pageOrders, sources: world.receivedValues?.sources ?? {} },
+      { receipts, sources: world.receivedValues?.sources ?? {} },
     );
     if (
       row['world_id'] !== world.id ||
@@ -491,10 +488,10 @@ export class HistoryRepository {
         world_id TEXT NOT NULL,event_id TEXT NOT NULL,actor_id TEXT NOT NULL,payload TEXT NOT NULL,
         position BIGINT NOT NULL,event_type TEXT NOT NULL,source_id TEXT,target_id TEXT,
         speech_peer_id TEXT,response_action BOOLEAN NOT NULL,
-        temporal_life BIGINT,temporal_epoch TEXT,temporal_ordinal BIGINT,
+        temporal_life BIGINT,temporal_epoch TEXT,temporal_batch_order BIGINT,temporal_entry_index BIGINT,
         PRIMARY KEY(world_id,event_id,actor_id));
       CREATE INDEX IF NOT EXISTS history_perspective_temporal ON history_perspectives
-        (world_id,actor_id,temporal_life,temporal_epoch,temporal_ordinal) WHERE temporal_ordinal IS NOT NULL;
+        (world_id,actor_id,temporal_life,temporal_epoch,temporal_batch_order,temporal_entry_index) WHERE temporal_batch_order IS NOT NULL;
       CREATE TABLE IF NOT EXISTS story_context_sources (
         world_id TEXT NOT NULL,narration_id TEXT NOT NULL,owner_id TEXT NOT NULL,event_id TEXT NOT NULL,
         PRIMARY KEY(world_id,narration_id,owner_id,event_id));
@@ -562,8 +559,8 @@ export class HistoryRepository {
    * account removes its grant, not an already delivered story. Semantic source
    * revocation separately removes derived stories in project/removeEvent.
    * docs/narration-and-conversations.md#7-proposed-persistence-and-indexes */
-  async retireTemporalAccounts(worldId: string, changes: RecordChanges): Promise<void> {
-    await retireTemporalStoryAccounts(this.db, worldId, changes);
+  async revokeTemporalAccounts(worldId: string, changes: RecordChanges): Promise<void> {
+    await revokeTemporalStoryAccounts(this.db, worldId, changes);
   }
   private async removeEvent(worldId: string, id: string) {
     await this.revokeStories(worldId, id);
@@ -832,7 +829,7 @@ export class HistoryRepository {
           const account = encodeStoryAccount(source, entry);
           await this.db
             .prepare(
-              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_life=NULL,temporal_epoch=NULL,temporal_ordinal=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
+              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_life=NULL,temporal_epoch=NULL,temporal_batch_order=NULL,temporal_entry_index=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
             )
             .run(account.payload, ...perspectiveColumns(source), world.id, entry.eventId, actorId);
           for (const principal of this.principals.filter((p) => p.actorId === actorId))

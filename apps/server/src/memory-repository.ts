@@ -14,6 +14,8 @@ import {
   addTemporalWitness,
   addTemporalPhysicalWitness,
   sameSupportedSelection,
+  temporalSelectionHeader,
+  type TemporalStateWitness,
   type TemporalSourceWatch,
 } from './temporal-source-fence.js';
 import {
@@ -24,6 +26,7 @@ import {
   type DerivedMemoryAllowance,
 } from './memory-derivatives.js';
 import { prepareAccountRetention } from './account-retention.js';
+import { retireRecentHistory } from './recent-retention.js';
 import { accountObservationInputs, type RetainedSourceWatch } from './retention-record-metadata.js';
 import {
   accountWriteHasRetentionDependencies,
@@ -36,14 +39,13 @@ import {
   type SourceVersionPlan,
 } from './source-version-retention.js';
 import { randomUUID } from 'node:crypto';
-import { evidenceEncodedBytesSql, receiptLookupBuckets } from './temporal-page-storage.js';
+import { evidenceEncodedBytesSql, findTemporalReceiptPages } from './temporal-page-storage.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalHistory,
   readTemporalPageRecord,
   temporalPageRecordId,
-  prepareTemporalRetention,
   type TemporalHistoryPage,
   captureTemporalHistoryReadContext,
   type TemporalHistoryReadContext,
@@ -74,6 +76,7 @@ import { digest } from './content-digest.js';
 import {
   personalAccountRevision,
   storyAccountSql,
+  storyAccountAvailableSql,
   temporalStoryAwareness,
   storyTemporalReceipt,
   storyTemporalPreparationBytesSql,
@@ -117,9 +120,13 @@ import {
   type TemporalFragment,
   temporalPageReceipt,
   temporalPageReceipts,
-  temporalPageOperations,
-  temporalAdvanceSeed,
-  temporalSeedFacet,
+  selectReceivedReceiptMembers,
+  selectReceivedState,
+  receivedPositionEligible,
+  receivedStateEligible,
+  type ReceivedAddress,
+  type TemporalPage,
+  type TemporalReceipt,
   temporalFacetEligible,
   temporalReceiptId,
   temporalReceiptForRead,
@@ -1480,10 +1487,11 @@ export class MemoryRepository {
         CHECK ((owner_kind='support' AND account_owner_kind IS NULL AND support_record_id IS NOT NULL) OR (owner_kind<>'support' AND account_owner_kind=owner_kind AND support_record_id IS NULL)));
       CREATE TABLE IF NOT EXISTS mind_impression_spans (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,owner_id TEXT NOT NULL,owner_kind TEXT NOT NULL CHECK(owner_kind='memory'),
-        physical_life BIGINT NOT NULL,receipt_epoch TEXT NOT NULL,first_ordinal BIGINT NOT NULL,last_ordinal BIGINT NOT NULL,
-        PRIMARY KEY(world_id,actor_id,owner_id,physical_life,receipt_epoch,first_ordinal,last_ordinal),
+        physical_life BIGINT NOT NULL,receipt_epoch TEXT NOT NULL,
+        first_batch_order BIGINT NOT NULL,first_entry BIGINT NOT NULL,last_batch_order BIGINT NOT NULL,last_entry BIGINT NOT NULL,
+        PRIMARY KEY(world_id,actor_id,owner_id,physical_life,receipt_epoch,first_batch_order,first_entry,last_batch_order,last_entry),
         FOREIGN KEY(world_id,actor_id,owner_id,owner_kind) REFERENCES recall_sources(world_id,actor_id,id,source_kind) ON DELETE CASCADE);
-      CREATE INDEX IF NOT EXISTS impression_receipt_range ON mind_impression_spans(world_id,actor_id,physical_life,receipt_epoch,first_ordinal,last_ordinal);
+      CREATE INDEX IF NOT EXISTS impression_receipt_range ON mind_impression_spans(world_id,actor_id,physical_life,receipt_epoch,first_batch_order,first_entry,last_batch_order,last_entry);
       CREATE INDEX IF NOT EXISTS recall_place_lookup ON recall_place_capsules(world_id,actor_id,place_id,observed_at DESC,observed_order DESC,owner_id DESC,owner_kind DESC);
       CREATE INDEX IF NOT EXISTS recall_commitments ON recall_sources(world_id,actor_id,at,id) WHERE source_kind='memory' AND memory_kind='commitment' AND eligible=1;
       CREATE INDEX IF NOT EXISTS recall_world_event ON recall_sources(world_id,event_id,actor_id);
@@ -1579,14 +1587,8 @@ export class MemoryRepository {
         pending?.deletes,
         metadata,
       );
-      const recent = await prepareTemporalRetention(
-        this.db,
-        accounts.state,
-        complete,
-        pending,
-        previous,
-        metadata,
-      );
+      const recent = retireRecentHistory(accounts.state,
+        Object.keys(accounts.state.world.experience?.temporal?.actors ?? {}));
       const rows = new Map(accounts.rows);
       for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);
       let retained = recent.state;
@@ -1639,413 +1641,108 @@ export class MemoryRepository {
     watch: TemporalSourceWatch,
     baselines: NonNullable<TemporalHistorySelection['baselines']>,
   ): Promise<boolean> {
-    // Selected current state is represented by the same logical receipt as its
-    // eventual closed interval. No saved physical page or forced save is needed.
-    const selected = [...selections];
-    for (const baseline of baselines) {
-      const { pageId: _pageId, ...header } = baseline.checkpoint;
-      selected.push({
-        receipt: { ...header, id: temporalReceiptId(header), change: 'baseline', required: false },
-        values: baseline.values,
-      });
+    type Request = {expected:TemporalHistorySelection['entries'][number];state?:TemporalStateWitness};
+    const requests:Request[]=selections.map(expected=>({expected}));
+    for(const baseline of baselines){
+      const {pageId:_page,binding,...header}=baseline.checkpoint;
+      if(binding===undefined)return false;
+      const expected={receipt:temporalReceiptForRead({...header,id:temporalReceiptId(header),change:'baseline' as const,required:false}),values:baseline.values};
+      requests.push({expected,state:{carrier:baseline.forReceipt,binding,subject:header.subject,asOf:baseline.availableAt,selection:expected}});
     }
-    if (!selected.length) return installTemporalWitnesses(watch, new Map(), RETRIEVAL_BYTES);
-    if (
-      selected.length > RETRIEVAL_ROWS ||
-      Buffer.byteLength(JSON.stringify(selected)) > RETRIEVAL_BYTES ||
-      selected.some(
-        (item) =>
-          item.receipt.actorId !== scope.actorId ||
-          item.receipt.facets.length !== item.values.length,
-      )
-    )
-      return false;
-    const subjects = new Set(selected.map((item) => item.receipt.subject));
-    const window = currentWindow(),
-      native = window.capture(subjects);
-    return this.snapshot(scope, async () => {
-      if (
-        (
-          await this.db
-            .prepare('SELECT generation FROM world_head WHERE world_id=?')
-            .get(scope.worldId)
-        )?.['generation'] !== scope.generation
-      )
-        return false;
-      const ordinals = [...new Set(selected.map((item) => item.receipt.ordinal))];
-      const members = selected.flatMap((item) =>
-        item.receipt.facets.map((field) =>
-          JSON.stringify([
-            scope.actorId,
-            item.receipt.physicalLife,
-            item.receipt.epoch,
-            item.receipt.ordinal,
-            field.ordinal,
-          ]),
-        ),
-      );
-      const buckets = receiptLookupBuckets('members', members);
-      const metadata = await this.db
-        .prepare(
-          `SELECT id,encoded_bytes FROM mind_temporal_pages
-        WHERE world_id=? AND actor_id=? AND retired_revision IS NULL AND last_received_at+?>?
-          AND (physical_life,receipt_epoch) IN (SELECT q.life,q.epoch FROM jsonb_to_recordset(?::jsonb)q(life bigint,epoch text))
-          AND (receipt_ordinals && ?::bigint[] OR (lookup_buckets && ?::smallint[] AND member_keys && ?::text[]))
-        ORDER BY first_at,first_order,id LIMIT ?`,
-        )
-        .all(
-          scope.worldId,
-          scope.actorId,
-          window.maxAgeSeconds,
-          window.at,
-          JSON.stringify(
-            selected.map((item) => ({
-              life: item.receipt.physicalLife,
-              epoch: item.receipt.epoch,
-            })),
-          ),
-          ordinals,
-          buckets,
-          members,
-          RETRIEVAL_ROWS + 1,
-        );
-      let preparationBytes = metadata.reduce(
-        (bytes, row) => bytes + Number(row['encoded_bytes']),
-        0,
-      );
-      if (metadata.length > RETRIEVAL_ROWS || preparationBytes > RETRIEVAL_BYTES) return false;
-      const ids = metadata.map((row) => String(row['id'])),
-        pages = [...native.pages];
-      if (ids.length)
-        for (const row of await this.db
-          .prepare(
-            'SELECT * FROM mind_temporal_pages WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
-          )
-          .all(scope.worldId, scope.actorId, ids))
-          pages.push(readTemporalPageRecord(row));
-      const receipts = [
-        ...native.open.map((interval) => interval.receipt),
-        ...pages.flatMap(temporalPageReceipts),
-      ];
-      const supportIds = selected.map((item) => temporalReceiptId(item.receipt));
-      const supports = new Map<string, TemporalSupportCapsule>();
-      const supportSize = await this.db
-        .prepare(
-          'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
-        )
-        .get(scope.worldId, scope.actorId, supportIds);
-      preparationBytes += Number(supportSize?.['bytes'] ?? 0);
-      if (preparationBytes > RETRIEVAL_BYTES) return false;
-      for (const row of await this.db
-        .prepare(
-          'SELECT payload FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
-        )
-        .all(scope.worldId, scope.actorId, supportIds)) {
-        const capsule = JSON.parse(String(row['payload'])) as TemporalSupportCapsule;
-        supports.set(capsule.receipt.id, capsule);
+    if(!requests.length)return installTemporalWitnesses(watch,new Map(),RETRIEVAL_BYTES);
+    if(requests.length>RETRIEVAL_ROWS || Buffer.byteLength(JSON.stringify(requests))>RETRIEVAL_BYTES ||
+      requests.some(({expected})=>expected.receipt.actorId!==scope.actorId || expected.receipt.facets.length!==expected.values.length))return false;
+    const subjects=new Set(requests.flatMap(({expected})=>[expected.receipt.subject,...(expected.receipt.contextSubjects??[])]));
+    const window=currentWindow(), native=window.capture(subjects);
+    const shape=(receipt:TemporalReceipt,facet:TemporalFacetReference)=>canonicalJson(temporalReceiptForRead({...receipt,facets:[facet]}).facets[0]);
+    const raw=(page:TemporalPage,request:Request)=>selectReceivedReceiptMembers(page,request.expected.receipt,
+      new Set(request.expected.receipt.facets.map(facet=>facet.memberIndex)),new Set([request.expected.receipt.subject,...(request.expected.receipt.contextSubjects??[])]));
+    const state=(page:TemporalPage,request:Request)=>request.state && selectReceivedState(page,request.state.carrier,{
+      binding:request.state.binding,subject:request.state.subject,asOf:request.state.asOf,
+      members:new Set(request.expected.receipt.facets.map(facet=>facet.memberIndex))})?.receipt;
+    const currentState=(request:Request)=>request.state && native.currentSeeds.filter(seed=>
+      seed.binding===request.state!.binding && seed.receipt.subject===request.state!.subject && seed.receipt.at<=request.state!.asOf).map(seed=>seed.receipt);
+    const metadataMatches=(actual:TemporalReceipt,request:Request)=>
+      (request.state || canonicalJson(temporalSelectionHeader(actual))===canonicalJson(temporalSelectionHeader(request.expected.receipt))) &&
+      request.expected.receipt.facets.some(expected=>actual.facets.some(facet=>facet.memberIndex===expected.memberIndex && shape(actual,facet)===canonicalJson(expected)));
+    return this.snapshot(scope,async()=>{
+      if((await this.db.prepare('SELECT generation FROM world_head WHERE world_id=?').get(scope.worldId))?.['generation']!==scope.generation)return false;
+      const addresses:ReceivedAddress[]=[];
+      for(const request of requests){
+        const available=[...native.pages.flatMap(page=>{const found=request.state?state(page,request):raw(page,request);return found?[found]:[];}),...(currentState(request)??[])];
+        if(request.state){
+          if(!available.some(actual=>metadataMatches(actual,request)))addresses.push(request.state.carrier);
+        }else for(const expected of request.expected.receipt.facets)
+          if(!available.some(actual=>canonicalJson(temporalSelectionHeader(actual))===canonicalJson(temporalSelectionHeader(request.expected.receipt)) && actual.facets.some(facet=>facet.memberIndex===expected.memberIndex&&shape(actual,facet)===canonicalJson(expected))))
+            addresses.push({...request.expected.receipt,memberIndex:expected.memberIndex});
       }
-      const memberKey = (receipt: TemporalReceiptLocator, ordinal: number) =>
-        JSON.stringify([
-          receipt.actorId,
-          receipt.physicalLife,
-          receipt.epoch,
-          receipt.ordinal,
-          ordinal,
-        ]);
-      const requestedMembers = new Set(
-        selected.flatMap((item) =>
-          item.receipt.facets.map((field) => memberKey(item.receipt, field.ordinal)),
-        ),
-      );
-      const references = [
-        ...new Set([
-          ...selected.flatMap((item) => item.receipt.facets.flatMap(temporalFacetValueReferences)),
-          ...receipts.flatMap((receipt) =>
-            receipt.facets
-              .filter((field) => requestedMembers.has(memberKey(receipt, field.ordinal)))
-              .flatMap(temporalFacetValueReferences),
-          ),
-          ...pages.flatMap((page) =>
-            page.declarations.flatMap((declaration) =>
-              declaration.seeds.flatMap((seed) => {
-                const member = declaration.members[seed.member];
-                return member &&
-                  requestedMembers.has(memberKey(member.locator, member.memberOrdinal)) &&
-                  seed.reception?.kind === 'body' &&
-                  typeof seed.reception.poseRef === 'string'
-                  ? [seed.reception.poseRef]
-                  : [];
-              }),
-            ),
-          ),
-          ...pages.flatMap((page) =>
-            temporalPageOperations(page).flatMap((operation) =>
-              operation.kind === 'span'
-                ? operation.terminal.flatMap((seed) =>
-                    requestedMembers.has(memberKey(operation.receipt, seed.member)) &&
-                    seed.reception?.kind === 'body' &&
-                    typeof seed.reception.poseRef === 'string'
-                      ? [seed.reception.poseRef]
-                      : [],
-                  )
-                : [],
-            ),
-          ),
-        ]),
-      ];
-      const sources = { ...native.sources };
-      const missing = references.filter((id) => !sources[id]);
-      if (missing.length) {
-        const size = await this.db
-          .prepare(
-            'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
-          )
-          .get(scope.worldId, missing);
-        preparationBytes += Number(size?.['bytes'] ?? 0);
-        if (preparationBytes > RETRIEVAL_BYTES) return false;
-        for (const row of await this.db
-          .prepare(
-            'SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
-          )
-          .all(scope.worldId, missing))
-          sources[String(row['source_id'])] = JSON.parse(String(row['payload']));
+      const selectedPages=await findTemporalReceiptPages(this.db,scope.worldId,scope.actorId,addresses,RETRIEVAL_BYTES);
+      if(selectedPages.incomplete)return false;
+      let bytes=selectedPages.rows.reduce((total,row)=>total+Number(row['encoded_bytes']),0);
+      const pageMap=new Map<string,TemporalPage>();
+      for(const row of selectedPages.rows){const page=readTemporalPageRecord(row);pageMap.set(page.id,page);}
+      // A pending sparse replacement wins over its still-saved predecessor.
+      for(const page of native.pages)pageMap.set(page.id,page);
+      const pages=[...pageMap.values()];
+      const candidates=requests.map(request=>[
+        ...pages.flatMap(page=>{const receipt=request.state?state(page,request):raw(page,request);return receipt&&metadataMatches(receipt,request)?[{receipt,page}]:[];}),
+        ...(currentState(request)??[]).filter(receipt=>metadataMatches(receipt,request)).map(receipt=>({receipt,page:undefined})),
+      ]);
+      const supportIds=[...new Set(requests.flatMap((request,index)=>!request.state&&
+        !request.expected.receipt.facets.every(expected=>candidates[index]!.some(({receipt})=>receipt.facets.some(facet=>facet.memberIndex===expected.memberIndex&&shape(receipt,facet)===canonicalJson(expected))))
+        ?[temporalReceiptId(request.expected.receipt)]:[]))];
+      const supports=new Map<string,TemporalSupportCapsule>();
+      if(supportIds.length){
+        const total=await this.db.prepare('SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])').get(scope.worldId,scope.actorId,supportIds);
+        bytes+=Number(total?.['bytes']??0);if(bytes>RETRIEVAL_BYTES)return false;
+        for(const row of await this.db.prepare('SELECT source_id,payload FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])').all(scope.worldId,scope.actorId,supportIds))
+          supports.set(String(row['source_id']),JSON.parse(String(row['payload'])) as TemporalSupportCapsule);
       }
-      // Match only requested read projections while preserving their raw received
-      // frame for value reconstruction. Page-local seeds advance in order through
-      // the existing clock owner; a support-only check cannot erase measurement.
-      const expectedFields = new Map<
-        string,
-        Map<
-          string,
-          | {
-              field: TemporalFacetReference;
-              receivedAt: number;
-              page?: import('@open-legend/domain').TemporalPage;
-            }
-          | undefined
-        >
-      >();
-      for (const item of selected)
-        for (const [index, field] of item.receipt.facets.entries()) {
-          const key = memberKey(item.receipt, field.ordinal);
-          let fields = expectedFields.get(key);
-          if (!fields) expectedFields.set(key, (fields = new Map()));
-          fields.set(canonicalJson([field, item.values[index]]), undefined);
-        }
-      const baseFields = new Map<string, TemporalFacetReference>();
-      const tryMatch = (
-        key: string,
-        candidate: TemporalFacetReference,
-        receivedAt: number,
-        page?: import('@open-legend/domain').TemporalPage,
-      ) => {
-        const expected = expectedFields.get(key);
-        if (!expected) return;
-        const projected = temporalReceiptForRead({ ...selected[0]!.receipt, facets: [candidate] })
-          .facets[0]!;
-        const fragment = receivedValueAt(sources, candidate),
-          value = fragment && materializeTemporalValue(candidate, fragment, sources);
-        if (!value) return;
-        const proof = canonicalJson([projected, value]),
-          prior = expected.get(proof);
-        if (expected.has(proof) && (!prior || prior.receivedAt < receivedAt))
-          expected.set(proof, { field: candidate, receivedAt, ...(page ? { page } : {}) });
-      };
-      for (const receipt of receipts)
-        for (const field of receipt.facets) {
-          const key = memberKey(receipt, field.ordinal);
-          if (!requestedMembers.has(key)) continue;
-          baseFields.set(key, field);
-          tryMatch(key, field, receipt.at);
-        }
-      for (const interval of native.open)
-        for (const seed of interval.terminal) {
-          const key = memberKey(interval.receipt, seed.member),
-            base = baseFields.get(key);
-          if (base) tryMatch(key, temporalSeedFacet(base, seed), seed.receivedAt);
-        }
-      for (const page of pages) {
-        const declarations = new Map(
-          page.declarations.map((declaration) => [
-            declaration.id,
-            {
-              declaration,
-              seeds: new Map(declaration.seeds.map((seed) => [seed.member, seed])),
-              selected: declaration.members.flatMap((member, position) =>
-                requestedMembers.has(memberKey(member.locator, member.memberOrdinal))
-                  ? [{ member, position, key: memberKey(member.locator, member.memberOrdinal) }]
-                  : [],
-              ),
-            },
-          ]),
-        );
-        for (const { declaration, seeds, selected: members } of declarations.values())
-          for (const item of members) {
-            const base = baseFields.get(item.key),
-              seed = seeds.get(item.position);
-            if (base && seed)
-              tryMatch(item.key, temporalSeedFacet(base, seed), seed.receivedAt, page);
-          }
-        for (const operation of temporalPageOperations(page)) {
-          if (operation.kind === 'span') {
-            for (const seed of operation.terminal) {
-              const key = memberKey(operation.receipt, seed.member),
-                base = baseFields.get(key);
-              if (base) tryMatch(key, temporalSeedFacet(base, seed), seed.receivedAt, page);
-            }
-          } else if (operation.kind === 'check')
-            for (const stamp of operation.stamps) {
-              const held = declarations.get(stamp.declaration);
-              if (!held) continue;
-              for (const item of held.selected) {
-                const base = baseFields.get(item.key),
-                  seed = held.seeds.get(item.position);
-                if (!base || !seed) continue;
-                const next = temporalAdvanceSeed(
-                  seed,
-                  item.member,
-                  stamp,
-                  operation.at,
-                  operation.order,
-                );
-                held.seeds.set(item.position, next);
-                tryMatch(item.key, temporalSeedFacet(base, next), next.receivedAt, page);
-              }
-            }
-        }
+      const references=[...new Set(candidates.flatMap(values=>values.flatMap(({receipt})=>receipt.facets.flatMap(temporalFacetValueReferences))))];
+      const sources={...native.sources};const missing=references.filter(id=>!sources[id]);
+      if(missing.length){
+        const total=await this.db.prepare('SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])').get(scope.worldId,missing);
+        bytes+=Number(total?.['bytes']??0);if(bytes>RETRIEVAL_BYTES)return false;
+        for(const row of await this.db.prepare('SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])').all(scope.worldId,missing))
+          sources[String(row['source_id'])]=JSON.parse(String(row['payload']));
       }
-      const rows: TemporalSourceWatch['rows'] = new Map();
-      let recentDeadline = Infinity;
-      for (const expected of selected) {
-        const locator = expected.receipt,
-          capsule = supports.get(temporalReceiptId(locator));
-        if (capsule && sameSupportedSelection(capsule, expected)) {
-          addTemporalWitness(
-            rows,
-            'mind_temporal_supports',
-            JSON.stringify([
-              'world',
-              'experience',
-              'temporal',
-              'actors',
-              scope.actorId,
-              'supports',
-              capsule.receipt.id,
-            ]),
-            { supports: new Map([[canonicalJson(locator), expected]]) },
-          );
+      const latest=currentWindow(), disclosure=latest.capture(subjects).disclosure;
+      const rows:TemporalSourceWatch['rows']=new Map();let deadline=Infinity;
+      for(const [index,request]of requests.entries()){
+        const expected=request.expected, key=canonicalJson([expected.receipt.actorId,expected.receipt.physicalLife,expected.receipt.epoch,expected.receipt.batchOrder,expected.receipt.entryIndex,request.state?.binding,request.state?.asOf,request.state?.carrier.memberIndex,expected.receipt.facets.map(facet=>facet.memberIndex)]);
+        const capsule=!request.state&&supports.get(temporalReceiptId(expected.receipt));
+        if(capsule&&sameSupportedSelection(capsule,expected)){
+          if(expected.receipt.facets.some((facet,index)=>!temporalFacetEligible(disclosure,scope.actorId,facet,expected.values[index]!)))return false;
+          addTemporalWitness(rows,'mind_temporal_supports',JSON.stringify(['world','experience','temporal','actors',scope.actorId,'supports',capsule.receipt.id]),{supports:new Map([[key,expected]])});
           continue;
         }
-        const parts = receipts.filter(
-          (receipt) =>
-            receipt.actorId === locator.actorId &&
-            receipt.physicalLife === locator.physicalLife &&
-            receipt.epoch === locator.epoch &&
-            receipt.ordinal === locator.ordinal,
-        );
-        const first = parts[0];
-        if (!first) return false;
-        const actual = {
-          ...first,
-          facets: [
-            ...new Map(
-              parts.flatMap((receipt) => receipt.facets).map((field) => [field.ordinal, field]),
-            ).values(),
-          ],
-        };
-        const header = (receipt: typeof actual) => {
-          const {
-            facets: _facets,
-            sourceIds: _sourceIds,
-            availability: _availability,
-            ...head
-          } = temporalReceiptForRead(receipt);
-          return head;
-        };
-        if (canonicalJson(header(actual)) !== canonicalJson(header(locator))) return false;
-        for (const [index, field] of locator.facets.entries()) {
-          const matched = expectedFields
-            .get(memberKey(locator, field.ordinal))
-            ?.get(canonicalJson([field, expected.values[index]]));
-          if (!matched) return false;
-          if (!temporalRecentAt(matched.receivedAt, currentWindow().at, window.maxAgeSeconds))
-            return false;
-          recentDeadline = Math.min(recentDeadline, matched.receivedAt + window.maxAgeSeconds);
-          if (matched.page) addTemporalPhysicalWitness(rows, matched.page);
-          const openOwns = native.open.some(
-            (interval) =>
-              memberKey(interval.receipt, field.ordinal) === memberKey(locator, field.ordinal) &&
-              interval.receipt.facets.some((owned) => owned.ordinal === field.ordinal),
-          );
-          if (!openOwns)
-            for (const page of pages)
-              if (
-                page.appendClosed === true &&
-                temporalPageReceipts(page).some(
-                  (receipt) =>
-                    memberKey(receipt, field.ordinal) === memberKey(locator, field.ordinal) &&
-                    receipt.facets.some((owned) => owned.ordinal === field.ordinal),
-                )
-              )
-                addTemporalPhysicalWitness(rows, page);
-          const fragment = receivedValueAt(sources, matched.field),
-            value = fragment && materializeTemporalValue(matched.field, fragment, sources);
-          if (
-            !value ||
-            canonicalJson(value) !== canonicalJson(expected.values[index]) ||
-            !temporalFacetEligible(native.disclosure, scope.actorId, matched.field, value)
-          )
-            return false;
+        if(request.state){
+          if(!receivedStateEligible(request.state.carrier,request.state.asOf,latest.frontier) ||
+            !temporalRecentAt(request.state.asOf,latest.at,latest.maxAgeSeconds) ||
+            !latest.contains(request.state.carrier,request.state.carrier.memberIndex))return false;
+          deadline=Math.min(deadline,request.state.asOf+latest.maxAgeSeconds);
         }
-        const key = JSON.stringify([
-          scope.actorId,
-          locator.physicalLife,
-          locator.epoch,
-          locator.ordinal,
-        ]);
-        addTemporalWitness(rows, 'temporal_logical', key, {
-          selections: new Map([[key, expected]]),
-        });
+        for(const [fieldIndex,field]of expected.receipt.facets.entries()){
+          if(!request.state&&(!receivedPositionEligible({...expected.receipt,memberIndex:field.memberIndex},expected.receipt.at,latest.frontier) ||
+            !temporalRecentAt(expected.receipt.at,latest.at,latest.maxAgeSeconds) || !latest.contains(expected.receipt,field.memberIndex)))return false;
+          let matched=false;
+          for(const candidate of candidates[index]!){
+            const facet=candidate.receipt.facets.find(facet=>facet.memberIndex===field.memberIndex&&shape(candidate.receipt,facet)===canonicalJson(field));
+            if(!facet)continue;
+            const fragment=receivedValueAt(sources,facet),value=fragment&&materializeTemporalValue(facet,fragment,sources);
+            if(!value || canonicalJson(value)!==canonicalJson(expected.values[fieldIndex]) || !temporalFacetEligible(disclosure,scope.actorId,facet,value))continue;
+            matched=true;if(candidate.page)addTemporalPhysicalWitness(rows,candidate.page);break;
+          }
+          if(!matched)return false;
+        }
+        if(!request.state)deadline=Math.min(deadline,expected.receipt.at+latest.maxAgeSeconds);
+        addTemporalWitness(rows,'temporal_logical',key,request.state?{states:new Map([[key,request.state]])}:{selections:new Map([[key,expected]])});
       }
-      const installed = installTemporalWitnesses(watch, rows, RETRIEVAL_BYTES);
-      if (installed) {
-        watch.deadline = recentDeadline;
-        watch.clock = () => currentWindow().at;
-      }
+      if(rows.get('temporal_logical')?.size)
+        addTemporalWitness(rows,'mind_temporal_actors',JSON.stringify(['world','experience','temporal','actors',scope.actorId]),{eligibility:true});
+      const installed=installTemporalWitnesses(watch,rows,RETRIEVAL_BYTES);
+      if(installed){watch.deadline=deadline;watch.clock=()=>currentWindow().at;}
       return installed;
-    });
-  }
-  async temporalReceiptLocatorsCurrent(
-    scope: MemoryScope,
-    locators: readonly TemporalReceiptLocator[],
-  ): Promise<boolean> {
-    return this.actorRead(scope, async () => {
-      if (!locators.length) return true;
-      if (
-        locators.length > RETRIEVAL_ROWS ||
-        locators.some((locator) => locator.actorId !== scope.actorId)
-      )
-        return false;
-      const unique = [
-        ...new Map(locators.map((locator) => [JSON.stringify(locator), locator])).values(),
-      ];
-      const row = await this.db
-        .prepare(
-          `SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
-        q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
-        WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
-          EXISTS (SELECT 1 FROM LATERAL (
-            SELECT last_ordinal FROM mind_temporal_pages c
-            WHERE c.retired_revision IS NULL AND c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
-              AND c.receipt_epoch=q.epoch
-              AND c.receipt_ordinals @> ARRAY[q.ordinal]
-            ORDER BY c.first_ordinal DESC LIMIT 1
-          ) current WHERE current.last_ordinal>=q.ordinal)
-          OR EXISTS (SELECT 1 FROM mind_temporal_supports s WHERE s.world_id=? AND s.actor_id=q."actorId"
-            AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal))`,
-        )
-        .get(JSON.stringify(unique), scope.worldId, scope.generation, scope.worldId, scope.worldId);
-      return Number(row?.['count'] ?? 0) === unique.length;
     });
   }
   /** Called before current rows change, inside their transaction. Retired/corrected
@@ -2660,8 +2357,10 @@ export class MemoryRepository {
               'memory',
               span.physicalLife,
               span.epoch,
-              span.from,
-              span.through,
+              span.from.batchOrder,
+              span.from.entryIndex,
+              span.through.batchOrder,
+              span.through.entryIndex,
             ]);
         await insertRows(this.db, 'mind_impression_spans', spans, 'ON CONFLICT DO NOTHING');
       }
@@ -4412,13 +4111,6 @@ export class MemoryRepository {
     const read = async () => {
       const receipts = sources.filter((source) => source.receipt);
       if (receipts.length) {
-        if (
-          !(await this.temporalReceiptLocatorsCurrent(
-            scope,
-            receipts.map((source) => source.receipt!),
-          ))
-        )
-          return false;
         const selected = await this.evidence(
           scope,
           receipts.map((source) => source.id),
@@ -4587,7 +4279,7 @@ export class MemoryRepository {
           ...(await this.db
             .prepare(
               `SELECT p.event_id,p.payload,${storyTemporalPreparationBytesSql()} AS preparation_bytes FROM history_perspectives p
-          WHERE p.world_id=? AND p.actor_id=? AND p.temporal_ordinal IS NOT NULL
+          WHERE p.world_id=? AND p.actor_id=? AND p.temporal_batch_order IS NOT NULL AND ${storyAccountAvailableSql()}
             AND p.event_id=ANY(?::text[]) AND (SELECT generation FROM world_head WHERE world_id=?)=?
             AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id AND f.source_id=p.event_id)`,
             )

@@ -21,9 +21,8 @@ export interface CapturedTemporalHistoryContext {
   readonly at?: number;
   readonly maxAgeSeconds?: number;
   readonly pages: readonly TemporalPage[];
-  readonly open?: readonly import('./temporal-evidence.js').TemporalOpenInterval[];
-  readonly releasedThrough?: number;
-  readonly retiredThrough?: { readonly pageOrder: number; readonly ordinal: number };
+  readonly currentSeeds?:readonly import('./temporal-evidence.js').TemporalCurrentSeed[];
+  readonly frontier?:import('./received-batches.js').ReceivedFrontier;
   readonly recordingGap?: { readonly from: number; readonly through: number };
   readonly sources: ReceivedValueLookup;
   readonly disclosure: TemporalReadContext;

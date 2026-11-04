@@ -3,7 +3,10 @@ import {
   selectedRepairRecentIndividualReferences,
   selectedPruneObserverIndividuals,
   temporalPageReferences,
-  temporalPageOperations,
+  temporalPageReceipts,
+  receivedPositionEligible,
+  receivedDirectoryContains,
+  compareReceivedPosition,
   temporalReceiptIndividualIds,
   temporalRecentAt,
   updateWorld,
@@ -15,7 +18,7 @@ import { readTemporalPageRecord, MemoryRetentionError } from './temporal-storage
 import { receiptLookupBucket } from './temporal-page-storage.js';
 import type { RetentionMetadataView } from './retention-metadata.js';
 
-type Reference = { epoch: string; ordinal: number; pageOrder: number; at: number };
+type Reference = { physicalLife:number;epoch:string;batchOrder:number;entryIndex:number;memberIndex:number;at:number };
 /** Sparse correction is exceptional: find only the latest matching retained
  * chunk for affected people, then inspect those bounded bodies once. Ordinary
  * prefix expiry and every other individual require no cold survivor lookup. */
@@ -52,9 +55,9 @@ export async function prepareIndividualReferenceRepairs(
       ) SELECT q.actor_id,q.individual_id,c.id,c.encoded_bytes
         FROM requested q CROSS JOIN LATERAL (
           SELECT id,encoded_bytes FROM mind_temporal_pages c WHERE c.world_id=? AND c.actor_id=q.actor_id
-            AND c.retired_revision IS NULL AND c.last_received_at>?
+            AND c.last_at>?
             AND c.lookup_buckets @> ARRAY[q.bucket] AND c.individual_ids @> ARRAY[q.individual_id]
-          ORDER BY c.last_received_at DESC,c.last_order DESC,c.id DESC LIMIT 1
+          ORDER BY c.last_batch_order DESC,c.last_entry DESC,c.last_member DESC,c.id DESC LIMIT 1
         ) c`,
     )
     .all(
@@ -105,32 +108,17 @@ export async function prepareIndividualReferenceRepairs(
         page.actorId === request.actor_id && page.individualIds.includes(request.individual_id),
     );
     let reference: Reference | undefined;
+    const actor = world.experience?.temporal?.actors[request.actor_id];
     for (const page of matching)
-      for (const operation of temporalPageOperations(page)) {
-        if (operation.kind === 'check') continue;
-        const receipt = operation.receipt;
-        if (
-          !temporalRecentAt(
-            operation.kind === 'span' ? operation.closedAt : receipt.at,
-            world.simTime,
-            selectedTemporalPolicy(world).recent.maxAgeSeconds,
-          ) ||
-          !temporalReceiptIndividualIds(receipt, sources).includes(request.individual_id)
-        )
-          continue;
-        const at = Math.max(
-          receipt.at,
-          ...receipt.facets.map(
-            (field) =>
-              field.support?.confirmedThrough ?? field.confirmedThrough ?? field.measuredThrough,
-          ),
-        );
-        if (
-          !reference ||
-          at > reference.at ||
-          (at === reference.at && receipt.ordinal > reference.ordinal)
-        )
-          reference = { epoch: page.epoch, ordinal: receipt.ordinal, pageOrder: page.order, at };
+      for (const receipt of temporalPageReceipts(page)) {
+        if (!temporalRecentAt(receipt.at, world.simTime, selectedTemporalPolicy(world).recent.maxAgeSeconds)) continue;
+        for (const facet of receipt.facets) {
+          if (!receivedPositionEligible({...receipt,memberIndex:facet.memberIndex},receipt.at,actor?.frontier) ||
+            !actor || !receivedDirectoryContains(actor.recent,receipt,facet.memberIndex) ||
+            !temporalReceiptIndividualIds({...receipt,facets:[facet]}, sources).includes(request.individual_id)) continue;
+          const candidate:Reference={physicalLife:receipt.physicalLife,epoch:receipt.epoch,batchOrder:receipt.batchOrder,entryIndex:receipt.entryIndex,memberIndex:facet.memberIndex,at:receipt.at};
+          if (!reference || compareReceivedPosition(candidate,reference)>0) reference=candidate;
+        }
       }
 
     changes.push({ id: request.individual_id, ...(reference ? { reference } : {}) });
