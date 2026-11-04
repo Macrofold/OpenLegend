@@ -49,9 +49,9 @@ Keep prompts and recipes, input revisions, the exact tool, model, mode and setti
 For animation, record required, retained and new clips; the unchanged target model/rig revision;
 conversion/bone-map revision and settings; root/loop policy, contact corrections and timing review;
 retained-clip coverage and measured gait facts; and exact editable/final target references.
-Each generated source keeps one preserved `request.json` and `receipt.json` under the
+Each hosted source job keeps one preserved `request.json` and `receipt.json` under the
 [source-record contract](../../projects/art-workflow-tech-design.md#112-input-output-and-record-contract).
-Link these for submitted provider/model settings, job recovery and cost. Keep inspected source
+Link these for submitted provider/model settings, job recovery and the cost reservation; actual charges remain in the study’s cost record. Keep inspected source
 skeleton/format/units/axes/time basis and input/output rights with the shared source inventory;
 multiple target candidates reuse that source without copying its receipt or counting its charge
 twice. Link existing source/target qualification or identify the missing check. A successful

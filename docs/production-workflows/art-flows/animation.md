@@ -109,8 +109,8 @@ source profiles defined in the tech design; those options are not installed comm
 1. Confirm the selected provider/version/target-rig qualification and available account, permission
    and bounded task budget. Pin the exact model revision; record its input controls, source skeleton,
    exported format, units, axes, time basis and applicable rights. Generate only the missing motion.
-2. Preserve each generation's original motion source, prepared `request.json` and `receipt.json`
-   once in the study's permitted working/archive location. Target candidates link that same source
+2. Preserve the original motion source and replay settings. For a hosted job, keep its prepared
+   `request.json` and `receipt.json` once in the study's permitted working/archive location. Target candidates link that same source
    when it is reused on another body; do not duplicate its paid job or charge. Keep target-specific
    mapping, corrections and review in the [study record](study-record.md#construction-and-sources).
    An exported skeleton is source data, not the character's replacement rig. If the route produces
