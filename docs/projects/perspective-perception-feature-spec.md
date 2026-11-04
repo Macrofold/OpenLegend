@@ -1,8 +1,8 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared reception and scoped retirement are implemented; operating qualification remains open. | 2026-11-01   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Supported reception is installed; further batch/lifetime design is complete and operating qualification remains open. | 2026-11-04   |
 
 Architecture applied to shared reception **2026-10-31 22:44 UTC**; the temporal/familiarity foundation used it **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
@@ -30,7 +30,7 @@ The selected [subject-wide familiarity law](../worlds/base/perception-recognitio
 
 ## Shared reception and change
 
-**Selected target; PP08 implementation remains open.** Sight, hearing and touch already share evidence and personal-memory foundations, but their current-state and temporal bookkeeping still contain separate producer-specific paths. The [shared runtime design](perspective-perception-runtime-design.md) defines their conversion through the existing owners and the grouped-contact representation. It changes representation and mutation responsibility, not the existing senses, attention allocation, sampling defaults or retention allowances.
+**Supported-channel PP08 conversion is installed; operating acceptance remains open.** Sight, hearing, contact, event and received-feature adapters use the [shared runtime contract](perspective-perception-runtime-design.md) through the existing current/evidence, attention and personal-history owners. The proposed [received-batch and lifetime design](bookkeeping-simplification-batch-design.md) completes the further structural reduction of repeated recording and storage work; [BK20–BK23](../maintainers/production-data.md#received-batches-and-lifetime) owns its unimplemented conversion. It preserves the existing senses, attention allocation, sampling defaults, personal boundaries and retention allowances; design completion claims no performance improvement.
 
 Different senses still determine what reaches someone: a wall can block sight and muffle speech while allowing a felt vibration under a separately installed physical law. The reusable part starts **after reception**. One common procedure handles received state, changes, availability, source timing, recording admission and correction. Adding a supported channel must not require writing another history or forgetting system.
 

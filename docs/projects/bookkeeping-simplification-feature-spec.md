@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                             | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK17–BK19 implementation and connected integration complete; operating qualification failed. | 2026-11-04   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Grouped reception is installed; its batch/lifetime replacement is designed and operating qualification remains unmet. | 2026-11-04   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
@@ -117,6 +117,17 @@ The distinctive payoff is remembered consequence without omniscient recording: a
 
 These are uses of existing actions, cognition and knowledge, not new quest, relationship or scene frameworks. Qualify a small encounter and useful return before making any crowd-capacity claim. Scripted correctness demonstrates supported behavior; voluntary player interest remains separate human evidence.
 
+These applications of the existing journeys require no new catalogue entries or compulsory character responses:
+
+| Playable outcome                          | Concrete encounter and choice                                                                                                                                                                                | Acceptance distinction                                                                                                                                                                                             |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Information makes cooperation useful      | Two witnesses have different parts of a stranger's route. Their actually heard reports can help the player choose where to search or which approach to try.                                                  | Direct sight, attributed testimony and the unseen gap stay distinct. Neither the receiving character nor the UI gets an omniscient completed route or a presumed culprit. Uses BK-J02/J04/J05 and PB-042.          |
+| A particular deed matters later           | A character receives someone's help making or recovering a useful object. After trivial travel fades, the independently retained account can identify the actual contribution and legitimately known helper. | Useful support survives expiry; no automatic affection, obedience, gratitude or universal reputation reward. A person who did not witness or hear about it remains uninformed. Uses BK-J04/J05, PB-101 and PB-151. |
+| Looking again changes a practical choice  | A later received observation shows that a previously seen place, object or route has changed. The observer can reconsider using it, returning or telling another person.                                     | New evidence updates only its recipient and checked properties. Old descriptions stay dated; a report may inform another person only through ordinary communication. Uses BK-J05/J06 and LKN097.                   |
+| Quiet attention can reveal an opportunity | A previously unconsidered object or property gets the existing discovery opportunity while ordinary activity continues. Its received qualities may support curiosity or practical invention.                 | No emergency, precompiled profession-to-object taxonomy, guaranteed model turn or promised discovery on every visit. Uses BK-J01/J04, PB-083 and MEC-001.                                                          |
+
+Native acceptance proves that the right permitted facts reach current/history/recall consumers and remain usable after saving or expiry. Existing scoped character-quality/player acceptance evaluates whether someone voluntarily makes a useful choice or finds the return worthwhile. A forced utterance or correct data fixture does not prove spontaneous gratitude, interpretation or fun. Broader combat, ecology, society, magic and alternate-world repertoire entries retain their own owners; this foundation grants none of their unimplemented behavior.
+
 ## 7. Scope, alternatives and acceptance
 
 Deliver one direct transactional persistence path, explicit append batches, useful shared values with simple ownership, independent minimal retained support, bounded asynchronous cleanup, pure capture/validation and all current producers/consumers. Remove superseded mechanisms in the same current-format conversion. No released-save migration, dual writer, fallback journal, region service, generic garbage collector, event-sourced engine or additional paid maintenance loop is included.
@@ -129,7 +140,7 @@ Copying every received body would simplify deletion but multiply richer stable v
 
 No product decision is left open for this design. Numerical engineering envelopes are provisional and must be qualified; performance and human enjoyment are unproved, not unresolved architecture choices. Implementation is not authorized by this document alone.
 
-- Implementation and dependencies: [BK00–BK07 baseline](../maintainers/production-data.md#bookkeeping-simplification), [BK08–BK16 conversion](../maintainers/production-data.md#database-work-reduction), [BK17–BK19 representation](../maintainers/production-data.md#received-state-and-history-representation).
+- Implementation and dependencies: [BK00–BK07 baseline](../maintainers/production-data.md#bookkeeping-simplification), [BK08–BK16 conversion](../maintainers/production-data.md#database-work-reduction), [BK17–BK19 representation](../maintainers/production-data.md#received-state-and-history-representation), [BK20–BK23 proposed batches and lifetime](../maintainers/production-data.md#received-batches-and-lifetime).
 - Limits and constraints: [persistence limits](../limits/persistence.md#bks-l01--direct-transactional-saving-target) distinguish current bounds and selected targets; [attention/memory policy](../worlds/base/attention.md) owns fictional retention.
 - Mechanisms, schema, removal map and step-by-step delivery: [technical design](bookkeeping-simplification-tech-design.md) and [runtime companion](bookkeeping-simplification-runtime-design.md).
 - Existing operating acceptance: [PS04-A SR04/SR07](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording); saving and privacy: [save/load](../save-and-load.md), [memory](../memory-architecture.md).
