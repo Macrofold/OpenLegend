@@ -178,7 +178,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '53';
+export const DATABASE_SCHEMA = '54';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(

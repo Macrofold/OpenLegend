@@ -1,6 +1,13 @@
 import type { CurrentContact, CurrentReceivedGroup, ReceivedBinding } from '@open-legend/domain';
 import { isImmutableData, currentContactContentIdentity } from '@open-legend/domain';
 import type { JsonRecord } from './world-record-schema.js';
+import {
+  receivedProofEncoder,
+  receivedProofDecoder,
+  type EncodedReceivedBinding,
+  type ReceivedProofOwner,
+  type ReceivedProofTable,
+} from './received-proof-codec.js';
 
 // Assign every native field explicitly: adding one must also choose its storage
 // column. This split is a codec, never another writable perception authority.
@@ -39,9 +46,11 @@ type RecordingMetadata = Omit<Recording, 'binding'> & {
 };
 type StoredGroup = {
   received: CurrentReceivedGroup['received'];
-  bindings: Array<{ key: string; value: StaticBinding }>;
+  bindings: Array<{ key: string; value: EncodedReceivedBinding }>;
 };
+type GroupBindings = Array<{ key: string; value: StaticBinding }>;
 type Content = Pick<CurrentContact, 'order'> & {
+  evidence?: ReceivedProofTable & { owner: ReceivedProofOwner };
   content: Pick<CurrentContactContent, 'fieldOrder' | 'originals'> & {
     groups: StoredGroup[];
   };
@@ -51,9 +60,9 @@ type Metadata = Pick<CurrentContact, 'sight'> & {
 };
 const contents = new WeakMap<CurrentContact, string>();
 const metadata = new WeakMap<CurrentContact, string>();
-const bindingKeys = new WeakMap<ReceivedBinding['parts'], string>();
-const groupBindings = new WeakMap<CurrentReceivedGroup, StoredGroup['bindings']>();
-function bindingKey(binding: ReceivedBinding): string {
+const bindingKeys = new WeakMap<object, string>();
+const groupBindings = new WeakMap<CurrentReceivedGroup, GroupBindings>();
+function bindingKey(binding: { id: number; parts: readonly { partIndex: number }[] }): string {
   let mask = bindingKeys.get(binding.parts);
   if (mask === undefined) {
     mask = binding.parts.map((part) => part.partIndex).join(',');
@@ -66,7 +75,7 @@ function sameStaticBinding(a: StaticBinding, b: StaticBinding): boolean {
 }
 /** Recording partitions move as individual clocks change. Their static dictionary
  * has canonical mask order so moving a checkpoint cannot rewrite received proofs. */
-function staticBindings(group: CurrentReceivedGroup): StoredGroup['bindings'] {
+function staticBindings(group: CurrentReceivedGroup): GroupBindings {
   const cached = groupBindings.get(group);
   if (cached) return cached;
   const unique = new Map<string, StaticBinding>();
@@ -112,14 +121,22 @@ export function currentContactPayload(contact: CurrentContact, previous?: Curren
     contents.set(contact, payload);
     return payload;
   }
+  const groups = contact.content.groups.map((group) => ({
+      received: group.received,
+      bindings: staticBindings(group),
+    })),
+    first = groups.find((group) => group.bindings.length)?.bindings[0]?.value.seed,
+    owner = first && { actorId: first.actorId, physicalLife: first.physicalLife },
+    codec = owner && receivedProofEncoder(owner);
   const body: Content = {
     order: contact.order,
+    ...(codec ? { evidence: { owner: owner!, ...codec.table } } : {}),
     content: {
       fieldOrder: contact.content.fieldOrder,
       originals: contact.content.originals,
-      groups: contact.content.groups.map((group) => ({
-        received: group.received,
-        bindings: staticBindings(group),
+      groups: groups.map(({ received, bindings }) => ({
+        received,
+        bindings: bindings.map(({ key, value }) => ({ key, value: codec!.binding(value) })),
       })),
     },
   };
@@ -153,7 +170,7 @@ export function currentContactMetadata(contact: CurrentContact): string {
 export function decodeCurrentContactRow(row: JsonRecord): CurrentContact {
   if (typeof row['payload'] !== 'string' || typeof row['metadata'] !== 'string')
     throw new Error('Missing current-contact storage columns.');
-  const body = JSON.parse(row['payload']) as Content;
+  const { evidence, ...body } = JSON.parse(row['payload']) as Content;
   const times = JSON.parse(row['metadata']) as Metadata;
   if (
     !body?.content ||
@@ -163,6 +180,14 @@ export function decodeCurrentContactRow(row: JsonRecord): CurrentContact {
     body.content.groups.length !== times.groups.length
   )
     throw new Error('Current-contact columns have different group membership.');
+  const codec =
+    evidence &&
+    (() => {
+      const { owner, ...table } = evidence;
+      if (!owner || Object.keys(owner).some((key) => key !== 'actorId' && key !== 'physicalLife'))
+        throw new Error('Invalid current proof owner.');
+      return receivedProofDecoder(table, owner);
+    })();
   // Unknown stored fields cannot disappear during reconstruction and evade the
   // native validator, which validates the joined value rather than this envelope.
   if (
@@ -221,7 +246,12 @@ export function decodeCurrentContactRow(row: JsonRecord): CurrentContact {
     content: {
       ...body.content,
       groups: body.content.groups.map(({ received, bindings }, at) => {
-        const held = new Map(bindings.map((binding) => [binding.key, binding.value])),
+        const held = new Map(
+            bindings.map((binding) => {
+              if (!codec) throw new Error('Missing current proof table.');
+              return [binding.key, codec.binding(binding.value)] as const;
+            }),
+          ),
           used = new Set<string>(),
           stored = times.groups[at]!;
         if (held.size !== bindings.length) throw new Error('Duplicate current binding descriptor.');
@@ -243,6 +273,7 @@ export function decodeCurrentContactRow(row: JsonRecord): CurrentContact {
     },
     ...(Object.hasOwn(times, 'sight') ? { sight: times.sight } : {}),
   };
+  codec?.finish();
   // Loading returns an editable builder. Its values may change before sealing;
   // only the immutable encoding path may seed identity-based caches.
   return contact;

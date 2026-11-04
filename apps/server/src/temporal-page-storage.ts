@@ -16,6 +16,12 @@ import {
 } from '@open-legend/domain';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 import type { SqlDatabase } from './store.js';
+import {
+  receivedProofEncoder,
+  receivedProofDecoder,
+  type EncodedReceivedBinding,
+  type ReceivedProofTable,
+} from './received-proof-codec.js';
 
 /** Native append intent belongs to the existing immutable save cut. Physical
  * packing never runs while physical time advances. */
@@ -332,6 +338,16 @@ export function receivedValueSql(world: string, reference: string): string {
 }
 
 const payloadEncodings = new WeakMap<object, string>();
+type EncodedBatch = Omit<ReceivedBatch, 'actorId' | 'physicalLife' | 'epoch' | 'bindings'> & {
+  bindings: EncodedReceivedBinding[];
+};
+type EncodedPage = Omit<
+  TemporalPage,
+  'batches' | 'subjects' | 'sourceIds' | 'individualIds' | 'sourceRefs'
+> & {
+  evidence: ReceivedProofTable;
+  batches: EncodedBatch[];
+};
 export function serializeTemporalPage(value: unknown): string {
   const page = value as TemporalPage,
     existing = payloadEncodings.get(page);
@@ -341,15 +357,59 @@ export function serializeTemporalPage(value: unknown): string {
     sourceIds: _sourceIds,
     individualIds: _individualIds,
     sourceRefs: _sourceRefs,
+    batches: _batches,
     ...body
   } = page;
-  const payload = JSON.stringify(body);
+  const codec = receivedProofEncoder(page);
+  const payload = JSON.stringify({
+    ...body,
+    evidence: codec.table,
+    batches: page.batches.map(({ actorId, physicalLife, epoch, bindings, ...batch }) => {
+      if (actorId !== page.actorId || physicalLife !== page.physicalLife || epoch !== page.epoch)
+        throw new Error('A temporal batch cannot inherit another owner.');
+      return { ...batch, bindings: bindings.map(codec.binding) };
+    }),
+  });
   payloadEncodings.set(page, payload);
   return payload;
 }
+/** Pending source fences and SQL restoration use the same current-format
+ * decoder. No caller may cast the compact saved body to a native page. */
+export function decodeTemporalPagePayload(payload: string): TemporalPage {
+  const stored = JSON.parse(payload) as EncodedPage;
+  const { evidence, batches, ...page } = stored;
+  if (!Array.isArray(batches)) throw new Error('Missing received batches.');
+  const codec = receivedProofDecoder(evidence, page);
+  const body = {
+    ...page,
+    subjects: [],
+    sourceIds: [],
+    individualIds: [],
+    sourceRefs: [],
+    batches: batches.map((batch) => {
+      if (
+        !batch ||
+        Object.hasOwn(batch, 'actorId') ||
+        Object.hasOwn(batch, 'physicalLife') ||
+        Object.hasOwn(batch, 'epoch') ||
+        !Array.isArray(batch.bindings)
+      )
+        throw new Error('Invalid temporal batch encoding.');
+      return {
+        ...batch,
+        actorId: page.actorId,
+        physicalLife: page.physicalLife,
+        epoch: page.epoch,
+        bindings: batch.bindings.map(codec.binding),
+      };
+    }),
+  };
+  codec.finish();
+  return body;
+}
 const restoredProjections = new WeakMap<TemporalPage, Record<string, unknown>>();
 export function decodeTemporalPageRow(row: Record<string, unknown>): TemporalPage {
-  const body = JSON.parse(String(row['payload'])) as TemporalPage;
+  const body = decodeTemporalPagePayload(String(row['payload']));
   if (
     body.appendClosed !== true ||
     !Array.isArray(body.batches) ||

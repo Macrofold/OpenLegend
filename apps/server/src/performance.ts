@@ -1,10 +1,12 @@
 import { createHash } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { monitorEventLoopDelay, PerformanceObserver } from 'node:perf_hooks';
 
 type DurationObserver = (stage: string, milliseconds: number, endedAt: number) => void;
 interface DatabaseQueryTally {
   kind: string;
   tables: string[];
+  aggregation: 'exact-template' | 'owner-family' | 'template-overflow';
   calls: number;
   failed: number;
   returnedRows: number;
@@ -22,7 +24,6 @@ interface Capture {
   counters: Map<string, number>;
   databaseQueries: Map<string, DatabaseQueryTally>;
   databaseRows: Map<string, { rows: number; bytes: number }>;
-  omittedDatabaseQueries: number;
   omittedDatabaseRows: number;
   gauges: Map<string, number>;
   observers: Set<DurationObserver>;
@@ -34,6 +35,26 @@ interface TimingMark {
   readonly started: number;
 }
 let capture: Capture | undefined;
+const groupedWriteCapture = new AsyncLocalStorage<Capture>();
+const groupedWriteKey = 'family:grouped-write';
+const overflowQueryKey = 'family:template-overflow';
+const maximumQueryTemplates = 256;
+function databaseQueryTally(
+  kind: string,
+  tables: string[],
+  aggregation: DatabaseQueryTally['aggregation'],
+): DatabaseQueryTally {
+  return {
+    kind,
+    tables,
+    aggregation,
+    calls: 0,
+    failed: 0,
+    returnedRows: 0,
+    affectedRows: ['insert', 'update', 'delete'].includes(kind) ? 0 : null,
+    elapsedMs: 0,
+  };
+}
 export function profilingEnabled(): boolean {
   return capture !== undefined;
 }
@@ -46,9 +67,13 @@ export function startPerformanceCapture(options: { runtimeMonitoring: boolean })
     runtimeMonitoring: options.runtimeMonitoring,
     samples: new Map(),
     counters: new Map(),
-    databaseQueries: new Map(),
+    // Fixed aggregate families cannot compete with exact shapes for capacity.
+    // Unknown shapes still contribute every completed adapter call after the cap.
+    databaseQueries: new Map([
+      [groupedWriteKey, databaseQueryTally('grouped-write', [], 'owner-family')],
+      [overflowQueryKey, databaseQueryTally('other', [], 'template-overflow')],
+    ]),
     databaseRows: new Map(),
-    omittedDatabaseQueries: 0,
     omittedDatabaseRows: 0,
     gauges: new Map(),
     observers: new Set(),
@@ -166,6 +191,13 @@ export function countMetric(name: string, amount = 1): void {
     owned.counters.set(name, (owned.counters.get(name) ?? 0) + amount);
   else owned.omitted.counterEvents++;
 }
+/** The explicit batch owner names this family; varying CTE/parameter shapes do
+ * not consume exact-template slots. The adapter remains the sole query timer.
+ * Attribution belongs to this capture even while its write waits in a queue. */
+export function withGroupedWriteAttribution<T>(operation: () => Promise<T>): Promise<T> {
+  const owned = capture;
+  return owned ? groupedWriteCapture.run(owned, operation) : operation();
+}
 /** Optional bounded SQL-template attribution. No parameters or query text leave
  * this owner. These elapsed totals describe the same adapter work as
  * postgres.statement and must not be added to it. */
@@ -173,12 +205,11 @@ export function beginDatabaseQuery(sql: string): { mark: TimingMark; key: string
   const mark = beginTiming();
   if (!mark) return;
   const owned = mark.capture;
+  if (groupedWriteCapture.getStore() === owned) return { mark, key: groupedWriteKey };
   const key = createHash('sha256').update(sql).digest('hex').slice(0, 16);
   if (!owned.databaseQueries.has(key)) {
-    if (owned.databaseQueries.size >= 256) {
-      owned.omittedDatabaseQueries++;
-      return;
-    }
+    if (owned.databaseQueries.size >= maximumQueryTemplates + 2)
+      return { mark, key: overflowQueryKey };
     const first = /^\s*([A-Z]+)/iu.exec(sql)?.[1]?.toLowerCase() ?? 'other';
     const kind =
       first === 'with'
@@ -195,15 +226,7 @@ export function beginDatabaseQuery(sql: string): { mark: TimingMark; key: string
     ]
       .sort()
       .slice(0, 32);
-    owned.databaseQueries.set(key, {
-      kind,
-      tables,
-      calls: 0,
-      failed: 0,
-      returnedRows: 0,
-      affectedRows: ['insert', 'update', 'delete'].includes(kind) ? 0 : null,
-      elapsedMs: 0,
-    });
+    owned.databaseQueries.set(key, databaseQueryTally(kind, tables, 'exact-template'));
   }
   return { mark, key };
 }
@@ -379,7 +402,7 @@ export function performanceSnapshot() {
         prepared: owned
           ? Object.fromEntries([...owned.databaseRows].map(([key, value]) => [key, { ...value }]))
           : {},
-        omittedQueries: owned?.omittedDatabaseQueries ?? 0,
+        omittedQueries: 0,
         omittedPreparedRows: owned?.omittedDatabaseRows ?? 0,
       },
       backgroundFailures: {

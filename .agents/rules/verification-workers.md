@@ -4,11 +4,13 @@ Read before requesting, starting, claiming or using any remote verification mach
 
 ## Current availability
 
-The [design](../../docs/projects/verification-workers-feature-spec.md) is complete; the pool/controller/runner are **not implemented or provisioned**. [VW01–VW04](../../docs/maintainers/verification-workers.md) track delivery. Existing profilers and temporary task-specific scripts are not a managed pool.
+The managed AWS pool and maintained CLI have been delivered separately; their runner code is **not integrated into this checkout**. [VW01–VW04](../../docs/maintainers/verification-workers.md) retain integration and qualification tracking. Existing profilers and temporary task-specific scripts are not a managed pool.
 
-Until delivery, use an already authorized task-owned environment under its actual ownership, deadline and cleanup rules, suitable local checks, or report the gap. Do not adopt another task's worker, assume a temporary worker stops instead of terminates, or invent a cloud harness inside unrelated feature work. This design does not authorize provisioning.
+Use that deployment only through its matching maintained CLI and contracts, located from authorized task/deployment records. Read the runner checkout's applicable guidance before invoking it; verify actual pool status and obtain the current experiment's valid claim before use. A stopped or apparently idle instance does not prove availability or ownership. Using the delivered tooling does not require or authorize merging its branch into this checkout.
 
-## Procedure once the managed runner is available
+If a matching maintained runner is unavailable, use an already authorized task-owned AWS instance under its actual ownership, deadline and cleanup rules, or report the gap. [Verification's speed-test location requirement](verification.md#choose-the-execution-location) still applies; suitable local non-timing checks can establish correctness only. Do not adopt another task's worker, assume a temporary worker stops instead of terminates, or invent a cloud harness inside unrelated feature work. The design alone does not authorize provisioning.
+
+## Procedure with a matching maintained runner
 
 1. **Plan.** Select the existing check, workload, immutable source, required pass/measurement, timeout, output allowance and cost. Prepare inputs before claiming. For performance use the [profiling procedure](../../docs/maintainers/performance-profiling.md); applicable browser/live-playtest procedures remain. A worker grants no extra tests or paid AI.
 2. **Admit and claim.** Review project/Region, source, machine and deadline. Reserve a cloud allocation within the shared task budget; other work cannot spend that allocation too. The controller admits against it and atomically claims the whole worker, including PostgreSQL, for the experiment only. Busy callers wait boundedly or do independent work; no private replacement bypasses the pool cap.
@@ -22,6 +24,6 @@ An expired heartbeat means **recover or quarantine**, not “free to take.” A 
 
 Use the [common report contract](../../docs/projects/verification-workers-tech-design.md#measurement-and-artifacts): separate setup, measured work and cleanup, preserve the full phase timeline and actual completed work, and distinguish skipped/unavailable data from zero. Reuse profiler outputs rather than create another measurement system.
 
-Graphics claims use representative visible-browser mode and actual rendered interaction; headless/software diagnostics are separate. A remote backend leaves browser load on the client and adds network latency; record both.
+Graphics claims use representative visible-browser mode and actual rendered interaction; headless/software diagnostics are separate. When Verification permits a separately located browser, the remote backend leaves browser load on that client and adds network latency; record both.
 
 Before implementing or changing the pool, runner, bootstrap, claims, caching, watchdog or report format, read the complete [feature specification](../../docs/projects/verification-workers-feature-spec.md), [technical design](../../docs/projects/verification-workers-tech-design.md) and affected [VW tasks](../../docs/maintainers/verification-workers.md). Keep operational defaults there, not in game/world policy or copied into agent-specific scripts.

@@ -2,7 +2,7 @@
 
 The native-only profiler runs disposable deterministic scenarios without a database or provider. The full-server profiler below explicitly selects a disposable database. Neither changes a live save, enables gameplay mechanics or permits paid dispatch. These are performance experiments, not automated correctness tests. [Performance tracker](performance.md) owns remaining work; [Verification](../verification.md) owns measured evidence.
 
-Before running a profile, select its local/remote environment under [Verification](../../.agents/rules/verification.md#choose-the-execution-location); remote execution must follow the linked worker procedure. [VW01–VW04](verification-workers.md) track the designed reusable pool and setup-timing workflow, separately from these existing profilers and game-performance acceptance.
+Before running a profile, select its AWS instance under [Verification](../../.agents/rules/verification.md#choose-the-execution-location), including the linked worker procedure and Mike's explicit-local-request exception. Run the commands below in that instance's source workspace; loopback URLs and `/tmp` paths refer to the instance. [VW01–VW04](verification-workers.md) track the designed reusable pool and setup-timing workflow, separately from these existing profilers and game-performance acceptance.
 
 ## Choose collection explicitly
 
@@ -122,14 +122,14 @@ pnpm run build
 node --import tsx scripts/performance/profile-server.mjs scripts/performance/scenarios/mixed.json /tmp/openlegend-server-report.json 15 1,3,8
 ```
 
-For PostgreSQL, use a disposable loopback service with `pgvector` installed and a role allowed to create databases and install the extension. For example, against a local service you already started:
+For PostgreSQL, use a disposable loopback service with `pgvector` installed and a role allowed to create databases and install the extension. For example, against a service already started on the selected instance:
 
 ```sh
 OPEN_LEGEND_PROFILE_POSTGRES_URL='postgres://review:review@127.0.0.1:5432/postgres' \
   node --import tsx scripts/performance/profile-server.mjs scripts/performance/scenarios/mixed.json /tmp/openlegend-postgres-report.json 15 1,3 25
 ```
 
-The example credentials are for a disposable local service, not production. Only PostgreSQL URLs with host `127.0.0.1`, `localhost` or `[::1]`, without query/fragment overrides, are accepted. The helper creates `openlegend_fixture_<uuid>`, runs both setup and restarted measurement on that database, then drops only that successfully created database. It never force-drops databases or terminates other sessions. The report identifies the adapter, loopback topology, server version and generated database name without storing the administrative URL or password. A failed cleanup is a nonzero result; the generated name identifies any resource requiring manual inspection. Remote topology benchmarking needs a separately reviewed safe fixture mechanism, not bypassing this guard.
+The example credentials are for that disposable service, not production. Only PostgreSQL URLs with host `127.0.0.1`, `localhost` or `[::1]`, without query/fragment overrides, are accepted. The helper creates `openlegend_fixture_<uuid>`, runs both setup and restarted measurement on that database, then drops only that successfully created database. It never force-drops databases or terminates other sessions. The report identifies the adapter, loopback topology, server version and generated database name without storing the administrative URL or password. A failed cleanup is a nonzero result; the generated name identifies any resource requiring manual inspection. A database on a separate host needs a separately reviewed safe fixture mechanism, not bypassing this guard; running both processes on AWS preserves the loopback contract.
 
 The profiler retains its own store through server startup so a failed initialization can close the connection/worker even before `createGameServer` returns a server handle. This does not fix the general factory's ownership gap for other callers; [AR07](action-reconciliation.md) remains separate. The current adapter initializes vector storage even when inference is disabled: plain PostgreSQL without `pgvector` is an initialization-failure workload, not a gameplay performance result. Keep a hard external deadline for manual profiling because native CPU work or broader shutdown failures can still prevent timely completion.
 

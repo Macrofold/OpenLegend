@@ -1,5 +1,5 @@
 import type { SqlDatabase } from './store.js';
-import { countMetric, gaugeMetric } from './performance.js';
+import { countMetric, gaugeMetric, withGroupedWriteAttribution } from './performance.js';
 import { toUSVString } from 'node:util';
 
 // Bound PostgreSQL parameters and bytes so a batch cannot grow without limit.
@@ -75,7 +75,7 @@ export class SqlWriteBatch {
             .join(',')
         : '1';
       const sql = `WITH ${this.writes.map((write, index) => `write_${index} AS (${write})`).join(',')} SELECT ${projection}`;
-      const row = await this.db.prepare(sql).get(...this.params);
+      const row = await withGroupedWriteAttribution(() => this.db.prepare(sql).get(...this.params));
       for (const check of this.checks)
         if (Number(row?.[`check_${check.index}`]) !== check.rows) throw new Error(check.message);
     }

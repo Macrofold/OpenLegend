@@ -1722,42 +1722,18 @@ function candidateSourceIds(state: PerceptionEvidenceOwner): string[] {
 }
 function noteReceivedAttention(
   state: PerceptionEvidenceOwner,
-  ids: Iterable<string>,
-  candidates: Iterable<string> = [],
+  entries: readonly AttentionEntry[],
+  tracks: SelectedReceivedTracks,
   resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
 ): void {
   const phase = receivedPhaseDeltas.get(state);
   if (!phase) return;
-  const selected = new Set(ids),
-    entries = (state.attention?.entries ?? []).filter((entry) => selected.has(entry.sourceId));
   phase.resolvedSubjects = resolvedSubjects;
   phase.subjects = new Set([
     ...phase.subjects,
     ...currentSelectionSubjects(state, entries, resolvedSubjects),
   ]);
-  mergeReceivedTracks(
-    phase.selected,
-    attentionTracks(state, entries, candidates, resolvedSubjects),
-  );
-}
-function selectedReceivedExposures(
-  state: PerceptionEvidenceOwner,
-  ids: ReadonlySet<string>,
-  candidates: Iterable<string> = [],
-  resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
-): SelectedReceivedTracks {
-  const tracks: SelectedReceivedTracks = new Map();
-  mergeReceivedTracks(tracks, receivedPhaseDeltas.get(state)?.selected ?? new Map());
-  mergeReceivedTracks(
-    tracks,
-    attentionTracks(
-      state,
-      (state.attention?.entries ?? []).filter((entry) => ids.has(entry.sourceId)),
-      candidates,
-      resolvedSubjects,
-    ),
-  );
-  return tracks;
+  mergeReceivedTracks(phase.selected, tracks);
 }
 const currentPerceptionBatches = new WeakSet<PerceptionEvidenceOwner>();
 function withCurrentPerceptionBatch<T>(
@@ -3298,11 +3274,18 @@ function selectedCurrentGroups(
 ): TemporalCurrentGroupInput[] {
   const groups: TemporalCurrentGroupInput[] = [];
   for (const [id, tracks] of selected) {
+    // Actual samples and availability changes already record their exact masks
+    // at reception. Reconciliation only opens or closes admission: compare the
+    // shared track selection before reading any unchanged field partitions.
+    const changed = new Set(
+      [...tracks.keys()].filter((key) => !entry.get(id)?.has(key) || !final.get(id)?.has(key)),
+    );
+    if (!changed.size) continue;
     const contact = currentContactGet(state, id);
     if (!contact) continue;
     for (const group of contact.content.groups) {
       const key = receivedTrackKey(group.received.grant.exposure, group.received.grant.channel);
-      if (!tracks.has(key)) continue;
+      if (!changed.has(key)) continue;
       for (const partition of group.metadata)
         groups.push({
           subjectId: id,
@@ -3350,19 +3333,6 @@ function recordCurrentReception(
     }
   }
   captureTemporalCurrent(world, actorId, inputs, selectedTemporalPolicy(world).recent);
-}
-
-/** Exact selected native memberships for a lazily opened history boundary. */
-export function selectedTemporalCurrentGroups(
-  state: PerceptionEvidenceOwner,
-): TemporalCurrentGroupInput[] {
-  const tracks = selectedReceivedExposures(
-    state,
-    new Set((state.attention?.entries ?? []).map((entry) => entry.sourceId)),
-    candidateSourceIds(state),
-    receivedPhaseDeltas.get(state)?.resolvedSubjects,
-  );
-  return selectedCurrentGroups(state, tracks, tracks, tracks);
 }
 
 function currentObservedSupports(
@@ -4214,7 +4184,8 @@ export function reconcileVisualEvidence(
         changedSourceIds: [...attentionChanges],
         geometrySourceIds: [...geometryChanges],
       }).after;
-      noteReceivedAttention(state, selected);
+      const entries = currentDetailedAttention(world, observer.id);
+      noteReceivedAttention(state, entries, attentionTracks(state, entries));
       const byId = new Map(subjects.map((subject) => [subject.id, subject]));
       for (const id of selected)
         if (!beforeAttention.has(id)) {
@@ -4345,7 +4316,12 @@ export function reconcileAttendedTemporalEvidence(
   const { receiverFrameChanged: _receiverFrameChanged, checked: _checked, ...attentionCues } = cues;
   const result = updateAttention(world, observerId, {
     directSubjects,
-    changedSourceIds,
+    // A received phase already owns the dirty source buckets. Even a caller
+    // without an explicit list must not rediscover the complete current scene.
+    // Successful unchanged checks remain support work, not descriptive novelty.
+    changedSourceIds: phase
+      ? [...new Set([...(changedSourceIds ?? []), ...phase.measured, ...phase.ended])]
+      : changedSourceIds,
     ...attentionCues,
   });
   const state = world.perceptionEvidence![observerId]!,
@@ -4363,18 +4339,11 @@ export function reconcileAttendedTemporalEvidence(
   const entryTracks =
     phase?.entry ?? attentionTracks(state, priorEntries, siblingIds, result.subjects);
   const after = new Set(result.after);
-  const selected = new Set([
-    ...before,
-    ...(receivedPhaseDeltas.get(world.perceptionEvidence![observerId]!)?.selected.keys() ?? []),
-    ...after,
-  ]);
-  noteReceivedAttention(state, after, siblingIds, result.subjects);
-  const selectedExposures = selectedReceivedExposures(
-    world.perceptionEvidence![observerId]!,
-    selected,
-    siblingIds,
-    result.subjects,
-  );
+  const selected = new Set([...before, ...(phase?.selected.keys() ?? []), ...after]);
+  noteReceivedAttention(state, afterEntries, finalTracks, result.subjects);
+  const selectedExposures: SelectedReceivedTracks = new Map();
+  mergeReceivedTracks(selectedExposures, phase?.selected ?? entryTracks);
+  mergeReceivedTracks(selectedExposures, finalTracks);
   const entering = new Set([...after].filter((id) => !before.has(id))),
     exiting = new Set([...before].filter((id) => !after.has(id)));
   if (

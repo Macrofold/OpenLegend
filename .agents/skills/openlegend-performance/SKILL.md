@@ -14,7 +14,7 @@ Select eligible candidates and only the fields or proof the caller consumes befo
 
 Match the evidence to the change. A clear, low-risk removal of repeated pure work can use source reasoning and focused correctness checks. An uncertain or invasive optimization needs measured attribution before editing. Claims of faster complete behavior need representative complete-path measurements; fewer helper calls alone are not sufficient.
 
-Select performance checks under [Verification](../../rules/verification.md). Distinguish ordinary workload, required capacity, required measurements, and exploration. Stress only the relevant dimensions. Specify the question and stopping condition before expensive experiments. Repeat for a defined purpose, including variance and reproducibility; do not search for a favorable run. Preserve actual simulation progress, mechanical and privacy semantics, and honest failed results.
+Select performance checks and their AWS execution location under [Verification](../../rules/verification.md#choose-the-execution-location), including its exception for Mike's explicit local request. Distinguish ordinary workload, required capacity, required measurements, and exploration. Stress only the relevant dimensions. Specify the question and stopping condition before expensive experiments. Repeat for a defined purpose, including variance and reproducibility; do not search for a favorable run. Preserve actual simulation progress, mechanical and privacy semantics, and honest failed results.
 
 Load only the matching detailed contract below. An ordinary feature reads this core, not every performance chapter or historical report. Relevant high-risk behavior still requires its full contract.
 

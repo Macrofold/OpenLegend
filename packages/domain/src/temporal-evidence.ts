@@ -110,7 +110,6 @@ import {
   receivedObservationFrame,
   receivedBodyParts,
   contributionFactKey,
-  selectedTemporalCurrentGroups,
 } from './perception-evidence.js';
 import type {
   CurrentFacetRecord,
@@ -2180,6 +2179,7 @@ export function captureTemporalCurrent(
   inputs: readonly TemporalCurrentGroupInput[],
   policy: TemporalRetentionPolicy,
 ): void {
+  if (!inputs.length) return;
   const owner = world.perceptionEvidence?.[actorId];
   if (!owner || !actorHistory(world, actorId)) return;
   withTemporalReceivedTransition(world, actorId, () => {
@@ -2192,6 +2192,8 @@ export function captureTemporalCurrent(
       mark?: TemporalCurrentGroupCheckpoint;
     }> = [];
     for (const input of inputs) {
+      if (!input.checked && !input.entering && !input.exiting && !input.partition.availability)
+        continue;
       if (!input.partition.members.length) continue;
       const currentGroup =
         currentContactGet(owner, input.subjectId)?.content.groups.find(

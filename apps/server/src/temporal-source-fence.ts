@@ -1,4 +1,4 @@
-import { temporalPageRecordId } from './temporal-page-storage.js';
+import { temporalPageRecordId, decodeTemporalPagePayload } from './temporal-page-storage.js';
 import {
   canonicalJson,
   materializeTemporalValue,
@@ -406,7 +406,7 @@ export function temporalWatchChanges(
         table === 'mind_temporal_pages' &&
         watch.rows.get('temporal_logical')?.size &&
         (JSON.parse(row.id) as string[])[4] === actorId &&
-        !trackTemporalPhysicalPage(watch, JSON.parse(row.payload) as TemporalPage, maximumBytes)
+        !trackTemporalPhysicalPage(watch, decodeTemporalPagePayload(row.payload), maximumBytes)
       )
         return false;
       if (!inspect(table, row.id, row.payload)) return false;
@@ -471,7 +471,7 @@ export function installTemporalWitnesses(
     if (
       pending.table === 'mind_temporal_pages' &&
       pending.payload &&
-      !trackTemporalPhysicalPage(watch, JSON.parse(pending.payload) as TemporalPage, maximumBytes)
+      !trackTemporalPhysicalPage(watch, decodeTemporalPagePayload(pending.payload), maximumBytes)
     )
       return false;
   let bytes = 0;

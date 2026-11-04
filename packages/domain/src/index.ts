@@ -22,6 +22,7 @@ export * from './native-command-contracts.js';
 export * from './types.js';
 export { headingFrame } from './follow.js';
 export * from './perception-evidence.js';
+export { validateEvidenceSource } from './perception-values.js';
 export * from './received-values.js';
 export * from './perception-support.js';
 export * from './worlds/base/initial-opening.js';

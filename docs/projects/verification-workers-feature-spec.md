@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                              | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Design and agent instructions are complete; the managed pool and runner remain unimplemented. | 2026-10-31   |
+| Not started | Design and agent instructions are complete; the managed pool and runner remain unimplemented. | 2026-11-04   |
 
 ## Purpose and scope
 
@@ -12,17 +12,17 @@ The repository already has native, PostgreSQL-backed server and browser profiler
 
 ## Selected behavior
 
-- Short, inexpensive static/correctness checks normally stay local. Sustained server profiling, expensive storage/population experiments and resource-heavy checks use a dedicated worker when available. [Verification policy](../../.agents/rules/verification.md#choose-the-execution-location) owns the selection, including user overrides and the continued ban on GitHub Actions.
+- [Verification policy](../../.agents/rules/verification.md#choose-the-execution-location) owns execution location: short static/correctness checks normally stay local; every speed test uses AWS unless Mike explicitly requests local execution. Expensive non-timing experiments and resource-heavy checks use a dedicated worker when available. The same policy owns unavailable-environment handling and the continued ban on GitHub Actions.
 - Begin with one reusable worker; allow a second only for actual concurrent demand within the configured cap and budget. Ten agents can share this small pool over time. Each run claims the whole worker exclusively, even for functional checks. Sharing CPU, database or disk would complicate cleanup and invalidate performance comparisons; no simultaneous shared-job mode is part of this design.
 - A claim identifies a task, worktree, immutable source, experiment and deadline. It covers preparation through cleanup, including a planned sequential comparison, but not unrelated coding time. Losing the owner stops the run safely. Neither a stale tag nor an expired timestamp grants ownership.
 - Stopping retains tools and caches on encrypted EBS; it preserves no live game and needs no hibernation. Fresh installation means installing OS/toolchain/database prerequisites; reuse skips it. Pnpm reuses unchanged package content across lockfile changes while each workspace gets a validated fresh installation.
 - Transfer a compressed, checksummed source snapshot. No push is required just to test. A cached Git fetch of an exact commit is an optional later transport only if timing demonstrates a benefit; moving-branch pulls and long-lived repository credentials are excluded.
 - One report explains setup, actual gameplay, logs and cleanup, preserving failures. Release returns after verified cleanup; it does not hold the agent for the idle-stop delay. Required results cannot expire before verified collection. Workload questions select duration; cold/warm overhead is measured, not promised.
-- Server speed, browser frame pacing and input-to-visible-response are separate outcomes. A full-game smoothness claim requires representative rendered play, not only server throughput or average FPS. Use an AWS backend with a representative local browser when useful; do not claim hardware graphics performance from a CPU worker's software renderer.
+- Server speed, browser frame pacing and input-to-visible-response are separate outcomes. A full-game smoothness claim requires representative rendered play, not only server throughput or average FPS. Select the browser's location under Verification as well as the backend's; do not claim hardware graphics performance from a CPU worker's software renderer. Unavailable representative AWS graphics leaves that evidence open unless Mike explicitly requests a local-device measurement.
 
 ## Agent journeys and failure behavior
 
-**Ordinary feature check:** an agent chooses focused checks through Verification, runs cheap ones locally and reports their scope. It does not load cloud implementation details or start a worker merely because tests exist.
+**Ordinary feature check:** an agent chooses focused checks through Verification, runs cheap non-timing ones locally and reports their scope. It does not load cloud implementation details or start a worker merely because tests exist.
 
 **Before/after performance comparison:** an agent pins both sources and matching workload/settings, reserves a cloud share of the task budget and claims one worker. Each ordered case gets fresh source/database preparation and measured activity; old-case commands cannot affect the next case. Save both results and release after cleanup. Cold/warm state and hardware remain recorded comparison conditions, not assumed equivalent after stop/start.
 
@@ -30,7 +30,7 @@ The repository already has native, PostgreSQL-backed server and browser profiler
 
 **Lost owner or uncertain execution:** missed heartbeats stop further dispatch. The supervisor terminates owned work; recovery confirms old processes and commands cannot resume before reuse. A failed database cleanup or uncertain late command quarantines the machine. A cancelled command is never silently replayed. Another worker may serve independent work within the same cap; replacing a quarantined machine does not create an extra unaccounted slot.
 
-**Interactive graphics check:** the agent uses a representative visible browser and a private tunnel to the worker's loopback server, exercises actual controls and records network/client/server conditions. Shared profiler start signaling coordinates remote capture; a copied local filename does not. Headless diagnostics remain separately labeled. Release the tunnel/worker after collection; GPU fleets and browser-device farms are outside delivery.
+**Interactive graphics check:** the agent selects a representative visible browser under Verification, exercises actual controls and records network/client/server conditions. A browser running with its server on the worker uses worker-local ready metadata and start signaling. A separately located browser uses a private tunnel to the worker's loopback server and shared remote start signaling; a copied local filename does not coordinate capture. Headless diagnostics remain separately labeled. Release the tunnel/worker after collection; GPU fleets and browser-device farms are outside delivery.
 
 ## Acceptance and stages
 
