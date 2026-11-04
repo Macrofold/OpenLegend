@@ -1,6 +1,6 @@
 # Art, audio and game feel
 
-**Status: In progress — focused Sea of Stars pass incorporated October 18, 2026. Topic: PRESENT.** Wider source comparison remains open.
+**Status: In progress — focused Sea of Stars pass incorporated October 18, 2026. Topic: PRESENT.** Wider presentation comparison remains open; a separate cross-game player-music study is linked below.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md#sea-of-stars-focused-incorporation--october-18-2026) · [Sea of Stars dossier](../dossiers/sea-of-stars.md)
 
@@ -12,6 +12,8 @@ What makes ordinary moments expressive, legible and satisfying?
 - How do cues communicate action, material, danger, emotion and inhabited place without excessive noise?
 - Which expressive choices earn production cost, and when do spectacle or fidelity undermine clarity and tone?
 - When an action asks the player for physical timing or precision, does the interaction clarify the action and deepen mastery, or merely add repeated attention cost?
+
+The [player appreciation of game music study](../../../../docs/research/player-music-appreciation/README.md) adds cross-game player reception evidence about emotion, place, effort, humor, repeated listening and fatigue. It is a separate research synthesis and selects no Open Legend music direction; the focused Sea of Stars incorporation below retains its stated scope.
 
 ## Ownership boundary
 
@@ -84,7 +86,7 @@ Player interaction is separately owned by the UI handbook and action contracts. 
 
 ## Open questions and missing evidence
 
-This is a one-source incorporation. Wider PRESENT research should compare games with very different budgets, cameras and action models before generalizing production cost or feedback intensity. Motion stability, ordinary-play readability and OpenLegend player enjoyment still require direct evidence.
+The Sea of Stars pass above is a one-source incorporation. The separate player-music study adds reception comparisons without resolving the wider presentation questions. Wider PRESENT research should compare games with very different budgets, cameras and action models before generalizing production cost or feedback intensity. Motion stability, ordinary-play readability and OpenLegend player enjoyment still require direct evidence.
 
 For action execution specifically, the ND38 design separates the selected world's mechanics, character competence, human input skill, accessibility and client authority. Competitive input authenticity remains a deferred decision, and optional execution must still demonstrate a worthwhile choice after mastery. Sea of Stars supplies a comparison, not evidence that OpenLegend's selected timing or finishing interactions are enjoyable.
 
