@@ -23,7 +23,10 @@ export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
             (table) => `SELECT '${table}' AS name,
       count(*) AS rows, ${['received_value_uses', 'mind_temporal_span_ranges'].includes(table) ? 'NULL' : 'COALESCE(sum(octet_length(payload)),0)'} AS payload_bytes,
       ${table === 'mind_perception_current' ? 'COALESCE(sum(octet_length(metadata)),0)' : '0::bigint'} AS metadata_bytes,
-      pg_relation_size('${table}') AS table_bytes, pg_indexes_size('${table}') AS index_bytes
+      pg_relation_size('${table}') AS table_bytes, pg_indexes_size('${table}') AS index_bytes,
+      pg_total_relation_size('${table}') AS total_bytes,
+      (SELECT CASE WHEN reltoastrelid=0 THEN 0 ELSE pg_total_relation_size(reltoastrelid) END
+        FROM pg_class WHERE oid='${table}'::regclass) AS toast_bytes
       FROM ${table} WHERE world_id=?`,
           )
           .join(' UNION ALL '),
