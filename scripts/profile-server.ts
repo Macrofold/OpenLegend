@@ -956,11 +956,12 @@ try {
         });
       }
     });
-  let longSoak: ReturnType<typeof prepareLongSoak> | undefined;
+  let preparedLongSoak: ReturnType<typeof prepareLongSoak> | undefined;
   if (longSoakFixture)
     seeded = updateWorld(seeded, (draft) => {
-      longSoak = prepareLongSoak(draft, routineResources, seconds, config.baseRatio);
+      preparedLongSoak = prepareLongSoak(draft, routineResources, seconds, config.baseRatio);
     });
+  const longSoak = preparedLongSoak;
   if (longSoak && travelFixture)
     longSoak.resourceSchedule =
       'Finite assigned separated patches, with actual supported approach travel and ordinary return between cycles. No retargeting or replenishment.';
