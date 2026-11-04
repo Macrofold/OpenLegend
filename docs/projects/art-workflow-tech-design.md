@@ -2,13 +2,13 @@
 
 | Status      | Current progress                                                                                                                                                                                                                     | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Stages 1–3 are delivered: the pages, the art tool (`report`, `sheet models`, `normalize`, `clips`) and the local model preview. The proof run's character-sheet part is done; the wrapped-family test and a state-sheet prop remain. | 2026-11-01   |
+| In progress | Existing art helpers and local preview are delivered. Section 11 specifies NVIDIA authoring additions; those additions and provider/target qualification are future work. Earlier proof-run acceptance remains with its existing tracker. | 2026-11-04 |
 
 This design describes how the [art workflow](art-workflow-feature-spec.md) is built: which page owns what, the seam to the art direction, the naming and storage conventions, the helper tool, the local model preview, the consumer contract the 3D route relies on, and the delivery tasks. The workflow is an agent-operated procedure; almost all of it runs on tools that already exist (the Higgsfield CLI, the OpenAI Images API, Blender 5.2.2 and the `pnpm assets` CLI). The new code is deliberately small.
 
 ## Maintained records
 
-- **Implementation:** [AF04–AF09](../maintainers/art-direction.md#art-flow-follow-through).
+- **Implementation:** [Art-flow follow-through](../maintainers/art-direction.md#art-flow-follow-through), including AF14–AF17 for the NVIDIA design and qualification. The tracker owns current progress.
 - **Limits and constraints:** no new discretionary limits ([feature specification](art-workflow-feature-spec.md#maintained-records)). The helpers read the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) values from one table, and the preview applies [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload).
 - **Related:** [feature specification](art-workflow-feature-spec.md); [asset workflow](../asset-workflow.md); [PlayCanvas guidance](../../.agents/skills/openlegend-playcanvas/SKILL.md); [world presentation](../world-presentation.md); [V3D tracker](../maintainers/3d-pixel-art.md).
 
@@ -22,6 +22,7 @@ This design describes how the [art workflow](art-workflow-feature-spec.md) is bu
 | [Tools and defaults](../production-workflows/art-flows/tools.md)                                | Default roster, presets and overrides, per-tool commands, cost estimates, job recovery, check dates                                              | Every request with a tool step                                   |
 | [Profiles](../production-workflows/art-flows/profiles.md)                                       | Coverage per subject kind and the play checks                                                                                                    | The matching profile only                                        |
 | [3D models](../production-workflows/art-flows/3d-models.md)                                     | Concept or sheet → prop, character or creature GLB, step by step, on either path; consumer contract and budgets                                  | 3D props, characters, creatures                                  |
+| [Animation](../production-workflows/art-flows/animation.md) | Conditional motion work, reuse, source selection, target-preserving preparation, clip review and qualification | Only a request/consumer requiring animation |
 | [Production packages](../production-workflows/art-flows/production.md)                          | Package contract; the finalize path; 2D, sprite, 2D rig, animation, material, environment, VFX and audio recipes                                 | Production of non-3D assets, package rules and the finalize path |
 | [Study record](../production-workflows/art-flows/study-record.md)                               | The record outline and final message                                                                                                             | Writing or resuming a study                                      |
 | [Current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance) | The look's entry point and its production notes                                                                                                  | Every brief                                                      |
@@ -172,6 +173,10 @@ The [3D page's consumer contract](../production-workflows/art-flows/3d-models.md
 | 4     | **AF07** proof run                                                    | One first-playable person and one state-sheet prop go end to end with recorded cost, time, corrections and decisions |
 | 4     | **AF08** update defaults from the proof run                           | The roster's defaults and the rig and motion recommendations reflect the measured results                            |
 | —     | **AF09** retire the synced artgen skills                              | Mike deletes or replaces them ([OD4](art-workflow-feature-spec.md#od4--retire-the-synced-artgen-skills))             |
+| 5 | **AF14** NVIDIA design | Section 11, feature §3.7, operational routes and research agree; no unmeasured route is called qualified |
+| 6 | **AF15** offline motion bridge | Source import, target maps, clip assembly and arbitrary-clip study preview pass the disposable checks in §11 |
+| 7 | **AF16** Kimodo qualification | Actual pinned provider/model/target combinations pass a small study with total effort/cost and art review recorded |
+| Optional | **AF17** MotionBricks transition | One justified safe-pose transition is baked and accepted, or the comparison records why ordinary keying wins |
 
 Stages 2 and 3 are independent and can run in parallel; stage 4 benefits from both but can start without them using the manual steps the 3D page gives.
 
@@ -194,3 +199,184 @@ The product questions are [OD1–OD8](art-workflow-feature-spec.md#10-open-decis
 - **Importers:** factory startup enables glTF and FBX, and OBJ is built in. Rigify is bundled but disabled; `bpy.ops.preferences.addon_enable(module="rigify")` enables it headlessly, after which its metarig operators (for example the basic quadruped) work.
 
 The facing convention is settled too: models normalized to face glTF +Z face the camera beside the published cast, including the mercenary, in the study viewer (October 31 proof run), and the 3D page's consumer contract states it.
+
+## 11. NVIDIA motion authoring
+
+**Status:** accepted design direction for implementation, not delivered code or qualified model output. The [feature decision](art-workflow-feature-spec.md#37-nvidia-motion-authoring) owns activation, defaults and scope. The [animation procedure](../production-workflows/art-flows/animation.md) is the operator's route; [tools](../production-workflows/art-flows/tools.md#human-motion-generation) owns the live provider pin/settings; the [research](../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md) retains evidence and alternatives. All commands/options explicitly marked **planned** below must be implemented by AF15/AF17 before a guide treats them as executable.
+
+### 11.1 Components and boundaries
+
+Use the current character and clip pipeline. Add one small single-provider request helper, source import inside the existing Blender helper, explicit bone maps, and study-only clip inspection. There is no runtime model, provider registry, database, worker service, asset migration or new gameplay state machine.
+
+| Owner/file | Existing behavior | Narrow addition |
+| --- | --- | --- |
+| Agent + art workflow | Resolve request, study, budget, tools, approvals and external storage | Determine animation need first; reuse compatible clips; select the qualified route for each missing human action |
+| Planned `scripts/art/kimodo-request.py` | None | One Replicate submission or recovery, local receipt, bounded polling/cancellation and artifact download; no rigging, retargeting or publication |
+| `scripts/art/art-tool.py` | Import/report/normalize, retarget and assemble clips, extract strides, export GLB | Import the supported SOMA BVH profiles, validate the actual motion root and mapped roles, save editable retarget output, inspect planned clip metadata |
+| `scripts/art/bone-maps/` | MPFB-to-Meshy map | Explicit SOMA maps for each tested target rest rig; readable anatomical roles, no guessed per-clip mapping |
+| `apps/client/src/art-study.ts` and `apps/client/src/model-animation.ts` | Local model preview, fixed motion choices, current Idle/Run gate | A study-only path to select any imported action and preview loop versus one-shot; keep game dispatch separate |
+| Existing asset workspace / `pnpm assets` | Exact external revisions, source retention and publication | Preserve new source, corrected `.blend`, manifests and exports through the same commands |
+| Planned optional `scripts/art/motionbricks-bake.py` | None | Convert a pinned MotionBricks pose-array result to a faithful Blender source action, then use the same retarget/export path |
+
+The world chooses action meanings, visible expression, rig families, tool grips and timing. The generic helper reads only explicit files and parameters. It cannot query private actor state, create actions, apply damage, move a body, transfer an object or publish assets. Another world can use the same helpers with a different look and compatible human family. Different anatomy keeps the existing specialist route rather than being forced onto SOMA.
+
+### 11.2 Input, output and record contract
+
+Before a job, complete the usual study brief with the target's exact asset revision, actual rest rig, requested action, clip name, consumer/study-only destination, loop or one-shot meaning, root policy, duration, contact/grip targets and rights. Fetch the target and reusable source files into the external study workspace. Do not reconstruct a target from a screenshot or replace it with the model's stick figure.
+
+Use one `motion.json` per candidate beside its payloads in the existing external study folder. It is a production record, not a runtime asset schema or new database. Git's study README links the preserved record and states decisions/readiness; it does not copy large provider responses or pose arrays.
+
+| Record group | Required content |
+| --- | --- |
+| Intent | Study/candidate ID; target asset revision/hash; requested output names; anatomy/rig family; destination; loop/one-shot; `rootPolicy`; action timing/contact notes; fidelity locks |
+| Source | Provider and immutable deployment or upstream code/checkpoint revision; actual model; seed; exact prompt/constraints, duration and generation settings; source rights and acquired license notices |
+| Submission | Prepared request hash; submitted timestamp; prediction ID and status; returned get/cancel URLs; deadline; estimated/reserved/actual/uncertain spend under the shared task ceiling |
+| Imported facts | Raw-file hash/type; FPS and timestamp span; source units/axes; rest convention; skeleton names/parents; moving pelvis; importer version/arguments and any whole-source rotation |
+| Retarget/edit | Target rig signature; map file and Git revision; source/target root/foot roles; crop and root policy; contact corrections, pose edits and loop seam treatment; Blender version; editable source exact ref |
+| Export/review | Exact GLB and sidecar refs/hashes; retained/new clip names; required consumer coverage; report, view/capture refs; actual checked rig/outfit/consumer; reviewer result and remaining limits |
+| Resume | Current stage, known active job or uncertain submission, completed local downloads, preserved refs and next action; never a credential |
+
+`rootPolicy` is one of `gait`, `stationary`, `authored-travel`. This is authoring metadata only. `gait` means an in-place cycle paced by native movement. `stationary` means intentional local body motion without net locomotion; it may include a reach, dip or sit transition. `authored-travel` retains a path for source/reference or a specifically supported consumer; it never bypasses native movement. A successful library export can still be `study-only`.
+
+Preserve raw generation, useful rejected candidates, editable corrections and final exports. Keep API output URLs only as job evidence; they expire and are not storage refs. No token, unrelated reference, world save or private conversation is sent to a provider. Model/rig changes invalidate only dependent source/map qualification; do not version the entire art system or re-export unaffected old assets.
+
+### 11.3 Acquire one Kimodo candidate
+
+#### Hosted route
+
+Use the pinned `sprited/kimodo` version and `Kimodo-SOMA-RP-v1.1` in the [tools owner](../production-workflows/art-flows/tools.md#human-motion-generation). The inspected immutable deployment is `17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545`. Its [published schema](https://replicate.com/sprited/kimodo/versions/17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545/api) is the implementation contract; fail explicitly if the provider no longer offers it. Changing a pin requires a new source qualification, not a silent fallback to `latest`.
+
+The first route requests **BVH** so the importer can use a defined hierarchy/rest convention. GLB is an optional optimization only after an actual exported file proves that Blender imports it as one armature with a valid rest pose; animated empties or a rods-and-spheres preview are not sufficient. Do not rely on `output_format=all` until the host's behavior without a supplied FBX has been checked. Do not upload our character merely to use the provider's Mixamo-specific FBX retargeter.
+
+Prepare this shape as `request.json`; these values illustrate one candidate rather than requiring a new walk when an adequate walk already exists:
+
+```json
+{
+  "version": "17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545",
+  "input": {
+    "prompt": "A person walks forward at an even pace",
+    "model": "Kimodo-SOMA-RP-v1.1",
+    "duration": 4,
+    "seed": 42,
+    "num_samples": 1,
+    "diffusion_steps": 100,
+    "postprocess": true,
+    "root_margin": 0.04,
+    "output_format": "bvh",
+    "output_delivery": "individual",
+    "include_auxiliary": true,
+    "filename_prefix": "openlegend_walk_c01",
+    "sample_index": 0,
+    "preview": true,
+    "image_size": 512
+  }
+}
+```
+
+One prompt contains one action segment, normally 2–5 seconds and never over the upstream **10-second** limit. The host splits prompts on periods and treats duration as **per segment**. For this first helper, reject periods and multi-segment `segment_durations`; the operator writes a single clause. This prevents a paragraph from accidentally becoming a longer/bigger job. Advanced constraints and deliberately connected sequences remain explicit upstream-tool work, not an implicit expansion of the default request. Seed assists reproduction only within the recorded environment.
+
+The planned helper has three commands:
+
+- `submit --request FILE --out DIR --cancel-after SECONDS --cost-reserve USD`: validate the allowed model/profile, single segment, sample count, duration and external output path; write prepared request/receipt before the POST. Require an authorized `REPLICATE_API_TOKEN` in the process environment, never in arguments or output. One invocation creates at most one prediction.
+- `resume --out DIR`: read the recorded prediction ID/URLs, fetch status, finish downloads and update the same receipt. It never POSTs a new prediction. An already downloaded complete result returns without spending.
+- `cancel --out DIR`: cancel the known nonterminal prediction through its returned URL, then record the observed terminal state. Cancellation can incur already-used compute; do not mark it free.
+
+Use Python's standard JSON/HTTP/filesystem utilities; no server or provider SDK is necessary. The agent/operator reserves the amount in the shared study budget **before** invoking `submit`; the helper validates it is supplied but is not a global financial ledger. Estimate using the current published billable rate and the configured execution deadline plus the provider's cancellation/billing terms, then account for previous/reserved/uncertain calls. Start with a 120-second deadline only when that bound fits the remaining authorized budget; it is a convenience default, not a promised price or provider SLA. A typical-cost label is not a spend cap. If the provider's maximum charge cannot be bounded adequately, do not dispatch automatically; report the missing price/access fact.
+
+POST to `https://api.replicate.com/v1/predictions` with Bearer authorization, JSON body and the provider's `Cancel-After` header. `Prefer: wait` is optional HTTP waiting, not a billing deadline. Immediately persist the returned ID and `urls.get`/`urls.cancel` with an atomic local-file replacement. Poll the known GET URL about every two seconds while `starting`/`processing`, respecting rate-limit responses; `succeeded`, `failed` and `canceled` are terminal. The [HTTP reference](https://replicate.com/docs/reference/http) owns these values. If locally interrupted, leave the receipt for `resume`; a polling failure must not trigger a fresh generation.
+
+The returned `output` is an **array of file URIs**, not a named GLB field. Download to temporary filenames, identify the expected BVH by header/content and metadata, verify completion, hash it, then rename. Require exactly the expected candidate/action and metadata; do not take `output[0]` on trust. Retain returned metadata and the useful MP4; archive any auxiliary viewer as source material without automatically executing its HTML/scripts. Missing/ambiguous artifacts fail the acquisition stage. [API output files expire after one hour](https://replicate.com/docs/topics/predictions/output-files), so download immediately and preserve through the existing asset workflow after each completed batch.
+
+If the create response is lost before an ID is saved, mark `submission-unknown` with the request hash and time. Inspect account history through authorized provider access; resume a positively identified prediction or report ambiguity. The helper must not retry POST automatically. A download/status GET may be retried within the same job/deadline; a failed model generation, timeout or expired artifact never authorizes a new paid generation. One ordinary run is enough to decide whether the artifact advances; targeted offline correction continues without an extra permission round.
+
+#### Official local route
+
+An already provisioned workstation can use official v1.2 instead. Keep code/checkpoint revision, model license, text-encoder authorization and settings in the record. The [upstream CLI](https://research.nvidia.com/labs/sil/projects/kimodo/docs/user_guide/cli.html) supports this **upstream command**, independent of our planned helper:
+
+```sh
+kimodo_gen "A person walks forward" \
+  --model Kimodo-SOMA-RP-v1.2 --duration 4 --num_samples 1 \
+  --diffusion_steps 100 --seed 42 --output "$MOTION_WORK/source/walk" \
+  --bvh --bvh_standard_tpose --save_example_dir
+```
+
+`MOTION_WORK` is the established external study workspace, not a new system directory. Archive native NPZ and replay/constraints metadata alongside BVH. The native route uses a **standard T rest pose**, unlike the hosted route's expected BONES rest convention, so it needs the matching source profile/map qualification. No built-in native GLB/FBX export or dependable native Mac setup is assumed. Existing CPU text-encoder offload reduces GPU requirements but is not free local setup. Do not distribute model/text-encoder weights in game assets.
+
+### 11.4 Import the source correctly
+
+Extend `import_model`/`native_fps` in `art-tool.py` to accept an explicit **source-only** profile for animation inputs. The target model remains an ordinary supported rigged GLB/FBX. A new `.bvh` must not fall through to OBJ or be accepted solely from its filename. First inspect its hierarchy, frame count/time and channels; refuse missing or nonfinite transforms, an unsupported hierarchy, an empty action or more than the requested single source. Preserve the raw file unchanged.
+
+Planned `clips` additions:
+
+| Option | Contract |
+| --- | --- |
+| `--source-profile kimodo-soma-bvh-bones` | Use the qualified hosted SOMA BVH hierarchy/rest convention; centimetres, +Y up/+Z forward, 30 Hz; verify actual header/metadata |
+| `--source-profile kimodo-soma-bvh-tpose` | Same units/axes/timing but the explicitly exported standard T rest convention; separately qualified map |
+| `--blend PATH` | Save the retargeted target rig, original target mesh/materials/weights and selected editable actions to an external `.blend` before disposable source objects are removed from the authoring handoff |
+| `--root-policy NAME=stationary\|gait\|authored-travel` | Record the intentional policy per output action and validate compatible finishing choices; never infer game movement |
+
+The source profile applies to **all sources in that invocation**, like the existing single `--bones` map. Do not mix raw SOMA and existing target clips in one command. Keep the existing GLB/FBX path unchanged when no source profile is supplied. Frame-rate handling must happen before selecting keyframes; no 30-to-24 reinterpretation.
+
+Blender **5.2.2** ships `io_anim_bvh` in `scripts/addons_core`; enable it explicitly in factory startup. Use `bpy.ops.import_anim.bvh` with `target='ARMATURE'`, `global_scale=0.01`, `axis_forward='Z'`, `axis_up='Y'`, `frame_start=1`, `use_fps_scale=False`, `update_scene_fps=True`, `update_scene_duration=False`, `use_cyclic=False`, `rotate_mode='NATIVE'`. Enable the bundled module after each factory reset before BVH import, since `clear_scene()` resets Blender settings. Require an importer `FINISHED` result and set the export range from the actual action, not the default scene end or an extra rest placeholder. The importer keys N real samples at frames 1 through N; do not drop sample 1. Require positive finite frame time agreeing with 1/30 second within 0.000001 second, and match header sample count to action keys. Pin and verify the installed operator at setup; an unavailable importer is a setup error, not permission to install an arbitrary plugin or guess scale. Source: [Blender v5.2.2 importer](https://github.com/blender/blender/blob/v5.2.2/scripts/addons_core/io_anim_bvh/__init__.py).
+
+The importer converts to Blender's +Z-up/+Y-forward convention. Rotate the **whole source armature** 180° around Blender Z, including its rest frame and motion, to match OpenLegend's Blender −Y forward / exported glTF +Z forward. The resulting coordinate mapping must be source `(x,y,z)` metres → Blender `(x,-z,y)` metres. Check three unit vectors: source forward → Blender −Y, source up → Blender +Z, source right → Blender +X. Do not rotate only the first animation frame or only the target mesh. Do not apply another 0.01 to the target or to already-metric GLB.
+
+Expected upstream BVH has 77 SOMA joints and a static `Root` wrapper. **`Hips` is the moving pelvis.** Its native rest positions come from BVH `OFFSET`s, not frame zero. Rotation channels are ordered Z/Y/X; the Blender importer must honor channel order. Inspect actual hosted output before approving this profile: published upstream export facts are not proof of a community wrapper's bytes. A mismatch stops intake with the actual hierarchy/units needed for a new profile; it does not trigger guessing.
+
+Keep 30 Hz through the raw retarget bake. Record both frame count and timestamp span: N samples at 30 Hz span `(N-1)/30` seconds between first and last samples; do not stretch the result by one frame merely to make a metadata duration label exact. Preserve fractional seconds in export. A source at an unexpected FPS fails the declared profile; a deliberate upstream re-export is preferable to silent reinterpretation.
+
+Full source joints are intermediate data, not the runtime joint budget. Retarget onto the existing family and export its deform joints. Do not ship the 77-joint SOMA source just because it animates. Native NPZ is retained for provenance and optional upstream editing, **not loaded into the game or parsed for gameplay**. Its foot-contact channel layout differs between predicted and expanded skeletons, so no code may assume every NPZ has four channels.
+
+### 11.5 Target maps and two-pass assembly
+
+Create named maps only after inspecting exact source and target skeletons in Blender. Keep the current map direction: **target bone → source bone**. Preserve `bones` and `alignRest`; add a small `roles` object naming the target `hips`, `leftFoot`, `rightFoot`, `leftToe` and `rightToe`. For SOMA profiles, use only explicit mapped names; an unlisted target bone inherits its parent/rest pose. Do not accidentally bind a same-named `Root` to the static source wrapper. Require the mapped `hips` role to follow `Hips`, with positive finite source/target standing hip heights.
+
+The helper's current `ground_speed` and `one_cycle` use Meshy names through `followers`. Use explicit target foot/toe roles when supplied so SOMA/MPFB names do not silently produce zero speed or a missing-key error. Existing no-profile Meshy behavior can retain its current known mapping; this is a narrow extension, not a general skeletal ontology. Record unmapped fingers/twists/cloth separately. Missing hips, either leg/foot chain, trunk/head or a requested arm chain is an error; optional finger/cape motion is a declared limitation, never invented by the mapper.
+
+Verified source body chain and target-name starting points:
+
+| Anatomy | SOMA source | MPFB target names already in the repo | Other target family |
+| --- | --- | --- | --- |
+| Pelvis | `Hips` | `root` | Inspect the actual deform pelvis, not any scene root |
+| Lower/middle/upper spine | `Spine1`, `Spine2`, `Chest` | `spine03`, `spine02`, `spine01`; **verify parent/anatomical order before assigning** | Inspect ordered spine joints; do not reuse source-name spelling by assumption |
+| Neck/head | `Neck1`, `Neck2`, `Head` | `neck01`, `head`; select the anatomically corresponding neck joint and check head orientation | Inspect the existing rest chain |
+| Shoulder/upper arm/forearm/hand | `LeftShoulder`, `LeftArm`, `LeftForeArm`, `LeftHand` and right equivalents | `clavicle.L`, `upperarm01.L`, `lowerarm01.L`, `wrist.L` and `.R` equivalents | Use actual target names |
+| Thigh/calf/foot/toe | `LeftLeg`, `LeftShin`, `LeftFoot`, `LeftToeBase` and right equivalents | `upperleg01.L`, `lowerleg01.L`, `foot.L`, `toe1-1.L` through `toe5-1.L`, plus `.R` | Use actual target names; SOMA `LeftLeg` is thigh, not the Meshy calf |
+
+Sources: [pinned SOMA definitions](https://github.com/nv-tlabs/kimodo/blob/e1c219c99b4b94ba48be1fb6a1cbc64ecee4c954/kimodo/skeleton/definitions.py), [existing MPFB map](../../scripts/art/bone-maps/mpfb-meshy.json). Do not present this anatomy table as a fully qualified map. AF15 must save real JSON maps with tested target hierarchy/rest signatures; a junior follows this sequence:
+
+1. Inspect target rest bones, parent chains and world directions. Save names, parents and rest transforms with the target asset hash; identify hips and feet. Compare the same anatomical chain in the source. Record the actual mapping file with the candidate before baking.
+2. Inspect a still rest pose and simple original diagnostic poses: raise one arm, bend one knee, rotate the torso. Confirm left/right and forward orientation on both source and target. These are free local checks and require no generation.
+3. Use the existing rest-relative world-space rotation retarget. Scale pelvis displacement once by target/source standing hip height after the source-unit conversion. Use the explicitly identified pelvis for every action; store roots **per action** rather than reusing the last loop variable when applying `--stride`/`--in-place` to several outputs.
+4. Review limb rest alignment. Start `alignRest` with only the anatomical arms/legs that require it; verify hands with their parent limbs. Do not blanket-align spine, head or feet, where rest differences often express anatomy and can bury toes or twist the torso. Record any deliberate neck/spine reduction in the map note.
+5. Bake the raw source onto a copy of the target at 30 Hz. Keep target mesh, skin weights, rest bones, materials, height, face, equipment sockets and garment construction intact. If a new rig or changed weights are actually necessary, stop the animation-only route and identify that separate repair.
+6. Save an editable target `.blend` and a **full target GLB with its skinned mesh** containing the new action(s). An armature-only intermediate may reimport as empties, so reserve `--motion-only` for a validated final consumer export. Reimport this full intermediate into a clean scene and confirm the same target skeleton and non-root joint motion.
+7. Finish contacts/root/loop policy in the target source, export the corrected full target intermediate, then assemble it with retained target clips using the current `clips` command **without the raw-source profile or map**. Every wanted existing clip is explicitly listed: `clips` clears the model's old actions. No unspecified action is assumed to survive.
+
+Planned first pass (after AF15; paths stand for fetched exact assets in the external workspace):
+
+```sh
+"$BLENDER_BIN" --background --factory-startup --disable-autoexec --offline-mode \
+  --python-exit-code 1 --python scripts/art/art-tool.py -- clips \
+  --model "$MOTION_WORK/target.glb" --clip "Wave=$MOTION_WORK/source/wave.bvh" \
+  --source-profile kimodo-soma-bvh-bones --bones "$MOTION_WORK/target-soma-map.json" \
+  --root-policy Wave=stationary --blend "$MOTION_WORK/target-wave.blend" \
+  --out "$MOTION_WORK/target-wave.glb"
+```
+
+The next assembly uses the existing interface; list the target's entire required/retained set, not just the three shown here:
+
+```sh
+"$BLENDER_BIN" --background --factory-startup --disable-autoexec --offline-mode \
+  --python-exit-code 1 --python scripts/art/art-tool.py -- clips \
+  --model "$MOTION_WORK/target.glb" \
+  --clip "Idle=$MOTION_WORK/retained-target.glb#Idle" \
+  --clip "Walk=$MOTION_WORK/retained-target.glb#Walk" \
+  --clip "Run=$MOTION_WORK/retained-target.glb#Run" \
+  --clip "Wave=$MOTION_WORK/target-wave.glb#Wave" \
+  --out "$MOTION_WORK/target-final.glb"
+```
+
+Use this only when `retained-target.glb` really is the same target rig/rest family. If an older clip is still on Meshy's source rig, adapt that batch with its own existing map first; never apply the SOMA map to it. Preserve every catalog-required strike/stride (`Attack`, `Punch`, optional `Sprint`) as applicable. Do not re-trim already phase-aligned retained loops merely to add Wave; copy their verified timing/ground-speed entries and check they remain unchanged. If the final export changes sampling or timing, remeasure and review rather than silently copying stale metadata.
+
+`report --strict` still gates a **complete runtime character** against the actual consumer and budgets. A raw source or one-shot intermediate intentionally lacks Idle/Run: inspect its source/action facts without mislabeling the missing runtime set as an error or fabricating clips to pass. The final assembled character must pass the runtime requirements. Source joint counts do not replace target A3D budgets.

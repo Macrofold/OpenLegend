@@ -165,7 +165,7 @@ The objective is a small repertoire of readable action meanings that supports th
 | Next | A distinctive voluntary greeting, hesitation or small response | People have character without requiring unique movement sets for every NPC | Express authored/selected visible conduct; do not expose hidden beliefs or undisclosed identities |
 | Later, as needed | Sit/stand, reach or recovery transitions | Connect useful actions without abrupt posing | MotionBricks or hand-keying uses safe input poses and authored geometry; no new traversal system |
 
-Source/reference selection still follows the current world art direction. Neither a particular human style nor Threewater March's work vocabulary belongs inside the importer or a model-selection heuristic. The [repertoire review in the research record](../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md#5-fit-to-openlegend-and-rejected-complexity) and production handbook retain the broader coverage and meaning.
+Source/reference selection still follows the current world art direction. Neither a particular human style nor Threewater March's work vocabulary belongs inside the importer or a model-selection heuristic. The [repertoire review in the research record](../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md#7-repertoire-audit-and-bounded-motion-coverage) and production handbook retain the broader coverage and meaning.
 
 #### Controls and acceptance
 
