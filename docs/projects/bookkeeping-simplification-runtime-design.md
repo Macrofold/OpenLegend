@@ -1,10 +1,10 @@
 # Saving and retention without repeated database investigation
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK17/BK19 connected scope complete; BK18 final storage integration and operating qualification open. | 2026-11-04   |
+| Status      | Current progress                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK17–BK19 implementation and connected integration complete; operating qualification failed. | 2026-11-04   |
 
-Technical companion to the [feature specification](bookkeeping-simplification-feature-spec.md) and [installed architecture](bookkeeping-simplification-tech-design.md). **Design baseline inspected November 1, 2026, 23:21 UTC:** Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `a2967555f6ae977d8bfe0ad880710815b9116681`. This is the current implementation contract; connected semantic/storage checks pass; the clean [November 3 standard run](../verification/performance/2026-10/bookkeeping-simplification.md#final-standard-run--no-runtime-failure-operating-gate-fails) reaches only 0.632342 normal. BK11/BK15 source conversion passes; BK12/BK16 retain sustainable cleanup and operating acceptance. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns implementation; BK07/SR11/RU11 retain their operating gates. Earlier BK/RU/PP08 work remains the starting implementation, not work to repeat.
+Technical companion to the [feature specification](bookkeeping-simplification-feature-spec.md) and [installed architecture](bookkeeping-simplification-tech-design.md). **Design baseline inspected November 1, 2026, 23:21 UTC:** Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `a2967555f6ae977d8bfe0ad880710815b9116681`. This is the current implementation contract; connected semantic/storage checks pass; the [November 4 standard gate](../verification/performance/2026-10/bookkeeping-simplification.md#completed-standard-gate) completes without runtime/storage failure or pause but fails normal-speed acceptance. BK11/BK15 source conversion passes; BK12/BK16 retain sustainable cleanup and operating acceptance. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns implementation; BK07/SR11/RU11 retain their operating gates. Earlier BK/RU/PP08 work remains the starting implementation, not work to repeat.
 
 ## 1. Intended play and evidence
 

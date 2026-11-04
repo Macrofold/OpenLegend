@@ -1,12 +1,12 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK17/BK19 connected scope complete; BK18 final storage integration and operating qualification open. | 2026-11-04   |
+| Status      | Current progress                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK17–BK19 implementation and connected integration complete; operating qualification failed. | 2026-11-04   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
-**Current behavior reconciled November 3, 2026, 08:45 UTC.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Connected read, retention, correction/privacy and restoration checks pass. The [completed-source standard run](../verification/performance/2026-10/bookkeeping-simplification.md#final-standard-run--no-runtime-failure-operating-gate-fails) completes without runtime failure at only 0.632342 normal; BK12/BK16 retain cleanup sustainability and operating qualification. No scale pass is claimed.
+**Current behavior and connected integration reconciled November 4, 2026.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Connected read, retention, correction/privacy and restoration checks pass. The [completed standard gate](../verification/performance/2026-10/bookkeeping-simplification.md#completed-standard-gate) has no runtime/storage failure or pause but fails normal-speed acceptance; BK12/BK16 retain cleanup sustainability and operating qualification. No scale pass is claimed.
 
 ## 1. Outcome
 

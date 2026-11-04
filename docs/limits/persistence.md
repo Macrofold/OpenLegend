@@ -486,7 +486,7 @@ Physical cleanup uses indexed candidates and actual transactional owner/value us
 
 ## BKS-L02 — Explicit evidence layout target
 
-**Implemented; operating qualification open · Restrictiveness: Medium.** Small changing measurements are inline; stable/richer compatible received values are shared by immutable ID. Keep world-owned logical memory allowances and the whole-operation exception; [BKS-L09](#bks-l09--span-and-check-representation) owns operational packing/residency. Save only new operation suffixes under existing SQL row/byte/parameter bounds; no per-coordinate SQL row, growing-prefix rewrite or hidden live-object layout cache. Sharing changes physical bytes, never personal access or logical allowance. [Representation](../projects/bookkeeping-simplification-tech-design.md#3-runtime-representation).
+**Implemented; normal-speed and cleanup qualification unmet · Restrictiveness: Medium.** Small changing measurements are inline; stable/richer compatible received values are shared by immutable ID. Keep world-owned logical memory allowances and the whole-operation exception; [BKS-L09](#bks-l09--span-and-check-representation) owns operational packing/residency. Save only new operation suffixes under existing SQL row/byte/parameter bounds; no per-coordinate SQL row, growing-prefix rewrite or hidden live-object layout cache. Sharing changes physical bytes, never personal access or logical allowance. [Representation](../projects/bookkeeping-simplification-tech-design.md#3-runtime-representation).
 
 ## BKS-L03 — Coarse physical expiry target
 
