@@ -8,7 +8,7 @@ import { readOnlyDraftView } from './draft.js';
 import { canonicalJson } from './events.js';
 import { immutableDataSnapshot, isImmutableData, jsonText } from './records.js';
 import { subjectKey, type ObserverSubject } from './knowledge.js';
-import type { ReceivedValueReference } from './received-values.js';
+import { sameReceivedValueReference, type ReceivedValueReference } from './received-values.js';
 import type { DefinitionPin } from './world-modules.js';
 import type {
   LiveFacetSupport,
@@ -663,12 +663,17 @@ function samePartition(a: CurrentPartPartition, b: CurrentPartPartition): boolea
     a.receivedAt === b.receivedAt &&
     a.receivedOrder === b.receivedOrder &&
     a.confirmedRevision === b.confirmedRevision &&
-    a.frameRef === b.frameRef &&
     a.revision === b.revision &&
     a.check === b.check &&
     a.availability?.at === b.availability?.at &&
     a.recording === b.recording &&
-    equalTimes(a.times, b.times)
+    equalTimes(a.times, b.times) &&
+    // Inline receiver frames can be equal but detached by current-format JSON.
+    // Coalesce their clock masks by value without refreshing either part.
+    (a.frameRef === b.frameRef ||
+      (a.frameRef !== undefined &&
+        b.frameRef !== undefined &&
+        sameReceivedValueReference(a.frameRef, b.frameRef)))
   );
 }
 function mergePartitions(input: readonly CurrentPartPartition[]): CurrentPartPartition[] {

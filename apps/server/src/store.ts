@@ -9,6 +9,7 @@ import {
   type AccountRetentionPlan,
 } from './account-retention.js';
 import { RetentionActorSelection } from './retention-deadlines.js';
+import { RECORD_NODES } from './world-record-schema.js';
 import { selectActorLiveReadCuts, selectActorRecordChanges } from './actor-record-selection.js';
 import { prepareRecentRetention, type RecentRetentionPlan } from './recent-retention.js';
 import type { LiveReadCuts, LiveReadCutsProvider, MetadataBaseline } from './live-read-overlay.js';
@@ -179,6 +180,11 @@ import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
 export const DATABASE_SCHEMA = '52';
+// A checkpoint installs complete physical history; its pages cannot first pass
+// ordinary append classification against the abandoned timeline.
+const restoreDiffTables = new Set(
+  [...RECORD_NODES.keys()].filter((table) => table !== 'mind_temporal_pages'),
+);
 
 export interface AttemptBudget {
   id: string;
@@ -1249,7 +1255,11 @@ export class SqlGameRepository implements GameRepository {
     const nativeChanges =
       prepared?.changes ??
       timedSync('persistence.prepareRecords', () =>
-        this.records.prepare(this.acceptedState ?? undefined, state),
+        this.records.prepare(
+          this.acceptedState ?? undefined,
+          state,
+          historyProjection?.restore ? restoreDiffTables : undefined,
+        ),
       );
     const sameWorldBaseline =
       !historyProjection?.restore && this.acceptedState?.world.id === state.world.id;

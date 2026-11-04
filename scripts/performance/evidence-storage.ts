@@ -1,6 +1,6 @@
 import type { SqlDatabase } from '../../apps/server/src/store.js';
 
-/** Explicit post-workload diagnostic; never called by gameplay or save admission.
+/** Explicit workload-boundary diagnostic; never called by gameplay or save admission.
  * SQL aggregates count cold data without loading it into the simulation. */
 export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
   if (!db.readMetadataBaseline)
@@ -43,7 +43,7 @@ export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
       .get(worldId, worldId, worldId, worldId, worldId);
     return {
       scope:
-        'Durable PostgreSQL snapshot after the workload; relation/index sizes include reusable space. WAL position is cluster-wide, not exclusive game WAL attribution.',
+        'Durable PostgreSQL snapshot at an explicit workload boundary; relation/index sizes include reusable space. WAL position is cluster-wide, not exclusive game WAL attribution.',
       relations,
       debt,
     };

@@ -1321,6 +1321,12 @@ async function main() {
       authoredClockRate,
       evidence: evidenceSettings(game.service.world),
     };
+    // Capture storage outside timed work while the reopened fixture is paused.
+    // A lone final debt value cannot distinguish reclamation from curtailed production.
+    report.initialEvidenceStorage = await evidenceStorageStats(
+      game.service.store.db,
+      game.service.world.id,
+    );
     if (collectCpu) {
       cpuProfiler = new Session();
       cpuProfiler.connect();
