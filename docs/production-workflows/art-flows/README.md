@@ -19,7 +19,7 @@ The [feature specification](../../projects/art-workflow-feature-spec.md) records
 9. [Preserve and resume](#9-preserve-and-resume)
 10. [Completion](#10-completion)
 
-Companion pages: [Tools and defaults](tools.md) (which platform and model each stage uses, with commands and costs) · [Deliverable profiles](profiles.md) (what a good result covers for each kind of subject) · [3D models](3d-models.md) (concept or character sheet → finished prop, character or creature) · [Production packages](production.md) (finishing and packaging other assets) · [Study record](study-record.md) (what to write down).
+Companion pages: [Tools and defaults](tools.md) (which platform and model each stage uses, with commands and costs) · [Deliverable profiles](profiles.md) (what a good result covers for each kind of subject) · [3D models](3d-models.md) (concept or character sheet → finished prop, character or creature) · [Animation authoring](animation.md) (reuse, new motion, retargeting and clip assembly) · [Production packages](production.md) (finishing and packaging other assets) · [Study record](study-record.md) (what to write down).
 
 ## 1. Ask for art
 
@@ -98,7 +98,7 @@ The simple path's procedure for models and animation:
    work, use the selected model/rig or a compatible existing project target; do not generate a replacement
    body. Resolve a missing target only when it would change the required motion or compatibility.
 2. Produce only the required geometry, basic materials and clips. Reuse compatible motion before
-   authoring it; use simple clear poses, appropriate timing and necessary contacts. Cyclic motions loop;
+   authoring it ([shared motion procedure](animation.md)); use simple clear poses, appropriate timing and necessary contacts. Cyclic motions loop;
    discrete actions finish once. Deliver real model/animation data, not a video substitute.
 3. Reopen the actual export; inspect form, scale, loading and required materials. Play clips on their
    target body, checking actual deformation, gross foot/grip errors and relevant loop/start/end behavior.
@@ -136,6 +136,13 @@ How `auto` decides, on either path:
 | `animations=auto` | Model-only requests get no clips. An animated walking character gets `Idle`, `Walk` and `Run` when compatible with its body: the game's loader requires `Idle` and `Run` ([consumer contract](3d-models.md#consumer-contract-and-budgets)), and without `Walk` a walking person plays a slowed run. Named motions are added to these, so "with a wave" adds `Wave`. Other forms get the simplest motion demonstrating their stated use, not a human rig or full action library. `none`, "only" or an explicit clip list overrides inference, within what the loader requires. The study viewer's local preview shows a model without both `Idle` and `Run` but plays none of its motion, and its Motion menu offers only Idle, Walk, Run, Sprint, Attack, Punch, Dodge and Wave, so check any other clip in Blender. |
 | `materials=auto`  | Preserve adequate existing materials. A new prototype uses simple materials: a generated model keeps the generator's own texture, resized to the budget. The full path follows the look's [production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production). Finalization refines only what the intended use needs. "Untextured", "simple" or "preserve these materials" are explicit constraints.                                                                                                                                                                                                                                                                                                                                                                                     |
 | `format=auto`     | Use the named consumer's supported format; normally GLB for OpenLegend's 3D model/animation path. Keep available editable sources. Do not create unused format variants.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+
+Animation source selection follows [Animation authoring](animation.md): preserve suitable existing
+clips first; use the [default human-motion source](tools.md#human-motion-generation) only for missing,
+compatible human motion. Its planned adapter and provider/rig qualification must be delivered before
+that route is executable. Existing reuse stays available without a new account. Animation-only work
+keeps the supplied model and rig; creature motion follows its anatomy. These defaults apply only
+when the request or consumer actually requires animation and preserve `motion=rough|polished`.
 
 Ordinary words set the common options too:
 

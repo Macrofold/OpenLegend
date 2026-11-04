@@ -6,8 +6,8 @@ Which platform and model each stage of the [art workflow](README.md) uses, how t
 
 | Preset               | Meaning                                                                                                                                                                                                                                                                                                |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `standard` (default) | Every stage uses the [default roster](#default-roster), in which every generation stage runs on Higgsfield (Mike's decision, October 31, 2026). "Regular", "manual" and "standard" all mean this.                                                                                                      |
-| `higgsfield`         | Now the same as `standard` for generation. The word is kept because Mike uses it.                                                                                                                                                                                                                      |
+| `standard` (default) | Every stage uses the [default roster](#default-roster). Image and geometry generation use Higgsfield; missing compatible human motion uses the qualified [human-motion route](#human-motion-generation). "Regular", "manual" and "standard" all mean this.                                                                                                      |
+| `higgsfield`         | Keeps Higgsfield for its supported image, geometry and rigging stages. It does not silently override the shared motion-source order; an explicit motion-source request can do that.                                                                                                                                                                                                                      |
 | `both`               | A comparison of Higgsfield against direct routes, from one frozen input set ([comparisons](README.md#8-compare-tools-or-methods)). The direct side uses the OpenAI Images API for 2D and an authorized direct 3D account; a stage with no authorized direct route is excluded, and the record says so. |
 
 **Overrides.** A request may name a platform or model for any stage: "concepts with Nano Banana Pro", "3D with Tripo", "views with Seedream". The named tool replaces that stage's default only; every other stage keeps the preset.
@@ -30,13 +30,13 @@ Checked 2026-10-31. "Connected" means usable today without new accounts or keys.
 | Cleanup, normalization, export  | **Blender 5.2.2** ([details](#blender)), with recipe scripts beside the work                                                                                                                                                                                                                                               | —                                                                                                                                                                                                         |
 | Human rig                       | The family rig: the MPFB body with its Mixamo or GameEngine rig, chosen in the proof run ([OD3](../../projects/art-workflow-feature-spec.md#od3--the-humanoid-body-family-and-rig-for-the-cast)); for a distinctive humanoid, **3D Rigging** on Higgsfield applied to the picked candidate ([rigging](#rigging-and-clips)) | Mixamo or AccuRIG ([manual](#other-platforms-opt-in)); hand-built in Blender                                                                                                                              |
 | Nonhuman rig                    | Blender's bundled **Rigify** templates (basic quadruped, horse, cat, wolf, bird, shark) or a hand-built armature                                                                                                                                                                                                           | Tripo's creature rig types (direct Tripo, opt-in)                                                                                                                                                         |
-| Clips                           | Family clips, then the Meshy animation library through Higgsfield, then hand-keyed in Blender ([order](3d-models.md#step-9--make-the-clips))                                                                                                                                                                               | Mixamo (manual); text-to-motion services ([opt-in](#other-platforms-opt-in))                                                                                                                              |
+| Clips                           | Suitable existing clips first; Kimodo for missing compatible human motion after qualification; library or Blender authoring for other cases ([procedure](animation.md), [readiness](#human-motion-generation))                                                                                                                                                                               | Meshy library reuse; Mixamo (manual); explicit alternative motion services ([access](#other-platforms-opt-in))                                                                                                                              |
 | UI composition and typography   | **Claude Design** ([notes](#claude-design))                                                                                                                                                                                                                                                                                | A native layout or vector tool, or a source preview                                                                                                                                                       |
 | Review sheets                   | [Image and turntable sheets](#review-sheets)                                                                                                                                                                                                                                                                               | —                                                                                                                                                                                                         |
 | Look check                      | The game's [study viewer](../../asset-workflow.md#inspect-in-a-browser-and-use-files-in-the-game)                                                                                                                                                                                                                          | —                                                                                                                                                                                                         |
 | Preservation                    | `pnpm assets` ([asset workflow](../../asset-workflow.md#publish-an-exact-revision))                                                                                                                                                                                                                                        | —                                                                                                                                                                                                         |
 
-Mike chose Higgsfield for every generation stage on October 31, 2026 ([OD1](../../projects/art-workflow-feature-spec.md#od1--default-generation-platform)). Higgsfield's terms let it train on uploads ([rights and data](#image-to-3d)); a design Mike wants kept private goes through a route he names for it.
+The October 31, 2026 Higgsfield choice still applies to image and geometry generation ([OD1](../../projects/art-workflow-feature-spec.md#od1--default-generation-platform)). The November 4 motion decision adds the conditional Kimodo default below; it does not replace geometry, rigging or existing clips. Higgsfield's terms let it train on uploads ([rights and data](#image-to-3d)); a design Mike wants kept private goes through a route he names for it.
 
 **Settings to state explicitly every time** (defaults are often wrong for art):
 
@@ -189,7 +189,59 @@ Submit at most 8 jobs at once, and save each job's JSON beside its download: the
 - **OpenAI Images API:** does not train on API data by default and keeps it up to 30 days for abuse monitoring ([business data](https://openai.com/business-data/)).
 - **Uploads:** never upload a reference whose license or privacy forbids it. [OD8](../../projects/art-workflow-feature-spec.md#od8--training-on-uploaded-art) covers how to handle designs Mike wants kept out of training data.
 
+## Human motion generation
+
+Checked 2026-11-04. **Kimodo is the selected default for new, missing compatible human motion.**
+Reuse suitable existing clips first. This does not select a model/rigging provider for creatures or
+replace a supplied character's rig. See [Animation authoring](animation.md) for the shared procedure
+and the [NVIDIA research record](../../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md)
+for source links and release/access evidence.
+
+**Execution status: unqualified.** The source adapter is planned in AF15; a successful bounded
+provider/version/target-rig check is required in AF16 before the route is used as an operational
+default. The current helper has no direct SOMA/BONES mapping or BVH import. No account, source
+export, mapping or end-to-end target result is claimed by this design decision. Existing clip reuse
+is independent of those tasks.
+
+| Route | Intended use and status |
+| --- | --- |
+| Replicate `sprited/kimodo`, explicitly pinned SOMA-RP v1.1 | Preferred initial hosted candidate for AF16 because it can be called programmatically. Inspect and record the exact provider version and export contract; an account/key and authorized bounded spend are prerequisites. It is a third-party deployment, not NVIDIA's hosted production API. |
+| Official Kimodo v1.2 | Optional self-hosted route and a later upgrade candidate. Its checkpoint, skeleton/export behavior, dependencies, hardware, license and target mapping require their own qualification. Never silently substitute it for the hosted v1.1 pin. |
+| MotionBricks | Optional offline pose-conditioned transition authoring when a requested asset needs it. Bake and retarget the output through the same target checks. No runtime inference service is part of this workflow. |
+
+The initial candidate pin is Replicate version
+`17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545`
+for `Kimodo-SOMA-RP-v1.1`. Qualification starts with one natural-language segment of 2–5 seconds
+(maximum 10 seconds), one sample, 100 diffusion steps and postprocessing enabled. Periods delimit
+segments in this wrapper, so resolve a conversational request into one segment deliberately.
+Use `output_delivery=individual`; the API returns an array of output URIs. Download and preserve
+artifacts within one hour, retaining the prediction ID and status for polling/resume; an unknown
+submission outcome is not permission to retry a paid job. Prefer BVH as the initial source to
+inspect: the wrapper's GLB may contain animated empties without a Blender armature. These are
+candidate settings and export risks, not evidence that the target adapter or route is qualified;
+[tech design §11](../../projects/art-workflow-tech-design.md#11-nvidia-motion-authoring) owns the planned
+normalization and mapping contract.
+
+Prefer a repeatable CLI/API and headless conversion over requiring a Blender GUI plugin. Exact
+commands and mapping implementation belong to [tech design §11](../../projects/art-workflow-tech-design.md#11-nvidia-motion-authoring)
+and remain prospective until AF15 ships. If the hosted candidate cannot meet the export, license,
+quality or cost requirements, report the specific failure and use an authorized available route;
+do not describe the preferred candidate as connected or change the pin without recording the choice.
+
+Keep provider charges and any self-hosted GPU/storage commitment inside the existing task budget;
+check current pricing and retain settled cost plus outstanding commitments. Existing typical asset
+cost examples assume their stated reused clips and do not include new motion-generation charges.
+A successful prediction is not proof that retargeting or game export works.
+
+Record model/code rights separately from the source motion and conditioning data. In particular,
+MotionBricks' bundled BONES example motions are for nonproduction use; exclude them from shipped
+assets and production motion sources. Preserve the applicable terms and the rights to the actual
+inputs/output with the study. The research record holds the detailed license evidence.
+
 ## Rigging and clips
+
+This stage supplies a needed rig and may include a useful library clip. For an already rigged model,
+start with [Animation authoring](animation.md); do not rerig it to reach the new human-motion default.
 
 **3D Rigging** (`3d_rigging`) rigs a humanoid at a given height and adds one library clip. Measured on five people on 2026-10-31:
 
@@ -212,7 +264,7 @@ higgsfield generate create 3d_rigging --model_url "$URL" --height_meters "$H" \
 - **Fallbacks** when a model cannot be rigged this way: rig in the generation call (`--enable_rigging true --rigging_height_meters H`, Meshy candidates only), Mixamo or AccuRIG (manual, opt-in), or a rig built in Blender.
 - **Direct Meshy** (opt-in) merges up to 10 clips per request.
 - **Nonhumans:** Blender's bundled Rigify (0.6.10 in Blender 5.2.2; enable it first, [Blender](#blender)) includes basic quadruped, horse, cat, wolf, bird and shark templates. Fit one, generate the rig, then weight-paint; export deform bones only. A humanoid rig is never renamed onto an animal.
-- **Retargeting** shared clips onto a different skeleton has no built-in one-click tool in Blender 5.2. Between humanoid rigs, `art-tool.py clips` retargets in world space ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)): it moved Meshy's library clips onto the mercenary's differently oriented rig, and with a `--bones` map onto the MPFB family rig, whose bone names and rest pose differ. Non-humanoid skeletons need bone constraints in a small script or an opt-in add-on (the free Rokoko plugin, compatibility with 5.2 unverified, or the paid Auto-Rig Pro Remap). [OD7](../../projects/art-workflow-feature-spec.md#od7--motion-source-for-shared-clips) decides the long-term clip source.
+- **Retargeting** shared clips onto a different skeleton has no built-in one-click tool in Blender 5.2. Between humanoid rigs, `art-tool.py clips` retargets in world space ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)): it moved Meshy's library clips onto the mercenary's differently oriented rig, and with a `--bones` map onto the MPFB family rig, whose bone names and rest pose differ. Non-humanoid skeletons need bone constraints in a small script or an opt-in add-on (the free Rokoko plugin, compatibility with 5.2 unverified, or the paid Auto-Rig Pro Remap). The [human-motion default](#human-motion-generation) and [shared procedure](animation.md) govern missing motion; this existing library route remains usable for suitable clips.
 
 ## OpenAI Images API
 

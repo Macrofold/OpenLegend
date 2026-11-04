@@ -46,6 +46,14 @@ For a UI kit with sliced raster parts, record fixed corners, repeated edges, joi
 
 Keep prompts and recipes, input revisions, the exact tool, model, mode and settings, and repeatable scripts. Separate observed metadata from inference. Proprietary or private source payloads and receipts stay in their permitted external locations; credentials never enter Git. A reconstructed layer is never described as an original layered source.
 
+For animation, record required, retained and new clips; the unchanged target model/rig revision;
+source provider and exact model/version pin; source skeleton, format, units/axes and time basis;
+input/output rights; conversion/bone-map revision and settings; and the retained source, final target
+artifacts and receipts at their permitted locations. Link existing qualification for that
+provider/version/target rig, or identify the missing check. Preserve target contact/loop/timing review,
+retained-clip coverage and measured gait facts. A successful provider job is not a qualified target
+export. See [Animation authoring](animation.md) for the procedure.
+
 ### Review and remaining gaps
 
 Observed strengths and defects, fit with the brief and look, play-check results, critique findings and what was fixed. For production checks, name the export revision, tool or viewer, and conditions. Keep visual judgment, export checks and runtime evidence distinct.

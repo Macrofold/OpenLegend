@@ -111,6 +111,8 @@ resolved [rig, motion, material and format defaults](README.md#step-options).
 An existing clip keeps its useful timing; a new game-action clip respects that action's native
 timing. A model containing an animation timer without the required movement is not usable output.
 
+Playable 3D motion follows [Animation authoring](animation.md), including reuse first, the qualified default for missing human motion and preservation of the supplied model. New source conversion remains planned until its adapter and provider/version/target-rig checks are complete.
+
 Other production follows the [animation](production.md#animation-clips), [sprite](production.md#sprites-and-frame-animation), [VFX](production.md#visual-effects) or [audio](production.md#audio) recipe; integration follows [assets and animation](../assets-and-animation.md) or [audio and feedback](../audio-and-feedback.md).
 
 **Play checks:** threat (for attacks), state.

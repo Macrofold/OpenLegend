@@ -16,7 +16,7 @@ The [quality setting](README.md#quality-the-simple-and-full-paths) picks the pat
 | 4–6 Candidates | One Meshy candidate from that image, with a quick look at the file; no sheet and no pick                                                                                                                        | Three candidates, the turntable sheet and Mike's pick     |
 | 7 Clean        | `normalize` (with `--profile prop` for a prop) for a static model; a model rigged through Higgsfield comes back at its height with feet at 0 and skips cleanup                                                  | All of Step 7                                             |
 | 8 Rig          | The automatic rig when a two-legged humanoid needs clips, with one bend checked in the look check; other bodies need an authored rig                                                                            | The rig route, skinning checks and the rough export first |
-| 9 Clips        | Library clips combined with `clips`: `Idle`, `Walk` and `Run` for a walking character; rough motion                                                                                                             | The motion order, in-place clips, gait strides measured   |
+| 9 Clips        | Shared [motion procedure](animation.md), reuse first: `Idle`, `Walk` and `Run` for a walking character; rough motion                                                                                                             | The motion order, in-place clips, gait strides measured   |
 | 10 Check       | `report` (`--profile prop` for a static prop), then the look check in the study viewer                                                                                                                          | All six points                                            |
 | 11 Preserve    | The same                                                                                                                                                                                                        | The same                                                  |
 
@@ -243,46 +243,27 @@ Check shoulders, armpits, hips, hems and anything worn over the body; garments m
 
 ## Step 9 — Make the clips
 
-1. **List the clips:** `Idle`, `Walk` and `Run` for a walking character (the game requires `Idle` and `Run` in every animated character), plus the requested scope. Fix the body, weights and equipment fit before making a set of clips that depends on them. For attackers, the wind-up, contact and recovery for each weapon or bite come before idle polish.
-2. **Choose a source** for each clip, in this order:
-   - existing family clips: the fitted MPFB study people carry the [character motion study](../../../art-direction/studies/2026-10-31-character-motion/README.md#library-people)'s eight library clips, retargeted with `--bones` (below), in place of the procedural `Idle` and `Run` from [`study_human_motion.py`](../../../scripts/study_human_motion.py);
-   - a clip library offered by the rigging route (a single library clip by ID per rigging job; [tools](tools.md#rigging-and-clips)), retargeted in Blender;
-   - a motion library such as Mixamo, used manually by Mike, with its terms recorded ([tools](tools.md#other-platforms-opt-in));
-   - hand-keyed in Blender.
+Follow [Animation authoring](animation.md), the shared owner for source selection, working commands,
+retargeting and clip assembly. Reuse suitable clips first; the default for missing compatible human
+motion becomes executable only after its source adapter and provider/version/target-rig qualification
+are delivered. Other anatomy uses a suitable library or authored motion on its own rig.
 
-   Generated video is motion reference only.
+List the needed clips from the brief and consumer: a walking character normally has `Idle`, `Walk`
+and `Run`, and every animated game character must include `Idle` and `Run`. Keep existing clips and
+native action timing. Fix blocking body, weights or equipment fit before building clips that depend
+on them; animation-only work otherwise preserves the supplied character.
 
-   **For an automatically rigged humanoid** (Meshy's skeleton, one library clip per rigging job): run the rigging job once, with `Idle` (ID 0) ([commands](tools.md#rigging-and-clips)), then add the cast's `Walk` (`walking_2`, ID 566) and `Run` (`Run_02`, ID 14) from the files the [character motion study](../../../art-direction/studies/2026-10-31-character-motion/README.md#resume) used (its Resume names the archive holding each); `CLIPS` below is a folder holding those two files:
-
-   ```sh
-   "${B[@]}" clips --model "$S/models/f01-<subject>-rig.glb" \
-     --clip Idle="$S/models/f01-<subject>-rig.glb" --clip Walk="$CLIPS/k02-walking-2.glb" \
-     --clip Run="$CLIPS/f06-orin-run.glb" --stride Walk --stride Run \
-     --out "$S/export/f01-<subject>.glb"
-   ```
-
-   It keeps the first file's skeleton and mesh, takes the single clip from each named file, retargets it onto that skeleton (so a clip from another rig with the same bone names fits), names the clips as the game expects, keeps the provider's frame rate, exports with the recipe's settings and reports the result.
-   - **Gait clips** that the game paces to travel speed (`Walk`, `Run`, `Sprint`) take `--stride NAME`: each becomes one in-place stride from left heel strike, and its measured ground speed goes in `<out>.clips.json` for the game's [gait](../../../apps/client/src/characters/gait.ts). Copy those facts where the game reads them: a catalog person's `strides` beside its animated file's hash, the mercenary's in [`mercenary.ts`](../../../apps/client/src/characters/mercenary.ts).
-   - **Other clips that travel** take `--in-place NAME`.
-   - **A rig of another family** takes `--bones` with a map naming the clip bone each of its bones follows, plus the limbs whose rest pose differs from the clip rig's; [`mpfb-meshy.json`](../../../scripts/art/bone-maps/mpfb-meshy.json) puts Meshy's clips on the MPFB family rig ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)).
-   - **A model that loads its motion separately**, like the mercenary, takes `--motion-only` to export just the skeleton and clips.
-
-   Otherwise hand-key them on that rig: adapt the bone names in `study_human_motion.py` for `Idle` and `Run`, and key `Walk` in Blender.
-
-3. **Block first, then author in place:** review the key poses and contacts at play distance before polishing the motion; polished clips follow the [motion order](../assets-and-animation.md#4-produce-motion-that-serves-an-action) for each needed motion. The game moves the body, so clips must not travel. Loop `Idle` and `Run` seamlessly; check feet planting, hand contact and held items on every frame that matters.
-4. **Timing:** follow the look's production notes on how poses are held.
-5. **Name** each action exactly as the consumer expects and push it to its own NLA track, so the glTF exporter writes one clip per action.
+The shared procedure covers the current `clips` helper, source-specific bone maps, in-place movement,
+measured gait strides and exact action names. Follow `motion=rough|polished`; both paths check the
+actual target export and contacts. Polished motion follows the look's production notes and the
+[production motion order](../assets-and-animation.md#4-produce-motion-that-serves-an-action).
 
 ### Animate a saved model
 
-A model kept in the archive has no live provider job, and the Higgsfield CLI cannot upload models, so a new library clip from a rigging job is possible only while a candidate job's `result_url` still works ([rigging](tools.md#rigging-and-clips)). Otherwise:
-
-- retarget an existing clip with `clips` from any file that holds it on a compatible skeleton, with `--bones` for another family's rig;
-- use the family clips when the model is on the family rig;
-- ask Mike to fetch a clip from Mixamo ([manual](tools.md#other-platforms-opt-in));
-- or hand-key it in Blender.
-
-Keep the model's existing clips by naming each one, `--clip Idle="$MODEL#Idle"`, beside the new one. The study viewer's Motion menu plays only Idle, Walk, Run, Sprint, Attack, Punch, Dodge and Wave; check any other clip in Blender's viewport.
+Use [the saved-model procedure](animation.md#animate-a-saved-model) with the archived model's existing
+rig and appearance. It includes retained-clip assembly and the current viewer's supported action
+names. Saved files can receive reusable, authored or qualified generated motion without a live model
+generation job; the rigging provider's upload limitation applies only to its own library-clip route.
 
 ## Step 10 — Export and check in the game's look
 
