@@ -7,6 +7,7 @@ import {
   materializeReceivedEntry,
   materializeReceivedBindingSeed,
   temporalPageMutation,
+  deriveReceivedBindingChargeProjection,
   type TemporalCheckpointAvailability,
 } from './temporal-frames.js';
 import type { WorldState } from './types.js';
@@ -31,7 +32,7 @@ import {
   type ObserverLife,
 } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
-import { hasRecordFields, isSafeRecordId } from './records.js';
+import { hasRecordFields, isImmutableData, isSafeRecordId } from './records.js';
 import { selectedAttentionPolicy } from './world-composition.js';
 import {
   temporalReceiptId,
@@ -40,6 +41,7 @@ import {
   installTemporalChargeDirectories,
   temporalSupportLogicalBytes,
   receivedTemporalFragment,
+  temporalReceiptChangeCount,
 } from './temporal-evidence.js';
 
 function validateEvidenceSource(
@@ -220,6 +222,14 @@ function validateReceiver(value: TemporalValue, observer: ObserverLife, acquired
 
 /** Shared current-format native binding validation, including bindings whose
  * older raw observations have already expired. */
+const verifiedBindingCharges = new WeakMap<
+  object,
+  {
+    parts: import('./received-batches.js').ReceivedBinding['parts'];
+    seed: import('./received-batches.js').ReceivedBinding['seed'];
+  }
+>();
+
 function validateReceivedBinding(
   world: WorldState,
   binding: import('./received-batches.js').ReceivedBinding,
@@ -313,7 +323,6 @@ function validateReceivedBinding(
       projection.members.some(
         (member: import('./received-batches.js').ReceivedChargeProjection['members'][number]) =>
           !ordinal(member.logicalMember) ||
-          !ordinal(member.bytes) ||
           member.count !== 1 ||
           !Array.isArray(member.partIndices) ||
           !member.partIndices.length ||
@@ -336,6 +345,50 @@ function validateReceivedBinding(
       throw new Error('Invalid received charge projection.');
   }
   validateReceipt(world, materializeReceivedBindingSeed(binding), expected.actorId);
+  if (binding.charges) {
+    const projection = binding.charges,
+      verified = verifiedBindingCharges.get(projection);
+    if (verified?.parts === binding.parts && verified.seed === binding.seed) return;
+    // Only direct saved provenance can be reconstructed independently here.
+    // Historical transitive recognition aliases may outlive today's knowledge;
+    // they remain lookup hints, never permissions or retained-value ownership.
+    const actual = deriveReceivedBindingChargeProjection(
+      binding,
+      world.receivedValues?.sources ?? {},
+    );
+    if (
+      projection.members.length !== actual.members.length ||
+      new Set(projection.members.map((member) => member.logicalMember)).size !==
+        projection.members.length
+    )
+      throw new Error('Received charge members disagree with their binding.');
+    for (const expected of actual.members) {
+      const member = projection.members.find(
+        (member) => member.logicalMember === expected.logicalMember,
+      );
+      if (
+        !member ||
+        member.count !== expected.count ||
+        member.partIndices.length !== expected.partIndices.length ||
+        new Set(member.partIndices).size !== member.partIndices.length ||
+        !expected.partIndices.every((index) => member.partIndices.includes(index)) ||
+        !sameStringMembers(member.individualIds, expected.individualIds) ||
+        !expected.sourceIds.every((id) => member.sourceIds.includes(id)) ||
+        member.closures.length !== expected.closures.length ||
+        new Set(member.closures.map((atom) => atom.key)).size !== member.closures.length ||
+        !expected.closures.every((atom) =>
+          member.closures.some((held) => held.key === atom.key && held.bytes === atom.bytes),
+        )
+      )
+        throw new Error('Received charge projection disagrees with its received parts.');
+    }
+    if (
+      isImmutableData(projection) &&
+      isImmutableData(binding.parts) &&
+      isImmutableData(binding.seed)
+    )
+      verifiedBindingCharges.set(projection, { parts: binding.parts, seed: binding.seed });
+  }
 }
 export function validateTemporalCurrentGroupCheckpoint(
   world: WorldState,
@@ -614,17 +667,44 @@ export function validateTemporalPage(
           }
         }
       }
+      const acceptedCount = members.size;
       for (const hole of entry.rejected ?? []) {
+        const prior = members.get(hole.memberIndex);
         if (
           !ordinal(hole.memberIndex) ||
-          members.has(hole.memberIndex) ||
+          !ordinal(hole.binding) ||
           !temporalSubject(hole.subject) ||
+          !Array.isArray(hole.partIndices) ||
+          !hole.partIndices.length ||
+          new Set(hole.partIndices).size !== hole.partIndices.length ||
+          !hole.partIndices.every(ordinal) ||
           !Array.isArray(hole.parts) ||
+          hole.parts.length !== hole.partIndices.length ||
+          !hole.parts.every((part: { partIndex: number }) =>
+            hole.partIndices.includes(part.partIndex),
+          ) ||
+          (prior &&
+            (prior.binding !== hole.binding ||
+              hole.partIndices.some((index: number) => prior.parts.has(index)))) ||
           !strings(hole.sourceIds)
         )
           throw new Error('Invalid rejected received coverage.');
-        members.set(hole.memberIndex, { binding: hole.binding, parts: new Set(hole.partIndices) });
+        if (prior) for (const index of hole.partIndices) prior.parts.add(index);
+        else
+          members.set(hole.memberIndex, {
+            binding: hole.binding,
+            parts: new Set(hole.partIndices),
+          });
       }
+      if (
+        entry.charge.count !==
+        (entry.receipt
+          ? temporalReceiptChangeCount(entry.receipt)
+          : entry.kind === 'boundary'
+            ? 0
+            : acceptedCount)
+      )
+        throw new Error('Received entry count disagrees with its accepted members.');
       if (entry.receipt) {
         if (
           entry.receipt.batchOrder !== batch.batchOrder ||

@@ -23,7 +23,7 @@ const bindingColumns = {
   subject: 'payload',
   seed: 'payload',
   parts: 'payload',
-  charges: 'payload',
+  charges: 'derived',
   predecessors: 'metadata',
 } satisfies Record<keyof ReceivedBinding, string>;
 void contactColumns;
@@ -32,7 +32,7 @@ void groupColumns;
 void bindingColumns;
 type CurrentContactContent = CurrentContact['content'];
 type Recording = NonNullable<CurrentReceivedGroup['recordings']>[number];
-type StaticBinding = Omit<ReceivedBinding, 'predecessors'>;
+type StaticBinding = Omit<ReceivedBinding, 'predecessors' | 'charges'>;
 type RecordingMetadata = Omit<Recording, 'binding'> & {
   binding: string;
   predecessors?: ReceivedBinding['predecessors'];
@@ -62,13 +62,7 @@ function bindingKey(binding: ReceivedBinding): string {
   return `${binding.id}:${mask}`;
 }
 function sameStaticBinding(a: StaticBinding, b: StaticBinding): boolean {
-  return (
-    a.id === b.id &&
-    a.subject === b.subject &&
-    a.seed === b.seed &&
-    a.parts === b.parts &&
-    a.charges === b.charges
-  );
+  return a.id === b.id && a.subject === b.subject && a.seed === b.seed && a.parts === b.parts;
 }
 /** Recording partitions move as individual clocks change. Their static dictionary
  * has canonical mask order so moving a checkpoint cannot rewrite received proofs. */
@@ -77,7 +71,9 @@ function staticBindings(group: CurrentReceivedGroup): StoredGroup['bindings'] {
   if (cached) return cached;
   const unique = new Map<string, StaticBinding>();
   for (const { binding } of group.recordings ?? []) {
-    const { predecessors: _clocks, ...value } = binding;
+    // Charge projections can be absent after exact mask selection, then rebuilt
+    // from these same parts. Their cache state is not acquired content.
+    const { predecessors: _clocks, charges: _charges, ...value } = binding;
     unique.set(bindingKey(binding), value);
   }
   const bindings = [...unique]
@@ -187,7 +183,7 @@ export function decodeCurrentContactRow(row: JsonRecord): CurrentContact {
             !binding.value ||
             Object.keys(binding).some((key) => !['key', 'value'].includes(key)) ||
             Object.keys(binding.value).some(
-              (key) => !['id', 'subject', 'seed', 'parts', 'charges'].includes(key),
+              (key) => !['id', 'subject', 'seed', 'parts'].includes(key),
             ) ||
             !Array.isArray(binding.value.parts) ||
             bindingKey(binding.value) !== binding.key,

@@ -870,52 +870,62 @@ function admitCoverage(
       coverage.boundary === (target.kind === 'boundary' ? target.reason : undefined),
   );
   const members: ReceivedCoverage['members'][number][] = [];
-  for (const [logicalMember, partIndices] of logical) {
+  for (const [logicalMember, suppliedParts] of logical) {
     const decision = JSON.stringify([target.entryIndex, binding.id, logicalMember]);
-    if (prepared.decisions.has(decision)) {
-      if (prepared.decisions.get(decision)) {
-        const memberIndex = prepared.coordinates.get(decision)!;
-        const existingParts = target.coverage
-          .filter((coverage) => coverage.binding === binding.id)
-          .flatMap((coverage) =>
-            coverage.members
-              .filter((member) => member.memberIndex === memberIndex)
-              .flatMap((member) => member.partIndices),
-          );
-        const additional = partIndices.filter((index) => !existingParts.includes(index));
-        if (additional.length) members.push({ memberIndex, partIndices: additional });
-      }
-      continue;
-    }
-    const memberIndex = prepared.nextMember.get(target.entryIndex) ?? 0;
-    prepared.nextMember.set(target.entryIndex, memberIndex + 1);
+    const previousDecision = prepared.decisions.get(decision),
+      existing = previousDecision !== undefined,
+      memberIndex = existing
+        ? prepared.coordinates.get(decision)!
+        : (prepared.nextMember.get(target.entryIndex) ?? 0);
+    const considered = existing
+      ? new Set([
+          ...target.coverage
+            .filter((coverage) => coverage.binding === binding.id)
+            .flatMap((coverage) =>
+              coverage.members
+                .filter((member) => member.memberIndex === memberIndex)
+                .flatMap((member) => member.partIndices),
+            ),
+          ...(target.rejected ?? [])
+            .filter((hole) => hole.binding === binding.id && hole.memberIndex === memberIndex)
+            .flatMap((hole) => hole.partIndices),
+        ])
+      : undefined;
+    const partIndices = considered
+      ? suppliedParts.filter((index) => !considered.has(index))
+      : suppliedParts;
+    if (!partIndices.length) continue;
+    if (!existing) prepared.nextMember.set(target.entryIndex, memberIndex + 1);
     const candidate = { memberIndex, partIndices };
-    const projection =
-        binding.charges ??
-        receivedBindingChargeProjection(binding, world.receivedValues?.sources ?? {}, world),
+    const projection = receivedBindingChargeProjection(
+        binding,
+        world.receivedValues?.sources ?? {},
+        world,
+        new Set(partIndices),
+      ),
       projectedIndex = logicalMember;
-    const descriptorKey = `binding:${projection.binding}:${logicalMember}`;
-    const marginal =
-      orderedRecordGet(actor.recent.closures, descriptorKey) ||
-      prepared.pendingAtoms.has(descriptorKey)
-        ? []
-        : projectionAtoms(projection, [projectedIndex]).filter(
-            (atom) =>
-              !orderedRecordGet(actor.recent.closures, atom.key) &&
-              !prepared.pendingAtoms.has(atom.key),
-          );
+    const marginal = projectionAtoms(projection, [projectedIndex]).filter(
+      (atom) =>
+        !orderedRecordGet(actor.recent.closures, atom.key) && !prepared.pendingAtoms.has(atom.key),
+    );
     const bytes =
-      byteLength(candidate) +
-      byteLength(clock ?? {}) +
-      marginal.reduce((sum, atom) => sum + atom.bytes, 0);
-    const count = target.kind === 'boundary' ? 0 : 1;
+      coverageBytes({
+        binding: binding.id,
+        members: [candidate],
+        ...(clock ? { clock } : {}),
+        ...(target.kind === 'boundary' && target.reason ? { boundary: target.reason } : {}),
+      }) + marginal.reduce((sum, atom) => sum + atom.bytes, 0);
+    const count = existing || target.kind === 'boundary' ? 0 : 1;
     const headroom = 1 + selectedTemporalPolicy(world).maintenanceHeadroom;
     const accepted =
       required ||
-      (actor.bytes + prepared.bytes + bytes <= prepared.policy.maxBytes * headroom &&
+      (previousDecision !== false &&
+        actor.bytes + prepared.bytes + bytes <= prepared.policy.maxBytes * headroom &&
         actor.count + prepared.count + count <= prepared.policy.maxChanges * headroom);
-    prepared.decisions.set(decision, accepted);
-    prepared.coordinates.set(decision, memberIndex);
+    if (!existing) {
+      prepared.decisions.set(decision, accepted);
+      prepared.coordinates.set(decision, memberIndex);
+    }
     if (!accepted) {
       target.rejected ??= [];
       (target.rejected as NonNullable<ReceivedEntry['rejected']>[number][]).push({
@@ -983,10 +993,6 @@ function projectionAtoms(
   for (const index of members ?? projection.members.map((member) => member.logicalMember)) {
     const member = projection.members.find((member) => member.logicalMember === index)!;
     for (const atom of member.closures) atoms.set(atom.key, atom.bytes);
-  }
-  for (const index of members ?? projection.members.map((member) => member.logicalMember)) {
-    const member = projection.members.find((member) => member.logicalMember === index)!;
-    atoms.set(`binding:${projection.binding}:${member.logicalMember}`, member.bytes);
   }
   return [...atoms].map(([key, bytes]) => ({ key, bytes }));
 }
@@ -1591,7 +1597,10 @@ function flushReceivedBatch(world: WorldState, actorId: string, prepared: BatchB
             : 'receivedOccurrenceEntries',
     );
     countDomainWork('receivedLogicalMembersAdmitted', entry.charge.count);
-    countDomainWork('receivedLogicalMembersRejected', entry.rejected?.length ?? 0);
+    countDomainWork(
+      'receivedLogicalMembersRejected',
+      new Set(entry.rejected?.map((hole) => hole.memberIndex)).size,
+    );
   }
   if (domainCountersEnabled()) {
     countDomainWork('receivedBatchEncodedBytes', byteLength(value));

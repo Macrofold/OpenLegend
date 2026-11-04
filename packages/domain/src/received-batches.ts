@@ -93,8 +93,9 @@ export interface ReceivedChargeProjection {
   members: readonly {
     logicalMember: number;
     partIndices: readonly number[];
-    bytes: number;
     count: number;
+    /** Shared rich values and exact typed-part descriptor atoms. This is cost
+     * accounting only; actual facets independently establish value ownership. */
     closures: readonly { key: string; bytes: number }[];
     individualIds: readonly string[];
     sourceIds: readonly string[];
@@ -179,9 +180,9 @@ export function selectReceivedBindingParts(
 ): ReceivedBinding {
   if (binding.parts.every((part) => indices.has(part.partIndex))) return binding;
   const parts = binding.parts.filter((part) => indices.has(part.partIndex)),
-    logical = new Set(parts.map((part) => part.logicalMember));
+    { charges: _charges, ...descriptor } = binding;
   return {
-    ...binding,
+    ...descriptor,
     parts,
     ...(binding.predecessors
       ? {
@@ -189,20 +190,6 @@ export function selectReceivedBindingParts(
             const partIndices = predecessor.partIndices.filter((index) => indices.has(index));
             return partIndices.length ? [{ ...predecessor, partIndices }] : [];
           }),
-        }
-      : {}),
-    ...(binding.charges
-      ? {
-          charges: {
-            ...binding.charges,
-            id: JSON.stringify([binding.id, parts.map((part) => part.partIndex)]),
-            members: binding.charges.members
-              .filter((member) => logical.has(member.logicalMember))
-              .map((member) => ({
-                ...member,
-                partIndices: member.partIndices.filter((index) => indices.has(index)),
-              })),
-          },
         }
       : {}),
   };
@@ -232,44 +219,13 @@ export function mergeReceivedBindings(
       return partIndices.length ? [{ ...value, partIndices }] : [];
     }),
   ];
-  const charges =
-    left.charges && right.charges
-      ? {
-          ...left.charges,
-          id: JSON.stringify([left.id, parts.map((part) => part.partIndex)]),
-          members: [
-            ...new Set(
-              [...left.charges.members, ...right.charges.members].map(
-                (member) => member.logicalMember,
-              ),
-            ),
-          ].map((logicalMember) => {
-            const values = [...left.charges!.members, ...right.charges!.members].filter(
-                (member) => member.logicalMember === logicalMember,
-              ),
-              first = values[0]!,
-              closures = new Map(
-                values.flatMap((value) =>
-                  value.closures.map((atom) => [atom.key, atom.bytes] as const),
-                ),
-              );
-            return {
-              ...first,
-              partIndices: [...new Set(values.flatMap((value) => value.partIndices))].sort(
-                (a, b) => a - b,
-              ),
-              bytes: Math.max(...values.map((value) => value.bytes)),
-              closures: [...closures].map(([key, bytes]) => ({ key, bytes })),
-              individualIds: [...new Set(values.flatMap((value) => value.individualIds))],
-              sourceIds: [...new Set(values.flatMap((value) => value.sourceIds))],
-            };
-          }),
-        }
-      : (left.charges ?? right.charges);
+  // A different exact mask has different descriptor bytes and rich references.
+  // The existing sources/world owner derives it once; do not estimate from two
+  // potentially overlapping projections or keep removed parts alive.
+  const { charges: _charges, ...descriptor } = left;
   return {
-    ...left,
+    ...descriptor,
     parts,
     predecessors: predecessors.filter((value) => value.partIndices.length),
-    ...(charges ? { charges } : {}),
   };
 }

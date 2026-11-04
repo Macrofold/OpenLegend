@@ -17,7 +17,7 @@ import {
   temporalValueLogicalBytes,
 } from './temporal-evidence.js';
 import { receivedValueAt } from './received-values.js';
-import { immutableDataSnapshot, jsonByteLength } from './records.js';
+import { immutableDataSnapshot, isImmutableData, jsonByteLength } from './records.js';
 import { appendSnapshot, readOnlyDraftView } from './draft.js';
 import type { ObserverSubject } from './knowledge.js';
 import { selectReceivedBindingParts, mergeReceivedBindings } from './received-batches.js';
@@ -425,17 +425,23 @@ export function temporalReceiptValues(
     return value ? [value] : [];
   });
 }
+const bindingReferences = new WeakMap<ReceivedBinding['parts'], ReadonlySet<string>>();
+/** Ownership derives from actual facets, independently of supplied accounting
+ * metadata. Repeated immutable descriptors reuse this exact reference set. */
+function receivedBindingReferences(binding: ReceivedBinding): ReadonlySet<string> {
+  const cached = bindingReferences.get(binding.parts);
+  if (cached) return cached;
+  const references = new Set<string>();
+  for (const part of binding.parts)
+    for (const reference of temporalFacetValueReferences(part.facet)) references.add(reference);
+  if (isImmutableData(binding.parts)) bindingReferences.set(binding.parts, references);
+  return references;
+}
 export function temporalPageReferences(page: TemporalPage): ReadonlySet<string> {
   const refs = new Set<string>();
   for (const batch of page.batches) {
-    for (const binding of batch.bindings) {
-      if (binding.charges)
-        for (const member of binding.charges.members)
-          for (const atom of member.closures) refs.add(atom.key);
-      else
-        for (const part of binding.parts)
-          for (const ref of temporalFacetValueReferences(part.facet)) refs.add(ref);
-    }
+    for (const binding of batch.bindings)
+      for (const ref of receivedBindingReferences(binding)) refs.add(ref);
     for (const entry of batch.entries)
       for (const facet of entry.receipt?.facets ?? [])
         for (const ref of temporalFacetValueReferences(facet)) refs.add(ref);
@@ -464,14 +470,44 @@ export interface TemporalPageMetadata {
 }
 /** Build exact charge projections once per used binding. Repeated samples refer
  * to these projections; their directory contains one header per entry. */
-const bindingChargeProjections = new WeakMap<object, ReceivedChargeProjection>();
+const bindingChargeProjections = new WeakMap<
+  object,
+  Map<
+    string,
+    {
+      seed: ReceivedBinding['seed'];
+      projection: ReceivedChargeProjection;
+      worldAware: boolean;
+    }
+  >
+>();
 export function receivedBindingChargeProjection(
   binding: ReceivedBinding,
   sources: ReceivedValueLookup,
   world?: import('./temporal-read-context.js').TemporalReadSource,
+  partIndices?: ReadonlySet<number>,
 ): ReceivedChargeProjection {
-  const existing = binding.charges ?? bindingChargeProjections.get(binding.parts);
-  if (existing) return existing;
+  const selected = partIndices ? selectReceivedBindingParts(binding, partIndices) : binding;
+  if (selected.charges) return selected.charges;
+  const key = JSON.stringify(selected.parts.map((part) => part.partIndex));
+  let masks = bindingChargeProjections.get(binding.parts);
+  const existing = masks?.get(key);
+  if (existing && existing.seed === binding.seed && (!world || existing.worldAware))
+    return existing.projection;
+  const projection = deriveReceivedBindingChargeProjection(selected, sources, world);
+  if (isImmutableData(binding.parts) && isImmutableData(binding.seed)) {
+    if (!masks) bindingChargeProjections.set(binding.parts, (masks = new Map()));
+    masks.set(key, { seed: binding.seed, projection, worldAware: !!world });
+  }
+  return projection;
+}
+/** Current-format integrity recomputes from raw parts; neither a saved projection
+ * nor its cache may certify its own closures or byte totals. */
+export function deriveReceivedBindingChargeProjection(
+  binding: ReceivedBinding,
+  sources: ReceivedValueLookup,
+  world?: import('./temporal-read-context.js').TemporalReadSource,
+): ReceivedChargeProjection {
   const logical = new Map<number, (typeof binding.parts)[number][]>();
   for (const part of binding.parts) {
     const held = logical.get(part.logicalMember);
@@ -483,24 +519,30 @@ export function receivedBindingChargeProjection(
     binding: binding.id,
     members: [...logical].map(([logicalMember, parts]) => {
       const closures = new Map<string, number>();
-      for (const part of parts)
+      for (const part of parts) {
         for (const reference of temporalFacetValueReferences(part.facet)) {
           const value = receivedValueAt(sources, reference);
-          if (value) closures.set(reference, jsonByteLength(value));
+          if (!value) throw new Error('Received binding references an unavailable value.');
+          closures.set(JSON.stringify(['value', reference]), jsonByteLength(value));
         }
+        // Overlapping masks share each typed descriptor exactly once. Inline
+        // payloads live here; only independently charged pooled values are omitted.
+        closures.set(
+          JSON.stringify(['part', binding.id, part.partIndex]),
+          jsonByteLength({
+            ...part.facet,
+            valueRef: typeof part.facet.valueRef === 'string' ? undefined : part.facet.valueRef,
+            reception:
+              part.facet.reception?.kind === 'body' &&
+              typeof part.facet.reception.poseRef === 'string'
+                ? { ...part.facet.reception, poseRef: undefined }
+                : part.facet.reception,
+          }),
+        );
+      }
       return {
         logicalMember,
         partIndices: parts.map((part) => part.partIndex),
-        bytes: jsonByteLength(
-          parts.map((part) => ({
-            ...part.facet,
-            valueRef: undefined,
-            reception:
-              part.facet.reception?.kind === 'body'
-                ? { kind: 'body', poseRef: undefined }
-                : part.facet.reception,
-          })),
-        ),
         count: 1,
         sourceIds: temporalReceiptAliases(
           { ...binding.seed, facets: parts.map((part) => part.facet) },
@@ -515,56 +557,51 @@ export function receivedBindingChargeProjection(
       };
     }),
   };
-  const owned = immutableDataSnapshot(projection, readOnlyDraftView);
-  bindingChargeProjections.set(binding.parts, owned);
-  return owned;
+  return immutableDataSnapshot(projection, readOnlyDraftView);
 }
 export function receivedBatchChargeDirectory(
   batch: ReceivedBatch,
   sources: ReceivedValueLookup,
+  world?: import('./temporal-read-context.js').TemporalReadSource,
 ): ReceivedChargeDirectory {
-  const projections = batch.bindings.map((binding) =>
-    receivedBindingChargeProjection(binding, sources),
-  );
+  const projections: ReceivedChargeProjection[] = [];
   const entries = batch.entries.map((entry) => {
-    const uses = entry.coverage.map((coverage) => {
-      const projection = projections.find((item) => item.binding === coverage.binding)!;
-      const members = coverage.members.map(
-        (member) =>
+    // Independent clocks can split detail and pose within one successful sample.
+    // Charge their exact union once under the original logical member coordinate.
+    const coverageMembers = new Map<number, Map<number, Set<number>>>();
+    for (const coverage of entry.coverage) {
+      let members = coverageMembers.get(coverage.binding);
+      if (!members) coverageMembers.set(coverage.binding, (members = new Map()));
+      for (const member of coverage.members) {
+        let indices = members.get(member.memberIndex);
+        if (!indices) members.set(member.memberIndex, (indices = new Set()));
+        for (const index of member.partIndices) indices.add(index);
+      }
+    }
+    const uses = [...coverageMembers].map(([bindingId, coverage]) => {
+      const binding = batch.bindings.find((binding) => binding.id === bindingId)!;
+      const projection = receivedBindingChargeProjection(
+        binding,
+        sources,
+        world,
+        new Set([...coverage.values()].flatMap((indices) => [...indices])),
+      );
+      if (!projections.some((held) => held.id === projection.id)) projections.push(projection);
+      const members = [...coverage.values()].map(
+        (indices) =>
           projection.members.find((projected) =>
-            projected.partIndices.some((index) => member.partIndices.includes(index)),
+            projected.partIndices.some((index) => indices.has(index)),
           )!.logicalMember,
       );
       return {
         projection: projection.id,
-        memberIndices: coverage.members.map((member) => member.memberIndex),
+        memberIndices: [...coverage.keys()],
         ...(members.length === projection.members.length &&
         members.every((member, index) => member === index)
           ? {}
           : { members }),
       };
     });
-    const groupedUses = new Map<
-      string,
-      { projection: string; memberIndices: number[]; members: number[] }
-    >();
-    for (const use of uses) {
-      const projection = projections.find((projection) => projection.id === use.projection)!;
-      const members = use.members ?? projection.members.map((member) => member.logicalMember);
-      let held = groupedUses.get(use.projection);
-      if (!held)
-        groupedUses.set(
-          use.projection,
-          (held = { projection: use.projection, memberIndices: [], members: [] }),
-        );
-      for (let index = 0; index < use.memberIndices.length; index++)
-        if (!held.memberIndices.includes(use.memberIndices[index]!)) {
-          held.memberIndices.push(use.memberIndices[index]!);
-          held.members.push(members[index]!);
-        }
-    }
-    uses.length = 0;
-    uses.push(...groupedUses.values());
     if (entry.receipt) {
       const id = JSON.stringify(['entry', batch.batchOrder, entry.entryIndex]);
       const projection: ReceivedChargeProjection = {
@@ -574,17 +611,16 @@ export function receivedBatchChargeDirectory(
           const atoms = new Map<string, number>();
           for (const reference of temporalFacetValueReferences(facet)) {
             const value = receivedValueAt(sources, reference);
-            if (value) atoms.set(reference, jsonByteLength(value));
+            if (value) atoms.set(JSON.stringify(['value', reference]), jsonByteLength(value));
           }
           return {
             logicalMember: facet.memberIndex,
             partIndices: [facet.memberIndex],
-            bytes: 0,
             count: entry.kind === 'boundary' ? 0 : 1,
             sourceIds: temporalReceiptAliases(
               { ...entry.receipt!, facets: [facet] },
               sources,
-              undefined,
+              world,
             ),
             individualIds: temporalReceiptIndividualIds(
               { ...entry.receipt!, facets: [facet] },
@@ -608,7 +644,9 @@ export function receivedBatchChargeDirectory(
       bytes: entry.charge.bytes,
       count: entry.charge.count,
       ...(entry.kind === 'occurrence' ? { indivisible: true as const } : {}),
-      ...(entry.rejected?.length ? { holes: entry.rejected.map((hole) => hole.memberIndex) } : {}),
+      ...(entry.rejected?.length
+        ? { holes: [...new Set(entry.rejected.map((hole) => hole.memberIndex))] }
+        : {}),
       uses,
     };
   });
@@ -637,7 +675,9 @@ export function temporalPageMetadata(
     entryBytes = 0,
     count = 0,
     spatialContext = false;
-  const directories = page.batches.map((batch) => receivedBatchChargeDirectory(batch, sources));
+  const directories = page.batches.map((batch) =>
+    receivedBatchChargeDirectory(batch, sources, options.world),
+  );
   for (const batch of page.batches) {
     for (const binding of batch.bindings) {
       subjects.add(binding.subject);
