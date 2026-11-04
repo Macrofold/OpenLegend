@@ -88,9 +88,9 @@ Rejected for this delivery: a live neural character controller; downloading weig
 The design decision is made; these are bounded qualification tasks, not unanswered product questions:
 
 1. Authenticate the selected host, record an immutable deployment and actual model identifier, and establish a live rate/termination-based maximum before the first paid prediction. If access or billing cannot be bounded, prepare the free/offline work and report the specific dependency.
-2. Inspect actual output skeleton names, axes, rest pose, root translation and duration. Implement the smallest correct source import and two verified maps: current mercenary/automatic human route and MPFB. A file extension or matching label does not establish compatibility.
+2. Inspect actual output skeleton names, axes, rest pose, root translation and duration. Implement the smallest correct source import and verified maps for the current mercenary and one MPFB study body/outfit. Automatic rigs remain a separate target until checked. A file extension or matching label does not establish compatibility.
 3. Run a small paired study on one existing humanoid and a second family target. Include a meaningful everyday motion, an expressive one-shot and a contact/locomotion stress case; compare correction effort and review the whole accepted output rather than model inference alone.
-4. Establish whether hosted v1.1 is good enough for the chosen clips or whether native v1.2 materially reduces correction. Do not change pins invisibly or call one version by another's name.
+4. Qualify hosted v1.1 for the chosen clips. Compare native v1.2 only when already provisioned or a concrete hosted limitation justifies the setup. Keep their evidence separate and do not change pins invisibly.
 5. If a real target-pose transition remains awkward by ordinary keying, qualify MotionBricks using production-safe input poses and the same target/export checks. No transition need means no MotionBricks installation task on the critical path.
 
 Current status: research and design only; provider access, target maps, clip acceptance, end-to-end costs and model execution remain unverified. Existing art-review questions, rig-family qualification and gameplay action gaps keep their existing owners.
