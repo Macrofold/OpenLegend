@@ -185,7 +185,7 @@ They also complicate nostalgia. A track may recall childhood, a recent playthrou
 
 ### 10. It remains welcome across the player's actual exposure
 
-Repeated listening can create familiarity or fatigue. Exposure is shaped by how long a player stays, how often they fail, how much they revisit, whether the same words demand attention, and what else they want to hear. The evidence contains requests to replace an iconic Undertale cue, expand a fitting RimWorld repertoire, mute beloved Animal Crossing music, or escape a repeated Expedition 33 cue. [E22], [P17], [P09], [X15]
+Repeated listening can create familiarity or fatigue. Exposure is shaped by whether the player chooses the repetition, how long they stay, how often they fail, how much they revisit, whether the same words demand attention, and what else they want to hear. The evidence contains requests to replace an iconic Undertale cue, expand a fitting RimWorld repertoire, mute beloved Animal Crossing music, or escape a repeated Expedition 33 cue. [E22], [P17], [P09], [X14], [X15]
 
 Consequently, an album's appeal is insufficient evidence of its suitability for a long gameplay loop. Conversely, muting alone is an ambiguous signal: a player may love the music and still prefer household awareness, an audiobook, environmental sounds or a different mood on that occasion. [X21]
 
