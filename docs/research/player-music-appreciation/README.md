@@ -26,7 +26,7 @@ The study provides player accounts, interpretations and qualifications for the f
 
 | Question | Examples examined |
 | --- | --- |
-| How does music gain meaning through progress and memory? | Outer Wilds, Undertale / Deltarune, NieR, Final Fantasy XIV, Chrono Trigger / Cross, Journey, To the Moon, Expedition 33 |
+| How does music gain meaning through progress and memory? | Outer Wilds, Undertale, NieR, Final Fantasy XIV, Chrono Trigger / Cross, Journey, To the Moon, Expedition 33 |
 | How does a place or routine become musically familiar? | Minecraft, Skyrim, Stardew Valley, Animal Crossing, World of Warcraft, Hollow Knight, RimWorld, FTL |
 | How does music relate to effort and attention? | DOOM, Metal Gear Rising, Celeste, Hi-Fi Rush, Halo Infinite |
 | How do character, humor and personal taste contribute? | Hades / Hades II, Portal / Portal 2, Katamari, Persona 5, Tony Hawk |
