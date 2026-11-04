@@ -45,7 +45,7 @@ action timing; do not change gameplay durations to fit a generated performance.
 2. **New compatible human motion:** use the [default human-motion source](tools.md#human-motion-generation)
    once its pinned provider/version and the selected target rig are qualified. Describe the motion
    naturally, then retain the exact submitted prompt and resolved controls. Reuse a qualified route;
-   qualification is not a new review ritual for every compatible clip.
+   qualification is not a new review ritual for every compatible clip. Its full identity includes deployment/model, source format and rest profile, importer settings, target rest hierarchy and map revision ([technical contract](../../projects/art-workflow-tech-design.md#119-implementation-order-and-qualification)).
 3. **Other anatomy or an unavailable default route:** use an available clip library or Blender
    authoring appropriate to the selected rig. A user-selected source takes precedence when suitable.
    State the concrete access or compatibility gap and the route actually used; never silently
@@ -87,8 +87,7 @@ sources and preserve timing explicitly.
   route; it is not a map for a newly selected generator's skeleton.
 - `--stride NAME` converts a traveling gait into one in-place stride from left heel strike and writes
   its measured speed to `<out>.clips.json`. Use it for newly prepared `Walk`, `Run` or `Sprint` clips
-  that the game paces to travel speed, on a supported target foot mapping. Other traveling clips
-  use `--in-place NAME` when required by their consumer.
+  that the game paces to travel speed, on a supported target foot mapping. Use `--in-place NAME` only for a deliberately reviewed net-drift correction; it does not close a pose seam or safely remove an arbitrary one-shot trajectory. Follow the [root-policy finishing rules](../../projects/art-workflow-tech-design.md#116-finish-motion-for-play).
 - `--motion-only` exports the skeleton and clips for a consumer that loads motion separately.
 - Hand-keying on the selected rig remains available. The existing
   [`study_human_motion.py`](../../../scripts/study_human_motion.py) is a starting point for procedural
@@ -162,8 +161,7 @@ the animated file's hash, or the mercenary's values in
 For both simple and full paths, play the actual exported clip on the exported target at normal speed
 and inspect important contact frames: feet, ground penetration, joint limits, hand/weapon grips,
 clothing and held items. Check action names, duration and sampling, loop seams or one-shot endpoints,
-and preservation of retained motion and appearance. The game's simulation moves the body, so game
-clips must be in place. A clean source-rig preview does not prove the target character works.
+and preservation of retained motion and appearance. The game's simulation moves the body. Locomotion cycles play in place; one-shot local weight shifts and vertical movement follow the explicit root policy and never become a second world-position authority. A clean source-rig preview does not prove the target character works.
 
 `motion=rough` stops at useful readable motion after those checks. `motion=polished` follows the
 [production motion order](../assets-and-animation.md#4-produce-motion-that-serves-an-action) for the
