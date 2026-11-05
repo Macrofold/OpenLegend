@@ -2,12 +2,12 @@
 
 ## State
 
-Created, checked, archived privately, and published in the public studies and the hosted study pages. Just before the move into the game went out, Mike found the new heads' necks broken mid-run and the run hunched. On the fixed files he then found Kest's neck jutting forward, a hump and a chest like small breasts. All of it is fixed in the study files, with every person judged whole through their strides ([The head and neck, and the run's back](#the-head-and-neck-and-the-runs-back)). Mike then rejected the MakeHuman bodies themselves, so only Ada and Mara Reed move into the game, on their sheet models; Kest, Tavin Vale, Orin, Mike and the mercenary keep the files the game has ([Into the game](#into-the-game)). Nothing new is published: the rebuilt study files and Ada's and Mara's game files wait for his look.
+Created, checked, archived privately, and published in the public studies and the hosted study pages. Just before the move into the game went out, Mike found the new heads' necks broken mid-run and the run hunched. On the fixed files he then found Kest's neck jutting forward, a hump and a chest like small breasts. All of it is fixed in the study files, with every person judged whole through their strides ([The head and neck, and the run's back](#the-head-and-neck-and-the-runs-back)). Mike then rejected the MakeHuman bodies themselves, so only Ada and Mara Reed move into the game, on their sheet models; Kest, Tavin Vale, Orin, Mike and the mercenary keep the files the game has ([Into the game](#into-the-game)). Ada's and Mara's game files are in the development runtime release (November 5); the rebuilt study files wait for his look.
 
 - **Owner choice:** Mike picked Sela's route B on November 4, 2026, asked for the rest of the cast's faces, had the finished study published the same day ("Yes, publish"), then asked for the fixes in the game ("Yes, move them").
 - **Archive:** both batches are archived privately (Resume). The fixed files are not archived yet.
 - **Published:** the 49 changed or new models and the catalog are in the public studies release, and the game's art-inspector link opens hosted pages built from it (Resume). They are the files from before the neck and back fixes.
-- **Not in the game yet:** the game still plays the cast's November 1 motion files and the mercenary's earlier textures. Ada's and Mara's sheet models are prepared to replace their MakeHuman outfits ([Into the game](#into-the-game)).
+- **In the game:** Ada's and Mara's sheet models replace their MakeHuman outfits in the development runtime release of November 5 ([Into the game](#into-the-game)). Everyone else still plays the November 1 motion files, and the mercenary his earlier textures.
 
 ## Brief
 
@@ -367,7 +367,7 @@ The fix needs the hands' own skin: the bodies cut again without the sleeve's cut
 
 Mike asked for the fixes in the game on November 4 ("Yes, move them"). His looks at the prepared files found the neck, back and chest faults above. He then rejected the MakeHuman bodies themselves ("They are horrible") and asked for the new bodies first: "we can move the new bodies into the game first without all that other stuff". Kest, Tavin Vale, Orin and Mike stay "as they are" until their character sheets come; people built from parts come later ([people built from parts](../../../docs/maintainers/art/people.md)).
 
-**Ada and Mara on their sheet models**, prepared, not published:
+**Ada and Mara on their sheet models**, published November 5 with Mike's permission ("Yes, publish", with the dresses as they are) as development runtime revision `sha256-9953d8419b6328fc707700e8a697be4c6e32c883419f8013c1eb2c06fb2034a9` (manifest SHA-256 `06cd3da048b08f01ad3b5794aaa00304530ef61b4da66417dd800d1e181e496d`, operation `sheet-people-development-runtime-20261105`), revision 7 of the `development/runtime` selection. It keeps every file of revision 6 and adds only the two files below; [`assets/locks/development.json`](../../../assets/locks/development.json) names it. A saved world uses it once its owner chooses **Use installed game art**. The public studies release does not carry the two files yet, so the art study served from a checkout cannot load their subjects until it does:
 
 - `source-sheet-people/{ada,mara}-sheet-model.glb`: the sheet model with her generated head and the eight clips, grafted again with `head --max-texture 1024` so both maps are 1024²; 58,457 and 58,935 triangles, 3.8 MB each. One file serves as both still and motion, as in the study.
 - [`selections.json`](../../../apps/client/src/props/art-study/selections.json) shows them in place of Ada's field tunic and Mara's travel coat in the game's current art. Saved worlds and the world's definitions are unchanged, and the art study lists the MakeHuman outfits as retained sources.
@@ -497,7 +497,8 @@ The seven head jobs sent at once and stopped unstarted charged nothing. Everythi
   - study files: `work/recipes/review/{plan.json,scale-heights.py,write-catalog.py}`.
 - **View:** open the hosted [art study](https://assets.openlegend.ai/studies/public/viewers/webgl-b5e612ef55fe01b22918f69abd44a130b748051167d34b80365a10159130ef0b/art-study.html) and choose **Character lineup · own heights** or a **Characters ·** subject, or serve a checkout's current pages with `pnpm assets serve --page /art-study.html`.
   - The working folder's view server was needed only while the study was private. It answers changed files from `publish/` and the rest from the public studies release: from this checkout, run `node_modules/.bin/vite --config <working folder>/study/work/tools/view-server.config.mts`, then open `http://localhost:5201/art-study.html#subject=characters`.
-- **Game files, prepared, not published:** `~/Documents/ChatGPT/OpenLegend-art/2026-11-04-character-fixes-runtime/`.
+- **Ada's and Mara's publication:** `~/Documents/ChatGPT/OpenLegend-art/2026-11-05-sheet-people-runtime/` holds the release manifest, its builder (`work/build_manifest.py`), the complete release it was published from (`full-dev/`) and the receipts.
+- **Game files and checks:** `~/Documents/ChatGPT/OpenLegend-art/2026-11-04-character-fixes-runtime/`.
   - `workspace-sheet/` holds Ada's and Mara's two game files at their repository paths; `build/sheet-game/` their builds, reports and whole-figure renders; `check/` their game-look captures and foot checks, and `after.index.json` the local viewer's file list for them.
   - `workspace/` holds the 29 MakeHuman and mercenary files built before the hip pivot, not moving; `build/heads-30fps/` the pivot build's game heads, not moving either; `workspace-planted/` the first prepared set, superseded. The second set, which Mike looked at, was superseded unpublished and not kept; its renders are in `review/heads/person/`.
   - `work/` holds the recipes: `runtime_heads.py` (the game heads), `assemble_runtime.py` (the re-cut `mercenary.glb`), `stage_runtime.py`, `update_game_catalogs.py`, and `build_runtime_manifest.py` and `build_studies_manifest.py` for the releases.
@@ -522,6 +523,5 @@ The seven head jobs sent at once and stopped unstarted charged nothing. Everythi
   - `studyViewerBaseUrl` in [`assets/delivery.json`](../../../assets/delivery.json) points at it, so the game's art-inspector link opens it. It replaces the November 3 build.
   - Its working folder is `~/Documents/ChatGPT/OpenLegend-art/2026-11-04-hosted-study-build/`.
 - **Open decisions:**
-  - Mike's look at Ada's and Mara's game files, and whether their stretching dresses are acceptable until separate clothing, before they are published to the development runtime ([Into the game](#into-the-game));
-  - his look at the rebuilt study files before they are archived and published in the public studies and the hosted pages;
+  - Mike's look at the rebuilt study files before they are archived and published in the public studies and the hosted pages, with Ada's and Mara's two game files, which that release lacks ([Into the game](#into-the-game));
   - character sheets for Kest, Tavin Vale, Orin and Mike, which Mike will send.

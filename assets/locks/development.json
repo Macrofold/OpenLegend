@@ -5,8 +5,8 @@
       "id": "openlegend-curated"
     },
     "assetId": "development-runtime",
-    "revisionId": "sha256-7d81191ca1c801356c82b4eb0d3362a052fdf822669029056882c5c67c4704a7",
-    "manifestSha256": "cd82ab7af905b8a3052e9f8acaaf83291784a80d631c13d085844fee4e14d0d6"
+    "revisionId": "sha256-9953d8419b6328fc707700e8a697be4c6e32c883419f8013c1eb2c06fb2034a9",
+    "manifestSha256": "06cd3da048b08f01ad3b5794aaa00304530ef61b4da66417dd800d1e181e496d"
   },
   "files": {
     "apps/client/src/characters/mercenary-assets/mercenary-face.json": {
@@ -7477,6 +7477,20 @@
       "sha256": "b400a36caec32c55fb7a95385deedde4f5bc5454a7e6c09f65823554e6c963df",
       "bytes": 383794,
       "mediaType": "image/png"
+    },
+    "apps/client/src/props/art-study/source-sheet-people/ada-sheet-model.glb": {
+      "sha256": "407192328bab8057e5c730af6fdbe1f19c609ae5eb2f47dc4600f4f5eec1d9e3",
+      "bytes": 3805128,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
+    },
+    "apps/client/src/props/art-study/source-sheet-people/mara-sheet-model.glb": {
+      "sha256": "d01b950624f3fba9f411affa083d8798dc9c104a9452eb58bc9b91be3adb66ca",
+      "bytes": 3752536,
+      "mediaType": "model/gltf-binary",
+      "boundary": "runtime",
+      "accessDomain": "public"
     }
   }
 }
