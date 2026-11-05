@@ -225,6 +225,8 @@ review. Apply its consumer contract and budgets together with the package rules 
 1. Pin the intended geometry/surface, physical texture scale, UV or procedural mapping,
    tiling axes and supported material model. Whether lighting belongs in the artwork or is
    supplied by the renderer comes from the look's [production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production).
+   When changing UVs, inspect a check pattern for stretching and seams; preserve asymmetric
+   marks instead of mirroring them, and set island padding for the actual filtering and mip levels.
 2. Finish editable paint/graphs and required maps. Remove unintended baked light from maps
    used as surface data; derive or author meaningful normal, roughness, height and other
    channels instead of relabeling a color image.
