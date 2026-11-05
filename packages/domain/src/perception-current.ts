@@ -258,6 +258,10 @@ export type CurrentFacetProof = Pick<
 // The mutation owner certifies metadata-only successors. The codec can reuse content
 // without comparing every received field, even when clock masks split and merge.
 const contentOrigins = new WeakMap<CurrentContactContent, object>();
+// Metadata-only builders own outer paths, while received fields remain shared.
+// A later semantic write must still go through mutableContact/mutableGroup.
+const mutableMetadataContents = new WeakSet<CurrentContactContent>();
+const mutableMetadataGroups = new WeakSet<CurrentReceivedGroup>();
 function contentIdentity(content: CurrentContactContent): object {
   const known = contentOrigins.get(content);
   if (known) return known;
@@ -273,8 +277,25 @@ function metadataContent(
   prior: CurrentContactContent,
   groups: CurrentReceivedGroup[],
 ): CurrentContactContent {
+  if (mutableMetadataContents.has(prior) || mutableContents.has(prior)) {
+    prior.groups = groups;
+    return prior;
+  }
   const next = { ...prior, groups };
+  mutableMetadataContents.add(next);
   contentOrigins.set(next, contentIdentity(prior));
+  return next;
+}
+function metadataGroup(
+  group: CurrentReceivedGroup,
+  changes: Partial<Pick<CurrentReceivedGroup, 'metadata' | 'recordings'>>,
+): CurrentReceivedGroup {
+  if (mutableMetadataGroups.has(group) || mutableGroups.has(group)) {
+    Object.assign(group, changes);
+    return group;
+  }
+  const next = { ...group, ...changes };
+  mutableMetadataGroups.add(next);
   return next;
 }
 export function currentFacetCheckScope(
@@ -348,6 +369,20 @@ export function withCurrentContactBatch<T>(owner: PerceptionEvidenceOwner, work:
   }
 }
 
+/** Reuse an already owned outer path; metadata editing never grants ownership
+ * of shared received fields or original/field-order dictionaries. */
+function setContactMetadataGroups(
+  owner: PerceptionEvidenceOwner,
+  id: string,
+  contact: CurrentContact,
+  groups: CurrentReceivedGroup[],
+): void {
+  const batch = contactBatch(owner.current)!;
+  const editable = batch.contacts.get(id);
+  const content = metadataContent(contact.content, groups);
+  if (editable === contact) editable.content = content;
+  else batch.contacts.set(id, { ...contact, content });
+}
 function contactAt(
   contacts: PerceptionEvidenceOwner['current'],
   id: string,
@@ -407,7 +442,11 @@ export function setCurrentSightCheck(
 ): void {
   withCurrentContactBatch(owner, () => {
     const contact = contactAt(owner.current, id);
-    if (contact) contactBatch(owner.current)!.contacts.set(id, { ...contact, sight });
+    if (!contact) return;
+    const batch = contactBatch(owner.current)!;
+    const editable = batch.contacts.get(id);
+    if (editable === contact) editable.sight = sight;
+    else batch.contacts.set(id, { ...contact, sight });
   });
 }
 /** Borrowed native input; no copied field, expanded clocks or proof is constructed. */
@@ -670,10 +709,7 @@ export function currentFacetSet(
       });
       if (sameField) {
         if (groups.some((group, at) => group !== priorContact.content.groups[at]))
-          contactBatch(owner.current)!.contacts.set(id, {
-            ...priorContact,
-            content: metadataContent(priorContact.content, groups),
-          });
+          setContactMetadataGroups(owner, id, priorContact, groups);
         return;
       }
     }
@@ -812,7 +848,7 @@ function coveredPartitions(
       next,
     ];
   });
-  return changed ? { ...group, metadata: mergePartitions(metadata) } : group;
+  return changed ? metadataGroup(group, { metadata: mergePartitions(metadata) }) : group;
 }
 export interface CurrentGroupCoverage {
   subjectId: string;
@@ -857,10 +893,7 @@ export function currentSetUnchecked(
         });
       });
       if (groups.some((group, at) => group !== contact.content.groups[at]))
-        contactBatch(owner.current)!.contacts.set(id, {
-          ...contact,
-          content: metadataContent(contact.content, groups),
-        });
+        setContactMetadataGroups(owner, id, contact, groups);
     }
   });
 }
@@ -940,10 +973,7 @@ export function currentConfirmGroups(
       return next;
     });
     if (groups.some((group, at) => group !== prior.content.groups[at]))
-      contactBatch(owner.current)!.contacts.set(subjectId, {
-        ...prior,
-        content: metadataContent(prior.content, groups),
-      });
+      setContactMetadataGroups(owner, subjectId, prior, groups);
     return checked;
   });
 }
@@ -1014,13 +1044,10 @@ export function currentGroupsSetRecording(
             remaining.push(recordingWithMembers(update.recording, update.recording.members));
           recordings = remaining;
         }
-        return recordings === group.recordings ? group : { ...group, recordings };
+        return recordings === group.recordings ? group : metadataGroup(group, { recordings });
       });
       if (groups.some((group, index) => group !== contact.content.groups[index]))
-        contactBatch(owner.current)!.contacts.set(id, {
-          ...contact,
-          content: metadataContent(contact.content, groups),
-        });
+        setContactMetadataGroups(owner, id, contact, groups);
     }
   });
 }
