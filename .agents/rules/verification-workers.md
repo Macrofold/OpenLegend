@@ -6,7 +6,7 @@ Read before requesting, starting, claiming or using any remote verification mach
 
 Use **m7i.xlarge: 4 vCPU, 16 GiB RAM, x86_64, in `us-east-2`, project `027677879749`** for every speed test. Use the managed pool when available, through its matching maintained runner and current claim. Positively verify the actual machine/environment; select a matching available worker, never a hardcoded instance ID. Record the actual hardware and stop/start session because matching instance type alone does not establish a matched comparison.
 
-Only Mike's explicit instruction authorizes a different machine or local speed test. If a required GPU/browser/device measurement is genuinely incompatible with this worker, report the gap and obtain his device choice; do not silently substitute another environment or claim its result replaces or is comparable to the standard baseline. Static/correctness checks retain Verification's existing location choices.
+Only Mike's explicit instruction authorizes a different instance type or local speed test. If a required GPU/browser/device measurement is genuinely incompatible with this worker, report the gap and obtain his device choice; do not silently substitute another environment or claim its result replaces or is comparable to the standard baseline. Static/correctness checks retain Verification's existing location choices.
 
 ## Current availability
 

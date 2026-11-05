@@ -4,7 +4,7 @@ This established collection contains mixed historical campaigns and current summ
 
 [Optional profiling implementation and evidence](profiling-controls.md) records disabled work, process/worker/browser cleanup, tool modes and measured-overhead qualification separately from the smooth3× goal.
 
-The [November 5 matched AWS investigation](bookkeeping/2026/2026-11-05-runtime-ablation.md) compares the historical and current source on one host and isolates perception, recording and attention costs through disposable subsystem removals. It distinguishes failed operating acceptance from proposed structural replacement.
+The [November 5 matched AWS investigation](bookkeeping/2026/2026-11-05-runtime-ablation.md) compares the historical and current source on one host and isolates perception, recording and attention costs through disposable subsystem removals. It distinguishes failed operating acceptance from proposed structural replacement. The [expanded subsystem ranking](bookkeeping/2026/2026-11-05-subsystem-ranking.md) measures additional native, presentation, storage and scheduling costs on the standard worker.
 
 For the integrated attention branch, start with the [October 30 complete-game diagnosis](2026-10/attention-runtime.md): standard and crowded failures, literal processing steps, exact reader obstruction and proposed root corrections. The earlier whole-game campaigns start with [Why OpenLegend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
 

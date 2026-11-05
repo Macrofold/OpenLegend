@@ -126,6 +126,7 @@ Dependencies: SL03–SL07; selected cadence/retention policy in D60 and relevant
 - [x] Schedule bounded server-owned whole-world autosaves through the same capture/publication path, with clear behavior during pause, slow storage, concurrent manual saves and shutdown.
 - [x] Rotate only complete saves, protect manual saves and required dependencies, and apply privacy deletion through the existing authoritative policy.
 - [x] Expose retained restore points and failure/coverage information without implying arbitrary ten-minute rewind.
+- [ ] Resolve and qualify the [standard-opening automatic-checkpoint failure](../verification/performance/bookkeeping/2026/2026-11-05-subsystem-ranking.md#longer-play-and-the-failed-checkpoint) on runtime `259bb1ecd`. Two captures hit the combined record/row-count/total-byte allowance guard without a generic storage error or completed recovery save; identify the first exceeded allowance. Deliver the [coherent live export selection](../projects/bookkeeping-simplification-tech-design.md#bounded-saving-and-ownership), retaining partial live blocks, minimum support and exact restored closure while omitting wholly collectible pages and their obsolete temporal perspectives/garbage-only values. Do not raise limits to hide unnecessary payload; PF00 owns profiler outcome/diagnosis coverage.
 
 Exit: prolonged play remains within the selected storage/work budget; interrupted rotation preserves a usable checkpoint, and every advertised point restores successfully.
 
