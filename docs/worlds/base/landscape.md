@@ -12,7 +12,7 @@ People, hares, deer, birds and objects receive their initial physical profiles f
 
 The original camp, ford, lookout, supplies and bird flight corridor retain their working space. Beyond them are connected low rises, a bending river, more rock formations, scattered berry/wood/stone/fiber patches, and more hares and deer. Wolves and bears start farther east and south. They use existing wandering, perceived-threat escape, injury, harvest and body decay; this introduces no aggression, hunting other animals, packs or new animal intelligence. Their physical clearance currently reuses the existing quadruped profile, while their authored anatomy and harvest quantities belong to `bodies.ts`.
 
-Broadleaf, birch and conifer silhouettes vary in height and width. Sparse trees and shrubs appear inland, with denser irregular woodland toward and beyond the perimeter. This static artwork is decorative: trees do not add collision, sight barriers, harvestable wood or new actions. Resources and rock formations remain separate native objects/geometry. Future interactive trees need that physical/action owner rather than deriving mechanics from pixels.
+Broadleaf, birch and conifer silhouettes vary in height and width. Sparse trees and shrubs appear inland, with denser irregular woodland toward and beyond the perimeter. The woodland leaves about three in ten of its grid points empty, so it has room between trees rather than reading as one mass. This static artwork is decorative: trees do not add collision, sight barriers, harvestable wood or new actions. Resources and rock formations remain separate native objects/geometry. Future interactive trees need that physical/action owner rather than deriving mechanics from pixels.
 
 ## Composition and presentation
 

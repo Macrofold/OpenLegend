@@ -1,6 +1,6 @@
 # Game asset storage and study delivery
 
-**Curated implementation verified; history reclamation separately gated. Updated 2026-10-18.** Shared publication, access, cache, consumer and recovery tools are implemented; current and historical game assets, sources and study pages are published and verified. Independent cloud verification, full isolated object restoration, native world restoration, protected Git restoration and repository removal pass. The signed-in owner selected the installed artwork in the configured current world, and its actual browser renders current scenery, characters and interface icons. [Feature specification](../projects/game-asset-storage-feature-spec.md) · [Technical design and directory contract](../projects/game-asset-storage-tech-design.md) · [AST limits](../limits/game-asset-storage.md).
+**Curated implementation verified; history reclamation separately gated; shared authority (AS09) awaiting migration. Updated 2026-11-05.** Shared publication, access, cache, consumer and recovery tools are implemented; current and historical game assets, sources and study pages are published and verified. Independent cloud verification, full isolated object restoration, native world restoration, protected Git restoration and repository removal pass. The signed-in owner selected the installed artwork in the configured current world, and its actual browser renders current scenery, characters and interface icons. [Feature specification](../projects/game-asset-storage-feature-spec.md) · [Technical design and directory contract](../projects/game-asset-storage-tech-design.md) · [AST limits](../limits/game-asset-storage.md).
 
 This tracker owns storage organization, local tooling, study delivery and migration. [PD05](production-deployment.md) retains hosted-game acceptance; [V3D02/V3D03](3d-pixel-art.md) retain general appearance publication/client handoff; INV retains art-production authority. The AS stages implement shared portions once. Nothing here closes those broader gates, authorizes paid infrastructure or rewrites history.
 
@@ -89,6 +89,16 @@ The configured maximum cache size and broad concurrent-client throughput remain 
 
 - [ ] Inventory affected refs/tags/PRs/clones/worktrees and retained commit links; establish backup/restore and old-to-new commit/recovery mappings before proposing the concrete operation.
 - [ ] If authorized, remove only inventoried externalized blobs from the agreed histories, coordinate remote updates and clone/worktree resynchronization, and verify recoverability plus actual clone/object-size reduction. **Exit:** no lost code/art, no silently reset unrelated checkout and no broken historic recipe reference. Until then, deleting current files reduces checkout/build weight but leaves old reachable Git blobs.
+
+## AS09 — Shared asset authority across machines
+
+**Owners:** asset repository and publication owner. **Depends on:** AS01–AS07. Design: [§12](../projects/game-asset-storage-tech-design.md#12-shared-asset-authority-across-machines).
+
+- [x] Provision Aurora Serverless v2 `openlegend-assets` (us-east-2) with managed administrator secret, IAM database login `openlegend_assets`, encrypted storage, backups, deletion protection and an address allowlist; create the asset tables. Verified 2026-11-04 through a certificate-checked IAM connection.
+- [x] Point publication, permission, recovery, private-pull and viewer commands at the authority without the game writer reservation; add `pnpm assets sync`. Verified 2026-11-04 against disposable probe databases on the same cluster: replacement of stale shared rows, retention of world bindings, refusal with no change on a dangling pin, a 450-row multi-batch copy and the CLI end to end. Not yet exercised: a real publication or a running game against a synced copy.
+- [ ] Qualify concurrent authority revision/permission updates and credential deadline/cleanup through the shared adapter. Write transactions now serialize before revision reads; IAM token signing reuses the bounded asset credential owner. Local PostgreSQL startup/reopen and authority-concurrency checks were not run during this merge because this Mac has no development PostgreSQL (Mike explicitly directed proceeding without them).
+- [ ] Migrate the existing records from the machine that holds them by following the [move steps](../asset-workflow.md#move-a-machines-existing-records-into-the-shared-authority), then sync each machine's game database. Needs that machine (Mike's other Mac); a `HANDOFF.md` with the steps is in `~/Documents/Projects/OpenLegend-asset-work/shared-authority-move/` on the M4 Mac mini.
+- [ ] **Exit:** two machines publish to the authority and their games show the result after sync; a withdrawal on one is honored by the other after its sync.
 
 ## Verification status
 

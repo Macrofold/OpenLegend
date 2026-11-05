@@ -6,6 +6,7 @@ import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
 import icons from '../design-system/icons/catalog';
+import { artworkCredits } from '../study-assets';
 import { THEMES } from '../design-system/themes';
 import { AUTO_UI_SCALE_RANGE, UI_SCALES, type UiScalePreference } from '../design-system/ui-scale';
 import type { CharacterPanelStyle } from './character-panel';
@@ -399,6 +400,23 @@ export const Settings = memo(function Settings({
               Self-hosted fonts: Cormorant Garamond, Atkinson Hyperlegible Next, IBM Plex Mono,
               Cinzel and Chakra Petch. SIL Open Font License 1.1.
             </p>
+          </details>
+          <details>
+            <summary>Artwork credits</summary>
+            <ul>
+              {artworkCredits.map((credit) => (
+                <li key={JSON.stringify(credit)}>
+                  <a href={credit.url} target="_blank" rel="noreferrer">
+                    {credit.work}
+                  </a>{' '}
+                  by {credit.creator},{' '}
+                  <a href={credit.licenseUrl} target="_blank" rel="noreferrer">
+                    {credit.license}
+                  </a>
+                  . {credit.changes}
+                </li>
+              ))}
+            </ul>
           </details>
         </Section>
       </TabPanel>

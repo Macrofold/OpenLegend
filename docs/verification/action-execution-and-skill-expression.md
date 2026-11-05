@@ -1,5 +1,11 @@
 # Skilled action execution — implementation evidence
 
+## November 1, 2026 UTC — intended-contact score check repaired
+
+The existing intended-contact case in `packages/domain/src/combat-contribution.test.ts` named the resident while aiming at an exact point, then expected the flight to keep the resident as its subject. Since the [subject-aiming revision](#october-25-2026-utc--subject-aiming-and-one-second-ring) gave free-point releases no directed subject, that case failed at its flight-subject check and never reached its contact assertions; it fails the same way at its integration commit `1a17f7b8`. Passing intended-contact evidence for [ASE10](../maintainers/action-execution-and-skill-expression.md#ase10--time-latency-and-competitive-safety) therefore came only from runs before that revision. The case now aims at the resident as a [subject](../projects/action-execution-and-skill-expression-tech-design.md#31-one-exact-released-ray-and-retained-source-facts); the collateral case keeps the exact point. Runtime code is unchanged and no test was added.
+
+The full native domain suite passes **23 files and 163 tests**; full TypeScript and changed-file formatting pass. A disposable native probe through the same fixture shows handling **0.80** and release scores **−1/0/+1**. With the saved evasion draw just below that baseline, a poor release lets the resident duck while ordinary and excellent releases hit (**100→90** health); just above it, only the excellent release hits. Results are identical for player-owned and NPC control and for intended and collateral contact. No provider calls ran; cost is **$0**.
+
 ## October 25, 2026 UTC — remove the aggregate injury meter
 
 The overall injury field, its event delta and movement coefficient are removed from body state, response profiles, history and story selection. Damage/healing still use the shared health owner; defense, susceptibility, interruptions, death, scars and independent status effects remain. Body-part wounds are not implemented. The [current body contract](../architecture.md#actor-means-any-living-being) and [care proposal](../projects/recovery-and-care-feature-spec.md) distinguish these retained foundations from future injuries.

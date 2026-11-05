@@ -18,7 +18,7 @@ purpose **UI style** and finish **study**. Select Standard, Higgsfield or both f
 request. A useful initial comparison is three coherent directions per requested flow,
 adjustable to the actual request and budget.
 
-Keep OpenLegend's [current direction](../../decisions.md#current-visual-requirements--october-16-2026)
+Keep OpenLegend's [current direction](../../decisions.md#superseded-pixel-art-requirements--october-16-2026)
 and [creative brief](../../final-board/creative-brief.md) as context. These references support
 exploring richer interface craftsmanship; they do not choose a final palette, require a
 parchment-book interface, or change the world's rendering style.

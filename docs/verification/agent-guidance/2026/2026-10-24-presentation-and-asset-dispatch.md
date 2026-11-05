@@ -4,7 +4,7 @@ Historical campaigns filed October 24, 2026 from `ecf49b1237e0aa83e408572a486aad
 
 ## Grounded art sourcing read-through — October 16, 2026
 
-The root's conditional art-direction route now loads the [current visual requirements](../../../../art-direction/decisions.md#current-visual-requirements--october-16-2026) and [creative brief](../../../../art-direction/final-board/creative-brief.md) before sourcing, concept prompts and visual asset decisions, including new files and client-folder starts. The requirements remain owned by the art documents; root instructions do not duplicate the style contract. Existing technical authoring/rendering work retains its PlayCanvas route.
+The root's conditional art-direction route now loads the [current visual requirements](../../../../art-direction/decisions.md#superseded-pixel-art-requirements--october-16-2026) and [creative brief](../../../../art-direction/final-board/creative-brief.md) before sourcing, concept prompts and visual asset decisions, including new files and client-folder starts. The requirements remain owned by the art documents; root instructions do not duplicate the style contract. Existing technical authoring/rendering work retains its PlayCanvas route.
 
 Four fresh ephemeral **Codex CLI 0.160.1** trials used the existing configured agent, no model override and a read-only sandbox. They prohibited edits, browsing, purchases, implementation, commits, history operations and delegation. Actual completed command output showed the requirements and brief in the three relevant cases; the incidental case read only root instructions.
 

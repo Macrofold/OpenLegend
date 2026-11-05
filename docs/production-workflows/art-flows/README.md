@@ -326,6 +326,8 @@ Compare equivalent coverage, quality, coherence, reuse, correction effort, Mike'
 
 ## 9. Preserve and resume
 
+Publication and permissions use the [shared asset authority](../../asset-workflow.md#shared-asset-authority). After publication, use `pnpm assets sync` to update a machine's game records. The world's look remains owned by [current art direction](../../../art-direction/decisions.md#current-direction-at-a-glance).
+
 The [asset workflow](../../asset-workflow.md) owns storage commands and the [storage decisions](../../projects/game-asset-storage-feature-spec.md#2-agreed-product-decisions) own the rules. In short:
 
 - **Upload as you go:** upload every meaningful output to S3 as soon as its batch finishes, not at the end of the study, and record its exact reference. Only very likely temporary scratch stays local. A later batch is a new revision that depends on the earlier one, not a copy of it.

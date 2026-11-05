@@ -11,7 +11,6 @@ import { installLocomotion } from './model-animation';
 import { Gait, type Stride } from './characters/gait';
 import { CharacterMotion } from './characters/character-motion';
 import type { MotionCue } from './world-motion';
-import { markPixelDetail, needsFinePixels } from './scene-pixels';
 const fieldUrl = assetUrl('apps/client/src/props/library-animals/hare-field.glb');
 const russetUrl = assetUrl('apps/client/src/props/library-animals/hare-russet.glb');
 const winterUrl = assetUrl('apps/client/src/props/library-animals/hare-winter.glb');
@@ -62,27 +61,24 @@ export class LibraryActors {
       source,
       this.presentation,
       this.camera,
-      (material) =>
-        this.prepare(material, needsFinePixels(source.width, source.height, source.width)),
+      (material) => this.prepare(material),
       () => this.actors.delete(actor),
     );
     this.actors.add(actor);
     return actor;
   }
-  private prepare(source: pc.StandardMaterial, fine: boolean): pc.StandardMaterial {
+  private prepare(source: pc.StandardMaterial): pc.StandardMaterial {
     const existing = this.prepared.get(source);
     if (existing) return existing;
     const material = new ShadowMaterial(this.sun).copy(source);
     setVisibilityStencil(material, personStencil);
     if (material.diffuseMap) {
-      // Fixed UV paint remains fixed when the camera moves. Mips suppress
-      // distant texture aliasing without repainting the authored artwork.
-      material.diffuseMap.magFilter = pc.FILTER_NEAREST;
+      // Plain 3D: smooth enlargement, with mips suppressing distant aliasing.
+      material.diffuseMap.magFilter = pc.FILTER_LINEAR;
       material.diffuseMap.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
       material.diffuseMap.anisotropy = 1;
     }
     this.art.prepare(material);
-    if (fine) markPixelDetail(material, this.app.graphicsDevice);
     material.update();
     this.prepared.set(source, material);
     return material;
@@ -246,9 +242,8 @@ export class LibraryActor {
         ? target
         : pc.math.lerpAngle(this.yaw, target, 1 - Math.exp(-step * 12));
     node.setLocalEulerAngles(0, this.yaw, 0);
-    if (this.motion)
-      this.motion.update(dt, speed, paused, art.motion, art.actionFixture, cue.action);
-    else this.run(node.anim, step, speed, paused, art);
+    if (this.motion) this.motion.update(dt, speed, paused, art.actionFixture, cue.action);
+    else this.run(node.anim, step, speed, paused);
     this.presentation.updateReveal(
       this.binding,
       this.material,
@@ -261,13 +256,7 @@ export class LibraryActor {
       selected,
     );
   }
-  private run(
-    anim: pc.AnimComponent,
-    step: number,
-    speed: number,
-    paused: boolean,
-    art: Readonly<ArtTreatment>,
-  ): void {
+  private run(anim: pc.AnimComponent, step: number, speed: number, paused: boolean): void {
     this.gait.update(paused ? 0 : step, paused ? 0 : speed);
     const next = this.gait.moving ? 'Run' : 'Idle';
     const changed = next !== this.clip;
@@ -277,8 +266,7 @@ export class LibraryActor {
       this.elapsed = this.sampled = 0;
     }
     if (!paused) this.elapsed += step;
-    const frequency = art.motion === 'held8' ? 8 : art.motion === 'held12' ? 12 : 0;
-    const sampled = frequency ? Math.floor(this.elapsed * frequency) / frequency : this.elapsed;
+    const sampled = this.elapsed;
     // Holding a pose (or pausing) needs no repeat skeleton evaluation. Rendering
     // still follows current placement and reveal, independently of pose cadence.
     const advance = Math.max(0, sampled - this.sampled);
@@ -305,9 +293,6 @@ export class LibraryActor {
   }
   get outlineMeshes(): readonly pc.MeshInstance[] {
     return this.meshes;
-  }
-  get screenAnchor(): undefined {
-    return undefined;
   }
   screenPoint(point: pc.Vec3): pc.Vec3 {
     return this.camera.camera!.worldToScreen(point);

@@ -14,6 +14,7 @@ import {
   S3ServiceException,
 } from '@aws-sdk/client-s3';
 import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import { Signer } from '@aws-sdk/rds-signer';
 import { fromIni, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { createNetworkOwner, type NetworkOperation, type NetworkPhase } from '@open-legend/network';
@@ -198,6 +199,7 @@ export async function hashAssetFile(path: string): Promise<{ sha256: string; byt
 export class S3AssetStorage {
   private readonly client: S3Client;
   private readonly identity: STSClient;
+  private readonly operatorCredentials: ReturnType<typeof fromIni>;
   private readonly handler: NodeHttpHandler;
   private closed = false;
   private verifiedIdentity?: Promise<string>;
@@ -230,6 +232,7 @@ export class S3AssetStorage {
     const options = { region: configuration.region, maxAttempts: 1, requestHandler: this.handler };
     const master = fromIni({ profile: configuration.profile, clientConfig: options });
     const masterCredentials = () => this.sdk(() => master(), 'credentials');
+    this.operatorCredentials = masterCredentials;
     const roleArn = configuration.roleArns?.[purpose];
     if (configuration.roleArns && !roleArn)
       throw new Error(`No asset storage role is configured for ${purpose}.`);
@@ -295,6 +298,24 @@ export class S3AssetStorage {
     phase: NetworkPhase = 'connect',
   ): Promise<T> {
     return waitSdkValue(this.operation(), phase, start);
+  }
+  /** IAM signing is local, but resolving this operator's credentials can perform
+   * STS/SSO work. Keep it under the existing metadata deadline and transport owner. */
+  databaseAuthToken(authority: { host: string; port: number; user: string }): Promise<string> {
+    if (this.closed) return Promise.reject(new Error('Asset storage is closed.'));
+    return this.network(30_000, () =>
+      this.sdk(
+        () =>
+          new Signer({
+            hostname: authority.host,
+            port: authority.port,
+            username: authority.user,
+            region: this.configuration.region,
+            credentials: this.operatorCredentials,
+          }).getAuthToken(),
+        'credentials',
+      ),
+    );
   }
   async principal(): Promise<string> {
     if (this.closed) throw new Error('Asset storage is closed.');

@@ -64,6 +64,10 @@ const WOODLAND_PATCHES: Array<[string, string, number, number, number, number]> 
   ['raw_fiber', 'Dry grass fibers', 46, 35, 30, BASE_RESOURCE_GATHERING_SECONDS.raw_fiber],
   ['raw_fiber', 'River reeds', 10, 40, 42, BASE_RESOURCE_GATHERING_SECONDS.raw_fiber],
 ];
+/** Share of perimeter-woodland grid points left without a tree, so the stand has room
+ * between trees instead of reading as one dense mass.
+ * docs/limits/base-world.md#bw13--starting-wilderness */
+const WOODLAND_GAP_SHARE = 0.3;
 const noise = (seed: number, x: number, z: number): number => {
   let n =
     Math.imul(seed ^ Math.imul(x + 317, 374761393), 668265263) ^ Math.imul(z + 911, 1274126177);
@@ -201,6 +205,7 @@ export function starterScenery(
       // The original camp and lookout keep their working space, flight corridor and sightlines.
       if (Math.hypot(px - 11, pz - 12) < 5.5 || (px > 17 && px < 26 && pz > 3 && pz < 14)) continue;
       if (edge > perimeter && (n > 0.075 || (px < 27 && pz < 23))) continue;
+      if (edge <= perimeter && noise(seed + 41, col, row) < WOODLAND_GAP_SHARE) continue;
       const shape = noise(seed + 7, col, row),
         h = shape < 0.35 ? 6.2 + n * 3.2 : 4.5 + n * 3.5;
       add(

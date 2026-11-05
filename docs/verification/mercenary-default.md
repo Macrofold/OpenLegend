@@ -1,6 +1,6 @@
 # Default mercenary character evidence
 
-September 28, 2026. Scope: the owner-selected mercenary study as a separate default NPC, live animation/cloth, fixed character pixels and actual-depth compositing. [Plan](../projects/completed/mercenary-scene-pilot.md), [current presentation](../world-presentation.md#animated-character-pixels), [bounds](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot), and remaining [V3D01/V3D05/V3D11 work](../maintainers/3d-pixel-art.md). This does not qualify the general generated-art pipeline.
+September 28, 2026. Scope: the owner-selected mercenary study as a separate default NPC, live animation/cloth, fixed character pixels and actual-depth compositing. [Plan](../projects/completed/mercenary-scene-pilot.md), [current presentation](../world-presentation.md#animated-characters), [bounds](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot), and remaining [V3D01/V3D05/V3D11 work](../maintainers/3d-pixel-art.md). This does not qualify the general generated-art pipeline.
 
 ## Environment and checks
 
@@ -64,7 +64,7 @@ A temporary loopback server served only the relocated `study/` directory. Instal
 
 **Art direction rejected after these checks.** Mike rejected the first block figure as ugly and asked for a result closer to the original 3D model. The recorded renderer/geometry checks remain valid for that prototype; they do not establish acceptable art. [MER09](../maintainers/art/mercenary.md#rejected-first-block-figure-and-new-sculpted-iteration) and the [reopened plan](../projects/completed/mercenary-voxel-iteration.md#revised-art-direction-after-explicit-rejection) own the replacement.
 
-Mike rejected camera-dependent sampled pixels, lost facial detail, small apparent height and thin clothing/body intersections. The new iteration constructs permanent colored cubic cells rather than voxelizing or rasterizing the previous mesh. The original GLB, renderer, cloth, external Blender study and dated package remain intact. [MER08](../maintainers/art/mercenary.md) owns sources/creator acceptance; [A3D16](../limits/3d-pixel-art.md#a3d16--authored-block-mercenary) owns the delivered art envelope, and [world presentation](../world-presentation.md#animated-character-pixels) describes current behavior.
+Mike rejected camera-dependent sampled pixels, lost facial detail, small apparent height and thin clothing/body intersections. The new iteration constructs permanent colored cubic cells rather than voxelizing or rasterizing the previous mesh. The original GLB, renderer, cloth, external Blender study and dated package remain intact. [MER08](../maintainers/art/mercenary.md) owns sources/creator acceptance; [A3D16](../limits/3d-pixel-art.md#a3d16--authored-block-mercenary) owns the delivered art envelope, and [world presentation](../world-presentation.md#animated-characters) describes current behavior.
 
 ### Source and geometry checks
 
@@ -103,7 +103,7 @@ The fixture hosts and isolated browser were stopped; known owned databases were 
 
 ## Sculpted source-guided iteration — October 14, 2026
 
-Mike rejected the first block figure as ugly and asked for a much closer likeness to the original 3D model. This revision preserves both earlier art sets. The original standing body's geometry and bone landmarks plus the fitted cape rest geometry guide offline solid-cell construction; anatomical material regions, restrained eyes/brows/mouth, warm hair/beard and two-peacock cape embroidery are deliberately repainted. No original texture colors or camera image are sampled. The shipped asset is an ordinary immutable vertex-color mesh. [MER09](../maintainers/art/mercenary.md#rejected-first-block-figure-and-new-sculpted-iteration), [current presentation](../world-presentation.md#animated-character-pixels) and [A3D17](../limits/3d-pixel-art.md#a3d17--sculpted-source-guided-mercenary) own source progress, current behavior and its limits.
+Mike rejected the first block figure as ugly and asked for a much closer likeness to the original 3D model. This revision preserves both earlier art sets. The original standing body's geometry and bone landmarks plus the fitted cape rest geometry guide offline solid-cell construction; anatomical material regions, restrained eyes/brows/mouth, warm hair/beard and two-peacock cape embroidery are deliberately repainted. No original texture colors or camera image are sampled. The shipped asset is an ordinary immutable vertex-color mesh. [MER09](../maintainers/art/mercenary.md#rejected-first-block-figure-and-new-sculpted-iteration), [current presentation](../world-presentation.md#animated-characters) and [A3D17](../limits/3d-pixel-art.md#a3d17--sculpted-source-guided-mercenary) own source progress, current behavior and its limits.
 
 The finer cells and actual anatomy replace the first figure's cuboid body sections, slab-like hands, horizontal cape throw, large eyes and chunky buckles. Developer inspection compares actual front/back/profile/face renders with the source study; this establishes what was inspected, not Mike's aesthetic approval. The imported source anatomy remains derivative study material with unqualified production rights.
 
@@ -187,7 +187,7 @@ TypeScript, production build, changed-file formatting, local references and full
 
 ## Visible height and whole-character pixels — October 15, 2026
 
-MER11 passed its texture/resource checks but failed Mike's visible height and whole-figure resolution requirements. MER12 restores the original model's complete-character image at 64×112, with separate vertical display correction and fixed physical rig scale. [Current behavior](../world-presentation.md#animated-character-pixels), [scope](../projects/completed/mercenary-visible-size-and-pixels.md) and [MER12](../maintainers/art/mercenary.md#visible-height-and-whole-character-pixels) own the delivery and remaining artistic decisions. Earlier reports below remain historical evidence, not qualification of this path.
+MER11 passed its texture/resource checks but failed Mike's visible height and whole-figure resolution requirements. MER12 restores the original model's complete-character image at 64×112, with separate vertical display correction and fixed physical rig scale. [Current behavior](../world-presentation.md#animated-characters), [scope](../projects/completed/mercenary-visible-size-and-pixels.md) and [MER12](../maintainers/art/mercenary.md#visible-height-and-whole-character-pixels) own the delivery and remaining artistic decisions. Earlier reports below remain historical evidence, not qualification of this path.
 
 ### Setup and measured result
 

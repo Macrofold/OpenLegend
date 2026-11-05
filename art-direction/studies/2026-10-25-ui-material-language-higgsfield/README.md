@@ -108,7 +108,7 @@ from those private archives.
     glows by day, and serif titles with a sans body. They exclude feathered edges, brush
     strokes, ripped paper, rope or cord, glowing icons and text, neon, sci-fi, cute styling,
     pixelated chrome and walnut wood grain.
-  - Also applied: the [visual requirements](../../decisions.md#current-visual-requirements--october-16-2026)
+  - Also applied: the [visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026)
     and the [UI brief](../../../docs/ui-design-brief.md#project-and-atmosphere).
 - **Budget:** $10 ceiling per task. Usage is measured from the Plus-plan credit balance.
   - Round 1: **68.75 credits** (1,096.25 → 1,027.5), 25 images at 2.75 credits each,

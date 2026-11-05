@@ -30,6 +30,13 @@ const embroideredCape = assetUrl(
   'apps/client/src/props/art-study/source-mercenary/cape-embroidered.png',
 );
 
+/** Plain 3D samples character paint smoothly: mipmapped minification and
+ * linear enlargement. */
+export function smoothCharacterSampling(texture: pc.Texture): void {
+  texture.mipmaps = true;
+  texture.minFilter = pc.FILTER_LINEAR_MIPMAP_LINEAR;
+  texture.magFilter = pc.FILTER_LINEAR;
+}
 export type MercenaryArt = ArtTreatment['mercenaryArt'];
 type PaintedArt = Exclude<MercenaryArt, 'original'>;
 type Paint = { body: pc.Texture; cape: pc.Texture };
@@ -52,7 +59,6 @@ export class MercenaryVariants {
   private readonly pending = new Map<PaintedArt, Promise<void>>();
   private readonly textureLoads = new Map<string, Promise<pc.Texture>>();
   private readonly failed = new Set<PaintedArt>();
-  private filtering: ArtTreatment['characterFiltering'] = 'source';
   private disposed = false;
   private wanted: MercenaryArt = 'original';
   private active: MercenaryArt = 'original';
@@ -120,7 +126,7 @@ export class MercenaryVariants {
         addressU: pc.ADDRESS_CLAMP_TO_EDGE,
         addressV: pc.ADDRESS_CLAMP_TO_EDGE,
       });
-      this.filterTexture(texture);
+      smoothCharacterSampling(texture);
       // The pinned runtime accepts ImageBitmap, but its declaration still lists
       // only DOM image/video/canvas sources.
       texture.setSource(bitmap as unknown as HTMLImageElement);
@@ -130,19 +136,6 @@ export class MercenaryVariants {
     } finally {
       this.downloads.delete(download);
     }
-  }
-  setFiltering(filtering: ArtTreatment['characterFiltering']): void {
-    if (this.filtering === filtering) return;
-    this.filtering = filtering;
-    for (const texture of this.textures) this.filterTexture(texture);
-  }
-  private filterTexture(texture: pc.Texture): void {
-    // Source artwork was authored for mipmapped minification; retain that
-    // sampling as its source policy and compare a deliberately sharper control.
-    texture.magFilter = pc.FILTER_NEAREST;
-    texture.mipmaps = this.filtering !== 'nearest';
-    texture.minFilter =
-      this.filtering === 'nearest' ? pc.FILTER_NEAREST : pc.FILTER_LINEAR_MIPMAP_LINEAR;
   }
   get current(): MercenaryArt {
     return this.active;

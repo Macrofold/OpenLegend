@@ -6,7 +6,7 @@ import { isFoliageMaterialName, prepareFoliageLight } from './environment-art';
 import { studyAssets } from './study-assets';
 import { ShadowMaterial } from './shadow-material';
 import { ordinaryStencil, setVisibilityStencil } from './visibility-stencil';
-import { markPixelDetail, needsFinePixels } from './scene-pixels';
+import { prepareWind, windCullMargin } from './vegetation-motion';
 const generatedChestUrl = assetUrl('apps/client/src/props/generated-chest.glb');
 const carved = assetUrl('apps/client/src/props/art-study/source-chests/chest-carved-lid.glb');
 const banded = assetUrl('apps/client/src/props/art-study/source-chests/chest-banded-lid.glb');
@@ -63,8 +63,7 @@ export class ScenePropResources {
         'Scene prop · ' + variant,
         depleted && source.depletedUrl ? source.depletedUrl : source.url,
       ),
-      (material) =>
-        this.prepare(material, needsFinePixels(source.width, source.height, source.depth)),
+      (material, sway) => this.prepare(material, sway ? height : undefined),
       () => this.actors.delete(actor),
       onReady,
     );
@@ -72,18 +71,26 @@ export class ScenePropResources {
     return actor;
   }
 
-  private prepare(source: pc.StandardMaterial, fine: boolean): pc.StandardMaterial {
+  private prepare(source: pc.StandardMaterial, windHeight?: number): pc.StandardMaterial {
     const existing = this.prepared.get(source);
     if (existing) return existing;
     const material = new ShadowMaterial(this.sun).copy(source);
     setVisibilityStencil(material, ordinaryStencil);
+    // A prop's materials belong to its own model, so the plant decision and
+    // height stay consistent for every material cached here.
+    if (windHeight !== undefined)
+      prepareWind(
+        material,
+        this.app.graphicsDevice,
+        isFoliageMaterialName(source.name),
+        windHeight,
+      );
     this.art.prepare(material);
     if (isFoliageMaterialName(source.name)) {
       material.twoSidedLighting = false;
       prepareFoliageLight(material, this.app.graphicsDevice);
       material.specularityFactor = 0.04;
     }
-    if (fine) markPixelDetail(material, this.app.graphicsDevice);
     material.update();
     this.prepared.set(source, material);
     return material;
@@ -121,7 +128,7 @@ export class ScenePropActor {
     height: number,
     depth: number,
     loaded: Promise<pc.ContainerResource>,
-    prepare: (source: pc.StandardMaterial) => pc.StandardMaterial,
+    prepare: (source: pc.StandardMaterial, sway: boolean) => pc.StandardMaterial,
     private readonly release: () => void,
     onReady?: (actor: ScenePropActor) => void,
   ) {
@@ -141,11 +148,26 @@ export class ScenePropActor {
         parent.addChild(node);
         for (const component of node.findComponents('render')) {
           if (!(component instanceof pc.RenderComponent)) continue;
-          for (const instance of component.meshInstances) {
-            if (instance.material instanceof pc.StandardMaterial)
-              instance.material = prepare(instance.material);
-            this.meshes.push(instance);
-          }
+          this.meshes.push(...component.meshInstances);
+        }
+        // A model with leaf, grass or fern materials is a plant: all of its
+        // parts, stems included, sway together in the wind.
+        const sway = this.meshes.some((instance) => isFoliageMaterialName(instance.material.name));
+        for (const instance of this.meshes) {
+          if (instance.material instanceof pc.StandardMaterial)
+            instance.material = prepare(instance.material, sway);
+          if (!sway) continue;
+          // Custom bounds are in the mesh node's space, so divide the metre margin by its scale.
+          const scale = instance.node.getWorldTransform().getScale();
+          const bounds = instance.mesh.aabb.clone();
+          bounds.halfExtents.add(
+            new pc.Vec3(
+              windCullMargin.x / scale.x,
+              windCullMargin.y / scale.y,
+              windCullMargin.z / scale.z,
+            ),
+          );
+          instance.setCustomAabb(bounds);
         }
         if (this.meshes.length === 0) throw new Error('Scene prop contains no render meshes.');
         this.state = 'ready';

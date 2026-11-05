@@ -1,10 +1,12 @@
 # Dimensional pixel art — restyle the existing starting scene
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Deer stride and wolf forepaws are refined; bear access and broader visual qualification remain open. | 2026-10-17   |
+| Status  | Current progress                                                                                                        | Last updated |
+| ------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Blocked | Superseded by the October 31, 2026 plain-3D direction; reusable pipeline and family scope awaits re-scoping under AD02. | 2026-10-31   |
 
-**Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
+**Superseded on 2026-10-31.** Mike replaced the dimensional pixel-art direction with plain 3D models and textures ([current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-31-2026), [why](../../art-direction/changelog/2026/2026-10-26.md#october-31-2026--plain-3d-models-replace-the-pixel-art-direction)). This document is kept as history and as the source for reusable pipeline and appearance-family scope, which awaits re-scoping under [AD02](../maintainers/art-direction.md#ad02--re-scope-the-asset-pipeline-and-appearance-families-for-plain-3d). Do not start new pixel-art work from it.
+
+**Art direction — October 16, 2026 (superseded by plain 3D on October 31):** beautiful dimensional pixel art had to retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art was rejected under the [October 16 requirements](../../art-direction/decisions.md#superseded-pixel-art-requirements--october-16-2026); that rejection carries forward into the [current plain-3D requirements](../../art-direction/decisions.md#current-visual-requirements--october-31-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
 ## Purpose and authorization
 

@@ -19,6 +19,16 @@
       "sha256": "e36363e07cfc3f7b4f9e6997b860daae8ac30a90b0d41a0316ec90a84ebed09c"
     }
   ],
+  "attribution": [
+    {
+      "work": "Bear",
+      "creator": "madtrollstudio",
+      "url": "https://poly.pizza/m/kLLBpmcw0w",
+      "license": "CC BY 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+      "changes": "Recolored and reshaped by OpenLegend, with standing and walking animations added."
+    }
+  ],
   "assets": [
     {
       "id": "bear-forest-brown",

@@ -44,7 +44,7 @@ Substance Designer, Material Maker, Blender or existing native art tools can cre
 
 Separate large forms, color grouping and roughness from optional tiny noise. When a place needs novelty, derive the distinctive feature from terrain, ecology, weather, history or actual use before introducing an unrelated prop family. Define controls that an artist can use intentionally: broad stone scale, growth distribution, wood direction or restrained wear, rather than an unexplained parameter list. Show purposeful variants together, including values that expose tiling, repetition or overly noisy output.
 
-When the representation supports it, keep surface color separate from lighting information. A normal map changes how light responds without adding the actual silhouette or opening of geometry. Review whether that detail survives the game's rendering at play distance. A painted shadow may conflict with a changing sun or nearby fire; adding another map does not automatically repair that conflict.
+When the representation supports it, keep surface color separate from lighting information. A normal map changes how light responds without adding the actual silhouette or opening of geometry. Review whether that detail survives the game's camera distance and texture filtering without shimmer. A painted shadow may conflict with a changing sun or nearby fire; adding another map does not automatically repair that conflict.
 
 **Useful result:** related surfaces remain readable under the intended camera and light, and a useful style revision can be made from their sources. If the family will not recur, retain the simpler one-off source instead of inventing a procedural system.
 

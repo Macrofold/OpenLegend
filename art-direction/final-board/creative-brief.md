@@ -6,9 +6,11 @@ Confirmed favorites, with creative interpretation kept distinct from your stated
 
 ## Shared direction
 
-Beautiful dimensional pixel art with believable real-world proportions, expressive and recognizable people, purposeful light and an inviting sense of life. Explicitly reject the visibly low-poly 3D look, flat faceted styling, blocky/Lego-like or cutesy assets, and small-body/big-head or exaggerated cartoon characters. Stylization belongs in pixels, palette, material interpretation and lighting while anatomy, objects and the world retain convincing proportions. Readable silhouettes and quiet areas matter as much as fine texture. Painted references remain useful for concepts and composition; photorealistic final rendering is not required.
+Beautiful plain 3D models and textures in a grounded stylized style (real proportions, slightly simplified forms, painted-looking textures) anchored on Quaternius's stylized textured kits, with expressive and recognizable people, purposeful light and an inviting sense of life, shown at full display resolution with no pixel treatment. Nature stays closer to real growth than those kits. Explicitly reject the visibly low-poly 3D look, flat faceted styling, blocky/Lego-like or cutesy assets, and small-body/big-head or exaggerated cartoon characters. Stylization belongs in shape, palette, material interpretation, lighting and animation while anatomy, objects and the world retain convincing proportions. Readable silhouettes and quiet areas matter as much as fine texture. Painted references remain useful for concepts and composition; photorealistic final rendering is not required.
 
-**Updated 2026-10-16 23:12 UTC:** [Current visual requirements](../decisions.md#current-visual-requirements--october-16-2026) own this clarification and the rejected creator styles. Earlier endorsements of individual games do not authorize their cute or exaggerated proportions. Research [grounded source creators](../research/3d-pixel-worlds/grounded-asset-creators.md) before returning to a familiar low-poly library.
+**Updated 2026-10-31:** Mike replaced the dimensional pixel-art direction with plain 3D. [Current visual requirements](../decisions.md#current-visual-requirements--october-31-2026) own this direction and the rejected creator styles; the [art changelog](../art-changelog.md) records why. Many favorites below are pixel-art games: their non-pixel qualities (light, colour, composition, environmental variety, acting) still apply, while their pixel rendering is no longer a target. Earlier endorsements of individual games do not authorize their cute or exaggerated proportions. Research [grounded source creators](../research/3d-pixel-worlds/grounded-asset-creators.md) before returning to a familiar low-poly library.
+
+**Updated 2026-11-01:** from his world asset survey picks, Mike adopted the grounded stylized direction with Quaternius's stylized textured line as its anchor; the [current visual requirements](../decisions.md#current-visual-requirements--october-31-2026) own its look rules and sources.
 
 ## The practical brief
 
@@ -20,9 +22,11 @@ Beautiful dimensional pixel art with believable real-world proportions, expressi
 - Add meaningful lived-in objects, not uniform visual noise. Use fine detail where it describes identity, material or use.
 - Compose each place around recognizable large forms, a clear activity or route, and a few distinctive environmental features. Let geology, water, growth, weather and human use explain those features; novelty should make a place understandable and memorable.
 - Build color variety through material, species, moisture, exposure and light. Reserve the strongest accents for selected focal features and preserve quieter ground, water and shadow. A rich palette does not require every surface to compete.
-- Preserve physical identity through changes of pose and view: scars, handed tools, clothing asymmetry and carried equipment remain attached to the same person and side. Expressiveness comes from gesture, posture, deliberate pixels and lighting within believable anatomy.
+- Preserve physical identity through changes of pose and view: scars, handed tools, clothing asymmetry and carried equipment remain attached to the same person and side. Expressiveness comes from gesture, posture, form and lighting within believable anatomy.
+- Keep a moving camera stable: no shimmering edges, crawling texture detail or flickering shadows. Mipmapped textures sized for their viewing distance, antialiasing and fixed shadow sampling are the ordinary tools.
+- Make the rules work for generated content at scale: shared palette, material and texture-detail rules let many generated or sourced assets sit together without per-asset hand finishing.
 - Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result.
-- Keep detail grouped and restrained: the October 17 feedback rejects the preceding uniformly fine treatment. Give small tools and animals only enough extra fixed pixel density to preserve identity. Check their actual screen footprint before adding detail, and keep all dated comparisons in the [study archive](../studies/README.md). Poly Haven is an endorsed source starting point; anatomy and construction still need visual review.
+- Keep detail grouped and restrained: the October 17 feedback rejects the preceding uniformly fine treatment. Give small tools and animals only enough extra texture and model detail to preserve identity. Check their actual screen footprint before adding detail, and keep all dated comparisons in the [study archive](../studies/README.md). Quaternius's stylized textured kits are the source starting point, with Poly Haven where the kits are too cartoony or have no piece (conifers, deadwood); anatomy and construction still need visual review.
 
 ## A living place with visible causes
 
@@ -44,7 +48,7 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 **Visual reading:** Misty streets, warm timber interiors, luminous laboratory equipment, webbed caves, open desert and cultivated land create distinct places through layout, material, light and apparent use. The trailers also contrast damaged and furnished interiors, construction and fighting.
 
-**Creative translation:** Develop meaningful differences among regions and everyday places while keeping believable anatomy, practical construction and the current dimensional pixel-art direction. Let changing conditions or actual repairs make familiar places feel different. Preserve quiet space and readable threats where combat occurs, alongside attractive places for peaceful activity.
+**Creative translation:** Develop meaningful differences among regions and everyday places while keeping believable anatomy, practical construction and the current plain-3D direction. Let changing conditions or actual repairs make familiar places feel different. Preserve quiet space and readable threats where combat occurs, alongside attractive places for peaceful activity.
 
 **Context:** The [illustrated study](../research/emberville/README.md) includes four official screenshot references and timestamped visual observations. The [Emberville and Diablo combat note](../../docs/game-ideas/real-time-combat-feel.md) owns the separate gameplay lessons. Promotional imagery does not establish input responsiveness, a chosen camera or a renderer technique.
 
@@ -56,21 +60,23 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 **Creative translation:** Carry purposeful palette and light through places, people and interfaces. Make gestures and reactions readable within believable anatomy. Choose interface materials that fit the current world and task, such as a field journal or workshop notebook, while keeping text, navigation and action results clear.
 
-**Context:** These are observations of official promotional footage and images, not a playthrough or renderer analysis. Their craft informs OpenLegend's dimensional pixel art; the cartoon proportions and music-industry setting are outside the selected scope. See the [illustrated study and frame references](../research/rockbeasts/README.md) and [narrative case study](../../docs/narrative/case-studies/rockbeasts.md).
+**Context:** These are observations of official promotional footage and images, not a playthrough or renderer analysis. Their craft informs OpenLegend's plain-3D art; the cartoon proportions and music-industry setting are outside the selected scope. See the [illustrated study and frame references](../research/rockbeasts/README.md) and [narrative case study](../../docs/narrative/case-studies/rockbeasts.md).
 
 ### Sea of Stars — Expressive environments in a grounded world
 
 **Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. OpenLegend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
 
-**Creative interpretation:** Organize richness around large landforms and purposeful pixel groups. Distinctive roots, rock, water, vegetation and structures should explain a place's character and use. Let local light affect nearby bodies and materials, give colorful accents quieter surroundings, and support warmth, curiosity, danger and loss within the same visual language. Natural proportions and practical construction remain the foundation.
+**Creative interpretation:** Organize richness around large landforms and purposeful colour and material groups. Distinctive roots, rock, water, vegetation and structures should explain a place's character and use. Let local light affect nearby bodies and materials, give colorful accents quieter surroundings, and support warmth, curiosity, danger and loss within the same visual language. Natural proportions and practical construction remain the foundation.
 
 ![Official Sea of Stars screenshot: a large curved tree forms a route over dark teal water](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1244090/ss_e7ac3a6e5ebe5f4561fc46d116c33678cf4ba811.1920x1080.jpg?t=1780931183)
 
 The broad curve establishes the route; bark marks follow its form; leaf and moss clusters sit beside larger quiet areas of water. This is a useful example of organized detail rather than a demand for uniformly finer texture. Source: [official Steam gallery](https://store.steampowered.com/app/1244090/Sea_of_Stars_Sunset_Edition/), inspected October 18, 2026. Publicity imagery; exact captured build is unspecified. Copyright remains with its owners; reference use does not grant production reuse.
 
-**Use in art review:** Read the [illustrated study and scene criteria](../research/sea-of-stars/README.md) with the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Review actual gameplay scale, movement, overlap, natural foliage gaps and light response. This reference does not establish a 2D camera, a renderer technique, a performance result or approval of an unseen OpenLegend scene. The [full dossier](../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) keeps mechanics and production findings separate from accepted art preferences.
+**Use in art review:** Read the [illustrated study and scene criteria](../research/sea-of-stars/README.md) with the [current visual requirements](../decisions.md#current-visual-requirements--october-31-2026). Review actual gameplay scale, movement, overlap, natural foliage gaps and light response. This reference does not establish a 2D camera, a renderer technique, a performance result or approval of an unseen OpenLegend scene. The [full dossier](../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) keeps mechanics and production findings separate from accepted art preferences.
 
 ### Dimensional pixel art — October 14 direction
+
+**Superseded on 2026-10-31 by the plain-3D direction.** Kept as history. The environmental, lighting, staging and character-quality qualities Mike endorsed here still apply; the pixel shading, sampling and pixel-authored surfaces do not.
 
 Mike's new references sharpen the target without replacing the earlier favorites. **Garbage Country** is a leading environment reference; **The Last Night** is a leading reference for fine pixel craft, dimensional staging, light and focus. **EthrA's environments** are strongly liked, but its small world characters should be exceeded in facial and material detail. **REPLACED** reinforces the desired cinematic finish.
 

@@ -1,0 +1,62 @@
+{
+  "group": "source-wildmesh-bear",
+  "recipe": {
+    "path": "scripts/prepare-game-animals.ts",
+    "sha256": "952cf6c58f4b46d4273af5950becb87bfaa3aeb687e1fa79c308ad320b4f0ce8"
+  },
+  "helpers": {
+    "model-files.ts": "567b7ee35a5b679159539d14c12b26887e336a88edc38a9ac9e07294206b4982"
+  },
+  "survey": {
+    "item": "predators-wildmesh-bear-animated-cel-shading-3d-model",
+    "file": "apps/client/src/props/art-survey/wildmesh/wildmesh-bear-bear-animated-cel-shading-3d-model.glb",
+    "sha256": "aef1a3b45015e73f7a8cf43a06f40f994f6602fe957c8ddeea7fa7bef286d071"
+  },
+  "sources": [
+    {
+      "page": "https://sketchfab.com/3d-models/bear-animated-cel-shading-3d-model-3befd34f44924848a75c3217c0bf3d3e",
+      "creator": "WildMesh 3D",
+      "license": "CC BY 4.0",
+      "file": "bear_animated_cel_shading_3d_model.glb",
+      "bytes": 12400752,
+      "sha256": "c9380c0639c9d63daad0e94e362441ee2338e9e088d1bbedaee074cc7d231307",
+      "retrieved": "2026-11-04T00:46:37Z"
+    }
+  ],
+  "attribution": [
+    {
+      "work": "Bear Animated Cel Shading 3D Model",
+      "creator": "WildMesh 3D",
+      "url": "https://sketchfab.com/3d-models/bear-animated-cel-shading-3d-model-3befd34f44924848a75c3217c0bf3d3e",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Resized by OpenLegend, keeping only its standing and walking animations."
+    }
+  ],
+  "assets": [
+    {
+      "id": "wildmesh-bear",
+      "family": "wildmesh-bear",
+      "label": "Brown bear · WildMesh 3D",
+      "variant": "painted",
+      "description": "WildMesh 3D’s painted brown bear with its breathing idle and walk.",
+      "recommended": true,
+      "file": "wildmesh-bear.glb",
+      "bounds": {
+        "min": [-0.305254, 0, -0.830431],
+        "max": [0.305254, 1.249993, 0.830431]
+      },
+      "triangles": 7508,
+      "vertices": 4524,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024],
+        [1024, 1024]
+      ],
+      "sha256": "af8eca69de0ffac8d6cbf1d737c9dcd1dbb23b1c079609fb9894fb7602fd8884",
+      "source": "Bear Animated Cel Shading 3D Model by WildMesh 3D, CC BY 4.0, https://sketchfab.com/3d-models/bear-animated-cel-shading-3d-model-3befd34f44924848a75c3217c0bf3d3e; resized to 1.25 m, standing in the first frame of its idle, with only that idle and its walk, held in place, by OpenLegend.",
+      "animatedFile": "wildmesh-bear-motion.glb",
+      "animatedSha256": "8d2af9ee768379a8b42bd062f363d86344d7d5223689fda1cca67f5d351dddd7"
+    }
+  ]
+}

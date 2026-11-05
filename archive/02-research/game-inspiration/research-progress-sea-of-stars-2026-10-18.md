@@ -6,7 +6,7 @@
 
 - [Full dossier](dossiers/sea-of-stars.md): the original game, subsequent editions and expansion, combat and other mechanics, story and endings, creation, economics, reception and community.
 - [Illustrated art study](../../../art-direction/research/sea-of-stars/README.md): seven official screenshots and three official lighting demonstration frames, with [image provenance](../../../art-direction/research/sea-of-stars/image-manifest.json).
-- [Art requirements](../../../art-direction/decisions.md#current-visual-requirements--october-16-2026) and [creative brief](../../../art-direction/final-board/creative-brief.md#sea-of-stars--expressive-environments-in-a-grounded-world): expressive environmental pixels, distinctive forms, natural color and purposeful light, without adopting cartoon proportions.
+- [Art requirements](../../../art-direction/decisions.md#superseded-pixel-art-requirements--october-16-2026) and [creative brief](../../../art-direction/final-board/creative-brief.md#sea-of-stars--expressive-environments-in-a-grounded-world): expressive environmental pixels, distinctive forms, natural color and purposeful light, without adopting cartoon proportions.
 - [Presentation](synthesis/art-audio-and-game-feel.md), [exploration](synthesis/exploration-and-world-design.md) and [combat](synthesis/combat-and-encounters.md#combat-l005): reusable source-grounded design principles. [ND38](../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) is a design need, not an approved timing-input feature.
 
 ## Evidence boundaries

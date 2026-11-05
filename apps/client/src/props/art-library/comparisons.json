@@ -1,0 +1,234 @@
+{
+  "category": {
+    "id": "comparisons",
+    "label": "Comparisons"
+  },
+  "subjects": [
+    {
+      "id": "compare-supplies",
+      "label": "Workshop supplies",
+      "note": "In the game: the open supply box in the missing-belonging scene, a repainted low-poly piece, beside the anchor kit's crates (the first two you liked in the survey) and others.",
+      "pieces": [
+        "survey:containers-kenney-supplies-open-box",
+        "survey:containers-megakit-crate-wooden",
+        "library:quaternius-fantasy-props-megakit-farm-crate-empty",
+        "library:quaternius-medieval-village-megakit-prop-crate",
+        "library:algumacoisaqq-medieval-village-kit-sm-vki-prop-crate",
+        "library:synofplay-medieval-cafe-crate-02",
+        "library:polyhaven-models-wooden-crate-01",
+        "survey:containers-megakit-barrel"
+      ]
+    },
+    {
+      "id": "compare-workbench",
+      "label": "Workbench",
+      "note": "In the game: the riverside workbench of the expeditions, a repainted low-poly piece, beside the anchor kit's benches and others.",
+      "pieces": [
+        "survey:furniture-kenney-workbench-open-bench",
+        "survey:furniture-megakit-workbench",
+        "library:quaternius-fantasy-props-megakit-workbench-drawers",
+        "library:algumacoisaqq-medieval-village-kit-sm-vki-prop-workbench-carpenter",
+        "library:sketchfab-0f358eaab21d4e70836ad855de34c423-0f-358eaab-21d-4e-70836ad-855de-34c-423-workbench"
+      ]
+    },
+    {
+      "id": "compare-bundle",
+      "label": "Travelling bundle",
+      "note": "In the game: the rolled wool of the expeditions and the tied bundle of the first threat, both repainted low-poly pieces, beside sacks, a backpack, a bedroll and wool.",
+      "pieces": [
+        "survey:camp-kenney-bundle-rolled-wool",
+        "study:bundle-tied-bundle",
+        "survey:containers-megakit-bag",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-prop-bedroll",
+        "library:algumacoisaqq-medieval-weapons-items-it-cloth-sack",
+        "library:algumacoisaqq-medieval-weapons-items-it-leather-backpack",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-pile-wool-1"
+      ]
+    },
+    {
+      "id": "compare-marker",
+      "label": "Work marker",
+      "note": "In the game: the single-board marker and the worn post that mark places in the scenes, both repainted low-poly pieces, beside signs and posts.",
+      "pieces": [
+        "survey:camp-kenney-marker-single-board",
+        "study:marker-worn-post",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-prop-sign",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-prop-signpost",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-quay-post"
+      ]
+    },
+    {
+      "id": "compare-wood",
+      "label": "Fallen wood",
+      "note": "In the game: the loose branches people gather wood from, a repainted low-poly piece, beside scanned branches and deadwood and stylized logs.",
+      "pieces": [
+        "study:fallen-wood-loose-branches",
+        "survey:deadwood-polyhaven-dry-branches-medium-01",
+        "survey:deadwood-polyhaven-grounded-deadwood-clear",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-log-fallen",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-pile-logs-1"
+      ]
+    },
+    {
+      "id": "compare-stones",
+      "label": "River stones",
+      "note": "In the game: the loose river stones people gather stone from, a repainted low-poly piece, beside the anchor kit's pebbles and other stones.",
+      "pieces": [
+        "survey:rocks-kenney-river-stones-loose-stones",
+        "library:quaternius-stylized-nature-megakit-pebble-round-1",
+        "library:quaternius-stylized-nature-megakit-pebble-round-3",
+        "library:quaternius-stylized-nature-megakit-pebble-square-1",
+        "library:sketchfab-fd45191815c14261b873dcd8e32ed376-sm-rock-pack-rock-01",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-pile-stone-1",
+        "survey:rocks-polyhaven-stone-01"
+      ]
+    },
+    {
+      "id": "compare-chest",
+      "label": "Supply chest",
+      "note": "In the game: the watchpost's supply chest, a repainted low-poly piece, beside the anchor kit's chest (you liked it), the carved chest used elsewhere, and others.",
+      "pieces": [
+        "study:chest-plank-cache",
+        "survey:containers-megakit-chest-wood",
+        "survey:containers-current-chest-carved-lid",
+        "library:algumacoisaqq-medieval-village-kit-sm-vki-prop-chest",
+        "library:algumacoisaqq-medieval-village-kit-sm-vki-prop-chest-iron",
+        "survey:containers-polyhaven-grounded-chest-clear"
+      ]
+    },
+    {
+      "id": "compare-hare",
+      "label": "Hare",
+      "note": "In the game: the woodland hare, beside the free animated hare the library found.",
+      "pieces": [
+        "survey:wildlife-current-hare-field",
+        "library:sketchfab-948938cd237d49a9868662213fa05543-948938cd-237d-49a-9868662213fa-05543"
+      ]
+    },
+    {
+      "id": "compare-bird",
+      "label": "Bird",
+      "note": "In the game: the shrike, beside the Fantasy Creatures eagle and a free snowy owl.",
+      "pieces": [
+        "survey:wildlife-current-bird-grey-wing",
+        "survey:wildlife-creatures-eagle",
+        "library:sketchfab-745c105544784b9a80bbec49cccd1580-745c-105544784b-9a-80bbec-49cccd-1580"
+      ]
+    },
+    {
+      "id": "compare-bow",
+      "label": "Bow (art study only)",
+      "note": "The default selection's bow, which only the art-study pages show (the game draws no held weapons yet), beside the library's bows.",
+      "pieces": [
+        "survey:ranged-current-natural-bow-clear",
+        "library:algumacoisaqq-medieval-weapons-items-wpn-hunting-bow",
+        "library:algumacoisaqq-medieval-weapons-items-wpn-longbow",
+        "library:algumacoisaqq-medieval-weapons-items-wpn-recurve-bow",
+        "library:sketchfab-a0c1d59396094833b59f9bf12a16064b-mesh-bow",
+        "library:sketchfab-8c05f49feda84b888ff66ef3e5f78110-8c-05f-49feda-84b-888ff-66ef-3e-5f-78110",
+        "library:sketchfab-1774a072f1cd45bf9c0875c1a23919a7-english-long-bow",
+        "library:algumacoisaqq-medieval-humans-orcs-goblins-prop-shortbow"
+      ]
+    },
+    {
+      "id": "compare-arrow",
+      "label": "Arrow (art study only)",
+      "note": "The default selection's arrow, which only the art-study pages show, beside the library's arrows.",
+      "pieces": [
+        "survey:ranged-current-natural-arrow-clear",
+        "library:algumacoisaqq-medieval-weapons-items-wpn-arrow",
+        "library:algumacoisaqq-medieval-weapons-items-it-arrows",
+        "library:sketchfab-1774a072f1cd45bf9c0875c1a23919a7-arrow-32-inch",
+        "library:algumacoisaqq-medieval-humans-orcs-goblins-prop-arrow"
+      ]
+    },
+    {
+      "id": "compare-people",
+      "label": "People",
+      "note": "Four of today's people beside the anchor line's outfitted characters and its free Superhero bodies; the Regular build with natural proportions is paid, and the page shows each piece's first frame, not its animations.",
+      "pieces": [
+        "study:mike-field-tunic",
+        "study:ada-field-tunic",
+        "study:mara-travel-coat",
+        "study:tavin-work-vest",
+        "library:quaternius-modular-character-outfits-fantasy-male-peasant",
+        "library:quaternius-modular-character-outfits-fantasy-female-peasant",
+        "library:quaternius-modular-character-outfits-fantasy-male-ranger",
+        "library:quaternius-modular-character-outfits-fantasy-female-ranger",
+        "library:quaternius-universal-base-characters-superhero-male-full-body",
+        "library:quaternius-universal-base-characters-superhero-female-full-body"
+      ]
+    },
+    {
+      "id": "compare-rocks",
+      "label": "Rocks",
+      "note": "The game's rock beside scanned, sculpted and hand-painted rocks; no rock has a like yet.",
+      "pieces": [
+        "survey:rocks-megakit-rock-rounded-shoulder",
+        "survey:rocks-polyhaven-grounded-boulder-quiet",
+        "survey:rocks-polyhaven-boulder-01",
+        "library:quaternius-stylized-nature-megakit-rock-medium-2",
+        "library:algumacoisaqq-medieval-village-kit-sm-vk-rock-boulder-a",
+        "library:sketchfab-fd45191815c14261b873dcd8e32ed376-sm-rock-pack-rock-groups-01-a",
+        "library:sketchfab-f3e0a67b9ca243b09119177649f21e17-f-3e-0a-67b-9ca-243b-09119177649f-21e-17-mid-1",
+        "library:sketchfab-f3e0a67b9ca243b09119177649f21e17-f-3e-0a-67b-9ca-243b-09119177649f-21e-17-runic-5"
+      ]
+    },
+    {
+      "id": "compare-ground",
+      "label": "Ground",
+      "note": "The game's ground beside scanned ground materials; no ground has a like yet.",
+      "pieces": [
+        "survey:terrain-engine-ground-understory",
+        "survey:terrain-engine-ground-woodland",
+        "survey:terrain-engine-ground-meadow",
+        "survey:terrain-polyhaven-forest-ground-04",
+        "survey:terrain-polyhaven-forest-leaves-02",
+        "survey:terrain-polyhaven-grass-path-2",
+        "survey:terrain-polyhaven-brown-mud-leaves-01",
+        "survey:terrain-polyhaven-rocky-trail-02"
+      ]
+    },
+    {
+      "id": "compare-broadleaf",
+      "label": "Broadleaf trees",
+      "note": "The game's broadleaf and birch beside trees with more natural crowns: the anchor kit's common tree, a simplified scan and hand-painted oaks and birches.",
+      "pieces": [
+        "survey:broadleaf-megakit-broadleaf-sheltered-crown",
+        "survey:broadleaf-megakit-birch-slender-birch",
+        "survey:broadleaf-megakit-commontree-1",
+        "survey:broadleaf-polyhaven-natural-broadleaf-quiet",
+        "library:sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba-d-246b-8b-4439d-44c-6adc-854ebc-5ffc-5ba-oak-green-1",
+        "library:sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba-d-246b-8b-4439d-44c-6adc-854ebc-5ffc-5ba-oak-green-2",
+        "library:sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba-d-246b-8b-4439d-44c-6adc-854ebc-5ffc-5ba-birch-green-2",
+        "library:sketchfab-031c99c42793439c9fa5a691c67d0da8-031c-99c-42793439c-9fa-5a-691c-67d-0da-8-trs-1-9"
+      ]
+    },
+    {
+      "id": "compare-conifers",
+      "label": "Conifers",
+      "note": "The game's fir beside painted pines and spruces, stylized pines and redwoods; the anchor kit's pines were too cartoony.",
+      "pieces": [
+        "survey:conifers-polyhaven-grounded-conifer-quiet",
+        "survey:conifers-megakit-pine-1",
+        "library:sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba-d-246b-8b-4439d-44c-6adc-854ebc-5ffc-5ba-pine-2",
+        "library:sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba-d-246b-8b-4439d-44c-6adc-854ebc-5ffc-5ba-spruce-2",
+        "library:sketchfab-46ac3c1a4c3645b1984a97568db54c5d-46ac-3c-1a-4c-3645b-1984a-97568db-54c-5d-stylized-pine-var-1",
+        "library:sketchfab-80dec2fffb174051a5a88a404b760895-80dec-2fffb-174051a-5a-88a-404b-760895"
+      ]
+    },
+    {
+      "id": "compare-bushes",
+      "label": "Bushes",
+      "note": "The game's shrub and berry bush beside the bushes you liked and new hand-painted ones.",
+      "pieces": [
+        "survey:bushes-megakit-shrub-rounded-thicket",
+        "survey:bushes-polyhaven-rooted-berries-quiet",
+        "survey:bushes-megakit-bush-common",
+        "survey:bushes-polyhaven-shrub-04",
+        "library:sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba-d-246b-8b-4439d-44c-6adc-854ebc-5ffc-5ba-bush",
+        "library:polyhaven-models-wild-rooibos-bush"
+      ]
+    }
+  ]
+}

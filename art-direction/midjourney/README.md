@@ -1,6 +1,6 @@
 # Midjourney prompting guide for Open Legend
 
-**Current prompt constraint:** use believable anatomy and natural head-to-body proportions for beautiful dimensional pixel art. Reject visibly low-poly, blocky/Lego-like, cutesy, chibi and big-head/small-body designs; painted concepts follow the same [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Stylize color, brushwork and lighting without cartoon-proportion drift.
+**Current prompt constraint:** use believable anatomy and natural head-to-body proportions; the in-game target is plain 3D models and textures, not pixel art. Reject visibly low-poly, blocky/Lego-like, cutesy, chibi and big-head/small-body designs; painted concepts follow the same [current visual requirements](../decisions.md#current-visual-requirements--october-31-2026). Stylize color, brushwork and lighting without cartoon-proportion drift.
 
 **Start here.** This folder (`art-direction/midjourney/`) is the team's reference for writing Midjourney prompts. It consolidates official Midjourney documentation, Midjourney's own release announcements, community guides and Open Legend's art direction into one place. It was written on **2026-09-27**, when **V8.2** was Midjourney's default model.
 
@@ -10,7 +10,7 @@
 
 ## What we use Midjourney for
 
-For now: **painted concept art** of Threewater March's people, places and props: portraits, character design sheets, story keyframes and environments. It is **not** how we make pixel art. The in-game pixel look comes from the 3D pixel-art renderer and asset pipeline, so concept art should be painted illustration with natural proportions, readable gear and purposeful light. See the [3D pixel-art feature spec](../../docs/projects/3d-pixel-art-feature-spec.md) and the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Current art delivery and remaining qualification belong to the [art tracker](../../docs/maintainers/art-direction.md) and [3D tracker](../../docs/maintainers/3d-pixel-art.md).
+For now: **painted concept art** of Threewater March's people, places and props: portraits, character design sheets, story keyframes and environments. It is **not** how we make in-game art. The in-game target is plain 3D models and textures with no pixel treatment ([why it changed](../changelog/2026/2026-10-26.md#october-31-2026--plain-3d-models-replace-the-pixel-art-direction) from pixel art on October 31, 2026), so concept art should be painted illustration with natural proportions, readable gear and purposeful light that can guide 3D models. See the [current visual requirements](../decisions.md#current-visual-requirements--october-31-2026). Current art delivery and remaining qualification belong to the [art tracker](../../docs/maintainers/art-direction.md) and [3D tracker](../../docs/maintainers/3d-pixel-art.md).
 
 ## How claims are labelled
 
@@ -59,7 +59,7 @@ Model choice: **V8.2** for almost everything. Use **V7** only when you need Omni
 | [03 Parameter reference](03-parameter-reference.md) | Looking up any `--parameter`: range, default, versions, when to use it |
 | [04 References and consistency](04-references-and-consistency.md) | Keeping a style or a character consistent: style references, moodboards, personalization, the Edit model, Omni Reference |
 | [05 Workflow and troubleshooting](05-workflow-and-troubleshooting.md) | Iterating (variations, remix, editor, upscale, Describe), running controlled tests, fixing common problems |
-| [06 Game concept art](06-game-concept-art.md) | Templates for design sheets, portraits, keyframes, environments and props; pixel-art notes; concepts for the 3D pipeline |
+| [06 Game concept art](06-game-concept-art.md) | Templates for design sheets, portraits, keyframes, environments and props; historical pixel-art notes; concepts for the 3D model pipeline |
 | [07 Open Legend house style](07-open-legend-house-style.md) | Turning our art brief into prompt wording: vocabulary, avoid-lists, identity anchors, the Threewater March cast and places |
 | [08 Plans, costs, rights and privacy](08-plans-costs-rights-privacy.md) | Plan limits, GPU cost multipliers, who owns outputs, stealth mode, the missing official API |
 | [09 Sources](09-sources.md) | Every source consulted, what it supports and how reliable it is |

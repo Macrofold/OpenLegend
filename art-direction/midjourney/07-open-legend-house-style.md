@@ -7,14 +7,14 @@ This file turns Open Legend's art direction into prompt wording. It draws on:
 - [Creative brief](../final-board/creative-brief.md): the final inspiration board and practical brief
 - [Art-direction decisions](../decisions.md): preferences from the review rounds
 - [Visual direction](../../archive/03-design-proposals/visual-direction.md): the earlier grounded visual direction
-- [Current visual requirements](../decisions.md#current-visual-requirements--october-16-2026): October 16 clarification of realistic proportions and rejected styles; replaces the obsolete separate style-bible reference
+- [Current visual requirements](../decisions.md#current-visual-requirements--october-31-2026): October 16 clarification of realistic proportions and rejected styles; replaces the obsolete separate style-bible reference
 - [Threewater March](../../docs/repertoires/worlds/medieval-survival.md): the world proposal (an optional proposal, **not** canonical history)
 
 When those change, update this file.
 
 ## The brief in one paragraph
 
-Beautiful dimensional pixel art with believable real-world proportions, recognizable people, organic surroundings and purposeful light. Explicitly reject visibly low-poly 3D, blocky/Lego-like, cutesy, chibi and big-head/small-body designs. Keep stylization in pixel craft, palette, material interpretation and expression while preserving convincing anatomy and construction. Painted concepts are useful design inputs; they must follow the same proportion requirements. Avoid permanent gloom and excessive saturation. This October 16 clarification supersedes the former blanket permission for appealing cartoon styling; the linked decisions own the complete rule.
+Beautiful plain 3D models and textures with believable real-world proportions, recognizable people, organic surroundings and purposeful light; the October 31, 2026 [direction change](../changelog/2026/2026-10-26.md#october-31-2026--plain-3d-models-replace-the-pixel-art-direction) replaced dimensional pixel art. Explicitly reject visibly low-poly 3D, blocky/Lego-like, cutesy, chibi and big-head/small-body designs. Keep stylization in shape, palette, material interpretation, lighting and expression while preserving convincing anatomy and construction. Painted concepts are useful design inputs; they must follow the same proportion requirements. Avoid permanent gloom and excessive saturation. This October 16 clarification supersedes the former blanket permission for appealing cartoon styling; the linked decisions own the complete rule.
 
 ## Brief → prompt words
 
@@ -26,7 +26,7 @@ Beautiful dimensional pixel art with believable real-world proportions, recogniz
 | Rich organic environments with quiet space | Layered foliage, reeds, mist, "foreground framing", "breathing room", "quiet open space" | "highly detailed" as a stand-in for real detail; tiled, repeated clutter |
 | Expressive but controlled colour | "earthy palette of bark, moss, stone and faded wool, with warm firelight accents" | "vibrant", "neon", "hyper-saturated" |
 | Believable real-world proportions | "realistic adult anatomy", "natural head-to-body proportions", "convincing garment construction" | "chibi", "cute", "big head", "small body", "toy-like", a fixed six-head-tall recipe |
-| Beautiful dimensional pixel art; visibly low-poly and blocky art rejected | For concepts: "grounded painterly game art, natural proportions, clear silhouettes, deliberate color grouping"; pixel finishing follows separately | "low-poly", "chunky", "faceted", "Lego-like" as desired style cues; naming the games that inspired it (see below) |
+| Beautiful plain 3D models and textures; visibly low-poly and blocky art rejected | For concepts: "grounded painterly game art, natural proportions, clear silhouettes, deliberate color grouping"; no pixel finishing | "low-poly", "chunky", "faceted", "Lego-like" as desired style cues; naming the games that inspired it (see below) |
 | Meaningful fine detail, "where it describes identity, material or use" | Wear, mends, patches, notches, soot, repairs, personal trinkets | Random ornament, filigree everywhere |
 
 ### The favourite references as words

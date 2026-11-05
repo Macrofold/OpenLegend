@@ -1,10 +1,10 @@
 # Runtime invention art pipeline
 
-**Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint. Existing implementation descriptions below are evidence of current behavior, not claims that every asset meets the target.
+**Art direction — October 31, 2026:** generated and sourced art is plain 3D models and textures with believable real-world proportions and no pixel treatment. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art remains rejected under the [current visual requirements](../art-direction/decisions.md#current-visual-requirements--october-31-2026). This is the bundled world’s artistic target, not a universal engine constraint. Existing implementation descriptions below are evidence of current behavior, not claims that every asset meets the target.
 
 **Status: accepted target design.** This document owns staged runtime asset production, the presentation contract, review/publication, and compatibility with mechanical revisions. It refines the accepted [visual direction](../archive/03-design-proposals/visual-direction.md#art-generated-during-play); that document retains artistic goals and immediate-state presentation intent. [Hybrid art methods](../archive/03-design-proposals/procedural-art-and-animation.md) owns procedural composition, rigs, pixel density, and rendering choices. [Invention foundation](invention-foundation.md) owns project coordination; [INV](maintainers/inventions-and-world-evolution.md) owns implementation and acceptance.
 
-The [progressive 3D pixel-art proposal](projects/3d-pixel-art-feature-spec.md) and its [generation/publication design](projects/3d-pixel-art-asset-pipeline.md) develop a possible implementation of this contract. They do not replace its mechanical, approval, funding or privacy boundaries. The separate [bundled mercenary pilot](projects/completed/mercenary-scene-pilot.md) is delivered fixed-asset presentation, not evidence that runtime generation, general rig families or safe arbitrary representation replacement are implemented.
+The [progressive 3D pixel-art proposal](projects/3d-pixel-art-feature-spec.md) and its [generation/publication design](projects/3d-pixel-art-asset-pipeline.md) develop a possible implementation of this contract; they are blocked pending re-scoping for plain 3D under [AD02](maintainers/art-direction.md#ad02--re-scope-the-asset-pipeline-and-appearance-families-for-plain-3d). They do not replace its mechanical, approval, funding or privacy boundaries. The separate [bundled mercenary pilot](projects/completed/mercenary-scene-pilot.md) is delivered fixed-asset presentation, not evidence that runtime generation, general rig families or safe arbitrary representation replacement are implemented.
 
 ## 1. Purpose and non-negotiable behavior
 
@@ -26,7 +26,7 @@ The contract identifies:
 | Functional/observable constraints | Required silhouette/topology/scale classes, meaningful materials, admitted visible/audible properties, footprint/reach cues, and supported states. |
 | Cosmetic freedom                  | Permitted surface detail, palette variation, ornamentation, and style choices that cannot change the constrained meaning.                          |
 | Player/creator intent             | Approved references and pinned features, with `refine rendering` distinct from `redesign appearance`.                                              |
-| Camera and density                | Projection/directions, world-space footprint, bounded source resolution, pixel density, framing, and style revision.                               |
+| Camera and density                | Projection/directions, world-space footprint, bounded source resolution, texture detail, framing, and style revision.                              |
 | Alignment                         | Pivots, anchors, attachment sockets, draw/layer order requirements, and compatible rig/part families.                                              |
 | Deliverables                      | Required icon/world/equipped forms, directions, poses, state variants, and optional enrichments.                                                   |
 | Budgets and fallback              | Limits on bytes, pixels, parts, frames, channels, texture memory, generation/validation work, and the minimum adequate representation.             |
@@ -97,7 +97,7 @@ Use a hybrid strategy rather than pure raster generation for every object.
 | Effects and transformations                 | Existing effect/overlay families driven by committed state.                             | Finite variants; presentation cannot invent gameplay sources or ongoing effects.          |
 | Invisible policies or abstract mechanics    | Existing symbolic/action/log presentation where appropriate.                            | Do not invent a physical object or buy art merely because a rule was admitted.            |
 
-Offline tools can create the reusable vocabulary. Runtime invention composes that vocabulary and requests missing art when justified. A future 3D source/bake workflow can supply consistent pixel-art views, but neither it nor a new image API requires changing the current PlayCanvas renderer or simulation.
+Offline tools can create the reusable vocabulary. Runtime invention composes that vocabulary and requests missing art when justified. Generated or sourced 3D models with textures supply the world's plain-3D appearance; neither they nor a new image API require changing the current PlayCanvas renderer or simulation.
 
 ## 5. Art and mechanic compatibility
 

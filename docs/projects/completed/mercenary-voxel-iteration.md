@@ -8,7 +8,7 @@
 
 Mike rejected the earlier mercenary's small displayed size, camera-dependent pixels, unreadable face and clothing/body intersections. Create a new iteration; retain the original GLB, renderer and editable study. His subsequent explicit rejection of the first block figure requires a closer source-guided replacement while preserving that figure too. This is one bundled art revision, not approval for the general generated-appearance pipeline. [MER08/MER09](../../maintainers/art/mercenary.md) and [V3D01](../../maintainers/3d-pixel-art.md#v3d01--visual-comparison-and-style-decision) own art progress and remaining style acceptance.
 
-The authoring script and editable Blender source own permanent block placement/color. A separate trusted GLB supplies rigid articulated parts. The client representation owns loading, poses, lighting, shadows, selection/reveal and disposal. The existing scoped `mercenary-model` appearance selects the new iteration without changing the character's identity, native body, world rules, saves or equipment. [World presentation](../../world-presentation.md#animated-character-pixels) owns delivered presentation behavior.
+The authoring script and editable Blender source own permanent block placement/color. A separate trusted GLB supplies rigid articulated parts. The client representation owns loading, poses, lighting, shadows, selection/reveal and disposal. The existing scoped `mercenary-model` appearance selects the new iteration without changing the character's identity, native body, world rules, saves or equipment. [World presentation](../../world-presentation.md#animated-characters) owns delivered presentation behavior.
 
 ## Approach, risk and decisions
 

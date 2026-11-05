@@ -59,8 +59,8 @@ For recurring requests, cost grows with delivered bytes, concurrent clients, aut
 
 ## Maintained records
 
-- Implementation: [AS01–AS08](../maintainers/game-asset-storage.md).
-- Limits: [AST01–AST08](../limits/game-asset-storage.md).
+- Implementation: [AS01–AS09](../maintainers/game-asset-storage.md).
+- Limits: [AST01–AST09](../limits/game-asset-storage.md).
 - Contract: [Feature specification](game-asset-storage-feature-spec.md) and [technical design](game-asset-storage-tech-design.md).
 
 ## Separate history-reclamation approval

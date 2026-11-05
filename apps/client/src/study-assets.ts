@@ -2,6 +2,7 @@ import selections from './props/art-study/selections.json';
 import catalogs from 'virtual:openlegend-study-catalogs/runtime';
 import { assetUrl } from './asset-files';
 import type { Stride } from './characters/gait';
+import type { ArtworkAttribution } from './study-catalog';
 
 /** Finite, offline-authored study exports. Exact references do not fetch models;
  * the scene's existing model owner loads only the selected appearances. */
@@ -34,3 +35,13 @@ for (const catalog of catalogs)
 const selectedAppearances = new Map(Object.entries(selections));
 export const studyAppearance = (appearance: string, sources: 'retained' | 'natural') =>
   sources === 'natural' ? (selectedAppearances.get(appearance) ?? appearance) : appearance;
+
+/** Every credit the shipped artwork's licenses require, once per work. Retained comparison
+ * models ship too and can be shown, so their credits stay listed. */
+export const artworkCredits: readonly ArtworkAttribution[] = [
+  ...new Map(
+    catalogs
+      .flatMap((catalog) => catalog.attribution ?? [])
+      .map((credit) => [JSON.stringify(credit), credit]),
+  ).values(),
+].sort((a, b) => a.creator.localeCompare(b.creator) || a.work.localeCompare(b.work));

@@ -29,7 +29,7 @@ Public preview artwork was actually inspected for **39 ranked entries**. Some we
 
 ## Art direction and world requirements used
 
-The controlling references are the [current visual decisions](../../decisions.md#current-visual-requirements--october-16-2026), [creative brief](../../final-board/creative-brief.md), the refinement-round analyses, [house-style guidance](../../midjourney/07-open-legend-house-style.md), [adaptation research](openlegend-adaptation.md), [natural-replacement study](../../assets/source-study/natural-replacements.md), and existing source/provenance records. The [appearance-family project](../../../docs/projects/3d-pixel-art-appearance-families.md), [asset pipeline](../../../docs/projects/3d-pixel-art-asset-pipeline.md), and [validation rubric](../../../docs/projects/3d-pixel-art-validation.md#3-art-acceptance-rubric) continue to own implementation and acceptance.
+The controlling references are the [current visual decisions](../../decisions.md#superseded-pixel-art-requirements--october-16-2026), [creative brief](../../final-board/creative-brief.md), the refinement-round analyses, [house-style guidance](../../midjourney/07-open-legend-house-style.md), [adaptation research](openlegend-adaptation.md), [natural-replacement study](../../assets/source-study/natural-replacements.md), and existing source/provenance records. The [appearance-family project](../../../docs/projects/3d-pixel-art-appearance-families.md), [asset pipeline](../../../docs/projects/3d-pixel-art-asset-pipeline.md), and [validation rubric](../../../docs/projects/3d-pixel-art-validation.md#3-art-acceptance-rubric) continue to own implementation and acceptance.
 
 The ranking follows these requirements:
 

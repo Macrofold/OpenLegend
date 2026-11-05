@@ -1,6 +1,5 @@
 import * as pc from 'playcanvas';
 import type { ActionAnimation } from '@open-legend/protocol';
-import type { ArtTreatment } from '../art-treatment';
 import { Gait, gaitStateGraph, type Stride } from './gait';
 
 // Committed strikes play the matching clip with its pose taken from the native progress: the
@@ -21,7 +20,7 @@ const SETTLE_PACE = 0.4;
  * its motion while the staged-motion fixture is on (the mercenary's sharpness study). */
 export interface CharacterClips {
   readonly strides: readonly Stride[];
-  readonly fixtures?: { readonly smooth: string; readonly held: string };
+  readonly fixture?: string;
 }
 
 /** One evaluated pose from Idle, a speed-paced stride blend and the strikes.
@@ -29,12 +28,8 @@ export interface CharacterClips {
  * docs/projects/3d-pixel-art-tech-design.md#7-animation-attachments-and-time */
 export class CharacterMotion {
   private clip = 'Idle';
-  private timing: ArtTreatment['motion'] = 'smooth';
   private readonly gait: Gait;
   private readonly durations = new Map<string, number>();
-  /** Pose time owed to the stepped (held) cadence, and what has been sampled of it. */
-  private elapsed = 0;
-  private sampled = 0;
   constructor(
     private readonly anim: pc.AnimComponent,
     tracks: readonly pc.AnimTrack[],
@@ -47,7 +42,7 @@ export class CharacterMotion {
       this.durations.set(name, found.duration);
       return found;
     };
-    const fixtures = clips.fixtures ? [clips.fixtures.smooth, clips.fixtures.held] : [];
+    const fixtures = clips.fixture ? [clips.fixture] : [];
     anim.loadStateGraph(
       gaitStateGraph(clips.strides, [
         // Strike poses follow native progress, so their own playback stays still.
@@ -85,14 +80,12 @@ export class CharacterMotion {
     this.anim.baseLayer?.play('Idle');
     this.clip = 'Idle';
     this.gait.rest();
-    this.elapsed = this.sampled = 0;
     this.anim.update(0);
   }
   update(
     dt: number,
     speed: number,
     paused: boolean,
-    timing: ArtTreatment['motion'],
     actionFixture: boolean,
     action?: ActionAnimation | null,
   ): void {
@@ -101,9 +94,7 @@ export class CharacterMotion {
     const step = paused ? 0 : Math.min(dt, 0.1);
     this.gait.update(step, paused ? 0 : speed);
     const strike = action ? STRIKES[action.kind] : undefined;
-    const fixture = actionFixture
-      ? this.clips.fixtures?.[timing === 'smooth' ? 'smooth' : 'held']
-      : undefined;
+    const fixture = actionFixture ? this.clips.fixture : undefined;
     const next = fixture ?? strike?.clip ?? (this.gait.moving ? 'Move' : 'Idle');
     const layer = this.anim.baseLayer;
     const changed = next !== this.clip;
@@ -120,7 +111,6 @@ export class CharacterMotion {
       );
       this.clip = next;
     }
-    this.timing = timing;
     this.anim.setFloat('stride', this.gait.parameter);
     if (strike && action && layer) {
       const at =
@@ -129,21 +119,16 @@ export class CharacterMotion {
           : action.progress * strike.contact;
       layer.activeStateCurrentTime = at * (this.durations.get(strike.clip) ?? 1);
     }
-    // Held looks sample the smooth clips a fixed number of times a second; the scene's
-    // travel stays continuous. docs/world-presentation.md#animated-character-pixels
+    // One smooth pose clock still paces strides and the stop blend to displayed travel.
+    // docs/world-presentation.md#animated-characters
     const settling = next === 'Idle' && !!layer?.transitioning && layer.previousState === 'Move';
-    this.elapsed += step * (next === 'Move' ? this.gait.rate : settling ? SETTLE_PACE : 1);
-    const frequency = timing === 'held8' ? 8 : timing === 'held12' ? 12 : 0;
-    const sampled = frequency ? Math.floor(this.elapsed * frequency) / frequency : this.elapsed;
-    const advance = Math.max(0, sampled - this.sampled);
-    this.sampled = sampled;
+    const advance = step * (next === 'Move' ? this.gait.rate : settling ? SETTLE_PACE : 1);
     if (changed || advance > 0 || strike) this.anim.update(advance);
   }
   diagnostics() {
     return {
       clip: this.clip,
       time: this.anim.baseLayer?.activeStateCurrentTime,
-      timing: this.timing,
       moving: this.gait.moving,
       speed: this.gait.speed,
       stride: this.gait.parameter,

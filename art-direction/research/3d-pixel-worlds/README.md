@@ -1,6 +1,8 @@
 # Building a dimensional pixel-art world
 
-**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+**History — superseded direction.** On October 31, 2026 Mike replaced the pixel-art direction with plain 3D models and textures ([current requirements](../../decisions.md#current-visual-requirements--october-31-2026), [why](../../changelog/2026/2026-10-26.md#october-31-2026--plain-3d-models-replace-the-pixel-art-direction)). This research is preserved as evidence; its lighting, animation, stability and sourcing findings may still inform plain-3D work, but its pixel techniques are no longer a target.
+
+**Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
 Research completed October 14, 2026. This collection answers Mike's supplied references and records a proposed technical route for OpenLegend. It updates the art brief; it does **not** select a production renderer, approve the mercenary's appearance, or implement the broader art pipeline.
 

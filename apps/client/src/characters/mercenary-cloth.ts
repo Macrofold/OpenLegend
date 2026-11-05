@@ -86,7 +86,7 @@ export class CapeCloth {
   // Authored topology and pins are fixed for this artwork lifetime. Resolve
   // their references once; bone transforms and particle positions stay live.
   // A changed garment/pin configuration must construct its own topology.
-  // docs/world-presentation.md#animated-character-pixels
+  // docs/world-presentation.md#animated-characters
   private readonly links: ClothLink[] = [];
   readonly patches: Patch[] = [];
   private readonly ownedMeshes = new Set<pc.Mesh>();

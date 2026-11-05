@@ -1,0 +1,62 @@
+{
+  "group": "source-wildmesh-doe",
+  "recipe": {
+    "path": "scripts/prepare-game-animals.ts",
+    "sha256": "952cf6c58f4b46d4273af5950becb87bfaa3aeb687e1fa79c308ad320b4f0ce8"
+  },
+  "helpers": {
+    "model-files.ts": "567b7ee35a5b679159539d14c12b26887e336a88edc38a9ac9e07294206b4982"
+  },
+  "survey": {
+    "item": "deer-wildmesh-doe-animated-cel-shading-3d-model",
+    "file": "apps/client/src/props/art-survey/wildmesh/wildmesh-doe-doe-animated-cel-shading-3d-model.glb",
+    "sha256": "9e019af9f1e4a74522a7239a7e2585bdf30b87533cac022e5afc0a3ca9b87b4d"
+  },
+  "sources": [
+    {
+      "page": "https://sketchfab.com/3d-models/doe-animated-cel-shading-3d-model-60fc44be35c44736a0fdcb816a89d903",
+      "creator": "WildMesh 3D",
+      "license": "CC BY 4.0",
+      "file": "doe_animated_cel_shading_3d_model.glb",
+      "bytes": 6691272,
+      "sha256": "eccfe0febb2c670fe37ce0f3b8a05dcad51cf6ae91107896b79fe264470edd9d",
+      "retrieved": "2026-11-04T00:46:23Z"
+    }
+  ],
+  "attribution": [
+    {
+      "work": "Doe Animated Cel Shading 3D Model",
+      "creator": "WildMesh 3D",
+      "url": "https://sketchfab.com/3d-models/doe-animated-cel-shading-3d-model-60fc44be35c44736a0fdcb816a89d903",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "changes": "Resized by OpenLegend, keeping only its standing and walking animations."
+    }
+  ],
+  "assets": [
+    {
+      "id": "wildmesh-doe",
+      "family": "wildmesh-doe",
+      "label": "Doe · WildMesh 3D",
+      "variant": "painted",
+      "description": "WildMesh 3D’s painted doe with its breathing idle and walk.",
+      "recommended": true,
+      "file": "wildmesh-doe.glb",
+      "bounds": {
+        "min": [-0.22591, 0, -1.024041],
+        "max": [0.22591, 1.450002, 1.024041]
+      },
+      "triangles": 5216,
+      "vertices": 3082,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024],
+        [512, 512]
+      ],
+      "sha256": "635ba54a84ba9a3496d0f59258e799cd1385cb4b39fb77ab0109d2e339f5da2b",
+      "source": "Doe Animated Cel Shading 3D Model by WildMesh 3D, CC BY 4.0, https://sketchfab.com/3d-models/doe-animated-cel-shading-3d-model-60fc44be35c44736a0fdcb816a89d903; resized to 1.45 m, standing in the first frame of its idle, with only that idle and its walk, held in place, by OpenLegend.",
+      "animatedFile": "wildmesh-doe-motion.glb",
+      "animatedSha256": "893070c4c990ed87ac481cfa351fe145e308f004a0fca81104a9f44102719ee7"
+    }
+  ]
+}

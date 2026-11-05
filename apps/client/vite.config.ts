@@ -121,6 +121,8 @@ function deliveryProjection(
                 ? '/__asset-records/' + encodeURIComponent(catalog.sourceFile)
                 : delivery.sourcePages?.[catalog.sourceFile]
               : undefined,
+          // Public license credits that the game shows in Settings → Credits.
+          attribution: catalog.attribution,
           assets: catalog.assets.map(project),
           controls: all ? catalog.controls?.map(project) : undefined,
         };
@@ -217,7 +219,11 @@ export function clientViteConfiguration(
 ): UserConfig {
   const studies = options.studies ?? false;
   const input: Record<string, string> = studies
-    ? { study: `${root}art-study.html`, worldStudy: `${root}scene-study.html` }
+    ? {
+        study: `${root}art-study.html`,
+        worldStudy: `${root}scene-study.html`,
+        survey: `${root}asset-survey.html`,
+      }
     : { game: `${root}index.html`, 'network-tools': `${root}src/network-tools.ts` };
   return {
     root,

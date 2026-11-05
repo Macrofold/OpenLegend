@@ -1,6 +1,6 @@
 # Representative Blender study
 
-**Current art target:** beautiful dimensional pixel art with believable proportions; visibly low-poly, blocky, cutesy and big-head/small-body designs are excluded by the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026). Retained source assets, alternatives and their credits document the study; their presence is not style approval. This preference update does not replace assets or alter their licenses.
+**Current art target:** plain 3D models and textures with believable proportions and no pixel treatment (since October 31, 2026; the pixel finishes recorded here belong to the superseded pixel-art direction); visibly low-poly, blocky, cutesy and big-head/small-body designs are excluded by the [current visual requirements](../../decisions.md#current-visual-requirements--october-31-2026). Retained source assets, alternatives and their credits document the study; their presence is not style approval. This preference update does not replace assets or alter their licenses.
 
 **Artwork rejected October 16, 2026.** Retained for comparison and source history; the [comprehensive replacement strategy](../../../docs/projects/3d-pixel-art-first-scene-plan.md#proposed-replacement-study--october-16-2026) owns the next art work. The technical export and inspector observations below do not establish artistic acceptance.
 

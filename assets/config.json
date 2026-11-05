@@ -15,6 +15,13 @@
     "maxEntries": 20000,
     "maxConcurrent": 4
   },
+  "authority": {
+    "host": "openlegend-assets.cluster-cv6myegokjlt.us-east-2.rds.amazonaws.com",
+    "port": 5432,
+    "database": "openlegend",
+    "user": "openlegend_assets",
+    "certificateBundle": "~/.postgresql/rds-global-bundle.pem"
+  },
   "publication": {
     "maxRevisions": 10000,
     "maxFiles": 20000,

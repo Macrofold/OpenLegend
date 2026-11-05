@@ -1,8 +1,8 @@
 # Shared world presentation and renderer comparison
 
-| Status      | Current progress                                                                                                           | Last updated         |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Independent PlayCanvas preparation is complete; the shared controller, Three.js and comparative qualification remain open. | 2026-10-31 22:26 UTC |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Independent PlayCanvas preparation is complete; the shared controller, Three.js and comparative qualification remain open. | 2026-11-05   |
 
 ## 1. Purpose and selected direction
 
@@ -16,7 +16,7 @@ This is a selected design, not a migration decision or a claim that Three.js is 
 
 The [first playable world](../worlds/base/playable-openings.md#first-playable-game-target) and [gameplay priorities](../repertoires/gameplay-priorities.md) remain controlling. Complete useful survival, making, camp, exploration, opposition, recovery, independent people and practical invention. Do not make two complete renderer ecosystems a prerequisite for developing those activities. Deliver a representative comparison slice, expand it through the actual currently supported presentation, then decide what continued dual support earns.
 
-The [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026) remain the art target: dimensional pixel art, natural proportions, recognizable expressive people, purposeful light, readable material groups and a living wilderness with emotional range. “Modern graphics” means accomplished art, stable motion, convincing depth, responsive controls and sufficient performance. It does not select photorealism, visible low-poly geometry, a new interface theme or expensive effects regardless of their benefit.
+The [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-31-2026) own the art target: grounded stylized plain 3D, natural proportions, recognizable expressive people, purposeful light, readable material groups and a living wilderness with emotional range. “Modern graphics” means accomplished art, stable motion, convincing depth, responsive controls and sufficient performance. It does not select photorealism, visible low-poly geometry, a new interface theme or expensive effects regardless of their benefit.
 
 ## 2. What exists and what this project adds
 
@@ -36,7 +36,7 @@ This does not change native collision, navigation, AI, authority, discovery, wor
 
 ### 3.1 Recognize people and read their actions
 
-A player walking into camp should distinguish the people they know, see who is moving or occupied, and understand an approach, attack, retreat or refusal through the supported cues. Camera motion, held animation poses, equipment, captions, selection and occluding scenery must agree. Preserve recognizable silhouettes and gear at normal play zoom; a close-up beauty shot cannot compensate for unreadable ordinary play.
+A player walking into camp should distinguish the people they know, see who is moving or occupied, and understand an approach, attack, retreat or refusal through the supported cues. Camera motion, smooth animation poses, equipment, captions, selection and occluding scenery must agree. Preserve recognizable silhouettes and gear at normal play zoom; a close-up beauty shot cannot compensate for unreadable ordinary play.
 
 The renderer may depict only supplied action/appearance information. It must not invent a character's intention, loyalty, fear, injury or knowledge. Richer expressions are later consumers of actual permitted presentation data, not a new psychology implementation in this project.
 
@@ -96,7 +96,7 @@ The workload manifest records exact inputs and counts; these scenarios are selec
 | -------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | W0: Small compatibility scene    | Walk, orbit, select and inspect beside a model, sprite, scenery and raised support.                        | Correct XYZ/support picking, occlusion, current/remembered distinction, camera and overlays, fallback-to-loaded representation.         | First adapter gate; not proof of a playable opening.                              |
 | W1: Inhabited camp               | Approach recognizable people, see motion/equipment, select a resident, read speech and an ongoing action.  | Moving and still poses, overlap, captions/status, read-through, light/shadow and normal play zoom.                                      | Use actual available people/assets; future first-playable cast remains FPV scope. |
-| W2: Woodland outing              | Follow a route, turn the camera, encounter foliage/raised ground, enter and leave the scene.               | Loading/reuse, depth/alpha, movement, pixel stability, route/support accuracy, no hidden-source reveal.                                 | No new streaming-world system is required.                                        |
+| W2: Woodland outing              | Follow a route, turn the camera, encounter foliage/raised ground, enter and leave the scene.               | Loading/reuse, depth/alpha, movement, image stability, route/support accuracy, no hidden-source reveal.                                 | No new streaming-world system is required.                                        |
 | W3: Making a place               | Preview, place/alter a supported shape, change an appearance, leave and return.                            | Shared placement policy, real geometry alignment, changed work only, asset cancellation/replacement and recognizable result.            | Authored replay does not qualify live invention or construction admission.        |
 | W4: Readable danger and darkness | Track a permitted moving target, aim, see supported action cues, retreat past cover under different light. | Displayed pose/aim consistency, selected-vs-physical target distinction, shared light selection, stable shadows and input cancellation. | Do not simulate hit authority or invent NPC decisions in a renderer.              |
 | W5: Repeated transitions         | Repeat scene entry/replacement, pause/resume, resize, asset failure and renderer replacement.              | Stop/disposal ownership, bounded retention, current scope, functional recovery and ordinary non-canvas UI.                              | Lifecycle/resource qualification; frame timing during replacement is separate.    |

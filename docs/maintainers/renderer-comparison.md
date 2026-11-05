@@ -4,6 +4,8 @@
 
 The selected browser renderer design and independent preparation are complete. The [preparation record](../verification/renderer-preparation.md) inventories the PlayCanvas path, qualifies reusable cloth calculations and records current-format capture plus bounded native/app/full-art baseline evidence. The client remains PlayCanvas-only; the shared presentation controller, Three.js, switching, replay and matched comparative qualification are not delivered. This document owns remaining implementation, integration and evidence.
 
+Current parity scope follows the [plain-3D requirements](../../art-direction/decisions.md#current-visual-requirements--october-31-2026). The pixel grid, character capture and held-pose treatment are retired and are not porting requirements. The speed-matched gait, strike replay and flowing cloth remain current; earlier pixel-profile measurements retain only their recorded historical scope.
+
 Source baseline: `Macrofold/OpenLegend` at `7e95b415f18cc58828eacbddc88da8a86693c3d0`. PlayCanvas remains the default while this project is implemented and evaluated. No matched Three.js performance result is claimed.
 
 ## Maintained records
@@ -92,7 +94,7 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 **Outcome:** the existing presentation runs through the new boundary without a regression. **Dependencies:** RCP03 for the initial narrow boundary; RCP04 for completion. The usable view/camera/lifecycle portion enables the RCP06 probe before this entire task is finished.
 
 - [ ] Move native entities, camera application, decoder integration, meshes, materials, shadow/reveal layers, render targets and disposal behind the PlayCanvas backend.
-- [ ] Preserve current art treatment, pixel-grid/coverage reconstruction, shadow filtering, sprite virtual depth, read-through, outlines and shader preparation. Share portable kernels only when their language/contracts fit; retain PC bindings and cache details locally.
+- [ ] Preserve current art treatment, alpha coverage, shadow filtering, sprite virtual depth, read-through, outlines and shader preparation. Share portable kernels only when their language/contracts fit; retain PC bindings and cache details locally.
 - [ ] Retain the PlayCanvas native tick as sole scheduler. Implement phase admission → collector begin → prepare → native pose/cloth/matrices → shared afterPose → draw admission → collector end → afterFrame, including ticks without drawing. Use native postrender for actual submission counts. Prevent automatic/manual double animation; do not add a controller RAF or another render call.
 - [ ] Expose actual API, declared feature coverage, device-ready versus scoped scene-ready, stop-now and disposal-settled states. Initial required artwork keeps the opaque loading/readiness gate; only already-supported runtime families use fallback. Track backend resources using existing ownership.
 - [ ] Preserve suspension separately from world pause and disposal: cancel held input, retain resources, stop recurring draws, allow the existing one-shot fresh-view frame and apply privacy removals while suspended.
@@ -117,7 +119,7 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 
 **Outcome:** both backends deliver the declared currently supported W1–W4 presentation. **Dependencies:** completed RCP04, RCP05 and RCP06.
 
-- [ ] Port remaining native material/pass integration for the selected art treatment, pixel coverage, shadows, read-through/outline, supported effects, scenery instancing, animation and cloth.
+- [ ] Port remaining native material/pass integration for the selected plain-3D art treatment, alpha coverage, shadows, read-through/outline, supported effects, scenery instancing, animation and cloth.
 - [ ] Check color-space/tone-mapping, output alpha, depth/stencil, filtering, transparency and shadow assumptions explicitly. A similarly named setting is not evidence of an equivalent result.
 - [ ] Preserve recognizable people/equipment, normal-zoom action cues, changed construction and current/remembered imagery. Use the same source revisions and clip/pose schedule.
 - [ ] Preserve one evaluated pose across color, shadows, reveal and attachments. Permit backend-specific batching/culling without reducing required work.

@@ -7,8 +7,8 @@ import {
   prepareFoliageLight,
 } from './environment-art';
 import { ShadowMaterial } from './shadow-material';
+import { prepareWind, windCullMargin } from './vegetation-motion';
 import { sceneryStencil, setVisibilityStencil } from './visibility-stencil';
-import { markPixelEnvironment } from './scene-pixels';
 import { readAssetJson } from './asset-files';
 
 type Library = 'natural' | 'kenney' | 'quaternius' | 'study' | 'canopy';
@@ -29,7 +29,6 @@ interface MaterialArt {
   alphaCutoff?: number;
   doubleSided?: boolean;
   texture?: string;
-  paintedTexture?: string;
   canopyNormals?: boolean;
 }
 interface PixelArt {
@@ -53,9 +52,11 @@ export class LibraryScenery {
   private readonly pixelArt = new Map<string, PixelArt>();
   private disposed = false;
   private readonly textures = new Map<string, pc.Texture>();
-  private readonly materials = new Map<string, pc.StandardMaterial>();
+  private readonly materials = new Map<
+    string,
+    { material: pc.StandardMaterial; art: MaterialArt }
+  >();
   private readonly meshes = new Map<Shape, pc.Mesh[]>();
-  private painted = true;
   private diffuseLight = false;
   constructor(
     private readonly app: pc.Application,
@@ -90,10 +91,8 @@ export class LibraryScenery {
     return request;
   }
   setTreatment(style: Readonly<ArtTreatment>): void {
-    this.painted = style.surfaceArt === 'painted';
     this.diffuseLight = style.foliageLight === 'diffuse';
-    for (const [key, material] of this.materials)
-      this.setPaint(material, this.materialArt.get(key)!);
+    for (const { material, art } of this.materials.values()) this.setPaint(material, art);
   }
   private texture(id: string): pc.Texture {
     const existing = this.textures.get(id);
@@ -116,7 +115,8 @@ export class LibraryScenery {
       format: pc.PIXELFORMAT_SRGBA8,
       mipmaps: true,
       minFilter: pc.FILTER_LINEAR_MIPMAP_LINEAR,
-      magFilter: pc.FILTER_NEAREST,
+      // Plain 3D enlarges library textures smoothly rather than as hard texels.
+      magFilter: pc.FILTER_LINEAR,
       addressU: pc.ADDRESS_REPEAT,
       addressV: pc.ADDRESS_REPEAT,
       flipY: false,
@@ -126,9 +126,7 @@ export class LibraryScenery {
     return texture;
   }
   private setPaint(material: pc.StandardMaterial, entry: MaterialArt): void {
-    const texture = this.painted ? (entry.paintedTexture ?? entry.texture) : entry.texture;
-    material.diffuseMap = texture ? this.texture(texture) : null;
-    // Source and painted versions retain identical UV alpha, including shadow cutouts.
+    material.diffuseMap = entry.texture ? this.texture(entry.texture) : null;
     material.opacityMap = entry.alphaCutoff && entry.texture ? this.texture(entry.texture) : null;
     // Metalness workflow ignores specular RGB unless explicitly enabled. The
     // previous .015 RGB therefore did not suppress the broad white highlights.
@@ -136,9 +134,10 @@ export class LibraryScenery {
     material.gloss = this.diffuseLight ? 0.08 : 0.25;
     material.update();
   }
-  private material(id: string): pc.StandardMaterial {
-    const existing = this.materials.get(id);
-    if (existing) return existing;
+  private material(id: string, sway: boolean): pc.StandardMaterial {
+    const key = sway ? id + ' · wind' : id;
+    const existing = this.materials.get(key);
+    if (existing) return existing.material;
     const entry = this.materialArt.get(id)!;
     const material = new ShadowMaterial(this.sun);
     material.name = 'Library scenery · ' + id;
@@ -154,11 +153,11 @@ export class LibraryScenery {
     material.specular.set(0.015, 0.015, 0.015);
     setVisibilityStencil(material, sceneryStencil);
     prepareSceneryNormals(material, this.app.graphicsDevice);
+    if (sway) prepareWind(material, this.app.graphicsDevice, entry.canopyNormals ?? false);
     this.treatment.prepare(material);
     if (entry.canopyNormals) prepareFoliageLight(material, this.app.graphicsDevice);
-    markPixelEnvironment(material, this.app.graphicsDevice);
     this.setPaint(material, entry);
-    this.materials.set(id, material);
+    this.materials.set(key, { material, art: entry });
     return material;
   }
   create(family: Library, appearance: string, instances: readonly SceneryInstance[]) {
@@ -217,8 +216,12 @@ export class LibraryScenery {
       instances.length,
       { data: transforms, usage: pc.BUFFER_STATIC },
     );
+    // A shape with leaf, grass or fern materials is a plant: all of its parts,
+    // trunk included, sway. Shapes without them (stone, wood piles) stay still.
+    const sway = shape.parts.some((part) => this.materialArt.get(part.material)?.canopyNormals);
+    if (sway) bounds.halfExtents.add(windCullMargin);
     const meshInstances = shape.parts.map((part, index) => {
-      const instance = new pc.MeshInstance(meshes[index]!, this.material(part.material));
+      const instance = new pc.MeshInstance(meshes[index]!, this.material(part.material, sway));
       instance.setInstancing(buffer, true);
       instance.setCustomAabb(bounds);
       instance.castShadow = instances[0]?.castShadows ?? false;
@@ -264,7 +267,7 @@ export class LibraryScenery {
         if (mesh.refCount === 0) mesh.destroy();
       }
     this.meshes.clear();
-    for (const material of this.materials.values()) material.destroy();
+    for (const { material } of this.materials.values()) material.destroy();
     this.materials.clear();
     for (const texture of this.textures.values()) texture.destroy();
     this.textures.clear();

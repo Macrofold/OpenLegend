@@ -53,17 +53,22 @@ export class PostgresDatabase implements SqlDatabase {
     private readonly connectionString: string,
     private readonly readOnly = false,
     readonly writeGroups = true,
-    private readonly role: 'primary' | 'application' = 'primary',
+    // 'authority' is the shared asset database: several machines publish to it at
+    // once, so it takes no game writer reservation. Per-record claims and
+    // revision-checked selections order concurrent publishers.
+    private readonly role: 'primary' | 'application' | 'authority' = 'primary',
     private applicationFailure?: () => void,
   ) {
+    // A paused serverless authority takes several seconds to resume on first connect.
+    const connectionTimeoutMillis = role === 'authority' ? 60000 : 5000;
     this.client = new pg.Client({
       connectionString,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis,
       statement_timeout: 5000,
     });
     this.reader = new pg.Client({
       connectionString,
-      connectionTimeoutMillis: 5000,
+      connectionTimeoutMillis,
       statement_timeout: 5000,
     });
     this.reader.on('error', () => {
@@ -93,8 +98,10 @@ export class PostgresDatabase implements SqlDatabase {
       await this.client.query('SET search_path TO open_legend');
       return;
     }
-    const lock = await this.client.query('SELECT pg_try_advisory_lock(187114, 1) AS acquired');
-    if (!lock.rows[0].acquired) throw new Error('Another Open Legend writer owns this database.');
+    if (this.role !== 'authority') {
+      const lock = await this.client.query('SELECT pg_try_advisory_lock(187114, 1) AS acquired');
+      if (!lock.rows[0].acquired) throw new Error('Another Open Legend writer owns this database.');
+    }
     await this.client.query(
       'CREATE SCHEMA IF NOT EXISTS open_legend; SET search_path TO open_legend; CREATE SCHEMA IF NOT EXISTS mind',
     );
@@ -304,6 +311,12 @@ export class PostgresDatabase implements SqlDatabase {
               : 'BEGIN',
         );
         if (!readOnly && !this.writeGroups) await this.query("SET LOCAL statement_timeout = '30s'");
+        // Shared authority clients do not hold the game writer lease. Serialize
+        // their mutations before revision/permission reads, preserving the asset
+        // repository's existing single-writer read-then-write checks across machines.
+        // docs/projects/game-asset-storage-tech-design.md#12-shared-asset-authority-across-machines
+        if (!readOnly && this.role === 'authority')
+          await this.query('SELECT pg_advisory_xact_lock(187114, 2)');
         result = await operation();
         await this.query('COMMIT');
       } catch (error) {

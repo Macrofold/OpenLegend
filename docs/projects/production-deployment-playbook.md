@@ -8,7 +8,7 @@
 
 The release-specific write gate remains future work. Existing [maintenance controls](completed/multiplayer-entry-maintenance.md) already pause ordinary play and retain the notice across restart; reuse that owner rather than rebuilding maintenance.
 
-[AS01–AS08](../maintainers/game-asset-storage.md) supplies shared asset storage, study delivery and migration work; deployment keeps the procedure and acceptance owned here.
+[AS01–AS09](../maintainers/game-asset-storage.md) supplies shared asset storage, study delivery and migration work; deployment keeps the procedure and acceptance owned here.
 
 ## 1. Build the smallest complete deployment
 

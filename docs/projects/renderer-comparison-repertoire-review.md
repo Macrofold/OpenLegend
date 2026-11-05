@@ -16,7 +16,7 @@ The strongest connected comparison is **a familiar camp, an outing, and a return
 
 OpenLegend's particular opportunity is to connect practical invention, independent people and persistent consequences. Good presentation can make those connections apparent: a newly admitted tool has an understandable form, a person remains recognizable while choosing their own activity, and a changed entrance or moved possession is visible on return. More anonymous actors, more particles or a more expensive lighting effect does not establish those qualities by itself.
 
-The selected dimensional pixel-art direction remains in [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). Natural proportions, expressive recognizable people, purposeful light and coherent material/color groups should work at ordinary play scale and during movement. This review selects no photorealistic replacement, new UI theme or asset-production campaign.
+The selected grounded-stylized plain-3D direction is owned by [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-31-2026). Natural proportions, expressive recognizable people, purposeful light and coherent material/color groups should work at ordinary play scale and during movement. This review selects no photorealistic replacement, new UI theme or asset-production campaign.
 
 ### Connected scenario matrix
 

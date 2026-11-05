@@ -40,6 +40,8 @@ Baseline: `Macrofold/OpenLegend` commit `7e95b415f18cc58828eacbddc88da8a86693c3d
 
 Independent preparation uses refreshed `origin/main` at `d2f03a1e434e83191620e734351a7edee0e24eae`; its client source is unchanged from that design baseline. The [preparation inventory and evidence](../verification/renderer-preparation.md) records actual callers, exact study assets/settings and coverage limits. Neither the stealth runtime nor Cognition Lab is integrated for this slice.
 
+The current art direction is grounded-stylized plain 3D. The old pixel-specific source paths and treatment are retired; the extraction map below names the current owners, while the pinned baseline and earlier evidence keep their original scope.
+
 Start source inspection at the [public renderer boundary](../../apps/client/src/world-renderer.ts), [current scene](../../apps/client/src/scene.ts), [scene study](../../apps/client/src/scene-study.ts) and [browser profiling driver](../../scripts/performance/profile-browser.mjs). These existing callers determine the extraction and integration steps below.
 
 | Current owner                                                                           | Reuse or extract once                                                                                                  | Backend-specific work                                                                          |
@@ -51,11 +53,11 @@ Start source inspection at the [public renderer boundary](../../apps/client/src/
 | `speech-captions.tsx`, `character-status.tsx`, `status-indicators.ts`, `vision-blur.ts` | Existing DOM/React behavior and content                                                                                | Supply consistent projected anchors/radii through a narrow query                               |
 | `asset-files.ts`, `study-assets.ts`                                                     | Exact selected releases, URLs, transfer queue, cancellation, bytes/checksums, source identity/dimensions               | Decode/upload/instantiate per engine                                                           |
 | `bundled-models.ts`, `scene-props.ts`                                                   | Loading state, deduplication, stale-result rejection, fallback and source-normalization policy                         | PlayCanvas registry/parser workarounds, Three loader/decoder/disposal                          |
-| `library-actors.ts`, `characters/mercenary-motion.ts`                                   | Clip selection, transition intent, pause, heading smoothing, held-pose schedule                                        | Native skeleton/morph evaluation and engine blend-reset mechanics                              |
+| `library-actors.ts`, `characters/character-motion.ts`, `characters/gait.ts`             | Clip selection, transition intent, pause, heading smoothing and speed-matched stride pacing                            | Native skeleton/morph evaluation and engine blend-reset mechanics                              |
 | `characters/mercenary-cloth.ts`                                                         | Typed-array particles, constraints, tethers, fixed stepping and quality decisions                                      | Read bone transforms, publish positions/normals and release mesh resources                     |
 | `library-scenery.ts`, `billboard.ts`, `perception-overlay.ts`                           | Plain geometry, bounds, instance transforms, billboard math and guide geometry                                         | Native meshes/buffers, alpha/depth integration and drawing                                     |
 | `world-presentation.ts`, `sunlight.ts`                                                  | Sun/daylight math, permitted light-source selection, read-through eligibility and reveal strengths                     | Lights/layers, stencil/depth, shadow passes and native skin/morph sharing                      |
-| `art-treatment.ts`, `scene-pixels.ts`, `pixel-effects.ts`, `shadow-material.ts`         | Art parameters, portable math/kernel fragments and required compositing behavior                                       | Shader chunks/nodes, bindings, targets, formats, variants, pass ordering and cache preparation |
+| `art-treatment.ts`, `shadow-material.ts`, `environment-art.ts`                          | Art parameters, portable math/kernel fragments and required compositing behavior                                       | Shader chunks/nodes, bindings, targets, formats, variants, pass ordering and cache preparation |
 | `scene-performance.ts`                                                                  | Measurement names, bounded report, intervals, histograms, missing-data semantics                                       | PlayCanvas stats/WebGL query collector or Three/actual-API collector                           |
 | `scene-study.ts`                                                                        | Workloads, camera path, selected quality and study actions                                                             | Access through the shared controller plus a narrow study interface                             |
 
@@ -176,7 +178,7 @@ The source baseline uses scene-owned application ticks and native animation upda
 
 ### 4.3 Animation, cloth and discontinuities
 
-The shared motion controller owns desired clip, absolute sample position, heading smoothing, transition intent, pause state and held-8/held-12 cadence when selected by the existing art profile. Backends evaluate that requested pose; an adapter may derive the required native mixer/layer delta from consecutive shared samples, but must not integrate its own wall time and drift. Preserve the existing normal-session blend duration/semantics. On install or seek, reset a transient blend to the currently requested clip/sample; a short blend discontinuity during the already-visible loading gap is accepted. Exact interrupted multi-clip fade reconstruction is not required and cannot be promised from a start timestamp alone.
+The shared motion controller owns desired clip, absolute sample position, heading smoothing, transition intent, pause state and smooth speed-matched gait. Backends evaluate that requested pose; an adapter may derive the required native mixer/layer delta from consecutive shared samples, but must not integrate its own wall time and drift. Preserve the existing normal-session blend duration/semantics. On install or seek, reset a transient blend to the currently requested clip/sample; a short blend discontinuity during the already-visible loading gap is accepted. Exact interrupted multi-clip fade reconstruction is not required and cannot be promised from a start timestamp alone.
 
 Each pose request identifies the exact source/clip, absolute sample in seconds, loop/clamp behavior and transition/restart intent. Presentation/replay clocks use milliseconds; convert once at this boundary. Adapters do not select clips from actor names, kinds or action wording. Installation supplies the controller's displayed transform; only its explicit discontinuity/reset decision snaps subsequent motion.
 
@@ -275,13 +277,13 @@ A stalled noncancelable parser/cleanup keeps the selector blocked with a truthfu
 
 ### Shared visual meaning
 
-Share material roles, art profiles, selected sun/fire descriptors, opacity/reveal policy, small-subject pixel density and portable algorithms. Preserve current source/dimension conventions, alpha coverage and color assumptions. Do not bake the PlayCanvas shader object model into a universal material schema.
+Share material roles, art profiles, selected sun/fire descriptors, opacity/reveal policy, small-subject readability and portable algorithms. Preserve current source/dimension conventions, alpha coverage and color assumptions. Do not bake the PlayCanvas shader object model into a universal material schema.
 
 In particular:
 
 - `sunlightAtHour()` already is pure. Share daylight/color/intensity interpolation and discontinuity rules; adapt native light axes locally.
 - Fire selection uses permitted source images, distance ranking and existing retention bias/quality budgets. Choose sources once; both backends illuminate from that same descriptor set. Do not cap native light selection differently and call the result matched.
-- Pixel treatment shares world-anchored grid and coverage-aware reconstruction mathematics, including coarse scenery/fine subject treatment. PlayCanvas's HDR alpha tagging and compose injection are implementation details; Three must supply equivalent coverage information without corrupting transparency or tone mapping.
+- Plain-3D material and alpha coverage follow the current art direction. The former pixel grid, character capture and held-pose treatment are removed; neither backend recreates them. Preserve transparent edges and tone mapping without imposing a common native pass layout.
 - Shadow filtering may share portable depth-comparison math. Depth formats, shadow samplers, bias, native macros, variant compilation/cache keys and filtering paths remain engine-specific.
 - Reveal/outline/preview/perception overlays share eligibility, parameters and source geometry. Native layers/stencil/depth/pass setup remain backend work. Reuse the current animated skin/morph pose in every pass.
 - Retain existing static scenery instancing and calculated bounds where useful; Three can use its own instancing/batching. Do not require equal draw-call counts to establish equivalent work.
@@ -293,9 +295,9 @@ Light descriptors identify the selected source, world position or direction-to-s
 | Area             | Check in the actual rendered result                                                                                                                 |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Color pipeline   | Linear/sRGB interpretation, source texture encoding, HDR formats, exposure/tone mapping order and final output conversion; no double gamma/tone map |
-| Pixel treatment  | World anchoring, coverage/alpha, small subject detail, resolution, normal-play zoom and moving-camera stability                                     |
+| Image stability  | Coverage/alpha, small subject detail, full resolution, normal-play zoom and moving-camera stability                                                 |
 | Depth/alpha      | Near/far/projection, opaque/cutout/blended sorting, sprites/virtual depth, fine foliage, support/feet and transparent edges                         |
-| Models/animation | Source scale/orientation, bind pose, clip time/blends, skin/morph/equipment, held cadence and shared multi-pass pose                                |
+| Models/animation | Source scale/orientation, bind pose, clip time/blends, skin/morph/equipment, smooth speed-matched gait and shared multi-pass pose                   |
 | Lighting         | Same selected sources, shadow coverage/distance/resolution/quality intent, material response, day/night and local-light cases                       |
 | Effects          | Existing bloom/grading/compose ordering, read-through, selected/hover outline, placement and range guides                                           |
 | UI projection    | Same camera/state for captions/status/aim, resize/DPR, missing/behind-camera anchors and focus/input ownership                                      |

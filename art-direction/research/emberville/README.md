@@ -1,6 +1,6 @@
 # Emberville: variety, atmosphere and readable action
 
-**Reference study — October 22, 2026.** Mike likes the beauty of Emberville's pixel art, especially the variety of its two-dimensional world and the promise of enjoyable real-time combat. He finds its proportions too cartoony for Open Legend and associates its presentation with Stardew Valley. This is an aspect-specific reference for [Open Legend's current visual direction](../../decisions.md#current-visual-requirements--october-16-2026): dimensional pixel art, believable anatomy and practical construction.
+**Reference study — October 22, 2026.** Mike likes the beauty of Emberville's pixel art, especially the variety of its two-dimensional world and the promise of enjoyable real-time combat. He finds its proportions too cartoony for Open Legend and associates its presentation with Stardew Valley. This is an aspect-specific reference for [Open Legend's current visual direction](../../decisions.md#superseded-pixel-art-requirements--october-16-2026): dimensional pixel art, believable anatomy and practical construction.
 
 The [combat research note](../../../docs/game-ideas/real-time-combat-feel.md) owns lessons from Emberville and Diablo. This study owns environmental composition and the relationship between scenery and readable play.
 
