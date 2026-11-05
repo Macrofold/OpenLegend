@@ -3,8 +3,13 @@ import { entityGet } from './entity-collection.js';
 import { readOnlyDraftView } from './draft.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import type { WorldState } from './types.js';
-import { takeAnimalWanderClockWrites } from './native-response-controller.js';
+import type { Entity, WorldState } from './types.js';
+import { statusEffectsReadToken } from './status-capabilities.js';
+import {
+  takeAnimalWanderClockWrites,
+  reconcileAnimalWander,
+  animalWanderNeedsCountdown,
+} from './native-response-controller.js';
 
 interface DueAnimal {
   id: string;
@@ -38,6 +43,17 @@ export class AnimalWorkQueue {
   private owned = false;
   private nativeOwnedClocks = false;
   private captureRequired = false;
+  /** Only wander eligibility is reused, never flight/forage/controller outcomes. */
+  private readonly wanderEligibility = new Map<
+    string,
+    {
+      ready: boolean;
+      status: object | undefined;
+      countdown: boolean;
+      absolute: boolean;
+      running: boolean;
+    }
+  >();
   constructor(preparation?: AnimalWorkPreparation) {
     this.entries = preparation?.entries ?? [];
     this.byId = preparation?.byId ?? new Map();
@@ -57,6 +73,53 @@ export class AnimalWorkQueue {
     this.nativeOwnedClocks = true;
     this.captureRequired = takeAnimalWanderClockWrites(world, this, true) === undefined;
   }
+  /** Position-only changes leave this predicate unchanged. The existing status
+   * owner supplies an expiring witness; foreign/mutable contributions return a fresh
+   * witness and therefore retain full reconciliation. No game value lives here. */
+  reconcileWander(world: WorldState, entity: Entity): void {
+    const current = readOnlyDraftView(entity),
+      animal = current.animal && readOnlyDraftView(current.animal);
+    if (!animal) return;
+    const actor = current.actor && readOnlyDraftView(current.actor),
+      spatial = readOnlyDraftView(current.spatial),
+      clock = readOnlyDraftView(animal.wander);
+    const ready =
+      !current.threat &&
+      !!actor?.alive &&
+      actor.controller === 'native' &&
+      !actor.incapacitated &&
+      !actor.action &&
+      !spatial.flight &&
+      spatial.fallVelocity === undefined &&
+      !animal.episode &&
+      !animal.foraging;
+    const status = ready ? statusEffectsReadToken(world, entity) : undefined,
+      countdown = animalWanderNeedsCountdown(world),
+      absolute = 'dueAt' in clock,
+      running = 'running' in clock && !!clock.running;
+    const prior = this.wanderEligibility.get(entity.id);
+    if (
+      prior &&
+      prior.ready === ready &&
+      prior.status === status &&
+      prior.countdown === countdown &&
+      prior.absolute === absolute &&
+      prior.running === running
+    ) {
+      countDomainWork('animalWanderEligibilityReuses');
+      return;
+    }
+    reconcileAnimalWander(world, entity);
+    const updated = readOnlyDraftView(readOnlyDraftView(entity).animal!.wander);
+    this.wanderEligibility.set(entity.id, {
+      ready,
+      status,
+      countdown,
+      absolute: 'dueAt' in updated,
+      running: 'running' in updated && !!updated.running,
+    });
+  }
+
   private writable() {
     if (!this.owned) {
       this.entries = [...this.entries];
@@ -118,6 +181,8 @@ export class AnimalWorkQueue {
           owned.activeForagers.delete(id);
           owned.pendingRefuges.delete(id);
         }
+      for (const id of this.wanderEligibility.keys())
+        if (!current.has(id)) this.wanderEligibility.delete(id);
       this.roster = roster;
       this.rosterIds = current;
     }

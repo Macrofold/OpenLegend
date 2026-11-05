@@ -1,4 +1,3 @@
-import { prepareIndividualReferenceRepairs } from './individual-reference-repair.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
 import { personalAccountRevision } from './personal-accounts.js';
 import {
@@ -546,7 +545,6 @@ interface AccountActorPlan {
   actorId: string;
   epoch: string;
   life: number;
-  repaired: string[];
   privacy: number;
   writes: ExperienceEntry[];
   deletes: Map<Kind, Set<string>>;
@@ -587,10 +585,9 @@ export async function prepareAccountRetentionPlan(
     prepared: PreparedMemoryRetention,
   ) => Promise<{ state: SavedWorld; plan: SourceVersionPlan }>,
 ): Promise<AccountRetentionPlan> {
-  const repaired = await prepareIndividualReferenceRepairs(db, state, metadata, actorIds);
   const prepared = await prepareAccountRetention(
     db,
-    repaired,
+    state,
     false,
     pendingDeletes,
     metadata,
@@ -654,7 +651,6 @@ export async function prepareAccountRetentionPlan(
       ![...deletes.values()].some((ids) => ids.size) &&
       !identities.length &&
       !supports.length &&
-      (before.individualRepairs?.length ?? 0) === (after.individualRepairs?.length ?? 0) &&
       before.accounts.nextDue === after.accounts.nextDue &&
       !Object.values(delta).some((value) => value.bytes || value.count) &&
       !knownPlacesChanged
@@ -665,9 +661,6 @@ export async function prepareAccountRetentionPlan(
       epoch: before.epoch,
       life: before.physicalLife,
       privacy: state.world.experience?.privacyRevisions?.[actorId] ?? 0,
-      repaired: (before.individualRepairs ?? []).filter(
-        (id) => !after.individualRepairs?.includes(id),
-      ),
       writes,
       deletes,
       identities,
@@ -825,12 +818,7 @@ export function applyAccountRetentionPlan(
           const due = experienceRetentionDue(draft, entry);
           if (due !== null) nextDue = Math.min(nextDue ?? Infinity, due);
         }
-        if (actorPlan.repaired.length) {
-          const completed = new Set(actorPlan.repaired);
-          actor.individualRepairs = actor.individualRepairs?.filter((id) => !completed.has(id));
-          if (!actor.individualRepairs?.length) delete actor.individualRepairs;
-        }
-        actor.accounts!.nextDue = actor.individualRepairs?.length ? draft.simTime : nextDue;
+        actor.accounts!.nextDue = nextDue;
         actor.accounts!.archives = actorPlan.accountsAfter.archives;
         // A newer native suffix may have crossed the early required-pool target
         // while this read was pending. Do not overwrite its due marker with the

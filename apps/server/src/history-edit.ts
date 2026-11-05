@@ -462,9 +462,6 @@ export async function prepareHistoryEdit(
                       (fact === undefined ||
                         entry.receipt?.facets.some(
                           (member) => member.memberIndex === fact.ordinal,
-                        ) ||
-                        entry.coverage.some((coverage) =>
-                          coverage.members.some((member) => member.memberIndex === fact.ordinal),
                         )),
                   ),
               )

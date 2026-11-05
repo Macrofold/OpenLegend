@@ -329,18 +329,12 @@ it('reads historical native distances through cold actor receipts, including a l
   // useful, but a movement change requires both retained endpoint measurements.
   if (atTwo.other?.endpointChange)
     expect(atTwo.other.endpointChange.decreaseLower).toBeGreaterThan(0.5);
-  expect(
-    atTwo.support.every(
-      (support) =>
-        captured.receiptDetails[support.reference] || captured.baselineDetails[support.reference],
-    ),
-  ).toBe(true);
+  expect(atTwo.support.every((support) => captured.receiptDetails[support.reference])).toBe(true);
   expect(
     await store.memories.temporalSelectionsCurrent(
       scope,
       Object.values(captured.receiptDetails),
       () => temporalHistoryWindow(service.world, scope.actorId),
-      Object.values(captured.baselineDetails),
     ),
   ).toBe(true);
   const { expandedIds: _, ...wire } = response;

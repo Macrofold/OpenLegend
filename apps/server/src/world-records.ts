@@ -70,7 +70,6 @@ import {
   type Appraisal,
   type Entity,
   type ItemInstance,
-  selectedObserverIdentityKnowledge,
   type ReceivedValue,
   temporalPageReferences,
   temporalPageMutation,
@@ -1528,7 +1527,7 @@ export class WorldRecords {
       } else if (!partial && !objectPredicate && table !== 'world_hot_events') {
         // Full recovery remains explicit, but each database transfer stays bounded.
         // Large PostgreSQL histories must not become one timeout-sized result.
-        for await (const row of tableRows(this.db, table, head.worldId)) rows.push(row);
+        for await (const row of tableRows(this.db, table, head.worldId, 'retained')) rows.push(row);
       } else {
         rows = await this.db
           .prepare(
@@ -1710,9 +1709,7 @@ export class WorldRecords {
         count = 0;
       for (const identity of Object.values(identities))
         if (identity.retained && !identity.authored) {
-          bytes += Buffer.byteLength(
-            JSON.stringify(selectedObserverIdentityKnowledge(state.world, identity)),
-          );
+          bytes += Buffer.byteLength(JSON.stringify(identity));
           count++;
         }
       if (!count) continue;

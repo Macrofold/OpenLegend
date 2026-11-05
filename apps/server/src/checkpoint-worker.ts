@@ -1,7 +1,7 @@
 import { parentPort, workerData } from 'node:worker_threads';
 import { PostgresDatabase } from './postgres.js';
 import { writeCheckpoint } from './checkpoint.js';
-import { SaveFiles } from './save-files.js';
+import { SaveFiles, CheckpointAllowanceError } from './save-files.js';
 import type { CheckpointSource, CheckpointRequest } from './checkpoint-worker-client.js';
 
 const source = workerData as CheckpointSource;
@@ -37,6 +37,7 @@ port.on('message', async (request: CheckpointRequest) => {
     port.postMessage({
       type: 'failed',
       error: error instanceof Error ? error.message : 'Checkpoint worker failed.',
+      ...(error instanceof CheckpointAllowanceError ? { allowance: error.details } : {}),
     });
   } finally {
     busy = false;

@@ -42,7 +42,6 @@ import {
 import { selectedAttentionPolicy, selectedTemporalPolicy } from './world-composition.js';
 import {
   captureTemporalGeometry,
-  createReceivedSample,
   withTemporalReceivedTransition,
   closeTemporalGeometry,
   type TemporalCurrentGroupCheckpoint,
@@ -965,7 +964,6 @@ function recordGeometryCheck(
     receivedGeometryFeatures(state),
     state.supportedThrough,
     selectedTemporalPolicy(world).recent,
-    createReceivedSample(world, observerId),
   );
 }
 function finalizeGeometry(
@@ -1061,7 +1059,7 @@ export function revokeReceivedGeometryEvidence(
         (feature.observation.facets[0]?.value.kind === 'physical-boundary' &&
           !ids.has(feature.observation.id))
       )
-        closeTemporalGeometry(world, observerId, feature, state.supportedThrough, 'loss');
+        closeTemporalGeometry(world, observerId, feature, state.supportedThrough, 'unchecked');
     state.boundaryKeys = state.boundaryKeys.filter((_, i) =>
       ids.has(state.boundaries[i]!.observation.id),
     );

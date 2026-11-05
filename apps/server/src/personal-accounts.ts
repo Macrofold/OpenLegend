@@ -4,6 +4,7 @@ import {
   receivedEventEvidence,
   receivedEventAwareness,
   temporalReceiptId,
+  materializeReceivedEntry,
   canonicalJson,
   type Awareness,
   type EventEvidence,
@@ -35,7 +36,7 @@ export function temporalStoryReceiptInPage(
     return;
   const batch = page.batches.find((batch) => batch.batchOrder === locator.batchOrder);
   const entry = batch?.entries.find((entry) => entry.entryIndex === locator.entryIndex);
-  return entry?.kind === 'occurrence' ? entry.receipt : undefined;
+  return batch && entry?.kind === 'occurrence' ? materializeReceivedEntry(batch, entry) : undefined;
 }
 
 /** Explicit correction/erasure carries exact old block predecessors. Ordinary
@@ -71,7 +72,12 @@ export async function revokeTemporalStoryAccounts(
         : intent.after.batches.flatMap((batch) =>
             batch.entries.flatMap((entry) =>
               entry.kind === 'occurrence' && entry.receipt
-                ? [[entry.receipt.id, canonicalJson(entry.receipt)] as const]
+                ? [
+                    [
+                      temporalReceiptId({ ...batch, entryIndex: entry.entryIndex }),
+                      canonicalJson(entry.receipt),
+                    ] as const,
+                  ]
                 : [],
             ),
           ),
@@ -81,9 +87,10 @@ export async function revokeTemporalStoryAccounts(
         if (
           entry.kind === 'occurrence' &&
           entry.receipt &&
-          retained.get(entry.receipt.id) !== canonicalJson(entry.receipt)
+          retained.get(temporalReceiptId({ ...batch, entryIndex: entry.entryIndex })) !==
+            canonicalJson(entry.receipt)
         )
-          removed.set(entry.receipt.id, {
+          removed.set(temporalReceiptId({ ...batch, entryIndex: entry.entryIndex }), {
             actorId: before.actorId,
             physicalLife: before.physicalLife,
             epoch: before.epoch,

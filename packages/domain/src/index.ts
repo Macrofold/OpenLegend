@@ -439,8 +439,6 @@ export {
   beginTemporalReceiptEpoch,
   temporalReceiptChangeCount,
   temporalSpatialContextValue,
-  retireTemporalPages,
-  retireTemporalEntries,
   advanceTemporalRecent,
   receivedDirectoryContains,
   restoreReceivedRecentDirectory,
@@ -456,6 +454,7 @@ export {
   invalidateTemporalFacets,
   temporalSourceIds,
   temporalReceiptAliases,
+  temporalValueDependencyAliases,
   temporalAvailability,
   temporalFieldAvailability,
   groupedTemporalAvailability,
@@ -473,13 +472,9 @@ export {
   isTemporalReceiptSource,
   temporalReceiptLocatorFromSource,
   parseTemporalReceiptId,
-  receivedDirectorySourceContains,
   retainTemporalObservationSupport,
   retainTemporalSupport,
-  retainTemporalStateSupport,
   retainTemporalCurrentSupport,
-  captureTemporalCurrentSeeds,
-  type TemporalCurrentSeed,
   closeTemporalCurrentGroup,
   captureTemporalGeometry,
   closeTemporalGeometry,
@@ -562,10 +557,14 @@ export { nativeThinkingTimeChanges } from './thinking-inputs.js';
 
 export { boundActionItemIds } from './action-item-references.js';
 
-export { selectReceivedReceiptMembers, selectReceivedState } from './temporal-frames.js';
+export { selectReceivedReceiptMembers } from './temporal-frames.js';
 
 export { jsonByteLength } from './records.js';
 
 export * from './received-batches.js';
 
-export { receivedBatchStorageBytes, materializeReceivedBindingSeed } from './temporal-frames.js';
+export { receivedBatchStorageBytes } from './temporal-frames.js';
+
+export { hasTemporalRecentIndividual } from './temporal-evidence.js';
+
+export { retainCapturedTemporalSupport } from './temporal-evidence.js';

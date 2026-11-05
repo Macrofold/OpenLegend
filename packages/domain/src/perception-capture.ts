@@ -23,6 +23,7 @@ import {
   type ObserverLife,
   type PerceptionEvidenceOwner,
   type CurrentMotionSample,
+  currentMotionEarlierProof,
   type CurrentBodyPoseSupport,
   type CurrentDescriptionSupport,
   type CapturedCurrentFacet,
@@ -180,7 +181,7 @@ export function captureCurrentSources(
       continue;
     const location = state && currentFacetGet(state, `${id}:location`, { modality: 'sight' });
     if (!location) continue;
-    const source = motion.earlier.original.source.id,
+    const source = motion.earlier.original.id,
       ordinal = motion.earlier.original.ordinal;
     const aliases = [source, personalFactAlias(source, ordinal), ...(motion.earlier.aliases ?? [])];
     if (
@@ -450,7 +451,7 @@ export function captureCurrentSource(
       const earlier = receivedFacetValueFromSources(captured.values, motion.earlier.value),
         latest = captureRecord(captured, location);
       if (earlier?.kind === 'location' && latest.value.kind === 'location') {
-        const { value: _value, ...earlierProof } = motion.earlier;
+        const earlierProof = currentMotionEarlierProof(captured.observer, motion.earlier);
         const later: ReceivedLocationSample = {
           location: latest.value.location,
           frame: latest.value.frame,

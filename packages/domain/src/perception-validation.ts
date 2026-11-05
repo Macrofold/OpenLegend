@@ -35,6 +35,7 @@ import {
   currentOriginalKey,
   currentFacetSupport,
   captureReceivedLocationSample,
+  materializeCurrentMotionEarlier,
   receivedPerceptionObservations,
 } from './perception-evidence.js';
 import { validateDetectionSupportState } from './perception-support.js';
@@ -406,19 +407,23 @@ export function validatePerceptionEvidenceState(
             );
             if (
               recording.lastSource.observer.actorId !== observerId ||
-              recording.lastSource.observer.physicalLife !== state.life ||
-              recording.binding.subject !== receivedTrackKey(grant.exposure, grant.channel)
+              recording.lastSource.observer.physicalLife !== state.life
             )
               throw new Error('Current recording belongs to another received track.');
             for (const member of recording.members) {
-              const part = recording.binding.parts.find(
+              const part = recording.content.find(
                   (part) => part.kind === member.kind && part.part === member.part,
                 ),
                 field = group.received.fields[member.kind];
+              const expected =
+                part?.part === 'pose' && field?.value.reception?.kind === 'body'
+                  ? field.value.reception.poseRef
+                  : field?.value.reference;
               if (
                 !part ||
                 !field ||
-                !sameReceivedValueReference(part.facet.valueRef, field.value.reference)
+                expected === undefined ||
+                !sameReceivedValueReference(part.value, expected)
               )
                 throw new Error('Current recording names another received value.');
               const key = JSON.stringify([member.kind, member.part]);
@@ -433,7 +438,7 @@ export function validatePerceptionEvidenceState(
             kinds.has(currentFieldIdentity(kind, grant.channel)) ||
             !hasRecordFields(
               field,
-              ['id', 'value', 'originalOrdinal'],
+              ['id', 'value', 'originalOrdinal', 'semanticRevision'],
               [
                 'bodyLeaseId',
                 'localSubject',
@@ -441,6 +446,8 @@ export function validatePerceptionEvidenceState(
                 'sourcePlacementRevision',
               ],
             ) ||
+            !Number.isSafeInteger(field.semanticRevision) ||
+            field.semanticRevision < 1 ||
             kind !== field.value.kind ||
             currentFieldParts(field).some((part) => !heldParts.has(JSON.stringify([kind, part])))
           )
@@ -529,8 +536,20 @@ export function validatePerceptionEvidenceState(
           track.continuityRevision < 0
         )
           throw new Error('Invalid current motion support.');
-        const { value, ...proof } = track.earlier;
-        const prior = receivedFacetValue(world, value);
+        if (
+          !hasRecordFields(
+            track.earlier,
+            ['value', 'times', 'original', 'confirmation'],
+            ['aliases'],
+          ) ||
+          !Array.isArray(track.earlier.times) ||
+          track.earlier.times.length !== 5 ||
+          track.earlier.times.some((at) => !Number.isFinite(at) || at < 0 || at > world.simTime) ||
+          !hasRecordFields(track.earlier.original, ['id', 'revision', 'ordinal']) ||
+          !hasRecordFields(track.earlier.confirmation, ['id', 'revision'])
+        )
+          throw new Error('Invalid current motion point.');
+        const prior = receivedFacetValue(world, track.earlier.value);
         const latest = receivedFacetValue(world, location.value);
         if (prior?.kind !== 'location' || latest?.kind !== 'location')
           throw new Error('Missing current motion point.');
@@ -545,7 +564,7 @@ export function validatePerceptionEvidenceState(
               currentFacetGrant(state, location).channel,
             ),
           },
-          earlier: { ...proof, location: prior.location, frame: prior.frame },
+          earlier: materializeCurrentMotionEarlier(world, state, track.earlier),
           later,
           correspondence: 'unambiguous-received-continuity',
         });
@@ -613,7 +632,16 @@ export function validatePerceptionEvidenceState(
         !record ||
         !hasRecordFields(
           record,
-          ['id', 'revision', 'grant', 'originalSource', 'times', 'value', 'originalOrdinal'],
+          [
+            'id',
+            'revision',
+            'grant',
+            'originalSource',
+            'times',
+            'value',
+            'originalOrdinal',
+            'semanticRevision',
+          ],
           [
             // The read projection copies this already-validated group state;
             // unchecked detail is a supported current fact, including after load.

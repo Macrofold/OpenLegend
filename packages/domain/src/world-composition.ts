@@ -64,11 +64,7 @@ import {
   outwardBodyName,
   associateBodyFamiliarity,
   pruneObserverIndividuals,
-  markRecentIndividualReferences,
-  requestRecentIndividualRepair,
-  repairRecentIndividualReferences,
   retainedIndividualEvidenceKeys,
-  observerIdentityKnowledge,
   captureSubjectLabelReader,
 } from './worlds/base/knowledge.js';
 import { DETECTION_SUPPORT_POLICY } from './worlds/base/senses.js';
@@ -178,40 +174,6 @@ export function selectedAssociateBodyFamiliarity(
 ): void {
   selectedCreationProfileForWorld(world);
   associateBodyFamiliarity(world, observerId, sourceId);
-}
-
-export function selectedMarkRecentIndividualReferences(
-  world: WorldState,
-  actorId: string,
-  ids: readonly string[],
-  reference: Parameters<typeof markRecentIndividualReferences>[3],
-): void {
-  selectedCreationProfileForWorld(world);
-  markRecentIndividualReferences(world, actorId, ids, reference);
-}
-export function selectedObserverIdentityKnowledge(
-  world: WorldState,
-  identity: Parameters<typeof observerIdentityKnowledge>[0],
-) {
-  selectedCreationProfileForWorld(world);
-  return observerIdentityKnowledge(identity);
-}
-
-export function selectedRequestRecentIndividualRepair(
-  world: WorldState,
-  actorId: string,
-  ids: readonly string[],
-): void {
-  selectedCreationProfileForWorld(world);
-  requestRecentIndividualRepair(world, actorId, ids);
-}
-export function selectedRepairRecentIndividualReferences(
-  world: WorldState,
-  actorId: string,
-  changes: Parameters<typeof repairRecentIndividualReferences>[2],
-): void {
-  selectedCreationProfileForWorld(world);
-  repairRecentIndividualReferences(world, actorId, changes);
 }
 
 export function selectedPruneObserverIndividuals(

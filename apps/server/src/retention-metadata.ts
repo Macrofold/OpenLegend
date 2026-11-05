@@ -1,17 +1,15 @@
 import {
   experienceMaintenanceTarget,
-  selectedObserverIdentityKnowledge,
   temporalPageMetadata,
   installTemporalChargeDirectories,
   selectedTemporalPolicy,
   receivedDirectoryContains,
-  receivedDirectorySourceContains,
   parseTemporalReceiptId,
   parsePersonalFactAlias,
+  temporalReceiptId,
   receivedPositionEligible,
-  materializeReceivedEntry,
-  temporalReceiptAliases,
-  temporalReceiptIndividualIds,
+  receivedRecordAliases,
+  receivedRecordIndividualIds,
   temporalPageReferences,
   temporalRecentAt,
   type TemporalPage,
@@ -128,6 +126,7 @@ export interface RetentionRow {
 }
 type Records = Map<string, RetentionRow>;
 const identity = (table: string, id: string) => JSON.stringify([table, id]);
+/** Parsing routes a candidate only; the actual entry/member below proves it. */
 function directReceiptAlias(id: string): { sourceId: string; memberIndex?: number } | undefined {
   const fact = parsePersonalFactAlias(id),
     sourceId = fact?.observationId ?? id;
@@ -583,8 +582,7 @@ export class RetentionMetadata {
       for (const value of Object.values(world.actorKnowledge?.[actorId] ?? {}))
         if (value.origin === 'actor-edit') add('optional', value);
       for (const value of Object.values(world.observerIdentities?.[actorId] ?? {}))
-        if ('retained' in value && value.retained && !value.authored)
-          add('optional', selectedObserverIdentityKnowledge(world, value));
+        if ('retained' in value && value.retained && !value.authored) add('optional', value);
       for (const category of ['optional', 'required', 'speech'] as const) {
         const total = totals[category],
           saved = actor.accounts?.[category],
@@ -836,34 +834,10 @@ export class RetentionMetadataView {
     const world = nativeCut ?? this.owner.capturedWorld();
     if (world && world.id !== worldId)
       throw new Error('Personal retention native cut belongs to another world.');
-    for (const [key, request] of requests.entries()) {
-      if (!request.includeRecent) continue;
-      if (!world) throw new Error('Recent membership requires its captured native cut.');
-      const actor = world.experience?.temporal?.actors[request.actorId];
-      if (!actor) continue;
-      const cutoff = Math.max(
-        world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
-        actor.frontier?.expiredThroughTime ?? -Infinity,
-      );
-      for (const alias of request.aliases) {
-        const direct = directReceiptAlias(alias);
-        if (
-          direct &&
-          receivedDirectorySourceContains(
-            actor.recent,
-            request.actorId,
-            direct.sourceId,
-            direct.memberIndex,
-            cutoff,
-          )
-        )
-          results[key]!.aliases.add(alias);
-      }
-    }
     for (const [key, request] of requests.entries())
       if (
         request.includeRecent &&
-        (request.aliases.some((id) => !directReceiptAlias(id) && !results[key]!.aliases.has(id)) ||
+        (request.aliases.some((id) => !results[key]!.aliases.has(id)) ||
           request.individualIds.some((id) => !results[key]!.individuals.has(id)))
       ) {
         if (!world) throw new Error('Recent membership requires its captured native cut.');
@@ -914,7 +888,7 @@ export class RetentionMetadataView {
       const { actorId, includeRecent } = request,
         result = results[key]!;
       const aliases = [...new Set(request.aliases.filter((id) => !result.aliases.has(id)))];
-      const recentAliases = aliases.filter((id) => !directReceiptAlias(id));
+      const recentAliases = aliases;
       const individuals = [
         ...new Set(request.individualIds.filter((id) => !result.individuals.has(id))),
       ];
@@ -1143,7 +1117,7 @@ export class RetentionMetadataView {
   ): void {
     const actor = world.experience?.temporal?.actors[request.actorId];
     if (!actor || page.actorId !== request.actorId) return;
-    const requestedAliases = request.aliases.filter((id) => !directReceiptAlias(id));
+    const requestedAliases = request.aliases;
     for (const batch of page.batches)
       for (const entry of batch.entries) {
         const locator = {
@@ -1167,36 +1141,27 @@ export class RetentionMetadataView {
           (entry.kind === 'occurrence' ||
             receivedDirectoryContains(actor.recent, locator, memberIndex));
         if (entry.kind === 'occurrence' && !eligible(0)) continue;
-        const selected =
-          entry.kind === 'occurrence'
-            ? entry
-            : {
-                ...entry,
-                coverage: entry.coverage.flatMap((coverage) => {
-                  const members = coverage.members.filter((member) => eligible(member.memberIndex));
-                  return members.length ? [{ ...coverage, members }] : [];
-                }),
-              };
-        const subjects =
-          selected.kind === 'occurrence'
-            ? [undefined]
-            : [
-                ...new Set(
-                  selected.coverage.map(
-                    (coverage) =>
-                      batch.bindings.find((binding) => binding.id === coverage.binding)!.subject,
-                  ),
-                ),
-              ].map((subject) => new Set([subject]));
-        for (const subject of subjects) {
-          const receipt = materializeReceivedEntry(batch, selected, subject);
-          if (!receipt) continue;
-          const aliases = new Set(temporalReceiptAliases(receipt, sources, world));
-          for (const alias of requestedAliases) if (aliases.has(alias)) result.aliases.add(alias);
-          const individuals = new Set(temporalReceiptIndividualIds(receipt, sources));
-          for (const id of request.individualIds)
-            if (individuals.has(id)) result.individuals.add(id);
+        const original = entry.receipt;
+        const facets = original.facets.filter((facet) => eligible(facet.memberIndex));
+        if (!facets.length && (original.facets.length || !eligible(0))) continue;
+        const receipt =
+          facets.length === original.facets.length ? original : { ...original, facets };
+        const aliases = new Set(
+          receivedRecordAliases(batch, { ...entry, receipt }, sources, world),
+        );
+        for (const alias of requestedAliases) {
+          const direct = directReceiptAlias(alias);
+          if (direct) {
+            if (
+              direct.sourceId === temporalReceiptId(locator) &&
+              (direct.memberIndex === undefined ||
+                facets.some((facet) => facet.memberIndex === direct.memberIndex))
+            )
+              result.aliases.add(alias);
+          } else if (aliases.has(alias)) result.aliases.add(alias);
         }
+        const individuals = new Set(receivedRecordIndividualIds(receipt, sources));
+        for (const id of request.individualIds) if (individuals.has(id)) result.individuals.add(id);
       }
   }
 }

@@ -3,6 +3,7 @@ import {
   speechDescription,
   soundDescription,
   type TemporalValue,
+  type TemporalReceipt,
   type ObservedLocation,
   type SensoryFacet,
 } from '@open-legend/domain';
@@ -36,7 +37,16 @@ function receivedLocation(location: ObservedLocation): string {
     ? 'a direction around my level'
     : `a direction ${location.elevation} me`;
 }
-function receivedText(values: readonly (TemporalValue | SensoryFacet)[]): string {
+function receivedText(
+  values: readonly (TemporalValue | SensoryFacet)[],
+  change: TemporalReceipt['change'],
+): string {
+  if (!values.length) {
+    if (change === 'loss') return 'Contact was lost.';
+    if (change === 'unchecked') return 'Further details were uncertain.';
+    if (change === 'attention-exit') return 'Attention shifted elsewhere.';
+    if (change === 'recording-gap') return 'Further details were not retained.';
+  }
   const parts: string[] = [];
   for (const value of values) {
     if (value.kind === 'personal-account') parts.push(historicalAccountText(value.text));
@@ -181,7 +191,7 @@ export async function recentHistory(
     .filter(({ receipt }) => receipt.change !== 'receiver-frame')
     .map((entry) => ({
       entry,
-      text: receivedText(entry.values),
+      text: receivedText(entry.values, entry.receipt.change),
     }));
   const matching = rows.filter((row) => !query || row.text.toLocaleLowerCase().includes(query));
   const page = matching.slice(-20),
@@ -232,7 +242,9 @@ export async function recentHistory(
           entryIndex: receipt.entryIndex,
         },
       }),
-      text: `${receipt.change === 'loss' ? 'Lost contact; last received' : receipt.change === 'attention-exit' ? 'Last noted' : 'Received'}: ${text}`,
+      text: !receipt.facets.length
+        ? text
+        : `${receipt.change === 'loss' ? 'Lost contact; last received' : receipt.change === 'attention-exit' ? 'Last noted' : 'Received'}: ${text}`,
     })),
     next:
       more && oldest
@@ -245,7 +257,9 @@ export async function recentHistory(
             memberIndex:
               'memberIndex' in oldest
                 ? oldest.memberIndex
-                : Math.min(...oldest.facets.map((facet) => facet.memberIndex)),
+                : oldest.facets.length
+                  ? Math.min(...oldest.facets.map((facet) => facet.memberIndex))
+                  : 0,
             order: oldest.order,
           })
         : null,

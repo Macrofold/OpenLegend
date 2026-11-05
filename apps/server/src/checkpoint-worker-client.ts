@@ -2,7 +2,11 @@ import { Worker } from 'node:worker_threads';
 import { randomUUID } from 'node:crypto';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { SaveFileMetadata } from './save-files.js';
+import {
+  CheckpointAllowanceError,
+  type CheckpointAllowanceDetails,
+  type SaveFileMetadata,
+} from './save-files.js';
 export type CheckpointSource = { url: string };
 export interface CheckpointRequest {
   directory: string;
@@ -49,19 +53,26 @@ export class CheckpointWorker {
         resourceLimits: { maxOldGenerationSizeMb: 256 },
       });
     this.ready = new Promise<void>((resolve, reject) => {
-      this.worker.on('message', (message: { type: string; error?: string }) => {
-        if (message.type === 'ready') resolve();
-        else if (this.failure)
-          return; // A timed-out capture settles only after worker exit.
-        else if (message.type === 'captured') this.pending?.captured();
-        else if (message.type === 'complete') {
-          this.pending?.resolve();
-          this.pending = undefined;
-        } else if (message.type === 'failed') {
-          this.pending?.reject(new Error(message.error ?? 'Checkpoint worker failed.'));
-          this.pending = undefined;
-        }
-      });
+      this.worker.on(
+        'message',
+        (message: { type: string; error?: string; allowance?: CheckpointAllowanceDetails }) => {
+          if (message.type === 'ready') resolve();
+          else if (this.failure)
+            return; // A timed-out capture settles only after worker exit.
+          else if (message.type === 'captured') this.pending?.captured();
+          else if (message.type === 'complete') {
+            this.pending?.resolve();
+            this.pending = undefined;
+          } else if (message.type === 'failed') {
+            this.pending?.reject(
+              message.allowance
+                ? new CheckpointAllowanceError(message.allowance)
+                : new Error(message.error ?? 'Checkpoint worker failed.'),
+            );
+            this.pending = undefined;
+          }
+        },
+      );
       const fail = (error: Error) => {
         // A watchdog failure names the actual stalled capture; its worker exit only
         // confirms that the PostgreSQL snapshot and file handles have been released.

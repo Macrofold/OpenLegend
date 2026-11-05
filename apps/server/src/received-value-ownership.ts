@@ -1,19 +1,12 @@
-import {
-  eligibleReceivedChargeDirectories,
-  temporalPageReferences,
-  type ReceivedChargeDirectory,
-} from '@open-legend/domain';
+import { temporalPageReferences } from '@open-legend/domain';
 import { beginTiming, endTiming, countMetric } from './performance.js';
 import { sqlRowBatches } from './sql-rows.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import type { SqlDatabase } from './store.js';
-import {
-  temporalBlockExpiredSql,
-  temporalBlockMixedBoundarySql,
-  temporalFrontierFromColumns,
-} from './temporal-page-storage.js';
+import { temporalBlockExpiredSql } from './temporal-page-storage.js';
 
+import { retainedEvidenceRowSql, retainedReceivedUseSql } from './retained-evidence-selection.js';
 import { receivedCurrentOwnerTables as currentOwners } from './received-record-references.js';
 interface Owner {
   kind: string;
@@ -65,19 +58,19 @@ export class ReceivedValueOwnership {
   }
 
   /** Startup/checkpoint integrity only; never a movement or command admission scan. */
-  async validate(worldId: string): Promise<void> {
+  async validate(worldId: string, evidence: 'physical' | 'retained' = 'physical'): Promise<void> {
     const expected = [...currentOwners, 'mind_temporal_pages']
       .map((table) => {
         const temporal = table === 'mind_temporal_pages';
         return `SELECT p.world_id,'${temporal ? 'mind_temporal_pages' : table}' AS owner_kind,p.id AS owner_id,p.actor_id,v.id AS value_id
         FROM ${table} p CROSS JOIN LATERAL unnest(p.value_refs) v(id)
-        WHERE p.world_id=?`;
+        WHERE p.world_id=?${evidence === 'retained' ? ` AND ${retainedEvidenceRowSql(table, 'p')}` : ''}`;
       })
       .join(' UNION ');
     const mismatch = await this.db
       .prepare(
         `WITH expected AS MATERIALIZED (${expected}), actual AS MATERIALIZED (
-        SELECT * FROM received_value_uses WHERE world_id=?
+        SELECT u.* FROM received_value_uses u WHERE u.world_id=?${evidence === 'retained' ? ` AND ${retainedReceivedUseSql('u')}` : ''}
       ) SELECT 1 AS invalid FROM ((SELECT * FROM expected EXCEPT SELECT * FROM actual)
         UNION ALL (SELECT * FROM actual EXCEPT SELECT * FROM expected)) missing LIMIT 1`,
       )
@@ -230,7 +223,7 @@ export class ReceivedValueOwnership {
         const candidates = await this.db
           .prepare(
             `WITH actors AS MATERIALIZED (
-          SELECT actor_id,expired_through_time,pressure_batch_order,pressure_entry,pressure_member,pressure_at,pressure_order,
+          SELECT actor_id,expired_through_time,pressure_batch_order,pressure_entry,pressure_member,
             row_number() OVER(ORDER BY actor_id) AS cursor_order
           FROM mind_temporal_actors WHERE world_id=? ${actorCursor ? 'AND actor_id>?' : ''}
           ORDER BY actor_id LIMIT 128
@@ -240,18 +233,14 @@ export class ReceivedValueOwnership {
           FROM mind_perception_values WHERE world_id=? AND gc_candidate_seq IS NOT NULL
             ${valueCursor ? 'AND (gc_candidate_seq,source_id)>(?,?)' : ''}
           ORDER BY gc_candidate_seq,source_id LIMIT 128
-        ) SELECT 1 AS kind,source_id AS id,NULL::text AS actor_id,gc_candidate_seq AS sequence,bytes,true AS eligible,cursor_order,
-            NULL::text AS boundary_directory,NULL::double precision AS expired_through_time,NULL::bigint AS pressure_batch_order,
-            NULL::bigint AS pressure_entry,NULL::bigint AS pressure_member,NULL::double precision AS pressure_at,NULL::bigint AS pressure_order
+        ) SELECT 1 AS kind,source_id AS id,NULL::text AS actor_id,gc_candidate_seq AS sequence,bytes,true AS eligible,cursor_order
           FROM values
         UNION ALL
         SELECT 0 AS kind,p.id,a.actor_id,p.first_batch_order AS sequence,p.encoded_bytes AS bytes,
-          ${temporalBlockExpiredSql('p', 'a')} AS eligible,a.cursor_order,
-          CASE WHEN ${temporalBlockMixedBoundarySql('p', 'a')} THEN p.charge_directory END AS boundary_directory,
-          a.expired_through_time,a.pressure_batch_order,a.pressure_entry,a.pressure_member,a.pressure_at,a.pressure_order
+          ${temporalBlockExpiredSql('p', 'a')} AS eligible,a.cursor_order
         FROM actors a LEFT JOIN LATERAL (
           SELECT id,first_batch_order,first_entry,first_member,last_batch_order,last_entry,last_member,
-            first_at,last_at,encoded_bytes,charge_directory
+            first_at,last_at,encoded_bytes
           FROM mind_temporal_pages WHERE world_id=? AND actor_id=a.actor_id
           ORDER BY first_batch_order,first_entry,first_member,id LIMIT 1
         ) p ON TRUE`,
@@ -269,16 +258,6 @@ export class ReceivedValueOwnership {
         const actors = candidates
           .filter((row) => Number(row['kind']) === 0)
           .sort((a, b) => Number(a['cursor_order']) - Number(b['cursor_order']));
-        // Time and pressure can jointly exhaust a boundary even when neither
-        // scalar envelope proves it alone. Inspect its grouped metadata, never
-        // its evidence bodies, through the same native eligibility owner.
-        for (const actor of actors) {
-          if (typeof actor['boundary_directory'] !== 'string') continue;
-          const directory = JSON.parse(actor['boundary_directory']) as ReceivedChargeDirectory;
-          actor['eligible'] =
-            eligibleReceivedChargeDirectories([directory], temporalFrontierFromColumns(actor))
-              .length === 0;
-        }
         const lastValue = values.at(-1),
           lastActor = actors.at(-1);
         let nextValueCursor =

@@ -333,6 +333,12 @@ export interface SensoryProgress {
   routineSight?: SampleProgress;
   incidentalContact?: SampleProgress;
 }
+/** Execution work from the existing sensory/knowledge owners; never another saved clock. */
+export interface PerceptionMeasurementWork {
+  nextAt?: number;
+  geometry: boolean;
+  subjects: ReadonlySet<string>;
+}
 export interface RoutineObservation {
   sight: boolean;
   contact: boolean;
@@ -340,6 +346,9 @@ export interface RoutineObservation {
   sampledContact: boolean;
   detail?: boolean;
   immediate?: boolean;
+  /** Targeted acquisition does not turn a geometry/recognition deadline into broad sight. */
+  subjects?: ReadonlySet<string>;
+  geometry?: boolean;
 }
 const noRoutineObservation = Object.freeze({
   sight: false,
@@ -376,9 +385,9 @@ export function routineObservationRelevant(world: WorldState, observer: Entity):
 export function takeRoutineObservation(
   world: WorldState,
   observer: Entity,
-  measurementDue = false,
+  measurement?: PerceptionMeasurementWork,
 ): RoutineObservation {
-  return routineObservation(world, observer, true, measurementDue);
+  return routineObservation(world, observer, true, measurement);
 }
 
 /** Pending captured rates must be current before a physical sample. Reuse the
@@ -386,17 +395,17 @@ export function takeRoutineObservation(
 export function routineObservationDue(
   world: WorldState,
   observer: Entity,
-  measurementDue = false,
+  measurement?: PerceptionMeasurementWork,
 ): boolean {
-  const timing = routineObservation(world, readOnlyDraftView(observer), false, measurementDue);
-  return timing.sight || timing.contact;
+  const timing = routineObservation(world, readOnlyDraftView(observer), false, measurement);
+  return timing.sight || timing.contact || !!timing.geometry;
 }
 
 function routineObservation(
   world: WorldState,
   observer: Entity,
   commit: boolean,
-  measurementDue = false,
+  measurement?: PerceptionMeasurementWork,
 ): RoutineObservation {
   if (!routineObservationRelevant(world, observer)) {
     if (commit && observer.sensoryProgress) delete observer.sensoryProgress;
@@ -443,13 +452,12 @@ function routineObservation(
   const selected = sightScopeDue(world, observer);
   let immediate =
     sampledSight &&
-    (measurementDue ||
-      !stored?.routineSight ||
+    (!stored?.routineSight ||
       stored.routineSight.definitions !== policy.sight?.key ||
       stored.routineSight.life !== life ||
       stored.routineSight.suspended);
   let sight = sampledSight
-      ? immediate || !!selected
+      ? immediate || !!selected || !!measurement?.subjects.size
       : due('routineSight', false, undefined, policy.sight?.key),
     contact = due(
       'incidentalContact',
@@ -501,7 +509,11 @@ function routineObservation(
     sampledSight,
     sampledContact,
     immediate,
-    ...(!immediate && selected === 'detail' ? { detail: true } : {}),
+    ...(!immediate && (selected === 'detail' || (!selected && measurement?.subjects.size))
+      ? { detail: true }
+      : {}),
+    ...(measurement?.subjects.size ? { subjects: measurement.subjects } : {}),
+    ...(measurement?.geometry ? { geometry: true } : {}),
   };
 }
 

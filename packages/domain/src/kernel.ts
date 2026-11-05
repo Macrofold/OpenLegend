@@ -1,3 +1,4 @@
+import { currentContactGet } from './perception-current.js';
 import { selectedCommitmentLimit, selectedOutwardBodyNotice } from './world-composition.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
@@ -11,7 +12,9 @@ import {
   currentBodyValue,
   currentObservedBodyIds,
   nextPerceptionWorkAt,
-  nextPerceptionMeasurementAt,
+  perceptionMeasurementWork,
+  selectVisualAttention,
+  finishVisualReception,
   continuePerceptionWork,
   reconcileAttendedTemporalEvidence,
 } from './perception-evidence.js';
@@ -7187,7 +7190,7 @@ function* advanceWorldNative(
         continue;
       }
       advanceFlight(world, entity, 0, events, landingOccupancy, deferFlight);
-      reconcileAnimalWander(world, entity);
+      wanderQueue.reconcileWander(world, entity);
       trackOccupancy(entity);
     }
     const takeoffs = flushFlight();
@@ -7690,7 +7693,7 @@ function* advanceWorldNative(
       mechanics === animalEligibilityMechanics ? blockedAnimalClocks : participants.animals;
     if (wanderingClocks)
       for (const id of wanderingClocks)
-        reconcileAnimalWander(world, entityGet(world.entities, id)!);
+        wanderQueue.reconcileWander(world, entityGet(world.entities, id)!);
     wanderQueue.synchronize(world, participants.animals);
     // Reaching the interval's stored deadline lands on it exactly (PF13.16).
     const landing = mechanics.endsAt !== undefined && seconds >= mechanics.remainingSeconds;
@@ -7889,7 +7892,7 @@ function* advanceWorldNative(
       if (!entity) continue;
       if (!movementRestricted.has(id)) {
         advanceFlight(world, entity, seconds, events, landingOccupancy, deferFlight);
-        reconcileAnimalWander(world, entity);
+        wanderQueue.reconcileWander(world, entity);
       }
       trackOccupancy(entity);
     }
@@ -8010,7 +8013,7 @@ function* advanceWorldNative(
       ? eligibilityChanges
       : participants.animals) {
       const entity = entityGet(world.entities, id);
-      if (entity?.animal) reconcileAnimalWander(world, entity);
+      if (entity?.animal) wanderQueue.reconcileWander(world, entity);
     }
     wanderQueue.synchronize(world, participants.animals);
     reconcileResourceReservations(world);
@@ -8175,7 +8178,31 @@ function retirePerceptionEpisodes(world: WorldState, actorId: string): void {
   for (const id of ids) delete episodes[id];
   countDomainWork('episodeBindingsDeleted', ids.length);
 }
-/** Positions stay fixed during this phase; preserve event-time audiences and actor order. */
+/** A source-only change cannot justify remeasuring unrelated selected subjects.
+ * The exposure owner widens unknown/observer/occluder input changes to all targets. */
+function requestedDetailSubjects(
+  world: WorldState,
+  observerId: string,
+  timing: RoutineObservation,
+  changed: ReadonlySet<string> | undefined,
+): Set<string> {
+  const requested = new Set<string>();
+  const state = world.perceptionEvidence?.[observerId];
+  for (const entry of currentDetailedAttention(world, observerId)) {
+    const contact = state && currentContactGet(state, entry.sourceId);
+    if (
+      timing.immediate ||
+      timing.subjects?.has(entry.sourceId) ||
+      entry.startedAt === world.simTime ||
+      changed === undefined ||
+      changed.has(entry.sourceId) ||
+      !contact?.sight?.detail
+    )
+      requested.add(entry.sourceId);
+  }
+  return requested;
+}
+/** Positions stay fixed through broad → selection → detail and existing worker yields. */
 function* updateEncounters(
   world: WorldState,
   original: EncounterBaseline,
@@ -8193,12 +8220,7 @@ function* updateEncounters(
     actorIds.some((id) => {
       const observer = entityGet(readOnlyDraftView(world.entities), id);
       return (
-        !!observer &&
-        routineObservationDue(
-          world,
-          observer,
-          (nextPerceptionMeasurementAt(world, id) ?? Infinity) <= world.simTime,
-        )
+        !!observer && routineObservationDue(world, observer, perceptionMeasurementWork(world, id))
       );
     })
   )
@@ -8267,7 +8289,7 @@ function* updateEncounters(
     const routineTiming = takeRoutineObservation(
       world,
       observer,
-      (nextPerceptionMeasurementAt(world, id) ?? Infinity) <= world.simTime,
+      perceptionMeasurementWork(world, id),
     );
     // A fresh-world authoring cut requests its actual current sensory sample.
     // Ordinary advancement alone follows the selected recurring clock.
@@ -8282,6 +8304,10 @@ function* updateEncounters(
           immediate: true,
         }
       : routineTiming;
+    if (timing.geometry) countDomainWork('sightGeometryOpportunities');
+    if (timing.subjects?.size) countDomainWork('sightRecognitionOpportunities');
+    if (timing.sight)
+      countDomainWork(timing.detail ? 'sightDetailOpportunities' : 'sightBroadOpportunities');
     if (!timing.sight) continuePerceptionWork(world, id);
     if (!timing.sight && !timing.contact) continue;
     routine.set(id, timing);
@@ -8320,7 +8346,13 @@ function* updateEncounters(
   let exposureCompleted = false;
   try {
     for (const [id, timing] of routine)
-      if (!initialize && timing.sampledSight && !timing.immediate && !frame.affected.has(id)) {
+      if (
+        !initialize &&
+        timing.sampledSight &&
+        !timing.immediate &&
+        !timing.subjects?.size &&
+        !frame.affected.has(id)
+      ) {
         timing.sight = false;
         // A clean physical scope skips sensing, not already-due interpretation
         // of held facts such as priority expiry or relation continuation.
@@ -8345,10 +8377,15 @@ function* updateEncounters(
         continue;
       let candidates: ReturnType<typeof frame.nearby>;
       if (timing.detail) {
-        const selected = new Set(
-          currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId),
+        selectVisualAttention(world, actor.id);
+        const selected = requestedDetailSubjects(
+          world,
+          actor.id,
+          timing,
+          frame.changedDetailTargets(actor.id),
         );
         detailedSubjects.set(actor.id, selected);
+        countDomainWork('sightDetailTargetsRequested', selected.size);
         candidates = frame.selectedContacts(actor.position, radius + 2, selected);
         peoplePrepared.set(actor.id, candidates);
       } else if (actor.nativeResponse) {
@@ -8528,7 +8565,7 @@ function* updateEncounters(
       if (timing.detail) {
         const selected =
           detailedSubjects.get(actor.id) ??
-          new Set(currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId));
+          requestedDetailSubjects(world, actor.id, timing, frame.changedDetailTargets(actor.id));
         const measured = [...selected].flatMap((id) => {
           const source = entityGet(readOnlyDraftView(world.entities), id);
           return source &&
@@ -8570,7 +8607,14 @@ function* updateEncounters(
             frame.publicAttributes,
             selected,
             frame.sourceDetailsToken,
+            undefined,
+            {
+              phase: 'detail',
+              deferCompletion: true,
+              sourcePresentation: frame.sourcePresentation,
+            },
           );
+        finishVisualReception(world, actor.id);
         reconcileCombatSight(
           world,
           entityGet(world.entities, actor.id)!,
@@ -8703,7 +8747,45 @@ function* updateEncounters(
             const detail = selectedOutwardBodyNotice(world, before, after);
             if (detail) personallyChangedFeatures.set(id, detail);
           },
+          { phase: 'broad', deferCompletion: true, sourcePresentation: frame.sourcePresentation },
         );
+      if (vision) {
+        const selected = requestedDetailSubjects(
+          world,
+          actor.id,
+          timing,
+          frame.changedDetailTargets(actor.id),
+        );
+        countDomainWork('sightDetailTargetsRequested', selected.size);
+        const candidates = frame.selectedContacts(actor.position, radius + 2, selected);
+        const prepareRay = sightPreparationQuery(world, actor.entity);
+        for (const source of candidates) {
+          const ray = prepareRay(source);
+          if (ray) requests.push(ray);
+          if (requests.length === 128) yield* prepare();
+        }
+        if (requests.length) yield* prepare();
+        const measured = candidates
+          .filter((source) => sees(source))
+          .flatMap((source) => {
+            const entity = entityGet(readOnlyDraftView(world.entities), source.id);
+            return entity ? [readOnlyDraftView(entity)] : [];
+          });
+        reconcileVisualEvidence(
+          world,
+          entityGet(world.entities, actor.id)!,
+          measured,
+          vision,
+          normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+          frame.sourceToken,
+          frame.publicAttributes,
+          selected,
+          frame.sourceDetailsToken,
+          undefined,
+          { phase: 'detail', deferCompletion: true, sourcePresentation: frame.sourcePresentation },
+        );
+        finishVisualReception(world, actor.id);
+      }
       for (const id of seen) {
         const detail = personallyChangedFeatures.get(id);
         if (detail) {

@@ -158,7 +158,7 @@ it('retains intermediate actually received movement and its exact last sample on
   expect(positions).toEqual(expect.arrayContaining([3, 4, 5]));
   const loss = recordedBoundaries(world, exposure).find(
     (operation) =>
-      operation.entry.reason === 'loss' &&
+      operation.receipt.change === 'loss' &&
       operation.receipt.facets.some((facet) => facet.measuredThrough === 2),
   )!;
   expect(loss).toBeDefined();
@@ -217,7 +217,7 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
     newHistory = read(secondBody.exposure.track);
   expect(
     recordedBoundaries(world, firstBody.exposure.track).some(
-      (operation) => operation.entry.reason === 'loss' && operation.entry.receivedAt === 1,
+      (operation) => operation.receipt.change === 'loss' && operation.entry.receivedAt === 1,
     ),
   ).toBe(true);
   expect(oldHistory.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(true);
@@ -266,7 +266,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   expect(
     recordedBoundaries(world, subject).some(
       (operation) =>
-        operation.entry.reason === 'attention-exit' && operation.entry.receivedAt === 1,
+        operation.receipt.change === 'attention-exit' && operation.entry.receivedAt === 1,
     ),
   ).toBe(true);
   expect(interrupted.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
@@ -283,14 +283,14 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
   const lost = selectTemporalHistory(world, PLAYER_ID, query);
   const loss = recordedBoundaries(world, subject).find(
-    (operation) => operation.entry.reason === 'loss',
+    (operation) => operation.receipt.change === 'loss',
   );
   expect(loss).toBeDefined();
   expect(loss!.entry.receivedAt).toBe(3);
   expect(loss!.receipt.facets.some((facet) => facet.measuredThrough < 3)).toBe(true);
   expect(
     recordedBoundaries(world, subject).some(
-      (operation) => operation.entry.reason === 'attention-exit',
+      (operation) => operation.receipt.change === 'attention-exit',
     ),
   ).toBe(true);
   expect(lost.incomplete).toBe(true);
@@ -942,7 +942,7 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   });
   initializePerception(world, []);
   const losses = recordedBoundaries(world, currentBodyObservationBeforeLoss.exposure.track).filter(
-    (operation) => operation.entry.reason === 'loss',
+    (operation) => operation.receipt.change === 'loss',
   );
   expect(losses.length).toBeGreaterThan(0);
   expect(

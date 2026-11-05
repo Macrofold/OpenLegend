@@ -123,16 +123,12 @@ async function validateCapturedSituation(
     const selections = Object.values(capturedSituation.receiptDetails);
     if (!sourceFence) throw new Error('Personal source validation has no request owner.');
     if (
-      !(await sourceFence.validate(
-        selections,
-        () => ({
-          ...temporalHistoryWindow(service.world, evidenceScope.actorId),
-          maxAgeSeconds: capturedSituation.historyMaxAgeSeconds,
-        }),
-        Object.values(capturedSituation.baselineDetails),
-      ))
+      !(await sourceFence.validate(selections, () => ({
+        ...temporalHistoryWindow(service.world, evidenceScope.actorId),
+        maxAgeSeconds: capturedSituation.historyMaxAgeSeconds,
+      })))
     )
-      throw new Error('Recent personal evidence expired during this decision.');
+      throw new Error('Personal evidence was withdrawn during this decision.');
   }
   if (generation !== service.generation || !capturedSituation.valid(service.world))
     throw new Error('Personal evidence changed during context validation.');

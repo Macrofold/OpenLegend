@@ -1,4 +1,3 @@
-import { selectReceivedBindingParts } from './received-batches.js';
 import {
   orderedRecordGet,
   orderedRecordSet,
@@ -103,6 +102,8 @@ const fieldAddress = (key: string): [string, DefinitionPin] => {
 };
 export type CurrentStoredField = Omit<LiveFacetSupport, EnvelopeMetadata | 'revision'> & {
   originalOrdinal: number;
+  /** Actual received content generation; independent of confirmation clocks. */
+  semanticRevision: number;
 };
 /** A current group partitions held fields with identical actual receipt/check semantics.
  * Old group versions are replaced, never accumulated in this contact. */
@@ -170,6 +171,26 @@ export interface CurrentGroupSelection {
 export function currentFieldParts(field: CurrentStoredField): readonly CurrentReceivedPart[] {
   return field.value.kind === 'body' ? ['detail', 'pose'] : ['value'];
 }
+const partitionAddresses = new WeakMap<
+  readonly CurrentPartPartition[],
+  ReadonlyMap<string, ReadonlyMap<CurrentReceivedPart, number>>
+>();
+/** Scope addresses contain indices only, never a second copy of current values. */
+function partitionAddress(group: CurrentReceivedGroup) {
+  const metadata = readOnlyDraftView(group.metadata);
+  const cached = partitionAddresses.get(metadata);
+  if (cached) return cached;
+  const addresses = new Map<string, Map<CurrentReceivedPart, number>>();
+  for (let at = 0; at < metadata.length; at++)
+    for (const [kind, part] of readOnlyDraftView(metadata[at]!).members) {
+      let parts = addresses.get(kind);
+      if (!parts) addresses.set(kind, (parts = new Map()));
+      parts.set(part, at);
+    }
+  // All metadata mutation replaces this array, including partial scope splits.
+  partitionAddresses.set(metadata, addresses);
+  return addresses;
+}
 export function currentGroupMetadata(
   group: CurrentReceivedGroup,
   kind: string,
@@ -177,10 +198,10 @@ export function currentGroupMetadata(
 ): CurrentPartPartition | undefined {
   const selected =
     part ?? (group.received.fields[kind]?.value.kind === 'body' ? 'detail' : 'value');
-  return readOnlyDraftView(group.metadata).find((partition) =>
-    partition.members.some(([member, memberPart]) => member === kind && selected === memberPart),
-  );
+  const at = partitionAddress(group).get(kind)?.get(selected);
+  return at === undefined ? undefined : readOnlyDraftView(group.metadata)[at];
 }
+
 export function currentGroupTimes(
   group: CurrentReceivedGroup,
   partition: CurrentPartPartition = group.metadata[0]!,
@@ -410,6 +431,28 @@ export function currentGroupFacetRecord(
   const input = currentGroupNativeFacet(group, originalSource, kind, partition);
   return input && projectCurrentFacet(input);
 }
+interface ContactAddresses {
+  fields: ReadonlyMap<string, readonly number[]>;
+}
+const contactAddresses = new WeakMap<object, ContactAddresses>();
+function contactAddress(content: CurrentContactContent): ContactAddresses {
+  const identity = contentIdentity(content);
+  const cached = contactAddresses.get(identity);
+  if (cached) return cached;
+  const fields = new Map<string, number[]>();
+  for (let at = 0; at < content.groups.length; at++)
+    for (const kind of Object.keys(readOnlyDraftView(content.groups[at]!.received.fields))) {
+      let groups = fields.get(kind);
+      if (!groups) fields.set(kind, (groups = []));
+      groups.push(at);
+    }
+  const result = { fields };
+  // Mutable content may still install another field in this receiving batch.
+  // Immutable content and certified freshness-only successors share addresses.
+  if (isImmutableData(content) || contentOrigins.has(content))
+    contactAddresses.set(identity, result);
+  return result;
+}
 export function currentContactNativeFacet(
   contact: CurrentContact,
   kind: string,
@@ -417,10 +460,9 @@ export function currentContactNativeFacet(
 ): CurrentNativeFacet | undefined {
   const content = readOnlyDraftView(readOnlyDraftView(contact).content);
   let selected: CurrentReceivedGroup | undefined;
-  for (const raw of readOnlyDraftView(content.groups)) {
-    const group = readOnlyDraftView(raw);
-    if (!selectedGroup(group, selector) || !readOnlyDraftView(group.received.fields)[kind])
-      continue;
+  for (const at of contactAddress(content).fields.get(kind) ?? []) {
+    const group = readOnlyDraftView(content.groups[at]!);
+    if (!selectedGroup(group, selector)) continue;
     if (selected) return;
     selected = group;
   }
@@ -429,23 +471,39 @@ export function currentContactNativeFacet(
   if (!original) throw new Error('A current group has no acquired original.');
   return currentGroupNativeFacet(selected, original, kind);
 }
+/** Typed internal address; display/storage key parsing stays at its boundary. */
+export function currentNativeFacetAt(
+  owner: CurrentReadOwner | undefined,
+  subjectId: string,
+  kind: string,
+  selector?: CurrentFacetSelector,
+): CurrentNativeFacet | undefined {
+  const contact = currentContactGet(owner, subjectId);
+  return contact && currentContactNativeFacet(contact, kind, selector);
+}
 export function currentNativeFacet(
   owner: CurrentReadOwner | undefined,
   key: string,
   selector?: CurrentFacetSelector,
 ): CurrentNativeFacet | undefined {
-  if (!owner) return;
-  const address = currentFacetAddress(key),
-    contact = currentContactGet(owner, address.subjectId);
-  return (
-    contact &&
-    currentContactNativeFacet(
-      contact,
-      address.kind,
-      address.channel ? { ...selector, channel: address.channel } : selector,
-    )
+  const address = currentFacetAddress(key);
+  return currentNativeFacetAt(
+    owner,
+    address.subjectId,
+    address.kind,
+    address.channel ? { ...selector, channel: address.channel } : selector,
   );
 }
+export function currentFacetAt(
+  owner: CurrentReadOwner | undefined,
+  subjectId: string,
+  kind: string,
+  selector?: CurrentFacetSelector,
+): CurrentFacetRecord | undefined {
+  const input = currentNativeFacetAt(owner, subjectId, kind, selector);
+  return input && projectCurrentFacet(input);
+}
+
 function fieldView(
   contact: CurrentContact,
   kind: string,
@@ -518,10 +576,15 @@ const equalGrant = (a: CurrentFacetGrant, b: CurrentFacetGrant) =>
   a.exposure === b.exposure &&
   a.modality === b.modality &&
   sameChannel(a.channel, b.channel);
+function equalStoredContent(a: CurrentStoredField, b: CurrentStoredField): boolean {
+  if (a === b) return true;
+  if (a.semanticRevision !== b.semanticRevision) return false;
+  const { semanticRevision: _left, ...left } = a;
+  const { semanticRevision: _right, ...right } = b;
+  return canonicalJson(left) === canonicalJson(right);
+}
 export function sameCurrentFacetContent(a: CurrentFacetRecord, b: CurrentFacetRecord): boolean {
-  return (
-    equalGrant(a.grant, b.grant) && canonicalJson(fieldValues(a)) === canonicalJson(fieldValues(b))
-  );
+  return equalGrant(a.grant, b.grant) && equalStoredContent(fieldValues(a), fieldValues(b));
 }
 export function currentFacetSet(
   owner: PerceptionEvidenceOwner,
@@ -556,7 +619,7 @@ export function currentFacetSet(
         if (
           !held ||
           !equalGrant(group.received.grant, input.grant) ||
-          (held !== candidate && canonicalJson(held) !== canonicalJson(candidate))
+          !equalStoredContent(held, candidate)
         )
           return group;
         const times = packedTimes(currentFacetTimes(owner, input));
@@ -577,7 +640,7 @@ export function currentFacetSet(
         return (
           held &&
           equalGrant(group.received.grant, input.grant) &&
-          (held === candidate || canonicalJson(held) === canonicalJson(candidate))
+          equalStoredContent(held, candidate)
         );
       });
       if (sameField) {
@@ -863,30 +926,12 @@ function recordingWithMembers(
   mark: import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint,
   members: typeof mark.members,
 ): typeof mark {
-  if (
-    mark.binding.parts.every((part) =>
-      members.some((member) => member.kind === part.kind && member.part === part.part),
-    )
-  )
-    return members === mark.members ? mark : { ...mark, members };
-  const parts = mark.binding.parts.filter((part) =>
+  return {
+    ...mark,
+    members,
+    content: mark.content.filter((part) =>
       members.some((member) => member.kind === part.kind && member.part === part.part),
     ),
-    indices = new Set(parts.map((part) => part.partIndex));
-  const carrierMembers = mark.carrierMembers?.flatMap((member) => {
-    const partIndices = member.partIndices.filter((index) => indices.has(index));
-    return partIndices.length ? [{ ...member, partIndices }] : [];
-  });
-  const carrier =
-    mark.carrier && carrierMembers?.length
-      ? { ...mark.carrier, memberIndex: carrierMembers[0]!.memberIndex }
-      : undefined;
-  const { carrier: _carrier, carrierMembers: _members, ...base } = mark;
-  return {
-    ...base,
-    members,
-    ...(carrier ? { carrier, carrierMembers } : {}),
-    binding: selectReceivedBindingParts(mark.binding, indices),
   };
 }
 
@@ -1115,7 +1160,7 @@ export function currentFacetSupport(
   input: CurrentFacetRecord,
   proof = currentFacetProof(owner, input),
 ): LiveFacetSupport {
-  const field = fieldValues(input);
+  const { semanticRevision: _generation, ...field } = fieldValues(input);
   return {
     ...field,
     ...currentFacetGrant(owner, input),
@@ -1188,6 +1233,7 @@ export function compactCurrentFacet(
   owner.observer ??= immutableDataSnapshot(observer, readOnlyDraftView);
   return {
     ...fields,
+    semanticRevision: 1,
     grant: {
       subjectId,
       subjectPhysicalLife,

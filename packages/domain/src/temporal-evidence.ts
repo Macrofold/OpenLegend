@@ -1,6 +1,4 @@
-import { objectIndexEntries } from './object-index.js';
 import { orderedRecordGet, orderedRecordSet, orderedRecordEntries } from './ordered-record.js';
-import { selectReceivedBindingParts, mergeReceivedBindings } from './received-batches.js';
 import {
   receivedTrackKey,
   currentFacetObserver,
@@ -32,21 +30,15 @@ import {
   temporalPageMetadata,
   appendTemporalPageBatch,
   receivedBatchChargeDirectory,
-  receivedBindingChargeProjection,
   receivedBatchStorageBytes,
   selectTemporalPageEntries,
   materializeReceivedEntry,
-  materializeReceivedBindingSeed,
-  type TemporalCheckpoint,
   type TemporalCheckpointAvailability,
 } from './temporal-frames.js';
 import {
   compareReceivedPosition,
   receivedPositionEligible,
-  receivedStateEligible,
   type ReceivedBatch,
-  type ReceivedBinding,
-  type ReceivedCoverage,
   type ReceivedEntry,
   type ReceivedChargeDirectory,
   type ReceivedRecentDirectory,
@@ -55,6 +47,8 @@ import {
   type ReceivedAddress,
 } from './received-batches.js';
 export * from './received-batches.js';
+export * from './received-record.js';
+import { compactReceivedReceipt } from './received-record.js';
 import {
   temporalRecognitionSupportSourceIds,
   temporalReadSourceRevoked,
@@ -71,6 +65,7 @@ import {
   type ReceivedValueState,
   type ReceivedValueLookup,
   type ReceivedValueFragment,
+  sameReceivedValueReference,
 } from './received-values.js';
 import {
   prepareWorldSnapshots,
@@ -81,7 +76,7 @@ import {
 import { entityGet } from './entity-collection.js';
 import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
-import { countDomainWork, domainCountersEnabled } from './diagnostic-counters.js';
+import { countDomainWork } from './diagnostic-counters.js';
 import {
   ensureExperienceAccounting,
   markRequiredExperienceMaintenance,
@@ -95,8 +90,7 @@ import { personalFactAlias, parsePersonalFactAlias } from './experience-source.j
 import { immutableDataSnapshot, jsonEncoding, jsonText, jsonByteLength } from './records.js';
 import {
   selectedRecognitionSupportSourceIds,
-  selectedMarkRecentIndividualReferences,
-  selectedRequestRecentIndividualRepair,
+  selectedPruneObserverIndividuals,
   selectedTemporalPolicy,
   selectedAttentionPolicy,
 } from './world-composition.js';
@@ -223,6 +217,9 @@ export interface TemporalReceipt extends TemporalReceiptLocator {
   acquisition: number;
   receiverFrame?: ObservationFrame;
   coverageGap?: { from: number; through: number };
+  /** Only these received parts stopped being available/recorded. Omitted means
+   * the terminal concerns the whole track, never an inferred disappearance. */
+  endedFields?: readonly CurrentMemberPart[];
   spatialContext?: true;
   origin?: ObservationOrigin;
   /** Observer-local continuous exposure, not a canonical identity. */
@@ -237,6 +234,7 @@ export interface TemporalReceipt extends TemporalReceiptLocator {
     | 'unchecked'
     | 'occurrence'
     | 'attention-exit'
+    | 'recording-gap'
     | 'receiver-frame'
     | 'retained-state';
   availability?: TemporalCheckpointAvailability[];
@@ -272,16 +270,23 @@ type NativeEvidenceSource = Extract<
  * freshness partition identity and never as an unrecorded future-close promise. */
 export interface TemporalCurrentGroupCheckpoint {
   epoch: string;
-  binding: ReceivedBinding;
-  carrier?: ReceivedAddress;
-  carrierMembers?: ReceivedCoverage['members'];
   members: readonly { kind: string; part: 'value' | 'detail' | 'pose' }[];
-  lastToken?: number;
+  /** Last recorded values, never a recursively carried receipt/proof graph. */
+  content: readonly {
+    kind: string;
+    part: 'value' | 'detail' | 'pose';
+    value: ReceivedValueReference;
+  }[];
   lastTimes: CurrentFacetTimes;
   lastSource: NativeEvidenceSource;
   lastAt: number;
   lastOrder: number;
   lastMeasurementRevision: number;
+  /** Per-member closing-header bytes, secured with admission. Splitting members
+   * preserves the unit, never duplicates an aggregate promise. */
+  terminalBytes: number;
+  /** Retry unchanged refused content only after capacity actually improves. */
+  refusedAt?: readonly [bytes: number, count: number];
   gap: boolean;
 }
 export interface TemporalCurrentGroupInput {
@@ -301,6 +306,8 @@ export interface TemporalActorHistory {
   pages: TemporalPage[];
   bytes: number;
   count: number;
+  /** Quota already committed to closing active sparse recording memberships. */
+  terminalReservedBytes: number;
   nextDue: number | null;
   maintenanceDue: boolean;
   /** Conservative unavailable-prefix coverage, not a ledger of fictional sensory losses. */
@@ -309,7 +316,6 @@ export interface TemporalActorHistory {
   /** Rebuilt from canonical block directories; excluded by the save codec. */
   recent: ReceivedRecentDirectory;
   /** Finite exceptional sparse-edit work, coalesced by the existing retention owner. */
-  individualRepairs?: string[];
   recordingGap?: { from: number; through: number };
   /** Sparse exact qualifying contact support, not an autobiographical archive. */
   supports?: Record<string, TemporalSupportCapsule>;
@@ -347,6 +353,12 @@ export interface TemporalRetentionPolicy {
 }
 export interface TemporalCaptureInput {
   availabilityAt?: number;
+  coverageGap?: { from: number; through: number };
+  endedFields?: readonly CurrentMemberPart[];
+  /** Internal pre-admitted finite closing-marker reservation. */
+  terminalReservationBytes?: number;
+  /** Change in reserved closing quota, installed only when this sample is admitted. */
+  terminalReservationDelta?: number;
   receivedAt?: number;
   receivedOrder?: number;
   availability?: TemporalCheckpointAvailability[];
@@ -389,7 +401,74 @@ export interface TemporalCaptureInput {
 
 /** Native buffer granularity bounds work; it is not authored memory policy. */
 const TEMPORAL_NATIVE_PAGE_BYTES = 64 * 1024;
+const TEMPORAL_NAMESPACE_MAX_LENGTH = 64;
 const byteLength = jsonByteLength;
+/** Every member may close independently. Size one complete largest supported
+ * closing header; numeric placeholders exceed every finite JSON number token. */
+function terminalMemberBytes(
+  actorId: string,
+  epoch: string,
+  subject: string,
+  members: readonly CurrentMemberPart[],
+): number {
+  const ordinal = Number.MAX_SAFE_INTEGER,
+    numberToken = '9'.repeat(32);
+  let largest: CurrentMemberPart = ['', 'detail'],
+    largestBytes = 0;
+  for (const member of members) {
+    const bytes = byteLength(member);
+    if (bytes > largestBytes) {
+      largest = member;
+      largestBytes = bytes;
+    }
+  }
+  return byteLength({
+    actorId,
+    physicalLife: ordinal,
+    epoch,
+    batchOrder: ordinal,
+    entryIndex: ordinal,
+    id: temporalReceiptId({ epoch, batchOrder: ordinal, entryIndex: ordinal }),
+    at: numberToken,
+    order: ordinal,
+    acquisition: ordinal,
+    subject,
+    change: 'attention-exit',
+    availabilityAt: numberToken,
+    coverageGap: { from: numberToken, through: numberToken },
+    endedFields: [largest],
+    required: false,
+    sourceIds: [],
+    facets: [],
+  });
+}
+/** Reservations are owned by the same admitted recording marks as their closes. */
+function releaseTerminalReservation(world: WorldState, actorId: string, bytes: number): void {
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (!actor) return;
+  if (bytes > actor.terminalReservedBytes)
+    throw new Error('Received terminal reservation underflow.');
+  actor.terminalReservedBytes -= bytes;
+}
+export function clearTemporalRecordingReservations(world: WorldState, actorId: string): void {
+  const current = world.perceptionEvidence?.[actorId];
+  if (current) {
+    touchNativeEvidence(world, 'perception', actorId);
+    const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
+    for (const [subjectId, contact] of currentContactEntries(current))
+      for (const group of contact.content.groups)
+        if (group.recordings?.length)
+          updates.push({ subjectId, fields: group.received.fields, recording: undefined });
+    if (updates.length) currentGroupsSetRecording(current, updates);
+    for (const features of [current.geometry?.fragments ?? [], current.geometry?.boundaries ?? []])
+      for (const feature of features) delete feature.recording;
+  }
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (actor) {
+    touchNativeEvidence(world, 'temporal', actorId);
+    actor.terminalReservedBytes = 0;
+  }
+}
 function valueEncoding(value: TemporalFragment): { json: string; bytes: number } {
   const held = readOnlyDraftView(value);
   // Encode common geometry components once through their existing immutable
@@ -612,11 +691,13 @@ function actorHistory(
       pages: [],
       bytes: 0,
       count: 0,
+      terminalReservedBytes: 0,
       nextDue: null,
       maintenanceDue: false,
-      recent: { blocks: { size: 0 }, projections: { size: 0 }, closures: { size: 0 } },
+      recent: { blocks: { size: 0 }, individuals: { size: 0 } },
     };
   else if (actor.physicalLife !== life) {
+    clearTemporalRecordingReservations(world, actorId);
     actor.physicalLife = life;
     actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
   }
@@ -634,37 +715,40 @@ function receivedIdentity(world: WorldState, family: string): number {
   return id;
 }
 /** The actual detector reserves causal coordinates before admission/filtering. */
-export function createReceivedSample(world: WorldState, actorId: string): number {
-  const token = receivedIdentity(world, 'received-sample'),
-    prepared = builder(world, actorId);
-  countDomainWork('receivedActualSampleTokens');
-  if (prepared && !prepared.reservations.has(token))
-    prepared.reservations.set(token, {
-      boundary: prepared.nextEntry++,
-      sample: prepared.nextEntry++,
-    });
-  return token;
+export function createReceivedSample(world: WorldState, _actorId: string): number {
+  return receivedIdentity(world, 'received-sample');
 }
+
 interface BatchBuilder {
   batch: ReceivedBatch;
+  frame?: ObservationFrame;
   nextEntry: number;
-  nextMember: Map<number, number>;
-  samples: Map<number, ReceivedEntry>;
-  decisions: Map<string, boolean>;
-  coordinates: Map<string, number>;
-  pendingAtoms: Set<string>;
-  sampleBindings: Map<number, Map<object | number, ReceivedBinding>>;
-  closedSamples: Set<number>;
   sourceDecisions: Map<string, TemporalReceiptLocator | false>;
-  reservations: Map<number, { boundary: number; sample: number }>;
-  boundaries: Map<number, ReceivedEntry>;
   policy: TemporalRetentionPolicy;
   bytes: number;
   count: number;
+  slots: number;
+  nativeBytes: number;
+  values: Set<string>;
+  terminals: Map<string, Map<string, { entry: ReceivedEntry; reservedBytes: number }>>;
 }
-const acquisitionBatches = new WeakMap<WorldState, Map<string, BatchBuilder>>();
+
+interface AcquisitionScope {
+  frame?: ObservationFrame;
+  prepared?: BatchBuilder;
+}
+const acquisitionBatches = new WeakMap<WorldState, Map<string, AcquisitionScope>>();
+/** A receiving scope alone allocates no historical frame/order/builder. */
 function builder(world: WorldState, actorId: string): BatchBuilder | undefined {
-  return acquisitionBatches.get(world)?.get(actorId);
+  const scope = acquisitionBatches.get(world)?.get(actorId);
+  if (!scope) return;
+  if (!scope.prepared) {
+    const actor = actorHistory(world, actorId)?.actor;
+    if (!actor) return;
+    scope.prepared = newBatch(world, actorId, actor, scope.frame);
+    countDomainWork('receivedHistoryBuilders');
+  }
+  return scope.prepared;
 }
 function newBatch(
   world: WorldState,
@@ -672,31 +756,24 @@ function newBatch(
   actor: TemporalActorHistory,
   frame?: ObservationFrame,
 ): BatchBuilder {
-  const batchOrder = 0;
   return {
     batch: {
       actorId,
       physicalLife: actor.physicalLife,
       epoch: actor.epoch,
-      batchOrder,
-      frames: frame ? [immutableDataSnapshot(frame, readOnlyDraftView)] : [],
-      bindings: [],
+      batchOrder: 0,
       entries: [],
     },
+    frame,
     nextEntry: 0,
-    nextMember: new Map(),
-    samples: new Map(),
-    decisions: new Map(),
-    coordinates: new Map(),
-    pendingAtoms: new Set(),
-    sampleBindings: new Map(),
-    closedSamples: new Set(),
     sourceDecisions: new Map(),
-    reservations: new Map(),
-    boundaries: new Map(),
     policy: selectedTemporalPolicy(world).recent,
     bytes: 0,
     count: 0,
+    slots: 0,
+    nativeBytes: 0,
+    values: new Set(),
+    terminals: new Map(),
   };
 }
 /** Synchronous receiving scope. Actual detector tokens and admission decisions
@@ -709,8 +786,6 @@ export function withTemporalAcquisition<T>(
 ): T {
   let actors = acquisitionBatches.get(world);
   if (actors?.has(actorId)) return work();
-  const actor = actorHistory(world, actorId)?.actor;
-  if (!actor) return work();
   let releaseSnapshotPreparation: (() => void) | undefined;
   if (!actors) {
     acquisitionBatches.set(world, (actors = new Map()));
@@ -718,11 +793,11 @@ export function withTemporalAcquisition<T>(
       flushReceivedAcquisitionsForSnapshot(world),
     );
   }
-  const prepared = newBatch(world, actorId, actor, frame);
-  actors.set(actorId, prepared);
+  const scope: AcquisitionScope = { frame };
+  actors.set(actorId, scope);
   try {
     const result = work();
-    flushReceivedBatch(world, actorId, prepared);
+    if (scope.prepared) flushReceivedBatch(world, actorId, scope.prepared);
     return result;
   } finally {
     actors.delete(actorId);
@@ -730,24 +805,14 @@ export function withTemporalAcquisition<T>(
     releaseSnapshotPreparation?.();
   }
 }
-/** Candidate snapshots see accepted received intent through the same authority
- * as ordinary publication. A frozen sample cannot grow across that boundary. */
+/** Flush only actual accepted history. A snapshot does not manufacture a sample. */
 export function flushReceivedAcquisitionsForSnapshot(world: WorldState): void {
   const actors = acquisitionBatches.get(world);
   if (!actors) return;
-  for (const [actorId, prepared] of actors) {
-    flushReceivedBatch(world, actorId, prepared);
-    const actor = world.experience?.temporal?.actors[actorId];
-    if (!actor) continue;
-    const closedSamples = new Set([
-        ...prepared.closedSamples,
-        ...prepared.samples.keys(),
-        ...prepared.reservations.keys(),
-      ]),
-      sourceDecisions = prepared.sourceDecisions;
-    Object.assign(prepared, newBatch(world, actorId, actor, prepared.batch.frames[0]));
-    prepared.closedSamples = closedSamples;
-    prepared.sourceDecisions = sourceDecisions;
+  for (const [actorId, scope] of actors) {
+    if (!scope.prepared) continue;
+    flushReceivedBatch(world, actorId, scope.prepared);
+    scope.prepared = undefined;
   }
 }
 const receivingTransitions = new WeakMap<
@@ -769,15 +834,7 @@ export function withTemporalReceivedTransition<T>(
     ...(sampleToken === undefined ? {} : { sampleToken, order: sampleToken }),
   });
   try {
-    return withTemporalAcquisition(world, actorId, undefined, () => {
-      const prepared = builder(world, actorId);
-      if (prepared && sampleToken !== undefined && !prepared.reservations.has(sampleToken))
-        prepared.reservations.set(sampleToken, {
-          boundary: prepared.nextEntry++,
-          sample: prepared.nextEntry++,
-        });
-      return work();
-    });
+    return withTemporalAcquisition(world, actorId, undefined, work);
   } finally {
     if (previous) actors.set(actorId, previous);
     else actors.delete(actorId);
@@ -797,485 +854,140 @@ function entry(
   world: WorldState,
   actorId: string,
   kind: ReceivedEntry['kind'],
-  token?: number,
-): ReceivedEntry {
-  const owned = builder(world, actorId)!,
-    boundaryToken =
-      kind === 'boundary' ? receivingTransitions.get(world)?.get(actorId)?.sampleToken : undefined;
-  const old =
-    token === undefined
-      ? boundaryToken === undefined
-        ? undefined
-        : owned.boundaries.get(boundaryToken)
-      : owned.samples.get(token);
-  if (old) return old;
-  if (owned.batch.batchOrder === 0)
-    owned.batch.batchOrder = receivedIdentity(world, 'received-batch');
-  let entryIndex: number;
-  const reservation = owned.reservations.get(token ?? boundaryToken ?? -1);
-  if (reservation) entryIndex = kind === 'boundary' ? reservation.boundary : reservation.sample;
-  else entryIndex = owned.nextEntry++;
-  const value: ReceivedEntry = {
-    entryIndex,
-    order: token ?? boundaryToken ?? temporalReceivedOrder(world, actorId),
+): Omit<ReceivedEntry, 'receipt'> {
+  const owned = builder(world, actorId)!;
+  if (!owned.batch.batchOrder) owned.batch.batchOrder = receivedIdentity(world, 'received-batch');
+  return {
+    entryIndex: owned.nextEntry++,
+    order: temporalReceivedOrder(world, actorId),
     receivedAt: world.simTime,
     kind,
     required: false,
-    coverage: [],
     charge: { bytes: 0, count: 0 },
-    ...(token === undefined ? {} : { sampleToken: token }),
   };
-  (owned.batch.entries as ReceivedEntry[]).push(value);
-  owned.bytes += byteLength({ ...value, charge: undefined });
-  if (token !== undefined) owned.samples.set(token, value);
-  if (boundaryToken !== undefined) owned.boundaries.set(boundaryToken, value);
-  return value;
-}
-function addBinding(prepared: BatchBuilder, binding: ReceivedBinding): void {
-  const index = prepared.batch.bindings.findIndex((held) => held.id === binding.id);
-  if (index < 0) (prepared.batch.bindings as ReceivedBinding[]).push(binding);
-  else
-    (prepared.batch.bindings as ReceivedBinding[])[index] = mergeReceivedBindings(
-      prepared.batch.bindings[index]!,
-      binding,
-    );
-}
-function coverageBytes(coverage: ReceivedCoverage): number {
-  return byteLength(coverage);
-}
-function admitCoverage(
-  world: WorldState,
-  actorId: string,
-  target: ReceivedEntry,
-  binding: ReceivedBinding,
-  parts: readonly number[],
-  clock: ReceivedCoverage['clock'],
-  required = false,
-): boolean {
-  const prepared = builder(world, actorId)!,
-    actor = world.experience!.temporal!.actors[actorId]!;
-  const logical = new Map<number, number[]>();
-  for (const partIndex of parts) {
-    const part = binding.parts.find((part) => part.partIndex === partIndex);
-    if (!part) throw new Error('Recorded sample names an absent binding part.');
-    const held = logical.get(part.logicalMember);
-    if (held) held.push(partIndex);
-    else logical.set(part.logicalMember, [partIndex]);
-  }
-  let covered = target.coverage.find(
-    (coverage) =>
-      coverage.binding === binding.id &&
-      canonicalJson(coverage.clock) === canonicalJson(clock) &&
-      coverage.boundary === (target.kind === 'boundary' ? target.reason : undefined),
-  );
-  const members: ReceivedCoverage['members'][number][] = [];
-  for (const [logicalMember, suppliedParts] of logical) {
-    const decision = JSON.stringify([target.entryIndex, binding.id, logicalMember]);
-    const previousDecision = prepared.decisions.get(decision),
-      existing = previousDecision !== undefined,
-      memberIndex = existing
-        ? prepared.coordinates.get(decision)!
-        : (prepared.nextMember.get(target.entryIndex) ?? 0);
-    const considered = existing
-      ? new Set([
-          ...target.coverage
-            .filter((coverage) => coverage.binding === binding.id)
-            .flatMap((coverage) =>
-              coverage.members
-                .filter((member) => member.memberIndex === memberIndex)
-                .flatMap((member) => member.partIndices),
-            ),
-          ...(target.rejected ?? [])
-            .filter((hole) => hole.binding === binding.id && hole.memberIndex === memberIndex)
-            .flatMap((hole) => hole.partIndices),
-        ])
-      : undefined;
-    const partIndices = considered
-      ? suppliedParts.filter((index) => !considered.has(index))
-      : suppliedParts;
-    if (!partIndices.length) continue;
-    if (!existing) prepared.nextMember.set(target.entryIndex, memberIndex + 1);
-    const candidate = { memberIndex, partIndices };
-    const projection = receivedBindingChargeProjection(
-        binding,
-        world.receivedValues?.sources ?? {},
-        world,
-        new Set(partIndices),
-      ),
-      projectedIndex = logicalMember;
-    const marginal = projectionAtoms(projection, [projectedIndex]).filter(
-      (atom) =>
-        !orderedRecordGet(actor.recent.closures, atom.key) && !prepared.pendingAtoms.has(atom.key),
-    );
-    const bytes =
-      coverageBytes({
-        binding: binding.id,
-        members: [candidate],
-        ...(clock ? { clock } : {}),
-        ...(target.kind === 'boundary' && target.reason ? { boundary: target.reason } : {}),
-      }) + marginal.reduce((sum, atom) => sum + atom.bytes, 0);
-    const count = existing || target.kind === 'boundary' ? 0 : 1;
-    const headroom = 1 + selectedTemporalPolicy(world).maintenanceHeadroom;
-    const accepted =
-      required ||
-      (previousDecision !== false &&
-        actor.bytes + prepared.bytes + bytes <= prepared.policy.maxBytes * headroom &&
-        actor.count + prepared.count + count <= prepared.policy.maxChanges * headroom);
-    if (!existing) {
-      prepared.decisions.set(decision, accepted);
-      prepared.coordinates.set(decision, memberIndex);
-    }
-    if (!accepted) {
-      target.rejected ??= [];
-      (target.rejected as NonNullable<ReceivedEntry['rejected']>[number][]).push({
-        memberIndex,
-        binding: binding.id,
-        subject: binding.subject,
-        partIndices,
-        parts: partIndices.map((index) => {
-          const part = binding.parts.find((part) => part.partIndex === index)!;
-          return { partIndex: index, kind: part.kind, part: part.part };
-        }),
-        sourceIds: [
-          ...new Set(
-            binding.parts.flatMap((part) =>
-              part.facet.original ? [part.facet.original.source.id] : [],
-            ),
-          ),
-        ],
-      });
-      const gapBytes = byteLength({ memberIndex, binding: binding.id, partIndices });
-      target.charge.bytes += gapBytes;
-      prepared.bytes += gapBytes;
-      actor.maintenanceDue = true;
-      continue;
-    }
-    members.push(candidate);
-    for (const atom of marginal) prepared.pendingAtoms.add(atom.key);
-    prepared.bytes += bytes;
-    prepared.count += count;
-  }
-  if (!members.length) return false;
-  addBinding(prepared, binding);
-  if (covered) (covered.members as ReceivedCoverage['members'][number][]).push(...members);
-  else {
-    covered = {
-      binding: binding.id,
-      members,
-      ...(clock ? { clock } : {}),
-      ...(target.kind === 'boundary' && target.reason ? { boundary: target.reason } : {}),
-    };
-    (target.coverage as ReceivedCoverage[]).push(covered);
-  }
-  target.required ||= required;
-  target.charge.bytes += coverageBytes({ ...covered, members });
-  target.charge.count =
-    target.kind === 'boundary'
-      ? 0
-      : new Set(
-          target.coverage.flatMap((coverage) =>
-            coverage.members.map((member) => member.memberIndex),
-          ),
-        ).size;
-  return true;
-}
-/** Native directory is derived from accepted canonical entries, never authority
- * for what was sensed. Load supplies the same directories for cold blocks. */
-function projectionUseKey(use: import('./received-batches.js').ReceivedChargeUse): string {
-  return use.members ? JSON.stringify([use.projection, use.members]) : use.projection;
-}
-function projectionAtoms(
-  projection: import('./received-batches.js').ReceivedChargeProjection,
-  members?: readonly number[],
-): readonly { key: string; bytes: number }[] {
-  const atoms = new Map<string, number>();
-  for (const index of members ?? projection.members.map((member) => member.logicalMember)) {
-    const member = projection.members.find((member) => member.logicalMember === index)!;
-    for (const atom of member.closures) atoms.set(atom.key, atom.bytes);
-  }
-  return [...atoms].map(([key, bytes]) => ({ key, bytes }));
-}
-function retainProjectionUse(
-  actor: TemporalActorHistory,
-  directory: ReceivedChargeDirectory,
-  use: import('./received-batches.js').ReceivedChargeUse,
-): void {
-  const key = projectionUseKey(use),
-    prior = orderedRecordGet(actor.recent.projections, key);
-  if (prior) {
-    orderedRecordSet(actor.recent.projections, key, { ...prior, uses: prior.uses + 1 });
-    return;
-  }
-  const projection = directory.projections.find((projection) => projection.id === use.projection);
-  if (!projection) throw new Error('Recent charge use has no projection.');
-  orderedRecordSet(actor.recent.projections, key, {
-    projection,
-    ...(use.members ? { members: use.members } : {}),
-    uses: 1,
-  });
-  for (const atom of projectionAtoms(projection, use.members)) {
-    const prior = orderedRecordGet(actor.recent.closures, atom.key);
-    orderedRecordSet(actor.recent.closures, atom.key, {
-      bytes: prior?.bytes ?? atom.bytes,
-      uses: (prior?.uses ?? 0) + 1,
-    });
-    if (!prior) actor.bytes += atom.bytes;
-  }
-}
-function releaseProjectionUse(
-  actor: TemporalActorHistory,
-  use: import('./received-batches.js').ReceivedChargeUse,
-): void {
-  const key = projectionUseKey(use),
-    held = orderedRecordGet(actor.recent.projections, key);
-  if (!held || held.uses <= 0) throw new Error('Recent projection use underflow.');
-  if (held.uses > 1) {
-    orderedRecordSet(actor.recent.projections, key, { ...held, uses: held.uses - 1 });
-    return;
-  }
-  orderedRecordSet(actor.recent.projections, key, undefined);
-  for (const atom of projectionAtoms(held.projection, held.members)) {
-    const prior = orderedRecordGet(actor.recent.closures, atom.key);
-    if (!prior || prior.uses <= 0) throw new Error('Recent closure use underflow.');
-    orderedRecordSet(
-      actor.recent.closures,
-      atom.key,
-      prior.uses === 1 ? undefined : { ...prior, uses: prior.uses - 1 },
-    );
-    if (prior.uses === 1) actor.bytes -= prior.bytes;
-  }
 }
 function recentBlockKey(
   owner: Pick<TemporalReceiptLocator, 'physicalLife' | 'epoch'>,
   batchOrder: number,
 ): string {
-  return `${String(batchOrder).padStart(16, '0')}:${owner.physicalLife}:${owner.epoch}`;
+  return JSON.stringify([String(batchOrder).padStart(16, '0'), owner.physicalLife, owner.epoch]);
 }
 export function installTemporalChargeDirectories(
   actor: TemporalActorHistory,
   directories: readonly ReceivedChargeDirectory[],
 ): void {
-  actor.recent = { blocks: { size: 0 }, projections: { size: 0 }, closures: { size: 0 } };
+  actor.recent = { blocks: { size: 0 }, individuals: { size: 0 } };
   actor.bytes = 0;
   actor.count = 0;
   for (const directory of eligibleReceivedChargeDirectories(directories, actor.frontier))
     appendTemporalChargeDirectory(actor, directory);
 }
-/** Full directory materialization is reserved for restore/audit/selected capture,
- * never the ordinary append or expiry path. */
 export function receivedRecentDirectories(
   actor: TemporalActorHistory,
 ): readonly ReceivedChargeDirectory[] {
   return [...orderedRecordEntries(actor.recent.blocks)].map(([, directory]) => directory);
 }
+function updateRecentIndividuals(
+  actor: TemporalActorHistory,
+  ids: readonly string[],
+  direction: 1 | -1,
+): void {
+  for (const id of ids) {
+    const count = (orderedRecordGet(actor.recent.individuals, id) ?? 0) + direction;
+    if (count < 0) throw new Error('Recent individual membership underflow.');
+    orderedRecordSet(actor.recent.individuals, id, count || undefined);
+  }
+}
 function appendTemporalChargeDirectory(
   actor: TemporalActorHistory,
   directory: ReceivedChargeDirectory,
 ): void {
-  const batchOrder = directory.entries[0]?.batchOrder;
-  if (batchOrder === undefined) return;
-  if (directory.entries.some((entry) => entry.batchOrder !== batchOrder))
-    throw new Error('Native recent directory must contain one bounded logical batch.');
-  const key = recentBlockKey(directory, batchOrder),
-    prior = orderedRecordGet(actor.recent.blocks, key);
-  let value = directory;
-  if (prior) {
-    if (
-      directory.entries.some((entry) =>
-        prior.entries.some((held) => held.entryIndex === entry.entryIndex),
-      )
-    )
-      throw new Error('Recent directory repeats an admitted entry.');
-    const projections = new Map(
-      [...prior.projections, ...directory.projections].map((projection) => [
-        projection.id,
-        projection,
-      ]),
-    );
-    value = {
-      ...prior,
-      entries: [...prior.entries, ...directory.entries].sort((a, b) => a.entryIndex - b.entryIndex),
-      projections: [...projections.values()],
-    };
-  }
-  orderedRecordSet(actor.recent.blocks, key, value);
   for (const header of directory.entries) {
+    const key = recentBlockKey(directory, header.batchOrder);
+    if (orderedRecordGet(actor.recent.blocks, key))
+      throw new Error('Recent block repeats its canonical address.');
+    orderedRecordSet(actor.recent.blocks, key, {
+      actorId: directory.actorId,
+      physicalLife: directory.physicalLife,
+      epoch: directory.epoch,
+      entries: [header],
+    });
     actor.bytes += header.bytes;
     actor.count += header.count;
-    for (const use of header.uses) retainProjectionUse(actor, directory, use);
+    updateRecentIndividuals(actor, header.individualIds, 1);
   }
 }
-/** Exact logical lookup visits one batch branch and its bounded entry mask. */
+export function hasTemporalRecentIndividual(
+  world: WorldState,
+  actorId: string,
+  individualId: string,
+): boolean {
+  const recent = world.experience?.temporal?.actors[actorId]?.recent;
+  return !!recent && !!orderedRecordGet(recent.individuals, individualId);
+}
+/** Eligibility only. A caller resolving a fact must still select its exact receipt. */
 export function receivedDirectoryContains(
   recent: ReceivedRecentDirectory,
   locator: TemporalReceiptLocator,
-  memberIndex?: number,
+  _memberIndex?: number,
   receivedAfter = -Infinity,
 ): boolean {
-  const block = orderedRecordGet(recent.blocks, recentBlockKey(locator, locator.batchOrder));
-  if (!block || block.actorId !== locator.actorId) return false;
-  let low = 0,
-    high = block.entries.length;
-  while (low < high) {
-    const mid = (low + high) >>> 1;
-    if (block.entries[mid]!.entryIndex < locator.entryIndex) low = mid + 1;
-    else high = mid;
-  }
-  const header = block.entries[low];
+  const block = orderedRecordGet(recent.blocks, recentBlockKey(locator, locator.batchOrder)),
+    header = block?.entries[0];
   return (
-    header?.entryIndex === locator.entryIndex &&
-    header.at > receivedAfter &&
-    (memberIndex === undefined ||
-      header.uses.some((use) => use.memberIndices.includes(memberIndex)))
+    !!block &&
+    block.actorId === locator.actorId &&
+    !!header &&
+    locator.entryIndex >= header.firstEntry &&
+    locator.entryIndex <= header.entryIndex &&
+    header.throughAt > receivedAfter
   );
 }
-/** Recombine disjoint physical slices before applying exact logical expiry. */
 export function eligibleReceivedChargeDirectories(
   directories: readonly ReceivedChargeDirectory[],
   frontier: ReceivedFrontier | undefined,
 ): ReceivedChargeDirectory[] {
-  const owners = new Map<
-    string,
-    {
-      header: ReceivedChargeDirectory;
-      projections: Map<string, import('./received-batches.js').ReceivedChargeProjection>;
-      entries: Map<string, import('./received-batches.js').ReceivedChargeEntry>;
-    }
-  >();
-  for (const directory of directories) {
-    const ownerKey = JSON.stringify([directory.actorId, directory.physicalLife, directory.epoch]);
-    let owner = owners.get(ownerKey);
-    if (!owner)
-      owners.set(
-        ownerKey,
-        (owner = { header: directory, projections: new Map(), entries: new Map() }),
-      );
-    for (const projection of directory.projections) {
-      const prior = owner.projections.get(projection.id);
-      owner.projections.set(
-        projection.id,
-        prior
-          ? {
-              ...prior,
-              members: [
-                ...prior.members,
-                ...projection.members.filter(
-                  (member) =>
-                    !prior.members.some((held) => held.logicalMember === member.logicalMember),
-                ),
-              ],
-            }
-          : projection,
-      );
-    }
+  const blocks = new Map<string, ReceivedChargeDirectory>();
+  for (const directory of directories)
     for (const header of directory.entries) {
-      const key = JSON.stringify([header.batchOrder, header.entryIndex]),
-        prior = owner.entries.get(key);
-      if (!prior) {
-        owner.entries.set(key, header);
-        continue;
-      }
-      const uses = new Map<
-        string,
-        { projection: string; memberIndices: number[]; members: number[] }
-      >();
-      for (const use of [...prior.uses, ...header.uses]) {
-        const projection = owner.projections.get(use.projection)!;
-        const selected = use.members ?? projection.members.map((member) => member.logicalMember);
-        let held = uses.get(use.projection);
-        if (!held)
-          uses.set(
-            use.projection,
-            (held = { projection: use.projection, memberIndices: [], members: [] }),
-          );
-        for (let index = 0; index < selected.length; index++) {
-          if (held.memberIndices.includes(use.memberIndices[index]!))
-            throw new Error('Overlapping received charge slices.');
-          held.memberIndices.push(use.memberIndices[index]!);
-          held.members.push(selected[index]!);
-        }
-      }
-      owner.entries.set(key, {
-        ...prior,
-        bytes: Math.max(prior.bytes, header.bytes),
-        count: prior.count + header.count,
-        ...(prior.holes || header.holes
-          ? { holes: [...new Set([...(prior.holes ?? []), ...(header.holes ?? [])])] }
-          : {}),
-        uses: [...uses.values()],
-      });
-    }
-  }
-  const result: ReceivedChargeDirectory[] = [];
-  for (const owner of owners.values()) {
-    const entries = [...owner.entries.values()]
-      .sort((a, b) => a.batchOrder - b.batchOrder || a.entryIndex - b.entryIndex)
-      .flatMap((header) => {
-        if (
-          frontier?.expiredThroughTime !== null &&
-          frontier?.expiredThroughTime !== undefined &&
-          header.at <= frontier.expiredThroughTime
+      if (
+        !receivedPositionEligible(
+          {
+            batchOrder: header.batchOrder,
+            entryIndex: header.entryIndex,
+            memberIndex: header.lastMember,
+          },
+          header.throughAt,
+          frontier,
         )
-          return [];
-        let count = 0;
-        const uses = header.uses.flatMap((use) => {
-          const projection = owner.projections.get(use.projection)!;
-          const selected = use.members ?? projection.members.map((member) => member.logicalMember),
-            members: number[] = [],
-            memberIndices: number[] = [];
-          for (let index = 0; index < selected.length; index++) {
-            const memberIndex = use.memberIndices[index]!;
-            if (
-              frontier?.pressureThrough &&
-              compareReceivedPosition(
-                { batchOrder: header.batchOrder, entryIndex: header.entryIndex, memberIndex },
-                frontier.pressureThrough.address,
-              ) <= 0
-            )
-              continue;
-            members.push(selected[index]!);
-            memberIndices.push(memberIndex);
-            count +=
-              header.count === 0
-                ? 0
-                : projection.members.find((member) => member.logicalMember === selected[index])!
-                    .count;
-          }
-          return members.length ? [{ projection: use.projection, members, memberIndices }] : [];
+      )
+        continue;
+      const key = JSON.stringify([
+        directory.actorId,
+        directory.physicalLife,
+        directory.epoch,
+        header.batchOrder,
+      ]);
+      const prior = blocks.get(key);
+      if (prior) {
+        const held = prior.entries[0]!;
+        // A sparse edit/replacement supplies the complete retained block; physical packing never splits it.
+        if (
+          held.firstEntry !== header.firstEntry ||
+          held.entryIndex !== header.entryIndex ||
+          held.bytes !== header.bytes ||
+          held.count !== header.count
+        )
+          throw new Error('Conflicting received block headers.');
+      } else
+        blocks.set(key, {
+          actorId: directory.actorId,
+          physicalLife: directory.physicalLife,
+          epoch: directory.epoch,
+          entries: [header],
         });
-        const holes = header.holes?.filter(
-          (memberIndex) =>
-            !frontier?.pressureThrough ||
-            compareReceivedPosition(
-              { batchOrder: header.batchOrder, entryIndex: header.entryIndex, memberIndex },
-              frontier.pressureThrough.address,
-            ) > 0,
-        );
-        if (!uses.length && !holes?.length) return [];
-        if (header.indivisible && count !== header.count)
-          throw new Error('Pressure frontier bisects an indivisible occurrence.');
-        return [{ ...header, count, uses, ...(holes ? { holes } : {}) }];
-      });
-    const batches = new Map<number, typeof entries>();
-    for (const entry of entries) {
-      const held = batches.get(entry.batchOrder);
-      if (held) held.push(entry);
-      else batches.set(entry.batchOrder, [entry]);
     }
-    for (const batchEntries of batches.values()) {
-      const used = new Set(
-        batchEntries.flatMap((entry) => entry.uses.map((use) => use.projection)),
-      );
-      result.push({
-        ...owner.header,
-        projections: [...owner.projections.values()].filter((projection) =>
-          used.has(projection.id),
-        ),
-        entries: batchEntries,
-      });
-    }
-  }
-  return result.sort((a, b) => (a.entries[0]?.batchOrder ?? 0) - (b.entries[0]?.batchOrder ?? 0));
+  return [...blocks.values()].sort((a, b) => a.entries[0]!.batchOrder - b.entries[0]!.batchOrder);
 }
 export function restoreReceivedRecentDirectory(
   world: WorldState,
@@ -1283,60 +995,25 @@ export function restoreReceivedRecentDirectory(
   directories: readonly ReceivedChargeDirectory[],
 ): void {
   const actor = world.experience?.temporal?.actors[actorId];
-  if (!actor) throw new Error('Received directory has no actor owner.');
-  if (directories.some((directory) => directory.actorId !== actorId))
-    throw new Error('Received directory belongs to another actor.');
+  if (!actor) throw new Error('Missing received actor for reconstruction.');
   const expected = { bytes: actor.bytes, count: actor.count };
-  const prepared = { ...actor };
-  installTemporalChargeDirectories(prepared, directories);
-  if (prepared.bytes !== expected.bytes || prepared.count !== expected.count)
-    throw new Error('Received recent charges disagree with saved actor totals.');
-  actor.recent = prepared.recent;
+  installTemporalChargeDirectories(actor, directories);
+  if (actor.bytes !== expected.bytes || actor.count !== expected.count)
+    throw new Error('Received block totals disagree with current authority.');
 }
-function releaseDirectoryEntry(
-  actor: TemporalActorHistory,
-  directory: ReceivedChargeDirectory,
-  header: import('./received-batches.js').ReceivedChargeEntry,
-  releasedIndividuals?: Set<string>,
-): void {
-  if (releasedIndividuals)
-    for (const use of header.uses) {
-      const projection = directory.projections.find(
-        (projection) => projection.id === use.projection,
-      )!;
-      for (const logical of use.members ?? projection.members.map((member) => member.logicalMember))
-        for (const id of projection.members.find((member) => member.logicalMember === logical)!
-          .individualIds)
-          releasedIndividuals.add(id);
-    }
-  actor.bytes -= header.bytes;
-  actor.count -= header.count;
-  for (const use of header.uses) releaseProjectionUse(actor, use);
-}
-/** Ordinary age/pressure retirement runs only over the actor's retained headers.
- * Current values and separately retained account support are never expired here. */
-function firstRecentDirectory(
-  recent: ReceivedRecentDirectory,
-): [string, ReceivedChargeDirectory] | undefined {
-  const first = orderedRecordEntries(recent.blocks).next();
-  return first.done ? undefined : first.value;
-}
-function setRecentDirectoryEntries(
+function releaseDirectory(
   actor: TemporalActorHistory,
   key: string,
   directory: ReceivedChargeDirectory,
-  entries: ReceivedChargeDirectory['entries'],
+  released: Set<string>,
 ): void {
-  if (!entries.length) {
-    orderedRecordSet(actor.recent.blocks, key, undefined);
-    return;
+  for (const header of directory.entries) {
+    actor.bytes -= header.bytes;
+    actor.count -= header.count;
+    updateRecentIndividuals(actor, header.individualIds, -1);
+    for (const id of header.individualIds) released.add(id);
   }
-  const used = new Set(entries.flatMap((entry) => entry.uses.map((use) => use.projection)));
-  orderedRecordSet(actor.recent.blocks, key, {
-    ...directory,
-    entries,
-    projections: directory.projections.filter((projection) => used.has(projection.id)),
-  });
+  orderedRecordSet(actor.recent.blocks, key, undefined);
 }
 export function advanceTemporalRecent(
   world: WorldState,
@@ -1350,274 +1027,110 @@ export function advanceTemporalRecent(
 } {
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return { bytes: 0, count: 0, nextDue: null, releasedIndividualIds: [] };
-  const previous = { bytes: actor.bytes, count: actor.count },
-    cutoff = world.simTime - policy.maxAgeSeconds,
-    first = firstRecentDirectory(actor.recent)?.[1].entries[0];
+  const cutoff = world.simTime - policy.maxAgeSeconds,
+    oldest = (
+      orderedRecordEntries(actor.recent.blocks).next().value as
+        | [string, ReceivedChargeDirectory]
+        | undefined
+    )?.[1].entries[0];
   if (
     !actor.maintenanceDue &&
     actor.bytes <= policy.maxBytes &&
     actor.count <= policy.maxChanges &&
-    (!first || first.at > cutoff)
+    (!oldest || oldest.at > cutoff)
   )
     return { bytes: 0, count: 0, nextDue: actor.nextDue, releasedIndividualIds: [] };
-  touchNativeEvidence(world, 'temporal', actorId);
-  const releasedIndividualIds = new Set<string>(),
+  const previous = { bytes: actor.bytes, count: actor.count },
+    released = new Set<string>(),
     frontier = (actor.frontier ??= { expiredThroughTime: null });
-  if (cutoff >= 0)
-    frontier.expiredThroughTime = Math.max(frontier.expiredThroughTime ?? -Infinity, cutoff);
-  if (actor.recordingGap) {
-    if (actor.recordingGap.through <= cutoff) delete actor.recordingGap;
-    else if (actor.recordingGap.from < cutoff)
-      actor.recordingGap = { ...actor.recordingGap, from: cutoff };
-  }
-  // One tree branch per expired batch; only its bounded boundary mask is copied.
   for (;;) {
-    const current = firstRecentDirectory(actor.recent);
-    if (!current) break;
-    const [key, directory] = current;
-    let expired = 0;
-    while (expired < directory.entries.length && directory.entries[expired]!.at <= cutoff) {
-      releaseDirectoryEntry(actor, directory, directory.entries[expired]!, releasedIndividualIds);
-      expired++;
-    }
-    if (!expired) break;
-    setRecentDirectoryEntries(actor, key, directory, directory.entries.slice(expired));
-    if (expired < directory.entries.length) break;
-  }
-  while (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
-    const current = firstRecentDirectory(actor.recent);
-    if (!current) break;
-    const [key, directory] = current,
-      header = directory.entries[0]!,
-      members = [
-        ...new Set([...header.uses.flatMap((use) => use.memberIndices), ...(header.holes ?? [])]),
-      ].sort((a, b) => a - b);
-    let removed: number;
-    if (header.indivisible || members.length <= 1) {
-      removed = Math.max(0, ...members);
-      releaseDirectoryEntry(actor, directory, header, releasedIndividualIds);
-      setRecentDirectoryEntries(actor, key, directory, directory.entries.slice(1));
-    } else {
-      removed = members[0]!;
-      let releasedCount = 0;
-      const uses = header.uses.flatMap((use) => {
-        const at = use.memberIndices.indexOf(removed);
-        if (at < 0) return [use];
-        const projection = directory.projections.find(
-            (projection) => projection.id === use.projection,
-          )!,
-          indices = use.members ?? projection.members.map((member) => member.logicalMember),
-          member = projection.members.find((member) => member.logicalMember === indices[at])!;
-        releasedCount = header.count === 0 ? 0 : member.count;
-        for (const id of member.individualIds) releasedIndividualIds.add(id);
-        releaseProjectionUse(actor, use);
-        const memberIndices = use.memberIndices.filter((_, index) => index !== at),
-          selected = indices.filter((_, index) => index !== at);
-        if (!memberIndices.length) return [];
-        const next = { projection: use.projection, memberIndices, members: selected };
-        retainProjectionUse(actor, directory, next);
-        return [next];
-      });
-      actor.count -= releasedCount;
-      const partial = {
-        ...header,
-        count: header.count - releasedCount,
-        uses,
-        ...(header.holes ? { holes: header.holes.filter((index) => index !== removed) } : {}),
-      };
-      setRecentDirectoryEntries(actor, key, directory, [partial, ...directory.entries.slice(1)]);
-    }
-    const address = {
+    const first = orderedRecordEntries(actor.recent.blocks).next().value as
+      | [string, ReceivedChargeDirectory]
+      | undefined;
+    if (!first) break;
+    const [key, directory] = first,
+      header = directory.entries[0]!;
+    if (header.at > cutoff && actor.bytes <= policy.maxBytes && actor.count <= policy.maxChanges)
+      break;
+    const end = {
       batchOrder: header.batchOrder,
       entryIndex: header.entryIndex,
-      memberIndex: removed,
+      memberIndex: header.lastMember,
     };
     if (
       !frontier.pressureThrough ||
-      compareReceivedPosition(address, frontier.pressureThrough.address) > 0
+      compareReceivedPosition(end, frontier.pressureThrough.address) > 0
     )
-      frontier.pressureThrough = { address, receivedAt: header.at, order: header.order };
+      frontier.pressureThrough = {
+        address: end,
+        receivedAt: header.throughAt,
+        order: header.order,
+      };
+    releaseDirectory(actor, key, directory, released);
   }
-  const oldest = firstRecentDirectory(actor.recent)?.[1].entries[0];
-  actor.nextDue = oldest ? oldest.at + policy.maxAgeSeconds : null;
+  if (cutoff >= 0)
+    frontier.expiredThroughTime = Math.max(frontier.expiredThroughTime ?? -Infinity, cutoff);
+  const first = orderedRecordEntries(actor.recent.blocks).next().value as
+    | [string, ReceivedChargeDirectory]
+    | undefined;
+  actor.nextDue = first ? first[1].entries[0]!.at + policy.maxAgeSeconds : null;
   actor.maintenanceDue = false;
-  actor.pages = actor.pages.filter((page) => {
-    if (temporalPageMutation(page) === 'edit' && !page.batches.length) return true;
-    if (frontier.expiredThroughTime !== null && page.throughAt <= frontier.expiredThroughTime)
-      return false;
-    if (!frontier.pressureThrough) return true;
-    const batch = page.batches.at(-1),
-      entry = batch?.entries.at(-1);
-    if (!batch || !entry) return true;
-    const memberIndex = Math.max(
-      0,
-      ...(entry.receipt?.facets.map((facet) => facet.memberIndex) ??
-        entry.coverage.flatMap((coverage) => coverage.members.map((member) => member.memberIndex))),
-      ...(entry.rejected?.map((member) => member.memberIndex) ?? []),
-    );
-    return (
-      compareReceivedPosition(
-        { batchOrder: batch.batchOrder, entryIndex: entry.entryIndex, memberIndex },
-        frontier.pressureThrough.address,
-      ) > 0
-    );
-  });
+  actor.pages = actor.pages.filter(
+    (page) =>
+      (temporalPageMutation(page) === 'edit' && !page.batches.length) ||
+      page.batches.some(
+        (batch) => !!orderedRecordGet(actor.recent.blocks, recentBlockKey(batch, batch.batchOrder)),
+      ),
+  );
+  if (actor.recordingGap && actor.recordingGap.through <= cutoff) delete actor.recordingGap;
+  if (previous.bytes !== actor.bytes || previous.count !== actor.count)
+    touchNativeEvidence(world, 'temporal', actorId);
   return {
     bytes: previous.bytes - actor.bytes,
     count: previous.count - actor.count,
     nextDue: actor.nextDue,
-    releasedIndividualIds: [...releasedIndividualIds],
+    releasedIndividualIds: [...released],
   };
 }
-
-const bindingIndividuals = new WeakMap<object, ReadonlyMap<number, readonly string[]>>();
-function receivedBindingIndividuals(
-  binding: ReceivedBinding,
-  sources: ReceivedValueLookup,
-): ReadonlyMap<number, readonly string[]> {
-  const projection = binding.charges ?? receivedBindingChargeProjection(binding, sources),
-    cached = bindingIndividuals.get(projection);
-  if (cached) return cached;
-  const result = new Map(
-    projection.members.map((member) => [member.logicalMember, member.individualIds]),
-  );
-  bindingIndividuals.set(projection, result);
-  return result;
-}
-
 function flushReceivedBatch(world: WorldState, actorId: string, prepared: BatchBuilder): void {
-  const batch = prepared.batch;
-  const entries = batch.entries
-    .filter((entry) => entry.coverage.length || entry.receipt || entry.rejected?.length)
-    .sort((a, b) => a.entryIndex - b.entryIndex);
-  if (!entries.length) return;
-  for (const entry of entries) entry.charge.bytes = byteLength({ ...entry, charge: undefined });
-  const actor = world.experience!.temporal!.actors[actorId]!;
-  const used = new Map<number, Set<number>>();
-  for (const entry of entries)
-    for (const coverage of entry.coverage) {
-      let indices = used.get(coverage.binding);
-      if (!indices) used.set(coverage.binding, (indices = new Set()));
-      for (const member of coverage.members)
-        for (const index of member.partIndices) indices.add(index);
-    }
-  const bindings = batch.bindings.flatMap((binding) => {
-    const indices = used.get(binding.id);
-    return indices ? [selectReceivedBindingParts(binding, indices)] : [];
-  });
-  const value = immutableDataSnapshot({ ...batch, bindings, entries }, readOnlyDraftView);
-  const encoded = receivedBatchStorageBytes(value),
-    prior = actor.pages.at(-1);
-  let page: TemporalPage;
-  if (
-    !prior ||
-    prior.appendClosed ||
-    prior.epoch !== batch.epoch ||
-    prior.batches.reduce((sum, batch) => sum + receivedBatchStorageBytes(batch), 0) + encoded >
-      TEMPORAL_NATIVE_PAGE_BYTES
-  ) {
-    page = {
-      id: nextId(world, 'temporal-page'),
-      order: world.nextId,
-      actorId,
-      physicalLife: batch.physicalLife,
-      epoch: batch.epoch,
-      fromAt: world.simTime,
-      throughAt: world.simTime,
-      subjects: [],
-      sourceIds: [],
-      individualIds: [],
-      sourceRefs: [],
-      bytes: 0,
-      count: 0,
-      batches: [],
-    };
-    actor.pages.push(page);
-  } else page = prior;
-  const metadata = temporalPageMetadata({ ...page, batches: [value] }, { world });
-  appendTemporalPageBatch(page, value, world);
-  page.bytes += metadata.entryBytes;
-  page.count += metadata.count;
-  page.fromAt = Math.min(page.fromAt, metadata.firstAt ?? page.fromAt);
-  page.throughAt = Math.max(page.throughAt, metadata.lastAt ?? page.throughAt);
-  page.subjects = [...new Set([...page.subjects, ...metadata.subjects])];
-  page.sourceIds = [...new Set([...page.sourceIds, ...metadata.sourceIds])];
-  page.individualIds = [...new Set([...page.individualIds, ...metadata.individualIds])];
-  page.sourceRefs = [...new Set([...page.sourceRefs, ...metadata.references])];
-  const directory = metadata.chargeDirectory;
-  appendTemporalChargeDirectory(actor, directory);
-  const due = Math.min(...entries.map((entry) => entry.receivedAt)) + prepared.policy.maxAgeSeconds;
-  actor.nextDue = Math.min(actor.nextDue ?? Infinity, due);
+  if (!prepared.batch.entries.length) return;
+  const actor = world.experience!.temporal!.actors[actorId]!,
+    value = immutableDataSnapshot(prepared.batch, readOnlyDraftView),
+    encoded = receivedBatchStorageBytes(value);
+  const page: TemporalPage = {
+    id: nextId(world, 'temporal-page'),
+    order: value.batchOrder,
+    actorId,
+    physicalLife: value.physicalLife,
+    epoch: value.epoch,
+    fromAt: value.entries[0]!.receivedAt,
+    throughAt: value.entries.at(-1)!.receivedAt,
+    subjects: [],
+    sourceIds: [],
+    individualIds: [],
+    sourceRefs: [],
+    bytes: 0,
+    count: 0,
+    batches: [value],
+  };
+  const metadata = temporalPageMetadata(page, { world });
+  page.bytes = metadata.entryBytes;
+  page.count = metadata.count;
+  page.subjects = metadata.subjects;
+  page.sourceIds = metadata.sourceIds;
+  page.individualIds = metadata.individualIds;
+  page.sourceRefs = metadata.references;
+  actor.pages.push(page);
+  appendTemporalChargeDirectory(actor, metadata.chargeDirectory);
+  actor.nextDue = Math.min(actor.nextDue ?? Infinity, page.fromAt + prepared.policy.maxAgeSeconds);
   actor.maintenanceDue ||=
     actor.bytes > prepared.policy.maxBytes || actor.count > prepared.policy.maxChanges;
-  for (const entry of entries) {
-    const mentioned = new Map<number, Set<string>>();
-    for (const coverage of entry.coverage) {
-      const binding = batch.bindings.find((binding) => binding.id === coverage.binding)!;
-      const individuals = receivedBindingIndividuals(binding, world.receivedValues?.sources ?? {});
-      for (const member of coverage.members) {
-        let ids = mentioned.get(member.memberIndex);
-        if (!ids) mentioned.set(member.memberIndex, (ids = new Set()));
-        for (const index of member.partIndices) {
-          const part = binding.parts.find((part) => part.partIndex === index)!;
-          for (const id of individuals.get(part.logicalMember) ?? []) ids.add(id);
-        }
-      }
-    }
-    if (entry.receipt)
-      for (const facet of entry.receipt.facets) {
-        const ids = temporalReceiptIndividualIds(
-          { ...entry.receipt, facets: [facet] },
-          world.receivedValues?.sources ?? {},
-        );
-        mentioned.set(facet.memberIndex, new Set(ids));
-      }
-    for (const [memberIndex, ids] of mentioned)
-      if (ids.size)
-        selectedMarkRecentIndividualReferences(world, actorId, [...ids], {
-          physicalLife: batch.physicalLife,
-          epoch: batch.epoch,
-          batchOrder: batch.batchOrder,
-          entryIndex: entry.entryIndex,
-          memberIndex,
-          at: entry.receivedAt,
-        });
-  }
-  countDomainWork('temporalOperationsAppended');
+  countDomainWork('temporalOperationsAppended', value.entries.length);
   countDomainWork('receivedBatchesAppended');
-  for (const entry of entries) {
-    countDomainWork(
-      entry.kind === 'baseline'
-        ? 'receivedBaselineEntries'
-        : entry.kind === 'sample'
-          ? 'receivedSampleEntries'
-          : entry.kind === 'boundary'
-            ? 'receivedBoundaryEntries'
-            : 'receivedOccurrenceEntries',
-    );
-    countDomainWork('receivedLogicalMembersAdmitted', entry.charge.count);
-    countDomainWork(
-      'receivedLogicalMembersRejected',
-      new Set(entry.rejected?.map((hole) => hole.memberIndex)).size,
-    );
-  }
-  if (domainCountersEnabled()) {
-    countDomainWork('receivedBatchEncodedBytes', byteLength(value));
-    countDomainWork(
-      'receivedBindingBytes',
-      value.bindings.reduce((sum, binding) => sum + byteLength(binding.parts), 0),
-    );
-    countDomainWork(
-      'receivedSeedBytes',
-      value.bindings.reduce(
-        (sum, binding) =>
-          sum + byteLength({ seed: binding.seed, predecessors: binding.predecessors }),
-        0,
-      ),
-    );
-  }
+  countDomainWork('receivedBatchEncodedBytes', encoded);
   chargeWork({ effects: 1, outputBytes: encoded });
 }
+
 function prepareCaptureFacets(
   world: WorldState,
   input: TemporalCaptureInput,
@@ -1647,21 +1160,78 @@ export function appendTemporalReceipt(
   actorId: string,
   input: TemporalCaptureInput,
   policy: TemporalRetentionPolicy,
-  _acquisition?: number,
 ): TemporalReceiptLocator | undefined {
-  if (!input.facets.length) return;
+  if (
+    !input.facets.length &&
+    !['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(input.change)
+  )
+    return;
   return withTemporalReceivedTransition(world, actorId, () => {
-    const prepared = builder(world, actorId);
+    let prepared = builder(world, actorId);
     if (!prepared) return;
     prepared.policy = policy;
-    const target = entry(
+    const owner = world.experience!.temporal!.actors[actorId]!;
+    // Different fields can have independent last checks and reasons. Merge only
+    // equal boundaries; one latest clock would erase an earlier field's gap.
+    const terminalKey =
+        input.terminalReservationBytes === undefined
+          ? ''
+          : JSON.stringify([
+              input.receivedAt ?? world.simTime,
+              input.coverageGap?.from,
+              input.coverageGap?.through,
+              input.change,
+            ]),
+      previousTerminal = terminalKey
+        ? prepared.terminals.get(input.subject)?.get(terminalKey)
+        : undefined;
+    if (input.terminalReservationBytes !== undefined && previousTerminal) {
+      const prior = previousTerminal.entry.receipt,
+        beforeBytes = byteLength(prior);
+      // A whole-track boundary subsumes scoped boundaries. Otherwise retain the
+      // union; changing one property must not close unrelated spatial evidence.
+      if (prior.endedFields && input.endedFields) {
+        const parts = new Map(prior.endedFields.map((part) => [JSON.stringify(part), part]));
+        for (const [kind, part] of input.endedFields)
+          parts.set(JSON.stringify([kind, part]), [kind, part]);
+        prior.endedFields = [...parts.values()];
+      } else delete prior.endedFields;
+      const addedBytes = byteLength(prior) - beforeBytes;
+      previousTerminal.reservedBytes += input.terminalReservationBytes;
+      previousTerminal.entry.charge.bytes += addedBytes;
+      if (previousTerminal.entry.charge.bytes > previousTerminal.reservedBytes)
+        throw new Error('Recording terminal exceeds its admitted reservation.');
+      prepared.bytes += addedBytes;
+      prepared.nativeBytes += addedBytes;
+      return {
+        actorId,
+        physicalLife: prepared.batch.physicalLife,
+        epoch: prepared.batch.epoch,
+        batchOrder: prepared.batch.batchOrder,
+        entryIndex: previousTerminal.entry.entryIndex,
+      };
+    }
+    if (
+      !input.required &&
+      input.terminalReservationBytes === undefined &&
+      owner.count + prepared.count + temporalChangeCount(input.change, input.facets.length) >
+        policy.maxChanges * (1 + selectedTemporalPolicy(world).maintenanceHeadroom)
+    ) {
+      owner.recordingGap = {
+        from: owner.recordingGap?.from ?? world.simTime,
+        through: world.simTime,
+      };
+      owner.maintenanceDue = true;
+      return;
+    }
+    let target = entry(
       world,
       actorId,
       input.change === 'baseline'
         ? 'baseline'
         : input.change === 'occurrence'
           ? 'occurrence'
-          : ['loss', 'unchecked', 'attention-exit'].includes(input.change)
+          : ['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(input.change)
             ? 'boundary'
             : 'sample',
     );
@@ -1696,20 +1266,83 @@ export function appendTemporalReceipt(
         facets,
         ...(input.subjectIdentity ? { subjectIdentity: input.subjectIdentity } : {}),
         ...(input.origin ? { origin: input.origin } : {}),
-        ...((input.receiverFrame ?? prepared.batch.frames[0])
-          ? { receiverFrame: input.receiverFrame ?? prepared.batch.frames[0] }
+        ...(target.kind !== 'boundary' && (input.receiverFrame ?? prepared.frame)
+          ? { receiverFrame: input.receiverFrame ?? prepared.frame }
           : {}),
         ...(input.contextSubjects ? { contextSubjects: [...input.contextSubjects] } : {}),
         ...(input.availability ? { availability: input.availability } : {}),
         ...(input.availabilityAt === undefined ? {} : { availabilityAt: input.availabilityAt }),
+        ...(input.coverageGap ? { coverageGap: input.coverageGap } : {}),
+        ...(input.endedFields
+          ? { endedFields: input.endedFields.map(([kind, part]) => [kind, part] as const) }
+          : {}),
       };
-    receipt.sourceIds = temporalReceiptAliases(receipt, world.receivedValues?.sources ?? {}, world);
-    const bytes = byteLength(receipt),
-      count = temporalReceiptChangeCount(receipt),
+    let bytes = byteLength(receipt);
+    const count = temporalReceiptChangeCount(receipt),
+      slots = Math.max(1, facets.length),
       headroom = 1 + selectedTemporalPolicy(world).maintenanceHeadroom;
+    // Constructor admission bounds the actual retained record before an immutable
+    // copy. One larger indivisible event is sealed alone under the same limit.
+    if (bytes > 1024 * 1024) {
+      if (receipt.required) throw new Error('Required received record exceeds bounded admission.');
+      actor.recordingGap = {
+        from: actor.recordingGap?.from ?? world.simTime,
+        through: world.simTime,
+      };
+      return;
+    }
+    if (
+      prepared.batch.entries.length &&
+      (prepared.nativeBytes + bytes > TEMPORAL_NATIVE_PAGE_BYTES || prepared.slots + slots > 256)
+    ) {
+      const scope = acquisitionBatches.get(world)!.get(actorId)!;
+      const decisions = prepared.sourceDecisions;
+      flushReceivedBatch(world, actorId, prepared);
+      prepared = newBatch(world, actorId, actor, prepared.frame);
+      prepared.sourceDecisions = decisions;
+      prepared.policy = policy;
+      scope.prepared = prepared;
+      target = entry(world, actorId, target.kind);
+      target.receivedAt = receipt.at;
+      target.order = receipt.order;
+      Object.assign(receipt, {
+        batchOrder: prepared.batch.batchOrder,
+        entryIndex: target.entryIndex,
+        id: temporalReceiptId({
+          epoch: actor.epoch,
+          batchOrder: prepared.batch.batchOrder,
+          entryIndex: target.entryIndex,
+        }),
+        acquisition: prepared.batch.batchOrder,
+        order: target.order,
+      });
+      bytes = byteLength(receipt);
+    }
+    const addedValues = new Set(
+      facets
+        .flatMap((facet) => temporalFacetValueReferences(facet))
+        .filter((reference) => !prepared!.values.has(reference)),
+    );
+    let richBytes = 0;
+    for (const reference of addedValues) {
+      const value = receivedValueAt(world.receivedValues?.sources ?? {}, reference);
+      if (!value) throw new Error('Received admission has missing content.');
+      richBytes += jsonEncoding(value).bytes;
+    }
+    const terminal =
+      input.terminalReservationBytes !== undefined && target.kind === 'boundary' && !facets.length;
+    if (terminal && bytes > input.terminalReservationBytes!)
+      throw new Error('Recording terminal exceeds its admitted reservation.');
     if (
       !receipt.required &&
-      (actor.bytes + prepared.bytes + bytes > policy.maxBytes * headroom ||
+      !terminal &&
+      (actor.bytes +
+        prepared.bytes +
+        bytes +
+        richBytes +
+        actor.terminalReservedBytes +
+        (input.terminalReservationDelta ?? 0) >
+        policy.maxBytes * headroom ||
         actor.count + prepared.count + count > policy.maxChanges * headroom)
     ) {
       actor.recordingGap = {
@@ -1720,21 +1353,47 @@ export function appendTemporalReceipt(
       return;
     }
     target.required = receipt.required;
-    target.receipt = receipt;
+    if (actor.terminalReservedBytes + (input.terminalReservationDelta ?? 0) < 0)
+      throw new Error('Received terminal reservation underflow.');
+    actor.terminalReservedBytes += input.terminalReservationDelta ?? 0;
     target.charge = { bytes, count };
-    prepared.bytes += bytes;
+    const retained: ReceivedEntry = {
+      ...target,
+      receipt: compactReceivedReceipt(prepared.batch, receipt),
+    };
+    (prepared.batch.entries as ReceivedEntry[]).push(retained);
+    if (terminal) {
+      let subjectTerminals = prepared.terminals.get(input.subject);
+      if (!subjectTerminals) prepared.terminals.set(input.subject, (subjectTerminals = new Map()));
+      subjectTerminals.set(terminalKey, {
+        entry: retained,
+        reservedBytes: input.terminalReservationBytes!,
+      });
+    } else prepared.terminals.delete(input.subject);
+    prepared.bytes += bytes + richBytes;
+    prepared.nativeBytes += bytes;
+    for (const reference of addedValues) prepared.values.add(reference);
     prepared.count += count;
-    return locator;
+    prepared.slots += slots;
+    return {
+      actorId,
+      physicalLife: receipt.physicalLife,
+      epoch: receipt.epoch,
+      batchOrder: receipt.batchOrder,
+      entryIndex: receipt.entryIndex,
+    };
   });
 }
 export function beginTemporalReceiptEpoch(world: WorldState, namespace: string): void {
-  if (!namespace.trim() || namespace.length > 64)
+  if (!namespace.trim() || namespace.length > TEMPORAL_NAMESPACE_MAX_LENGTH)
     throw new Error('A receipt timeline requires its admitted namespace.');
   const temporal = world.experience?.temporal;
   if (!temporal) return;
   temporal.namespace = namespace;
-  for (const actor of Object.values(temporal.actors))
+  for (const [actorId, actor] of Object.entries(temporal.actors)) {
+    clearTemporalRecordingReservations(world, actorId);
     actor.epoch = `${namespace}-${nextId(world, 'receipt-epoch')}`;
+  }
 }
 export function temporalSpatialContextValue(
   value: Pick<TemporalValue | ReceivedValueFragment, 'kind'>,
@@ -1748,6 +1407,7 @@ function temporalChangeCount(change: TemporalReceipt['change'], fields: number):
   return change === 'loss' ||
     change === 'unchecked' ||
     change === 'attention-exit' ||
+    change === 'recording-gap' ||
     change === 'receiver-frame'
     ? 0
     : fields;
@@ -1973,205 +1633,28 @@ export function captureTemporalSnapshot(
   return capsule?.receipt;
 }
 
-/** Selected proof snapshots remain read products; ongoing history is already
- * recorded at reception rather than waiting for a later closure. */
-export interface TemporalCurrentSeed {
-  receipt: TemporalReceipt;
-  binding: number;
-  carrier?: ReceivedAddress;
-  carrierMembers?: ReceivedCoverage['members'];
-  bindingParts: ReceivedBinding['parts'];
-}
-export function captureTemporalCurrentSeeds(
-  world: WorldState,
-  actorId: string,
-  subjects?: ReadonlySet<string>,
-  includeGeometry = false,
-): TemporalCurrentSeed[] {
-  const owner = world.perceptionEvidence?.[actorId];
-  if (!owner) return [];
-  const result: TemporalCurrentSeed[] = [];
-  for (const [subjectId, contact] of currentContactEntries(owner))
-    for (const group of contact.content.groups)
-      for (const mark of group.recordings ?? []) {
-        if (mark.gap) continue;
-        if (subjects && !subjects.has(subjectId) && !subjects.has(mark.binding.subject)) continue;
-        result.push({
-          receipt: materializeReceivedBindingSeed(
-            mark.binding,
-            new Set(
-              mark.binding.parts
-                .filter((part) =>
-                  mark.members.some(
-                    (member) => member.kind === part.kind && member.part === part.part,
-                  ),
-                )
-                .map((part) => part.partIndex),
-            ),
-          ),
-          binding: mark.binding.id,
-          bindingParts: mark.binding.parts,
-          ...(mark.carrier ? { carrier: mark.carrier, carrierMembers: mark.carrierMembers } : {}),
-        });
-      }
-  if (includeGeometry)
-    for (const feature of [
-      ...(owner.geometry?.fragments ?? []),
-      ...(owner.geometry?.boundaries ?? []),
-    ])
-      if (feature.recording)
-        result.push({
-          receipt: materializeReceivedBindingSeed(feature.recording.binding),
-          binding: feature.recording.binding.id,
-          bindingParts: feature.recording.binding.parts,
-          ...(feature.recording.carrier
-            ? {
-                carrier: feature.recording.carrier,
-                carrierMembers: feature.recording.carrierMembers,
-              }
-            : {}),
-        });
-  return result;
-}
-function markParts(
-  mark: TemporalCurrentGroupCheckpoint,
-  members: readonly CurrentMemberPart[],
-): number[] {
-  return mark.binding.parts
-    .filter((part) => members.some(([kind, which]) => kind === part.kind && which === part.part))
-    .map((part) => part.partIndex);
-}
-function bindingForCurrent(
-  world: WorldState,
-  actorId: string,
-  input: TemporalCurrentGroupInput,
-  target: ReceivedEntry,
-  previous?: ReceivedBinding,
-): ReceivedBinding {
-  const prepared = builder(world, actorId)!,
-    owner = world.perceptionEvidence![actorId]!,
-    parts: ReceivedBinding['parts'][number][] = previous ? [...previous.parts] : [];
-  const logical = new Map(parts.map((part) => [part.kind, part.logicalMember]));
-  let nextLogical = Math.max(-1, ...parts.map((part) => part.logicalMember)) + 1;
-  let nextPart = Math.max(-1, ...parts.map((part) => part.partIndex)) + 1;
-  for (const partition of input.group.metadata)
-    for (const [kind, part] of partition.members) {
-      if (parts.some((held) => held.kind === kind && held.part === part)) continue;
-      const record = currentGroupFacetRecord(input.group, input.originalSource, kind, partition);
-      if (!record) throw new Error('Received binding has no member.');
-      const value = temporalFacetInput(world, currentFacetSupport(owner, record));
-      if (!('received' in value)) throw new Error('Current binding lost its received descriptor.');
-      const { received, ...metadata } = value;
-      let logicalMember = logical.get(kind);
-      if (logicalMember === undefined) {
-        logicalMember = nextLogical++;
-        logical.set(kind, logicalMember);
-      }
-      const facet: TemporalFacetReference = {
-        ...metadata,
-        ...received.reference,
-        memberIndex: logicalMember,
-        track: JSON.stringify([
-          receivedTrackKey(input.group.received.grant.exposure, input.group.received.grant.channel),
-          kind,
-          part,
-        ]),
-        ...(received.projection.reception ? { reception: received.projection.reception } : {}),
-      };
-      parts.push({ partIndex: nextPart++, logicalMember, kind, part, facet });
-    }
-  if (previous) {
-    if (
-      previous.subject !==
-      receivedTrackKey(input.group.received.grant.exposure, input.group.received.grant.channel)
-    )
-      throw new Error('A sample cannot extend a different received track.');
-    const extended = { ...previous, parts, charges: undefined };
-    return immutableDataSnapshot(
-      {
-        ...extended,
-        charges: receivedBindingChargeProjection(
-          extended,
-          world.receivedValues?.sources ?? {},
-          world,
-        ),
-      },
-      readOnlyDraftView,
-    );
-  }
-  const actor = world.experience!.temporal!.actors[actorId]!,
-    locator = {
-      actorId,
-      physicalLife: actor.physicalLife,
-      epoch: actor.epoch,
-      batchOrder: prepared.batch.batchOrder,
-      entryIndex: target.entryIndex,
-    },
-    id = world.nextId;
-  nextId(world, 'received-binding');
-  return immutableDataSnapshot(
-    {
-      id,
-      subject: receivedTrackKey(
-        input.group.received.grant.exposure,
-        input.group.received.grant.channel,
-      ),
-      seed: {
-        ...locator,
-        id: temporalReceiptId(locator),
-        at: world.simTime,
-        order: target.order,
-        acquisition: prepared.batch.batchOrder,
-        subject: receivedTrackKey(
-          input.group.received.grant.exposure,
-          input.group.received.grant.channel,
-        ),
-        change: 'baseline' as const,
-        required: false,
-        sourceIds: [],
-        ...(Object.values(input.group.received.fields).find((field) => field.localSubject)
-          ?.localSubject
-          ? {
-              subjectIdentity: Object.values(input.group.received.fields).find(
-                (field) => field.localSubject,
-              )!.localSubject,
-            }
-          : {}),
-        ...(prepared.batch.frames[0] ? { receiverFrame: prepared.batch.frames[0] } : {}),
-      },
-      parts,
-    },
-    readOnlyDraftView,
-  );
-}
-function updateBindingSeed(
-  binding: ReceivedBinding,
-  clock: ReceivedCoverage['clock'],
-  batch: ReceivedBatch,
-  entry: ReceivedEntry,
-  partIndices: readonly number[],
-): ReceivedBinding {
-  if (!clock) return binding;
-  const selected = new Set(partIndices),
-    predecessors = (binding.predecessors ?? []).flatMap((predecessor) => {
-      const retained = predecessor.partIndices.filter((index) => !selected.has(index));
-      return retained.length
-        ? [
-            retained.length === predecessor.partIndices.length
-              ? predecessor
-              : { ...predecessor, partIndices: retained },
-          ]
-        : [];
-    });
-  const { frame, ...proof } = clock;
-  predecessors.push({
-    partIndices,
-    at: entry.receivedAt,
-    order: entry.order,
-    clock: proof,
-    ...(frame === undefined ? {} : { frame: batch.frames[frame] }),
+function currentPartContent(group: CurrentReceivedGroup, members: readonly CurrentMemberPart[]) {
+  return members.map(([kind, part]) => {
+    const field = group.received.fields[kind]!;
+    const value =
+      part === 'pose' && field.value.reception?.kind === 'body'
+        ? field.value.reception.poseRef
+        : field.value.reference;
+    return { kind, part, value };
   });
-  return { ...binding, predecessors };
+}
+function sameRecordedContent(
+  prior: TemporalCurrentGroupCheckpoint,
+  content: ReturnType<typeof currentPartContent>,
+): boolean {
+  return content.every((value) =>
+    prior.content.some(
+      (old) =>
+        old.kind === value.kind &&
+        old.part === value.part &&
+        sameReceivedValueReference(old.value, value.value),
+    ),
+  );
 }
 export function captureTemporalCurrent(
   world: WorldState,
@@ -2179,205 +1662,156 @@ export function captureTemporalCurrent(
   inputs: readonly TemporalCurrentGroupInput[],
   policy: TemporalRetentionPolicy,
 ): void {
-  if (!inputs.length) return;
   const owner = world.perceptionEvidence?.[actorId];
-  if (!owner || !actorHistory(world, actorId)) return;
-  withTemporalReceivedTransition(world, actorId, () => {
-    const prepared = builder(world, actorId)!;
-    prepared.policy = policy;
-    const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
-    const freshBindings = new Map<object | number, ReceivedBinding>();
-    const admissions: Array<{
-      input: TemporalCurrentGroupInput;
-      mark?: TemporalCurrentGroupCheckpoint;
-    }> = [];
-    for (const input of inputs) {
-      if (!input.checked && !input.entering && !input.exiting && !input.partition.availability)
-        continue;
-      if (!input.partition.members.length) continue;
-      const currentGroup =
-        currentContactGet(owner, input.subjectId)?.content.groups.find(
-          (group) =>
-            readOnlyDraftView(group.received.fields) ===
-            readOnlyDraftView(input.group.received.fields),
-        ) ?? input.group;
-      if (input.exiting || input.partition.availability) {
-        closeTemporalCurrentGroup(
-          world,
-          actorId,
-          input.subjectId,
-          currentGroup,
-          input.exiting ? 'attention-exit' : 'unchecked',
-          input.partition,
-        );
-        continue;
-      }
-      const marks = currentGroupRecordings(currentGroup, input.partition.members),
-        covered = new Set<string>();
-      for (const mark of marks) {
-        const members = input.partition.members.filter(([kind, part]) =>
-          mark.members.some((member) => member.kind === kind && member.part === part),
-        );
-        for (const member of members) covered.add(JSON.stringify(member));
-        admissions.push({ input: { ...input, partition: { ...input.partition, members } }, mark });
-      }
-      const remaining = input.partition.members.filter(
-        (member) => !covered.has(JSON.stringify(member)),
+  if (!owner || !inputs.length) return;
+  const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
+  // Freshness scopes may merge independently of the recorded-value segments.
+  // Preserve each disjoint prior admission instead of manufacturing a baseline.
+  const admissions = inputs.flatMap((input) => {
+    if (input.exiting || input.partition.availability) return [input];
+    const remaining = new Set(input.partition.members.map((member) => JSON.stringify(member)));
+    const selected: TemporalCurrentGroupInput[] = [];
+    for (const mark of currentGroupRecordings(input.group, input.partition.members)) {
+      const members = input.partition.members.filter(([kind, part]) =>
+        mark.members.some((member) => member.kind === kind && member.part === part),
       );
-      if (remaining.length)
-        admissions.push({
-          input:
-            remaining.length === input.partition.members.length
-              ? input
-              : { ...input, partition: { ...input.partition, members: remaining } },
-        });
+      for (const member of members) remaining.delete(JSON.stringify(member));
+      if (members.length) selected.push({ ...input, partition: { ...input.partition, members } });
     }
-    for (const admission of admissions) {
-      const { input } = admission,
-        parts = input.partition.members;
-      let mark = admission.mark;
-      // Reconciliation alone neither repeats an admitted baseline nor retries a refusal.
-      if (!input.checked && (mark || !input.entering)) continue;
-
-      if (mark?.gap) mark = undefined;
-      if (!mark && !input.checked && !input.entering) continue;
-      const times = currentGroupTimes(input.group, input.partition),
-        field = input.group.received.fields[parts[0]![0]]!,
-        source: NativeEvidenceSource = {
-          family: 'native-exposure',
-          id: field.id,
-          revision: Math.max(input.partition.revision, input.partition.confirmedRevision),
-          observer: currentFacetObserver(owner),
-        };
-      if (mark && mark.epoch !== prepared.batch.epoch) mark = undefined;
-      const token = input.checked ? input.sampleToken : undefined;
-      if (input.checked && token === undefined)
-        throw new Error('An actual received check requires its detector sample token.');
-      if (token !== undefined && prepared.closedSamples.has(token)) continue;
-      const target = entry(world, actorId, token === undefined ? 'baseline' : 'sample', token);
-      if (admission.mark && input.checked && admission.mark.lastToken === token) continue;
-      let sampleBindings = token === undefined ? undefined : prepared.sampleBindings.get(token);
-      if (token !== undefined && !sampleBindings)
-        prepared.sampleBindings.set(token, (sampleBindings = new Map()));
-      const fieldIdentity = readOnlyDraftView(input.group.received.fields),
-        freshKey = admission.mark?.gap ? admission.mark : fieldIdentity;
-      const priorSample = sampleBindings?.get(mark?.binding.id ?? freshKey),
-        candidate =
-          mark?.binding ??
-          freshBindings.get(freshKey) ??
-          bindingForCurrent(world, actorId, input, target, priorSample);
-      const acquiredBinding = priorSample
-        ? mergeReceivedBindings(priorSample, candidate)
-        : candidate;
-      const binding = acquiredBinding.charges
-        ? acquiredBinding
-        : {
-            ...acquiredBinding,
-            charges: receivedBindingChargeProjection(
-              acquiredBinding,
-              world.receivedValues?.sources ?? {},
-              world,
-            ),
-          };
-      if (!binding.parts.length) continue;
-      freshBindings.set(freshKey, binding);
-      sampleBindings?.set(mark?.binding.id ?? freshKey, binding);
-      const frame =
-        input.partition.frameRef === undefined
-          ? undefined
-          : receivedObservationFrame(world, input.partition.frameRef);
-      let frameIndex: number | undefined;
-      if (frame) {
-        frameIndex = prepared.batch.frames.findIndex((value) => value === frame);
-        if (frameIndex < 0) {
-          frameIndex = prepared.batch.frames.length;
-          (prepared.batch.frames as ObservationFrame[]).push(frame);
-        }
-      }
-      const measurement =
-        !mark ||
-        input.partition.revision !== mark.lastMeasurementRevision ||
-        times.valueMeasuredThrough !== mark.lastTimes.valueMeasuredThrough ||
-        times.valueMeasuredFrom !== mark.lastTimes.valueMeasuredFrom ||
-        times.valueAcquiredAt !== mark.lastTimes.valueAcquiredAt;
-      const clock: ReceivedCoverage['clock'] = {
-        confirmation: source,
-        confirmedFrom: times.confirmedFrom,
-        confirmedThrough: times.confirmedThrough,
-        ...(measurement
+    const members = input.partition.members.filter((member) =>
+      remaining.has(JSON.stringify(member)),
+    );
+    if (members.length) selected.push({ ...input, partition: { ...input.partition, members } });
+    return selected;
+  });
+  for (const input of admissions) {
+    const members = input.partition.members;
+    if (!members.length) continue;
+    if (input.exiting || input.partition.availability) {
+      closeTemporalCurrentGroup(
+        world,
+        actorId,
+        input.subjectId,
+        input.group,
+        input.exiting ? 'attention-exit' : 'unchecked',
+        input.partition,
+      );
+      continue;
+    }
+    const marks = currentGroupRecordings(input.group, members),
+      content = currentPartContent(input.group, members),
+      reservationMark = marks.find((held) =>
+        members.every(([kind, part]) =>
+          held.members.some((member) => member.kind === kind && member.part === part),
+        ),
+      ),
+      mark = marks.find(
+        (held) =>
+          held.epoch === world.experience?.temporal?.actors[actorId]?.epoch &&
+          members.every(([kind, part]) =>
+            held.members.some((member) => member.kind === kind && member.part === part),
+          ),
+      );
+    if (!input.entering && !input.checked) continue;
+    if (mark && sameRecordedContent(mark, content)) {
+      if (!mark.gap) continue;
+      const actor = world.experience?.temporal?.actors[actorId];
+      if (
+        mark.refusedAt &&
+        actor &&
+        actor.bytes + actor.terminalReservedBytes >= mark.refusedAt[0] &&
+        actor.count >= mark.refusedAt[1]
+      )
+        continue;
+    }
+    if (mark?.gap && !input.checked) continue;
+    const facets: TemporalCaptureInput['facets'] = [];
+    for (const kind of new Set(members.map(([kind]) => kind))) {
+      const record = currentGroupFacetRecord(
+        input.group,
+        input.originalSource,
+        kind,
+        input.partition,
+      );
+      if (!record) throw new Error('Received change has no current typed value.');
+      facets.push(temporalFacetInput(world, currentFacetSupport(owner, record)));
+    }
+    if (!facets.length) continue;
+    const actor = actorHistory(world, actorId)?.actor;
+    if (!actor) continue;
+    const subject = receivedTrackKey(
+        input.group.received.grant.exposure,
+        input.group.received.grant.channel,
+      ),
+      identity = Object.values(input.group.received.fields).find(
+        (field) => field.localSubject,
+      )?.localSubject,
+      times = currentGroupTimes(input.group, input.partition),
+      field = input.group.received.fields[members[0]![0]]!,
+      terminalBytes =
+        reservationMark?.terminalBytes ??
+        terminalMemberBytes(actorId, actor.epoch, subject, members),
+      terminalReservationDelta =
+        terminalBytes * members.length -
+        (reservationMark && !reservationMark.gap
+          ? reservationMark.terminalBytes * members.length
+          : 0);
+    const locator = appendTemporalReceipt(
+      world,
+      actorId,
+      {
+        subject,
+        change: mark && !mark.gap ? 'change' : 'baseline',
+        facets,
+        terminalReservationDelta,
+        ...(identity ? { subjectIdentity: identity } : {}),
+      },
+      policy,
+    );
+    const source: NativeEvidenceSource = {
+      family: 'native-exposure',
+      id: field.id,
+      revision: input.partition.revision,
+      observer: currentFacetObserver(owner),
+    };
+    updates.push({
+      subjectId: input.subjectId,
+      fields: input.group.received.fields,
+      members,
+      recording: {
+        epoch: actor.epoch,
+        members: members.map(([kind, part]) => ({ kind, part })),
+        content,
+        lastTimes: times,
+        lastSource: source,
+        lastAt: world.simTime,
+        lastOrder: locator?.batchOrder ?? mark?.lastOrder ?? 0,
+        lastMeasurementRevision: input.partition.revision,
+        terminalBytes,
+        gap: !locator,
+        ...(!locator
           ? {
-              measurement: {
-                measuredFrom: times.valueMeasuredFrom,
-                measuredThrough: times.valueMeasuredThrough,
-                acquiredAt: times.valueAcquiredAt,
-                receivedFrom: { ...source, revision: input.partition.revision },
-              },
+              refusedAt: [
+                actor.bytes +
+                  actor.terminalReservedBytes +
+                  (acquisitionBatches.get(world)?.get(actorId)?.prepared?.bytes ?? 0),
+                actor.count + (acquisitionBatches.get(world)?.get(actorId)?.prepared?.count ?? 0),
+              ] as const,
             }
           : {}),
-        ...(frameIndex === undefined ? {} : { frame: frameIndex }),
-      };
-      const supplied = markParts({ binding } as TemporalCurrentGroupCheckpoint, parts);
-      admitCoverage(world, actorId, target, binding, supplied, clock);
-      const carrierMembers = target.coverage
-          .filter((coverage) => coverage.binding === binding.id)
-          .flatMap((coverage) => coverage.members),
-        acceptedParts = new Set(carrierMembers.flatMap((member) => member.partIndices));
-      const admitted = parts.filter(([kind, part]) =>
-        binding.parts.some(
-          (held) => held.kind === kind && held.part === part && acceptedParts.has(held.partIndex),
-        ),
+      },
+    });
+    if (!locator && reservationMark && !reservationMark.gap)
+      closeTemporalCurrentGroup(
+        world,
+        actorId,
+        input.subjectId,
+        input.group,
+        'recording-gap',
+        input.partition,
       );
-      const declined = parts.filter(
-        ([kind, part]) =>
-          !admitted.some(([heldKind, heldPart]) => heldKind === kind && heldPart === part),
-      );
-      const nextBinding = updateBindingSeed(binding, clock, prepared.batch, target, supplied);
-      for (const [members, gap] of [
-        [admitted, false],
-        [declined, true],
-      ] as const) {
-        if (!members.length) continue;
-        const indices = new Set(markParts({ binding } as TemporalCurrentGroupCheckpoint, members)),
-          carriers = carrierMembers.flatMap((member) => {
-            const partIndices = member.partIndices.filter((index) => indices.has(index));
-            return partIndices.length ? [{ ...member, partIndices }] : [];
-          }),
-          admittedMember = carriers[0]?.memberIndex;
-        const next: TemporalCurrentGroupCheckpoint = {
-          epoch: prepared.batch.epoch,
-          ...(admittedMember === undefined
-            ? {}
-            : {
-                carrier: {
-                  actorId,
-                  physicalLife: prepared.batch.physicalLife,
-                  epoch: prepared.batch.epoch,
-                  batchOrder: prepared.batch.batchOrder,
-                  entryIndex: target.entryIndex,
-                  memberIndex: admittedMember,
-                },
-                carrierMembers: carriers,
-              }),
-          binding: nextBinding,
-          members: members.map(([kind, part]) => ({ kind, part })),
-          lastToken: token,
-          lastTimes: times,
-          lastSource: source,
-          lastAt: world.simTime,
-          lastOrder: target.order,
-          lastMeasurementRevision: input.partition.revision,
-          gap,
-        };
-        updates.push({
-          subjectId: input.subjectId,
-          fields: input.group.received.fields,
-          members,
-          recording: next,
-        });
-      }
-    }
-    if (updates.length) currentGroupsSetRecording(owner, updates);
-  });
+  }
+  if (updates.length) currentGroupsSetRecording(owner, updates);
 }
 export function closeTemporalCurrentGroup(
   world: WorldState,
@@ -2389,29 +1823,41 @@ export function closeTemporalCurrentGroup(
 ): void {
   const owner = world.perceptionEvidence?.[actorId];
   if (!owner) return;
-  withTemporalReceivedTransition(world, actorId, () => {
-    const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
-    for (const mark of currentGroupRecordings(group, partition?.members)) {
-      const members =
-        partition?.members ?? mark.members.map((member) => [member.kind, member.part] as const);
-      if (!mark.gap) {
-        const target = entry(world, actorId, 'boundary');
-        target.reason = reason;
-        admitCoverage(
-          world,
-          actorId,
-          target,
-          mark.binding,
-          markParts(mark, members),
-          undefined,
-          true,
-        );
-      }
-      updates.push({ subjectId, fields: group.received.fields, members, recording: undefined });
+  const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
+  for (const mark of currentGroupRecordings(group, partition?.members)) {
+    const members = mark.members
+      .filter(
+        ({ kind, part }) =>
+          !partition ||
+          partition.members.some(([member, memberPart]) => member === kind && memberPart === part),
+      )
+      .map(({ kind, part }) => [kind, part] as const);
+    if (!members.length) continue;
+    if (!mark.gap) {
+      appendTemporalReceipt(
+        world,
+        actorId,
+        {
+          subject: receivedTrackKey(group.received.grant.exposure, group.received.grant.channel),
+          change: reason === 'retained-state' ? 'unchecked' : reason,
+          availabilityAt: world.simTime,
+          coverageGap: {
+            from: Math.max(mark.lastAt, currentGroupTimes(group, partition).confirmedThrough),
+            through: world.simTime,
+          },
+          endedFields: members,
+          facets: [],
+          terminalReservationBytes: mark.terminalBytes * members.length,
+        },
+        selectedTemporalPolicy(world).recent,
+      );
+      releaseTerminalReservation(world, actorId, mark.terminalBytes * members.length);
     }
-    if (updates.length) currentGroupsSetRecording(owner, updates);
-  });
+    updates.push({ subjectId, fields: group.received.fields, members, recording: undefined });
+  }
+  if (updates.length) currentGroupsSetRecording(owner, updates);
 }
+
 export function captureTemporalObservation(
   world: WorldState,
   actorId: string,
@@ -2425,6 +1871,7 @@ export function captureTemporalObservation(
     contextSubjects?: readonly string[];
     change?: TemporalCaptureInput['change'];
     confirmedThrough?: number;
+    terminalReservationDelta?: number;
   } = {},
 ): TemporalReceiptLocator | undefined {
   const sourceKey = JSON.stringify([
@@ -2448,6 +1895,9 @@ export function captureTemporalObservation(
       receivedOrder: observation.receivedOrder,
       ...(options.contextSubjects?.length ? { contextSubjects: options.contextSubjects } : {}),
       required,
+      ...(options.terminalReservationDelta === undefined
+        ? {}
+        : { terminalReservationDelta: options.terminalReservationDelta }),
       sourceIds,
       origin: cloneValue(observation.origin),
       facets: observation.facets
@@ -2485,153 +1935,80 @@ export function captureTemporalGeometry(
   features: readonly TemporalGeometryFeature[],
   through: number,
   policy: TemporalRetentionPolicy,
-  sampleToken: number,
 ): void {
-  if (!actorHistory(world, actorId)) return;
-  withTemporalReceivedTransition(world, actorId, () => {
-    const prepared = builder(world, actorId)!;
-    if (prepared.closedSamples.has(sampleToken)) return;
-    prepared.policy = policy;
-    const target = entry(world, actorId, 'sample', sampleToken);
-    for (const feature of features) {
-      const observation = feature.observation,
-        prior = feature.recording;
-      if (prior?.lastToken === sampleToken) continue;
-      let binding = prior?.binding;
-      if (!binding) {
-        const facets = prepareCaptureFacets(world, {
-          subject: observation.id,
-          change: 'baseline',
-          facets: observation.facets.map(({ ordinal, ...facet }) => ({
-            ...facet,
-            memberIndex: ordinal,
-            original: contributionFactKey(observation, ordinal),
-            value: facet.value,
-          })),
-        }).map((facet) => ({
-          ...facet,
-          track: JSON.stringify([
-            observation.origin.kind === 'exposure'
-              ? observation.origin.episodeId
-              : observation.origin.eventId,
-            observation.origin.kind === 'exposure'
-              ? observation.origin.detectorId
-              : observation.origin.eventId,
-            facet.memberIndex,
-          ]),
-        }));
-        const actor = world.experience!.temporal!.actors[actorId]!,
-          locator = {
-            actorId,
-            physicalLife: actor.physicalLife,
-            epoch: actor.epoch,
-            batchOrder: prepared.batch.batchOrder,
-            entryIndex: target.entryIndex,
-          },
-          id = world.nextId;
-        nextId(world, 'received-binding');
-        binding = immutableDataSnapshot(
-          {
-            id,
-            subject:
-              observation.origin.kind === 'exposure'
-                ? observation.origin.episodeId
-                : observation.origin.eventId,
-            seed: {
-              ...locator,
-              id: temporalReceiptId(locator),
-              at: world.simTime,
-              order: target.order,
-              acquisition: prepared.batch.batchOrder,
-              subject:
-                observation.origin.kind === 'exposure'
-                  ? observation.origin.episodeId
-                  : observation.origin.eventId,
-              change: 'baseline' as const,
-              required: false,
-              sourceIds: [observation.id],
-              spatialContext: true,
-              origin: observation.origin,
-            },
-            parts: facets.map((facet, index) => ({
-              partIndex: index,
-              logicalMember: facet.memberIndex,
-              kind: observation.facets[index]!.value.kind,
-              part: 'value' as const,
-              facet,
-            })),
-          },
-          readOnlyDraftView,
-        );
-      }
-      if (!binding.charges)
-        binding = {
-          ...binding,
-          charges: receivedBindingChargeProjection(
-            binding,
-            world.receivedValues?.sources ?? {},
-            world,
-          ),
-        };
-      const original = contributionFactKey(observation, 0),
-        source = original.source as NativeEvidenceSource,
-        times = {
-          valueMeasuredFrom: observation.facets[0]!.measuredFrom,
-          valueMeasuredThrough: observation.facets[0]!.measuredThrough,
-          valueAcquiredAt: observation.acquiredAt,
-          confirmedFrom: observation.acquiredAt,
-          confirmedThrough: through,
-        },
-        clock = {
-          confirmation: source,
-          confirmedFrom: times.confirmedFrom,
-          confirmedThrough: through,
-        };
-      const accepted = admitCoverage(
+  for (const feature of features) {
+    const observation = feature.observation,
+      prior = feature.recording,
+      heldActor = world.experience?.temporal?.actors[actorId];
+    if (
+      prior &&
+      prior.lastSource.id === observation.id &&
+      prior.lastMeasurementRevision === observation.revision &&
+      (!prior.gap ||
+        (prior.refusedAt &&
+          heldActor &&
+          heldActor.bytes + heldActor.terminalReservedBytes >= prior.refusedAt[0] &&
+          heldActor.count >= prior.refusedAt[1]))
+    )
+      continue;
+    const actor = actorHistory(world, actorId)?.actor;
+    if (!actor) continue;
+    const subject =
+        observation.origin.kind === 'exposure'
+          ? observation.origin.episodeId
+          : observation.origin.eventId,
+      members = observation.facets.map((facet) => [facet.value.kind, 'value'] as const),
+      terminalBytes =
+        prior?.terminalBytes ?? terminalMemberBytes(actorId, actor.epoch, subject, members),
+      terminalReservationDelta =
+        terminalBytes * members.length -
+        (prior && !prior.gap ? prior.terminalBytes * prior.members.length : 0),
+      locator = captureTemporalObservation(
         world,
         actorId,
-        target,
-        binding,
-        binding.parts.map((part) => part.partIndex),
-        clock,
+        observation,
+        [observation.id],
+        false,
+        policy,
+        {
+          subject,
+          change: prior && !prior.gap ? 'change' : 'baseline',
+          confirmedThrough: through,
+          terminalReservationDelta,
+        },
       );
-      const carrierMembers = target.coverage
-          .filter((coverage) => coverage.binding === binding!.id)
-          .flatMap((coverage) => coverage.members),
-        admittedMember = carrierMembers[0]?.memberIndex;
-      feature.recording = {
-        epoch: prepared.batch.epoch,
-        ...(admittedMember === undefined
-          ? {}
-          : {
-              carrier: {
-                actorId,
-                physicalLife: prepared.batch.physicalLife,
-                epoch: prepared.batch.epoch,
-                batchOrder: prepared.batch.batchOrder,
-                entryIndex: target.entryIndex,
-                memberIndex: admittedMember,
-              },
-              carrierMembers,
-            }),
-        binding: updateBindingSeed(
-          binding,
-          clock,
-          prepared.batch,
-          target,
-          binding.parts.map((part) => part.partIndex),
-        ),
-        members: binding.parts.map((part) => ({ kind: part.kind, part: part.part })),
-        lastToken: sampleToken,
-        lastTimes: times,
-        lastSource: source,
-        lastAt: world.simTime,
-        lastOrder: target.order,
-        lastMeasurementRevision: source.revision,
-        gap: !accepted,
-      };
-    }
-  });
+    if (!locator && prior && !prior.gap)
+      closeTemporalGeometry(world, actorId, feature, through, 'recording-gap');
+    const source = contributionFactKey(observation, 0).source as NativeEvidenceSource;
+    feature.recording = {
+      epoch: world.experience!.temporal!.actors[actorId]!.epoch,
+      members: members.map(([kind, part]) => ({ kind, part })),
+      content: [],
+      lastTimes: {
+        valueMeasuredFrom: observation.facets[0]!.measuredFrom,
+        valueMeasuredThrough: observation.facets[0]!.measuredThrough,
+        valueAcquiredAt: observation.acquiredAt,
+        confirmedFrom: observation.acquiredAt,
+        confirmedThrough: through,
+      },
+      lastSource: source,
+      lastAt: world.simTime,
+      lastOrder: locator?.batchOrder ?? prior?.lastOrder ?? 0,
+      lastMeasurementRevision: observation.revision,
+      terminalBytes,
+      gap: !locator,
+      ...(!locator
+        ? {
+            refusedAt: [
+              actor.bytes +
+                actor.terminalReservedBytes +
+                (acquisitionBatches.get(world)?.get(actorId)?.prepared?.bytes ?? 0),
+              actor.count + (acquisitionBatches.get(world)?.get(actorId)?.prepared?.count ?? 0),
+            ] as const,
+          }
+        : {}),
+    };
+  }
 }
 export function closeTemporalGeometry(
   world: WorldState,
@@ -2642,42 +2019,29 @@ export function closeTemporalGeometry(
 ): void {
   const mark = feature.recording;
   if (!mark) return;
-  withTemporalReceivedTransition(world, actorId, () => {
-    if (!mark.gap) {
-      const target = entry(world, actorId, 'boundary');
-      target.reason = reason;
-      admitCoverage(
-        world,
-        actorId,
-        target,
-        mark.binding,
-        mark.binding.parts.map((part) => part.partIndex),
-        undefined,
-        true,
-      );
-    }
-    delete feature.recording;
-  });
+  if (!mark.gap) {
+    appendTemporalReceipt(
+      world,
+      actorId,
+      {
+        subject:
+          feature.observation.origin.kind === 'exposure'
+            ? feature.observation.origin.episodeId
+            : feature.observation.origin.eventId,
+        change: reason === 'retained-state' ? 'unchecked' : reason,
+        coverageGap: { from: Math.max(mark.lastAt, _through), through: world.simTime },
+        endedFields: mark.members.map(({ kind, part }) => [kind, part] as const),
+        facets: [],
+        terminalReservationBytes: mark.terminalBytes * mark.members.length,
+      },
+      selectedTemporalPolicy(world).recent,
+    );
+    releaseTerminalReservation(world, actorId, mark.terminalBytes * mark.members.length);
+  }
+  delete feature.recording;
 }
+
 export interface TemporalHistorySelection {
-  baselines?: Array<{
-    checkpoint: TemporalCheckpoint;
-    values: TemporalValue[];
-    forReceipt: ReceivedAddress;
-    availableAt: number;
-    origins: Array<{
-      kind: 'checkpoint' | 'receipt';
-      batchOrder: number;
-      entryIndex: number;
-      memberIndex: number;
-      availability?: {
-        kind: 'checkpoint' | 'receipt';
-        batchOrder: number;
-        entryIndex: number;
-        memberIndex: number;
-      };
-    }>;
-  }>;
   examinedBefore?: {
     epoch: string;
     batchOrder: number;
@@ -2725,7 +2089,7 @@ export function captureTemporalReceiptPrefix(
   actorId: string,
 ): TemporalReceiptPrefix {
   const actor = world.experience?.temporal?.actors[actorId],
-    active = builder(world, actorId),
+    active = acquisitionBatches.get(world)?.get(actorId)?.prepared,
     batch = active?.batch ?? actor?.pages.at(-1)?.batches.at(-1);
   return {
     physicalLife: actor?.physicalLife ?? 0,
@@ -2759,16 +2123,6 @@ export function selectTemporalHistory(
     {
       actorId,
       pages: actor.pages,
-      currentSeeds: captureTemporalCurrentSeeds(
-        world,
-        actorId,
-        query.subjects
-          ? new Set(query.subjects)
-          : query.subject
-            ? new Set([query.subject])
-            : undefined,
-        query.includeGeometry,
-      ),
       frontier: actor.frontier,
       sources: world.receivedValues?.sources ?? {},
       disclosure: captureTemporalReadContext(world, actorId),
@@ -2781,8 +2135,7 @@ export function selectTemporalHistory(
     query,
   );
 }
-/** Decode only candidate entries and their exact captured seeds. Seeds can answer
- * held-state cuts but never appear as additional historical observations. */
+/** Select actual sparse acquisitions. Silence never reconstructs an old scene. */
 export function selectCapturedTemporalHistory(
   context: CapturedTemporalHistoryContext,
   query: TemporalHistoryQuery = {},
@@ -2795,198 +2148,46 @@ export function selectCapturedTemporalHistory(
     ),
     through = Math.min(query.through ?? Infinity, context.at ?? Infinity),
     subjects = query.subjects ?? (query.subject ? [query.subject] : []),
-    subjectSet = subjects.length ? new Set(subjects) : undefined,
+    selected = subjects.length ? new Set(subjects) : undefined,
     limit = query.limit ?? 128,
     maxWork = query.operations ?? context.maximumOperations ?? limit,
     maxCandidates = context.maximumCandidates ?? maxWork * 4,
     maxBytes = query.bytes ?? 8192;
-  const requestedFrom = query.from ?? 0,
-    ageFloor =
-      context.frontier?.expiredThroughTime ??
-      (context.at !== undefined && context.maxAgeSeconds !== undefined
-        ? context.at - context.maxAgeSeconds
-        : -Infinity),
-    pressure = context.frontier?.pressureThrough;
   const result: TemporalHistorySelection = {
     entries: [],
     incomplete:
-      requestedFrom <= ageFloor ||
-      (!!pressure && requestedFrom <= pressure.receivedAt) ||
+      (context.frontier?.expiredThroughTime !== null &&
+        context.frontier?.expiredThroughTime !== undefined &&
+        (query.from ?? 0) <= context.frontier.expiredThroughTime) ||
+      (!!context.frontier?.pressureThrough &&
+        (query.from ?? 0) <= context.frontier.pressureThrough.receivedAt) ||
       (!!context.recordingGap &&
         context.recordingGap.from <= through &&
         context.recordingGap.through >= from),
   };
-  let candidates = 0,
-    work = 0,
-    bytes = 0;
-  const carried = new Map<
-    string,
-    {
-      seed: TemporalReceipt | ReceivedBinding;
-      parts?: ReadonlySet<number>;
-      carrier: ReceivedAddress;
-      until: number;
-      binding: number;
-      memberCarriers: ReadonlyMap<number, number>;
-    }
-  >();
   const pending: Array<{ batch: ReceivedBatch; entry: ReceivedEntry }> = [];
-  for (const page of context.pages) {
+  for (const page of [...context.pages].reverse()) {
+    if (pending.length >= maxCandidates) {
+      result.incomplete = true;
+      result.hasMore = true;
+      break;
+    }
     if (
+      page.throughAt < from ||
+      page.fromAt > through ||
       (query.physicalLife !== undefined && page.physicalLife !== query.physicalLife) ||
       (query.epoch !== undefined && page.epoch !== query.epoch)
     )
       continue;
-    if (
-      subjectSet &&
-      !page.subjects.some((subject) => subjectSet.has(subject)) &&
-      !(
-        query.includeGeometry &&
-        page.batches.some(
-          (batch) =>
-            batch.bindings.some((binding) => binding.seed.spatialContext) ||
-            batch.entries.some((entry) => entry.receipt?.spatialContext),
-        )
-      )
-    )
-      continue;
-    for (const batch of page.batches)
-      for (const entry of batch.entries) pending.push({ batch, entry });
-  }
-  // Mixed physical blocks may split one complete logical entry. Reassemble
-  // disjoint members before pagination so a byte boundary never skips its siblings.
-  const logicalEntries = new Map<string, { batch: ReceivedBatch; entry: ReceivedEntry }>();
-  for (const value of pending) {
-    const key = JSON.stringify([
-        value.batch.actorId,
-        value.batch.physicalLife,
-        value.batch.epoch,
-        value.batch.batchOrder,
-        value.entry.entryIndex,
-      ]),
-      held = logicalEntries.get(key);
-    if (!held) {
-      logicalEntries.set(key, value);
-      continue;
-    }
-    const bindings = new Map(held.batch.bindings.map((binding) => [binding.id, binding]));
-    for (const binding of value.batch.bindings) {
-      const prior = bindings.get(binding.id);
-      if (!prior) bindings.set(binding.id, binding);
-      else {
-        bindings.set(binding.id, mergeReceivedBindings(prior, binding));
+    for (const batch of [...page.batches].reverse())
+      for (const entry of [...batch.entries].reverse()) {
+        if (pending.length >= maxCandidates) {
+          result.incomplete = true;
+          result.hasMore = true;
+          break;
+        }
+        pending.push({ batch, entry });
       }
-    }
-    const receipt =
-      held.entry.receipt && value.entry.receipt
-        ? {
-            ...held.entry.receipt,
-            facets: [...held.entry.receipt.facets, ...value.entry.receipt.facets],
-          }
-        : (held.entry.receipt ?? value.entry.receipt);
-    logicalEntries.set(key, {
-      batch: { ...held.batch, bindings: [...bindings.values()] },
-      entry: {
-        ...held.entry,
-        coverage: [...held.entry.coverage, ...value.entry.coverage],
-        charge: {
-          bytes: Math.max(held.entry.charge.bytes, value.entry.charge.bytes),
-          count: held.entry.charge.count + value.entry.charge.count,
-        },
-        ...(receipt ? { receipt } : {}),
-      },
-    });
-  }
-  pending.length = 0;
-  pending.push(...logicalEntries.values());
-  // Captured first-use seeds establish only the supported state before this
-  // carrier, never an event at the requested cut. Keep the nearest carrier per track.
-  for (const { batch, entry } of pending) {
-    if (entry.receivedAt < from) continue;
-    const byBinding = new Map<number, ReceivedCoverage[]>();
-    for (const coverage of entry.coverage) {
-      const held = byBinding.get(coverage.binding);
-      if (held) held.push(coverage);
-      else byBinding.set(coverage.binding, [coverage]);
-    }
-    for (const [id, coverages] of byBinding) {
-      const binding = batch.bindings.find((binding) => binding.id === id)!;
-      if (
-        (subjectSet &&
-          !subjectSet.has(binding.subject) &&
-          !(query.includeGeometry && binding.seed.spatialContext)) ||
-        binding.seed.at > through
-      )
-        continue;
-      const key = String(binding.id),
-        held = carried.get(key);
-      if (held && entry.receivedAt >= held.until) continue;
-      const parts = new Set(
-        coverages.flatMap((coverage) => coverage.members.flatMap((member) => member.partIndices)),
-      );
-      carried.set(key, {
-        seed: binding,
-        parts,
-        carrier: {
-          actorId: batch.actorId,
-          physicalLife: batch.physicalLife,
-          epoch: batch.epoch,
-          batchOrder: batch.batchOrder,
-          entryIndex: entry.entryIndex,
-          memberIndex: coverages[0]!.members[0]!.memberIndex,
-        },
-        until: entry.receivedAt,
-        binding: binding.id,
-        memberCarriers: new Map(
-          coverages.flatMap((coverage) =>
-            coverage.members.flatMap((member) =>
-              member.partIndices.map(
-                (index) =>
-                  [
-                    binding.parts.find((part) => part.partIndex === index)!.logicalMember,
-                    member.memberIndex,
-                  ] as const,
-              ),
-            ),
-          ),
-        ),
-      });
-    }
-  }
-  for (const {
-    receipt: seed,
-    binding,
-    carrier,
-    carrierMembers,
-    bindingParts,
-  } of context.currentSeeds ?? []) {
-    if (
-      !carrier ||
-      (subjectSet &&
-        !subjectSet.has(seed.subject) &&
-        !(query.includeGeometry && seed.spatialContext)) ||
-      seed.at > through
-    )
-      continue;
-    const held = carried.get(String(binding));
-    if (!held || held.until > through)
-      carried.set(String(binding), {
-        seed,
-        carrier,
-        until: Infinity,
-        binding,
-        memberCarriers: new Map(
-          (carrierMembers ?? []).flatMap((member) =>
-            member.partIndices.map(
-              (index) =>
-                [
-                  bindingParts.find((part) => part.partIndex === index)!.logicalMember,
-                  member.memberIndex,
-                ] as const,
-            ),
-          ),
-        ),
-      });
   }
   pending.sort(
     (a, b) =>
@@ -2994,104 +2195,66 @@ export function selectCapturedTemporalHistory(
       b.batch.batchOrder - a.batch.batchOrder ||
       b.entry.entryIndex - a.entry.entryIndex,
   );
+  let work = 0,
+    candidates = 0,
+    bytes = 0;
   for (const { batch, entry } of pending) {
     if (++candidates > maxCandidates || work >= maxWork) {
       result.incomplete = true;
+      result.hasMore = true;
       break;
     }
-    if (
-      entry.receivedAt > through ||
-      entry.receivedAt < from ||
-      (context.at !== undefined &&
-        context.maxAgeSeconds !== undefined &&
-        !temporalRecentAt(entry.receivedAt, context.at, context.maxAgeSeconds))
-    )
-      continue;
-    if (
-      entry.rejected?.some(
-        (hole) =>
-          (!subjectSet || subjectSet.has(hole.subject)) &&
-          receivedPositionEligible(
-            { ...batch, entryIndex: entry.entryIndex, memberIndex: hole.memberIndex },
-            entry.receivedAt,
-            context.frontier,
-          ) &&
-          (!query.kinds ||
-            hole.parts.some((part) => query.kinds!.some((kind) => kind === part.kind))),
-      )
-    )
-      result.incomplete = true;
-    if (
-      query.before &&
-      (entry.order > query.before.order ||
-        (entry.order === query.before.order &&
-          (batch.batchOrder > query.before.batchOrder ||
-            (batch.batchOrder === query.before.batchOrder &&
-              entry.entryIndex > query.before.entryIndex))))
-    )
-      continue;
-    if (
-      entry.kind === 'boundary' &&
-      entry.coverage.some((coverage) =>
-        ['loss', 'unchecked', 'attention-exit'].includes(coverage.boundary ?? entry.reason ?? ''),
-      )
-    )
-      result.incomplete = true;
-    const coordinates = [
-      ...new Set(
-        entry.receipt
-          ? entry.receipt.facets.map((facet) => facet.memberIndex)
-          : entry.coverage
-              .filter((coverage) => {
-                const binding = batch.bindings.find((binding) => binding.id === coverage.binding)!;
-                return (
-                  !subjectSet ||
-                  subjectSet.has(binding.subject) ||
-                  (!!query.includeGeometry && !!binding.seed.spatialContext)
-                );
-              })
-              .flatMap((coverage) => coverage.members.map((member) => member.memberIndex)),
-      ),
-    ]
-      .filter(
-        (memberIndex) =>
-          (!query.before ||
-            batch.batchOrder !== query.before.batchOrder ||
-            entry.entryIndex !== query.before.entryIndex ||
-            memberIndex < query.before.memberIndex) &&
-          receivedPositionEligible(
-            { ...batch, entryIndex: entry.entryIndex, memberIndex },
-            entry.receivedAt,
-            context.frontier,
-          ),
-      )
-      .sort((a, b) => b - a);
-    const selectedMembers = new Set(coordinates.slice(0, Math.max(0, maxWork - work)));
-    if (selectedMembers.size < coordinates.length) {
-      result.incomplete = true;
-      result.hasMore = true;
-    }
-    if (selectedMembers.size)
-      result.examinedBefore = {
-        epoch: batch.epoch,
-        batchOrder: batch.batchOrder,
-        entryIndex: entry.entryIndex,
-        memberIndex: Math.min(...selectedMembers),
-        at: entry.receivedAt,
-        order: entry.order,
-      };
+    if (entry.receivedAt < from || entry.receivedAt > through) continue;
     const received = materializeReceivedEntry(
       batch,
       entry,
-      subjectSet,
-      selectedMembers,
+      selected,
+      undefined,
       query.includeGeometry,
     );
-    if (!received) continue;
-    if (query.cut && !temporalReceiptWithinPrefix(received, query.cut)) continue;
+    if (!received || (query.cut && !temporalReceiptWithinPrefix(received, query.cut))) continue;
+    if (
+      query.before &&
+      (received.order > query.before.order ||
+        (received.order === query.before.order &&
+          (received.batchOrder > query.before.batchOrder ||
+            (received.batchOrder === query.before.batchOrder &&
+              received.entryIndex > query.before.entryIndex))))
+    )
+      continue;
+    if (!received.facets.length) {
+      if (
+        query.before &&
+        received.batchOrder === query.before.batchOrder &&
+        received.entryIndex === query.before.entryIndex &&
+        query.before.memberIndex <= 0
+      )
+        continue;
+      result.examinedBefore = {
+        epoch: received.epoch,
+        batchOrder: received.batchOrder,
+        entryIndex: received.entryIndex,
+        memberIndex: 0,
+        at: received.at,
+        order: received.order,
+      };
+      if (!receivedPositionEligible({ ...received, memberIndex: 0 }, received.at, context.frontier))
+        continue;
+      const size = byteLength(received);
+      if (bytes + size > maxBytes || result.entries.length >= limit) {
+        result.incomplete = true;
+        result.hasMore = true;
+        break;
+      }
+      result.entries.push({ receipt: received, values: [] });
+      bytes += size;
+      work++;
+      result.incomplete ||= received.change !== 'occurrence';
+      continue;
+    }
     const facets: TemporalFacetReference[] = [],
       values: TemporalValue[] = [];
-    for (const facet of received.facets) {
+    for (const facet of [...received.facets].sort((a, b) => b.memberIndex - a.memberIndex)) {
       if (
         query.before &&
         received.batchOrder === query.before.batchOrder &&
@@ -3101,8 +2264,17 @@ export function selectCapturedTemporalHistory(
         continue;
       if (++work > maxWork) {
         result.incomplete = true;
+        result.hasMore = true;
         break;
       }
+      result.examinedBefore = {
+        epoch: received.epoch,
+        batchOrder: received.batchOrder,
+        entryIndex: received.entryIndex,
+        memberIndex: facet.memberIndex,
+        at: received.at,
+        order: received.order,
+      };
       if (
         !receivedPositionEligible(
           { ...received, memberIndex: facet.memberIndex },
@@ -3116,17 +2288,14 @@ export function selectCapturedTemporalHistory(
       if (
         !value ||
         (query.kinds && !query.kinds.includes(value.kind)) ||
-        !temporalFacetEligible(context.disclosure, context.actorId, facet, value)
+        !temporalFacetEligible(context.disclosure, context.actorId, facet, value) ||
+        (query.measurements &&
+          (facet.measuredThrough < query.measurements.from ||
+            facet.measuredFrom > query.measurements.through))
       )
         continue;
-      if (
-        query.measurements &&
-        (facet.measuredThrough < query.measurements.from ||
-          facet.measuredFrom > query.measurements.through)
-      )
-        continue;
-      facets.push(facet);
-      values.push(value);
+      facets.unshift(facet);
+      values.unshift(value);
     }
     if (!facets.length) continue;
     const receipt = temporalReceiptForRead(
@@ -3134,118 +2303,17 @@ export function selectCapturedTemporalHistory(
       ),
       added = byteLength(receipt) + values.reduce((sum, value) => sum + byteLength(value), 0);
     if (result.entries.length >= limit || bytes + added > maxBytes) {
-      result.hasMore = true;
       result.incomplete = true;
+      result.hasMore = true;
       break;
     }
     bytes += added;
     result.entries.push({ receipt, values });
-    result.examinedBefore = {
-      epoch: receipt.epoch,
-      batchOrder: receipt.batchOrder,
-      entryIndex: receipt.entryIndex,
-      memberIndex: Math.min(...receipt.facets.map((facet) => facet.memberIndex)),
-      at: receipt.at,
-      order: receipt.order,
-    };
-  }
-  for (const {
-    seed: captured,
-    parts,
-    carrier,
-    until,
-    binding,
-    memberCarriers,
-  } of carried.values()) {
-    if (work >= maxWork) {
-      result.incomplete = true;
-      break;
-    }
-    let seed: TemporalReceipt;
-    if ('parts' in captured) {
-      const available = captured.parts.filter(
-          (part) =>
-            (!parts || parts.has(part.partIndex)) &&
-            (!query.kinds || query.kinds.some((kind) => kind === part.kind)),
-        ),
-        logical = [...new Set(available.map((part) => part.logicalMember))],
-        selected = new Set(logical.slice(0, Math.max(0, maxWork - work)));
-      if (selected.size < logical.length) result.incomplete = true;
-      seed = materializeReceivedBindingSeed(
-        captured,
-        new Set(
-          available
-            .filter((part) => selected.has(part.logicalMember))
-            .map((part) => part.partIndex),
-        ),
-      );
-    } else seed = captured;
-    if (
-      seed.at >= from ||
-      seed.at > through ||
-      until < from ||
-      (query.cut && !temporalReceiptWithinPrefix(seed, query.cut))
-    )
-      continue;
-    const availableAt = Math.max(from, seed.at);
-    if (availableAt > through) continue;
-    if (
-      context.frontier?.expiredThroughTime !== null &&
-      context.frontier?.expiredThroughTime !== undefined &&
-      availableAt <= context.frontier.expiredThroughTime
-    )
-      continue;
-    const facets: TemporalFacetReference[] = [],
-      values: TemporalValue[] = [];
-    for (const facet of seed.facets) {
-      const actualMember = memberCarriers.get(facet.memberIndex);
-      if (
-        actualMember === undefined ||
-        !receivedStateEligible(
-          { ...carrier, memberIndex: actualMember },
-          availableAt,
-          context.frontier,
-        )
-      )
-        continue;
-      if (++work > maxWork) {
-        result.incomplete = true;
-        break;
-      }
-      const fragment = retainedValueAt(context.sources, facet),
-        value = fragment && materializeTemporalValue(facet, fragment, context.sources);
-      if (
-        !value ||
-        (query.kinds && !query.kinds.includes(value.kind)) ||
-        !temporalFacetEligible(context.disclosure, context.actorId, facet, value)
-      )
-        continue;
-      facets.push(facet);
-      values.push(value);
-    }
-    if (!facets.length) continue;
-    const checkpoint: TemporalCheckpoint = {
-      ...temporalReceiptForRead({ ...seed, facets }),
-      binding,
-      pageId: 'captured-binding',
-      sourceIds: [],
-    };
-    (result.baselines ??= []).push({
-      checkpoint,
-      values,
-      forReceipt: { ...carrier, memberIndex: memberCarriers.get(facets[0]!.memberIndex)! },
-      availableAt,
-      origins: facets.map((facet) => ({
-        kind: 'checkpoint' as const,
-        batchOrder: carrier.batchOrder,
-        entryIndex: carrier.entryIndex,
-        memberIndex: memberCarriers.get(facet.memberIndex)!,
-      })),
-    });
   }
   result.entries.reverse();
   return result;
 }
+
 function refreshTemporalPage(page: TemporalPage, world: WorldState): void {
   const metadata = temporalPageMetadata(page, { world });
   page.subjects = metadata.subjects;
@@ -3256,39 +2324,6 @@ function refreshTemporalPage(page: TemporalPage, world: WorldState): void {
   page.bytes = metadata.entryBytes;
   page.fromAt = metadata.firstAt ?? 0;
   page.throughAt = metadata.lastAt ?? 0;
-}
-export function retireTemporalPages(
-  world: WorldState,
-  actorId: string,
-  pageIds: ReadonlySet<string>,
-  nextDue: number | null,
-): void {
-  const actor = world.experience?.temporal?.actors[actorId];
-  if (!actor) return;
-  touchNativeEvidence(world, 'temporal', actorId);
-  actor.pages = actor.pages.filter((page) => !pageIds.has(page.id));
-  actor.nextDue = nextDue;
-}
-export function retireTemporalEntries(
-  world: WorldState,
-  actorId: string,
-  pageId: string,
-  entries: ReadonlySet<string>,
-  nextDue: number | null,
-): void {
-  const actor = world.experience?.temporal?.actors[actorId],
-    page = actor?.pages.find((page) => page.id === pageId);
-  if (!actor || !page) return;
-  const selections = page.batches.flatMap((batch) =>
-    batch.entries
-      .filter((entry) => !entries.has(JSON.stringify([batch.batchOrder, entry.entryIndex])))
-      .map((entry) => ({ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex })),
-  );
-  const selected = selectTemporalPageEntries(page, selections);
-  page.batches = selected.batches;
-  markTemporalPageEdited(page);
-  refreshTemporalPage(page, world);
-  actor.nextDue = nextDue;
 }
 export function temporalAvailability(
   receipt: Pick<TemporalReceipt, 'change' | 'availabilityAt' | 'at'>,
@@ -3347,11 +2382,24 @@ export function invalidateTemporalEvidence(
       world,
     ).some((id) => sourceIds.has(id)),
   );
+  const individualCandidates = new Set<string>();
   for (const [id, capsule] of Object.entries(actor.supports ?? {}))
     if (temporalSupportAliases(capsule, world).some((alias) => sourceIds.has(alias))) {
+      if (capsule.receipt.subjectIdentity?.kind === 'individual')
+        individualCandidates.add(capsule.receipt.subjectIdentity.individualId);
+      for (const value of capsule.values) {
+        const individual = temporalValueIndividualId(value);
+        if (individual) individualCandidates.add(individual);
+      }
       releaseTemporalSupport(world, actorId, id);
       released.push(id);
     }
+  if (individualCandidates.size)
+    selectedPruneObserverIndividuals(world, actorId, {
+      releasedSourceIds: [],
+      candidates: [...individualCandidates],
+      retireRecent: true,
+    });
   return released;
 }
 export function invalidateTemporalFacets(
@@ -3367,7 +2415,8 @@ export function invalidateTemporalFacets(
   if (!actor) return;
   touchNativeEvidence(world, 'temporal', actorId);
   const removedAddresses = new Set<string>(),
-    replacements: ReceivedChargeDirectory[] = [];
+    replacements: ReceivedChargeDirectory[] = [],
+    individualCandidates = new Set<string>();
   for (const page of actor.pages) {
     const receipts = temporalPageReceipts(page),
       retained: TemporalReceipt[] = [];
@@ -3381,9 +2430,10 @@ export function invalidateTemporalFacets(
         return !value || !revoked(value, facet, receipt);
       });
       if (facets.length !== receipt.facets.length) pageChanged = true;
-      if (facets.length) retained.push({ ...receipt, facets });
+      if (facets.length || !receipt.facets.length) retained.push({ ...receipt, facets });
     }
     if (pageChanged) {
+      for (const id of page.individualIds) individualCandidates.add(id);
       for (const batch of page.batches)
         for (const entry of batch.entries)
           removedAddresses.add(JSON.stringify([batch.batchOrder, entry.entryIndex]));
@@ -3391,7 +2441,6 @@ export function invalidateTemporalFacets(
       refreshTemporalPage(page, world);
       const directory = temporalPageMetadata(page, { world }).chargeDirectory;
       if (directory.entries.length) replacements.push(directory);
-      selectedRequestRecentIndividualRepair(world, actorId, page.individualIds);
     }
   }
   if (removedAddresses.size) {
@@ -3402,19 +2451,11 @@ export function invalidateTemporalFacets(
       if (!entries) affected.set(batchOrder, (entries = new Set()));
       entries.add(entryIndex);
     }
-    for (const [batchOrder, entries] of affected) {
-      for (const page of actor.pages) {
-        const key = recentBlockKey(page, batchOrder),
-          directory = orderedRecordGet(actor.recent.blocks, key);
-        if (!directory) continue;
-        const retained = directory.entries.filter((header) => {
-          if (!entries.has(header.entryIndex)) return true;
-          releaseDirectoryEntry(actor, directory, header);
-          return false;
-        });
-        setRecentDirectoryEntries(actor, key, directory, retained);
-        break;
-      }
+    const released = new Set<string>();
+    for (const [batchOrder] of affected) {
+      const key = recentBlockKey(actor, batchOrder),
+        directory = orderedRecordGet(actor.recent.blocks, key);
+      if (directory) releaseDirectory(actor, key, directory, released);
     }
     for (const directory of eligibleReceivedChargeDirectories(replacements, actor.frontier))
       appendTemporalChargeDirectory(actor, directory);
@@ -3426,33 +2467,51 @@ export function invalidateTemporalFacets(
     for (const [subjectId, contact] of currentContactEntries(owner))
       for (const group of contact.content.groups)
         for (const mark of group.recordings ?? []) {
-          const members = mark.members.filter((member) => {
-            const part = mark.binding.parts.find(
-              (part) => part.kind === member.kind && part.part === member.part,
+          const original = contact.content.originals[group.received.grant.original];
+          if (!original) continue;
+          const members = mark.members.filter(({ kind }) => {
+            const record = currentGroupFacetRecord(group, original, kind);
+            if (!record) return true;
+            const input = temporalFacetInput(world, currentFacetSupport(owner, record));
+            if (!('received' in input)) return false;
+            const { received, ...facet } = input;
+            const value = materializeTemporalValue(
+              { reception: received.projection.reception },
+              received.projection.value,
+              world.receivedValues?.sources ?? {},
             );
-            if (!part) return true;
-            const fragment = retainedValueAt(world.receivedValues?.sources ?? {}, part.facet),
-              value =
-                fragment &&
-                materializeTemporalValue(part.facet, fragment, world.receivedValues?.sources ?? {});
             return (
               !!value &&
-              revoked(value, part.facet, {
-                ...mark.binding.seed,
-                facets: mark.binding.parts.map((part) => part.facet),
-              })
+              revoked(
+                value,
+                { ...facet, valueRef: received.reference.valueRef, memberIndex: 0 },
+                {
+                  id: 'current',
+                  sourceIds: [],
+                  facets: [],
+                },
+              )
             );
           });
-          if (members.length)
+          if (members.length) {
+            if (!mark.gap)
+              releaseTerminalReservation(world, actorId, mark.terminalBytes * members.length);
             updates.push({
               subjectId,
               fields: group.received.fields,
-              members: members.map((member) => [member.kind, member.part] as const),
+              members: members.map(({ kind, part }) => [kind, part] as const),
               recording: undefined,
             });
+          }
         }
     if (updates.length) currentGroupsSetRecording(owner, updates);
   }
+  if (individualCandidates.size)
+    selectedPruneObserverIndividuals(world, actorId, {
+      releasedSourceIds: [],
+      candidates: [...individualCandidates],
+      retireRecent: true,
+    });
 }
 
 export function temporalSourceIds(receipt: TemporalReceipt): EvidenceSource[] {
@@ -3573,7 +2632,7 @@ export function temporalAccountAliasClosure(
   for (const chunk of actor?.pages ?? [])
     for (const receipt of temporalPageReceipts(chunk)) add(receipt);
   for (const support of Object.values(actor?.supports ?? {})) add(support.receipt, support.values);
-  for (const interval of captureTemporalCurrentSeeds(world, actorId)) add(interval.receipt);
+
   const selected = new Set(sourceIds),
     queue = [...selected],
     visited = new Set<string[]>();
@@ -3687,14 +2746,28 @@ export function hasRetainedTemporalSource(
     sources = world.receivedValues?.sources ?? {};
   const fact = parsePersonalFactAlias(sourceId);
   const directSource = fact?.observationId ?? sourceId;
-  if (parseTemporalReceiptId(directSource))
-    return receivedDirectorySourceContains(
-      actor.recent,
-      actorId,
-      directSource,
-      fact?.ordinal,
-      Math.max(cutoff, actor.frontier?.expiredThroughTime ?? -Infinity),
-    );
+  const direct = parseTemporalReceiptId(directSource);
+  if (direct) {
+    // A block range or dependency alias is only a candidate. The actual owned
+    // entry/member proves existence; cold edit callers prepare this selected body.
+    for (const page of actor.pages) {
+      if (page.epoch !== direct.epoch || !page.sourceIds.includes(sourceId)) continue;
+      const locator = { actorId, physicalLife: page.physicalLife, ...direct };
+      if (!receivedDirectoryContains(actor.recent, locator)) continue;
+      const receipt = temporalPageReceipt(page, locator);
+      if (!receipt || receipt.at <= cutoff) continue;
+      const eligible = (memberIndex: number) =>
+        receivedPositionEligible({ ...locator, memberIndex }, receipt.at, actor.frontier);
+      if (fact)
+        return receipt.facets.some(
+          (field) => field.memberIndex === fact.ordinal && eligible(field.memberIndex),
+        );
+      return receipt.facets.length
+        ? receipt.facets.some((field) => eligible(field.memberIndex))
+        : eligible(0);
+    }
+    return false;
+  }
   const includes = (owner: {
     facets: readonly TemporalFieldDependencies[];
     sourceIds: readonly string[];
@@ -3889,31 +2962,6 @@ export function temporalReceiptLocatorFromSource(
 }
 /** Exact direct-source membership uses the resident batch branch, not a list of
  * generated receipt aliases in every SQL block. Past lives keep their own owner. */
-export function receivedDirectorySourceContains(
-  recent: ReceivedRecentDirectory,
-  actorId: string,
-  sourceId: string,
-  memberIndex?: number,
-  receivedAfter = -Infinity,
-): boolean {
-  const position = parseTemporalReceiptId(sourceId);
-  if (!position) return false;
-  const prefix = String(position.batchOrder).padStart(16, '0') + ':';
-  for (const [key, block] of objectIndexEntries(readOnlyDraftView(recent.blocks).root, prefix)) {
-    if (!key.startsWith(prefix)) break;
-    if (
-      block.epoch === position.epoch &&
-      receivedDirectoryContains(
-        recent,
-        { actorId, physicalLife: block.physicalLife, ...position },
-        memberIndex,
-        receivedAfter,
-      )
-    )
-      return true;
-  }
-  return false;
-}
 export function isTemporalReceiptSource(source: EvidenceSource): boolean {
   return temporalReceiptLocatorFromSource(source) !== undefined;
 }
@@ -4199,6 +3247,39 @@ function retainTemporalCaptureSupport(
     options,
   );
 }
+/** Called only with a finite private-reader admitted capture, after explicit revocation fencing. */
+export function retainCapturedTemporalSupport(
+  world: WorldState,
+  actorId: string,
+  capture: { receipt: TemporalReceipt; values: readonly TemporalValue[] },
+  options: { required?: boolean; maxBytes: number; maxRecords: number },
+): TemporalSupportCapsule | undefined {
+  if (
+    capture.receipt.actorId !== actorId ||
+    capture.receipt.facets.length !== capture.values.length
+  )
+    return;
+  return retainTemporalCaptureSupport(
+    world,
+    actorId,
+    {
+      subject: capture.receipt.subject,
+      subjectIdentity: capture.receipt.subjectIdentity,
+      change: 'baseline',
+      sourceIds: [...new Set([capture.receipt.id, ...capture.receipt.sourceIds])],
+      facets: capture.receipt.facets.map((facet, index) => {
+        const {
+          valueRef: _reference,
+          reception: _reception,
+          memberIndex: _index,
+          ...metadata
+        } = facet;
+        return { ...metadata, value: capture.values[index]! };
+      }),
+    },
+    options,
+  );
+}
 export function retainTemporalCurrentSupport(
   world: WorldState,
   actorId: string,
@@ -4248,96 +3329,6 @@ export function retainTemporalCurrentSupport(
     },
     options,
   );
-}
-
-export function retainTemporalStateSupport(
-  world: WorldState,
-  actorId: string,
-  baseline: NonNullable<TemporalHistorySelection['baselines']>[number],
-  anchor: TemporalReceipt,
-  options: { required?: boolean; maxBytes: number; maxRecords: number },
-): TemporalSupportCapsule | undefined {
-  const actor = world.experience?.temporal?.actors[actorId];
-  if (
-    !actor ||
-    baseline.checkpoint.actorId !== actorId ||
-    anchor.actorId !== actorId ||
-    !sameReceiptAddress(anchor, baseline.forReceipt) ||
-    baseline.availableAt > anchor.at ||
-    anchor.at > world.simTime ||
-    !temporalRecentAt(
-      baseline.availableAt,
-      world.simTime,
-      selectedTemporalPolicy(world).recent.maxAgeSeconds,
-    ) ||
-    baseline.checkpoint.facets.length !== baseline.values.length ||
-    !baseline.values.length ||
-    baseline.checkpoint.facets.some(
-      (reference, index) =>
-        !temporalFacetEligible(world, actorId, reference, baseline.values[index]!),
-    )
-  )
-    return;
-  const batchOrder = receivedIdentity(world, 'retained-support'),
-    entryIndex = 0,
-    id = temporalReceiptId({ epoch: actor.epoch, batchOrder, entryIndex });
-  if (actor.supports?.[id]) return;
-  const values: TemporalFragment[] = [],
-    facets = baseline.checkpoint.facets.map((reference, index) => {
-      const { value, reception } = splitTemporalValue(baseline.values[index]!);
-      values.push(immutableDataSnapshot(value, readOnlyDraftView));
-      const { reception: _old, ...metadata } = reference;
-      return { ...metadata, ...(reception ? { reception } : {}) };
-    });
-  const receipt: TemporalReceipt = {
-    id,
-    actorId,
-    physicalLife: baseline.checkpoint.physicalLife,
-    epoch: actor.epoch,
-    batchOrder,
-    entryIndex,
-    acquisition: batchOrder,
-    at: anchor.at,
-    order: anchor.order,
-    subject: baseline.checkpoint.subject,
-    ...(baseline.checkpoint.subjectIdentity
-      ? { subjectIdentity: baseline.checkpoint.subjectIdentity }
-      : {}),
-    ...(anchor.receiverFrame ? { receiverFrame: anchor.receiverFrame } : {}),
-    change: 'retained-state',
-    required: options.required === true,
-    sourceIds: [
-      JSON.stringify([
-        'temporal-checkpoint',
-        baseline.checkpoint.physicalLife,
-        baseline.checkpoint.epoch,
-        baseline.checkpoint.binding,
-        baseline.checkpoint.batchOrder,
-        baseline.checkpoint.entryIndex,
-        baseline.checkpoint.facets.map((facet) => [facet.memberIndex, facet.track ?? null]),
-        baseline.forReceipt.physicalLife,
-        baseline.forReceipt.epoch,
-        baseline.forReceipt.batchOrder,
-        baseline.forReceipt.entryIndex,
-        baseline.forReceipt.memberIndex,
-        baseline.availableAt,
-      ]),
-    ],
-    facets,
-    ...(baseline.checkpoint.availability?.length
-      ? { availability: baseline.checkpoint.availability }
-      : {}),
-  };
-  receipt.sourceIds = temporalReceiptAliases(receipt, {}, world, values);
-  const capsule: TemporalSupportCapsule = {
-    receipt: immutableDataSnapshot(receipt, readOnlyDraftView),
-    values,
-    bytes: 0,
-    required: options.required === true,
-  };
-  touchNativeEvidence(world, 'temporal', actorId);
-  const admitted = admitTemporalSupport(world, actorId, capsule, options);
-  return admitted;
 }
 
 export function releaseTemporalSupport(

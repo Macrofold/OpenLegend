@@ -178,7 +178,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '54';
+export const DATABASE_SCHEMA = '55';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(
@@ -192,6 +192,8 @@ export interface AttemptBudget {
 export interface SqlDatabase {
   /** Transport grouping for explicitly independent writes; transaction semantics are unchanged. */
   readonly writeGroups: boolean;
+  /** Synchronous health of the session owning the exclusive world-writer lock. */
+  assertWriteAdmission(): void;
   /** Undefined adapters cannot prove whether shared committed reads are safe. */
   readonly transactionActive?: boolean;
   checkpointSource?: import('./checkpoint-worker-client.js').CheckpointSource;
@@ -375,6 +377,8 @@ export interface RetentionActors {
 }
 
 export interface GameRepository extends WorldStore {
+  /** Current health of the exclusively owned durable writer session. */
+  assertWriteAdmission(): void;
   readonly ready: Promise<void>;
   setRetainedValueLookup?(provider: (worldId: string) => Readonly<Record<string, unknown>>): void;
   setLiveReadCuts?(provider: LiveReadCutsProvider): void;
@@ -753,6 +757,10 @@ export class SqlGameRepository implements GameRepository {
   get persistence() {
     return 'postgres' as const;
   }
+  assertWriteAdmission(): void {
+    if (this.closing) throw new Error('The database writer is unavailable for new gameplay.');
+    this.db.assertWriteAdmission();
+  }
 
   async intelligenceCall(id: string): Promise<IntelligenceCall | undefined> {
     await this.ready;
@@ -1114,7 +1122,10 @@ export class SqlGameRepository implements GameRepository {
     const captured = await snapshot(async () => {
       const loaded = await this.records.load(active);
       if (!loaded) return null;
-      await this.receivedOwnership.validate(loaded.state.world.id);
+      await this.receivedOwnership.validate(
+        loaded.state.world.id,
+        active ? 'physical' : 'retained',
+      );
       return {
         canonical: loaded,
         historyCount: await (active

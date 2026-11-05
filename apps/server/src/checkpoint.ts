@@ -37,7 +37,7 @@ export async function writeCheckpoint(
     const simTime = Number(JSON.parse(String(settings['payload'])).simTime);
     options.captured?.();
     await new HistoryRepository(db).auditEventCount(head.worldId);
-    await new ReceivedValueOwnership(db).validate(head.worldId);
+    await new ReceivedValueOwnership(db).validate(head.worldId, 'retained');
     await files.writeStream(
       { ...identity, createdAt: new Date().toISOString(), simTime, revision: head.revision },
       checkpointLines(db, head.worldId, identity.format, head.revision),
@@ -63,7 +63,7 @@ async function* checkpointLines(
     if (performance.now() - started > 120_000)
       throw new Error('Checkpoint capture exceeded two minutes; previous saves retained.');
     yield JSON.stringify({ table }) + '\n';
-    for await (const row of tableRows(db, table, worldId)) {
+    for await (const row of tableRows(db, table, worldId, 'retained')) {
       if (performance.now() - started > 120_000)
         throw new Error('Checkpoint capture exceeded two minutes; previous saves retained.');
       yield JSON.stringify({ table, row }) + '\n';

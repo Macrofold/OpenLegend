@@ -1,6 +1,6 @@
 import { receivedPositionEligible } from '../../received-batches.js';
 import { recordObservationSupport, observationReceiptMemberIndices } from '../../experience.js';
-import { currentFacetValues } from '../../perception-current.js';
+import { currentContactEntries, currentFacetValues } from '../../perception-current.js';
 import { currentNativeFacet, currentFacetGrant } from '../../perception-current.js';
 import type { CurrentFacetGrant } from '../../perception-current.js';
 import { sameDefinitionPin } from '../../definition-pins.js';
@@ -11,6 +11,7 @@ import { inspectedItemName } from '../../inventory-inspection.js';
 import type { Entity, WorldState, WorldEvent, Outcome } from '../../types.js';
 import {
   currentBodyAssociation,
+  prepareCurrentBodyReadScope,
   currentBodyLocalSubject,
   currentBodyGrant,
   currentBodyLabel,
@@ -28,16 +29,17 @@ import {
   type KnowledgePolicy,
 } from '../../knowledge.js';
 import { isImmutableData, isSafeRecordId } from '../../records.js';
-import { cloneValue, readOnlyDraftView, touchNativeEvidence } from '../../draft.js';
+import { cloneValue, readOnlyDraftView } from '../../draft.js';
 import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
 import {
   retainTemporalSupport,
+  hasTemporalRecentIndividual,
+  receivedDirectoryContains,
   releaseTemporalSupport,
   temporalReceiptForSource,
   temporalReceiptSource,
   temporalReceiptId,
   retainedTemporalReceipt,
-  receivedDirectoryContains,
   temporalReceiptLocatorFromSource,
   type TemporalValue,
   type TemporalReceiptLocator,
@@ -69,15 +71,6 @@ export function startingRecipeKnowledge(
 export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
 export interface ObserverIdentity {
-  /** Last actual recent reference. Liveness only; never identity or recognition proof. */
-  recentReference?: {
-    physicalLife: number;
-    epoch: string;
-    batchOrder: number;
-    entryIndex: number;
-    memberIndex: number;
-    at: number;
-  };
   /** Current body-only local roles need no lasting allocation. */
   retained?: true;
   familiarity?: import('../../attention.js').FamiliarityState;
@@ -94,14 +87,6 @@ export interface ObserverIdentity {
   encounterId: string | null;
   authored: boolean;
 }
-/** One bounded newest-reference locator is retention housekeeping. It neither
- * consumes learned-fact capacity nor allows a full pool to lose actual liveness. */
-export function observerIdentityKnowledge(
-  identity: ObserverIdentity,
-): Omit<ObserverIdentity, 'recentReference'> {
-  const { recentReference: _recent, ...knowledge } = identity;
-  return knowledge;
-}
 export function adjustObserverIdentityAccounting(
   world: WorldState,
   actorId: string,
@@ -109,13 +94,7 @@ export function adjustObserverIdentityAccounting(
   after: ObserverIdentity | undefined,
   options?: Parameters<typeof adjustRetainedKnowledgeAccounting>[4],
 ): boolean {
-  return adjustRetainedKnowledgeAccounting(
-    world,
-    actorId,
-    before && observerIdentityKnowledge(before),
-    after && observerIdentityKnowledge(after),
-    options,
-  );
+  return adjustRetainedKnowledgeAccounting(world, actorId, before, after, options);
 }
 /** The existing identity owner installs lasting learning only after its complete
  * encoded record fits the same personal-knowledge pool as notes and accounts. */
@@ -450,102 +429,20 @@ export function associateBodyFamiliarity(
   if (candidate.individualId)
     commitObserverIdentity(world, observerId, candidate.individualId, candidate);
 }
-/** Only admission of an actual recent reference updates this small locator. Reads
- * and unchanged confirmations cannot prolong an otherwise forgotten individual. */
-export function markRecentIndividualReferences(
-  world: WorldState,
-  actorId: string,
-  ids: readonly string[],
-  reference: NonNullable<ObserverIdentity['recentReference']>,
-): void {
-  const records = world.observerIdentities?.[actorId];
-  if (!records) return;
-  for (const id of ids) {
-    const identity = records[id];
-    if (!identity || identity.authored) continue;
-    const previous = identity.recentReference;
-    if (
-      previous &&
-      previous.epoch === reference.epoch &&
-      (previous.batchOrder > reference.batchOrder ||
-        (previous.batchOrder === reference.batchOrder &&
-          (previous.entryIndex > reference.entryIndex ||
-            (previous.entryIndex === reference.entryIndex &&
-              previous.memberIndex >= reference.memberIndex))))
-    )
-      continue;
-    const next = { ...identity, recentReference: { ...reference } };
-    records[id] = next;
-  }
-}
-
-export function requestRecentIndividualRepair(
-  world: WorldState,
-  actorId: string,
-  ids: readonly string[],
-): void {
-  const actor = world.experience?.temporal?.actors[actorId];
-  if (!actor) return;
-  const pending = new Set(actor.individualRepairs);
-  for (const id of ids)
-    if (world.observerIdentities?.[actorId]?.[id]?.recentReference) pending.add(id);
-  if (pending.size) {
-    actor.individualRepairs = [...pending];
-    if (actor.accounts)
-      actor.accounts.nextDue = Math.min(actor.accounts.nextDue ?? Infinity, world.simTime);
-  }
-}
-export function repairRecentIndividualReferences(
-  world: WorldState,
-  actorId: string,
-  changes: readonly { id: string; reference?: NonNullable<ObserverIdentity['recentReference']> }[],
-): void {
-  const identities = world.observerIdentities?.[actorId],
-    actor = world.experience?.temporal?.actors[actorId];
-  if (!actor) return;
-  touchNativeEvidence(world, 'temporal', actorId);
-  for (const { id, reference } of changes) {
-    const before = identities?.[id];
-    if (!before) continue;
-    const after = { ...before };
-    if (reference) after.recentReference = { ...reference };
-    else delete after.recentReference;
-    // Correcting a prior locator is withdrawal bookkeeping, not new knowledge.
-    if (
-      before.retained &&
-      !adjustObserverIdentityAccounting(world, actorId, before, after, { revocation: true })
-    )
-      throw new Error('Recent individual repair did not fit its prior allocation.');
-    identities![id] = after;
-  }
-  const completed = new Set(changes.map((change) => change.id));
-  actor.individualRepairs = actor.individualRepairs?.filter((id) => !completed.has(id));
-  if (!actor.individualRepairs?.length) delete actor.individualRepairs;
-}
-
+/** Recent ownership is derived once by the temporal block owner; no learned
+ * identity is rewritten to point at each passing sensory record. */
 function recentIndividualAvailable(
   world: WorldState,
   actorId: string,
-  identity: ObserverIdentity,
+  identityId: string,
 ): boolean {
-  const reference = identity.recentReference;
-  const actor = world.experience?.temporal?.actors[actorId];
-  if (
-    !reference ||
-    !actor ||
-    reference.at + BASE_ATTENTION_POLICY.retention.recent.maxAgeSeconds <= world.simTime
-  )
-    return false;
-  return (
-    receivedPositionEligible(reference, reference.at, actor.frontier) &&
-    receivedDirectoryContains(actor.recent, { actorId, ...reference }, reference.memberIndex)
-  );
+  return hasTemporalRecentIndividual(world, actorId, identityId);
 }
 
 /** Incidental contact follows its actual received member, not the latest time of
  * some other subject in a mixed batch. Independently learned roots bypass this
  * recent-only check through their own retained support above. */
-function recentFamiliarityRootAvailable(
+function recentFamiliarityRootMayRemain(
   actor: TemporalActorHistory | undefined,
   actorId: string,
   root: import('../../attention.js').FamiliarityRoot,
@@ -557,6 +454,9 @@ function recentFamiliarityRootAvailable(
   const locator = temporalReceiptLocatorFromSource(source);
   if (!locator || locator.actorId !== actorId || !receivedDirectoryContains(actor.recent, locator))
     return false;
+  // This is a deletion-only decision, never proof for acquisition or an edit.
+  // Cold or bounded selected residency cannot prove absence. Keep an eligible
+  // root until its block retires; explicit withdrawals use recognition's owner.
   for (const key of root.support) {
     const parsed = JSON.parse(/^(awareness|memory|summary):/u.test(key) ? 'null' : key) as {
       source?: { id?: string };
@@ -565,12 +465,11 @@ function recentFamiliarityRootAvailable(
     if (
       parsed?.source?.id === source.id &&
       parsed.memberIndex !== undefined &&
-      (!receivedPositionEligible(
+      !receivedPositionEligible(
         { ...locator, memberIndex: parsed.memberIndex },
         root.at,
         actor.frontier,
-      ) ||
-        !receivedDirectoryContains(actor.recent, locator, parsed.memberIndex))
+      )
     )
       return false;
   }
@@ -608,7 +507,7 @@ export function pruneObserverIndividuals(
       (root) =>
         root.required ||
         held.has(root.sourceKey) ||
-        recentFamiliarityRootAvailable(actor, actorId, root, cutoff),
+        recentFamiliarityRootMayRemain(actor, actorId, root, cutoff),
     );
     if (remaining.length === roots.length) continue;
     const next = cloneValue(identity!);
@@ -689,7 +588,7 @@ export function pruneObserverIndividuals(
       !identity ||
       identity.authored ||
       pinned.has(key) ||
-      recentIndividualAvailable(world, actorId, identity) ||
+      recentIndividualAvailable(world, actorId, identity.individualId ?? key) ||
       (input.candidates && !input.retireRecent && identity.retained) ||
       identity.nickname ||
       identity.givenName ||
@@ -1195,12 +1094,22 @@ export function assignSubjectName(
       evidenceIds,
     );
   const identity = observerIndividual(world, observerId, edit.subjectId);
+  const scope = identity && prepareCurrentBodyReadScope(world, observerId);
+  // A received local person belongs to the actual body grant, whose observation
+  // identity is distinct from the world's encounter-membership episode.
   const currentBody =
-    identity?.encounterId &&
-    Object.entries(world.perceptionEpisodes?.[observerId] ?? {}).some(
-      ([id, episode]) =>
-        episode === identity.encounterId && !!currentBodyGrant(world, observerId, id),
-    );
+    scope &&
+    currentContactEntries(scope.state).some(([id, contact]) => {
+      if (
+        !contact.content.groups.some((group) => {
+          const local = group.received.fields['body']?.localSubject;
+          return local && sameSubject(local, edit.subjectId);
+        })
+      )
+        return false;
+      const local = scope.nativeBody(id)?.field.localSubject;
+      return !!local && sameSubject(local, edit.subjectId);
+    });
   if (
     !identity?.individualId ||
     identity.seedOnly ||
@@ -1387,20 +1296,6 @@ export function validateObserverIdentities(world: WorldState): void {
         (identity.nameEvidenceIds !== undefined &&
           (!Array.isArray(identity.nameEvidenceIds) ||
             identity.nameEvidenceIds.some((source) => typeof source !== 'string' || !source))) ||
-        (identity.recentReference !== undefined &&
-          (!Number.isSafeInteger(identity.recentReference.physicalLife) ||
-            identity.recentReference.physicalLife < 0 ||
-            typeof identity.recentReference.epoch !== 'string' ||
-            !identity.recentReference.epoch ||
-            !Number.isSafeInteger(identity.recentReference.batchOrder) ||
-            identity.recentReference.batchOrder < 0 ||
-            !Number.isSafeInteger(identity.recentReference.entryIndex) ||
-            identity.recentReference.entryIndex < 0 ||
-            !Number.isSafeInteger(identity.recentReference.memberIndex) ||
-            identity.recentReference.memberIndex < 0 ||
-            !Number.isFinite(identity.recentReference.at) ||
-            identity.recentReference.at < 0 ||
-            identity.recentReference.at > world.simTime)) ||
         typeof identity.givenName !== 'string' ||
         (identity.nickname !== undefined &&
           (typeof identity.nickname !== 'string' ||

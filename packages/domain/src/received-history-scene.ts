@@ -25,9 +25,10 @@ interface EndpointChange {
   decreaseLower: number;
   support: HistoricalSpatialFact[];
 }
-export type HistoricalSpatialFact =
-  | { entry: number; facet: number }
-  | { baseline: number; facet: number };
+export interface HistoricalSpatialFact {
+  entry: number;
+  facet: number;
+}
 interface Fact {
   source: HistoricalSpatialFact;
   order: number;
@@ -36,6 +37,7 @@ interface Fact {
   acquisition: number;
   epoch: string;
   physicalLife: number;
+  segment: number;
   availableAt?: number;
   unavailableAt?: number;
   subject: string;
@@ -86,9 +88,16 @@ const supports = (fact: Fact, at: number) =>
 const originalKey = (fact: Fact) =>
   JSON.stringify(fact.reference.original ?? [fact.source, fact.reference.memberIndex]);
 const proof = (fact: Fact): HistoricalSpatialFact => fact.source;
-const trackKey = (fact: Fact) => JSON.stringify([fact.physicalLife, fact.epoch, fact.subject]);
+const trackKey = (fact: Fact) =>
+  JSON.stringify([fact.physicalLife, fact.epoch, fact.subject, fact.segment]);
 const acquisitionKey = (fact: Fact) =>
   JSON.stringify([fact.physicalLife, fact.epoch, fact.acquisition]);
+const geometryKind = (kind: string) =>
+  kind === 'body' ||
+  kind === 'location' ||
+  kind === 'observed-motion' ||
+  kind === 'physical-boundary' ||
+  kind === 'surface-patch';
 function bodyProofs(fact: BodyFact): HistoricalSpatialFact[] {
   return fact.detail && JSON.stringify(fact.detail.source) !== JSON.stringify(fact.source)
     ? [fact.source, fact.detail.source]
@@ -208,46 +217,51 @@ export function historicalSpatialMeasurements(
   allowance: number,
 ) {
   const facts: Fact[] = [];
-  for (const [entry, selected] of selection.entries.entries())
+  const segments = new Map<string, number>();
+  let recordingIncomplete = false;
+  for (const [entry, selected] of selection.entries.entries()) {
+    const receipt = selected.receipt;
+    const key = JSON.stringify([receipt.physicalLife, receipt.epoch, receipt.subject]);
+    let segment = segments.get(key) ?? 0;
+    const terminal = ['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(
+        receipt.change,
+      ),
+      affectsGeometry =
+        !receipt.endedFields || receipt.endedFields.some(([kind]) => geometryKind(kind)),
+      ended = terminal && affectsGeometry,
+      gap = receipt.coverageGap && (!terminal || affectsGeometry);
+    // Losing a description or attribute says nothing about a still-received
+    // position/shape. Geometry joins stop only at their own availability boundary.
+    if (
+      (receipt.change === 'baseline' &&
+        selected.values.some((value) => geometryKind(value.kind))) ||
+      gap
+    )
+      segment++;
+    if (ended || gap) recordingIncomplete = true;
+    segments.set(key, segment + (ended ? 1 : 0));
     for (const [facet, value] of selected.values.entries()) {
-      const reference = selected.receipt.facets[facet]!;
+      const reference = receipt.facets[facet]!;
       facts.push({
         source: { entry, facet },
-        order: selected.receipt.order,
-        batchOrder: selected.receipt.batchOrder,
-        entryIndex: selected.receipt.entryIndex,
-        acquisition: selected.receipt.acquisition,
-        epoch: selected.receipt.epoch,
-        physicalLife: selected.receipt.physicalLife,
-        availableAt: selected.receipt.at,
-        unavailableAt: selected.receipt.availability?.find((group) =>
+        order: receipt.order,
+        batchOrder: receipt.batchOrder,
+        entryIndex: receipt.entryIndex,
+        acquisition: receipt.acquisition,
+        epoch: receipt.epoch,
+        physicalLife: receipt.physicalLife,
+        segment,
+        availableAt: receipt.at,
+        unavailableAt: receipt.availability?.find((group) =>
           group.fields.includes(reference.memberIndex),
         )?.at,
-        subject: selected.receipt.subject,
+        subject: receipt.subject,
         reference,
         value,
       });
     }
-  for (const [baseline, selected] of (selection.baselines ?? []).entries())
-    for (const [facet, value] of selected.values.entries()) {
-      const reference = selected.checkpoint.facets[facet]!;
-      facts.push({
-        source: { baseline, facet },
-        order: selected.checkpoint.order,
-        batchOrder: selected.checkpoint.batchOrder,
-        entryIndex: selected.checkpoint.entryIndex,
-        acquisition: selected.checkpoint.acquisition,
-        epoch: selected.checkpoint.epoch,
-        physicalLife: selected.checkpoint.physicalLife,
-        availableAt: selected.availableAt,
-        unavailableAt: selected.checkpoint.availability?.find((group) =>
-          group.fields.includes(reference.memberIndex),
-        )?.at,
-        subject: selected.checkpoint.subject,
-        reference,
-        value,
-      });
-    }
+  }
+  const factSegments = new Map(facts.map((fact) => [fact.source, trackKey(fact)]));
   const bodies = receivedBodySamples(facts, request);
   const anchors = bodies
     .filter(
@@ -296,7 +310,7 @@ export function historicalSpatialMeasurements(
     boundaryCoverage: 'selected-retained' | 'partial';
   }> = [];
   const seen = new Set<string>();
-  let incomplete = selection.incomplete;
+  let incomplete = selection.incomplete || recordingIncomplete;
   for (const [position, anchor] of anchors.entries()) {
     if (!remaining) {
       incomplete = true;
@@ -400,10 +414,7 @@ export function historicalSpatialMeasurements(
     }
     samples.push(sample);
   }
-  const position = (source: HistoricalSpatialFact) =>
-    'entry' in source
-      ? selection.entries[source.entry]!.receipt
-      : selection.baselines![source.baseline]!.checkpoint;
+  const position = (source: HistoricalSpatialFact) => selection.entries[source.entry]!.receipt;
   samples.sort((a, b) => {
     const first = position(a.support[0]!),
       second = position(b.support[0]!);
@@ -414,36 +425,36 @@ export function historicalSpatialMeasurements(
       first.entryIndex - second.entryIndex
     );
   });
-  let previousOther: { at: number; lower: number; support: HistoricalSpatialFact[] } | undefined;
+  let previousOther:
+    | { at: number; lower: number; support: HistoricalSpatialFact[]; segment: string }
+    | undefined;
   const previousEdges = new Map<
     string,
     { at: number; lower: number; support: HistoricalSpatialFact[] }
   >();
   for (const sample of samples) {
-    // A checkpoint is useful known state at its retained suffix, never another
-    // measured endpoint from which a route or approach can be manufactured.
-    if (!('entry' in sample.support[0]!)) continue;
     const direct = [...sample.support];
+    const segment = JSON.stringify(direct.map((source) => factSegments.get(source)));
     if (
       sample.other?.status === 'complete' &&
       sample.other.lower !== undefined &&
       sample.other.upper !== undefined
     ) {
-      if (previousOther && previousOther.at < sample.at)
+      if (previousOther && previousOther.segment === segment && previousOther.at < sample.at)
         sample.other.endpointChange = {
           from: previousOther.at,
           through: sample.at,
           decreaseLower: previousOther.lower - sample.other.upper,
           support: previousOther.support,
         };
-      previousOther = { at: sample.at, lower: sample.other.lower, support: direct };
+      previousOther = { at: sample.at, lower: sample.other.lower, support: direct, segment };
     }
     for (const edge of sample.boundaries) {
-      const reference =
-        'entry' in edge.support
-          ? selection.entries[edge.support.entry]!.receipt.facets[edge.support.facet]!
-          : selection.baselines![edge.support.baseline]!.checkpoint.facets[edge.support.facet]!;
-      const key = JSON.stringify(reference.original ?? [edge.support, reference.memberIndex]),
+      const reference = selection.entries[edge.support.entry]!.receipt.facets[edge.support.facet]!;
+      const key = JSON.stringify([
+          segment,
+          reference.original ?? [edge.support, reference.memberIndex],
+        ]),
         previous = previousEdges.get(key),
         measurement = edge.measurement;
       if (measurement.lower === undefined || measurement.upper === undefined) continue;

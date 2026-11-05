@@ -5,7 +5,7 @@ import { validateEvidenceSource } from './perception-values.js';
 import type { ManifestEvidenceDependency } from './experience-manifest.js';
 import { isSafeRecordId } from './records.js';
 import type { ExperienceEntry, MemoryRecord, WorldState } from './types.js';
-import { selectedTemporalPolicy, selectedObserverIdentityKnowledge } from './world-composition.js';
+import { selectedTemporalPolicy } from './world-composition.js';
 import { temporalActorHistory } from './temporal-evidence.js';
 
 /** Only typed received local subjects are indexed; physical routing IDs are not
@@ -140,9 +140,7 @@ export function ensureExperienceAccounting(world: WorldState, actorId: string): 
     }
   for (const value of Object.values(world.observerIdentities?.[actorId] ?? {}))
     if ('retained' in value && value.retained && !value.authored) {
-      actor.accounts.optional.bytes += encoder.encode(
-        JSON.stringify(selectedObserverIdentityKnowledge(world, value)),
-      ).byteLength;
+      actor.accounts.optional.bytes += encoder.encode(JSON.stringify(value)).byteLength;
       actor.accounts.optional.count++;
     }
   for (const value of world.knowledge[actorId] ?? [])

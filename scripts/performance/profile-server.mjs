@@ -1069,6 +1069,7 @@ async function main() {
       before: performanceSnapshot(),
       nativeStart,
       recentStart,
+      checkpointStart: game.checkpointDiagnostics,
       nativeCounters,
       stages,
       loop,
@@ -1095,6 +1096,7 @@ async function main() {
       threadUsed = phase.threadCpu ? process.threadCpuUsage(phase.threadCpu) : null,
       after = performanceSnapshot(),
       pressure = pressureRun?.snapshot();
+    const checkpointEnd = game.checkpointDiagnostics;
     const elapsed = (end - phase.start) / 1000,
       advanced = game.service.world.simTime - phase.sim;
     return {
@@ -1169,6 +1171,24 @@ async function main() {
       heapUsedBytes: process.memoryUsage().heapUsed,
       rssBytes: process.memoryUsage().rss,
       storageError: game.service.storageError,
+      checkpoints: {
+        before: phase.checkpointStart,
+        after: checkpointEnd,
+        measured: Object.fromEntries(
+          [
+            'due',
+            'attempts',
+            'captures',
+            'failures',
+            'busy',
+            'rotations',
+            'retentionFailures',
+            'settled',
+          ].map((key) => [key, checkpointEnd[key] - phase.checkpointStart[key]]),
+        ),
+        scope:
+          'Automatic checkpoint outcomes; phase-boundary inFlight flags identify crossing tasks. Generic runtime errors and process exit do not establish successful capture.',
+      },
       backgroundFailures: {
         ...after.runtime.backgroundFailures,
         observedInPhase:

@@ -3924,6 +3924,8 @@ async function initializeGameServer(
         // point, so they run fenced in the lane and are ordered after any revocation.
         const perform = async () =>
           [
+            '/api/command',
+            '/api/input',
             '/api/actions',
             '/api/trade',
             '/api/trade/disclosures',
@@ -4117,6 +4119,9 @@ async function initializeGameServer(
     config,
     isWorldRunning: true,
     service,
+    get checkpointDiagnostics() {
+      return autosaves.diagnostics;
+    },
     get director() {
       return director;
     },

@@ -616,6 +616,7 @@ export function releaseSavedTemporalHistory(
                 entryIndex: entry.entryIndex,
               })),
             ),
+            { world },
           ),
         );
         noteTemporalResidency(selected, page);

@@ -6,6 +6,7 @@ import type { AppConfig } from './config.js';
 import type { SqlGameRepository } from './store.js';
 import type { WorldService } from './world-service.js';
 import type { AiDirector } from './ai-director.js';
+import type { Autosaves } from './autosaves.js';
 import type { ShutdownReport } from './http.js';
 import {
   creationActivationRequestSchema,
@@ -55,6 +56,7 @@ export interface CreationHostRuntime {
   readonly isWorldRunning: boolean;
   readonly service: WorldService;
   readonly director: AiDirector;
+  readonly checkpointDiagnostics: Autosaves['diagnostics'];
   close(): Promise<void>;
   shutdown(deadlineMs?: number): Promise<ShutdownReport>;
 }
@@ -547,6 +549,14 @@ export async function createAwaitingCreationHost(
           'No world service is running on this prepared host.',
         );
       return runtime.service;
+    },
+    get checkpointDiagnostics() {
+      if (!runtime)
+        throw new CreationTargetError(
+          'blocked',
+          'No world checkpoint service is running on this prepared host.',
+        );
+      return runtime.checkpointDiagnostics;
     },
     get director() {
       if (!runtime)

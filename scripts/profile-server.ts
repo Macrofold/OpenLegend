@@ -2094,6 +2094,7 @@ try {
     lossMeasuring = true;
     if (collectNativeCounters) observeDomainCounters(nativeCounters);
     const before = performanceSnapshot();
+    const checkpointBefore = game.checkpointDiagnostics;
     const growthSamples: ReturnType<typeof readGrowthSample>[] = [];
     let growthSamplesOmitted = 0,
       previousGrowthCpu = startingCpu,
@@ -2327,6 +2328,7 @@ try {
     const usedCpu = process.cpuUsage(startingCpu);
     const simulatedSeconds = game.service.world.simTime - simStart;
     const after = performanceSnapshot();
+    const checkpointAfter = game.checkpointDiagnostics;
     // Pause, GC and final inspection are cleanup, not gameplay publication stalls.
     measuring = false;
     lossMeasuring = false;
@@ -2559,6 +2561,26 @@ try {
       failures,
       ...(collectRejections ? { rejections } : {}),
       storageError: game.service.storageError,
+      checkpoints: {
+        before: checkpointBefore,
+        after: checkpointAfter,
+        measured: Object.fromEntries(
+          (
+            [
+              'due',
+              'attempts',
+              'captures',
+              'failures',
+              'busy',
+              'rotations',
+              'retentionFailures',
+              'settled',
+            ] as const
+          ).map((key) => [key, checkpointAfter[key] - checkpointBefore[key]]),
+        ),
+        scope:
+          'Automatic checkpoint outcomes during measurement; before/after inFlight flags expose tasks crossing a phase boundary. Failure cause contains safe allowance counters only. Generic runtime errors and process success do not qualify capture success.',
+      },
       heap: {
         collected: !!globalThis.gc,
         initialBytes: initialHeapBytes,

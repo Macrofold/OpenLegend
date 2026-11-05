@@ -686,39 +686,41 @@ export class WorldService {
     input: WorldInputUpdate,
     scope = this.localScope,
   ): Promise<WorldInputResult> {
-    return this.mutate(async () => {
-      await this.ready;
-      this.assertScope(scope, 'play', true);
-      const now = performance.now();
-      this.accountInputTime(now);
-      this.worldInputs.expire(now, scope.actorId);
-      const state = this.inputState(scope);
-      if (this.paused)
-        return {
-          ok: false,
-          code: 'paused',
-          message: 'Resume the world to move or release.',
-          inputScope: { ...state.scope },
-        };
-      const actor = entityGet(this.world.entities, scope.actorId);
-      if (!actor?.actor?.alive)
-        return {
-          ok: false,
-          code: 'unavailable',
-          message: 'This character cannot move now.',
-          inputScope: { ...state.scope },
-        };
-      if (input.kind === 'steer' && (input.direction.x || input.direction.z)) {
-        if (!canSteer(this.world, actor))
+    await this.ready;
+    return this.authorityContext.run({ scope, capability: 'play', controlling: true }, () =>
+      this.mutate(async () => {
+        this.assertLiveAdmission();
+        const now = performance.now();
+        this.accountInputTime(now);
+        this.worldInputs.expire(now, scope.actorId);
+        const state = this.inputState(scope);
+        if (this.paused)
           return {
             ok: false,
-            code: 'busy',
-            message: 'This character cannot steer during the current work or condition.',
+            code: 'paused',
+            message: 'Resume the world to move or release.',
             inputScope: { ...state.scope },
           };
-      }
-      return this.worldInputs.update(state, input, now, this.world.simTime + this.debtSeconds);
-    });
+        const actor = entityGet(this.world.entities, scope.actorId);
+        if (!actor?.actor?.alive)
+          return {
+            ok: false,
+            code: 'unavailable',
+            message: 'This character cannot move now.',
+            inputScope: { ...state.scope },
+          };
+        if (input.kind === 'steer' && (input.direction.x || input.direction.z)) {
+          if (!canSteer(this.world, actor))
+            return {
+              ok: false,
+              code: 'busy',
+              message: 'This character cannot steer during the current work or condition.',
+              inputScope: { ...state.scope },
+            };
+        }
+        return this.worldInputs.update(state, input, now, this.world.simTime + this.debtSeconds);
+      }),
+    );
   }
   executionView(actorId: string): AttackExecutionView | undefined {
     const execution = entityGet(this.world.entities, actorId)?.actor?.action?.attackExecution;
@@ -2306,6 +2308,15 @@ export class WorldService {
     return retained;
   }
 
+  /** Final ordinary admission uses current permission and the existing writer
+   * session; preparation-time checks cannot authorize a later effect.
+   * docs/projects/bookkeeping-simplification-runtime-design.md#53-sessions-controls-and-story-display */
+  private assertLiveAdmission(requireHealthyWriter = true): void {
+    const authority = this.authorityContext.getStore();
+    if (authority) this.assertScope(authority.scope, authority.capability, authority.controlling);
+    if (requireHealthyWriter) this.store.assertWriteAdmission();
+  }
+
   private async acceptProgress(
     saved: SavedWorld,
     receipt?: GameplayReceipt,
@@ -2338,6 +2349,7 @@ export class WorldService {
       );
       const pending = this.pendingSave ?? new PendingWorldSave(performance.now());
       const sequence = this.snapshotSequence + 1;
+      this.assertLiveAdmission(!emergencyPause);
       if (
         !pending.admit(
           prepared.snapshot,
@@ -6773,6 +6785,20 @@ export class WorldService {
     scope?: RequestScope,
     publicReferences = false,
   ): Promise<ApiResult> {
+    return this.authorityContext.run(
+      scope ? { scope, capability: 'play', controlling: true } : this.authorityContext.getStore(),
+      () => this.prepareAndAdmitCommand(commandId, input, actorId, epoch, scope, publicReferences),
+    );
+  }
+
+  private async prepareAndAdmitCommand(
+    commandId: string,
+    input: CommandInput,
+    actorId?: string,
+    epoch?: string,
+    scope?: RequestScope,
+    publicReferences = false,
+  ): Promise<ApiResult> {
     await this.ready;
     if (scope) this.assertScope(scope, 'play', true);
     const actor = scope?.actorId ?? actorId ?? this.controlledEntityId;
@@ -6888,20 +6914,22 @@ export class WorldService {
       // changed inventory cannot turn an already accepted transfer into another one.
       if (prior)
         return await this.mutate(async () => {
-          if (scope) this.assertScope(scope, 'play', true);
+          this.assertLiveAdmission(false);
           if (generation !== this.generation || timeline !== this.timelineId)
             throw new AuthorityError('stale-scope');
           return replay(prior);
         });
       await this.prepareNativeKnownPlaces();
       const resolved = await prepare();
+      if (scope) this.assertScope(scope, 'play', true);
       if (!('type' in resolved)) return resolved;
       return await this.mutate(async () => {
-        if (scope) this.assertScope(scope, 'play', true);
+        this.assertLiveAdmission(false);
         if (generation !== this.generation || timeline !== this.timelineId)
           throw new AuthorityError('stale-scope');
         const outcome = this.recentCommandResults.get(id) ?? prior;
         if (outcome) return replay(outcome);
+        this.assertLiveAdmission();
         if (epoch !== undefined && epoch !== this.commandEpoch)
           return {
             ok: false,
@@ -8445,7 +8473,19 @@ export class WorldService {
         const recordedAction = world.actionExperience.occurrences[actorId]?.some(
           (entry) => entry.id === sourceId,
         );
-        if (!recordedAction && !retainedExperienceSource(world, actorId, sourceId))
+        if (
+          !recordedAction &&
+          !retainedExperienceSource(world, actorId, sourceId) &&
+          !this.store.memories?.hasCapturedTemporalSource(
+            {
+              worldId: world.id,
+              actorId,
+              generation: this.storageGeneration,
+              physicalLife: entityGet(world.entities, actorId)!.actor!.physicalLife ?? 0,
+            },
+            sourceId,
+          )
+        )
           return {
             ok: false,
             code: 'source',

@@ -31,8 +31,6 @@ import {
   selectedAttentionPolicy,
   selectedTemporalPolicy,
   situationReceiptDetailsCurrent,
-  situationBaselineDetailsCurrent,
-  groupedTemporalAvailability,
   type WorldState,
   type TemporalHistorySelection,
   type TemporalValue,
@@ -152,27 +150,6 @@ interface SuppliedModelFact {
 }
 type SuppliedModelFacts = ReadonlyMap<string, SuppliedModelFact>;
 const inlineFrame = (value: object, frame: unknown) => ({ ...value, frame });
-const temporalBaselineScope = (
-  baseline: NonNullable<TemporalHistorySelection['baselines']>[number],
-) => [
-  'checkpoint',
-  baseline.checkpoint.physicalLife,
-  baseline.checkpoint.epoch,
-  baseline.checkpoint.binding,
-  baseline.checkpoint.batchOrder,
-  baseline.checkpoint.entryIndex,
-  baseline.forReceipt.physicalLife,
-  baseline.forReceipt.epoch,
-  baseline.forReceipt.batchOrder,
-  baseline.forReceipt.entryIndex,
-  baseline.forReceipt.memberIndex,
-  baseline.availableAt,
-];
-const temporalBaselineHandle = (
-  world: ExperiencePresentation,
-  actorId: string,
-  baseline: NonNullable<TemporalHistorySelection['baselines']>[number],
-) => permittedSourceHandle(world, actorId, temporalBaselineScope(baseline));
 
 function temporalFactsForModel(
   world: ExperiencePresentation,
@@ -230,7 +207,6 @@ export function temporalHistoryForModel(
   frame = capturedExperience(world) ? world.frame : captureModelSpatialFrame(world, actorId),
 ) {
   const prepared = prepareTemporalHistoryForModel(world, actorId, selection, frame);
-  prepared.model.baselines = (selection.baselines ?? []).map(prepared.renderBaseline);
   return prepared.model;
 }
 function prepareTemporalHistoryForModel(
@@ -265,6 +241,8 @@ function prepareTemporalHistoryForModel(
           }
         : {}),
       acquiredAt: receipt.at,
+      ...(receipt.coverageGap ? { coverageGap: receipt.coverageGap } : {}),
+      ...(receipt.endedFields ? { endedFields: receipt.endedFields } : {}),
       ...(receipt.availabilityAt !== undefined ? { availabilityAt: receipt.availabilityAt } : {}),
       ...(receipt.receiverFrame
         ? { receiverFrame: frames.indexed({}, modelObservationFrame(frame, receipt.receiverFrame)) }
@@ -284,43 +262,10 @@ function prepareTemporalHistoryForModel(
     };
     return { row, throughFrame: frames.frames.length };
   });
-  const renderBaseline = (
-    baseline: NonNullable<TemporalHistorySelection['baselines']>[number],
-  ) => ({
-    reference: temporalBaselineHandle(world, actorId, baseline),
-    subject: receivedSubjectHandle(world, actorId, baseline.checkpoint.subject),
-    ...(baseline.checkpoint.subjectIdentity
-      ? { localSubject: subjectForModel(world, actorId, baseline.checkpoint.subjectIdentity) }
-      : {}),
-    entryAt: baseline.checkpoint.at,
-    knownAt: baseline.availableAt,
-    ...(baseline.checkpoint.availability?.length
-      ? { availability: baseline.checkpoint.availability }
-      : {}),
-    forReceipt: permittedSourceHandle(world, actorId, [
-      'receipt',
-      baseline.forReceipt.physicalLife,
-      baseline.forReceipt.epoch,
-      baseline.forReceipt.batchOrder,
-      baseline.forReceipt.entryIndex,
-    ]),
-    ...temporalFactsForModel(
-      world,
-      actorId,
-      baseline.checkpoint.facets,
-      baseline.values,
-      temporalBaselineScope(baseline),
-      frame,
-      frames,
-      suppliedFacts,
-    ),
-  });
   return {
     frames,
-    renderBaseline,
     throughFrames: rows.map(({ throughFrame }) => throughFrame).reverse(),
     model: {
-      baselines: [] as ReturnType<typeof renderBaseline>[],
       coverage: selection.incomplete ? 'partial' : 'selected-retained',
       frames: frames.frames,
       entries: rows.map(({ row }) => row).reverse(),
@@ -337,7 +282,7 @@ export function boundedTemporalHistoryForModel(
   frame = capturedExperience(world) ? world.frame : captureModelSpatialFrame(world, actorId),
   suppliedFacts?: SuppliedModelFacts,
 ) {
-  const { model, throughFrames, frames, renderBaseline } = prepareTemporalHistoryForModel(
+  const { model, throughFrames, frames } = prepareTemporalHistoryForModel(
     world,
     actorId,
     selection,
@@ -361,57 +306,12 @@ export function boundedTemporalHistoryForModel(
     first = index;
     frameCount = through;
   }
-  let incomplete = selection.incomplete || first > 0;
+  const incomplete = selection.incomplete || first > 0;
   model.entries = model.entries.slice(first);
   frames.compact(model.entries, 0);
-  const retained = selection.entries.slice(first),
-    kept = new Set(
-      retained.map(({ receipt }) =>
-        canonicalJson([
-          receipt.physicalLife,
-          receipt.epoch,
-          receipt.batchOrder,
-          receipt.entryIndex,
-        ]),
-      ),
-    );
-  const baselines: NonNullable<TemporalHistorySelection['baselines']> = [];
-  bytes = Buffer.byteLength(JSON.stringify({ ...model, coverage: 'selected-retained' }));
-  for (const baseline of selection.baselines ?? []) {
-    if (
-      !kept.has(
-        canonicalJson([
-          baseline.forReceipt.physicalLife,
-          baseline.forReceipt.epoch,
-          baseline.forReceipt.batchOrder,
-          baseline.forReceipt.entryIndex,
-        ]),
-      )
-    )
-      continue;
-    const start = frames.frames.length,
-      row = renderBaseline(baseline);
-    const size =
-      Buffer.byteLength(JSON.stringify(row)) +
-      (model.baselines.length ? 1 : 0) +
-      frames.frames
-        .slice(start)
-        .reduce<number>(
-          (sum, value, index) =>
-            sum + Buffer.byteLength(JSON.stringify(value)) + (start + index ? 1 : 0),
-          0,
-        );
-    if (bytes + size > maxBytes) {
-      incomplete = true;
-      frames.compact(undefined, start);
-      continue;
-    }
-    bytes += size;
-    model.baselines.push(row);
-    baselines.push(baseline);
-  }
+  const retained = selection.entries.slice(first);
   model.coverage = incomplete ? 'partial' : 'selected-retained';
-  return { model, selection: { ...selection, entries: retained, baselines, incomplete } };
+  return { model, selection: { ...selection, entries: retained, incomplete } };
 }
 function temporalValueForModel(
   world: ExperiencePresentation,
@@ -700,25 +600,11 @@ function situationBodyFacts(
   };
 }
 
-function selectedBaselineFields(
-  baseline: NonNullable<TemporalHistorySelection['baselines']>[number],
-) {
-  return baseline.origins.map((origin, index) => ({
-    origin,
-    facet: baseline.checkpoint.facets[index]!,
-    value: baseline.values[index]!,
-    availability: baseline.checkpoint.availability?.find((group) =>
-      group.fields.includes(baseline.checkpoint.facets[index]!.memberIndex),
-    ),
-  }));
-}
 function bindSituationHistory(
   world: CapturedExperienceContext,
   actorId: string,
-  maxAgeSeconds: number,
   retentionReferences: Record<string, TemporalReceiptLocator>,
   receiptDetails: NonNullable<SituationProposalBinding['receiptDetails']>,
-  baselineDetails: NonNullable<SituationProposalBinding['baselineDetails']>,
   selection: TemporalHistorySelection,
 ) {
   for (const entry of selection.entries) {
@@ -739,7 +625,7 @@ function bindSituationHistory(
     };
     const previous = receiptDetails[handle];
     if (!previous) {
-      receiptDetails[handle] = { ...entry, expiresAt: receipt.at + maxAgeSeconds };
+      receiptDetails[handle] = { ...entry };
       continue;
     }
     const { facets: _oldFacets, sourceIds: _oldAliases, ...oldHeader } = previous.receipt;
@@ -771,59 +657,6 @@ function bindSituationHistory(
         sourceIds: [...new Set([...previous.receipt.sourceIds, ...receipt.sourceIds])],
       },
       values: facts.map(({ value }) => value),
-      expiresAt: Math.min(previous.expiresAt, receipt.at + maxAgeSeconds),
-    };
-  }
-  for (const baseline of selection.baselines ?? []) {
-    const handle = temporalBaselineHandle(world, actorId, baseline),
-      previous = baselineDetails[handle];
-    if (!previous) {
-      baselineDetails[handle] = { ...baseline, expiresAt: baseline.availableAt + maxAgeSeconds };
-      continue;
-    }
-    const { facets: _old, availability: _oldAvailability, ...oldHeader } = previous.checkpoint,
-      { facets: _new, availability: _newAvailability, ...newHeader } = baseline.checkpoint;
-    if (
-      canonicalJson(oldHeader) !== canonicalJson(newHeader) ||
-      previous.availableAt !== baseline.availableAt ||
-      canonicalJson(previous.forReceipt) !== canonicalJson(baseline.forReceipt)
-    )
-      throw new Error('Retained state changed during this request.');
-    const facts = new Map(
-      selectedBaselineFields(previous).map((field) => [canonicalJson(field.origin), field]),
-    );
-    for (const field of selectedBaselineFields(baseline)) {
-      const key = canonicalJson(field.origin),
-        { facet, value, availability } = field,
-        old = facts.get(key);
-      if (
-        old &&
-        (canonicalJson(old.facet) !== canonicalJson(facet) ||
-          canonicalJson(
-            old.availability && { reason: old.availability.reason, at: old.availability.at },
-          ) !==
-            canonicalJson(availability && { reason: availability.reason, at: availability.at }) ||
-          canonicalJson(old.value) !== canonicalJson(value))
-      )
-        throw new Error('A selected retained state field changed during this request.');
-      facts.set(key, field);
-    }
-    const held = [...facts.values()];
-    baselineDetails[handle] = {
-      ...baseline,
-      checkpoint: {
-        ...baseline.checkpoint,
-        facets: held.map((value) => value.facet),
-        availability: groupedTemporalAvailability(held.map((value) => value.availability)).map(
-          (group) => ({
-            ...group,
-            fields: group.fields.map((index) => held[index]!.facet.memberIndex),
-          }),
-        ),
-      },
-      values: held.map((value) => value.value),
-      origins: held.map((value) => value.origin),
-      expiresAt: Math.min(previous.expiresAt, baseline.availableAt + maxAgeSeconds),
     };
   }
 }
@@ -848,14 +681,9 @@ interface SituationQueryRead {
 function validSituationCut(
   cut: ReturnType<typeof captureEvidenceCut>,
   details: SituationProposalBinding['receiptDetails'],
-  baselines: SituationProposalBinding['baselineDetails'],
   world: WorldState,
 ) {
-  return (
-    evidenceCutEligible(world, cut) &&
-    situationReceiptDetailsCurrent(world, details) &&
-    situationBaselineDetailsCurrent(world, baselines)
-  );
+  return evidenceCutEligible(world, cut) && situationReceiptDetailsCurrent(world, details);
 }
 function querySituationBodies(
   read: SituationQueryRead,
@@ -1266,16 +1094,13 @@ export function captureSituation(
   );
   const retentionReferences: Record<string, TemporalReceiptLocator> = {};
   const receiptDetails: NonNullable<SituationProposalBinding['receiptDetails']> = {};
-  const baselineDetails: NonNullable<SituationProposalBinding['baselineDetails']> = {};
   const historyMaxAgeSeconds = selectedTemporalPolicy(world).recent.maxAgeSeconds;
   const bindHistory = bindSituationHistory.bind(
     undefined,
     presentation,
     actorId,
-    historyMaxAgeSeconds,
     retentionReferences,
     receiptDetails,
-    baselineDetails,
   );
   bindHistory(history);
   const boundaries = geometry.observations.flatMap((observation) =>
@@ -1582,7 +1407,6 @@ export function captureSituation(
     attentionReferences,
     retentionReferences,
     receiptDetails,
-    baselineDetails,
     observationReferences,
     suppliedFacts,
     bindHistory,
@@ -1592,7 +1416,7 @@ export function captureSituation(
     allAttentionReferences,
     allCurrentReferences,
     currentReferences,
-    valid: validSituationCut.bind(undefined, cut, receiptDetails, baselineDetails),
+    valid: validSituationCut.bind(undefined, cut, receiptDetails),
   };
 }
 /** Complete asynchronous history preparation without replacing the original
@@ -1644,7 +1468,6 @@ export function situationResponseCapabilities(captured: CapturedSituation) {
     attention: Object.keys(captured.attentionReferences),
     retention: [
       ...Object.keys(captured.retentionReferences),
-      ...Object.keys(captured.baselineDetails),
       ...Object.keys(captured.observationReferences),
       ...Object.keys(captured.currentReferences),
     ],
@@ -1660,7 +1483,6 @@ export function situationProposalBinding(
     | 'attentionReferences'
     | 'retentionReferences'
     | 'receiptDetails'
-    | 'baselineDetails'
     | 'observationReferences'
     | 'presented'
     | 'currentReferences'
@@ -1672,7 +1494,6 @@ export function situationProposalBinding(
     attentionReferences: captured.attentionReferences,
     retentionReferences: captured.retentionReferences,
     receiptDetails: captured.receiptDetails,
-    baselineDetails: captured.baselineDetails,
     observationReferences: captured.observationReferences,
     presented: captured.presented,
     currentReferences: captured.currentReferences,
@@ -1695,7 +1516,6 @@ export async function expandSituation(
     expandedIds = new Set<string>();
   const firstFrame = captured.frames.length;
   const originalRetention = new Set(Object.keys(captured.retentionReferences)),
-    originalBaselines = new Set(Object.keys(captured.baselineDetails)),
     originalObservations = new Set(Object.keys(captured.observationReferences));
   let visits = policy.queryVisits;
   const wire = () => ({
@@ -1747,29 +1567,17 @@ export async function expandSituation(
         );
         visits -= native.visited;
         const support = (fact: import('@open-legend/domain').HistoricalSpatialFact) => {
-          const baseline = 'baseline' in fact ? history.baselines![fact.baseline]! : undefined;
-          const entry = 'entry' in fact ? history.entries[fact.entry]! : undefined;
-          const reference = (baseline?.checkpoint.facets ?? entry!.receipt.facets)[fact.facet]!;
-          const availability = baseline?.checkpoint.availability
-            ?.filter((group) => group.fields.includes(reference.memberIndex))
-            .map(({ reason, at }) => ({ reason, at }));
+          const entry = history.entries[fact.entry]!;
+          const reference = entry.receipt.facets[fact.facet]!;
           return {
-            reference: baseline
-              ? temporalBaselineHandle(world, actorId, baseline)
-              : permittedSourceHandle(world, actorId, [
-                  'receipt',
-                  entry!.receipt.physicalLife,
-                  entry!.receipt.epoch,
-                  entry!.receipt.batchOrder,
-                  entry!.receipt.entryIndex,
-                ]),
+            reference: permittedSourceHandle(world, actorId, [
+              'receipt',
+              entry.receipt.physicalLife,
+              entry.receipt.epoch,
+              entry.receipt.batchOrder,
+              entry.receipt.entryIndex,
+            ]),
             facet: reference.memberIndex,
-            ...(baseline
-              ? {
-                  knownAt: baseline.availableAt,
-                  ...(availability?.length ? { availability } : {}),
-                }
-              : {}),
             asOf: reference.asOf,
             measuredFrom: reference.measuredFrom,
             measuredThrough: reference.measuredThrough,
@@ -1788,7 +1596,7 @@ export async function expandSituation(
           const record = value as Record<string, unknown>;
           if (
             Object.keys(record).length === 2 &&
-            (typeof record['entry'] === 'number' || typeof record['baseline'] === 'number') &&
+            typeof record['entry'] === 'number' &&
             typeof record['facet'] === 'number'
           )
             return support(
@@ -1939,12 +1747,6 @@ export async function expandSituation(
         while (rows.length && encodedBytes() > policy.expansionBytes) {
           if (keepNewest) rows.shift();
           else rows.pop();
-          if (record['entries'] === rows && Array.isArray(record['baselines'])) {
-            const receipts = new Set(rows.map((row) => (row as { reference?: string }).reference));
-            record['baselines'] = record['baselines'].filter((value) =>
-              receipts.has((value as { forReceipt?: string }).forReceipt),
-            );
-          }
           captured.compactFrames(result, frameStart);
         }
       }
@@ -1984,8 +1786,6 @@ export async function expandSituation(
   for (const key of Object.keys(captured.observationReferences))
     if (!originalObservations.has(key) && !disclosed.has(key))
       delete captured.observationReferences[key];
-  for (const key of Object.keys(captured.baselineDetails))
-    if (!originalBaselines.has(key) && !disclosed.has(key)) delete captured.baselineDetails[key];
   captured.cut.current = Object.values(captured.currentReferences);
   return { ...wire(), expandedIds };
 }

@@ -1,4 +1,4 @@
-import { receivedValueAt, temporalRecentAt, temporalReadSourceRevoked } from '@open-legend/domain';
+import { temporalReadSourceRevoked } from '@open-legend/domain';
 import { personalVectorScope } from './vector-store.js';
 import {
   objectIndexGet,
@@ -10,14 +10,7 @@ import { nativeText } from '@open-legend/domain';
 import {
   newTemporalSourceWatch,
   temporalWatchChanges,
-  installTemporalWitnesses,
-  addTemporalWitness,
-  addTemporalPhysicalWitness,
-  sameSupportedSelection,
-  temporalSelectionHeader,
-  currentTemporalStateMatches,
-  findTemporalStateCarrier,
-  type TemporalStateWitness,
+  retainTemporalSelectionWatch,
   type TemporalSourceWatch,
 } from './temporal-source-fence.js';
 import {
@@ -41,12 +34,11 @@ import {
   type SourceVersionPlan,
 } from './source-version-retention.js';
 import { randomUUID } from 'node:crypto';
-import { evidenceEncodedBytesSql, findTemporalReceiptPages } from './temporal-page-storage.js';
+import { evidenceEncodedBytesSql } from './temporal-page-storage.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalHistory,
-  readTemporalPageRecord,
   temporalPageRecordId,
   type TemporalHistoryPage,
   captureTemporalHistoryReadContext,
@@ -116,24 +108,15 @@ import {
   type TemporalHistorySelection,
   type TemporalReceiptLocator,
   type TemporalSupportCapsule,
-  temporalFacetValueReferences,
+  temporalReceiptAliases,
+  temporalValueDependencyAliases,
+  sensoryFacetDependencies,
+  type EvidenceSource,
   temporalFieldAvailability,
   type TemporalValue,
-  type TemporalFragment,
-  temporalPageReceipt,
-  temporalPageReceipts,
-  selectReceivedReceiptMembers,
-  selectReceivedState,
-  receivedPositionEligible,
-  receivedStateEligible,
-  type ReceivedAddress,
-  type TemporalPage,
   type TemporalReceipt,
   temporalFacetEligible,
   temporalReceiptId,
-  temporalReceiptForRead,
-  materializeTemporalValue,
-  type TemporalFacetReference,
   temporalKnownPlaceCapsules,
   selectedAttentionPolicy,
   validExperienceSummary,
@@ -638,7 +621,6 @@ export interface TemporalSourceFence extends CanonicalSourceFence {
   validate(
     selections: readonly TemporalHistorySelection['entries'][number][],
     currentWindow: () => TemporalHistoryWindow,
-    baselines?: TemporalHistorySelection['baselines'],
   ): Promise<boolean>;
 }
 interface CanonicalSourceWatch {
@@ -648,6 +630,8 @@ interface CanonicalSourceWatch {
   expected: ReadonlyMap<string, string>;
   valid: boolean;
   temporal?: TemporalSourceWatch;
+  /** Exact storage timeline for finite detached temporal inputs. */
+  temporalGeneration?: string;
   retention?: {
     accounts: Set<string>;
     dependentAccounts: Set<string>;
@@ -882,7 +866,8 @@ export class MemoryRepository {
       this.sourceEditEpochs.set(key, {});
     }
     for (const fence of this.canonicalSourceFences)
-      if (fence.worldId === worldId && selected.has(fence.actorId)) fence.valid = false;
+      if (fence.worldId === worldId && selected.has(fence.actorId) && !fence.temporal)
+        fence.valid = false;
     this.publicationRevision++;
     for (const actor of selected)
       this.actorRevisions = objectIndexSet(this.actorRevisions, actor, this.publicationRevision);
@@ -1075,15 +1060,17 @@ export class MemoryRepository {
       expected: new Map(),
       valid: true,
       temporal,
+      temporalGeneration: scope.generation,
     };
     this.canonicalSourceFences.add(fence);
     const release = () => {
       fence.valid = false;
-      temporal.pending = [];
-      temporal.nativePending = [];
-      temporal.rows.clear();
-      temporal.ancestors.clear();
-      temporal.currentState = undefined;
+      temporal.aliases.clear();
+      temporal.personalSources.clear();
+      temporal.personalEdits.clear();
+      temporal.editBytes = 0;
+      temporal.selections.clear();
+      temporal.bytes = 0;
       this.canonicalSourceFences.delete(fence);
       signal?.removeEventListener('abort', release);
     };
@@ -1092,49 +1079,17 @@ export class MemoryRepository {
     let pending: Promise<boolean> | undefined;
     let validatedInput: string | undefined;
     return {
-      current: () =>
-        fence.valid &&
-        !this.sourceEditPending(scope) &&
-        (!temporal.clock || temporal.clock() < temporal.deadline) &&
-        (!temporal.currentState || temporal.currentState()),
+      current: () => fence.valid && !this.sourceEditPending(scope),
       release,
-      validate: async (selections, currentWindow, baselines = []) => {
+      validate: async (selections, currentWindow) => {
         while (pending) await pending;
-        if (!fence.valid) return false;
-        const window = currentWindow();
-        if (temporal.clock && window.at >= temporal.deadline) {
-          fence.valid = false;
-          return false;
-        }
-        const input = digest([selections, baselines, window.maxAgeSeconds]);
-        // The installed witness already watches every selected accepted write.
-        // Hash actual input values so mutable/narrowed query results cannot reuse
-        // an earlier proof merely by keeping their object identity.
-        if (input === validatedInput) return !temporal.currentState || temporal.currentState();
-        temporal.collecting = true;
-        temporal.pending = [];
-        temporal.nativePending = [];
-        temporal.pendingBytes = 0;
-        const work = (async () => {
-          return (
-            fence.valid &&
-            (await this.validateTemporalSelections(
-              scope,
-              selections,
-              currentWindow,
-              temporal,
-              baselines,
-            ))
-          );
-        })().finally(() => {
-          temporal.collecting = false;
-          temporal.pending = [];
-          temporal.nativePending = [];
-          temporal.pendingBytes = 0;
-        });
+        if (!fence.valid || this.sourceEditPending(scope)) return false;
+        const input = digest(selections);
+        if (input === validatedInput) return true;
+        const work = this.validateTemporalSelections(scope, selections, currentWindow, temporal);
         pending = work;
         try {
-          const valid = (await work) && fence.valid;
+          const valid = (await work) && fence.valid && !this.sourceEditPending(scope);
           if (!valid) fence.valid = false;
           else validatedInput = input;
           return valid;
@@ -1143,6 +1098,34 @@ export class MemoryRepository {
         }
       },
     };
+  }
+  /** An authorized creator can withdraw input still held by an active thought,
+   * even after its optional raw record expires. This bounded request registry
+   * proves only the captured source; it never restores personal history. */
+  hasCapturedTemporalSource(
+    scope: MemoryScope & { physicalLife: number },
+    sourceId: string,
+  ): boolean {
+    for (const fence of this.canonicalSourceFences) {
+      if (
+        !fence.valid ||
+        fence.worldId !== scope.worldId ||
+        fence.actorId !== scope.actorId ||
+        fence.temporalGeneration !== scope.generation ||
+        !fence.temporal?.aliases.has(sourceId)
+      )
+        continue;
+      for (const { selection } of fence.temporal.selections.values())
+        if (
+          selection.receipt.physicalLife === scope.physicalLife &&
+          (temporalReceiptAliases(selection.receipt, {}, undefined).includes(sourceId) ||
+            selection.values.some((value) =>
+              temporalValueDependencyAliases(value, undefined).includes(sourceId),
+            ))
+        )
+          return true;
+    }
+    return false;
   }
   /** Invalidate finite source watches once the canonical transaction commits.
    * No historical revision ledger or source body is retained by these watches. */
@@ -1625,17 +1608,16 @@ export class MemoryRepository {
       };
     })();
   }
-  /** Revalidate selected fields and their exact physical declarations. A baseline
-   * is tied to a real retained suffix, never a new observation or an older route. */
+  /** Bind finite, already admitted private input to explicit source withdrawals.
+   * Ordinary recent expiry does not revoke a dated captured observation. */
   async temporalSelectionsCurrent(
     scope: MemoryScope,
     selections: readonly TemporalHistorySelection['entries'][number][],
     currentWindow: () => TemporalHistoryWindow,
-    baselines: TemporalHistorySelection['baselines'] = [],
   ): Promise<boolean> {
     const fence = this.captureTemporalSourceFence(scope);
     try {
-      return await fence.validate(selections, currentWindow, baselines);
+      return await fence.validate(selections, currentWindow);
     } finally {
       fence.release();
     }
@@ -1645,437 +1627,68 @@ export class MemoryRepository {
     selections: readonly TemporalHistorySelection['entries'][number][],
     currentWindow: () => TemporalHistoryWindow,
     watch: TemporalSourceWatch,
-    baselines: NonNullable<TemporalHistorySelection['baselines']>,
   ): Promise<boolean> {
-    type Request = {
-      expected: TemporalHistorySelection['entries'][number];
-      state?: TemporalStateWitness;
-    };
-    const requests: Request[] = selections.map((expected) => ({ expected }));
-    for (const baseline of baselines) {
-      const { pageId: _page, binding, ...header } = baseline.checkpoint;
-      if (
-        binding === undefined ||
-        header.facets.length !== baseline.values.length ||
-        header.facets.length !== baseline.origins.length
-      )
-        return false;
-      // Every selected field has its own carrier member. Physical slices and
-      // sparse corrections cannot borrow the first field's surviving address.
-      for (const [index, facet] of header.facets.entries()) {
-        const origin = baseline.origins[index]!;
-        const expected = {
-          receipt: temporalReceiptForRead({
-            ...header,
-            facets: [facet],
-            id: temporalReceiptId(header),
-            change: 'baseline' as const,
-            required: false,
-          }),
-          values: [baseline.values[index]!],
-        };
-        requests.push({
-          expected,
-          state: {
-            carrier: {
-              ...baseline.forReceipt,
-              batchOrder: origin.batchOrder,
-              entryIndex: origin.entryIndex,
-              memberIndex: origin.memberIndex,
-            },
-            binding,
-            subject: header.subject,
-            asOf: baseline.availableAt,
-            selection: expected,
-          },
-        });
-      }
-    }
-    if (!requests.length) return installTemporalWitnesses(watch, new Map(), RETRIEVAL_BYTES);
+    // The private history reader already admitted and detached these exact
+    // entries at its source boundary. Rehydrating them here adds no authority,
+    // and would incorrectly revoke input whose optional storage just expired.
     if (
-      requests.length > RETRIEVAL_ROWS ||
-      Buffer.byteLength(JSON.stringify(requests)) > RETRIEVAL_BYTES ||
-      requests.some(
-        ({ expected }) =>
-          expected.receipt.actorId !== scope.actorId ||
-          expected.receipt.facets.length !== expected.values.length,
+      selections.length > RETRIEVAL_ROWS ||
+      Buffer.byteLength(JSON.stringify(selections)) > RETRIEVAL_BYTES ||
+      selections.some(
+        ({ receipt, values }) =>
+          receipt.actorId !== scope.actorId || receipt.facets.length !== values.length,
       )
     )
       return false;
     const subjects = new Set(
-      requests.flatMap(({ expected }) => [
-        expected.receipt.subject,
-        ...(expected.receipt.contextSubjects ?? []),
-      ]),
+      selections.flatMap(({ receipt }) => [receipt.subject, ...(receipt.contextSubjects ?? [])]),
     );
-    const window = currentWindow(),
-      native = window.capture(subjects);
-    const shape = (receipt: TemporalReceipt, facet: TemporalFacetReference) =>
-      canonicalJson(temporalReceiptForRead({ ...receipt, facets: [facet] }).facets[0]);
-    const raw = (page: TemporalPage, request: Request) =>
-      selectReceivedReceiptMembers(
-        page,
-        request.expected.receipt,
-        new Set(request.expected.receipt.facets.map((facet) => facet.memberIndex)),
-        new Set([
-          request.expected.receipt.subject,
-          ...(request.expected.receipt.contextSubjects ?? []),
-        ]),
-      );
-    const state = (page: TemporalPage, request: Request) =>
-      request.state &&
-      selectReceivedState(page, request.state.carrier, {
-        binding: request.state.binding,
-        subject: request.state.subject,
-        asOf: request.state.asOf,
-        members: new Set(request.expected.receipt.facets.map((facet) => facet.memberIndex)),
-      })?.receipt;
-    const currentState = (request: Request) =>
-      request.state &&
-      native.currentSeeds
-        .filter(
-          (seed) =>
-            seed.binding === request.state!.binding &&
-            seed.receipt.subject === request.state!.subject &&
-            seed.receipt.at <= request.state!.asOf,
-        )
-        .map((seed) => seed.receipt);
-    const metadataMatches = (actual: TemporalReceipt, request: Request) =>
-      (request.state ||
-        canonicalJson(temporalSelectionHeader(actual)) ===
-          canonicalJson(temporalSelectionHeader(request.expected.receipt))) &&
-      request.expected.receipt.facets.some((expected) =>
-        actual.facets.some(
-          (facet) =>
-            facet.memberIndex === expected.memberIndex &&
-            shape(actual, facet) === canonicalJson(expected),
-        ),
-      );
-    return this.snapshot(scope, async () => {
-      if (
+    const context = currentWindow().capture(subjects),
+      aliases = new Set<string>(),
+      semanticSources: EvidenceSource[] = [];
+    for (const selection of selections) {
+      const receipt = selection.receipt;
+      if (temporalReadSourceRevoked(context.disclosure, scope.actorId, receipt.id)) return false;
+      for (const alias of temporalReceiptAliases(receipt, context.sources, context.disclosure))
+        aliases.add(alias);
+      for (const [at, facet] of receipt.facets.entries()) {
+        const value = selection.values[at]!;
+        for (const source of [
+          facet.original?.source,
+          facet.receivedFrom,
+          facet.support?.original.source,
+          facet.support?.confirmation,
+          facet.detailSupport?.proof.original.source,
+          facet.detailSupport?.proof.confirmation,
+        ])
+          if (source) semanticSources.push(source);
+        if (value.kind !== 'personal-account')
+          for (const dependency of sensoryFacetDependencies(value))
+            semanticSources.push(dependency.source);
+        if (!temporalFacetEligible(context.disclosure, scope.actorId, facet, value)) return false;
+        for (const alias of temporalValueDependencyAliases(value, context.disclosure))
+          aliases.add(alias);
+      }
+    }
+    if (
+      [...aliases].some((alias) =>
+        temporalReadSourceRevoked(context.disclosure, scope.actorId, alias),
+      )
+    )
+      return false;
+    // Install before the SQL await so an edit during the generation check cannot
+    // escape this existing finite registry. No history row is pinned.
+    if (!retainTemporalSelectionWatch(watch, selections, aliases, RETRIEVAL_BYTES, semanticSources))
+      return false;
+    return this.snapshot(
+      scope,
+      async () =>
         (
           await this.db
             .prepare('SELECT generation FROM world_head WHERE world_id=?')
             .get(scope.worldId)
-        )?.['generation'] !== scope.generation
-      )
-        return false;
-      const addresses: ReceivedAddress[] = [];
-      for (const request of requests) {
-        const available = [
-          ...native.pages.flatMap((page) => {
-            const found = request.state ? state(page, request) : raw(page, request);
-            return found ? [found] : [];
-          }),
-          ...(currentState(request) ?? []),
-        ];
-        if (request.state) {
-          if (!available.some((actual) => metadataMatches(actual, request)))
-            addresses.push(request.state.carrier);
-        } else
-          for (const expected of request.expected.receipt.facets)
-            if (
-              !available.some(
-                (actual) =>
-                  canonicalJson(temporalSelectionHeader(actual)) ===
-                    canonicalJson(temporalSelectionHeader(request.expected.receipt)) &&
-                  actual.facets.some(
-                    (facet) =>
-                      facet.memberIndex === expected.memberIndex &&
-                      shape(actual, facet) === canonicalJson(expected),
-                  ),
-              )
-            )
-              addresses.push({ ...request.expected.receipt, memberIndex: expected.memberIndex });
-      }
-      const selectedPages = await findTemporalReceiptPages(
-        this.db,
-        scope.worldId,
-        scope.actorId,
-        addresses,
-        RETRIEVAL_BYTES,
-      );
-      if (selectedPages.incomplete) return false;
-      let bytes = selectedPages.rows.reduce(
-        (total, row) => total + Number(row['encoded_bytes']),
-        0,
-      );
-      const pageMap = new Map<string, TemporalPage>();
-      for (const row of selectedPages.rows) {
-        const page = readTemporalPageRecord(row);
-        pageMap.set(page.id, page);
-      }
-      // A pending sparse replacement wins over its still-saved predecessor.
-      for (const page of native.pages) pageMap.set(page.id, page);
-      const pages = [...pageMap.values()];
-      const candidates = requests.map((request) => [
-        ...pages.flatMap((page) => {
-          const receipt = request.state ? state(page, request) : raw(page, request);
-          return receipt && metadataMatches(receipt, request) ? [{ receipt, page }] : [];
-        }),
-        ...(currentState(request) ?? [])
-          .filter((receipt) => metadataMatches(receipt, request))
-          .map((receipt) => ({ receipt, page: undefined })),
-      ]);
-      const supportIds = [
-        ...new Set(
-          requests.flatMap((request, index) =>
-            !request.state &&
-            !request.expected.receipt.facets.every((expected) =>
-              candidates[index]!.some(({ receipt }) =>
-                receipt.facets.some(
-                  (facet) =>
-                    facet.memberIndex === expected.memberIndex &&
-                    shape(receipt, facet) === canonicalJson(expected),
-                ),
-              ),
-            )
-              ? [temporalReceiptId(request.expected.receipt)]
-              : [],
-          ),
-        ),
-      ];
-      const supports = new Map<string, TemporalSupportCapsule>();
-      if (supportIds.length) {
-        const total = await this.db
-          .prepare(
-            'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
-          )
-          .get(scope.worldId, scope.actorId, supportIds);
-        bytes += Number(total?.['bytes'] ?? 0);
-        if (bytes > RETRIEVAL_BYTES) return false;
-        for (const row of await this.db
-          .prepare(
-            'SELECT source_id,payload FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[])',
-          )
-          .all(scope.worldId, scope.actorId, supportIds))
-          supports.set(
-            String(row['source_id']),
-            JSON.parse(String(row['payload'])) as TemporalSupportCapsule,
-          );
-      }
-      const references = [
-        ...new Set(
-          candidates.flatMap((values) =>
-            values.flatMap(({ receipt }) => receipt.facets.flatMap(temporalFacetValueReferences)),
-          ),
-        ),
-      ];
-      const sources = { ...native.sources };
-      const missing = references.filter((id) => !sources[id]);
-      if (missing.length) {
-        const total = await this.db
-          .prepare(
-            'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
-          )
-          .get(scope.worldId, missing);
-        bytes += Number(total?.['bytes'] ?? 0);
-        if (bytes > RETRIEVAL_BYTES) return false;
-        for (const row of await this.db
-          .prepare(
-            'SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
-          )
-          .all(scope.worldId, missing))
-          sources[String(row['source_id'])] = JSON.parse(String(row['payload']));
-      }
-      const latest = currentWindow(),
-        latestContext = latest.capture(subjects),
-        disclosure = latestContext.disclosure;
-      const rows: TemporalSourceWatch['rows'] = new Map();
-      const currentStates: TemporalStateWitness[] = [];
-      let deadline = Infinity;
-      for (const [index, request] of requests.entries()) {
-        const expected = request.expected,
-          key = canonicalJson([
-            expected.receipt.actorId,
-            expected.receipt.physicalLife,
-            expected.receipt.epoch,
-            expected.receipt.batchOrder,
-            expected.receipt.entryIndex,
-            request.state?.binding,
-            request.state?.asOf,
-            request.state?.carrier.memberIndex,
-            expected.receipt.facets.map((facet) => facet.memberIndex),
-          ]);
-        const capsule = !request.state && supports.get(temporalReceiptId(expected.receipt));
-        // An independently retained proof does not override a later personal
-        // correction of this receipt or its exact selected member.
-        if (
-          !request.state &&
-          (temporalReadSourceRevoked(disclosure, scope.actorId, expected.receipt.id) ||
-            expected.receipt.facets.some((facet) =>
-              temporalReadSourceRevoked(
-                disclosure,
-                scope.actorId,
-                personalFactAlias(expected.receipt.id, facet.memberIndex),
-              ),
-            ))
-        )
-          return false;
-        if (capsule && sameSupportedSelection(capsule, expected)) {
-          if (
-            expected.receipt.facets.some(
-              (facet, index) =>
-                !temporalFacetEligible(disclosure, scope.actorId, facet, expected.values[index]!),
-            )
-          )
-            return false;
-          addTemporalWitness(
-            rows,
-            'mind_temporal_supports',
-            JSON.stringify([
-              'world',
-              'experience',
-              'temporal',
-              'actors',
-              scope.actorId,
-              'supports',
-              capsule.receipt.id,
-            ]),
-            { supports: new Map([[key, expected]]) },
-          );
-          continue;
-        }
-        if (request.state) {
-          if (
-            !receivedStateEligible(request.state.carrier, request.state.asOf, latest.frontier) ||
-            !temporalRecentAt(request.state.asOf, latest.at, latest.maxAgeSeconds)
-          )
-            return false;
-          deadline = Math.min(deadline, request.state.asOf + latest.maxAgeSeconds);
-          const physical =
-            latest.contains(request.state.carrier, request.state.carrier.memberIndex) &&
-            expected.receipt.facets.every((field, fieldIndex) =>
-              candidates[index]!.some((candidate) => {
-                if (!candidate.page) return false;
-                const facet = candidate.receipt.facets.find(
-                  (facet) =>
-                    facet.memberIndex === field.memberIndex &&
-                    shape(candidate.receipt, facet) === canonicalJson(field),
-                );
-                if (!facet) return false;
-                const fragment = receivedValueAt(sources, facet),
-                  value = fragment && materializeTemporalValue(facet, fragment, sources);
-                return (
-                  !!value &&
-                  canonicalJson(value) === canonicalJson(expected.values[fieldIndex]) &&
-                  temporalFacetEligible(disclosure, scope.actorId, facet, value)
-                );
-              }),
-            );
-          if (
-            !physical &&
-            (currentTemporalStateMatches(latestContext, request.state) ||
-              findTemporalStateCarrier(latestContext, request.state, latest.contains))
-          ) {
-            currentStates.push(request.state);
-            continue;
-          }
-          if (!physical) return false;
-        }
-        for (const [fieldIndex, field] of expected.receipt.facets.entries()) {
-          if (
-            !request.state &&
-            (!receivedPositionEligible(
-              { ...expected.receipt, memberIndex: field.memberIndex },
-              expected.receipt.at,
-              latest.frontier,
-            ) ||
-              !temporalRecentAt(expected.receipt.at, latest.at, latest.maxAgeSeconds) ||
-              !latest.contains(expected.receipt, field.memberIndex))
-          )
-            return false;
-          let matched = false;
-          for (const candidate of candidates[index]!) {
-            if (request.state && !candidate.page) continue;
-            const facet = candidate.receipt.facets.find(
-              (facet) =>
-                facet.memberIndex === field.memberIndex &&
-                shape(candidate.receipt, facet) === canonicalJson(field),
-            );
-            if (!facet) continue;
-            const fragment = receivedValueAt(sources, facet),
-              value = fragment && materializeTemporalValue(facet, fragment, sources);
-            if (
-              !value ||
-              canonicalJson(value) !== canonicalJson(expected.values[fieldIndex]) ||
-              !temporalFacetEligible(disclosure, scope.actorId, facet, value)
-            )
-              continue;
-            matched = true;
-            if (candidate.page) addTemporalPhysicalWitness(rows, candidate.page);
-            break;
-          }
-          if (!matched) return false;
-        }
-        if (!request.state)
-          deadline = Math.min(deadline, expected.receipt.at + latest.maxAgeSeconds);
-        addTemporalWitness(
-          rows,
-          'temporal_logical',
-          key,
-          request.state
-            ? { states: new Map([[key, request.state]]) }
-            : { selections: new Map([[key, expected]]) },
-        );
-      }
-      if (rows.get('temporal_logical')?.size)
-        addTemporalWitness(
-          rows,
-          'mind_temporal_actors',
-          JSON.stringify(['world', 'experience', 'temporal', 'actors', scope.actorId]),
-          { eligibility: true },
-        );
-      const installed = installTemporalWitnesses(watch, rows, RETRIEVAL_BYTES);
-      if (installed) {
-        watch.deadline = deadline;
-        watch.clock = () => currentWindow().at;
-        const promoted = new Set<TemporalStateWitness>();
-        watch.currentState = currentStates.length
-          ? () => {
-              const window = currentWindow();
-              let current: TemporalHistoryReadContext | undefined;
-              for (const state of currentStates) {
-                // Changing the proof's physical carrier cannot move the original
-                // requested state past a pressure/age boundary.
-                if (
-                  !receivedStateEligible(state.carrier, state.asOf, window.frontier) ||
-                  !temporalRecentAt(state.asOf, window.at, window.maxAgeSeconds)
-                )
-                  return false;
-                if (promoted.has(state)) continue;
-                current ??= window.capture(subjects);
-                const carrier = findTemporalStateCarrier(current, state, window.contains);
-                if (!carrier) {
-                  if (!currentTemporalStateMatches(current, state)) return false;
-                  continue;
-                }
-                const key = canonicalJson([
-                  'current-state',
-                  carrier.state.carrier,
-                  state.binding,
-                  state.asOf,
-                  state.selection.receipt.facets.map((facet) => facet.memberIndex),
-                ]);
-                addTemporalWitness(watch.rows, 'temporal_logical', key, {
-                  states: new Map([[key, carrier.state]]),
-                });
-                addTemporalPhysicalWitness(watch.rows, carrier.page);
-                addTemporalWitness(
-                  watch.rows,
-                  'mind_temporal_actors',
-                  JSON.stringify(['world', 'experience', 'temporal', 'actors', scope.actorId]),
-                  { eligibility: true },
-                );
-                if (!installTemporalWitnesses(watch, watch.rows, RETRIEVAL_BYTES)) return false;
-                promoted.add(state);
-              }
-              return true;
-            }
-          : undefined;
-      }
-      return installed;
-    });
+        )?.['generation'] === scope.generation,
+    );
   }
   /** Called before current rows change, inside their transaction. Retired/corrected
    * source versions preserve provenance for future consolidation policies.

@@ -1,3 +1,4 @@
+import { retainedEvidenceRowSql } from './retained-evidence-selection.js';
 import { liveEvidenceRowSql } from './world-record-schema.js';
 import { setImmediate } from 'node:timers/promises';
 import type { SqlDatabase } from './store.js';
@@ -9,7 +10,12 @@ const identifier = (name: string) => {
 };
 
 /** Keyset paging never scans an increasing OFFSET or retains previous pages. */
-export async function* tableRows(db: SqlDatabase, table: string, worldId?: string) {
+export async function* tableRows(
+  db: SqlDatabase,
+  table: string,
+  worldId?: string,
+  evidence: 'physical' | 'retained' = 'physical',
+) {
   identifier(table);
   const primary = (
     await db
@@ -28,7 +34,7 @@ export async function* tableRows(db: SqlDatabase, table: string, worldId?: strin
   let cursor: unknown[] | undefined;
   for (;;) {
     const predicates = [
-      liveEvidenceRowSql(table),
+      evidence === 'retained' ? retainedEvidenceRowSql(table) : liveEvidenceRowSql(table),
       worldId !== undefined ? 'world_id=?' : '',
       cursor ? `(${columns.join(',')}) > (${columns.map(() => '?').join(',')})` : '',
     ].filter(Boolean);

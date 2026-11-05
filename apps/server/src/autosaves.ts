@@ -2,12 +2,46 @@ import type { AutosaveSettings, AutosaveStatus, GameSaveSummary } from '@open-le
 import { AUTOSAVE_DEFAULTS, CheckpointBusyError, GameSaveError } from './game-saves.js';
 import { OverloadError } from './work-lane.js';
 import type { WorldService } from './world-service.js';
+import { CheckpointAllowanceError, type CheckpointAllowanceDetails } from './save-files.js';
 
 /** Wall-time cadence is operational policy, not a simulation clock or durability boundary.
  * Enable, cadence and retention are operator settings (C05); defaults are on, every five
  * minutes of running time, keep three. docs/save-and-load.md#compatibility-and-retention
  */
 export class Autosaves {
+  private readonly outcomes = {
+    due: 0,
+    attempts: 0,
+    captures: 0,
+    failures: 0,
+    busy: 0,
+    rotations: 0,
+    retentionFailures: 0,
+    settled: 0,
+  };
+  private lastFailure?: {
+    stage: 'capture' | 'rotation';
+    cause: 'allowance' | 'other';
+    allowance?: CheckpointAllowanceDetails;
+  };
+  /** Scalar outcomes remain available when expensive profiler collectors are off.
+   * A settled task/process is not proof that its checkpoint succeeded. */
+  get diagnostics() {
+    return {
+      ...this.outcomes,
+      inFlight: !!this.active,
+      ...(this.lastFailure
+        ? {
+            lastFailure: {
+              ...this.lastFailure,
+              ...(this.lastFailure.allowance
+                ? { allowance: { ...this.lastFailure.allowance } }
+                : {}),
+            },
+          }
+        : {}),
+    };
+  }
   private elapsed = 0;
   private active?: Promise<void>;
   private stopped = false;
@@ -111,11 +145,15 @@ export class Autosaves {
       return;
     }
     if (this.settingsError || !this.settings.enabled) return;
+    const wasDue = this.elapsed >= this.cadenceSeconds;
     this.elapsed = Math.min(this.cadenceSeconds, this.elapsed + seconds);
+    if (!wasDue && this.elapsed >= this.cadenceSeconds) this.outcomes.due++;
     // A waiting manual save goes first; busy periods leave one pending opportunity.
     if (this.active || this.service.store.saves?.busy || this.elapsed < this.cadenceSeconds) return;
     this.elapsed = 0;
+    this.outcomes.attempts++;
     this.active = this.save().finally(() => {
+      this.outcomes.settled++;
       this.active = undefined;
     });
   }
@@ -124,12 +162,15 @@ export class Autosaves {
     let stage = 'Autosave failed';
     try {
       await this.service.createAutosave();
+      this.outcomes.captures++;
       this.lastCompletedAt = new Date().toISOString();
       this.deferred = 0;
       stage = 'Autosave retention failed';
       await saves?.rotate(this.service.world.id, 'auto', this.settings.retain);
+      this.outcomes.rotations++;
     } catch (error) {
       if (error instanceof CheckpointBusyError || error instanceof OverloadError) {
+        this.outcomes.busy++;
         // The mutation queue refused this opportunity (a running capture normally holds the
         // opportunity in advance() instead; the capture-slot refusal is a defensive fallback).
         // Retry after 30 s of running time; three consecutive refusals are reported, since
@@ -142,6 +183,14 @@ export class Autosaves {
             `Automatic checkpoints are being delayed because the server is busy (${error.message}) Earlier checkpoints retained.`,
           );
       } else {
+        const failedStage = stage === 'Autosave failed' ? 'capture' : 'rotation';
+        if (failedStage === 'capture') this.outcomes.failures++;
+        else this.outcomes.retentionFailures++;
+        this.lastFailure = {
+          stage: failedStage,
+          cause: error instanceof CheckpointAllowanceError ? 'allowance' : 'other',
+          ...(error instanceof CheckpointAllowanceError ? { allowance: { ...error.details } } : {}),
+        };
         // Only consecutive busy refusals count toward the busy report.
         this.deferred = 0;
         await saves?.recordFailure(

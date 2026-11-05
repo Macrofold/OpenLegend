@@ -10,14 +10,13 @@ import {
   captureTemporalReadContext,
   captureTemporalReceiptPrefix,
   receivedDirectoryContains,
-  captureTemporalCurrentSeeds,
-  temporalFacetValueReferences,
   canonicalJson,
   immutableDataSnapshot,
   appendedRecordCount,
   selectedAttentionPolicy,
   temporalPageReferences,
   selectTemporalPageEntries,
+  receivedRecordValueReferences,
   selectCapturedTemporalHistory,
   receivedObservationValueReferences,
   receivedFacetValueReferences,
@@ -35,6 +34,7 @@ import {
   type TemporalValue,
   type ReceivedFrontier,
   type ReceivedObservation,
+  type ReceivedEntrySelection,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
@@ -130,8 +130,6 @@ export interface TemporalHistoryReadContext {
   readonly maximumOperations: number;
   readonly maximumCandidates: number;
   readonly pages: readonly TemporalPage[];
-  readonly currentSeeds: ReturnType<typeof captureTemporalCurrentSeeds>;
-  readonly captureIncomplete: boolean;
   readonly releasedThrough?: number;
   readonly frontier?: ReceivedFrontier;
   readonly recordingGap?: { readonly from: number; readonly through: number };
@@ -153,20 +151,10 @@ export function captureTemporalHistoryReadContext(
         page.subjects.some((subject) => subjectSet.has(subject)) ||
         (selection.includeGeometry &&
           page.batches.some((batch) =>
-            batch.bindings.some((binding) => binding.seed.spatialContext),
+            batch.entries.some((entry) => entry.receipt?.spatialContext),
           )),
     )
     .map((page) => immutableDataSnapshot(page));
-  const maximum = selectedAttentionPolicy(world).scene.candidateVisits;
-  const acquiredSeeds = captureTemporalCurrentSeeds(
-    world,
-    actorId,
-    subjectSet,
-    selection.includeGeometry,
-  );
-  const currentSeeds = acquiredSeeds
-    .slice(0, maximum)
-    .map((receipt) => immutableDataSnapshot(receipt));
   const sources: Record<string, ReceivedValueLookup[string]> = {};
   for (const chunk of pages)
     for (const id of temporalPageReferences(chunk)) {
@@ -174,15 +162,7 @@ export function captureTemporalHistoryReadContext(
       if (!source) continue;
       sources[id] = { value: immutableDataSnapshot(source.value) };
     }
-  for (const interval of currentSeeds)
-    for (const field of interval.receipt.facets)
-      for (const id of temporalFacetValueReferences(field)) {
-        const source = world.receivedValues?.sources[id];
-        if (source) sources[id] = { value: immutableDataSnapshot(source.value) };
-      }
   return {
-    currentSeeds,
-    captureIncomplete: acquiredSeeds.length > currentSeeds.length,
     worldId: world.id,
     actorId,
     at: world.simTime,
@@ -314,47 +294,6 @@ export class MemoryRetentionError extends Error {
   override readonly name = 'MemoryRetentionError';
 }
 
-interface TemporalNeighborKey {
-  key: string;
-  life?: number;
-  epoch?: string;
-}
-/** The same bounded seek serves subject discovery and exact held-state tracks.
- * Newer saved batches can never substitute for the caller's captured cut. */
-async function temporalNeighborPages(
-  db: SqlDatabase,
-  scope: MemoryScope,
-  kind: 'subjects' | 'tracks',
-  keys: readonly TemporalNeighborKey[],
-  at: number,
-  cut: TemporalReceiptPrefix,
-): Promise<Record<string, unknown>[]> {
-  if (!keys.length) return [];
-  const column = kind === 'subjects' ? 'subject_keys' : 'track_keys';
-  const wanted = keys.map((key) => ({ ...key, bucket: receiptLookupBuckets(kind, [key.key])[0]! }));
-  const seek = (
-    following: boolean,
-  ) => `SELECT p.id,p.encoded_bytes FROM wanted q CROSS JOIN LATERAL (
-    SELECT id,encoded_bytes FROM mind_temporal_pages c
-    WHERE c.world_id=? AND c.actor_id=? AND (q.life IS NULL OR c.physical_life=q.life)
-      AND (q.epoch IS NULL OR c.receipt_epoch=q.epoch)
-      AND c.lookup_buckets @> ARRAY[q.bucket]::smallint[] AND c.${column} @> ARRAY[q.key]::text[]
-      AND c.first_at${following ? '>' : '<='}?
-      AND (c.first_batch_order,c.first_entry)<=(?,?)
-    ORDER BY c.first_at ${following ? 'ASC' : 'DESC'},c.first_batch_order ${following ? 'ASC' : 'DESC'},
-      c.first_entry ${following ? 'ASC' : 'DESC'},c.first_member ${following ? 'ASC' : 'DESC'},c.id ${following ? 'ASC' : 'DESC'} LIMIT 1
-  ) p`;
-  const args = [scope.worldId, scope.actorId, at, cut.throughBatchOrder, cut.throughEntryIndex];
-  return db
-    .prepare(
-      `WITH wanted AS MATERIALIZED (
-      SELECT * FROM jsonb_to_recordset(?::jsonb) q(key text,bucket smallint,life bigint,epoch text)
-    ), selected AS (${seek(false)} UNION ALL ${seek(true)})
-    SELECT DISTINCT id,encoded_bytes FROM selected`,
-    )
-    .all(JSON.stringify(wanted), ...args, ...args);
-}
-
 /** Read metadata before bodies. The caller retains the same authority/privacy
  * fence across this await and the final disclosure. Shared source IDs grant nothing. */
 export async function readTemporalHistory(
@@ -411,7 +350,6 @@ export async function readTemporalHistory(
         : []),
     );
   const pages = new Map<string, TemporalPage>();
-  const loadedRecords = new Set<string>();
   const selected: string[] = [];
   const sourceIds = new Set<string>();
   const metadataCursor = (row: Record<string, unknown>) => ({
@@ -424,7 +362,7 @@ export async function readTemporalHistory(
   });
   let metadataBefore: TemporalHistoryPage['nextBefore'];
   let preparationBytes = 0,
-    incomplete = metadata.length > 128 || !!context.recordingGap || context.captureIncomplete,
+    incomplete = metadata.length > 128 || !!context.recordingGap,
     hasMore = metadata.length > 128;
   for (const row of metadata.slice(0, 128)) {
     const size = Number(row['encoded_bytes']);
@@ -448,35 +386,9 @@ export async function readTemporalHistory(
       const page = readTemporalPageRecord(row);
       if (page.actorId !== scope.actorId) throw new MemoryRetentionError('Foreign temporal block.');
       pages.set(page.id, page);
-      loadedRecords.add(String(row['id']));
     }
   };
   await hydrate(selected);
-  // A selected subject may have no actual sample inside the requested interval.
-  // Its nearest neighboring block supplies only the original carried seed; native
-  // selection still proves that seed's exact admission and availability range.
-  if (subjects.length) {
-    const neighbors = await temporalNeighborPages(
-      db,
-      scope,
-      'subjects',
-      subjects.map((key) => ({ key, life: query.physicalLife, epoch: query.epoch })),
-      through,
-      cut,
-    );
-    const ids: string[] = [];
-    for (const row of neighbors) {
-      if (loadedRecords.has(String(row['id']))) continue;
-      const bytes = Number(row['encoded_bytes']);
-      if (preparationBytes + bytes > maximumPreparation) {
-        incomplete = true;
-        break;
-      }
-      preparationBytes += bytes;
-      ids.push(String(row['id']));
-    }
-    await hydrate(ids);
-  }
   for (const page of context.pages)
     if (
       (!subjects.length ||
@@ -486,57 +398,6 @@ export async function readTemporalHistory(
       (query.epoch === undefined || page.epoch === query.epoch)
     )
       pages.set(page.id, page);
-  const tracks = new Map<string, { track: string; life: number; epoch: string }>();
-  const addTrack = (track: string | undefined, life: number, epoch: string) => {
-    if (!track) return;
-    const key = JSON.stringify([track, life, epoch]);
-    if (tracks.size >= context.maximumOperations && !tracks.has(key)) {
-      incomplete = true;
-      return;
-    }
-    tracks.set(key, { track, life, epoch });
-  };
-  for (const interval of context.currentSeeds)
-    for (const facet of interval.receipt.facets)
-      addTrack(facet.track, interval.receipt.physicalLife, interval.receipt.epoch);
-  for (const page of pages.values())
-    for (const batch of page.batches)
-      for (const binding of batch.bindings) {
-        if (
-          subjects.length &&
-          !subjects.includes(binding.subject) &&
-          !(query.includeGeometry && binding.seed.spatialContext)
-        )
-          continue;
-        for (const part of binding.parts)
-          addTrack(part.facet.track, batch.physicalLife, batch.epoch);
-      }
-  if (tracks.size) {
-    const neighbors = await temporalNeighborPages(
-      db,
-      scope,
-      'tracks',
-      [...tracks.values()].map((track) => ({
-        key: track.track,
-        life: track.life,
-        epoch: track.epoch,
-      })),
-      through,
-      cut,
-    );
-    const ids: string[] = [];
-    for (const row of neighbors) {
-      if (loadedRecords.has(String(row['id']))) continue;
-      const bytes = Number(row['encoded_bytes']);
-      if (preparationBytes + bytes > maximumPreparation) {
-        incomplete = true;
-        break;
-      }
-      preparationBytes += bytes;
-      ids.push(String(row['id']));
-    }
-    await hydrate(ids);
-  }
   // Pending members replace the same immutable logical coordinates. Physical
   // slices can share an entry, so overlay only their actual member intersection.
   const nativeMembers = new Map<string, Set<number>>();
@@ -551,11 +412,9 @@ export async function readTemporalHistory(
         ]);
         let members = nativeMembers.get(key);
         if (!members) nativeMembers.set(key, (members = new Set()));
-        for (const coverage of entry.coverage)
-          for (const member of coverage.members) members.add(member.memberIndex);
         for (const facet of entry.receipt?.facets ?? []) members.add(facet.memberIndex);
-        for (const member of entry.rejected ?? []) members.add(member.memberIndex);
       }
+  const trimmedPages = new Map<string, readonly ReceivedEntrySelection[]>();
   for (const [id, page] of pages) {
     if (context.pages.includes(page)) continue;
     let changed = false;
@@ -565,13 +424,7 @@ export async function readTemporalHistory(
           JSON.stringify([page.physicalLife, page.epoch, batch.batchOrder, entry.entryIndex]),
         );
         if (!replaced) return [{ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex }];
-        const all = [
-          ...entry.coverage.flatMap((coverage) =>
-            coverage.members.map((member) => member.memberIndex),
-          ),
-          ...(entry.receipt?.facets.map((facet) => facet.memberIndex) ?? []),
-          ...(entry.rejected?.map((member) => member.memberIndex) ?? []),
-        ];
+        const all = [...(entry.receipt?.facets.map((facet) => facet.memberIndex) ?? [])];
         const kept = new Set(all.filter((member) => !replaced.has(member)));
         changed ||= kept.size !== all.length;
         return kept.size
@@ -581,14 +434,30 @@ export async function readTemporalHistory(
     );
     if (!changed) continue;
     if (!selections.length) pages.delete(id);
-    else pages.set(id, selectTemporalPageEntries(page, selections));
+    else trimmedPages.set(id, selections);
   }
-  // Each selected page decodes without a predecessor-page replay chain.
-  for (const chunk of pages.values())
-    for (const id of temporalPageReferences(chunk)) sourceIds.add(id);
-  for (const seed of context.currentSeeds)
-    for (const facet of seed.receipt.facets)
-      for (const id of temporalFacetValueReferences(facet)) sourceIds.add(id);
+  // Select native field references before cold value hydration. Rebuilding the
+  // selected page's authoritative metadata waits for those exact values below.
+  for (const [id, chunk] of pages) {
+    const selections = trimmedPages.get(id);
+    if (!selections) {
+      for (const ref of temporalPageReferences(chunk)) sourceIds.add(ref);
+      continue;
+    }
+    const selected = new Map(
+      selections.map((selection) => [
+        JSON.stringify([selection.batchOrder, selection.entryIndex]),
+        selection.members,
+      ]),
+    );
+    for (const batch of chunk.batches)
+      for (const entry of batch.entries) {
+        const key = JSON.stringify([batch.batchOrder, entry.entryIndex]);
+        if (!selected.has(key)) continue;
+        for (const ref of receivedRecordValueReferences(entry.receipt, selected.get(key)))
+          sourceIds.add(ref);
+      }
+  }
   preparationBytes = [...pages.values()].reduce(
     (bytes, chunk) => bytes + Buffer.byteLength(JSON.stringify(chunk)),
     0,
@@ -633,6 +502,8 @@ export async function readTemporalHistory(
     }
   }
 
+  for (const [id, selections] of trimmedPages)
+    pages.set(id, selectTemporalPageEntries(pages.get(id)!, selections, { sources }));
   const selection = selectCapturedTemporalHistory(
     { ...context, pages: [...pages.values()], sources },
     { ...query, cut, from, through, limit, bytes: maxBytes, operations: context.maximumOperations },

@@ -1,3 +1,4 @@
+import { materializeReceivedEntry } from '@open-legend/domain';
 import { receivedValueAt } from '@open-legend/domain';
 import {
   receivedEventEvidence,
@@ -31,7 +32,8 @@ export interface ReceivedEventAccount {
 /** One observer reader's last immutable roots provide append lineage. The weak
  * lookup stores offsets only; accepted receipts remain the sole evidence owner. */
 export type ReceivedEventAccountIndex = Map<string, TemporalPage>;
-type OccurrenceReceipts = Map<string, TemporalReceipt[]>;
+type OccurrenceLocation = { batch: number; entry: number };
+type OccurrenceReceipts = Map<string, OccurrenceLocation[]>;
 const occurrenceIndexes = new WeakMap<object, OccurrenceReceipts>();
 /** Only actual occurrences have history accounts. Movement/check entries need
  * neither proof materialization nor value hydration to answer this query. */
@@ -41,14 +43,25 @@ function occurrenceReceipts(chunk: TemporalPage, previous?: TemporalPage): Occur
   if (cached) return cached;
   const prior = previous && occurrenceIndexes.get(previous.batches);
   const appended = prior && previous && appendedRecordCount(previous.batches, chunk.batches);
-  const receipts = appended !== undefined ? new Map(prior) : new Map<string, TemporalReceipt[]>();
-  for (const batch of chunk.batches.slice(appended === undefined ? 0 : previous!.batches.length))
-    for (const entry of batch.entries) {
+  const receipts =
+    appended !== undefined ? new Map(prior) : new Map<string, OccurrenceLocation[]>();
+  for (
+    let batchIndex = appended === undefined ? 0 : previous!.batches.length;
+    batchIndex < chunk.batches.length;
+    batchIndex++
+  ) {
+    const batch = chunk.batches[batchIndex]!;
+    for (let entryIndex = 0; entryIndex < batch.entries.length; entryIndex++) {
+      const entry = batch.entries[entryIndex]!;
       const receipt = entry.kind === 'occurrence' ? entry.receipt : undefined;
       if (receipt?.origin?.kind !== 'occurrence') continue;
       const eventId = receipt.origin.eventId;
-      receipts.set(eventId, [...(receipts.get(eventId) ?? []), receipt]);
+      receipts.set(eventId, [
+        ...(receipts.get(eventId) ?? []),
+        { batch: batchIndex, entry: entryIndex },
+      ]);
     }
+  }
   if (immutable) occurrenceIndexes.set(chunk.batches, receipts);
   return receipts;
 }
@@ -100,8 +113,11 @@ export function receivedEventAccounts(
         : undefined;
     for (const eventId of wanted) {
       if (result.has(eventId) || forgotten.has(eventId)) continue;
-      for (const receipt of occurrences.get(eventId) ?? []) {
-        if (result.has(eventId) || previousOccurrences?.get(eventId)?.includes(receipt)) continue;
+      for (const location of occurrences.get(eventId) ?? []) {
+        if (result.has(eventId) || previousOccurrences?.get(eventId)?.includes(location)) continue;
+        const batch = chunk.batches[location.batch]!,
+          receipt = materializeReceivedEntry(batch, batch.entries[location.entry]!);
+        if (!receipt) continue;
         const values = receipt.facets.flatMap((reference) => {
           const fragment = receivedValueAt(world.receivedValues?.sources ?? {}, reference);
           if (!fragment || (fragment.kind !== 'event' && fragment.kind !== 'sound')) return [];

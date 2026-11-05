@@ -1,7 +1,11 @@
 import { currentFacetValues } from './perception-current.js';
 import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
-import { temporalPageReceipts, temporalPageReferences } from './temporal-frames.js';
+import {
+  temporalPageReceipts,
+  temporalPageReferences,
+  materializeReceivedEntry,
+} from './temporal-frames.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as worldComposition from './world-composition.js';
 import {
@@ -553,7 +557,7 @@ describe('native received relation producers', () => {
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.track;
     const opening =
-      world.perceptionEvidence![PLAYER_ID]!.geometry!.fragments[0]!.recording!.binding.id;
+      world.perceptionEvidence![PLAYER_ID]!.geometry!.fragments[0]!.recording!.lastSource.id;
     world.simTime = 21610;
     setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
@@ -565,7 +569,7 @@ describe('native received relation producers', () => {
         maxAgeSeconds: world.simTime - 15,
       });
     expect(
-      world.perceptionEvidence![PLAYER_ID]!.geometry!.fragments[0]!.recording!.binding.id,
+      world.perceptionEvidence![PLAYER_ID]!.geometry!.fragments[0]!.recording!.lastSource.id,
     ).toBe(opening);
     initializePerception(world, []);
 
@@ -736,11 +740,11 @@ describe('native received relation producers', () => {
     const history = world.experience!.temporal!.actors[PLAYER_ID]!;
     expect(
       history.pages
-        .flatMap((page) => page.batches.flatMap((batch) => batch.bindings))
-        .filter((binding) =>
-          binding.parts.some((part) => part.facet.original?.source.id === observation.id),
+        .flatMap((page) => temporalPageReceipts(page))
+        .filter((receipt) =>
+          receipt.facets.some((facet) => facet.original?.source.id === observation.id),
         )
-        .every((binding) => binding.seed.contextSubjects === undefined),
+        .every((receipt) => receipt.contextSubjects === undefined),
     ).toBe(true);
     expect(
       history.pages
@@ -758,15 +762,8 @@ describe('native received relation producers', () => {
           (entry) =>
             entry.kind === 'sample' &&
             entry.receivedAt === 1 &&
-            entry.coverage.some((coverage) =>
-              batch.bindings
-                .find((binding) => binding.id === coverage.binding)
-                ?.parts.some(
-                  (part) =>
-                    coverage.members.some((member) =>
-                      member.partIndices.includes(part.partIndex),
-                    ) && part.facet.original?.source.id === observation.id,
-                ),
+            materializeReceivedEntry(batch, entry)?.facets.some(
+              (facet) => facet.original?.source.id === observation.id,
             ),
         ),
       ),

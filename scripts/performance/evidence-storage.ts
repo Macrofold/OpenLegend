@@ -1,13 +1,5 @@
 import type { SqlDatabase } from '../../apps/server/src/store.js';
-import {
-  eligibleReceivedChargeDirectories,
-  type ReceivedChargeDirectory,
-} from '@open-legend/domain';
-import {
-  temporalBlockExpiredSql,
-  temporalBlockMixedBoundarySql,
-  temporalFrontierFromColumns,
-} from '../../apps/server/src/temporal-page-storage.js';
+import { temporalBlockExpiredSql } from '../../apps/server/src/temporal-page-storage.js';
 
 /** Explicit workload-boundary diagnostic; never called by gameplay or save admission.
  * SQL aggregates count cold data without loading it into the simulation. */
@@ -73,35 +65,7 @@ export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
       collectible_block_payload_bytes: Number(captured['collectible_block_payload_bytes']),
       partial_blocks: Number(captured['partial_blocks']),
       partial_block_payload_bytes: Number(captured['partial_block_payload_bytes']),
-      mixed_boundaries_examined: 0,
     };
-    // Scalar envelopes are sufficient for most blocks. Reuse the collector's
-    // exact metadata proof where age and pressure can jointly exhaust a block.
-    let after: string | undefined;
-    for (;;) {
-      const boundaries = await db
-        .prepare(
-          `SELECT p.id,p.encoded_bytes,p.charge_directory,
-          a.expired_through_time,a.pressure_batch_order,a.pressure_entry,a.pressure_member,a.pressure_at,a.pressure_order
-        FROM mind_temporal_pages p JOIN mind_temporal_actors a ON a.world_id=p.world_id AND a.actor_id=p.actor_id
-        WHERE p.world_id=? AND ${temporalBlockMixedBoundarySql('p', 'a')} ${after ? 'AND p.id>?' : ''}
-        ORDER BY p.id LIMIT 128`,
-        )
-        .all(worldId, ...(after ? [after] : []));
-      for (const row of boundaries) {
-        debt.mixed_boundaries_examined++;
-        const directory = JSON.parse(String(row['charge_directory'])) as ReceivedChargeDirectory;
-        if (eligibleReceivedChargeDirectories([directory], temporalFrontierFromColumns(row)).length)
-          continue;
-        const bytes = Number(row['encoded_bytes']);
-        debt.collectible_blocks++;
-        debt.collectible_block_payload_bytes += bytes;
-        debt.partial_blocks--;
-        debt.partial_block_payload_bytes -= bytes;
-      }
-      if (boundaries.length < 128) break;
-      after = String(boundaries.at(-1)!['id']);
-    }
     return {
       scope:
         'Durable PostgreSQL snapshot at an explicit workload boundary; relation/index sizes include reusable space. Collectible blocks are wholly ineligible under saved frontiers; partial-block payload is occupied boundary storage, not wholly reclaimable debt. Queued pooled-value candidates may remain owned; unowned candidates can still have protected pending references. WAL position is cluster-wide, not exclusive game WAL attribution.',

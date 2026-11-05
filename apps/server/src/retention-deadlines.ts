@@ -44,7 +44,6 @@ function indexes(world: WorldState) {
       // Required admission already marks nextDue at its early maintenance target.
       // Protected grants above that target must not schedule empty SQL forever.
       accounts: make((actor) =>
-        !!actor.individualRepairs?.length ||
         !actor.accounts ||
         (['optional', 'required', 'speech'] as const).some(
           (pool) =>

@@ -1,27 +1,19 @@
 import {
   appendedRecordCount,
   receivedBatchStorageBytes,
+  receivedBatchChargeDirectory,
   immutableDataSnapshot,
   recordAppendBase,
   temporalPageMetadata,
   temporalPageReferences,
   temporalPageMutation,
-  selectTemporalPageEntries,
   type TemporalPage,
   type ReceivedBatch,
-  type ReceivedEntry,
   type ReceivedAddress,
-  type ReceivedFrontier,
   type WorldState,
 } from '@open-legend/domain';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 import type { SqlDatabase } from './store.js';
-import {
-  receivedProofEncoder,
-  receivedProofDecoder,
-  type EncodedReceivedBinding,
-  type ReceivedProofTable,
-} from './received-proof-codec.js';
 
 /** Native append intent belongs to the existing immutable save cut. Physical
  * packing never runs while physical time advances. */
@@ -38,36 +30,12 @@ export const temporalPageRecordId = (actorId: string, id: string) =>
 export const temporalPageIntentKey = (page: TemporalPage) =>
   JSON.stringify([page.actorId, page.physicalLife, page.epoch, page.id]);
 
-/** Sufficient whole-block proof from the committed actor frontier. Mixed
- * boundaries use the native directory owner; SQL never invents eligibility. */
+/** Whole logical blocks use their maximum received time and final append
+ * position. Received source dates need not follow append order. */
 export function temporalBlockExpiredSql(block: string, actor: string): string {
   return `((${block}.last_at<=${actor}.expired_through_time OR
     (${block}.last_batch_order,${block}.last_entry,${block}.last_member)<=
       (${actor}.pressure_batch_order,${actor}.pressure_entry,${actor}.pressure_member)) IS TRUE)`;
-}
-export function temporalBlockMixedBoundarySql(block: string, actor: string): string {
-  return `(NOT ${temporalBlockExpiredSql(block, actor)} AND ${block}.first_at<=${actor}.expired_through_time
-    AND (${block}.first_batch_order,${block}.first_entry,${block}.first_member)<=
-      (${actor}.pressure_batch_order,${actor}.pressure_entry,${actor}.pressure_member))`;
-}
-export function temporalFrontierFromColumns(row: Record<string, unknown>): ReceivedFrontier {
-  return {
-    expiredThroughTime:
-      row['expired_through_time'] == null ? null : Number(row['expired_through_time']),
-    ...(row['pressure_batch_order'] == null
-      ? {}
-      : {
-          pressureThrough: {
-            address: {
-              batchOrder: Number(row['pressure_batch_order']),
-              entryIndex: Number(row['pressure_entry']),
-              memberIndex: Number(row['pressure_member']),
-            },
-            receivedAt: Number(row['pressure_at']),
-            order: Number(row['pressure_order']),
-          },
-        }),
-  };
 }
 
 export function captureTemporalPageChange(
@@ -161,20 +129,8 @@ export function encodeTemporalPage(
   residentBytes.set(page, Buffer.byteLength(payload));
   return result;
 }
-interface EntrySlice {
-  batch: ReceivedBatch;
-  entry: ReceivedEntry;
-  members?: readonly number[];
-}
-const entryMembers = (entry: ReceivedEntry): number[] =>
-  unique([
-    ...entry.coverage.flatMap((coverage) => coverage.members.map((member) => member.memberIndex)),
-    ...(entry.receipt?.facets.map((facet) => facet.memberIndex) ?? []),
-    ...(entry.rejected?.map((member) => member.memberIndex) ?? []),
-  ]).sort((a, b) => a - b);
-
-/** Save-cut blocks mix entry kinds and native containers. Only an oversized
- * mixed block is subdivided, and then only between complete logical facets. */
+/** Physical save blocks contain complete logical batches. Whole-block expiry
+ * must not retain a facet-split predecessor chain or a per-member directory. */
 export function packTemporalSave(
   intents: Iterable<PendingTemporalPage>,
   world: WorldState,
@@ -200,70 +156,48 @@ export function packTemporalSave(
           intent.before.epoch !== source.epoch)
       )
         throw new Error('A temporal replacement has a different physical predecessor.');
-      // A sparse edit keeps the original physical identity even when its creation
-      // anchor was removed. Logical entry/member coordinates remain untouched.
       const encoded = encodeTemporalPage(source, world);
       if (temporalCheckpointBytes(encoded, world.id) > CHECKPOINT_LIMITS.rowBytes)
         throw new Error('An indivisible received history record exceeds its admission limit.');
       result.push({ ...encoded, replacement: intent.replacement });
       continue;
     }
-    const appended = source.batches.filter(
-      (batch) => acknowledgedBefore === undefined || batch.batchOrder >= acknowledgedBefore,
-    );
     const frontier = world.experience?.temporal?.actors[source.actorId]?.frontier;
-    const selected = appended.flatMap((batch) =>
-      batch.entries.flatMap((entry) => {
-        const address = { batchOrder: batch.batchOrder, entryIndex: entry.entryIndex };
-        // Mandatory reception affects admission, not the lifetime of raw history.
-        // Continuing obligations own their minimal support outside these blocks.
-        if (!frontier) return [address];
-        if (frontier.expiredThroughTime !== null && entry.receivedAt <= frontier.expiredThroughTime)
-          return [];
-        const pressure = frontier.pressureThrough?.address;
-        if (
-          !pressure ||
-          batch.batchOrder > pressure.batchOrder ||
-          (batch.batchOrder === pressure.batchOrder && entry.entryIndex > pressure.entryIndex)
-        )
-          return [address];
-        if (batch.batchOrder < pressure.batchOrder || entry.entryIndex < pressure.entryIndex)
-          return [];
-        const members = new Set(
-          entryMembers(entry).filter((member) => member > pressure.memberIndex),
-        );
-        return members.size ? [{ ...address, members }] : [];
-      }),
-    );
-    const batches = selected.length
-      ? selectTemporalPageEntries({ ...source, batches: appended }, selected).batches
-      : [];
-    if (source.appendClosed === true && batches.length)
+    const appended = source.batches.filter((batch) => {
+      if (acknowledgedBefore !== undefined && batch.batchOrder < acknowledgedBefore) return false;
+      const last = batch.entries.at(-1);
+      if (!last) return false;
+      if (!frontier) return true;
+      const header = receivedBatchChargeDirectory(batch, world.receivedValues?.sources ?? {}, world)
+        .entries[0];
+      if (
+        header &&
+        frontier.expiredThroughTime !== null &&
+        header.throughAt <= frontier.expiredThroughTime
+      )
+        return false;
+      const pressure = frontier.pressureThrough?.address;
+      return (
+        !pressure ||
+        batch.batchOrder > pressure.batchOrder ||
+        (batch.batchOrder === pressure.batchOrder && last.entryIndex > pressure.entryIndex)
+      );
+    });
+    if (source.appendClosed === true && appended.length)
       throw new Error('An acknowledged physical temporal block cannot append.');
     const key = JSON.stringify([source.actorId, source.physicalLife, source.epoch]);
     let owner = owners.get(key);
     if (!owner) owners.set(key, (owner = { prototype: source, batches: new Map() }));
-    for (const batch of batches) {
+    for (const batch of appended) {
       const prior = owner.batches.get(batch.batchOrder);
       if (prior && prior !== batch) throw new Error('Conflicting native received batch.');
       owner.batches.set(batch.batchOrder, batch);
     }
   }
   for (const { prototype, batches } of owners.values()) {
-    const slices: EntrySlice[] = [...batches.values()]
-      .sort((a, b) => a.batchOrder - b.batchOrder)
-      .flatMap((batch) => batch.entries.map((entry) => ({ batch, entry })));
-    const encode = (parts: readonly EntrySlice[]): StoredTemporalPage => {
-      const selectedBatches = unique(parts.map((part) => part.batch));
-      const selected = selectTemporalPageEntries(
-        { ...prototype, batches: selectedBatches },
-        parts.map((part) => ({
-          batchOrder: part.batch.batchOrder,
-          entryIndex: part.entry.entryIndex,
-          ...(part.members ? { members: new Set(part.members) } : {}),
-        })),
-      );
-      const metadata = temporalPageMetadata(selected, { world });
+    const encode = (selected: readonly ReceivedBatch[]): StoredTemporalPage => {
+      const page: TemporalPage = { ...prototype, batches: [...selected] };
+      const metadata = temporalPageMetadata(page, { world });
       const id = JSON.stringify([
         prototype.actorId,
         prototype.physicalLife,
@@ -274,7 +208,7 @@ export function packTemporalSave(
       ]);
       return encodeTemporalPage(
         immutableDataSnapshot({
-          ...selected,
+          ...page,
           id,
           appendClosed: true as const,
           order: metadata.firstBatchOrder!,
@@ -282,48 +216,40 @@ export function packTemporalSave(
           throughAt: metadata.lastAt!,
           bytes: metadata.entryBytes,
           count: metadata.count,
+          subjects: metadata.subjects,
+          sourceIds: metadata.sourceIds,
+          individualIds: metadata.individualIds,
+          sourceRefs: metadata.references,
         }),
         world,
         metadata,
       );
     };
-    const flush = (parts: readonly EntrySlice[]): void => {
-      if (!parts.length) return;
-      const encoded = encode(parts);
+    const flush = (selected: readonly ReceivedBatch[]): void => {
+      if (!selected.length) return;
+      const encoded = encode(selected);
       const bytes =
         Buffer.byteLength(encoded.payload) + Buffer.byteLength(JSON.stringify(encoded.metadata));
-      if (bytes <= TEMPORAL_PAGE_TARGET_BYTES) {
-        result.push(encoded);
-        return;
-      }
-      if (parts.length > 1) {
-        const middle = Math.ceil(parts.length / 2);
-        flush(parts.slice(0, middle));
-        flush(parts.slice(middle));
-        return;
-      }
-      const part = parts[0]!;
-      const members = part.members ?? entryMembers(part.entry);
-      if (part.entry.kind !== 'occurrence' && members.length > 1) {
-        const middle = Math.ceil(members.length / 2);
-        flush([{ ...part, members: members.slice(0, middle) }]);
-        flush([{ ...part, members: members.slice(middle) }]);
+      if (bytes > TEMPORAL_PAGE_TARGET_BYTES && selected.length > 1) {
+        const middle = Math.ceil(selected.length / 2);
+        flush(selected.slice(0, middle));
+        flush(selected.slice(middle));
         return;
       }
       if (temporalCheckpointBytes(encoded, world.id) > CHECKPOINT_LIMITS.rowBytes)
         throw new Error('An indivisible received history record exceeds its admission limit.');
       result.push(encoded);
     };
-    let pending: EntrySlice[] = [],
+    let pending: ReceivedBatch[] = [],
       estimated = 0;
-    for (const slice of slices) {
-      const bytes = Math.max(256, slice.entry.charge.bytes);
+    for (const batch of [...batches.values()].sort((a, b) => a.batchOrder - b.batchOrder)) {
+      const bytes = receivedBatchStorageBytes(batch);
       if (pending.length && estimated + bytes > TEMPORAL_PAGE_TARGET_BYTES) {
         flush(pending);
         pending = [];
         estimated = 0;
       }
-      pending.push(slice);
+      pending.push(batch);
       estimated += bytes;
     }
     flush(pending);
@@ -338,14 +264,11 @@ export function receivedValueSql(world: string, reference: string): string {
 }
 
 const payloadEncodings = new WeakMap<object, string>();
-type EncodedBatch = Omit<ReceivedBatch, 'actorId' | 'physicalLife' | 'epoch' | 'bindings'> & {
-  bindings: EncodedReceivedBinding[];
-};
+type EncodedBatch = Omit<ReceivedBatch, 'actorId' | 'physicalLife' | 'epoch'>;
 type EncodedPage = Omit<
   TemporalPage,
   'batches' | 'subjects' | 'sourceIds' | 'individualIds' | 'sourceRefs'
 > & {
-  evidence: ReceivedProofTable;
   batches: EncodedBatch[];
 };
 export function serializeTemporalPage(value: unknown): string {
@@ -360,14 +283,12 @@ export function serializeTemporalPage(value: unknown): string {
     batches: _batches,
     ...body
   } = page;
-  const codec = receivedProofEncoder(page);
   const payload = JSON.stringify({
     ...body,
-    evidence: codec.table,
-    batches: page.batches.map(({ actorId, physicalLife, epoch, bindings, ...batch }) => {
+    batches: page.batches.map(({ actorId, physicalLife, epoch, ...batch }) => {
       if (actorId !== page.actorId || physicalLife !== page.physicalLife || epoch !== page.epoch)
         throw new Error('A temporal batch cannot inherit another owner.');
-      return { ...batch, bindings: bindings.map(codec.binding) };
+      return batch;
     }),
   });
   payloadEncodings.set(page, payload);
@@ -377,9 +298,8 @@ export function serializeTemporalPage(value: unknown): string {
  * decoder. No caller may cast the compact saved body to a native page. */
 export function decodeTemporalPagePayload(payload: string): TemporalPage {
   const stored = JSON.parse(payload) as EncodedPage;
-  const { evidence, batches, ...page } = stored;
+  const { batches, ...page } = stored;
   if (!Array.isArray(batches)) throw new Error('Missing received batches.');
-  const codec = receivedProofDecoder(evidence, page);
   const body = {
     ...page,
     subjects: [],
@@ -392,7 +312,7 @@ export function decodeTemporalPagePayload(payload: string): TemporalPage {
         Object.hasOwn(batch, 'actorId') ||
         Object.hasOwn(batch, 'physicalLife') ||
         Object.hasOwn(batch, 'epoch') ||
-        !Array.isArray(batch.bindings)
+        !Array.isArray(batch.entries)
       )
         throw new Error('Invalid temporal batch encoding.');
       return {
@@ -400,11 +320,9 @@ export function decodeTemporalPagePayload(payload: string): TemporalPage {
         actorId: page.actorId,
         physicalLife: page.physicalLife,
         epoch: page.epoch,
-        bindings: batch.bindings.map(codec.binding),
       };
     }),
   };
-  codec.finish();
   return body;
 }
 const restoredProjections = new WeakMap<TemporalPage, Record<string, unknown>>();
@@ -421,7 +339,6 @@ export function decodeTemporalPageRow(row: Record<string, unknown>): TemporalPag
         batch.epoch !== body.epoch ||
         !Array.isArray(batch.entries) ||
         !batch.entries.length ||
-        !Array.isArray(batch.bindings) ||
         batch.entries.some(
           (entry) =>
             !entry.charge ||
@@ -634,7 +551,7 @@ export function compareTemporalPageOrder(a: TemporalPage, b: TemporalPage): numb
     return {
       batch: batch?.batchOrder ?? page.order,
       entry: entry?.entryIndex ?? 0,
-      member: entry ? (entryMembers(entry)[0] ?? 0) : 0,
+      member: 0,
     };
   };
   const left = first(a),

@@ -86,6 +86,8 @@ export class PostgresDatabase implements SqlDatabase {
     this.liveReadCuts = provider;
   }
   private failed = false;
+  private writeOwnershipReady = false;
+  private closing = false;
   private fail(): void {
     this.failed = true;
   }
@@ -114,6 +116,8 @@ export class PostgresDatabase implements SqlDatabase {
     this.client.on('error', () => {
       this.fail();
     });
+    // An ended session loses its advisory writer lock even without an error event.
+    this.client.on('end', () => this.fail());
   }
   private async connect() {
     await this.client.connect();
@@ -128,6 +132,13 @@ export class PostgresDatabase implements SqlDatabase {
     await this.client.query(
       'CREATE SCHEMA IF NOT EXISTS open_legend; SET search_path TO open_legend; CREATE SCHEMA IF NOT EXISTS mind',
     );
+    this.writeOwnershipReady = true;
+  }
+  /** Live effects rely on the same exclusive session that owns durable writes.
+   * No query or second lease is needed at ordinary in-memory admission. */
+  assertWriteAdmission(): void {
+    if (!this.writeOwnershipReady || this.failed || this.closing || this.readOnly)
+      throw new Error('The database writer is unavailable for new gameplay.');
   }
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     return this.writeLane.run(operation);
@@ -372,6 +383,7 @@ export class PostgresDatabase implements SqlDatabase {
     };
   }
   async close(): Promise<void> {
+    this.closing = true;
     await Promise.all([this.writeLane.idle(), this.readLane.idle()]);
     await this.ready.catch(() => undefined);
     this.fail();

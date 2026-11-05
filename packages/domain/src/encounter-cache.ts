@@ -1,3 +1,4 @@
+import type { ObservedBody } from './perception-evidence.js';
 import { selectedOutwardBodyActivity } from './world-composition.js';
 import { observedActionAnimation } from './observed-animation.js';
 import { isImmutableData, jsonText, immutableDataSnapshot } from './records.js';
@@ -51,6 +52,7 @@ export interface ExposureInput {
   detailSignature: string;
   poseSignature: string;
   publicAttributes?: AttributeView[];
+  actorPresentation?: Pick<ObservedBody, 'animation' | 'effects'>;
   publicAttributeProjection?: PublicAttributeProjection;
 }
 /** A new continuous-exposure episode identity. Its format is owned here with its parser. */
@@ -194,14 +196,12 @@ function withPublicAttributes(
   if (!entity.actor) return capture;
   // Visible pose is measured detail, never narrative salience or private target
   // identity. Recompute its actual tracking direction once per changed source.
-  const animation = observedActionAnimation(world, entity);
+  const animation = observedActionAnimation(world, entity),
+    effects = projectStatusEffects(world, entity);
   capture = {
     ...capture,
-    detailSignature: JSON.stringify([
-      capture.detailSignature,
-      animation,
-      projectStatusEffects(world, entity),
-    ]),
+    actorPresentation: { animation, effects },
+    detailSignature: JSON.stringify([capture.detailSignature, animation, effects]),
   };
   const publicAttributeProjection = capturePublicAttributeProjection(world, entity);
   if (!publicAttributeProjection.inputs.length) return capture;
@@ -468,6 +468,8 @@ function* prepareExposurePhase(
     nearbySight: (observerId: string, position: Position, radius: number) => Source[];
     /** Undefined requires a full rescan; otherwise only these sources can change sight. */
     changedPeople: (id: string) => ReadonlySet<string> | undefined;
+    /** Complete phase-local person/animal/object target changes; undefined widens safely. */
+    changedDetailTargets: (id: string) => ReadonlySet<string> | undefined;
     selectedPeople: (position: Position, radius: number, ids: ReadonlySet<string>) => Source[];
     sourceIds: Iterable<string>;
     selectedContacts: (position: Position, radius: number, ids: ReadonlySet<string>) => Source[];
@@ -478,6 +480,7 @@ function* prepareExposurePhase(
      * belong to the finite prepared phase; receivers still sample their own frame. */
     sourceToken: (id: string) => string | undefined;
     sourceDetailsToken: (id: string) => object | undefined;
+    sourcePresentation: (id: string) => Pick<ObservedBody, 'animation' | 'effects'> | undefined;
     publicAttributes: (id: string) => readonly AttributeView[];
     /** A completed native reader, never a saved or optional callback. */
     completeObserver: (id: string, broadSight: boolean) => void;
@@ -592,6 +595,12 @@ function* prepareExposurePhase(
   const changed: Source[] = [];
   const fullPeople = new Set<string>();
   const peopleChanges = new Map<string, Set<string>>();
+  const detailChanges = new Map<string, Set<string>>();
+  const changedDetail = (observerId: string, sourceId: string) => {
+    let ids = detailChanges.get(observerId);
+    if (!ids) detailChanges.set(observerId, (ids = new Set()));
+    ids.add(sourceId);
+  };
   const publicContributions = new Set(
     statusDefinitions(world).flatMap((definition) =>
       definition.contribution?.disclosure === 'public' &&
@@ -858,6 +867,7 @@ function* prepareExposurePhase(
     for (const observer of prepared.observerNear.query(source.position, prepared.ranges.maximum))
       if (within(source.position, observer.position, observer.radius)) {
         affected.add(observer.id);
+        changedDetail(observer.id, source.id);
         // Non-occluding object changes affect object exposure, not every person
         // this observer sees. Real occluder edits already replace the map above.
         if (!source.object) {
@@ -872,6 +882,7 @@ function* prepareExposurePhase(
     for (const id of new Set(changed.filter((source) => !source.object).map((source) => source.id)))
       for (const observerId of prepared.viewers.get(id) ?? []) {
         affected.add(observerId);
+        changedDetail(observerId, id);
         let ids = peopleChanges.get(observerId);
         if (!ids) peopleChanges.set(observerId, (ids = new Set()));
         ids.add(id);
@@ -897,6 +908,7 @@ function* prepareExposurePhase(
         for (const observer of prepared.observerNear.query(position, prepared.ranges.maximum)) {
           if (!within(position, observer.position, observer.radius)) continue;
           affected.add(observer.id);
+          changedDetail(observer.id, id);
           if (!source || source.object) prepared.observers.get(observer.id)!.objectsDirty = true;
           if (!source?.object) {
             let ids = peopleChanges.get(observer.id);
@@ -932,6 +944,10 @@ function* prepareExposurePhase(
       rebuild || orderChanged || fullPeople.has(id)
         ? undefined
         : (peopleChanges.get(id) ?? new Set<string>()),
+    changedDetailTargets: (id) =>
+      rebuild || orderChanged || fullPeople.has(id)
+        ? undefined
+        : (detailChanges.get(id) ?? new Set<string>()),
     selectedPeople: (position, radius, ids) => prepared.near.querySelected(position, radius, ids),
     sourceIds: prepared.inputs.keys(),
     selectedContacts: (position, radius, ids) =>
@@ -940,6 +956,7 @@ function* prepareExposurePhase(
       [...ids].sort((a, b) => prepared.inputs.get(a)!.order - prepared.inputs.get(b)!.order),
     sourceToken: (id) => prepared.inputs.get(id)?.measurementKey,
     sourceDetailsToken: (id) => prepared.inputs.get(id)?.detailToken,
+    sourcePresentation: (id) => prepared.inputs.get(id)?.actorPresentation,
     publicAttributes: (id) => {
       const source = prepared.inputs.get(id);
       if (!source?.publicAttributeProjection) return [];

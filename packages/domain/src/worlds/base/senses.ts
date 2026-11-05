@@ -6,7 +6,10 @@ export const PERCEPTION_RULES = { sightRadius: 28 } as const;
 /** One aligned ordinary-sight policy keeps broad discovery, detailed sampling and
  * contextual feature work on compatible opportunities. Physical effects and
  * occurrence-time hearing retain their independent exact boundaries. */
-export const ORDINARY_SIGHT_TIMING = { broadSeconds: 20, detailSeconds: 10 } as const;
+export const ORDINARY_SIGHT_TIMING = { broadSeconds: 60, detailSeconds: 30 } as const;
+/** Context and native relation checks retain their faster cadence; they do not
+ * purchase fresh body sight. BK24 qualifies this independently from ordinary sight. */
+export const ORDINARY_CONTEXT_SECONDS = 20;
 export const DETECTION_SUPPORT_POLICY = {
   id: 'wilderness:detection-support',
   version: 1,

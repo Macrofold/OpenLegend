@@ -1,3 +1,4 @@
+import { compactReceivedReceipt } from './received-record.js';
 import { canonicalJson } from './events.js';
 import { validReceivedTrackKey } from './perception-values.js';
 import { receivedValueAt } from './received-values.js';
@@ -5,9 +6,7 @@ import { orderedRecordEntries, validateOrderedRecord } from './ordered-record.js
 import {
   temporalPageMetadata,
   materializeReceivedEntry,
-  materializeReceivedBindingSeed,
   temporalPageMutation,
-  deriveReceivedBindingChargeProjection,
   type TemporalCheckpointAvailability,
 } from './temporal-frames.js';
 import type { WorldState } from './types.js';
@@ -222,176 +221,8 @@ function validateReceiver(value: TemporalValue, observer: ObserverLife, acquired
 
 /** Shared current-format native binding validation, including bindings whose
  * older raw observations have already expired. */
-const verifiedBindingCharges = new WeakMap<
-  object,
-  {
-    parts: import('./received-batches.js').ReceivedBinding['parts'];
-    seed: import('./received-batches.js').ReceivedBinding['seed'];
-  }
->();
-
-function validateReceivedBinding(
-  world: WorldState,
-  binding: import('./received-batches.js').ReceivedBinding,
-  expected: ObserverLife,
-  epoch: string,
-): void {
-  if (
-    !record(binding) ||
-    !ordinal(binding.id) ||
-    !temporalSubject(binding.subject) ||
-    !record(binding.seed) ||
-    binding.seed.actorId !== expected.actorId ||
-    binding.seed.physicalLife !== expected.physicalLife ||
-    binding.seed.epoch !== epoch ||
-    binding.seed.subject !== binding.subject ||
-    !Array.isArray(binding.parts) ||
-    !binding.parts.length
-  )
-    throw new Error('Invalid received binding owner.');
-  const indices = new Set<number>(),
-    members = new Set<string>();
-  for (const part of binding.parts) {
-    const key = JSON.stringify([part.logicalMember, part.kind, part.part]);
-    if (
-      !ordinal(part.partIndex) ||
-      indices.has(part.partIndex) ||
-      members.has(key) ||
-      !ordinal(part.logicalMember) ||
-      typeof part.kind !== 'string' ||
-      !['value', 'detail', 'pose'].includes(part.part)
-    )
-      throw new Error('Invalid received binding part.');
-    indices.add(part.partIndex);
-    members.add(key);
-  }
-  const predecessorParts = new Set<number>();
-  for (const predecessor of binding.predecessors ?? []) {
-    const clock = predecessor.clock;
-    if (
-      !finite(predecessor.at) ||
-      predecessor.at < binding.seed.at ||
-      predecessor.at > world.simTime ||
-      !ordinal(predecessor.order) ||
-      !Array.isArray(predecessor.partIndices) ||
-      !predecessor.partIndices.length ||
-      predecessor.partIndices.some(
-        (index: number) => !indices.has(index) || predecessorParts.has(index),
-      ) ||
-      new Set(predecessor.partIndices).size !== predecessor.partIndices.length ||
-      (predecessor.frame && !validObservationFrame(predecessor.frame))
-    )
-      throw new Error('Invalid received predecessor mask.');
-    for (const index of predecessor.partIndices) predecessorParts.add(index);
-    validateEvidenceSource(clock.confirmation);
-    if (
-      clock.confirmation.observer.actorId !== expected.actorId ||
-      clock.confirmation.observer.physicalLife !== expected.physicalLife ||
-      !finite(clock.confirmedFrom) ||
-      !finite(clock.confirmedThrough) ||
-      clock.confirmedFrom > clock.confirmedThrough ||
-      clock.confirmedThrough > predecessor.at
-    )
-      throw new Error('Invalid predecessor clocks.');
-    if (clock.measurement) {
-      const measurement = clock.measurement;
-      validateEvidenceSource(measurement.receivedFrom);
-      if (
-        ![measurement.measuredFrom, measurement.measuredThrough, measurement.acquiredAt].every(
-          finite,
-        ) ||
-        measurement.measuredFrom > measurement.measuredThrough ||
-        measurement.measuredThrough > measurement.acquiredAt ||
-        measurement.acquiredAt > predecessor.at
-      )
-        throw new Error('Invalid predecessor measurement.');
-    }
-  }
-  if (binding.charges) {
-    const projection = binding.charges;
-    if (
-      projection.id !==
-        JSON.stringify([
-          binding.id,
-          binding.parts.map(
-            (part: import('./received-batches.js').ReceivedBinding['parts'][number]) =>
-              part.partIndex,
-          ),
-        ]) ||
-      projection.binding !== binding.id ||
-      !Array.isArray(projection.members) ||
-      projection.members.some(
-        (member: import('./received-batches.js').ReceivedChargeProjection['members'][number]) =>
-          !ordinal(member.logicalMember) ||
-          member.count !== 1 ||
-          !Array.isArray(member.partIndices) ||
-          !member.partIndices.length ||
-          member.partIndices.some(
-            (index: number) =>
-              !binding.parts.some(
-                (part: import('./received-batches.js').ReceivedBinding['parts'][number]) =>
-                  part.partIndex === index && part.logicalMember === member.logicalMember,
-              ),
-          ) ||
-          !strings(member.individualIds) ||
-          !strings(member.sourceIds) ||
-          !Array.isArray(member.closures) ||
-          member.closures.some(
-            (atom: { key: string; bytes: number }) =>
-              typeof atom.key !== 'string' || !ordinal(atom.bytes),
-          ),
-      )
-    )
-      throw new Error('Invalid received charge projection.');
-  }
-  validateReceipt(world, materializeReceivedBindingSeed(binding), expected.actorId);
-  if (binding.charges) {
-    const projection = binding.charges,
-      verified = verifiedBindingCharges.get(projection);
-    if (verified?.parts === binding.parts && verified.seed === binding.seed) return;
-    // Only direct saved provenance can be reconstructed independently here.
-    // Historical transitive recognition aliases may outlive today's knowledge;
-    // they remain lookup hints, never permissions or retained-value ownership.
-    const actual = deriveReceivedBindingChargeProjection(
-      binding,
-      world.receivedValues?.sources ?? {},
-    );
-    if (
-      projection.members.length !== actual.members.length ||
-      new Set(projection.members.map((member) => member.logicalMember)).size !==
-        projection.members.length
-    )
-      throw new Error('Received charge members disagree with their binding.');
-    for (const expected of actual.members) {
-      const member = projection.members.find(
-        (member) => member.logicalMember === expected.logicalMember,
-      );
-      if (
-        !member ||
-        member.count !== expected.count ||
-        member.partIndices.length !== expected.partIndices.length ||
-        new Set(member.partIndices).size !== member.partIndices.length ||
-        !expected.partIndices.every((index) => member.partIndices.includes(index)) ||
-        !sameStringMembers(member.individualIds, expected.individualIds) ||
-        !expected.sourceIds.every((id) => member.sourceIds.includes(id)) ||
-        member.closures.length !== expected.closures.length ||
-        new Set(member.closures.map((atom) => atom.key)).size !== member.closures.length ||
-        !expected.closures.every((atom) =>
-          member.closures.some((held) => held.key === atom.key && held.bytes === atom.bytes),
-        )
-      )
-        throw new Error('Received charge projection disagrees with its received parts.');
-    }
-    if (
-      isImmutableData(projection) &&
-      isImmutableData(binding.parts) &&
-      isImmutableData(binding.seed)
-    )
-      verifiedBindingCharges.set(projection, { parts: binding.parts, seed: binding.seed });
-  }
-}
 export function validateTemporalCurrentGroupCheckpoint(
-  world: WorldState,
+  _world: WorldState,
   value: unknown,
   now: number,
   parts: readonly (readonly [string, 'value' | 'detail' | 'pose'])[],
@@ -401,39 +232,29 @@ export function validateTemporalCurrentGroupCheckpoint(
     !record(mark) ||
     typeof mark.epoch !== 'string' ||
     !mark.epoch ||
-    !record(mark.binding) ||
-    !ordinal(mark.binding.id) ||
-    !Array.isArray(mark.binding.parts) ||
     !Array.isArray(mark.members) ||
     !mark.members.length ||
+    !Array.isArray(mark.content) ||
     !finite(mark.lastAt) ||
     mark.lastAt > now ||
     !ordinal(mark.lastOrder) ||
     !ordinal(mark.lastMeasurementRevision) ||
+    !ordinal(mark.terminalBytes) ||
     typeof mark.gap !== 'boolean' ||
+    (mark.refusedAt !== undefined &&
+      (!Array.isArray(mark.refusedAt) ||
+        mark.refusedAt.length !== 2 ||
+        !mark.refusedAt.every(ordinal) ||
+        !mark.gap)) ||
     !mark.members.every((member) =>
       parts.some(([kind, part]) => member.kind === kind && member.part === part),
+    ) ||
+    !mark.content.every((value) =>
+      mark.members.some((member) => member.kind === value.kind && member.part === value.part),
     )
   )
-    throw new Error('Invalid active recording binding.');
+    throw new Error('Invalid sparse recording continuation.');
   validateEvidenceSource(mark.lastSource);
-  validateReceivedBinding(world, mark.binding, mark.lastSource.observer, mark.epoch);
-  if (
-    mark.lastSource.observer.actorId !== mark.binding.seed.actorId ||
-    mark.lastSource.observer.physicalLife !== mark.binding.seed.physicalLife ||
-    mark.epoch !== mark.binding.seed.epoch
-  )
-    throw new Error('Recording binding has another owner.');
-  if (
-    mark.carrier &&
-    (mark.carrier.actorId !== mark.binding.seed.actorId ||
-      mark.carrier.physicalLife !== mark.binding.seed.physicalLife ||
-      mark.carrier.epoch !== mark.epoch ||
-      ![mark.carrier.batchOrder, mark.carrier.entryIndex, mark.carrier.memberIndex].every(ordinal))
-  )
-    throw new Error('Recording carrier belongs to another receiver.');
-  if (mark.lastToken !== undefined && !ordinal(mark.lastToken))
-    throw new Error('Invalid received sample token.');
 }
 function validateReceipt(
   world: WorldState,
@@ -458,7 +279,8 @@ function validateReceipt(
     typeof receipt.required !== 'boolean' ||
     !strings(receipt.sourceIds) ||
     !Array.isArray(receipt.facets) ||
-    !receipt.facets.length ||
+    (!receipt.facets.length &&
+      !['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(receipt.change)) ||
     ![
       'baseline',
       'change',
@@ -466,6 +288,7 @@ function validateReceipt(
       'unchecked',
       'occurrence',
       'attention-exit',
+      'recording-gap',
       'receiver-frame',
       'retained-state',
     ].includes(receipt.change)
@@ -512,6 +335,24 @@ function validateReceipt(
       validateReceivedFacetProof(facet.detailSupport.proof, observer, receipt.at);
     validateStoredValue(facet, fragment, new Map(), observer, receipt.at, sources);
   });
+  if (receipt.endedFields !== undefined) {
+    if (
+      !Array.isArray(receipt.endedFields) ||
+      !receipt.endedFields.length ||
+      !['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(receipt.change) ||
+      !receipt.endedFields.every(
+        (field) =>
+          Array.isArray(field) &&
+          field.length === 2 &&
+          typeof field[0] === 'string' &&
+          !!field[0] &&
+          ['value', 'detail', 'pose'].includes(field[1]),
+      ) ||
+      new Set(receipt.endedFields.map((field) => JSON.stringify(field))).size !==
+        receipt.endedFields.length
+    )
+      throw new Error('Invalid received field boundary.');
+  }
   if (receipt.receiverFrame && !validObservationFrame(receipt.receiverFrame))
     throw new Error('Invalid received frame.');
   if (receipt.subjectIdentity && !validObserverSubject(receipt.subjectIdentity))
@@ -544,36 +385,14 @@ export function validateTemporalPage(
       batch.epoch !== page.epoch ||
       !ordinal(batch.batchOrder) ||
       batch.batchOrder < priorOrder ||
-      !Array.isArray(batch.frames) ||
-      batch.frames.some((frame) => !validObservationFrame(frame)) ||
-      !Array.isArray(batch.bindings) ||
-      !Array.isArray(batch.entries)
-    )
-      throw new Error('Invalid received batch.');
-    priorOrder = batch.batchOrder;
-    const bindings = new Map<number, (typeof batch.bindings)[number]>();
-    for (const binding of batch.bindings) {
-      if (
-        !ordinal(binding.id) ||
-        bindings.has(binding.id) ||
-        !temporalSubject(binding.subject) ||
-        !Array.isArray(binding.parts) ||
-        !binding.parts.length ||
-        binding.seed.actorId !== actorId ||
-        binding.seed.physicalLife !== batch.physicalLife ||
-        binding.seed.epoch !== batch.epoch ||
-        binding.seed.subject !== binding.subject
+      !Array.isArray(batch.entries) ||
+      !batch.entries.length ||
+      Object.keys(batch).some(
+        (key) => !['actorId', 'physicalLife', 'epoch', 'batchOrder', 'entries'].includes(key),
       )
-        throw new Error('Invalid received binding.');
-      bindings.set(binding.id, binding);
-      validateReceivedBinding(
-        world,
-        binding,
-        { actorId, physicalLife: batch.physicalLife },
-        batch.epoch,
-      );
-    }
-
+    )
+      throw new Error('Invalid sparse received block.');
+    priorOrder = batch.batchOrder;
     let previous = -1;
     for (const entry of batch.entries) {
       const address = JSON.stringify([batch.batchOrder, entry.entryIndex]);
@@ -586,136 +405,37 @@ export function validateTemporalPage(
         entry.receivedAt > world.simTime ||
         !['baseline', 'sample', 'boundary', 'occurrence'].includes(entry.kind) ||
         typeof entry.required !== 'boolean' ||
-        !Array.isArray(entry.coverage) ||
         !record(entry.charge) ||
         !ordinal(entry.charge.bytes) ||
-        !ordinal(entry.charge.count)
+        !ordinal(entry.charge.count) ||
+        !entry.receipt ||
+        !Array.isArray(entry.receipt.sources) ||
+        !Array.isArray(entry.receipt.frames) ||
+        !Array.isArray(entry.receipt.facets) ||
+        entry.charge.count !== temporalReceiptChangeCount(entry.receipt) ||
+        Object.keys(entry).some(
+          (key) =>
+            ![
+              'entryIndex',
+              'order',
+              'receivedAt',
+              'kind',
+              'required',
+              'receipt',
+              'charge',
+            ].includes(key),
+        )
       )
-        throw new Error('Invalid received entry.');
+        throw new Error('Invalid sparse received change.');
+      const received = materializeReceivedEntry(batch, entry);
+      if (!received) throw new Error('Received change has no admitted content.');
+      validateReceipt(world, received, actorId);
+      // Only the untrusted current-format boundary checks canonical compactness;
+      // ordinary acquisition and reads do not repeat this reconstruction.
+      if (canonicalJson(compactReceivedReceipt(batch, received)) !== canonicalJson(entry.receipt))
+        throw new Error('Noncanonical received record.');
       addresses.add(address);
       previous = entry.entryIndex;
-      if (entry.sampleToken !== undefined && !ordinal(entry.sampleToken))
-        throw new Error('Invalid sample token.');
-      const members = new Map<number, { binding: number; parts: Set<number> }>();
-      for (const coverage of entry.coverage) {
-        const binding = bindings.get(coverage.binding);
-        if (!binding || !Array.isArray(coverage.members) || !coverage.members.length)
-          throw new Error('Invalid received coverage binding.');
-        for (const member of coverage.members) {
-          if (
-            !ordinal(member.memberIndex) ||
-            !Array.isArray(member.partIndices) ||
-            !member.partIndices.length ||
-            new Set(member.partIndices).size !== member.partIndices.length ||
-            member.partIndices.some(
-              (index: number) =>
-                !binding.parts.some(
-                  (part: import('./received-batches.js').ReceivedBinding['parts'][number]) =>
-                    part.partIndex === index,
-                ),
-            ) ||
-            (members.has(member.memberIndex) &&
-              (members.get(member.memberIndex)!.binding !== binding.id ||
-                member.partIndices.some((index: number) =>
-                  members.get(member.memberIndex)!.parts.has(index),
-                )))
-          )
-            throw new Error('Overlapping received member mask.');
-          const held = members.get(member.memberIndex);
-          if (held) for (const index of member.partIndices) held.parts.add(index);
-          else
-            members.set(member.memberIndex, {
-              binding: binding.id,
-              parts: new Set(member.partIndices),
-            });
-        }
-        if (
-          coverage.boundary !== undefined &&
-          (entry.kind !== 'boundary' ||
-            !['change', 'loss', 'unchecked', 'attention-exit', 'receiver-frame'].includes(
-              coverage.boundary,
-            ))
-        )
-          throw new Error('Invalid received boundary mask.');
-        const clock = coverage.clock;
-        if (clock) {
-          validateEvidenceSource(clock.confirmation);
-          if (
-            clock.confirmation.observer.actorId !== actorId ||
-            clock.confirmation.observer.physicalLife !== batch.physicalLife ||
-            !finite(clock.confirmedFrom) ||
-            !finite(clock.confirmedThrough) ||
-            clock.confirmedFrom > clock.confirmedThrough ||
-            clock.confirmedThrough > entry.receivedAt ||
-            (clock.frame !== undefined && (!ordinal(clock.frame) || !batch.frames[clock.frame]))
-          )
-            throw new Error('Invalid received support clocks.');
-          if (clock.measurement) {
-            const measurement = clock.measurement;
-            validateEvidenceSource(measurement.receivedFrom);
-            if (
-              ![
-                measurement.measuredFrom,
-                measurement.measuredThrough,
-                measurement.acquiredAt,
-              ].every(finite) ||
-              measurement.measuredFrom > measurement.measuredThrough ||
-              measurement.measuredThrough > measurement.acquiredAt ||
-              measurement.acquiredAt > entry.receivedAt
-            )
-              throw new Error('Invalid received measurement clocks.');
-          }
-        }
-      }
-      const acceptedCount = members.size;
-      for (const hole of entry.rejected ?? []) {
-        const prior = members.get(hole.memberIndex);
-        if (
-          !ordinal(hole.memberIndex) ||
-          !ordinal(hole.binding) ||
-          !temporalSubject(hole.subject) ||
-          !Array.isArray(hole.partIndices) ||
-          !hole.partIndices.length ||
-          new Set(hole.partIndices).size !== hole.partIndices.length ||
-          !hole.partIndices.every(ordinal) ||
-          !Array.isArray(hole.parts) ||
-          hole.parts.length !== hole.partIndices.length ||
-          !hole.parts.every((part: { partIndex: number }) =>
-            hole.partIndices.includes(part.partIndex),
-          ) ||
-          (prior &&
-            (prior.binding !== hole.binding ||
-              hole.partIndices.some((index: number) => prior.parts.has(index)))) ||
-          !strings(hole.sourceIds)
-        )
-          throw new Error('Invalid rejected received coverage.');
-        if (prior) for (const index of hole.partIndices) prior.parts.add(index);
-        else
-          members.set(hole.memberIndex, {
-            binding: hole.binding,
-            parts: new Set(hole.partIndices),
-          });
-      }
-      if (
-        entry.charge.count !==
-        (entry.receipt
-          ? temporalReceiptChangeCount(entry.receipt)
-          : entry.kind === 'boundary'
-            ? 0
-            : acceptedCount)
-      )
-        throw new Error('Received entry count disagrees with its accepted members.');
-      if (entry.receipt) {
-        if (
-          entry.receipt.batchOrder !== batch.batchOrder ||
-          entry.receipt.entryIndex !== entry.entryIndex
-        )
-          throw new Error('Occurrence has another logical address.');
-        validateReceipt(world, entry.receipt, actorId);
-      } else {
-        const receipt = materializeReceivedEntry(batch, entry);
-        if (receipt) validateReceipt(world, receipt, actorId);
-      }
     }
   }
   const metadata = temporalPageMetadata(page, { world });
@@ -748,31 +468,38 @@ export function validateTemporalEvidenceState(
       !Array.isArray(actor.pages) ||
       !ordinal(actor.bytes) ||
       !ordinal(actor.count) ||
+      !ordinal(actor.terminalReservedBytes) ||
       !record(actor.recent) ||
       !record(actor.recent.blocks) ||
-      !record(actor.recent.projections) ||
-      !record(actor.recent.closures)
+      !record(actor.recent.individuals)
     )
       throw new Error('Invalid received actor history.');
     for (const page of actor.pages) validateTemporalPage(world, page, actorId);
+    // Restore validates the one saved scalar against its actual existing owners.
+    // Ordinary receiving maintains it incrementally; no sensing pass scans marks.
+    const current = world.perceptionEvidence?.[actorId];
+    let reserved = 0;
+    if (current) {
+      for (const [, contact] of orderedRecordEntries(current.current))
+        for (const group of contact.content.groups)
+          for (const mark of group.recordings ?? [])
+            if (!mark.gap) reserved += mark.terminalBytes * mark.members.length;
+      for (const feature of [
+        ...(current.geometry?.fragments ?? []),
+        ...(current.geometry?.boundaries ?? []),
+      ]) {
+        const mark = feature.recording;
+        if (mark && !mark.gap) reserved += mark.terminalBytes * mark.members.length;
+      }
+    }
+    if (reserved !== actor.terminalReservedBytes)
+      throw new Error('Recording terminal reservations disagree with current owners.');
     const reconstructed = { ...actor };
     validateOrderedRecord(
       actor.recent.blocks,
-      (value) => record(value) && Array.isArray(value.entries) && Array.isArray(value.projections),
+      (value) => record(value) && Array.isArray(value.entries),
     );
-    validateOrderedRecord(
-      actor.recent.projections,
-      (value) =>
-        record(value) &&
-        ordinal(value.uses) &&
-        (value.uses as number) > 0 &&
-        record(value.projection),
-    );
-    validateOrderedRecord(
-      actor.recent.closures,
-      (value) =>
-        record(value) && ordinal(value.bytes) && ordinal(value.uses) && (value.uses as number) > 0,
-    );
+    validateOrderedRecord(actor.recent.individuals, (value) => ordinal(value) && Number(value) > 0);
     installTemporalChargeDirectories(
       reconstructed,
       [...orderedRecordEntries(actor.recent.blocks)].map(([, directory]) => directory),
@@ -780,8 +507,8 @@ export function validateTemporalEvidenceState(
     if (
       reconstructed.bytes !== actor.bytes ||
       reconstructed.count !== actor.count ||
-      canonicalJson([...orderedRecordEntries(reconstructed.recent.closures)]) !==
-        canonicalJson([...orderedRecordEntries(actor.recent.closures)])
+      canonicalJson([...orderedRecordEntries(reconstructed.recent.individuals)]) !==
+        canonicalJson([...orderedRecordEntries(actor.recent.individuals)])
     )
       throw new Error('Recent charge directory disagrees with actor totals.');
     for (const [id, capsule] of Object.entries(actor.supports ?? {})) {
