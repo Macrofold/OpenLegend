@@ -144,6 +144,8 @@ An NPC's optional self-explanation is speech with normal hearing/uncertainty, no
 
 ## 5. Perception, attention, interpretation and memory
 
+**BK24 replacement target, not installed:** [compact current and change-only history](bookkeeping-simplification-tech-design.md#15-compact-native-evidence-and-change-history) replaces the installed historical-confirmation/proof machinery below, uses one final optional selection, and specifies separate due-work/cadence experiments. It preserves this feature’s broad visibility, independent received detail, required evidence, local identity and bounded private interpretation. Follow that owner for the coordinated replacement; future physical sensing and broader scene families remain separate.
+
 **Implemented compact core contracts; complete-game qualification remains open.** Ordinary attention preserves a reliable recent sequence at the received resolution. Useful older accounts survive when warranted; trivial experience may disappear. Native heuristics can favor familiar subjects without knowing their emotional significance. Existing cognition interprets unfamiliar meaning when an actual cause merits a decision. The design preserves the received-evidence, identity, knowledge, experience, agency and decision owners:
 
 ```text

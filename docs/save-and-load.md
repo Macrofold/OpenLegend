@@ -63,6 +63,8 @@ Implementation is tracked in [SL00–SL10](maintainers/save-and-load.md), with a
 
 ## Current history capture boundary
 
+**Designed replacement, not installed:** [SL08/BK24 retained-state export](projects/bookkeeping-simplification-tech-design.md#retained-state-checkpoint-and-recovery) omits wholly collectible history and only its dependent obsolete perspectives/values from one captured cut, with the same selection in ownership validation and full recovery. The current automatic checkpoint allowance failure remains open; no limits or restore guarantees are weakened.
+
 Portable verification copies use the same complete checkpoint capture and restore owners as gameplay. `WorldRecords.load(true)` reconstructs the active working set, with cold history and retired records still in SQL; serializing it is not a complete export. Even a full world-record read does not copy the other repositories. Keep original checkpoints and use their complete payloads when constructing an owned disposable continuation.
 
 Autosaves are server-owned recovery files for the entire shared persistent world, not per-player saves. One scheduler serves the world regardless of which players are connected. Manual save/list/delete/load requires the creator or authorized operator's current save grant; ordinary participants have no save controls or automatic-save request path. Normal gameplay durability comes from database commits. Autosaves accrue only while the world is running; the current presence policy pauses after all admitted players finish any installed simulated vulnerable fade; a lone fading player still receives normal simulation. A future host that runs without connected players uses the same server-owned checkpoint path.
