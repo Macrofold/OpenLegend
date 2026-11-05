@@ -46,7 +46,7 @@ The full per-round record — requests, Claude Design's replies with every value
 
 ## Archive
 
-All payloads are outside Git in private S3 storage of the OpenLegend project, recorded in the asset authority database named by the main checkout (`openlegend_dev_20261016_repaired`). The exact indexes beside this record let any authenticated checkout fetch and verify the files.
+All payloads are outside Git in private S3 storage of the OpenLegend project, recorded in the asset authority: originally the main checkout's database (`openlegend_dev_20261016_repaired`), and the [shared asset authority](../../../docs/asset-workflow.md#shared-asset-authority) once those records are moved into it. The exact indexes beside this record let any authenticated checkout fetch and verify the files.
 
 | Collection                                   | Boundary / access      | Files | Bytes | Manifest SHA-256 | Index |
 | -------------------------------------------- | ---------------------- | ----- | ----- | ---------------- | ----- |
@@ -60,7 +60,7 @@ Claude Design canvas: <https://claude.ai/artifact/c5b4c0bd-a432-4cbb-842c-3f9aeb
 
 ## Resume
 
-Fetch an exact copy into a new folder from the repository root, with the OpenLegend AWS session signed in and `OPEN_LEGEND_DATABASE_URL` naming the asset authority database:
+Fetch an exact copy into a new folder from the repository root, with the OpenLegend AWS session signed in and this machine set up for the [shared asset authority](../../../docs/asset-workflow.md#shared-asset-authority):
 
 ```sh
 pnpm assets workspace --index art-direction/studies/2026-10-18-interface-direct-method/production.index.json --all --output /private/tmp/gildmoss-production

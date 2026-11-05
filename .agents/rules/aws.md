@@ -4,17 +4,25 @@
 
 Use the explicitly selected `openlegend` profile and `us-east-2` Region for OpenLegend's current AWS project. Its AWS account ID is `027677879749`; verify it with STS before resource mutations. These settings do not apply to Mike's work projects.
 
-On Mike's current machine, the CLI supporting browser sign-in is `$HOME/.local/bin/aws` (2.38.1 at setup). The ordinary `aws` command remains his work installation. Use the explicit executable and profile, for example:
+Use an AWS CLI that supports browser sign-in (`aws login`) with the explicit profile and Region on every command. On the M4 Mac mini that is the ordinary `aws` (2.39.3 on November 4, 2026); a machine whose ordinary `aws` belongs to a work setup may keep a separate one such as `$HOME/.local/bin/aws`. Check `aws --version` and the profile rather than assuming a path:
 
 ```sh
-"$HOME/.local/bin/aws" sts get-caller-identity --profile openlegend --region us-east-2
+aws sts get-caller-identity --profile openlegend --region us-east-2
 ```
+
+When the session has expired, Mike signs in with `aws login --profile openlegend --region us-east-2`; agents never handle passwords, tokens or one-time codes.
 
 Do not change the default/work profiles, export a global `AWS_PROFILE`, copy credentials into the repository, or create long-lived access keys to avoid sign-in. Renew only the selected profile when required. Signing in does not authorize unrelated resources, spending or permission changes; the root task policy still applies.
 
 The `aws-mcp` Codex connection allows only `AWS_MCP_PROXY_PROFILES=openlegend`, with `AWS_REGION` and `AWS_DEFAULT_REGION` set to `us-east-2` in that server's environment. Its service endpoint is in `us-east-1`; that does not change the project's selected resource Region. Never add a work profile to its allowed list without an explicit request. CLI is the primary path for local files and repeatable commands; MCP provides AWS knowledge and API tools using the same project permissions. An unavailable MCP connection does not require console-based resource management when CLI access works.
 
 Use installed AWS skills selectively for the affected service. Their advice does not override this repository's authorization, engine/world, privacy, spending or verification rules. Existing AWS access is not evidence that infrastructure has been provisioned or production deployment qualified.
+
+## Shared secrets and project resources
+
+Keep shared secrets in AWS Secrets Manager, readable through each person's own project sign-in, or in a shared 1Password vault when they are not AWS secrets. Never put them in chat, email, Git or saved scripts, and fetch rotating secrets at use. Prefer IAM database authentication over shared passwords.
+
+The shared asset authority database (Aurora Serverless v2 `openlegend-assets`, security group `openlegend-asset-db`) is documented with the [asset workflow](../../docs/asset-workflow.md#shared-asset-authority). Its cost is usage-based; leave its deletion protection, encryption and address allowlist in place.
 
 ## AWS-provided experience guidance
 

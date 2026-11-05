@@ -22,7 +22,7 @@ Batches 07–09 retain [world-creation limits](limits/world-creation.md), the de
 
 Start with [the tracking system](limits/README.md). Feature inventories retain limits, reasons and removal decisions; [Remove / Change / Expand](maintainers/limits-audit.md) contains only pending recommendations. [Feature documentation requirements](feature-documentation.md) explain how future changes keep both synchronized.
 
-Accepted [game asset storage direction](projects/game-asset-storage-feature-spec.md): [AST01–AST08](limits/game-asset-storage.md) records tiny-only Git assets, storage/access boundaries, exact dependency closures, local cache, preserved history, temporary cleanup, URLs and unqualified growing work. [AS01–AS08](maintainers/game-asset-storage.md) owns implementation; numerical defaults are proposed, not delivered capacity.
+Accepted [game asset storage direction](projects/game-asset-storage-feature-spec.md): [AST01–AST09](limits/game-asset-storage.md) records tiny-only Git assets, storage/access boundaries, exact dependency closures, local cache, preserved history, temporary cleanup, URLs and unqualified growing work. [AS01–AS09](maintainers/game-asset-storage.md) owns implementation; numerical defaults are proposed, not delivered capacity.
 
 Proposed [customer and supporter offers](projects/customer-and-supporter-offers-feature-spec.md): [CO-L01–CO-L08](limits/commercial-offers.md) records first-offer scope, account allowance policies, explicit spending, finite service/retention, one optional dedication and growing obligations. [CO01–CO06](maintainers/commercial-offers.md) consumes PD10/INV-13; actual launch quantities, prices, operating inputs and qualification remain open.
 

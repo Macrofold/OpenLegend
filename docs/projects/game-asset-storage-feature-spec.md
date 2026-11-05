@@ -132,7 +132,7 @@ The documented workflow must reproduce the supported fetch/edit/preserve/publish
 
 ## Maintained records
 
-- Implementation and migration: [AS01–AS08](../maintainers/game-asset-storage.md).
+- Implementation and migration: [AS01–AS09](../maintainers/game-asset-storage.md).
 - Limits and constraints: [Asset storage inventory](../limits/game-asset-storage.md).
 - Architecture and directory/URL contract: [Technical design](game-asset-storage-tech-design.md).
 - Consuming projects: [Production deployment](production-deployment-feature-spec.md), [3D asset pipeline](3d-pixel-art-asset-pipeline.md), [runtime invention art](../invention-art-pipeline.md).

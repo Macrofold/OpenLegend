@@ -104,6 +104,46 @@ Each connection signs a 15-minute IAM token from the person's own `openlegend` s
 
 The game reads releases and pins saves in its own database, so each machine keeps a copy. `pnpm assets sync` replaces this machine's copy of the shared records with the authority's current snapshot in one transaction and leaves world bindings, pins and save claims alone. Stop the local game first: sync writes the game database through its one-writer reservation. Sync refuses, changing nothing, when a local save pins a revision the authority does not record. A withdrawal reaches a machine's game at its next sync; public files never need either database.
 
+#### Add a person or a computer
+
+- **A person:** invite them as a team member of the OpenLegend project in [AWS Settings](https://settings.aws.com/). Their own sign-in then reaches the database; nothing is shared with them. Removing them from the project removes their access.
+- **A computer or a changed home address:** the project owner adds the address (find it with `curl -s https://checkip.amazonaws.com`) and removes the old one:
+
+  ```sh
+  aws ec2 authorize-security-group-ingress --profile openlegend --region us-east-2 --group-id sg-02dcc09f297841901 --ip-permissions 'IpProtocol=tcp,FromPort=5432,ToPort=5432,IpRanges=[{CidrIp=ADDRESS/32,Description="WHO and WHICH computer"}]'
+  aws ec2 revoke-security-group-ingress --profile openlegend --region us-east-2 --group-id sg-02dcc09f297841901 --protocol tcp --port 5432 --cidr OLD_ADDRESS/32
+  ```
+
+- **Secrets:** keep shared secrets in AWS Secrets Manager, readable through each person's own project sign-in; use a shared 1Password vault for secrets outside AWS. Never send them through chat, email or Git. The database administrator password is the RDS-managed secret attached to the cluster (`aws rds describe-db-clusters --profile openlegend --region us-east-2 --db-cluster-identifier openlegend-assets --query 'DBClusters[0].MasterUserSecret.SecretArn'`); RDS rotates it, so fetch it at use. Only database administration such as creating logins needs it.
+
+#### Move a machine's existing records into the shared authority
+
+Do this once, from the machine that published before the shared authority existed (as of November 2026, Mike's other Mac; this Mac mini never had an asset database). Until it is done the shared authority is empty: do not publish to it yet, because a game save that pins already-published art would then block that machine's sync. All directories below are outside every checkout.
+
+1. **Back up with the old code.** In that machine's existing checkout, before it pulls the shared-authority change, stop the local game and run, with `OPEN_LEGEND_DATABASE_URL` still naming its game database:
+
+   ```sh
+   pnpm assets recovery-create --operation shared-authority-move-YYYYMMDD --output ~/OpenLegend-authority-move/checkpoint
+   pnpm assets recovery-verify --manifest ~/OpenLegend-authority-move/checkpoint/locator.json --output ~/OpenLegend-authority-move/verified
+   ```
+
+   The order matters: after the change, `recovery-create` captures the shared authority instead. Keep `locator.json` in durable storage. Add `--source-config` as described under [recovery checkpoints](#create-and-verify-recovery-checkpoints) if its receipts name another environment.
+
+2. **Update and set up the machine.** Bring the checkout to the code containing `pnpm assets sync`, then complete the three setup steps above (sign-in, certificate, address allowlist).
+
+3. **Restore into the shared authority.**
+
+   ```sh
+   pnpm assets recovery-restore-catalog --source-root ~/OpenLegend-authority-move/verified
+   pnpm assets recovery-reconcile --output ~/OpenLegend-authority-move/current-authority
+   ```
+
+   The first refuses if the authority already holds records, and leaves restored access quarantined; the second admits it only after checking the independent current-permission record in the recovery bucket. Neither copies or changes S3 files: the published files stay where they are.
+
+4. **Sync and check.** With the game stopped, run `pnpm assets sync` on that machine. It must succeed: a refusal naming a missing revision means the restore was incomplete, so stop and investigate rather than retry with different data. Start the game and confirm the installed art still loads.
+
+5. **Other machines.** On each other machine with a game database, complete setup and run `pnpm assets sync`. Afterward, publish from any set-up machine; the old local records are an ordinary synced copy.
+
 ### Select development or production runtime storage
 
 Generate environment configurations from the deployed stack instead of keeping duplicate full configurations in Git:
@@ -173,7 +213,7 @@ The verified migration checkpoint has a small [checked-in exact locator](../asse
 
 When retained publication receipts name another trusted environment's buckets, supply its frozen configuration with `--source-config /external/frozen-environment.json` to `recovery-create`. Repeat the option for each required environment. The command verifies the recorded physical locations against these explicit configurations; it does not substitute the current bucket for an older receipt. Retain the configurations and locator in protected operator storage without embedding credentials.
 
-For an isolated restore, explicitly configure `OPEN_LEGEND_DATABASE_URL` to a fresh empty recovery database, then run `recovery-restore-catalog --source-root /private/tmp/asset-verified-restore`. The command refuses a nonempty asset catalog and keeps restored access quarantined. `recovery-reconcile --output /private/tmp/current-recovery-authority` admits access only after verifying the independently current permission record and the operator's current authority. Missing or pending permission coverage leaves the restored catalog unavailable. Restoring the wider world/database and promoting recovered private objects retain their separate owning workflows; copying an old database alone is not authorization to serve assets.
+Recovery restores into the configured asset authority. For an isolated rehearsal, pass `--config` with a copy of `assets/config.json` whose `authority` names a fresh empty database, then run `recovery-restore-catalog --source-root /private/tmp/asset-verified-restore`. The command refuses a nonempty asset catalog and keeps restored access quarantined. `recovery-reconcile --output /private/tmp/current-recovery-authority` admits access only after verifying the independently current permission record and the operator's current authority. Missing or pending permission coverage leaves the restored catalog unavailable. Restoring the wider world/database and promoting recovered private objects retain their separate owning workflows; copying an old database alone is not authorization to serve assets.
 
 After catalog restoration and current-authority reconciliation, `recovery-restore-objects --source-root /private/tmp/asset-verified-restore --quarantine-domain recovery-isolated-check --output /private/tmp/restored-asset-locations.json` streams the exact protected object versions into private intake quarantine, checking complete destination checksums and current permission. Its receipt identifies restored locations and unavailable files. Budget for these recovery reads as well as the earlier verification reads. It does not overwrite their original buckets, expose the quarantine publicly or install the recovered assets in a game; those operations require their normal publication and installation authority.
 

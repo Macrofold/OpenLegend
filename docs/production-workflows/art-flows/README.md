@@ -242,8 +242,9 @@ storage workaround. This implements Mike's explicit S3 requirement for these flo
 Use `pnpm assets help` in an authorized checkout containing the current tooling, then the
 documented prepare/approve/publish/retrieve process with actual manifests and rights evidence.
 Do not invent bucket names, object paths, permissions, public URLs or command flags.
-Follow the AWS rules before AWS access. Coordinate the exclusive publication writer rather
-than stopping another contributor's game unilaterally.
+Follow the AWS rules before AWS access. Publication goes to the
+[shared asset authority](../../asset-workflow.md#shared-asset-authority) from any set-up
+machine; run `pnpm assets sync` afterward so each machine's game sees the result.
 
 Save editable originals privately and study previews under the approved visibility. Permission
 to save to S3 is not permission to publish a new collection publicly. Keep credentials and
