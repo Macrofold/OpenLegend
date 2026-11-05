@@ -25,6 +25,7 @@ Earlier art, licenses, meaningful rejected trials and exact evidence remain pres
 5. **World ownership and storage are different concerns.** A world's trees and creatures remain authored world content. A shared file store does not turn them into universal engine rules. Cross-world reuse requires permitted references, not copying every file into each world directory.
 6. **Documentation uses durable HTTPS references after migration.** Evidence links identify a specific study or asset revision. Private links require login but remain stable; temporary signed download URLs, machine paths and provider download links are not durable references to our stored work.
 7. **Retain meaningful study history.** Preserve all iterations requested by Mike, including unsuccessful trials. Storage pressure stops or limits new optional work before it silently erases preserved work. License, privacy and explicit withdrawal obligations remain controlling.
+8. **One shared asset authority for every machine and collaborator.** What has been published and who may use it is recorded once, in a hosted database. Each machine's game keeps its saves locally and copies the shared records with a sync, so a permission change reaches a machine at its next sync. See the [technical design](game-asset-storage-tech-design.md#12-shared-asset-authority-across-machines).
 
 ## 3. What is stored
 

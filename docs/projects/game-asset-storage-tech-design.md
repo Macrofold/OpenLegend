@@ -331,9 +331,23 @@ Required scenarios include the existing mercenary/deer source-study chain; two w
 
 No unresolved owner decision blocks the accepted curated implementation. Verified project/Region, owned hostname, narrow roles and the completed current-tree migration are configured; the [tracker](../maintainers/game-asset-storage.md) and [evidence](../verification/game-asset-storage.md) retain actual qualification. The current configured world uses the installed exact artwork selected through its normal signed-in owner control. Mike authorized replacing old development progress with the current ordinary opening; authentication, asset authority and accounting remain preserved. The AST inventory distinguishes configured policies from measured capacity. No achieved recovery-time or recovery-point objective is inferred from a successful copy. Git history rewriting remains separately authorized and coordinated.
 
+## 12. Shared asset authority across machines
+
+Mike works across several computers and expects collaborators, so publication and permission records live in one hosted authority instead of a single machine's game database. [AS09](../maintainers/game-asset-storage.md#as09--shared-asset-authority-across-machines) tracks the work; the [workflow guide](../asset-workflow.md#shared-asset-authority) owns setup and use.
+
+**Database.** Aurora Serverless v2 PostgreSQL 18.6, cluster `openlegend-assets`, database `openlegend`, in the OpenLegend project (`us-east-2`). It scales from 0 to 4 capacity units and pauses after five idle minutes, so idle cost is storage plus the public address. Storage is encrypted, backups are kept seven days and deletion protection is on. Security group `openlegend-asset-db` admits port 5432 only from listed addresses; clients verify the server against the [RDS certificate bundle](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/UsingWithRDS.SSL.html). Move to provisioned capacity only when sustained use makes serverless hours cost more.
+
+**Credentials.** Tools connect as `openlegend_assets` with an IAM token signed from the caller's `openlegend` profile (`apps/server/src/asset-authority.ts`), so removing a person's project access removes database access. RDS manages the administrator password in Secrets Manager.
+
+**Concurrency.** The authority takes no game writer reservation. Concurrent publishers are ordered by the existing per-file claims and revision-checked selections, which refuse the conflicting operation.
+
+**Game copies.** The game still reads releases and pins saves in its own database, unchanged. `pnpm assets sync` copies every shared asset table from one repeatable-read snapshot of the authority into the game database in one transaction, replacing the previous copy. World bindings, pins, pin files and save claims are the game's and are never overwritten. Sync refuses when a local pin names a revision the authority lacks, because replacing the catalog would break that save's restore. A withdrawal or new grant reaches a machine's game at its next sync; this lag is the accepted cost of leaving game code unchanged.
+
+**Migration.** The authority starts empty. Move existing records from the machine that holds them with a verified recovery checkpoint, `recovery-restore-catalog` into the shared authority and `recovery-reconcile` (§9), then run `pnpm assets sync` on each machine.
+
 ## Maintained records
 
 - Behavior: [Feature specification](game-asset-storage-feature-spec.md).
-- Implementation: [AS01–AS08](../maintainers/game-asset-storage.md).
+- Implementation: [AS01–AS09](../maintainers/game-asset-storage.md).
 - Limits: [AST01–AST08](../limits/game-asset-storage.md).
 - Shared contracts: [Identity](../identity-and-references.md), [save/load](../save-and-load.md), [engine/world boundaries](../engine-and-world-boundaries.md), [3D asset pipeline](3d-pixel-art-asset-pipeline.md), [deployment playbook](production-deployment-playbook.md).

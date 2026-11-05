@@ -89,6 +89,15 @@ The configured maximum cache size and broad concurrent-client throughput remain 
 - [ ] Inventory affected refs/tags/PRs/clones/worktrees and retained commit links; establish backup/restore and old-to-new commit/recovery mappings before proposing the concrete operation.
 - [ ] If authorized, remove only inventoried externalized blobs from the agreed histories, coordinate remote updates and clone/worktree resynchronization, and verify recoverability plus actual clone/object-size reduction. **Exit:** no lost code/art, no silently reset unrelated checkout and no broken historic recipe reference. Until then, deleting current files reduces checkout/build weight but leaves old reachable Git blobs.
 
+## AS09 — Shared asset authority across machines
+
+**Owners:** asset repository and publication owner. **Depends on:** AS01–AS07. Design: [§12](../projects/game-asset-storage-tech-design.md#12-shared-asset-authority-across-machines).
+
+- [x] Provision Aurora Serverless v2 `openlegend-assets` (us-east-2) with managed administrator secret, IAM database login `openlegend_assets`, encrypted storage, backups, deletion protection and an address allowlist; create the asset tables. Verified 2026-11-04 through a certificate-checked IAM connection.
+- [x] Point publication, permission, recovery, private-pull and viewer commands at the authority without the game writer reservation; add `pnpm assets sync`. Verified 2026-11-04 against disposable probe databases on the same cluster: replacement of stale shared rows, retention of world bindings, refusal with no change on a dangling pin, a 450-row multi-batch copy and the CLI end to end. Not yet exercised: a real publication or a running game against a synced copy.
+- [ ] Migrate the existing records from the machine that holds them (recovery checkpoint, `recovery-restore-catalog`, `recovery-reconcile`), then sync each machine's game database. Needs that machine.
+- [ ] **Exit:** two machines publish to the authority and their games show the result after sync; a withdrawal on one is honored by the other after its sync.
+
 ## Verification status
 
 The [implementation review](../verification/game-asset-storage.md#implementation-review) records corrected dependency-use checks during withdrawal, recoverable authority admission, enforced transaction boundaries, cache queue/lifecycle work, study selection, build enforcement and renderer cleanup. Root and scoped guidance already route these tasks through asset, performance and authorization owners; no duplicate AGENTS rules are added.
