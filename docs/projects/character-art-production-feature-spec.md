@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | The selected offline production workflow is designed; its first finished package, useful revision and in-game acceptance remain unrun. | 2026-10-31 |
+| Not started | The offline production design specifies prototype-to-polish execution and scoped acceptance; the first package, useful revision and in-game qualification remain unrun. | 2026-11-05 |
 
 ## Purpose and ownership
 
@@ -49,13 +49,17 @@ The bundled world retains beautiful dimensional pixel art with believable real-w
 
 Use the stopping point already agreed in the [art flow](../production-workflows/art-flows/README.md#request-and-stopping-point). Do not turn a design request into generation, an export request into new engine development, or an authorized integration into a pretty study that stops before the game works.
 
+**Production effort is separate from the delivery boundary.** Use a functional prototype for an early gameplay experiment unless greater finish is requested. Use the polished profile for a selected visual-quality or release deliverable. Both preserve identity constraints, required motion/state coverage, valid exports, rights and truthful status. A prototype may omit optional fine texture work, sculpt/baking, secondary physics and unnecessary variants; it may not omit the behavior or files it promises. Continue polishing the same source when authorized, revisiting only affected dependencies. The [execution profiles](character-art-production-tech-design.md#choose-the-effort-profile) specify the short route and the continuation; these are ordinary task choices, not a new automation API or a compulsory approval step.
+
 ## 4. Production choices
 
 ### Preserve identity before optimizing production
 
 Record the features that make this person recognizable: believable body proportions, head/face structure, hair, meaningful clothing divisions, distinctive marks, important asymmetry and relevant possessions. Separate fixed identity from the current outfit or temporary condition. Use approved art and the actual character's facts; a generated rear view is a proposed design choice, not recovered evidence of an unseen surface.
 
-Recognition must survive ordinary viewing distance, the required camera angles and relevant poses. A close portrait can add detail but cannot excuse an unreadable world character. Do not enlarge heads, stretch bodies or change physical dimensions to conceal a framing or source-art problem. Deliberate quiet areas and broad material/value groups matter more than uniform tiny decoration.
+Recognition must survive ordinary viewing distance, the required camera angles and relevant poses where the identifying information is meant to be visible. A close portrait can add detail but cannot excuse an unreadable world character. Do not enlarge heads, stretch bodies or change physical dimensions to conceal a framing or source-art problem. Deliberate quiet areas and broad material/value groups matter more than uniform tiny decoration.
+
+Intentional concealment, a disguise or an adopted transformation can legitimately change the available identifying information. Preserve the selected appearance and observer-specific disclosure rules rather than forcing recognition by exposing a face, hidden mark or secret association. This is a constraint on artwork and its review, not a new disguise or recognition mechanic.
 
 ### Use the smallest useful part separation
 
@@ -113,7 +117,7 @@ The [character authorship contract](compelling-characters-feature-spec.md#charac
 
 ### A. Recognizing a person after an equipment change
 
-Use a selected person, the supported body/rig and one real compatible item. Establish the person's recognizability in the ordinary game camera. Equip, use and remove the item through the actual game when that integration is in scope. The character remains the same person; the item appears in the correct place and does not duplicate, disappear or alter identity.
+Use a selected person, the supported body/rig and one real compatible item. Establish the person's intended recognizability in the ordinary game camera. Equip, use and remove the item through the actual game when that integration is in scope. The character remains the same person; the item appears in the correct place and does not duplicate, disappear or unintentionally alter identity. The deliberate-concealment and transformation boundary above still applies.
 
 A fixed-costume preview can test fitting, but cannot qualify real equipment changes. Unsupported fits remain explicit. Use the existing honest fallback rather than claiming a perfect model or prohibiting otherwise legitimate mechanics.
 
@@ -141,7 +145,7 @@ A second compatible human outfit tests reuse. It does not prove a quadruped, unu
 
 ### Required passes for the selected deliverable
 
-- The identity, proportions, material relationships and important features meet the accepted brief at the actual intended viewing scale, not only in an enlarged render.
+- The identity, proportions, material relationships and important visible features meet the accepted brief at the actual intended viewing scale, not only in an enlarged render; intentional concealment remains respected.
 - The actual exported body, rig, clips and attachments cover the promised cases without unacceptable deformation, missing surfaces, false contacts or contradictory state depictions.
 - Required files and dependencies are retained through the existing asset workflow with exact revisions, source provenance, permitted uses and honest gaps. Unknown rights are not approved production rights.
 - A later contributor can perform the specified local revision without guessing which source or export was used. Where family reuse is promised, the needed second variation has actually been made and inspected.
@@ -159,9 +163,9 @@ Use creator review for genuinely new visual directions and families under the ex
 
 ## 8. Delivery sequence and dependencies
 
-1. **Prepare a scoped production brief.** Select the real use, exact source/control, required views/actions, supported consumer and one worthwhile revision. Resolve only consequential missing identity or rights choices.
+1. **Prepare a scoped production brief.** Select the real use, exact source/control, required views/actions, supported consumer, effort profile and one worthwhile revision when reuse is promised. Resolve only consequential missing identity or rights choices.
 2. **Prove form, fit and rough movement.** Repair the cause of an observed failure before final dependent work. Prefer current trusted sources where they satisfy the brief.
-3. **Finish and export the first package.** Complete the selected materials, rig/weights, clips and final artifact checks. Preserve the exact output and limitations.
+3. **Finish and export the first package.** Complete the materials, rig/weights, clips and final artifact checks needed by the selected profile and requested finish. Preserve the exact output and limitations; a prototype does not establish polished-art acceptance.
 4. **Make the useful revision.** Reuse the accepted source and document the actual changed dependencies and correction effort. Do not make an unnecessary family merely to satisfy a checklist.
 5. **Integrate and qualify the promised scope when authorized.** Reuse V3D01.6 for the bounded existing-character motion experiment, V3D05 for general humanoid/equipment work and V3D06 for a genuinely different family. Offline production may proceed independently of unneeded general runtime machinery.
 
@@ -169,7 +173,7 @@ The supplied video is evidence for production options, not a reason to pause cur
 
 ## 9. Decisions and open matters
 
-**Settled by this design:** preserve the existing visual direction and native authority; distinguish authoring parts from runtime objects; choose direct refinement or reconstruction by actual need; test rough deformation early; polish visible features; make physics optional; inspect actual exports; prove a useful revision when claiming reuse; retain one existing storage/flow system.
+**Settled by this design:** preserve the existing visual direction and native authority; distinguish authoring parts from runtime objects; choose direct refinement or reconstruction by actual need; use a functional prototype for early gameplay questions and continue polish on the same source; test rough deformation early; polish visible features without revealing intentionally concealed information; make physics optional; inspect actual exports; prove a useful revision when claiming reuse; retain one existing storage/flow system.
 
 **No unresolved owner decision blocks this documentation design.** Future production still needs its selected character/variation and actual tool access. A change to identity, art direction, rights, spending authority or required game behavior must be resolved by its established owner before dependent work. Routine source repair, export settings drawn from the current consumer and reversible production choices remain the executing contributor's responsibility.
 

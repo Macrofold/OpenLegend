@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | The production procedure, handoffs and acceptance cases are specified; no new asset, tool trial or runtime integration has been executed. | 2026-10-31 |
+| Not started | Prototype/polish steps, repair cases and handoffs are specified; no new asset, tool trial or runtime integration has been executed. | 2026-11-05 |
 
 ## Read this first
 
@@ -12,6 +12,10 @@ The current repository base inspected for this design is GitHub `Macrofold/OpenL
 
 **No runtime logic changes are designed here.** Existing semantic owners remain in the [3D technical design](3d-pixel-art-tech-design.md#2-semantic-owners): native body/object/action facts, server-scoped presentation, client representation resources and immutable asset publication. Existing family, lifecycle, private-information and spending contracts are consumed, not duplicated. A newly discovered missing runtime capability is a separately scoped V3D or gameplay task; an artist must not simulate its existence in metadata or animation.
 
+### Working vocabulary
+
+A **mesh** is the surface made from vertices, edges and faces; **topology** is their arrangement. A **rig** provides the skeleton and authoring controls used to pose it. **Skin weights** specify how strongly joints move each vertex. The **bind pose** is the reference configuration used by that skin binding; changing it is not an ordinary animation edit. **UVs** map points on the surface to a flat texture. **Retargeting** maps motion between rigs but does not automatically repair body proportions or contact. **Baking** records a calculated surface or movement into data the next tool can consume. A **GLB** packages glTF model data; its exported materials, geometry and animation can differ from the editable authoring scene. **Root motion** is displacement carried by an animation's root, not permission to move the authoritative game body.
+
 ## 1. Working arrangement and handoff
 
 One coordinator owns the complete requested result. The character designer owns the selected visible identity; the modeling/material artist owns editable geometry and surfaces; the rigging/animation contributor owns deformation and motion; the integration contributor owns the actual consumer and native-state mapping. One person can fill all roles. Give one writer responsibility for each source file. Independent concept alternatives or material samples may run in parallel; final skinning and fitted clothes must not silently consume different body revisions.
@@ -20,7 +24,7 @@ Use the existing [study record](../production-workflows/art-flows/study-record.m
 
 | Information | Record once in the existing brief/package |
 | --- | --- |
-| Intended result | Selected character/object, wanted player experience, study/production/integrate finish and the actual consumer. |
+| Intended result | Selected character/object, wanted player experience, study/production/integrate finish, prototype/polished effort and the actual consumer. |
 | Identity and freedoms | Exact approved reference/source revision; features that must remain; routine artistic choices still open; material identity changes requiring owner input. |
 | Required coverage | Needed camera scale/views, actions and states, body/outfit/item combinations and the one useful revision being proved. |
 | Source and rights | Exact source files, creator/provider, permitted reference/input use, production/export/distribution use and known restrictions. Unknown is not approved. |
@@ -42,6 +46,25 @@ Keep artist-working notes short and current. Do not copy the complete feature sp
 
 **Stop before dependent production** when the intended identity, permitted use or required consumer capability is genuinely unresolved. Continue independent research or preparation, report the exact question and its consequence, and use the existing owner-decision rule. Do not stop for routine reversible choices already delegated by the brief.
 
+### Choose the effort profile
+
+Treat effort and delivery as separate choices. A prototype may be an inspected production package or an explicitly authorized game integration. A polished concept can still be only a study. Record the choice in ordinary language; no new command syntax or workflow service is required.
+
+| Choice | Functional prototype | Polished continuation |
+| --- | --- | --- |
+| When to use | Default for an early gameplay, fit or motion experiment unless greater finish is requested. | A selected visual-quality, presentation or release deliverable, or an authorized refinement of the prototype. |
+| Starting point | Reuse the known compatible body, rig, material and clips wherever they serve the requested use. Generate/model only a real missing part. | Reopen that same retained source and identify the specific remaining visual defects; do not regenerate the person to restart the process. |
+| Geometry and surfaces | Preserve the intended proportions, silhouette and important visible identity; retain usable UVs and clean material groups. Repair actual fit/deformation failures. | Refine the form, face, garment/material treatment and UV allocation where they visibly improve the target view. Rebuild or bake only for a diagnosed need. |
+| Motion | Include the required travel/action/state coverage and relevant transitions, using compatible motion and simple attachments. | Refine weight, contacts, acting and transitions on that coverage before adding optional variants. |
+| Secondary motion | Use a suitable settled/static form or already-working simple bone motion. | Add authored, baked or supported runtime motion only for a visible benefit that survives game-scale review. |
+| What never becomes optional | Rights, exact sources, supported export, required state/fit coverage, native authority, truthful limitations and the promised deliverable. | The same requirements; extra detail does not compensate for a failed basic use or export. |
+
+**Short route:** complete sections 2–3; choose the existing/direct/local-repair route in section 4; perform only needed assembly and rig work in sections 5–7; retain or minimally repair adequate materials/motion under sections 8–10; export and reimport under section 11; perform section 12 only for authorized integration; preserve and hand off under section 15. Perform section 13 when the assignment promises useful revision or family reuse. Skip a stage already satisfied by the exact source, not a check that the requested result still needs.
+
+**Polish route:** start from the retained prototype, compare it with the accepted brief at the actual viewing scale, and repair its highest-impact shortcomings through sections 6–10. Re-export and recheck the affected cases using sections 11–15. Do not add a high-detail sculpt, new rig, full texture-map set or physics merely because the profile is called polished.
+
+A prototype completes a prototype request, not an already-authorized polished or integrated assignment. When that fuller outcome is requested, continue through it without another approval ritual. No fixed artist-hour allowance or generator retry count is implied by either profile; the actual task and spending policy still control.
+
 ## 3. Define the brief and coverage sheet
 
 Write a short description of the person as the player should encounter them. Include body proportions, head/face structure, hair, clothing construction, important colors/material groups, meaningful asymmetry and any actually carried item needed by the task. Mark which details are identity anchors and which may vary. An illustrative worker might have a recognizable profile and practical sleeves; this does not prescribe their personality, employment or current equipment in the game.
@@ -59,6 +82,8 @@ Use a small coverage table such as the following, populated with the actual task
 | One meaningful variation | A needed compatible outfit, body or equipment change | Same identity where intended; fit and action remain coherent | Actual revised source/export and recorded correction effort. |
 
 Do not add every repertoire action. Choose the smallest coverage that proves the selected use and its real risks. A generic locomotion proof does not establish a two-handed grip, sitting with a pack or unusual anatomy.
+
+Mark deliberately concealed features and adopted transformations in the brief. Review the information that should actually be visible, rather than exposing a face or mark to satisfy a blanket recognition test. Private source material must not be included in public exports. Costume coverage is not a substitute for the existing owner deciding which asset data may be disclosed.
 
 ## 4. Select the source and model route
 
@@ -188,7 +213,7 @@ Use this order as a decision aid, not a mandatory escalation ladder:
 
 Do not require a full cloth solver for one moving hem, or retain physics because it looked impressive in Unreal. Small motion can become distracting pixel noise. Keep the existing settled/held-pose controls for comparison; do not change global cadence or physics defaults as an asset-local repair.
 
-Optimize only against a concrete consumer need. A lower-detail export, shared material or consolidated rigid part may help, but must preserve required silhouette, grips, state coverage and identity. Do not merge away separately handled equipment, expose hidden private marks through a shared atlas or create a new model for every transient state. Levels of detail and crowd policies remain with the existing family/resource owners.
+Optimize only against a concrete consumer need. A lower-detail export, shared material or consolidated rigid part may help, but must preserve required silhouette, grips, state coverage and identity. Do not merge away separately handled equipment, bundle private source data into a public atlas or create a new model for every transient state. Levels of detail and crowd policies remain with the existing family/resource owners.
 
 ## 11. Export a package the consumer can actually use
 
@@ -221,7 +246,7 @@ Use the current game and the selected native scenario. Where a needed state is d
 
 | Check | What to exercise | Failure to reject or record |
 | --- | --- | --- |
-| Ordinary recognition | Normal play scale, required camera orbit/pitch/zoom, neighboring people/objects and relevant lights. | Face/outfit identity disappears, proportions change, thin important parts vanish or visual noise defeats the intended finish. |
+| Ordinary recognition | Normal play scale, required camera orbit/pitch/zoom, neighboring people/objects and relevant lights, respecting intended concealment. | Required visible identity disappears, proportions change, thin important parts vanish or visual noise defeats the intended finish; concealed information must not be exposed to rescue recognition. |
 | Motion and contact | Travel, turn, stop, chosen action, relevant interruption and supported rest/lifecycle state. | Sliding, broken grip, clipping, root-driven world motion, false success or inappropriate live pose. |
 | Equipment and variation | The actual supported equip/remove/drop/contained cases needed by the task; current body fit. | Duplicated item, missing gear, wrong side, stale outfit mask, invented custody or incompatible fallback. |
 | Pixel/depth integration | Moving camera and moving subject separately, light changes, occlusion, selected outlines/shadows where affected. | Attractive still but unstable motion, silhouette/depth disagreement, double shadow or broken selection. |
@@ -239,6 +264,18 @@ Choose a change that somebody actually needs: a compatible outfit, the same item
 Make the change from the retained source. Do not regenerate the whole person unless the source-selection decision genuinely calls for it. Record the work needed to fit, paint, bind, export and inspect the revision. Compare both results under the same relevant conditions and preserve the useful earlier version.
 
 If the revision is almost as expensive as a new asset, record that honestly. It may show that the chosen family boundary is wrong, the source needs one targeted improvement or a one-off asset is more economical. Do not build a universal parameter system merely to make reuse sound successful. A second human outfit qualifies only that useful variation, not animals or arbitrary morphology.
+
+### Worked repair: a weak face on an otherwise useful body
+
+This is an illustrative procedure, not a claim that a particular current asset has this defect.
+
+1. Compare the face in neutral light, profile and the actual intended game view. Establish whether the failure is shape, paint placement, lighting or insufficient visible information. Do not regenerate geometry to repair a misplaced eyebrow.
+2. Preserve the current body, rig, clothing and clips. For a surface defect, edit the local paint/UV/material and retain the working binding. For a shape defect, model locally or generate a replacement against the accepted head/neck dimensions and reference.
+3. Fit the changed head to the same neck and rest pose; repair the relevant seam, normals, skinning and material boundary. Retain intentional asymmetry. A generated head is not automatically compatible with the previous skin weights or facial controls.
+4. Recheck head/neck turns and every required pose or fitted item affected by the change. If the rig or rest pose changed, broaden checks to the actual dependent clips; do not assert the old animation pass still applies.
+5. Export the revised artifact, reimport it and compare under the original camera/light conditions. Update the exact source/export references and affected portraits or other required views. Record the correction effort and preserve the prior useful version.
+
+The result may still be one joined character mesh. Independent generation was an editing choice, not a new detachable-head mechanic or a mandatory runtime part.
 
 ## 14. Repair and dependency map
 
@@ -269,7 +306,7 @@ The handoff must let another contributor answer: What is selected? Which source 
 
 ## 16. Execution plan, verification and open decisions
 
-The [art-direction follow-through](../maintainers/art-direction.md#character-production-follow-through) owns the offline production proof. Its dependency order is brief/rights/consumer → rough form/fit/motion → finished export → meaningful revision → authorized integrated evidence. A missing general runtime family blocks its dependent integration, not all independent art preparation. Existing V3D01.6, V3D05 and V3D06 own their technical implementation and scope-specific acceptance; no duplicate tracker is introduced.
+The [art-direction follow-through](../maintainers/art-direction.md#character-production-follow-through) owns the offline production proof. Its dependency order is brief/rights/consumer → rough form/fit/motion → selected finish and export → meaningful revision → authorized integrated evidence. A missing general runtime family blocks its dependent integration, not all independent art preparation. Existing V3D01.6, V3D05 and V3D06 own their technical implementation and scope-specific acceptance; no duplicate tracker is introduced.
 
 For this documentation assignment, verify content, ownership, links, scenario coverage and the actual diff. No new automated tests, game startup, GitHub Actions, paid model calls or asset generation are required to establish that the design is written. A future production task follows the current verification policy for its actual changes.
 
@@ -277,7 +314,7 @@ For this documentation assignment, verify content, ownership, links, scenario co
 
 No unresolved owner decision blocks this design. Before production, select the needed subject/variation and confirm exact input rights, tools and supported consumer; these are concrete execution inputs. Changes to visual direction, identity, required mechanics, public release or spending beyond authorization require the established owner decision. Routine finishing within settled constraints does not need repeated confirmation.
 
-The design deliberately leaves provider superiority, asset-specific finishing time, maximum practical roster, full clothing interchange, arbitrary anatomy and device/crowd performance unclaimed. Reconsider the route when actual repair/revision effort outweighs reuse, motion or camera tests fail, players cannot recognize the person/use, or a new selected capability exceeds the tested family. Do not turn those future evidence questions into an additional architecture project before a real need exists.
+The design deliberately leaves provider superiority, asset-specific finishing time, maximum practical roster, full clothing interchange, arbitrary anatomy and device/crowd performance unclaimed. Reconsider the route when actual repair/revision effort outweighs reuse, motion or camera tests fail, players cannot recognize the intended visible person/use, or a new selected capability exceeds the tested family. Do not turn those future evidence questions into an additional architecture project before a real need exists.
 
 ## Maintained records
 
