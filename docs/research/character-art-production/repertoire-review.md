@@ -80,7 +80,7 @@ The [work catalogue](../../repertoires/work-crafting.md#base-coverage) requires 
 
 ### Recognition without an omniscient costume rule
 
-For a selected compatible outfit or equipment revision, preserve the person's intended visible identity while checking garment removal, coverage and required motion. Separately review any deliberately concealed feature: do not expose it through an atlas, thumbnail, missing layer or forced facial reveal. The [knowledge catalogue](../../repertoires/languages-knowledge.md#selected-recognition-and-evidence-boundary) retains observer-specific recognition. A disguise or genuine transformation may intentionally change recognition; no new disguise mechanic is implemented by this workflow.
+For a selected compatible outfit or equipment revision, preserve the person's intended visible identity while checking garment removal, coverage and required motion. Separately review deliberately concealed features: do not accidentally reveal them in rendered thumbnails, through missing layers or a forced facial reveal. Keep private source material out of public exports; the existing disclosure owner decides which asset data may be sent. The [knowledge catalogue](../../repertoires/languages-knowledge.md#selected-recognition-and-evidence-boundary) retains observer-specific recognition. A disguise or genuine transformation may intentionally change recognition; no new disguise mechanic is implemented by this workflow.
 
 ### Expression without exposing a private mind
 
