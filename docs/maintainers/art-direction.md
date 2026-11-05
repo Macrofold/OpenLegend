@@ -69,10 +69,12 @@ The [art-workflow project](../projects/art-workflow-feature-spec.md) redesigned 
 
   On November 4 Mike rejected the MakeHuman bodies themselves ("They are horrible") and asked for the new bodies in the game first ("we can move the new bodies into the game first without all that other stuff"). Ada and Mara Reed move onto their sheet models with their generated heads, shown in place of their MakeHuman outfits through the game's art selection. Kest, Tavin Vale, Orin and Mike stay as they are until their character sheets come ("as they are"), and the mercenary keeps his shipped files. The prepared MakeHuman and mercenary release is not moving, and the cast is to be rebuilt from parts ([people built from parts](art/people.md), AF10) ([record](../../art-direction/studies/2026-11-03-character-fixes/README.md#into-the-game)).
 
+  Published November 5: Ada's and Mara's game files in the development runtime release (Mike: "Yes, publish", dresses as they are), then, when he asked for "everything we need to", the fixed study folder archived privately and the rebuilt comparison copies, with Ada's and Mara's files, in the public studies and the hosted pages that the art-inspector link opens.
+
   Remaining:
-  - Ada's and Mara's game files are published in the development runtime release (November 5, Mike: "Yes, publish", dresses as they are); they reach the game's normal runs when this work merges into main;
-  - Mike's look at the rebuilt study files, then archiving them and publishing them in the public studies and the hosted pages, with Ada's and Mara's two game files, which the studies release lacks;
-  - the limits the record lists: the sheet models' old painted skin and hair at the neck, the head paint against the look's limited-colour paint for people, the sheet models' triangles, and the library people's open hands.
+  - merging this work into main, so the game's normal runs show Ada and Mara;
+  - Mike's acceptance of the fixes, or his reasons for sending them back;
+  - the limits the record lists: the sheet models' dresses stretching in Run and Sprint, their old painted skin and hair at the neck, the head paint against the look's limited-colour paint for people, the sheet models' triangles, and the library people's open hands.
 
   Exit: Mike accepts or sends back each fix, and accepted files are published and locked.
 
