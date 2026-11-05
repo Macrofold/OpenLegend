@@ -6,6 +6,12 @@ Use sound, motion, visual effects and interface feedback together to make play e
 
 **Route:** action/experience brief → event and timing map → sound/motion/effect palette → editable assets → synchronized integration → full-scene mix and interaction review → useful variation and refinement.
 
+## Music and sound sourcing
+
+Music can be authored offline as fixed assets, with responsive selection, silence and transitions; procedural composition is unnecessary and SFX generation is optional. The [audio research](../research/audio/README.md) owns current composer, library and AI sourcing evidence. Its [proposed direction and audition](../research/audio/openlegend-direction.md) guide a compact first package. Signature music benefits from coherent themes and useful revision; licensed recordings can supply consistent action/material effects. Select sources by their job and request stems only for a chosen playback need.
+
+Apply the [rights brief](../research/audio/archive/2026/2026-11-04-rights-and-delivery.md) to the actual browser release, edits, collaborators and intended downstream uses. Preserve masters, derivatives and entitlement through the [asset workflow](../asset-workflow.md). [AUD01–AUD04](../maintainers/audio-production.md) tracks auditions, accepted rights/assets, the representative soundscape and any missing playback work. Offline acquisition does not change mechanical hearing or select optional speech media.
+
 ## 1. Map the experience to actual events
 
 **Consume:** the selected action or scene, actual start/progress/outcome meanings, relevant interruption behavior, current presentation and the knowledge available to this participant.
@@ -46,7 +52,7 @@ Balance activity with quiet. An ordinary successful action can use a restrained 
 
 **Produce:** editable source projects where useful, cleaned individual assets, required loop/variation versions and exports suitable for the actual consumer. Retain the source and meaningful processing settings that make revision inexpensive.
 
-Start with existing useful sounds, clips, particles or effects. Generate or author missing pieces selectively. Specialist sound/music generation can propose material; ordinary audio editing establishes timing, clean beginnings/endings, loop seams and mix suitability. Motion tools provide usable clips only when they export the required skeletal data. The [asset and audio research](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md) records candidate tools and their limitations.
+Start with existing useful sounds, clips, particles or effects. Generate or author missing pieces selectively. Specialist sound/music generation can propose material; ordinary audio editing establishes timing, clean beginnings/endings, loop seams and mix suitability. Motion tools provide usable clips only when they export the required skeletal data. Use the [current music/SFX research](../research/audio/README.md) for audio candidates and terms; the earlier [asset and audio study](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md) retains motion and speech references.
 
 An audio contributor or agent should inspect the actual file, not only a provider's success response. Listen for unwanted speech, artifacts, inconsistent tails, intrusive background layers and repetition. Check a loop over several repetitions and compare variants in the same listening context. Preserve useful dynamic range and avoid embedding an entire soundtrack or ambience into a short effect that must mix independently.
 
@@ -123,4 +129,5 @@ For voice, casting and dialogue authoring can explore together, but final record
 
 - **Implementation:** the affected action tracker, [spatial/presentation work](../maintainers/spatial-world.md), [3D animation](../maintainers/3d-pixel-art.md), [UIUX](../maintainers/ui-ux.md), [hearing/media](../maintainers/hearing-and-speech.md) and [narration/conversations](../maintainers/narration-and-conversations.md), according to scope.
 - **Limits and constraints:** [hearing and optional media](../limits/hearing-and-speech.md), [interface/presentation](../limits/interface.md), [AI execution](../limits/ai-execution.md) and the relevant action/asset inventory. No new audio quota, playback system or voice policy is selected here.
+- **Music/SFX sourcing and proposed production:** [current research](../research/audio/README.md), [musical direction](../research/audio/openlegend-direction.md) and [AUD01–AUD04](../maintainers/audio-production.md).
 - **Evidence:** [asset/audio research](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), [production cases](../../archive/02-research/ai-game-development/02-developer-case-studies.md) and actual topic reports under [verification](../verification.md).

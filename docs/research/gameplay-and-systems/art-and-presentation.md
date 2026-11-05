@@ -25,3 +25,5 @@ Investigation: Compare specific packs/tools and their current terms when selecte
 Evidence needed: Consistent deliverable asset family with recorded rights, budget, fallbacks
 
 Current qualification belongs to the linked delivery owners, not the former archive's “not started” snapshot. This question grants no new implementation or paid-experiment authority.
+
+Music and sound now have a completed [sourcing study](../audio/README.md), a [proposed musical direction](../audio/openlegend-direction.md) and [production follow-through](../../maintainers/audio-production.md). The study compares current licenses and production routes; asset auditions, acquisitions and in-game qualification remain unperformed. Other asset families retain their existing research and delivery owners.

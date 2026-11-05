@@ -136,7 +136,7 @@ ElevenLabs exposes distinct sound-effect and music models; its current music off
 
 For OpenLegend, first build small reviewed libraries: identifiable material impacts, footsteps, gathering/crafting cues, weather layers, and a few musical states that can transition cleanly. Require clean loop boundaries, appropriate length, loudness consistency, and separation from dialogue. A beautiful whole song is not automatically an interactive score. Keep wet reverberation and ambience separable where the game needs spatial placement. These are proposed audio acceptance criteria, not measured shortcomings of a particular vendor.
 
-Generated trailer music and dialogue acting can be useful without becoming live runtime dependencies. Record the source, intended use, and applicable export/use terms during asset acceptance; no broader legal study is needed to compare creative fitness here.
+Generated trailer music and dialogue acting can be useful without becoming live runtime dependencies. Record the source, intended use, and applicable export/use terms during asset acceptance. The [current music/SFX sourcing investigation](../../../docs/research/audio/README.md) owns the deeper commercial-license comparison, composer/library alternatives and proposed Open Legend musical direction; [its AI record](../../../docs/research/audio/archive/2026/2026-11-04-ai-audio.md) distinguishes current Suno, Stable Audio, Eleven Music/SFX and other product terms. Creative audition, rights acceptance and actual playback qualification remain separate. [AUD01–AUD04](../../../docs/maintainers/audio-production.md) tracks proposed follow-through; optional speech media retains HE07.
 
 ## 6. What the supplied sites contribute
 
