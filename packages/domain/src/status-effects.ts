@@ -1743,7 +1743,6 @@ export { validateStatusEffectPolicy };
 
 export {
   capabilityBlocked,
-  statusEffectsReadToken,
   activeStatusEffects,
   projectStatusEffects,
   activeContributionId,

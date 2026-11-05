@@ -8,6 +8,8 @@ Design and written routing complete, October 31, 2026. No managed pool/controlle
 
 Documentation evidence: `pnpm guidance:check`, affected-file Prettier and changed/new local-link/heading checks pass. The written route distinguishes local, remote, new-tool and prose-only tasks; no native agent dispatch, cloud lifecycle or game-performance check ran for this design.
 
+Current tooling integration: the disposable PostgreSQL helper honors the separately delivered runner's managed database prefix; ordinary, managed and maximum-length names round-trip, and invalid prefixes refuse before connecting. The [BK24 operating record](../verification/performance/bookkeeping/2026/2026-11-05-sparse-reception.md) tracks a stopped, quarantined worker whose interrupted untagged database remains unproven. VW01–VW03's cleanup/recovery qualification remains open; this fixture integration does not integrate or qualify the pool/controller/runner in this checkout.
+
 ## Delivery order
 
 - [ ] **VW01 — Atomic ownership and bounded lifecycle.** Implement the controller/table, fixed slots, cloud-allocation admission, fenced run/case claims, supervisor and independent deadlines/recovery through the [shared contracts](../projects/verification-workers-tech-design.md#runner-input-and-output). **Required pass:** concurrent claim has one winner; duplicate or changed-payload retries do not replay; stale run/case commands cannot affect successors; cleanup after expiry can stop a long-running child without lock deadlock; controller/laptop loss and stop/claim races recover or quarantine. Allocation/create/retire uncertainty cannot exceed the slot cap or reset spending. Exercise owned disposable fault scenarios, never active temporary workers.

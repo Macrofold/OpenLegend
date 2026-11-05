@@ -56,7 +56,6 @@ export const DOMAIN_COUNTERS = [
   'animalWanderDecisions',
   'animalWanderQueueEntriesVisited',
   'animalWanderEligibilityChecks',
-  'animalWanderEligibilityReuses',
   'sightBroadOpportunities',
   'sightDetailOpportunities',
   'sightRecognitionOpportunities',

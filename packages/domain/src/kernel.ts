@@ -7190,7 +7190,7 @@ function* advanceWorldNative(
         continue;
       }
       advanceFlight(world, entity, 0, events, landingOccupancy, deferFlight);
-      wanderQueue.reconcileWander(world, entity);
+      reconcileAnimalWander(world, entity);
       trackOccupancy(entity);
     }
     const takeoffs = flushFlight();
@@ -7693,7 +7693,7 @@ function* advanceWorldNative(
       mechanics === animalEligibilityMechanics ? blockedAnimalClocks : participants.animals;
     if (wanderingClocks)
       for (const id of wanderingClocks)
-        wanderQueue.reconcileWander(world, entityGet(world.entities, id)!);
+        reconcileAnimalWander(world, entityGet(world.entities, id)!);
     wanderQueue.synchronize(world, participants.animals);
     // Reaching the interval's stored deadline lands on it exactly (PF13.16).
     const landing = mechanics.endsAt !== undefined && seconds >= mechanics.remainingSeconds;
@@ -7892,7 +7892,7 @@ function* advanceWorldNative(
       if (!entity) continue;
       if (!movementRestricted.has(id)) {
         advanceFlight(world, entity, seconds, events, landingOccupancy, deferFlight);
-        wanderQueue.reconcileWander(world, entity);
+        reconcileAnimalWander(world, entity);
       }
       trackOccupancy(entity);
     }
@@ -8013,7 +8013,7 @@ function* advanceWorldNative(
       ? eligibilityChanges
       : participants.animals) {
       const entity = entityGet(world.entities, id);
-      if (entity?.animal) wanderQueue.reconcileWander(world, entity);
+      if (entity?.animal) reconcileAnimalWander(world, entity);
     }
     wanderQueue.synchronize(world, participants.animals);
     reconcileResourceReservations(world);

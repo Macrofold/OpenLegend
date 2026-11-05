@@ -57,6 +57,31 @@ Cancellation exposed a separate tooling integration defect: the shared disposabl
 
 Artifacts: `/tmp/ol-bk24-aws-20261105/cancelled-comparisons-results`, recovery receipt `owned-recovery-state.json`. Financial settlement/retained storage remain explicit until final reconciliation.
 
+## Matched structural comparison
+
+The fixed-source retry completed all eight cases on one new standard worker/session (`i-01bdb83b2c3aadf43`, slot 2 generation 142, campaign `54e591a2-9022-40d4-9eff-b435abe57643`), with clean per-case and final cleanup. Historical game source `259bb1ecd` uses the exact hashed current fixture setup helper; candidate game source is `8555c5634`. Both use wilderness seed 1086, seven people, twenty animals, 74 root objects, one controlled stream, world clock 60:1 and **20/10 sight plus 20 context/relation**. No model calls, CPU sampler or runtime monitor. Warmup is excluded.
+
+| Case                                                      | Measured seconds | Normal fraction | Node CPU ms / game second | Accepted-command p95 ms |
+| --------------------------------------------------------- | ---------------: | --------------: | ------------------------: | ----------------------: |
+| Historical, application diagnostics off                   |          120.126 |        0.364201 |                    48.769 |                 546.879 |
+| Completed batch, diagnostics off                          |          120.328 |        0.954337 |                    20.297 |                 587.533 |
+| Completed diagnostic control                              |           90.512 |        0.987832 |                    19.477 |                 562.769 |
+| E1a reversed: unrelated due work buys full sight          |           90.290 |        0.828810 |                    23.327 |                 668.350 |
+| E1b reversed: all selected detail rechecked               |           90.050 |        0.912893 |                    20.948 |                 506.377 |
+| E2 reversed: original eligibility evaluation              |           90.369 |        1.002670 |                    19.046 |                 513.688 |
+| E4 reversed: outer command authorization holds world lane |           90.101 |        0.867544 |                    20.639 |                 291.312 |
+| E1c reversed: repeated source preparation                 |           90.091 |        1.012862 |                    18.993 |                 582.110 |
+
+The unsampled completed batch advances 6,890 game seconds versus 2,625 historically, using 139.846 versus 128.018 seconds of whole Node-process CPU. CPU per advanced game second falls about 58.4%; total CPU does not fall because the candidate completes much more simulation. Main-thread CPU (119.845 versus 110.386 seconds) overlaps Node-process CPU and is not added. Actual physical trajectories differ under fixed real-time arrivals; this compares complete structural batches, not isolated compaction or equal routes. Neither short control is a sustained operating pass. Command p95 did not improve at this cadence, and E4 trades faster clock progress for a worse accepted-command tail in this specimen; its connected fairness/authority proof remains separate.
+
+Temporal SQL rows fall from 8,446 to 1,002; payload from 253,574,490 to 19,040,105 bytes and metadata from 75,846,393 to 8,070,404. These are total occupied temporal rows/JSON bytes, **not cleanup debt**. Main-isolate retained heap after requested collections is 330.35 versus 225.34 MiB; the worlds have advanced different amounts. At the final snapshot, wholly collectible temporal payload is 839,888 versus zero bytes. A zero endpoint is not proof of sustained retirement.
+
+The 90-second diagnostic control advances 5,370 game seconds. E1a reversal performs 4,508 broad opportunities / 4,490 game seconds versus 2,412 / 5,370; detail targets rise 9,252→20,569. E1b reversal requests 24,772 detail targets / 4,932.337 game seconds versus 9,252 / 5,370. The cause and target filters remove real extra sensing work; differences are not additive timings. E1c performs 1,600 preparations / 5,370 game seconds versus 2,155 / 5,475 when reversed (about 24% fewer per game second). Existing preparation-reuse counters are not E1c-only. Whole-process CPU per game second is slightly worse with E1c in this one comparison; retain its small existing-cut borrowing for demonstrated duplicate construction removal, without claiming a total speed gain.
+
+**E2 is rejected and removed.** Its witness reduces actual eligibility evaluations from 132,684 to 20,922 plus 112,677 reuse checks, but whole-process CPU/game second is 19.477 with the witness versus 19.046 without it. The small difference is noisy and does not justify the added map/dependency machinery. This is not isolated controller CPU. Restoring the original queue removes the witness map, wrapper, counter and unused status-token accessor and preserves complete world state, ordered events, all twenty animals’ routes/positions/decisions/needs and RNG at fixed 120/240/360/480/600-game-second checkpoints in the external native comparison. Eleven to eighteen animals move at the checkpoints, eighteen forage and one flies. Both planners are released; no local speed measurement or unit suite ran. Artifacts: `/tmp/ol-bk24-e2-removal/result2.log`, `manifest.json`.
+
+Detailed counters, effective settings, CPU cuts, heap and storage snapshots are in `/tmp/ol-bk24-aws-20261105/comparisons-summary.json` and `comparison-work-removal.json`. Application-counter/stage timings are diagnostic evidence; they overlap and cannot be summed into a CPU budget. Final operating qualification uses the completed source **after** E2 removal and the independent 60/30 sight comparison.
+
 ## Operating qualification
 
 Pending: matched E0–E5 AWS comparisons, automatic checkpoint across recent retirement, complete normal-speed results and applicable population/cleanup qualification. No speed improvement or capacity pass is claimed by the connected checks.
