@@ -80,10 +80,19 @@ These sources refine existing steps; they add no compulsory tool, comparison or 
 
 The current walking-person request uses the clips named by the [motion workflow](../../../docs/production-workflows/art-flows/3d-models.md#step-9--make-the-clips), including its `Idle`/`Walk`/`Run` defaults and current-loader requirements. The original video's walk demonstration does not replace that contract. This follow-through selects no body source, wrap method, fit envelope, secondary-physics system or provider winner.
 
+## Qualification status — November 5, 2026
+
+**Unqualified experiments; production A/B not run.** The additional handoff/dependency-check procedure and any new method selected for claimed efficiency follow [AF07's isolated comparison](../../../docs/projects/art-workflow-tech-design.md#isolated-workflow-experiments). Selective parts, direct-mesh refinement, blocking and focused finalization already existed before this follow-through; rebuilding everything is not their historical baseline. Added documentation/check effort must be measured too.
+
+Source inspection of [`art-tool.py`](../../../scripts/art/art-tool.py) establishes that `normalize` refuses rigs/actions and cannot split fused parts, fill holes or remove ornaments; ordinary `report` success is not a strict pass; and `clips` replaces the action set with the explicitly named, retargeted clips. Clip names alone do not prove unchanged motion. These are inspected tool constraints, not measured art outcomes.
+
+The inspected environment has no Blender executable or `bpy` runtime and no local editable art fixtures. Public exported assets exist, but downloading a GLB does not supply the missing repair/export execution environment or an observed artist-work comparison. No synthetic timing loop substitutes for that work. No production-effort or renderer-performance benefit is established; the before/after comparisons remain open.
+
+The branch comparison against `6277b516e8cc10613e37bc289723d710d22f731a` contains documentation changes only. Inspected [motion](../../../apps/client/src/characters/character-motion.ts) and [cognition](../../../apps/server/src/cognition-contracts.ts) consumers are byte-identical to that base. This establishes no changed execution input, not universal cognition correctness or future method safety. The [recognition policy](../../../docs/worlds/base/perception-recognition.md) remains a selected, uninstalled design; art must not supply its missing evidence or claim it is implemented.
+
 ## Repertoire coverage and selected auditions
 
 **November 5 follow-through:** an art-focused review inventoried all 42 current repertoire Markdown files, examined their structures and art-relevant passages, and read contextual examples across the catalogues and four world proposals. Existing scope, visible-state and representative-family guidance remains sufficient; no catalogue additions are justified. This is not a line-by-line editorial or external-source revalidation of every entry. The selected examples below feed the workflow, rather than multiplying the default prototype requirements.
-
 
 All 42 paths are represented below. Their existing situations already cover the necessary artistic range; this review found no need to add catalogue entries, universal style labels or bespoke animations for every row. Historical ledgers were checked for relevant scope and left as historical records.
 

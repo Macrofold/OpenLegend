@@ -4,7 +4,7 @@
 
 **Status:** Not started. Selected for design on November 4, 2026; implementation is not authorized. The design need is [DG37](../needs-design.md#dg37--character-appearance-a-creator-and-varied-populations) (ND39–ND42). Until PPL03 lands, ask Mike before making a person, and never generate one whose clothes are part of the body. Until the cast is rebuilt ([AF10](../art-direction.md#art-flow-follow-through)), Ada and Mara Reed use the models generated from their sheets, with their clothes fused into the body, and the other people keep their MakeHuman bodies ([AF14](../art-direction.md#art-flow-follow-through)).
 
-The [general workflow refinement](../../projects/art-workflow-feature-spec.md#37-repair-only-the-failed-dependency) settles selective generation, direct-mesh repair and prototype-to-polish handoffs. It supplies procedure for these tasks, not the missing body source/coverage, face-control, clothing or acceptance decisions; PPL01/PPL02 and ND39–ND42 remain open.
+The [general workflow](../../projects/art-workflow-feature-spec.md#37-repair-only-the-failed-dependency) supplies repair/reuse guidance and the isolated experiments for uncertain method effects. It does not settle body source/coverage, face controls, clothing or acceptance; PPL01/PPL02 and ND39–ND42 remain open.
 
 ## Tasks
 

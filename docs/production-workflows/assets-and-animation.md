@@ -228,7 +228,7 @@ For a revision or finalization, reopen the exact selected source and record whic
 | Correct source but broken runtime view           | Export and renderer consumption                      | Final artifacts, actual game poses and loading/replacement behavior                                                                                    |
 | Repeated variants lose identity                  | Shared brief, references or family controls          | Variant generation and cross-representation review                                                                                                     |
 
-Reimport and inspect the exact final artifact after the repair. If a previously checked dependency, consumer or look changed, its relevant check is no longer reusable. New family or device qualification is required only when that coverage is part of the task; one repaired character supplies evidence for its inspected combination.
+Reimport and inspect the exact final artifact after the repair. If a previously checked dependency, consumer or look changed, its relevant check is no longer reusable. Added mandatory handoff work, reduced check coverage and uncertain repair methods remain [isolated experiments](../projects/art-workflow-tech-design.md#isolated-workflow-experiments) until qualified. New family or device qualification is required only when that coverage is part of the task; one repaired character supplies evidence for its inspected combination.
 
 ## Maintained records
 
