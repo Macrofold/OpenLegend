@@ -1,0 +1,163 @@
+{
+  "group": "source-library-props",
+  "recipe": {
+    "path": "scripts/prepare-game-props.ts",
+    "sha256": "f33d8ebfdf0f2dbc1c3f6a39a1c466dedecf8292b25153e00c1ac31357db837d"
+  },
+  "helpers": {
+    "model-files.ts": "6b35e765e8800a31ac189200fefbd81fcf40617f9948c975c784eb76dbd2ef72"
+  },
+  "sources": [
+    {
+      "page": "https://opengameart.org/content/fantasy-props-megakit",
+      "creator": "Quaternius",
+      "license": "CC0 1.0",
+      "bytes": 73727082,
+      "sha256": "0bc1e5843c9f245c44bda82f97f738b09f88fe51bb34d2a69a7847a969f868e3"
+    },
+    {
+      "page": "https://algumacoisaqq.itch.io/medieval-village-dungeon-kit",
+      "creator": "Daniel Gruginski (algumacoisaqq)",
+      "license": "CC0 1.0",
+      "file": "MedievalVillageKit_Godot_0.3.0.zip",
+      "bytes": 435196561,
+      "sha256": "701788b32beeca87263db0ff446230b16744c32c569db342aabbb660d03bb612",
+      "retrieved": "2026-11-04T06:34:59Z"
+    },
+    {
+      "page": "https://algumacoisaqq.itch.io/medieval-itens-pack",
+      "creator": "Daniel Gruginski (algumacoisaqq)",
+      "license": "CC0 1.0",
+      "file": "MedievalItems_FBX.zip",
+      "bytes": 63426859,
+      "sha256": "464a5d12a03dce08827ac870dbd35e25777f2deb6505f61092322ff952ba8226",
+      "retrieved": "2026-11-04T22:12:17Z"
+    }
+  ],
+  "assets": [
+    {
+      "id": "library-supplies-crate",
+      "family": "library-supplies-crate",
+      "label": "Workshop supplies · Quaternius",
+      "variant": "survey",
+      "description": "The anchor kit’s wooden crate, which Mike liked in the survey.",
+      "recommended": true,
+      "file": "library-supplies-crate.glb",
+      "bounds": {
+        "min": [-0.271426, 0, -0.292707],
+        "max": [0.271426, 0.600002, 0.292707]
+      },
+      "triangles": 1576,
+      "vertices": 1426,
+      "textureSizes": [
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512]
+      ],
+      "sha256": "f4d0c8d566097e5fefac71f71ad55dd4c41983fde6a8fab830ac1886d385e45f",
+      "source": "Crate by Quaternius, CC0 1.0, https://opengameart.org/content/fantasy-props-megakit; placed on its footprint at the size the asset survey shows, by OpenLegend."
+    },
+    {
+      "id": "library-workbench",
+      "family": "library-workbench",
+      "label": "Riverside workbench · Quaternius",
+      "variant": "survey",
+      "description": "The anchor kit’s workbench, which Mike liked in the survey.",
+      "recommended": true,
+      "file": "library-workbench.glb",
+      "bounds": {
+        "min": [-1.015596, 0, -0.515186],
+        "max": [1.015596, 0.900004, 0.515186]
+      },
+      "triangles": 1368,
+      "vertices": 1380,
+      "textureSizes": [
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512]
+      ],
+      "sha256": "a0584d3340c4c571e852e08bdc478652867aab02182f77c1215369ff42ec31ab",
+      "source": "Workbench by Quaternius, CC0 1.0, https://opengameart.org/content/fantasy-props-megakit; placed on its footprint at the size the asset survey shows, by OpenLegend."
+    },
+    {
+      "id": "library-bundle-bedroll",
+      "family": "library-bundle-bedroll",
+      "label": "Travelling bundle · Gruginski",
+      "variant": "library",
+      "description": "The village kit’s tied bedroll, which Mike liked among the bundles.",
+      "recommended": true,
+      "file": "library-bundle-bedroll.glb",
+      "bounds": {
+        "min": [-0.37, 0, -0.83],
+        "max": [0.37, 0.249833, 0.83]
+      },
+      "triangles": 352,
+      "vertices": 540,
+      "textureSizes": [
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512]
+      ],
+      "sha256": "75562cb73e681f6664f4b27047ba3673a6a37cf861286c4c15d2c7b6aae75e02",
+      "source": "Bedroll from Medieval Village & Dungeon Kit (Godot version 0.3.0) by Daniel Gruginski (algumacoisaqq), CC0 1.0, https://algumacoisaqq.itch.io/medieval-village-dungeon-kit; placed on its footprint at the size the asset library shows, by OpenLegend."
+    },
+    {
+      "id": "library-bundle-backpack",
+      "family": "library-bundle-backpack",
+      "label": "Equipment bundle · Gruginski",
+      "variant": "library",
+      "description": "A leather backpack, which Mike liked among the bundles.",
+      "recommended": true,
+      "file": "library-bundle-backpack.glb",
+      "bounds": {
+        "min": [-0.201294, 0, -0.157657],
+        "max": [0.201294, 0.5, 0.157657]
+      },
+      "triangles": 2108,
+      "vertices": 2312,
+      "textureSizes": [],
+      "sha256": "d0e9d7f18caa41ccb46e167c7b1c4d38445db737b0200c90f3abcf89b731018e",
+      "source": "Leather backpack from Medieval Weapons & Items (FBX version) by Daniel Gruginski (algumacoisaqq), CC0 1.0, https://algumacoisaqq.itch.io/medieval-itens-pack; placed on its footprint at the size the asset library shows, by OpenLegend."
+    },
+    {
+      "id": "library-river-stones",
+      "family": "library-river-stones",
+      "label": "Loose river stones · Gruginski",
+      "variant": "library",
+      "description": "The village kit’s stone pile at a third of its size, a loose pile to gather from.",
+      "recommended": true,
+      "file": "library-river-stones.glb",
+      "bounds": {
+        "min": [-0.4725, 0, -0.175],
+        "max": [0.4725, 0.1645, 0.175]
+      },
+      "triangles": 624,
+      "vertices": 1348,
+      "textureSizes": [
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512],
+        [512, 512]
+      ],
+      "sha256": "8b246aef9615883847dbce75900f56ff285306b9ff5d10ef23a8fda5f6580242",
+      "source": "Pile stone 1 from Medieval Village & Dungeon Kit (Godot version 0.3.0) by Daniel Gruginski (algumacoisaqq), CC0 1.0, https://algumacoisaqq.itch.io/medieval-village-dungeon-kit; placed on its footprint at 0.35 times the size the asset library shows, by OpenLegend."
+    }
+  ]
+}

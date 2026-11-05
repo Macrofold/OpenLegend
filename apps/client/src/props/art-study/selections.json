@@ -29,5 +29,13 @@
   "study:natural-leafy-shrub-quiet": "study:rooted-shrub-quiet",
   "study:woodland-doe-quiet": "study:wildmesh-doe",
   "study:woodland-stag-quiet": "study:wildmesh-stag",
-  "study:woodland-wolf-quiet": "study:fantasy-wolf-grey"
+  "study:woodland-wolf-quiet": "study:fantasy-wolf-grey",
+  "study:supplies-open-box": "study:library-supplies-crate",
+  "study:workbench-open-bench": "study:library-workbench",
+  "study:bundle-tied-bundle": "study:library-bundle-bedroll",
+  "study:chest-plank-cache": "study:chest-carved-lid",
+  "study:bundle-rolled-wool": "study:library-bundle-backpack",
+  "study:river-stones-loose-stones": "study:library-river-stones",
+  "study:marker-single-board": "study:marker-worn-post",
+  "study:fallen-wood-loose-branches": "study:grounded-deadwood-clear"
 }

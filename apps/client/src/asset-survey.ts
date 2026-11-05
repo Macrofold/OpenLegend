@@ -10,6 +10,8 @@ import { BundledModels, destroyModelApplication } from './bundled-models';
 import { assetUrl, readAssetBytes } from './asset-files';
 import surveyCatalog from './props/art-survey/catalog.json';
 import libraryCatalog from './props/art-library/catalog.json';
+import comparisonPlan from './props/art-library/comparisons.json';
+import studyCatalogs from 'virtual:openlegend-study-catalogs/all';
 import './art-study.css';
 import './asset-survey.css';
 
@@ -94,12 +96,59 @@ const withNew = <T extends { id: string }>(known: T[], added: T[]) => [
   ...known,
   ...added.filter((entry) => !known.some((existing) => existing.id === entry.id)),
 ];
+/** Comparisons put chosen pieces side by side under one subject (the game's own art first, then
+ * survey and library candidates), so a pick is one like. A copy keeps its piece's file, size and
+ * credit under an id of its own. Today's game art comes from the art-study catalogs. */
+function comparisonItems(): Item[] {
+  const pieces = new Map<string, Item>([
+    ...surveyCollection.items.map((item) => [`survey:${item.id}`, item] as const),
+    ...libraryCollection.items.map((item) => [`library:${item.id}`, item] as const),
+  ]);
+  const studyPiece = (id: string): Item | undefined => {
+    for (const study of studyCatalogs) {
+      const asset = study.assets.find((entry) => entry.id === id);
+      if (asset)
+        return {
+          id: asset.id,
+          subject: '',
+          family: 'current',
+          label: `${asset.label} (in game)`,
+          inGame: true,
+          kind: 'model',
+          file: `apps/client/src/props/art-study/${asset.fileGroup ?? study.group}/${asset.file}`,
+          bounds: asset.bounds,
+          triangles: asset.triangles,
+          textures: asset.textureSizes,
+          credit: asset.source,
+        };
+    }
+    return undefined;
+  };
+  return comparisonPlan.subjects.flatMap((subject) =>
+    subject.pieces.map((key) => {
+      const piece = key.startsWith('study:') ? studyPiece(key.slice(6)) : pieces.get(key);
+      if (!piece) throw new Error(`Comparison ${subject.id} names no piece ${key}.`);
+      return { ...piece, id: `${subject.id}:${piece.id}`, subject: subject.id };
+    }),
+  );
+}
 const catalog: Required<Catalog> = {
   families: withNew(surveyCollection.families, libraryCollection.families),
-  categories: withNew(surveyCollection.categories, libraryCollection.categories),
-  subjects: withNew(surveyCollection.subjects, libraryCollection.subjects),
+  categories: [
+    comparisonPlan.category,
+    ...withNew(surveyCollection.categories, libraryCollection.categories),
+  ],
+  subjects: [
+    ...comparisonPlan.subjects.map(({ id, label, note }) => ({
+      id,
+      label,
+      note,
+      category: comparisonPlan.category.id,
+    })),
+    ...withNew(surveyCollection.subjects, libraryCollection.subjects),
+  ],
   sources: { ...surveyCollection.sources, ...libraryCollection.sources },
-  items: [...surveyCollection.items, ...libraryCollection.items],
+  items: [...comparisonItems(), ...surveyCollection.items, ...libraryCollection.items],
   paid: libraryCollection.paid ?? [],
 };
 // Presentation colours that tell the families apart in the stage and cards.

@@ -6,7 +6,9 @@
 
 Each pack directory holds a download and its `extracted` copy (see
 scripts/prepare-asset-library.ts). Every `.blend` and `.fbx` there becomes a GLB at the same
-relative path under the pack's `converted` folder, which the library plan then includes. The files
+relative path under the pack's `converted` folder, which the library plan then includes. A folder
+inside `extracted` converts only that part of its pack, for packs whose other files cannot stand
+alone or repeat the same models in another format. The files
 are downloaded data: their embedded scripts never run, and no image outside the pack is read, since
 a file can name any path on the disk as a texture.
 
@@ -154,13 +156,22 @@ def convert(source, output, root):
     print(f"{source.name}: {len(meshes)} meshes; images {names}; painted {painted or 'none'}")
 
 
+def target(value):
+    """The pack directory and the folder of it to convert: all of `extracted`, or the part named."""
+    path = Path(value).resolve()
+    if "extracted" not in path.parts:
+        return path, path / "extracted"
+    index = len(path.parts) - 1 - path.parts[::-1].index("extracted")
+    return Path(*path.parts[:index]), path
+
+
 def main():
-    packs = [Path(value).resolve() for value in sys.argv[sys.argv.index("--") + 1:]]
-    if not packs:
+    targets = [target(value) for value in sys.argv[sys.argv.index("--") + 1:]]
+    if not targets:
         raise SystemExit("Usage: ... --python scripts/convert-to-gltf.py -- PACK_DIRECTORY ...")
-    for pack in packs:
+    for pack, folder in targets:
         extracted = pack / "extracted"
-        for source in sorted(path for path in extracted.rglob("*") if path.suffix.lower() in SOURCES):
+        for source in sorted(path for path in folder.rglob("*") if path.suffix.lower() in SOURCES):
             if "__MACOSX" in source.parts:
                 continue
             relative = source.relative_to(extracted).with_suffix(".glb")

@@ -1100,6 +1100,63 @@
           "color": "extracted/MedievalItems/Items/Textures/Kit/T_VKX_VK_StoneFresh_BaseColor.png",
           "normal": "extracted/MedievalItems/Items/Textures/Kit/T_VK_Rock_N.png"
         }
+      ],
+      "tints": [
+        {
+          "file": "/IT_antidote\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#b280e0"
+        },
+        {
+          "file": "/IT_potion_tall\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#bf5940"
+        },
+        {
+          "file": "/IT_potion_flask\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#4c8cf2"
+        },
+        {
+          "file": "/IT_potion_big\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#334cd9"
+        },
+        {
+          "file": "/IT_garnet\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#9e1f29"
+        },
+        {
+          "file": "/IT_ruby\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#e61433"
+        },
+        {
+          "file": "/IT_sapphire\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#335cdb"
+        },
+        {
+          "file": "/IT_scroll\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#668cf2"
+        },
+        {
+          "file": "/IT_scroll_open\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#73d9f2"
+        },
+        {
+          "file": "/IT_scroll_rod\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#ffd980"
+        },
+        {
+          "file": "/IT_scroll_singed\\.glb$",
+          "material": "^IT_Tint$",
+          "color": "#ff994c"
+        }
       ]
     },
     {
@@ -2289,6 +2346,800 @@
       "include": "^converted/.*\\.glb$",
       "split": true,
       "subject": "axes"
+    },
+    {
+      "id": "sketchfab-da574cba504e4b83a3293f3d3bd067fb",
+      "title": "medieval sword",
+      "creator": "LowSeb (@lowseb)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/da574cba504e4b83a3293f3d3bd067fb",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A light medieval sword in a physically based finish.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "unit": 0.5,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-80c25af6364e446c88529d3c07728f9d",
+      "title": "Stylized Medieval village External furniture",
+      "creator": "Booba Booba (@tymoteuszrudzenka)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/80c25af6364e446c88529d3c07728f9d",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Stylized village furniture; style not yet checked against the anchor.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "excludePieces": "fucking",
+      "subject": "village",
+      "rules": [
+        {
+          "subject": "village",
+          "match": "bee ?hive"
+        },
+        {
+          "subject": "camp",
+          "match": "candel"
+        }
+      ]
+    },
+    {
+      "id": "sketchfab-c3b896134b184ad9a52f542b0ad539da",
+      "title": "Stylized Handpainted Props",
+      "creator": "Luka van Opstal (@lukavopstal)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/c3b896134b184ad9a52f542b0ad539da",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted props; not yet compared with the anchor kit.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "misc",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-a06dfdc919334bfc95de720ad98f4295",
+      "title": "Medieval Tavern (2k vertices) - free game asset",
+      "creator": "Andy Woodhead (@Andywoodhead)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/a06dfdc919334bfc95de720ad98f4295",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A light hand-painted tavern; its painted-in shadows bake light into the texture.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "buildings",
+      "unit": 10,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-ef55c796859a4da6ad7124fb5280e197",
+      "title": "Stone masons workshop - free game asset",
+      "creator": "Andy Woodhead (@Andywoodhead)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/ef55c796859a4da6ad7124fb5280e197",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A stonemason's workshop, a subject no kit covers; realistic finish.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "buildings",
+      "unit": 2.4,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-0f358eaab21d4e70836ad855de34c423",
+      "title": "Asset Pack - Blacksmith Equipment",
+      "creator": "Mike Farrant (@MikeFarrant)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/0f358eaab21d4e70836ad855de34c423",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A complete forge set; historical finish that would need a painted pass.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "forge",
+      "rules": [
+        {
+          "subject": "forge",
+          "match": "quench"
+        }
+      ]
+    },
+    {
+      "id": "sketchfab-e543a102465a4fbdb2eb89e3b8d3afb0",
+      "title": "Medieval Tools Set",
+      "creator": "Thangzy (@thangzy)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e543a102465a4fbdb2eb89e3b8d3afb0",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Forge tools in a semi-realistic finish.",
+      "include": "\\.(glb|gltf)$",
+      "excludePieces": "^key",
+      "subject": "forge",
+      "unit": 0.4,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-d93444656b204ddd8270b9a9be0d99ec",
+      "title": "The Blacksmith's",
+      "creator": "Aartee (@Aartee)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d93444656b204ddd8270b9a9be0d99ec",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "A stylized sculpted smithy; leans further from the anchor than its props.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "buildings",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-247c37e6a9694ae891398911876f0c14",
+      "title": "Throne Room",
+      "creator": "Uğur Yakışık (@UgurYksk)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/247c37e6a9694ae891398911876f0c14",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "The only free throne room found; many materials, realistic finish.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "hall",
+      "unit": 0.06,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-377413861d004cd6b33680a948904b51",
+      "title": "Medieval Houses Asset",
+      "creator": "Uğur Yakışık (@UgurYksk)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/377413861d004cd6b33680a948904b51",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Three light medieval houses; finish not yet compared with the anchor.",
+      "include": "\\.(glb|gltf)$",
+      "excludePieces": "^plane",
+      "subject": "buildings",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-62ccabc4e78b4822ac8c5af74fe9c66a",
+      "title": "Modular Dungeon Props",
+      "creator": "Tom (@just_polygons)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/62ccabc4e78b4822ac8c5af74fe9c66a",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "A small dungeon kit on a trim sheet, built the way the anchor kits are.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "ruins"
+    },
+    {
+      "id": "sketchfab-e86dd1bc858347f58d97330f258e0c9e",
+      "title": "Nord house",
+      "creator": "Linsort (@Linsort)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e86dd1bc858347f58d97330f258e0c9e",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "A nordic house with sculpted stylized forms.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "buildings",
+      "unit": 0.001,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-4099fd90094c400e987deb240078c38e",
+      "title": "Medieval Watchtower House",
+      "creator": "Krystian Zem (@Banketo)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/4099fd90094c400e987deb240078c38e",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted watchtower house; colour-only painting can read cartoony.",
+      "include": "\\.(glb|gltf)$",
+      "excludePieces": "#565_0$",
+      "subject": "buildings",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-d901a490ab2b4164b1db48bd6e3da519",
+      "title": "Spinning Wheel",
+      "creator": "marthayuill21 (@marthayuill21)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d901a490ab2b4164b1db48bd6e3da519",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "The only free spinning wheel found for a textiles room.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "forge",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-be36443ae66e487aaca4f84c014bff5a",
+      "title": "Goblin",
+      "creator": "C. Anastasiadis (@bagatir)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/be36443ae66e487aaca4f84c014bff5a",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A free, painted and animated goblin; its proportions may be exaggerated.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "humanoids",
+      "unit": 0.00075,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-573e13159e7a4b2cad3fe34a1c754dcc",
+      "title": "Ape-like Goblin (Gameready)",
+      "creator": "Ivaskiv Grigory (@Livagof)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/573e13159e7a4b2cad3fe34a1c754dcc",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A painted goblin with a few clips; style not yet compared.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "humanoids",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-948938cd237d49a9868662213fa05543",
+      "title": "Hare (animated)",
+      "creator": "bluekiwi.dog (@bluekiwi.dog)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/948938cd237d49a9868662213fa05543",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "One of the few free hares with a natural form; fills a gap in the painted sets.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "wildlife",
+      "unit": 0.25,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-f1a74a0a076b403cb78be57efe31bea8",
+      "title": "Fennec Fox",
+      "creator": "Dylan Martínez Sánchez (@dylanmartinezs)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/f1a74a0a076b403cb78be57efe31bea8",
+      "family": "painted",
+      "fit": "fence",
+      "why": "A hand-painted fennec fox; proportions not yet checked.",
+      "include": "\\.(glb|gltf)$",
+      "excludePieces": "^plane$",
+      "subject": "predators",
+      "unit": 0.15,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-745c105544784b9a80bbec49cccd1580",
+      "title": "Day 20 - Snowy Owl",
+      "creator": "Lilly! (@LillyanneTr)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/745c105544784b9a80bbec49cccd1580",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A free snowy owl, a bird the painted sets lack.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "wildlife",
+      "unit": 0.4,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba",
+      "title": "Handpainted Tree Pack",
+      "creator": "rudolfs (@rudolfs)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d246b8b4439d44c6adc854ebc5ffc5ba",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted oak, pine, spruce and birch; check the crowns against natural growth.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "excludePieces": "decal|^plane",
+      "subject": "broadleaf",
+      "rules": [
+        {
+          "subject": "deadwood",
+          "match": "(birch |oak |pine |spruce )?(dead|stump|log)"
+        },
+        {
+          "subject": "conifers",
+          "match": "(spruce|pine)"
+        },
+        {
+          "subject": "bushes",
+          "match": "bush"
+        },
+        {
+          "subject": "groundcover",
+          "match": "(grass|fern|flower|mushroom)"
+        },
+        {
+          "subject": "rocks",
+          "match": "(rock|stone)"
+        }
+      ]
+    },
+    {
+      "id": "sketchfab-46ac3c1a4c3645b1984a97568db54c5d",
+      "title": "Stylized pine tree pack",
+      "creator": "W_illness (@W_illness)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/46ac3c1a4c3645b1984a97568db54c5d",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Stylized study pines; check against the stacked-cone rejection.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "conifers"
+    },
+    {
+      "id": "sketchfab-35e96b479cf942ad9407eb01a11ffa3a",
+      "title": "Stylized palm / coconut tree pack",
+      "creator": "W_illness (@W_illness)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/35e96b479cf942ad9407eb01a11ffa3a",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Stylized palms and coconut trees for coasts.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "tropical"
+    },
+    {
+      "id": "sketchfab-80dec2fffb174051a5a88a404b760895",
+      "title": "Stylised Redwood Trees Pack (with LOD groups)",
+      "creator": "Parelaxel (@parelaxel)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/80dec2fffb174051a5a88a404b760895",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted redwoods; tall conifers with natural trunks.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "conifers",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-f3e0a67b9ca243b09119177649f21e17",
+      "title": "Stone Pack",
+      "creator": "ashkan.fancy (@ashkan.fancy)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/f3e0a67b9ca243b09119177649f21e17",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Sculpted, painted rocks and rune stones; no rock has a like yet.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "rocks"
+    },
+    {
+      "id": "sketchfab-350e77196b424ebc8d28b8e7fc7b509e",
+      "title": "Acacia ( From \"Tree It\")",
+      "creator": "Paul (Sketchfab) (@paul_sketch)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/350e77196b424ebc8d28b8e7fc7b509e",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A light acacia for savanna; photographic textures.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "broadleaf",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-734c4537ca8547209a54df49f134824a",
+      "title": "Date palm and vegetation",
+      "creator": "Bársh (@borsh_and)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/734c4537ca8547209a54df49f134824a",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Date palms and oasis vegetation; tagged both hand-painted and cartoon.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "tropical"
+    },
+    {
+      "id": "sketchfab-031c99c42793439c9fa5a691c67d0da8",
+      "title": "Stylized Hand Painted Trees",
+      "creator": "Satendra Saraswat (@satendra5286)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/031c99c42793439c9fa5a691c67d0da8",
+      "family": "painted",
+      "fit": "fence",
+      "why": "Hand-painted trees; may lean toward a cartoon style.",
+      "include": "\\.(glb|gltf)$",
+      "split": true,
+      "subject": "broadleaf",
+      "rules": [
+        {
+          "subject": "groundcover",
+          "match": "(grass ?clump|fl[yr] [0-9])"
+        },
+        {
+          "subject": "rocks",
+          "match": "rock"
+        }
+      ]
+    },
+    {
+      "id": "sketchfab-f39dc69dbbfe49c68045bec2c16e03ba",
+      "title": "The Sword Of Victory",
+      "creator": "@ArmsMuseum",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/f39dc69dbbfe49c68045bec2c16e03ba",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-97575b982f5944baa0c9062d8107a983",
+      "title": "Decorative Battle Axe",
+      "creator": "@ArmsMuseum",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/97575b982f5944baa0c9062d8107a983",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-f0bfbca7a2804efd9cf77fd0f5a806aa",
+      "title": "Decorative Double-Bladed Battle Axe",
+      "creator": "@ArmsMuseum",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/f0bfbca7a2804efd9cf77fd0f5a806aa",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.001,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-80fa91fc8c974fd0acd2a55cc513edec",
+      "title": "Moonbrand (Early 14th C Arming Sword)",
+      "creator": "@oakeshott",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/80fa91fc8c974fd0acd2a55cc513edec",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-4c8da04032aa4d0386620148bb227ddc",
+      "title": "German Arming Sword",
+      "creator": "@oakeshott",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/4c8da04032aa4d0386620148bb227ddc",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-6e2aea6ce0a0421089652f18349502c1",
+      "title": "15th Century Dagger",
+      "creator": "@oakeshott",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/6e2aea6ce0a0421089652f18349502c1",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-13600dbd9c79478a8380bb90ff8b6df5",
+      "title": "1969.5 Helmet",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/13600dbd9c79478a8380bb90ff8b6df5",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-faca2ad557f64809b598c3a646a8804f",
+      "title": "1964.88 Armor for Man and Horse",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/faca2ad557f64809b598c3a646a8804f",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-d314c9a6abe444ffb22010310b7bae01",
+      "title": "1916.1723.a Crossbow Of Augustus I Of Saxony",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/d314c9a6abe444ffb22010310b7bae01",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "ranged",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-c54e6cbecf5e450d86052da35a86af6d",
+      "title": "1930.741 Book-Shaped Reliquary",
+      "creator": "@clevelandart",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/c54e6cbecf5e450d86052da35a86af6d",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "trinkets",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-7ef62203bf3349a5825fcd8b2dd1441a",
+      "title": "A sword from Small Market in Kraków",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/7ef62203bf3349a5825fcd8b2dd1441a",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "unit": 0.001,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-c4bd07612f424fcd9f516cbccc2554e6",
+      "title": "Closed helmet",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/c4bd07612f424fcd9f516cbccc2554e6",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.001,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-f8914000ccfe413298c332c4e43dcd83",
+      "title": "Mace",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/f8914000ccfe413298c332c4e43dcd83",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.001,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-c78c6d51fc084fb4979c885335196d9d",
+      "title": "Spearhead",
+      "creator": "@WirtualneMuzeaMalopolski",
+      "license": "CC0 1.0",
+      "page": "https://sketchfab.com/3d-models/c78c6d51fc084fb4979c885335196d9d",
+      "family": "scans",
+      "fit": "fence",
+      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "ranged",
+      "unit": 0.001,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-00d4f61c87b34179bea669bfb5d5280f",
+      "title": "Armor Stand - Stylized (PBR)",
+      "creator": "Wicked_Vixx (@tylukex)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/00d4f61c87b34179bea669bfb5d5280f",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "Full plate armour on a stand in a physically based finish.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-d5a373b723f64878b9b866578ff0573c",
+      "title": "Set of Warhammers",
+      "creator": "Peter Nox (@Peter.Nox)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/d5a373b723f64878b9b866578ff0573c",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A dozen war hammers and maces at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.15,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-68fe42128e9b4cdf9719c2982f71b841",
+      "title": "Medieval Sword 15th century",
+      "creator": "Mkostal (@Mkostal)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/68fe42128e9b4cdf9719c2982f71b841",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A 15th-century longsword at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-e733059e9edd414895109a75eed0d3b6",
+      "title": "Bec-de-Corbin (raven's beak) Polearm",
+      "creator": "Michael D. Theodore H. (@MichaelDtheodoreH)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/e733059e9edd414895109a75eed0d3b6",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A bec-de-corbin polearm at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "ranged",
+      "unit": 1.42,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-0ae0f62030ad48d88364b327b7cd3fc3",
+      "title": "Paladin Shield [Free Download]",
+      "creator": "Efarys (@Efarys)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/0ae0f62030ad48d88364b327b7cd3fc3",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A metal kite shield with an embossed cross.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "shields",
+      "unit": 0.45,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-7261d334924f4a9b835ef4b15c1e16d0",
+      "title": "Ancient Roman gladius sword",
+      "creator": "Samize (@samize)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/7261d334924f4a9b835ef4b15c1e16d0",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A Roman gladius and scabbard at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "blades",
+      "unit": 0.375,
+      "nameFromTitle": true
+    },
+    {
+      "id": "sketchfab-83217215a0c541b2956a8e87a4ae62fe",
+      "title": "Medieval Mace",
+      "creator": "Kama Modeling (@KamaModeling)",
+      "license": "CC BY 4.0",
+      "page": "https://sketchfab.com/3d-models/83217215a0c541b2956a8e87a4ae62fe",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A spiked mace at real proportions.",
+      "include": "\\.(glb|gltf)$",
+      "subject": "axes",
+      "unit": 0.01,
+      "nameFromTitle": true
+    },
+    {
+      "id": "algumacoisaqq-medieval-humans-orcs-goblins",
+      "title": "Medieval Humans, Orcs & Goblins (rigged)",
+      "creator": "Daniel Gruginski (algumacoisaqq)",
+      "license": "CC0 1.0",
+      "page": "https://algumacoisaqq.itch.io/medieval-humans-orcs-goblins-rigged",
+      "family": "stylized",
+      "fit": "fence",
+      "why": "Gruginski's AI-built goblin and troll with their gear, made for a top-down camera; each creature wears all its outfits at once.",
+      "include": "^converted/Humanoids/Goblins/.*\\.glb$",
+      "subject": "humanoids",
+      "prefix": "(prop )?",
+      "rules": [
+        {
+          "subject": "ranged",
+          "match": "(shortbow|quiver|glaive|spear|arrow|shaman ?staff)"
+        },
+        {
+          "subject": "axes",
+          "match": "(great ?axe|cleaver|club|troll ?club)"
+        },
+        {
+          "subject": "shields",
+          "match": "(shield ?plank|pot ?helm|leather ?cap|skull ?pauldron|pauldron|bone ?crown|shaman ?headdress)"
+        },
+        {
+          "subject": "trinkets",
+          "match": "(necklace|chief ?buckle|skull ?trophy)"
+        },
+        {
+          "subject": "decor",
+          "match": "war ?banner"
+        },
+        {
+          "subject": "outfits",
+          "match": "(troll ?)?hair"
+        },
+        {
+          "subject": "containers",
+          "match": "(pouch|sack|waterskin)"
+        }
+      ]
+    },
+    {
+      "id": "synofplay-medieval-cafe",
+      "title": "Medieval Café Asset Pack (Free/CC0)",
+      "creator": "Syntaxes of Play",
+      "license": "CC0 1.0",
+      "page": "https://synofplay.itch.io/medieval-caf-asset-pack-free",
+      "family": "realistic",
+      "fit": "fence",
+      "why": "A light tavern and café set sold as low-poly (100–400 triangles a piece) with photo-textured materials; it may look faceted.",
+      "include": "^converted/fbx/.*\\.glb$",
+      "subject": "kitchen",
+      "rules": [
+        {
+          "subject": "walls",
+          "match": "(wall [0-9]|column [0-9])"
+        },
+        {
+          "subject": "openings",
+          "match": "(door|window) [0-9]"
+        },
+        {
+          "subject": "floors",
+          "match": "floor"
+        },
+        {
+          "subject": "furniture",
+          "match": "(counter|table [0-9]|chair|stool|shelf)"
+        },
+        {
+          "subject": "food",
+          "match": "(food|veg|fruit|bowl of stew|platter|basket of pastries|coffee beans)"
+        },
+        {
+          "subject": "kitchenware",
+          "match": "(mug|jug|pitcher|bottle)"
+        },
+        {
+          "subject": "decor",
+          "match": "(tapestry|plaque|menu stand|table cloth|herb drying)"
+        },
+        {
+          "subject": "trinkets",
+          "match": "pouch of coins"
+        }
+      ]
     }
   ],
   "paid": [
@@ -2582,15 +3433,27 @@
     },
     {
       "area": "Nature",
-      "name": "Spruce Forest and Birch Forest – Game Ready with LODs",
+      "name": "Spruce Forest – Game Ready with LODs",
       "creator": "Silver Delivery",
       "url": "https://silver-delivery.itch.io/spruce-forest-game-ready-with-lods",
-      "price": "$8.99 each ($4.49 on sale)",
+      "price": "$8.99",
       "license": "creator's comment: commercial use, no resale",
       "formats": ".blend, FBX, GLB, Unity, Godot",
-      "contents": "8 spruces and 4 birches with 4–5 detail levels, grass and bushes; about 545 vertices per tree.",
+      "contents": "8 spruces (about 545 vertices each, 4 detail levels and a billboard), 4 grasses and 3 bushes, hand-painted.",
       "fit": "fence",
       "why": "The strongest conifer lead: painted in the Arcane style on natural species forms, very light."
+    },
+    {
+      "area": "Nature",
+      "name": "Birch Forest – Game Ready with LODs",
+      "creator": "Silver Delivery",
+      "url": "https://silver-delivery.itch.io/birch-forest-game-ready-with-lods",
+      "price": "$8.99",
+      "license": "creator's comment: commercial use, no resale",
+      "formats": ".blend, FBX, GLB, Unity, Godot",
+      "contents": "4 birches (about 545 vertices each, 3 detail levels), 3 grasses and 3 bushes, hand-painted.",
+      "fit": "fence",
+      "why": "The spruce forest's birch companion in the same Arcane style."
     },
     {
       "area": "Nature",
@@ -3158,557 +4021,6 @@
     }
   ],
   "pending": [
-    {
-      "id": "sketchfab-da574cba504e4b83a3293f3d3bd067fb",
-      "title": "medieval sword",
-      "creator": "LowSeb (@lowseb)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/da574cba504e4b83a3293f3d3bd067fb",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A light medieval sword in a physically based finish.",
-      "subject": "blades"
-    },
-    {
-      "id": "sketchfab-80c25af6364e446c88529d3c07728f9d",
-      "title": "Stylized Medieval village External furniture",
-      "creator": "Booba Booba (@tymoteuszrudzenka)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/80c25af6364e446c88529d3c07728f9d",
-      "family": "stylized",
-      "fit": "fence",
-      "why": "Stylized village furniture; style not yet checked against the anchor.",
-      "subject": "village",
-      "split": true
-    },
-    {
-      "id": "sketchfab-c3b896134b184ad9a52f542b0ad539da",
-      "title": "Stylized Handpainted Props",
-      "creator": "Luka van Opstal (@lukavopstal)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/c3b896134b184ad9a52f542b0ad539da",
-      "family": "painted",
-      "fit": "fence",
-      "why": "Hand-painted props; not yet compared with the anchor kit.",
-      "subject": "misc",
-      "split": true
-    },
-    {
-      "id": "sketchfab-a06dfdc919334bfc95de720ad98f4295",
-      "title": "Medieval Tavern (2k vertices) - free game asset",
-      "creator": "Andy Woodhead (@Andywoodhead)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/a06dfdc919334bfc95de720ad98f4295",
-      "family": "painted",
-      "fit": "fence",
-      "why": "A light hand-painted tavern; its painted-in shadows bake light into the texture.",
-      "subject": "buildings"
-    },
-    {
-      "id": "sketchfab-ef55c796859a4da6ad7124fb5280e197",
-      "title": "Stone masons workshop - free game asset",
-      "creator": "Andy Woodhead (@Andywoodhead)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/ef55c796859a4da6ad7124fb5280e197",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A stonemason's workshop, a subject no kit covers; realistic finish.",
-      "subject": "buildings"
-    },
-    {
-      "id": "sketchfab-0f358eaab21d4e70836ad855de34c423",
-      "title": "Asset Pack - Blacksmith Equipment",
-      "creator": "Mike Farrant (@MikeFarrant)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/0f358eaab21d4e70836ad855de34c423",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A complete forge set; historical finish that would need a painted pass.",
-      "subject": "forge",
-      "split": true
-    },
-    {
-      "id": "sketchfab-e543a102465a4fbdb2eb89e3b8d3afb0",
-      "title": "Medieval Tools Set",
-      "creator": "Thangzy (@thangzy)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/e543a102465a4fbdb2eb89e3b8d3afb0",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "Forge tools in a semi-realistic finish.",
-      "subject": "forge",
-      "split": true
-    },
-    {
-      "id": "sketchfab-d93444656b204ddd8270b9a9be0d99ec",
-      "title": "The Blacksmith's",
-      "creator": "Aartee (@Aartee)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/d93444656b204ddd8270b9a9be0d99ec",
-      "family": "stylized",
-      "fit": "fence",
-      "why": "A stylized sculpted smithy; leans further from the anchor than its props.",
-      "subject": "buildings"
-    },
-    {
-      "id": "sketchfab-247c37e6a9694ae891398911876f0c14",
-      "title": "Throne Room",
-      "creator": "Uğur Yakışık (@UgurYksk)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/247c37e6a9694ae891398911876f0c14",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "The only free throne room found; many materials, realistic finish.",
-      "subject": "hall",
-      "split": true
-    },
-    {
-      "id": "sketchfab-377413861d004cd6b33680a948904b51",
-      "title": "Medieval Houses Asset",
-      "creator": "Uğur Yakışık (@UgurYksk)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/377413861d004cd6b33680a948904b51",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "Three light medieval houses; finish not yet compared with the anchor.",
-      "subject": "buildings",
-      "split": true
-    },
-    {
-      "id": "sketchfab-62ccabc4e78b4822ac8c5af74fe9c66a",
-      "title": "Modular Dungeon Props",
-      "creator": "Tom (@just_polygons)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/62ccabc4e78b4822ac8c5af74fe9c66a",
-      "family": "stylized",
-      "fit": "fence",
-      "why": "A small dungeon kit on a trim sheet, built the way the anchor kits are.",
-      "subject": "ruins",
-      "split": true
-    },
-    {
-      "id": "sketchfab-e86dd1bc858347f58d97330f258e0c9e",
-      "title": "Nord house",
-      "creator": "Linsort (@Linsort)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/e86dd1bc858347f58d97330f258e0c9e",
-      "family": "stylized",
-      "fit": "fence",
-      "why": "A nordic house with sculpted stylized forms.",
-      "subject": "buildings"
-    },
-    {
-      "id": "sketchfab-4099fd90094c400e987deb240078c38e",
-      "title": "Medieval Watchtower House",
-      "creator": "Krystian Zem (@Banketo)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/4099fd90094c400e987deb240078c38e",
-      "family": "painted",
-      "fit": "fence",
-      "why": "A hand-painted watchtower house; colour-only painting can read cartoony.",
-      "subject": "buildings"
-    },
-    {
-      "id": "sketchfab-d901a490ab2b4164b1db48bd6e3da519",
-      "title": "Spinning Wheel",
-      "creator": "marthayuill21 (@marthayuill21)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/d901a490ab2b4164b1db48bd6e3da519",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "The only free spinning wheel found for a textiles room.",
-      "subject": "forge"
-    },
-    {
-      "id": "sketchfab-be36443ae66e487aaca4f84c014bff5a",
-      "title": "Goblin",
-      "creator": "C. Anastasiadis (@bagatir)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/be36443ae66e487aaca4f84c014bff5a",
-      "family": "painted",
-      "fit": "fence",
-      "why": "A free, painted and animated goblin; its proportions may be exaggerated.",
-      "subject": "humanoids"
-    },
-    {
-      "id": "sketchfab-573e13159e7a4b2cad3fe34a1c754dcc",
-      "title": "Ape-like Goblin (Gameready)",
-      "creator": "Ivaskiv Grigory (@Livagof)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/573e13159e7a4b2cad3fe34a1c754dcc",
-      "family": "painted",
-      "fit": "fence",
-      "why": "A painted goblin with a few clips; style not yet compared.",
-      "subject": "humanoids"
-    },
-    {
-      "id": "sketchfab-948938cd237d49a9868662213fa05543",
-      "title": "Hare (animated)",
-      "creator": "bluekiwi.dog (@bluekiwi.dog)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/948938cd237d49a9868662213fa05543",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "One of the few free hares with a natural form; fills a gap in the painted sets.",
-      "subject": "wildlife"
-    },
-    {
-      "id": "sketchfab-f1a74a0a076b403cb78be57efe31bea8",
-      "title": "Fennec Fox",
-      "creator": "Dylan Martínez Sánchez (@dylanmartinezs)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/f1a74a0a076b403cb78be57efe31bea8",
-      "family": "painted",
-      "fit": "fence",
-      "why": "A hand-painted fennec fox; proportions not yet checked.",
-      "subject": "predators"
-    },
-    {
-      "id": "sketchfab-745c105544784b9a80bbec49cccd1580",
-      "title": "Day 20 - Snowy Owl",
-      "creator": "Lilly! (@LillyanneTr)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/745c105544784b9a80bbec49cccd1580",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A free snowy owl, a bird the painted sets lack.",
-      "subject": "wildlife"
-    },
-    {
-      "id": "sketchfab-d246b8b4439d44c6adc854ebc5ffc5ba",
-      "title": "Handpainted Tree Pack",
-      "creator": "rudolfs (@rudolfs)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/d246b8b4439d44c6adc854ebc5ffc5ba",
-      "family": "painted",
-      "fit": "fence",
-      "why": "Hand-painted oak, pine, spruce and birch; check the crowns against natural growth.",
-      "subject": "broadleaf",
-      "split": true
-    },
-    {
-      "id": "sketchfab-46ac3c1a4c3645b1984a97568db54c5d",
-      "title": "Stylized pine tree pack",
-      "creator": "W_illness (@W_illness)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/46ac3c1a4c3645b1984a97568db54c5d",
-      "family": "stylized",
-      "fit": "fence",
-      "why": "Stylized study pines; check against the stacked-cone rejection.",
-      "subject": "conifers",
-      "split": true
-    },
-    {
-      "id": "sketchfab-35e96b479cf942ad9407eb01a11ffa3a",
-      "title": "Stylized palm / coconut tree pack",
-      "creator": "W_illness (@W_illness)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/35e96b479cf942ad9407eb01a11ffa3a",
-      "family": "stylized",
-      "fit": "fence",
-      "why": "Stylized palms and coconut trees for coasts.",
-      "subject": "tropical",
-      "split": true
-    },
-    {
-      "id": "sketchfab-80dec2fffb174051a5a88a404b760895",
-      "title": "Stylised Redwood Trees Pack (with LOD groups)",
-      "creator": "Parelaxel (@parelaxel)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/80dec2fffb174051a5a88a404b760895",
-      "family": "painted",
-      "fit": "fence",
-      "why": "Hand-painted redwoods; tall conifers with natural trunks.",
-      "subject": "conifers",
-      "split": true
-    },
-    {
-      "id": "sketchfab-f3e0a67b9ca243b09119177649f21e17",
-      "title": "Stone Pack",
-      "creator": "ashkan.fancy (@ashkan.fancy)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/f3e0a67b9ca243b09119177649f21e17",
-      "family": "painted",
-      "fit": "fence",
-      "why": "Sculpted, painted rocks and rune stones; no rock has a like yet.",
-      "subject": "rocks",
-      "split": true
-    },
-    {
-      "id": "sketchfab-350e77196b424ebc8d28b8e7fc7b509e",
-      "title": "Acacia ( From \"Tree It\")",
-      "creator": "Paul (Sketchfab) (@paul_sketch)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/350e77196b424ebc8d28b8e7fc7b509e",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A light acacia for savanna; photographic textures.",
-      "subject": "broadleaf"
-    },
-    {
-      "id": "sketchfab-734c4537ca8547209a54df49f134824a",
-      "title": "Date palm and vegetation",
-      "creator": "Bársh (@borsh_and)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/734c4537ca8547209a54df49f134824a",
-      "family": "painted",
-      "fit": "fence",
-      "why": "Date palms and oasis vegetation; tagged both hand-painted and cartoon.",
-      "subject": "tropical",
-      "split": true
-    },
-    {
-      "id": "sketchfab-031c99c42793439c9fa5a691c67d0da8",
-      "title": "Stylized Hand Painted Trees",
-      "creator": "Satendra Saraswat (@satendra5286)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/031c99c42793439c9fa5a691c67d0da8",
-      "family": "painted",
-      "fit": "fence",
-      "why": "Hand-painted trees; may lean toward a cartoon style.",
-      "subject": "broadleaf",
-      "split": true
-    },
-    {
-      "id": "sketchfab-f39dc69dbbfe49c68045bec2c16e03ba",
-      "title": "The Sword Of Victory",
-      "creator": "@ArmsMuseum",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/f39dc69dbbfe49c68045bec2c16e03ba",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-97575b982f5944baa0c9062d8107a983",
-      "title": "Decorative Battle Axe",
-      "creator": "@ArmsMuseum",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/97575b982f5944baa0c9062d8107a983",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-f0bfbca7a2804efd9cf77fd0f5a806aa",
-      "title": "Decorative Double-Bladed Battle Axe",
-      "creator": "@ArmsMuseum",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/f0bfbca7a2804efd9cf77fd0f5a806aa",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-80fa91fc8c974fd0acd2a55cc513edec",
-      "title": "Moonbrand (Early 14th C Arming Sword)",
-      "creator": "@oakeshott",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/80fa91fc8c974fd0acd2a55cc513edec",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-4c8da04032aa4d0386620148bb227ddc",
-      "title": "German Arming Sword",
-      "creator": "@oakeshott",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/4c8da04032aa4d0386620148bb227ddc",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-6e2aea6ce0a0421089652f18349502c1",
-      "title": "15th Century Dagger",
-      "creator": "@oakeshott",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/6e2aea6ce0a0421089652f18349502c1",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-13600dbd9c79478a8380bb90ff8b6df5",
-      "title": "1969.5 Helmet",
-      "creator": "@clevelandart",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/13600dbd9c79478a8380bb90ff8b6df5",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-faca2ad557f64809b598c3a646a8804f",
-      "title": "1964.88 Armor for Man and Horse",
-      "creator": "@clevelandart",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/faca2ad557f64809b598c3a646a8804f",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-d314c9a6abe444ffb22010310b7bae01",
-      "title": "1916.1723.a Crossbow Of Augustus I Of Saxony",
-      "creator": "@clevelandart",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/d314c9a6abe444ffb22010310b7bae01",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-c54e6cbecf5e450d86052da35a86af6d",
-      "title": "1930.741 Book-Shaped Reliquary",
-      "creator": "@clevelandart",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/c54e6cbecf5e450d86052da35a86af6d",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-7ef62203bf3349a5825fcd8b2dd1441a",
-      "title": "A sword from Small Market in Kraków",
-      "creator": "@WirtualneMuzeaMalopolski",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/7ef62203bf3349a5825fcd8b2dd1441a",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-c4bd07612f424fcd9f516cbccc2554e6",
-      "title": "Closed helmet",
-      "creator": "@WirtualneMuzeaMalopolski",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/c4bd07612f424fcd9f516cbccc2554e6",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-f8914000ccfe413298c332c4e43dcd83",
-      "title": "Mace",
-      "creator": "@WirtualneMuzeaMalopolski",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/f8914000ccfe413298c332c4e43dcd83",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-c78c6d51fc084fb4979c885335196d9d",
-      "title": "Spearhead",
-      "creator": "@WirtualneMuzeaMalopolski",
-      "license": "CC0 1.0",
-      "page": "https://sketchfab.com/3d-models/c78c6d51fc084fb4979c885335196d9d",
-      "family": "scans",
-      "fit": "fence",
-      "why": "A museum scan of a real object: authentic construction for reference, photographic and heavier than a game piece.",
-      "subject": "misc"
-    },
-    {
-      "id": "sketchfab-00d4f61c87b34179bea669bfb5d5280f",
-      "title": "Armor Stand - Stylized (PBR)",
-      "creator": "Wicked_Vixx (@tylukex)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/00d4f61c87b34179bea669bfb5d5280f",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "Full plate armour on a stand in a physically based finish.",
-      "subject": "shields",
-      "note": "Left for a later round: this round fetched the painted weapons first."
-    },
-    {
-      "id": "sketchfab-d5a373b723f64878b9b866578ff0573c",
-      "title": "Set of Warhammers",
-      "creator": "Peter Nox (@Peter.Nox)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/d5a373b723f64878b9b866578ff0573c",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A dozen war hammers and maces at real proportions.",
-      "subject": "axes",
-      "split": true,
-      "note": "Left for a later round: this round fetched the painted weapons first."
-    },
-    {
-      "id": "sketchfab-68fe42128e9b4cdf9719c2982f71b841",
-      "title": "Medieval Sword 15th century",
-      "creator": "Mkostal (@Mkostal)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/68fe42128e9b4cdf9719c2982f71b841",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A 15th-century longsword at real proportions.",
-      "subject": "blades",
-      "note": "Left for a later round: this round fetched the painted weapons first."
-    },
-    {
-      "id": "sketchfab-e733059e9edd414895109a75eed0d3b6",
-      "title": "Bec-de-Corbin (raven's beak) Polearm",
-      "creator": "Michael D. Theodore H. (@MichaelDtheodoreH)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/e733059e9edd414895109a75eed0d3b6",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A bec-de-corbin polearm at real proportions.",
-      "subject": "ranged",
-      "note": "Left for a later round: this round fetched the painted weapons first."
-    },
-    {
-      "id": "sketchfab-0ae0f62030ad48d88364b327b7cd3fc3",
-      "title": "Paladin Shield [Free Download]",
-      "creator": "Efarys (@Efarys)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/0ae0f62030ad48d88364b327b7cd3fc3",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A metal kite shield with an embossed cross.",
-      "subject": "shields",
-      "note": "Left for a later round: this round fetched the painted weapons first."
-    },
-    {
-      "id": "sketchfab-7261d334924f4a9b835ef4b15c1e16d0",
-      "title": "Ancient Roman gladius sword",
-      "creator": "Samize (@samize)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/7261d334924f4a9b835ef4b15c1e16d0",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A Roman gladius and scabbard at real proportions.",
-      "subject": "blades",
-      "split": true,
-      "note": "Left for a later round: this round fetched the painted weapons first."
-    },
-    {
-      "id": "sketchfab-83217215a0c541b2956a8e87a4ae62fe",
-      "title": "Medieval Mace",
-      "creator": "Kama Modeling (@KamaModeling)",
-      "license": "CC BY 4.0",
-      "page": "https://sketchfab.com/3d-models/83217215a0c541b2956a8e87a4ae62fe",
-      "family": "realistic",
-      "fit": "fence",
-      "why": "A spiked mace at real proportions.",
-      "subject": "axes",
-      "note": "Left for a later round: this round fetched the painted weapons first."
-    },
     {
       "id": "itch-vertexfrog-free-stylised-fantasy-weapons",
       "title": "Free Stylised Fantasy Weapons",

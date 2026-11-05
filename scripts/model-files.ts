@@ -297,13 +297,13 @@ function uriBytes(uri: string, directory: string, packRoot: string): Uint8Array 
   if (!fallback) throw new Error(`Missing ${uri} for a model in ${packRoot}`);
   return readFileSync(fallback);
 }
-/** Images larger than 1024 px are reduced to 1024 px (macOS `sips`) so a lineup of trim-sheet
- * models fits in GPU memory; identical images are reduced once. */
+/** Images larger than 1024 px (or `limit`) are reduced to that size (macOS `sips`) so a lineup
+ * of trim-sheet models fits in GPU memory; identical images are reduced once. */
 const studyTextureLimit = 1024;
 const reduced = new Map<string, Uint8Array>();
-export function studyImage(bytes: Uint8Array): Uint8Array {
-  if (Math.max(...imageSize(bytes)) <= studyTextureLimit) return bytes;
-  const key = createHash('sha256').update(bytes).digest('hex');
+export function studyImage(bytes: Uint8Array, limit = studyTextureLimit): Uint8Array {
+  if (Math.max(...imageSize(bytes)) <= limit) return bytes;
+  const key = `${limit}:${createHash('sha256').update(bytes).digest('hex')}`;
   const existing = reduced.get(key);
   if (existing) return existing;
   const directory = mkdtempSync(join(tmpdir(), 'openlegend-study-image-'));
@@ -312,7 +312,7 @@ export function studyImage(bytes: Uint8Array): Uint8Array {
     const input = join(directory, 'source' + extension);
     const output = join(directory, 'reduced' + extension);
     writeFileSync(input, bytes);
-    execFileSync('sips', ['-Z', String(studyTextureLimit), input, '--out', output], {
+    execFileSync('sips', ['-Z', String(limit), input, '--out', output], {
       stdio: 'ignore',
     });
     const result = readFileSync(output);
@@ -622,12 +622,50 @@ export function compact({ json, bin }: Gltf): Gltf {
   return { json, bin: packed };
 }
 
+/** The model with every embedded image larger than `limit` px reduced, for game pieces that
+ * need less texture detail than a study shows. */
+export function reduceImages({ json, bin }: Gltf, limit: number): Gltf {
+  const parts: Uint8Array[] = [bin];
+  let offset = align(bin.byteLength);
+  const views = [...(json['bufferViews'] ?? [])];
+  const images = (json['images'] ?? []).map((image: any) => {
+    if (image.bufferView === undefined) return image;
+    const view = views[image.bufferView];
+    const start = view.byteOffset ?? 0;
+    const bytes = bin.subarray(start, start + view.byteLength);
+    const smaller = studyImage(bytes, limit);
+    if (smaller === bytes) return image;
+    views.push({ buffer: 0, byteOffset: offset, byteLength: smaller.byteLength });
+    parts.push(smaller);
+    offset += align(smaller.byteLength);
+    return { ...image, bufferView: views.length - 1 };
+  });
+  return compact({ json: { ...json, bufferViews: views, images }, bin: concat(parts) });
+}
+
 /** A scene holding several separate objects (a pack exported as one file) as one model per object.
  * Below any chain of single-child wrapper nodes, each child that holds a mesh becomes a piece. A
  * piece keeps its wrapper ancestors, whose transforms often turn a Z-up export upright, its skin
  * joints and their animation channels, and only the meshes, materials and buffer data it uses. A
  * scene with fewer than two such children is returned whole, unnamed. */
 export function splitScene(gltf: Gltf): { name: string; gltf: Gltf }[] {
+  const { nodes, chain, pieces } = scenePieces(gltf);
+  if (pieces.length < 2) return [{ name: '', gltf }];
+  return pieces.map((piece) => ({
+    name: nodes[piece].name ?? `Piece ${piece}`,
+    gltf: keepSubtrees(gltf, chain, [piece]),
+  }));
+}
+
+/** The whole scene without the pieces (as `splitScene` finds them) whose names match, such as the
+ * ground plane a model was posed on. */
+export function withoutPieces(gltf: Gltf, excluded: RegExp): Gltf {
+  const { nodes, chain, pieces } = scenePieces(gltf);
+  const kept = pieces.filter((piece) => !excluded.test(nodes[piece].name ?? ''));
+  return kept.length === pieces.length ? gltf : keepSubtrees(gltf, chain, kept);
+}
+
+function scenePieces(gltf: Gltf) {
   const nodes: any[] = gltf.json['nodes'] ?? [];
   const scene = gltf.json['scenes']?.[gltf.json['scene'] ?? 0];
   const chain: number[] = [];
@@ -642,15 +680,10 @@ export function splitScene(gltf: Gltf): { name: string; gltf: Gltf }[] {
   }
   const holdsMesh = (index: number): boolean =>
     nodes[index].mesh !== undefined || (nodes[index].children ?? []).some(holdsMesh);
-  const pieces = level.filter(holdsMesh);
-  if (pieces.length < 2) return [{ name: '', gltf }];
-  return pieces.map((piece) => ({
-    name: nodes[piece].name ?? `Piece ${piece}`,
-    gltf: keepSubtree(gltf, chain, piece),
-  }));
+  return { nodes, chain, pieces: level.filter(holdsMesh) };
 }
 
-function keepSubtree(source: Gltf, chain: readonly number[], root: number): Gltf {
+function keepSubtrees(source: Gltf, chain: readonly number[], roots: readonly number[]): Gltf {
   const json = structuredClone(source.json);
   const nodes: any[] = json['nodes'];
   const parents = new Map<number, number>();
@@ -670,7 +703,7 @@ function keepSubtree(source: Gltf, chain: readonly number[], root: number): Gltf
     kept.add(index);
     for (const child of nodes[index].children ?? []) visit(child);
   };
-  visit(root);
+  for (const root of roots) visit(root);
   // Skinned meshes need their joints, which may sit outside the piece's own subtree.
   for (const index of [...kept]) {
     const skin = json['skins']?.[nodes[index].skin];

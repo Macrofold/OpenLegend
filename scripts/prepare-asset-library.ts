@@ -39,6 +39,7 @@ import {
   splitScene,
   studyImage,
   textureAppender,
+  withoutPieces,
   writeGlb,
   type Gltf,
 } from './model-files.js';
@@ -113,9 +114,13 @@ interface Pack {
     normal?: string;
     roughness?: string;
   }[];
+  /** Base colours (sRGB hex), by material name, for materials a game colours per item at run
+   * time and its export leaves in a placeholder colour; `file` limits a colour to some models. */
+  tints?: { file?: string; material: string; color: string }[];
   /** One piece per object for files that hold a whole set (see `splitScene`). */
   split?: boolean;
-  /** Regular expression over split pieces' names to leave out. */
+  /** Regular expression over pieces' names (see `splitScene`) to leave out: a split pack's
+   * pieces, or the parts a whole model is shown without, such as the ground it was posed on. */
   excludePieces?: string;
 }
 interface Plan {
@@ -372,6 +377,30 @@ function attachTextures(
   }
   return textures.finish();
 }
+function applyTints(
+  gltf: Gltf,
+  packDirectory: string,
+  tints: NonNullable<Pack['tints']>,
+  model: string,
+): Gltf {
+  const modelPath = relative(packDirectory, model);
+  const modelTints = tints.filter(
+    (entry) => !entry.file || new RegExp(entry.file, 'i').test(modelPath),
+  );
+  for (const material of gltf.json['materials'] ?? []) {
+    const tint = modelTints.find((entry) =>
+      new RegExp(entry.material, 'i').test(material.name ?? ''),
+    );
+    if (!tint) continue;
+    // glTF base colours are linear; the plan's hex colours are sRGB.
+    const rgb = tint.color.match(/[0-9a-f]{2}/gi)!.map((hex) => linear(parseInt(hex, 16) / 255));
+    material.pbrMetallicRoughness = {
+      ...material.pbrMetallicRoughness,
+      baseColorFactor: [...rgb, 1],
+    };
+  }
+  return gltf;
+}
 /** Applies the Godot material resource named like each glTF material: an albedo map times the
  * base colour (glTF multiplies by the vertex colours itself, as the kit's shader does), a
  * greyscale roughness map in the metallic-roughness texture's green channel, and a normal map. */
@@ -418,6 +447,7 @@ function paintGodotMaterials(gltf: Gltf, packDirectory: string, folder: string):
 function prepareModel(pack: Pack, packDirectory: string, path: string): Gltf {
   let gltf = readGltf(path, packDirectory);
   if (pack.textures) gltf = attachTextures(gltf, packDirectory, pack.textures, path);
+  if (pack.tints) gltf = applyTints(gltf, packDirectory, pack.tints, path);
   if (pack.godotMaterials) gltf = paintGodotMaterials(gltf, packDirectory, pack.godotMaterials);
   if (pack.coat)
     gltf = paintCoat(
@@ -548,7 +578,10 @@ for (const pack of plan.packs) {
     let parts: { name: string; gltf: Gltf }[];
     try {
       const prepared = prepareModel(pack, root, join(root, path));
-      parts = pack.split ? splitScene(prepared) : [{ name: '', gltf: prepared }];
+      const excluded = excludedPiece(pack);
+      parts = pack.split
+        ? splitScene(prepared)
+        : [{ name: '', gltf: excluded ? withoutPieces(prepared, excluded) : prepared }];
     } catch (error) {
       // Downloaded third-party files can be malformed; one broken model must not stop the rest.
       skip(`unreadable: ${(error as Error).message}`);
