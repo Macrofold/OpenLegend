@@ -1,6 +1,6 @@
 # Performance measurement and interpretation
 
-Part of the [performance contract](../performance.md). Read for the matching mechanism; historical results qualify only their recorded workload and revision. [Verification](../../.agents/rules/verification.md#choose-the-execution-location) selects checks and requires AWS execution for speed tests unless Mike explicitly requests local execution. This includes the short diagnostics and browser measurements below.
+Part of the [performance contract](../performance.md). Read for the matching mechanism; historical results qualify only their recorded workload and revision. [Verification](../../.agents/rules/verification.md#choose-the-execution-location) selects checks and requires AWS execution for speed tests using the [standard worker](../../.agents/rules/verification-workers.md#standard-speed-test-worker), subject to Mike's explicit exceptions. This includes the short diagnostics and browser measurements below.
 
 ## Data foundation measurements
 

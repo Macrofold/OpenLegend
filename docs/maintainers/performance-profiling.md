@@ -2,7 +2,7 @@
 
 The native-only profiler runs disposable deterministic scenarios without a database or provider. The full-server profiler below explicitly selects a disposable database. Neither changes a live save, enables gameplay mechanics or permits paid dispatch. These are performance experiments, not automated correctness tests. [Performance tracker](performance.md) owns remaining work; [Verification](../verification.md) owns measured evidence.
 
-Before running a profile, select its AWS instance under [Verification](../../.agents/rules/verification.md#choose-the-execution-location), including the linked worker procedure and Mike's explicit-local-request exception. Run the commands below in that instance's source workspace; loopback URLs and `/tmp` paths refer to the instance. [VW01–VW04](verification-workers.md) track the designed reusable pool and setup-timing workflow, separately from these existing profilers and game-performance acceptance.
+Before running a profile, select the [standard worker](../../.agents/rules/verification-workers.md#standard-speed-test-worker) under [Verification](../../.agents/rules/verification.md#choose-the-execution-location), including Mike's explicit exception rule. Run the commands below in that instance's source workspace; loopback URLs and `/tmp` paths refer to the instance. [VW01–VW04](verification-workers.md) track the designed reusable pool and setup-timing workflow, separately from these existing profilers and game-performance acceptance.
 
 ## Choose collection explicitly
 

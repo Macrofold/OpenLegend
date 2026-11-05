@@ -2,13 +2,19 @@
 
 Read before requesting, starting, claiming or using any remote verification machine. [Verification](verification.md#choose-the-execution-location) selects location/checks; [AWS access](aws.md) and [spending](verification.md#spending) apply. Workers are disposable test environments, never production game servers.
 
+## Standard speed-test worker
+
+Use **m7i.xlarge: 4 vCPU, 16 GiB RAM, x86_64, in `us-east-2`, project `027677879749`** for every speed test. Use the managed pool when available, through its matching maintained runner and current claim. Positively verify the actual machine/environment; select a matching available worker, never a hardcoded instance ID. Record the actual hardware and stop/start session because matching instance type alone does not establish a matched comparison.
+
+Only Mike's explicit instruction authorizes a different machine or local speed test. If a required GPU/browser/device measurement is genuinely incompatible with this worker, report the gap and obtain his device choice; do not silently substitute another environment or claim its result replaces or is comparable to the standard baseline. Static/correctness checks retain Verification's existing location choices.
+
 ## Current availability
 
 The managed AWS pool and maintained CLI have been delivered separately; their runner code is **not integrated into this checkout**. [VW01–VW04](../../docs/maintainers/verification-workers.md) retain integration and qualification tracking. Existing profilers and temporary task-specific scripts are not a managed pool.
 
 Use that deployment only through its matching maintained CLI and contracts, located from authorized task/deployment records. Read the runner checkout's applicable guidance before invoking it; verify actual pool status and obtain the current experiment's valid claim before use. A stopped or apparently idle instance does not prove availability or ownership. Using the delivered tooling does not require or authorize merging its branch into this checkout.
 
-If a matching maintained runner is unavailable, use an already authorized task-owned AWS instance under its actual ownership, deadline and cleanup rules, or report the gap. [Verification's speed-test location requirement](verification.md#choose-the-execution-location) still applies; suitable local non-timing checks can establish correctness only. Do not adopt another task's worker, assume a temporary worker stops instead of terminates, or invent a cloud harness inside unrelated feature work. The design alone does not authorize provisioning.
+If a matching maintained runner is unavailable, use an already authorized task-owned AWS instance under its actual ownership, deadline and cleanup rules, or report the gap. A speed-test fallback must positively match the standard machine/environment above; unavailable tooling permits neither different hardware nor local timing. Suitable local non-timing checks can establish correctness only. Do not adopt another task's worker, assume a temporary worker stops instead of terminates, or invent a cloud harness inside unrelated feature work. The design alone does not authorize provisioning.
 
 ## Procedure with a matching maintained runner
 
