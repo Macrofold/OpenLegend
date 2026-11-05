@@ -61,11 +61,13 @@ function codeRequest(pathname: string): boolean {
   if (!codeExtension.test(path)) return false;
   if (path.startsWith('/src/') || path.startsWith('/node_modules/')) return true;
   if (!path.startsWith('/@fs/')) return false;
-  const absolute = resolve(path.slice('/@fs/'.length));
+  // Vite writes `/@fs` followed by the absolute path; keep that path's leading slash.
+  const absolute = resolve(path.slice('/@fs'.length));
   const roots = [
     'node_modules',
     'apps/client/src',
     'packages/assets/src',
+    'packages/network/src',
     'packages/protocol/src',
     'packages/spatial/src',
     'packages/language/src',

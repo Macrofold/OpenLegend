@@ -1,0 +1,91 @@
+{
+  "group": "source-sheet-people",
+  "study": "art-direction/studies/2026-11-03-character-fixes/README.md",
+  "recipe": {
+    "path": "scripts/art/art-tool.py",
+    "sha256": "aec969b3f47fa0f131a7dd354d26a472fe65286bb2f72d02515b2afe61a3c837",
+    "note": "head --max-texture 1024 on the character fixes study's export/people sheet bodies, with work/recipes/heads/heads.json, in the study archive"
+  },
+  "assets": [
+    {
+      "id": "ada-sheet-model",
+      "family": "ada-sheet",
+      "label": "Ada",
+      "variant": "sheet model, generated head",
+      "description": "24, an ordinary young woman raised near woodland, from her character sheet. Generated sculpted head with her braid over her left shoulder. The clothes are painted on one body with the skin, so they cannot come off.",
+      "recommended": true,
+      "file": "ada-sheet-model.glb",
+      "bounds": {
+        "min": [-0.522, -0.0, -0.2185],
+        "max": [0.522, 1.834, 0.2185]
+      },
+      "triangles": 58457,
+      "vertices": 54543,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024]
+      ],
+      "sha256": "407192328bab8057e5c730af6fdbe1f19c609ae5eb2f47dc4600f4f5eec1d9e3",
+      "source": "Mike's October 31 character sheet made into a model by Multi-Image to 3D (Meshy) and rigged by 3D Rigging, both on Higgsfield, in the character-sheet proof run; the eight clips from the Meshy library through Higgsfield, retargeted with art-tool.py clips; a head generated through Higgsfield (four GPT Image 2.5 close-up views from her sheet, one Tripo H3.1 Multiview head) and grafted with art-tool.py head, with 1024\u00b2 maps for the game. The account holder owns the generated outputs. Not yet owner-accepted.",
+      "animatedFile": "ada-sheet-model.glb",
+      "animatedSha256": "407192328bab8057e5c730af6fdbe1f19c609ae5eb2f47dc4600f4f5eec1d9e3",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.22,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 4.874,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 10.674,
+          "seconds": 0.5
+        }
+      ]
+    },
+    {
+      "id": "mara-sheet-model",
+      "family": "mara-sheet",
+      "label": "Mara Reed",
+      "variant": "sheet model, generated head",
+      "description": "A careful camp mender, from her character sheet. Generated sculpted head with a short braid over her right shoulder. The clothes are painted on one body with the skin, so they cannot come off.",
+      "recommended": true,
+      "file": "mara-sheet-model.glb",
+      "bounds": {
+        "min": [-0.4535, -0.0, -0.2125],
+        "max": [0.4535, 1.8419, 0.2125]
+      },
+      "triangles": 58935,
+      "vertices": 53390,
+      "textureSizes": [
+        [1024, 1024],
+        [1024, 1024]
+      ],
+      "sha256": "d01b950624f3fba9f411affa083d8798dc9c104a9452eb58bc9b91be3adb66ca",
+      "source": "Mike's October 31 character sheet made into a model by Multi-Image to 3D (Meshy) and rigged by 3D Rigging, both on Higgsfield, in the character-sheet proof run; the eight clips from the Meshy library through Higgsfield, retargeted with art-tool.py clips; a head generated through Higgsfield (four GPT Image 2.5 close-up views from her sheet, one Tripo H3.1 Multiview head) and grafted with art-tool.py head, with 1024\u00b2 maps for the game. The account holder owns the generated outputs. Not yet owner-accepted.",
+      "animatedFile": "mara-sheet-model.glb",
+      "animatedSha256": "d01b950624f3fba9f411affa083d8798dc9c104a9452eb58bc9b91be3adb66ca",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.259,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 4.97,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 10.737,
+          "seconds": 0.5
+        }
+      ]
+    }
+  ]
+}

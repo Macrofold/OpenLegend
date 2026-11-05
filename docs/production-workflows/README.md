@@ -1,6 +1,6 @@
 # OpenLegend production workflows
 
-**Status:** proposed, reusable development procedures derived from the [AI game-development research](../../archive/02-research/ai-game-development/README.md). They organize production work; they do not claim that every route or tool has been qualified in OpenLegend. Existing art decisions, gameplay contracts, implementation trackers and task authorization retain their owners.
+**Status:** the [art workflow](art-flows/README.md) has been used for real studies and production art since October 2026; its redesigned October 31 procedure is not yet proven end to end ([AF07](../maintainers/art-direction.md#art-flow-follow-through)). The other chapters are proposed, reusable development procedures derived from the [AI game-development research](../../archive/02-research/ai-game-development/README.md). They organize production work; they do not claim that every route or tool has been qualified in OpenLegend. Existing art decisions, gameplay contracts, implementation trackers and task authorization retain their owners.
 
 Before creating, downloading, editing, exporting or capturing any asset file, follow [Working with game assets](../asset-workflow.md) for exact inputs, external editable workspaces, preservation and publication. This applies across model, animation, image, audio, interface and scene work; each route below still owns its creative and gameplay requirements.
 
@@ -10,7 +10,7 @@ The route is chosen for the wanted experience. Improving the weight of a carried
 
 ## Run an art request
 
-For a repeatable agent-operated request, use the [Standard and Higgsfield art flows](art-flows/README.md). Say which flow and what you want; the agent handles the brief, tool prompts, visual review, revisions and saving. The shared procedure separates a style/asset study, usable production files and explicit game integration. It loads only the relevant [deliverable profile](art-flows/profiles.md), and preserves outputs through the project's S3 workflow. A study can finish before any playable build.
+For any art request, use the [art workflow](art-flows/README.md). Say what you want, optionally with tools, fidelity or a stopping point; the agent handles the brief, tool work, review sheets, revisions and saving, and asks Mike to decide only the direction, the candidate and acceptance. It separates a study, usable production files and explicit game integration, loads only the relevant [deliverable profile](art-flows/profiles.md), takes every stage's platform and model from [tools and defaults](art-flows/tools.md), turns concepts and character sheets into game models through [3D models](art-flows/3d-models.md), and preserves outputs through the project's S3 workflow. The workflow takes its look from the art direction rather than defining one. A study can finish before any playable build.
 
 ## The common route
 
@@ -71,7 +71,7 @@ Place the brief in the existing art-study record, project design or task record 
 
 The brief should be concrete enough for independent contributors to produce compatible work. It does not need to settle every brushstroke. For a hypothetical new lantern appearance, it might pin the silhouette, handle, scale and supported carrying state while leaving surface wear open. Whether it emits game light is a separate native fact; a painted glow cannot decide that behavior.
 
-Use the [creative brief](../../art-direction/final-board/creative-brief.md), [recorded art decisions](../../art-direction/decisions.md) and [UI brief](../ui-design-brief.md) as existing inputs. Reference art communicates a target; source ownership and production-use rights are recorded separately in the existing asset records.
+Use the [current art direction](../../art-direction/decisions.md#current-direction-at-a-glance) (which names the world, interface and concept owners) and the [UI brief](../ui-design-brief.md) as existing inputs. Reference art communicates a target; source ownership and production-use rights are recorded separately in the existing asset records.
 
 ## Explore before expanding a family
 
@@ -102,7 +102,7 @@ Each stage delivers enough for the next contributor to act without guessing. The
 
 For example, “model complete” is insufficient when the consumer needs a movable lid. A useful handoff says whether the lid is separated, where it pivots, which opening is present, what the export contains and which gameplay behavior remains to be integrated. Name illustrative or fixture behavior explicitly; do not present it as current world content.
 
-Keep editable source payloads in the established external art workspace and preserve exact revisions through the [art-flow storage procedure](art-flows/README.md#preserve-and-resume). The [art-direction tracker](../maintainers/art-direction.md) owns ongoing art work and study milestones; Git holds notes, recipes and exact references. Approved runtime artifacts enter the selected game-delivery collection through the asset workflow. Provider URLs, temporary execution directories and a remembered prompt are not durable substitutes for preserved source and output files.
+Keep editable source payloads in the established external art workspace and preserve exact revisions through the [art-flow storage procedure](art-flows/README.md#9-preserve-and-resume). The [art-direction tracker](../maintainers/art-direction.md) owns ongoing art work and study milestones; Git holds notes, recipes and exact references. Approved runtime artifacts enter the selected game-delivery collection through the asset workflow. Provider URLs, temporary execution directories and a remembered prompt are not durable substitutes for preserved source and output files.
 
 ## Revise the responsible source
 

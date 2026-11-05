@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                   | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Curated delivery and current-world owner selection pass; separately gated Git history reclamation remains in AS08. | 2026-10-18   |
+| In progress | Curated delivery and current-world owner selection pass; separately gated Git history reclamation remains in AS08. | 2026-11-01   |
 
 **Technical design used for implementation review:** 2026-10-18 04:00:12 UTC. [Actual review evidence](../verification/game-asset-storage.md#implementation-review) remains separate from the design contract.
 
@@ -291,7 +291,7 @@ Measure through complete fresh-checkout, cold-browser, warm-scene, multi-worktre
 
 ## 9. Retention, backups and withdrawal
 
-Start conservatively: no automatic deletion of published runtime files, durable source/library versions or preserved study iterations. Pins include exact transitive dependencies, active publications, retained supported saves, approved exports and active production inputs. A huge retained library does not justify scanning it during gameplay. SQL admission reserves exact physical keys before transfers and charges canonical/named/environment copies separately; same-address reuse is deduplicated. The configured global byte/file/operation envelope includes pending and terminal orphan claims and rolls back an over-limit reservation before network work. Claims are conservatively retained; no collector or automatic reconciliation declares old network writers harmless.
+Start conservatively: no automatic deletion of published runtime files, durable source/library versions or preserved study iterations. Pins include exact transitive dependencies, active publications, retained supported saves, approved exports and active production inputs. A huge retained library does not justify scanning it during gameplay. SQL admission reserves exact physical keys before transfers; canonical, named and environment copies are separate addresses, and same-address reuse is deduplicated. Official storage has no byte cap. The configured claim-row/operation counts keep retained publication metadata within one recovery checkpoint; they include pending and terminal orphan claims and roll back an over-limit reservation before network work. Claims are conservatively retained; no collector or automatic reconciliation declares old network writers harmless.
 
 Intake has a distinct [cleanup policy](../limits/game-asset-storage.md#ast06--temporary-intake-and-previews). Keep completed runs untagged through the operator-enforced grace, then explicitly review the exact disposable versions; S3's age-based timer does not measure time since tagging. Preserved/published dependencies must have been copied and verified first. Abort stale incomplete multipart uploads. Never apply an age-only lifecycle rule to retained blob prefixes or assume an old file is unused.
 

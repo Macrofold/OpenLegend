@@ -1,0 +1,1406 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "character-sheet-proof-2026-10-31",
+  "revisionId": "sha256-2c937d43a1c704b98393ab495485bdc5f6130d2701d55e6af5176a5d70b34af8",
+  "manifestSha256": "32d2c869c8ecc1fe43c0c92f01c792c80c5bf48e60e58bdacaac8985bc441c02"
+ },
+ "files": {
+  "export/final/f01-sela-tern.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f142691ee3f0072d6cde87f5ae803f95d4067be27fe4372cbd917b6507b43688",
+   "bytes": 5980284,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/final/f02-jessa-cairn.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a0c31ed2adaf392c82fa539e427e97edcbeea697e337b571479db2f888b20f8c",
+   "bytes": 5928240,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/final/f03-ada.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "0806615b39915959ca3145aacba86b51239d01637380533f23383fe07c23ab61",
+   "bytes": 5542432,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/final/f04-mara-reed.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1790f201ff8af6a8b8097f94e27796edb4bbe0e518c87902188406ee14de0457",
+   "bytes": 5201584,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/final/f06-orin.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "807fb8beb9259e248fd9281c7215f78f284f336edea13dd8b939b9b88aaff85a",
+   "bytes": 1621736,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m01-sela-tern-meshy.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b16e2b8b782c63f36d56e8d8df6477b352a6ee776f4560cc48050226968dad4e",
+   "bytes": 4823948,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m02-jessa-cairn-meshy.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "030f75dc75a556772c0df1b619723f830a90be53c0213249c21cc1b1a6413f75",
+   "bytes": 4829212,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m03-ada-meshy.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "26d16ba361bc4158fb4ff114d03f1583d9b26314f4892287b66badb2765a3332",
+   "bytes": 4332400,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m04-mara-reed-meshy.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b2d8d9f523b41faf96542cc33e117254fb24c3441af5a7d9adb84c6b7dba9c6e",
+   "bytes": 4058568,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m05-orin-meshy.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2156065fb746ab8d7f4a2583a2ec67e9e35d007dfff79b8a6578ef3cb60f36dc",
+   "bytes": 3662876,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m06-sela-tern-tripo.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "10addbeac1cd83d20c60c9a11dabcb263827b878e09d8267911b96869ea104a1",
+   "bytes": 6767196,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m07-jessa-cairn-tripo.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2bd0c301b1dc5087ac646682638c3f48a42fc1f7fb731bd0638f69d51b0ae55a",
+   "bytes": 8561500,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m08-ada-tripo.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1aaa3667178f13f5aaa3440acb0bcc29877b14905e2d9ee19f56f960eb75057c",
+   "bytes": 6552740,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m09-mara-reed-tripo.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1dfee164e3e4b4fbe901758d8ed8853aa9fc7db2db37b7d7b7f537fa26d7e4dd",
+   "bytes": 6750328,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m10-orin-tripo.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "da0e54277ccb84dfe468cd88b7b346820a44915cce3ae70974ab256f76a2649e",
+   "bytes": 6179948,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m11-mara-reed-meshy-crop.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "40ad69475e48ceb8a1e59b3299c63d37eed799f76035c6ff8939983249d0737a",
+   "bytes": 4154680,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/normalized/m12-orin-meshy-crop.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b7451b8f2952ede67b07db4dd80e43ca48db2704140e0b24f973849270d5ad9d",
+   "bytes": 3977160,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f01-sela-tern-rig--hf_20261031_224928_0d9ab918-cad0-4894-bb5a-05e1acd1d0af.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c68a7faeee3defba983cf4db39a404e9d30f9c88ba48c32a22617360ea15b0f0",
+   "bytes": 6675216,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f01-sela-tern-run--hf_20261031_225130_bc88da0b-d412-41b7-be2a-1b6de8ed62a5.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5b797ec27986e1fd05742374e6cbf51d460d41e4d9c3629cbe7a34459e784594",
+   "bytes": 6587480,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f02-jessa-cairn-rig--hf_20261031_224928_d4fd5da6-9063-4959-9845-6a3f6dcf89d2.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7a9de0ff198fd26e891b90c99a5bb8a9128679bf259ac069633ec0acb912c96c",
+   "bytes": 6616928,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f02-jessa-cairn-run--hf_20261031_225131_c779d467-c496-492c-bf95-e3e4f16c3c64.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9029c8e56c1dbecb8dde9671166f1ea4110a91fc78361084e96fc2c06696d1a8",
+   "bytes": 6528968,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f03-ada-rig--hf_20261031_224928_65fba84b-7342-4a77-b458-86932da2d9d6.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4c88a4b3ae3e222f54bbcf7403901f19ff534b0d5c3d960c48b0bb0eaf2d3996",
+   "bytes": 6267952,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f03-ada-run--hf_20261031_225130_8fa47ae4-de9b-4044-a885-e1f7f3267e34.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a0428edee410f865a913c9244f9ded5e13e1200b8a63a6d9dc83a4c51e3f25a6",
+   "bytes": 6180496,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f04-mara-reed-rig--hf_20261031_224928_f203aaf9-c9b6-4ce2-a70e-9a21f64a30cf.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c1f6bc3ee950080ac0f01423d9251b895c1d37b5cbfe80eee16072f10bf721e2",
+   "bytes": 5906236,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f04-mara-reed-run--hf_20261031_225130_b0009453-acc8-4dd0-9f63-2bc50069e0af.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7844482dc1d3245e7f979bd5d6863dafbeb7c646c78095ab720a566860e1ccf4",
+   "bytes": 5818572,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f05-orin-rig-sideways--hf_20261031_230513_540302e5-77c6-40ce-bac8-892dcb3b6585.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b78f4450be9dc8ffc8cc3790b2984755084a05baea294b9ab83a69c7a2082606",
+   "bytes": 1793820,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f05-orin-run-sideways--hf_20261031_230513_86368dce-042b-472f-8653-0bfbcab41ed9.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f850652d8b92f3a3ddfad6e33ff270aecdb5f8eaf9cd4b16b260a5dfda658b1f",
+   "bytes": 1705932,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f06-orin-rig--hf_20261031_231747_fa3e6d5d-1b42-4446-ab35-1e6058f24dd6.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e99f3e0adfde332da2001c8db83d9f8dd7089d66e37433918dd6a9f54ac23ad4",
+   "bytes": 1858932,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/f06-orin-run--hf_20261031_231747_b3df56eb-1810-41b8-bf2f-bde8294bb410.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1add97751525994af3eda417b3ddd3b04dfaf142c1c9f2b7e9983c9e55f9f54c",
+   "bytes": 1771480,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m01-sela-tern-meshy-clean--hf_20261031_221719_b382a273-b31e-406c-aa2c-c26b3caf2c0a.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "47cae12ef8dc3f0a7b64062bbb1b807f173ae04f337d578358467d260455693a",
+   "bytes": 5296640,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m02-jessa-cairn-meshy-clean--hf_20261031_221720_4c158fb6-3987-4ca0-a7e4-19d05570524a.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "10620ab3ca4d275332c03ca956d1ce54a92072e229eeba9b32c44da5fd0bab02",
+   "bytes": 5253104,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m03-ada-meshy-clean--hf_20261031_221720_0eb4937c-a1ad-463c-8c25-a7dacf6fc1c3.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "82e958880ad47a338b2e371e238f47063333fc8f4203526bea3c6dd15e23488a",
+   "bytes": 4824088,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m04-mara-reed-meshy-clean--hf_20261031_221721_2b10290c-57f2-4d9e-b205-2474670d61b1.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4d2add01a6c8af75b9f08dc35d56a5cbbdbd9bef5209c22013c60e2b22b95711",
+   "bytes": 4522668,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m05-orin-meshy-clean--hf_20261031_221720_fcd26e52-abd3-4609-a058-d135a41f83b4.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5a079792ec08206e498842100f20f3732f125ce826f666ab746b52e38c33fd32",
+   "bytes": 4057736,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m06-sela-tern-tripo-clean--hf_20261031_221722_e747c743-a78a-4ea2-a450-a12be24aa9e2.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "cf47200d1d3b14943445575e68f557e15730a70dce0cb27378560c0a08b47ef2",
+   "bytes": 4193148,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m07-jessa-cairn-tripo-clean--hf_20261031_221719_3c7f9915-b683-499b-849e-e5500a7b42b5.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "27894af5077e12893214fe6244cc2eb46a9bef165742916e009650b74d9fb553",
+   "bytes": 4771836,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m08-ada-tripo-clean--hf_20261031_221720_4e981a0e-2a43-443f-8b69-16f8537b4043.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5b3042e5c933c44e303a21a9830b4732b069a7cbabcf03009dc23ebe382da8c6",
+   "bytes": 4126284,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m09-mara-reed-tripo-clean--hf_20261031_222332_12678e47-7eb1-427c-9caa-26eb090106d1.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "690b1f54926a1ea8975a645a13edaa1b6f993b241806c0dcefc7da98e0fc0eb1",
+   "bytes": 3891980,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m10-orin-tripo-clean--hf_20261031_222333_6b27e7a5-9d9c-42cd-a506-730d715ff25b.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4455488fecc074dac7e50b47b0df4e99fbb23ddc21885185b1babdb5d90b655a",
+   "bytes": 3578604,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m11-mara-reed-meshy-crop--hf_20261031_222332_cd455bb2-0478-4b14-aba8-05e85c2d7e94.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "59d9c16061478fc9270047840ec9f5f521b0570291dda76e41c6f8171fcf6cf4",
+   "bytes": 4551380,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m12-orin-meshy-crop--hf_20261031_222329_df027b2c-a159-4641-ac14-30fac03657f1.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9afdeac3f91d843bc5f0e20f96b028c73fb7c610303c1603ff41b50f9763bdef",
+   "bytes": 4341520,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m13-orin-tripo-glb--hf_20261031_230230_4d24d6d1-d810-41bf-b770-1334c11e121d.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "59be56b1e6428b4d213970a2465037c6bec363472b6c5c4cede73caf8e2a506c",
+   "bytes": 1334404,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m14-orin-tripo-default--hf_20261031_230730_4e67e985-0a62-4b47-b04e-6d4458f92f1b.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "033d5d559039eaa51430045141bd8e80ee0cfc93701a9084666bb1f5e4d7df91",
+   "bytes": 1281112,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m15-orin-tripo-reordered--hf_20261031_231117_9c8a1f89-e1c2-4bfc-91c7-02c70b134fd8.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2f059b41f1d26fb2d5c156496e5853545e89ba0c146df4486071e9196c40f0ee",
+   "bytes": 860896,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/m16-orin-tripo-reordered-geometry--hf_20261031_231430_df3de134-36fc-4b4b-8dac-2b83d59ec8ca.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "726f0586281d53dd2660cebd22bf1137e0c0ae3b2425e4fb3e118b83e5ecb359",
+   "bytes": 1383028,
+   "mediaType": "model/gltf-binary"
+  },
+  "references/c01-sela-tern-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "15f9a7874b3bb85d34442e96301477d87fdb2f626978d03317dc35f225805c4d",
+   "bytes": 2530592,
+   "mediaType": "image/png"
+  },
+  "references/c01-sela-tern-sheet.webp": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b9a07ab5187e066a12c77bd2332696af2cf51b5ee098f0dbd193b63761566f18",
+   "bytes": 422434,
+   "mediaType": "image/webp"
+  },
+  "references/c02-jessa-cairn-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4e55e55b8f4e0df7c14c974f7dca991a38594b2c0cd69bf2fc0570a321b75b6c",
+   "bytes": 2976088,
+   "mediaType": "image/png"
+  },
+  "references/c02-jessa-cairn-sheet.webp": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "174e73fe13d35be382bbd351c5b857803b855789549ed9f7d5a97e2c70558949",
+   "bytes": 377176,
+   "mediaType": "image/webp"
+  },
+  "references/c03-ada-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "be63e97ddcf41cbf36b38f0c2e059ab2a1ee0e2f466f63871e96c64ec0bd7692",
+   "bytes": 3561146,
+   "mediaType": "image/png"
+  },
+  "references/c03-ada-sheet.webp": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "dbfb94df1befca9b8952f23a7761e206c21b8f8b880fdc9b11cbc1248a7ddb9d",
+   "bytes": 381150,
+   "mediaType": "image/webp"
+  },
+  "references/c04-mara-reed-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "d946b99e5ca9efe0803f2b32461a6d959b0df63d8f13411b1f0ea40ac823bec6",
+   "bytes": 2600909,
+   "mediaType": "image/png"
+  },
+  "references/c04-mara-reed-sheet.webp": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "295704d429afd13be87204cc6e057308d9af1b029fb66ebbdea4615e5f070c85",
+   "bytes": 424314,
+   "mediaType": "image/webp"
+  },
+  "references/c05-orin-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2a875ac44fc2f2874b605db1f201cdaad147ccffcf67be2a0411ea06b367c5bf",
+   "bytes": 1148635,
+   "mediaType": "image/png"
+  },
+  "references/c05-orin-sheet.webp": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c3e1ffc9c07aaa60899707287bcd3b13f3e84907eca7917eb4aa71e133048c57",
+   "bytes": 198234,
+   "mediaType": "image/webp"
+  },
+  "review/ada-candidates-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6f679a42fe6ecc9f2b9994854a538b9273fdae255a72fbdbd053ccf20324bc53",
+   "bytes": 1476858,
+   "mediaType": "image/png"
+  },
+  "review/clean-views-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e476dbde5c8ae306109634b64278286a9b40a91caaf45886277ed717016dcff1",
+   "bytes": 1492191,
+   "mediaType": "image/png"
+  },
+  "review/crop-views-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "d4cdd4bd1e58460c90d101a7becb2d953ba0fd5f9c9356644e7a0654ffa4f8f3",
+   "bytes": 1392020,
+   "mediaType": "image/png"
+  },
+  "review/f05-orin-rig-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4730c005f2b9e2b6b96303b2828bb03dec9de88ffdb62d232d9c51513a2831ee",
+   "bytes": 491572,
+   "mediaType": "image/png"
+  },
+  "review/finals-look-lineup.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "fdb05e91c11c7b4ce78b963810387d485fb39895f79167f0e144f903208009dc",
+   "bytes": 69100,
+   "mediaType": "image/png"
+  },
+  "review/finals-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9341e5f7618d0e392dc667fee1177934291739c6f0fce188d931fbfb34195cac",
+   "bytes": 2751118,
+   "mediaType": "image/png"
+  },
+  "review/jessa-cairn-candidates-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "dc832c6337b1ba72e6701d5952835f3d1779075b3e5f8395c409a44d4a5469de",
+   "bytes": 1461215,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f01-sela-tern-idle.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a54c4f6e20ad0311d45e8f5aa0ad7e4d7536ac58483181a6fa1192cd09bb4d45",
+   "bytes": 92821,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f01-sela-tern-run-a.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c27686e7fe58b34b6c24acfe09d0b922760cad09f555f2e672f4f15786144dea",
+   "bytes": 91566,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f01-sela-tern-run-b.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9491ced7f1627053358077bd7bc423e41c803ebf2f0d21bf23dc96897e2ebccd",
+   "bytes": 92468,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f01-sela-tern.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3f6930aa2638e4649e72fa1d212d6ed4a5db0136e3e7f45169ac8976b0697e83",
+   "bytes": 92658,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f02-jessa-cairn-idle.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5ebf1dbef3e5b2de275f6799f561d51f139c1a33a7702f5a634bfbca3a4945bf",
+   "bytes": 92405,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f02-jessa-cairn-run-a.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "aff2d30c82fb1225bac0be0f0aebdaeb2a21839076f979d8a48e7e7b37cac480",
+   "bytes": 91454,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f02-jessa-cairn-run-b.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6dee9bb59af819c66343960e6e83aa0f137cf0d616a37a64c291736800a3e0d3",
+   "bytes": 92642,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f02-jessa-cairn.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5369901b4ebe5df8c41dd75b52c05f50692f3bea05debd565c99938c9b5ba3b2",
+   "bytes": 92427,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f03-ada-idle.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7ca1c8bfed60fc19c3179a71178cd15cb1a65c76c66d3a61ad861714f3984310",
+   "bytes": 92218,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f03-ada-run-a.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e35d0b9699990a242e5c16652207911a5fcfe36c3311f2cd5acc0e8b3f2b608c",
+   "bytes": 90773,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f03-ada-run-b.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "0e527f000f16cffd4a661e2b30936971b34038ea4a1620afd173380ceb6fad39",
+   "bytes": 91510,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f03-ada.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "63d9fe91c48672f4608c2eb7e9119f07ac99f2d6348b0fb3ed7c794edcaef9a9",
+   "bytes": 92266,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f04-mara-reed-idle.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "feac1e32320163f854126ee16ec8941829dec2ea4d55a9e0c505c82932dfdb9b",
+   "bytes": 92764,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f04-mara-reed-run-a.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "cad8c724bd6a0171b6612c034daab94337d29c300b59984ed2e5abe721fdbaa2",
+   "bytes": 92362,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f04-mara-reed-run-b.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "d4c2c79bfbb31d803e8aa18f5b310154208ff7727f56e628802ae7467305ef87",
+   "bytes": 92750,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f04-mara-reed.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "bd89875eebfb72d44bcc74057f397f05c95c04e867198aa2564ab2e3e2051170",
+   "bytes": 92700,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f06-orin-idle.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "53cf3fa736eabbbc9e495f8644b8d4aeacefcd5f55839d00771cec2e57171177",
+   "bytes": 92396,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f06-orin-run-a.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "549db882badb56b31d215b67eb40ba28e8b148d06deebef7212ba00199a7a834",
+   "bytes": 91463,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f06-orin-run-b.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1eb8ad684d7841858a79e09813f8b648645b2f577d0dcee75c90a7f6494f602b",
+   "bytes": 92704,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-f06-orin.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9d6af1213348ab7f91dced1a282a5abf61cdd26d750f7fb700ca4c8fe2eea1a6",
+   "bytes": 92334,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m01-sela-tern-meshy.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "cc7647184b54bbbc247cc093ad26b886bbc188a0a8ef638cc433d4338eb16476",
+   "bytes": 94568,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m02-jessa-cairn-meshy.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "0d0c8a083ae12212727b49fcdfeb110cf78e48a382dfcca0bc4ef20f74eca82b",
+   "bytes": 94971,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m03-ada-meshy.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "13351974ee761a98cbb4396ba37a6dada9771a33e33c429f1de7a4500af2b212",
+   "bytes": 94643,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m04-mara-reed-meshy.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5600a7678ea1906e9c03a5221dcf69b00b5dc37ffd2b0d2fee6f0b006899d803",
+   "bytes": 94619,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m05-orin-meshy.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6cbc027f48e6b3ff1eb035a30c9843cdaf5bf866706a0cc243896564ee68abac",
+   "bytes": 95151,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m06-sela-tern-tripo.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "54e38d14302943715ab15a803fd2a6ef856d2fb9535b35979572c2e2c1dbd86e",
+   "bytes": 93812,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m07-jessa-cairn-tripo.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "24a6ddcdfe8789e535565b8ede7ca7b72cd1c0b5f4e9f298a7aa9df9641d1cde",
+   "bytes": 95002,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m08-ada-tripo.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "dbfbd7b00c8a75f9c563ac74a7fe12d8573567a81ffd0dc655bc0aad1b8e480a",
+   "bytes": 93675,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m09-mara-reed-tripo.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "898e0e8f7ae6849577bb8c98a25f74a282218977b56e3b9013945727c5d51308",
+   "bytes": 93944,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m10-orin-tripo.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8be02b7c3dcbcdac069f9658eb43a1f7ae65788fdbd278df1bb0e6d5ac2904d6",
+   "bytes": 93795,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m11-mara-reed-meshy-crop.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c2006cb493049a2c0dea9322488f5526dbbbe4554c62e210818d972de3260045",
+   "bytes": 95386,
+   "mediaType": "image/png"
+  },
+  "review/look/look-cast-m12-orin-meshy-crop.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f4d5455b2f615d19aa32260db8e0420676c455964983e5b8b34bc1034746de5f",
+   "bytes": 97197,
+   "mediaType": "image/png"
+  },
+  "review/look/rotate-back-f01-sela-tern.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3a10648a6ec53f2a1f7d49d987401ac522698e2b56c3ac718cf0d146f9212dca",
+   "bytes": 80753,
+   "mediaType": "image/png"
+  },
+  "review/look/rotate-quarter-f01-sela-tern.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "972b56af44b8e1b6a41aaaa7326094c72fd004a6b4553e9217583a29c5eb3e75",
+   "bytes": 90992,
+   "mediaType": "image/png"
+  },
+  "review/look-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "bec9823370d01401cce97b9f6bcb8b581e3e079843a54881bf7b9da56c1919fc",
+   "bytes": 869089,
+   "mediaType": "image/png"
+  },
+  "review/m13-orin-tripo-glb-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "092469e4b63c47e486ed729e11ec9f8bff3653524c79ecbf3932c78def2d497f",
+   "bytes": 957368,
+   "mediaType": "image/png"
+  },
+  "review/m14-orin-tripo-default-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4e241920d478ca646f394057b0b3cb69121f733e47cdfa85cb1e1e8a9bd0989d",
+   "bytes": 494752,
+   "mediaType": "image/png"
+  },
+  "review/m15-orin-tripo-reordered-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1e973d3d9d8e3f323417c18d9631aab2d866771da84a2b7e5d35baa0b33cc714",
+   "bytes": 478512,
+   "mediaType": "image/png"
+  },
+  "review/m16-orin-tripo-reordered-geometry-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "64c792149ee250bfde33eea3ae7376c343baae1e911cacded4dce76be93471cf",
+   "bytes": 953407,
+   "mediaType": "image/png"
+  },
+  "review/motion-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9d2a670cf8e152ad03c15d3f8abc9275983b408c1ae534d824fa4430152e7e4f",
+   "bytes": 330750,
+   "mediaType": "image/png"
+  },
+  "review/normalized-ada-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "601b74c62093fbe7d6d077d416d17c7496ea511819f04182dd11732275c4e119",
+   "bytes": 1115099,
+   "mediaType": "image/png"
+  },
+  "review/normalized-jessa-cairn-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4670a5b2dd6dc5e046174f26efa80568bce8b3db0177f25ba0eebfd3398dd904",
+   "bytes": 1108072,
+   "mediaType": "image/png"
+  },
+  "review/normalized-mara-reed-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ee91699d1751df9ffeb67ea080fa2e39f84852ca40a00d65d4c3983655bf257e",
+   "bytes": 1627121,
+   "mediaType": "image/png"
+  },
+  "review/normalized-orin-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "370e7eaa66d99af14a4f1e60f7f00521164c856e4ba91376504a6f900e9e224b",
+   "bytes": 1724978,
+   "mediaType": "image/png"
+  },
+  "review/normalized-sela-tern-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "fef4771bd8254d03950265d78adb35f8cd19b3f95bc44b0a637f8dd0e1ea52cf",
+   "bytes": 1130370,
+   "mediaType": "image/png"
+  },
+  "review/reports/f01-sela-tern-rig--hf_20261031_224928_0d9ab918-cad0-4894-bb5a-05e1acd1d0af.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f6f4c685ee83ae02ffa0daf87ac08bff9ed0c786379fd6cce0ba4cdfcd62bac6",
+   "bytes": 2371,
+   "mediaType": "application/json"
+  },
+  "review/reports/f02-jessa-cairn-rig--hf_20261031_224928_d4fd5da6-9063-4959-9845-6a3f6dcf89d2.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "53de4879672dc3a92d64440a3af963f5d82239698db88c0275323cc30e64686d",
+   "bytes": 2372,
+   "mediaType": "application/json"
+  },
+  "review/reports/f03-ada-rig--hf_20261031_224928_65fba84b-7342-4a77-b458-86932da2d9d6.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3cce50e5d61db9afb2bdda50454fa28551980456cf31baed3886b86474d12f4a",
+   "bytes": 2364,
+   "mediaType": "application/json"
+  },
+  "review/reports/f04-mara-reed-rig--hf_20261031_224928_f203aaf9-c9b6-4ce2-a70e-9a21f64a30cf.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e0e4ee1a6baa82fff1b5e1088627490b8f8414cb9469b187a2c6825c559f3d3f",
+   "bytes": 2370,
+   "mediaType": "application/json"
+  },
+  "review/reports/f05-orin-rig--hf_20261031_230513_540302e5-77c6-40ce-bac8-892dcb3b6585.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "950ed83d86b24179a286631b697af1755b8e994ddbf4101e373a21decfdf24cc",
+   "bytes": 2399,
+   "mediaType": "application/json"
+  },
+  "review/reports/f05-orin-run--hf_20261031_230513_86368dce-042b-472f-8653-0bfbcab41ed9.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "00d594c5a598c12062d68bc4df62613a605ab6dfda9fc8bb309c8a636c69780a",
+   "bytes": 2402,
+   "mediaType": "application/json"
+  },
+  "review/reports/m01-sela-tern-meshy-clean--hf_20261031_221719_b382a273-b31e-406c-aa2c-c26b3caf2c0a.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ddd10f91d0da6b5094555dd8a4b0b4ec8c525709731ea7aa9b34ab283f2d6408",
+   "bytes": 2207,
+   "mediaType": "application/json"
+  },
+  "review/reports/m02-jessa-cairn-meshy-clean--hf_20261031_221720_4c158fb6-3987-4ca0-a7e4-19d05570524a.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c0f1791f4997c521f297fd34bf2291199b460071f05763bb423da60708859680",
+   "bytes": 2207,
+   "mediaType": "application/json"
+  },
+  "review/reports/m03-ada-meshy-clean--hf_20261031_221720_0eb4937c-a1ad-463c-8c25-a7dacf6fc1c3.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1b59f653500e0d63edd2819d85589d8be81d74161c0fd7f8e6f70e6f6b972e42",
+   "bytes": 2202,
+   "mediaType": "application/json"
+  },
+  "review/reports/m04-mara-reed-meshy-clean--hf_20261031_221721_2b10290c-57f2-4d9e-b205-2474670d61b1.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4607b923e4597d8602d1d42f3c3827bdd2741b365cb6cfa386c8b1309def761a",
+   "bytes": 2207,
+   "mediaType": "application/json"
+  },
+  "review/reports/m05-orin-meshy-clean--hf_20261031_221720_fcd26e52-abd3-4609-a058-d135a41f83b4.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "65a1412b5cf7053b9535d40421240cd313c4605c33086a12de848189e025a3b4",
+   "bytes": 2201,
+   "mediaType": "application/json"
+  },
+  "review/reports/m06-sela-tern-tripo-clean--hf_20261031_221722_e747c743-a78a-4ea2-a450-a12be24aa9e2.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "297debdf53bd9435a1f70ed0ceb1239b2c15010f78d6f77c6907bea1c5030109",
+   "bytes": 2753,
+   "mediaType": "application/json"
+  },
+  "review/reports/m07-jessa-cairn-tripo-clean--hf_20261031_221719_3c7f9915-b683-499b-849e-e5500a7b42b5.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4fb48bfe2650cc2502e0f842fe79ea598f02df273f0ae62162391c90665a52a7",
+   "bytes": 2757,
+   "mediaType": "application/json"
+  },
+  "review/reports/m08-ada-tripo-clean--hf_20261031_221720_4e981a0e-2a43-443f-8b69-16f8537b4043.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a375a920376b26f7722be6702a844131d362232e096b11128155c7daad84d124",
+   "bytes": 2747,
+   "mediaType": "application/json"
+  },
+  "review/reports/m09-mara-reed-tripo-clean--hf_20261031_222332_12678e47-7eb1-427c-9caa-26eb090106d1.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f7242398a39def36b9071193cbefe7e32bdb2ee48b469c8ba6d05a84e18db058",
+   "bytes": 2753,
+   "mediaType": "application/json"
+  },
+  "review/reports/m10-orin-tripo-clean--hf_20261031_222333_6b27e7a5-9d9c-42cd-a506-730d715ff25b.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e8db408fb2a67e0605e9203c14f20b829a5399c54dcabb5077bf35d80008414e",
+   "bytes": 2746,
+   "mediaType": "application/json"
+  },
+  "review/reports/m11-mara-reed-meshy-crop--hf_20261031_222332_cd455bb2-0478-4b14-aba8-05e85c2d7e94.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a34b934210db2d332ddca1dab548b95306c0f59897edf448bde55c8e9bfab179",
+   "bytes": 2227,
+   "mediaType": "application/json"
+  },
+  "review/reports/m12-orin-meshy-crop--hf_20261031_222329_df027b2c-a159-4641-ac14-30fac03657f1.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9bb8526ff0aeac1337ca5fba3f505b0eadbdbe98f945f80549f5c40893470097",
+   "bytes": 2219,
+   "mediaType": "application/json"
+  },
+  "review/reports/m13-orin-tripo-glb--hf_20261031_230230_4d24d6d1-d810-41bf-b770-1334c11e121d.report.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a3828921204bfe2a158bb77371b40468e35f1738891a2d10cd2efb1ee1a048e9",
+   "bytes": 2252,
+   "mediaType": "application/json"
+  },
+  "review/sela-tern-candidates-sheet.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ba35a9e9c4a14aef69706eec9373e9360cfc89c18abfa1e52fbf1a5d9fe1e7f4",
+   "bytes": 1504846,
+   "mediaType": "image/png"
+  },
+  "views/clean/ada-back-pair.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6b5011eebcb50f53c3d6a46456ca6ff796a51d81293788182cfb986751632c38",
+   "bytes": 3675193,
+   "mediaType": "image/png"
+  },
+  "views/clean/ada-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "985aa3883a971af79410c75eb219f46792270a61356c242a8b869b5890e21c3c",
+   "bytes": 1654311,
+   "mediaType": "image/png"
+  },
+  "views/clean/ada-back.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a913e7ab5b63e41068e6dc0e98c951ddf44890775935362d3929353f9580348d",
+   "bytes": 1014,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/ada-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8243e70816a8204281f1c85eeb37d1de8b67d4850cfbb7012d962009470d1ddd",
+   "bytes": 3205915,
+   "mediaType": "image/png"
+  },
+  "views/clean/ada-front.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6718185936a1b715bb3df4ef442f6b133914b4265dda30d189a53c22265e98d1",
+   "bytes": 919,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/ada-left.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "fc235a09659ab94c49842910b3c470057388c4ffeea125efd42012b79b31d878",
+   "bytes": 3435986,
+   "mediaType": "image/png"
+  },
+  "views/clean/ada-left.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8a35b0ccedbb045b7768d62b49a6a4350528c07ac6f8e5b04f77f0d9eb6aa8b1",
+   "bytes": 1049,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/ada-right.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9bf3a9fd2f8a48191dca4fb02a637b0715c6911bfab0f2668dbfd675f4e30dc8",
+   "bytes": 3250772,
+   "mediaType": "image/png"
+  },
+  "views/clean/ada-right.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "caaf088af5f4b28046c2bac487db3008989b0d5b8eabe8a2c513f59698dcf4c8",
+   "bytes": 1052,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/jessa-cairn-back-pair.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "31fcdd767dec3ffa2c9efd81e93075d2c9334c0752903f8a44a544bdbc06dc1f",
+   "bytes": 3700668,
+   "mediaType": "image/png"
+  },
+  "views/clean/jessa-cairn-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "d0d68f24bbe6735f13546b8fdcf31181ca836ac4e54627666db5cb09cf4943e3",
+   "bytes": 1687668,
+   "mediaType": "image/png"
+  },
+  "views/clean/jessa-cairn-back.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "48105d4e433b253789f77a5fffe56743843024fbe1f0f562a36ed89a58c51e6b",
+   "bytes": 1115,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/jessa-cairn-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "0647333e9514fd03a4da8f6ba743dab2aee2c7d034afa94a2464a777d02f9dc5",
+   "bytes": 3070995,
+   "mediaType": "image/png"
+  },
+  "views/clean/jessa-cairn-front.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ece44fbfde67a13acae41bdbdb9f1b772119738804e71805f92e92871fe70ed6",
+   "bytes": 961,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/jessa-cairn-left-wrongfacing.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3cc4e87b936dbff2ed999180470e5fccbb29e3eb9047ed1e11173598142c08ef",
+   "bytes": 3061149,
+   "mediaType": "image/png"
+  },
+  "views/clean/jessa-cairn-left.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "de05745411ea1f7ac2c8c952fd3868d48c66c28f9aeb3e4e63ffc18e3b4dbf54",
+   "bytes": 3292286,
+   "mediaType": "image/png"
+  },
+  "views/clean/jessa-cairn-left.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4788255c7a6f45b509b0c4f2abe6923529f06baa4f34336edbab0083bcd643b1",
+   "bytes": 1209,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/jessa-cairn-right.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f247f480af5f53cac6ab69c66b00abfa601a70a065fe6063f44834a9dcb3a092",
+   "bytes": 3269298,
+   "mediaType": "image/png"
+  },
+  "views/clean/jessa-cairn-right.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f7303604184310cfc0adf6043dd536b968600b19c5e086d01ce58589f332ab8b",
+   "bytes": 1094,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/mara-reed-back-pair.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3b373c25174120bb9939b2dc0b26ed725cefb0e65c3804011186fd4762e8853a",
+   "bytes": 3891112,
+   "mediaType": "image/png"
+  },
+  "views/clean/mara-reed-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "37fae5a7cb25e9b5b20e179c8d6fbb5b6e033e1f747bc2fb5e249c7030db14e7",
+   "bytes": 1771162,
+   "mediaType": "image/png"
+  },
+  "views/clean/mara-reed-back.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8a7111d150003726a400485fb37d88743848c61fd78177ddc09f46b98137619f",
+   "bytes": 865,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/mara-reed-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e98a4e48dac391c1b70cb66f3a0174baf6802b743b5c1284f5c505bc83ce5dd5",
+   "bytes": 3016005,
+   "mediaType": "image/png"
+  },
+  "views/clean/mara-reed-front.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3ddc3c084976c155aca82b6037ce254efcb02e89a4d236fede0c9b3282cd5a52",
+   "bytes": 763,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/mara-reed-left-wrongfacing.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "89e5b7c01533407a25a7c5db5a2ebf9e7791cbc316db7b44aa208f2af95e2b19",
+   "bytes": 3206940,
+   "mediaType": "image/png"
+  },
+  "views/clean/mara-reed-left.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a2a878a37d6910d45b52036264e0fc02ad20d42eefbd7f60f027d39333608c12",
+   "bytes": 3273410,
+   "mediaType": "image/png"
+  },
+  "views/clean/mara-reed-left.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7da0a13b7e524c07d93fab02670a0625d0fb6073d54688abddd24727566df8b0",
+   "bytes": 1011,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/mara-reed-right.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "98678b158d66f1ea93fa8659a3071cf58c7373e627d5c7b31f42de421485dfea",
+   "bytes": 3161004,
+   "mediaType": "image/png"
+  },
+  "views/clean/mara-reed-right.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b4c143493d26222e15c3693003344a0226b3386ae721f6733eb74b9d38e40a41",
+   "bytes": 896,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/orin-back-pair.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "75db104cb644a200760c75043067c92ad3db2b6bc264a10ea23b17d2726d2726",
+   "bytes": 3308975,
+   "mediaType": "image/png"
+  },
+  "views/clean/orin-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "62bc8c87bae70683a8ce4e4fa6fbd934cf5d209deedcc1d7413c4525be330825",
+   "bytes": 1435476,
+   "mediaType": "image/png"
+  },
+  "views/clean/orin-back.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c85da07bf4e142898a6061ac660908113bdb6dad540f2031d4e73bc9649eb75f",
+   "bytes": 1022,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/orin-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "13d5f3c22281359002adee7fe2d1a1476b68e2ed337f8874724f6f41b34199ac",
+   "bytes": 3293201,
+   "mediaType": "image/png"
+  },
+  "views/clean/orin-front.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "38094aebfe5d848fe9d19c5e8c74fe3d152f43a69b56ec5972177c44ffb380ac",
+   "bytes": 914,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/orin-left.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c50ea1df8c6b35c99926208da68d9b3d00eeb1358dc90397e1413a088cda756f",
+   "bytes": 3382041,
+   "mediaType": "image/png"
+  },
+  "views/clean/orin-left.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1128dda2892e03d765ac5f3210a66c2d87dbb85d119bfd21596c004f51e15e45",
+   "bytes": 1044,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/orin-right.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1fcf15c319525d9a6c56ede3e2ea5118708c57f3d1503624094bd3dc2c37a7d2",
+   "bytes": 3360061,
+   "mediaType": "image/png"
+  },
+  "views/clean/orin-right.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b3be491eb1c097af42eba1d7c510afbff332517dc1bfa0ae3ca990f9b7f3f05e",
+   "bytes": 1047,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/sela-tern-back-pair.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "793457319dcce1a680a10f9d513f279fe627cc3ec37877940df33b46d6c88bef",
+   "bytes": 4317750,
+   "mediaType": "image/png"
+  },
+  "views/clean/sela-tern-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "589f444026bb8fd103742edac3144b5c01b797fbbcc30cd8f155304a4260908e",
+   "bytes": 1944683,
+   "mediaType": "image/png"
+  },
+  "views/clean/sela-tern-back.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c10831f5a30e084771445deb324186506d097b51c887055aac139b2128b022a6",
+   "bytes": 1083,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/sela-tern-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "53ebf938cac4ab611611f2b8536b481a2a1a5cb31373c8fee25a25e1ccd4f3d7",
+   "bytes": 3900187,
+   "mediaType": "image/png"
+  },
+  "views/clean/sela-tern-front.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "be619ed503c3b87e262f3bebe2c69d50cc36e752e3ad657654ffc2d364514407",
+   "bytes": 958,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/sela-tern-left.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "817a361b5155374d3e8795d65e057cb01cf5e95292cc61878e046452ffbc7efa",
+   "bytes": 3469776,
+   "mediaType": "image/png"
+  },
+  "views/clean/sela-tern-left.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2ca5d083a62f32f881c323f913866f8f5883f18bad04b875aef622a4b987a0ff",
+   "bytes": 1088,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/clean/sela-tern-right.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7c691527c61163a56e6486828144ce1cd427d2165d8703203817f60a6a366382",
+   "bytes": 3516078,
+   "mediaType": "image/png"
+  },
+  "views/clean/sela-tern-right.prompt.txt": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "35c04c9f3ba6ec07c3641b228d834238156f1ffc63b3c1a04d65000ac2351c34",
+   "bytes": 1091,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "views/crop/ada-a-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6684d009c217acc55e26c82ef5733d40eb2564d99168197c3b1de09404e312bb",
+   "bytes": 859757,
+   "mediaType": "image/png"
+  },
+  "views/crop/ada-b-side.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1ae4ace7c8188c4dc030790d99cd24ed602bc91860741662221fc1a0f6dd5bbb",
+   "bytes": 728052,
+   "mediaType": "image/png"
+  },
+  "views/crop/ada-c-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "28ae40d95278e412046c981afdbaec9da805a433839b4457af1f498045edef79",
+   "bytes": 695652,
+   "mediaType": "image/png"
+  },
+  "views/crop/ada-d-other.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "bc55728ee6abfbe83c55af797e9128a2ce344861bca0adfd7e879699d9ea847b",
+   "bytes": 662291,
+   "mediaType": "image/png"
+  },
+  "views/crop/jessa-cairn-a-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6e972afce38c74245a3421b5605020e1577b6a36ff1b8e63b794895e4ce3a478",
+   "bytes": 751975,
+   "mediaType": "image/png"
+  },
+  "views/crop/jessa-cairn-b-side.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9b90c291de0ba6ef423ac76856b6e5eb7074de779f6d8907c99cb1d1f9a3ffe8",
+   "bytes": 588103,
+   "mediaType": "image/png"
+  },
+  "views/crop/jessa-cairn-c-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "154ddd9d69e91d5b8dc38b7a67b8466fc5e0688743c23f8aff14c57af3bfb53b",
+   "bytes": 534206,
+   "mediaType": "image/png"
+  },
+  "views/crop/jessa-cairn-d-other.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f5441574ec928998bc049a1d453dc82e89d9372110595409ea038bfcedac857b",
+   "bytes": 634195,
+   "mediaType": "image/png"
+  },
+  "views/crop/mara-reed-a-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f4b5845fc8aa8867f71f4d4ea852e79d6d8fa4d57aae808dba0e928d178c7da7",
+   "bytes": 617956,
+   "mediaType": "image/png"
+  },
+  "views/crop/mara-reed-b-side.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "17ae84b7aa568c5a6b004ff4f2eb9d8b1cdd85b55252afaecdf2b88654d9d40f",
+   "bytes": 417716,
+   "mediaType": "image/png"
+  },
+  "views/crop/mara-reed-c-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f61be614ec86b6db123962c45abb6261d6f645dbe6a191f751fbe1d33c1112c3",
+   "bytes": 566016,
+   "mediaType": "image/png"
+  },
+  "views/crop/mara-reed-d-other.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b6896ce45e79f0d3948171f5a370ce114c1de9f27b65182ba227cb35c7d5c47a",
+   "bytes": 625496,
+   "mediaType": "image/png"
+  },
+  "views/crop/orin-a-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "cb4b8a0868991e0dcd72a32795a651b478169a875e1f5ea1770eaf436e8aacae",
+   "bytes": 371410,
+   "mediaType": "image/png"
+  },
+  "views/crop/orin-b-side.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5d6ca5028cd6a25564718a8bc19ea44184e5eb390692898f4555090f0823f4e6",
+   "bytes": 374194,
+   "mediaType": "image/png"
+  },
+  "views/crop/orin-c-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "0a98fcf3a4fe7075db33851661aae09a9d8646f92d7cdc994c00e914ea7c4790",
+   "bytes": 305695,
+   "mediaType": "image/png"
+  },
+  "views/crop/sela-tern-a-front.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ac90f0c83b946c575dc93bb4e60e1f2e6f2071eb73d7b9893a1d6538b40b17e0",
+   "bytes": 725090,
+   "mediaType": "image/png"
+  },
+  "views/crop/sela-tern-b-side.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b7efb95b55bea56685b90d484268d69150bae922fa13b988cd3270b6d4ff5a0f",
+   "bytes": 439746,
+   "mediaType": "image/png"
+  },
+  "views/crop/sela-tern-c-back.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ae363322bab3fcc83eceb771157ffe9c4cc100dd531cb7b61a77fd193b384dd8",
+   "bytes": 444503,
+   "mediaType": "image/png"
+  },
+  "views/crop/sela-tern-d-other.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b78db2d3f66b36402c08eb0a2061080a34649d189031ce8dcb0ac844da6aa2ad",
+   "bytes": 678405,
+   "mediaType": "image/png"
+  },
+  "work/recipes/bones.py": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "08dea1033c3541fc2fb82d6267ebdedaf4aa92b584f1d97fe1a4cdca209f276b",
+   "bytes": 583,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "work/recipes/build_manifest.py": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3f9e33752dc260db59597cee153f4d2971804e25152ae44423c67490b5f372c2",
+   "bytes": 2183,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "work/recipes/gen3d.sh": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8c22f2f1ba0457b5ade6bd14dbc1dd4a4987ffea8a8e9378f1775aa9e695b051",
+   "bytes": 1321,
+   "mediaType": "text/x-shellscript; charset=utf-8"
+  },
+  "work/recipes/gen_view.sh": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ecde85f7b315a85b69cf579d2695a027c514581aa1705e6852056abc22053a1f",
+   "bytes": 729,
+   "mediaType": "text/x-shellscript; charset=utf-8"
+  },
+  "work/recipes/look-check.mjs": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "432fe14488c6fc4f862e143fc612afbd5e78953ca2d436a3626b28008dca3737",
+   "bytes": 5388,
+   "mediaType": "text/javascript; charset=utf-8"
+  },
+  "work/recipes/resource-check.mjs": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c9c08fd1bc74415dcc51576360c2b43c509c18add9cc89c8f0c5ade8fd51ce23",
+   "bytes": 4477,
+   "mediaType": "text/javascript; charset=utf-8"
+  }
+ }
+}

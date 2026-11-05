@@ -1,6 +1,6 @@
 # Future work needing design
 
-This register identifies remaining product decisions and design preparation. Existing feature/technical specifications own behavior and mechanism; focused maintainer trackers own implementation and qualification. **ND01–ND38** identify needs and **DG01–DG36** group related preparation. Neither numbering nor inclusion establishes implementation priority or authorizes an unselected feature.
+This register identifies remaining product decisions and design preparation. Existing feature/technical specifications own behavior and mechanism; focused maintainer trackers own implementation and qualification. **ND01–ND42** identify needs and **DG01–DG37** group related preparation. Neither numbering nor inclusion establishes implementation priority or authorizes an unselected feature.
 
 ## First-playable preparation and current selected scope
 
@@ -202,6 +202,36 @@ The [Enshrouded/Dragonwilds comparison](../../archive/02-research/game-inspirati
 [The personal Journal edition](../projects/personal-journal-feature-spec.md) proposes eligible selected entries, optional title/interpretation, exact preview and private PDF/text output. [NC21](narration-and-conversations.md) and [JP limits](../limits/narration.md) retain technical/privacy/accessibility delivery. A saved draft is a separate resumption convenience.
 
 **Owners/dependencies:** NC, data/privacy, art-rights and Journal owners. Select a useful extension against current Journal use. Shared editions, real-life reflection, illustrations and print products need their own rights/consent decisions; none gates a narrow text edition or authorizes full-world/private-history export.
+
+#### DG37 — Character appearance: a creator and varied populations
+
+Let players shape their character's face and body, and give every NPC a distinct, believable look, without generating a model per person. The usual implementation shares one parametric body family across all people: one mesh layout and skeleton, shape targets or bone controls for face and body, swappable hair and garments that follow the body's shape, and colour and material values. NPC variety samples the same values from world-owned population ranges with a visual seed; named characters get authored values. The [art workflow's people-family section](../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety) records the analysis and the pipeline consequences:
+
+- people are made as a family;
+- each person's look comes from their own concept, wrapped onto a shared base mesh (MPFB's, hidden underneath);
+- pre-built parts are combined per character;
+- offline-baked combinations come first, with runtime assembly later.
+
+**Mike's requirements (November 4, 2026):** every person, character or actor is built from separate parts, each selected or generated from their character sheet:
+
+- **ND39:** a body, the closest match from a canonical set covering every body type, or a report that none fits;
+- **ND40:** an adjustable face and hairstyle;
+- **ND41:** clothing they wear and can take off, never part of the body;
+- **ND42:** the build that turns a character sheet into those parts, designed before the art workflow adopts it.
+
+**Disposition: needs scoped design; selected for design on November 4, 2026.** Mike first raised it on October 31 as a question. [People built from parts](art/people.md) owns the design tasks (PPL01–PPL03) and the questions each design must settle. Implementation is not authorized.
+
+**Owners/dependencies:**
+
+- [People built from parts](art/people.md): the design tasks and the art workflow update.
+- [Clothing slots](../projects/character-and-map-additions-tech-design.md#equipment-slots): the accepted slots that worn garments use.
+- [V3D05](3d-pixel-art.md#v3d05--rigged-character-and-equipment-family): the body and rig family, and per-instance morph lifetime in the renderer.
+- World presentation and the base-world character definitions: appearance values as world data.
+- Save and load.
+- Perception and recognition: recognition never reads mesh identity.
+- UI/UX for the creator itself.
+
+Faces matter mostly in portraits and close views; build, hair, clothing and colour carry identity at play distance.
 
 ### Band 4 — Make communities last
 
@@ -409,6 +439,10 @@ Each ND entry retains one preparation description below. Multiple DGs indicate d
 | ND36 | DG15             | Selected external perspective versus other cutaways                                                                                                                                                |
 | ND37 | DG08             | Public reporting and operator authority                                                                                                                                                            |
 | ND38 | DG01             | Player skill during action execution versus action selection/native outcome                                                                                                                        |
+| ND39 | DG37             | Canonical base bodies for every body type, matched from a character sheet                                                                                                                          |
+| ND40 | DG37             | Adjustable faces and hairstyles                                                                                                                                                                    |
+| ND41 | DG37             | Removable clothing: garments worn in slots and drawn on the body                                                                                                                                   |
+| ND42 | DG37             | Building a person part by part from their character sheet                                                                                                                                          |
 
 ## Elden Ring applications through existing design owners
 
@@ -449,7 +483,7 @@ The [scalability suite](../product-scalability/README.md), [feature specificatio
 
 Use the [AI game-development research](../../archive/02-research/ai-game-development/README.md) for evidence and tool comparisons, and the [production handbook](../production-workflows/README.md) for reusable routes from ideas through editable art, assets, animation, scenes, interfaces, character situations and feedback to a working game result. Existing feature designs and trackers own runtime behavior, delivery and acceptance.
 
-The [Standard/Higgsfield art flows](../production-workflows/art-flows/README.md) define short-request studies, production and explicit integration. [AF01–AF02](art-direction.md#art-flow-follow-through) own preservation of the existing six UI contenders and execution of the separate surface-language study; these are tracked art and qualification work, not an undesigned automation platform.
+The [art workflow](../production-workflows/art-flows/README.md) defines short-request studies, production and explicit integration, with tool defaults, fidelity levels and a 3D route. [AF01–AF02](art-direction.md#art-flow-follow-through) own preservation of the existing six UI contenders and execution of the separate surface-language study; these are tracked art and qualification work, not an undesigned automation platform.
 
 Production should give inventions a recognizable identity; residents should be worth spending time with; places should support discovery, atmosphere and meaningful approaches; and coordinated presentation should make actions understandable and satisfying. The existing [playability gates](../projects/five-product-feature-specs.md#playability-gates) own judgment of the complete experience. These opportunities guide a selected slice without requiring a new generic AI-production feature or a second fun-evaluation system.
 

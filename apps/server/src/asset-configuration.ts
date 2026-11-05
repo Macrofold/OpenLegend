@@ -64,7 +64,6 @@ export type AssetConfiguration = z.infer<typeof schema>;
 export async function readAssetRetentionLimits() {
   return z
     .object({
-      maxRetainedBytes: positive,
       maxRetainedFiles: positive,
       maxPublicationOperations: positive,
     })

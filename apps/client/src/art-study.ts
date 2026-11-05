@@ -1,7 +1,7 @@
 import * as pc from 'playcanvas';
 import { ArtMaterials, candidateArt } from './art-treatment';
 import { isFoliageMaterialName, prepareFoliageLight } from './environment-art';
-import { BundledModels, destroyModelApplication } from './bundled-models';
+import { BundledModels, destroyModelApplication, type BundledModel } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
 import { StudyCapture } from './study-capture';
@@ -16,8 +16,13 @@ import './art-study.css';
 type Choice = StudyCatalogAsset & {
   url: string;
   motionUrl?: string;
+  /** A developer-chosen local file shown beside the catalog subjects; never uploaded. */
+  localBytes?: ArrayBuffer;
   sourceUrl?: string;
   historical: boolean;
+  /** A current study-only collection (catalog group `study-*`): its own subjects, and never
+   * in the game's runtime catalogs, which take only `source-*` groups (vite.config.ts). */
+  collection?: string;
   sourceControl?: boolean;
 };
 const sourcePages = new Map(catalogs.map((catalog) => [catalog.group, catalog.sourcePage]));
@@ -27,7 +32,8 @@ const choices: Choice[] = catalogs.flatMap((catalog) =>
     ...(catalog.controls ?? []).map((asset) => ({ ...asset, sourceControl: true })),
   ].map((asset) => ({
     ...asset,
-    historical: !catalog.group.startsWith('source-'),
+    historical: !/^(source|study)-/.test(catalog.group),
+    collection: catalog.group.startsWith('study-') ? catalog.group : undefined,
     url: assetUrl(
       `apps/client/src/props/art-study/${asset.fileGroup ?? catalog.group}/${asset.file}`,
     ),
@@ -42,23 +48,87 @@ const retainedFamilies = new Set(
   choices.filter((asset) => replacedIds.has('study:' + asset.id)).map((asset) => asset.family),
 );
 const layout: Record<string, { label: string; position: readonly number[] }> = studyLayout;
+// The game's runtime payload bound (docs/limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload):
+// a larger local candidate would not load in play either, so it is reduced first.
+const LOCAL_MODEL_BYTES = 16 * 1024 * 1024;
+const clipNames = (resource: BundledModel) =>
+  resource.animations.flatMap((asset) =>
+    asset.resource instanceof pc.AnimTrack ? [asset.resource.name] : [],
+  );
+const hasLocomotion = (resource: BundledModel) =>
+  ['Idle', 'Run'].every((name) => clipNames(resource).includes(name));
+/** Measure a local model once it is parsed; catalog subjects carry these facts already. */
+function describeLocal(asset: Choice, artwork: pc.Entity, resource: BundledModel): void {
+  const box = new pc.BoundingBox();
+  const part = new pc.BoundingBox();
+  const textures = new Set<pc.Texture>();
+  let first = true,
+    triangles = 0;
+  for (const component of artwork.findComponents('render')) {
+    if (!(component instanceof pc.RenderComponent)) continue;
+    for (const mesh of component.meshInstances) {
+      // Joints place a skinned mesh, and its inverse bind matrices cancel the node scale
+      // (providers export a 0.01-scaled armature), so its bind pose is already in model space.
+      if (mesh.skinInstance) part.copy(mesh.mesh.aabb);
+      else part.setFromTransformedAabb(mesh.mesh.aabb, mesh.node.getWorldTransform());
+      if (first) box.copy(part);
+      else box.add(part);
+      first = false;
+      triangles += Math.floor((mesh.mesh.primitive[0]?.count ?? 0) / 3);
+      const material = mesh.material;
+      if (material instanceof pc.StandardMaterial)
+        for (const texture of [material.diffuseMap, material.normalMap, material.opacityMap])
+          if (texture) textures.add(texture);
+    }
+  }
+  const min = box.getMin(),
+    max = box.getMax();
+  asset.bounds = { min: [min.x, min.y, min.z], max: [max.x, max.y, max.z] };
+  asset.triangles = triangles;
+  asset.textureSizes = [...textures].map((texture) => [texture.width, texture.height]);
+  const clips = clipNames(resource);
+  asset.description =
+    `Clips: ${clips.length ? clips.join(', ') : 'none'}` +
+    (hasLocomotion(resource) ? '' : ' · Idle and Run are needed for motion');
+}
 function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
 const subject = element<HTMLSelectElement>('subject');
-const subjectKey = (choice: Choice) => (choice.historical ? 'earlier:' : '') + choice.family;
+const subjectKey = (choice: Choice) =>
+  (choice.historical ? 'earlier:' : choice.collection ? choice.collection + ':' : '') +
+  choice.family;
+const collectionTitle = (collection: string) => {
+  const name = collection.slice('study-'.length);
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
 for (const family of new Set(choices.map(subjectKey))) {
   const option = document.createElement('option');
   option.value = family;
   const member = choices.find((choice) => subjectKey(choice) === family)!;
-  option.textContent = `${member.historical ? 'Earlier study · ' : retainedFamilies.has(member.family) ? 'Retained source · ' : ''}${member.historical ? (layout[member.family]?.label ?? member.label) : member.label}`;
+  option.textContent = `${member.historical ? 'Earlier study · ' : member.collection ? collectionTitle(member.collection) + ' · ' : retainedFamilies.has(member.family) ? 'Retained source · ' : ''}${member.historical ? (layout[member.family]?.label ?? member.label) : member.label}`;
   subject.append(option);
 }
+/** One option per shown version of the chosen subject; subjects have different numbers. */
+function refreshVersions(): void {
+  const versions = element<HTMLSelectElement>('versions');
+  const kept = versions.value;
+  for (const option of [...versions.options]) if (/^\d+$/.test(option.value)) option.remove();
+  choices
+    .filter((asset) => subjectKey(asset) === subject.value && !asset.sourceControl)
+    .forEach((asset, index) =>
+      versions.append(
+        new Option(`${String.fromCharCode(65 + index)} · ${asset.variant}`, String(index)),
+      ),
+    );
+  versions.value = [...versions.options].some((option) => option.value === kept) ? kept : 'compare';
+}
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
-if (requested && choices.some((choice) => subjectKey(choice) === requested))
+if (requested && [...subject.options].some((option) => option.value === requested))
   subject.value = requested;
 else if (!requested && choices.some((choice) => choice.family === 'mercenary'))
   subject.value = 'mercenary';
+refreshVersions();
 
 /** Finite trusted asset inspection, independent of saves, world actions and AI. */
 export class ArtStudy {
@@ -80,6 +150,7 @@ export class ArtStudy {
   private animations: pc.AnimComponent[] = [];
   private readonly bounds: pc.Vec3[] = [];
   private displayed: Choice[] = [];
+  private local?: Choice;
   private anchors: { node: pc.Entity; label: HTMLElement; height: number }[] = [];
   private epoch = 0;
   private disposed = false;
@@ -165,7 +236,11 @@ export class ArtStudy {
     this.observer.observe(canvas.parentElement!);
     const on = (target: EventTarget, event: string, handler: EventListener) =>
       target.addEventListener(event, handler, { signal: this.events.signal });
-    for (const id of ['subject', 'versions']) on(element(id), 'change', () => void this.show());
+    on(subject, 'change', () => {
+      refreshVersions();
+      void this.show();
+    });
+    on(element('versions'), 'change', () => void this.show());
     const captureName = () =>
       'openlegend-asset-' +
       [
@@ -193,6 +268,20 @@ export class ArtStudy {
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
     on(element('shading'), 'change', () => this.shading());
+    // A page restored from history keeps form state but no local model.
+    element<HTMLInputElement>('local-model').value = '';
+    element('local-model-remove').hidden = true;
+    on(element('local-model'), 'change', () => {
+      const file = element<HTMLInputElement>('local-model').files?.[0];
+      if (file) void this.chooseLocal(file);
+    });
+    on(element('local-model-remove'), 'click', () => this.removeLocal());
+    on(canvas.parentElement!, 'dragover', (event) => event.preventDefault());
+    on(canvas.parentElement!, 'drop', (event) => {
+      event.preventDefault();
+      const file = (event as DragEvent).dataTransfer?.files[0];
+      if (file) void this.chooseLocal(file);
+    });
     on(element('pixel-treatment'), 'change', () => this.placeCamera());
     for (const [id, yaw] of [
       ['front', 0],
@@ -293,16 +382,19 @@ export class ArtStudy {
       const pose = element<HTMLSelectElement>('pose').value;
       if (pose !== 'still' && this.motionAllowed && this.animations.length) {
         for (const anim of this.animations) {
-          if (anim.baseLayer?.activeState !== pose) anim.baseLayer?.play(pose);
+          // A model without the chosen clip stands in Idle beside those that have it.
+          const state = anim.baseLayer?.states.includes(pose) ? pose : 'Idle';
+          if (anim.baseLayer?.activeState !== state) anim.baseLayer?.play(state);
           anim.update(Math.min(dt, 0.1));
         }
         this.invalidate();
       }
+      const playing = this.animations.filter((anim) => anim.baseLayer?.activeState === pose);
       const motionEvidence = !this.motionAllowed
         ? 'Motion paused by your reduced-motion preference.'
         : pose === 'still'
           ? 'Pose held for comparison.'
-          : `${this.animations.length} animated models · ${pose === 'Run' ? 'Movement' : 'Idle'} · ${(this.animations[0]?.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
+          : `${playing.length} of ${this.animations.length} animated models · ${pose} · ${(playing[0]?.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
       if (element('motion-evidence').textContent !== motionEvidence)
         element('motion-evidence').textContent = motionEvidence;
       if (this.labelsDirty) {
@@ -369,7 +461,7 @@ export class ArtStudy {
   async show(): Promise<void> {
     if (this.disposed) return;
     const epoch = ++this.epoch,
-      composition = ['composition', 'calibration', 'cast'].includes(subject.value);
+      composition = ['composition', 'calibration', 'cast', 'characters'].includes(subject.value);
     if (this.pendingModels) this.releaseModels(this.pendingModels);
     this.pendingModels = undefined;
     const versions = element<HTMLSelectElement>('versions');
@@ -386,11 +478,14 @@ export class ArtStudy {
             asset.recommended &&
             (subject.value === 'composition'
               ? asset.historical
-              : !asset.historical &&
-                (subject.value === 'cast'
-                  ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
-                  : ['mercenary', 'ada', 'grounded-chest', 'natural-sword']
-                ).includes(asset.family)),
+              : subject.value === 'characters'
+                ? asset.collection === 'study-characters'
+                : !asset.historical &&
+                  !asset.collection &&
+                  (subject.value === 'cast'
+                    ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
+                    : ['mercenary', 'ada', 'grounded-chest', 'natural-sword']
+                  ).includes(asset.family)),
         )
       : choices.filter(
           (asset) =>
@@ -402,8 +497,13 @@ export class ArtStudy {
         version === 'selected'
           ? selected.filter((asset) => asset.recommended)
           : selected.slice(Number(version), Number(version) + 1);
+    if (this.local) selected = [...selected, this.local];
     if (!selected.length) {
+      // Removing the only shown model must not leave it on screen untracked.
+      this.clearDisplayed();
+      this.cards([]);
       element('status').textContent = 'No exported assets are available for this subject yet.';
+      this.canvas.dataset.ready = 'true';
       return;
     }
     if (
@@ -422,9 +522,18 @@ export class ArtStudy {
     const models = (this.pendingModels = new BundledModels(this.app));
     const materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
     let installed = false;
+    let failed: Choice | undefined;
     try {
       const resources = await Promise.all(
-        selected.map((asset) => models.load(asset.label, asset.motionUrl ?? asset.url)),
+        selected.map((asset) =>
+          (asset.localBytes
+            ? models.loadBytes(asset.label, asset.file, asset.localBytes)
+            : models.load(asset.label, asset.motionUrl ?? asset.url)
+          ).catch((error: unknown) => {
+            failed ??= asset;
+            throw error;
+          }),
+        ),
       );
       if (this.disposed || epoch !== this.epoch) return;
       const animations: pc.AnimComponent[] = [];
@@ -436,8 +545,11 @@ export class ArtStudy {
             receiveShadows: true,
           });
           fresh.push(artwork);
-          this.prepare(artwork, materials, selected[index]!);
-          if (selected[index]!.motionUrl) animations.push(installLocomotion(artwork, resource));
+          const asset = selected[index]!;
+          if (asset.localBytes) describeLocal(asset, artwork, resource);
+          this.prepare(artwork, materials, asset);
+          if (asset.motionUrl || (asset.localBytes && hasLocomotion(resource)))
+            animations.push(installLocomotion(artwork, resource));
           // A single exported mesh may carry its own origin offset. Position a
           // parent so its original model transform (and ground contact) survives.
           const placement = new pc.Entity(selected[index]!.id, this.app);
@@ -448,18 +560,13 @@ export class ArtStudy {
         for (const root of fresh) root.destroy();
         throw error;
       }
-      for (const root of this.roots) root.destroy();
-      for (const material of this.materials.values()) material.destroy();
-      this.releaseModels(this.models);
+      this.clearDisplayed();
       this.models = models;
       this.materials = materials;
       installed = true;
       this.roots = fresh;
       this.animations = animations;
-      this.bounds.length = 0;
       this.displayed = selected;
-      element('labels').replaceChildren();
-      this.anchors = [];
       const largest = Math.max(
         ...selected.map((asset) =>
           Math.max(
@@ -519,6 +626,13 @@ export class ArtStudy {
       console.error(error);
       element('status').textContent =
         'This comparison could not load. The previous displayed assets are retained; choose another subject or reload.';
+      if (failed?.localBytes) {
+        // Keep tracking whichever local model the retained comparison still shows.
+        this.local = this.displayed.find((asset) => asset.localBytes);
+        element('local-model-remove').hidden = !this.local;
+        element('status').textContent =
+          'That file could not be read as a GLB model. The previous comparison is retained.';
+      }
       this.canvas.dataset.ready = String(this.roots.length > 0);
     } finally {
       if (this.pendingModels === models) this.pendingModels = undefined;
@@ -527,6 +641,58 @@ export class ArtStudy {
         this.releaseModels(models);
       }
     }
+  }
+  /** Show a local GLB beside the current comparison, in the game's own look. */
+  private async chooseLocal(file: File): Promise<void> {
+    if (file.size > LOCAL_MODEL_BYTES) {
+      element('status').textContent =
+        `${file.name} is larger than the game's 16 MiB model limit. Reduce its textures or geometry first.`;
+      element<HTMLInputElement>('local-model').value = '';
+      return;
+    }
+    const bytes = await file.arrayBuffer();
+    // Without a reset, choosing the same (re-exported) file again sends no change event.
+    element<HTMLInputElement>('local-model').value = '';
+    if (this.disposed) return;
+    this.local = {
+      id: 'local-model',
+      file: file.name,
+      family: 'local-model',
+      label: file.name,
+      variant: 'local file',
+      description: 'Loading…',
+      recommended: false,
+      triangles: 0,
+      vertices: 0,
+      textureSizes: [],
+      source: 'Opened from this computer only; not uploaded, cached or published.',
+      bounds: { min: [-0.5, 0, -0.5], max: [0.5, 1.8, 0.5] },
+      url: '',
+      historical: false,
+      localBytes: bytes,
+    };
+    element('local-model-remove').hidden = false;
+    await this.show();
+  }
+  private removeLocal(redisplay = true): void {
+    this.local = undefined;
+    element<HTMLInputElement>('local-model').value = '';
+    element('local-model-remove').hidden = true;
+    if (redisplay) void this.show();
+  }
+  /** Remove the displayed comparison and release what it owns. */
+  private clearDisplayed(): void {
+    for (const root of this.roots) root.destroy();
+    for (const material of this.materials.values()) material.destroy();
+    this.releaseModels(this.models);
+    this.models = new BundledModels(this.app);
+    this.materials = new Map();
+    this.roots = [];
+    this.animations = [];
+    this.displayed = [];
+    this.bounds.length = 0;
+    element('labels').replaceChildren();
+    this.anchors = [];
   }
   private releaseModels(models: BundledModels): void {
     const pending = models.destroy();
@@ -547,7 +713,7 @@ export class ArtStudy {
           p.className = 'recommendation';
           p.textContent = asset.historical
             ? 'Earlier selection · rejected study'
-            : retainedFamilies.has(asset.family)
+            : !asset.collection && retainedFamilies.has(asset.family)
               ? 'Previous selection · retained for comparison'
               : 'Working selection · under review';
           card.append(p);
@@ -561,6 +727,7 @@ export class ArtStudy {
         const facts = document.createElement('small');
         facts.textContent = `${(asset.bounds.max[1]! - asset.bounds.min[1]!).toFixed(2)} m tall · ${asset.triangles.toLocaleString()} triangles · ${asset.textureSizes.map((size) => size.join('×')).join(', ')} fixed paint`;
         card.append(facts);
+        if (!asset.url) return card; // A local file is already on this computer.
         const download = document.createElement('p');
         const model = document.createElement('a');
         model.href = asset.url;

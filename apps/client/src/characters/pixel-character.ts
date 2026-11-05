@@ -85,6 +85,18 @@ export class PixelCharacter {
   private neutralVertices = 0;
   private neutralPreparationMs = 0;
   private readonly bodyBounds = { minY: 0, maxY: 0 };
+  /** Each skinned caster's bind-space vertex box per bone (minimum then maximum x, y, z). */
+  private readonly boneBoxes: { instance: pc.MeshInstance; boxes: Float32Array }[] = [];
+  /** Screen bounds of the current pose: minimum x, maximum x, minimum y, maximum y. */
+  private readonly pose = new Float64Array(4);
+  private readonly corner = new pc.Vec3();
+  private readonly projected = new pc.Vec3();
+  private readonly boneMatrix = new pc.Mat4();
+  /** When each side of the screen capture first needed under half its allocation (ms), so it
+   * shrinks only after that has lasted: strides, strikes and short rests keep the image. */
+  private readonly shrinkSince = [0, 0];
+  /** A fixed-row treatment's image size for the neutral figure; poses widen it by whole samples. */
+  private fixedSize = [imageWidth, imageHeight];
   private readonly lights = new Set<pc.LightComponent>();
   private readonly casters: pc.MeshInstance[];
   private readonly world: pc.Layer;
@@ -250,6 +262,8 @@ export class PixelCharacter {
         const rows = sampling === 'native' ? 378 : Number(sampling);
         const height = Math.round((rows * imageHeight) / visibleRows);
         const width = Math.round((height * imageWidth) / imageHeight);
+        this.fixedSize = [width, height];
+        this.shrinkSince.fill(0);
         this.resizeTarget(width, height);
       }
       this.color.minFilter = this.color.magFilter =
@@ -287,15 +301,34 @@ export class PixelCharacter {
       device.maxTextureSize,
       Math.max(16, Math.ceil((height * screenCaptureScale) / 16) * 16),
     );
-    // Grow before losing detail; shrink only after a substantial zoom/viewport
-    // change. Small camera motion must not reallocate both textures every frame.
-    if (
-      nextWidth > this.color.width ||
-      nextHeight > this.color.height ||
-      nextWidth < this.color.width / 2 ||
-      nextHeight < this.color.height / 2
-    )
-      this.resizeTarget(nextWidth, nextHeight);
+    const grow = (next: number) =>
+      Math.min(device.maxTextureSize, Math.ceil((next * 1.5) / 16) * 16);
+    this.resizeTarget(
+      this.allocation(nextWidth, this.color.width, 0, grow),
+      this.allocation(nextHeight, this.color.height, 1, grow),
+    );
+  }
+  /** The image size to keep on one side for a need of `next`: grow at once with headroom, so a
+   * widening pose reallocates once or twice, and shrink only once a much smaller need has lasted
+   * two seconds (a zoom, a viewport change or a long rest). A single odd frame, such as a reset
+   * cape that has not caught up with a jump, therefore cannot pin a large image. */
+  private allocation(
+    next: number,
+    current: number,
+    side: 0 | 1,
+    grow: (next: number) => number,
+  ): number {
+    if (next > current) {
+      this.shrinkSince[side] = 0;
+      return grow(next);
+    }
+    if (next >= current / 2) {
+      this.shrinkSince[side] = 0;
+      return current;
+    }
+    const now = performance.now();
+    this.shrinkSince[side] ||= now;
+    return now - this.shrinkSince[side]! > 2000 ? next : current;
   }
   setVisible(value: boolean): void {
     // RenderComponent enable can register these in the capture layer again.
@@ -343,6 +376,8 @@ export class PixelCharacter {
     this.foreground.visible = selected;
     this.revealMaterial.setParameter('characterOpacity', reveal);
     this.protectionMaterial.setParameter('characterOpacity', reveal);
+    // The pose and cape have moved since the last frame; the capture window follows them.
+    this.mappingReady = false;
     this.prepareProjection();
   }
 
@@ -421,22 +456,51 @@ export class PixelCharacter {
     // Screen capture rounding must not widen/narrow the body as allocation
     // changes. Historical fixed-row modes retain their existing aspect ratios.
     const aspect =
-      this.sampling === 'screen' ? imageWidth / imageHeight : this.color.width / this.color.height;
-    // A contracted body is wider relative to its height. Keep the whole visible
-    // body in the capture instead of clipping its sides to the standing aspect.
-    const width = this.physicalExtent
-      ? Math.max(height * aspect, 2 * Math.max(this.screen.x - minX, maxX - this.screen.x))
-      : height * aspect;
+      this.sampling === 'screen'
+        ? imageWidth / imageHeight
+        : this.fixedSize[0]! / this.fixedSize[1]!;
     const sourceCenterY = (minY + maxY) / 2;
-    const centerY = this.screen.y + ((sourceCenterY - this.screen.y) * height) / sourceHeight;
+    const scale = height / sourceHeight;
+    // The neutral figure alone sets the mapping, but the capture covers the current pose:
+    // strides, strikes, a contracted body and the trailing cape all reach past the neutral
+    // contour. Half-extents are in displayed pixels, symmetric about the feet and the neutral
+    // centre so that fixed-row samples keep their grid as the image grows.
+    this.measurePose();
+    // Two pixels beyond the pose keep filtered silhouette edges off the image border.
+    let halfWidth = Math.max(
+      (height * aspect) / 2,
+      this.screen.x - this.pose[0]! + 2,
+      this.pose[1]! - this.screen.x + 2,
+    );
+    let halfHeight =
+      Math.max(
+        sourceHeight / 2,
+        sourceCenterY - this.pose[2]! + 2,
+        this.pose[3]! - sourceCenterY + 2,
+      ) * scale;
+    if (this.sampling !== 'screen') {
+      // Change the image by whole samples on both sides, so samples keep their size and
+      // grid, under the same growth and shrink rule as the screen capture.
+      const sample = height / this.fixedSize[1]!;
+      const whole = (needed: number, base: number) =>
+        base + 2 * Math.ceil(Math.max(0, needed - base) / 2);
+      const size = (needed: number, base: number, current: number, side: 0 | 1) =>
+        this.allocation(whole(needed, base), current, side, (next) => whole(next * 1.25, base));
+      const columns = size((2 * halfWidth) / sample, this.fixedSize[0]!, this.color.width, 0);
+      const rows = size((2 * halfHeight) / sample, this.fixedSize[1]!, this.color.height, 1);
+      this.resizeTarget(columns, rows);
+      halfWidth = (columns * sample) / 2;
+      halfHeight = (rows * sample) / 2;
+    }
+    const centerY = this.screen.y + (sourceCenterY - this.screen.y) * scale;
     // Separate Y ranges compensate for upright-body foreshortening. X stays
     // unchanged so steep views cannot widen him; displayed texels stay square.
     this.rect[0] = this.sourceRect[0] = (this.screen.x / viewport.width) * 2 - 1;
     this.rect[1] = 1 - (centerY / viewport.height) * 2;
     this.sourceRect[1] = 1 - (sourceCenterY / viewport.height) * 2;
-    this.rect[2] = this.sourceRect[2] = width / viewport.width;
-    this.rect[3] = height / viewport.height;
-    this.sourceRect[3] = sourceHeight / viewport.height;
+    this.rect[2] = this.sourceRect[2] = (2 * halfWidth) / viewport.width;
+    this.rect[3] = (2 * halfHeight) / viewport.height;
+    this.sourceRect[3] = (2 * halfHeight) / scale / viewport.height;
     if (this.sampling === 'screen') this.resizeForScreen();
     this.crop.setIdentity();
     const m = this.crop.data;
@@ -458,6 +522,58 @@ export class PixelCharacter {
     this.mappedViewport[6] = device.width;
     this.mappedViewport[7] = device.height;
     this.mappingReady = true;
+  }
+
+  /** Screen bounds of the current pose without evaluating its vertices: each bone's bind-space
+   * vertex box under that bone's current transform (conservative, and cheap every frame), plus
+   * the live mesh bounds of unskinned parts such as the simulated cape. */
+  private measurePose(): void {
+    this.pose[0] = this.pose[2] = Infinity;
+    this.pose[1] = this.pose[3] = -Infinity;
+    for (const { instance, boxes } of this.boneBoxes) {
+      const skin = instance.skinInstance!;
+      if (!instance.visible) continue;
+      for (let bone = 0; bone < skin.bones.length; bone++) {
+        const at = bone * 6;
+        if (!(boxes[at]! <= boxes[at + 3]!)) continue; // moves no vertex of this mesh
+        this.boneMatrix.mulAffine2(
+          skin.bones[bone]!.getWorldTransform(),
+          skin.skin.inverseBindPose[bone]!,
+        );
+        for (let corner = 0; corner < 8; corner++) {
+          this.corner.set(
+            boxes[at + (corner & 1 ? 3 : 0)]!,
+            boxes[at + (corner & 2 ? 4 : 1)]!,
+            boxes[at + (corner & 4 ? 5 : 2)]!,
+          );
+          this.includePose(this.boneMatrix.transformPoint(this.corner, this.corner));
+        }
+      }
+    }
+    for (const instance of this.casters) {
+      // Hidden parts, such as a cape being reset after a jump, are not drawn.
+      if (instance.skinInstance || !instance.visible || !instance.node.enabled) continue;
+      const min = instance.aabb.getMin(),
+        max = instance.aabb.getMax();
+      for (let corner = 0; corner < 8; corner++)
+        this.includePose(
+          this.corner.set(
+            corner & 1 ? max.x : min.x,
+            corner & 2 ? max.y : min.y,
+            corner & 4 ? max.z : min.z,
+          ),
+        );
+    }
+  }
+  private includePose(point: pc.Vec3): void {
+    // A corner at or behind the camera has no meaningful screen position.
+    const m = this.viewProjection.data;
+    if (point.x * m[3]! + point.y * m[7]! + point.z * m[11]! + m[15]! <= 1e-6) return;
+    this.project(point, this.projected);
+    this.pose[0] = Math.min(this.pose[0]!, this.projected.x);
+    this.pose[1] = Math.max(this.pose[1]!, this.projected.x);
+    this.pose[2] = Math.min(this.pose[2]!, this.projected.y);
+    this.pose[3] = Math.max(this.pose[3]!, this.projected.y);
   }
 
   private project(point: pc.Vec3, result = new pc.Vec3()): pc.Vec3 {
@@ -506,6 +622,12 @@ export class PixelCharacter {
         instance.mesh.getVertexStream(pc.SEMANTIC_BLENDWEIGHT, weights);
         instance.mesh.getVertexStream(pc.SEMANTIC_BLENDINDICES, indices);
       }
+      // Each bone's box around the bind positions it moves bounds later poses cheaply.
+      const boxes = new Float32Array(skin ? skin.bones.length * 6 : 0);
+      for (let at = 0; at < boxes.length; at += 6) {
+        boxes.fill(Infinity, at, at + 3);
+        boxes.fill(-Infinity, at + 3, at + 6);
+      }
       const worldTransform = instance.node.getWorldTransform();
       // Match SkinInstance's bone-world × inverse-bind evaluation without
       // changing its render-frame cache. This also works before first drawing,
@@ -529,6 +651,13 @@ export class PixelCharacter {
             const offset = vertex * 4 + influence;
             const weight = weights[offset]!;
             if (weight === 0) continue;
+            const at = indices[offset]! * 6;
+            boxes[at] = Math.min(boxes[at]!, this.point.x);
+            boxes[at + 1] = Math.min(boxes[at + 1]!, this.point.y);
+            boxes[at + 2] = Math.min(boxes[at + 2]!, this.point.z);
+            boxes[at + 3] = Math.max(boxes[at + 3]!, this.point.x);
+            boxes[at + 4] = Math.max(boxes[at + 4]!, this.point.y);
+            boxes[at + 5] = Math.max(boxes[at + 5]!, this.point.z);
             const matrix = matrices?.[indices[offset]!];
             if (matrix) {
               matrix.transformPoint(this.point, this.localPoint);
@@ -542,6 +671,7 @@ export class PixelCharacter {
         this.inverseRoot.transformPoint(this.point, this.localPoint);
         points.push(this.localPoint.x, this.localPoint.y, this.localPoint.z);
       }
+      if (skin) this.boneBoxes.push({ instance, boxes });
     }
     this.neutralVertices = points.length / 3;
     // Retain directional extrema, not the full vertex cloud. These cover a

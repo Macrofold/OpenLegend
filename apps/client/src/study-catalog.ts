@@ -4,6 +4,9 @@ export interface RuntimeStudyCatalogAsset {
   id: string;
   file: string;
   animatedFile?: string;
+  /** The animated file's stride clips with the ground speeds `art-tool.py clips` measured on
+   * it; re-measure when the file changes. The game paces them to travel (characters/gait.ts). */
+  strides?: { name: string; groundSpeed: number; seconds: number }[];
   depletedFile?: string;
   bounds: { min: number[]; max: number[] };
 }

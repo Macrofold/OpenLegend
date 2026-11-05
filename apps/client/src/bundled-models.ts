@@ -2,6 +2,7 @@ import * as pc from 'playcanvas';
 import { readAssetBytes } from './asset-files';
 
 let nextModelOwner = 0;
+let nextLocalModel = 0;
 
 export type BundledModel = pc.ContainerResource & { animations: pc.Asset[] };
 function container(value: unknown): value is BundledModel {
@@ -35,37 +36,7 @@ export class BundledModels {
     this.downloads.add(download);
     const promise = readAssetBytes(url, download.signal)
       .finally(() => this.downloads.delete(download))
-      .then((contents) => {
-        if (this.disposed) throw new Error('Model owner was destroyed.');
-        // The engine caches parsed containers by URL. Independently disposable
-        // owners must not share that mutable resource: replacing a comparison
-        // with an overlapping subset otherwise destroys the new model when the
-        // old owner unloads. Fetch the canonical URL once per owner; isolate only
-        // the parser's cache key, retaining the original filename for decoding.
-        const cacheUrl = `${url}${url.includes('?') ? '&' : '?'}model-owner=${this.cacheIdentity}`;
-        const asset = new pc.Asset(name, 'container', { url: cacheUrl, filename: url, contents });
-        const parsed = new Promise<BundledModel>((resolve, reject) => {
-          asset.once('load', () => {
-            if (this.disposed || !container(asset.resource)) {
-              asset.unload();
-              this.app.assets.remove(asset);
-              reject(new Error(name + ' owner was destroyed or its model is unavailable.'));
-            } else {
-              this.assets.push(asset);
-              resolve(asset.resource);
-            }
-          });
-          asset.once('error', () => {
-            asset.unload();
-            this.app.assets.remove(asset);
-            reject(new Error(name + ' model unavailable.'));
-          });
-        });
-        this.parsing.add(parsed);
-        this.app.assets.add(asset);
-        this.app.assets.load(asset);
-        return parsed.finally(() => this.parsing.delete(parsed));
-      })
+      .then((contents) => this.parse(name, url, url, contents))
       .catch((error: unknown) => {
         // Share in-flight/successful work, but a transient failure must not
         // poison later explicit requests for this bundled asset. No retry is
@@ -75,6 +46,49 @@ export class BundledModels {
       });
     this.pending.set(url, promise);
     return promise;
+  }
+
+  /** Parse a developer-chosen local file for the study viewer's local preview.
+   * The bytes never leave the browser and are not cached or shared by URL. */
+  loadBytes(name: string, filename: string, contents: ArrayBuffer): Promise<BundledModel> {
+    return this.parse(name, `local-model/${++nextLocalModel}`, filename, contents);
+  }
+
+  private parse(
+    name: string,
+    url: string,
+    filename: string,
+    contents: ArrayBuffer,
+  ): Promise<BundledModel> {
+    if (this.disposed) return Promise.reject(new Error('Model owner was destroyed.'));
+    // The engine caches parsed containers by URL. Independently disposable
+    // owners must not share that mutable resource: replacing a comparison
+    // with an overlapping subset otherwise destroys the new model when the
+    // old owner unloads. Fetch the canonical URL once per owner; isolate only
+    // the parser's cache key, retaining the original filename for decoding.
+    const cacheUrl = `${url}${url.includes('?') ? '&' : '?'}model-owner=${this.cacheIdentity}`;
+    const asset = new pc.Asset(name, 'container', { url: cacheUrl, filename, contents });
+    const parsed = new Promise<BundledModel>((resolve, reject) => {
+      asset.once('load', () => {
+        if (this.disposed || !container(asset.resource)) {
+          asset.unload();
+          this.app.assets.remove(asset);
+          reject(new Error(name + ' owner was destroyed or its model is unavailable.'));
+        } else {
+          this.assets.push(asset);
+          resolve(asset.resource);
+        }
+      });
+      asset.once('error', () => {
+        asset.unload();
+        this.app.assets.remove(asset);
+        reject(new Error(name + ' model unavailable.'));
+      });
+    });
+    this.parsing.add(parsed);
+    this.app.assets.add(asset);
+    this.app.assets.load(asset);
+    return parsed.finally(() => this.parsing.delete(parsed));
   }
 
   destroy(): Promise<void> | undefined {

@@ -88,7 +88,7 @@ from those private archives.
   for the vibe of the game", a grounded medieval survival world. Show the pieces individually
   and assembled, with readable sample text, and generate a **wide variety** of high-quality
   styles. Whole-screen layouts and item icons are out of scope.
-- **Flow / profile / finish:** [Higgsfield](../../../docs/production-workflows/art-flows/higgsfield.md),
+- **Flow / profile / finish:** [Higgsfield](../../../docs/production-workflows/art-flows/tools.md#higgsfield),
   [UI style](../../../docs/production-workflows/art-flows/profiles.md#ui-style), study.
 - **References and their roles:**
   - Mike's 24 game-UI screenshots (local folder `Downloads/UIs`; filenames overlap the

@@ -1,4 +1,4 @@
 interface:
-  display_name: 'OpenLegend Art Flows'
-  short_description: 'Run Standard or Higgsfield art studies and production'
-  default_prompt: 'Use $openlegend-art for my art request, following the requested flow, references and finish level.'
+  display_name: 'OpenLegend Art Workflow'
+  short_description: 'Concepts, UI kits and 3D models through the shared art workflow'
+  default_prompt: 'Use $openlegend-art for my art request, following its tool defaults, fidelity and review points.'

@@ -25,7 +25,7 @@ The resulting `mercenary-motion.glb` is 148,660 bytes, with 35 nodes, four clips
 
 The actual PlayCanvas GLB parser imported all four clips with 34 bone paths matching the original rig. Its evaluator returned identical values between held keys and changing values for the smooth gesture. Both held walks exactly matched the Blender-exported smooth control's component values at their authored key times. The source walk lasts approximately 1.0833 seconds, including the export's first key at 1/24 second; the sharp gesture lasts approximately 1.0417 seconds.
 
-[The motion owner](../../apps/client/src/characters/mercenary-motion.ts) evaluates the rig once before garment updates. Automatic engine animation advancement is disabled for this actor, preventing a second evaluation or a one-frame pause mismatch. Continuous travel and heading still belong to the existing scene; clips and gesture completion write no physical position, action result or knowledge. The staged gesture is available only through the explicit developer comparison control and does not establish an ordinary attack animation.
+[The motion owner](../../apps/client/src/characters/character-motion.ts) evaluates the rig once before garment updates. Automatic engine animation advancement is disabled for this actor, preventing a second evaluation or a one-frame pause mismatch. Continuous travel and heading still belong to the existing scene; clips and gesture completion write no physical position, action result or knowledge. The staged gesture is available only through the explicit developer comparison control and does not establish an ordinary attack animation.
 
 ## Moving comparison and decision
 
