@@ -23,21 +23,15 @@ export {
   NATIVE_ITEMS,
 } from './worlds/base/world.js';
 
-/** Same saved generator arithmetic for a prospective choice whose draw is
- * committed only if its enclosing action is admitted. */
-export function randomStep(state: number): { value: number; state: number } {
-  let x = state | 0;
+export function nextRandom(world: WorldState): number {
+  countDomainWork('randomEvaluations');
+  // State, including every random draw, is part of the committed snapshot.
+  let x = world.rngState | 0;
   x ^= x << 13;
   x ^= x >>> 17;
   x ^= x << 5;
-  const next = x >>> 0;
-  return { value: next / 4294967296, state: next };
-}
-export function nextRandom(world: WorldState): number {
-  countDomainWork('randomEvaluations');
-  const next = randomStep(world.rngState);
-  world.rngState = next.state;
-  return next.value;
+  world.rngState = x >>> 0;
+  return world.rngState / 4294967296;
 }
 export function nextId(world: WorldState, prefix: string): string {
   if (

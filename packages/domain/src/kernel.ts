@@ -554,7 +554,7 @@ import {
   activeContributionId,
 } from './status-effects.js';
 import { isRecallableExperience } from './mind.js';
-import { addItem, sourceItemId, nextId, nextRandom, randomStep } from './data.js';
+import { addItem, sourceItemId, nextId, nextRandom } from './data.js';
 import {
   appendMemory,
   canonicalJson,
@@ -2984,12 +2984,13 @@ function prepareNativeOperation(
   );
 }
 
-/** Every candidate passes ordinary admission before one saved choice is drawn.
- * A failed final admission discards the tentative RNG and action together. */
+/** The ground controller supplies its one selected route. Ordinary movement
+ * admission owns installation; ground escape adds no second selection or draw.
+ * docs/projects/bookkeeping-simplification-tech-design.md#actual-route-selection-and-randomness */
 function nativeMovementTransition(
   original: WorldState,
   actorId: string,
-  routes: NativeRefugeRoute[],
+  route: NativeRefugeRoute,
   mode: 'travel' | 'escape',
   sealCompleted: boolean,
 ): Transition {
@@ -3016,61 +3017,19 @@ function nativeMovementTransition(
       ? { episodeId: episode!.id, generation: episode!.proposalGeneration }
       : {}),
   };
-  const command = (route: NativeRefugeRoute): Command => ({
+  const command: Command = {
     id: `native-move-${original.nextId}`,
     actorId,
     type: 'move',
     destination: { ...route.candidate.point },
-  });
-  // A single proposal needs only ordinary execution admission. Previewing it first
-  // duplicates preparation without making a selection.
-  const available =
-    routes.length === 1
-      ? routes
-      : routes.filter(
-          (route) =>
-            executeCommand(original, command(route), {
-              preview: true,
-              nativeController: true,
-              nativeMovement: { binding, path: route.path },
-            }).outcome.ok,
-        );
-  if (!available.length)
-    return {
-      world: original,
-      events: [],
-      outcome: outcome(
-        false,
-        'native-movement-unavailable',
-        'No proposed native movement remains available.',
-      ),
-    };
-  let selected = available[0]!,
-    draw: number | undefined,
-    selectedRng: number | undefined;
-  if (available.length > 1) {
-    countDomainWork('randomEvaluations');
-    const next = randomStep(original.rngState);
-    draw = next.value;
-    selectedRng = next.state;
-    const weights = available.map(
-      (route) => 1 / (1 + route.length / profile.candidates.distanceWeightScale),
-    );
-    let remainder = draw * weights.reduce((sum, weight) => sum + weight, 0);
-    for (let index = 0; index < available.length; index++) {
-      selected = available[index]!;
-      remainder -= weights[index]!;
-      if (remainder < 0) break;
-    }
-  }
+  };
   const movementOptions = {
     nativeController: true as const,
-    nativeMovement: { binding, path: selected.path },
+    nativeMovement: { binding, path: route.path },
   };
-  const selectedCommand = command(selected);
   const transition = withWorkMeter(WORK_LIMITS.group, () => {
-    chargeWork({ inputBytes: (JSON.stringify(selectedCommand)?.length ?? 0) * 3 });
-    return executeCommandNative(original, selectedCommand, movementOptions, false, selectedRng);
+    chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
+    return executeCommandNative(original, command, movementOptions, false);
   });
   if (!transition.outcome.ok) return { ...transition, world: original, events: [] };
   const inDraft = transition.world === original;
@@ -3083,10 +3042,9 @@ function nativeMovementTransition(
       ...(active.acousticCue
         ? { acousticDirection: cloneValue(active.acousticCue.sound.direction) }
         : {}),
-      point: { ...selected.candidate.point },
+      point: { ...route.candidate.point },
       selectedAt: world.simTime,
       generation: active.proposalGeneration,
-      ...(draw === undefined ? {} : { draw }),
     };
     active.movement = { kind: 'action', id: action.id };
     active.mode = 'escaping';
@@ -3196,7 +3154,6 @@ function executeCommandNative(
     tradeDisclosures?: import('./handover.js').TradeDisclosureContext;
   },
   standalone: boolean,
-  prospectiveRng?: number,
 ): Transition {
   const reject = (code: string, message: string): Transition => ({
     world: original,
@@ -3472,7 +3429,6 @@ function executeCommandNative(
   const world = inDraft
     ? original
     : draftWorld(original, { materializeNativeEntities: [command.actorId] });
-  if (prospectiveRng !== undefined) world.rngState = prospectiveRng;
   if (inDraft) materializeNativeEntity(world, command.actorId);
   const actor = entityGet(world.entities, command.actorId)!;
   const component = actor.actor!;
@@ -7430,16 +7386,16 @@ function* advanceWorldNative(
         participants = nativeParticipants(world);
         discardMechanics('response-flight');
       }
-      if (decision.status === 'choices' || decision.status === 'stop') {
+      if (decision.status === 'route' || decision.status === 'stop') {
         yield* materialize();
         const changesBeforeMove = captureStateChanges(world),
           manifestBeforeMove = world.moduleManifest.revision;
         const transition =
-          decision.status === 'choices'
+          decision.status === 'route'
             ? nativeMovementTransition(
                 world,
                 id,
-                decision.routes,
+                decision.route,
                 'escape',
                 Object.isFrozen(original),
               )
@@ -7959,7 +7915,7 @@ function* advanceWorldNative(
       const transition = nativeMovementTransition(
         world,
         id,
-        [route],
+        route,
         'travel',
         Object.isFrozen(original),
       );

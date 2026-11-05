@@ -465,7 +465,7 @@ export function observeNativeAttackPreparation(
 
 export type NativeResponseDecision =
   | { status: 'none' | 'pending' }
-  | { status: 'choices'; routes: NativeRefugeRoute[] }
+  | { status: 'route'; route: NativeRefugeRoute }
   | { status: 'flight-choices'; preparation: NativeFlightPreparation }
   | { status: 'stop' };
 
@@ -852,7 +852,7 @@ export function nativeResponseDecision(
           progress,
         };
       if (progress >= search.distance * rule.preferredProgress - SPATIAL_LIMITS.epsilon)
-        return { status: 'choices', routes: [route] };
+        return { status: 'route', route };
     }
     search.attempted++;
     if (
@@ -872,7 +872,7 @@ export function nativeResponseDecision(
         best.path,
         best.length,
       );
-      if (scored.status === 'complete') return { status: 'choices', routes: [scored.route] };
+      if (scored.status === 'complete') return { status: 'route', route: scored.route };
       delete search.best;
     }
     if (search.attempted >= rule.angles.length) break;

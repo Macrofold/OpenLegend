@@ -260,6 +260,7 @@ export type CurrentFacetProof = Pick<
 const contentOrigins = new WeakMap<CurrentContactContent, object>();
 // Metadata-only builders own outer paths, while received fields remain shared.
 // A later semantic write must still go through mutableContact/mutableGroup.
+// docs/projects/bookkeeping-simplification-tech-design.md#a2--one-receiving-lifetime-and-one-accepted-prefix-finalization
 const mutableMetadataContents = new WeakSet<CurrentContactContent>();
 const mutableMetadataGroups = new WeakSet<CurrentReceivedGroup>();
 function contentIdentity(content: CurrentContactContent): object {
