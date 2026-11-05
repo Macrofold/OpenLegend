@@ -1,9 +1,9 @@
-import { S3AssetStorage } from './asset-storage.js';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { ASSET_TABLES } from './asset-repository.js';
 import type { AssetConfiguration } from './asset-configuration.js';
 import { PostgresDatabase } from './postgres.js';
+import { signAssetAuthorityToken } from './asset-storage.js';
 import type { SqlDatabase } from './store.js';
 
 /** One shared asset authority records publication and permission for every machine.
@@ -26,13 +26,13 @@ export async function assetAuthorityUrl(configuration: AssetConfiguration): Prom
   if (!authority)
     throw new Error('assets/config.json names no shared asset authority (the "authority" entry).');
   // Short-lived IAM token from the person's own sign-in; no stored database password.
-  const storage = new S3AssetStorage(configuration);
-  let token: string;
-  try {
-    token = await storage.databaseAuthToken(authority);
-  } finally {
-    storage.close();
-  }
+  const token = await signAssetAuthorityToken({
+    profile: configuration.profile,
+    region: configuration.region,
+    host: authority.host,
+    port: authority.port,
+    user: authority.user,
+  });
   const bundle = authority.certificateBundle.replace(/^~(?=\/)/, homedir());
   const url = new URL(`postgresql://${authority.host}`);
   url.port = String(authority.port);
