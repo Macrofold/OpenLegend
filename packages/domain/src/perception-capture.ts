@@ -10,6 +10,7 @@ import {
   currentFacetSupport,
   currentFacetTimes,
   currentContactEntries,
+  currentContactGet,
   type CurrentReadOwner,
   type CurrentReceivedGroup,
   type CurrentFacetRecord,
@@ -20,6 +21,7 @@ import {
   currentLeaseEligible,
   receivedFacetValueFromSources,
   currentBodyGrant,
+  prepareCurrentBodyReadScope,
   type ObserverLife,
   type PerceptionEvidenceOwner,
   type CurrentMotionSample,
@@ -60,6 +62,7 @@ export function captureCurrentSources(
   world: WorldState,
   actorId: string,
   selection?: { sourceIds?: ReadonlySet<string>; kinds?: ReadonlySet<string> },
+  reads = prepareCurrentBodyReadScope(world, actorId),
 ): CapturedCurrentSources {
   const actor = entityGet(world.entities, actorId);
   if (!actor?.actor) throw new Error('A current source cut requires an observer.');
@@ -84,8 +87,13 @@ export function captureCurrentSources(
     if (subject) subjects.set(JSON.stringify(subject), subject);
   };
   if (state?.life === observer.physicalLife) {
-    for (const [id, contact] of currentContactEntries(state)) {
-      if (selection?.sourceIds && !selection.sourceIds.has(id)) continue;
+    const selectedContacts = selection?.sourceIds
+      ? [...selection.sourceIds].flatMap((id) => {
+          const contact = currentContactGet(state, id);
+          return contact ? [[id, contact] as const] : [];
+        })
+      : currentContactEntries(state);
+    for (const [id, contact] of selectedContacts) {
       const groups: CurrentReceivedGroup[] = [];
       for (const raw of contact.content.groups) {
         const group = readOnlyDraftView(raw),
@@ -97,7 +105,13 @@ export function captureCurrentSources(
           contact.content.originals[group.received.grant.original]!,
           representative,
         );
-        if (!first || !currentLeaseEligible(world, actorId, first, { allowUnchecked: true }))
+        if (
+          !first ||
+          !currentLeaseEligible(world, actorId, first, {
+            allowUnchecked: true,
+            bodyReadScope: reads,
+          })
+        )
           continue;
         const association =
           group.received.fields['association'] &&
@@ -108,7 +122,10 @@ export function captureCurrentSources(
           );
         const dropAssociation =
           association &&
-          !currentLeaseEligible(world, actorId, association, { allowUnchecked: true });
+          !currentLeaseEligible(world, actorId, association, {
+            allowUnchecked: true,
+            bodyReadScope: reads,
+          });
         const fields =
           dropAssociation || selection?.kinds
             ? Object.fromEntries(
@@ -177,7 +194,11 @@ export function captureCurrentSources(
   }
   const motions: CapturedCurrentSources['motions'] = {};
   for (const [id, motion] of Object.entries(state?.motionSamples ?? {})) {
-    if (world.simTime >= motion.expiresAt || !sources[id] || !currentBodyGrant(world, actorId, id))
+    if (
+      world.simTime >= motion.expiresAt ||
+      !sources[id] ||
+      !currentBodyGrant(world, actorId, id, reads)
+    )
       continue;
     const location = state && currentFacetGet(state, `${id}:location`, { modality: 'sight' });
     if (!location) continue;

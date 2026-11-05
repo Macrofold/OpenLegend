@@ -40,7 +40,6 @@ export type NativeDeadlineReason =
   | 'lifetime'
   | 'animal-pattern'
   | 'threat'
-  | 'foraging-review'
   | 'foraging-work'
   | 'response-review'
   | 'danger-expiry'
@@ -136,7 +135,6 @@ export function nativeInterval(
         at(threat.searchUntil, 'threat');
     }
     if (animal?.foraging && !animal.episode) {
-      at(animal.foraging.reviewAt, 'foraging-review');
       if (animal.foraging.work) at(animal.foraging.work.endsAt, 'foraging-work');
     }
     if (animal?.episode) {

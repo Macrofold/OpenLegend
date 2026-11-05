@@ -6,6 +6,7 @@ import {
   characterCount,
   currentBodyValue,
   currentBodyGrant,
+  prepareCurrentBodyReadScope,
   currentBodySubject,
   canAddressRememberedSubject,
   recognizesSubject,
@@ -254,7 +255,8 @@ export function responseReferences(
   learnedSubjects: ObserverSubject[] = [],
   frame = captureModelSpatialFrame(world, actorId),
 ) {
-  visibleIds = visibleIds.filter((id) => !!currentBodyGrant(world, actorId, id));
+  const reads = prepareCurrentBodyReadScope(world, actorId);
+  visibleIds = visibleIds.filter((id) => !!currentBodyGrant(world, actorId, id, reads));
   const evidence = new Set(evidenceIds);
   const awareness = (retainedEvidence ?? world.experience?.awareness[actorId] ?? []).filter(
     (entry) => evidence.has(entry.eventId),
@@ -303,9 +305,9 @@ export function responseReferences(
   const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
   const references = ids.map((id) => {
     const entity = entityGet(world.entities, id)!;
-    const received = visible.has(id) ? currentBodyValue(world, actorId, id) : undefined;
+    const received = visible.has(id) ? currentBodyValue(world, actorId, id, reads) : undefined;
     const currentSubject = received
-      ? (currentBodySubject(world, actorId, id) ??
+      ? (currentBodySubject(world, actorId, id, reads) ??
         (!entity.actor ? { kind: 'entity' as const, entityId: id } : undefined))
       : undefined;
     if (currentSubject) identityReferences[roleHandle(id)] = currentSubject;
@@ -416,7 +418,8 @@ export function responseReferences(
       ...possessions,
       ...piled,
       ...inspected.filter(
-        (id) => accessiblePossession(world, actorId, id) || !!currentBodyGrant(world, actorId, id),
+        (id) =>
+          accessiblePossession(world, actorId, id) || !!currentBodyGrant(world, actorId, id, reads),
       ),
     ]),
   ];
@@ -431,7 +434,7 @@ export function responseReferences(
     physicalEntityReferences: entityReferenceMap(world, physicalIds, actorId),
     entityLeases: Object.fromEntries(
       visibleIds.flatMap((id) => {
-        const received = currentBodyGrant(world, actorId, id);
+        const received = currentBodyGrant(world, actorId, id, reads);
         return received ? [[id, received.leaseId]] : [];
       }),
     ),

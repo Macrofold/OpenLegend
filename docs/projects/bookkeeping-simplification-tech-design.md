@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK24 is installed; BK25 design is complete, with implementation and lifecycle/operating acceptance open. | 2026-11-05   |
+| Status      | Current progress                                                                                  | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK25 source conversion is installed; semantic review and isolated AWS acceptance are in progress. | 2026-11-05   |
 
 **Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. Architecture used and implementation reconciled 2026-10-31 10:59 UTC on `codex/bookkeeping-runtime-01`, based on `39aa9775a5cf48e4318227410d0ab5625f92db9d`. [BK](../maintainers/production-data.md#bookkeeping-simplification) owns remaining qualification; concurrent unrelated work is outside this project. The [integration contract](attention-and-scenes-runtime-design.md#14-integration-contract-for-the-completed-bk-ru-and-vw-branches) coordinates BK with RU consumers and VW tooling without duplicating this implementation.
 
@@ -575,7 +575,7 @@ Measure records/bytes/allocations and completed physical work as well as time. A
 
 ## 16. Proposed native execution and current-read reduction
 
-**Design complete, not implemented. November 5, 2026, 17:39 UTC.** Architecture inspected at Macrofold/OpenLegend `538a1c8e007f8d2607d77bd8b1f84278bdea0a2c`, branch `codex/stealth-runtime-01-evidence`; executable contents remain identical to `bd7da905984e500c6434bc39aab814a042e69e1b`. [Feature behavior](bookkeeping-simplification-feature-spec.md#13-proposed-native-execution-and-current-read-reduction), [BK25](../maintainers/production-data.md#bk25--native-execution-and-current-read-reduction-proposed) and [BKS-L11](../limits/persistence.md#bks-l11--sparse-history-and-bounded-capture-proposal) own experience, delivery and limits. The [completed investigation](../verification/performance/bookkeeping/2026/2026-11-05-deep-runtime-ablation.md) owns measurements, exact cuts and failures. This section specifies implementation; it grants no implementation authority.
+**Source conversion installed; experimental acceptance in progress. November 5, 2026, 18:24 UTC.** Architecture used for implementation at Macrofold/OpenLegend `a89645dbcdee773b7d0606928346a8fc216ff142`, branch `codex/stealth-runtime-01-evidence`. The measured pre-implementation runtime is `bd7da905984e500c6434bc39aab814a042e69e1b`. [Feature behavior](bookkeeping-simplification-feature-spec.md#13-proposed-native-execution-and-current-read-reduction), [BK25](../maintainers/production-data.md#bk25--native-execution-and-current-read-reduction-proposed) and [BKS-L11](../limits/persistence.md#bks-l11--sparse-history-and-bounded-capture-proposal) own experience, delivery and limits. The [completed investigation](../verification/performance/bookkeeping/2026/2026-11-05-deep-runtime-ablation.md) owns measurements, exact cuts and failures. Stage 0 and A1–A4 are installed for qualification; conditional B remains unselected. Final adoption requires the isolated checks below.
 
 ### Diagnosis and selected sequence
 

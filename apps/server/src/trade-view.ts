@@ -2,6 +2,7 @@ import {
   BASE_HANDOVER,
   canHandleItems,
   currentBodySubject,
+  prepareCurrentBodyReadScope,
   entityGet,
   inventoryFor,
   nativeCommandSupported,
@@ -25,13 +26,18 @@ import type { WorldService } from './world-service.js';
 
 /** A private physical route cannot reconnect two unknown bodies. Draft continuity
  * follows the observer's acquired individual, or this exact current contact. */
-const tradeDraftScope = (world: WorldState, scope: RequestScope, person: Entity) =>
+const tradeDraftScope = (
+  world: WorldState,
+  scope: RequestScope,
+  person: Entity,
+  reads = prepareCurrentBodyReadScope(world, scope.actorId),
+) =>
   permittedSourceHandle(world, scope.actorId, [
     'trade-draft',
     privateDraftScopeKey(scope),
     scope.timelineId,
-    currentBodySubject(world, scope.actorId, person.id) ??
-      currentContactReference(world, scope, person),
+    currentBodySubject(world, scope.actorId, person.id, reads) ??
+      currentContactReference(world, scope, person, reads),
     person.actor?.physicalLife ?? 0,
   ]);
 
@@ -43,6 +49,7 @@ export function tradeSummary(
   person: Entity,
   readerRevision: string,
   disclosureRevision: string,
+  reads = prepareCurrentBodyReadScope(world, scope.actorId),
 ): ItemTradeSummary | undefined {
   const actor = entityGet(world.entities, scope.actorId)!;
   if (!person.actor?.alive || !canHandleItems(world, person)) return;
@@ -54,21 +61,26 @@ export function tradeSummary(
   const offers = known
     .filter((offer) => offer.status === 'pending' && offer.expiresAt > world.simTime)
     .map(({ id, revision }) => ({ id, revision }));
-  return projectCommandContactReferences(world, scope, {
-    scope: tradeDraftScope(world, scope, person),
-    personId: person.id,
-    personName: observerName(world, actor.id, person.id).name,
-    labels: { title: BASE_HANDOVER.text.title },
-    offers,
-    revision: permittedSourceHandle(world, actor.id, [
-      'trade-reader',
-      person.id,
-      known.map(({ id, revision, status }) => [id, revision, status]),
+  return projectCommandContactReferences(
+    world,
+    scope,
+    {
+      scope: tradeDraftScope(world, scope, person, reads),
+      personId: person.id,
+      personName: observerName(world, actor.id, person.id, reads).name,
+      labels: { title: BASE_HANDOVER.text.title },
       offers,
-      readerRevision,
-      disclosureRevision,
-    ]),
-  });
+      revision: permittedSourceHandle(world, actor.id, [
+        'trade-reader',
+        person.id,
+        known.map(({ id, revision, status }) => [id, revision, status]),
+        offers,
+        readerRevision,
+        disclosureRevision,
+      ]),
+    },
+    reads,
+  );
 }
 
 /** Read-only detail: one selected current contact, through the same native

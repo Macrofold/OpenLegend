@@ -9,6 +9,7 @@ import {
   canAccessContainer,
   objectAncestors,
   currentBodyGrant,
+  prepareCurrentBodyReadScope,
   currentBodyValue,
   currentBodySubject,
   type ObserverSubject,
@@ -46,8 +47,9 @@ export const currentContactReference = (
   world: WorldState,
   scope: RequestScope,
   entity: Entity,
+  reads = prepareCurrentBodyReadScope(world, scope.actorId),
 ): string => {
-  const observed = currentBodyGrant(world, scope.actorId, entity.id);
+  const observed = currentBodyGrant(world, scope.actorId, entity.id, reads);
   if (!observed) throw new ContactReferenceError();
   return `contact-${entityBodyReference(`${scopeKey(scope)}:${observed.leaseId}`, entity)}`;
 };
@@ -94,8 +96,9 @@ function assemblyPartReference(
   scope: RequestScope,
   rootId: string,
   itemId: string,
+  reads = prepareCurrentBodyReadScope(world, scope.actorId),
 ): string {
-  const lease = currentBodyGrant(world, scope.actorId, rootId);
+  const lease = currentBodyGrant(world, scope.actorId, rootId, reads);
   if (!lease) throw new ContactReferenceError();
   return `part-${createHmac('sha256', communicationKey)
     .update(JSON.stringify([scopeKey(scope), lease.leaseId, 'assembly-part', rootId, itemId]))
@@ -235,21 +238,30 @@ export function projectConstructionPreview<T extends { shapes: ConstructionShape
 }
 
 /** Existing owned/inspected contents are explicit physical roles, not guessed bodies. */
-function permittedContent(world: WorldState, actorId: string, id: string): boolean {
+function permittedContent(
+  world: WorldState,
+  actorId: string,
+  id: string,
+  reads = prepareCurrentBodyReadScope(world, actorId),
+): boolean {
   if (id === actorId || accessiblePossession(world, actorId, id)) return true;
   const inspection = currentInventoryInspection(world, actorId);
   if (inspection?.containerId === id || inspection?.itemIds.includes(id)) return true;
   const target = entityGet(world.entities, id);
   if (target?.container?.access?.actors.includes(actorId)) {
     const root = objectAncestors(world, id).at(-1);
-    if (root && currentBodyGrant(world, actorId, root.id) && canAccessContainer(world, actorId, id))
+    if (
+      root &&
+      currentBodyGrant(world, actorId, root.id, reads) &&
+      canAccessContainer(world, actorId, id)
+    )
       return true;
   }
   if (!target?.item) return false;
   const root = objectAncestors(world, id).at(-1);
   return (
     !!root &&
-    currentObservedFacetValues(world, actorId, root.id, ['pile-contents']).some(
+    currentObservedFacetValues(world, actorId, root.id, ['pile-contents'], reads).some(
       (facet) =>
         facet.value.kind === 'pile-contents' && facet.value.items.some((item) => item.id === id),
     )
@@ -261,12 +273,14 @@ export const hasPhysicalContactReference = (
   world: WorldState,
   actorId: string,
   id: string,
+  reads = prepareCurrentBodyReadScope(world, actorId),
 ): boolean => {
-  if (currentBodyGrant(world, actorId, id) || permittedContent(world, actorId, id)) return true;
+  if (currentBodyGrant(world, actorId, id, reads) || permittedContent(world, actorId, id, reads))
+    return true;
   const root = objectAncestors(world, id).at(-1);
   return (
     !!root &&
-    !!currentBodyValue(world, actorId, root.id)?.value.body.assembly?.parts.some(
+    !!currentBodyValue(world, actorId, root.id, reads)?.value.body.assembly?.parts.some(
       (part) => part.id === id,
     )
   );
@@ -277,44 +291,46 @@ export function physicalContactReference(
   world: WorldState,
   scope: RequestScope,
   id: string,
+  reads = prepareCurrentBodyReadScope(world, scope.actorId),
 ): string {
   const entity = entityGet(world.entities, id);
-  if (entity && currentBodyGrant(world, scope.actorId, id))
-    return currentContactReference(world, scope, entity);
-  if (permittedContent(world, scope.actorId, id)) return id;
+  if (entity && currentBodyGrant(world, scope.actorId, id, reads))
+    return currentContactReference(world, scope, entity, reads);
+  if (permittedContent(world, scope.actorId, id, reads)) return id;
   const root = entity && objectAncestors(world, id).at(-1);
-  const body = root && currentBodyValue(world, scope.actorId, root.id)?.value.body;
+  const body = root && currentBodyValue(world, scope.actorId, root.id, reads)?.value.body;
   if (root && body?.assembly?.parts.some((part) => part.id === id))
-    return assemblyPartReference(world, scope, root.id, id);
+    return assemblyPartReference(world, scope, root.id, id, reads);
   throw new ContactReferenceError();
 }
 
 /** Select only this observer's active bodies or learned associations, never all world IDs.
  * Resolving an opaque reference grants its exact role; native admission still checks use. */
 function contactTargetResolver(world: WorldState, scope: RequestScope, communication = false) {
+  const reads = prepareCurrentBodyReadScope(world, scope.actorId);
   let bodies: Map<string, string> | undefined,
     parts: Map<string, string> | undefined,
     people: Map<string, string> | undefined;
   return (reference: string): string => {
-    if (permittedContent(world, scope.actorId, reference)) return reference;
+    if (permittedContent(world, scope.actorId, reference, reads)) return reference;
     let selected: Map<string, string> | undefined;
     if (reference.startsWith('contact-')) {
       if (!bodies) {
         bodies = new Map();
-        for (const id of currentObservedBodyIds(world, scope.actorId)) {
+        for (const id of currentObservedBodyIds(world, scope.actorId, reads)) {
           const entity = entityGet(world.entities, id);
-          if (entity) bodies.set(currentContactReference(world, scope, entity), entity.id);
+          if (entity) bodies.set(currentContactReference(world, scope, entity, reads), entity.id);
         }
       }
       selected = bodies;
     } else if (reference.startsWith('part-')) {
       if (!parts) {
         parts = new Map();
-        for (const subjectId of currentObservedBodyIds(world, scope.actorId)) {
-          const value = currentBodyValue(world, scope.actorId, subjectId)?.value;
+        for (const subjectId of currentObservedBodyIds(world, scope.actorId, reads)) {
+          const value = currentBodyValue(world, scope.actorId, subjectId, reads)?.value;
           if (value?.kind !== 'body') continue;
           for (const part of value.body.assembly?.parts ?? [])
-            parts.set(assemblyPartReference(world, scope, subjectId, part.id), part.id);
+            parts.set(assemblyPartReference(world, scope, subjectId, part.id, reads), part.id);
         }
       }
       selected = parts;
@@ -538,6 +554,7 @@ export function projectCommandContactReferences<T>(
   world: WorldState,
   scope: RequestScope,
   input: T,
+  reads = prepareCurrentBodyReadScope(world, scope.actorId),
 ): T {
   const references = new Map<string, string>();
   return mapContactReferences(
@@ -546,7 +563,7 @@ export function projectCommandContactReferences<T>(
     (id) => {
       let reference = references.get(id);
       if (reference === undefined) {
-        reference = physicalContactReference(world, scope, id);
+        reference = physicalContactReference(world, scope, id, reads);
         references.set(id, reference);
       }
       return reference;

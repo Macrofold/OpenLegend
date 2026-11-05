@@ -22,6 +22,8 @@ import { assemblyPhaseLabel } from '@open-legend/domain';
 import { selectedCreationProfileForWorld, definitionPin } from '@open-legend/domain';
 import {
   currentBodyGrant,
+  prepareCurrentBodyReadScope,
+  countDomainWork,
   currentObservedBodyIds,
   activelyParticipates,
   currentObservedFacetValues,
@@ -252,7 +254,7 @@ export const calendarFields = (world: WorldState) => {
   };
 };
 
-const publicDetailKinds = ['body', 'pile-contents', 'carried', 'public-attributes'] as const;
+const publicDetailKinds = ['pile-contents', 'carried', 'public-attributes'] as const;
 
 /** This explicit projection is a security boundary: never serialize WorldState to the browser. */
 export async function projectView(
@@ -360,10 +362,13 @@ export async function projectView(
   const observerParticipating = activelyParticipates(player);
   // Capture only body roles this view exposes. Exact grant continuity permits
   // ordinary movement while an async reader waits, but never a lost/replaced body.
-  const bodyGrants = observation.visibleEntities.map((entity) => ({
-    id: entity.id,
-    grant: currentBodyGrant(world, scope.actorId, entity.id)!,
-  }));
+  const bodyGrants = (() => {
+    const reads = prepareCurrentBodyReadScope(world, scope.actorId);
+    return observation.visibleEntities.map((entity) => ({
+      id: entity.id,
+      grant: currentBodyGrant(world, scope.actorId, entity.id, reads)!,
+    }));
+  })();
   const generation = service.generation;
   const historyEpoch = service.historyEpoch;
   const practice = await memo<Promise<PracticeView[]>>(
@@ -638,216 +643,282 @@ export async function projectView(
         tradeDefinitions,
       ]),
   );
-  const entities: EntityView[] = observation.visibleEntities
-    .filter((entity) => entity.id !== scope.actorId)
-    .map((entity) => {
-      let values = cache.entities.get(entity.id);
-      if (!values) cache.entities.set(entity.id, (values = new Map()));
-      const entityMemo = memoizer({ values });
-      const facets = currentObservedFacetValues(world, player.id, entity.id, publicDetailKinds);
-      const received = facets.find((facet) => facet.value.kind === 'body');
-      if (received?.value.kind !== 'body') throw new ViewChangedError();
-      const body = received.value.body;
-      const detailMeasured =
-        received.descriptionSupport?.descriptionMeasuredThrough ?? received.valueMeasuredThrough;
-      const detailAcquired =
-        received.descriptionSupport?.descriptionAcquiredAt ?? received.valueAcquiredAt;
-      const detailConfirmed =
-        received.descriptionSupport?.confirmedThrough ?? received.confirmedThrough;
-      const detailSource = received.descriptionSupport?.confirmation ?? received.source;
-      const pile = facets.find((facet) => facet.value.kind === 'pile-contents');
-      const carried = facets.find((facet) => facet.value.kind === 'carried');
-      const publicAttributes = facets.find((facet) => facet.value.kind === 'public-attributes');
-      const health =
-        publicAttributes?.value.kind === 'public-attributes'
-          ? publicAttributes.value.attributes.find((attribute) => attribute.bodyHealth)?.value
+  const entities: EntityView[] = (() => {
+    const bodyReads = prepareCurrentBodyReadScope(world, player.id);
+    return observation.visibleEntities
+      .filter((entity) => entity.id !== scope.actorId)
+      .map((entity) => {
+        let values = cache.entities.get(entity.id);
+        if (!values) cache.entities.set(entity.id, (values = new Map()));
+        const entityMemo = memoizer({ values });
+        const parts = bodyReads?.bodyParts(entity.id);
+        if (!parts) throw new ViewChangedError();
+        const individualSubject = currentBodySubject(world, player.id, entity.id, bodyReads);
+        const identity = individualSubject
+          ? observerIndividual(world, player.id, individualSubject)
           : undefined;
-      const individualSubject = currentBodySubject(world, player.id, entity.id);
-      const identity = individualSubject
-        ? observerIndividual(world, player.id, individualSubject)
-        : undefined;
-      const display = entityMemo(
-        'name',
-        [identity, body.label?.name, body.label?.nameForm, body.label?.indefiniteArticle],
-        () => observerName(world, player.id, entity.id),
-      );
-      const kind: EntityView['kind'] =
-        body.kind === 'animal'
-          ? 'animal'
-          : body.kind === 'npc' || body.kind === 'player'
-            ? 'actor'
-            : body.kind === 'remains'
-              ? 'remains'
-              : body.kind === 'item-pile'
-                ? 'item-pile'
-                : body.kind === 'resource'
-                  ? 'resource'
-                  : body.kind === 'practice-target'
-                    ? 'practice-target'
-                    : 'station';
-      const rememberedAddressee = currentCommunicationSubject(world, player.id, entity.id);
-      const grant = currentBodyGrant(world, player.id, entity.id)!;
-      const binding = perceivedEncounterPreferenceBinding(world, player, entity);
-      const tradeDisclosures = entity.actor
-        ? rememberedTradeDisclosureIndex(world, player.id, entity.id)
-        : undefined;
-
-      return {
-        id: entityMemo('contact', [grant.leaseId, grant.physicalLife], () =>
-          currentContactReference(world, scope, entity),
-        ),
-        bodyReference: entityMemo('body', [entity.actor?.physicalLife ?? 0], () =>
-          entityBodyReference(scopeKey(scope), entity),
-        ),
-        contextActionRevision: entityMemo(
-          'contextActions',
+        countDomainWork('viewNameReads');
+        const display = entityMemo(
+          'name',
           [
-            world.moduleManifest.revision,
-            actor.physicalLife,
-            entity.actor?.physicalLife,
-            JSON.stringify(binding),
-            coaching,
-            (actor.combatReadyAt ?? 0) > world.simTime,
-            actor.action?.ranged?.ready,
+            identity,
+            parts.details.label?.name,
+            parts.details.label?.nameForm,
+            parts.details.label?.indefiniteArticle,
           ],
-          () => contextActionRevision(scopeKey(scope), world, player, entity, binding),
-        ),
-        ...(body.assembly
-          ? {
-              assembly: projectObservedAssembly(world, scope, entity.id, body.assembly),
-              actionRevision: permittedSourceHandle(world, player.id, [
-                'assembly-actions',
-                received.id,
-                body.assembly.revision,
-                body.assembly.implementation === 'grounded-panel-boundary'
-                  ? body.assembly.materialRevision
-                  : null,
-              ]),
-            }
-          : {}),
-        ...(attentionKeys.has(entity.id)
-          ? { attentionPreference: attentionPreferences.has(attentionKeys.get(entity.id)!) }
-          : {}),
-        ...display,
-        ...(identity && !identity.seedOnly
-          ? {
-              identity: entityMemo(
-                'identity',
-                [identity.givenName, identity.nickname, identity.revision],
-                () => ({
-                  ...(identity.givenName ? { knownName: identity.givenName } : {}),
-                  ...(identity.nickname ? { nickname: identity.nickname } : {}),
-                  revision: identity.revision,
-                }),
-              ),
-            }
-          : {}),
-        observation: entityMemo(
-          'observation',
+          () => {
+            countDomainWork('viewNamePreparations');
+            return observerName(world, player.id, entity.id, bodyReads);
+          },
+        );
+        const description = bodyReads?.received(entity.id, 'description');
+        const descriptionInput = bodyReads?.observed(entity.id, 'description');
+        countDomainWork('viewAppearanceReads');
+        const appearance = entityMemo(
+          'appearance',
           [
-            detailMeasured,
-            detailAcquired,
-            detailConfirmed,
-            sightConfirmedThrough,
-            detailSource.family,
-            detailSource.id,
-            detailSource.revision,
-            detailSource.observer.actorId,
-            detailSource.observer.physicalLife,
+            parts.details,
+            description,
+            world.presentation?.portraits,
+            !!entity.actor,
+            descriptionInput?.metadata.availability,
+            descriptionInput?.originalSource.facets[descriptionInput.field.originalOrdinal]?.role,
           ],
-          () => ({
-            kind: 'current',
-            modality: 'sight',
-            measurementAt: detailTime(detailMeasured),
-            acquiredAt: detailTime(detailAcquired),
-            confirmedThrough: detailTime(detailConfirmed),
-            sourceReference: evidenceSourceHandle(world, player.id, detailSource),
-          }),
-        ),
-        kind,
-        subtype: body.subtype ?? body.kind,
-        ...(body.icon ? { icon: body.icon } : {}),
-        ...(body.kind === 'resource' && body.subtype
-          ? { art: itemIllustration(world, body.subtype) }
-          : {}),
-        ...(body.bodyPlan ? { bodyPlan: body.bodyPlan } : {}),
-        statusEffects: body.effects ?? [],
-        observedMoving: hasCurrentObservedFacet(world, player.id, entity.id, 'observed-motion'),
-        position: body.position,
-        supportSurfaceId: body.supportSurfaceId,
-        heading: body.heading,
-        appearance: body.appearance,
-        ...(entity.actor ? { portrait: portraitArt(world, body.appearance) } : {}),
-        radius: body.radius,
-        bodySize: entityMemo('bodySize', [body.radius, body.height], () => ({
-          width: body.radius * 2,
-          height: body.height,
-        })),
-        actionAnimation: body.animation
-          ? {
-              ...body.animation,
-              id: permittedSourceHandle(world, player.id, [
-                'outward-action',
-                received.id,
-                body.animation.id,
-              ]),
-            }
-          : null,
-        status: body.outward.filter(Boolean).join(', '),
-        ...(body.description ? { description: body.description } : {}),
-        ...(publicAttributes?.value.kind === 'public-attributes'
-          ? {
-              attributes: publicAttributes.value.attributes,
-              ...(typeof health === 'number' ? { health } : {}),
-            }
-          : {}),
-        ...(body.quantity !== undefined ? { quantity: body.quantity } : {}),
-        ...(body.heatLit !== undefined ? { heat: { lit: body.heatLit } } : {}),
-        ...(body.remainsPhase === 'fresh' || body.remainsPhase === 'rotting'
-          ? { bodyState: body.remainsPhase === 'fresh' ? ('dead' as const) : ('rotting' as const) }
-          : {}),
-        ...(pile?.value.kind === 'pile-contents' ? { contents: pile.value.items } : {}),
-        storage: inventoryStorageHint(service, scope, entity.id, body),
-        ...(carried?.value.kind === 'carried'
-          ? {
-              observedCarried: {
-                items: carried.value.items,
-                measurementAt: detailTime(carried.valueMeasuredThrough),
-                confirmedThrough: detailTime(carried.confirmedThrough),
+          () => {
+            countDomainWork('viewAppearancePreparations');
+            const detail = parts.details;
+            const kind: EntityView['kind'] =
+              detail.kind === 'animal'
+                ? 'animal'
+                : detail.kind === 'npc' || detail.kind === 'player'
+                  ? 'actor'
+                  : detail.kind === 'remains'
+                    ? 'remains'
+                    : detail.kind === 'item-pile'
+                      ? 'item-pile'
+                      : detail.kind === 'resource'
+                        ? 'resource'
+                        : detail.kind === 'practice-target'
+                          ? 'practice-target'
+                          : 'station';
+            return {
+              kind,
+              detail: {
+                ...detail,
+                ...(description?.kind === 'description' &&
+                (descriptionInput?.originalSource.facets[descriptionInput.field.originalOrdinal]
+                  ?.role ?? 'direct') === 'direct'
+                  ? { description: description.text }
+                  : {}),
               },
-            }
-          : {}),
-        ...(entity.actor
-          ? {
-              canTalk: body.outward[0] === 'alive' && playerCanSpeak,
-              talkRequiresAi: entity.actor.controller === 'npc',
-              ...(!playerCanSpeak
-                ? { talkUnavailableReason: 'Your character cannot speak now.' }
-                : {}),
-              ...(rememberedAddressee
-                ? {
-                    communicationReference: communicationReference(scope, {
-                      id: rememberedAddressee,
-                    }),
-                  }
-                : {}),
-              trade: tradeSummary(
-                world,
-                scope,
-                entity,
-                tradeReaderRevision,
-                entityMemo('tradeDisclosures', [tradeDisclosures], () =>
-                  permittedSourceHandle(world, player.id, [
-                    'trade-disclosures',
-                    entity.id,
-                    [...tradeDisclosures!],
-                  ]),
+              status: detail.outward.filter(Boolean).join(', '),
+              ...(entity.actor ? { portrait: portraitArt(world, detail.appearance) } : {}),
+            };
+          },
+        );
+        const facets = currentObservedFacetValues(
+          world,
+          player.id,
+          entity.id,
+          publicDetailKinds,
+          bodyReads,
+        );
+        const received = bodyReads?.envelope(entity.id, 'body');
+        if (!received) throw new ViewChangedError();
+        const body = { ...appearance.detail, ...parts.pose };
+        const detailMeasured =
+          received.descriptionSupport?.descriptionMeasuredThrough ?? received.valueMeasuredThrough;
+        const detailAcquired =
+          received.descriptionSupport?.descriptionAcquiredAt ?? received.valueAcquiredAt;
+        const detailConfirmed =
+          received.descriptionSupport?.confirmedThrough ?? received.confirmedThrough;
+        const detailSource = received.descriptionSupport?.confirmation ?? received.source;
+        const pile = facets.find((facet) => facet.value.kind === 'pile-contents');
+        const carried = facets.find((facet) => facet.value.kind === 'carried');
+        const publicAttributes = facets.find((facet) => facet.value.kind === 'public-attributes');
+        const health =
+          publicAttributes?.value.kind === 'public-attributes'
+            ? publicAttributes.value.attributes.find((attribute) => attribute.bodyHealth)?.value
+            : undefined;
+        const kind = appearance.kind;
+        const rememberedAddressee = currentCommunicationSubject(
+          world,
+          player.id,
+          entity.id,
+          bodyReads,
+        );
+        const grant = currentBodyGrant(world, player.id, entity.id, bodyReads)!;
+        const binding = perceivedEncounterPreferenceBinding(world, player, entity);
+        const tradeDisclosures = entity.actor
+          ? rememberedTradeDisclosureIndex(world, player.id, entity.id)
+          : undefined;
+
+        return {
+          id: entityMemo('contact', [grant.leaseId, grant.physicalLife], () =>
+            currentContactReference(world, scope, entity, bodyReads),
+          ),
+          bodyReference: entityMemo('body', [entity.actor?.physicalLife ?? 0], () =>
+            entityBodyReference(scopeKey(scope), entity),
+          ),
+          contextActionRevision: entityMemo(
+            'contextActions',
+            [
+              world.moduleManifest.revision,
+              actor.physicalLife,
+              entity.actor?.physicalLife,
+              JSON.stringify(binding),
+              coaching,
+              (actor.combatReadyAt ?? 0) > world.simTime,
+              actor.action?.ranged?.ready,
+            ],
+            () => contextActionRevision(scopeKey(scope), world, player, entity, binding),
+          ),
+          ...(body.assembly
+            ? {
+                assembly: projectObservedAssembly(world, scope, entity.id, body.assembly),
+                actionRevision: permittedSourceHandle(world, player.id, [
+                  'assembly-actions',
+                  received.id,
+                  body.assembly.revision,
+                  body.assembly.implementation === 'grounded-panel-boundary'
+                    ? body.assembly.materialRevision
+                    : null,
+                ]),
+              }
+            : {}),
+          ...(attentionKeys.has(entity.id)
+            ? { attentionPreference: attentionPreferences.has(attentionKeys.get(entity.id)!) }
+            : {}),
+          ...display,
+          ...(identity && !identity.seedOnly
+            ? {
+                identity: entityMemo(
+                  'identity',
+                  [identity.givenName, identity.nickname, identity.revision],
+                  () => ({
+                    ...(identity.givenName ? { knownName: identity.givenName } : {}),
+                    ...(identity.nickname ? { nickname: identity.nickname } : {}),
+                    revision: identity.revision,
+                  }),
                 ),
-              ),
-            }
-          : {}),
-      };
-    });
+              }
+            : {}),
+          observation: entityMemo(
+            'observation',
+            [
+              detailMeasured,
+              detailAcquired,
+              detailConfirmed,
+              sightConfirmedThrough,
+              detailSource.family,
+              detailSource.id,
+              detailSource.revision,
+              detailSource.observer.actorId,
+              detailSource.observer.physicalLife,
+            ],
+            () => ({
+              kind: 'current',
+              modality: 'sight',
+              measurementAt: detailTime(detailMeasured),
+              acquiredAt: detailTime(detailAcquired),
+              confirmedThrough: detailTime(detailConfirmed),
+              sourceReference: evidenceSourceHandle(world, player.id, detailSource),
+            }),
+          ),
+          kind,
+          subtype: body.subtype ?? body.kind,
+          ...(body.icon ? { icon: body.icon } : {}),
+          ...(body.kind === 'resource' && body.subtype
+            ? { art: itemIllustration(world, body.subtype) }
+            : {}),
+          ...(body.bodyPlan ? { bodyPlan: body.bodyPlan } : {}),
+          statusEffects: body.effects ?? [],
+          observedMoving: hasCurrentObservedFacet(
+            world,
+            player.id,
+            entity.id,
+            'observed-motion',
+            bodyReads,
+          ),
+          position: body.position,
+          supportSurfaceId: body.supportSurfaceId,
+          heading: body.heading,
+          appearance: body.appearance,
+          ...(appearance.portrait ? { portrait: appearance.portrait } : {}),
+          radius: body.radius,
+          bodySize: entityMemo('bodySize', [body.radius, body.height], () => ({
+            width: body.radius * 2,
+            height: body.height,
+          })),
+          actionAnimation: body.animation
+            ? {
+                ...body.animation,
+                id: permittedSourceHandle(world, player.id, [
+                  'outward-action',
+                  received.id,
+                  body.animation.id,
+                ]),
+              }
+            : null,
+          status: appearance.status,
+          ...(body.description ? { description: body.description } : {}),
+          ...(publicAttributes?.value.kind === 'public-attributes'
+            ? {
+                attributes: publicAttributes.value.attributes,
+                ...(typeof health === 'number' ? { health } : {}),
+              }
+            : {}),
+          ...(body.quantity !== undefined ? { quantity: body.quantity } : {}),
+          ...(body.heatLit !== undefined ? { heat: { lit: body.heatLit } } : {}),
+          ...(body.remainsPhase === 'fresh' || body.remainsPhase === 'rotting'
+            ? {
+                bodyState: body.remainsPhase === 'fresh' ? ('dead' as const) : ('rotting' as const),
+              }
+            : {}),
+          ...(pile?.value.kind === 'pile-contents' ? { contents: pile.value.items } : {}),
+          storage: inventoryStorageHint(service, scope, entity.id, body, bodyReads),
+          ...(carried?.value.kind === 'carried'
+            ? {
+                observedCarried: {
+                  items: carried.value.items,
+                  measurementAt: detailTime(carried.valueMeasuredThrough),
+                  confirmedThrough: detailTime(carried.confirmedThrough),
+                },
+              }
+            : {}),
+          ...(entity.actor
+            ? {
+                canTalk: body.outward[0] === 'alive' && playerCanSpeak,
+                talkRequiresAi: entity.actor.controller === 'npc',
+                ...(!playerCanSpeak
+                  ? { talkUnavailableReason: 'Your character cannot speak now.' }
+                  : {}),
+                ...(rememberedAddressee
+                  ? {
+                      communicationReference: communicationReference(scope, {
+                        id: rememberedAddressee,
+                      }),
+                    }
+                  : {}),
+                trade: tradeSummary(
+                  world,
+                  scope,
+                  entity,
+                  tradeReaderRevision,
+                  entityMemo('tradeDisclosures', [tradeDisclosures], () =>
+                    permittedSourceHandle(world, player.id, [
+                      'trade-disclosures',
+                      entity.id,
+                      [...tradeDisclosures!],
+                    ]),
+                  ),
+                  bodyReads,
+                ),
+              }
+            : {}),
+        };
+      });
+  })();
   const eventEvidenceOwners = (snapshot: WorldState) => [
     entityGet(snapshot.entities, scope.actorId)?.actor?.physicalLife ?? 0,
     snapshot.experience?.awareness[scope.actorId],
@@ -1686,13 +1757,14 @@ export async function projectView(
   service.assertScope(scope);
   if (service.world !== world) {
     const currentPlayer = entityGet(service.world.entities, player.id);
+    const reads = prepareCurrentBodyReadScope(service.world, scope.actorId);
     if (
       !currentPlayer?.actor ||
       (currentPlayer.actor.physicalLife ?? 0) !== observerLife ||
       currentPlayer.actor.alive !== actor.alive ||
       activelyParticipates(currentPlayer) !== observerParticipating ||
       bodyGrants.some(({ id, grant }) => {
-        const current = currentBodyGrant(service.world, scope.actorId, id);
+        const current = currentBodyGrant(service.world, scope.actorId, id, reads);
         return (
           !current ||
           current.leaseId !== grant.leaseId ||

@@ -20,6 +20,7 @@ import {
   observationFactKey,
   captureAttentionPresentation,
   currentBodyGrant,
+  prepareCurrentBodyReadScope,
   currentBodySubject,
   entityGet,
   currentReceivedGeometry,
@@ -786,18 +787,24 @@ export function captureSituation(
   const policy = selectedAttentionPolicy(world).scene,
     scene = receivedScene(world, actorId),
     frame = captureModelSpatialFrame(world, actorId);
+  const bodyReads = prepareCurrentBodyReadScope(world, actorId);
   const geometry = currentReceivedGeometry(world, actorId),
     entries = currentDetailedAttention(world, actorId),
-    candidates = attentionCandidates(world, actorId);
+    candidates = attentionCandidates(world, actorId, undefined, bodyReads);
   // Preserve the permitted expansion envelope, including broad bodies and
   // non-spatial communication candidates outside detailed attention. Required
   // represented observations retain their separate exact acquisition grant below.
-  const current = captureCurrentSources(world, actorId, {
-    sourceIds: new Set([
-      ...scene.bodies.keys(),
-      ...Object.values(candidates).map((candidate) => candidate.sourceId),
-    ]),
-  });
+  const current = captureCurrentSources(
+    world,
+    actorId,
+    {
+      sourceIds: new Set([
+        ...scene.bodies.keys(),
+        ...Object.values(candidates).map((candidate) => candidate.sourceId),
+      ]),
+    },
+    bodyReads,
+  );
   const phaseCut = captureEvidenceCut(world, actorId, { acquired: geometry.observations });
   const cut = { ...phaseCut, current: [] as CapturedCurrentFacet[] };
   const visualTracks = new Map(
@@ -808,10 +815,10 @@ export function captureSituation(
   );
   const bodyBindings = new Map(
     [...scene.bodies.keys()].flatMap((id) => {
-      const grant = currentBodyGrant(world, actorId, id);
+      const grant = currentBodyGrant(world, actorId, id, bodyReads);
       if (!grant) return [];
       const subject =
-        currentBodySubject(world, actorId, id) ??
+        currentBodySubject(world, actorId, id, bodyReads) ??
         (!entityGet(world.entities, id)?.actor
           ? { kind: 'entity' as const, entityId: id }
           : undefined);

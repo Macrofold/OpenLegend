@@ -425,14 +425,17 @@ export function territorialIntention(
 }
 /** Only expensive detours spend the shared episode allowance. Returning gets one terminal
  * attempt; failure leaves the animal at its actual supported stop, never a teleport. */
-export function admitTerritorialDetour(entity: Entity): boolean {
+export function territorialDetourAvailable(entity: Entity): boolean {
   const threat = entity.threat;
   // Ordinary travel outside an episode must not spend (or be blocked by) the
   // finite pursuit allowance retained from earlier territorial work.
   if (!threat || threat.mode === 'idle') return true;
   const limit = threat.policy.detours + (threat.mode === 'return' ? 1 : 0);
-  if (threat.detoursSpent >= limit) return false;
-  threat.detoursSpent++;
+  return threat.detoursSpent < limit;
+}
+export function admitTerritorialDetour(entity: Entity): boolean {
+  if (!territorialDetourAvailable(entity)) return false;
+  if (entity.threat && entity.threat.mode !== 'idle') entity.threat.detoursSpent++;
   return true;
 }
 export function territorialRefusal(world: WorldState, entity: Entity, events: WorldEvent[]): void {

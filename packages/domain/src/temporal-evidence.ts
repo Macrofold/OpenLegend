@@ -104,6 +104,8 @@ import {
   receivedObservationFrame,
   receivedBodyParts,
   contributionFactKey,
+  isRetiringPerceptionLife,
+  retirePerceptionLife,
 } from './perception-evidence.js';
 import type {
   CurrentFacetRecord,
@@ -699,7 +701,13 @@ function actorHistory(
       recent: { blocks: { size: 0 }, individuals: { size: 0 } },
     };
   else if (actor.physicalLife !== life) {
-    clearTemporalRecordingReservations(world, actorId);
+    if (isRetiringPerceptionLife(world, actorId)) return { state: temporal, actor };
+    // Current reception can already have replaced its old owner before history
+    // first records the new life. Retire only the matching old owner; retiring
+    // the newly received life would erase its baseline and release new marks.
+    if (world.perceptionEvidence?.[actorId]?.life === actor.physicalLife)
+      retirePerceptionLife(world, actorId);
+    actor.terminalReservedBytes = 0;
     actor.physicalLife = life;
     actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
   }
@@ -738,8 +746,10 @@ interface BatchBuilder {
 interface AcquisitionScope {
   frame?: ObservationFrame;
   prepared?: BatchBuilder;
+  beforeSnapshot?: () => void;
 }
 const acquisitionBatches = new WeakMap<WorldState, Map<string, AcquisitionScope>>();
+const acquisitionSnapshotReleases = new WeakMap<WorldState, () => void>();
 /** A receiving scope alone allocates no historical frame/order/builder. */
 function builder(world: WorldState, actorId: string): BatchBuilder | undefined {
   const scope = acquisitionBatches.get(world)?.get(actorId);
@@ -778,45 +788,93 @@ function newBatch(
     terminals: new Map(),
   };
 }
-/** Synchronous receiving scope. Actual detector tokens and admission decisions
- * are shared by all helpers; no builder survives publication or a wait. */
+/** The existing acquisition owner supports explicit generator lifetimes. Snapshot
+ * preparation is world-owned until the last independent actor scope ends.
+ * docs/projects/bookkeeping-simplification-tech-design.md#technical-yields-snapshots-and-failures */
+export function beginTemporalAcquisition(
+  world: WorldState,
+  actorId: string,
+  frame: ObservationFrame | undefined,
+  beforeSnapshot?: () => void,
+): { finish(): void; abort(): void } {
+  let actors = acquisitionBatches.get(world);
+  const borrowed = actors?.get(actorId);
+  if (borrowed) {
+    const previous = borrowed.beforeSnapshot;
+    if (beforeSnapshot) borrowed.beforeSnapshot = beforeSnapshot;
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      if (beforeSnapshot && borrowed.beforeSnapshot === beforeSnapshot)
+        borrowed.beforeSnapshot = previous;
+    };
+    return { finish: release, abort: release };
+  }
+  if (!actors) {
+    acquisitionBatches.set(world, (actors = new Map()));
+    acquisitionSnapshotReleases.set(
+      world,
+      prepareWorldSnapshots(world, () => flushReceivedAcquisitionsForSnapshot(world)),
+    );
+  }
+  const scope: AcquisitionScope = { frame, beforeSnapshot };
+  actors.set(actorId, scope);
+  let closed = false;
+  const release = () => {
+    if (closed) return;
+    closed = true;
+    if (actors.get(actorId) === scope) actors.delete(actorId);
+    if (!actors.size && acquisitionBatches.get(world) === actors) {
+      acquisitionBatches.delete(world);
+      acquisitionSnapshotReleases.get(world)?.();
+      acquisitionSnapshotReleases.delete(world);
+    }
+  };
+  return {
+    finish() {
+      if (closed) return;
+      try {
+        if (scope.prepared) flushReceivedBatch(world, actorId, scope.prepared);
+      } finally {
+        release();
+      }
+    },
+    abort: release,
+  };
+}
 export function withTemporalAcquisition<T>(
   world: WorldState,
   actorId: string,
   frame: ObservationFrame | undefined,
   work: () => T,
 ): T {
-  let actors = acquisitionBatches.get(world);
-  if (actors?.has(actorId)) return work();
-  let releaseSnapshotPreparation: (() => void) | undefined;
-  if (!actors) {
-    acquisitionBatches.set(world, (actors = new Map()));
-    releaseSnapshotPreparation = prepareWorldSnapshots(world, () =>
-      flushReceivedAcquisitionsForSnapshot(world),
-    );
-  }
-  const scope: AcquisitionScope = { frame };
-  actors.set(actorId, scope);
+  if (acquisitionBatches.get(world)?.has(actorId)) return work();
+  const scope = beginTemporalAcquisition(world, actorId, frame);
   try {
     const result = work();
-    if (scope.prepared) flushReceivedBatch(world, actorId, scope.prepared);
+    scope.finish();
     return result;
   } finally {
-    actors.delete(actorId);
-    if (!actors.size) acquisitionBatches.delete(world);
-    releaseSnapshotPreparation?.();
+    scope.abort();
   }
+}
+/** Drain accepted entries before sealing current contact paths; acquisition ownership stays live. */
+export function flushTemporalAcquisition(world: WorldState, actorId: string): void {
+  const scope = acquisitionBatches.get(world)?.get(actorId);
+  const prepared = scope?.prepared;
+  if (!scope || !prepared) return;
+  scope.prepared = undefined;
+  flushReceivedBatch(world, actorId, prepared);
 }
 /** Flush only actual accepted history. A snapshot does not manufacture a sample. */
 export function flushReceivedAcquisitionsForSnapshot(world: WorldState): void {
   const actors = acquisitionBatches.get(world);
   if (!actors) return;
-  for (const [actorId, scope] of actors) {
-    if (!scope.prepared) continue;
-    flushReceivedBatch(world, actorId, scope.prepared);
-    scope.prepared = undefined;
-  }
+  for (const scope of actors.values()) scope.beforeSnapshot?.();
+  for (const actorId of actors.keys()) flushTemporalAcquisition(world, actorId);
 }
+
 const receivingTransitions = new WeakMap<
   WorldState,
   Map<string, { order?: number; sampleToken?: number }>

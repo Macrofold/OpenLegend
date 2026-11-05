@@ -1,5 +1,6 @@
 import { reconcileNativeControl } from './native-response-controller.js';
 import { currentAttributeState } from './native-values.js';
+import { retirePerceptionLife } from './perception-evidence.js';
 import { entityGet, entitySet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import {
@@ -198,6 +199,7 @@ export function reviveActor(
   const actor = entity.actor!;
   if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
     throw new Error('Physical life exhausted.');
+  retirePerceptionLife(world, actorId);
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
   delete actor.combatReadyAt;
   actor.alive = true;

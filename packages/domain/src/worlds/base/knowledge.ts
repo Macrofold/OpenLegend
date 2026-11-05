@@ -625,15 +625,16 @@ function currentBodyIdentity(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  scope = prepareCurrentBodyReadScope(world, observerId),
 ): ObserverIdentity | undefined {
-  const local = currentBodyLocalSubject(world, observerId, subjectId);
+  const local = currentBodyLocalSubject(world, observerId, subjectId, scope);
   const localIdentity = local && observerIndividual(world, observerId, local);
   if (localIdentity?.nickname || localIdentity?.givenName) return localIdentity;
-  const association = currentBodyAssociation(world, observerId, subjectId);
+  const association = currentBodyAssociation(world, observerId, subjectId, scope);
   if (association) return observerIndividual(world, observerId, association);
   if (localIdentity) return localIdentity;
   const encounterId = world.perceptionEpisodes?.[observerId]?.[subjectId];
-  if (!encounterId || !currentBodyGrant(world, observerId, subjectId)) return undefined;
+  if (!encounterId || !currentBodyGrant(world, observerId, subjectId, scope)) return undefined;
   return Object.values(world.observerIdentities?.[observerId] ?? {}).find(
     (identity) => !identity.seedOnly && !identity.authored && identity.encounterId === encounterId,
   );
@@ -644,15 +645,16 @@ export function currentBodySubjects(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  scope = prepareCurrentBodyReadScope(world, observerId),
 ): ObserverSubject[] {
-  const local = currentBodyLocalSubject(world, observerId, subjectId);
-  const association = currentBodyAssociation(world, observerId, subjectId);
+  const local = currentBodyLocalSubject(world, observerId, subjectId, scope);
+  const association = currentBodyAssociation(world, observerId, subjectId, scope);
   if (local || association)
     return [
       ...(local ? [local] : []),
       ...(association && (!local || !sameSubject(local, association)) ? [association] : []),
     ];
-  const identity = currentBodyIdentity(world, observerId, subjectId);
+  const identity = currentBodyIdentity(world, observerId, subjectId, scope);
   return identity?.individualId
     ? [{ kind: 'individual', individualId: identity.individualId }]
     : [];
@@ -664,8 +666,9 @@ export function currentBodySubject(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  scope = prepareCurrentBodyReadScope(world, observerId),
 ): ObserverSubject | undefined {
-  const subjects = currentBodySubjects(world, observerId, subjectId),
+  const subjects = currentBodySubjects(world, observerId, subjectId, scope),
     local = subjects[0];
   if (
     local &&
@@ -729,8 +732,9 @@ export function currentCommunicationSubject(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  scope = prepareCurrentBodyReadScope(world, observerId),
 ): string | undefined {
-  const association = currentBodyAssociation(world, observerId, subjectId);
+  const association = currentBodyAssociation(world, observerId, subjectId, scope);
   return association ? observerIndividual(world, observerId, association)?.canonicalId : undefined;
 }
 export function recognizesSubject(
@@ -810,9 +814,10 @@ export function observerGivenName(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  scope = prepareCurrentBodyReadScope(world, observerId),
 ): string | undefined {
   if (observerId === subjectId) return entityGet(world.entities, subjectId)?.name;
-  const identity = currentBodyIdentity(world, observerId, subjectId);
+  const identity = currentBodyIdentity(world, observerId, subjectId, scope);
   return identity?.nickname || identity?.givenName || undefined;
 }
 export function assignGivenName(
@@ -1037,10 +1042,15 @@ export function outwardBodyName(_world: WorldState, entity: Entity): Named {
 }
 
 /** Select permitted identity before applying presentation grammar. */
-export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
-  const known = observerGivenName(world, observerId, subjectId);
+export function observerName(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  scope = prepareCurrentBodyReadScope(world, observerId),
+): Named {
+  const known = observerGivenName(world, observerId, subjectId, scope);
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
-  const received = currentBodyLabel(world, observerId, subjectId);
+  const received = currentBodyLabel(world, observerId, subjectId, scope);
   if (received) return received;
   const inspected = inspectedItemName(world, observerId, subjectId);
   if (inspected) return inspected;

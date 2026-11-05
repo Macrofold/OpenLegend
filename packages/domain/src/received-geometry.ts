@@ -19,7 +19,8 @@ import {
   receiveObservation,
   observationFactKey,
   validateObservationContribution,
-  currentObservedFacetValues,
+  prepareCurrentBodyReadScope,
+  receivedFacetValue,
   type ObservationContribution,
   type ObservationFactKey,
   type ObservationFrame,
@@ -391,14 +392,14 @@ function contextAnchors(
   for (const entry of Object.values(attention?.annotations ?? {}))
     if (entry.direct) ids.add(entry.sourceId);
   let visited = 0;
+  const reads = prepareCurrentBodyReadScope(world, input.observer.id);
   const add = (id: string) => {
     if (visited >= Math.floor(policy.visits / 3)) return;
     visited++;
-    const received = currentObservedFacetValues(world, input.observer.id, id, ['location']).find(
-      (value) => value.value.kind === 'location',
-    );
-    if (received?.value.kind === 'location' && received.value.location.kind === 'point')
-      points.push(received.value.location.point);
+    const native = reads?.observed(id, 'location'),
+      value = native && receivedFacetValue(world, native.field.value);
+    if (value?.kind === 'location' && value.location.kind === 'point')
+      points.push(value.location.point);
   };
   for (const id of ids) add(id);
   const visible = [

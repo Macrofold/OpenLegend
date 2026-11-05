@@ -299,30 +299,55 @@ const mutableGroups = new WeakSet<CurrentReceivedGroup>();
 function contactBatch(contacts: PerceptionEvidenceOwner['current']): ContactBatch | undefined {
   return contactBatches.get(readOnlyDraftView(contacts));
 }
-/** One native receiving boundary replaces each affected contact path once. */
-export function withCurrentContactBatch<T>(owner: PerceptionEvidenceOwner, work: () => T): T {
+/** One native receiving boundary replaces each affected contact path once.
+ * The owning receiver can span a generator yield; borrowed callers cannot close it. */
+export function beginCurrentContactBatch(owner: PerceptionEvidenceOwner): {
+  finish(): void;
+  abort(): void;
+} {
   const key = readOnlyDraftView(owner.current);
-  if (contactBatches.has(key)) return work();
+  if (contactBatches.has(key)) return { finish() {}, abort() {} };
   const batch: ContactBatch = { owner, contacts: new Map() };
   contactBatches.set(key, batch);
+  let closed = false;
+  const detach = () => {
+    if (closed) return false;
+    closed = true;
+    if (contactBatches.get(key) === batch) contactBatches.delete(key);
+    return true;
+  };
+  return {
+    finish() {
+      if (!detach()) return;
+      for (const [id, contact] of batch.contacts) {
+        const snapshot = contact && immutableDataSnapshot(contact, readOnlyDraftView);
+        if (snapshot && contact) {
+          const origin = contentIdentity(contact.content);
+          contentOrigins.set(
+            snapshot.content,
+            isImmutableData(origin) ? origin : Object.freeze({}),
+          );
+        }
+        orderedRecordSet(owner.current, id, snapshot);
+      }
+    },
+    abort() {
+      detach();
+    },
+  };
+}
+export function withCurrentContactBatch<T>(owner: PerceptionEvidenceOwner, work: () => T): T {
+  if (contactBatch(owner.current)) return work();
+  const batch = beginCurrentContactBatch(owner);
   try {
     const result = work();
-    contactBatches.delete(key);
-    for (const [id, contact] of batch.contacts) {
-      const snapshot = contact && immutableDataSnapshot(contact, readOnlyDraftView);
-      if (snapshot && contact) {
-        const origin = contentIdentity(contact.content);
-        // A first receiving batch may still refer to its editable content. Seal
-        // an opaque certificate, not that builder or an old payload graph.
-        contentOrigins.set(snapshot.content, isImmutableData(origin) ? origin : Object.freeze({}));
-      }
-      orderedRecordSet(owner.current, id, snapshot);
-    }
+    batch.finish();
     return result;
   } finally {
-    contactBatches.delete(key);
+    batch.abort();
   }
 }
+
 function contactAt(
   contacts: PerceptionEvidenceOwner['current'],
   id: string,
@@ -1282,6 +1307,27 @@ export function receivedAttentionSources(
       currentNativeFacet(owner, currentFacetKey(sourceId, kind, channel)) ?? [],
   );
   return result;
+}
+/** Borrowed once per synchronous read; exact leases retain candidate precedence. */
+export function prepareReceivedAttentionRead(owner: CurrentReadOwner) {
+  const subjects = new Map<string, readonly CurrentNativeFacet[]>(),
+    leases = new Map<string, ReadonlyMap<string, CurrentNativeFacet>>();
+  const sources = (id: string) => {
+    let result = subjects.get(id);
+    if (!result) {
+      result = receivedAttentionSources(owner, id);
+      subjects.set(id, result);
+      leases.set(id, new Map(result.map((source) => [source.field.id, source])));
+    }
+    return result;
+  };
+  return {
+    sources,
+    source(id: string, lease: string) {
+      sources(id);
+      return leases.get(id)?.get(lease);
+    },
+  };
 }
 export function receivedAttentionSource(
   owner: CurrentReadOwner,

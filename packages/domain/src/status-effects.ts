@@ -1,4 +1,5 @@
 import { nativeForagingActive, nativeForagingState } from './native-foraging.js';
+import { endCurrentEvidence } from './perception-evidence.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { countDomainWork, domainCountersEnabled } from './diagnostic-counters.js';
 import { narrationTemplate } from './narration.js';
@@ -636,6 +637,14 @@ export function activateStatusEffect(
       : {}),
   };
   if (definition.contribution) invalidateContributionIndex(entity, world);
+  if (
+    definition.whileActive.some(
+      (operation) =>
+        'restrictCapabilities' in operation &&
+        operation.restrictCapabilities.capabilities.includes('perception'),
+    )
+  )
+    endCurrentEvidence(world, entity.id);
   if (definition.occupiesAction && actor) {
     actor.action = {
       id: episode,

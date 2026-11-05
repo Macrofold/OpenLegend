@@ -62,7 +62,9 @@ export function prepareWorldSnapshots(world: WorldState, prepare: () => void): (
   if (snapshotPreparations.has(world))
     throw new Error('World snapshot preparation already has an owner.');
   snapshotPreparations.set(world, prepare);
-  return () => snapshotPreparations.delete(world);
+  return () => {
+    if (snapshotPreparations.get(world) === prepare) snapshotPreparations.delete(world);
+  };
 }
 function prepareWorldSnapshot(world: WorldState): void {
   snapshotPreparations.get(world)?.();
@@ -97,6 +99,11 @@ export function hasPrivateDraftBase(world: WorldState): boolean {
 export function beginCommandBatch(world: WorldState): void {
   if (!isDraft(world) || commandBatches.has(world) || !isImmutableData(original(world)!)) return;
   commandBatches.set(world, { origin: original(world)!, inheritedEntities: new Set() });
+}
+/** Only a native batch based on an accepted immutable input may admit a proved
+ * non-refusing command in place. An arbitrary mutable builder is not ownership. */
+export function hasOwnedCommandBatch(world: WorldState): boolean {
+  return commandBatches.has(world);
 }
 export function isPrivateCommandWorld(world: WorldState): boolean {
   return privateCommandWorlds.has(world);

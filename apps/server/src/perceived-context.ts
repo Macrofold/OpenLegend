@@ -7,6 +7,7 @@ import {
 import { experienceReading, type ExperienceEntry } from '@open-legend/domain';
 import {
   currentObservedFacetValues,
+  prepareCurrentBodyReadScope,
   currentBodyValue,
   observerName,
   worldPosition,
@@ -281,14 +282,18 @@ export function perceivedEntityText(
   world: WorldState,
   observerId: string,
   entityId: string,
+  reads = prepareCurrentBodyReadScope(world, observerId),
 ): string | undefined {
-  const body = currentBodyValue(world, observerId, entityId);
+  const body = currentBodyValue(world, observerId, entityId, reads);
   if (!body) return undefined;
-  const facts = currentObservedFacetValues(world, observerId, entityId, [
-    'carried',
-    'pile-contents',
-  ]);
-  const label = namePhrase(observerName(world, observerId, entityId), 'indefinite');
+  const facts = currentObservedFacetValues(
+    world,
+    observerId,
+    entityId,
+    ['carried', 'pile-contents'],
+    reads,
+  );
+  const label = namePhrase(observerName(world, observerId, entityId, reads), 'indefinite');
   const received = (
     facet: Pick<
       (typeof facts)[number],

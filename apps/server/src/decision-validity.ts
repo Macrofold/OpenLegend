@@ -1,6 +1,7 @@
 import {
   entityGet,
   currentBodyGrant,
+  prepareCurrentBodyReadScope,
   activeAppraisals,
   appraisalDefinition,
   attributeDefinition,
@@ -140,9 +141,10 @@ export function physicalEntityReferencesCurrent(
   entityLeases: Readonly<Record<string, string>>,
   targetIds: readonly string[] = Object.keys(entityLeases),
 ): boolean {
+  const reads = prepareCurrentBodyReadScope(world, actorId);
   return targetIds.every(
     (id) =>
       entityLeases[id] === undefined ||
-      currentBodyGrant(world, actorId, id)?.leaseId === entityLeases[id],
+      currentBodyGrant(world, actorId, id, reads)?.leaseId === entityLeases[id],
   );
 }

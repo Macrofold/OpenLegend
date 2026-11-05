@@ -1,7 +1,10 @@
 import { BASE_LOCAL_AVOIDANCE } from './skilled-execution.js';
 import { entityGet } from '../../entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
-import { currentBodyObservation, currentObservedFacets } from '../../perception-evidence.js';
+import {
+  prepareCurrentBodyReadScope,
+  currentObservedFacetValues,
+} from '../../perception-evidence.js';
 import { projectAttributes } from '../../world-modules.js';
 import type { WorldState } from '../../types.js';
 import type { RangedPolicy } from '../../ranged-policy.js';
@@ -66,11 +69,12 @@ export function observedBodyHealth(
   const own = observerId === targetId,
     target = own ? entityGet(world.entities, targetId) : undefined;
   if (own && !target?.actor) return '';
-  if (!own && !currentBodyObservation(world, observerId, targetId)) return '';
+  const reads = own ? undefined : prepareCurrentBodyReadScope(world, observerId);
+  if (!own && !reads?.nativeBody(targetId)) return '';
   const attributes = own
     ? projectAttributes(world, target!, 'owner')
-    : currentObservedFacets(world, observerId, targetId).flatMap((facet) =>
-        facet.value.kind === 'public-attributes' ? facet.value.attributes : [],
+    : currentObservedFacetValues(world, observerId, targetId, ['public-attributes'], reads).flatMap(
+        (facet) => (facet.value.kind === 'public-attributes' ? facet.value.attributes : []),
       );
   const health = attributes.find((attribute) => attribute.bodyHealth);
   if (!health || typeof health.value !== 'number') return '';

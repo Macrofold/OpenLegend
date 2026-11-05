@@ -55,6 +55,7 @@ export {
 export { STIMULUS_POLICY } from './worlds/base/senses.js';
 export {
   DOMAIN_COUNTERS,
+  countDomainWork,
   domainCountersEnabled,
   observeDomainCounters,
   type DomainCounter,

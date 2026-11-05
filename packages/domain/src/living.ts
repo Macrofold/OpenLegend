@@ -1,4 +1,5 @@
 import { reconcileNativeControl } from './native-response-controller.js';
+import { retirePerceptionLife } from './perception-evidence.js';
 import { forgetProjectileBodyEncounters } from './ranged.js';
 import { entityGet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordSet } from './ordered-record.js';
@@ -123,6 +124,7 @@ export function reconcileBody(
       separateDeadLife(world, entity, events);
     }
     if (!actor.alive) {
+      retirePerceptionLife(world, entity.id);
       delete actor.encounters;
       // Death ends live sensory continuity, not retained knowledge or historical evidence.
       // docs/knowledge.md#subject-binding

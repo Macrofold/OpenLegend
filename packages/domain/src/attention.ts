@@ -16,11 +16,11 @@ import { countDomainWork } from './diagnostic-counters.js';
 import {
   prepareCurrentBodySubjects,
   prepareCurrentBodyReadScope,
+  type CurrentBodyReadScope,
   currentChannelEligible,
   currentFacetOriginal,
   currentFacetTimes,
   currentFacetExposure,
-  receivedBodyParts,
   publicAttributeMeanings,
   receivedFacetValue,
   selectVisualAttention,
@@ -328,6 +328,74 @@ function stateFor(world: WorldState, id: string): AttentionState | undefined {
     relationScans: {},
   });
 }
+/** Withdrawal removes only bindings that have actually lost their received
+ * representative. Ranking cannot repair a dead observer, and a different
+ * receipt must never inherit an explicit selection.
+ * docs/projects/bookkeeping-simplification-tech-design.md#stage-0--atomic-withdrawal-and-no-effect-ending */
+export function pruneWithdrawnAttention(
+  world: WorldState,
+  observerId: string,
+  sourceIds?: ReadonlySet<string>,
+  geometrySourceIds?: ReadonlySet<string>,
+): void {
+  const owner = owned(world, observerId),
+    state = owner?.attention;
+  if (!owner || !state) return;
+  const removed = new Set<string>(),
+    withdrawnTracks = new Set<string>(),
+    changedAnchors = new Set<string>();
+  for (const [key, annotation] of Object.entries(readOnlyDraftView(state.annotations))) {
+    if (sourceIds && !sourceIds.has(annotation.sourceId)) continue;
+    const source = receivedAttentionSource(owner, annotation.sourceId, annotation.leaseId);
+    const exposure = source && currentFacetExposure(owner, source);
+    if (
+      source &&
+      exposure &&
+      currentChannelEligible(world, observerId, source.grant.channel) &&
+      attentionSubjectKey(annotation.sourceId, exposure) === key &&
+      exposure.observer.actorId === annotation.exposure.observer.actorId &&
+      exposure.observer.physicalLife === annotation.exposure.observer.physicalLife
+    ) {
+      // A retained body does not preserve a relation scan through a withdrawn
+      // location or motion witness. Keep the historical alarm itself.
+      if (geometrySourceIds?.has(annotation.sourceId)) {
+        changedAnchors.add(key);
+        withdrawnTracks.add(annotation.exposure.track);
+      }
+      continue;
+    }
+    removed.add(key);
+    withdrawnTracks.add(annotation.exposure.track);
+  }
+  if (!removed.size && !changedAnchors.size) return;
+  touchNativeEvidence(world, 'perception', observerId);
+  for (const key of removed) delete state.annotations[key];
+  if (removed.size) {
+    state.entries = state.entries.filter((entry) => !removed.has(entry.key));
+    state.explicit = state.explicit.filter((key) => !removed.has(key));
+  }
+  let revision: number | undefined;
+  for (const family of ['closing-body', 'closing-drop'] as const) {
+    for (const key of removed) {
+      const relation = relationKey(key, family);
+      delete state.latches[relation];
+      delete state.relationScans[relation];
+      delete state.relationDirty[relation];
+    }
+    for (const key of changedAnchors) {
+      const relation = relationKey(key, family);
+      delete state.relationScans[relation];
+      if (state.latches[relation]) delete state.latches[relation]!.clearSince;
+      state.relationDirty[relation] = revision ??= ++state.relationRevision;
+    }
+  }
+  for (const [key, latch] of Object.entries(readOnlyDraftView(state.latches))) {
+    if (!latch.witnessId || !withdrawnTracks.has(latch.witnessId)) continue;
+    delete state.latches[key]!.clearSince;
+    delete state.relationScans[key];
+    state.relationDirty[key] = revision ??= ++state.relationRevision;
+  }
+}
 function point(location: ObservedLocation, at: number): AttentionPoint | undefined {
   return location.kind === 'point'
     ? { point: { ...location.point }, errorRadius: location.errorRadius, at }
@@ -339,8 +407,11 @@ function currentPoint(
   world: WorldState,
   _observerId: string,
   selector?: CurrentFacetSelector,
+  reads?: CurrentBodyReadScope,
 ): AttentionPoint | undefined {
-  const source = currentNativeFacetAt(owner, sourceId, 'location', selector);
+  const source = reads
+    ? reads.native(sourceId, 'location', selector)
+    : currentNativeFacetAt(owner, sourceId, 'location', selector);
   if (!source) return;
   const lease = readOnlyDraftView(source);
   const value = receivedValueAt(world.receivedValues?.sources ?? {}, lease.field.value.reference);
@@ -359,29 +430,35 @@ function descriptions(
   owner: PerceptionEvidenceOwner,
   id: string,
   selector?: CurrentFacetSelector,
+  reads?: CurrentBodyReadScope,
 ): string {
   // A new receipt can measure the same appearance at another position. Receipt
   // identity is provenance; it must not invent new descriptive novelty.
 
-  const facet = (kind: string) => {
-    const lease = currentNativeFacetAt(owner, id, kind, selector);
-    return lease ? receivedFacetValue(world, readOnlyDraftView(lease.field.value)) : undefined;
-  };
-  // Description novelty depends on outward detail, never a reconstructed pose.
-  const bodySource = currentNativeFacetAt(owner, id, 'body', selector),
-    bodyDescriptor = bodySource && readOnlyDraftView(bodySource.field).value,
-    parts = bodyDescriptor && receivedBodyParts(world, bodyDescriptor),
-    appearance = parts && readOnlyDraftView(parts.details);
-  const description = facet('description'),
-    association = facet('association'),
-    attributes = facet('public-attributes'),
-    carried = facet('carried'),
-    detected = facet('detected'),
-    contact = facet('contact');
+  const native = (kind: string) =>
+    reads ? reads.native(id, kind, selector) : currentNativeFacetAt(owner, id, kind, selector);
+  const body = native('body'),
+    detail =
+      body && receivedValueAt(world.receivedValues?.sources ?? {}, body.field.value.reference),
+    appearance = detail?.kind === 'body' ? readOnlyDraftView(detail.body) : undefined;
+  const kinds = [
+    'description',
+    'carried',
+    'public-attributes',
+    'association',
+    'detected',
+    'contact',
+  ] as const;
+  const descriptors = kinds.map((kind) => native(kind)?.field.value);
+  // Immutable source fragments are the inputs to the existing meaning memo.
+  // Resolve descriptors/identity first; rich sibling values are only needed on a miss.
+  const inputs = descriptors.map(
+    (descriptor) =>
+      descriptor && receivedValueAt(world.receivedValues?.sources ?? {}, descriptor.reference),
+  );
   // Source-only pose/receipt changes preserve these actual received fragments.
   // Share their descriptive meaning across compatible receivers without retaining
   // a world or treating a comparison cache as a new acquisition or identity grant.
-  const inputs = [description, carried, attributes, association, detected, contact];
   const reusable =
     appearance &&
     isImmutableData(appearance) &&
@@ -403,6 +480,9 @@ function descriptions(
     return prepared.value;
   }
   countDomainWork('attentionDescriptionPreparations');
+  const [description, carried, attributes, association, detected, contact] = descriptors.map(
+    (descriptor) => descriptor && receivedFacetValue(world, readOnlyDraftView(descriptor)),
+  );
   const value = JSON.stringify(
     [
       appearance
@@ -457,17 +537,30 @@ export function attentionCandidates(
     const annotationSource = annotations[key];
     if (!annotationSource) continue;
     const annotation = readOnlyDraftView(annotationSource);
-    const body = receivedAttentionSource(owner, annotation.sourceId, annotation.leaseId);
-    if (!body || !currentChannelEligible(world, observerId, body.grant.channel)) continue;
+    const body = bodyReads?.attention.source(annotation.sourceId, annotation.leaseId);
+    if (!body || !bodyReads?.channelEligible(body.grant.channel)) continue;
     const selector = { channel: body.grant.channel, exposure: body.grant.exposure };
-    const location = currentNativeFacetAt(owner, annotation.sourceId, 'location', selector);
-    const measured = currentPoint(owner, annotation.sourceId, world, observerId, selector);
+    const location = bodyReads?.native(annotation.sourceId, 'location', selector);
+    const measured = currentPoint(
+      owner,
+      annotation.sourceId,
+      world,
+      observerId,
+      selector,
+      bodyReads,
+    );
     const subject =
       (body.field.value.kind === 'body' &&
       bodyReads?.nativeBody(annotation.sourceId)?.field.id === body.field.id
         ? subjectFor(annotation.sourceId)
         : undefined) ?? body.field.localSubject;
-    const descriptionRevision = descriptions(world, owner, annotation.sourceId, selector);
+    const descriptionRevision = descriptions(
+      world,
+      owner,
+      annotation.sourceId,
+      selector,
+      bodyReads,
+    );
     const displacement =
       measured && annotation.anchor
         ? Math.max(
@@ -1192,7 +1285,8 @@ export function captureAttentionPresentation(
     state = owner?.attention;
   if (!owner || !state) return [];
   const selected = keys ?? state.entries.map((entry) => entry.key);
-  const candidates = attentionCandidates(world, observerId, selected);
+  const bodyReads = prepareCurrentBodyReadScope(world, observerId);
+  const candidates = attentionCandidates(world, observerId, selected, bodyReads);
   return selected.flatMap((key) => {
     const candidate = candidates[key];
     return candidate
@@ -1202,7 +1296,7 @@ export function captureAttentionPresentation(
             descriptionRevision: candidate.descriptionRevision,
             changeRevision: candidate.changeRevision,
             point: currentPoint(owner, candidate.sourceId, world, observerId, {
-              channel: receivedAttentionSource(owner, candidate.sourceId, candidate.leaseId)!.grant
+              channel: bodyReads!.attention.source(candidate.sourceId, candidate.leaseId)!.grant
                 .channel,
             }),
           },
@@ -1497,30 +1591,36 @@ export function revokeAttentionEvidence(
       affected.has(personalFactAlias(fact.source.id, fact.ordinal)) ||
       affected.has(JSON.stringify(fact)) ||
       affected.has(JSON.stringify(fact.source)));
-  const changed: string[] = [];
+  let changed = false;
+  const touch = () => {
+    if (!changed) touchNativeEvidence(world, 'perception', observerId);
+    changed = true;
+  };
   for (const candidate of Object.values(state.annotations)) {
     if (revoked(candidate.urgencySource)) {
+      touch();
       candidate.urgency = 0;
       delete candidate.urgencyThrough;
       delete candidate.urgencySource;
-      changed.push(candidate.sourceId);
     }
     if (revoked(candidate.directSource)) {
+      touch();
       candidate.direct = false;
       delete candidate.directThrough;
       delete candidate.directSource;
-      changed.push(candidate.sourceId);
     }
   }
   for (const [key, latch] of Object.entries(state.latches)) {
     // A pending all-clear interval is optional derived evidence. A correction
     // cannot preserve it by omission merely because its original alarm survived.
     if (affected.size && latch.clearSince !== undefined) {
+      touch();
       delete latch.clearSince;
       if (latch.active) state.relationDirty[key] = ++state.relationRevision;
     }
     if (![...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some((fact) => revoked(fact)))
       continue;
+    touch();
     latch.active = false;
     delete latch.entryProof;
     delete latch.newestProof;
@@ -1530,7 +1630,8 @@ export function revokeAttentionEvidence(
     state.relationDirty[key] = ++state.relationRevision;
     delete state.relationScans[key];
   }
-  if (changed.length) selectVisualAttention(world, observerId, changed);
+  // Correction withdraws its supported cue now. Competition remains owned by
+  // the next real attention opportunity; recording must not promote a sibling.
 }
 
 /** Current-save boundary: exact references are validated by the owning perception validator. */

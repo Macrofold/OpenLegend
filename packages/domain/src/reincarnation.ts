@@ -1,4 +1,5 @@
 import { entityGet, entitySet, entityValues } from './entity-collection.js';
+import { retirePerceptionLife } from './perception-evidence.js';
 import { equippedItems } from './equipment.js';
 import { canStand, distance3D, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
@@ -312,6 +313,7 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
     choices[choices.length === 1 ? 0 : Math.floor(nextRandom(world) * choices.length)]!;
   const point = choice.points[Math.floor(nextRandom(world) * choice.points.length)]!;
   forgetProjectileBodyEncounters(world, entity.id, actor.physicalLife ?? 0);
+  retirePerceptionLife(world, entity.id);
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
   actor.alive = true;
   actor.incapacitated = false;

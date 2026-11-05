@@ -1,7 +1,12 @@
 import { nativeText } from '@open-legend/domain';
 import { entityHandle, permittedSourceHandle } from './entity-references.js';
 import { memoryForModel, acceptedMindForModel, eventFieldsForModel } from './experience-context.js';
-import { currentBodyValue, currentObservedFacets, bodyContext } from '@open-legend/domain';
+import {
+  currentBodyValue,
+  currentObservedFacets,
+  prepareCurrentBodyReadScope,
+  bodyContext,
+} from '@open-legend/domain';
 import { captureSituation } from './situation-context.js';
 import { selectTemporalHistory } from '@open-legend/domain';
 import { itemContainerCapacity } from '@open-legend/domain';
@@ -266,6 +271,7 @@ export function buildContext(
     `context:${service.world.sequence}`,
     selectTemporalHistory(service.world, actorId),
   );
+  const bodyReads = prepareCurrentBodyReadScope(service.world, actorId);
   const context = {
     receivedSituation: situation.packet,
     world: { id: observed.worldId, profile: service.world.profile, simulationSeconds: observed.at },
@@ -293,13 +299,13 @@ export function buildContext(
         })) ?? [],
     },
     nearby: observed.visibleEntities.flatMap((entity) => {
-      const received = currentBodyValue(service.world, actorId, entity.id);
+      const received = currentBodyValue(service.world, actorId, entity.id, bodyReads);
       if (!received) return [];
       const body = received.value.body;
       return [
         {
           id: entityHandle(service.world, actorId, entity.id),
-          name: excerpt(observerName(service.world, actorId, entity.id).name, 40),
+          name: excerpt(observerName(service.world, actorId, entity.id, bodyReads).name, 40),
           kind: body.kind,
           position: body.position,
           facts: situation.bodyFacts(entity.id),

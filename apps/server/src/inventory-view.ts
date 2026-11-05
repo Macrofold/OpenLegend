@@ -24,6 +24,7 @@ import {
   currentInventoryInspection,
   currentBodyValue,
   currentBodyGrant,
+  prepareCurrentBodyReadScope,
   currentObservedFacetValues,
   worldPosition,
   readRecipeRecord,
@@ -156,13 +157,14 @@ export function inventoryStorageHint(
   scope: RequestScope,
   id: string,
   body: ObservedBody,
+  reads = prepareCurrentBodyReadScope(service.world, scope.actorId),
 ): EntityView['storage'] {
   const storage = body.storage;
   const target = entityGet(service.world.entities, id);
   if (!storage || !target) return;
   const inspection = currentInventoryInspection(service.world, scope.actorId);
   return {
-    containerId: currentContactReference(service.world, scope, target),
+    containerId: currentContactReference(service.world, scope, target, reads),
     placementRevision: storage.placementRevision,
     ...(inspection?.containerId === id ? { revision: inspection.revision } : {}),
   };
@@ -215,6 +217,7 @@ export function inventoryAccess(
   request: { containerId: string; approach?: boolean },
 ): InventoryAccessView {
   service.assertScope(scope);
+  const reads = prepareCurrentBodyReadScope(service.world, scope.actorId);
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId),
     target = entityGet(world.entities, request.containerId);
@@ -234,10 +237,10 @@ export function inventoryAccess(
   const root = objectAncestors(world, target.id).at(-1);
   if (!root || root.placement?.mode !== 'world') return unavailable;
   const accessible = canAccessContainer(world, actor.id, target.id);
-  const observed = currentBodyValue(world, scope.actorId, root.id);
+  const observed = currentBodyValue(world, scope.actorId, root.id, reads);
   const visibleExterior =
     (target.id === root.id && !!observed) ||
-    currentObservedFacetValues(world, scope.actorId, root.id, ['pile-contents']).some(
+    currentObservedFacetValues(world, scope.actorId, root.id, ['pile-contents'], reads).some(
       (facet) =>
         facet.value.kind === 'pile-contents' &&
         facet.value.items.some((item) => item.id === target.id),
@@ -696,6 +699,7 @@ export function inventoryDestinationPage(
   request: InventoryDestinationRequest,
 ): InventoryDestinationPage {
   service.assertScope(scope);
+  const reads = prepareCurrentBodyReadScope(service.world, scope.actorId);
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId)!,
     source = request.source;
@@ -775,7 +779,7 @@ export function inventoryDestinationPage(
     throw new HistoryCursorError('Destinations, contents or access changed. Refresh destinations.');
   let observed: { id: string; leaseId: string }[] | undefined;
   const observedBodies = () =>
-    (observed ??= currentObservedBodyGrants(world, scope.actorId).sort((a, b) =>
+    (observed ??= currentObservedBodyGrants(world, scope.actorId, reads).sort((a, b) =>
       a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
     ));
   let spatialRevision: string | undefined;
@@ -784,12 +788,12 @@ export function inventoryDestinationPage(
       .update(JSON.stringify(observedBodies()))
       .digest('hex'));
   const observedPile = (id: string) =>
-    currentObservedFacetValues(world, scope.actorId, id, ['pile-contents']).find(
+    currentObservedFacetValues(world, scope.actorId, id, ['pile-contents'], reads).find(
       (facet) => facet.value.kind === 'pile-contents',
     );
   if (
     cursor.phase === 'ground' &&
-    (!currentBodyGrant(world, scope.actorId, cursor.grantActorId) ||
+    (!currentBodyGrant(world, scope.actorId, cursor.grantActorId, reads) ||
       observedPile(cursor.grantActorId)?.id !== cursor.grantEvidence)
   )
     throw new HistoryCursorError('Observed contents changed. Refresh destinations.');
@@ -965,7 +969,7 @@ export function inventoryDestinationPage(
       if (target.id === scope.actorId) continue;
       // A corpse retains its actor component; its storage follows native remains access.
       if (request.activity && (!target.actor || target.remains)) {
-        if (!currentBodyGrant(world, scope.actorId, target.id)) continue;
+        if (!currentBodyGrant(world, scope.actorId, target.id, reads)) continue;
         if (target.container) add(target.id);
         if (target.kind === 'item-pile' || target.remains) {
           cursor.phase = 'ground';
@@ -976,7 +980,7 @@ export function inventoryDestinationPage(
         }
       } else if (target.actor && !target.remains) {
         if (
-          !currentBodyGrant(world, scope.actorId, target.id) ||
+          !currentBodyGrant(world, scope.actorId, target.id, reads) ||
           !canReachEntity(world, actor, target, world.itemHandling.reach)
         )
           continue;
@@ -995,7 +999,7 @@ export function inventoryDestinationPage(
         }
       } else if (
         (target.container || target.kind === 'item-pile' || target.remains) &&
-        currentBodyGrant(world, scope.actorId, target.id)
+        currentBodyGrant(world, scope.actorId, target.id, reads)
       )
         add(target.id);
     }
