@@ -96,7 +96,7 @@ For public studies, select `art-studies/public`, approve `public-study` and sour
 
 One hosted PostgreSQL database records what has been published and who may use it for every machine and collaborator: Aurora Serverless v2 cluster `openlegend-assets` in the OpenLegend project (`us-east-2`), named in the `authority` entry of `assets/config.json`. It pauses when idle; the first command after a pause waits several seconds while it resumes. Publication, approval, grants, withdrawal, recovery, private pulls and the operator viewer connect to it directly.
 
-Each connection signs a 15-minute IAM token from the person's own `openlegend` sign-in, as database user `openlegend_assets`; no database password is stored or shared. The administrator password is managed and rotated by RDS in Secrets Manager and is needed only for database administration. Before first use on a machine:
+Each connection signs a 15-minute IAM token from the person's own `openlegend` sign-in, as database user `openlegend_assets`; no database password is stored or shared. A sign-in lookup that has not answered after 30 seconds stops the command with a `deadline_exceeded during credentials` error; `aws sts get-caller-identity --profile openlegend --region us-east-2` checks the sign-in. The administrator password is managed and rotated by RDS in Secrets Manager and is needed only for database administration. Before first use on a machine:
 
 1. Sign in: `aws login --profile openlegend --region us-east-2`.
 2. Download Amazon's database certificate to the configured path: `mkdir -p ~/.postgresql && curl -sSf -o ~/.postgresql/rds-global-bundle.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem`. Connections verify the server against it.
