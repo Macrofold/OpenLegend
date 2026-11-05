@@ -17,7 +17,12 @@ import { STSClient, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
 import { fromIni, fromTemporaryCredentials } from '@aws-sdk/credential-providers';
 import { Signer } from '@aws-sdk/rds-signer';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
-import { createNetworkOwner, type NetworkOperation, type NetworkPhase } from '@open-legend/network';
+import {
+  createNetworkOwner,
+  NetworkError,
+  type NetworkOperation,
+  type NetworkPhase,
+} from '@open-legend/network';
 import {
   consumeSdkReadable,
   ownNodeStream,
@@ -592,11 +597,15 @@ export class S3AssetStorage {
           error instanceof S3ServiceException ? error.$metadata.httpStatusCode : undefined;
         const transient =
           (status !== undefined && (status === 429 || status >= 500)) ||
+          (error instanceof NetworkError &&
+            error.kind === 'transport_error' &&
+            error.phase === 'body') ||
           (error instanceof Error &&
-            // Known S3 endpoints can suffer transient resolver failures too;
-            // retries retain this transfer's original deadline and settlement gate.
+            // Node resets may say only "aborted" and carry ECONNRESET in code;
+            // the stream boundary may instead return a sanitized body transport error.
+            // Both retain this transfer's original deadline and settlement gate.
             /\b(?:ECONNRESET|ETIMEDOUT|EPIPE|ECONNABORTED|EAI_AGAIN|ENOTFOUND)\b/.test(
-              error.message,
+              `${'code' in error && typeof error.code === 'string' ? error.code : ''} ${error.message}`,
             ));
         if (!transient || attempt >= 2) throw error;
         try {
