@@ -102,7 +102,12 @@ it('requires exact 3D surface intentions and preserves the HTTP retry boundary',
 
 it('preserves elevated position and manual route snapshots while departure cancels walking', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'openlegend-spatial-'));
-  const config = readConfig({ AI_BUDGET_USD: '0', OPEN_LEGEND_DATA_DIR: directory });
+  const config = readConfig({
+    AI_BUDGET_USD: '0',
+    OPEN_LEGEND_DATA_DIR: directory,
+    // The final storage-failure probe must first have real speed-control authority.
+    OPEN_LEGEND_GOD_MODE: 'true',
+  });
   // CPU time must not expire a controller that this native fixture keeps present.
   const now = () => 10_000;
   let game = await createGameServer({

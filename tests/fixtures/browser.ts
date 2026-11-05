@@ -25,10 +25,18 @@ export async function enterGame(page: Page): Promise<void> {
   // A native button can be enabled beneath an inert paused workspace. Wait for
   // accepted play itself before a journey sends input or closes the selected tab.
   await expect(page.locator('#world')).not.toHaveAttribute('inert', '');
-  await expect(page.getByRole('button', { name: 'Time settings', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Game menu (Escape)', exact: true })).toBeEnabled();
   await expect(page.locator('.ol-entry')).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game is paused.', exact: true })).toBeHidden();
   await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeHidden();
+}
+
+/** The ordinary menu owns the full catalogue; contextual browsing stays scoped. */
+export async function openAllActions(page: Page): Promise<void> {
+  const all = page.getByRole('button', { name: 'All actions', exact: true });
+  if (!(await all.isVisible()))
+    await page.getByRole('button', { name: 'Game menu (Escape)', exact: true }).click();
+  await all.click();
 }
 
 /** Pick the real public deck after framing it with ordinary camera controls.

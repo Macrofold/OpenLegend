@@ -1,3 +1,5 @@
+export * from './expression-definitions.js';
+export * from './expressions.js';
 export * from './entity-collection.js';
 export * from './ordered-record.js';
 export * from './world-creation.js';
@@ -74,6 +76,7 @@ export {
   sensesFor,
   seesEntity,
   entityVisionQuery,
+  visibleEntitiesFor,
   pointVisionQuery,
   hearsEntity,
   speechPerception,
@@ -102,6 +105,7 @@ export {
 } from './worlds/base/missing-belonging.js';
 export {
   GOD_SPAWN_OPTIONS,
+  godAuthoringCatalogue,
   editPerson,
   editWorldEvents,
   reviveActor,
@@ -147,6 +151,7 @@ export {
 export * from './mind.js';
 
 export * from './experience.js';
+export * from './history-authoring.js';
 export * from './experience-sources.js';
 export * from './status-effects.js';
 export * from './status-condition-references.js';
@@ -198,6 +203,7 @@ export { gatheringDescription } from './worlds/base/actions.js';
 export { recordInventionFeedback } from './invention-feedback.js';
 
 export * from './spatial-state.js';
+export { headingFrame } from './follow.js';
 export * from './spatial-mutations.js';
 
 export {
@@ -416,10 +422,23 @@ export { personallyKnownPlaceReports } from './outings.js';
 export { activityHostRequests } from './activity-hosts.js';
 
 export { isNativeInputField, isMaterialInputRole } from './native-inputs.js';
-export { BOUNDARY_REPAIR_INPUT_LIMIT } from './boundary-repair-inputs.js';
+export {
+  BOUNDARY_REPAIR_INPUT_LIMIT,
+  boundaryRepairInputFields,
+} from './boundary-repair-inputs.js';
 export * from './execution-input.js';
 export { canSteer } from './player-steering.js';
 
 export { itemContainerCapacity } from './objects.js';
 
 export * from './cartography.js';
+export { BASE_COGNITION_LAB_RECIPES } from './worlds/base/cognition-lab-recipes.js';
+
+export {
+  nativeValueHoldSupported,
+  nativeValueHoldCurrent,
+  validateNativeValueHolds,
+  type NativeValueHold,
+} from './native-value-holds.js';
+
+export { BASE_COGNITION_LAB_ACTION_TYPES } from './worlds/base/cognition-lab-protocol.js';

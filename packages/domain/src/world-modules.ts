@@ -2,6 +2,7 @@ import { validateCartography } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
 import { validLethalPermission } from './combat-consent.js';
+import { validateExpressions, type ExpressionDefinition } from './expression-definitions.js';
 import { validateSensoryProgress } from './perception-timing.js';
 import { validatePersonalSocialEvidence } from './personal-social.js';
 import { validateSupplyOpportunities } from './supply-opportunities.js';
@@ -60,6 +61,7 @@ import { activeStatusEffects } from './status-capabilities.js';
 import { strikeDefinition, validMelee, validateNativeStrikes } from './strikes.js';
 import {
   conditionText,
+  conditionSeverity,
   reconcileConditions,
   canNoticeInternalChange,
   validateConditionPolicy,
@@ -195,7 +197,19 @@ export interface DefinitionPin {
   version: number;
   digest: string;
 }
+/** Selected-world reference material for human experiments; never execution authority. */
+export interface WorldExperimentGuide {
+  id: string;
+  name: string;
+  description: string;
+  setup: string;
+  changedFactor: string;
+  observe: string;
+  prerequisites: string[];
+}
 export interface WorldModuleManifest {
+  expressions?: ExpressionDefinition[];
+  experimentGuides?: WorldExperimentGuide[];
   appraisals?: AppraisalPolicy;
   revision: number;
   interface: 'world-modules-v1';
@@ -307,6 +321,10 @@ export function activityManifest(world: WorldState): string {
     bodyPolicy: manifest.bodyPolicy && definitionPin(manifest.bodyPolicy),
     acoustics: definitionPin(manifest.acoustics),
     rangedPolicy: manifest.rangedPolicy && definitionPin(manifest.rangedPolicy),
+    appraisals: manifest.appraisals && {
+      ...manifest.appraisals,
+      definitions: manifest.appraisals.definitions.map(definitionPin),
+    },
   });
 }
 export function createModuleManifest(
@@ -317,8 +335,12 @@ export function createModuleManifest(
   activityHosts: readonly DefinitionPin[] = [],
   rangedPolicy: RangedPolicy | null = null,
   socialPerception: SocialPerceptionPolicy | null = null,
+  experimentGuides: readonly WorldExperimentGuide[] = [],
+  expressions: readonly ExpressionDefinition[] = [],
 ): WorldModuleManifest {
   const manifest: WorldModuleManifest = {
+    expressions: structuredClone([...expressions]),
+    experimentGuides: structuredClone([...experimentGuides]),
     appraisals: structuredClone(BASE_APPRAISAL_POLICY),
     revision: 1,
     interface: 'world-modules-v1',
@@ -402,6 +424,8 @@ function finite(value: unknown): value is number {
 // docs/architecture.md#content-counts-and-request-limits
 export function validateModuleManifest(manifest: WorldModuleManifest): void {
   object(manifest, [
+    'expressions',
+    'experimentGuides',
     'revision',
     'interface',
     'bodyPolicy',
@@ -421,6 +445,34 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
     'rangedPolicy',
     'rangedPolicyPin',
   ]);
+  if (manifest.expressions !== undefined) validateExpressions(manifest.expressions);
+  if (manifest.experimentGuides !== undefined) {
+    if (!Array.isArray(manifest.experimentGuides))
+      throw new Error('Invalid experiment reference material.');
+    const ids = new Set<string>();
+    for (const guide of manifest.experimentGuides) {
+      object(guide, [
+        'id',
+        'name',
+        'description',
+        'setup',
+        'changedFactor',
+        'observe',
+        'prerequisites',
+      ]);
+      if (
+        !boundedText(guide.id, 120) ||
+        ids.has(guide.id) ||
+        ![guide.name, guide.description, guide.setup, guide.changedFactor, guide.observe].every(
+          (value) => boundedText(value, 4000),
+        ) ||
+        !Array.isArray(guide.prerequisites) ||
+        !guide.prerequisites.every((value) => boundedText(value, 1000))
+      )
+        throw new Error('Invalid experiment reference material.');
+      ids.add(guide.id);
+    }
+  }
   validateAppraisalPolicy(manifest.appraisals);
   validateActivityHostPins(manifest.activityHosts);
   validateRangedPolicy(manifest.rangedPolicy);
@@ -1016,9 +1068,18 @@ export function projectAttributes(
   world: WorldState,
   entity: Entity,
   audience: 'owner' | 'public',
+  attributeIds?: readonly string[],
 ): AttributeView[] {
   if (!entity.actor) return [];
-  return applicableAttributes(world, entity)
+  const selected = attributeIds
+    ? attributeIds.flatMap((id) => {
+        const definition = attributeDefinition(world, id);
+        return definition && readAttribute(world, entity, definition) !== undefined
+          ? [definition]
+          : [];
+      })
+    : applicableAttributes(world, entity);
+  return selected
     .filter((d) => audience === 'owner' || d.disclosure === 'public')
     .map((d) => {
       const value = readAttribute(world, entity, d);
@@ -1077,19 +1138,44 @@ export function projectAttributes(
       };
     });
 }
-export function bodyContext(world: WorldState, entity: Entity): string {
+export function bodyContext(
+  world: WorldState,
+  entity: Entity,
+  options: { exactNumbers?: boolean } = {},
+): string {
   const actor = entity.actor!;
   return [
     // Qualitative concerns supplement measurements; they must not replace them.
     // docs/memory-architecture.md#3-one-compact-model-facing-context
     ...projectAttributes(world, entity, 'owner').flatMap((v) => {
       const name = v.name;
+      const definition = attributeDefinition(world, v.id)!;
+      const display = (value: unknown) => {
+        if (typeof value !== 'number' || options.exactNumbers) return String(value);
+        const formatted = formatDisplayNumber(value);
+        const rounded = Number(formatted);
+        // Approximate prose must not disguise a nonzero value or a different
+        // native condition. Stored values and execution always remain exact.
+        // docs/technical/situation-aware-cognition-context.md#186-faithful-presentation-across-routes
+        const boundaries = [v.min, v.max].filter((n): n is number => n !== undefined);
+        const changesMeaning =
+          Math.sign(value) !== Math.sign(rounded) ||
+          boundaries.some((bound) => Math.sign(value - bound) !== Math.sign(rounded - bound)) ||
+          (definition.condition &&
+            conditionSeverity(definition.condition, value) !==
+              conditionSeverity(definition.condition, rounded)) ||
+          attributeConcernActive(entity, definition, value) !==
+            attributeConcernActive(entity, definition, rounded) ||
+          attributeCritical(entity, definition, value, definition.critical) !==
+            attributeCritical(entity, definition, rounded, definition.critical);
+        return changesMeaning || rounded === value ? String(value) : `approximately ${formatted}`;
+      };
       const measurement =
         v.status === 'unknown'
           ? `${name}: unknown.`
           : v.display === 'meter'
-            ? `${name}: ${v.value}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
-            : `${name}: ${v.value}.`;
+            ? `${name}: ${display(v.value)}${v.unit ? ` ${v.unit}` : ''} (range ${v.min}–${v.max}${v.unit ? ` ${v.unit}` : ''}).`
+            : `${name}: ${display(v.value)}.`;
       return [measurement, v.condition ?? v.concern, v.meaning].filter(Boolean);
     }),
     ...activeStatusEffects(world, entity)

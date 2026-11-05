@@ -114,7 +114,11 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
       reason: `${definition.reservoir.workSeconds} seconds of game time, plus approach. ${RESERVOIR_CONSUMER_GUIDE.drain}`,
     };
   },
-  requestChoices(world, actorId, prepared) {
+  requestChoices(world, actorId, prepared, query, families) {
+    if (families && !families.includes('reservoir-demo:recharge-session'))
+      return { choices: [], warnings: [] };
+    if (query && (query.family !== 'reservoir-demo:recharge-session' || query.field !== 'sourceId'))
+      return { choices: [], warnings: [] };
     const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });
     if (!observed) return { choices: [], warnings: ['Your character is unavailable.'] };
     // Match the existing bounded activity-context window; omitted is never unavailable.

@@ -1,3 +1,4 @@
+import { hasEmbeddingAccess } from './generation-config.js';
 import { createEmbeddingClient } from '@open-legend/ai';
 import { inventionFamily, describeInvention } from '@open-legend/domain';
 import type { InventionSearch, SimilarInvention } from '@open-legend/protocol';
@@ -38,7 +39,7 @@ export async function searchInventions(
     message,
   });
   const vectors = store.vectors;
-  if (!vectors || !config.embeddingKey)
+  if (!vectors || !hasEmbeddingAccess(config))
     return unavailable(
       'Similarity search needs configured embeddings and PostgreSQL vector storage. Retry search or explicitly continue without it.',
     );
@@ -63,14 +64,16 @@ export async function searchInventions(
       workSeconds: recipe.workSeconds,
     }),
   }));
-  const embeddings = createEmbeddingClient({
-    apiKey: config.embeddingKey,
-    model: config.embeddingModel,
-    dimensions: config.embeddingDimensions,
-    network: log.network,
-    modelPrices: config.embeddingModelPrices,
-    timeoutMs: config.aiTimeoutMs,
-  });
+  const embeddings =
+    service.embeddingClient ??
+    createEmbeddingClient({
+      apiKey: config.embeddingKey,
+      model: config.embeddingModel,
+      dimensions: config.embeddingDimensions,
+      network: log.network,
+      modelPrices: config.embeddingModelPrices,
+      timeoutMs: config.aiTimeoutMs,
+    });
   try {
     const indexed = await vectors.reconcile(scope, sources);
     const missing = sources.filter((source) => !indexed.has(source.id));

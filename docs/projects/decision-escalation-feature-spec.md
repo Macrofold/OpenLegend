@@ -1,26 +1,28 @@
 # Better decisions without stopping the game — feature specification
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Luna Low is enabled by default; background concurrency is expanded to 100, with broader release qualification open. | 2026-10-22   |
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Useful-lifetime continuation and scoped preparation pass focused native/live checks; broader release qualification remains open. | 2026-11-03   |
 
-Specification updated **2026-10-22T21:59:22Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
+Specification updated **2026-11-03T06:21:41Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
 
 ## Purpose
 
-Keep ordinary character decisions fast, while giving difficult or unusable decisions one opportunity to benefit from **GPT-6 Luna at low reasoning effort**. The character's existing activity, native reactions and the rest of the world continue while that extra reasoning happens. The stronger model proposes an answer; the game checks whether that answer can still be used.
+Keep ordinary character decisions fast, while giving difficult or unusable decisions one opportunity for higher-model reasoning. The configured complex deployment supplies that request when present; otherwise the default remains **GPT-6 Luna at low reasoning effort**. An explicit direct-model selection takes precedence. The character's existing activity, native reactions and the rest of the world continue while that extra reasoning happens. The stronger model proposes an answer; the game checks whether that answer can still be used.
 
-The server owns one bounded reconsideration attempt. The fast decision model remains configurable; the fallback choice does not imply that every primary request meets a sub-second deadline.
+The server owns one bounded reconsideration attempt. Both the fast decision model and higher model are configurable through their existing server owners. Direct models require their exact configured prices; deployment request fees remain separate from shared hosting. The default fallback choice does not imply that every primary request meets a sub-second deadline.
 
 ## Current behavior
 
+[SC14’s installed-family detail continuation](../technical/situation-aware-cognition-context.md#185-one-optional-installed-activity-detail-continuation) is implemented: one higher child normally makes one generation, or an eligible response may request effect-free detail followed by one final generation under the original root limits. It grants no recursive fallback or general tool loop.
+
 Ordinary operation still chooses a generative route when no supplied action is suitable. With fallback disabled, missing or invalid ratings defer without a repair call. Native action admission, protected memory selection, background reflection and durable spending remain the existing authorities.
 
-The implemented capability records why reconsideration is allowed, schedules one stronger-model attempt separately, and saves its final outcome. The immediate coordinator is released after a durable action, continuation or deferral, while a separate execution limit still counts the original remote request. It does not edit personality files, grant new actions, repair missing engine rules or turn a conversation into a mandatory long deliberation.
+The implemented capability records why reconsideration is allowed, schedules one stronger-model attempt separately, and saves its final outcome. A deferred decision retains its admitted pipeline until completion or handoff; recording deferral does not admit another ordinary pipeline. Separate execution limits still count remote requests. It does not edit personality files, grant new actions, repair missing engine rules or turn a conversation into a mandatory long deliberation.
 
-The capability defaults to apply for the configured originating model and existing permitted recovery reasons. An operator can explicitly disable it or override that scope. A finite existing spending allowance and direct OpenAI credentials remain required; default standard Luna pricing is supplied unless an operator catalogue overrides it. Existing generation-disabled operation continues to prohibit it. The [technical design](decision-escalation-tech-design.md#adoption-and-current-policy) owns exact configuration and admission contracts.
+The capability defaults to apply for the configured originating model and existing permitted recovery reasons. An operator can explicitly disable it or override that scope. Existing spending/no-call admission and credentials for the selected route remain required; default standard Luna pricing is supplied unless an operator catalogue overrides it. Existing generation-disabled operation continues to prohibit it. The [technical design](decision-escalation-tech-design.md#adoption-and-current-policy) owns exact configuration and admission contracts.
 
-## Why Luna Low is the selected fallback
+## Why Luna Low remains the direct default
 
 The [complete known-miss comparison](../benchmarks/decision-fallback-models.md#all-267-recorded-jev-misses-complete-comparison) tested all 267 recorded Jev misses. Excluding 59 calculations that belong in native code, Low and Medium matched 132/208 (63.46%) and 135/208 (64.90%). They earned 83.99% and 84.11% of possible points, with mean requests of 2.66 and 3.68 seconds. Low trades three net accepted answers for faster delayed reasoning.
 
@@ -77,6 +79,18 @@ The game keeps simulation time separate from elapsed real time. A world running 
 
 If the fast model answers after one second, a choice that is still useful may be checked and used as a delayed answer. It is not counted as a split-second decision, and it does not require a second charge simply for arriving late. Immediate-only choices expire instead. An uncertain first execution blocks a second paid call while it is reconciled; the original task deadline bounds that wait.
 
+### Continuation within the original lifetime
+
+**Implemented.** An admitted decision that remains useful later may finish its existing workflow within its original usefulness deadline. The one-second mark records immediate action, continuation or deferral; it is not a cutoff for every model request in that workflow. This explicitly includes the first request when necessary preparation takes more than one second. Ordinary and supplied-response decisions share the same lifetime rule. Rootless callers retain their own existing bounds.
+
+For example, a character may choose to offer food, then choose which possession and how much. Finishing those details is part of the same decision. A character retrieving an old promise before answering should also be able to finish. Neither receives another 31 seconds, a new spending allowance or a guaranteed action. The character may refuse, stay quiet, lose the opportunity, or produce an unusable answer. Existing activities and the world continue normally; no filler speech or gesture is generated to disguise waiting.
+
+"Admitted" means the existing scheduler accepted this actor, cause and authority into its bounded active capacity before preparation. A queued event, a saved task object or an operator inspecting a scenario cannot create that entitlement. Immediate-only tasks retain their earlier expiry. New relevant evidence, changed intent, loss of permission, cancellation or the original real/simulation deadline can end any unfinished decision.
+
+The [technical design](decision-escalation-tech-design.md#useful-lifetime-continuation) also scopes memory-index readiness to the requesting character, bounds preparation waits by the caller's lifetime, and shares unchanged preparation through existing owners. It keeps required evidence, exact request/spending durability and final native validation. No new planner, fallback route, model default, concurrency allowance or world rule is introduced. Longer admitted work can occupy existing capacity and spend more of an already authorized budget; that tradeoff must be measured alongside the additional useful answers.
+
+Delivery is tracked in [DE06](../maintainers/cognition-redesign.md#de06--useful-lifetime-continuation-and-preparation), with shared preparation measurements in [PF14](../maintainers/performance.md#pf14--shared-cognition-preparation-and-complete-path-cost). Focused qualification does not reopen the completed experiment panel or establish broader latency or character quality.
+
 ## What the stronger model receives and returns
 
 Supply a fresh, character-permitted description of the initiating situation, current actions and goals, body and needs, applicable feelings, required memories and commitments, relevant optional evidence, installed rules, and exact available choices. Preserve unknowns, conflicting claims, event times and whether information was observed, heard, remembered or inferred. Include all task-relevant installed restrictions; do not silently drop one because the character has twenty meters or hundreds of memories.
@@ -84,6 +98,8 @@ Supply a fresh, character-permitted description of the initiating situation, cur
 Prefer preventing an illegal choice from being offered in the first place. Where a previous answer was rejected, the new request can include a short factual explanation such as “that option requires more available energy than this character has.” Explanations must not reveal private facts. Luna receives neither the benchmark answer key nor instructions to agree with the earlier model.
 
 The output remains small and structured: an offered choice, task-specific rating/probability, explicit abstention, a subset of relevant optional memories, or supported response operations. Every requested question must be explicitly answered or declined. An appraisal can mean “propose frustration at this intensity, supported by this permitted event,” through the installed feeling rules. Language is optional unless the task calls for speech. A fluent explanation does not excuse an invalid structured choice, and private model reasoning is never required. The [exact output contract](decision-escalation-tech-design.md#exact-answer-envelope) prevents implementers from inventing their own formats.
+
+Abstention reasons follow the question's meaning: “no suitable option” applies only to an offered choice, while “no change warranted” permits an appraisal to leave feelings unchanged. Missing/conflicting evidence and unsupported judgments remain distinct. Empty relevance selections and deliberate silence are valid answers; a spoken uncertainty or refusal is also a response. New replies may repeat earlier information when appropriate, including to answer a follow-up. Protection against duplicate execution applies to the prior operation, not to saying the same fact again.
 
 No raw whole-world data, unrelated private memories, credentials, extra tools or writable mind workspace are supplied. Context overflow is explicit. A larger context window cannot reconstruct forgotten facts or compensate for facts the server never provided.
 
@@ -101,13 +117,13 @@ The new feeling-output capability requires explicit permission in each installed
 
 ## Spending, load and failure
 
-The implementation permits one stronger-model request per decision, with no recursive escalation or automatic same-model repetition. Its cost shares the existing decision/account budgets, including money still reserved for uncertain earlier requests. The benchmark's $100 experiment allowance is not a gameplay operating budget.
+The implementation permits one stronger-model child per decision, normally with one request and only the explicit SC14 detail/final exception above, with no recursive escalation or automatic same-model repetition. Its cost shares the existing decision/account budgets, including money still reserved for uncertain earlier requests. The benchmark's $100 experiment allowance is not a gameplay operating budget.
 
-Preparing that fallback cannot silently buy other AI calls for memory ranking, summaries, embeddings or action interpretation. It uses permitted current facts and valid cached information, then makes at most one additional model invocation. Missing required context ends preparation explicitly. The configured direct route must also be priced as direct OpenAI even when ordinary generation uses Macrofold.
+Preparing that fallback cannot silently buy other AI calls for memory ranking, summaries, embeddings or action interpretation. It uses permitted current facts and valid cached information, then normally makes one additional generation; an eligible explicit installed-family detail request permits one final generation within the same allowance. Missing required context ends preparation explicitly. An unnamespaced direct selection is priced as direct OpenAI even when ordinary generation uses Macrofold. A namespaced catalog selection uses the existing Macrofold inference route, broader backend credential and configured Run reserve; missing access refuses dispatch. A configured deployment uses its native zero request-fee reservation while shared hosting remains separately funded; zero actor allowance still prevents dispatch.
 
 Only an operator may choose the provider/model and permit the extra spending. A character's thoughts, a player message or a generated world description cannot grant it. A cheaper replacement, different billing mode or different data-sharing route requires explicit configuration rather than silent substitution.
 
-The server permits 100 simultaneous background operations, shared across character reconsideration, maintenance/indexing and urgent decisions, plus its separate primary-inference allowance. Each uncertain execution occupies one position; unrelated work can use the remainder without discarding possible charges. Queues and concurrent execution are bounded under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention). Native simulation and ordinary player interaction must remain responsive under overload. Declining additional optional deliberation is preferable to accumulating an unlimited backlog of obsolete answers. The inspector records why a request was declined, cancelled, unusable or still financially uncertain.
+The server permits 100 simultaneous background operations, shared across character reconsideration, maintenance/indexing and urgent decisions, plus its separate primary-inference allowance. Each uncertain execution occupies one position; unrelated work can use the remainder without discarding possible charges. When the primary request has ended locally but its external completion remains unknown, one independent ordinary request at a time may also use an available background position. This never retries the uncertain decision or increases capacity. Queues and concurrent execution are bounded under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention). Native simulation and ordinary player interaction must remain responsive under overload. Declining additional optional deliberation is preferable to accumulating an unlimited backlog of obsolete answers. The inspector records why a request was declined, cancelled, unusable or still financially uncertain.
 
 Pausing, shutdown and restart end unfinished delayed decisions. Resuming or restarting does not automatically send or apply them again. Completed actions and real spending records survive; a later genuine event may create a new decision. If a provider might still be executing, its occupied execution capacity remains accounted for until completion is known, even across restart. Missing price alone retains the financial allowance without occupying execution capacity forever.
 
@@ -119,10 +135,10 @@ The authorized cognition inspector links the original decision and its stronger 
 
 ## Delivery and acceptance
 
-Detailed tasks and unchecked gates belong to [DE01–DE05](../maintainers/cognition-redesign.md#decision-escalation), not a second checklist here.
+Detailed tasks and unchecked gates belong to [DE01–DE06](../maintainers/cognition-redesign.md#decision-escalation), not a second checklist here.
 
 1. **Native checks and request meaning:** identify task-specific deterministic facts, supported output shapes, the unresolved decision and its legal alternatives. Preserve source/effect distinctions.
-2. **One asynchronous stronger attempt:** deliver Luna Low for a bounded existing action-selection case, with shared accounting, fresh admission, cancellation and no shared-slot wait during remote execution.
+2. **One asynchronous stronger attempt:** deliver the configured higher route for a bounded existing action-selection case, with shared accounting, fresh admission, cancellation and no shared-slot wait during remote execution.
 3. **Complete consumer integration:** cover explicit independent decisions, appraisal and attention consumers where supported, conversation integration, restart/restore, privacy and the existing inspector.
 4. **Measured selection policy:** extend the benchmark to exercise actual escalation triggers, new prompts, timing and state changes; qualify any optional uncertainty thresholds before enabling them.
 
@@ -132,13 +148,13 @@ Human review remains necessary for emotional appropriateness, character consiste
 
 ## Scope boundaries and decisions
 
-This feature implements one low-effort generative fallback and explicit eligible fast-model origins. It does not add universal emotional laws, new injury mechanics, a planning agent with tools, a multi-model voting system, unlimited retries, silent provider switching or automatic personal-file edits. Those capabilities retain their existing owners and separate approval boundaries.
+This feature implements one generative fallback and explicit eligible fast-model origins, with low effort on the direct default and supported native settings on a selected deployment. It does not add universal emotional laws, new injury mechanics, a planning agent with tools, a multi-model voting system, unlimited retries, silent provider switching or automatic personal-file edits. Those capabilities retain their existing owners and separate approval boundaries.
 
 Implementation and live Low gameplay checks are complete. A small live policy comparison triggered no fallback and therefore demonstrated no added quality benefit. Human character review, natural primary-failure integration and representative deployment capacity remain explicit [release qualification limits](../verification/decision-escalation.md#remaining-release-qualification). Default activation is authorized; those limits are not implied to have passed.
 
 ## Maintained records
 
-- Implementation and acceptance: [DE01–DE05](../maintainers/cognition-redesign.md#decision-escalation).
+- Implementation and acceptance: [DE01–DE06](../maintainers/cognition-redesign.md#decision-escalation).
 - Limits and constraints: [DE-L01–DE-L05](../limits/ai-execution.md#decision-escalation-limits); existing [cognition allowances](../limits/cognition.md#cg08) remain shared owners.
 - Mechanism and verification: [Technical design](decision-escalation-tech-design.md).
 - Existing contracts: [AI providers](../ai-providers.md), [memory and response admission](../memory-architecture.md), [engine/world boundaries](../engine-and-world-boundaries.md).

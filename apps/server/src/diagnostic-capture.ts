@@ -79,13 +79,19 @@ function prepare(value: unknown, maxBytes: number, recordMetadata = false): Prep
       if (length > maxBytes) throw new CaptureOmission();
       if (recordMetadata && depth === 1 && identityFields.has(key)) return string(item, length);
       if (/^\s*[\[{]/.test(item)) {
+        let parsed: unknown;
         try {
-          return visit(JSON.parse(item), depth + 1, key, embedding);
+          parsed = JSON.parse(item);
         } catch {
-          // A truncated/malformed JSON prefix cannot be safely treated as prose:
-          // quoted or escaped secret keys would bypass the prose redactor.
-          throw new CaptureOmission();
+          // Bracketed labels are prose; malformed structured or escaped bodies
+          // still fail closed because their secret keys can evade prose redaction.
+          if (
+            !/^\s*\[[\p{L}\p{N}_ -]+\](?:\s|$)/u.test(item) ||
+            /[{}]|["']\s*[:=]|\\["'u]/i.test(item)
+          )
+            throw new CaptureOmission();
         }
+        if (parsed !== undefined) return visit(parsed, depth + 1, key, embedding);
       }
       const redacted = item
         .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, 'Bearer [redacted]')

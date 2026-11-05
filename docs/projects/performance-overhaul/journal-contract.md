@@ -78,7 +78,7 @@ The following classifies the actual `SqlGameRepository.commit` sequence. “Sync
 
 ## Reader revision and wait matrix
 
-The database facade used by existing repositories owns a conservative table-read fence. Journal append/application use the underlying connection explicitly; they cannot recursively wait on themselves. Unknown table access waits conservatively. A read transaction fences before opening its repeatable snapshot, never halfway through it.
+The database facade used by existing repositories owns a conservative table-read fence. Journal append/application use the underlying connection explicitly; they cannot recursively wait on themselves. Unknown table access waits conservatively. A read transaction fences before opening its repeatable snapshot, never halfway through it. Trusted nonrewindable owners use `SqlGameRepository.operationalDatabase`, sharing the existing adapter and transaction context. Lab receipts/captures/Library metadata, command recovery and authority belong there; canonical joins and mixed transactions enter through the fenced `db` view. An operational callback must not depend on application of unrelated world tables before it can record an accepted result.
 
 The service publishes the live world immediately after durable acknowledgement. Deferred application separately notifies the service when committed memory metadata or retained history rows change, so its cached views and existing SSE transport also advance memory/place revision tokens in a quiet or paused world. Clock-only application sends no second notification. This notification grants no gameplay effect, starts no polling and does not delay the original acknowledgement. The service releases its subscription with its runtime resources.
 

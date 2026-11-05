@@ -52,9 +52,16 @@ export function subjectKnowledgeCandidates(
   world: WorldState,
   actorId: string,
   involved: Set<string>,
+  selection: { requiredOnly?: boolean; candidateIds?: ReadonlySet<string> } = {},
 ): AttentionCandidate[] {
   return Object.entries(world.actorKnowledge?.[actorId] ?? {}).flatMap(([id, doc]) => {
     if (doc.subjectId === null || !doc.text) return [];
+    const required = !doc.subjectKind && involved.has(doc.subjectId);
+    if (
+      (selection.requiredOnly && !required) ||
+      (selection.candidateIds && !required && !selection.candidateIds.has(`notepad:${id}`))
+    )
+      return [];
     if (doc.subjectKind) {
       // Map subjects are not entity references, even if their string IDs coincide.
       // These owner-private notes may inform context without granting physical

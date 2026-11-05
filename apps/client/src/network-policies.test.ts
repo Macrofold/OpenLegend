@@ -6,6 +6,9 @@ it('classifies POST reads, shared-path operations, and retained recovery without
     semantic: 'read',
     timeoutMs: 15_000,
   });
+  expect(
+    browserRequestPolicy('POST', '/api/cognition-lab/runs/run/stages/stage/receipt', {}),
+  ).toMatchObject({ semantic: 'read', timeoutMs: 30_000, recovery: 'observation' });
   expect(browserRequestPolicy('POST', '/api/god/appraisal', {})).toMatchObject({
     semantic: 'mutation',
     recovery: 'current-state',

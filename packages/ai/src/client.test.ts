@@ -1,6 +1,53 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAiClient, estimateCostUsd } from './index.js';
+import {
+  createAiClient,
+  compileSchema,
+  estimateCostUsd,
+  batchJudgmentQuestions,
+  validateJudgmentSize,
+  JUDGMENT_STATE_QUESTION_CHARACTERS,
+} from './index.js';
 import type { FetchTransport, GenerateRequest, JudgeRequest } from './types.js';
+
+describe('complete independent judgment packing', () => {
+  it('preserves every offered question in order across bounded requests', () => {
+    const state = { evidence: 'x'.repeat(80_000) };
+    const questions = Object.fromEntries(
+      Array.from({ length: 400 }, (_, index) => [
+        `q${index}`,
+        { type: 'noul' as const, instructions: `${index}: ${'detail '.repeat(170)}` },
+      ]),
+    );
+    const batches = batchJudgmentQuestions(state, questions);
+    expect(batches.length).toBeGreaterThan(1);
+    expect(batches.flatMap((batch) => Object.keys(batch))).toEqual(Object.keys(questions));
+    expect(Object.assign({}, ...batches)).toEqual(questions);
+    for (const batch of batches) expect(() => validateJudgmentSize(state, batch)).not.toThrow();
+  });
+  it('keeps an ordinary complete map in one request', () => {
+    const questions = { one: { type: 'noul' as const, instructions: 'Choose this now?' } };
+    expect(batchJudgmentQuestions({ evidence: 'A current fact.' }, questions)).toEqual([questions]);
+  });
+  it('retains every valid question identity, including prototype property names', () => {
+    const questions = Object.fromEntries(
+      ['__proto__', 'constructor', 'okay'].map((id) => [
+        id,
+        { type: 'noul' as const, instructions: 'Choose this now?' },
+      ]),
+    );
+    const batches = batchJudgmentQuestions({}, questions);
+    expect(Object.keys(batches[0]!)).toEqual(Object.keys(questions));
+    expect(Object.getPrototypeOf(batches[0]!)).toBeNull();
+  });
+  it('refuses a shared state and individual question that cannot fit', () => {
+    expect(() =>
+      batchJudgmentQuestions(
+        { evidence: 'x'.repeat(JUDGMENT_STATE_QUESTION_CHARACTERS) },
+        { one: { type: 'noul', instructions: 'Choose this now?' } },
+      ),
+    ).toThrow('judgment_state_question_exceeds_28000_estimated_tokens');
+  });
+});
 
 const question: JudgeRequest = {
   requestId: 'judge-1',
@@ -220,7 +267,16 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     const result = await createAiClient({
       openai: { apiKey: 'fixture', prices, reasoningEffort: 'low' },
       fetch: fetcher,
-    }).generate<{ text: string }>(generation);
+    }).generate<{ text: string }>({
+      ...generation,
+      schema: {
+        type: 'object',
+        properties: { text: { $ref: '#/$defs/allowed~1text~0value' } },
+        required: ['text'],
+        additionalProperties: false,
+        $defs: { 'allowed/text~value': { type: 'string', enum: ['I should find food.'] } },
+      },
+    });
     expect(result.outcome).toBe('value');
     if (result.outcome === 'value') expect(result.value.text).toBe('I should find food.');
     const [url, init] = fetcher.mock.calls[0]!;
@@ -232,7 +288,17 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
       max_output_tokens: 2048,
       reasoning: { effort: 'low' },
       text: {
-        format: { type: 'json_schema', strict: true, name: 'thought', schema: generation.schema },
+        format: {
+          type: 'json_schema',
+          strict: true,
+          name: 'thought',
+          schema: expect.objectContaining({
+            properties: { text: { $ref: '#/$defs/allowed~1text~0value' } },
+            $defs: {
+              'allowed/text~value': { type: 'string', enum: ['I should find food.'] },
+            },
+          }),
+        },
       },
     });
     expect(result.receipt).toMatchObject({
@@ -247,6 +313,63 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     });
     expect(result.receipt.estimatedCostUsd).toBeCloseTo(0.0001139, 12);
   });
+
+  it.each(['retained', 'mutated'])(
+    'captures exact request accounting and preserves the submitted schema across mutation: %s',
+    async (answer) => {
+      const schema = {
+        type: 'object',
+        properties: { text: { type: 'string', enum: ['retained'] } },
+        required: ['text'],
+        additionalProperties: false,
+      };
+      const context = { observation: 'Mara said “bonjour”.' };
+      const originalContext = structuredClone(context);
+      const originalSchema = structuredClone(schema);
+      const instructions = 'Réponds with the permitted value.';
+      let transport = '';
+      const fetcher = vi.fn<FetchTransport>(async (_url, init) => {
+        transport = String(init.body);
+        schema.properties.text.enum[0] = 'mutated';
+        context.observation = 'A different observation.';
+        return response(generateResponse(JSON.stringify({ text: answer })));
+      });
+      const result = await createAiClient({
+        openai: { apiKey: 'fixture' },
+        fetch: fetcher,
+      }).generate({ ...generation, instructions, context, schema, maxOutputTokens: 128 });
+      expect(result.outcome).toBe(answer === 'retained' ? 'value' : 'invalid');
+      const sent = JSON.parse(transport);
+      expect(sent.text.format.schema).toEqual(originalSchema);
+      expect(JSON.parse(sent.input)).toEqual(originalContext);
+      const inputBytes = Buffer.byteLength(
+        JSON.stringify({
+          instructions: sent.instructions,
+          input: sent.input,
+          text: sent.text,
+        }),
+      );
+      expect(result.receipt.requestAccounting).toEqual({
+        instructionsBytes: Buffer.byteLength(instructions),
+        contextBytes: Buffer.byteLength(JSON.stringify(originalContext)),
+        schemaBytes: Buffer.byteLength(JSON.stringify(originalSchema)),
+        toolDefinitionBytes: 0,
+        toolResultBytes: 0,
+        inputScope: 'adapter-input',
+        encodedInputBytes: inputBytes,
+        transportBytes: Buffer.byteLength(transport),
+        maxOutputTokens: 128,
+        estimatedInputTokens: {
+          value: Math.ceil(inputBytes / 3),
+          basis: 'captured-input-utf8-divided-by-three',
+          model: 'gpt-5.6-luna',
+          exact: false,
+        },
+      });
+      expect(result.receipt.usage?.inputTokens).toBe(100);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it.each(['{"text":12}', '{"text":"hi","extra":true}', '```json\n{}\n```'])(
     'rejects invalid generated data: %s',
@@ -340,6 +463,44 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     expect((await client.generate({ ...generation, maxOutputTokens: 1_000_000 })).outcome).toBe(
       'invalid',
     );
+    const local = {
+      type: 'object',
+      properties: { text: { $ref: '#/$defs/text' } },
+      required: ['text'],
+      additionalProperties: false,
+      $defs: { text: { type: 'string', enum: ['permitted'] } },
+    };
+    const valid = compileSchema(local);
+    expect(valid({ text: 'permitted' })).toBe(true);
+    expect(valid({ text: 'invented' })).toBe(false);
+    for (const ref of [
+      '#',
+      '#/definitions/text',
+      '#/$defs/missing',
+      '#/$defs/text/type',
+      '#/$defs/te%78t',
+      '#/$defs/text~2',
+      'https://example.com/schema',
+    ])
+      expect(() => compileSchema({ ...local, properties: { text: { $ref: ref } } })).toThrow();
+    for (const definitions of [
+      { text: { $ref: '#/$defs/text' } },
+      { text: { $ref: '#/$defs/other' }, other: { $ref: '#/$defs/text' } },
+      {
+        text: {
+          type: 'object',
+          properties: { undeclared: { type: 'string' } },
+          required: [],
+          additionalProperties: false,
+        },
+      },
+      { text: { type: 'string' }, unused: { type: 'object', properties: {}, required: [] } },
+      { text: { $dynamicRef: '#/$defs/text' } },
+      { text: { $ref: '#/$defs/other', minLength: 1 }, other: { type: 'string' } },
+      { text: { $id: 'https://example.com/text', type: 'string' } },
+      { text: { $async: true, type: 'string' } },
+    ])
+      expect(() => compileSchema({ ...local, $defs: definitions })).toThrow();
     expect(fetcher).not.toHaveBeenCalled();
   });
 

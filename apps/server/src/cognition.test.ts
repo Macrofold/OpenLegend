@@ -394,19 +394,27 @@ describe('fixture: cognition vertical slice', () => {
         });
       }),
     );
-    const pending = new MacrofoldBackend(s).judge({
-      requestId: 'cancelled-original-deadline',
-      signal: controller.signal,
-      deadlineMs: Date.now() + 100,
-      state: {},
-      questions: { notice: { type: 'noul', instructions: 'Did I notice it?' } },
-    });
-    await dispatched;
-    controller.abort();
-    const result = await pending;
-    expect(result.outcome).toBe('cancelled');
-    expect(transportSignal!.reason).toMatchObject({ kind: 'deadline_exceeded' });
-    expect(result.receipt).toMatchObject({ dispatched: true, completionUncertain: true });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date', 'performance'] });
+    try {
+      const pending = new MacrofoldBackend(s).judge({
+        requestId: 'cancelled-original-deadline',
+        signal: controller.signal,
+        deadlineMs: Date.now() + 100,
+        state: {},
+        questions: { notice: { type: 'noul', instructions: 'Did I notice it?' } },
+      });
+      await dispatched;
+      controller.abort();
+      await vi.advanceTimersByTimeAsync(99);
+      expect(transportSignal!.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(transportSignal!.aborted).toBe(true);
+      const result = await pending;
+      expect(result.outcome).toBe('cancelled');
+      expect(result.receipt).toMatchObject({ dispatched: true, completionUncertain: true });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it.each(['managed', 'byok'] as const)(
@@ -523,7 +531,14 @@ describe('fixture: cognition vertical slice', () => {
       expect(admissions[1]).not.toHaveProperty('billing_mode');
       expect(admissions[1]).not.toHaveProperty('model');
       expect(modelReads).toBe(1);
-      const laneKey = saved.mock.calls.find(([key]) => key.includes(':lane:conversation:'))![0];
+      // Integration keys are opaque runtime namespace identities. Inspect the
+      // actual retained session rather than duplicating their addressing format.
+      const laneWrite = saved.mock.calls.find(([, value]) => {
+        const lane = value as { session?: { id?: string } } | undefined;
+        return lane?.session?.id === 'continued-session';
+      });
+      expect(laneWrite).toBeDefined();
+      const laneKey = laneWrite![0];
       const lane = (await s.store.getIntegration(laneKey)) as Record<string, unknown>;
       expect(lane.session).toEqual({ id: 'continued-session', billingMode, model });
       for (const [field, session] of [
@@ -752,8 +767,24 @@ describe('fixture: cognition vertical slice', () => {
           estimatedCostUsd: 'known' in scenario ? scenario.known : undefined,
           providerReportedCostUsd: 0.0000106,
         };
-        await s.store.reserve(pendingReceipt.requestId, 'jev', 0.02, 1, NPC_ID);
+        await s.store.reserve(
+          pendingReceipt.requestId,
+          'jev',
+          0.02,
+          1,
+          NPC_ID,
+          undefined,
+          undefined,
+          {
+            rootJobId: 'fixture-inspection',
+            category: 'level',
+            stage: execution,
+            executionClass: 'primary',
+          },
+        );
+        await s.store.markDecisionDispatch(pendingReceipt.requestId);
         await s.store.settle(pendingReceipt.requestId, pendingReceipt);
+        expect(await s.store.occupiedDecisionSlots()).toHaveLength(1);
         vi.spyOn(s.store, 'intelligenceCall').mockResolvedValue({
           id: 'fixture-inspection',
           kind: 'Native decision',
@@ -769,8 +800,15 @@ describe('fixture: cognition vertical slice', () => {
           s.config.macrofoldBillingMode = billingMode === 'byok' ? 'managed' : 'byok';
         await new MacrofoldBackend(s).inspectCall('fixture-inspection');
         const reconciled = await s.store.attemptReceipt(pendingReceipt.requestId);
-        if (billingMode === 'byok' && missingUsage) expect(reconciled).toEqual(pendingReceipt);
-        else
+        if (billingMode === 'byok' && missingUsage) {
+          expect(reconciled).toMatchObject({
+            requestId: pendingReceipt.requestId,
+            macrofoldBillingMode: billingMode,
+            completionUncertain: false,
+          });
+          expect(reconciled?.estimatedCostUsd).toBeUndefined();
+          expect((await s.store.usage(1)).budget.spentUsd).toBe(0.02);
+        } else
           expect(reconciled).toMatchObject({
             completionUncertain: false,
             macrofoldBillingMode: billingMode,
@@ -779,6 +817,7 @@ describe('fixture: cognition vertical slice', () => {
             providerReportedCostUsd: 0.0000106,
             usage: { inputTokens: 200, outputTokens: 1 },
           });
+        expect(await s.store.occupiedDecisionSlots()).toHaveLength(0);
         expect(paths.slice(3).sort()).toEqual([
           '/v1/billing/usage',
           '/v1/runs/judgment-run',
@@ -879,8 +918,15 @@ describe('fixture: cognition vertical slice', () => {
       );
       await new MacrofoldBackend(s).inspectCall('native-inspection');
       const reconciled = await s.store.attemptReceipt(receipt.requestId);
-      if (scenario.expected === undefined) expect(reconciled).toEqual(receipt);
-      else
+      if ('uncertain' in scenario) expect(reconciled).toEqual(receipt);
+      else if (scenario.expected === undefined) {
+        expect(reconciled).toMatchObject({
+          requestId: receipt.requestId,
+          completionUncertain: false,
+        });
+        expect(reconciled?.estimatedCostUsd).toBeUndefined();
+        expect((await s.store.usage(1)).budget.spentUsd).toBe(0.02);
+      } else
         expect(reconciled).toMatchObject({
           completionUncertain: false,
           macrofoldBillingMode: scenario.mode,

@@ -9,9 +9,12 @@ Use the [architecture map](../architecture.md) to locate an implemented owner; r
 | Movement, contact and navigation          | [Spatial world](../spatial-world.md)                                                               |
 | State continuity and storage validation   | [Save/load](../save-and-load.md)                                                                   |
 | Private evidence, memory and attention    | [Memory](../memory-architecture.md), [perception/reactions](../events-perception-and-reactions.md) |
+| Character decision preparation            | [Situation-aware context](situation-aware-cognition-context.md)                                    |
 | Provider execution and accounting         | [AI providers](../ai-providers.md), [live setup](../live-ai-setup.md)                              |
 | Performance                               | [Contract and conditional chapters](../performance.md)                                             |
 | Rendering, controls and asset delivery    | [UI/UX](../ui-ux/README.md), [asset workflow](../asset-workflow.md)                                |
 | Documentation and development guidance    | [Documentation system](../documentation-system.md), [agent guidance](../../.agents/README.md)      |
+
+[Verification workers](verification-workers.md) own the development pool, runner, source identity and artifact lifecycle.
 
 [Current features](../features/README.md) · [Unfinished work](../maintainers/README.md)

@@ -25,13 +25,19 @@ export class MacrofoldHttpError extends Error {
     return (
       this.code === 'execution_disabled' ||
       this.code === 'inference_disabled' ||
-      // Macrofold rejects insufficient credit before creating a Run or reserving spend.
-      (this.status === 402 && this.code === 'insufficient_credit') ||
+      // These exact funding refusals precede invocation/Run insertion and dispatch.
+      // A terminal Run with a budget failure still needs its ordinary receipt reconciliation.
+      (this.status === 402 &&
+        ['insufficient_credit', 'run_budget_exhausted', 'deployment_budget_exhausted'].includes(
+          this.code,
+        )) ||
+      // This exact service code proves pre-admission expiry or confirmed rollback.
+      // Ambiguous admission and provider timeouts keep their uncertain commitment.
+      (this.status === 503 && this.code === 'inference_admission_timeout') ||
       // These canonical deployment errors establish no new admission. Other
       // conflicts/unavailable responses can still represent uncertain work.
       (this.status === 409 &&
         ['deployment_binding_stale', 'deployment_not_ready'].includes(this.code)) ||
-      (this.status === 402 && this.code === 'deployment_budget_exhausted') ||
       (this.status === 503 && this.code === 'deployment_unavailable') ||
       [400, 401, 403, 404, 413, 422, 429].includes(this.status)
     );

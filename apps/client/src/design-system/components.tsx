@@ -247,18 +247,27 @@ export type SelectOption = {
 function SelectInputGroup({
   trigger,
   children,
+  remote,
 }: {
   trigger: RefObject<HTMLDivElement | null>;
   children: ReactNode;
+  remote: boolean;
 }) {
   const state = useContext(ComboBoxStateContext);
   return (
     <div
       className="ol-select-trigger"
       ref={trigger}
+      onFocusCapture={(event) => {
+        if (remote && !state?.isFocused && event.target instanceof HTMLInputElement)
+          state?.open(null, 'focus');
+      }}
+      onChangeCapture={(event) => {
+        if (remote && event.target instanceof HTMLInputElement) state?.open(null, 'input');
+      }}
       onKeyDownCapture={(event) => {
-        // Escape closes one picker without reverting its controlled query. Reverting
-        // starts another remote search and can reopen the popup over its parent dialog.
+        // Close this picker only; its caller owns query restoration. Do not let
+        // the same Escape also dismiss the parent dialog.
         if (event.key === 'Escape' && !event.nativeEvent.isComposing && state?.isOpen) {
           event.preventDefault();
           event.stopPropagation();
@@ -338,7 +347,9 @@ export function SelectField({
       isDisabled={disabled}
       selectedKey={value}
       onSelectionChange={(key) => key !== null && onChange(String(key))}
-      menuTrigger="focus"
+      // Remote callers also change text when restoring a selected label or dismissing
+      // a search. Open on actual input interaction, not those controlled updates.
+      menuTrigger={remote ? 'manual' : 'focus'}
       onOpenChange={onOpenChange}
       disabledKeys={disabledKeys}
       {...(remote
@@ -356,7 +367,7 @@ export function SelectField({
           })}
     >
       <Label className="ol-select-label">{label}</Label>
-      <SelectInputGroup trigger={trigger}>
+      <SelectInputGroup trigger={trigger} remote={remote}>
         {triggerArtwork ?? <Icon name="ui.search" size={16} />}
         <Input
           className="ol-select-input ol-field-editor"

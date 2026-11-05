@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createNetworkOwner } from '@open-legend/network';
 import {
+  MACROFOLD_DECISION_MODELS,
   createMacrofoldDecisionClient,
   createMacrofoldGenerationClient,
   decodeJudge,
@@ -380,7 +381,7 @@ describe('standalone Macrofold native decisions', () => {
     }
   });
 
-  it.each<MacrofoldDecisionModel>(['typesafe/jev-1.13', 'microsoft/microsoft-decision-1'])(
+  it.each<MacrofoldDecisionModel>(MACROFOLD_DECISION_MODELS)(
     'retains native question maps and score evidence for %s',
     async (model) => {
       const f = fixture();
@@ -525,20 +526,36 @@ describe('standalone Macrofold native decisions', () => {
   });
 
   it.each([
-    { admitStatus: 402, admitCode: 'insufficient_credit' },
-    { admitStatus: 503, admitCode: 'inference_disabled' },
-  ])('marks definitive admission rejection as undispatched without retry: %j', async (options) => {
-    const f = fixture(options);
-    const result = await client(f.fetcher).judge(request);
-    expect(result.outcome).toBe('unavailable');
-    expect(result).toMatchObject({ reason: options.admitCode });
-    expect(result.receipt).toMatchObject({
-      dispatched: false,
-      completionUncertain: false,
-      httpStatus: options.admitStatus,
-    });
-    expect(f.fetcher).toHaveBeenCalledOnce();
-  });
+    { admitStatus: 402, admitCode: 'insufficient_credit', rejected: true },
+    { admitStatus: 402, admitCode: 'run_budget_exhausted', rejected: true },
+    { admitStatus: 402, admitCode: 'deployment_budget_exhausted', rejected: true },
+    { admitStatus: 503, admitCode: 'run_budget_exhausted', rejected: false },
+    { admitStatus: 503, admitCode: 'inference_disabled', rejected: true },
+    { admitStatus: 503, admitCode: 'inference_admission_timeout', rejected: true },
+    { admitStatus: 503, admitCode: 'inference_admission_unknown', rejected: false },
+    { admitStatus: 503, admitCode: 'worker_retry_exhausted', rejected: false },
+    { admitStatus: 503, admitCode: 'provider_timeout', rejected: false },
+    { admitStatus: 502, admitCode: 'inference_admission_timeout', rejected: false },
+  ])(
+    'distinguishes definitive admission rejection from uncertain execution without retry: %j',
+    async (options) => {
+      for (const kind of ['judge', 'generate'] as const) {
+        const f = fixture(options);
+        const result =
+          kind === 'judge'
+            ? await client(f.fetcher).judge(request)
+            : await generationClient(f.fetcher).generate(generationRequest);
+        expect(result.outcome).toBe(options.rejected ? 'unavailable' : 'uncertain');
+        expect(result).toMatchObject({ reason: options.admitCode });
+        expect(result.receipt).toMatchObject({
+          dispatched: !options.rejected,
+          completionUncertain: !options.rejected,
+          httpStatus: options.admitStatus,
+        });
+        expect(f.fetcher).toHaveBeenCalledOnce();
+      }
+    },
+  );
 
   it('does not repeat admission when the accepted-Run journal callback fails', async () => {
     const f = fixture();
@@ -666,6 +683,8 @@ function generationClient(fetcher: FetchTransport, billingMode: 'managed' | 'byo
     apiKey: 'fixture-only-key',
     model: 'meta/muse-spark-1.3-contributor',
     billingMode,
+    // These schema-transport fixtures exercise the explicit strict strategy.
+    macrofoldOutputMode: 'json_schema',
     ...(billingMode === 'byok' ? { providerConnectionId: 'exact-openrouter-connection' } : {}),
     maxCostUsd: 0.02,
     fetch: fetcher,
@@ -771,6 +790,13 @@ describe('standalone Macrofold schema generation', () => {
     const observedAcceptanceCounts: number[] = [];
     const result = await generationClient(f.fetcher).generate({
       ...generationRequest,
+      schema: {
+        type: 'object',
+        properties: { action: { $ref: '#/$defs/action' } },
+        required: ['action'],
+        additionalProperties: false,
+        $defs: { action: { type: 'string', enum: ['rest'] } },
+      },
       stream: true,
       onAccepted: accepted,
       onProgress: () => observedAcceptanceCounts.push(accepted.mock.calls.length),
@@ -788,7 +814,19 @@ describe('standalone Macrofold schema generation', () => {
     expect(accepted).toHaveBeenCalledExactlyOnceWith('run-fixture');
     expect(observedAcceptanceCounts.length).toBeGreaterThan(0);
     expect(observedAcceptanceCounts.every((count) => count === 1)).toBe(true);
-    expect(f.bodies[0]).toMatchObject({ stream: true });
+    expect(f.bodies[0]).toMatchObject({
+      stream: true,
+      input: {
+        response_format: {
+          json_schema: {
+            schema: {
+              properties: { action: { $ref: '#/$defs/action' } },
+              $defs: { action: { type: 'string', enum: ['rest'] } },
+            },
+          },
+        },
+      },
+    });
     expect(f.paths).toEqual(['/v1/inferences']);
   });
 
@@ -859,6 +897,59 @@ describe('standalone Macrofold schema generation', () => {
     ]);
     expect(f.paths).toEqual(['/v1/inferences']);
   });
+
+  it.each(['rest', 'invented'])(
+    'accounts for actual native chat transport and retains its frozen schema: %s',
+    async (answer) => {
+      const request = {
+        ...structuredClone(generationRequest),
+        schema: {
+          type: 'object',
+          properties: { action: { $ref: '#/$defs/action' } },
+          required: ['action'],
+          additionalProperties: false,
+          $defs: { action: { type: 'string', enum: ['rest'] } },
+        },
+      };
+      const originalSchema = structuredClone(request.schema);
+      const originalContext = structuredClone(request.context);
+      const f = fixture({ value: generationRaw(JSON.stringify({ action: answer })) });
+      let transport = '';
+      const fetcher: FetchTransport = async (url, init) => {
+        if (new URL(url).pathname === '/v1/inferences') {
+          transport = String(init.body);
+          request.schema.$defs.action.enum = ['invented'];
+          request.context = { encounter: 'Mutated after admission.' };
+        }
+        return f.fetcher(url, init);
+      };
+      const result = await generationClient(fetcher).generate(request);
+      expect(result.outcome).toBe(answer === 'rest' ? 'value' : 'invalid');
+      const sent = JSON.parse(transport);
+      expect(sent.input.response_format.json_schema.schema).toEqual(originalSchema);
+      expect(JSON.parse(sent.input.messages[1].content)).toEqual(originalContext);
+      const inputBytes = Buffer.byteLength(JSON.stringify(sent.input));
+      expect(result.receipt.requestAccounting).toEqual({
+        instructionsBytes: Buffer.byteLength(request.instructions),
+        contextBytes: Buffer.byteLength(JSON.stringify(originalContext)),
+        schemaBytes: Buffer.byteLength(JSON.stringify(originalSchema)),
+        toolDefinitionBytes: 0,
+        toolResultBytes: 0,
+        inputScope: 'adapter-input',
+        encodedInputBytes: inputBytes,
+        transportBytes: Buffer.byteLength(transport),
+        maxOutputTokens: sent.limits.max_output_tokens,
+        estimatedInputTokens: {
+          value: Math.ceil(inputBytes / 3),
+          basis: 'captured-input-utf8-divided-by-three',
+          model: 'meta/muse-spark-1.3-contributor',
+          exact: false,
+        },
+      });
+      expect(result.receipt.usage?.inputTokens).toBe(100);
+      expect(f.paths).toEqual(['/v1/inferences']);
+    },
+  );
 
   it.each([
     { schema: { type: 'object', properties: { action: { type: 'string' } } } },

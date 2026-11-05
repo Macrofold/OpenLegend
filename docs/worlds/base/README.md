@@ -6,6 +6,8 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 
 [Integrated specification](../../projects/first-playable-world-feature-spec.md) · [layout](first-playable-layout.md) · [survival/recipes](first-playable-survival.md) · [natural camp](editable-shelters.md) · [people/cooperation](first-playable-people.md) · [roaming wildlife/people](first-playable-roaming.md). These selected additions are designed; the current implemented contracts below retain their stated evidence. [FPW](../../maintainers/first-playable-world.md) and [FPV](../../maintainers/first-playable-validation.md) coordinate delivery and acceptance.
 
+[Cognition Lab study characters](cognition-lab-characters.md) owns the isolated study cast and its voice illustrations; these profiles do not add residents to the ordinary opening.
+
 ## Mechanics
 
 - [Starting wilderness, terrain and population](landscape.md)

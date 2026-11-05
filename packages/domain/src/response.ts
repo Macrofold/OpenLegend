@@ -8,11 +8,14 @@ import { reconcileCompacts } from './social-compacts.js';
 import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
-import { subjectNarration, presentVerb, person } from './narration.js';
+import { subjectNarration, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
-import { worldPosition } from './spatial-state.js';
-import { BASE_EXPRESSION_VERBS } from './worlds/base/actions.js';
-import { installedActionMeaning } from './activity-hosts.js';
+import { commitExpression } from './expressions.js';
+import {
+  activityRequestDescriptors,
+  activityRequestWorkModeField,
+  installedActionMeaning,
+} from './activity-hosts.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   actionTargetsCurrent,
@@ -37,11 +40,12 @@ import {
   type ActionInvocation,
   type ActionFulfillment,
   choiceWorkCurrent,
+  captureActorFrame,
   type ActionChoice,
 } from './action-capabilities.js';
 import { discardSuspended, proposeActionRevision } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
-import { hasMemory, supportsManualWork } from './living.js';
+import { hasMemory } from './living.js';
 import {
   resolveAttempt,
   deferAttempt,
@@ -55,40 +59,39 @@ import {
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
 import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
-import { executeCommand, prepareNativeChoice, SIMULATION_RULES } from './kernel.js';
+import { executeCommand, prepareNativeChoice } from './kernel.js';
 import { appendMemory, canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
-import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 import { reconcileOutings } from './outings.js';
 
 export interface ResponseOperation {
-  appraise?: AppraisalChange | null;
-  note?: KnowledgeEdit | null;
-  name?: GivenNameEdit | null;
+  appraise?: AppraisalChange;
+  note?: KnowledgeEdit;
+  name?: GivenNameEdit;
   localId: string;
   requiresAccepted: string[];
-  talk: {
+  talk?: {
     text: string;
     addresseeEntityId: string | null;
     volume: SpeechVolume;
     selfIntroduction?: string | null;
-  } | null;
-  act: {
+  };
+  act?: {
     kind: 'known' | 'expression' | 'proposal' | 'invoke';
     invocation?: ActionInvocation | null;
     /** Proposal-only exact references; see unmetSlots for the admission check. */
     slots?: IntentSlots | null;
     actionId: string | null;
-    verb: 'nod' | 'smile' | 'frown' | 'wave' | 'shrug' | 'shake_head' | 'slap' | null;
+    verb: string | null;
     targetEntityId: string | null;
     description: string | null;
     mode: 'enqueue' | 'replace' | 'interrupt';
-  } | null;
-  think: { text: string; aboutEntityIds: string[] } | null;
-  goal: GoalChange | null;
-  plan: {
+  };
+  think?: { text: string; aboutEntityIds: string[] };
+  goal?: GoalChange;
+  plan?: {
     mode: 'enqueue' | 'replace' | 'interrupt' | 'cancel';
     expectedRevision: number;
     goalId: string | null;
@@ -97,7 +100,7 @@ export interface ResponseOperation {
       itemFromStep: number | null;
       useItemAs: 'equip' | 'eat' | null;
     }[];
-  } | null;
+  };
 }
 export interface ActorResponse {
   operations: ResponseOperation[];
@@ -128,30 +131,38 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   if (
     !value ||
     typeof value !== 'object' ||
+    Array.isArray(value) ||
     Object.keys(value).join() !== 'operations' ||
     !Array.isArray(value.operations) ||
     value.operations.length > RESPONSE_LIMITS.operations
   )
     return false;
-  if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes) return false;
+  try {
+    if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes)
+      return false;
+  } catch {
+    // Native callers also cross this boundary; nonserializable input cannot have a receipt.
+    return false;
+  }
   const ids = new Set<string>();
   const fields = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name', 'appraise'] as const;
   for (const op of value.operations) {
     if (
       !op ||
+      typeof op !== 'object' ||
+      Array.isArray(op) ||
       Object.keys(op).some((key) => !['localId', 'requiresAccepted', ...fields].includes(key)) ||
-      Object.keys(op).length < 7 ||
+      Object.keys(op).length !== 3 ||
+      typeof op.localId !== 'string' ||
       !/^[a-z][a-z0-9_]{0,23}$/.test(op.localId) ||
       !isSafeRecordId(op.localId) ||
       ids.has(op.localId) ||
       !Array.isArray(op.requiresAccepted) ||
       op.requiresAccepted.length > 16 ||
-      new Set(op.requiresAccepted).size !== op.requiresAccepted.length ||
-      op.requiresAccepted.some((id) => !ids.has(id)) ||
+      op.requiresAccepted.some((id) => typeof id !== 'string' || id.length > 24) ||
       fields.some(
         (field) =>
-          (!['note', 'name', 'appraise'].includes(field) && !(field in op)) ||
-          (op[field] != null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
+          field in op && (!op[field] || typeof op[field] !== 'object' || Array.isArray(op[field])),
       ) ||
       fields.filter((field) => op[field] != null).length !== 1
     )
@@ -260,6 +271,30 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   }
   return true;
 }
+
+/** Preflight only: failed dependencies cannot justify paid grounding or effects.
+ * Accept either model or native payloads after structural validation established
+ * unique operation identities. Keep the original envelope for receipts.
+ * docs/technical/situation-aware-cognition-context.md#97-target-and-dependency-admission-refinements
+ */
+export function responseDependencyFailures(response: {
+  operations: readonly Pick<ResponseOperation, 'localId' | 'requiresAccepted'>[];
+}): ReadonlyMap<string, 'invalid-dependency' | 'dependency-rejected'> {
+  const earlier = new Set<string>();
+  const failures = new Map<string, 'invalid-dependency' | 'dependency-rejected'>();
+  for (const operation of response.operations) {
+    const dependencies = operation.requiresAccepted;
+    if (
+      new Set(dependencies).size !== dependencies.length ||
+      dependencies.some((id) => !earlier.has(id))
+    )
+      failures.set(operation.localId, 'invalid-dependency');
+    else if (dependencies.some((id) => failures.has(id)))
+      failures.set(operation.localId, 'dependency-rejected');
+    earlier.add(operation.localId);
+  }
+  return failures;
+}
 export const RESPONSE_RECEIPT_LIMIT = 300;
 
 /** Stopping conditions of a composition, counting a follow's deadline as a time condition. */
@@ -350,6 +385,7 @@ export function commitActorResponse(
   knowledgeReferences: Record<string, string> = {},
   appraisalBindings?: AppraisalBindings,
   permissions: NativeExecutionPermissions = {},
+  capturedActorFrame?: string,
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -362,7 +398,7 @@ export function commitActorResponse(
     outcome: outcome(false, 'actor-unavailable', message),
   });
   if (!isSafeRecordId(id) || id.length > 100 || !validResponseEnvelope(response))
-    return reject('Malformed decision envelope, aliases, dependencies or aggregate limits.');
+    return reject('Malformed decision envelope, operation identities or aggregate limits.');
   const digest = canonicalJson({
     actorId,
     response,
@@ -374,6 +410,7 @@ export function commitActorResponse(
     evidenceIds,
     knowledgeReferences,
     ...(appraisalBindings ? { appraisalBindings } : {}),
+    ...(capturedActorFrame !== undefined ? { capturedActorFrame } : {}),
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
   if (prior) {
@@ -488,8 +525,130 @@ export function commitActorResponse(
     );
     components[localId] = transition.outcome;
   };
+  /** Selection syntax does not change native admission. Known choices, typed
+   * invocations and exact single-command grounding share this owner; finite
+   * multi-command plans retain their separate physical-work contract. */
+  const admitSelected = (
+    selected: Command,
+    mode: 'enqueue' | 'replace' | 'interrupt',
+    continuation: 'offered' | 'probe' | null = null,
+    declaredMode?: string | number | boolean,
+  ) => {
+    // A trusted binder may carry the work choice in the command or its declared
+    // request field. Neither representation can silently override the response.
+    const nativeMode =
+      selected.type === 'compose' ||
+      (selected.type === 'outing' && ['invite', 'accept', 'work'].includes(selected.operation))
+        ? 'mode' in selected
+          ? selected.mode
+          : undefined
+        : undefined;
+    if (
+      (nativeMode !== undefined && nativeMode !== mode) ||
+      (declaredMode !== undefined && declaredMode !== mode)
+    ) {
+      components[localId] = outcome(
+        false,
+        'activity-choices',
+        'The requested activity and action must choose the same handling of current work.',
+      );
+      return;
+    }
+    const direct = [
+      'activity',
+      'compose',
+      'inspect-activities',
+      'teach',
+      'handover',
+      'outing',
+      'transfer-item',
+      'cancel',
+      'resume-work',
+      'recover',
+      'release-shot',
+      'withdraw-attempt',
+      'confirm-attempt',
+    ].includes(selected.type);
+    if (
+      !direct &&
+      (continuation === 'offered' || (continuation === 'probe' && mode === 'enqueue'))
+    ) {
+      // The native owner proves whether this exact operation can happen while
+      // current work continues. A prepared durative action refuses continue;
+      // that does not revoke the explicitly selected outer work transition.
+      const prepared = prepareNativeChoice(
+        world,
+        actorId,
+        selected,
+        'continue',
+        construction.permissions,
+        undefined,
+        construction.campAssets,
+      );
+      const available = 'ok' in prepared ? prepared : prepared.outcome;
+      if (available.ok) {
+        command('act', { ...selected, actorId, id: `${id}:${localId}` });
+        return;
+      }
+      if (continuation === 'offered') {
+        components[localId] = available;
+        return;
+      }
+    }
+    if (direct) {
+      const beforeAction = world,
+        beforeEventCount = events.length;
+      const beforeAppendOnly: boolean = appendOnlyCommands;
+      let start = true;
+      if (selected.type === 'activity' && !selected.resume && mode === 'replace') {
+        command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
+        start = components[localId]?.ok === true;
+      }
+      // Native activity start pauses atomically; replacement refusal must also
+      // preserve old work and any independently accepted speech.
+      if (start)
+        command('act', {
+          ...selected,
+          ...(selected.type === 'activity' && !selected.resume && mode === 'interrupt'
+            ? { interrupt: true }
+            : {}),
+          actorId,
+          id: `${id}:${localId}`,
+        });
+      if (!components[localId]?.ok && selected.type === 'activity') {
+        world = beforeAction;
+        events.length = beforeEventCount;
+        appendOnlyCommands = beforeAppendOnly;
+      }
+      return;
+    }
+    components[localId] = admitPlan(
+      world,
+      entityGet(world.entities, actorId)!.actor!,
+      `${id}:${localId}`,
+      [{ ...selected, actorId, id: `${id}:${localId}` }],
+      mode,
+      entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
+      null,
+    );
+  };
+  let invocationRequests:
+    | Map<string, ReturnType<typeof activityRequestDescriptors>[number]>
+    | undefined;
+  const dependencyFailures = responseDependencyFailures(response);
   for (const op of response.operations) {
     localId = op.localId;
+    const dependencyFailure = dependencyFailures.get(localId);
+    if (dependencyFailure) {
+      components[localId] = outcome(
+        false,
+        dependencyFailure,
+        dependencyFailure === 'invalid-dependency'
+          ? 'A required response operation is missing, repeated or does not precede this one.'
+          : 'An admission dependency was rejected.',
+      );
+      continue;
+    }
     if (op.requiresAccepted.some((dependency) => !components[dependency]?.ok)) {
       components[localId] = outcome(
         false,
@@ -534,6 +693,22 @@ export function commitActorResponse(
           : [];
     const directTarget =
       op.talk?.addresseeEntityId ?? op.act?.invocation?.targetEntityId ?? op.act?.targetEntityId;
+    const invocation = op.act?.kind === 'invoke' ? op.act.invocation : undefined;
+    const invocationParameters = invocation?.parameters;
+    if (invocationParameters)
+      invocationRequests ??= new Map(
+        activityRequestDescriptors(input, actorId).map((request) => [request.id, request]),
+      );
+    const invocationEntities = invocationParameters
+      ? Object.fromEntries(
+          Object.entries(invocationRequests!.get(invocation!.family)?.fields ?? {}).flatMap(
+            ([field, descriptor]) =>
+              descriptor.type === 'entity' && typeof invocationParameters[field] === 'string'
+                ? [[field, invocationParameters[field] as string]]
+                : [],
+          ),
+        )
+      : {};
     const slotReferences = [
       op.act?.slots?.itemId,
       op.act?.slots?.instrumentId,
@@ -546,6 +721,7 @@ export function commitActorResponse(
     // entity kinds cannot be probed through slot errors.
     if (
       (directTarget && !permitted.has(directTarget)) ||
+      Object.values(invocationEntities).some((ref) => !permitted.has(ref)) ||
       slotReferences.some((ref) => !permitted.has(ref))
     ) {
       components[localId] = outcome(
@@ -576,6 +752,8 @@ export function commitActorResponse(
       continue;
     }
     if (directTarget) actionCommands.push({ actorId, targetId: directTarget });
+    if (Object.keys(invocationEntities).length)
+      actionCommands.push({ actorId, bindings: invocationEntities });
     if (op.act?.slots?.recipientId)
       actionCommands.push({ actorId, targetId: op.act.slots.recipientId });
     if (targetEpisodes && !actionTargetsCurrent(world, actorId, actionCommands, targetEpisodes)) {
@@ -677,6 +855,19 @@ export function commitActorResponse(
         'The proposed action fields do not match its kind.',
       );
     } else if (act?.kind === 'invoke') {
+      if (
+        act.invocation?.family === 'move' &&
+        act.invocation.frame === 'actor' &&
+        (capturedActorFrame === undefined ||
+          capturedActorFrame !== captureActorFrame(world, actorId))
+      ) {
+        components[localId] = outcome(
+          false,
+          'stale-actor-frame',
+          'Your position, support or facing changed after this relative movement was chosen.',
+        );
+        continue;
+      }
       const bound = bindActionInvocation(
         world,
         actorId,
@@ -690,31 +881,11 @@ export function commitActorResponse(
         entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (
-        bound.type === 'outing' &&
-        bound.operation !== 'invite' &&
-        bound.operation !== 'accept' &&
-        bound.operation !== 'work'
-      )
-        command('act', bound);
-      else if (bound.type === 'compose' || bound.type === 'outing') {
-        if (('mode' in bound ? bound.mode : undefined) !== act.mode)
-          components[localId] = outcome(
-            false,
-            'activity-choices',
-            'The requested activity and action must choose the same handling of current work.',
-          );
-        else command('act', bound);
-      } else
-        components[localId] = admitPlan(
-          world,
-          entityGet(world.entities, actorId)!.actor!,
-          `${id}:${localId}`,
-          [bound],
-          act.mode,
-          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
-          null,
-        );
+      else {
+        const descriptor = invocationRequests?.get(act.invocation!.family);
+        const field = descriptor && activityRequestWorkModeField(descriptor);
+        admitSelected(bound, act.mode, 'probe', field ? invocationParameters?.[field] : undefined);
+      }
     } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
       components[localId] = outcome(
         false,
@@ -726,78 +897,18 @@ export function commitActorResponse(
         selected = choice.invocation;
       if (
         !choiceWorkCurrent(world, actorId, choice) ||
-        (choice.transition !== 'continue' && act.mode !== choice.transition) ||
         (act.mode !== 'enqueue' &&
           entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan)
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (selected && choice.transition === 'continue' && isActivityCommand(selected)) {
-        const prepared = prepareNativeChoice(
-          world,
-          actorId,
-          selected,
-          'continue',
-          construction.permissions,
-          undefined,
-          construction.campAssets,
+      else if (choice.transition !== 'continue' && act.mode !== choice.transition)
+        components[localId] = outcome(
+          false,
+          'action-mode',
+          'The chosen action handles current work differently from the offered choice.',
         );
-        const available = 'ok' in prepared ? prepared : prepared.outcome;
-        if (!available.ok) components[localId] = available;
-        else command('act', { ...selected, actorId, id: `${id}:${localId}` });
-      } else if (
-        selected &&
-        [
-          'activity',
-          'compose',
-          'inspect-activities',
-          'teach',
-          'handover',
-          'outing',
-          'transfer-item',
-          'cancel',
-          'resume-work',
-          'recover',
-          'release-shot',
-          'withdraw-attempt',
-          'confirm-attempt',
-        ].includes(selected.type)
-      ) {
-        const beforeAction = world,
-          beforeEventCount = events.length;
-        const beforeAppendOnly: boolean = appendOnlyCommands;
-        let start = true;
-        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace') {
-          command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
-          start = components[localId]?.ok === true;
-        }
-        // The kernel pauses and starts together, so a refused start leaves work running.
-        if (start)
-          command('act', {
-            ...selected,
-            ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
-              ? { interrupt: true }
-              : {}),
-            actorId,
-            id: `${id}:${localId}`,
-          });
-        // A chosen method may become unavailable during the decision wait. Its
-        // replacement and start form one operation; retain independently accepted
-        // speech, but never commit just the cancellation when the start refuses.
-        if (!components[localId]?.ok && selected.type === 'activity') {
-          world = beforeAction;
-          events.length = beforeEventCount;
-          appendOnlyCommands = beforeAppendOnly;
-        }
-      } else if (selected)
-        components[localId] = admitPlan(
-          world,
-          entityGet(world.entities, actorId)!.actor!,
-          `${id}:${localId}`,
-          [{ ...selected, actorId, id: `${id}:${localId}` }],
-          act.mode,
-          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
-          null,
-        );
+      else if (selected)
+        admitSelected(selected, act.mode, choice.transition === 'continue' ? 'offered' : null);
       else
         components[localId] = outcome(
           true,
@@ -807,69 +918,10 @@ export function commitActorResponse(
             : 'Existing behavior continues.',
         );
     } else if (act?.kind === 'expression') {
-      const source = entityGet(world.entities, actorId)!;
-      const target = act.targetEntityId ? entityGet(world.entities, act.targetEntityId) : undefined;
-      const invalidTarget =
-        !!act.targetEntityId &&
-        (!permitted.has(act.targetEntityId) || !entityHas(world.entities, act.targetEntityId));
-      const reachable =
-        act.verb !== 'slap' ||
-        (!!target &&
-          !invalidTarget &&
-          activelyParticipates(target) &&
-          target.id !== actorId &&
-          distance(worldPosition(source), worldPosition(target)) <=
-            SIMULATION_RULES.interactionRadius &&
-          hasLineOfSight(world, worldPosition(source), worldPosition(target)));
-      if (
-        !supportsManualWork(source) ||
-        !act.verb ||
-        !Object.hasOwn(BASE_EXPRESSION_VERBS, act.verb) ||
-        invalidTarget ||
-        !reachable ||
-        (target &&
-          (!seesEntity(world, source, target) ||
-            !hasLineOfSight(world, worldPosition(source), worldPosition(target)) ||
-            (target.actor && !target.actor.alive)))
-      )
-        components[localId] = outcome(
-          false,
-          supportsManualWork(source) ? 'invalid-expression' : 'unsupported-body',
-          supportsManualWork(source)
-            ? 'The expression target is unavailable or out of reach.'
-            : 'This gesture requires a supported biped body.',
-        );
-      else {
-        emit(
-          world,
-          events,
-          'expression',
-          subjectNarration(source, [
-            presentVerb(source, BASE_EXPRESSION_VERBS[act.verb!]),
-            ...(act.verb === 'shake_head' ? [' ', person(source, 'possessive'), ' head'] : []),
-            ...(target
-              ? [
-                  act.verb === 'slap' ? ' ' : ' toward ',
-                  person(target, target.id === source.id ? 'reflexive' : 'object'),
-                ]
-              : []),
-            '.',
-          ]),
-          source,
-          target?.id,
-          {
-            mechanical: false,
-            responseId: id,
-            semanticTrigger: true,
-            ...(target ? { targetReference: true } : {}),
-          },
-        );
-        components[localId] = outcome(
-          true,
-          'expressed',
-          'Expression accepted without mechanical effects.',
-        );
-      }
+      components[localId] =
+        !act.verb || (act.targetEntityId && !permitted.has(act.targetEntityId))
+          ? outcome(false, 'invalid-expression', 'The expression target is unavailable.')
+          : commitExpression(world, events, actorId, act.verb, act.targetEntityId ?? undefined, id);
     } else if (act?.kind === 'proposal') {
       // Server-scoped interpretation chooses existing commands, never effects. Admission
       // remains native and a composition queues sequential work rather than executing it here.
@@ -1000,22 +1052,15 @@ export function commitActorResponse(
           entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
         )
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
-        else if (selected.length === 1 && selected[0]!.type === 'compose')
-          command('act', { ...selected[0]!, mode: act.mode, actorId, id: `${id}:${localId}` });
-        else if (
-          selected.length === 1 &&
-          [
-            'teach',
-            'handover',
-            'outing',
-            'transfer-item',
-            'cancel',
-            'recover',
-            'withdraw-attempt',
-            'confirm-attempt',
-          ].includes(selected[0]!.type)
-        )
-          command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
+        else if (selected.length === 1)
+          admitSelected(
+            {
+              ...selected[0]!,
+              ...(selected[0]!.type === 'compose' ? { mode: act.mode } : {}),
+            },
+            act.mode,
+            'probe',
+          );
         else
           components[localId] = admitPlan(
             world,

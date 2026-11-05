@@ -18,7 +18,7 @@ Apply the short [Performance core](../skills/openlegend-performance/SKILL.md) be
 
 ## Verify and review by impact
 
-Follow [Verification](verification.md): retain the default against new maintained tests, reuse existing checks and small disposable scenarios, and simplify brittle setup. Explicitly required tests and permitted local verification gates remain required; hosted CI follows the repository’s local-only verification policy. Prove the intended consumer actually ran. Repairing a fixture does not demonstrate product progress.
+Follow [Verification](verification.md#select-checks-for-the-task), including the current automated-test pause. Use permitted static checks and small manual/native scenarios; separately authorized live experiments remain distinct. Prove the intended consumer actually ran. Repairing a fixture does not demonstrate product progress.
 
 Inspect the complete affected change under [Review](../skills/openlegend-review/SKILL.md). After fixes, review corrections and affected assumptions. Reopen broader verification or review only for a concrete finding, invalidated dependency, missing required evidence, or explicit requirement. Consolidate costly overlapping checks once relevant changes stabilize.
 

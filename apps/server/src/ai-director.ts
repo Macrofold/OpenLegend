@@ -1,8 +1,28 @@
+import {
+  canPrepareActivityDetail,
+  claimActivityDetail,
+  activityDetailPhase,
+} from './activity-detail.js';
+import { attentionIncludes } from './jev-questions.js';
+import { modelJsonSchema } from './ai-schemas.js';
+import { selectedExpressions } from '@open-legend/domain';
+import { continuationProof, type ReconstitutedDecision } from './cognition-continuation.js';
+import { stageAllowance, stageSize } from './cognition-stage-budget.js';
 import { entityGet, heardAddressedSpeech } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
 import { humanRequestId } from './human-request-id.js';
 import { CognitionExecution } from './cognition-execution.js';
+import {
+  CognitionControlError,
+  type CognitionStageInput,
+  type CognitionTimingObservation,
+} from './cognition-runtime-control.js';
+import {
+  acquireDecisionTimingHold,
+  decisionRequestDeadline,
+  type DecisionTimingHold,
+} from './decision-timing.js';
 import { DecisionEscalator } from './decision-escalator.js';
 import {
   prepareReconsideration,
@@ -11,8 +31,8 @@ import {
 } from './decision-preparation.js';
 import {
   DECISION_LIMITS,
-  DECISION_MODEL,
   decisionRoot,
+  shiftUndispatchedDecision,
   endDecision,
   type DecisionState,
   type DecisionReason,
@@ -26,15 +46,26 @@ import {
 } from './decision-task.js';
 import { decisionValidity, preparedResponseValidity } from './decision-validity.js';
 import { decisionObservation } from './decision-observation.js';
-import { preparedResponseChoices } from './prepared-response-context.js';
+import { contextUnitKey, finalizeDecisionRequest } from './decision-context-selection.js';
+import {
+  prepareResponseReadiness,
+  preparedResponseChoices,
+  preparedResponseDecisionContext,
+} from './prepared-response-context.js';
 import { prepareResponseAppraisals } from './prepared-response-appraisals.js';
 import {
   preparedResponseRelevanceRequest,
   preparedResponseRelevance,
   preparedResponseChoiceRequest,
+  preparedResponseInputMeasure,
+  preparedResponseVoiceSelected,
 } from './prepared-response-questions.js';
 import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
-import { bindDecisionAppraisals, decisionFeelings } from './appraisal-context.js';
+import {
+  bindDecisionAppraisals,
+  captureDecisionAppraisalContext,
+  decisionFeelings,
+} from './appraisal-context.js';
 import { namePhrase } from '@open-legend/language';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import {
@@ -45,8 +76,13 @@ import {
   type LedgerCategory,
 } from './cognition-budget.js';
 import { namedClockTimes, clockDeadline, activityRequestDescriptors } from '@open-legend/domain';
-import { requestRoutes, chooseActivityRequest } from './activity-request-choice.js';
-import type { RequestScope } from './authority.js';
+import {
+  requestRoutes,
+  chooseActivityRequest,
+  activityRequestChoiceFacts,
+  ActivityRequestChoicesUnavailable,
+} from './activity-request-choice.js';
+import { AuthorityError, type RequestScope } from './authority.js';
 import { NpcReplyPreviews } from './npc-reply-preview.js';
 import {
   observerDescription,
@@ -56,7 +92,6 @@ import {
   actionTargetsCurrent,
   recordPlayerExpression,
   activelyParticipates,
-  supportsManualWork,
   validResponseEnvelope,
 } from '@open-legend/domain';
 import { prepareInventionWorkshop } from './invention-workshop.js';
@@ -66,7 +101,12 @@ import { capabilityBlocked } from '@open-legend/domain';
 import { groundActionAttempts } from './action-grounding.js';
 import { actionReferencePermitted, commitTypedAction, typedActionForms } from './typed-actions.js';
 import { actionResponse } from './action-response.js';
-import { npcCandidates, planningCandidates, candidateChoice } from './context.js';
+import {
+  npcCandidates,
+  planningCandidates,
+  candidateChoice,
+  immediateActionCandidates,
+} from './context.js';
 import {
   compilePreparedResponses,
   preparedResponseProfile,
@@ -121,30 +161,62 @@ import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
 import {
   fallbackDecisionActions,
+  fitDecisionResponse,
+  fitPreparedChoiceContext,
   prepareDecision,
   refreshDecisionActions,
   selectDecisionActions,
+  offerPreparedActions,
+  selectedDecisionActionCandidates,
+  type DecisionInputMeasure,
 } from './decision-context.js';
-import { responseTrigger } from './response-context.js';
+import {
+  judgmentDecisionContext,
+  readableDecisionContext,
+  renderDecisionContext,
+  responseTrigger,
+} from './response-context.js';
 import {
   RESPONSE_INSTRUCTIONS,
+  STANDALONE_ACTIVITY_DETAIL_INSTRUCTIONS,
+  responseGenerationContract,
+  requestedActivityDetail,
+  responseSemantics,
+  responseTaskInstructions,
+  DECISION_INSTRUCTIONS,
   LEVEL_LIMITS,
   boundResponseSchema,
+  responseActionReferences,
+  nativeResponse,
+  nativeResponseOperation,
+  boundSpeechResponseSchema,
   COGNITION_VERSION,
   previewSpeechOperation,
 } from './cognition-contracts.js';
 import { captureActionTargets, unseenExperiences, commitActorResponse } from '@open-legend/domain';
 import { IntelligenceLog } from './intelligence-log.js';
+import { DIAGNOSTIC_LIMITS } from './diagnostic-capture.js';
 import { cognitionOutputTokens } from './macrofold-model.js';
-import { resolveNpcGenerationConfig } from './generation-config.js';
+import {
+  judgmentDeploymentTarget,
+  hasJudgmentAccess,
+  hasGenerationAccess,
+  hasSharedModelAccess,
+  hasNpcGenerationAccess,
+  resolveHigherDecisionGenerationConfig,
+  resolveNpcGenerationConfig,
+  applyCatalogGenerationFormat,
+} from './generation-config.js';
 import { ModelTargetPreparationError } from './generation-targets.js';
 import { z } from 'zod';
 import { MacrofoldBackend } from './macrofold.js';
 import { randomUUID } from 'node:crypto';
+import { applyGenerationInput } from './cognition-runtime-control.js';
 import {
   createAiClient,
   InvalidData,
-  validateJudgmentSize,
+  batchJudgmentQuestions,
+  macrofoldGenerationInstructions,
   type AiClient,
   type AiResult,
   type GenerateRequest,
@@ -204,10 +276,18 @@ const judgeMeter = (
   },
 });
 interface Running {
+  continuation?: ReconstitutedDecision;
+  labEpoch?: number;
+  labTiming?: CognitionTimingObservation;
   /** Admission lane, independent of later provider duration or outcome. */
   urgent: boolean;
   immediateTimer?: ReturnType<typeof setTimeout>;
   expiryTimer?: ReturnType<typeof setTimeout>;
+  timersRetired?: boolean;
+  immediateTimingHold?: DecisionTimingHold;
+  lifetimeTimingHold?: DecisionTimingHold;
+  primaryRequestId?: string;
+  primaryGeneration?: boolean;
   receipt?: import('@open-legend/ai').AiReceipt;
   failure?: { outcome: string; reason: string };
   handedOff?: boolean;
@@ -215,6 +295,8 @@ interface Running {
   decisionPreparation?: RetainedDecisionPreparation;
   validityFor?: (world: WorldState) => string;
   preparedResponse?: boolean;
+  /** Once a component committed, an interruption cannot replay its selection. */
+  preparedResponseCommitted?: boolean;
   invalidated?: boolean;
   /** Per-decision accounting and level limits; absent for non-decision jobs. */
   ledger?: DecisionLedger;
@@ -233,6 +315,7 @@ interface Running {
   generatedBy?: string;
   playerSpeechEventId?: string;
   cancelReason?: string;
+  cancellationProgress?: Promise<void>;
   responseWatch?: { actorId: string; afterSequence: number; attempt: number };
   validateJudgmentSource?: () => Promise<void>;
   supersession?: { attempt: number; interruptions: ResponseInterruption[] };
@@ -254,7 +337,41 @@ interface ThoughtSchedule {
 }
 
 /** Bounded actor-owned workflows; provider completions never bypass authoritative rules. */
+export type AiExecutionSource = Exclude<DeclarationProvenance['source'], 'supplied-proposal'>;
+
+export type AdmissionObservation =
+  | import('./actor-work.js').IntakeReadinessObservation
+  | {
+      kind: 'save-demand' | 'saved' | 'selected-for-admission';
+      generation: string;
+      wallAt: number;
+      simTime: number;
+      target?: number;
+      actorId?: string;
+      sourceIds?: string[];
+    };
+
 export class AiDirector {
+  private admissionObserver?: (event: AdmissionObservation) => void;
+  /** Scoped optional observation uses existing intake; disabled recording makes
+   * no clock reads/copies. A faulty diagnostic never changes native admission. */
+  observeAdmission(observer: (event: AdmissionObservation) => void): () => void {
+    if (this.admissionObserver) throw new Error('Admission already has an observer.');
+    const safe = (event: AdmissionObservation) => {
+      try {
+        observer(event);
+      } catch {
+        /* diagnostic only */
+      }
+    };
+    this.admissionObserver = safe;
+    this.thoughtWork.readinessObserver = safe;
+    return () => {
+      if (this.admissionObserver !== safe) return;
+      this.admissionObserver = undefined;
+      this.thoughtWork.readinessObserver = undefined;
+    };
+  }
   diagnosticCaptureSnapshot() {
     return this.log.captureSnapshot();
   }
@@ -262,7 +379,8 @@ export class AiDirector {
   private readonly immediateRuns = new Map<string, Running>();
 
   private canAdmit(actorId: string | undefined, urgent = false): boolean {
-    if (this.stopped || this.immediateRuns.size >= 2) return false;
+    if (this.stopped || this.service.cognitionControl?.held || this.immediateRuns.size >= 2)
+      return false;
     if (!urgent && [...this.immediateRuns.values()].some((run) => !run.urgent)) return false;
     return (
       !actorId ||
@@ -288,6 +406,42 @@ export class AiDirector {
     capture: () => this.service.durabilityTicket(),
     current: (ticket) => this.service.isDurable(ticket),
   });
+  private durabilityDemand?: { generation: string; target: number; promise: Promise<void> };
+  private requestEvidenceSave(target: number, generation: string): void {
+    if (this.durabilityDemand?.generation === generation || this.stopped) return;
+    const demand = { generation, target, promise: Promise.resolve() };
+    this.durabilityDemand = demand;
+    if (this.admissionObserver)
+      this.admissionObserver({
+        kind: 'save-demand',
+        generation,
+        target,
+        wallAt: this.now(),
+        simTime: this.service.world.simTime,
+      });
+    demand.promise = this.service.whenDurable({ generation, sequence: target }).then(
+      () => {
+        if (this.durabilityDemand !== demand) return;
+        this.durabilityDemand = undefined;
+        if (!this.stopped && generation === this.service.generation) {
+          if (this.admissionObserver)
+            this.admissionObserver({
+              kind: 'saved',
+              generation,
+              target,
+              wallAt: this.now(),
+              simTime: this.service.world.simTime,
+            });
+          this.onAdmissionReady?.();
+        }
+      },
+      () => {
+        // The storage owner reports failure. Keep causes pending, without a
+        // callback retry loop; ordinary recovery/inspection owns the next demand.
+        if (this.durabilityDemand === demand) this.durabilityDemand = undefined;
+      },
+    );
+  }
   private readonly thoughtInputs = new ThoughtIntakeInputs();
   private thoughtInputWorld?: WorldState;
   private thoughtInputScope?: string;
@@ -308,45 +462,72 @@ export class AiDirector {
     readonly service: WorldService,
     client?: AiClient,
     private readonly now = Date.now,
-    readonly executionSource: Exclude<DeclarationProvenance['source'], 'supplied-proposal'> = client
-      ? 'test-fixture'
-      : 'live-model',
+    readonly executionSource: AiExecutionSource = client ? 'test-fixture' : 'live-model',
     execution?: CognitionExecution,
+    private readonly onAdmissionReady?: () => void,
   ) {
     const config = service.config;
-    const log = (this.log = new IntelligenceLog(service.store));
+    const log = (this.log = new IntelligenceLog(
+      service.store,
+      service.cognitionControl
+        ? (attemptId, call) =>
+            service.cognitionControl!.emit({
+              kind: 'wire',
+              attemptId,
+              exchanges: call?.exchanges,
+              partial: !call || call.partial,
+            })
+        : undefined,
+    ));
     this.macrofold = new MacrofoldBackend(service, log);
+    const ordinaryClient = config.macrofoldKey
+      ? this.macrofold
+      : createAiClient({
+          jev: { apiKey: config.jevKey, model: config.jevModel, prices: config.jevPrices },
+          openai: {
+            apiKey: config.llmKey,
+            model: config.llmModel,
+            prices: config.llmPrices,
+            modelPrices: config.llmModelPrices,
+            reasoningEffort: 'low',
+          },
+          network: log.network,
+          timeoutMs: config.aiTimeoutMs,
+          maxRequestBytes: 500_000,
+          maxResponseBytes: 500_000,
+          maxOutputTokens: 8192,
+        });
+    // A model-only credential selects only configured deployment calls. File,
+    // Worker and unconfigured inference keep their existing backend or provider.
     this.client = log.wrap(
-      client ??
-        (config.macrofoldKey
-          ? this.macrofold
-          : createAiClient({
-              jev: { apiKey: config.jevKey, model: config.jevModel, prices: config.jevPrices },
-              openai: {
-                apiKey: config.llmKey,
-                model: config.llmModel,
-                prices: config.llmPrices,
-                modelPrices: config.llmModelPrices,
-                reasoningEffort: 'low',
-              },
-              network: log.network,
-              timeoutMs: config.aiTimeoutMs,
-              maxRequestBytes: 500_000,
-              maxResponseBytes: 500_000,
-              maxOutputTokens: 8192,
-            })),
+      client ?? {
+        judge: (request) =>
+          (judgmentDeploymentTarget(service.config.modelTargets)
+            ? this.macrofold
+            : ordinaryClient
+          ).judge(request),
+        generate: (request) =>
+          (request.macrofoldDeployment ? this.macrofold : ordinaryClient).generate(request),
+      },
     );
-    this.narrator = new Narrator(service, this.client, log);
     this.ownsExecution = !execution;
     this.execution = execution ?? new CognitionExecution(service.store, now);
-    this.recall = new RecallService(service, log, undefined, this.execution);
+    this.narrator = new Narrator(
+      service,
+      this.client,
+      log,
+      service.cognitionControl ? this.execution : undefined,
+    );
+    this.recall = new RecallService(service, log, service.embeddingClient, this.execution);
     this.escalator = new DecisionEscalator(
       service,
       this.execution,
       log,
-      (job, signal) => prepareReconsideration(service, this.recall, job, signal),
+      (job, signal, readControl) =>
+        prepareReconsideration(service, this.recall, job, signal, undefined, readControl),
       client,
       now,
+      this.macrofold,
     );
     this.maintenance = new CognitionMaintenance(
       service,
@@ -374,13 +555,13 @@ export class AiDirector {
               active.validity !==
                 (active.validityFor?.(service.world) ??
                   decisionValidity(service.world, active.job.decision.actorId))) ||
-            (active.job.authority && !service.currentScope(active.job.authority, 'play', true)))
+            (active.job.authority && !this.jobAuthorityCurrent(active.job)))
         ) {
           active.invalidated = !service.paused;
           active.controller.abort();
         }
       for (const run of this.activeRuns) {
-        if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
+        if (run?.job.authority && !this.jobAuthorityCurrent(run.job)) {
           run.cancelReason = 'Control or access changed.';
           run.controller.abort();
           continue;
@@ -459,162 +640,187 @@ export class AiDirector {
     authority = this.service.localScope,
     slots: IntentSlots | null = null,
     expression = false,
+    operatorActorId?: string,
   ): Promise<ApiResult> {
     return this.admission(() =>
-      this.service.authorized(authority, 'play', true, async () => {
-        this.service.assertScope(authority, 'play', true);
-        if (expression && targetId === authority.actorId) targetId = undefined;
-        const identity = playerActionIdentity(
-          this.service.world.id,
-          this.service.timelineId,
-          authority,
-          {
-            requestId: id,
-            text,
-            mode,
-            targetId,
-            slots,
-            ...(expression ? { expression: true as const } : {}),
-          },
-        );
-        id = identity.id;
-        const actorId = authority.actorId;
-        const actor = entityGet(this.service.world.entities, actorId)?.actor;
-        if (
-          !text.trim() ||
-          text.length > 500 ||
-          !['enqueue', 'replace', 'interrupt'].includes(mode)
-        )
-          return {
-            ok: false,
-            code: 'invalid-action',
-            message: 'Supply an action of 1–500 characters.',
-          };
-        if (slots !== null && !validIntentSlots(this.service.world, slots))
-          return {
-            ok: false,
-            code: 'invalid-action',
-            message:
-              'A chosen detail is not valid here, such as a stopping time this world does not name.',
-          };
-        const fingerprint = identity.fingerprint;
-        const previous = await this.service.store.getJob(id);
-        if (previous)
-          return previous.kind === 'action' && previous.fingerprint === fingerprint
-            ? {
-                ok: true,
-                code: 'duplicate',
-                message: previous.message,
-                jobId: id,
-                jobStatus: previous.status,
-              }
-            : {
-                ok: false,
-                code: 'idempotency-conflict',
-                message: 'This request identity was already used.',
-              };
-        if (this.service.paused)
-          return { ok: false, code: 'paused', message: 'Resume before attempting an action.' };
-        if (
-          !actor?.alive ||
-          (expression && !activelyParticipates(entityGet(this.service.world.entities, actorId))) ||
-          actor.incapacitated ||
-          capabilityBlocked(
-            this.service.world,
-            entityGet(this.service.world.entities, actorId),
-            'actions',
-          )
-        )
-          return {
-            ok: false,
-            code: 'actor-unavailable',
-            message: 'Your character cannot act now.',
-          };
-        if (
-          targetId &&
-          targetId !== actorId &&
-          !this.service
-            .observe(actorId, { includeMemories: false })
-            ?.visibleEntities.some((e) => e.id === targetId) &&
-          !(expression && accessiblePossession(this.service.world, actorId, targetId))
-        )
-          return {
-            ok: false,
-            code: 'target',
-            message: 'The selected target is no longer perceived.',
-          };
-        // Recognized typed forms bind natively now, even while another request runs.
-        const typed =
-          !expression &&
-          (await commitTypedAction(
-            this.service,
-            { id, authority, fingerprint },
-            actorId,
-            { text, targetId: targetId ?? null, slots },
-            mode,
-          ));
-        if (typed) return typed;
-        if (expression) {
-          const available = await this.service.playerInteractionAvailability(
-            'act',
-            targetId,
+      this.service.authorized(
+        authority,
+        operatorActorId ? 'create' : 'play',
+        !operatorActorId,
+        async () => {
+          this.service.assertScope(
             authority,
+            operatorActorId ? 'create' : 'play',
+            !operatorActorId,
           );
-          if (!available.available)
-            return { ok: false, code: available.code, message: available.reason! };
-        }
-        if (!this.canAdmit(actorId))
-          return {
-            ok: false,
-            code: 'busy',
-            message: 'Another intelligence request is in progress; try again after it finishes.',
-          };
-        const config = this.service.config;
-        if (
-          !config.budgetUsd ||
-          (expression && config.jevOnly) ||
-          (!config.macrofoldKey && !(expression ? config.llmKey : config.jevKey))
-        )
-          return {
-            ok: false,
-            code: 'ai-unavailable',
-            message: expression
-              ? config.jevOnly
-                ? 'Act is unavailable while language generation is disabled.'
-                : 'Act needs language-model access and an AI allowance.'
-              : `This wording needs configured Jev and language-model access with an allowance. ${typedActionForms(this.service.world)}`,
-          };
-        this.maintenance.cancel();
-        const job: JobRecord = {
-          id,
-          kind: 'action',
-          authority,
-          fingerprint,
-          status: 'queued',
-          message: expression ? 'Describing your action.' : 'Resolving your action.',
-          createdAt: this.now(),
-          diagnosticTriggerType: 'Player action request',
-          request: {
-            text,
-            npcId: actorId,
-            action: {
-              ...(expression
-                ? { expression: true as const, expressionLife: actor.physicalLife ?? 0 }
-                : {}),
+          if (operatorActorId && !this.service.mayInspectPrivate(operatorActorId, authority))
+            return {
+              ok: false,
+              code: 'forbidden',
+              message: 'This character is unavailable to the operator.',
+            };
+          if (expression && targetId === authority.actorId) targetId = undefined;
+          const identity = playerActionIdentity(
+            this.service.world.id,
+            this.service.timelineId,
+            authority,
+            {
+              requestId: id,
+              text,
               mode,
               targetId,
-              ...(slots ? { slots } : {}),
-              expectedPlan: actor.planGeneration,
-              targetEpisodes: captureActionTargets(this.service.world, actorId, [
-                { actorId, targetId },
-              ]),
-              timelineId: this.service.timelineId,
+              slots,
+              ...(expression ? { expression: true as const } : {}),
             },
-          },
-        };
-        await this.begin(job);
-        return { ok: true, code: 'queued', message: job.message, jobId: id };
-      }),
+          );
+          id = identity.id;
+          const actorId = operatorActorId ?? authority.actorId;
+          const actor = entityGet(this.service.world.entities, actorId)?.actor;
+          if (
+            !text.trim() ||
+            text.length > 500 ||
+            !['enqueue', 'replace', 'interrupt'].includes(mode)
+          )
+            return {
+              ok: false,
+              code: 'invalid-action',
+              message: 'Supply an action of 1–500 characters.',
+            };
+          if (slots !== null && !validIntentSlots(this.service.world, slots))
+            return {
+              ok: false,
+              code: 'invalid-action',
+              message:
+                'A chosen detail is not valid here, such as a stopping time this world does not name.',
+            };
+          const fingerprint = operatorActorId
+            ? digest([identity.fingerprint, 'operator-authored', operatorActorId])
+            : identity.fingerprint;
+          const previous = await this.service.store.getJob(id);
+          if (previous)
+            return previous.kind === 'action' && previous.fingerprint === fingerprint
+              ? {
+                  ok: true,
+                  code: 'duplicate',
+                  message: previous.message,
+                  jobId: id,
+                  jobStatus: previous.status,
+                }
+              : {
+                  ok: false,
+                  code: 'idempotency-conflict',
+                  message: 'This request identity was already used.',
+                };
+          if (this.service.paused)
+            return { ok: false, code: 'paused', message: 'Resume before attempting an action.' };
+          if (
+            !actor?.alive ||
+            (expression &&
+              !activelyParticipates(entityGet(this.service.world.entities, actorId))) ||
+            actor.incapacitated ||
+            capabilityBlocked(
+              this.service.world,
+              entityGet(this.service.world.entities, actorId),
+              'actions',
+            )
+          )
+            return {
+              ok: false,
+              code: 'actor-unavailable',
+              message: 'Your character cannot act now.',
+            };
+          if (
+            targetId &&
+            targetId !== actorId &&
+            !this.service
+              .observe(actorId, { includeMemories: false })
+              ?.visibleEntities.some((e) => e.id === targetId) &&
+            !(expression && accessiblePossession(this.service.world, actorId, targetId))
+          )
+            return {
+              ok: false,
+              code: 'target',
+              message: 'The selected target is no longer perceived.',
+            };
+          // Recognized typed forms bind natively now, even while another request runs.
+          const typed =
+            !expression &&
+            (await commitTypedAction(
+              this.service,
+              {
+                id,
+                authority,
+                fingerprint,
+                ...(operatorActorId ? { operatorAuthored: true as const } : {}),
+              },
+              actorId,
+              { text, targetId: targetId ?? null, slots },
+              mode,
+            ));
+          if (typed) return typed;
+          if (expression && !operatorActorId) {
+            const available = await this.service.playerInteractionAvailability(
+              'act',
+              targetId,
+              authority,
+            );
+            if (!available.available)
+              return { ok: false, code: available.code, message: available.reason! };
+          }
+          if (!this.canAdmit(actorId))
+            return {
+              ok: false,
+              code: 'busy',
+              message: 'Another intelligence request is in progress; try again after it finishes.',
+            };
+          const config = this.service.config;
+          if (
+            !config.budgetUsd ||
+            (expression && config.jevOnly) ||
+            (expression ? !hasGenerationAccess(config) : !hasJudgmentAccess(config))
+          )
+            return {
+              ok: false,
+              code: 'ai-unavailable',
+              message: expression
+                ? config.jevOnly
+                  ? 'Act is unavailable while language generation is disabled.'
+                  : 'Act needs language-model access and an AI allowance.'
+                : `This wording needs configured Jev and language-model access with an allowance. ${typedActionForms(this.service.world)}`,
+            };
+          this.maintenance.cancel();
+          const job: JobRecord = {
+            id,
+            kind: 'action',
+            ...(operatorActorId ? { operatorAuthored: true as const } : {}),
+            authority,
+            fingerprint,
+            status: 'queued',
+            message: expression ? 'Describing your action.' : 'Resolving your action.',
+            createdAt: this.now(),
+            diagnosticTriggerType: 'Player action request',
+            request: {
+              text,
+              npcId: actorId,
+              action: {
+                ...(expression
+                  ? { expression: true as const, expressionLife: actor.physicalLife ?? 0 }
+                  : {}),
+                mode,
+                targetId,
+                ...(slots ? { slots } : {}),
+                expectedPlan: actor.planGeneration,
+                targetEpisodes: captureActionTargets(this.service.world, actorId, [
+                  { actorId, targetId },
+                ]),
+                timelineId: this.service.timelineId,
+              },
+            },
+          };
+          await this.begin(job);
+          return { ok: true, code: 'queued', message: job.message, jobId: id };
+        },
+      ),
     );
   }
 
@@ -632,12 +838,10 @@ export class AiDirector {
       signal: run.controller.signal,
       retryUnresolved: run.job.kind === 'action',
       judge: (request) =>
-        this.call(
+        this.judge(
           run,
-          'jev',
           `${operation}:classify:${serial++}`,
-          (requestId) =>
-            this.client.judge({ ...request, requestId, signal: run.controller.signal }),
+          request,
           judgeMeter('grounding', request),
         ),
       generate: (request) =>
@@ -700,7 +904,7 @@ export class AiDirector {
       slots: request.slots ?? null,
     });
     const choices = [
-      ...npcCandidates(this.service, actorId),
+      ...immediateActionCandidates(npcCandidates(this.service, actorId)),
       ...planningCandidates(this.service, actorId),
     ].flatMap((c) =>
       c.command
@@ -762,7 +966,12 @@ export class AiDirector {
       );
     const authorizedCommit = () =>
       run.job.authority
-        ? this.service.authorized(run.job.authority, 'play', true, commit)
+        ? this.service.authorized(
+            run.job.authority,
+            run.job.operatorAuthored ? 'create' : 'play',
+            !run.job.operatorAuthored,
+            commit,
+          )
         : Promise.reject(new StopJob('stale', 'The action has no controlling authority.'));
     let result = await authorizedCommit();
     while (!result.ok && result.code === 'paused') {
@@ -844,10 +1053,20 @@ export class AiDirector {
         run.job.id,
       );
     if (!run.job.authority) throw new StopJob('stale', 'The action has no controlling authority.');
-    let result = await this.service.authorized(run.job.authority, 'play', true, commit);
+    let result = await this.service.authorized(
+      run.job.authority,
+      run.job.operatorAuthored ? 'create' : 'play',
+      !run.job.operatorAuthored,
+      commit,
+    );
     while (!result.ok && result.code === 'paused') {
       await this.awaitResume(run, true);
-      result = await this.service.authorized(run.job.authority, 'play', true, commit);
+      result = await this.service.authorized(
+        run.job.authority,
+        run.job.operatorAuthored ? 'create' : 'play',
+        !run.job.operatorAuthored,
+        commit,
+      );
     }
     await this.update(run, result.ok ? 'completed' : 'failed', result.message, { outcome: result });
   }
@@ -889,10 +1108,51 @@ export class AiDirector {
     if (!run.controller.signal.aborted) {
       run.cancelReason = 'Request cancelled.';
       this.replyPreviews.recheck();
-      await this.update(run, run.job.status, 'Cancelling request…');
+      run.cancellationProgress = this.update(run, run.job.status, 'Cancelling request…');
       run.controller.abort();
     }
+    await run.cancellationProgress;
     return { ok: true, code: 'cancelling', message: 'Cancellation requested.', jobId };
+  }
+
+  private async retrySpeechMatches(original: JobRecord, actorId: string): Promise<boolean> {
+    if (!original.playerSpeechEventId || !original.request.npcId) return false;
+    const speech =
+      this.service.worldEvent(original.playerSpeechEventId) ??
+      (await this.service.store.history?.event(
+        this.service.world.id,
+        original.playerSpeechEventId,
+      ));
+    return speech?.actorId === actorId && speech.targetId === original.request.npcId;
+  }
+  private async responseRetryEligible(original: JobRecord): Promise<boolean> {
+    if (original.status !== 'failed' || !original.playerSpeechEventId) return false;
+    const latest = await this.service.store.getSpeechJob(original.playerSpeechEventId);
+    if (latest?.id !== original.id) return false;
+    const receipt = this.service.world.responseReceipts?.[original.id];
+    return !(
+      Object.values(receipt?.components ?? {}).some((component) => component.ok) ||
+      this.service.world.events.some((event) => event.data?.['responseId'] === original.id) ||
+      (await this.service.store.history?.hasResponse(this.service.world.id, original.id))
+    );
+  }
+  /** Read-only offer; ordinary submit repeats these same native checks at admission. */
+  async responseRetry(
+    jobId: string,
+    scope: RequestScope,
+  ): Promise<{ sourceId: string; actorId: string } | undefined> {
+    if (!this.service.currentScope(scope, 'play', true) || this.service.paused) return;
+    const original = await this.service.store.getJob(jobId);
+    if (
+      !original ||
+      original.kind !== 'chat' ||
+      !original.request.npcId ||
+      !(await this.retrySpeechMatches(original, scope.actorId)) ||
+      !(await this.responseRetryEligible(original))
+    )
+      return;
+    this.service.assertScope(scope, 'play', true);
+    return { sourceId: original.id, actorId: original.request.npcId };
   }
 
   async submit(
@@ -963,13 +1223,7 @@ export class AiDirector {
             code: 'retry-unavailable',
             message: 'The original conversation request is unavailable.',
           };
-        const speech =
-          this.service.worldEvent(original.playerSpeechEventId) ??
-          (await this.service.store.history?.event(
-            this.service.world.id,
-            original.playerSpeechEventId,
-          ));
-        if (!speech || speech.actorId !== inventorId || speech.targetId !== original.request.npcId)
+        if (!(await this.retrySpeechMatches(original, inventorId)))
           return {
             ok: false,
             code: 'retry-unavailable',
@@ -1175,13 +1429,7 @@ export class AiDirector {
         if (!permission.ok) return permission;
       }
       if (original) {
-        const latest = await this.service.store.getSpeechJob(original.playerSpeechEventId!);
-        const receipt = this.service.world.responseReceipts?.[original.id];
-        const applied =
-          Object.values(receipt?.components ?? {}).some((component) => component.ok) ||
-          this.service.world.events.some((event) => event.data?.['responseId'] === original!.id) ||
-          (await this.service.store.history?.hasResponse(this.service.world.id, original.id));
-        if (original.status !== 'failed' || latest?.id !== original.id || applied)
+        if (!(await this.responseRetryEligible(original)))
           return {
             ok: false,
             code: 'retry-unavailable',
@@ -1211,8 +1459,9 @@ export class AiDirector {
         kind === 'invention' &&
         continuation?.action !== 'reuse' &&
         invention?.candidate === undefined &&
-        !this.service.config.macrofoldKey &&
-        (mode === 'workshop' ? !this.service.config.llmKey : !this.service.config.jevKey)
+        (mode === 'workshop'
+          ? !hasGenerationAccess(this.service.config)
+          : !hasJudgmentAccess(this.service.config))
       )
         return {
           ok: false,
@@ -1380,17 +1629,24 @@ export class AiDirector {
       run.job = updated;
       await this.service.store.putJob(run.job);
     }
+    // A native publication may already have closed this job with independently
+    // accepted components. Its durable result wins over a later stage's stale
+    // completion arguments in diagnostics and live updates as well as storage.
+    const publishedTerminal = ['completed', 'failed', 'cancelled', 'stale'].includes(
+      run.job.status,
+    );
+    const publishedResult = run.job.result;
     const scope = run.job.request.invention;
     if (
-      terminal &&
-      status === 'failed' &&
+      publishedTerminal &&
+      run.job.status === 'failed' &&
       scope?.authority.origin === 'agent' &&
       scope.worldId === this.service.world.id &&
       scope.timelineId === this.service.timelineId
     ) {
       await this.service.transition((world) =>
         scope.worldId === world.id && scope.timelineId === this.service.timelineId
-          ? recordInventionFeedback(world, scope.actorId, run.job.id, message)
+          ? recordInventionFeedback(world, scope.actorId, run.job.id, run.job.message)
           : {
               world,
               events: [],
@@ -1402,7 +1658,7 @@ export class AiDirector {
             },
       );
     }
-    if (terminal && run.ledger?.entries.length) {
+    if (publishedTerminal && run.ledger?.entries.length) {
       const used = new Set(run.ledger.entries.flatMap((entry) => entry.level ?? []));
       await this.log.record(
         `${run.job.id}:decision-accounting`,
@@ -1419,14 +1675,29 @@ export class AiDirector {
     if (trace)
       await this.log.save({
         ...trace,
-        status: terminal ? (status === 'completed' ? 'completed' : 'failed') : 'running',
+        status: publishedTerminal
+          ? run.job.status === 'completed'
+            ? 'completed'
+            : 'failed'
+          : 'running',
         disposition:
-          result && typeof result === 'object' && 'disposition' in result
-            ? String(result.disposition)
-            : status,
-        output: { message, result },
-        ...(terminal ? { completedAt: new Date().toISOString() } : {}),
+          publishedResult && typeof publishedResult === 'object' && 'disposition' in publishedResult
+            ? String(publishedResult.disposition)
+            : run.job.status,
+        output: { message: run.job.message, result: publishedResult },
+        ...(publishedTerminal ? { completedAt: new Date().toISOString() } : {}),
       });
+    await this.service.cognitionControl?.emit({
+      kind: 'job',
+      jobId: run.job.id,
+      actorId: this.selectedActorId(run.job),
+      status: run.job.status,
+      result: publishedResult,
+      primaryStageId: run.primaryRequestId,
+      ...(publishedTerminal
+        ? { publication: this.service.world.responseReceipts?.[run.job.id] }
+        : {}),
+    });
     this.service.notify();
   }
 
@@ -1438,12 +1709,37 @@ export class AiDirector {
     return job.kind === 'invention' ? job.request.invention?.actorId : job.request.npcId;
   }
 
+  private jobAuthorityCurrent(job: JobRecord): boolean {
+    return (
+      !job.authority ||
+      this.service.currentScope(
+        job.authority,
+        job.operatorAuthored ? 'create' : 'play',
+        !job.operatorAuthored,
+      )
+    );
+  }
+
+  async submitOperatorAction(
+    id: string,
+    actorId: string,
+    text: string,
+    mode: 'enqueue' | 'replace' | 'interrupt',
+    targetId?: string,
+    authority = this.service.localScope,
+    slots: IntentSlots | null = null,
+  ): Promise<ApiResult> {
+    return this.submitAction(id, text, mode, targetId, authority, slots, false, actorId);
+  }
+
   private current(run: Running): string {
+    this.service.cognitionControl?.assertCurrent(run.labEpoch);
     const decision = run.job.decision;
     if (
       decision &&
-      (this.now() >= decision.usefulUntilWall ||
-        performance.now() >= decision.usefulUntilMonotonic ||
+      ((!run.lifetimeTimingHold &&
+        (this.now() >= decision.usefulUntilWall ||
+          performance.now() >= decision.usefulUntilMonotonic)) ||
         decision.policyDigest !== decisionPolicyDigest(this.service.config) ||
         decision.timelineId !== this.service.timelineId ||
         (decision.usefulUntilSim !== undefined &&
@@ -1457,6 +1753,7 @@ export class AiDirector {
     if (
       this.stopped ||
       run.invalidated ||
+      run.cancelReason ||
       run.controller.signal.aborted ||
       (this.service.paused && (run.job.kind === 'thought' || !!decision))
     )
@@ -1469,7 +1766,7 @@ export class AiDirector {
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
       );
-    if (run.job.authority && !this.service.currentScope(run.job.authority, 'play', true))
+    if (run.job.authority && !this.jobAuthorityCurrent(run.job))
       throw new StopJob('stale', 'Control or access changed; no new effects were applied.');
     if (run.job.kind === 'invention') {
       const scope = run.job.request.invention;
@@ -1478,7 +1775,7 @@ export class AiDirector {
         scope.worldId !== this.service.world.id ||
         scope.timelineId !== this.service.timelineId ||
         (scope.authority.origin === 'player' &&
-          (!run.job.authority || !this.service.currentScope(run.job.authority, 'play', true)))
+          (!run.job.authority || !this.jobAuthorityCurrent(run.job)))
       )
         throw new StopJob(
           'stale',
@@ -1529,6 +1826,7 @@ export class AiDirector {
     onCompleted?: () => Promise<void>,
     cursor?: DecisionState['cursor'],
     urgent = false,
+    continuation?: ReconstitutedDecision,
   ): Promise<void> {
     // Invalid/busy requests cannot discard another mind's funded decision.
     // Reflection cleanup remains asynchronous once admission has actually succeeded.
@@ -1544,7 +1842,11 @@ export class AiDirector {
     if (
       (job.kind === 'chat' || job.kind === 'thought') &&
       actorId &&
-      permitsEscalation(this.service.config)
+      (permitsEscalation(this.service.config) ||
+        (!this.service.config.jevOnly &&
+          this.service.config.budgetUsd > 0 &&
+          (hasNpcGenerationAccess(this.service.config, 'npc_response_fast') ||
+            hasNpcGenerationAccess(this.service.config, 'npc_response_complex'))))
     ) {
       const acceptedAt = this.now();
       const cause = job.triggerEvidenceId ?? job.playerSpeechEventId;
@@ -1574,6 +1876,8 @@ export class AiDirector {
       });
     }
     const run: Running = {
+      labEpoch: this.service.cognitionControl?.epoch,
+      continuation,
       urgent,
       job,
       controller: new AbortController(),
@@ -1586,74 +1890,112 @@ export class AiDirector {
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.immediateRuns.set(job.id, run);
     this.activeRuns.add(run);
+    const control = this.service.cognitionControl;
+    const registrationHold = run.job.decision ? control?.heldTiming : undefined;
+    const releaseNative = this.service.cognitionControl?.registerNative(job.id, () => {
+      const decision = run.job.decision;
+      if (
+        !decision ||
+        decision.phase === 'closed' ||
+        decision.immediate.kind !== 'pending' ||
+        run.cancelReason ||
+        run.controller.signal.aborted ||
+        this.stopped ||
+        (!run.immediateTimingHold &&
+          (this.now() >= decision.fastPublishBy ||
+            performance.now() >= decision.fastPublishByMonotonic))
+      )
+        return;
+      return this.holdDecisionTiming(run, false);
+    });
     try {
       await this.service.store.putJob(job);
+      // The first row must exist before ordinary timing holds can mutate it.
+      // Preserve an operator hold across that write without excluding unheld
+      // database work or renewing stopped work. Native deadlines stay unchanged.
+      if (registrationHold && control) {
+        const held = control.heldTiming;
+        if (
+          held.wallMs > registrationHold.wallMs ||
+          held.monotonicMs > registrationHold.monotonicMs
+        ) {
+          const interrupted = () =>
+            run.controller.signal.aborted ||
+            !!run.cancelReason ||
+            this.stopped ||
+            run.generation !== this.service.generation ||
+            run.labEpoch !== control.epoch;
+          const saved = await this.service.store.mutateDecision(job.id, async (current) => {
+            if (
+              interrupted() ||
+              current.decision?.phase === 'closed' ||
+              current.decision?.generation !== run.generation
+            )
+              return;
+            const elapsed = control.heldTiming;
+            return {
+              ...current,
+              decision: shiftUndispatchedDecision(
+                current.decision,
+                Math.max(0, elapsed.wallMs - registrationHold.wallMs),
+                Math.max(0, elapsed.monotonicMs - registrationHold.monotonicMs),
+              ),
+            };
+          });
+          if (saved) run.job = saved;
+          else if (!interrupted())
+            throw new StopJob('stale', 'The held decision was replaced before registration.');
+        }
+      }
+      if (run.job.decision && control) run.labTiming = this.observeLabTiming(run);
+      this.service.notify();
+      this.armDecisionTimers(run);
+      await this.service.cognitionControl?.emit({
+        kind: 'job',
+        jobId: job.id,
+        actorId,
+        status: 'queued',
+      });
+      await this.log.save({
+        id: job.id,
+        kind: 'Semantic trigger',
+        ownerAccountId: job.authority?.accountId,
+        worldId: this.service.world.id,
+        actorId,
+        actorName: actorId ? entityGet(this.service.world.entities, actorId)?.name : undefined,
+        trigger: job.diagnosticTrigger ?? job.request.text,
+        triggerType:
+          job.diagnosticTriggerType ??
+          (job.kind === 'chat'
+            ? 'Player speech'
+            : job.kind === 'invention'
+              ? 'Player invention request'
+              : 'Autonomous cognition'),
+        gameTime: this.service.world.simTime,
+        startedAt: new Date().toISOString(),
+        status: 'running',
+        disposition: 'queued',
+        // The readable trigger stays concise; raw inspection retains the exact stimulus.
+        input: {
+          policy: COGNITION_VERSION,
+          offeredRoutes: [0, 1, 2, 3, 4, 5],
+          stimulus: job.request.text,
+        },
+        exchanges: [],
+      });
     } catch (error) {
+      await run.labTiming?.close();
       this.activeRuns.delete(run);
       this.releaseImmediate(run);
+      this.retireDecisionTimers(run);
+      releaseNative?.();
+      await this.update(
+        run,
+        'failed',
+        'The native decision ended before provider execution.',
+      ).catch(() => undefined);
       throw error;
     }
-    this.service.notify();
-    if (job.decision) {
-      run.immediateTimer = setTimeout(
-        () => {
-          void this.deferImmediate(run).catch(() => {
-            this.service.storageError = 'A decision deferral could not be saved.';
-          });
-        },
-        Math.max(
-          1,
-          Math.min(
-            job.decision.fastPublishBy - this.now(),
-            job.decision.fastPublishByMonotonic - performance.now(),
-          ),
-        ),
-      );
-      run.expiryTimer = setTimeout(
-        () => {
-          run.controller.abort();
-          void this.escalator.end(job.id, 'expired').catch(() => {
-            this.service.storageError = 'An expired decision could not be saved.';
-          });
-        },
-        Math.max(
-          1,
-          Math.min(
-            job.decision.usefulUntilWall - this.now(),
-            job.decision.usefulUntilMonotonic - performance.now(),
-          ),
-        ),
-      );
-      run.immediateTimer.unref();
-      run.expiryTimer.unref();
-    }
-    await this.log.save({
-      id: job.id,
-      kind: 'Semantic trigger',
-      ownerAccountId: job.authority?.accountId,
-      worldId: this.service.world.id,
-      actorId,
-      actorName: actorId ? entityGet(this.service.world.entities, actorId)?.name : undefined,
-      trigger: job.diagnosticTrigger ?? job.request.text,
-      triggerType:
-        job.diagnosticTriggerType ??
-        (job.kind === 'chat'
-          ? 'Player speech'
-          : job.kind === 'invention'
-            ? 'Player invention request'
-            : 'Autonomous cognition'),
-      gameTime: this.service.world.simTime,
-      startedAt: new Date().toISOString(),
-      status: 'running',
-      disposition: 'queued',
-      // The readable trigger stays concise; raw inspection retains the exact stimulus.
-      input: {
-        policy: COGNITION_VERSION,
-        offeredRoutes: [0, 1, 2, 3, 4, 5],
-        stimulus: job.request.text,
-      },
-      exchanges: [],
-    });
     const pending = this.log
       .withTrigger(job.id, async () => await this.process(run))
       .then(async () => {
@@ -1670,8 +2012,12 @@ export class AiDirector {
       })
       .catch((error) =>
         this.log.withTrigger(job.id, async () => {
+          // The cancellation caller observes a failed progress write. Terminal
+          // cleanup still follows that write so it cannot overwrite the outcome.
+          if (run.cancellationProgress) await Promise.allSettled([run.cancellationProgress]);
           const known = error instanceof StopJob;
-          const cancelled = run.controller.signal.aborted;
+          // Requested cancellation stays distinct from provider failure during cleanup.
+          const cancelled = !!run.cancelReason || run.controller.signal.aborted;
           if (await this.escalateFailure(run, error)) return;
           if (run.job.request.invention)
             run.job.invention = {
@@ -1690,6 +2036,7 @@ export class AiDirector {
             };
           await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
             reason: error instanceof Error ? error.message : 'Unknown failure',
+            ...(error instanceof ContextBudgetError ? { contextBudget: error.details } : {}),
           });
           await this.update(
             run,
@@ -1714,9 +2061,10 @@ export class AiDirector {
         }),
       )
       .finally(async () => {
+        await run.labTiming?.close();
+        releaseNative?.();
         this.activeRuns.delete(run);
-        if (run.immediateTimer) clearTimeout(run.immediateTimer);
-        if (run.expiryTimer) clearTimeout(run.expiryTimer);
+        this.retireDecisionTimers(run);
         this.replyPreviews.end(run.job.id);
         try {
           this.releaseImmediate(run);
@@ -1728,6 +2076,7 @@ export class AiDirector {
           if (
             proposal &&
             !this.stopped &&
+            !run.cancelReason &&
             !run.controller.signal.aborted &&
             run.generation === this.service.generation
           ) {
@@ -1780,7 +2129,12 @@ export class AiDirector {
   }
 
   private async handoff(run: Running, reason: DecisionReason, response = false): Promise<boolean> {
-    if (!run.job.decision || run.controller.signal.aborted || run.receipt?.completionUncertain)
+    if (
+      !run.job.decision ||
+      run.cancelReason ||
+      run.controller.signal.aborted ||
+      run.receipt?.completionUncertain
+    )
       return false;
     const retained = run.decisionPreparation;
     const handedOff = await this.escalator.enqueue(
@@ -1788,13 +2142,24 @@ export class AiDirector {
       reason,
       response,
       retained
-        ? (job, signal) => prepareReconsideration(this.service, this.recall, job, signal, retained)
+        ? (job, signal, readControl) =>
+            prepareReconsideration(this.service, this.recall, job, signal, retained, readControl)
         : undefined,
+      { signal: run.controller.signal, labEpoch: run.labEpoch },
+      {
+        held: () => !!run.lifetimeTimingHold,
+        transfer: async (queued) => {
+          if ((queued.decision?.revision ?? 0) > (run.job.decision?.revision ?? 0))
+            run.job = queued;
+          this.retireDecisionTimers(run);
+          // Keep the old owner through enqueue's awaited writes, then drain it
+          // before the queued owner starts measuring the next held interval.
+          await run.labTiming?.close();
+          run.handedOff = true;
+          return run.job;
+        },
+      },
     );
-    if (handedOff) {
-      run.handedOff = true;
-      run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
-    }
     return handedOff;
   }
 
@@ -1809,9 +2174,13 @@ export class AiDirector {
       return false;
     if (
       run.receipt?.completionUncertain &&
-      (await this.escalator.awaitPrimary(run.job.id, run.receipt.requestId, run.validity))
+      (await this.escalator.awaitPrimary(run.job.id, run.receipt.requestId, run.validity, {
+        signal: run.controller.signal,
+        labEpoch: run.labEpoch,
+      }))
     ) {
       run.handedOff = true;
+      this.retireDecisionTimers(run);
       run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
       return true;
     }
@@ -1876,214 +2245,580 @@ export class AiDirector {
     this.current(run);
   }
 
-  private async call<T>(
+  private async awaitLabRelease(run: Running): Promise<void> {
+    await this.service.cognitionControl?.waitUntilReleased({
+      rootId: run.job.id,
+      signal: run.controller.signal,
+      current: () => {
+        this.current(run);
+      },
+      holdTiming: () => this.holdDecisionTiming(run),
+      settleTiming: () => run.labTiming?.settle(),
+    });
+  }
+
+  private observeLabTiming(run: Running): CognitionTimingObservation {
+    return this.service.cognitionControl!.observeTiming(run.job.id, {
+      current: () =>
+        run.job.decision?.phase !== 'closed' &&
+        !run.handedOff &&
+        !run.receipt?.completionUncertain &&
+        !run.controller.signal.aborted &&
+        !this.stopped,
+      holdTiming: () => {
+        try {
+          return this.holdDecisionTiming(run);
+        } catch (error) {
+          // Its ordinary execution guard reports invalidation; observation
+          // cannot renew a cancelled, expired or unauthorized operation.
+          if (
+            !(
+              error instanceof StopJob ||
+              error instanceof CognitionControlError ||
+              error instanceof AuthorityError
+            )
+          )
+            throw error;
+          return undefined;
+        }
+      },
+      failed: (error) => {
+        this.service.storageError = 'A held decision clock could not be saved.';
+        run.controller.abort(error);
+      },
+    });
+  }
+
+  private retireDecisionTimers(run: Running): void {
+    run.timersRetired = true;
+    if (run.immediateTimer) clearTimeout(run.immediateTimer);
+    if (run.expiryTimer) clearTimeout(run.expiryTimer);
+    delete run.immediateTimer;
+    delete run.expiryTimer;
+  }
+
+  private armDecisionTimers(run: Running): void {
+    if (run.immediateTimer) clearTimeout(run.immediateTimer);
+    if (run.expiryTimer) clearTimeout(run.expiryTimer);
+    const decision = run.job.decision;
+    if (
+      !decision ||
+      decision.phase === 'closed' ||
+      run.timersRetired ||
+      run.controller.signal.aborted ||
+      this.stopped
+    )
+      return;
+    if (decision.immediate.kind === 'pending' && !run.immediateTimingHold)
+      run.immediateTimer = setTimeout(
+        () => {
+          if (run.immediateTimingHold) return;
+          void this.deferImmediate(run).catch(() => {
+            this.service.storageError = 'A decision deferral could not be saved.';
+          });
+        },
+        Math.max(
+          1,
+          Math.min(
+            decision.fastPublishBy - this.now(),
+            decision.fastPublishByMonotonic - performance.now(),
+          ),
+        ),
+      );
+    if (!run.lifetimeTimingHold)
+      run.expiryTimer = setTimeout(
+        () => {
+          if (run.lifetimeTimingHold) return;
+          run.controller.abort();
+          void this.escalator.end(run.job.id, 'expired').catch(() => {
+            this.service.storageError = 'An expired decision could not be saved.';
+          });
+        },
+        Math.max(
+          1,
+          Math.min(
+            decision.usefulUntilWall - this.now(),
+            decision.usefulUntilMonotonic - performance.now(),
+          ),
+        ),
+      );
+    run.immediateTimer?.unref();
+    run.expiryTimer?.unref();
+  }
+
+  private holdDecisionTiming(run: Running, lifetime = true): () => Promise<void> {
+    this.current(run); // An already expired operation cannot be revived by opening an editor.
+    const acquire = (key: 'immediateTimingHold' | 'lifetimeTimingHold') => {
+      const { hold, release } = acquireDecisionTimingHold(run[key], this.now(), performance.now());
+      run[key] = hold;
+      const timer = key === 'immediateTimingHold' ? run.immediateTimer : run.expiryTimer;
+      if (timer) clearTimeout(timer);
+      return () => {
+        const wait = release();
+        if (!wait) return;
+        return {
+          elapsed: () => wait.elapsed(this.now(), performance.now()),
+          finish: () => {
+            if (run[key] === hold) delete run[key];
+          },
+        };
+      };
+    };
+    const decision = run.job.decision;
+    const immediate =
+      decision?.immediate.kind === 'pending' &&
+      (run.immediateTimingHold ||
+        (this.now() < decision.fastPublishBy &&
+          performance.now() < decision.fastPublishByMonotonic))
+        ? acquire('immediateTimingHold')
+        : undefined;
+    const useful = lifetime ? acquire('lifetimeTimingHold') : undefined;
+    const interrupted = () =>
+      run.controller.signal.aborted ||
+      this.stopped ||
+      run.generation !== this.service.generation ||
+      (run.labEpoch !== undefined && run.labEpoch !== this.service.cognitionControl?.epoch);
+    return async () => {
+      const immediateWait = immediate?.(),
+        usefulWait = useful?.();
+      if (!immediateWait && !usefulWait) return;
+      try {
+        if (interrupted()) return;
+        if (run.job.decision) {
+          const saved = await this.service.store.mutateDecision(run.job.id, async (current) => {
+            if (
+              interrupted() ||
+              current.decision?.phase === 'closed' ||
+              current.decision?.generation !== run.generation
+            )
+              return;
+            // Include row/queue wait in observer credit, without extending a
+            // prior token across the next hold or charging it twice.
+            const usefulElapsed = usefulWait?.elapsed(),
+              immediateElapsed = immediateWait?.elapsed();
+            let shifted = current.decision;
+            // Human wait extends the lifetime before immediate credit is bounded by it.
+            if (usefulElapsed)
+              shifted = shiftUndispatchedDecision(
+                shifted,
+                usefulElapsed.wall,
+                usefulElapsed.monotonic,
+                'lifetime',
+              );
+            if (immediateElapsed)
+              shifted = shiftUndispatchedDecision(
+                shifted,
+                immediateElapsed.wall,
+                immediateElapsed.monotonic,
+                'immediate',
+              );
+            return { ...current, decision: shifted };
+          });
+          if (!saved) {
+            if (interrupted()) return;
+            throw new StopJob('stale', 'The held decision was replaced before continuation.');
+          }
+          run.job = saved;
+        }
+      } finally {
+        immediateWait?.finish();
+        usefulWait?.finish();
+        if (!interrupted()) this.armDecisionTimers(run);
+      }
+    };
+  }
+
+  private requestDeadline(run: Running, earlier?: number) {
+    this.current(run);
+    const deadline = run.job.decision
+      ? decisionRequestDeadline(run.job.decision, this.now(), performance.now(), earlier)
+      : earlier;
+    if (deadline !== undefined && deadline <= Date.now())
+      throw new StopJob('failed', 'The decision request deadline passed.', 'expired');
+    return deadline;
+  }
+
+  private memoryReadControl(run: Running) {
+    const now = this.now;
+    return {
+      signal: run.controller.signal,
+      // A Lab hold can shift the native clock while earlier preparation awaits.
+      // Read its current bound when lexical waiting actually begins.
+      get deadlineMs() {
+        const state = run.job.decision;
+        return state ? decisionRequestDeadline(state, now(), performance.now()) : undefined;
+      },
+    };
+  }
+
+  private async judge(
+    run: Running,
+    purpose: string,
+    request: Omit<JudgeRequest, 'requestId' | 'signal'>,
+    meter?: Meter,
+  ): Promise<JudgeValue> {
+    const value = await this.call(
+      run,
+      'jev',
+      purpose,
+      { kind: 'judge', request },
+      (requestId, input, deadlineMs) =>
+        this.client.judge({
+          ...input.request,
+          deadlineMs,
+          requestId,
+          signal: run.controller.signal,
+        }),
+      meter,
+      request.deadlineMs,
+    );
+    if (!run.primaryGeneration && !purpose.includes('attention'))
+      run.primaryRequestId = `${run.job.id}:${purpose}`;
+    return value;
+  }
+
+  private async call<T, I extends CognitionStageInput>(
     run: Running,
     provider: 'jev' | 'openai',
     suffix: string,
-    dispatch: (requestId: string) => Promise<AiResult<T>>,
+    input: I,
+    dispatch: (requestId: string, input: I, deadlineMs?: number) => Promise<AiResult<T>>,
     meter?: Meter,
+    earlierDeadline?: number,
   ): Promise<T> {
+    if (input.kind === 'generate' && this.executionSource === 'live-model')
+      input = {
+        ...input,
+        request: applyCatalogGenerationFormat(this.service.config, input.request),
+      } as I;
+    const timing = run.labTiming?.settle();
+    if (timing) await timing;
     const sourceActorId = this.current(run);
     const sourceCurrent = this.service.privateReadFence(
       sourceActorId,
       () => this.current(run) === sourceActorId,
     );
-    // This selected strategy declares both dependent calls in advance. Its
-    // original useful lifetime still fences every dispatch/commit via current();
-    // a stage transition neither renews that clock nor funds a fallback.
-    if (
-      run.job.decision &&
-      !run.preparedResponse &&
-      (this.now() >= run.job.decision.fastPublishBy ||
-        performance.now() >= run.job.decision.fastPublishByMonotonic)
-    )
-      throw new StopJob(
-        'failed',
-        'No new immediate inference was started after the one-second boundary.',
-        'expired',
-      );
-    const lease = await this.execution.primary(run.urgent);
-    if (!lease)
-      throw new StopJob('failed', 'The primary model execution slot is occupied.', 'capacity');
-    let reservedId: string | undefined,
-      dispatchIntent = false,
-      completed = false;
-    try {
-      if (this.service.paused && run.job.request.invention?.mode !== 'workshop')
-        await this.awaitResume(run);
-      const actorId = this.current(run);
-      const id = `${run.job.id}:${suffix}`;
-      const config = this.service.config;
-      // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
-      // Exact provider invoices remain external; custom prices must match the selected model.
-      const reserve = decisionAllowance(config, provider, meter?.model);
-      // A decision's own level work stays within that level's per-decision limits.
-      // docs/limits/cognition.md#cg08
-      const category =
-        meter?.category ?? (/classify|interpret/.test(suffix) ? 'grounding' : 'preparation');
-      const admitted = run.ledger?.admit(category, meter?.level, reserve);
-      if (admitted && !admitted.ok)
-        throw new StopJob(
-          'failed',
-          `${admitted.reason} No further paid request was sent.`,
-          'budget-exhausted',
-        );
-      const reserveAttempt = async () => {
-        if (
-          !(await this.service.store.reserve(
-            id,
-            provider,
-            reserve,
-            config.budgetUsd,
-            actorId,
-            undefined,
-            inventionAttemptBudget(this.service, run.job.request.invention),
-            {
-              rootJobId: run.job.id,
-              category,
-              ...(meter?.level ? { level: meter.level } : {}),
-              stage: suffix,
-              executionClass: lease.executionClass,
+    // The one-second mark records responsiveness. This admitted pipeline may
+    // finish required stages until its original usefulness boundary (current()).
+    // docs/projects/decision-escalation-tech-design.md#one-root-two-timing-meanings
+    const control = this.service.cognitionControl;
+    const deployment =
+      input.kind === 'generate'
+        ? (input.request as GenerateRequest).macrofoldDeployment
+        : undefined;
+    const prepared = control
+      ? await control.prepare(
+          {
+            id: `${run.job.id}:${suffix}`,
+            rootId: run.job.id,
+            actorId: sourceActorId,
+            purpose: suffix,
+            modelPurpose:
+              input.kind === 'judge'
+                ? 'judgment'
+                : input.kind === 'generate' && input.request.task === 'npc_response'
+                  ? meter?.level === 2
+                    ? 'responseFast'
+                    : 'responseComplex'
+                  : undefined,
+            generation: run.generation,
+            responseBoundBytes: this.service.config.macrofoldKey ? 1_000_000 : 500_000,
+            wireBoundBytes: DIAGNOSTIC_LIMITS.recordBytes,
+            ...(deployment
+              ? { protectedModel: `deployment:${deployment.modelBinding.deployment_id}` }
+              : {}),
+            signal: run.controller.signal,
+            current: () => {
+              this.current(run);
             },
-          ))
+            holdTiming: () => this.holdDecisionTiming(run),
+            settleTiming: () => run.labTiming?.settle(),
+          },
+          input,
         )
-          throw new StopJob(
-            'failed',
-            'Your usage allowance is used up. Existing actions and learned recipes still work.',
-            'budget-exhausted',
-          );
-      };
-      if (run.job.decision && provider === 'openai' && meter?.model === DECISION_MODEL) {
-        const direct = await this.service.store.mutateDecision(run.job.id, async (job) => {
-          if (job.decision!.phase === 'closed' || job.decision!.higherEntitlement !== 'available')
-            return undefined;
-          await reserveAttempt();
-          return { ...job, decision: { ...job.decision!, higherEntitlement: 'used-direct' } };
-        });
-        if (!direct)
-          throw new StopJob(
-            'failed',
-            'The higher-model allowance was already used.',
-            'budget-exhausted',
-          );
-        run.job = direct;
-      } else await reserveAttempt();
-      reservedId = id;
-      run.ledger?.record({
-        requestId: id,
-        stage: suffix,
-        category,
-        ...(meter?.level ? { level: meter.level } : {}),
-        provider,
-        size: meter?.size ?? { instructions: 0, context: 0, schema: 0 },
-        reservedUsd: reserve,
-      });
-      await this.update(
-        run,
-        provider === 'jev' ? 'judging' : 'generating',
-        provider === 'jev'
-          ? 'Jev is checking the bounded route.'
-          : run.job.kind === 'invention'
-            ? 'Generating a new material-and-mechanism definition.'
-            : run.job.kind === 'action'
-              ? 'Interpreting the requested action.'
-              : 'Preparing a detailed decision. This may take about a minute.',
-      );
-      this.current(run);
-      if (run.job.decision && !run.preparedResponse) {
-        if (
-          this.now() >= run.job.decision.fastPublishBy ||
-          performance.now() >= run.job.decision.fastPublishByMonotonic
-        )
-          throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-      }
-      dispatchIntent = true;
-      if (!(await this.service.store.markDecisionDispatch(id))) {
-        throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
-      }
-      const result = await this.macrofold.withSourceValidation(
-        async () => {
-          this.current(run);
-          await run.validateJudgmentSource?.();
-          this.current(run);
-          if (!sourceCurrent())
-            throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
+      : undefined;
+    try {
+      const selectedInput = prepared?.input ?? input;
+      const submittedModel =
+        selectedInput.kind === 'generate'
+          ? (selectedInput.request.model ?? meter?.model)
+          : meter?.model;
+      const providerInput =
+        selectedInput.kind === 'generate'
+          ? {
+              ...selectedInput,
+              request: applyCatalogGenerationFormat(
+                this.service.config,
+                applyGenerationInput(
+                  input.kind === 'generate' ? input.request : selectedInput.request,
+                  selectedInput.request,
+                ),
+              ),
+            }
+          : selectedInput;
+      if (run.continuation) {
+        const continuation = run.continuation;
+        const prerequisite = continuation.prerequisites[0];
+        if (prerequisite) {
           if (
-            run.job.decision &&
-            !run.preparedResponse &&
-            (this.now() >= run.job.decision.fastPublishBy ||
-              performance.now() >= run.job.decision.fastPublishByMonotonic)
+            prerequisite.purpose !== suffix ||
+            digest(prerequisite.input) !== digest(selectedInput)
           )
-            throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-        },
-        () => dispatch(id),
-      );
-      const accountingStartedAt = new Date().toISOString();
-      result.receipt = normalizeReceiptCost(result.receipt);
-      await this.service.store.settle(id, result.receipt);
-      completed = true;
-      run.receipt = result.receipt;
-      run.failure =
-        result.outcome === 'value' ? undefined : { outcome: result.outcome, reason: result.reason };
-      if (result.receipt.completionUncertain) lease?.uncertain(id);
-      run.ledger?.settle(id, result.receipt, result.outcome);
-      if (result.receipt.completionUncertain)
+            throw new StopJob(
+              'stale',
+              'Checkpoint prerequisite input or native references changed; no new inference was sent.',
+              'unavailable',
+            );
+          continuation.prerequisites.shift();
+          if (prepared && control)
+            await control.reuse(prepared.stage, prerequisite.value, prerequisite.stageId);
+          return structuredClone(prerequisite.value) as T;
+        }
+        if (
+          continuation.descriptor.purpose !== suffix ||
+          digest(continuation.input) !== digest(selectedInput)
+        )
+          throw new StopJob(
+            'stale',
+            'The reconstructed checkpoint request or native references changed; no inference was sent.',
+            'unavailable',
+          );
+        run.continuation = undefined;
+      }
+      const lease = prepared
+        ? await this.execution.acquirePrepared(prepared.stage, 'primary', run.urgent)
+        : await this.execution.primary(run.urgent);
+      if (!lease)
         throw new StopJob(
           'failed',
-          'The original provider execution is still uncertain; no world effect or second request was allowed.',
-          'uncertain',
+          this.execution.primaryCapacityReason(run.urgent) ?? 'Model execution is unavailable.',
+          'capacity',
         );
-      await this.log.record(
-        `${id}:accounting`,
-        'Accounting',
-        { provider, requestId: result.receipt.requestId },
-        { settled: true, receipt: result.receipt },
-        accountingStartedAt,
-      );
-      if (result.outcome !== 'value' && run.job.request.invention)
-        run.job.invention = {
-          ...run.job.invention,
-          code: result.receipt.completionUncertain ? 'uncertain' : result.outcome,
+      let reservedId: string | undefined,
+        dispatchIntent = false,
+        completed = false,
+        providerStarted = false;
+      try {
+        if (this.service.paused && run.job.request.invention?.mode !== 'workshop')
+          await this.awaitResume(run);
+        const actorId = this.current(run);
+        const id = `${run.job.id}:${suffix}`;
+        const config = this.service.config;
+        if (config.budgetUsd <= 0)
+          throw new StopJob(
+            'failed',
+            'Model requests are disabled by the current usage allowance.',
+            'budget-exhausted',
+          );
+        // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
+        // Exact provider invoices remain external; custom prices must match the selected model.
+        const actualSize =
+          control || providerInput.kind === 'generate'
+            ? stageSize(providerInput)
+            : (meter?.size ?? { instructions: 0, context: 0, schema: 0 });
+        if (
+          providerInput.kind === 'generate' &&
+          providerInput.request.macrofoldOutputMode &&
+          meter?.level &&
+          actualSize.instructions + actualSize.context > CONTEXT_BYTE_LIMIT
+        )
+          throw new ContextBudgetError(
+            'The selected output format exceeds the complete model-input allowance.',
+          );
+        const reserve = control
+          ? stageAllowance(config, providerInput, meter?.model)
+          : decisionAllowance(config, provider, meter?.model);
+        // A decision's own level work stays within that level's per-decision limits.
+        // docs/limits/cognition.md#cg08
+        const category =
+          meter?.category ?? (/classify|interpret/.test(suffix) ? 'grounding' : 'preparation');
+        const admitted = run.ledger?.admit(category, meter?.level, reserve);
+        if (admitted && !admitted.ok)
+          throw new StopJob(
+            'failed',
+            `${admitted.reason} No further paid request was sent.`,
+            'budget-exhausted',
+          );
+        const reserveAttempt = async () => {
+          if (
+            !(await this.service.store.reserve(
+              id,
+              provider,
+              reserve,
+              config.budgetUsd,
+              actorId,
+              undefined,
+              inventionAttemptBudget(this.service, run.job.request.invention),
+              {
+                rootJobId: run.job.id,
+                category,
+                ...(meter?.level ? { level: meter.level } : {}),
+                stage: suffix,
+                executionClass: lease.executionClass,
+              },
+            ))
+          )
+            throw new StopJob(
+              'failed',
+              'Your usage allowance is used up. Existing actions and learned recipes still work.',
+              'budget-exhausted',
+            );
         };
-      if (
-        result.outcome === 'value' &&
-        this.service.paused &&
-        run.job.request.invention?.mode !== 'workshop'
-      )
-        await this.awaitResume(run, true);
-      if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
-      // Surface actual provider failures even when an explicit request is paused.
-      if (result.outcome === 'value' || !this.service.paused || run.job.kind === 'thought')
+        if (
+          run.job.decision &&
+          provider === 'openai' &&
+          submittedModel === config.higherDecisionModel
+        ) {
+          const direct = await this.service.store.mutateDecision(run.job.id, async (job) => {
+            const detailFinal =
+              suffix.endsWith(':detail-final') &&
+              job.decision?.activityDetail?.phase === 'final-ready';
+            if (
+              job.decision!.phase === 'closed' ||
+              (job.decision!.higherEntitlement !== 'available' && !detailFinal)
+            )
+              return undefined;
+            await reserveAttempt();
+            return { ...job, decision: { ...job.decision!, higherEntitlement: 'used-direct' } };
+          });
+          if (!direct)
+            throw new StopJob(
+              'failed',
+              'The higher-model allowance was already used.',
+              'budget-exhausted',
+            );
+          run.job = direct;
+        } else await reserveAttempt();
+        reservedId = id;
+        if (suffix.endsWith(':detail-final')) {
+          const next = await activityDetailPhase(this.service, run.job.id, 'final-dispatched', id);
+          if (!next) throw new StopJob('stale', 'The detail continuation changed.');
+          run.job = next;
+        }
+        run.ledger?.record({
+          requestId: id,
+          stage: suffix,
+          category,
+          ...(meter?.level ? { level: meter.level } : {}),
+          provider,
+          size: actualSize,
+          reservedUsd: reserve,
+        });
+        await this.update(
+          run,
+          provider === 'jev' ? 'judging' : 'generating',
+          provider === 'jev'
+            ? 'Jev is checking the bounded route.'
+            : run.job.kind === 'invention'
+              ? 'Generating a new material-and-mechanism definition.'
+              : run.job.kind === 'action'
+                ? 'Interpreting the requested action.'
+                : 'Preparing a response.',
+        );
         this.current(run);
-      if (result.outcome !== 'value')
-        throw new StopJob(
-          result.outcome === 'cancelled' ? 'cancelled' : 'failed',
-          `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. No world effect or automatic retry followed.`,
-          // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
-          result.outcome !== 'cancelled' && result.receipt.completionUncertain
-            ? 'uncertain'
-            : ((
-                {
-                  deployment_capacity: 'capacity',
-                  deployment_budget_exhausted: 'budget-exhausted',
-                  unsupported_model_capability: 'unsupported',
-                  context_length_exceeded: 'context-exceeded',
-                  deployment_binding_stale: 'resource-unavailable',
-                  deployment_not_ready: 'resource-unavailable',
-                  deployment_unavailable: 'resource-unavailable',
-                } as Record<string, string>
-              )[result.receipt.providerErrorCode ?? ''] ?? result.outcome),
+        dispatchIntent = true;
+        if (!(await this.service.store.markDecisionDispatch(id))) {
+          throw new StopJob(
+            'failed',
+            'This model request already has dispatch intent.',
+            'uncertain',
+          );
+        }
+        const execute = () => {
+          const deadline = this.requestDeadline(run, earlierDeadline);
+          providerStarted = true;
+          return dispatch(id, providerInput, deadline);
+        };
+        const result = await this.macrofold.withSourceValidation(
+          async () => {
+            this.current(run);
+            await run.validateJudgmentSource?.();
+            this.current(run);
+            if (!sourceCurrent())
+              throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
+          },
+          () =>
+            prepared && control
+              ? control.dispatch(prepared.stage, providerInput, execute, lease)
+              : execute(),
         );
-      if (provider === 'openai') run.generatedBy = result.receipt.model;
-      return result.value;
+        const accountingStartedAt = new Date().toISOString();
+        result.receipt = normalizeReceiptCost(result.receipt);
+        await this.service.store.settle(id, result.receipt);
+        completed = true;
+        run.receipt = result.receipt;
+        run.failure =
+          result.outcome === 'value'
+            ? undefined
+            : { outcome: result.outcome, reason: result.reason };
+        if (result.receipt.completionUncertain) lease?.uncertain(id);
+        run.ledger?.settle(id, result.receipt, result.outcome);
+        if (result.receipt.completionUncertain)
+          throw new StopJob(
+            'failed',
+            'This call’s outcome is still uncertain. Its output applied no effects and it was not resubmitted.',
+            'uncertain',
+          );
+        await this.log.record(
+          `${id}:accounting`,
+          'Accounting',
+          { provider, requestId: result.receipt.requestId },
+          { settled: true, receipt: result.receipt },
+          accountingStartedAt,
+        );
+        if (result.outcome !== 'value' && run.job.request.invention)
+          run.job.invention = {
+            ...run.job.invention,
+            code: result.receipt.completionUncertain ? 'uncertain' : result.outcome,
+          };
+        if (
+          result.outcome === 'value' &&
+          this.service.paused &&
+          run.job.request.invention?.mode !== 'workshop'
+        )
+          await this.awaitResume(run, true);
+        if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
+        // Surface actual provider failures even when an explicit request is paused.
+        if (result.outcome === 'value' || !this.service.paused || run.job.kind === 'thought')
+          this.current(run);
+        if (result.outcome !== 'value')
+          throw new StopJob(
+            result.outcome === 'cancelled' ? 'cancelled' : 'failed',
+            `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. This call applied no effects and was not automatically retried.`,
+            // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
+            result.outcome !== 'cancelled' && result.receipt.completionUncertain
+              ? 'uncertain'
+              : ((
+                  {
+                    deployment_capacity: 'capacity',
+                    run_budget_exhausted: 'budget-exhausted',
+                    deployment_budget_exhausted: 'budget-exhausted',
+                    unsupported_model_capability: 'unsupported',
+                    context_length_exceeded: 'context-exceeded',
+                    deployment_binding_stale: 'resource-unavailable',
+                    deployment_not_ready: 'resource-unavailable',
+                    deployment_unavailable: 'resource-unavailable',
+                  } as Record<string, string>
+                )[result.receipt.providerErrorCode ?? ''] ?? result.outcome),
+          );
+        if (provider === 'openai') run.generatedBy = result.receipt.model;
+        return result.value;
+      } finally {
+        try {
+          if (reservedId && (!dispatchIntent || (control && !providerStarted)) && !completed) {
+            const receipt = undispatchedReceipt(reservedId, provider, this.now());
+            await this.service.store.settle(reservedId, receipt);
+            run.ledger?.settle(reservedId, receipt, 'cancelled');
+            completed = true;
+          }
+        } finally {
+          if (dispatchIntent && !completed && reservedId) lease?.uncertain(reservedId);
+          lease?.release();
+        }
+      }
     } finally {
-      if (reservedId && !dispatchIntent)
-        await this.service.store.settle(
-          reservedId,
-          undispatchedReceipt(reservedId, provider, this.now()),
-        );
-      if (dispatchIntent && !completed && reservedId) lease?.uncertain(reservedId);
-      lease?.release();
+      if (prepared && prepared.stage.status !== 'consumed')
+        await control!.decline(prepared.stage, 'Native admission ended before provider dispatch.');
     }
   }
 
@@ -2092,12 +2827,40 @@ export class AiDirector {
   private selectKnownAction(
     prepared: Awaited<ReturnType<typeof prepareDecision>>,
     selected: string,
-  ): ActorResponse {
+  ): ReturnType<typeof knownDecisionResponse> {
     return knownDecisionResponse(prepared, selected);
   }
 
-  /** Two sequential supplied judgments use this actor's existing job, reservations,
-   * refresh allowance and native response owner. No route gate or generator runs. */
+  /** Each planned batch keeps the same captured state and independent question IDs.
+   * It is new bounded work, never a retry; the existing judge owns every charge
+   * and rechecks the original source before each dispatch. */
+  private async judgeIndependentQuestions(
+    run: Running,
+    suffix: string,
+    request: Omit<JudgeRequest, 'requestId' | 'signal'>,
+  ): Promise<JudgeValue> {
+    const batches = batchJudgmentQuestions(request.state, request.questions);
+    const answers = Object.create(null) as JudgeValue['answers'];
+    for (const [index, questions] of batches.entries()) {
+      const part = { state: request.state, questions };
+      const result = await this.judge(
+        run,
+        batches.length === 1 ? suffix : `${suffix}:batch:${index}`,
+        part,
+        judgeMeter('level', part),
+      );
+      for (const id of Object.keys(questions)) {
+        // Missing required scores already make the comparison unusable. Do not
+        // purchase its remaining batches to repair or conceal that failure.
+        if (!Object.hasOwn(result.answers, id)) throw new InvalidData('missing_independent_answer');
+        answers[id] = result.answers[id]!;
+      }
+    }
+    return { answers };
+  }
+
+  /** Supplied stages share one job and budget. A separately selected utterance
+   * can follow the native commit without delaying or replacing physical conduct. */
   private async preparedResponse(
     run: Running,
     actorId: string,
@@ -2140,6 +2903,13 @@ export class AiDirector {
       triggerEvidenceId,
     );
     const required = preparedResponseChoices(catalogue, profile.instructions, subjectLabels);
+    const voice =
+      profile.voice &&
+      !this.service.config.jevOnly &&
+      hasNpcGenerationAccess(this.service.config, 'npc_response_fast') &&
+      canSpeak(entityGet(this.service.world.entities, actorId))
+        ? profile.voice
+        : undefined;
     required.feelings = interpretations.scopes;
     let prepared = await prepareDecision(
       this.service,
@@ -2159,11 +2929,21 @@ export class AiDirector {
       undefined,
       'native-only',
       required,
+      preparedResponseInputMeasure(catalogue, interpretations.projectContext),
+      {
+        question: `Evaluate each supplied purpose and supported feeling interpretation independently, then choose among the complete native alternatives or deliberate continuation. ${profile.instructions}`,
+        enabledSemantics: [],
+        capabilityDetail: 'directory',
+      },
+      this.memoryReadControl(run),
     );
     const validityFor = (world: WorldState) =>
       preparedResponseValidity(world, actorId, interpretations.scopes);
     run.validityFor = validityFor;
     run.validity = validityFor(this.service.world);
+    // Relevance already depends on every source in this first frame. Reducing
+    // optional context for choice must not weaken that earlier result's fence.
+    const validateRelevanceSources = prepared.validateConversation;
     const current = async () => {
       this.current(run);
       if (
@@ -2177,7 +2957,7 @@ export class AiDirector {
         );
       }
       try {
-        await prepared.validateConversation(false);
+        await validateRelevanceSources(false);
       } catch (error) {
         run.invalidated = true;
         throw error;
@@ -2194,15 +2974,13 @@ export class AiDirector {
     preparedResponseChoiceRequest(
       prepared,
       Object.fromEntries(catalogue.purposes.map((_, index) => [`p${index}`, 'uncertain' as const])),
+      voice,
     );
     await current();
-    const first = await this.call(
+    const first = await this.judgeIndependentQuestions(
       run,
-      'jev',
       `attempt:${attempt}:threat-relevance`,
-      (requestId) =>
-        this.client.judge({ ...relevanceRequest, requestId, signal: run.controller.signal }),
-      judgeMeter('level', relevanceRequest),
+      relevanceRequest,
     );
     await current();
     const relevance = preparedResponseRelevance(first, relevanceRequest.questions, catalogue);
@@ -2220,13 +2998,6 @@ export class AiDirector {
         localId: `feeling${index}`,
         requiresAccepted: [],
         appraise,
-        note: null,
-        name: null,
-        talk: null,
-        act: null,
-        goal: null,
-        plan: null,
-        think: null,
       })),
     };
     let interpretationAdmission: unknown;
@@ -2252,6 +3023,7 @@ export class AiDirector {
               prepared.binding.knowledgeReferences,
               interpretations.bound.bindings,
               this.service.nativeExecutionPermissions,
+              prepared.binding.capturedActorFrame,
             );
             // Only this serialized native result can advance the expected feeling revisions.
             // Subscribers see the postcommit guard, while external changes stay fenced.
@@ -2263,7 +3035,12 @@ export class AiDirector {
           () => interpretations.bound.current(),
         );
       const result = run.job.authority
-        ? await this.service.authorized(run.job.authority, 'play', true, commit)
+        ? await this.service.authorized(
+            run.job.authority,
+            run.job.operatorAuthored ? 'create' : 'play',
+            !run.job.operatorAuthored,
+            commit,
+          )
         : await commit();
       interpretationAdmission = result;
       if (!result.ok)
@@ -2291,24 +3068,29 @@ export class AiDirector {
         elapsedMs: performance.now() - started,
       },
     );
+    // First-stage time and appraisals can change prerequisites. Keep the same
+    // purpose identities/meanings while refreshing only their exact native means.
+    const refreshed = preparedResponseChoices(
+      prepareResponseReadiness(this.service, catalogue),
+      profile.instructions,
+      subjectLabels,
+    );
     prepared = {
       ...prepared,
-      context: {
-        ...prepared.context,
-        feelings: decisionFeelings(this.service.world, actorId, interpretations.scopes),
-        admittedInterpretations:
-          this.service.world.responseReceipts?.[appraisalId]?.components ?? {},
-      },
+      actionCandidates: refreshed.candidates,
+      choiceWork: currentWorkIdentity(this.service.world, actorId),
     };
+    prepared = fitPreparedChoiceContext(prepared, {
+      requiredChoices: refreshed.facts,
+      feelings: decisionFeelings(this.service.world, actorId, interpretations.scopes),
+      admittedInterpretations: this.service.world.responseReceipts?.[appraisalId]?.components ?? {},
+    });
     await current();
-    const choice = preparedResponseChoiceRequest(prepared, relevance);
-    const answer = await this.call(
+    const choice = preparedResponseChoiceRequest(prepared, relevance, voice);
+    const answer = await this.judgeIndependentQuestions(
       run,
-      'jev',
       `attempt:${attempt}:threat-choice`,
-      (requestId) =>
-        this.client.judge({ ...choice.request, requestId, signal: run.controller.signal }),
-      judgeMeter('level', choice.request),
+      choice.request,
     );
     const level1 = resolveLevel1({
       offered: choice.prepared.offered.map(({ id, description }) => ({ handle: id, description })),
@@ -2318,14 +3100,51 @@ export class AiDirector {
     });
     run.level1 = level1.outcome;
     await current();
+    const chosenHandle =
+      level1.outcome.kind === 'act' || level1.outcome.kind === 'continue'
+        ? level1.outcome.handle
+        : undefined;
+    // A selected complete utterance already expresses this decision. Do not buy
+    // another rendition, while keeping language independent of action confidence.
+    const voiceSelected =
+      !!voice &&
+      preparedResponseVoiceSelected(answer, choice.request.questions) &&
+      (!chosenHandle || choice.prepared.binding.actions[chosenHandle]?.invocation?.type !== 'say');
+    if (voiceSelected && run.job.decision) {
+      const saved = await this.service.store.mutateDecision(run.job.id, async (job) => {
+        if (!job.decision || job.decision.phase === 'closed') return undefined;
+        return {
+          ...job,
+          decision: {
+            ...job.decision,
+            groups: {
+              ...job.decision.groups,
+              q1: { kind: 'response' as const, state: 'open' as const, attemptId: job.id },
+            },
+          },
+        };
+      });
+      if (!saved) throw new StopJob('stale', 'This response opportunity already ended.');
+      run.job = saved;
+    }
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:threat-choice`,
       'Independent personal choice',
-      { request: choice.request },
-      { ...level1, elapsedMs: performance.now() - started },
+      { preparation: choice.prepared.diagnostics, request: choice.request },
+      { ...level1, voiceSelected, elapsedMs: performance.now() - started },
     );
     if (level1.outcome.kind !== 'act' && level1.outcome.kind !== 'continue') {
       run.responseWatch = undefined;
+      if (voiceSelected)
+        await this.preparedVoice(
+          run,
+          actorId,
+          attempt,
+          stimulus,
+          requiredEvidenceIds,
+          triggerEvidenceId,
+          voice!.instructions,
+        );
       await this.update(run, 'completed', level1Message(level1.outcome), {
         disposition: 'deferred',
         level1: level1.outcome,
@@ -2333,7 +3152,7 @@ export class AiDirector {
       return;
     }
     const handle = level1.outcome.handle;
-    const reply = this.selectKnownAction(choice.prepared, handle);
+    const reply = nativeResponse(this.selectKnownAction(choice.prepared, handle));
     run.responseWatch = undefined;
     await this.prepareResponseAdmission(run);
     const root = run.job.decision ? await this.service.store.getJob(run.job.id) : undefined;
@@ -2373,6 +3192,7 @@ export class AiDirector {
             choice.prepared.binding.knowledgeReferences,
             undefined,
             this.service.nativeExecutionPermissions,
+            choice.prepared.binding.capturedActorFrame,
           );
         },
         undefined,
@@ -2385,8 +3205,14 @@ export class AiDirector {
         publication,
       );
     const result = run.job.authority
-      ? await this.service.authorized(run.job.authority, 'play', true, commit)
+      ? await this.service.authorized(
+          run.job.authority,
+          run.job.operatorAuthored ? 'create' : 'play',
+          !run.job.operatorAuthored,
+          commit,
+        )
       : await commit();
+    run.preparedResponseCommitted ||= result.ok;
     await this.log.record(
       `${run.job.id}:commit`,
       'Supplied response admission',
@@ -2405,10 +3231,258 @@ export class AiDirector {
         publication.deliveredAt,
         publication.deliveredElapsedMs,
       );
+    // Native precondition refusal does not consume an independently selected voice.
+    // preparedVoice rechecks its own life, source, authority and original lifetime.
+    if (voiceSelected)
+      await this.preparedVoice(
+        run,
+        actorId,
+        attempt,
+        stimulus,
+        requiredEvidenceIds,
+        triggerEvidenceId,
+        voice!.instructions,
+      );
     await this.update(run, result.ok ? 'completed' : 'failed', result.message, {
       disposition: result.ok && level1.outcome.kind === 'continue' ? 'continued' : result.code,
       level1: level1.outcome,
     });
+  }
+
+  /** One explicitly selected speech component, after any independent physical
+   * commit. It shares this job's original lifetime, reservations and cancellation. */
+  private async preparedVoice(
+    run: Running,
+    actorId: string,
+    attempt: number,
+    stimulus: string,
+    evidenceIds: string[],
+    triggerEvidenceId: string | undefined,
+    voiceInstructions: string,
+  ): Promise<void> {
+    this.current(run);
+    const receiptId = `${run.job.id}:voice`;
+    const c = this.service.config;
+    const selected = resolveNpcGenerationConfig(
+      this.executionSource === 'live-model' ? c : { ...c, modelTargets: undefined },
+      'npc_response_fast',
+      { maxOutputTokens: LEVEL_LIMITS[2].outputTokens, reasoningEffort: LEVEL_LIMITS[2].effort },
+    );
+    const instructions = `${DECISION_INSTRUCTIONS}\n\n${voiceInstructions}\nReturn only the supplied JSON. Choose at most one talk operation or {"operations":[]}. Use localId, requiresAccepted:[], and the exact supplied addressee handle (or null). Speech can include brief expressive asides but does not perform physical actions. Context is a captured view; ongoing native work may progress while words form. Do not claim an offered or planned action happened, or that work completed without a supplied actual result.`;
+    const outputMode = selected.structuredOutput === 'auto' ? undefined : selected.structuredOutput;
+    let voiceContract:
+      | {
+          key: string;
+          schema: ReturnType<typeof boundSpeechResponseSchema>;
+          jsonSchema: GenerateRequest['schema'];
+          instructions: string;
+        }
+      | undefined;
+    const contractFor = (references: Record<string, string>) => {
+      const handles = Object.keys(references),
+        key = JSON.stringify(handles);
+      if (!voiceContract || voiceContract.key !== key) {
+        const schema = boundSpeechResponseSchema(handles),
+          jsonSchema = modelJsonSchema(schema);
+        voiceContract = {
+          key,
+          schema,
+          jsonSchema,
+          instructions: macrofoldGenerationInstructions(instructions, jsonSchema, outputMode),
+        };
+      }
+      return voiceContract;
+    };
+    // Rebuild through the same permitted context owner after native admission.
+    // The old complete catalogue must not masquerade as current physical state.
+    const prepared = await prepareDecision(
+      this.service,
+      this.recall,
+      actorId,
+      receiptId,
+      stimulus,
+      evidenceIds,
+      async () => {
+        throw new Error('Selected speech preparation cannot buy another judgment.');
+      },
+      run.controller.signal,
+      this.service.config.budgetUsd,
+      true,
+      attempt,
+      triggerEvidenceId,
+      undefined,
+      'native-only',
+      undefined,
+      ({ context, sources }) =>
+        textBytes(
+          outputMode === 'json_object' || outputMode === 'prompted_json'
+            ? contractFor(sources.entityReferences).instructions
+            : instructions,
+        ) + textBytes(readableDecisionContext(context, [], false)),
+      { question: voiceInstructions, enabledSemantics: ['talk'] },
+      this.memoryReadControl(run),
+    );
+    const current = async () => {
+      this.current(run);
+      if (
+        !canSpeak(entityGet(this.service.world.entities, actorId)) ||
+        (run.validityFor && run.validity !== run.validityFor(this.service.world))
+      )
+        throw new StopJob('stale', 'The character or source changed before the utterance.');
+      // Words can finish while the independently admitted work progresses. Keep
+      // all captured source/privacy/participant proofs; only this speech-only
+      // schema lacks the action/goal authority requiring unchanged work outcomes.
+      await prepared.validateEvidence();
+    };
+    run.validateJudgmentSource = current;
+    const voice = contractFor(prepared.entityReferences);
+    const schema = voice.schema;
+    const limit = levelLimits(c)[2];
+    const capturedRequest = finalizeDecisionRequest({
+      scope: prepared.manifest.scope,
+      context: prepared.prompt,
+      instructions,
+      schema: voice.jsonSchema,
+      sourceKeys: prepared.manifest.units.map((unit) => unit.key),
+      references: { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+    });
+    const responseSchema = capturedRequest.schema;
+    const compiledInstructions = voice.instructions;
+    const inputBytes = textBytes(compiledInstructions) + textBytes(prepared.prompt);
+    if (inputBytes > CONTEXT_BYTE_LIMIT)
+      throw new ContextBudgetError(
+        'The complete selected speech context exceeds its input allowance.',
+        {
+          guard: 'selected-speech-input',
+          inputBytes,
+          limitBytes: CONTEXT_BYTE_LIMIT,
+          sections: {
+            instructions: textBytes(compiledInstructions),
+            context: textBytes(prepared.prompt),
+          },
+        },
+      );
+    const schemaBytes = textBytes(responseSchema);
+    if (schemaBytes > limit.schemaBytes)
+      throw new ContextBudgetError('The selected speech schema exceeds its input allowance.', {
+        guard: 'selected-speech-schema',
+        inputBytes: schemaBytes,
+        limitBytes: limit.schemaBytes,
+        sections: { schema: schemaBytes },
+      });
+    let request: Omit<GenerateRequest, 'requestId' | 'signal'> = {
+      task: 'npc_response',
+      actorScope: actorId,
+      execution: 'fast',
+      ...('macrofoldDeployment' in selected
+        ? { macrofoldDeployment: selected.macrofoldDeployment }
+        : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
+      maxOutputTokens: selected.maxOutputTokens,
+      instructions: capturedRequest.instructions,
+      context: capturedRequest.context,
+      schema: responseSchema,
+    };
+    await current();
+    if (request.macrofoldDeployment && c.budgetUsd > 0)
+      request = await this.macrofold.prepareGeneration(
+        { ...request, deadlineMs: this.requestDeadline(run, request.deadlineMs) },
+        selected.structuredOutput,
+        run.controller.signal,
+        current,
+      );
+    const value = await this.generate<unknown>(run, request, `attempt:${attempt}:voice`, {
+      category: 'level',
+      level: 2,
+    });
+    if (textBytes(value) > limit.visibleOutputBytes)
+      throw new StopJob(
+        'failed',
+        'The selected utterance exceeded its output allowance.',
+        'invalid',
+      );
+    const parsed = schema.safeParse(value);
+    if (!parsed.success || !validResponseEnvelope(parsed.data))
+      throw new StopJob(
+        'failed',
+        'The selected utterance did not match its speech contract.',
+        'invalid',
+      );
+    const reply = resolveResponseEntities(parsed.data, prepared.entityReferences);
+    await current();
+    await this.prepareResponseAdmission(run);
+    const root = run.job.decision ? await this.service.store.getJob(run.job.id) : undefined;
+    const publication: DecisionPublication | undefined = root?.decision
+      ? {
+          rootJobId: root.id,
+          expectedRevision: root.decision.revision,
+          attemptId: root.id,
+          receiptId,
+          final: true,
+          ...(run.level1?.kind === 'defer' ? { unresolvedReason: 'abstained' as const } : {}),
+          now: this.now,
+          groups: {
+            q1: {
+              operations: reply.operations.map((operation) => operation.localId),
+              continued: reply.operations.length === 0,
+            },
+          },
+        }
+      : undefined;
+    const commit = () =>
+      this.service.transition(
+        (world) => {
+          this.current(run);
+          return commitActorResponse(
+            world,
+            receiptId,
+            actorId,
+            reply,
+            {},
+            prepared.binding.entityIds,
+            prepared.binding.expectedPlan,
+            [],
+            prepared.binding.entityEpisodes,
+            prepared.binding.evidenceIds,
+            prepared.binding.knowledgeReferences,
+            undefined,
+            this.service.nativeExecutionPermissions,
+            prepared.binding.capturedActorFrame,
+          );
+        },
+        undefined,
+        run.job.id,
+        async () => {
+          await current();
+          return true;
+        },
+        undefined,
+        publication,
+      );
+    const result = run.job.authority
+      ? await this.service.authorized(
+          run.job.authority,
+          run.job.operatorAuthored ? 'create' : 'play',
+          !run.job.operatorAuthored,
+          commit,
+        )
+      : await commit();
+    run.preparedResponseCommitted ||= result.ok;
+    await this.log.record(
+      `${run.job.id}:voice:commit`,
+      'Independent utterance admission',
+      { proposed: reply },
+      { ...result, components: this.service.world.responseReceipts?.[receiptId]?.components },
+    );
+    if (!result.ok)
+      throw new StopJob(result.code === 'storage' ? 'failed' : 'stale', result.message);
+    if (publication?.deliveredAt !== undefined)
+      await recordDecisionTiming(
+        this.log,
+        run.job,
+        'final',
+        publication.deliveredAt,
+        publication.deliveredElapsedMs,
+      );
   }
 
   private async generate<T>(
@@ -2419,11 +3493,21 @@ export class AiDirector {
       category: /interpret/.test(operation) ? 'grounding' : 'preparation',
     },
   ): Promise<T> {
+    // Explicit defaults keep capture, accounting and injected transports on
+    // the same model; a grant's lane order never selects character behavior.
+    if (this.service.config.sharedExecution && !request.macrofoldDeployment && !request.model)
+      request = { ...request, model: this.service.config.llmModel };
     if (
       this.service.config.jevOnly ||
       (this.executionSource === 'live-model' &&
-        !this.service.config.macrofoldKey &&
-        !this.service.config.llmKey)
+        !(request.macrofoldDeployment
+          ? this.service.config.macrofoldModelKey ||
+            hasSharedModelAccess(
+              this.service.config,
+              'generate',
+              `deployment:${request.macrofoldDeployment.modelBinding.deployment_id}`,
+            )
+          : hasGenerationAccess(this.service.config, request.model)))
     )
       throw new StopJob(
         'failed',
@@ -2440,18 +3524,25 @@ export class AiDirector {
         'Full deliberation requires the configured Macrofold harness.',
         'unavailable',
       );
-    return await this.call(
+    const value = await this.call(
       run,
       'openai',
       operation,
-      async (id) =>
-        await this.client.generate<T>({
+      {
+        kind: 'generate',
+        request: {
           ...request,
-          requestId: id,
-          signal: run.controller.signal,
           maxOutputTokens:
             request.maxOutputTokens ??
             (this.service.config.macrofoldKey ? cognitionOutputTokens(request.execution) : 1800),
+        },
+      },
+      async (id, input, deadlineMs) =>
+        await this.client.generate<T>({
+          ...input.request,
+          deadlineMs,
+          requestId: id,
+          signal: run.controller.signal,
         }),
       {
         ...meter,
@@ -2464,7 +3555,13 @@ export class AiDirector {
           schema: textBytes(request.schema),
         },
       },
+      request.deadlineMs,
     );
+    if (request.task === 'npc_response') {
+      run.primaryRequestId = `${run.job.id}:${operation}`;
+      run.primaryGeneration = true;
+    }
+    return value;
   }
 
   private async process(run: Running): Promise<void> {
@@ -2567,6 +3664,7 @@ export class AiDirector {
       const supersession = run.supersession;
       if (
         (!run.job.decision || run.preparedResponse) &&
+        !run.preparedResponseCommitted &&
         attempt === 0 &&
         supersession?.attempt === attempt &&
         !run.invalidated &&
@@ -2596,10 +3694,16 @@ export class AiDirector {
     interruptionEvidenceIds: string[],
   ): Promise<void> {
     const actorId = this.current(run);
-    if (!(await this.execution.primaryAvailable(run.urgent)))
+    const control = this.service.cognitionControl;
+    let available: boolean;
+    do {
+      if (control) await this.awaitLabRelease(run);
+      available = await this.execution.primaryAvailable(run.urgent);
+    } while (control?.held);
+    if (!available)
       throw new StopJob(
         'failed',
-        'The fast model is still executing an earlier request; this opportunity was deferred without preparing more model input.',
+        `${this.execution.primaryCapacityReason(run.urgent) ?? 'Model execution is unavailable.'} This opportunity was deferred without preparing more model input.`,
         'capacity',
       );
     // An urgent refresh decides again; an earlier attempt's level-1 outcome no longer applies.
@@ -2704,17 +3808,20 @@ export class AiDirector {
             invocation: choice.invocation,
             firstActionDescription: candidate.firstActionDescription,
             transition: choice.transition,
+            readiness: candidate.readiness,
             subjects: candidate.subjectIds,
           };
         },
       );
-      const catalogue = compilePreparedResponses(this.service.world, {
+      const compiledCatalogue = compilePreparedResponses(this.service.world, {
         actorId,
         causeIds: [...decisionEvidenceIds],
         evidence: decisionEvidence,
         visible: observed.visibleEntities,
         methods,
       });
+      const catalogue =
+        compiledCatalogue && prepareResponseReadiness(this.service, compiledCatalogue);
       if (catalogue?.eligible)
         return await this.preparedResponse(
           run,
@@ -2737,6 +3844,32 @@ export class AiDirector {
     let attentionCall = 0;
     const contextStartedAt = new Date().toISOString();
     run.validateJudgmentSource = undefined;
+    const generationAvailable =
+      !this.service.config.jevOnly &&
+      (hasNpcGenerationAccess(this.service.config, 'npc_response_fast') ||
+        hasNpcGenerationAccess(this.service.config, 'npc_response_complex'));
+    const policy = this.service.world.cognitionPolicy;
+    const questions = decisionQuestions(
+      addressedSpeech,
+      policy.maxImmediateLevel,
+      speechTrigger,
+      generationAvailable,
+    );
+    const routeQuestion = questions['route'];
+    if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
+    const criteria = routeQuestion.criteria;
+    const capabilityDescriptors = activityRequestDescriptors(this.service.world, actorId);
+    const requestFamilies = requestRoutes(capabilityDescriptors);
+    for (const [key, descriptor] of requestFamilies)
+      criteria[key] = activityRouteCriterion(descriptor);
+    const offeredRoutes = Object.keys(criteria);
+    const routingMeasure: DecisionInputMeasure = ({ context }) =>
+      Buffer.byteLength(
+        JSON.stringify({
+          state: { character: judgmentDecisionContext(context) },
+          questions,
+        }),
+      );
     let prepared = await prepareDecision(
       this.service,
       this.recall,
@@ -2745,12 +3878,10 @@ export class AiDirector {
       stimulus,
       evidenceIds,
       async (request) =>
-        await this.call(
+        await this.judge(
           run,
-          'jev',
           `attempt:${attempt}:attention:${attentionCall++}`,
-          async (id) =>
-            await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          request,
           judgeMeter('level', request),
         ),
       run.controller.signal,
@@ -2762,7 +3893,61 @@ export class AiDirector {
         ? undefined
         : (request, operation) => this.generate<unknown>(run, request, operation),
       run.job.decision ? 'native-only' : 'ordinary',
+      undefined,
+      routingMeasure,
+      {
+        question:
+          'Choose the least expensive offered immediate route that can express this person’s response. Independently decide whether the new evidence warrants later reflection and, for speech, whether action options may matter.',
+        enabledSemantics: responseSemantics(
+          this.service.world.moduleManifest.appraisals?.definitions.some(
+            (definition) => definition.decision,
+          ) ?? false,
+        ),
+        capabilityDetail: 'directory',
+        capabilityDescriptors,
+        routingQuestions: questions,
+      },
+      this.memoryReadControl(run),
     );
+    // Detail expansion reuses positively selected evidence and the same work/lifetime.
+    // Earlier paid decisions keep their source fence even if the final fit is smaller.
+    const prepareConsumer = async (
+      consumer: NonNullable<Parameters<typeof prepareDecision>[16]>,
+      inputMeasure: DecisionInputMeasure,
+    ) => {
+      const prior = prepared;
+      await prior.validateConversation();
+      const next = await prepareDecision(
+        this.service,
+        this.recall,
+        actorId,
+        run.job.id,
+        stimulus,
+        evidenceIds,
+        async () => {
+          throw new Error('Detail preparation cannot buy another judgment.');
+        },
+        run.controller.signal,
+        0,
+        speech,
+        attempt,
+        triggerEvidenceId,
+        undefined,
+        'native-only',
+        undefined,
+        inputMeasure,
+        { ...consumer, capabilityDescriptors },
+        this.memoryReadControl(run),
+        prior.preparationWork,
+        prior.retainedRecall,
+      );
+      const current = next.validateConversation;
+      next.validateConversation = async (...args) => {
+        await prior.validateConversation(...args);
+        await current(...args);
+      };
+      return next;
+    };
     run.validateJudgmentSource = () => prepared.validateConversation();
     this.current(run);
     const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;
@@ -2781,6 +3966,50 @@ export class AiDirector {
       prepared.prompt,
       contextStartedAt,
     );
+    if (this.service.cognitionControl) {
+      const selection = prepared.diagnostics.selection;
+      const included = new Set(
+        ('candidates' in selection
+          ? [
+              ...selection.automatic,
+              ...selection.mandatory,
+              ...selection.candidates.filter((candidate) => candidate.selected),
+            ]
+          : []
+        ).map((candidate) => candidate.id),
+      );
+      const candidates = [
+        ...new Map(
+          ('candidates' in selection
+            ? [...selection.automatic, ...selection.mandatory, ...selection.candidates]
+            : []
+          ).map((candidate) => [candidate.id, candidate]),
+        ).values(),
+      ];
+      await this.service.cognitionControl.emit({
+        kind: 'context',
+        id: `${run.job.id}:attempt:${attempt}:context`,
+        rootId: run.job.id,
+        actorId,
+        generation: run.generation,
+        diagnostics: prepared.diagnostics,
+        input: prepared.prompt,
+        selectionAvailable: 'candidates' in selection,
+        selection: candidates.map((candidate) => ({
+          id: candidate.id,
+          kind: candidate.kind,
+          text: candidate.text,
+          at: candidate.at,
+          selected: included.has(candidate.id),
+          required: candidate.required,
+          automatic: candidate.automatic,
+          reason: candidate.reason,
+          score: candidate.score,
+          sourceIds: candidate.sourceIds,
+          sourceKeys: candidate.sourceKeys,
+        })),
+      });
+    }
     const retryForUrgentAwareness = async () => {
       if (attempt > 0) return false;
       const interruptions =
@@ -2803,35 +4032,13 @@ export class AiDirector {
       return true;
     };
     if (await retryForUrgentAwareness()) return;
-    const policy = this.service.world.cognitionPolicy;
-    const generationAvailable =
-      !this.service.config.jevOnly &&
-      !!(this.service.config.macrofoldKey || this.service.config.llmKey);
-    const questions = decisionQuestions(
-      addressedSpeech,
-      policy.maxImmediateLevel,
-      speechTrigger,
-      generationAvailable,
-    );
-    const routeQuestion = questions['route'];
-    if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
-    const criteria = routeQuestion.criteria;
-    const requestFamilies = requestRoutes(
-      prepared.activityRequests.requests,
-      prepared.activityRequests.choices,
-    );
-    for (const [key, descriptor] of requestFamilies)
-      criteria[key] = activityRouteCriterion(descriptor);
-    const offeredRoutes = Object.keys(criteria);
     const judge =
       (suffix: string) =>
       async (request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue> =>
-        await this.call(
+        await this.judge(
           run,
-          'jev',
           `attempt:${attempt}:${suffix}`,
-          async (id) =>
-            await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          request,
           judgeMeter('level', request),
         );
     // Refresh cheap feasibility after earlier provider latency, then bound candidates.
@@ -2850,6 +4057,7 @@ export class AiDirector {
           this.current(run);
         },
         !!run.job.decision,
+        this.service.cognitionControl ? this.execution : undefined,
       );
       this.current(run);
       return { prepared: { ...refreshed, actionCandidates: retrieval.candidates }, retrieval };
@@ -2858,72 +4066,21 @@ export class AiDirector {
     // than buying a second relevance judgment; no request is dispatched here.
     const offerRated = async (base: typeof prepared, answers: Record<string, JudgmentAnswer>) =>
       await selectDecisionActions(base, async () => ({ answers }), 'actions');
-    // Level-1 bindings must exist before the question that selects them. Non-speech triggers
-    // always consider actions, so their bindings are prepared first and rated in the routing
-    // request. Route, reflection and per-action ratings are independent questions; a request
-    // over Jev's size limits falls back to the dependent second request before any dispatch.
-    // archive/07-technical-architecture/agent-agency-runtime.md#24-level-1-selection-without-generative-escalation
-    let combined:
-      | {
-          routing: JudgeValue;
-          base: typeof prepared;
-          selected: Awaited<ReturnType<typeof selectDecisionActions>>;
-          offered: ReturnType<typeof offeredForRating>;
-          retrieval: Awaited<ReturnType<typeof retrieveActions>>;
-          startedAt: string;
-        }
-      | undefined;
+    // Routing and evidence attention share one admitted request. Native action
+    // ratings retain their own existing owner after the route has been selected.
     const routingStartedAt = new Date().toISOString();
-    let earlyBindings: Awaited<ReturnType<typeof prepareActionBindings>> | undefined;
-    if (!speechTrigger) {
-      const bindings = (earlyBindings = await prepareActionBindings());
-      // Written by the rating callback; a holder avoids stale control-flow narrowing.
-      const captured: { routing?: JudgeValue; offered: ReturnType<typeof offeredForRating> } = {
-        offered: [],
-      };
-      try {
-        const selected = await selectDecisionActions(
-          bindings.prepared,
-          async (request) => {
-            captured.offered = offeredForRating(request);
-            const all = { ...request.questions, ...questions };
-            validateJudgmentSize(request.state, all);
-            const answers = (await judge('route')({ state: request.state, questions: all }))
-              .answers;
-            captured.routing = {
-              answers: Object.fromEntries(
-                Object.keys(questions).flatMap((key) => {
-                  const answer = answers[key];
-                  return answer ? [[key, answer]] : [];
-                }),
-              ),
-            };
-            return {
-              answers: Object.fromEntries(
-                Object.entries(answers).filter(([key]) => !Object.hasOwn(questions, key)),
-              ),
-            };
-          },
-          'choose-action',
-        );
-        if (captured.routing)
-          combined = {
-            routing: captured.routing,
-            base: bindings.prepared,
-            selected,
-            offered: captured.offered,
-            retrieval: bindings.retrieval,
-            startedAt: routingStartedAt,
-          };
-      } catch (error) {
-        // Only the pre-dispatch size check falls back; provider outcomes stop the job.
-        if (!(error instanceof InvalidData) || captured.routing) throw error;
-      }
-    }
     const judged =
-      combined?.routing ?? (await judge('route')({ state: prepared.prompt, questions }));
+      prepared.rootJudgment ??
+      (await judge('route')({
+        state: { character: judgmentDecisionContext(prepared.context) },
+        questions,
+      }));
     if (await retryForUrgentAwareness()) return;
     const routeAnswer = judged.answers['route'];
+    const consideredFamilies = capabilityDescriptors
+      .filter((_descriptor, index) => attentionIncludes(judged.answers[`family${index}`]))
+      .map((descriptor) => descriptor.id);
+    if (run.decisionPreparation) run.decisionPreparation.selectedFamilyIds = consideredFamilies;
     // Routing spends a bounded allowance; it does not authorize a world effect.
     // Use the winning probability, not the provider's separate confidence score.
     const routeProbability =
@@ -2964,7 +4121,7 @@ export class AiDirector {
           checkActionSelection: true,
           reason: 'non-speech semantic decision',
         };
-    const selectionMode = combined ? 'combined' : 'dependent';
+    const selectionMode = 'root-attention';
     if (generationAvailable && policy.reflection && choice(judged.answers['reflection']) === 'yes')
       await this.maintenance.enqueue(actorId, run.job.id, stimulus, run.generation);
     await this.log.record(
@@ -3026,23 +4183,71 @@ export class AiDirector {
       );
       return;
     }
-    if (route !== 'level1' && (await this.handoff(run, 'semantic-escalation', true))) return;
-    let requestedActivity: ActorResponse | undefined;
     const chosenFamily = requestFamilies.get(route);
+    if (
+      route !== 'level1' &&
+      !chosenFamily &&
+      (await this.handoff(run, 'semantic-escalation', true))
+    )
+      return;
+    let requestedActivity: Awaited<ReturnType<typeof chooseActivityRequest>>;
     if (chosenFamily) {
-      await prepared.validateConversation();
+      prepared = await prepareConsumer(
+        {
+          question: `Choose the parameters for ${chosenFamily.label}. ${chosenFamily.description}`,
+          enabledSemantics: ['act'],
+          capabilityDetail: 'selected',
+          capabilityFamily: chosenFamily.id,
+        },
+        ({ context }) =>
+          Buffer.byteLength(
+            JSON.stringify({ character: preparedResponseDecisionContext(context) }),
+          ),
+      );
       const selectedWorld = this.service.world;
       let parameterRound = 0;
       requestedActivity = await chooseActivityRequest({
         descriptor: chosenFamily,
         choices: prepared.activityRequests.choices,
+        prepareChoices: async () => {
+          await prepared.validateConversation();
+          this.current(run);
+          const world = this.service.world;
+          const observation = decisionObservation(world, actorId);
+          const choices = new Map<string, ReturnType<typeof activityRequestChoiceFacts>>();
+          return (field, parameters) => {
+            const key = JSON.stringify([field, parameters]);
+            const cached = choices.get(key);
+            if (cached) return cached;
+            const facts = activityRequestChoiceFacts(
+              world,
+              actorId,
+              chosenFamily,
+              field,
+              parameters,
+              prepared.entityReferences,
+              observation ?? undefined,
+              (demand) => prepared.preparationWork.charge(demand),
+            );
+            choices.set(key, facts);
+            return facts;
+          };
+        },
         simTime: selectedWorld.simTime,
         namedDeadlines: namedClockTimes(selectedWorld).map((name) => ({
           name,
           at: clockDeadline(selectedWorld, name)!,
         })),
-        state: prepared.prompt,
+        state: { character: preparedResponseDecisionContext(prepared.context) },
         judge: (request) => judge(`activity-parameters:${parameterRound++}`)(request),
+      }).catch(async (error: unknown) => {
+        if (!(error instanceof ActivityRequestChoicesUnavailable)) throw error;
+        await this.log.record(
+          `${run.job.id}:attempt:${attempt}:activity-unavailable`,
+          'Activity parameters unavailable',
+          { family: chosenFamily.id, reason: error.message },
+        );
+        return undefined;
       });
       this.current(run);
       if (!requestedActivity) {
@@ -3065,24 +4270,133 @@ export class AiDirector {
         requestedActivity,
       );
     }
+    let capturedInvention: Awaited<ReturnType<typeof prepareActorInvention>> | undefined;
+    let appraisalView: ReturnType<typeof captureDecisionAppraisalContext> | undefined;
+    const renderSupport = (
+      invention: Pick<
+        Awaited<ReturnType<typeof prepareActorInvention>>,
+        'instructions' | 'context'
+      >,
+      appraisalContext?: ReturnType<NonNullable<typeof appraisalView>['project']>,
+    ) => {
+      const support = [
+        invention.context,
+        appraisalContext ? 'Permitted feeling proposals: ' + JSON.stringify(appraisalContext) : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      return {
+        instructions: `${RESPONSE_INSTRUCTIONS} ${invention.instructions}`,
+        appendix: support ? `\n\n## Current decision support\n${support}` : '',
+      };
+    };
+    const responseMeasure: DecisionInputMeasure = (input) => {
+      const support = renderSupport(
+        capturedInvention ?? { instructions: '', context: '' },
+        appraisalView?.project({ ...input.sources, triggerEvidenceId }),
+      );
+      const rendered = renderDecisionContext(
+        input.context,
+        [...input.offered],
+        input.includeActions,
+      );
+      return (
+        Buffer.byteLength(rendered.prompt) +
+        Buffer.byteLength(support.instructions) +
+        Buffer.byteLength(support.appendix) +
+        (detailEnabled ? Buffer.byteLength(`\n${STANDALONE_ACTIVITY_DETAIL_INSTRUCTIONS}`) : 0)
+      );
+    };
+    let executedRoute: string = route;
+    let detailEnabled = false;
+    let detailFamilies: string[] = [];
+    let responsePrepared = false;
+    const prepareResponseConsumer = async () => {
+      if (responsePrepared) return;
+      // Level 1 can choose a different generation tier. Price the actual route,
+      // so its optional second request is affordable before advertising detail.
+      const detailLevel = executedRoute === 'level4' ? 4 : executedRoute === 'level3' ? 3 : 2;
+      const detailTarget = resolveNpcGenerationConfig(
+        this.executionSource === 'live-model'
+          ? this.service.config
+          : { ...this.service.config, modelTargets: undefined },
+        detailLevel === 2 ? 'npc_response_fast' : 'npc_response_complex',
+        {
+          maxOutputTokens: LEVEL_LIMITS[detailLevel].outputTokens,
+          reasoningEffort: LEVEL_LIMITS[detailLevel].effort,
+        },
+      );
+      const detailModel = detailTarget.macrofoldDeployment
+        ? `deployment:${detailTarget.macrofoldDeployment.modelBinding.deployment_id}`
+        : detailTarget.model;
+      const currentDetailJob = await this.service.store.getJob(run.job.id);
+      detailEnabled =
+        !!currentDetailJob &&
+        (await canPrepareActivityDetail(
+          this.service,
+          currentDetailJob,
+          detailLevel,
+          decisionAllowance(this.service.config, 'openai', detailModel),
+        ));
+      // Establish the complete generative baseline before optional action work.
+      // Its existing no-action view remains usable if that optional work exhausts.
+      capturedInvention = await prepareActorInvention(this.service, actorId);
+      appraisalView = this.service.world.moduleManifest.appraisals?.definitions.some(
+        (definition) => definition.decision,
+      )
+        ? captureDecisionAppraisalContext(this.service.world, actorId)
+        : undefined;
+      const selectedCandidates = selectedDecisionActionCandidates(prepared);
+      const initialFamilies = [
+        ...new Set([...consideredFamilies, ...prepared.completeForms.map((form) => form.id)]),
+      ];
+      const responseFamilies =
+        this.service.cognitionControl?.initialResponseActivityFamilies(actorId, initialFamilies, {
+          detailAvailable: detailEnabled,
+          requiredChoices: prepared.choiceCoverage !== 'optional',
+        }) ?? initialFamilies;
+      const complete = await prepareConsumer(
+        {
+          question: responseTaskInstructions(addressedSpeech),
+          enabledSemantics: responseSemantics(!!appraisalView),
+          capabilityDetail: detailEnabled ? 'selected' : 'complete',
+          ...(detailEnabled
+            ? {
+                selectedFamilyIds: responseFamilies,
+              }
+            : {}),
+        },
+        responseMeasure,
+      );
+      prepared = selectedCandidates.length
+        ? offerPreparedActions(
+            complete,
+            selectedCandidates,
+            'Retained independent action selection',
+          )
+        : complete;
+      detailFamilies = detailEnabled
+        ? complete.discoveryDescriptors
+            .filter(
+              (descriptor) => !complete.completeForms.some((form) => form.id === descriptor.id),
+            )
+            .map((descriptor) => descriptor.id)
+        : [];
+      responsePrepared = true;
+      run.validateJudgmentSource = () => prepared.validateConversation();
+    };
+    if (route !== 'level1' && !requestedActivity) await prepareResponseConsumer();
     let actionAnswers: Record<string, JudgmentAnswer> = {};
     let offeredForSelection: ReturnType<typeof offeredForRating> = [];
     // Candidates before the level-1 threshold filter, for offering rated actions to generation.
     let ratedBase: typeof prepared | undefined;
     if (!requestedActivity && semanticTrigger.checkActionSelection) {
-      const actionsStartedAt = combined?.startedAt ?? new Date().toISOString();
+      const actionsStartedAt = new Date().toISOString();
       let withActions: Awaited<ReturnType<typeof selectDecisionActions>>;
       let retrieval: Awaited<ReturnType<typeof retrieveActions>>;
-      if (combined) {
-        retrieval = combined.retrieval;
-        ratedBase = combined.base;
-        offeredForSelection = combined.offered;
-        actionAnswers = combined.selected.diagnostics.actionSelection.answers;
-        withActions =
-          route === 'level1' ? combined.selected : await offerRated(combined.base, actionAnswers);
-      } else {
+      {
         // An oversized combined request already prepared bindings; admission rechecks them.
-        const bindings = earlyBindings ?? (await prepareActionBindings());
+        const bindings = await prepareActionBindings();
         retrieval = bindings.retrieval;
         ratedBase = bindings.prepared;
         try {
@@ -3130,7 +4444,6 @@ export class AiDirector {
       );
       if (await retryForUrgentAwareness()) return;
     }
-    let executedRoute: string = route;
     let level1: Level1Resolution | undefined;
     if (route === 'level1') {
       const startedAt = new Date().toISOString();
@@ -3191,50 +4504,130 @@ export class AiDirector {
         if (escalated) await this.log.save({ ...escalated, route: `level1→${executedRoute}` });
       }
     }
+    if (executedRoute !== 'level1' && !requestedActivity) await prepareResponseConsumer();
     const level = executedRoute === 'level4' ? 4 : executedRoute === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
     const actorInvention =
       executedRoute === 'level1' || requestedActivity
         ? { enabled: false, policyRevision: 0, schema: z.null(), instructions: '', context: '' }
-        : await prepareActorInvention(this.service, actorId);
-    const appraisals = this.service.world.moduleManifest.appraisals?.definitions.some(
-      (definition) => definition.decision,
-    )
-      ? await bindDecisionAppraisals(
-          this.service,
-          actorId,
-          run.job.id,
-          prepared.binding.evidenceIds ?? evidenceIds,
-          prepared.entityReferences,
-          triggerEvidenceId,
-        )
-      : undefined;
-    const baseSchema = boundResponseSchema(
-      Object.keys(prepared.entityReferences),
-      Object.keys(prepared.binding.actions),
-      {
-        speech: canSpeak(entityGet(this.service.world.entities, actorId)),
-        expressions: supportsManualWork(entityGet(this.service.world.entities, actorId)),
-      },
-      Object.keys(prepared.binding.knowledgeReferences ?? {}),
-      namedClockTimes(this.service.world),
-      activityRequestDescriptors(this.service.world),
-      appraisals?.schema,
-    );
-    const schema = actorInvention.enabled
-      ? baseSchema.extend({ invention: actorInvention.schema })
-      : baseSchema;
-    const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
-    const context = `${prepared.prompt}\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}`;
-    // Private proposal context shares the existing total bound; it does not buy a larger prompt.
-    if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
-      throw new ContextBudgetError();
-    await prepared.validateConversation();
+        : (capturedInvention ?? (await prepareActorInvention(this.service, actorId)));
     const selectedHandle =
       level1?.outcome.kind === 'act' || level1?.outcome.kind === 'continue'
         ? level1.outcome.handle
         : undefined;
+    const responseTarget = resolveNpcGenerationConfig(
+      this.executionSource === 'live-model' ? c : { ...c, modelTargets: undefined },
+      level === 2 ? 'npc_response_fast' : 'npc_response_complex',
+      {
+        maxOutputTokens: actorInvention.enabled
+          ? Math.max(1800, limits.outputTokens)
+          : limits.outputTokens,
+        reasoningEffort: limits.effort,
+      },
+    );
+    const bindResponse = async () => {
+      const appraisals = this.service.world.moduleManifest.appraisals?.definitions.some(
+        (definition) => definition.decision,
+      )
+        ? await bindDecisionAppraisals(
+            this.service,
+            actorId,
+            run.job.id,
+            prepared.binding.evidenceIds ?? evidenceIds,
+            prepared.entityReferences,
+            triggerEvidenceId,
+            { sharedExperiences: prepared.sharedExperiences, contextSnapshot: appraisalView },
+          )
+        : undefined;
+      if (appraisalView && !appraisalView.current(this.service.world))
+        throw new StopJob('stale', 'The character’s interpretation changed during preparation.');
+      if (
+        capturedInvention &&
+        capturedInvention.policyRevision !== this.service.world.inventionPolicy.revision
+      )
+        throw new StopJob('stale', 'The available invention policy changed during preparation.');
+      const { instructions, appendix } = renderSupport(actorInvention, appraisals?.context);
+      const detailInstructions = detailFamilies.length
+        ? `\n${STANDALONE_ACTIVITY_DETAIL_INSTRUCTIONS}`
+        : '';
+      const reservedBytes =
+        Buffer.byteLength(instructions) -
+        Buffer.byteLength(RESPONSE_INSTRUCTIONS) +
+        Buffer.byteLength(appendix) +
+        Buffer.byteLength(detailInstructions);
+      prepared = fitDecisionResponse(prepared, reservedBytes, selectedHandle);
+      const bindSchema = () => {
+        const baseSchema = boundResponseSchema(
+          Object.keys(prepared.entityReferences),
+          responseActionReferences(prepared.binding.actions),
+          {
+            speech: canSpeak(entityGet(this.service.world.entities, actorId)),
+            expressions: selectedExpressions(
+              this.service.world,
+              entityGet(this.service.world.entities, actorId),
+            ),
+          },
+          Object.keys(prepared.binding.knowledgeReferences ?? {}),
+          namedClockTimes(this.service.world),
+          prepared.completeForms,
+          appraisals?.schema,
+          prepared.goalIds,
+        );
+        const schema = actorInvention.enabled
+          ? baseSchema.extend({ invention: actorInvention.schema })
+          : baseSchema;
+        const responseContract = responseGenerationContract(schema, detailFamilies);
+        return {
+          baseSchema,
+          schema,
+          responseContract,
+          responseSchema: modelJsonSchema(responseContract.schema),
+        };
+      };
+      let bound = bindSchema();
+      const outputMode =
+        responseTarget.structuredOutput === 'auto' ? undefined : responseTarget.structuredOutput;
+      if (outputMode === 'json_object' || outputMode === 'prompted_json') {
+        // Reserve the provider compiler's actual schema instructions once. Only
+        // optional action suggestions may shrink; required forms remain intact.
+        const overhead = textBytes(
+          macrofoldGenerationInstructions('', bound.responseSchema, outputMode),
+        );
+        const previous = prepared;
+        prepared = fitDecisionResponse(prepared, reservedBytes + overhead, selectedHandle);
+        if (prepared !== previous) bound = bindSchema();
+      }
+      const context =
+        prepared.prompt.slice(0, prepared.responseSupplementOffset) +
+        appendix +
+        prepared.prompt.slice(prepared.responseSupplementOffset);
+      // Private proposal context shares the existing total bound; it does not buy a larger prompt.
+      if (
+        textBytes(
+          macrofoldGenerationInstructions(
+            instructions + detailInstructions,
+            bound.responseSchema,
+            outputMode,
+          ),
+        ) +
+          Buffer.byteLength(context) >
+        CONTEXT_BYTE_LIMIT
+      )
+        throw new ContextBudgetError();
+      await prepared.validateConversation();
+      return { appraisals, instructions, appendix, ...bound, context };
+    };
+    let {
+      appraisals,
+      instructions,
+      appendix,
+      baseSchema,
+      schema,
+      context,
+      responseContract,
+      responseSchema,
+    } = await bindResponse();
     const levelLimit = levelLimits(c)[level];
     const authority = run.job.authority;
     const controller = run.controller;
@@ -3243,6 +4636,7 @@ export class AiDirector {
     // Only the measured direct-inference route gets a disclosure grant. Other
     // generation callers and full harnesses keep their existing completed values.
     const preview =
+      !detailFamilies.length &&
       !run.job.decision &&
       !requestedActivity &&
       executedRoute !== 'level1' &&
@@ -3276,16 +4670,22 @@ export class AiDirector {
               const operation = previewSpeechOperation(baseSchema.shape.operations.element, value);
               return operation
                 ? (resolveResponseEntities(
-                    { operations: [(({ appraise: _appraise, ...rest }) => rest)(operation)] },
+                    {
+                      operations: [
+                        nativeResponseOperation(
+                          (({ appraise: _appraise, ...rest }) => rest)(operation),
+                        ),
+                      ],
+                    },
                     prepared.entityReferences,
                     prepared.binding.knowledgeReferences,
-                    activityRequestDescriptors(this.service.world),
+                    prepared.completeForms,
                   ).operations[0] ?? null)
                 : null;
             },
           })
         : undefined;
-    const responseSchema = z.toJSONSchema(schema, { target: 'draft-7' });
+    if (detailFamilies.length) instructions += `\n${STANDALONE_ACTIVITY_DETAIL_INSTRUCTIONS}`;
     let value: unknown;
     if (requestedActivity) value = requestedActivity;
     else if (executedRoute === 'level1') {
@@ -3293,71 +4693,152 @@ export class AiDirector {
       value = this.selectKnownAction(prepared, selectedHandle);
     } else
       try {
-        // Schemas count toward the level input allowance, separately from context.
-        if (textBytes(responseSchema) > levelLimit.schemaBytes)
-          throw new ContextBudgetError(
-            `The level ${level} response schema exceeds its ${levelLimit.schemaBytes}-byte allowance; this request was not sent.`,
-          );
-        // Select by this producer's purpose before spending admission. Other fast generation
-        // callers, including player expression, retain their own provider configuration.
-        const selected = resolveNpcGenerationConfig(
-          this.executionSource === 'live-model' ? c : { ...c, modelTargets: undefined },
-          level === 2 ? 'npc_response_fast' : 'npc_response_complex',
-          {
-            maxOutputTokens: actorInvention.enabled
-              ? Math.max(1800, limits.outputTokens)
-              : limits.outputTokens,
-            reasoningEffort: limits.effort,
-          },
-        );
-        let generationRequest: Omit<GenerateRequest, 'requestId' | 'signal'> = {
-          task: 'npc_response',
-          actorScope: actorId,
-          execution: level === 2 ? 'fast' : 'complex',
-          ...('macrofoldDeployment' in selected
-            ? { macrofoldDeployment: selected.macrofoldDeployment }
-            : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
-          maxOutputTokens: selected.maxOutputTokens,
-          instructions,
-          context,
-          schema: responseSchema,
-          ...(preview ? { onProgress: preview.progress } : {}),
-        };
-        if (generationRequest.macrofoldDeployment && !c.jevOnly && c.budgetUsd > 0) {
-          try {
-            generationRequest = await this.macrofold.prepareDeploymentGeneration(
-              generationRequest,
-              selected.structuredOutput,
-              run.controller.signal,
-              async () => {
-                await prepared.validateConversation();
-                this.current(run);
-              },
+        let detailFinal = false;
+        for (;;) {
+          // Schemas count toward the level input allowance, separately from context.
+          if (textBytes(responseSchema) > levelLimit.schemaBytes)
+            throw new ContextBudgetError(
+              `The level ${level} response schema exceeds its ${levelLimit.schemaBytes}-byte allowance; this request was not sent.`,
             );
-            this.current(run);
-          } catch (error) {
-            if (error instanceof ModelTargetPreparationError) {
-              await this.log.record(
-                `${run.job.id}:attempt:${attempt}:deployment-preparation`,
-                'Model preparation',
-                { purpose: level === 2 ? 'npc_response_fast' : 'npc_response_complex' },
-                { outcome: error.outcome, code: error.code },
+          // Select by this producer's purpose before spending admission. Other fast generation
+          // callers, including player expression, retain their own provider configuration.
+          const selected = responseTarget;
+          const capturedRequest = finalizeDecisionRequest({
+            scope: prepared.manifest.scope,
+            context,
+            instructions,
+            schema: responseSchema,
+            sourceKeys: [
+              ...new Set([
+                ...prepared.manifest.units.map((unit) => unit.key),
+                ...[...(appraisals?.sources.values() ?? [])].map((source) =>
+                  contextUnitKey(prepared.manifest.scope, {
+                    family: 'evidence',
+                    id: JSON.stringify([source.sourceKind, source.sourceId]),
+                    revision: source.sourceVersion,
+                  }),
+                ),
+                ...(actorInvention.enabled
+                  ? [
+                      contextUnitKey(prepared.manifest.scope, {
+                        family: 'instruction',
+                        id: 'actor-invention',
+                        revision: String(actorInvention.policyRevision),
+                      }),
+                    ]
+                  : []),
+              ]),
+            ],
+            references: { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+          });
+          await this.log.record(
+            `${run.job.id}:attempt:${attempt}:context-final`,
+            'Final decision context',
+            {
+              digest: capturedRequest.digest,
+              scope: capturedRequest.scope,
+              bytes: capturedRequest.bytes,
+              selectedSources: prepared.manifest.sourceKeys.length,
+              dependencies: capturedRequest.sourceKeys.length,
+              units: prepared.manifest.units.length,
+            },
+          );
+          let generationRequest: Omit<GenerateRequest, 'requestId' | 'signal'> = {
+            task: 'npc_response',
+            actorScope: actorId,
+            execution: level === 2 ? 'fast' : 'complex',
+            ...('macrofoldDeployment' in selected
+              ? { macrofoldDeployment: selected.macrofoldDeployment }
+              : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
+            maxOutputTokens: selected.maxOutputTokens,
+            instructions: capturedRequest.instructions,
+            context: capturedRequest.context,
+            schema: capturedRequest.schema,
+            ...(preview ? { onProgress: preview.progress } : {}),
+          };
+          if (generationRequest.macrofoldDeployment && !c.jevOnly && c.budgetUsd > 0) {
+            try {
+              generationRequest = await this.macrofold.prepareGeneration(
+                {
+                  ...generationRequest,
+                  deadlineMs: this.requestDeadline(run, generationRequest.deadlineMs),
+                },
+                selected.structuredOutput,
+                run.controller.signal,
+                async () => {
+                  await prepared.validateConversation();
+                  this.current(run);
+                },
               );
-              throw new StopJob(
-                'failed',
-                'The selected character model is unavailable for this reply.',
-                error.outcome,
-              );
+              this.current(run);
+            } catch (error) {
+              if (error instanceof ModelTargetPreparationError) {
+                await this.log.record(
+                  `${run.job.id}:attempt:${attempt}:deployment-preparation`,
+                  'Model preparation',
+                  { purpose: level === 2 ? 'npc_response_fast' : 'npc_response_complex' },
+                  { outcome: error.outcome, code: error.code },
+                );
+                throw new StopJob(
+                  'failed',
+                  'The selected character model is unavailable for this reply.',
+                  error.outcome,
+                );
+              }
+              throw error;
             }
-            throw error;
           }
+          value = await this.generate<unknown>(
+            run,
+            generationRequest,
+            `attempt:${attempt}:generate${detailFinal ? ':detail-final' : ''}`,
+            { category: 'level', level },
+          );
+          value = responseContract.decode(value);
+          const family = requestedActivityDetail(value);
+          if (family !== undefined) {
+            if (detailFinal || !detailEnabled)
+              throw new Error('Activity detail cannot be requested again.');
+            await prepared.validateConversation();
+            run.job = await claimActivityDetail(
+              this.service,
+              run.job,
+              family,
+              prepared.discoveryDescriptors,
+              run.receipt?.requestId ?? `${run.job.id}:attempt:${attempt}:generate`,
+            );
+            prepared = await prepareConsumer(
+              {
+                question: responseTaskInstructions(addressedSpeech),
+                enabledSemantics: responseSemantics(!!appraisalView),
+                capabilityDetail: 'selected',
+                selectedFamilyIds: [
+                  ...new Set([...prepared.completeForms.map((form) => form.id), family]),
+                ],
+              },
+              responseMeasure,
+            );
+            detailFinal = true;
+            detailEnabled = false;
+            detailFamilies = [];
+            ({
+              appraisals,
+              instructions,
+              appendix,
+              baseSchema,
+              schema,
+              context,
+              responseContract,
+              responseSchema,
+            } = await bindResponse());
+            run.job =
+              (await activityDetailPhase(this.service, run.job.id, 'final-ready')) ?? run.job;
+            continue;
+          }
+          if (detailFinal)
+            run.job = (await activityDetailPhase(this.service, run.job.id, 'finished')) ?? run.job;
+          break;
         }
-        value = await this.generate<unknown>(
-          run,
-          generationRequest,
-          `attempt:${attempt}:generate`,
-          { category: 'level', level },
-        );
         try {
           preview?.finish();
         } catch {
@@ -3435,11 +4916,12 @@ export class AiDirector {
               throw new Error('This route did not bind feeling proposals.');
             return { ...op, ...(appraise ? { appraise: changes[next++] } : {}) };
           });
-          if (!validResponseEnvelope({ operations }))
+          const native = nativeResponse({ operations });
+          if (!validResponseEnvelope(native))
             throw new Error(
-              'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and dependencies on earlier entries only.',
+              'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and bounded dependency lists.',
             );
-          return { ...parsed, operations };
+          return { ...parsed, operations: native.operations };
         },
         { id: `${run.job.id}:attempt:${attempt}:parse` },
       )
@@ -3460,7 +4942,7 @@ export class AiDirector {
       { operations: reply.operations },
       prepared.entityReferences,
       prepared.binding.knowledgeReferences,
-      activityRequestDescriptors(this.service.world),
+      prepared.completeForms,
     );
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply
@@ -3538,6 +5020,7 @@ export class AiDirector {
             prepared.binding.knowledgeReferences,
             appraisals?.bindings,
             this.service.nativeExecutionPermissions,
+            prepared.binding.capturedActorFrame,
           );
         },
         undefined,
@@ -3551,7 +5034,12 @@ export class AiDirector {
       );
     const authorizedCommit = () =>
       run.job.authority
-        ? this.service.authorized(run.job.authority, 'play', true, commit)
+        ? this.service.authorized(
+            run.job.authority,
+            run.job.operatorAuthored ? 'create' : 'play',
+            !run.job.operatorAuthored,
+            commit,
+          )
         : commit();
     let result = await authorizedCommit();
     while (!result.ok && result.code === 'paused') {
@@ -3688,10 +5176,7 @@ export class AiDirector {
       current: () => this.current(run),
       source: this.executionSource,
       model: () => run.generatedBy ?? this.service.config.llmModel,
-      judge: (request) =>
-        this.call(run, 'jev', 'route', (id) =>
-          this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
-        ),
+      judge: (request) => this.judge(run, 'route', request),
       generate: (request) =>
         this.generate(
           run,
@@ -3748,16 +5233,11 @@ export class AiDirector {
       // Native actions, retained experience and existing completions have their
       // own owners and continue without this optional admission opportunity.
       if (
+        this.service.cognitionControl?.held ||
         !this.service.config.budgetUsd ||
-        (!this.service.config.macrofoldKey && !this.service.config.jevKey)
+        !hasJudgmentAccess(this.service.config)
       )
         return;
-      if (this.service.config.macrofoldKey || this.service.config.jevKey)
-        void this.maintenance.tick(this.immediateRuns.size > 0).catch(() => {
-          this.service.storageError =
-            'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
-          this.service.notify();
-        });
       if (this.immediateRuns.size >= 2 || this.stopped || this.service.paused) return;
       const world = this.service.world;
       const policy = world.cognitionPolicy;
@@ -3801,18 +5281,23 @@ export class AiDirector {
           this.thoughtInputs.refreshed();
         }
       });
-      const actors = this.thoughtWork
-        .ready(
-          this.now(),
-          world.simTime,
-          (id) =>
-            entityGet(world.entities, id)?.actor?.controller === 'npc' &&
-            !this.escalator.hasActor(id) &&
-            ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
-            !entityGet(world.entities, id)?.actor?.incapacitated &&
-            this.thoughtInputs.visible(id) !== undefined,
+      const readiness = this.thoughtWork.ready(this.now(), world.simTime, (id) => {
+        const actor = entityGet(world.entities, id)?.actor;
+        if (
+          !actor?.alive ||
+          actor.incapacitated ||
+          actor.controller !== 'npc' ||
+          !(this.service.cognitionControl?.allowsAutonomousActor(id) ?? true) ||
+          this.escalator.hasActor(id) ||
+          this.thoughtInputs.visible(id) === undefined
         )
-        .map((id) => entityGet(world.entities, id)!);
+          return false;
+        for (const run of this.activeRuns) if (run.job.decision?.actorId === id) return false;
+        return true;
+      });
+      if (readiness.durabilityTicket !== undefined)
+        this.requestEvidenceSave(readiness.durabilityTicket, generation);
+      const actors = readiness.actors.map((id) => entityGet(world.entities, id)!);
       const generations = new Map(
         actors.map((entity) => [entity.id, this.thoughtWork.capture(world, entity.id)]),
       );
@@ -4071,6 +5556,15 @@ export class AiDirector {
           continue;
         }
         this.thoughtWork.recordOutcome('admitted', all.length);
+        if (this.admissionObserver)
+          this.admissionObserver({
+            kind: 'selected-for-admission',
+            generation,
+            actorId: entity.id,
+            sourceIds: [...unseenIds],
+            wallAt: this.now(),
+            simTime: world.simTime,
+          });
         // Attempted, not consumed: the cursor advances only when the decision completes. A
         // failed decision is not a debt to replay; the same opportunity is not retried and
         // new changes create fresh opportunities that still include unread evidence.
@@ -4166,6 +5660,16 @@ export class AiDirector {
           });
         return;
       }
+      // Inspect immediate personal opportunities before offering idle work. Starting
+      // maintenance first lets its asynchronous preparation race the event response
+      // to the provider boundary, even when the same person just acquired contact.
+      // docs/memory-architecture.md#maintenance-storage-failures
+      if (hasJudgmentAccess(this.service.config))
+        void this.maintenance.tick(this.immediateRuns.size > 0).catch(() => {
+          this.service.storageError =
+            'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
+          this.service.notify();
+        });
     });
   }
   private async readSchedule(key: string): Promise<ThoughtSchedule | undefined> {
@@ -4193,12 +5697,252 @@ export class AiDirector {
     return await this.decide(run, false);
   }
 
+  async settleDispatched(): Promise<void> {
+    await this.service.cognitionControl?.settle();
+    await this.service.settleBackgroundSaves();
+  }
+
+  async requestMaintenance(
+    commandId: string,
+    actorId: string,
+    authority: RequestScope,
+  ): Promise<ApiResult> {
+    this.service.assertScope(authority, 'create');
+    if (!this.service.mayInspectPrivate(actorId, authority))
+      throw new Error('This character cannot be inspected.');
+    return this.maintenance.request(actorId, humanRequestId(authority, commandId));
+  }
+
+  /** Reconstitute a supported held decision from a native checkpoint's existing source.
+   * Only pure prerequisite values carry forward; attempts, timers and claims are fresh. */
+  async continueDecision(
+    commandId: string,
+    continuation: ReconstitutedDecision,
+    authority: RequestScope,
+  ): Promise<ApiResult> {
+    const descriptor = continuation.descriptor;
+    this.service.assertScope(authority, 'create');
+    if (!this.service.cognitionControl || this.service.cognitionControl.held)
+      throw new Error('Open an explicit guarded lab interval first.');
+    if (
+      descriptor.worldId !== this.service.world.id ||
+      descriptor.actorId !== descriptor.request.npcId ||
+      (await continuationProof(
+        this.service,
+        descriptor.actorId,
+        descriptor.sourceId,
+        authority,
+      )) !== descriptor.proof
+    )
+      throw new Error('The checkpoint source, body or installed native bindings changed.');
+    const id = humanRequestId(authority, commandId),
+      fingerprint = digest(descriptor);
+    const previous = await this.service.store.getJob(id);
+    if (previous) {
+      if (previous.fingerprint !== fingerprint)
+        throw new Error('This continuation identity was used for another checkpoint.');
+      return {
+        ok: previous.status !== 'failed' && previous.status !== 'stale',
+        code: previous.status,
+        jobId: id,
+        message: previous.message,
+      };
+    }
+    const actor = entityGet(this.service.world.entities, descriptor.actorId)?.actor;
+    if (!actor?.alive || actor.controller !== 'npc' || actor.incapacitated)
+      throw new Error('The responding character cannot currently think.');
+    if ([...this.activeRuns].some((run) => this.selectedActorId(run.job) === descriptor.actorId))
+      throw new Error('The responding character already has active cognition.');
+    await this.begin(
+      {
+        id,
+        kind: 'chat',
+        operatorAuthored: true,
+        authority,
+        fingerprint,
+        request: { text: descriptor.request.text, npcId: descriptor.actorId },
+        playerSpeechEventId: descriptor.sourceId,
+        status: 'queued',
+        message: 'Reconstituting a held decision from its checkpoint.',
+        createdAt: this.now(),
+      },
+      undefined,
+      undefined,
+      true,
+      continuation,
+    );
+    return {
+      ok: true,
+      code: 'queued',
+      jobId: id,
+      message: 'Checkpoint continuation admitted with fresh native decision bindings.',
+    };
+  }
+
+  /** Explicitly paid, pure request comparison. It uses the installed adapters,
+   * reservations and receipts, with no actor workspace binding or native publication. */
+  async compareRequest(
+    commandId: string,
+    actorId: string,
+    input: Extract<CognitionStageInput, { kind: 'judge' | 'generate' }>,
+    authority: RequestScope,
+    currentCapture: () => Promise<void>,
+    signal?: AbortSignal,
+  ): Promise<AiResult<unknown>> {
+    if (this.service.config.budgetUsd <= 0)
+      throw new Error('Model requests are disabled by the current usage allowance.');
+    if (input.kind === 'generate' && this.service.config.jevOnly)
+      throw new Error('Generation is disabled by the installed inference policy.');
+    if (input.kind === 'generate' && input.request.execution === 'full')
+      throw new Error('A tool-bearing request requires a complete supported scenario rerun.');
+    let generationRequest =
+      input.kind === 'generate'
+        ? ({ ...input.request } as Omit<GenerateRequest, 'requestId' | 'signal'>)
+        : undefined;
+    if (generationRequest?.model?.startsWith('deployment:')) {
+      const identity = generationRequest.model;
+      const target = [
+        ...(['npc_response_fast', 'npc_response_complex'] as const).map((purpose) =>
+          resolveNpcGenerationConfig(this.service.config, purpose),
+        ),
+        resolveHigherDecisionGenerationConfig(this.service.config, {
+          maxOutputTokens: DECISION_LIMITS.outputTokens,
+        }),
+      ].find(
+        (configured) =>
+          configured.macrofoldDeployment &&
+          `deployment:${configured.macrofoldDeployment.modelBinding.deployment_id}` === identity,
+      );
+      if (!target?.macrofoldDeployment)
+        throw new Error(
+          'The recorded deployment is not currently configured for native character inference.',
+        );
+      generationRequest = await this.macrofold.prepareGeneration(
+        applyGenerationInput(
+          { ...generationRequest, macrofoldDeployment: target.macrofoldDeployment },
+          generationRequest,
+        ),
+        target.structuredOutput,
+        signal ?? new AbortController().signal,
+        currentCapture,
+      );
+    }
+    if (generationRequest)
+      generationRequest = applyCatalogGenerationFormat(this.service.config, generationRequest);
+    const id = `comparison:${humanRequestId(authority, commandId)}`;
+    const fingerprint = digest(input);
+    await currentCapture();
+    this.service.assertScope(authority, 'create');
+    const previous = await this.service.store.getJob(id);
+    if (previous) {
+      if (previous.fingerprint !== fingerprint)
+        throw new Error('This comparison identity was used for different input.');
+      if (previous.result) return previous.result as AiResult<unknown>;
+      throw new Error(
+        'The original comparison is unresolved; inspect its receipt before starting another.',
+      );
+    }
+    const lease = await this.execution.requestOnly();
+    if (!lease) throw new Error('Shared inference capacity is occupied.');
+    const provider = input.kind === 'judge' ? 'jev' : 'openai';
+    let reserved = false,
+      dispatchIntent = false,
+      completed = false,
+      providerStarted = false;
+    const job: JobRecord = {
+      id,
+      kind: 'action',
+      operatorAuthored: true,
+      authority,
+      fingerprint,
+      request: { text: 'Request comparison', npcId: actorId },
+      createdAt: this.now(),
+      status: 'queued',
+      message: 'Comparing a recorded application request.',
+    };
+    try {
+      await this.service.authorized(authority, 'create', false, async () => {
+        await currentCapture();
+        await this.service.store.putJob(job);
+        reserved = await this.service.store.reserve(
+          id,
+          provider,
+          stageAllowance(
+            this.service.config,
+            generationRequest ? { kind: 'generate', request: generationRequest } : input,
+          ),
+          this.service.config.budgetUsd,
+          actorId,
+          undefined,
+          undefined,
+          {
+            rootJobId: id,
+            category: 'preparation',
+            stage: 'request-comparison',
+            executionClass: lease.executionClass,
+          },
+        );
+      });
+      if (!reserved)
+        throw new Error('The configured comparison spending allowance is unavailable.');
+      const check = async () => {
+        signal?.throwIfAborted();
+        await currentCapture();
+        this.service.assertScope(authority, 'create');
+        signal?.throwIfAborted();
+      };
+      await check();
+      dispatchIntent = true;
+      if (!(await this.service.store.markDecisionDispatch(id)))
+        throw new Error('This comparison already has dispatch intent.');
+      const result = await this.macrofold.withSourceValidation(check, () =>
+        this.log.withTrigger(id, () => {
+          providerStarted = true;
+          return input.kind === 'judge'
+            ? this.client.judge({ ...input.request, requestId: id, signal })
+            : this.client.generate<unknown>({ ...generationRequest!, requestId: id, signal });
+        }),
+      );
+      await this.service.store.settle(id, result.receipt);
+      completed = true;
+      if (result.receipt.completionUncertain) lease.uncertain(id);
+      await this.service.store.putJob({
+        ...job,
+        status: result.outcome === 'value' ? 'completed' : 'failed',
+        message:
+          result.outcome === 'value'
+            ? 'Request comparison completed; no scenario effects were applied.'
+            : result.reason,
+        completedAt: this.now(),
+        result,
+      });
+      await check();
+      return result;
+    } finally {
+      try {
+        if (reserved && (!dispatchIntent || !providerStarted)) {
+          await this.service.store.settle(id, undispatchedReceipt(id, provider, this.now()));
+          completed = true;
+        }
+      } finally {
+        if (dispatchIntent && !completed) lease.uncertain(id);
+        lease.release();
+      }
+    }
+  }
+  comparisonResponseBound(): number {
+    return this.service.config.macrofoldKey ? 1_000_000 : 500_000;
+  }
+
   async idle(): Promise<void> {
     while (this.pendingWork.size) await Promise.all([...this.pendingWork]);
     await this.execution.idle();
   }
   async close(): Promise<void> {
     this.stopped = true;
+    this.durabilityDemand = undefined;
+    this.admissionObserver = undefined;
+    this.thoughtWork.readinessObserver = undefined;
     this.releasePlayerInteractionAdmission();
     this.replyPreviews.close();
     for (const run of this.activeRuns) run.controller.abort();
@@ -4214,6 +5958,6 @@ export class AiDirector {
     await this.maintenance.close();
     await this.narrator.close();
     await this.log.close();
-    if (this.ownsExecution) this.execution.close();
+    if (this.ownsExecution) await this.execution.close();
   }
 }

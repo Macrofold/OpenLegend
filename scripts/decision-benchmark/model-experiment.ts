@@ -92,7 +92,7 @@ function deployment(source: Record<string, unknown>) {
   );
   if (!parsed?.purposes.npc_response_fast) throw new Error('Missing deployment target.');
   return captureMacrofoldDeploymentTarget({
-    workspaceId: parsed.workspace_id,
+    workspaceId: parsed.workspace_id!, // Deployment admission requires a workspace.
     modelBinding: parsed.purposes.npc_response_fast.model_binding,
   });
 }

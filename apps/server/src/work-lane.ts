@@ -61,6 +61,8 @@ export class WorkLane {
           const index = this.pending.indexOf(entry);
           if (index < 0) return;
           this.pending.splice(index, 1);
+          const waited = elapsedTiming(measured);
+          if (waited !== undefined) recordDuration(`${this.name}.waitExpired`, waited);
           reject(new OverloadError());
         },
       };

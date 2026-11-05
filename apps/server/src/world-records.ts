@@ -270,17 +270,47 @@ export class WorldRecords {
       : null;
   }
   /** Acquire the write fence before touching any effects. Caller owns the transaction. */
-  async advance(worldId: string, expected: number, restore = false): Promise<number> {
+  async advance(
+    worldId: string,
+    expected: number,
+    restore = false,
+    previousWorldId = worldId,
+  ): Promise<number> {
+    const replacesWorld = previousWorldId !== worldId;
     if (expected === 0)
       await this.db
         .prepare('INSERT INTO world_head VALUES (1,?,0,?,0) ON CONFLICT(id) DO NOTHING')
         .run(worldId, randomUUID());
+    if (replacesWorld) {
+      if (!restore) throw new Error('World replacement requires native restore admission.');
+      const head = await this.db
+        .prepare('SELECT world_id,revision,applied_revision FROM world_head WHERE id=1 FOR UPDATE')
+        .get();
+      if (
+        head?.['world_id'] !== previousWorldId ||
+        Number(head['revision']) !== expected ||
+        Number(head['applied_revision']) !== expected
+      )
+        throw new Error('Save conflict: another writer changed this world.');
+      // A complete recovery cut is durable before this transaction. Canonical
+      // records belong to one active world; delete their owned root, never rename IDs.
+      // Physical-parent references intentionally restrict ordinary entity deletion.
+      // Only this complete-world replacement detaches their derived SQL edges before
+      // discarding every canonical owner in the same fenced transaction.
+      await this.db.prepare('DELETE FROM sim_placements WHERE world_id=?').run(previousWorldId);
+      await this.db.prepare('DELETE FROM data_world WHERE world_id=?').run(previousWorldId);
+    }
     const row = await this.db
       .prepare(
-        `UPDATE world_head SET revision=revision+1,applied_revision=revision+1${restore ? ',generation=?' : ''}
+        `UPDATE world_head SET revision=revision+1,applied_revision=revision+1${replacesWorld ? ',world_id=?' : ''}${restore ? ',generation=?' : ''}
       WHERE id=1 AND world_id=? AND revision=? AND applied_revision=revision RETURNING revision`,
       )
-      .get(...(restore ? [randomUUID()] : []), worldId, expected);
+      .get(
+        ...(replacesWorld ? [worldId] : []),
+        ...(restore ? [randomUUID()] : []),
+        previousWorldId,
+        expected,
+      );
     if (!row) throw new Error('Save conflict: another writer changed this world.');
     return Number(row['revision']);
   }

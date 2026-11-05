@@ -272,3 +272,9 @@ Changed exact family/method meaning refuses incompatible development saves,
 without an adapter, conversion or reseeding. No standard database was reset.
 Existing compatible source objects keep their stored costs; final natural source
 configuration remains open in [SV01](../maintainers/first-playable-survival.md#sv01--compile-the-selected-natural-material-opening).
+
+## BW16 — Brief social contact
+
+**Current · Restrictiveness: Medium.** The installed [tickle expression](../worlds/base/actions.md#expressions-and-brief-contact) makes one brief contact with a living recipient within **1.5 metres between interaction anchors**. The performer needs a supported manual body, current sight and clear reach; moving or obstructed targets can refuse at commitment. It neither approaches automatically nor sustains contact. The recipient receives felt evidence, with performer identity only when perceived. No injury, laughter, reciprocal gesture, consent or social meaning is imposed.
+
+**Reason / tradeoff:** A small shared player/NPC action supports real social-context experiments without inventing prolonged physiology or scripted reactions. Worlds may omit the expression family; ordinary noncontact gestures retain their existing semantics. Native checks cover reach, low/tall barriers, moved targets, unseen performers and replay; these do not establish natural model-response quality or population throughput.

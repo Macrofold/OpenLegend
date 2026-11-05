@@ -1,3 +1,4 @@
+import { AttemptRepository, ATTEMPT_SCHEMA } from './attempt-repository.js';
 import type { PreparedDiagnosticRecord } from './diagnostic-capture.js';
 import {
   readDecisionState,
@@ -9,12 +10,7 @@ import {
   type ExecutionClass,
 } from './decision-state.js';
 import type { ConstructionPermission, ConstructionPermissionChanges } from '@open-legend/domain';
-import {
-  usdToMicroUsd,
-  microUsdToUsd,
-  normalizeReceiptCost,
-  sumSafeIntegers,
-} from '@open-legend/ai';
+import { usdToMicroUsd, microUsdToUsd, sumSafeIntegers } from '@open-legend/ai';
 import {
   AuthorityRepository,
   type AuthorityFence,
@@ -37,11 +33,10 @@ import {
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
 import { WorldRecords } from './world-records.js';
 import {
-  assertAttemptReceiptContinuity,
-  readAttemptBudget,
-  retainKnownAttemptCost,
-  uncertainAttemptMicroUsd,
   type AttemptBudgetSnapshot,
+  type AttemptBudget,
+  attemptMicroUsd as micro,
+  attemptExposure as exposureTotal,
 } from './attempt-budget.js';
 import { WorldAgentStore } from './world-agent-store.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
@@ -159,10 +154,7 @@ import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
 export const DATABASE_SCHEMA = '22';
 
-export interface AttemptBudget {
-  id: string;
-  limitUsd: number;
-}
+export type { AttemptBudget } from './attempt-budget.js';
 export interface SqlDatabase {
   /** Transport grouping for explicitly independent writes; transaction semantics are unchanged. */
   readonly writeGroups: boolean;
@@ -204,6 +196,10 @@ export interface SavedWorld {
 }
 
 export interface JobRecord extends AiJobView {
+  /** Native work identity only; this grants no player/session authority or permissions. */
+  nativeContext?: { worldId: string; timelineId: string };
+  /** Creator-authored action keeps the operator's authority separate from its acting body. */
+  operatorAuthored?: true;
   decision?: DecisionState;
   authority?: RequestScope;
   responseReady?: boolean;
@@ -264,17 +260,6 @@ export interface JobRecord extends AiJobView {
   completedAt?: number;
   queueLatencyMs?: number;
   totalLatencyMs?: number;
-}
-
-function micro(usd: number): number {
-  const amount = usdToMicroUsd(usd);
-  if (amount === undefined) throw new Error('Invalid spending amount.');
-  return amount;
-}
-function exposureTotal(value: unknown): bigint {
-  const text = String(value);
-  if (!/^\d+$/.test(text)) throw new Error('Invalid spending exposure.');
-  return BigInt(text);
 }
 
 /** Record changes prepared for one exact baseline and expected revision. Preparation assigns
@@ -441,19 +426,8 @@ export class SqlGameRepository implements GameRepository {
     this.settlementListeners.add(listener);
     return () => this.settlementListeners.delete(listener);
   }
-  private async exposure(actorId: string): Promise<bigint> {
-    const date = new Date();
-    const start = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
-    const row = await this.db
-      .prepare(
-        "SELECT COALESCE(SUM(spent + CASE WHEN status = 'reserved' THEN reserved ELSE 0 END), 0) AS total FROM attempts a LEFT JOIN attempt_scopes s ON s.attempt_id=a.id WHERE a.created_at>=? AND (s.actor_id=? OR s.actor_id IS NULL)",
-      )
-      .get(start, actorId);
-    return exposureTotal(row?.['total'] ?? 0);
-  }
   async budgetAvailable(actorId: string, amountUsd: number, ceilingUsd: number): Promise<boolean> {
-    await this.ready;
-    return (await this.exposure(actorId)) + BigInt(micro(amountUsd)) <= BigInt(micro(ceilingUsd));
+    return this.attempts.budgetAvailable(actorId, amountUsd, ceilingUsd);
   }
   readonly creationTargets: CreationTargetRepository;
   readonly commands: CommandReceipts;
@@ -461,6 +435,14 @@ export class SqlGameRepository implements GameRepository {
   readonly invites: InviteRepository;
   readonly maintenance: MaintenanceRepository;
   readonly db: SqlDatabase;
+  /** Trusted nonrewindable SQL owners must remain durable while world tables lag.
+   * Shares this repository's database adapter/transactions; canonical joins or mixed work
+   * must enter through db's fence instead. No world-state reader belongs here.
+   * docs/projects/performance-overhaul/journal-contract.md#reader-revision-and-wait-matrix
+   */
+  get operationalDatabase(): SqlDatabase {
+    return this.rawDb;
+  }
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
   private readonly integrationValues: IntegrationValues;
@@ -499,8 +481,10 @@ export class SqlGameRepository implements GameRepository {
   async putIntelligenceCalls(calls: PreparedDiagnosticRecord[]): Promise<void> {
     await this.ready;
     if (!calls.length) return;
+    // Optional diagnostic upserts cannot require unrelated world-table application.
+    // docs/performance/storage.md#storage-execution
     await insertRows(
-      this.db,
+      this.rawDb,
       'intelligence_calls (id, started_at, payload)',
       calls.map((call) => [call.id, call.startedAt, call.json]),
       'ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
@@ -509,7 +493,7 @@ export class SqlGameRepository implements GameRepository {
     const previous = this.intelligenceWrites;
     this.intelligenceWrites += calls.length;
     if (Math.floor(previous / 25) !== Math.floor(this.intelligenceWrites / 25))
-      await this.db.exec(
+      await this.rawDb.exec(
         'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
       );
   }
@@ -608,6 +592,7 @@ export class SqlGameRepository implements GameRepository {
     );
   }
 
+  readonly attempts: AttemptRepository;
   readonly history: HistoryRepository;
   readonly saves: GameSaves;
   readonly assets: AssetRepository;
@@ -625,6 +610,7 @@ export class SqlGameRepository implements GameRepository {
         'meta',
         'jobs',
         'attempts',
+        'cognition_attempt_links',
         'attempt_scopes',
         'attempt_budgets',
         'intelligence_calls',
@@ -634,15 +620,26 @@ export class SqlGameRepository implements GameRepository {
       () => this.journal.writeAligned(),
       () => this.journal.canSkipFlush(),
     );
-    this.integrationValues = new IntegrationValues(this.db);
+    this.attempts = new AttemptRepository(
+      this.rawDb,
+      () => this.ready,
+      () => {
+        this.invalidateRead(this.usageCache, this.db);
+      },
+      () => {
+        for (const listener of this.settlementListeners) listener();
+      },
+    );
+    // This owner reads/writes only immediate meta rows and retains transaction hooks.
+    this.integrationValues = new IntegrationValues(this.rawDb);
     this.records = new WorldRecords(this.db);
     this.memories = new MemoryRepository(this.db);
     this.history = new HistoryRepository(this.db);
     this.saves = new GameSaves(this.db, join(dataDirectory, 'saves'), database.checkpointSource);
     // Revocation, authentication and retry recovery stay immediate even while query
     // tables trail the durable journal. Their existing transactional fences remain.
-    this.commands = new CommandReceipts(database);
-    this.authority = new AuthorityRepository(database);
+    this.commands = new CommandReceipts(this.operationalDatabase);
+    this.authority = new AuthorityRepository(this.operationalDatabase);
     this.invites = new InviteRepository(this.db);
     this.maintenance = new MaintenanceRepository(this.db);
     this.assets = new AssetRepository(this.db);
@@ -696,11 +693,7 @@ export class SqlGameRepository implements GameRepository {
         WHERE (payload::jsonb #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched');
       CREATE INDEX IF NOT EXISTS decision_unfinished ON jobs(id)
         WHERE (payload::jsonb #>> '{decision,phase}') IN ('immediate','waiting-primary','higher');
-      CREATE TABLE IF NOT EXISTS attempts (
-        id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
-        reserved BIGINT NOT NULL CHECK (reserved >= 0), spent BIGINT NOT NULL DEFAULT 0 CHECK (spent >= 0),
-        receipt TEXT, created_at BIGINT NOT NULL
-      );
+      ${ATTEMPT_SCHEMA}
       CREATE TABLE IF NOT EXISTS cognition_attempt_links (
         attempt_id TEXT PRIMARY KEY REFERENCES attempts(id), root_job_id TEXT NOT NULL,
         category TEXT NOT NULL, level INTEGER, stage TEXT NOT NULL,
@@ -708,12 +701,6 @@ export class SqlGameRepository implements GameRepository {
         dispatch_intent BOOLEAN NOT NULL DEFAULT false
       );
       CREATE INDEX IF NOT EXISTS cognition_attempt_root ON cognition_attempt_links(root_job_id,attempt_id);
-      CREATE INDEX IF NOT EXISTS attempts_unsettled ON attempts(id) WHERE status IN ('reserved','uncertain');
-      CREATE INDEX IF NOT EXISTS attempts_created ON attempts(created_at,id);
-      CREATE TABLE IF NOT EXISTS attempt_scopes (attempt_id TEXT PRIMARY KEY, actor_id TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS attempt_budgets (attempt_id TEXT PRIMARY KEY, budget_id TEXT NOT NULL);
-      CREATE INDEX IF NOT EXISTS attempt_budget_scope ON attempt_budgets(budget_id, attempt_id);
-      CREATE INDEX IF NOT EXISTS attempt_actor ON attempt_scopes(actor_id,attempt_id);
       CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
       CREATE INDEX IF NOT EXISTS intelligence_calls_parent_time ON intelligence_calls((payload::jsonb #>> '{parentId}'), started_at DESC, id DESC);
@@ -895,6 +882,88 @@ export class SqlGameRepository implements GameRepository {
     return null;
   }
 
+  /** Offline development replacement, before a runtime adopts any world. Unlike
+   * gameplay restore, incompatible simulated progress is deliberately discarded;
+   * operational authority, spending and external-request identities stay intact.
+   * AGENTS.md#development-save-policy */
+  async replaceDevelopmentWorld(
+    expected: NonNullable<Awaited<ReturnType<WorldRecords['head']>>>,
+    state: SavedWorld,
+    bootstrap: Pick<
+      NonNullable<Parameters<WorldStore['commit']>[4]>,
+      'authorityBindings' | 'authorityOwners' | 'constructionSeeds'
+    > = {},
+  ): Promise<number> {
+    await this.ready;
+    if (this.applicationFailure) throw this.applicationFailure;
+    if (this.acceptedState || this.acceptedRevision !== -1 || this.db.transactionActive)
+      throw new Error('Development replacement requires an unopened standalone world repository.');
+    if (state.world.id === expected.worldId)
+      throw new Error('Development replacement requires a distinct fresh world identity.');
+    assertAssetBinding(state.presentationRelease, state.presentationReleaseRevision);
+    validateCurrentWorldState(state.world);
+    if (state.world.archivedEventCount)
+      throw new Error('A fresh development world cannot depend on external archived history.');
+    if (this.journalActive) await this.journal.flush();
+    const write: TableWrite = {
+      before: null,
+      state,
+      revision: expected.revision + 1,
+      changes: this.records.prepare(undefined, state),
+      historyAfter: state.world,
+      preparedHistory: this.prepareHistoryWrite(state, undefined, state.world, true),
+      restore: true,
+    };
+    const publish = () => {
+      this.acceptedState = state;
+      this.acceptedRevision = write.revision;
+      this.baselineLost = false;
+      this.readyHistoryWorlds.clear();
+      this.integrationValues.clear();
+      this.publishWorldTables(write);
+      if (this.journalActive) this.journal.synchronized(state.world.id, write.revision);
+    };
+    let publicationDeferred = false;
+    const revision = await this.db.transaction(async () => {
+      if (this.applicationFailure) throw this.applicationFailure;
+      const head = await this.records.head();
+      if (
+        !head ||
+        head.worldId !== expected.worldId ||
+        head.revision !== expected.revision ||
+        head.generation !== expected.generation ||
+        head.appliedRevision !== expected.appliedRevision ||
+        (this.journalActive && !this.journal.writeAligned())
+      )
+        throw new Error('Save conflict: the development world changed before replacement.');
+      // A replacement may retain an already authorized release, but it cannot
+      // manufacture an asset binding or substitute a missing library revision.
+      if (state.presentationRelease)
+        await this.assets.worldReleaseStatus(state.world.id, state.presentationRelease);
+      for (const permission of bootstrap.constructionSeeds ?? [])
+        await this.authority.seedConstruction(permission);
+      for (const binding of bootstrap.authorityBindings ?? [])
+        await this.authority.provision(state.world.id, binding);
+      for (const [actorId, accountId] of bootstrap.authorityOwners ?? [])
+        await this.authority.retainActorOwner(state.world.id, actorId, accountId);
+      await this.memories.releaseWorldSources(expected.worldId);
+      write.revision = await this.records.advance(
+        state.world.id,
+        expected.revision,
+        true,
+        expected.worldId,
+      );
+      await this.applyWorldTables(write);
+      if (this.db.afterCommit) {
+        this.db.afterCommit(publish);
+        publicationDeferred = true;
+      }
+      return write.revision;
+    });
+    if (!publicationDeferred) publish();
+    return revision;
+  }
+
   private readonly readyHistoryWorlds = new Set<string>();
   async commit(
     expectedRevision: number,
@@ -951,6 +1020,10 @@ export class SqlGameRepository implements GameRepository {
       ? ((await this.records.load())?.state ?? null)
       : undefined;
     if (historyProjection?.restore) this.acceptedState = restoreBaseline ?? null;
+    const previousWorldId = this.acceptedState?.world.id ?? state.world.id;
+    const replacesWorld = previousWorldId !== state.world.id;
+    if (replacesWorld && !historyProjection?.restore)
+      throw new Error('World replacement requires native restore admission.');
     const prepared = historyProjection?.prepared;
     // A prepared change set is valid only against the exact baseline it was diffed from.
     if (
@@ -968,7 +1041,7 @@ export class SqlGameRepository implements GameRepository {
     const changes =
       prepared?.changes ??
       timedSync('persistence.prepareRecords', () =>
-        this.records.prepare(this.acceptedState ?? undefined, state),
+        this.records.prepare(replacesWorld ? undefined : (this.acceptedState ?? undefined), state),
       );
     let committedRevision = expectedRevision;
     const write: TableWrite = {
@@ -1071,10 +1144,16 @@ export class SqlGameRepository implements GameRepository {
           await this.authority.saveExit(state.world.id, actorId, attempt);
         }
         await historyProjection?.operationalChange?.();
+        if (replacesWorld) {
+          if (this.journalActive && !this.journal.writeAligned())
+            throw new Error('Drain native changes before replacing the active world.');
+          await this.memories.releaseWorldSources(previousWorldId);
+        }
         const revision = await this.records.advance(
           state.world.id,
           expectedRevision,
           !!historyProjection?.restore,
+          previousWorldId,
         );
         committedRevision = revision;
         write.revision = revision;
@@ -1586,8 +1665,13 @@ export class SqlGameRepository implements GameRepository {
     change: (job: JobRecord) => Promise<JobRecord | undefined>,
   ): Promise<JobRecord | undefined> {
     await this.ready;
-    return this.db.transaction(async () => {
-      const row = await this.db.prepare('SELECT payload FROM jobs WHERE id=? FOR UPDATE').get(id);
+    // Job/cursor/attempt mutations are immediate operational work. A canonical
+    // publication caller still owns its enclosing transaction and revision fence.
+    // docs/projects/performance-overhaul/journal-contract.md#reader-revision-and-wait-matrix
+    return this.rawDb.transaction(async () => {
+      const row = await this.rawDb
+        .prepare('SELECT payload FROM jobs WHERE id=? FOR UPDATE')
+        .get(id);
       if (!row) return undefined;
       const current = JSON.parse(String(row['payload'])) as JobRecord;
       if (!current.decision) return undefined;
@@ -1753,181 +1837,17 @@ export class SqlGameRepository implements GameRepository {
 
   async attemptBudget(budgetId: string): Promise<AttemptBudgetSnapshot> {
     await this.ready;
-    return readAttemptBudget(this.db, budgetId);
+    return this.attempts.attemptBudget(budgetId);
   }
 
-  async reserve(
-    id: string,
-    provider: 'jev' | 'openai' | 'macrofold',
-    amountUsd: number,
-    ceilingUsd: number,
-    actorId = 'world-agent',
-    reuse?: 'compute-allocation',
-    budget?: AttemptBudget,
-    decision?: DecisionAttemptLink,
-  ): Promise<boolean> {
-    await this.ready;
-    const amount = micro(amountUsd);
-    const ceiling = micro(ceilingUsd);
-
-    if (
-      !Number.isFinite(amountUsd) ||
-      amountUsd <= 0 ||
-      !Number.isFinite(ceilingUsd) ||
-      ceilingUsd < 0 ||
-      !actorId ||
-      actorId.length > 160
-    )
-      throw new Error('Invalid spending reservation.');
-    const accepted = await this.db.transaction(async () => {
-      const existing = await this.db
-        .prepare('SELECT provider,reserved FROM attempts WHERE id = ?')
-        .get(id);
-      // Resume the same allocation after a crash, never authorize another model dispatch.
-      // docs/architecture.md#macrofold-worker-ownership
-      if (
-        existing &&
-        reuse === 'compute-allocation' &&
-        provider === 'macrofold' &&
-        id.startsWith('macrofold-worker:') &&
-        id.endsWith(':compute') &&
-        existing['provider'] === provider &&
-        Number(existing['reserved']) === micro(amountUsd)
-      )
-        return true;
-      if (existing) throw new Error('Attempt already admitted; do not dispatch it again.');
-      const actorExposure = await this.exposure(actorId);
-      // This is an additional cap over the same attempt ledger, not another wallet.
-      // docs/architecture.md#invention-workshop-tools
-      if (budget) {
-        if (
-          !budget.id ||
-          budget.id.length > 500 ||
-          !Number.isFinite(budget.limitUsd) ||
-          budget.limitUsd < 0
-        )
-          throw new Error('Invalid episode spending scope.');
-        const exposure = await this.db
-          .prepare(
-            "SELECT COALESCE(SUM(a.spent + CASE WHEN a.status = 'reserved' THEN a.reserved ELSE 0 END), 0) AS total FROM attempt_budgets b JOIN attempts a ON a.id=b.attempt_id WHERE b.budget_id=?",
-          )
-          .get(budget.id);
-        if (
-          exposureTotal(exposure?.['total'] ?? 0) + BigInt(amount) >
-          BigInt(micro(budget.limitUsd))
-        )
-          return false;
-      }
-      if (actorExposure + BigInt(amount) > BigInt(ceiling)) {
-        return false;
-      }
-      await this.db
-        .prepare(
-          "INSERT INTO attempts (id,provider,status,reserved,created_at) VALUES (?,?,'reserved',?,?)",
-        )
-        .run(id, provider, amount, Date.now());
-      await this.db.prepare('INSERT INTO attempt_scopes VALUES (?,?)').run(id, actorId);
-      if (budget)
-        await this.db.prepare('INSERT INTO attempt_budgets VALUES (?,?)').run(id, budget.id);
-      if (decision)
-        await this.db
-          .prepare(
-            'INSERT INTO cognition_attempt_links(attempt_id,root_job_id,category,level,stage,execution_class) VALUES (?,?,?,?,?,?)',
-          )
-          .run(
-            id,
-            decision.rootJobId,
-            decision.category,
-            decision.level ?? null,
-            decision.stage,
-            decision.executionClass,
-          );
-      return true;
-    });
-    if (accepted) this.invalidateRead(this.usageCache, this.db);
-    return accepted;
+  async reserve(...args: Parameters<AttemptRepository['reserve']>): Promise<boolean> {
+    return this.attempts.reserve(...args);
   }
-
   async attemptReceipt(id: string): Promise<AiReceipt | undefined> {
-    await this.ready;
-    const row = await this.db.prepare('SELECT receipt FROM attempts WHERE id = ?').get(id);
-    return row?.['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
+    return this.attempts.attemptReceipt(id);
   }
-
   async settle(id: string, receipt: AiReceipt): Promise<void> {
-    await this.ready;
-    if (receipt.requestId !== id) throw new Error('Spending receipt identity mismatch.');
-    receipt = normalizeReceiptCost(receipt);
-    await this.db.transaction(async () => {
-      const row = await this.db
-        .prepare('SELECT status,reserved,spent,receipt FROM attempts WHERE id = ?')
-        .get(id);
-      if (!row) return;
-      const prior = row['receipt'] ? (JSON.parse(String(row['receipt'])) as AiReceipt) : undefined;
-      // Later accounting may omit optional metadata without changing the exact admitted Run.
-      // Retain its already-established deployment revision and separate hosting attribution.
-      if (
-        prior?.macrofoldDeployment ||
-        prior?.macrofoldCostAttribution ||
-        prior?.macrofoldRequestedDeployment
-      )
-        receipt = {
-          ...receipt,
-          macrofoldDeployment: receipt.macrofoldDeployment ?? prior.macrofoldDeployment,
-          macrofoldCostAttribution:
-            receipt.macrofoldCostAttribution ?? prior.macrofoldCostAttribution,
-          macrofoldRequestedDeployment:
-            receipt.macrofoldRequestedDeployment ?? prior.macrofoldRequestedDeployment,
-        };
-      assertAttemptReceiptContinuity(prior, receipt);
-      if (row['status'] === 'settled') {
-        // A final priced receipt is immutable; an unpriced attempt may receive
-        // definitive billing later without authorizing another dispatch.
-        if (!prior?.dispatched || usdToMicroUsd(prior.estimatedCostUsd) !== undefined) return;
-      }
-      receipt = retainKnownAttemptCost(receipt, prior?.estimatedCostUsd);
-      const reserve = Number(row['reserved']);
-      const estimated = receipt.estimatedCostUsd;
-      const uncertain =
-        receipt.dispatched && (receipt.completionUncertain || estimated === undefined);
-      // A later uncertain observation can increase the obligation without proving
-      // completion. Missing/smaller evidence cannot restore spending headroom.
-      const spent = !receipt.dispatched
-        ? 0
-        : uncertain
-          ? uncertainAttemptMicroUsd(
-              reserve,
-              Number(row['spent']),
-              prior?.estimatedCostUsd,
-              estimated,
-            )
-          : micro(estimated!);
-      const priorCharge = usdToMicroUsd(prior?.estimatedCostUsd) ?? -1;
-      const observedCharge = usdToMicroUsd(estimated) ?? -1;
-      // Repeated uncertain polling must not rewrite an unchanged obligation.
-      // A higher known charge is worth retaining even while below the reserve.
-      if (
-        row['status'] === 'uncertain' &&
-        receipt.completionUncertain &&
-        prior?.providerRequestId === receipt.providerRequestId &&
-        prior?.completionUncertain === receipt.completionUncertain &&
-        prior?.macrofoldBillingMode === receipt.macrofoldBillingMode &&
-        spent === Number(row['spent']) &&
-        observedCharge <= priorCharge
-      )
-        return;
-      await this.db
-        .prepare(
-          "UPDATE attempts SET status=?,spent=?,receipt=? WHERE id=? AND status IN ('reserved','uncertain','settled')",
-        )
-        .run(uncertain ? 'uncertain' : 'settled', spent, JSON.stringify(receipt), id);
-      const notify = () => {
-        for (const listener of this.settlementListeners) listener();
-      };
-      if (this.db.afterCommit) this.db.afterCommit(notify);
-      else notify();
-    });
-    this.invalidateRead(this.usageCache, this.db);
+    await this.attempts.settle(id, receipt);
   }
 
   /** A restart never resends an admitted call whose external outcome is unknown. */

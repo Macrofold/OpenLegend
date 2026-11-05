@@ -47,7 +47,7 @@ export function fallbackTaskAdapter(
       );
       const prepared = (largeContextStudy ? compileDecisionTask : prepareDecisionTask)(
         tasks,
-        JSON.stringify(input.state),
+        input.state,
       );
       preparations.set(scene.id, prepared);
       return {

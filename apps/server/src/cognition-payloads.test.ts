@@ -1,8 +1,11 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
+import {
+  fixtureTriggerExperience,
+  fixtureResponseActionHandles,
+} from '../../../tests/fixtures/cognition-ai.js';
 import { entityGet } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
 import {
   MIND_LIMITS,
   NPC_ID,
@@ -11,9 +14,12 @@ import {
   createItemLot,
   flattenFiles,
   quantityOf,
+  worldPosition,
+  worldSupport,
   wordCount,
 } from '@open-legend/domain';
 import {
+  compileSchema,
   validateJudgmentSize,
   type AiClient,
   type AiReceipt,
@@ -142,14 +148,6 @@ function operation(localId: string, fields: Partial<Record<Kind, unknown>>) {
   return {
     localId,
     requiresAccepted: [],
-    talk: null,
-    act: null,
-    think: null,
-    goal: null,
-    plan: null,
-    note: null,
-    name: null,
-    appraise: null,
     ...fields,
   };
 }
@@ -211,29 +209,8 @@ function speakerHandle(request: GenerateRequest): string {
   if (!speaker) throw new Error('No addressable speaker reference.');
   return speaker.entityId;
 }
-/** Every action handle a generation schema permits (act and plan-step `actionId` enums). */
-function actionHandles(schema: unknown): string[] {
-  const found = new Set<string>();
-  const collect = (node: unknown): void => {
-    if (!node || typeof node !== 'object') return;
-    const record = node as Record<string, unknown>;
-    if (Array.isArray(record['enum']))
-      for (const entry of record['enum']) if (typeof entry === 'string') found.add(entry);
-    for (const child of Object.values(record)) collect(child);
-  };
-  const visit = (node: unknown): void => {
-    if (!node || typeof node !== 'object') return;
-    const record = node as Record<string, unknown>;
-    const properties = record['properties'] as Record<string, unknown> | undefined;
-    if (properties?.['actionId']) collect(properties['actionId']);
-    for (const child of Object.values(record)) visit(child);
-  };
-  visit(schema);
-  return [...found].filter(handleKey).sort();
-}
-/** The provider JSON Schema actually sent, as a validator for candidate fixture replies. */
-const providerSchema = (request: GenerateRequest) =>
-  z.fromJSONSchema(request.schema as Parameters<typeof z.fromJSONSchema>[0]);
+/** Use the same frozen-schema validator as the actual configured adapters. */
+const providerSchema = (request: GenerateRequest) => compileSchema(request.schema);
 
 /** Every heading readableDecisionContext can emit; anything else means a split inside content. */
 const KNOWN_HEADINGS = new Set([
@@ -245,27 +222,28 @@ const KNOWN_HEADINGS = new Set([
   'Task',
   'Conversation so far',
   'Known planning techniques',
-  'Optional installed activity requests',
+  'Available activities, optional',
   'Private intent controls',
   'Private intentions and native work',
   'Native navigation',
-  'Optional installed activity requests',
   'Container I chose to inspect',
   'Current time',
   'Actions I chose to inspect',
   'Activities I chose to inspect',
-  'Recent memories',
+  'Recalled memories',
   'Nearby actors and objects',
   'Inventory',
   'General knowledge notepad',
   'Knowledge',
   'Actions',
-  'Response format',
+  'Response rules',
+  'Context',
   'References',
+  'Current decision support',
 ]);
 /** Section sizes account for every byte of the rendered text, under known unique headings. */
 function expectCompleteSections(text: string, parts: Section[]) {
-  expect(text.startsWith('## Me\n')).toBe(true);
+  expect(text.startsWith('## Task\n')).toBe(true);
   const headings = parts.map((part) => part.heading);
   expect(headings.filter((heading) => !KNOWN_HEADINGS.has(heading))).toEqual([]);
   expect(new Set(headings).size).toBe(headings.length);
@@ -342,7 +320,7 @@ function embeddedJson(line: string): { start: number; end: number; value: unknow
 // Format and reference sections legitimately describe nullable fields and empty role lists;
 // only whole-line JSON there is inspected, which exposes content appended without a heading.
 // Complete observer records use null to preserve unknown/unacquired facts.
-const SCAFFOLDING_EXEMPT = new Set(['Response format', 'References', 'Complete personal evidence']);
+const SCAFFOLDING_EXEMPT = new Set(['Response rules', 'References', 'Complete personal evidence']);
 /** Null/empty scaffolding in model-facing sections: empty bodies, whole-line empty JSON,
  * null/empty values inside embedded JSON, bare `null` prose, separators left by empty values
  * and blank lines. Reported, never asserted to exist. The accepted About-me text is authored
@@ -406,8 +384,7 @@ function scaffolding(parts: Section[], accepted = ''): Finding[] {
 }
 /** Entries of a structured Jev state whose value is null or empty, as sent. */
 function emptyStateEntries(state: unknown): Record<string, unknown> {
-  const context = (state as { decisionContext?: Record<string, unknown> } | undefined)
-    ?.decisionContext;
+  const context = (state as { character?: Record<string, unknown> } | undefined)?.character;
   return Object.fromEntries(
     Object.entries(context ?? {}).filter(([, entry]) => isEmptyJson(entry)),
   );
@@ -521,6 +498,7 @@ async function harness(
   options: {
     script?: Script;
     reply?: (request: GenerateRequest) => unknown;
+    judge?: (request: JudgeRequest) => AiResult<JudgeValue> | Promise<AiResult<JudgeValue>>;
     food?: boolean;
   } = {},
 ) {
@@ -549,7 +527,7 @@ async function harness(
   const client: AiClient = {
     async judge(request) {
       calls.judges.push(request);
-      return answer(request, state.script);
+      return options.judge ? options.judge(request) : answer(request, state.script);
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       calls.generations.push(request);
@@ -819,6 +797,119 @@ describe(
     timeout: 180_000,
   },
   () => {
+    it.each(['physical-refusal', 'forgotten-source', 'incapacitated'] as const)(
+      'keeps selected prepared voice independent while enforcing %s',
+      async (condition) => {
+        let changed = false;
+        let source = '';
+        const h = await harness({
+          reply: (request) => ({
+            operations: [
+              operation('reaction', { talk: talk('Get away from me!', speakerHandle(request)) }),
+            ],
+          }),
+          judge: async (request) => {
+            if (!request.requestId.includes(':threat-')) return answer(request, {});
+            const answers: Record<string, JudgmentAnswer> = {};
+            const evasion = Object.entries(request.questions).find(
+              ([key, question]) => handleKey(key) && /evad/i.test(question.instructions ?? ''),
+            )?.[0];
+            for (const [key, question] of Object.entries(request.questions))
+              answers[key] =
+                question.type === 'choice'
+                  ? distribution(Object.keys(question.criteria), {
+                      [key === 'voice' ? 'b_speak' : 'b_relevant']: 1,
+                    })
+                  : question.type === 'noul'
+                    ? noul(key === evasion ? 0.99 : 0.1)
+                    : {
+                        type: 'score',
+                        score: 0,
+                        legend: Object.fromEntries(
+                          question.criteria.map((label, index) => [String(index), label]),
+                        ),
+                        probabilities: Object.fromEntries(
+                          question.criteria.map((_, index) => [String(index), Number(index === 0)]),
+                        ),
+                      };
+            if (request.requestId.includes(':threat-choice') && !changed) {
+              changed = true;
+              expect(evasion, 'actual supplied evasion option').toBeDefined();
+              if (condition === 'physical-refusal') {
+                // Ordinary work begins during model latency. The old physical
+                // binding must refuse; a fresh, independently selected voice remains legal.
+                const position = worldPosition(entityGet(h.service.world.entities, NPC_ID)!);
+                const result = await h.service.command(
+                  'intervening-movement',
+                  {
+                    type: 'move',
+                    position: {
+                      ...position,
+                      x: position.x + 0.5,
+                      surfaceId: worldSupport(entityGet(h.service.world.entities, NPC_ID)!)!,
+                    },
+                  },
+                  NPC_ID,
+                );
+                expect(result.ok, result.message).toBe(true);
+              } else if (condition === 'forgotten-source') {
+                expect((await h.service.forgetMemory(NPC_ID, source)).ok).toBe(true);
+              } else {
+                await editWorld(h.service, (world) => {
+                  entityGet(world.entities, NPC_ID)!.actor!.incapacitated = true;
+                });
+              }
+            }
+            return value(request.requestId, 'jev', { answers });
+          },
+        });
+        expect(
+          (
+            await h.service.command('voice-trigger-punch', {
+              type: 'strike',
+              definitionId: 'punch',
+              targetId: NPC_ID,
+            })
+          ).ok,
+        ).toBe(true);
+        for (let step = 0; step < 400 && !source; step++) {
+          await h.service.tick(0.5);
+          source =
+            h.service.world.events.find(
+              (event) => event.type === 'struck' && event.targetId === NPC_ID,
+            )?.id ?? '';
+        }
+        expect(source, 'native punch landed').not.toBe('');
+        const job = await h.thought();
+        expect(changed, JSON.stringify(job.result)).toBe(true);
+        const generated = h.jobCalls(job.id).generations;
+        if (condition === 'physical-refusal') {
+          expect(
+            h.service.world.responseReceipts?.[job.id]?.outcome.ok,
+            JSON.stringify({ job, failures: (await h.trace(job.id)).stage('Workflow failure') }),
+          ).toBe(false);
+          expect(
+            Object.values(h.service.world.responseReceipts![job.id]!.components).map(
+              (component) => component.code,
+            ),
+          ).toContain('stale-plan');
+          expect(generated).toHaveLength(1);
+          expect(h.service.world.responseReceipts?.[`${job.id}:voice`]?.outcome.ok).toBe(true);
+          expect(
+            h.service.world.events.some(
+              (event) =>
+                event.type === 'speech' &&
+                event.actorId === NPC_ID &&
+                event.data?.['text'] === 'Get away from me!',
+            ),
+          ).toBe(true);
+        } else {
+          expect(generated).toHaveLength(0);
+          expect(h.service.world.responseReceipts?.[`${job.id}:voice`]).toBeUndefined();
+        }
+      },
+    );
+
     it('greeting: routing and one level-2 generation within limits, empty facts stated', async () => {
       const h = await harness({
         script: { route: { level2: 0.9 } },
@@ -837,8 +928,13 @@ describe(
       expect(Object.keys(route!.questions)).toEqual(
         expect.arrayContaining(['route', 'reflection', 'possibleAction']),
       );
-      // Speech routing sees the same readable context the generation later receives.
-      expect(typeof route!.state).toBe('string');
+      // Routing receives actor-permitted facts, not the generator's output task.
+      const routeContext = (route!.state as { character: Record<string, unknown> }).character;
+      expect(routeContext).toBeDefined();
+      expect(routeContext).not.toHaveProperty('knowledgeInstructions');
+      expect(routeContext).not.toHaveProperty('navigation');
+      expect(Array.isArray(routeContext['planOffers'])).toBe(true);
+      expect(JSON.stringify(route!.state)).not.toContain('Use the supplied JSON schema');
       expect(decisionJudges(dispatched.judges).map((request) => request.requestId)).toEqual([
         `${job.id}${ROUTE}`,
         `${job.id}:attempt:0:action-attention`,
@@ -855,20 +951,19 @@ describe(
 
       const context = String(generation!.context);
       const parts = sections(context);
-      // Routing and generation share every section except the action shortlist; the
-      // generation additionally carries the actor-invention context after References.
-      const routeParts = sections(route!.state as string);
-      for (const part of routeParts.filter((entry) => entry.heading !== 'References'))
-        expect(section(parts, part.heading).body, part.heading).toBe(part.body);
-      expect(
-        parts
-          .map((part) => part.heading)
-          .filter((heading) => !routeParts.some((entry) => entry.heading === heading)),
-      ).toEqual(['Actions']);
-      const routeReferences = section(routeParts, 'References').body;
-      expect(section(parts, 'References').body.startsWith(routeReferences)).toBe(true);
-      // Text the generation carries after the reference list, under no heading of its own.
-      const unheaded = section(parts, 'References').body.slice(routeReferences.length);
+      // Both consumers retain the same complete evidence and acquired event roles.
+      expect(routeContext['experience']).toEqual(
+        JSON.parse(section(parts, 'Complete personal evidence').body.split('\n')[0]!),
+      );
+      expect(routeContext['triggerFacts']).toEqual(
+        JSON.parse(section(parts, 'Trigger facts').body.split('\n')[0]!),
+      );
+      expect(parts[0]?.heading).toBe('Task');
+      expect(parts[1]?.heading).toBe('Context');
+      expect(parts.at(-1)?.heading).toBe('Response rules');
+      expect(parts.findIndex((part) => part.heading === 'Current decision support')).toBeLessThan(
+        parts.findIndex((part) => part.heading === 'Complete personal evidence'),
+      );
       // Meaningful empty facts survive as explicit statements rather than blank sections.
       const commitments = section(parts, 'My commitments').body.split('\n');
       expect(commitments[0]).toBe('None supplied.');
@@ -881,11 +976,11 @@ describe(
       const aboutMe = h.aboutMe();
       expect(Buffer.byteLength(aboutMe)).toBeGreaterThan(0);
       expect(section(parts, 'Me').body).toContain(aboutMe);
-      expect(section(routeParts, 'Me').body).toContain(aboutMe);
+      expect(routeContext['aboutMe']).toBe(aboutMe);
       const input = inspected.at(-1)!.bytes;
       report('greeting', {
         requests: inspected,
-        unheadedAfterReferences: unheaded,
+        decisionSupportBytes: section(parts, 'Current decision support').bytes,
         aboutMe: {
           acceptedBytes: Buffer.byteLength(aboutMe),
           meSectionBytes: section(parts, 'Me').bytes,
@@ -898,10 +993,10 @@ describe(
           overTargetBy: input.instructions + input.context - GREETING_TARGET_BYTES,
         },
         scaffolding: scaffolding(parts, h.aboutMe()),
-        routeStateScaffolding: scaffolding(routeParts, h.aboutMe()),
+        routeStateBytes: Buffer.byteLength(JSON.stringify(route!.state)),
         // The byte ceiling the model-facing format states, beside the enforced level-2 limit.
         responseFormatStatedBytes: Number(
-          /and (\d+) UTF-8 bytes in total/.exec(section(parts, 'Response format').body)?.[1] ?? NaN,
+          /and (\d+) UTF-8 bytes in total/.exec(section(parts, 'Response rules').body)?.[1] ?? NaN,
         ),
         enforcedVisibleOutputBytes: levelLimits(h.config)[2].visibleOutputBytes,
         accounting: ledger.summary,
@@ -930,10 +1025,10 @@ describe(
       expect(keys).toEqual(expect.arrayContaining(['route', 'reflection']));
       expect(keys.filter(handleKey).length).toBeGreaterThan(1);
       const state = route.state as {
-        decisionContext: Record<string, unknown>;
+        character: Record<string, unknown>;
         candidates: Record<string, string>;
       };
-      const decisionContext = state.decisionContext;
+      const decisionContext = state.character;
       // Owned food is supplied; the no-food fact is correctly absent.
       expect(decisionContext['carryingConcern']).toBeUndefined();
       expect(JSON.stringify(decisionContext['possessions'])).toContain('Wild berries');
@@ -977,14 +1072,17 @@ describe(
       const actions = [...section(parts, 'Actions').body.matchAll(/^- (a\d+): (.+)$/gm)];
       const eat = actions.find(([, , description]) => isEat(description ?? ''))?.[1];
       expect(eat).toBeDefined();
+      expect(
+        actions.every(([, , description]) =>
+          /\[mode=(enqueue|replace|interrupt)\]$/.test(description!),
+        ),
+      ).toBe(true);
       const route = decisionJudges(dispatched.judges)[0]!;
       expect(
-        (route.state as { decisionContext: Record<string, unknown> }).decisionContext[
-          'carryingConcern'
-        ],
+        (route.state as { character: Record<string, unknown> }).character['carryingConcern'],
       ).toBeUndefined();
       // The listed eat option's handle is one the generation schema permits.
-      expect(actionHandles(generation!.schema)).toContain(eat);
+      expect(fixtureResponseActionHandles(generation!.schema)).toContain(eat);
       report('resource-task:level2', {
         trigger: section(parts, 'Trigger').body.trim(),
         requests: inspected,
@@ -996,6 +1094,48 @@ describe(
       });
     });
 
+    it.each(['offered', 'mismatch'] as const)(
+      'known actions expose their exact work mode and admit only that mode: %s',
+      async (selection) => {
+        const h = await harness({
+          food: true,
+          script: { route: { level2: 0.9 } },
+          reply: (request) => {
+            const actions = section(sections(String(request.context)), 'Actions').body;
+            const eat = [
+              ...actions.matchAll(/^- (a\d+): (.+) \[mode=(enqueue|replace|interrupt)\]$/gm),
+            ].find(([, , description]) => isEat(description!));
+            expect(eat).toBeDefined();
+            expect(eat![3]).toBe('replace');
+            expect(String(request.context)).toContain('copy its offered mode exactly');
+            return {
+              operations: [
+                operation('eat', {
+                  act: {
+                    kind: 'known',
+                    actionId: eat![1],
+                    mode: selection === 'offered' ? eat![3] : 'interrupt',
+                  },
+                }),
+                operation('feeling', { think: { text: 'I feel hungry.', aboutEntityIds: [] } }),
+              ],
+            };
+          },
+        });
+        const job = await h.thought();
+        expect(job.status).toBe('completed');
+        const component = h.service.world.responseReceipts?.[job.id]?.components['eat'];
+        expect(h.service.world.responseReceipts?.[job.id]?.components['feeling']?.ok).toBe(true);
+        if (selection === 'offered') expect(component?.ok, component?.message).toBe(true);
+        else expect(component).toMatchObject({ ok: false, code: 'action-mode' });
+        await h.service.tick(0.1);
+        expect(quantityOf(h.service.world, NPC_ID, 'berries')).toBe(
+          selection === 'offered' ? 1 : 2,
+        );
+        expect(h.jobCalls(job.id).generations).toHaveLength(1);
+      },
+    );
+
     it('resource task without food: "I have no food." reaches Jev and generation', async () => {
       const h = await harness({ food: false, script: { route: { level2: 0.9 } } });
       expect(quantityOf(h.service.world, NPC_ID, 'berries')).toBe(0);
@@ -1003,7 +1143,7 @@ describe(
       expect(job.status).toBe('completed');
       const dispatched = h.jobCalls(job.id);
       const route = dispatched.judges.find((request) => request.requestId === `${job.id}${ROUTE}`)!;
-      expect((route.state as { decisionContext: Record<string, unknown> }).decisionContext).toEqual(
+      expect((route.state as { character: Record<string, unknown> }).character).toEqual(
         expect.objectContaining({ carryingConcern: 'I have no food.' }),
       );
       expect(dispatched.generations).toHaveLength(1);
@@ -1118,9 +1258,8 @@ describe(
         `${job.id}${ROUTE}`,
       ]);
       const route = decisionJudges(dispatched.judges)[0]!;
-      const decisionContext = (route.state as { decisionContext: Record<string, unknown> })
-        .decisionContext;
-      expect(String(decisionContext['stimulus'])).toMatch(/punched/);
+      const decisionContext = (route.state as { character: Record<string, unknown> }).character;
+      expect(fixtureTriggerExperience(decisionContext).value['text']).toMatch(/punched/);
       expect(Object.keys(route.questions).some(handleKey)).toBe(true);
       expect(dispatched.generations).toHaveLength(1);
       const [generation] = dispatched.generations;
@@ -1130,7 +1269,7 @@ describe(
       expect(ledger.summary.groups).toEqual({ level1: dispatched.judges.length, level3: 1 });
       expect(ledger.summary.requests).toBe(dispatched.judges.length + 1);
       const parts = sections(String(generation!.context));
-      expect(section(parts, 'Trigger').body).toMatch(/punched/);
+      expect(fixtureTriggerExperience(generation!.context).value['text']).toMatch(/punched/);
       report('hazard', {
         trigger: section(parts, 'Trigger').body,
         requests: [
@@ -1158,6 +1297,7 @@ describe(
         code: string;
         path: (string | number)[];
         expected?: string;
+        keys?: string[];
         values?: unknown[];
       };
       /** Per-variant issues of the single-kind union, as the parse stage recorded them. */
@@ -1218,7 +1358,7 @@ describe(
         const sent = h.state.reply(generation);
         const bytes = Buffer.byteLength(JSON.stringify(sent));
         // Whether the provider JSON Schema actually sent would itself admit this reply.
-        const providerAccepts = providerSchema(generation).safeParse(sent).success;
+        const providerAccepts = providerSchema(generation)(sent);
         outcomes.push({
           case: name,
           status: job.status,
@@ -1228,7 +1368,7 @@ describe(
           failure,
           responseBytes: bytes,
           providerSchemaAccepts: providerAccepts,
-          offeredActionHandles: actionHandles(generation.schema),
+          offeredActionHandles: fixtureResponseActionHandles(generation.schema),
           parseStage: parse.map((entry) => entry.status),
           parseError: parse.map((entry) => JSON.stringify(entry.output ?? null).slice(0, 240)),
           generations: dispatched.generations.length,
@@ -1271,11 +1411,11 @@ describe(
       // each fail on exactly one field, the other kind, so the second kind alone is the defect.
       const twoKindSingles = unionBranches(twoKinds.parse)
         .filter((branch) => branch.length === 1)
-        .map(([issue]) => ({ path: issue!.path.join('.'), expected: issue!.expected }));
+        .map(([issue]) => ({ code: issue!.code, keys: issue!.keys }));
       expect(twoKindSingles).toEqual(
         expect.arrayContaining([
-          { path: 'think', expected: 'null' },
-          { path: 'talk', expected: 'null' },
+          { code: 'unrecognized_keys', keys: ['think'] },
+          { code: 'unrecognized_keys', keys: ['talk'] },
         ]),
       );
       expect(twoKindSingles).toHaveLength(2);
@@ -1289,11 +1429,6 @@ describe(
               act: {
                 kind: 'known',
                 actionId: 'a99',
-                verb: null,
-                targetEntityId: null,
-                description: null,
-                invocation: null,
-                slots: null,
                 mode: 'enqueue',
               },
             }),
@@ -1301,18 +1436,25 @@ describe(
         }),
         { route: { level2: 0.9 }, possibleAction: { yes: 0.9 } },
       );
-      const offered = actionHandles(unknownAction.generation.schema);
+      const offered = fixtureResponseActionHandles(unknownAction.generation.schema);
       expect(offered.length).toBeGreaterThan(0);
       expect(offered).not.toContain('a99');
       expect(unknownAction.providerAccepts).toBe(false);
       expect(unknownAction.parse.map((entry) => entry.status)).toEqual(['failed']);
       expect(disposition(unknownAction.job)).toBe('invalid');
-      // The act-only shape fails on exactly one field: the handle is not an offered value.
+      // The act family rejects the unknown handle; its known-action alternative
+      // has exactly one defect, distinct from unrelated invocation alternatives.
       const actBranch = unionBranches(unknownAction.parse).find((branch) =>
         branch.every((issue) => issue.path[0] === 'act'),
       );
       expect(actBranch).toHaveLength(1);
-      expect(actBranch![0]).toMatchObject({ code: 'invalid_value', path: ['act', 'actionId'] });
+      expect(actBranch![0]).toMatchObject({
+        code: 'invalid_union',
+        path: ['act'],
+        errors: expect.arrayContaining([
+          [expect.objectContaining({ code: 'invalid_value', path: ['actionId'] })],
+        ]),
+      });
       report('output-rejection', { visibleOutputBytes: limit, outcomes });
     });
 
@@ -1413,8 +1555,9 @@ describe(
                 event.data?.['responseId'] === job.id,
             )
             .map((event) => event.data?.['text']),
-          routeHasCompleteSnapshot:
-            typeof route?.state === 'string' ? route.state.includes(text) : null,
+          routeHasCompleteSnapshot: route
+            ? (route.state as { character: { aboutMe: unknown } }).character.aboutMe === text
+            : null,
           generationInputBytes: generation
             ? Buffer.byteLength(generation.instructions) +
               Buffer.byteLength(String(generation.context))
@@ -1439,7 +1582,12 @@ describe(
       // The large snapshots must refuse before dispatch. A small accepted snapshot supplies
       // a positive control independently of growing authored starting context.
       const sixFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
-      const positiveSix = await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6));
+      probes.push(await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6)));
+      // Installed forms are required context too. Their authored growth can move
+      // this boundary; preserve a complete multi-document positive rather than
+      // treating an old successful document count as a new identity quota.
+      const threeFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
+      const positiveMultiple = await probe(threeFiles, 'fresh-three-files', 3, files.slice(0, 3));
       const control = await harness({ script: { route: { level2: 0.9 } }, reply });
       const positive = await probe(control, 'fresh-control', 1, files.slice(0, 1));
       report('inner-world-quota', {
@@ -1447,7 +1595,7 @@ describe(
         fileBytes: fileBytes[0],
         level2InputLimit: levelLimits(h.config)[2].inputSize,
         level1InputLimit: levelLimits(h.config)[1].inputSize,
-        probes: [...probes, positiveSix, positive],
+        probes: [...probes, positiveMultiple, positive],
       });
       const exceeded =
         'Complete accepted inner world and required context exceed the input budget.';
@@ -1469,8 +1617,8 @@ describe(
           generationInputBytes: null,
           accounting: null,
         });
-      expect(positiveSix).toMatchObject({
-        files: 6,
+      expect(positiveMultiple).toMatchObject({
+        files: 3,
         status: 'completed',
         disposition: 'responded',
         routeHasCompleteSnapshot: true,

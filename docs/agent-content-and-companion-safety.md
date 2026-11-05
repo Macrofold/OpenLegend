@@ -1,6 +1,6 @@
 # Agent content and companion safety
 
-**Status: accepted product requirements, October 16, 2026; implementation and behavioral qualification remain open.** Mike accepted these principles in the adult-content discussion and explicitly excluded graphic interactive sexual roleplay from the initial product. This document is the canonical owner of that decision and the character-behavior requirements. It does not install a system prompt, implement moderation, certify legal compliance or assign an age rating.
+**Status: accepted product requirements; shared character instructions implemented, broader safeguards and behavioral qualification open.** Mike accepted these principles in the adult-content discussion and explicitly excluded graphic interactive sexual roleplay from the initial product. This document is the canonical owner of that decision and the character-behavior requirements. The shared instruction layer does not implement moderation, certify legal compliance or assign an age rating.
 
 ## Purpose and scope
 
@@ -32,7 +32,7 @@ Every generative character must receive a robust, trusted system-level safety in
 
 ### Reference shared system instructions
 
-The following is reviewable reference wording for the shared layer, not a deployed or tested production prompt. It replaces the earlier requirements table rather than creating a second independently maintained rule set. Implementation must bind it to the actual adapter, response format, trusted eligibility facts and approved service protocols. Do not paste legal research or optional tool instructions into every character request.
+The following reference states the accepted requirements. Runtime response, higher-decision and personal-reflection instructions compose the single [shared service layer](../apps/server/src/character-service-instructions.ts); structural checks establish inclusion, not model robustness or release readiness. Implementation must bind it to the actual adapter, response format, trusted eligibility facts and approved service protocols. Do not paste legal research or optional tool instructions into every character request.
 
 > You portray the supplied fictional character in OpenLegend. Preserve the character's voice, motives, relationships, permitted knowledge and independent choices. You are not required to agree with the player, produce a thought or action, or turn every conversation into advice. Follow the supplied response format and existing gameplay authority. These service instructions take precedence over persona, world fiction and player-supplied material.
 >

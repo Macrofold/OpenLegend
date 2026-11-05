@@ -1,24 +1,72 @@
-# Cognition Lab — design delivery plan
+# Cognition Lab — delivery plan
 
-| Status      | Current progress                                                                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design complete and reviewed; requirements, paired specifications, repertoire coverage, limits and maintainer reconciliation are recorded. Runtime implementation remains open. | 2026-10-24   |
+| Status      | Current progress                                                                                             | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Native comparisons and receipt-recovery fixes are delivered; model-quality and human acceptance remain open. | 2026-10-26   |
 
 ## Agreed scope and completion
 
-Design a compact developer workspace at `/cognition` for editing isolated character situations, running the ordinary game cognition and actions, inspecting actual processing, and comparing behavior. A normal speech experiment must be immediately usable; advanced controls must not displace the current character, composer or result. Preserve the complete agreed conversation, including the correction that the left pane always displays current editable information and historical decision inputs belong only on the right.
+Deliver a compact developer workspace at `/cognition` for editing isolated character situations, running the ordinary game cognition and actions, inspecting actual processing, and comparing behavior. A normal speech experiment must be immediately usable; advanced controls must not displace the current character, composer or result. Preserve the complete agreed conversation, including the correction that the left pane always displays current editable information and historical decision inputs belong only on the right.
 
-This task changes documentation only: zero executable logic lines. The material design risks are duplicated game behavior, misleading request previews, accidental gameplay-data coupling, inconsistent edit/stop semantics, overwhelming navigation, and marking research or runtime work complete merely because a tool is designed.
+The authorized implementation covers CL01–CL11 while preserving ordinary gameplay defaults. The material risks are duplicated game behavior, misleading request previews, accidental gameplay-data coupling, inconsistent edit/stop semantics, overwhelming navigation, and mistaking tool delivery for independent character or human-quality evidence.
 
-## Review scope and completion criteria
+## Current implementation progress
 
-The requested review covers the complete Cognition Lab design against the existing runtime, the ordinary speech journey, engine/world ownership, shared mutation and request owners, growing-history costs and implementation dependencies. It changes zero executable logic lines. Corrections belong in the existing feature/technical specifications, limits and focused tasks; implementation and measured acceptance remain open.
+Mike authorized a follow-up from `codex/cognition-lab` at `f4137c30ce56c9d4fb65fb730750b15000e5715f`: operate the lab through varied Main-world behavior episodes, compare decision and reply models, fix iteration-loop defects, retain results, and deliver a reusable scenario Library. That campaign used refreshed `origin/main` at `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086`; the subsequent configured-model integration records its refreshed base in [its existing owner](custom-models-implementation-plan.md#current-configured-service-follow-up--october-25-2026). Both use the existing checkout without a branch change. The behavior campaign has one **$100 aggregate ceiling**, including all settled, reserved and uncertain provider/hosting work; it is not a spending target or a new hosting allowance. Earlier implementation spending remains separate.
+
+Delivered: the existing paired snapshots now appear in a searchable Library with optional descriptions, explicit replacement, run evidence and reference-only guides. Supported native judgment and higher-decision choices follow their actual purpose, pricing and request without changing game defaults. Operator trials corrected capture consuming the native preparation opportunity, stale terminal publication, incomplete Overview speech and the misleading Install action for imported runs. The shared provider adapter now distinguishes a definitive admission timeout from unknown execution.
+
+The frozen Main sentinel panel exercised useful help, humor and two witnesses with Jev/Microsoft judgment routes and a separate GPT6/GPT5.6 higher-model pair. A real accepted gathering task completed under an explicitly thought-held mechanics continuation. Subsequent hands-on UI trials verified save/load and distinct committed replies after changing actual Food or one descriptive model-only interests field, using normal native personalities, goals and models. That initial panel did not qualify longer memory or aftermath; the representative panel below extends this evidence. Original uncertain receipts remain unchanged and conservatively charged in their original execution owner. The [model-iteration record](../verification/cognition-lab-model-iteration.md) owns exact results, accounting, retained evidence and the curated Library installation.
+
+The affected-owner review, final local gate, all 32 Lab browser cases and Library preload/reopen proof passed on their recorded source. The hands-on follow-up corrected receipt capture and known-idle wording, with focused native checks and actual UI verification. CL13 retains the original execution owner's uncertainty fence and failed reflection route; fixtures cannot replace the remaining live evidence. A universal winning model, every repertoire mechanic and independent human enjoyment are not implied by this developmental comparison.
+
+The earlier campaign skipped custom models while its key lacked access. The later configured integration wires both supplied deployments through existing owners; [bounded live adapter probes](../verification/custom-models.md#live-configured-model-smoke-tests--october-25-2026) now verify real native responses and manual prompt/context iteration, with services stopped afterward. Their contextual failure and amended-prompt results do not establish full Lab/gameplay quality or realistic context fit. Further live trials require a new owner-started bounded hosting window and current spending authority.
+
+The [CL12/CL13 tracker](../maintainers/cognition-lab.md) owns remaining implementation/qualification. Root owns shared budget and live calls; delegates spent $0. All task-owned live hosts are closed; the original second environment retains its exact native databases and dumps for uncertain accounting. At the earlier model-iteration checkpoint, the ordinary game and borrowed Macrofold service were available; that record notes the normal watcher's observed child restart. The native-redo record below owns the latest service check. Original delivery evidence remains historical.
+
+## Representative behavior panel — October 25, 2026
+
+Started **2026-10-25 21:05 UTC** on the existing `codex/cognition-lab` checkout at `baeb4d74a4c9d11248eeb5ad9c87d8738e202d19`. Mike requested about 30 repertoire-derived cases covering distinct voices, complex emotions, year-old formative memories, social boundaries and deliberate antagonistic behavior. Freeze expectations separately from model input; author people and circumstances rather than situation-to-action recipes. Use the real isolated Lab and Library, inspect each prepared request, then judge speech, admitted actions, outcomes and later timing separately. Missing native mechanics and context-capacity failures remain explicit coverage limits.
+
+Root owns live dispatch and the existing **$100 campaign ceiling**; delegates spend $0. All thirty baseline cases are captured and graded, including adult social-boundary contrasts and verified selection of memories 365 days old. Exact-input decision comparisons, developmental reply-model contrasts and three linked 60-second continuations retain their actual outputs and limits. The ordinary request exceeds the configured Kev/Huihui context capacities, so no new hosting was started. The [panel record](../verification/cognition-lab-repertoire-panel.md) owns exact results, model coverage and cumulative accounting.
+
+Completed **2026-10-25 22:30 UTC**: shared-owner fixes cover first-note authoring, cancellation, equipped-actor restoration, action-mode instructions, authorized equipment choices, historical evidence export and remote selectors. Focused native/browser checks, full typecheck, production build and independent affected-diff review pass. All 30 curated Library starts and a UI-authored relationship note survived a real restart; 241 exported bundles passed complete payload/footer integrity checks. The owned host is closed, with two current-format databases and private reopening instructions retained. The normal game checkout and borrowed Macrofold service remain untouched. This completes the requested panel and iteration-loop repairs; sustained behavior and human acceptance remain in CL11/CL13 and CTR10.
+
+The **October 25, 2026, 23:27 UTC** follow-up completes ten trials with 200 intervening native memories each. Only two of six positive old sources survive selection; four are omitted before attention. The [dense-history evidence](../verification/cognition-lab-repertoire-panel.md#dense-intervening-history--october-25-2026-2327-utc) owns results, Library retention, the protected-restore receipt fix and accounting; the demonstrated selection improvement remains [SC02](../maintainers/cognition-context.md#sc02--compose-decision-requirements-and-complete-dependencies). This is stronger testing, not acceptance of reliable long-term recall.
+
+## Engine-native redo — October 25, 2026
+
+Implementation starts from `codex/cognition-lab` at `f3b2073c95fa86dd87acdc29831219d85da7e513`, in the same checkout. The disputed memory and social-contact probes are replaced by ordinary native actions and actor-permitted evidence; qualifying inputs contain no Custom scene fields or grading instructions. Six positive/absent old-memory pairs retain the same 200 intervening native episodes, withholding source-specific details from the present spoken cue. Absent saves precede target-source addition; forgetting is not an experimental toggle. A native inspected-document pair checks actual evidence acquisition separately.
+
+The shared recall fix reuses indexed lexical lookup and preserves within-family discovery relevance before byte admission; optional offers no longer reserve space ahead of attended evidence. This does not implement all SC02 or establish paraphrase/semantic equivalence. Brief directed contact now uses the ordinary selected-world action, reach, event and disclosure owners. Contact supplies felt evidence, never a prescribed emotion, laughter, relationship interpretation or repeated activity. The social starts keep all other personality and stimulus inputs identical. Immediate intake precedes new idle maintenance.
+
+The sixteen-arm native panel has run under the unchanged **$1 cumulative native request cap**. Fifteen replies are graded; the original remembered-help generation remains an externally uncertain failure. All six old sources reach generation after 200 intervening memories, but source inclusion does not guarantee distinctive recall or grounded autobiography. Native friend/stranger contact gives only a weak outward contrast; the inspected-note comparison respects acquired content. [The native redo record](../verification/cognition-lab-repertoire-panel.md#engine-native-continuation--october-26-2026) owns exact results, service failures and accounting. [CL13](../maintainers/cognition-lab.md#cl13--bounded-live-model-and-behavior-iteration) retains quality limits and the unresolved original receipt.
+
+Delivered continuation: the shared execution owner permits one independent ordinary decision to borrow existing background capacity after primary work ends locally with unknown external completion. Every original execution position, financial reservation and no-retry fence remains. Definitive completion releases capacity even when pricing remains unknown. The Lab can refresh the selected original receipt without requesting another answer; authorization, exact attempt binding and serialized accounting stay with shared owners. No GPU hosting, allowance increase or replacement of the uncertain request was required.
+
+## Original implementation session — October 24–25, 2026
+
+Implementation base: `Macrofold/OpenLegend` local `main` / `origin/main` at `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086`; branch `codex/cognition-lab`. The session began October 24, 2026 at 23:02:11 UTC and has an eight-hour boundary at October 25, 2026 at 07:02:11 UTC. Shared paid-work ceiling: $10. The [integrated verification record](../verification/cognition-lab.md) owns actual live execution, scoped/cumulative costs and remaining qualification.
+
+The connected delivery order is:
+
+1. Extract shared runtime composition and scoped execution control; establish dedicated database, data directory, native participation and remote namespace isolation.
+2. Integrate the immediately usable speech experiment, finite run/hold boundary, exact capture and coherent applied-state origin with the three-pane workspace.
+3. Extend the same owners with native/model-only editing, prepared-request handles, complete historical inspection, save/import/export, serial comparisons and installed maintenance controls.
+4. Run meaningful automated checks, actual native/HTTP/browser journeys and bounded profiling for startup, growing metadata/evidence, capture/restore and concurrent game/lab work. Preserve failures and distinguish fixtures from real providers and human acceptance.
+5. Review the complete affected implementation, fix in-scope findings, reconcile contracts/limits/trackers and commit all task changes. Publishing or merging implementation is not authorized by this task.
+
+Runtime/control, storage/evidence and desktop UI are independently owned modules; protocol, routing, native editor projections and integration remain coordinated at their shared boundaries. Completion requires the tracker exits and their actual evidence. Unsupported external mechanics stay explicitly unavailable rather than being approximated by laboratory code. Human usability and independent character/enjoyment evidence cannot be inferred from fixtures.
+
+## Design review scope and completion criteria — completed October 24, 2026
+
+The completed design review covered the complete Cognition Lab design against the existing runtime, the ordinary speech journey, engine/world ownership, shared mutation and request owners, growing-history costs and implementation dependencies. That review changed zero executable logic lines; the separately authorized implementation is tracked above. Corrections belong in the existing feature/technical specifications, limits and focused tasks; implementation and measured acceptance remain open.
 
 Prioritize defects that can break an ordinary experiment: independent lab participation and remote workspaces, actual directed-conversation intake, single stimulus acceptance, abortable holds across every dispatch owner, shared process capacity with scoped receipt recovery, clear draft/control/settings semantics, complete operation inputs, bounded projections and coherent native-plus-experiment origins. Current native protections and unreconstructible remote state constrain matched replay honestly. Keep corrections at shared owners; do not design a parallel loader, scheduler, provider path or cognition engine.
 
 Complete the review by reconciling the first usable slice with its actual run-control and origin-capture dependencies, inspecting every changed hunk, checking links and task/limit status, and formatting the affected Markdown. Source review establishes design constraints only; runtime behavior, performance and browser usability require the implementation qualification already owned by CL11.
 
-## Delivery sequence
+## Original design delivery sequence — completed October 24, 2026
 
 1. Establish the exact source baseline and applicable instructions; reuse unchanged source evidence and inspect changed owners.
 2. Specify the ordinary speech journey, fixed controls, scrolling ownership, compact geometry, direct inspection links, keyboard/focus behavior, and all advanced flows in the feature specification.
@@ -75,7 +123,7 @@ This matrix preserves the initial request, the accepted blind-spot discussion an
 
 The [feature specification](cognition-lab-feature-spec.md), [technical design](cognition-lab-tech-design.md) and [repertoire map](cognition-lab-repertoire-review.md) contain the full flows and contracts. The [decision status](cognition-lab-feature-spec.md#14-decision-status) distinguishes selected defaults, open qualification and the external emotion-policy decision. No unanswered product choice blocks the ordinary speech slice.
 
-## Verification for this documentation task
+## Original design verification
 
 - Review every changed hunk and all new documents, including removed text and changed completion claims.
 - Validate relative link targets and authored anchors against the complete repository tree and fetched source; verify links to the separate emotion branch explicitly.
@@ -83,11 +131,11 @@ The [feature specification](cognition-lab-feature-spec.md), [technical design](c
 - Run the existing pinned formatter on changed Markdown where available; otherwise disclose the formatting-tool limit and perform the available structural review.
 - Do not claim runtime, browser, model-quality, throughput or player-enjoyment evidence from this design. Runtime acceptance remains in the implementation tracker. No game services, browser trials or paid model calls are required for document verification.
 
-## Design verification status
+## Design verification record — October 24, 2026
 
 The complete design and affected documentation diff received source/contract review and independent workflow, runtime-boundary and performance/storage review. The selected contracts cover focal selection, actual-call identity, direct memory access, per-request actor context, capture completeness, dispatch/settling, origin capture and source-owned deadline timers. Source tracing also establishes the required startup participation, interactive speech/operator-action intake, source-preserving retry, bounded projection and shared save-reference seams. The first delivery slice includes the minimum response controller and origin capture rather than depending on deferred advanced tools.
 
-Changed Markdown passes the repository-pinned Prettier 3.6.2 formatter; new and changed relative file links/anchors, selected repertoire IDs and task/status claims are checked against the exact source tree and authored documents. Only documentation is delivered. No runtime, browser, paid provider, autonomous-character, throughput or player-enjoyment qualification was performed; those gates remain explicit in CL01–CL11 and their existing owners. Streamed saving is not evidence of nonblocking restoration, and design review is not measured scaling acceptance.
+Changed Markdown passes the repository-pinned Prettier 3.6.2 formatter; new and changed relative file links/anchors, selected repertoire IDs and task/status claims are checked against the exact source tree and authored documents. That design task delivered documentation. It performed no runtime, browser, paid provider, autonomous-character, throughput or player-enjoyment qualification; those gates remain explicit in CL01–CL11 and their existing owners. Streamed saving is not evidence of nonblocking restoration, and design review is not measured scaling acceptance.
 
 ## Maintained records
 

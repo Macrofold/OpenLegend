@@ -25,7 +25,12 @@ export async function createDisposableDatabase(connectionString) {
 
   const require = createRequire(new URL('../apps/server/package.json', import.meta.url));
   const { Client } = require('pg');
-  const database = 'openlegend_fixture_' + randomUUID().replaceAll('-', '');
+  const prefix = process.env.OPENLEGEND_FIXTURE_DATABASE_PREFIX;
+  if (prefix !== undefined && !/^ol_vw_[a-f0-9]{32}_$/.test(prefix))
+    throw new Error('Invalid owned fixture database prefix.');
+  const database = prefix
+    ? prefix + randomUUID().replaceAll('-', '').slice(0, 16)
+    : 'openlegend_fixture_' + randomUUID().replaceAll('-', '');
   const withAdmin = async (stage, operation) => {
     const client = new Client({
       connectionString: adminUrl.toString(),

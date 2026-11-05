@@ -1,0 +1,1 @@
+export { CognitionLabApp } from './app';

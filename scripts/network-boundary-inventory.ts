@@ -23,16 +23,62 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
   'apps/server/src/world-mcp.ts': ['@modelcontextprotocol/node', '@modelcontextprotocol/server'],
   'scripts/performance/profile-browser.mjs': ['@playwright/test'],
   'scripts/art/texel-splatting/run.mjs': ['@playwright/test'],
+  'scripts/verification-workers/aws.mjs': ['@aws-sdk/credential-providers'],
+  'scripts/verification-workers/artifacts.mjs': ['@aws-sdk/client-s3'],
+  'scripts/verification-workers/controller.mjs': [
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-ec2',
+    '@aws-sdk/client-ssm',
+    '@aws-sdk/client-s3',
+    '@aws-sdk/client-scheduler',
+    '@aws-sdk/client-cloudtrail',
+  ],
+  'scripts/verification-workers/campaigns.mjs': ['@aws-sdk/lib-dynamodb', '@aws-sdk/client-lambda'],
+  'scripts/verification-workers/coordination.mjs': ['@aws-sdk/lib-dynamodb'],
+  'scripts/verification-workers/images.mjs': ['@aws-sdk/client-ec2', '@aws-sdk/client-ssm'],
+  'scripts/verification-workers/preflight.mjs': [
+    '@aws-sdk/client-service-quotas',
+    '@aws-sdk/client-ec2',
+  ],
+  'scripts/verification-workers/cli.mjs': [
+    '@aws-sdk/client-lambda',
+    '@aws-sdk/client-sts',
+    '@aws-sdk/client-ssm',
+  ],
+  'scripts/verification-workers/deploy.mjs': [
+    '@aws-sdk/client-cloudformation',
+    '@aws-sdk/client-sts',
+    '@aws-sdk/client-ec2',
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-lambda',
+  ],
+  'scripts/verification-workers/supervisor.mjs': [
+    '@aws-sdk/client-dynamodb',
+    '@aws-sdk/lib-dynamodb',
+    '@aws-sdk/client-lambda',
+  ],
 };
 
 /** These runners execute local programs/files. Changing one to remote work must
  * move that invocation through runRemoteProcess with an explicit finite profile.
  */
 export const localProcessOwners: Readonly<Record<string, string>> = {
+  'scripts/cognition-lab/campaign.ts':
+    'Local Git tree inspection of the frozen adapter source only.',
+  'scripts/cognition-lab/response-format.ts':
+    'Local Git object existence check only; model calls reuse execute-ai and shared execution.',
   'scripts/decision-benchmark/main.ts': 'Local Git root inspection only.',
   'scripts/decision-benchmark/run.ts': 'Local Git revision/diff inspection only.',
   'scripts/decision-benchmark/escalation.ts': 'Local Git revision/diff inspection only.',
   'scripts/profile-server.ts': 'Local Git revision inspection only.',
+  'scripts/performance/cognition-lab-actions.ts':
+    'Local Git revision inspection only; native action measurements use an owned disposable loopback PostgreSQL fixture.',
+  'scripts/performance/cognition-lab-storage.ts':
+    'Local Git revision inspection only; measurements use disposable loopback PostgreSQL through the existing repository.',
+  'scripts/performance/cognition-lab-runtime.ts':
+    'Local Git revision inspection only; disposable native HTTP specimens use the existing bounded tool HTTP owner.',
   'scripts/performance/profile-server.mjs':
     'Local profiling server child; outgoing work uses script network boundary.',
   'scripts/stress-data.ts': 'Local Git revision inspection only.',
@@ -49,10 +95,15 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
 /** Command positions are closed; later arguments are local revision/path data.
  * Git global options (including -c aliases) cannot precede these commands. */
 export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
+  'scripts/cognition-lab/campaign.ts': ['ls-tree'],
+  'scripts/cognition-lab/response-format.ts': ['cat-file'],
   'scripts/decision-benchmark/main.ts': ['rev-parse'],
   'scripts/decision-benchmark/run.ts': ['rev-parse', 'ls-files', 'diff'],
   'scripts/decision-benchmark/escalation.ts': ['rev-parse', 'diff'],
   'scripts/profile-server.ts': ['rev-parse', 'ls-files', 'branch'],
+  'scripts/performance/cognition-lab-actions.ts': ['rev-parse'],
+  'scripts/performance/cognition-lab-storage.ts': ['rev-parse'],
+  'scripts/performance/cognition-lab-runtime.ts': ['rev-parse'],
   'scripts/stress-data.ts': ['rev-parse'],
   'scripts/check-agent-guidance.mjs': ['ls-files'],
   'scripts/check-assets.ts': ['ls-files'],
@@ -90,6 +141,10 @@ export const acquisitionObservers: Readonly<Record<string, string>> = {
 };
 
 export const inboundOwners: Readonly<Record<string, string>> = {
+  'apps/server/src/shared-execution-http.ts':
+    'Scoped paid execution control; bounded bodies and persistent authority outside worker fixtures.',
+  'scripts/verification-workers/cli.mjs':
+    'Brief loopback port reservation before the owned SSM tunnel; no request handling or public bind.',
   'apps/server/src/http.ts': 'Incoming game HTTP/SSE, bounded receive and blocked-write ownership.',
   'apps/server/src/creation-host.ts': 'Incoming prepared-world HTTP, bounded receive ownership.',
   'apps/server/src/world-mcp.ts': 'Incoming MCP HTTP transport.',
@@ -98,6 +153,16 @@ export const inboundOwners: Readonly<Record<string, string>> = {
 
 export const networkDependencies: Readonly<Record<string, string>> = {
   '@aws-sdk/client-s3': 'asset-storage.ts',
+  '@aws-sdk/client-cloudformation': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-dynamodb': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/lib-dynamodb': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-ec2': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-lambda': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-service-quotas':
+    'Read-only campaign capacity admission through verification aws.mjs bounded owner.',
+  '@aws-sdk/client-scheduler': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-ssm': 'Bounded managed verification control, never game runtime.',
+  '@aws-sdk/client-cloudtrail': 'Bounded managed verification control, never game runtime.',
   '@aws-sdk/client-sts': 'asset-storage.ts',
   '@aws-sdk/credential-providers': 'asset-storage.ts',
   '@aws-sdk/rds-signer':
@@ -154,6 +219,8 @@ export const continuousBrowserPaths = new Set([
 
 /** Dynamic loading is confined to these exact local source/binding owners. */
 export const dynamicModuleOwners: Readonly<Record<string, string>> = {
+  'scripts/verification-workers/workspace-check.mjs':
+    'Loads only the admitted checkout workspace-binding guard, before any database or game starts.',
   'scripts/compare-world-survival.ts':
     'Loads exact selected local domain/spatial source paths for offline comparison.',
   'scripts/performance/workspace-bindings.ts':
@@ -170,6 +237,10 @@ export const generatedNetworkArtifacts: Readonly<Record<string, string>> = {
 export const fixtureToolOwners: Readonly<Record<string, string>> = {
   'scripts/performance/profile-action-input.ts':
     'Disposable PostgreSQL-backed native input measurement; no listener, inference worker or provider calls.',
+  'scripts/performance/cognition-lab-actions.ts':
+    'Owned disposable native action catalogue fixture; uses zero-budget config and no HTTP or inference client.',
+  'scripts/performance/cognition-lab-runtime.ts':
+    'Owned disposable game/lab HTTP fixture with native providers disabled; actual requests use the bounded tool HTTP owner.',
   'scripts/capture-starting-art-study.ts':
     'Disposable native HTTP journey through bounded test helper; no app deployment import.',
   'scripts/decision-benchmark/escalation-load.ts':

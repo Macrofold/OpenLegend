@@ -4,7 +4,7 @@ import {
   appraisalPin,
   characterCount,
   knowledgeDocument,
-  knowledgePage,
+  knowledgeKey,
   snapshotRevision,
   canRememberSubject,
   distance3D,
@@ -20,6 +20,89 @@ import { HistoryCursorError } from './perceived-events.js';
 import { digest } from './store.js';
 import type { WorldService } from './world-service.js';
 
+/** The same permitted subjects feed both the note list and its searchable picker.
+ * Recognition need not already have a note or a current sighting. */
+function rememberedSubjects(world: WorldState, actorId: string): string[] {
+  return [
+    ...new Set([
+      ...Object.keys(world.observerIdentities?.[actorId] ?? {}),
+      ...Object.keys(world.perceptionEpisodes?.[actorId] ?? {}),
+    ]),
+  ].filter((id) => canRememberSubject(world, actorId, id));
+}
+
+const orderedEditableNotes = new WeakMap<object, { signature: string; keys: readonly string[] }>();
+function recognitionRevision(world: WorldState, actorId: string): readonly number[] {
+  return [
+    snapshotRevision(world.observerIdentities?.[actorId]),
+    snapshotRevision(world.perceptionEpisodes?.[actorId]),
+    snapshotRevision(world.moduleManifest.socialPerception ?? undefined),
+  ];
+}
+export function isActorKnowledgeSubject(
+  world: WorldState,
+  subjectId: string | null,
+  subjectKind?: KnowledgeDocument['subjectKind'],
+): boolean {
+  return !subjectKind && subjectId !== null && !!entityGet(world.entities, subjectId)?.actor;
+}
+
+function editableNotesPage(world: WorldState, actorId: string, after: string, actorsOnly = false) {
+  const documents = world.actorKnowledge?.[actorId];
+  const anchor =
+    world.observerIdentities?.[actorId] ?? documents ?? world.perceptionEpisodes?.[actorId];
+  const signature = JSON.stringify([
+    actorId,
+    snapshotRevision(documents),
+    ...recognitionRevision(world, actorId),
+    !!world.knowledgePolicy,
+  ]);
+  let ordered = anchor && Object.isFrozen(anchor) ? orderedEditableNotes.get(anchor) : undefined;
+  if (ordered?.signature !== signature) {
+    const keys = new Set(Object.keys(documents ?? {}));
+    if (world.knowledgePolicy)
+      for (const id of rememberedSubjects(world, actorId)) keys.add(knowledgeKey(id));
+    ordered = { signature, keys: [...keys].sort() };
+    if (anchor && Object.isFrozen(anchor)) orderedEditableNotes.set(anchor, ordered);
+  }
+  // Like the native document index, only a cold immutable input visits all keys.
+  // Page selection never hydrates the other documents or creates empty notes.
+  const keys = ordered!.keys;
+  let low = 0,
+    high = keys.length;
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    if (keys[mid]! <= after) low = mid + 1;
+    else high = mid;
+  }
+  const page: Array<{ document: KnowledgeDocument | undefined; subjectId: string | null }> = [];
+  let next: string | null = null;
+  let last: string | undefined;
+  for (let index = low; index < keys.length; index++) {
+    const key = keys[index]!;
+    const document = documents?.[key];
+    // Stored notes retain their namespace; only recognition placeholders decode
+    // a subject key. Filter before taking a page, so object sightings cannot
+    // leave a Relations page empty while known people remain farther on.
+    const subjectId = document
+      ? document.subjectId
+      : key === knowledgeKey(null)
+        ? null
+        : key.slice('subject:'.length);
+    if (actorsOnly && !isActorKnowledgeSubject(world, subjectId, document?.subjectKind)) continue;
+    if (page.length === SUBJECT_PAGE) {
+      next = last!;
+      break;
+    }
+    page.push({ document, subjectId });
+    last = key;
+  }
+  return {
+    values: page,
+    next,
+  };
+}
+
 /** Private, bounded owner/NPC-inspector projection. The ordinary observer view never
  * receives appraisal labels, cause coverage, social counts or document contents. */
 export function continuityView(
@@ -27,6 +110,7 @@ export function continuityView(
   actorId: string,
   scope: RequestScope,
   cursor?: string,
+  selection: 'all' | 'feelings' | 'relations' = 'all',
 ): GodMindView {
   if (!service.mayInspectPrivate(actorId, scope))
     throw new Error('Private continuity is unavailable.');
@@ -38,7 +122,9 @@ export function continuityView(
     service.generation,
     actorId,
     world.knowledgeRevisions?.[actorId] ?? 0,
+    ...recognitionRevision(world, actorId),
     snapshotRevision(world.appraisals?.[actorId]),
+    selection,
   ]);
   let notesAfter: string | null = '',
     feelingsAfter: string | null = '';
@@ -59,15 +145,19 @@ export function continuityView(
     feelingsAfter = decoded.feelings;
   }
   const notes =
-    notesAfter === null ? { values: [], next: null } : knowledgePage(world, actorId, notesAfter);
+    notesAfter === null || selection === 'feelings'
+      ? { values: [], next: null }
+      : editableNotesPage(world, actorId, notesAfter, selection === 'relations');
   const feelings =
-    feelingsAfter === null
+    feelingsAfter === null || selection === 'relations'
       ? { values: [], next: null }
       : appraisalPage(world, actorId, feelingsAfter);
   const label = (subjectId: string) => observerDescription(world, actorId, subjectId);
   const general = knowledgeDocument(world, actorId, null);
   const documents =
-    general && !notes.values.includes(general) ? [general, ...notes.values] : notes.values;
+    selection === 'all' && general && !notes.values.some((entry) => entry.document === general)
+      ? [{ document: general, subjectId: null }, ...notes.values]
+      : notes.values;
   return {
     actorId,
     name: actor.name,
@@ -79,9 +169,12 @@ export function continuityView(
     records: [],
     thoughts: [],
     knowledgeLimits: world.knowledgePolicy?.maxCharacters,
-    notepads: documents.map((doc) => notepadView(world, actorId, doc)),
+    notepads: documents.map(({ document, subjectId }) =>
+      projectKnowledgeNote(world, actorId, document, subjectId),
+    ),
     continuity: {
-      ...(service.config.godMode &&
+      ...(selection !== 'relations' &&
+      service.config.godMode &&
       actor.actor.controller === 'npc' &&
       service.currentScope(scope, 'create')
         ? {
@@ -116,24 +209,29 @@ export function continuityView(
   };
 }
 
-function notepadView(world: WorldState, actorId: string, doc: KnowledgeDocument) {
+export function projectKnowledgeNote(
+  world: WorldState,
+  actorId: string,
+  doc: KnowledgeDocument | undefined,
+  subjectId = doc?.subjectId ?? null,
+) {
+  const text = doc?.text ?? '';
   return {
-    subjectId: doc.subjectId,
-    ...(doc.subjectKind ? { subjectKind: doc.subjectKind } : {}),
-    origin: doc.origin,
+    subjectId,
+    ...(doc?.subjectKind ? { subjectKind: doc.subjectKind } : {}),
+    origin: doc?.origin ?? ('unwritten' as const),
     label:
-      doc.subjectKind === 'place'
+      doc?.subjectKind === 'place'
         ? 'Place note'
-        : doc.subjectKind === 'map-marker'
-          ? (world.mapMarkers?.[actorId]?.[doc.subjectId!]?.label ?? 'Map marker note')
-          : doc.subjectId
-            ? observerDescription(world, actorId, doc.subjectId)
+        : doc?.subjectKind === 'map-marker'
+          ? (world.mapMarkers?.[actorId]?.[subjectId!]?.label ?? 'Map marker note')
+          : subjectId
+            ? observerDescription(world, actorId, subjectId)
             : 'General knowledge',
-    text: doc.text,
-    revision: doc.revision,
-    characters: characterCount(doc.text),
-    maxCharacters:
-      world.knowledgePolicy!.maxCharacters[doc.subjectId === null ? 'general' : 'subject'],
+    text,
+    revision: doc?.revision ?? 0,
+    characters: characterCount(text),
+    maxCharacters: world.knowledgePolicy!.maxCharacters[subjectId === null ? 'general' : 'subject'],
   };
 }
 
@@ -177,7 +275,7 @@ function subjectView(
 }
 
 /** Searchable owner/NPC-inspector subject choices for the private mind editors. The work
- * is one pass over this character's current sightings and note subjects (no storage read). */
+ * is one pass over this character's sightings, recognized subjects and notes (no storage read). */
 export function continuitySubjects(
   service: WorldService,
   actorId: string,
@@ -190,7 +288,15 @@ export function continuitySubjects(
   const words = normalized(request.query ?? '')
     .split(/\s+/)
     .filter(Boolean);
-  const fence = digest([scopeKey(scope), service.generation, actorId, words]);
+  const fence = digest([
+    scopeKey(scope),
+    service.generation,
+    actorId,
+    words,
+    world.knowledgeRevisions?.[actorId] ?? 0,
+    ...recognitionRevision(world, actorId),
+    snapshotRevision(world.visiblePeople?.[actorId]),
+  ]);
   let after: z.infer<typeof cursorSchema> | undefined;
   if (request.after) {
     try {
@@ -214,13 +320,13 @@ export function continuitySubjects(
       selected: selected
         ? {
             subject: selected,
-            notepad: document ? notepadView(world, actorId, document) : null,
+            notepad: document ? projectKnowledgeNote(world, actorId, document) : null,
             identity: world.observerIdentities?.[actorId]?.[selected.id] ?? null,
           }
         : null,
     };
   }
-  const ids = new Set(visible);
+  const ids = new Set([...visible, ...rememberedSubjects(world, actorId)]);
   for (const key of Object.keys(world.actorKnowledge?.[actorId] ?? {}))
     if (key.startsWith('subject:')) ids.add(key.slice('subject:'.length));
   const order = (

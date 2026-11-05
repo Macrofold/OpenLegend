@@ -27,6 +27,9 @@ export interface PreparedResponseProfile {
     relevant: string;
     irrelevant: string;
   };
+  /** An independently selected utterance may accompany native conduct. Null
+   * keeps this world's supplied strategy entirely closed. */
+  voice: { question: string; silent: string; speak: string; instructions: string } | null;
   purposes: Array<{
     id: string;
     label: string;
@@ -64,6 +67,7 @@ export interface PreparedResponseMethod {
   /** Concise actual action; complete requirements/costs remain in description. */
   firstActionDescription?: string;
   invocation: Command | null;
+  readiness?: import('./action-capabilities.js').ActionReadiness;
   transition: WorkTransitionMode;
   /** Personally perceived subjects described by a fixed-point movement. */
   subjects?: readonly string[];

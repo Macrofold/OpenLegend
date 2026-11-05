@@ -56,7 +56,15 @@ it('keeps required causes and a complete bounded recent suffix after the trigger
     const history = decision.context['conversation'] as string[];
     expect(history.length).toBeGreaterThan(0);
     expect(history.length).toBeLessThan(34);
-    const numbers = history.map((line) => Number(/My reply number (\d+)/.exec(line)?.[1]));
+    const experiences = decision.context['experience'] as Array<{ value: unknown }>;
+    const numbers = history.map((reference) => {
+      const index = /^character\.experience\[(\d+)\]$/.exec(reference)?.[1];
+      expect(index, 'Conversation must reference the shared evidence array.').toBeDefined();
+      const source = experiences[Number(index)];
+      expect(source, reference).toBeDefined();
+      return Number(/My reply number (\d+)/.exec(JSON.stringify(source))?.[1]);
+    });
+    expect(new Set(history).size).toBe(history.length);
     expect(
       numbers.every((number, index) => index === 0 || number === numbers[index - 1]! + 1),
     ).toBe(true);

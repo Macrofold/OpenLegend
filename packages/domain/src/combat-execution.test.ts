@@ -16,6 +16,7 @@ import { pointShotProblem, settleProjectiles } from './ranged.js';
 import { seesEntity } from './perception.js';
 import { occurrenceFor } from './action-experience.js';
 import { bodyCenter, interactionAnchor, nearbyBodyEntities } from './spatial.js';
+import { observedCombatActivity } from './worlds/base/combat-views.js';
 
 describe('native skilled combat execution', () => {
   it('retains an observed body point through early release and reload while low cover still intercepts the ray', () => {
@@ -86,6 +87,16 @@ describe('native skilled combat execution', () => {
   it('holds a point shot, releases the exact ray once and keeps body recovery after cancellation', () => {
     let { world } = fixture();
     world = aim(world);
+    const observedActivity = () =>
+      observedCombatActivity(
+        world,
+        entityGet(world.entities, NPC_ID)!,
+        entityGet(world.entities, PLAYER_ID)!,
+      );
+    expect(observedActivity()).toMatchObject({
+      text: expect.stringContaining('Preparing a shot;'),
+      actionId: entityGet(world.entities, PLAYER_ID)!.actor!.action!.id,
+    });
     world = advanceWorld(world, 18).world;
     const action = entityGet(world.entities, PLAYER_ID)!.actor!.action!;
     expect(action.attackExecution?.ready).toBe(true);
@@ -123,6 +134,23 @@ describe('native skilled combat execution', () => {
       }).outcome.code,
     ).toBe('combat-recovery');
     expect(Object.keys(world.projectiles!)).toHaveLength(1);
+    expect(observedActivity()).toEqual({
+      text: expect.stringContaining('Recovering from combat;'),
+    });
+    const position = worldPosition(entityGet(world.entities, PLAYER_ID)!);
+    world = command(world, {
+      id: 'move-during-combat-recovery',
+      type: 'move',
+      destination: {
+        ...position,
+        z: position.z + 1,
+        surfaceId: worldSupport(entityGet(world.entities, PLAYER_ID)!),
+      },
+    });
+    expect(entityGet(world.entities, PLAYER_ID)!.actor!.action?.type).toBe('move');
+    expect(observedActivity()).toEqual({
+      text: expect.stringContaining('Recovering from combat;'),
+    });
     validateWorldModules(world);
     const damaged = structuredClone(world);
     occurrenceFor(damaged, PLAYER_ID, action.id)!.attackExecution!.assessment.score = 0;

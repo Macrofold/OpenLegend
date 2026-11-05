@@ -1,25 +1,31 @@
 import {
   decodeJudge,
-  validateJudgmentSize,
-  validateQuestions,
+  batchJudgmentQuestions,
   InvalidData,
   type JudgeValue,
   type TypedQuestionMap,
 } from '@open-legend/ai';
 import type { compilePreparedResponses, PreparedResponseProfile } from '@open-legend/domain';
 import { ContextBudgetError } from './context.js';
-import { offerPreparedActions, type prepareDecision } from './decision-context.js';
+import {
+  offerPreparedActions,
+  type prepareDecision,
+  type DecisionInputMeasure,
+  type DecisionInputSources,
+} from './decision-context.js';
+import { preparedResponseDecisionContext } from './prepared-response-context.js';
 
 type Prepared = Awaited<ReturnType<typeof prepareDecision>>;
 type Catalogue = NonNullable<ReturnType<typeof compilePreparedResponses>>;
-export type PurposeRelevance = Record<string, 'uncertain' | 'relevant' | 'irrelevant'>;
+type AppraisalContextProjection = (sources: DecisionInputSources['sharedExperiences']) => unknown;
+const PURPOSE_RELEVANCE_VALUES = ['uncertain', 'relevant', 'irrelevant'] as const;
+export type PurposeRelevance = Record<string, (typeof PURPOSE_RELEVANCE_VALUES)[number]>;
 
 /** Keep complete required questions or refuse before dispatch. Both transport
  * adapters use these existing limits and the same offered-key Choice decoder. */
 function checkedRequest(state: Record<string, unknown>, questions: TypedQuestionMap) {
-  validateQuestions(questions);
   try {
-    validateJudgmentSize(state, questions);
+    batchJudgmentQuestions(state, questions);
   } catch (error) {
     if (!(error instanceof InvalidData)) throw error;
     throw new ContextBudgetError(
@@ -29,23 +35,56 @@ function checkedRequest(state: Record<string, unknown>, questions: TypedQuestion
   return { state, questions };
 }
 
-function requestState(prepared: Prepared, offered?: { id: string; description: string }[]) {
+function sharedRequestState(
+  context: Record<string, unknown>,
+  actionGuidance: Prepared['actionGuidance'],
+) {
   return {
-    decisionContext: Object.fromEntries(
-      Object.entries(prepared.context).filter(
-        // This closed strategy selects exact supplied invocations. Freeform
-        // activity forms belong to the independent generated-response route;
-        // current agreements and every offered physical choice remain here.
-        ([key]) =>
-          !['knowledgeInstructions', 'navigation', 'planOffers', 'activityRequests'].includes(key),
-      ),
-    ),
+    // Match the shared trigger, conversation and recall source-reference root.
+    character: preparedResponseDecisionContext(context),
     // One full authored rubric is shared, rather than copied into every independent
     // question. Default Noul yes/no still judges these exact supplied meanings.
-    personalChoiceRubric: prepared.actionGuidance,
-    ...(offered
-      ? { choices: Object.fromEntries(offered.map((choice) => [choice.id, choice.description])) }
-      : {}),
+    personalChoiceRubric: actionGuidance,
+  };
+}
+
+function requestState(prepared: Prepared) {
+  return sharedRequestState(prepared.context, prepared.actionGuidance);
+}
+
+/** Reserve both actual shared-state consumers before optional evidence fits.
+ * Purpose relevance is added between stages; it cannot buy a larger context or
+ * displace required evidence after the first paid judgment. Question batches
+ * retain their independent complete-set admission in checkedRequest. */
+export function preparedResponseInputMeasure(
+  catalogue: { purposes: readonly unknown[] },
+  projectAppraisals?: AppraisalContextProjection,
+): DecisionInputMeasure {
+  const encodedBytes = (value: unknown) => Buffer.byteLength(JSON.stringify(value));
+  const longest = PURPOSE_RELEVANCE_VALUES.reduce((left, right) =>
+    encodedBytes(left) >= encodedBytes(right) ? left : right,
+  );
+  const purposeRelevance = Object.fromEntries(
+    catalogue.purposes.map((_, index) => [`p${index}`, longest]),
+  );
+  return ({ context, actionGuidance, sources }) => {
+    const { purposeRelevance: _laterRelevance, ...beforeRelevance } = context;
+    const choiceBytes = encodedBytes(
+      sharedRequestState({ ...context, purposeRelevance }, actionGuidance),
+    );
+    // This native field is published only after the first stage. Its actual new
+    // feelings and receipts are consumed by choice, never the earlier relevance.
+    return Object.hasOwn(context, 'admittedInterpretations')
+      ? choiceBytes
+      : Math.max(
+          encodedBytes({
+            ...sharedRequestState(beforeRelevance, actionGuidance),
+            ...(projectAppraisals
+              ? { appraisals: projectAppraisals(sources.sharedExperiences) }
+              : {}),
+          }),
+          choiceBytes,
+        );
   };
 }
 
@@ -53,7 +92,7 @@ export function preparedResponseRelevanceRequest(
   prepared: Prepared,
   catalogue: Catalogue,
   profile: PreparedResponseProfile,
-  appraisals?: { context: unknown; questions: TypedQuestionMap },
+  appraisals?: { projectContext: AppraisalContextProjection; questions: TypedQuestionMap },
 ) {
   if (prepared.choiceCoverage !== 'complete-required')
     throw new Error('This strategy requires complete supplied choices.');
@@ -85,14 +124,11 @@ export function preparedResponseRelevanceRequest(
     }
   return checkedRequest(
     {
-      ...requestState(
-        prepared,
-        prepared.actionCandidates.map((candidate, index) => ({
-          id: `a${index}`,
-          description: candidate.description,
-        })),
-      ),
-      ...(appraisals ? { appraisals: appraisals.context } : {}),
+      // Complete purposes/methods already occur in requiredChoices. Repeating
+      // every opaque purpose-method pairing here can exceed the per-question
+      // state limit without adding meaning; each purpose question names its people.
+      ...requestState(prepared),
+      ...(appraisals ? { appraisals: appraisals.projectContext(prepared.sharedExperiences) } : {}),
     },
     questions,
   );
@@ -128,7 +164,11 @@ export function preparedResponseRelevance(
   );
 }
 
-export function preparedResponseChoiceRequest(prepared: Prepared, relevance: PurposeRelevance) {
+export function preparedResponseChoiceRequest(
+  prepared: Prepared,
+  relevance: PurposeRelevance,
+  voice?: NonNullable<PreparedResponseProfile['voice']>,
+) {
   const retained = prepared.actionCandidates.filter(
     (candidate) =>
       !candidate.purposeHandle ||
@@ -165,8 +205,25 @@ export function preparedResponseChoiceRequest(prepared: Prepared, relevance: Pur
       },
     ]),
   );
+  if (voice)
+    questions.voice = {
+      type: 'choice',
+      instructions: voice.question,
+      // Silence wins ties and covers uncertainty; it never buys a repair call.
+      criteria: { a_silent: voice.silent, b_speak: voice.speak },
+    };
   return {
     prepared: selected,
     request: checkedRequest(requestState(selected), questions),
   };
+}
+
+export function preparedResponseVoiceSelected(value: JudgeValue, questions: TypedQuestionMap) {
+  if (!questions.voice) return false;
+  const answer = decodeJudge(value, { voice: questions.voice }).answers.voice;
+  return (
+    answer?.type === 'choice' &&
+    answer.choice === 'b_speak' &&
+    (answer.probabilities.b_speak ?? 0) > (answer.probabilities.a_silent ?? 0)
+  );
 }

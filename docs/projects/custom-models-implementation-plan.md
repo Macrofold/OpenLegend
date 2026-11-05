@@ -1,18 +1,39 @@
 # Custom models — implementation plan
 
-| Status      | Current progress                                                                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native Kev/Huihui integration and review fixes pass focused checks; current credentials cannot discover authorized services for live qualification. | 2026-10-24   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Integration is verified; original 8k/4k services are unsuitable for measured character workloads and larger variants remain unqualified. | 2026-10-27   |
 
 ## Scope and completion
 
 Implement [the approved feature](custom-models-feature-spec.md) and [technical design](custom-models-tech-design.md), including production MX01–MX03/MX06/MX08 and thin benchmark/report extensions MX04–MX05. MX07 research and changing the default model are excluded. [MX](../maintainers/custom-models.md) owns task status and acceptance; this file owns the implementation sequence.
 
-The original production delivery used `feat/production-custom-models`, with preserved design base `05d2bb034cea0f717c54efedee019f74906849c6`, descending from verified `Macrofold/OpenLegend` `origin/main` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. The current native extension's branch and refreshed base are recorded below. Only `/Users/mzw/.codex/worktrees/7370/OpenLegend` receives implementation edits. Preserve unrelated checkouts and work.
+The original production delivery used `feat/production-custom-models`, with preserved design base `05d2bb034cea0f717c54efedee019f74906849c6`, descending from verified `Macrofold/OpenLegend` `origin/main` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. The current native extension's branch and refreshed base are recorded below. Those original implementation edits used `/Users/mzw/.codex/worktrees/7370/OpenLegend`. The current follow-up below uses its existing checkout; preserve unrelated checkouts and work.
 
 Initial estimate was approximately 1,000–1,800 changed logic lines. Integrated scope is approximately 2,100 added/changed logic lines across shared AI preparation, strict server configuration, capability caching, existing execution/accounting owners and thin benchmark tools. The larger scope retains these existing owners; no second executor or new test infrastructure was introduced. The consequential risks are wrong-purpose routing, accepting stale world authority, duplicate dispatch/settlement, inaccurate hosting attribution, and incompatible generated request types.
 
+## Current configured-service follow-up — October 25, 2026
+
+The native implementation and its review are already integrated through `77e6518ab` and `3e1518dd5`, including source branch `codex/native-kev-and-huihui` at `fbc055277`. Reuse that delivery; do not merge it again or create another adapter. This follow-up continues on `codex/cognition-lab` in `/Users/mzw/.codex/worktrees/c00b/OpenLegend`, with refreshed `origin/main` at `4503bf717c5be73c689e7cab7790620580a050f3`.
+
+Mike supplied these current references for Macrofold workspace **World** (`01a0bb3a-0bd0-72f2-96ab-06cf5b38ffc9`):
+
+| Purpose                                                          | Deployment                             | Exact revision                         |
+| ---------------------------------------------------------------- | -------------------------------------- | -------------------------------------- |
+| Native judgment — official Kev                                   | `01a17443-9754-75db-b045-ab9ca26f0f89` | `01a17443-9757-769f-beb3-4ade61901a18` |
+| Fast/complex NPC generation, including higher decisions — Huihui | `01a17443-9c72-71c8-b6bf-94e7a6e12b91` | `01a17462-4d1d-7755-a670-71a46cd99269` |
+
+Authenticated reads and [bounded live adapter probes](../verification/custom-models.md#live-configured-model-smoke-tests--october-25-2026) succeeded with the dedicated credential and selected revisions. Both services were stopped afterward. The earlier 403 remains historical evidence for another credential; actual native responses now have separate evidence, without qualifying full game/Lab behavior.
+
+Current implementation scope is the existing server configuration, target preparation and inference owners: prefer optional `MACROFOLD_MODEL_API_KEY` for deployment requests while retaining the backend key for other features; carry a capability-checked native `chat_template_kwargs.enable_thinking` option; and default higher decisions to configured complex generation through the same adapter unless a direct model is explicitly selected. Native deployment request fees/reservations are zero, with zero-budget/no-call and execution guards retained; hosting remains separately funded. Omission preserves existing credentials and provider defaults. The selected trial caps each target at 1,024 output tokens and uses strict `json_schema` with `enable_thinking:false` for both chat purposes. It adds no hosting, purpose registry, prompt override, schema repair or inference retry.
+
+Mike's current suitability decision is that the original Kev 8,192-token and Huihui 4,096-token configurations cannot serve the measured character workloads, approximately 19.9k judgment and 29.4k generation input tokens. Retain the supplied deployment references and grants. The [native study](../verification/cognition-lab-native-model-study.md#native-selector-comparison-preparation) records distinct larger configurations: Kev 65k passed zero-inference encoding/accounting checks, while Huihui 32k remains declared capacity without an encoding qualification claimed here. Both larger windows ended in startup failure before inference admission, so neither supplies character-quality or ordinary-caller qualification. This decision is scoped to the measured workloads and preserves required identity, evidence and schemas.
+
+Implementation, focused checks, required static/build checks and affected-change review are complete. The private checkout configuration selects the supplied pins and preserves the broader backend key. Bounded live probes verified native responses and a manual prompt/context iteration; the linked evidence retains Huihui's contextual failure and hosting-cost uncertainty. Future calls require a new owner-started bounded window and current aggregate spending authority. Preserve exact attempts, uncertainty, required character evidence and local schemas rather than silently truncating context or claiming unexecuted gameplay. [MX06](../maintainers/custom-models.md#mx06--production-contract-recovery-and-operating-acceptance) owns remaining qualification.
+
 ## Sequence and owners
+
+The following sections retain the original delivery sequence and its recorded review scope; the current follow-up above identifies new work.
 
 1. **Trusted configuration:** add the pure server generation configuration owner, strict `OPENLEGEND_MODEL_TARGETS_JSON` admission, unchanged default selection and explicit NPC-purpose resolution. This local configuration work does not depend on remote deployment execution.
 2. **Shared target and capabilities (MX01/MX02):** consume the actual compatible Macrofold generated types; add shared preparation to the existing AI entrypoint. Resolve output format and reduced output bounds before reservation. Cache immutable revision facts and coalesce bounded descriptor reads; apply the design's stale/negative-cache behavior.
@@ -26,7 +47,7 @@ Initial estimate was approximately 1,000–1,800 changed logic lines. Integrated
 
 Work grows with admitted generation count, request/schema bytes and concurrent demand. Share immutable capability/schema preparation and identical in-flight descriptor reads. Target changes, remotely reported capability failures and newly observed admitted revisions invalidate only later preparation; cached permission/readiness never authorizes inference. Compatible warm requests add no hosting, pricing, Hugging Face or experiment reads.
 
-Measure the complete ordinary NPC request and publication path, including preparation reads, bytes, first useful permitted output, completion, concurrency and recovery. Separate local configuration/static/fixture evidence from actual hosted/game acceptance. No new automated tests are authorized; use existing focused checks and small suitable ad-hoc scenarios. Required checks include changed-file pinned formatting, TypeScript checking, production build and relevant current checks after inspecting their effects.
+Measure the complete ordinary NPC request and publication path, including preparation reads, bytes, first useful permitted output, completion, concurrency and recovery. Separate local configuration/static/fixture evidence from actual hosted/game acceptance. Reuse existing focused checks and suitable ad-hoc scenarios; this configured-service follow-up also has Mike's explicit request for focused tests. Required checks include changed-file pinned formatting, TypeScript checking, production build and relevant current checks after inspecting their effects.
 
 All paid work shares the existing $10 task ceiling. Dispatch only with bounded outstanding commitments and authorized credentials. Record settled/estimated/unknown request and hosting costs separately. Do not start or stop a borrowed Macrofold service or leave newly started paid hosting running without its applicable authorization.
 
@@ -34,7 +55,7 @@ All paid work shares the existing $10 task ceiling. Dispatch only with bounded o
 
 Actual Macrofold HTTP and live external-model checks use the canonical deployment binding, descriptor and receipt projections through the existing transport. The server and generated-client source fingerprints, one ordinary live NPC speech publication, invalid replies, revision/pin recovery and bounded warm/concurrent measurements are retained in [verification](../verification/custom-models.md). No competing complete wire schema or permissive gameplay parser was introduced.
 
-The external model worker is opaque to this installation. Managed-worker restart/replacement, broader GPU workload capacity and final hosting invoices remain unevidenced; no RunPod credential was found and the authorized live setup excludes GPU launch. Keep those MX06 criteria open. The compatible upstream implementation is a fingerprinted local snapshot rather than a published immutable release; ship its matching API, migration and client together. Optional MX07 research is outside this task.
+The managed Kev and Huihui services now have bounded native-adapter response evidence through Macrofold-owned hosting; OpenLegend receives no RunPod credential. Ordinary gameplay/context fit, managed-worker restart/replacement, broader GPU workload capacity and final hosting invoices remain unevidenced. Keep those MX06 criteria open and ship matching upstream API, migration and client builds together. Optional MX07 research is outside this task.
 
 ## Requested implementation review
 
@@ -82,7 +103,7 @@ Completion requires reviewed integration, passing focused tests, changed-file fo
 
 Review also requires the shared terminal decoder to compare execution outcome with Run status and to withhold decisions made from truncated input after retaining their accounting. Accepted inference recovery must consult the existing exact-identity journal before current deployment readiness; otherwise a stopped service could prevent retrieval of an already completed answer. A stable logical input fingerprint protects caller inputs and trusted target settings, while the actual wire fingerprint and retained body protect dispatch identity. Reuse those existing records rather than creating another replay path or retaining duplicate private prompts after acceptance.
 
-Implementation, focused tests and review fixes are delivered. Native selection, capability reuse, exact journal recovery, source/deadline revalidation and truthful operating-setting review reuse their existing owners. [Verification](../verification/custom-models.md#native-kev-and-huihui-integration--october-24-2026) records passing focused/static checks and the actual current-key discovery refusal. Current-service live calls remain unverified; no inference or paid infrastructure was launched. Broader MX06 service/load qualification and CI merge gates remain separate and open.
+Implementation, focused tests and review fixes are delivered. Native selection, capability reuse, exact journal recovery, source/deadline revalidation and truthful operating-setting review reuse their existing owners. [Verification](../verification/custom-models.md#native-kev-and-huihui-integration--october-24-2026) records passing focused/static checks and the actual current-key discovery refusal. That checkpoint launched no inference or paid infrastructure; subsequent bounded live adapter evidence is linked in the current follow-up above. Broader MX06 service/load qualification and CI merge gates remain separate and open.
 
 ## Requested native-integration review
 

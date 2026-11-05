@@ -89,10 +89,6 @@ export function prepareRoutinePlan(
       {
         localId: 'routine',
         requiresAccepted: [],
-        talk: null,
-        act: null,
-        think: null,
-        goal: null,
         plan: {
           mode: 'enqueue',
           expectedRevision: observed.actor.actor!.agency.plan?.revision ?? 0,
@@ -184,7 +180,6 @@ export function prepareRoutinePlan(
         {
           localId: 'routine',
           requiresAccepted: [],
-          talk: null,
           act: {
             kind: 'proposal',
             actionId: null,
@@ -193,9 +188,6 @@ export function prepareRoutinePlan(
             description,
             mode: 'enqueue',
           },
-          think: null,
-          goal: null,
-          plan: null,
         },
       ],
     };

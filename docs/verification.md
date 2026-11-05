@@ -7,6 +7,9 @@
 - [Character mechanics prototype](verification/character-and-map-additions.md) — separate-branch historical equipment, stat, carrying and native consumer evidence; not current Gildmoss mechanics delivery.
 
 - [Skilled action execution](verification/action-execution-and-skill-expression.md) — native effects, exact input/receipt ownership, fitted capacity, rendered controls, isolated measurements and separate player acceptance.
+- [Cognition Lab](verification/cognition-lab.md) — isolated native experiments, exact captures, prepared calls, saved comparisons, failure recovery, browser isolation and bounded storage/runtime profiling. [Library and model iteration](verification/cognition-lab-model-iteration.md) records the live help, humor and witness panel; the [native model study](verification/cognition-lab-native-model-study.md) records the 30-situation, 15-configuration matrix, custom hosting and coverage limits. The [October 29 paired panel](verification/cognition-lab/2026/2026-10-29-final-native-panel.md) retains its complete 108-cell baseline and current final-source follow-through. Deterministic mechanisms remain separate from live behavior and human acceptance.
+
+- [Situation-aware cognition context](verification/situation-aware-cognition-context.md) — complete-source preparation, hierarchical action binding, sparse schemas, privacy/lifecycle checks, scoped profiles and one live direct-provider smoke.
 
 - [First-playable entry](verification/first-playable-entry.md) — actual loading bar, held/failed required artwork, explicit Retry and current Main selection; bounded animal feeding evidence remains separate.
 
@@ -175,5 +178,7 @@ Current 3× scene investigation: [plain-language results, before/after tables an
 - [Existing test repairs](verification/existing-test-repairs.md): stale hearing/starting-world expectations and the AI-director usage race.
 
 ## Shared procedure
+
+Before selecting or running checks, follow [Verification](../.agents/rules/verification.md#choose-the-execution-location), including its required execution-location choice and conditional managed-worker instructions.
 
 Before bounded live gameplay or character-behavior experiments, use the [playtest protocol](verification/playtest-protocol.md#bounded-live-playtest-protocol). Project-specific playtest plans own their particular session.

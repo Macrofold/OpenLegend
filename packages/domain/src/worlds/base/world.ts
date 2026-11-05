@@ -1,4 +1,6 @@
+import { BASE_EXPRESSIONS } from './expressions.js';
 import firstPlayable from './config/first-playable.generated.json' with { type: 'json' };
+import { BASE_COGNITION_LAB_RECIPES } from './cognition-lab-recipes.js';
 import {
   installBaseOpeningContent,
   installBaseCampSuggestions,
@@ -307,6 +309,18 @@ export function createFreshBaseWorld(
       ].map(activityHostPin),
       BASE_RANGED_POLICY,
       BASE_SOCIAL_PERCEPTION,
+      BASE_COGNITION_LAB_RECIPES.map(
+        ([id, name, description, setup, changedFactor, observe, prerequisites]) => ({
+          id,
+          name,
+          description,
+          setup,
+          changedFactor,
+          observe,
+          prerequisites: [...prerequisites],
+        }),
+      ),
+      BASE_EXPRESSIONS,
     ),
     cognitionPolicy: baseCognitionPolicy(),
     storyPolicy: defaultStoryPolicy(),
@@ -465,8 +479,13 @@ export function createWorld(
 export function createBaseDiagnosticWorld(
   seed: number,
   accounts?: WorldCreationAccounts,
+  worldId?: string,
 ): WorldState {
-  return buildBaseWorld(seed, accounts);
+  return buildBaseWorld(
+    seed,
+    accounts,
+    worldId ? { worldId, playerId: PLAYER_ID, residentId: NPC_ID } : undefined,
+  );
 }
 
 /** One composition owner; the diagnostic scope omits the selected Main bundle. */

@@ -86,20 +86,37 @@ export function uncertainAttemptMicroUsd(
  */
 export async function readAttemptBudget(
   db: SqlDatabase,
-  budgetId: string,
+  budgetId: string | readonly string[],
 ): Promise<AttemptBudgetSnapshot> {
+  const ids = typeof budgetId === 'string' ? [budgetId] : budgetId;
+  if (!ids.length) return { spentUsd: 0, reservedUsd: 0, uncertainUsd: 0 };
   const row = await db
     .prepare(
       `SELECT COALESCE(SUM(a.spent),0) AS spent,
       COALESCE(SUM(CASE WHEN a.status='reserved' THEN a.reserved ELSE 0 END),0) AS reserved,
       COALESCE(SUM(CASE WHEN a.status='uncertain' THEN a.spent ELSE 0 END),0) AS uncertain
-      FROM attempts a JOIN attempt_budgets b ON b.attempt_id=a.id WHERE b.budget_id=?`,
+      FROM attempts a JOIN attempt_budgets b ON b.attempt_id=a.id WHERE b.budget_id IN (${ids.map(() => '?').join(',')})`,
     )
-    .get(budgetId);
+    .get(...ids);
   const spentUsd = microUsdToUsd(String(row?.['spent'] ?? 0));
   const reservedUsd = microUsdToUsd(String(row?.['reserved'] ?? 0));
   const uncertainUsd = microUsdToUsd(String(row?.['uncertain'] ?? 0));
   if (spentUsd === undefined || reservedUsd === undefined || uncertainUsd === undefined)
     throw new Error('Episode spending exceeds safe arithmetic.');
   return { spentUsd, reservedUsd, uncertainUsd };
+}
+
+export interface AttemptBudget {
+  id: string;
+  limitUsd: number;
+}
+export function attemptMicroUsd(usd: number): number {
+  const amount = usdToMicroUsd(usd);
+  if (amount === undefined) throw new Error('Invalid spending amount.');
+  return amount;
+}
+export function attemptExposure(value: unknown): bigint {
+  const text = String(value);
+  if (!/^\d+$/.test(text)) throw new Error('Invalid spending exposure.');
+  return BigInt(text);
 }

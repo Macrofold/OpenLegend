@@ -5,16 +5,9 @@ export function actionResponse(act: NonNullable<ResponseOperation['act']>): Acto
   return {
     operations: [
       {
-        note: null,
-        name: null,
-        appraise: null,
         localId: 'action',
         requiresAccepted: [],
-        talk: null,
-        think: null,
-        goal: null,
-        plan: null,
-        // The decision schema requires every act field; absent references are explicit nulls.
+        // Genuine unspecified action references retain their meaningful null values.
         act: { ...act, invocation: act.invocation ?? null, slots: act.slots ?? null },
       },
     ],

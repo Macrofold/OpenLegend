@@ -19,6 +19,7 @@
     "@open-legend/protocol": "workspace:*",
     "@open-legend/spatial": "workspace:*",
     "@smithy/node-http-handler": "4.12.1",
+    "@streamparser/json": "0.0.26",
     "openid-client": "6.8.8",
     "pg": "8.16.3",
     "recast-navigation": "0.43.1",

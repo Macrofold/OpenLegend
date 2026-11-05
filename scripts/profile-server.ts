@@ -3,6 +3,7 @@ import { SSEFramer } from '@open-legend/network';
 import { learnRecipe } from '../packages/domain/src/knowledge.js';
 import { profilingOptions } from './performance/profiling-options.js';
 import { workspaceBindings } from './performance/workspace-bindings.js';
+import { json as writeVerificationJson } from './verification-workers/files.mjs';
 import {
   entityDelete,
   entityGet,
@@ -75,6 +76,13 @@ async function sourceFingerprint() {
   const capturedAt = new Date().toISOString();
   try {
     const root = fileURLToPath(new URL('..', import.meta.url));
+    if (process.env['OPENLEGEND_VERIFICATION_MANIFEST']) {
+      const { verifySnapshot } = await import('./verification-workers/source.mjs');
+      return await verifySnapshot(
+        root,
+        JSON.parse(await readFile(process.env['OPENLEGEND_VERIFICATION_MANIFEST'], 'utf8')),
+      );
+    }
     const git = (...args: string[]) => execFileSync('git', args, { cwd: root, encoding: 'utf8' });
     const paths = [
       ...new Set(
@@ -1563,15 +1571,17 @@ try {
     };
     if (browserFixture) {
       profilingStage = 'browser startup';
-      await writeFile(
+      await writeVerificationJson(
         resolve(readyPath!),
-        JSON.stringify({
+        {
           url: base,
           playerId: view.player.id,
           outputPath: resolve(output),
           databaseAdapter: 'postgres',
-          nativeSpeed: 3,
+          nativeSpeed: game.service.speed,
           startMarkerPath: resolve(browserStartPath!),
+          captureAckPath: resolve(browserStartPath!) + '.ack',
+          captureCompletePath: resolve(browserStartPath!) + '.complete',
           seconds,
           expanded: expandedFixture,
           addedPopulation,
@@ -1587,8 +1597,8 @@ try {
           ...(memoryHistory ? { memoryHistory } : {}),
           sourceProvenance,
           instrumentation,
-        }),
-        { flag: 'wx', mode: 0o600 },
+        },
+        { exclusive: true },
       );
       console.error(`profile browser ready: ${base}; waiting for browser start marker`);
       const deadline = performance.now() + 120_000;
@@ -1619,6 +1629,12 @@ try {
       : undefined;
     const measurementStartedAtUnixMs = performance.timeOrigin + start;
     profilingStage = 'measurement';
+    if (browserFixture)
+      await writeVerificationJson(
+        resolve(browserStartPath!) + '.ack',
+        { measurementStartedAtUnixMs, simTime: game.service.world.simTime },
+        { exclusive: true },
+      );
     const travel = travelFixture ? travelProgress(game.service.world, routineActorIds) : undefined;
     const activity = {
       eventsByType: {} as Record<string, number>,
@@ -2801,7 +2817,32 @@ try {
   if (collectRejections) CognitionMaintenance.prototype.tick = maintenanceTick;
   await probe.end().catch(() => {});
   try {
-    await closeResources();
+    try {
+      if (browserFixture && reportWritten) {
+        let started = false;
+        try {
+          await readFile(resolve(browserStartPath!) + '.ack');
+          started = true;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+        if (started) {
+          const until = Date.now() + 30000;
+          for (;;) {
+            try {
+              await readFile(resolve(browserStartPath!) + '.complete');
+              break;
+            } catch (error) {
+              if ((error as NodeJS.ErrnoException).code !== 'ENOENT' || Date.now() >= until)
+                throw error;
+              await new Promise((done) => setTimeout(done, 100));
+            }
+          }
+        }
+      }
+    } finally {
+      await closeResources();
+    }
   } finally {
     try {
       await rm(directory, { recursive: true, force: true });

@@ -4,7 +4,7 @@ import { FOLLOW_RULES, headingFrame } from './follow.js';
 export { FOLLOW_RULES } from './follow.js';
 import { rememberedPlace, suspensionProblem } from './agency.js';
 import { canReachEntity, findApproachPath, sameSurfacePoint } from './spatial.js';
-import { supportedPosition, worldPosition } from './spatial-state.js';
+import { supportedPosition, worldPosition, worldSupport } from './spatial-state.js';
 import { portableItems } from './item-handling.js';
 import { accessiblePossession } from './object-access.js';
 import { itemFor } from './objects.js';
@@ -19,6 +19,27 @@ import { activityRequestDescriptors, bindActivityRequest } from './activity-host
 import type { Action, Command, Entity, Outcome, WorldState } from './types.js';
 
 export type WorkTransitionMode = 'continue' | 'enqueue' | 'replace' | 'interrupt';
+
+/** Captured native feasibility, never execution authority or future permission. */
+export type ActionReadiness =
+  | { kind: 'ready'; at: number }
+  | { kind: 'blocked'; at: number; reason: string; code?: string; nextAt?: number };
+export function actionReadiness(
+  result: Outcome | { outcome: Outcome; nextAt?: number },
+  at: number,
+): ActionReadiness {
+  const available = 'outcome' in result ? result.outcome : result;
+  return available.ok
+    ? { kind: 'ready', at }
+    : {
+        kind: 'blocked',
+        at,
+        reason: available.message,
+        ...(available.code ? { code: available.code } : {}),
+        ...('nextAt' in result && result.nextAt !== undefined ? { nextAt: result.nextAt } : {}),
+      };
+}
+
 /** One read-only proposal, not permission or another work queue. Recompute its
  * prerequisites at admission. docs/action-capabilities.md#prepared-choices-and-prospective-work-transitions */
 export interface ProspectiveWork {
@@ -77,6 +98,20 @@ export interface ActionChoice {
   purpose?: ResponsePurposeBinding;
   transition: WorkTransitionMode;
   expectedWork: ProspectiveWork['expected'];
+}
+/** Relative offsets retain the deciding body's actual frame across provider waits.
+ * Compare only this movement meaning, not a world or activity revision: ongoing
+ * travel can move/turn without changing its work identity. This is server-bound
+ * evidence, never a model-supplied movement argument. */
+export function captureActorFrame(world: WorldState, actorId: string): string | undefined {
+  const actor = entityGet(world.entities, actorId);
+  if (!actor?.actor || actor.placement?.mode !== 'world') return;
+  return canonicalJson({
+    position: worldPosition(actor),
+    support: worldSupport(actor),
+    heading: actor.spatial.heading,
+    life: actor.actor.physicalLife ?? 0,
+  });
 }
 export function bindNativeChoice(
   world: WorldState,
@@ -458,9 +493,14 @@ export function validActionInvocation(world: WorldState, raw: unknown): raw is A
               Number.isFinite(value) &&
               (field.minimum === undefined || value >= field.minimum) &&
               (field.maximum === undefined || value <= field.maximum)
-            : field.type === 'mode'
-              ? value === 'enqueue' || value === 'replace' || value === 'interrupt'
-              : isSafeRecordId(value) && value.length <= 120;
+            : // Source-owned choices can depend on this actor's received terms.
+              // Their exact current membership is checked by compileRequest, not
+              // against the unscoped installation's private-choice-free projection.
+              field.type === 'choice'
+              ? typeof value === 'string' && value.length > 0 && value.length <= 120
+              : field.type === 'mode'
+                ? value === 'enqueue' || value === 'replace' || value === 'interrupt'
+                : isSafeRecordId(value) && value.length <= 120;
       })
     );
   if (v.parameters != null) return false;

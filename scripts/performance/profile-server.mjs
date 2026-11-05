@@ -470,6 +470,7 @@ async function main() {
       domainCounters: appProfiling,
       externalProcessCuts: true,
       externalEventLoop: appProfiling,
+      externalProgressPollMs: 1000,
     },
     warmups: [],
     phases: [],
@@ -508,7 +509,7 @@ async function main() {
       ? (observedLoop = monitorEventLoopDelay({ resolution: 10 }))
       : undefined;
     loop?.enable();
-    return {
+    const phase = {
       before: performanceSnapshot(),
       nativeStart,
       nativeCounters,
@@ -521,8 +522,31 @@ async function main() {
       start: performance.now(),
       startedAtUnixMs: performance.timeOrigin + performance.now(),
     };
+    // Constant-size host/world reads, never an entity census or a storage query.
+    // Keep a chronological account even when expensive attribution is disabled.
+    phase.progress = [];
+    phase.progressCostMs = 0;
+    const sample = () => {
+      const started = performance.now();
+      const cpu = process.cpuUsage(phase.cpu);
+      phase.progress.push({
+        elapsedMs: started - phase.start,
+        simTime: game.service.world.simTime,
+        paused: game.service.paused,
+        speed: game.service.speed,
+        memoryBacklog: game.service.memoryBacklog,
+        storageError: game.service.storageError,
+        cpuMs: (cpu.user + cpu.system) / 1000,
+        rssBytes: process.memoryUsage.rss(),
+      });
+      phase.progressCostMs += performance.now() - started;
+    };
+    sample();
+    phase.progressTimer = setInterval(sample, 1000);
+    return phase;
   };
   const finishPhase = (phase) => {
+    clearInterval(phase.progressTimer);
     stopPhaseObserving?.();
     stopPhaseObserving = undefined;
     observeDomainCounters();
@@ -536,6 +560,8 @@ async function main() {
     return {
       startingSimTime: phase.sim,
       elapsedSeconds: elapsed,
+      progress: phase.progress,
+      progressSamplingMs: phase.progressCostMs,
       advancedSimSeconds: advanced,
       expectedSimSeconds: elapsed * config.baseRatio * game.service.speed,
       achievedSpeed: advanced / elapsed / config.baseRatio,

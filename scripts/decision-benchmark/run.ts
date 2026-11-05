@@ -15,6 +15,7 @@ import { groupByModel, summarize, type RunRecord } from './evaluate.js';
 import {
   armSupportsTask,
   executeArm,
+  benchmarkMacrofoldKey,
   preparedArmInput,
   benchmarkDeploymentPreparation,
   deploymentPreparationFailure,
@@ -538,10 +539,12 @@ export async function runBenchmark(
   if ((process.env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210') !== manifest.baseUrl)
     throw new Error('Cannot change Macrofold host on resume.');
   if (
-    manifest.models.some((m) => availableArms.get(m)!.transport.startsWith('macrofold')) &&
-    !process.env['MACROFOLD_API_KEY']?.trim()
+    manifest.models.some((m) => {
+      const arm = availableArms.get(m)!;
+      return arm.transport.startsWith('macrofold') && !benchmarkMacrofoldKey(arm).trim();
+    })
   )
-    throw new Error('Missing Macrofold key.');
+    throw new Error('Missing Macrofold credential for a selected model arm.');
   if (
     manifest.models.some((m) => availableArms.get(m)!.transport.startsWith('openai')) &&
     !process.env['OPENAI_API_KEY']?.trim()

@@ -1,8 +1,9 @@
 import { execFile } from 'node:child_process';
-import { readdir, open, lstat } from 'node:fs/promises';
+import { readdir, open, lstat, readFile } from 'node:fs/promises';
 import { resolve, join, relative } from 'node:path';
 import { promisify } from 'node:util';
 import { assetDataCategory, isAssetMediaPath, scanAssetPayload } from './assets/inventory.js';
+import { verifySnapshot } from './verification-workers/source.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const failures: string[] = [];
@@ -50,12 +51,21 @@ async function inspectPayload(path: string, label: string) {
 
 // Include unstaged additions while respecting Git ignores, so authors receive
 // the same feedback before and after adding a file to the index.
-const workingFiles = await promisify(execFile)(
-  'git',
-  ['ls-files', '--cached', '--others', '--exclude-standard', '-z'],
-  { cwd: root, maxBuffer: 8 * 1024 * 1024 },
-);
-for (const path of new Set(workingFiles.stdout.split('\0').filter(Boolean))) {
+const admittedManifest = process.env['OPENLEGEND_VERIFICATION_MANIFEST'];
+const captured = admittedManifest ? JSON.parse(await readFile(admittedManifest, 'utf8')) : null;
+if (captured) await verifySnapshot(root, captured);
+const workingFiles = captured
+  ? Object.keys(captured.files)
+  : (
+      await promisify(execFile)(
+        'git',
+        ['ls-files', '--cached', '--others', '--exclude-standard', '-z'],
+        { cwd: root, maxBuffer: 8 * 1024 * 1024 },
+      )
+    ).stdout
+      .split('\0')
+      .filter(Boolean);
+for (const path of new Set<string>(workingFiles)) {
   try {
     await inspectPayload(join(root, path), path);
   } catch (error) {

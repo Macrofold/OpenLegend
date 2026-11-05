@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { compactCommandInput, cooperationProposalInput } from './cooperation-input.js';
 import { validContributionTerms } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
@@ -15,7 +16,13 @@ import {
   type MindProposal,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
-import { buildContext, npcCandidates, candidateChoice } from './context.js';
+import {
+  buildContext,
+  npcCandidates,
+  candidateChoice,
+  immediateActionCandidates,
+  blockedActionCapabilities,
+} from './context.js';
 import type { WorldService } from './world-service.js';
 
 export const COGNITION_INSTRUCTIONS_VERSION = 'open-legend-cognition-v1';
@@ -139,6 +146,13 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         methodId: input.methodId!,
         bindings: input.bindings!,
         ...(input.resume ? { resume: true } : {}),
+      };
+    case 'express':
+      return {
+        ...base,
+        type: 'express',
+        verb: input.verb!,
+        ...(input.targetId ? { targetId: input.targetId } : {}),
       };
     case 'say':
       return {
@@ -455,7 +469,8 @@ export function cognitionContext(
   });
   if (recall.coverage.requiredMissing.length)
     throw new Error('Required memories do not fit this job.');
-  const candidates = npcCandidates(service, actorId);
+  const nativeCandidates = npcCandidates(service, actorId);
+  const candidates = immediateActionCandidates(nativeCandidates);
   const { innerWorld, memories, ...current } = buildContext(service, actorId, query);
   // Serialize only useful experience fields; actor IDs and retention metadata are
   // already bound by the server. Optional recall yields to the complete accepted mind.
@@ -524,6 +539,7 @@ export function cognitionContext(
     quotaUsage: quotaUsage(mind),
     recall: compactRecall,
     actions: candidates.map(({ id, description }) => ({ id, description })),
+    blockedCapabilities: blockedActionCapabilities(nativeCandidates),
   };
   const fits = () =>
     JSON.stringify(context).length <= 80000 && Buffer.byteLength(JSON.stringify(context)) <= 400000;
@@ -596,4 +612,4 @@ export function cognitionOpportunity(service: WorldService, actorId: string) {
     ? ('reflection' as const)
     : null;
 }
-export const fullCognitionJsonSchema = z.toJSONSchema(proposalSchema, { target: 'draft-7' });
+export const fullCognitionJsonSchema = modelJsonSchema(proposalSchema);

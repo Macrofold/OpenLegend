@@ -1,3 +1,4 @@
+import { selectedExpressions } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import { commandDescriptions, installedActionMeaning } from '@open-legend/domain';
 import {
@@ -76,6 +77,8 @@ function describeCommand(
     'Choose a supported action.';
   if (command.type === 'outing') return BASE_OUTING.description;
   switch (command.type) {
+    case 'express':
+      return selectedExpressions(world).find((d) => d.id === command.verb)?.description ?? common;
     case 'guard':
       return itemDefinition?.contactDefense
         ? `${equipmentChangeDescription(world, observation.actor.id, item!.id)}${itemDefinition.name}: ${guardDescription(itemDefinition.contactDefense)}`

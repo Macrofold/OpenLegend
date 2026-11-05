@@ -54,7 +54,7 @@ export interface ActivityHostDescriptor {
   ) => { value: boolean | undefined; depends: string[]; nextBoundary?: number };
   acceptsTarget?: (world: WorldState, targetId: string) => boolean;
   /** Trusted data projection from this world's installed policy; it grants no executor. */
-  requestDescriptors?: (world: WorldState) => ActivityRequestDescriptor[];
+  requestDescriptors?: (world: WorldState, actorId?: string) => ActivityRequestDescriptor[];
   compileRequest?: (
     world: WorldState,
     actorId: string,
@@ -68,7 +68,19 @@ export interface ActivityHostDescriptor {
     world: WorldState,
     actorId: string,
     observed?: ActivityRequestObservation,
+    query?: ActivityRequestChoiceQuery,
+    /** Restrict full-form discovery before preparing role domains. Exact field
+     * queries already name their family and do not use this optional filter. */
+    families?: readonly string[],
   ) => { choices: ActivityRequestChoice[]; warnings: string[] };
+  /** Permitted entity-role identities before dependent arguments are chosen.
+   * This is a reference closure, not parameter choices or execution authority. */
+  requestRoleEntityIds?: (
+    world: WorldState,
+    actorId: string,
+    requestId: string,
+    observed?: ActivityRequestObservation,
+  ) => Iterable<string>;
   /** Trusted role predicate after the caller has proved permitted disclosure. */
   requestChoice?: (
     world: WorldState,
@@ -76,6 +88,7 @@ export interface ActivityHostDescriptor {
     requestId: string,
     fieldId: string,
     candidateId: string,
+    arguments_?: Readonly<Record<string, string | number | boolean>>,
   ) => ActivityRequestChoice | undefined;
 }
 export interface ActivityActionMeaning {
@@ -147,12 +160,19 @@ export interface ActivityRequestObservation {
 export interface ActivityRequestChoice {
   id: string;
   label: string;
-  kind: 'entity' | 'definition';
+  kind: 'entity' | 'definition' | 'choice';
   roles: string[];
   requestIds?: string[];
   distance?: number;
   accessible: boolean;
   reason?: string;
+  /** Permitted parent associations, not authority to use another reference. */
+  requires?: Readonly<Record<string, string | number | boolean>>;
+}
+export interface ActivityRequestChoiceQuery {
+  family: string;
+  field: string;
+  arguments: Readonly<Record<string, string | number | boolean>>;
 }
 export interface ActivityRequest {
   family: string;
@@ -162,10 +182,21 @@ export interface ActivityRequest {
  * docs/projects/game-interaction-redesign-tech-design.md#replace-generic-activity-forms-with-semantic-presentations */
 export type ActivityRequestPresentation = {
   target: string;
-  workMode: string;
+  workMode?: string;
 } & (
   | { kind: 'replenish-session' }
   | { kind: 'outing-invitation'; destination: string }
+  | {
+      kind: 'cooperation-proposal';
+      destination?: string;
+      quarry?: string;
+      method?: string;
+      output?: string;
+      quantity?: string;
+      agreement?: string;
+      offer?: string;
+      opponent?: string;
+    }
   | {
       kind: 'resource-care';
       supply: string;
@@ -192,16 +223,32 @@ export type ActivityRequestField = {
   minimumDuration?: number;
   maximumDuration?: number;
   required: true;
+  /** Resolve these fields before querying this role; changing one invalidates dependents. */
+  dependencies?: readonly string[];
   discovery?: {
-    source: 'spatial' | 'storage' | 'materials';
+    source:
+      | 'spatial'
+      | 'storage'
+      | 'materials'
+      | 'known-places'
+      | 'definitions'
+      | 'outputs'
+      | 'choices';
     /** Materials from this selected source require current character evidence. */
     sourceField?: string;
   };
 } & (
   | { type: 'definition'; definitionKind: 'item' | 'recipe' }
+  | { type: 'choice'; choices: readonly { value: string; label: string }[]; definitionKind?: never }
   | { type: 'entity' | 'integer' | 'time' | 'mode'; definitionKind?: never }
 );
 export interface ActivityRequestDescriptor {
+  /** Complete direct meanings supplied by this form. This prunes optional
+   * concrete preparation only; it grants no permission or required-set omission. */
+  covers?: readonly {
+    type: Command['type'];
+    equals?: Readonly<Record<string, string | number | boolean>>;
+  }[];
   /** Exact native operations this composition needs; no equipment/material grant. */
   requires?: readonly Command['type'][];
   purposeLabel?: string;
@@ -212,12 +259,48 @@ export interface ActivityRequestDescriptor {
   presentation?: ActivityRequestPresentation;
   fields: Record<string, ActivityRequestField>;
 }
+/** Prepare once for the actor's optional catalogue. A compound request's
+ * prerequisites do not imply complete coverage of those primitive meanings. */
+export function prepareActivityRequestCoverage(requests: readonly ActivityRequestDescriptor[]) {
+  const byType = new Map<Command['type'], Array<Array<[string, string | number | boolean]>>>();
+  for (const request of requests)
+    for (const coverage of request.covers ?? []) {
+      const predicates = byType.get(coverage.type) ?? [];
+      predicates.push(Object.entries(coverage.equals ?? {}));
+      byType.set(coverage.type, predicates);
+    }
+  return <C extends Pick<Command, 'type'>>(command: C) =>
+    byType
+      .get(command.type)
+      ?.some((equals) =>
+        equals.every(
+          ([field, value]) => (command as unknown as Record<string, unknown>)[field] === value,
+        ),
+      ) ?? false;
+}
+
+export function activityRequestFieldDependencies(field: ActivityRequestField): readonly string[] {
+  return [
+    ...new Set([
+      ...(field.dependencies ?? []),
+      ...(field.discovery?.sourceField ? [field.discovery.sourceField] : []),
+    ]),
+  ];
+}
+/** Only a field with the declared work-mode meaning controls outer work handling.
+ * An unrelated literal parameter named "mode" keeps its own family semantics. */
+export function activityRequestWorkModeField(
+  request: ActivityRequestDescriptor,
+): string | undefined {
+  return Object.entries(request.fields).find(([, field]) => field.type === 'mode')?.[0];
+}
 export function activityHostRequests(
   world: WorldState,
   host: ActivityHostDescriptor,
+  actorId?: string,
 ): readonly ActivityRequestDescriptor[] {
   return host.requestDescriptors
-    ? host.requestDescriptors(world)
+    ? host.requestDescriptors(world, actorId)
     : (host.definition.requests ?? []);
 }
 export function validateInstalledActivityRequests(world: WorldState): void {
@@ -227,43 +310,136 @@ export function validateInstalledActivityRequests(world: WorldState): void {
       if (seen.has(request.id))
         throw new Error('Two installed hosts cannot own the same activity request.');
       seen.add(request.id);
+      if (Object.values(request.fields).filter((field) => field.type === 'mode').length > 1)
+        throw new Error('An activity request must identify at most one work-mode field.');
+      const visiting = new Set<string>(),
+        visited = new Set<string>();
+      const visit = (name: string): void => {
+        if (visited.has(name)) return;
+        if (visiting.has(name) || !Object.hasOwn(request.fields, name))
+          throw new Error(
+            'Activity request dependencies must name an acyclic set of declared fields.',
+          );
+        visiting.add(name);
+        for (const dependency of activityRequestFieldDependencies(request.fields[name]!))
+          visit(dependency);
+        visiting.delete(name);
+        visited.add(name);
+      };
+      for (const name of Object.keys(request.fields)) visit(name);
     }
 }
-export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
+export function activityRequestDescriptors(
+  world: WorldState,
+  actorId?: string,
+): ActivityRequestDescriptor[] {
   return selectedDescriptors(world)
-    .flatMap((host) => activityHostRequests(world, host))
+    .flatMap((host) => activityHostRequests(world, host, actorId))
     .filter(
       (request) =>
         request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
     );
 }
-export function activityRequestHost(world: WorldState, requestId: string) {
+function activityRequestOwner(world: WorldState, requestId: string, actorId?: string) {
   for (const host of selectedDescriptors(world)) {
-    if (
-      activityHostRequests(world, host).some(
-        (request) =>
-          request.id === requestId &&
-          request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
-      )
-    )
-      return host;
+    const descriptor = activityHostRequests(world, host, actorId).find(
+      (request) =>
+        request.id === requestId &&
+        request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
+    );
+    if (descriptor) return { host, descriptor };
   }
+}
+export function activityRequestHost(world: WorldState, requestId: string, actorId?: string) {
+  return activityRequestOwner(world, requestId, actorId)?.host;
+}
+/** Selected-family preparation binds its potential role identities without
+ * hydrating every target/parameter tuple in the installed catalogue. */
+export function activityRequestRoleEntityIds(
+  world: WorldState,
+  actorId: string,
+  requestId: string,
+  observed?: ActivityRequestObservation,
+): string[] {
+  const selected = activityRequestOwner(world, requestId, actorId);
+  if (!selected) throw new Error('The selected activity family is unavailable.');
+  const { host, descriptor } = selected;
+  if (!Object.values(descriptor.fields).some((field) => field.type === 'entity')) return [];
+  if (host.requestRoleEntityIds)
+    return [...new Set(host.requestRoleEntityIds(world, actorId, requestId, observed))];
+  if (!host.requestChoices)
+    throw new Error('The selected activity does not provide a complete role-reference closure.');
+  // Simple hosts already own bounded, independent field reads. Compound native
+  // hosts supply metadata above when dependent roles need a broader candidate
+  // namespace than their presently selectable parameters.
+  const ids = new Set<string>();
+  for (const [field, meaning] of Object.entries(descriptor.fields)) {
+    if (meaning.type !== 'entity') continue;
+    const selected = host.requestChoices(world, actorId, observed, {
+      family: requestId,
+      field,
+      arguments: {},
+    });
+    for (const choice of selected.choices)
+      if (
+        choice.kind === 'entity' &&
+        choice.roles.includes(field) &&
+        (!choice.requestIds || choice.requestIds.includes(requestId))
+      )
+        ids.add(choice.id);
+  }
+  return [...ids];
 }
 export function activityRequestChoices(
   world: WorldState,
   actorId: string,
   observed?: ActivityRequestObservation,
+  query?: ActivityRequestChoiceQuery,
+  families?: readonly string[],
 ) {
-  const supported = new Set(activityRequestDescriptors(world).map((request) => request.id));
-  const results = selectedDescriptors(world).flatMap((host) => {
+  // A dependent-field read needs only its actual actor-scoped owner. Enumerating
+  // every installed descriptor here repeats unrelated knowledge/form preparation
+  // for each parameter and can disagree with actor-specific availability.
+  const selected = query ? activityRequestOwner(world, query.family, actorId) : undefined;
+  const supported = new Set(
+    query
+      ? selected
+        ? [query.family]
+        : []
+      : (families ?? activityRequestDescriptors(world, actorId).map((request) => request.id)),
+  );
+  const hosts = query
+    ? selected
+      ? [selected.host]
+      : []
+    : families
+      ? [
+          ...new Set(
+            families.flatMap((family) => {
+              const owner = activityRequestOwner(world, family, actorId);
+              return owner ? [owner.host] : [];
+            }),
+          ),
+        ]
+      : selectedDescriptors(world);
+  const results = hosts.flatMap((host) => {
     return host.requestChoices &&
-      activityHostRequests(world, host).some((entry) => supported.has(entry.id))
-      ? [host.requestChoices(world, actorId, observed)]
+      (query || activityHostRequests(world, host, actorId).some((entry) => supported.has(entry.id)))
+      ? [host.requestChoices(world, actorId, observed, query, query ? undefined : families)]
       : [];
   });
   return {
     choices: results.flatMap((result) =>
       result.choices.flatMap((choice) => {
+        if (
+          query &&
+          (!choice.roles.includes(query.field) ||
+            (choice.requestIds && !choice.requestIds.includes(query.family)) ||
+            Object.entries(choice.requires ?? {}).some(
+              ([key, value]) => query.arguments[key] !== value,
+            ))
+        )
+          return [];
         if (!choice.requestIds) return [choice];
         const requestIds = choice.requestIds.filter((id) => supported.has(id));
         return requestIds.length ? [{ ...choice, requestIds }] : [];
@@ -280,17 +456,9 @@ export function bindActivityRequest(
   request: ActivityRequest,
   permittedEntityIds?: readonly string[],
 ): Command | Outcome {
-  for (const host of selectedDescriptors(world)) {
-    if (
-      activityHostRequests(world, host).some(
-        (descriptor) =>
-          descriptor.id === request.family &&
-          descriptor.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
-      ) &&
-      host.compileRequest
-    )
-      return host.compileRequest(world, actorId, id, request, permittedEntityIds);
-  }
+  const selected = activityRequestOwner(world, request.family, actorId);
+  if (selected?.host.compileRequest)
+    return selected.host.compileRequest(world, actorId, id, request, permittedEntityIds);
   return outcome(
     false,
     'unsupported-activity',
@@ -302,20 +470,12 @@ export function reviewActivityRequest(
   actorId: string,
   request: ActivityRequest,
 ): string[] {
-  for (const host of selectedDescriptors(world)) {
-    if (
-      activityHostRequests(world, host).some(
-        (entry) =>
-          entry.id === request.family &&
-          entry.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
-      )
-    ) {
-      const bound = host.compileRequest?.(world, actorId, 'review', request);
-      if (!bound || 'ok' in bound) return [];
-      return host.reviewRequest?.(world, actorId, request) ?? [];
-    }
-  }
-  return [];
+  const selected = activityRequestOwner(world, request.family, actorId);
+  if (!selected) return [];
+  const bound = selected.host.compileRequest?.(world, actorId, 'review', request);
+  return !bound || 'ok' in bound
+    ? []
+    : (selected.host.reviewRequest?.(world, actorId, request) ?? []);
 }
 /** A budget consumer must publish actual `spent` receipts and a conservative debit.
  * Deadline-safe stock movement is deliberately separate from this contract. */

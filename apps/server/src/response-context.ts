@@ -1,4 +1,10 @@
-import { entityGet, entityHas } from '@open-legend/domain';
+import {
+  canonicalJson,
+  entityGet,
+  entityHas,
+  type ActivityRequestChoice,
+  type ActivityRequestDescriptor,
+} from '@open-legend/domain';
 import { accessiblePossession, worldPosition } from '@open-legend/domain';
 import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
 import {
@@ -15,8 +21,110 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { gameTime } from './recall.js';
-import { experienceForModel, experienceModelBindings } from './perceived-context.js';
+import {
+  experienceForModel,
+  experienceModelBindings,
+  modelEvidenceReference,
+  MODEL_EXPERIENCE_MEANING,
+  orderedDecisionContext,
+  projectDecisionPresentation,
+} from './perceived-context.js';
 import type { WorldService } from './world-service.js';
+import type { DecisionActionOffer } from './context.js';
+import {
+  ACTIVITY_REQUEST_LABEL,
+  ACTIVITY_REQUEST_MEANING,
+  ACTIVITY_INVOCATION_INSTRUCTIONS,
+} from './navigation-contracts.js';
+import {
+  responseOperationEnabled,
+  responseOperationGuide,
+  RESPONSE_PORTRAYAL_GUIDE,
+  responseTaskInstructions,
+  type ResponseOperationKind,
+} from './cognition-contracts.js';
+import type { DecisionRequirements } from './decision-context-selection.js';
+const KNOWN_PLANNING_MEANING =
+  'These choices describe planning techniques, not actions guaranteed executable now. Prerequisites must be obtained first. These handles can be queued without a current action shortlist.';
+
+export interface ModelActivityRequests {
+  requests: ActivityRequestDescriptor[];
+  choices: Array<
+    Omit<ActivityRequestChoice, 'id'> & { entityId?: string; definitionId?: string; value?: string }
+  >;
+  warnings: string[];
+}
+
+/** Factor repeated transport metadata without selecting or shortening a choice.
+ * The authoritative catalogue and exact bindings keep their ordinary shape. */
+export function compactActivityRequests(catalogue: ModelActivityRequests) {
+  const shared = new Map<
+    string,
+    {
+      choice: Omit<ModelActivityRequests['choices'][number], 'requestIds'>;
+      requestIds?: Set<string>;
+    }
+  >();
+  for (const { requestIds, ...choice } of catalogue.choices) {
+    // Merge only the same complete fact. Combining different role or parent
+    // bindings would invent relationships between a form and its parameters.
+    const key = canonicalJson({ choice, scoped: requestIds !== undefined });
+    const prior = shared.get(key);
+    if (prior) for (const id of requestIds ?? []) prior.requestIds!.add(id);
+    else
+      shared.set(key, {
+        choice,
+        ...(requestIds ? { requestIds: new Set(requestIds) } : {}),
+      });
+  }
+  const groups = new Map<string, number>();
+  const choiceGroups: Array<
+    Pick<ActivityRequestChoice, 'kind' | 'roles' | 'accessible' | 'requestIds'>
+  > = [];
+  const choices = [...shared.values()].map(({ choice: sharedChoice, requestIds: familyIds }) => {
+    const { kind, roles, accessible, ...choice } = sharedChoice;
+    const requestIds = familyIds && [...familyIds];
+    const common = { kind, roles, accessible, ...(requestIds ? { requestIds } : {}) };
+    const key = canonicalJson(common);
+    let group = groups.get(key);
+    if (group === undefined) {
+      group = choiceGroups.length;
+      groups.set(key, group);
+      choiceGroups.push(common);
+    }
+    return { group, ...choice };
+  });
+  return {
+    // Native catalogue coverage is server preparation metadata, not model evidence.
+    requests: catalogue.requests.map(({ covers: _covers, ...request }) => request),
+    choiceGroups,
+    choices,
+    warnings: catalogue.warnings,
+    reading:
+      'Each choice inherits every field from choiceGroups[group], a zero-based metadata index, not an entity ID. Choices remain separate exact alternatives; group membership is not a requirement to perform them together.',
+  };
+}
+
+/** Judgment questions own the task. Reuse the actor's evidence and available forms
+ * without embedding the generator's response-format instructions in its state. */
+export function judgmentDecisionContext(context: Record<string, unknown>) {
+  context = projectDecisionPresentation(context);
+  const projected = Object.fromEntries(
+    Object.entries(context)
+      .filter(([key]) => !['knowledgeInstructions', 'navigation'].includes(key))
+      .map(([key, value]) => [
+        key,
+        key === 'activityRequests'
+          ? compactActivityRequests(value as ModelActivityRequests)
+          : value,
+      ]),
+  );
+  // Known techniques can matter before their materials are owned. Preserve their
+  // exact handles and costs without presenting planning vocabulary as feasibility.
+  if (Array.isArray(context['planOffers']) && context['planOffers'].length)
+    projected['planningMeaning'] = KNOWN_PLANNING_MEANING;
+  return orderedDecisionContext(projected);
+}
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
 export function responseTrigger(
@@ -62,11 +170,30 @@ export function responseTriggerContext(
       ? entityGet(world.entities, recipientId)
       : undefined;
   const observer = entityGet(world.entities, actorId);
+  const bindings = experienceModelBindings(
+    world,
+    actorId,
+    { source: 'awareness', value: aware },
+    'trigger',
+  );
+  const experience = experienceForModel({ source: 'awareness', value: aware }, bindings);
   return {
-    experience: experienceForModel(
-      { source: 'awareness', value: aware },
-      experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
-    ),
+    experience,
+    // Awareness.actorId identifies the observer, not necessarily the acting person.
+    // An unknown source stays unknown; contact alone does not identify an attacker.
+    participants: aware.speech
+      ? {
+          observer: experience.owner,
+          speaker: aware.sourceId ? (bindings.entities.get(aware.sourceId) ?? null) : null,
+          intendedAddressee: aware.targetId
+            ? (bindings.entities.get(aware.targetId) ?? null)
+            : null,
+        }
+      : {
+          observer: experience.owner,
+          perceivedSource: aware.sourceId ? (bindings.entities.get(aware.sourceId) ?? null) : null,
+          subject: aware.targetId ? (bindings.entities.get(aware.targetId) ?? null) : null,
+        },
     eventTime: gameTime(
       aware.at,
       world.statusEffectPolicy.clockOffsetHours,
@@ -95,39 +222,92 @@ export function responseTriggerContext(
   };
 }
 
+/** Keep current visibility/age/roles beside the cause, but reference the complete
+ * source already admitted to the request instead of copying its payload or words. */
+export function referenceTriggerContext(facts: Record<string, unknown>, index: number) {
+  return {
+    triggerFacts: { ...facts, experience: modelEvidenceReference(index) },
+    stimulus: `Current cause: ${modelEvidenceReference(index)}`,
+  };
+}
+
 export function readableDecisionContext(
   context: Record<string, unknown>,
-  actions: { id: string; description: string }[],
+  actions: DecisionActionOffer[],
   includeActions = false,
 ): string {
-  const capabilities = context['capabilities'] as
-    | { speech: boolean; expressions: boolean }
+  return renderDecisionContext(context, actions, includeActions).prompt;
+}
+
+/** Shared rendering lets final fitting measure only changed offers, rather than
+ * repeatedly formatting the unchanged identity, conversation and source bodies. */
+export function renderActionChoices(actions: readonly DecisionActionOffer[]): string {
+  return `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description} [mode=${action.mode}]`).join('\n') : 'No shortlisted mechanical action.'}\nI may propose an unlisted action. I should not prefer an existing action just because it is listed. A proposal is an intention, not a completed action; unsupported mechanics cannot execute. A useful partial interpretation must report omissions; uncertain revisions require explicit initiator acceptance, not automatic invention.`;
+}
+
+/** Keep the response-only supplement seam with the renderer, never by searching
+ * authored text for headings or serializing the complete selected context again. */
+export function renderDecisionContext(
+  context: Record<string, unknown>,
+  actions: DecisionActionOffer[],
+  includeActions = false,
+): { prompt: string; responseSupplementOffset: number; actionSectionBytes: number } {
+  context = projectDecisionPresentation(context);
+  const requirements = context['decisionRequirements'] as
+    | Pick<DecisionRequirements, 'question' | 'enabledSemantics'>
     | undefined;
-  // Stopping-time names and output families come from the world, never from this text.
-  const namedTimes = Array.isArray(context['namedTimes'])
-    ? (context['namedTimes'] as string[])
-    : [];
+  const allows = (operation: ResponseOperationKind) =>
+    responseOperationEnabled(requirements?.enabledSemantics, operation);
+  const actionsEnabled = allows('act') || allows('plan');
+  const capabilities = context['capabilities'] as
+    | { speech: boolean; expressions: string[] }
+    | undefined;
+  // Output families come from the selected world, never from this text.
   const outputs = Array.isArray(context['outputFamilies'])
     ? (context['outputFamilies'] as string[]).join(', ')
     : 'none supplied';
-  const expressionGuidance = capabilities?.expressions
-    ? 'Supported gestures: nod, smile, frown, wave, shrug, shake_head, slap. Expressions have no mechanical effects; a slap requires contact range.'
-    : 'This body has no supported gesture expressions. Do not use act.kind=expression or describe human gestures as performed.';
+  const supportsExpressions = !!capabilities?.expressions.length;
+  const expressionGuidance = !actionsEnabled
+    ? ''
+    : supportsExpressions
+      ? `Supported expressions:\n${((context['expressionDescriptions'] as string[]) ?? []).join('; ')}`
+      : 'This body has no supported gesture expressions; act.kind=expression is unavailable. Descriptive emotion in speech is still allowed and does not perform a gesture.';
+  const hasItems = (value: unknown): value is unknown[] => Array.isArray(value) && value.length > 0;
   const list = (value: unknown) =>
-    Array.isArray(value) && value.length
+    hasItems(value)
       ? value.map((line) => `- ${String(line).replace(/\n/g, '\n  ')}`).join('\n')
       : 'None supplied.';
+  const triggerFacts = context['triggerFacts'] as Record<string, unknown> | null | undefined;
+  const memories = hasItems(context['recall'])
+    ? [
+        `## Recalled memories\nReferences into the complete personal evidence array:\n${list(context['recall'])}`,
+      ]
+    : [];
+  const conversation = hasItems(context['conversation'])
+    ? [
+        `## Conversation so far\nReferences to selected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nEach referenced record preserves who spoke to whom. My own speech is not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+      ]
+    : [];
   const sections = [
-    `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']} ${context['feelings'] ?? ''}${context['carryingConcern'] ? `\n${context['carryingConcern']}` : ''}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; talk must be null.' : ''}`,
-    `## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`,
-    `## Trigger\n${context['stimulus']}`,
-    `## Trigger facts\n${JSON.stringify(context['triggerFacts'] ?? {})}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
-    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThese structured records preserve who experienced each event, acquisition, exact heard fragments and participant roles. Quoted words remain the speaker's words. Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
-    `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${(context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
-    `## Conversation so far\nSelected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+    `## Task\n${requirements?.question ?? responseTaskInstructions(triggerFacts?.['observerRelationship'] === 'addressed_speech')}`,
+    '## Context\nMy identity, present state, acquired evidence and available choices follow. These are information for my decision, not a checklist of things to mention or goals to adopt. Keep current facts, memories, claims and interpretations distinct.',
+    ...(triggerFacts
+      ? [
+          `## Current cause\n${JSON.stringify(triggerFacts)}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
+        ]
+      : []),
+    ...(context['stimulus'] ? [`## Trigger\n${context['stimulus']}`] : []),
+    `## Me\n${[context['identity'], context['aboutMe'], context['body'], context['feelings'], context['carryingConcern']].filter((value) => typeof value === 'string' && value.length > 0).join('\n')}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; do not emit talk operations.' : ''}`,
+    ...(hasItems(context['commitments']) || context['activityCoverage']
+      ? [`## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`]
+      : []),
+    `## Private intentions and native work\n${formatIntentions(context['agency'], requirements?.enabledSemantics)}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.${actionsEnabled || allows('goal') ? ' Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.' : ''}`,
+    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThis array is character.experience; an index reference is zero-based. ${MODEL_EXPERIENCE_MEANING} Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
+    ...conversation,
+    ...memories,
     ...(Array.isArray(context['planOffers']) && context['planOffers'].length
       ? [
-          `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
+          `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\n${KNOWN_PLANNING_MEANING}`,
         ]
       : []),
     ...(Array.isArray(context['intentActions']) && context['intentActions'].length
@@ -135,15 +315,32 @@ export function readableDecisionContext(
           `## Private intent controls\n${JSON.stringify(context['intentActions'] ?? [])}\nUse a known action handle to accept the exact revised action or withdraw an unresolved intent. Withdrawal does not cancel physical work; neither control can be queued in a plan. Never accept for another actor.`,
         ]
       : []),
-    `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved. Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.`,
     ...(Array.isArray(context['supplyOpportunities']) && context['supplyOpportunities'].length
       ? [`## Optional personal supply considerations\n${list(context['supplyOpportunities'])}`]
       : []),
-    `## Native navigation\n${context['navigation'] ?? ''}\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
-    `## Current time\n${context['now']} (simulation seconds: ${context['simTime'] ?? 'unavailable'})`,
-    ...(context['activityRequests']
+    ...(Array.isArray(context['blockedCapabilities']) && context['blockedCapabilities'].length
       ? [
-          `## Optional installed activity requests\n${JSON.stringify(context['activityRequests'])}\nThese are optional selected compositions, not goals or learned behavior. Use exact authored parameters only. Later native checks can refuse changed prerequisites.`,
+          `## Currently blocked capabilities\n${JSON.stringify(context['blockedCapabilities'])}\nThese are information, not selectable immediate actions. Native reasons and game-time recovery boundaries describe what must change; an unlisted proposal still requires native admission.`,
+        ]
+      : []),
+    ...(context['navigation'] || context['currentPosition']
+      ? [
+          `## ${actionsEnabled ? 'Native navigation' : 'Current position and known places'}\n${context['navigation'] ?? ''}${context['spatialPerspective'] ? `\n${context['spatialPerspective']}` : ''}${context['currentPosition'] ? `\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport'] ?? 'unavailable'}` : ''}${context['currentFacing'] ? `\nFacing in world X/Z directions: ${JSON.stringify(context['currentFacing'])}` : ''}${hasItems(context['publicSurfaces']) ? `\nPublic supports: ${JSON.stringify(context['publicSurfaces'])}` : ''}${context['publicSurfacesCoverage'] ? `\n${context['publicSurfacesCoverage']}` : ''}`,
+        ]
+      : []),
+    ...(context['now'] || typeof context['simTime'] === 'number'
+      ? [
+          `## Current time\n${context['now'] ?? ''}${typeof context['simTime'] === 'number' ? ` (simulation seconds: ${context['simTime']})` : ''}`,
+        ]
+      : []),
+    ...(hasItems(context['activityDirectory'])
+      ? [
+          `## Additional supported activities\n${JSON.stringify(context['activityDirectory'])}\nInvocation details for these additional families are not included in this response. Complete activity forms below supply the exact parameters for direct invocation. A family description alone supplies no parameter values or permission to execute.`,
+        ]
+      : []),
+    ...(actionsEnabled && context['activityRequests']
+      ? [
+          `## ${ACTIVITY_REQUEST_LABEL}\n${ACTIVITY_REQUEST_MEANING}\n${JSON.stringify(compactActivityRequests(context['activityRequests'] as ModelActivityRequests))}\nChoose act.kind "invoke" for one of these activity forms. ${ACTIVITY_INVOCATION_INSTRUCTIONS} If a parameter declares a work mode, keep it equal to act.mode.`,
         ]
       : []),
     ...(context['inspectedContainer']
@@ -157,29 +354,83 @@ export function readableDecisionContext(
     ...(context['inspectedMethods']
       ? [`## Activities I chose to inspect\n${list(context['inspectedMethods'])}`]
       : []),
-    `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
-    `## Nearby actors and objects\n${list(context['surroundings'])}${Array.isArray(context['contacts']) && context['contacts'].length ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
-    `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
-    `## General knowledge notepad\n${JSON.stringify(context['notepad'] ?? {})}`,
-    `## Knowledge\n${list(context['knowledge'])}`,
+    ...(hasItems(context['surroundings']) || hasItems(context['contacts'])
+      ? [
+          `## Nearby actors and objects\n${list(context['surroundings'])}${hasItems(context['contacts']) ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
+        ]
+      : []),
+    ...(hasItems(context['possessions']) || context['inventoryCoverage']
+      ? [
+          `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
+        ]
+      : []),
+    ...(context['notepad']
+      ? [`## General knowledge notepad\n${JSON.stringify(context['notepad'])}`]
+      : []),
+    ...(hasItems(context['knowledge']) ? [`## Knowledge\n${list(context['knowledge'])}`] : []),
   ];
-  if (includeActions)
-    sections.push(
-      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description}`).join('\n') : 'No shortlisted mechanical action.'}\nI may propose an unlisted action. I should not prefer an existing action just because it is listed. A proposal is an intention, not a completed action; unsupported mechanics cannot execute. A useful partial interpretation must report omissions; uncertain revisions require explicit initiator acceptance, not automatic invention.`,
-    );
-  sections.push(
-    `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 40000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier operation localIds only, never entity IDs; [] for independent speech), and exactly one non-null field among talk, act, think, goal, plan, note, name, appraise; all seven unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
-Speech: talk={"text":"words","addresseeEntityId":null,"selfIntroduction":null,"volume":"normal"}, max 1200 characters. Use null for ambient speech or copy one permitted ID for directed speech; never inherit a prior recipient. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
-Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"slots":null,"mode":"enqueue|replace|interrupt"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ${namedTimes.length ? `until ${namedTimes.join('|')}` : 'until null (this world names no stopping times)'}; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
-Goal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.
-Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ${outputs} supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
-${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}
-Examples: empty {"operations":[]}; speech alone {"operations":[{"localId":"reply","requiresAccepted":[],"talk":{"text":"Hello.","addresseeEntityId":"COPY_PERMITTED_ID","selfIntroduction":null,"volume":"normal"},"act":null,"think":null,"goal":null,"plan":null,"note":null,"name":null,"appraise":null}]}; combined decisions can contain separate speech and thought operations, repeated kinds, or a goal creation followed by a plan requiring that goal's admission. Never invent a goal or thought just to fill the schema. No reasoning transcript or fabricated completion.`,
-  );
+  const actionSection = includeActions && actionsEnabled ? renderActionChoices(actions) : '';
+  if (includeActions && actionsEnabled) sections.push(actionSection);
+  // Schema-use and optional-silence guidance improved matched responses beyond the schema alone.
+  // docs/verification/cognition-lab-native-model-study.md#october-28--prompt-voice-and-context-comparison
+  const responseRules = [
+    `## Response rules\n${responseOperationGuide(requirements?.enabledSemantics)}`,
+    allows('talk') ? RESPONSE_PORTRAYAL_GUIDE : '',
+    actionsEnabled
+      ? 'Proposals preserve exact references, amounts and qualifiers in slots: quantityMode exact means units handled; held means total to carry afterward.'
+      : '',
+    [
+      allows('goal') ? 'Goals are private intentions; marking one complete grants no reward.' : '',
+      allows('goal') || allows('plan')
+        ? `Copy current ${allows('goal') && allows('plan') ? 'goal/plan revisions' : allows('goal') ? 'goal revisions' : 'plan revisions'}.`
+        : '',
+      allows('plan')
+        ? `Plans wait for actual earlier completion, recheck prerequisites and stop on failure; a new goal alias "$localId" requires that earlier goal's admission. Only ${outputs} supply a single item receipt for later equip/eat steps; do not invent future item IDs. Empty or blocked work does not require restarting it.`
+        : '',
+      actionsEnabled
+        ? 'Native navigation and installed requests retain their exact parameters and work modes.'
+        : '',
+    ]
+      .filter(Boolean)
+      .join(' '),
+    allows('note') || allows('name') || allows('talk')
+      ? (context['knowledgeInstructions'] ?? '')
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
   sections.push(`## References
-Names are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID. Include (ID:token) in an unlisted proposal when identifying its target.
-${list(context['references'])}`);
-  return sections.join('\n\n');
+Names are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID.${actionsEnabled ? ' Include (ID:token) in an unlisted proposal when identifying its target.' : ''}
+${list((context['references'] as ResponseReference[] | undefined)?.map(responseReferenceText))}`);
+  const responseSupplementOffset = sections.reduce(
+    (size, section, index) => size + section.length + (index ? 2 : 0),
+    0,
+  );
+  sections.push(responseRules);
+  return {
+    prompt: sections.join('\n\n'),
+    responseSupplementOffset,
+    actionSectionBytes: Buffer.byteLength(actionSection),
+  };
+}
+
+/** Readable permitted directory data; native IDs and authority remain in the binding. */
+export interface ResponseReference {
+  entityId: string | undefined;
+  label: string;
+  relation?: string;
+  species?: string;
+  position?: ReturnType<typeof worldPosition>;
+  noteRevision?: number;
+  noteCharacters?: number;
+  nameRevision?: number;
+  knowledgeBinding?: 'unresolved';
+  triggerRoles?: { evidenceId: string; role: string }[];
+}
+
+/** Prose is the encoding boundary; structured callers retain the original row. */
+export function responseReferenceText(reference: ResponseReference): string {
+  return JSON.stringify(reference);
 }
 
 /** Only visible or explicitly perceived identities enter the reference contract. */
@@ -239,16 +490,16 @@ export function responseReferences(
     (id) => !ids.includes(id) && accessiblePossession(world, actorId, id),
   );
   const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
-  const references = ids.map((id) => {
+  const references = ids.map((id): ResponseReference => {
     const entity = entityGet(world.entities, id);
     const rememberedLabel = rememberedLabels.get(id);
     if (!entity)
-      return JSON.stringify({
+      return {
         entityId: handles.get(id),
         label: rememberedLabel ?? 'Remembered individual',
         relation: 'remembered identity; current body and location unavailable',
-      });
-    return JSON.stringify({
+      };
+    return {
       entityId: entityHandles(world, actorId).get(id),
       label: recognizedIds.has(id)
         ? entityLabel(world, entity, actorId)
@@ -265,25 +516,21 @@ export function responseReferences(
             nameRevision: world.observerIdentities?.[actorId]?.[id]?.revision ?? 0,
           }
         : { knowledgeBinding: 'unresolved' }),
-      triggerRoles: roles.get(id) ?? [],
-    });
+      ...(roles.has(id) ? { triggerRoles: roles.get(id)! } : {}),
+    };
   });
   for (const id of possessions)
-    references.push(
-      JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
-        relation: 'my possession',
-      }),
-    );
+    references.push({
+      entityId: entityHandles(world, actorId).get(id),
+      label: entityLabel(world, entityGet(world.entities, id)!, actorId),
+      relation: 'my possession',
+    });
   for (const id of piled)
-    references.push(
-      JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
-        relation: 'lying in a visible pile',
-      }),
-    );
+    references.push({
+      entityId: entityHandles(world, actorId).get(id),
+      label: entityLabel(world, entityGet(world.entities, id)!, actorId),
+      relation: 'lying in a visible pile',
+    });
   const inspected = [...new Set(inspectedIds)].filter(
     (id) =>
       !ids.includes(id) &&
@@ -292,13 +539,11 @@ export function responseReferences(
       entityHas(world.entities, id),
   );
   for (const id of inspected)
-    references.push(
-      JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
-        relation: 'current permitted activity choice or inspected container page',
-      }),
-    );
+    references.push({
+      entityId: entityHandles(world, actorId).get(id),
+      label: entityLabel(world, entityGet(world.entities, id)!, actorId),
+      relation: 'current permitted activity choice or inspected container page',
+    });
   const all = [...ids, ...possessions, ...piled, ...inspected];
   const completeHandles = experienceEntityReferences(world, actorId, all);
   return {
@@ -308,7 +553,7 @@ export function responseReferences(
   };
 }
 
-function formatIntentions(value: unknown): string {
+function formatIntentions(value: unknown, enabledSemantics?: readonly string[]): string {
   const agency = value as
     | {
         goals?: { id: string; revision: number; objective: string; status: string }[];
@@ -320,14 +565,17 @@ function formatIntentions(value: unknown): string {
       }
     | undefined;
   return [
-    ...(agency?.goals ?? []).map((goal) => `${goal.status} goal: ${goal.objective}`),
     typeof agency?.plan === 'string' ? agency.plan : 'No remaining work supplied.',
     ...(typeof agency?.paused === 'string' ? [agency.paused] : []),
     ...(agency?.outcomeCoverage ? [agency.outcomeCoverage] : []),
-    `For structured plan changes, current plan revision: ${agency?.planRevision ?? 0}.`,
+    ...(responseOperationEnabled(enabledSemantics, 'plan')
+      ? [`For structured plan changes, current plan revision: ${agency?.planRevision ?? 0}.`]
+      : []),
     ...(agency?.goals?.length
       ? [
-          `Goal controls for structured goal changes: ${JSON.stringify(agency.goals.map(({ id, revision, objective }) => ({ id, revision, objective })))}`,
+          responseOperationEnabled(enabledSemantics, 'goal')
+            ? `Goals and their current controls: ${JSON.stringify(agency.goals.map(({ id, revision, objective, status }) => ({ id, revision, objective, status })))}`
+            : `Goals: ${JSON.stringify(agency.goals.map(({ objective, status }) => ({ objective, status })))}`,
         ]
       : []),
     ...(agency?.attempts ?? []).map((attempt) => `Unresolved intention: ${attempt.description}`),

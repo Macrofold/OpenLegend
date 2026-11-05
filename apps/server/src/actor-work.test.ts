@@ -99,13 +99,13 @@ describe('character work waits for its captured evidence to be saved', () => {
     work.refresh(world, (id) => [id === NPC_ID ? value : 1], 'timeline', [NPC_ID, PLAYER_ID]);
     value++;
     work.refreshAffected(world, [NPC_ID]);
-    expect(work.ready(now, 0)).toEqual([NPC_ID, PLAYER_ID]);
+    expect(work.ready(now, 0).actors).toEqual([NPC_ID, PLAYER_ID]);
     work.defer(NPC_ID, 1000);
     work.defer(NPC_ID, 2000);
     now = 1000;
-    expect(work.ready(now, 0)).toEqual([PLAYER_ID]);
+    expect(work.ready(now, 0).actors).toEqual([PLAYER_ID]);
     now = 2000;
-    expect(work.ready(now, 0)).toEqual([NPC_ID, PLAYER_ID]);
+    expect(work.ready(now, 0).actors).toEqual([NPC_ID, PLAYER_ID]);
   });
 
   it('starts an overdue review age only when eligibility and durability permit it', () => {
@@ -116,14 +116,14 @@ describe('character work waits for its captured evidence to be saved', () => {
     work.refresh(world, () => [1], 'timeline', [NPC_ID, PLAYER_ID]);
     expect(work.inspected(NPC_ID, 10, work.capture(world, NPC_ID), world, 'timeline')).toBe(true);
     now = 20_000;
-    expect(work.ready(now, 20, (id) => id !== NPC_ID)).toEqual([PLAYER_ID]);
+    expect(work.ready(now, 20, (id) => id !== NPC_ID).actors).toEqual([PLAYER_ID]);
     expect(work.pending(NPC_ID)?.since).toBeUndefined();
     durable = false;
-    expect(work.ready(now, 20)).toEqual([]);
+    expect(work.ready(now, 20).actors).toEqual([]);
     expect(work.pending(NPC_ID)?.since).toBeUndefined();
     durable = true;
     now++;
-    expect(work.ready(now, 20)).toEqual([PLAYER_ID, NPC_ID]);
+    expect(work.ready(now, 20).actors).toEqual([PLAYER_ID, NPC_ID]);
     expect(work.pending(NPC_ID)?.since).toBe(now);
     expect(work.pending(NPC_ID)?.reasons).toContain('reminder');
   });
@@ -137,16 +137,16 @@ describe('character work waits for its captured evidence to be saved', () => {
       current: (ticket) => ticket <= saved,
     });
     work.refresh(world, () => [1], 'timeline', [NPC_ID]);
-    expect(work.ready(100, 0)).toEqual([]);
+    expect(work.ready(100, 0).actors).toEqual([]);
     required = 3;
     work.refresh(world, () => [1], 'timeline', [NPC_ID]);
     saved = 2;
-    expect(work.ready(100, 0)).toEqual([NPC_ID]);
-    expect(work.ready(100, 0)).toEqual([NPC_ID]); // Repeated readiness checks do not acknowledge work.
+    expect(work.ready(100, 0).actors).toEqual([NPC_ID]);
+    expect(work.ready(100, 0).actors).toEqual([NPC_ID]); // Repeated readiness checks do not acknowledge work.
     expect(work.inspected(NPC_ID, Infinity, work.capture(world, NPC_ID), world, 'timeline')).toBe(
       true,
     );
-    expect(work.ready(100, 0)).toEqual([]);
+    expect(work.ready(100, 0).actors).toEqual([]);
   });
 
   it('does not acknowledge a newer wake with an older completion', () => {
@@ -162,9 +162,9 @@ describe('character work waits for its captured evidence to be saved', () => {
     required = 2;
     work.wake(NPC_ID, { reason: 'evidence', urgency: 8 });
     expect(work.inspected(NPC_ID, Infinity, earlier, world, 'timeline')).toBe(false);
-    expect(work.ready(100, 0)).toEqual([]);
+    expect(work.ready(100, 0).actors).toEqual([]);
     saved = 2;
-    expect(work.ready(100, 0)).toEqual([NPC_ID]);
+    expect(work.ready(100, 0).actors).toEqual([NPC_ID]);
   });
 
   it('reconstructs readiness on a new timeline and rejects the abandoned capture', () => {
@@ -180,6 +180,6 @@ describe('character work waits for its captured evidence to be saved', () => {
     required = saved = 3;
     work.refresh(world, () => [1], 'restored', [NPC_ID]);
     expect(work.inspected(NPC_ID, Infinity, earlier, world, 'restored')).toBe(false);
-    expect(work.ready(100, 0)).toEqual([NPC_ID]);
+    expect(work.ready(100, 0).actors).toEqual([NPC_ID]);
   });
 });

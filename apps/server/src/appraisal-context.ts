@@ -18,6 +18,7 @@ import {
   type AppraisalEvidence,
   type WorldState,
   type AppraisalScope,
+  type ExperienceSourceReference,
 } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
@@ -36,6 +37,9 @@ interface AppraisalPreparation {
   guard?: 'all' | 'required';
   /** The caller includes the exact complete character.experience array. */
   sharedExperiences?: ReadonlyMap<string, SharedModelExperience>;
+  /** Fixed feeling/policy wording already measured at the decision's source time. */
+  contextSnapshot?: ReturnType<typeof captureDecisionAppraisalContext>;
+  experienceRoot?: string;
 }
 
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
@@ -50,6 +54,159 @@ function selectedFeelings(world: WorldState, actorId: string, required: readonly
       ].map((value) => [value.id, value]),
     ).values(),
   ];
+}
+
+function appraisalContextState(
+  world: WorldState,
+  actorId: string,
+  purpose: 'decision' | 'reflection',
+  required: readonly AppraisalScope[] = [],
+) {
+  const permitted = (
+    definition: NonNullable<WorldState['moduleManifest']['appraisals']>['definitions'][number],
+  ) => (purpose === 'decision' ? definition.decision : definition.reflection);
+  const records = new Map(
+    selectedFeelings(world, actorId, required).map((value, index) => [
+      `feeling${index + 1}`,
+      value,
+    ]),
+  );
+  const recordDefinitions = new Map(
+    [...records].map(([handle, record]) => [
+      handle,
+      appraisalDefinition(world, record.definitionPin),
+    ]),
+  );
+  const definitions = new Map(
+    (world.moduleManifest.appraisals?.definitions ?? [])
+      .filter(permitted)
+      .map((definition, index) => [`policy${index + 1}`, definition]),
+  );
+  return { records, recordDefinitions, definitions, permitted };
+}
+
+type AppraisalContextSource = {
+  handle: string;
+  experience: ReturnType<typeof experienceForModel> | { reference: string };
+  coverage: AppraisalEvidence['coverage'];
+  subjects: string[];
+};
+
+const appraisalSourceOrder = (a: { id: string; kind: string }, b: { id: string; kind: string }) =>
+  a.id < b.id ? -1 : a.id > b.id ? 1 : a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0;
+
+function renderAppraisalContext(
+  state: ReturnType<typeof appraisalContextState>,
+  subjects: Record<string, string>,
+  sources: AppraisalContextSource[],
+  shared: boolean,
+  experienceRoot = 'character.experience',
+) {
+  const byId = new Map(Object.entries(subjects).map(([handle, id]) => [id, handle]));
+  return {
+    ...(shared
+      ? {
+          sourceReferences: `An experience.reference names the exact complete record at ${experienceRoot}[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.`,
+        }
+      : {}),
+    feelings: [...state.records].map(([handle, record]) => ({
+      handle,
+      revision: record.revision,
+      label: record.feeling,
+      subject: record.targetId === null ? null : (byId.get(record.targetId) ?? null),
+      value: record.value,
+      lifetime: record.lifetime,
+      coverage: record.coverage,
+      editable: (() => {
+        const definition = state.recordDefinitions.get(handle);
+        return !!definition && state.permitted(definition);
+      })(),
+    })),
+    policies: [...state.definitions].map(([handle, definition]) => ({
+      handle,
+      label: definition.label,
+      value: definition.value,
+      lifetime: definition.lifetime.kind,
+    })),
+    sources,
+  };
+}
+
+/** Capture fixed interpretation capabilities once. Optional fitting projects only
+ * already-selected complete sources; it performs no reads or native effects. */
+export function captureDecisionAppraisalContext(
+  world: WorldState,
+  actorId: string,
+  purpose: 'decision' | 'reflection' = 'decision',
+) {
+  const original = appraisalContextState(world, actorId, purpose);
+  const state = {
+    ...original,
+    records: structuredClone(original.records),
+    definitions: structuredClone(original.definitions),
+    recordDefinitions: structuredClone(original.recordDefinitions),
+  };
+  const capturedState = canonicalJson(world.appraisals?.[actorId] ?? {});
+  const capturedPolicies = canonicalJson(world.moduleManifest.appraisals ?? null);
+  const project = (input: {
+    evidenceIds: readonly string[];
+    sharedExperiences: ReadonlyMap<string, SharedModelExperience>;
+    entityReferences: Record<string, string>;
+    triggerEvidenceId?: string;
+  }) => {
+    const ids = new Set(
+      [
+        ...new Set([
+          ...(input.triggerEvidenceId ? [input.triggerEvidenceId] : []),
+          ...input.evidenceIds,
+        ]),
+      ].slice(0, 48),
+    );
+    const selected = [...input.sharedExperiences]
+      .map(([key, shared]) => {
+        const [kind, id] = JSON.parse(key) as [string, string];
+        return { kind, id, shared };
+      })
+      .filter(({ id }) => ids.has(id))
+      .sort(appraisalSourceOrder);
+    // Match native binding's first exact permitted handle per original subject.
+    // A second directory alias must not create another appraisal subject.
+    const subjectHandles = new Map<string, string>();
+    for (const [handle, id] of Object.entries(input.entityReferences))
+      if (!subjectHandles.has(id)) subjectHandles.set(id, handle);
+    const sources: AppraisalContextSource[] = selected.map(({ shared }, index) => {
+      return {
+        handle: `cause${index + 1}`,
+        experience: {
+          reference: `${purpose === 'reflection' ? 'experience' : 'character.experience'}[${shared.index}]`,
+        },
+        coverage: shared.acquisition,
+        subjects: shared.subjectIds.flatMap((id) => {
+          const handle = subjectHandles.get(id);
+          return handle ? [handle] : [];
+        }),
+      };
+    });
+    return renderAppraisalContext(
+      state,
+      input.entityReferences,
+      sources,
+      input.sharedExperiences.size > 0,
+      purpose === 'reflection' ? 'experience' : 'character.experience',
+    );
+  };
+  return {
+    project,
+    render: (
+      subjects: Record<string, string>,
+      sources: AppraisalContextSource[],
+      shared: boolean,
+      experienceRoot?: string,
+    ) => renderAppraisalContext(state, subjects, sources, shared, experienceRoot),
+    current: (current: WorldState) =>
+      capturedState === canonicalJson(current.appraisals?.[actorId] ?? {}) &&
+      capturedPolicies === canonicalJson(current.moduleManifest.appraisals ?? null),
+  };
 }
 export function decisionFeelings(
   world: WorldState,
@@ -111,13 +268,23 @@ async function bindAppraisals(
   const requested = [...new Set(evidenceIds)];
   if (completeSources && requested.length > 48)
     throw new Error('The complete appraisal source set exceeds its admitted work limit.');
-  const selected =
-    scope && repository
-      ? await repository.appraisalSources(
-          scope,
-          completeSources ? requested : requested.slice(0, 48),
-        )
-      : [];
+  const requestedIds = completeSources ? requested : requested.slice(0, 48);
+  const exactSources = preparation.contextSnapshot
+    ? [...(preparation.sharedExperiences ?? [])].flatMap(([key, source]) => {
+        const [kind, id] = JSON.parse(key) as [ExperienceSourceReference['kind'], string];
+        return requestedIds.includes(id) ? [{ kind, id, revision: source.revision }] : [];
+      })
+    : undefined;
+  const resolved =
+    scope && repository ? await repository.appraisalSources(scope, requestedIds, exactSources) : [];
+  // A measured ordinary request grants exact selected sources, not additional
+  // records which happen to alias the same event ID. Keep source kinds distinct.
+  const selected = resolved.sort((a, b) =>
+    appraisalSourceOrder(
+      { id: a.memory.id, kind: a.sourceKind },
+      { id: b.memory.id, kind: b.sourceKind },
+    ),
+  );
   if (
     completeSources &&
     requested.some(
@@ -158,25 +325,8 @@ async function bindAppraisals(
   const installed = world.moduleManifest.appraisals;
   const knowledgeRevision = world.knowledgeRevisions?.[actorId];
   const ownerAccount = world.authorship.playerAccountIds[actorId];
-  const permitted = (definition: NonNullable<typeof installed>['definitions'][number]) =>
-    purpose === 'decision' ? definition.decision : definition.reflection;
-  const records = new Map(
-    selectedFeelings(world, actorId, requiredFeelings).map((value, index) => [
-      `feeling${index + 1}`,
-      value,
-    ]),
-  );
-  const recordDefinitions = new Map(
-    [...records].map(([handle, record]) => [
-      handle,
-      appraisalDefinition(world, record.definitionPin),
-    ]),
-  );
-  const definitions = new Map(
-    (world.moduleManifest.appraisals?.definitions ?? [])
-      .filter(permitted)
-      .map((definition, index) => [`policy${index + 1}`, definition]),
-  );
+  const contextState = appraisalContextState(world, actorId, purpose, requiredFeelings);
+  const { permitted, records, recordDefinitions, definitions } = contextState;
   const proof = selected.map(memorySourceProof);
   const sourceCurrent = async () =>
     generation === service.generation &&
@@ -204,6 +354,7 @@ async function bindAppraisals(
   };
   const sourcesCurrent = async () =>
     feelingsCurrent() &&
+    (!preparation.contextSnapshot || preparation.contextSnapshot.current(service.world)) &&
     (installed === service.world.moduleManifest.appraisals ||
       canonicalJson(installed ?? null) ===
         canonicalJson(service.world.moduleManifest.appraisals ?? null)) &&
@@ -231,6 +382,63 @@ async function bindAppraisals(
     }
     return sourcesCurrent();
   };
+  // Bind source identity and complete observer wording once. Different request
+  // consumers can then share their exact selected evidence without a reread or
+  // rebinding the stable cause handles used by native appraisal admission.
+  const contextSources = [...sources].map(([handle, source], index) => {
+    const entry = selected[index]!,
+      experience = experienceForModel(
+        entry.entry,
+        experienceModelBindings(world, actorId, entry.entry, handle),
+      );
+    return {
+      key: experienceEntryKey(entry.entry),
+      revision: entry.revision,
+      rendered: canonicalJson({ ...experience, handle: null }),
+      value: {
+        handle,
+        experience,
+        coverage: source.coverage,
+        subjects: source.subjectIds.flatMap((id) => {
+          const reference = subjectRef(id);
+          return reference ? [reference] : [];
+        }),
+      },
+    };
+  });
+  const renderContext =
+    preparation.contextSnapshot?.render ??
+    ((
+      subjects: Record<string, string>,
+      sources: AppraisalContextSource[],
+      shared: boolean,
+      experienceRoot?: string,
+    ) => renderAppraisalContext(contextState, subjects, sources, shared, experienceRoot));
+  const projectContext = (
+    sharedExperiences?: ReadonlyMap<string, SharedModelExperience>,
+    experienceRoot = preparation.experienceRoot ?? 'character.experience',
+  ) =>
+    renderContext(
+      subjects,
+      contextSources.map(({ key, revision, rendered, value }) => {
+        const shared = sharedExperiences?.get(key);
+        // A matching ID/revision cannot replace differently projected wording.
+        if (
+          shared &&
+          (shared.revision !== revision ||
+            canonicalJson({ ...shared.experience, handle: null }) !== rendered)
+        )
+          throw new Error('A shared appraisal source changed version or permitted perspective.');
+        return {
+          ...value,
+          experience: shared
+            ? { reference: `${experienceRoot}[${shared.index}]` }
+            : value.experience,
+        };
+      }),
+      !!sharedExperiences?.size,
+      experienceRoot,
+    );
   return {
     current,
     sourceCurrent,
@@ -250,66 +458,14 @@ async function bindAppraisals(
           })
         : variants[0];
     },
-    context: {
-      ...(preparation.sharedExperiences?.size
-        ? {
-            sourceReferences:
-              'An experience.reference names the exact complete record at character.experience[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
-          }
-        : {}),
-      feelings: [...records].map(([handle, record]) => ({
-        handle,
-        revision: record.revision,
-        label: record.feeling,
-        subject: subjectRef(record.targetId),
-        value: record.value,
-        lifetime: record.lifetime,
-        coverage: record.coverage,
-        editable: (() => {
-          const definition = recordDefinitions.get(handle);
-          return !!definition && permitted(definition);
-        })(),
-      })),
-      policies: [...definitions].map(([handle, definition]) => ({
-        handle,
-        label: definition.label,
-        value: definition.value,
-        lifetime: definition.lifetime.kind,
-      })),
-      sources: [...sources].map(([handle, source], index) => {
-        const entry = selected[index]!,
-          experience = experienceForModel(
-            entry.entry,
-            experienceModelBindings(world, actorId, entry.entry, handle),
-          ),
-          shared = preparation.sharedExperiences?.get(experienceEntryKey(entry.entry));
-        // Exact private identity and revision are necessary but not enough: a
-        // changed observer projection must retain its own complete wording.
-        const same =
-          shared?.revision === entry.revision &&
-          canonicalJson({ ...shared.experience, handle: null }) ===
-            canonicalJson({ ...experience, handle: null });
-        return {
-          handle,
-          experience: same ? { reference: `character.experience[${shared.index}]` } : experience,
-          coverage: source.coverage,
-          subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
-        };
-      }),
-    },
+    context: projectContext(preparation.sharedExperiences, preparation.experienceRoot),
+    projectContext,
     resolve(proposals: AppraisalProposal[]): AppraisalChange[] {
       const changes: AppraisalChange[] = proposals.map((proposal) => {
-        const existing = proposal.appraisal ? records.get(proposal.appraisal) : undefined;
+        const existing = 'appraisal' in proposal ? records.get(proposal.appraisal) : undefined;
         const record = existing && appraisalById(service.world, actorId, existing.id);
         if (proposal.kind === 'resolve') {
-          if (
-            !record ||
-            proposal.expectedRevision !== record.revision ||
-            proposal.policy !== null ||
-            proposal.source !== null ||
-            proposal.subject !== null ||
-            proposal.value !== null
-          )
+          if (!record || proposal.expectedRevision !== record.revision)
             throw new Error('Invalid supplied appraisal resolution.');
           return { kind: 'resolve', id: record.id, expectedRevision: record.revision };
         }
@@ -327,11 +483,7 @@ async function bindAppraisals(
         if ((definition.value.kind === 'qualitative') !== (proposal.value === null))
           throw new Error('Unsupported appraisal scale.');
         if (proposal.kind === 'create') {
-          if (
-            proposal.appraisal !== null ||
-            proposal.expectedRevision !== null ||
-            (proposal.subject !== null && !Object.hasOwn(subjects, proposal.subject))
-          )
+          if (proposal.subject !== null && !Object.hasOwn(subjects, proposal.subject))
             throw new Error('Invalid appraisal creation binding.');
           return {
             kind: 'create',
@@ -341,12 +493,7 @@ async function bindAppraisals(
             value,
           };
         }
-        if (
-          !record ||
-          proposal.expectedRevision !== record.revision ||
-          proposal.policy !== null ||
-          proposal.subject !== null
-        )
+        if (!record || proposal.expectedRevision !== record.revision)
           throw new Error('Invalid supplied appraisal reframe.');
         return { kind: 'reframe', id: record.id, expectedRevision: record.revision, source, value };
       });
@@ -374,8 +521,18 @@ export function bindReflectionAppraisals(
   jobId: string,
   evidenceIds: string[],
   subjects: Record<string, string>,
+  preparation: AppraisalPreparation = {},
 ) {
-  return bindAppraisals(service, actorId, jobId, evidenceIds, subjects, 'reflection');
+  return bindAppraisals(
+    service,
+    actorId,
+    jobId,
+    evidenceIds,
+    subjects,
+    'reflection',
+    undefined,
+    preparation,
+  );
 }
 
 export async function bindDecisionAppraisals(
@@ -437,16 +594,24 @@ export async function bindDecisionAppraisals(
             'appraisal' in proposal
               ? bound.context.feelings.find((feeling) => feeling.handle === proposal.appraisal)
               : undefined;
-          return {
-            kind: proposal.kind,
-            appraisal: 'appraisal' in proposal ? proposal.appraisal : null,
-            expectedRevision: existing?.revision ?? null,
-            policy: proposal.kind === 'create' ? proposal.definition : null,
-            source: 'source' in proposal ? proposal.source : null,
-            subject: proposal.kind === 'create' ? proposal.target : null,
-            value:
-              'value' in proposal && proposal.value.kind === 'scaled' ? proposal.value.value : null,
+          const value =
+            'value' in proposal && proposal.value.kind === 'scaled' ? proposal.value.value : null;
+          if (proposal.kind === 'create')
+            return {
+              kind: proposal.kind,
+              policy: proposal.definition,
+              source: proposal.source,
+              subject: proposal.target,
+              value,
+            };
+          if (!existing) throw new Error('The supplied appraisal is unavailable.');
+          const current = {
+            appraisal: proposal.appraisal,
+            expectedRevision: existing.revision,
           };
+          return proposal.kind === 'resolve'
+            ? { kind: proposal.kind, ...current }
+            : { kind: proposal.kind, ...current, source: proposal.source, value };
         }),
       );
     },

@@ -1,10 +1,12 @@
 # Combat and threat responses: feature specification
 
-| Status      | Current progress                                                                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Readiness and demand-driven admission are implemented; bounded experiments separate mechanics from remaining behavior/timing limits. | 2026-11-05   |
 
-**Behavior alignment updated:** 2026-10-23T06:11:21Z.
+**Behavior alignment updated:** 2026-11-05T06:15:00Z.
+
+New readiness, timing and continuity implementations are experimental until their [isolated before/after gates](combat-and-threat-responses-tech-design.md#isolated-before-and-after-adoption-gates) pass. Design completion does not establish unchanged performance or response quality; current defaults remain until adoption is supported.
 
 ## Purpose and authority
 
@@ -14,7 +16,7 @@ This project extends the implemented physical combat in [batch 06](parallel-batc
 
 Native code may implement an authored world's animal policy. The engine supplies shared physical execution, perception, evidence, decision scheduling and admission. The bundled world chooses danger categories, escape preferences, speeds, harm rules, personality content and response repertoires. Another coherent world may make different choices without rewriting engine consumers.
 
-The reusable decision architecture belongs to [agency](../agent-agency.md#shared-deliberation-different-ways-to-choose) and [action capabilities](../action-capabilities.md#prepared-choices-and-prospective-work-transitions). Ordinary task changes, optional speech and defense share exact choices, work consequences, admission and actual results. Combat selects its particular purposes, appraisal and two-call strategy. Human shortcuts stay direct, ordinary animals stay native, and a character can still choose an ordinary action without generating a thought or goal. The first delivery must demonstrate this reuse through the [shared-contract qualification cases](../maintainers/combat-and-threat-responses.md#shared-contract-qualification).
+The reusable decision architecture belongs to [agency](../agent-agency.md#shared-deliberation-different-ways-to-choose) and [action capabilities](../action-capabilities.md#prepared-choices-and-prospective-work-transitions). Ordinary task changes, optional speech and defense share exact choices, work consequences, admission and actual results. Combat selects its particular purposes, appraisal and two-stage strategy. Human shortcuts stay direct, ordinary animals stay native, and a character can still choose an ordinary action without generating a thought or goal. The first delivery must demonstrate this reuse through the [shared-contract qualification cases](../maintainers/combat-and-threat-responses.md#shared-contract-qualification).
 
 Attack preparation does not
 alarm animals; personally observed actual attacks do. Ground escape uses the
@@ -42,6 +44,14 @@ the cadence. This does not change animal speed, avoidance, preparation or harm.
 8. Humanlike characters use a prepared repertoire for this threat-response profile: a cheap Decision API stage selects situation-relevant options, then a second stage chooses what the character actually does. Native feasibility precedes both; it does not substitute for the first semantic decision.
 9. Meaningful changes, including an aggressor withdrawing, leaving effective reach or disappearing, trigger reconsideration. Neither automatic pursuit nor silent permanent pursuit follows from being attacked.
 10. Selection and hovering remain harmless. Command-click uses exact, disclosed action intent and per-opponent evidence, including a short recent-hostility grace period, without exposing hidden intentions.
+
+### A perceived warning can start a response before injury
+
+**Implemented; bounded qualification and remaining timing limits are [recorded](../verification/cognition-context/2026/2026-11-05-readiness-and-admission.md).** Personally perceiving an incoming attack can make a decision eligible immediately through ordinary intake. Injury is another cause, not a prerequisite. When an otherwise eligible decision is waiting only for its evidence to become durable, request the existing ordered save promptly and reconsider admission when it completes. Do not leave that opportunity waiting for the routine background-save interval. Native simulation continues; this is not a new combat pause, automatic defense, shorter cooldown or guarantee that a character will avoid the first blow.
+
+[The timing contract](combat-and-threat-responses-tech-design.md#demand-driven-durability-and-reaction-admission) separates the observed late first judgment, the identified save gate and unmeasured contributors. It defines the existing owners, lifecycle checks and independent Lab/ordinary-clock measurements.
+
+Qualification must distinguish an opportunity delivered too late, an informed choice not to defend, a chosen action refused because circumstances changed, and a defense that physically failed. A surprise attack may reasonably land before deliberation. A reliable, readable fight must also demonstrate useful responses to advance warning under the ordinary game clock; a Lab run that holds time during inference cannot establish that alone.
 
 ## Stealth, warning and surprise integration
 
@@ -125,7 +135,7 @@ The exact action and target visible at pointer-down are captured for that gestur
 
 This design completes the selected [ND11 direct-conflict/immediate-response portion](../maintainers/needs-design.md#nd11--human-conflictrecovery-and-npc-ghost-continuity) and [ND13 combat-sensitive quick-action portion](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization). Their source discussions are the [COMBAT ND11](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#nd11--responsive-conflict-in-the-selected-base-world) and [COMBAT ND13](../../archive/02-research/game-inspiration/synthesis/combat-and-encounters.md#nd13--predictable-opponent-specific-quick-actions) sections. [Repertoire scope](combat-and-threat-responses-repertoire-review.md) identifies selected contributions and future possibilities.
 
-Native animals are selected because useful refuge behavior should scale without a thought-generation cost. Two short personal decision stages are selected because relevance and willing action have different meanings; they do incur two real provider waits and require measurement. Per-opponent evidence avoids a global enemy toggle while giving quick input enough continuity. Physical contact makes cover and intervention meaningful while accepting collateral consequences. Finite purposes let a fight stop or change because something changed, leaving space for the rest of a person's life.
+Native animals are selected because useful refuge behavior should scale without a thought-generation cost. Two short personal decision stages are selected because relevance and willing action have different meanings; ordinary maps incur two real provider waits, while larger complete maps can require additional bounded batches and need measurement. Per-opponent evidence avoids a global enemy toggle while giving quick input enough continuity. Physical contact makes cover and intervention meaningful while accepting collateral consequences. Finite purposes let a fight stop or change because something changed, leaving space for the rest of a person's life.
 
 No unresolved product decision blocks the selected CTR scope. Numeric values are explicit initial world tuning, not proven optimal values. Runtime reliability, complete latency, animal-route cost, readable play and enjoyment are open **acceptance work**, not missing design. Broader relationships, ecology, rescue/afterlife, institutions, repeated-attack modes and general input customization remain clearly deferred under their existing owners.
 
@@ -139,11 +149,21 @@ This is a quality requirement on this character's free choice and its supporting
 
 ### A flexible prepared repertoire
 
-Pre-authored purposes avoid requiring a new monologue for routine danger responses; whether the complete two-call route is fast enough remains an early playability gate. The catalogue includes stopping an assault, driving someone away, holding a place, evading, leaving, following an assailant, checking their last-seen point, letting them leave, helping a particular person, seeking help, asking whether contact was accidental, warning, de-escalating, retaliating and returning to interrupted life. These are different reasons for similar physical actions and different reasons to stop. The [full world catalogue](../worlds/base/threat-response-options.md#3-first-delivery-purposes) is canonical; the engine does not contain a generic moral ranking of its motives.
+Pre-authored purposes avoid requiring a new monologue for routine danger responses; whether the complete two-stage route is fast enough remains an early playability gate. The catalogue includes stopping an assault, driving someone away, holding a place, evading, leaving, following an assailant, checking their last-seen point, letting them leave, helping a particular person, seeking help, asking whether contact was accidental, warning, de-escalating, retaliating and returning to interrupted life. These are different reasons for similar physical actions and different reasons to stop. The [full world catalogue](../worlds/base/threat-response-options.md#3-first-delivery-purposes) is canonical; the engine does not contain a generic moral ranking of its motives.
 
-Native preparation first removes impossible bindings and exposes the real costs of leaving current work. A first cheap Decision API call then selects situation-relevant purposes and supported source-linked appraisals. A second call chooses one fully grounded response from those purposes. Protecting someone is absent when there is no actual person or feasible protective action; deciding that an available person matters enough to protect remains Ada's judgment. Uncertain relevance remains explicit and available to the final choice. No change, continuation and unavailable judgment have distinct outcomes.
+Native preparation first removes impossible bindings and exposes the real costs of leaving current work. A first cheap Decision API stage selects situation-relevant purposes and supported source-linked appraisals. A second stage chooses one fully grounded response from those purposes. Each normally uses one request; complete independent question sets may be packed into additional bounded requests under the same source, deadline and spending limits. No choice is dropped to fit, and a failed batch grants no retry or generated fallback. Protecting someone is absent when there is no actual person or feasible protective action; deciding that an available person matters enough to protect remains Ada's judgment. Uncertain relevance remains explicit and available to the final choice. No change, continuation and unavailable judgment have distinct outcomes.
+
+A person can also independently choose to speak in their own voice while evading, defending or attacking. The same second-stage judgment asks whether words are warranted; silence and uncertainty buy no generation. Any selected native action commits first. An explicitly selected utterance then uses at most one bounded fast-model request and the ordinary speech admission, without replacing work or performing another action. A selected finite catalogue line already supplies the words and needs no duplicate generation. A failed or stale utterance leaves committed action and feelings intact. This is an optional response component, not an automatic fallback from an uncertain physical choice.
 
 All cognition triggers must have complete relevant context and choices, including while the person is gathering, moving or crafting. Being busy supplies consequential information—remaining work, spent inputs, recovery and whether interruption can resume—not an early exit that hides strikes or guards. A new action carries an explicit compatible continue/replace/interrupt meaning, and the native owner may refuse a currently impossible interruption before it stops or spends anything.
+
+### Knowing a method versus being able to start it
+
+**Designed, not implemented.** A character recovering from a dodge should know that another dodge will be possible later, without wasting their immediate choice on starting it now. Keep the reason and known recovery time visible; choose among presently startable alternatives, continuing the current dodge, or no new intervention. After recovery, a still-relevant situation can be reconsidered normally. Recovery does not compel a dodge or an attack.
+
+The same distinction applies to other supported work: a reserved tool may be released by an explicitly chosen replacement, while an interrupted action's committed recovery remains. Readiness concerns the complete proposed transition, not only the actor's unchanged current state. Native refusal preserves existing work. Deliberate attempts with uncertain outcomes remain possible when the world permits them. The [shared readiness contract](../action-capabilities.md#immediate-selection-and-blocked-capabilities) owns this behavior across callers; [technical integration](combat-and-threat-responses-tech-design.md#readiness-integration-and-qualification) owns delivery.
+
+Acceptance requires blocked methods to remain understandable but unselectable as immediate acts, continued work to retain progress, and recovery to restore eligibility without an automatic action. A readable warning, successful escape, held boundary or finite retaliation can each make a compelling Brann encounter; maximum damage is not the general success criterion. Ada's separately selected counterattack requirement above is unchanged. Human enjoyment and reliable stopping after danger ends still need their own evidence.
 
 ### Psychological state without a wall of need bars
 

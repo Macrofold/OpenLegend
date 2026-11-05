@@ -50,6 +50,16 @@ Committed speech appears as plain captions with a small remaining-reading-time r
 
 Hearing uses pinned acoustic/sense descriptors and persists event-time fragments. See [the hearing design](docs/hearing-and-speech.md), [current implementation](docs/architecture.md#hearing-captions-and-perceived-events), and [combined integration evidence](docs/verification/hearing-main-integration.md). Broader graphical, provider, database and scale qualification remains in HE05.
 
+## Inspect characters in Cognition Lab
+
+Open `/cognition` on the running development server to edit an independent situation, speak to a character, inspect the actual model requests and native effects, and compare retained runs. The page uses the ordinary simulation without loading the game renderer. Its current editor and historical inspector remain separate; loading a checkpoint explicitly replaces only the lab situation.
+
+The page requires your existing authenticated creator access. For local development, that access uses the existing `OPEN_LEGEND_GOD_MODE=true` setting; OIDC hosts use the signed-in account's current creator grant.
+
+Run `pnpm setup:lab` after configuring PostgreSQL. Worktree setup runs this step automatically. The lab derives a separate database name with `_cognition_lab` and a separate data directory; `OPEN_LEGEND_LAB_DATABASE_URL` and `OPEN_LEGEND_LAB_DATA_DIR` can select other independent locations. Setup never falls back to the game's database. Provider execution requires the existing server credentials and an explicit `OPEN_LEGEND_LAB_BUDGET_USD` allowance, which defaults to `0`; opening or inspecting the page sends no model request. Ordinary game spending and model defaults are unchanged.
+
+The [workspace specification](docs/projects/cognition-lab-feature-spec.md), [runtime contracts](docs/projects/cognition-lab-tech-design.md), [qualification](docs/verification/cognition-lab.md) and [remaining acceptance](docs/maintainers/cognition-lab.md) distinguish implemented tools, measured behavior and character/player quality.
+
 ## Run locally
 
 The two supplied starts are **Main world** and **Solo testing ground** in **Create → World authoring → Create a world**. Main world uses the same complete authored setup as default development startup: camp residents, survival/crafting, shelter, fishing, practice, expeditions, the missing-belonging investigation and distant Broken Watchpost rivals. For a directly playable solo development world, set `OPEN_LEGEND_WORLD_PRESET=solo` with a separate PostgreSQL database and `OPEN_LEGEND_DATA_DIR`; it creates one person with basic supplies and pouch-making knowledge. The preset applies only to an empty database. Existing compatible progress is reopened rather than regenerated. [Starting content and boundaries](docs/worlds/base/playable-openings.md).
@@ -61,6 +71,7 @@ pnpm install --frozen-lockfile
 cp .env.example .env
 # Create a PostgreSQL database with pgvector available, then set
 # OPEN_LEGEND_DATABASE_URL=postgresql://localhost/openlegend in .env.
+pnpm setup:lab
 pnpm run dev
 ```
 
@@ -72,7 +83,7 @@ For Codex worktrees, set the project's local environment setup script to:
 bash bin/setup_worktree.sh
 ```
 
-The [setup script](bin/setup_worktree.sh) copies `.env` from Git's main checkout when the destination has no `.env`, then runs `pnpm install --frozen-lockfile`. Existing files and symlinks are preserved. Configure the main checkout's `.env` first; use `--source PATH` or `OPEN_LEGEND_WORKTREE_SOURCE_PATH` to select another source, and `--dry-run` to preview without changes. Configuration is copied so each worktree can change its settings independently. The copied database URL initially selects the same development world; choose a separate database and `OPEN_LEGEND_DATA_DIR` for independent play. Dependencies are installed per checkout; saved files are not copied or linked. Setup does not start the server or dispatch AI requests.
+The [setup script](bin/setup_worktree.sh) copies `.env` from Git's main checkout when the destination has no `.env`, then runs `pnpm install --frozen-lockfile` and `pnpm setup:lab`. Existing files and symlinks are preserved. Configure the main checkout's `.env` first; use `--source PATH` or `OPEN_LEGEND_WORKTREE_SOURCE_PATH` to select another source, and `--dry-run` to preview without changes. Configuration is copied so each worktree can change its settings independently. The copied database URL initially selects the same development world; choose a separate database and `OPEN_LEGEND_DATA_DIR` for independent play. Dependencies are installed per checkout; saved files are not copied or linked. Lab setup uses an existing separate database or creates its derived database when the configured role has that permission. Setup does not start the server or dispatch AI requests.
 
 If startup reports an unsupported database schema, the configured development database format differs from the running code. Follow the [development save policy](AGENTS.md#development-save-policy): agents may set up fresh current-format development state without another confirmation. Replace incompatible local gameplay and development bookkeeping through fresh current-format initialization; do not retain an old database or build a migration to preserve that progress. Keep external credentials, asset catalogs/current permissions, asset files and unrelated data intact, and re-establish current local access through its existing setup owner. Do not change the stored schema marker to bypass validation. The server itself still refuses incompatible data; this policy does not add automatic reset to `pnpm dev`. Fresh standard starts use the newest integrated world initializer, combining its current characters, encounters and supplies; isolated test fixtures and unfinished branches are not the default seed.
 
@@ -210,7 +221,7 @@ The latest design additions cover [world locks and invention ownership](archive/
 - [Real-time multiplayer synchronization](archive/07-technical-architecture/realtime-synchronization.md) — batching, prediction, replication and future improvements
 - [Production data model](archive/07-technical-architecture/production-data-model.md), [world-agent queries](archive/07-technical-architecture/data-queries-and-mcp.md), and [migration/scale design](archive/07-technical-architecture/data-delivery-and-scale.md) — target design, with active phases in the [production-data tracker](docs/maintainers/production-data.md)
 - [Cognition redesign](docs/memory-architecture.md) and [build tasks CR01–CR12](docs/maintainers/cognition-redesign.md) — implemented compact context, attention, cleanup and background reflection, with remaining acceptance tracked explicitly
-- [Situation-aware context design](docs/projects/situation-aware-cognition-context-feature-spec.md), [technical contract](docs/projects/situation-aware-cognition-context-tech-design.md) and [SC01–SC12](docs/maintainers/cognition-context.md) — selected design for smaller situation-specific requests with complete necessary evidence, exact references and compatible speech/action; runtime implementation and qualification remain open
+- [Situation-aware context](docs/features/situation-aware-cognition-context.md), [technical contract](docs/technical/situation-aware-cognition-context.md) and [optional SC12 work](docs/maintainers/cognition-context.md) — implemented, locally qualified preparation with complete required evidence, exact references, hierarchical action binding and compatible speech/action; [completion records](docs/projects/completed/2026/situation-aware-cognition-context-evidence-and-decisions.md) retain the original scope and decisions.
 - [Project decisions](docs/maintainers/decisions/README.md) and [implementation status](docs/architecture.md)
 - [First playable MVP agreement](archive/05-project/first-playable-mvp.md)
 - [Art direction and reference board](art-direction/README.md)

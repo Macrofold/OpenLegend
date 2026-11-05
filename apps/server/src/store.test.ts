@@ -1,9 +1,14 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { readConfig, testRepository } from '../../../tests/fixtures/database.js';
-import { entityGet, PLAYER_ID } from '@open-legend/domain';
+import { entityGet, freezeWorld, updateWorld, PLAYER_ID } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import { createDisposableDatabase } from '../../../scripts/disposable-postgres.mjs';
+import { PostgresDatabase } from './postgres.js';
+import { CognitionLabRecords } from './cognition-lab-records.js';
+import { JournalWorker } from './journal-worker-client.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createItemLot, executeCommand, inventoryFor } from '@open-legend/domain';
 import type { AiReceipt } from '@open-legend/ai';
@@ -28,7 +33,7 @@ function diskPath(): string {
   return directory;
 }
 function save(): SavedWorld {
-  return { world: stockedCamp(73), speed: 1, manuallyPaused: false };
+  return { world: freezeWorld(stockedCamp(73)), speed: 1, manuallyPaused: false };
 }
 function receipt(requestId: string, overrides: Partial<AiReceipt> = {}): AiReceipt {
   return {
@@ -67,20 +72,149 @@ afterEach(async () => {
 });
 
 describe('PostgreSQL committed world boundary', () => {
+  it('retains operational Lab receipts while pending world materialization still fences canonical and mixed work', async () => {
+    const database = await createDisposableDatabase(process.env['OPENLEGEND_TEST_DATABASE_URL']);
+    const raw = new PostgresDatabase(database.url);
+    const directory = diskPath();
+    const store = new SqlGameRepository(directory, raw);
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const apply = JournalWorker.prototype.apply;
+    let application: ReturnType<typeof vi.spyOn> | undefined;
+    try {
+      await store.ready;
+      const initial = save();
+      const revision = await store.commit(0, initial);
+      const records = new CognitionLabRecords(store.operationalDatabase, directory);
+      await records.ready;
+      application = vi.spyOn(JournalWorker.prototype, 'apply').mockImplementation(async function (
+        this: JournalWorker,
+        ...args
+      ) {
+        await held;
+        return apply.apply(this, args);
+      });
+      const next = {
+        ...initial,
+        world: freezeWorld({ ...initial.world, simTime: initial.world.simTime + 1 }),
+      };
+      const committed = await store.commit(revision, next);
+      await expect.poll(() => application!.mock.calls.length).toBe(1);
+      const head = await raw
+        .prepare('SELECT revision,applied_revision FROM world_head WHERE id=1')
+        .get();
+      expect(Number(head!['revision'])).toBe(committed);
+      expect(Number(head!['applied_revision'])).toBe(revision);
+
+      // A provider-acceptance callback must durably retain the same operation
+      // identity without waiting for unrelated world-table application.
+      const commandId = randomUUID();
+      const intention = { kind: 'retain-original-provider-identity' };
+      const receipt = await records.beginOperation(commandId, intention);
+      expect(receipt.claimed).toBe(true);
+      await records.finishOperation(commandId, 'completed', { providerRunId: randomUUID() });
+      expect((await records.receipt(commandId))?.state).toBe('completed');
+      expect((await records.beginOperation(commandId, intention)).claimed).toBe(false);
+      expect(
+        Number(
+          (await raw.prepare('SELECT applied_revision FROM world_head WHERE id=1').get())![
+            'applied_revision'
+          ],
+        ),
+      ).toBe(revision);
+
+      const captured = {
+        id: randomUUID(),
+        kind: 'timeline' as const,
+        name: 'Accepted provider identity',
+        createdAt: new Date().toISOString(),
+        summary: {},
+        data: {},
+      };
+      await records.putRecord(captured);
+      await records.putRecord({ ...captured, name: 'Retained original identity' });
+      expect((await records.getRecord(captured.id))?.name).toBe('Retained original identity');
+
+      let canonicalRead = false;
+      const canonical = store.db
+        .prepare('SELECT revision FROM world_head WHERE id=1')
+        .get()
+        .then((value) => {
+          canonicalRead = true;
+          return value;
+        });
+      let mixedRead = false;
+      const joined = store.db
+        .prepare(
+          'SELECT h.revision FROM cognition_lab.receipts r CROSS JOIN world_head h WHERE r.command_id=? AND h.id=1',
+        )
+        .get(commandId)
+        .then((value) => {
+          mixedRead = true;
+          return value;
+        });
+      let unknownRead = false;
+      const unknown = store.db
+        .prepare('SELECT 1 AS answer')
+        .get()
+        .then((value) => {
+          unknownRead = true;
+          return value;
+        });
+      let mixedEntered = false;
+      const rollbackKey = 'operational-mixed-rollback';
+      const mixed = store.db.transaction(async () => {
+        mixedEntered = true;
+        await store.operationalDatabase
+          .prepare('INSERT INTO meta VALUES (?,?)')
+          .run(rollbackKey, 'must roll back');
+        await store.db.prepare('SELECT revision FROM world_head WHERE id=1').get();
+        throw new Error('roll back mixed transaction');
+      });
+      const mixedResult = mixed.catch((error: unknown) => error);
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      expect(canonicalRead).toBe(false);
+      expect(mixedEntered).toBe(false);
+      expect(mixedRead).toBe(false);
+      expect(unknownRead).toBe(false);
+      release();
+      expect(Number((await canonical)!['revision'])).toBe(committed);
+      expect(Number((await joined)!['revision'])).toBe(committed);
+      expect((await unknown)!['answer']).toBe(1);
+      expect(await mixedResult).toEqual(new Error('roll back mixed transaction'));
+      expect(mixedEntered).toBe(true);
+      expect(
+        await raw.prepare('SELECT value FROM meta WHERE key=?').get(rollbackKey),
+      ).toBeUndefined();
+    } finally {
+      release();
+      application?.mockRestore();
+      await store.close();
+      await database.close();
+    }
+  }, 30_000);
+
   it('persists state and command receipts together across close/reopen', async () => {
     const path = diskPath();
     let store = await open(path);
     const initial = save();
-    entityGet(initial.world.entities, PLAYER_ID)!.actor!.body!.conditions = {
-      wetness: 12.5,
-      burning: 3,
-    };
-    // Persistence coverage must not depend on the bundled world's starting inventory.
-    const foodId = createItemLot(initial.world, PLAYER_ID, 'berries', 3, 'fixture-food');
+    const foodId = 'fixture-food';
+    initial.world = freezeWorld(
+      updateWorld(initial.world, (world) => {
+        entityGet(world.entities, PLAYER_ID)!.actor!.body!.conditions = {
+          wetness: 12.5,
+          burning: 3,
+        };
+        // Persistence coverage must not depend on the bundled world's starting inventory.
+        createItemLot(world, PLAYER_ID, 'berries', 3, foodId);
+      }),
+    );
     expect(await store.load()).toBeNull();
     const revision = await store.commit(0, initial);
     const command = { id: 'eat-once', actorId: PLAYER_ID, type: 'eat' as const, itemId: foodId };
-    const changed = executeCommand(initial.world, command).world;
+    const changed = freezeWorld(executeCommand(initial.world, command).world);
     const savedRevision = await store.commit(revision, { ...initial, world: changed, speed: 3 });
     await close(store);
     store = await open(path);
@@ -125,6 +259,24 @@ describe('PostgreSQL committed world boundary', () => {
 });
 
 describe('durable AI allowances outside simulated time', () => {
+  it('admits an exact zero-fee attempt once and settles its zero charge without accepting negatives', async () => {
+    const store = await open();
+    await expect(store.reserve('negative-fee', 'openai', -0.000001, 0)).rejects.toThrow();
+    expect(await store.reserve('zero-fee', 'openai', 0, 0)).toBe(true);
+    await expect(store.reserve('zero-fee', 'openai', 0, 0)).rejects.toThrow(
+      'Attempt already admitted',
+    );
+    const observed = receipt('zero-fee', { estimatedCostUsd: 0 });
+    await store.settle('zero-fee', observed);
+    await store.settle('zero-fee', observed);
+    expect(await store.attemptReceipt('zero-fee')).toMatchObject(observed);
+    expect((await store.usage(0)).budget).toMatchObject({
+      limitUsd: 0,
+      spentUsd: 0,
+      reservedUsd: 0,
+    });
+    expect((await store.usage(0)).usage.llmCalls).toBe(1);
+  });
   it('counts outstanding reservations against one ceiling and settles only once', async () => {
     const store = await open();
     expect(await store.reserve('jev-route', 'jev', 0.02, 0.1)).toBe(true);
@@ -168,19 +320,98 @@ describe('durable AI allowances outside simulated time', () => {
     expect((await store.usage(1)).budget.reservedUsd).toBe(0);
   });
   it('does not erase paid usage when a world snapshot is restored', async () => {
-    const store = await open();
+    const path = diskPath();
+    let store = await open(path);
     const original = save();
     let revision = await store.commit(0, original);
     await store.reserve('paid', 'openai', 0.08, 1);
     await store.settle('paid', receipt('paid'));
     revision = await store.commit(revision, {
       ...original,
-      world: { ...original.world, simTime: 4000 },
+      world: freezeWorld(
+        updateWorld(original.world, (world) => {
+          world.simTime = 4000;
+        }),
+      ),
     });
-    await store.commit(revision, original);
+    revision = await store.commit(revision, original);
     expect((await store.load())!.state.world.simTime).toBe(0);
     expect((await store.usage(1)).budget.spentUsd).toBe(0.03);
     await expect(async () => await store.reserve('paid', 'openai', 0.08, 1)).rejects.toThrow(
+      /already admitted/,
+    );
+    expect(
+      await store.reserve('uncertain-paid', 'openai', 0.08, 1, PLAYER_ID, undefined, undefined, {
+        rootJobId: 'original-uncertain-root',
+        category: 'level',
+        level: 1,
+        stage: 'primary',
+        executionClass: 'primary',
+      }),
+    ).toBe(true);
+    await store.markDecisionDispatch('uncertain-paid');
+    await store.settle(
+      'uncertain-paid',
+      receipt('uncertain-paid', {
+        completionUncertain: true,
+        providerRequestId: 'original-external-run',
+        estimatedCostUsd: undefined,
+        usage: undefined,
+      }),
+    );
+    const journal = { body: { input: 'original native input' }, idempotencyKey: 'original-key' };
+    await store.putIntegration('macrofold:original-admission', journal);
+    await store.putJob(job('original-operational-job'));
+    const finance = await store.attemptReceipt('uncertain-paid');
+    const slots = await store.occupiedDecisionSlots();
+    const operationalJob = await store.getJob('original-operational-job');
+    const fresh: SavedWorld = {
+      world: freezeWorld(stockedCamp(74)),
+      speed: 1,
+      manuallyPaused: false,
+    };
+    const adopted = (await store.records.head())!;
+    await expect(store.replaceDevelopmentWorld(adopted, fresh)).rejects.toThrow(/unopened/);
+
+    // Model an incompatible development definition without loading it as current.
+    // Replacement must never decode or repair the old native host pin.
+    const incompatible = structuredClone(original);
+    incompatible.world.moduleManifest.activityHosts[0] = {
+      ...incompatible.world.moduleManifest.activityHosts[0]!,
+      digest: 'incompatible-development-host',
+    };
+    freezeWorld(incompatible.world);
+    await store.commit(revision, incompatible);
+    await close(store);
+    store = await open(path);
+    await expect(store.load()).rejects.toThrow(/trusted activity host/);
+    const head = (await store.records.head())!;
+    await expect(
+      store.replaceDevelopmentWorld({ ...head, revision: head.revision + 1 }, fresh),
+    ).rejects.toThrow(/Save conflict/);
+    const invalidFresh = structuredClone(fresh);
+    invalidFresh.world.moduleManifest.activityHosts[0] = {
+      ...invalidFresh.world.moduleManifest.activityHosts[0]!,
+      digest: 'invalid-new-host',
+    };
+    freezeWorld(invalidFresh.world);
+    await expect(store.replaceDevelopmentWorld(head, invalidFresh)).rejects.toThrow(
+      /trusted activity host/,
+    );
+    expect(await store.records.head()).toEqual(head);
+    await store.replaceDevelopmentWorld(head, fresh);
+    expect((await store.load())!.state.world.id).toBe(fresh.world.id);
+    await close(store);
+    store = await open(path);
+    validateCurrentWorldState((await store.load())!.state.world);
+    expect((await store.records.head())!.worldId).toBe(fresh.world.id);
+    expect(await store.attemptReceipt('uncertain-paid')).toEqual(finance);
+    expect(await store.occupiedDecisionSlots()).toEqual(slots);
+    expect(await store.getIntegration('macrofold:original-admission')).toEqual(journal);
+    expect(await store.getJob('original-operational-job')).toEqual(operationalJob);
+    expect((await store.usage(1)).budget.spentUsd).toBe(0.11);
+    await expect(store.reserve('paid', 'openai', 0.08, 1)).rejects.toThrow(/already admitted/);
+    await expect(store.reserve('uncertain-paid', 'openai', 0.08, 1)).rejects.toThrow(
       /already admitted/,
     );
   });
@@ -319,6 +550,91 @@ describe('durable AI allowances outside simulated time', () => {
     });
     expect(await store.attemptBudget(confirmed.id)).toMatchObject({
       spentUsd: 0.03,
+      reservedUsd: 0,
+      uncertainUsd: 0,
+    });
+  });
+  it('keeps completed unpriced execution closed when stale uncertain billing arrives', async () => {
+    const path = diskPath();
+    let store = await open(path);
+    const attemptId = 'completed-unpriced';
+    const episode = { id: 'completed-unpriced-episode', limitUsd: 0.04 };
+    expect(
+      await store.reserve(attemptId, 'openai', 0.02, 0.04, 'actor', undefined, episode, {
+        rootJobId: 'completed-unpriced-root',
+        category: 'level',
+        level: 1,
+        stage: 'primary',
+        executionClass: 'primary',
+      }),
+    ).toBe(true);
+    expect(await store.markDecisionDispatch(attemptId)).toBe(true);
+    expect(await store.occupiedDecisionSlots()).toEqual([{ attemptId, executionClass: 'primary' }]);
+    const completed = receipt(attemptId, {
+      providerRequestId: 'completed-run',
+      estimatedCostUsd: undefined,
+    });
+    await store.settle(attemptId, completed);
+    expect(await store.occupiedDecisionSlots()).toEqual([]);
+    for (const estimatedCostUsd of [undefined, 0.01, 0.0300001]) {
+      await store.settle(attemptId, {
+        ...completed,
+        completionUncertain: true,
+        estimatedCostUsd,
+      });
+      expect(await store.attemptReceipt(attemptId)).toEqual(completed);
+      expect(await store.occupiedDecisionSlots()).toEqual([]);
+      expect(await store.attemptBudget(episode.id)).toMatchObject({
+        spentUsd: estimatedCostUsd === 0.0300001 ? 0.030001 : 0.02,
+        uncertainUsd: estimatedCostUsd === 0.0300001 ? 0.030001 : 0.02,
+      });
+    }
+    await close(store);
+    store = await open(path);
+    await store.recoverInterruptedWork();
+    for (const estimatedCostUsd of [undefined, 0.01, NaN]) {
+      await store.settle(attemptId, {
+        ...completed,
+        completionUncertain: true,
+        estimatedCostUsd,
+      });
+      expect(await store.attemptReceipt(attemptId)).toEqual(completed);
+      expect(await store.occupiedDecisionSlots()).toEqual([]);
+      expect(await store.attemptBudget(episode.id)).toMatchObject({
+        spentUsd: 0.030001,
+        reservedUsd: 0,
+        uncertainUsd: 0.030001,
+      });
+    }
+    expect((await store.usage(0.04)).budget.spentUsd).toBe(0.030001);
+    expect(await store.reserve('monthly-over', 'openai', 0.01, 0.04, 'actor')).toBe(false);
+    expect(
+      await store.reserve('episode-over', 'openai', 0.01, 1, 'actor', undefined, episode),
+    ).toBe(false);
+    await expect(
+      store.reserve(attemptId, 'openai', 0, 1, 'actor', undefined, episode),
+    ).rejects.toThrow(/already admitted/);
+    // Another completion-only result must not promote the stale provisional charge.
+    await store.settle(attemptId, completed);
+    expect(await store.attemptReceipt(attemptId)).toEqual(completed);
+    expect(await store.attemptBudget(episode.id)).toMatchObject({
+      spentUsd: 0.030001,
+      uncertainUsd: 0.030001,
+    });
+    // Definitive billing replaces the conservative hold and remains immutable.
+    await store.settle(attemptId, { ...completed, estimatedCostUsd: 0.025 });
+    await store.settle(attemptId, {
+      ...completed,
+      completionUncertain: true,
+      estimatedCostUsd: 0.09,
+    });
+    expect(await store.attemptReceipt(attemptId)).toEqual({
+      ...completed,
+      estimatedCostUsd: 0.025,
+    });
+    expect(await store.occupiedDecisionSlots()).toEqual([]);
+    expect(await store.attemptBudget(episode.id)).toMatchObject({
+      spentUsd: 0.025,
       reservedUsd: 0,
       uncertainUsd: 0,
     });

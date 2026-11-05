@@ -4,6 +4,7 @@ import type { ActivityHostDescriptor, ActivityActionMeaning } from '../../activi
 import type { Command } from '../../types.js';
 import { BASE_COMMAND_DESCRIPTIONS } from './action-descriptions.js';
 import { BASE_FAMILY_FACTS } from './actions.js';
+import { baseNativeRequestSupport } from './native-request-forms.js';
 
 function host(
   id: string,
@@ -35,11 +36,12 @@ function host(
       ...(command === 'craft' ? { coarseWork: 'consumed-stationary-craft' as const } : {}),
     };
   return {
+    ...baseNativeRequestSupport(commands),
     definition: {
       id,
       version: 1,
       interface: 'activity-host-v1',
-      implementationVersion: 1,
+      implementationVersion: 2,
       commands,
       deadlineSafeCommands: commands.filter((command) =>
         (BASE_FAMILY_FACTS.deadlineSafeCommands as readonly string[]).includes(command),
@@ -84,10 +86,35 @@ function host(
     },
   };
 }
+function requestHost(id: string, types: readonly Command['type'][]): ActivityHostDescriptor {
+  return {
+    definition: {
+      id,
+      version: 1,
+      interface: 'activity-host-v1',
+      implementationVersion: 1,
+      commands: [],
+      deadlineSafeCommands: [],
+    },
+    ...baseNativeRequestSupport(types),
+  };
+}
 /** Optional capabilities are separate exact installations. Missing possessions block an
  * installed command; linking this source grants no availability.
  * docs/worlds/base/actions.md */
 export const BASE_NATIVE_ACTIVITY_HOSTS = [
+  requestHost('base:possession-requests', [
+    'inspect-inventory',
+    'inspect-activities',
+    'transfer-item',
+    'transfer-stock',
+    'equip',
+    'unequip',
+    'learn-record',
+  ]),
+  requestHost('base:handover-requests', ['handover']),
+  requestHost('base:contact-requests', ['guard', 'strike', 'evade']),
+  requestHost('base:body-requests', ['status-effect', 'treat-scar']),
   host('base:native-feeding', ['feed']),
   host('base:structural-impact', ['impact-boundary'], {
     label: 'Strike a boundary part',

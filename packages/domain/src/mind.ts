@@ -9,7 +9,7 @@ import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from './body-policy.js';
 import { draftWorld, cloneValue } from './draft.js';
 import { experiences } from './experience.js';
-import type { MemoryRecord, Transition, WorldState } from './types.js';
+import type { ActorComponent, MemoryRecord, Transition, WorldState } from './types.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { commitActorResponse } from './response.js';
 import { actionTargetsCurrent } from './action-targets.js';
@@ -107,27 +107,40 @@ export interface CognitionBinding {
   actions: Record<string, ActionChoice>;
   restEpisode: string | null;
   bodyEligibility: string;
+  /** Captured native movement meaning for generated actor-relative invocations. */
+  capturedActorFrame?: string;
 }
 export const wordCount = (text: string): number =>
   text.normalize('NFKC').trim().split(/\s+/u).filter(Boolean).length;
 export const byteCount = (value: unknown): number =>
   new TextEncoder().encode(typeof value === 'string' ? value : JSON.stringify(value)).length;
+/** Authored fields can contain paragraphs or lists, including voice illustrations.
+ * Keep their boundaries so the following biography is not part of the last list item. */
+export function authoredIdentityText(
+  introduction: string,
+  identity:
+    | Pick<ActorComponent, 'description' | 'personality' | 'backstory' | 'initialGoals'>
+    | undefined,
+  goalsTense: 'are' | 'were' = 'are',
+): string {
+  return [
+    introduction,
+    identity?.description,
+    identity?.personality,
+    identity?.backstory,
+    identity?.initialGoals?.length
+      ? `My starting goals ${goalsTense}: ${identity.initialGoals.join('; ')}.`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+}
 export function mindFor(world: WorldState, actorId: string): ActorMind {
   const existing = world.minds?.[actorId];
   if (existing) return cloneValue(existing);
   const actor = entityGet(world.entities, actorId);
   const component = actor?.actor;
-  const identity = [
-    `I am ${actor?.name ?? actorId}.`,
-    component?.description,
-    component?.personality,
-    component?.backstory,
-    component?.initialGoals?.length
-      ? `My starting goals are: ${component.initialGoals.join('; ')}.`
-      : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const identity = authoredIdentityText(`I am ${actor?.name ?? actorId}.`, component);
   return {
     revision: 0,
     documents: [
@@ -379,7 +392,6 @@ export function commitCognition(
             {
               localId: 'choice',
               requiresAccepted: [],
-              talk: null,
               act: {
                 kind: 'known',
                 actionId: proposal.actionId,
@@ -388,9 +400,6 @@ export function commitCognition(
                 targetEntityId: null,
                 description: null,
               },
-              think: null,
-              goal: null,
-              plan: null,
             },
           ],
         },

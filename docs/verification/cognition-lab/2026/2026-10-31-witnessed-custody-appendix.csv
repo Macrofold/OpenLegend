@@ -1,0 +1,98 @@
+scope,conditionId,character,modelId,model,executionSourceRevision,cohort,assessment,confirmedCharacterResponseCalls,confirmedClosedChoiceCalls,personalVoiceScore,socialInterpretationScore,memoryKnowledgeScore,agencyPhysicalScore,timingContinuityScore,nativeEffectsJson,nativeEffectsText,outcome,knownCellCostUsd,knownCharacterResponseCostUsd,knownJevCostUsd,unpricedAttempts
+separate-witnessed-custody-appendix,B10-held-bag,Pell Sorn,R04,meta/muse-spark-open,7c0ac3f08cf36c786d47421abfcb67066833c0ed,supplementary-witnessed-custody,assessable,2,3,2,3,3,2,2,"[{""kind"": ""native-same-bag-setup"", ""itemId"": ""item-4443"", ""dropEvent"": ""event-38194"", ""pickupStartedEvent"": ""event-38197"", ""pickupWitnessEvent"": ""event-38198"", ""visitorInventoryBefore"": [{""definitionId"": ""woven_bag"", ""quantity"": 1}], ""visitorInventoryAfter"": [{""definitionId"": ""woven_bag"", ""quantity"": 1}], ""providerCalls"": 0, ""setupProofSha256"": ""c1f06e3bc0845d1d42ea8fa9834da8ddcd8394db18c4985aec8a4e08d751ce92"", ""autonomousNpcSetupCredit"": false}, {""kind"": ""speech"", ""events"": [""event-38313""]}, {""kind"": ""visitor-movement-completion"", ""event"": ""event-38309"", ""destination"": {""x"": 21, ""z"": 16}}, {""kind"": ""deliberate-remain"", ""stage"": ""66409081-e81b-4525-866c-b817a3a5a00c"", ""nativeJobId"": ""thought-409e18fe-f1d9-4b1f-b01a-4fa7d271977d"", ""choice"": ""a19"", ""meaning"": ""Remain in place while considering the next useful step."", ""nativeTerminal"": ""No new response was chosen.""}, {""kind"": ""no-npc-bag-effect"", ""theftObserved"": false, ""bagInspectionObserved"": false, ""custodyTransferObserved"": false}]","[
+  {
+    ""kind"": ""native-same-bag-setup"",
+    ""itemId"": ""item-4443"",
+    ""dropEvent"": ""event-38194"",
+    ""pickupStartedEvent"": ""event-38197"",
+    ""pickupWitnessEvent"": ""event-38198"",
+    ""visitorInventoryBefore"": [
+      {
+        ""definitionId"": ""woven_bag"",
+        ""quantity"": 1
+      }
+    ],
+    ""visitorInventoryAfter"": [
+      {
+        ""definitionId"": ""woven_bag"",
+        ""quantity"": 1
+      }
+    ],
+    ""providerCalls"": 0,
+    ""setupProofSha256"": ""c1f06e3bc0845d1d42ea8fa9834da8ddcd8394db18c4985aec8a4e08d751ce92"",
+    ""autonomousNpcSetupCredit"": false
+  },
+  {
+    ""kind"": ""speech"",
+    ""events"": [
+      ""event-38313""
+    ]
+  },
+  {
+    ""kind"": ""visitor-movement-completion"",
+    ""event"": ""event-38309"",
+    ""destination"": {
+      ""x"": 21,
+      ""z"": 16
+    }
+  },
+  {
+    ""kind"": ""deliberate-remain"",
+    ""stage"": ""66409081-e81b-4525-866c-b817a3a5a00c"",
+    ""nativeJobId"": ""thought-409e18fe-f1d9-4b1f-b01a-4fa7d271977d"",
+    ""choice"": ""a19"",
+    ""meaning"": ""Remain in place while considering the next useful step."",
+    ""nativeTerminal"": ""No new response was chosen.""
+  },
+  {
+    ""kind"": ""no-npc-bag-effect"",
+    ""theftObserved"": false,
+    ""bagInspectionObserved"": false,
+    ""custodyTransferObserved"": false
+  }
+]","Pell accurately recalled watching the visitor set down and pick up the bag, then asked whether it was missing again. The real observed events reached all five selected inputs; no private contents were exposed. He remained in place and did not take or inspect the bag. The opening response and two other choices returned typed abstentions, with no missed dispatch window. This separate appendix does not replace or causally rank the original controls.",0.170110242,0.0631989,0.008535072,0
+separate-witnessed-custody-appendix,B10-held-bag,Pell Sorn,R08,meta/muse-spark-1.3-contributor,7c0ac3f08cf36c786d47421abfcb67066833c0ed,supplementary-witnessed-custody,partially-assessable,2,0,3,3,3,2,2,"[{""kind"": ""native-same-bag-setup"", ""itemId"": ""item-4443"", ""dropEvent"": ""event-38194"", ""pickupStartedEvent"": ""event-38197"", ""pickupWitnessEvent"": ""event-38198"", ""visitorInventoryBefore"": [{""definitionId"": ""woven_bag"", ""quantity"": 1}], ""visitorInventoryAfter"": [{""definitionId"": ""woven_bag"", ""quantity"": 1}], ""providerCalls"": 0, ""setupProofSha256"": ""c1f06e3bc0845d1d42ea8fa9834da8ddcd8394db18c4985aec8a4e08d751ce92"", ""autonomousNpcSetupCredit"": false}, {""kind"": ""speech"", ""events"": [""event-38212"", ""event-38248""]}, {""kind"": ""visitor-movement-completion"", ""event"": ""event-38242"", ""destination"": {""x"": 21, ""z"": 16}}, {""kind"": ""no-npc-bag-effect"", ""theftObserved"": false, ""bagInspectionObserved"": false, ""custodyTransferObserved"": false}]","[
+  {
+    ""kind"": ""native-same-bag-setup"",
+    ""itemId"": ""item-4443"",
+    ""dropEvent"": ""event-38194"",
+    ""pickupStartedEvent"": ""event-38197"",
+    ""pickupWitnessEvent"": ""event-38198"",
+    ""visitorInventoryBefore"": [
+      {
+        ""definitionId"": ""woven_bag"",
+        ""quantity"": 1
+      }
+    ],
+    ""visitorInventoryAfter"": [
+      {
+        ""definitionId"": ""woven_bag"",
+        ""quantity"": 1
+      }
+    ],
+    ""providerCalls"": 0,
+    ""setupProofSha256"": ""c1f06e3bc0845d1d42ea8fa9834da8ddcd8394db18c4985aec8a4e08d751ce92"",
+    ""autonomousNpcSetupCredit"": false
+  },
+  {
+    ""kind"": ""speech"",
+    ""events"": [
+      ""event-38212"",
+      ""event-38248""
+    ]
+  },
+  {
+    ""kind"": ""visitor-movement-completion"",
+    ""event"": ""event-38242"",
+    ""destination"": {
+      ""x"": 21,
+      ""z"": 16
+    }
+  },
+  {
+    ""kind"": ""no-npc-bag-effect"",
+    ""theftObserved"": false,
+    ""bagInspectionObserved"": false,
+    ""custodyTransferObserved"": false
+  }
+]","Pell gave a distinctive bored complaint, then accurately recalled watching the visitor drop and pick up the bag before leaving. Those observed events were present in both actual inputs, with private contents still hidden. No theft or bag transfer occurred. Two other native decision windows missed before dispatch. This appendix does not replace or causally rank the original controls.",0.013633756,0.0100006,0.003390156,0

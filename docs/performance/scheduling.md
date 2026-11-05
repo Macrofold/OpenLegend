@@ -20,13 +20,15 @@ Locally buffered authoritative state lives on the server. Browser buffers hold p
 
 ## Triggered background work
 
+A wakeup received while the runner is active must survive its final cleanup: keep a dirty generation/next-due marker and recheck it before going idle. Coalesced worker notifications select work; committed records authorize it.
+
 ### Narrator
 
 The durable story-job row is the queue. When a world commit or explicit regeneration actually creates eligible queued work, return a small after-commit signal with the world/owner and next eligibility time. Arm one timer for the earliest due job, using the configured causal batching window. Avoid resetting the timer on unrelated movement or postponing an existing batch indefinitely.
 
 The runner claims a due job durably, releases the transaction, invokes the provider only after required spending admission, and publishes under the existing source-currentness checks. It then drains or schedules the next eligible job with bounded concurrency. Source privacy and job identity come from stored records, not the in-memory notification.
 
-On startup, perform existing uncertain-work recovery and one bounded scan for queued/due work. On resume, drain pending wakeups and recompute the next due time. On shutdown, prevent new dispatch and reconcile in-flight claims according to the existing no-paid-retry contract. A wakeup received while the runner is active must survive its final cleanup: keep a dirty generation/next-due marker and recheck it before going idle. A crash between commit and notification is recovered by the startup scan. Because all current job creation is local and authoritative, no periodic empty database poll is necessary. External producers would require an explicit notification/reconciliation mechanism later.
+On startup, perform existing uncertain-work recovery and one bounded scan for queued/due work. On resume, drain pending wakeups and recompute the next due time. On shutdown, prevent new dispatch and reconcile in-flight claims according to the existing no-paid-retry contract. A crash between commit and notification is recovered by the startup scan. Because all current job creation is local and authoritative, no periodic empty database poll is necessary. External producers would require an explicit notification/reconciliation mechanism later.
 
 This removes idle work, not durable job admission. Do not dispatch from an uncommitted transition, create a second queue table, or regenerate narration merely because a UI reloads.
 
@@ -36,9 +38,13 @@ The [internal-event integration](../events-perception-and-reactions.md#7-interna
 
 Only actors affected by newly perceived evidence, need crossings, action outcomes, relevant inventory/goal changes or elapsed deadlines become scheduling candidates. Retain recurring critical-need reminders, consolidation eligibility and sleep/day boundaries; event-driven does not mean ignoring the passage of time.
 
+When a consumer is eligible except for durability, request its captured required cut through the existing ordered writer rather than waiting for routine autosave, and coalesce a completion wake. Reuse covering writes; unrelated later progress must not move that consumer's target. The [durable-notification contract](../projects/ordered-async-saves.md#durable-notification-epr05-seam) owns failure and lifecycle handling.
+
 Start with small dirty-actor sets, cached scheduling state and one earliest-deadline timer. Rebuild scheduling indexes from saved state on startup; invalidate them after commit or restore. Distinguish real-time cooldown/batching deadlines from simulation-time hunger, commitments and sleep. Pausing or changing speed must not turn a game-time deadline into a stale wall-clock timeout.
 
 The simulation timer must not await a full cognition-maintenance scheduling scan. It reports relevant changes and returns. Scheduling and model execution use bounded asynchronous capacity, with interactive work taking precedence over not-yet-started optional work. Do not cancel/retry paid work just to reclaim a slot. Per-agent spending limits do not imply unlimited host concurrency; use explicit host-wide concurrency and pending-work limits without changing billing policy.
+
+An explicit finite lab time offer owns its runtime's clock before reopening admission, excluding that instance's automatic elapsed offers and their optional cognition intake until the finite operation settles. The game's separate runtime continues independently. Queued native preparation settles through that runtime's execution registration before offering time. Internal processing and evidence capture can interrupt a batch: the clock waits for their native release, then offers only the requested simulation duration that has not actually advanced. Successive indexing batches can consume the interval's existing call, spending or active-wall guards before time advances; no allowance increases. Operator Hold, Stop, a selected prepared-stage boundary, authority loss and native pause still end or hold the operation, preserving actual partial progress and any live prepared handle without offering the remainder again. Report the duration as elapsed only when native simulation time actually advanced by that amount.
 
 ### Browser and provider polling
 
@@ -68,6 +74,8 @@ A single command on an idle healthy server should not wait for an artificial bat
 Repeated unsent movement destinations may use the existing real-time design's explicit supersession contract when implemented. General action coalescing is unsafe: two eats, a pickup followed by craft, or stop followed by a new task are not interchangeable writes. Preserve fairness between players when adding multiplayer; priority must not silently reorder already-admitted causal work.
 
 Buffers have byte/count/age limits and a defined overflow policy. Optional pending trace snapshots can be replaced by newer versions and report capture gaps. Visual updates can be recomputed from a compatible baseline. Accepted world events, source revocations, command receipts and spending records cannot be dropped. On actual storage failure, stop authoritative admission and expose degraded/paused state. Optional memory consolidation pressure is not that failure and must not stop walking. Queues smooth bursts, not sustained overload.
+
+Bound maintenance and result collection on a shared coordinator too: these must yield to live leases and admission rather than monopolize its execution slot. When work must span invocations, retain progress tied to exact immutable inputs and retry only operations whose owner establishes safe repetition. The [verification-worker collection](../technical/verification-workers.md#measurement-and-artifacts) is one implemented example.
 
 Scope cooldowns and stops to the resource whose limit was observed, sharing them across dependent workers. Skip that resource's unattempted entries without retiring workers needed for independent work; an aggregate spending ceiling still governs all its consumers. Check stops before expensive preparation and exercise mixed blocked and eligible work through the actual dispatcher, including resume when the stop is durable.
 

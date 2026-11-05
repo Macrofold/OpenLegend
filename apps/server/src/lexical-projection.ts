@@ -8,6 +8,23 @@ const PENDING_ROWS = 65536;
 const PENDING_BYTES = 8 * 1024 * 1024;
 const READ_WAIT_MS = 5000;
 const BACKGROUND_DELAY_MS = 1000;
+export interface MemoryReadControl {
+  signal?: AbortSignal;
+  /** A live caller may shorten this while preparing; the five-second read bound never renews. */
+  readonly deadlineMs?: number;
+}
+
+interface LexicalScope {
+  worldId: string;
+  actorId: string;
+  generation: string;
+}
+interface ReadinessGroup {
+  scope: LexicalScope;
+  required: boolean;
+  subscribers: Set<() => void>;
+}
+
 const lexeme = (word: string) => `'${word.replace(/['\\]/g, '\\$&')}'`;
 
 function lexicalVector(text: string): string {
@@ -40,7 +57,9 @@ export class LexicalProjection {
   private closed = false;
   private failed = false;
   private pendingKnown = true;
-  private required = false;
+  private pendingEpoch = 0;
+  private readonly readers = new Map<string, ReadinessGroup>();
+  private preferRequired = true;
   private backgroundAllowed = () => true;
   constructor(private readonly db: SqlDatabase) {}
 
@@ -93,7 +112,7 @@ export class LexicalProjection {
 
   async admit(progress: Record<string, unknown> | undefined) {
     if (progress && Number(progress['pending_rows']) > 0) {
-      this.pendingKnown = true;
+      this.markPending();
       gaugeMetric('memory.lexicalPendingRows', Number(progress['pending_rows']));
       gaugeMetric('memory.lexicalPendingBytes', Number(progress['pending_bytes']));
     }
@@ -114,14 +133,13 @@ export class LexicalProjection {
   /** A different owned application session committed source work. This wakes
    * optional preparation without promoting it to a required foreground read. */
   sourcesCommitted(): void {
-    this.pendingKnown = true;
+    this.markPending();
     this.committed();
   }
 
   committed(force = false) {
     if (force) {
-      this.required = true;
-      this.pendingKnown = true;
+      this.markPending();
       this.cancelScheduled();
     }
     if (this.closed || this.active || !this.pendingKnown) return;
@@ -146,13 +164,13 @@ export class LexicalProjection {
       let more = true;
       while (more && !this.closed) {
         transactionEntered = false;
-        if (!this.required && !this.backgroundAllowed()) return;
+        if (!this.hasRequiredReaders() && !this.backgroundAllowed()) return;
         more = await this.db.transaction(async () => {
           transactionEntered = true;
           // The journal fence has settled and the primary writer is now held.
           // A save or command may have arrived while that fence was awaited.
-          if (!this.required && !this.backgroundAllowed()) return false;
-          return this.batch();
+          if (!this.hasRequiredReaders() && !this.backgroundAllowed()) return false;
+          return this.batch(this.nextRequiredScope());
         });
       }
     });
@@ -161,25 +179,28 @@ export class LexicalProjection {
         this.failed = true;
         countMetric('memory.lexicalFailures');
         recordBackgroundFailure('memory-search', error, { transactionEntered });
+        this.notifyReaders();
       })
       .finally(() => {
         this.active = undefined;
-        this.required = false;
         // A source commit can enqueue just after the last batch's empty check but
         // before this promise releases ownership. Its kick must not be lost.
-        if (this.pendingKnown && !this.closed && !this.failed) this.committed();
+        if (this.pendingKnown && !this.closed && !this.failed)
+          this.committed(this.hasRequiredReaders());
       });
   }
 
   async close() {
     this.closed = true;
     this.cancelScheduled();
+    this.notifyReaders();
     await this.active;
   }
 
   restored() {
     this.cancelScheduled();
-    this.pendingKnown = true;
+    this.markPending();
+    this.notifyReaders();
   }
 
   private cancelScheduled() {
@@ -187,66 +208,156 @@ export class LexicalProjection {
     this.scheduled = undefined;
   }
 
-  private async covered(scope: { worldId: string; generation: string }): Promise<boolean> {
+  private markPending() {
+    this.pendingKnown = true;
+    this.pendingEpoch++;
+  }
+
+  private hasRequiredReaders() {
+    for (const group of this.readers.values()) if (group.required) return true;
+    return false;
+  }
+
+  /** Alternate one requested actor batch with ordinary oldest work. Map rotation
+   * keeps several active actors fair without another queue or copied source data. */
+  private nextRequiredScope(): LexicalScope | undefined {
+    if (!this.preferRequired) {
+      this.preferRequired = true;
+      return undefined;
+    }
+    for (const [key, group] of this.readers) {
+      if (!group.required) continue;
+      group.required = false;
+      this.readers.delete(key);
+      this.readers.set(key, group);
+      this.preferRequired = false;
+      return group.scope;
+    }
+    return undefined;
+  }
+
+  private notifyReaders(worldId?: string, generation?: string, actors?: Set<string>) {
+    for (const group of this.readers.values()) {
+      if (
+        worldId !== undefined &&
+        (group.scope.worldId !== worldId ||
+          group.scope.generation !== generation ||
+          (actors && !actors.has(group.scope.actorId)))
+      )
+        continue;
+      for (const notify of group.subscribers) notify();
+    }
+  }
+
+  private async covered(scope: LexicalScope): Promise<boolean> {
     const row = await this.db
       .prepare(
-        `SELECT h.generation,p.covered_revision IS NOT NULL AND
-        (p.covered_revision>=h.revision OR NOT EXISTS (
-          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=h.world_id AND q.generation=h.generation
-        )) AS ready
+        `SELECT h.generation,p.generation IS NOT NULL AND NOT EXISTS (
+          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=h.world_id
+            AND q.generation=h.generation AND q.actor_id=?
+        ) AS ready
       FROM world_head h LEFT JOIN memory_lexical_progress p ON p.world_id=h.world_id AND p.generation=h.generation
       WHERE h.world_id=?`,
       )
-      .get(scope.worldId);
+      .get(scope.actorId, scope.worldId);
     if (!row || row['generation'] !== scope.generation) throw new LexicalPreparationError();
-    // A clock-only commit advances the world head without changing searchable
-    // sources. Source writes and pending keys commit atomically, so an empty
-    // same-generation queue proves readiness in this snapshot without a writer.
+    // Generation reconciliation must finish before an empty actor queue proves
+    // coverage. Exact source changes/pending keys are atomic; other actors' work
+    // cannot invalidate this actor's complete search in the same read snapshot.
     return row['ready'] === true;
   }
 
   /** Never wait for the writer while retaining an older read snapshot. A caller that
    * supplied its own snapshot must prepare first or receive truthful unavailability. */
   async snapshot<T>(
-    scope: { worldId: string; generation: string },
+    scope: LexicalScope,
     operation: () => Promise<T>,
+    control: MemoryReadControl = {},
   ): Promise<T> {
+    const wallDeadline = Date.now() + READ_WAIT_MS;
+    const monotonicDeadline = performance.now() + READ_WAIT_MS;
+    const remaining = () =>
+      Math.min(
+        wallDeadline - Date.now(),
+        monotonicDeadline - performance.now(),
+        (control.deadlineMs ?? Infinity) - Date.now(),
+      );
+    const current = () => {
+      control.signal?.throwIfAborted();
+      if (this.closed || remaining() <= 0) throw new LexicalPreparationError();
+    };
+    current();
     if (this.db.transactionActive) {
       if (!(await this.covered(scope))) throw new LexicalPreparationError();
-      return operation();
+      current();
+      const value = await operation();
+      current();
+      return value;
     }
-    const deadline = Date.now() + READ_WAIT_MS;
-    for (;;) {
-      if (this.closed || Date.now() >= deadline) throw new LexicalPreparationError();
-      const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
-      const result = await snapshot(
-        async (): Promise<{ ready: false } | { ready: true; value: T }> =>
-          (await this.covered(scope))
-            ? { ready: true, value: await operation() }
-            : { ready: false },
-      );
-      if (result.ready) return result.value;
-      // Release the old read snapshot before asking the writer to catch up.
-      this.committed(true);
-      const active = this.active;
-      if (this.closed || !active) throw new LexicalPreparationError();
-      const remaining = deadline - Date.now();
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      try {
-        await Promise.race([
-          active,
-          new Promise<never>((_, reject) => {
-            timer = setTimeout(() => reject(new LexicalPreparationError()), Math.max(0, remaining));
-          }),
-        ]);
-      } finally {
-        if (timer) clearTimeout(timer);
+    const key = JSON.stringify([scope.worldId, scope.generation, scope.actorId]);
+    let group = this.readers.get(key);
+    if (!group) {
+      group = { scope, required: false, subscribers: new Set() };
+      this.readers.set(key, group);
+    }
+    let changed = () => {};
+    const notify = () => changed();
+    // Register before reading readiness. A committing final batch between that
+    // read and waiting then resolves this same subscription instead of losing it.
+    group.subscribers.add(notify);
+    try {
+      for (;;) {
+        current();
+        const progress = new Promise<void>((resolve) => {
+          changed = resolve;
+        });
+        const snapshot =
+          this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+        const result = await snapshot(
+          async (): Promise<{ ready: false } | { ready: true; value: T }> => {
+            current();
+            if (!(await this.covered(scope))) return { ready: false };
+            current();
+            const value = await operation();
+            current();
+            return { ready: true, value };
+          },
+        );
+        current();
+        if (result.ready) return result.value;
+        group.required = true;
+        this.committed(true);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        let aborted: (() => void) | undefined;
+        try {
+          await Promise.race([
+            progress,
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(
+                () => reject(new LexicalPreparationError()),
+                Math.max(0, remaining()),
+              );
+              if (control.signal) {
+                aborted = () => reject(control.signal!.reason);
+                control.signal.addEventListener('abort', aborted, { once: true });
+                if (control.signal.aborted) aborted();
+              }
+            }),
+          ]);
+        } finally {
+          if (timer) clearTimeout(timer);
+          if (aborted) control.signal?.removeEventListener('abort', aborted);
+        }
+        if (this.failed) throw new LexicalPreparationError();
       }
-      if (this.failed || this.closed) throw new LexicalPreparationError();
+    } finally {
+      group.subscribers.delete(notify);
+      if (!group.subscribers.size) this.readers.delete(key);
     }
   }
 
-  private async batch(): Promise<boolean> {
+  private async batch(scope?: LexicalScope): Promise<boolean> {
+    const pendingEpoch = this.pendingEpoch;
     const rows = await this.db
       .prepare(
         `WITH head AS MATERIALIZED (
@@ -256,7 +367,8 @@ export class LexicalProjection {
           SELECT q.* FROM head h JOIN memory_lexical_pending q
             ON q.world_id=h.world_id AND q.generation=h.generation
           WHERE h.projection_generation=h.generation
-          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind LIMIT ${BATCH_ROWS}
+            ${scope ? 'AND q.actor_id=? AND h.world_id=? AND h.generation=?' : ''}
+          ORDER BY ${scope ? 'q.id,q.source_kind' : 'q.world_revision,q.actor_id,q.id,q.source_kind'} LIMIT ${BATCH_ROWS}
         ), sized AS (
           SELECT q.*,row_number() OVER batch AS ordinal,
             sum(coalesce(octet_length(r.search_text),0)) OVER batch AS source_bytes
@@ -269,7 +381,7 @@ export class LexicalProjection {
             AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
           ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind`,
       )
-      .all();
+      .all(...(scope ? [scope.actorId, scope.worldId, scope.generation] : []));
     const head = rows[0];
     if (!head) {
       // Startup can precede the first world commit. There is no work to own yet;
@@ -307,7 +419,10 @@ export class LexicalProjection {
         pending_rows=excluded.pending_rows,pending_bytes=excluded.pending_bytes`,
         )
         .run(world, generation, world);
-      return this.batch();
+      const notify = () => this.notifyReaders();
+      if (this.db.afterCommit) this.db.afterCommit(notify);
+      else notify();
+      return this.batch(scope);
     }
     const selected = rows.filter((row) => row['id'] !== null);
     // Size the bounded key prefix in SQL before transferring bodies. One already
@@ -374,7 +489,15 @@ export class LexicalProjection {
     // Data-modifying CTEs share the statement's original snapshot. Coverage must
     // explicitly subtract the exact completed keys, not rescan as if DELETE were visible.
     if (!completed) throw new Error('Search preparation lost its current progress owner.');
-    this.pendingKnown = completed['ready'] !== true;
-    return this.pendingKnown;
+    const pending = completed['ready'] !== true;
+    const publish = () => {
+      // A saturation batch can precede another enqueue in its outer transaction.
+      // Its later commit callback must not clear that newer pending indication.
+      if (pending || pendingEpoch === this.pendingEpoch) this.pendingKnown = pending;
+      this.notifyReaders(world, generation, new Set(claims.map((claim) => String(claim.actor))));
+    };
+    if (this.db.afterCommit) this.db.afterCommit(publish);
+    else publish();
+    return pending;
   }
 }

@@ -38,7 +38,7 @@ import { addItem, TRAIT_BANK } from './data.js';
 import { setBodyHealth } from './body-state.js';
 import { itemHasReservations } from './resource-claims.js';
 import { canonicalJson, emit, finish, outcome } from './events.js';
-import { mindFor } from './mind.js';
+import { authoredIdentityText, mindFor } from './mind.js';
 import {
   experienceEntry,
   experienceEntries,
@@ -62,6 +62,24 @@ import type {
 
 import { GOD_SPAWN_OPTIONS } from './worlds/base/catalogue.js';
 export { GOD_SPAWN_OPTIONS } from './worlds/base/catalogue.js';
+
+/** Read the same supported native authoring vocabulary used by spawn/edit admission.
+ * This owner currently implements the bundled world's fixed creation family.
+ * Extend admission and this catalogue together for another family; see
+ * docs/projects/cognition-lab-tech-design.md#3-shared-owners-and-installed-modules. */
+export function godAuthoringCatalogue(world: WorldState, actorId?: string) {
+  return {
+    spawnOptions: GOD_SPAWN_OPTIONS,
+    traits: [
+      ...new Map(
+        [
+          ...TRAIT_BANK,
+          ...(actorId ? (entityGet(world.entities, actorId)?.actor?.traits ?? []) : []),
+        ].map((trait) => [trait.id, trait]),
+      ).values(),
+    ],
+  };
+}
 
 function reject(world: WorldState, code: string, message: string): Transition {
   return { world, events: [], outcome: outcome(false, code, message) };
@@ -575,17 +593,11 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
     const mind = mindFor(world, draft.actorId);
     const identity = mind.documents.find((document) => document.id === 'identity');
     if (identity) {
-      identity.text = [
+      identity.text = authoredIdentityText(
         `I am ${namePhrase(entity, 'definite', { capitalize: true })}.`,
-        entity.actor!.description,
-        entity.actor!.personality,
-        entity.actor!.backstory,
-        entity.actor!.initialGoals?.length
-          ? `My starting goals were: ${entity.actor!.initialGoals.join('; ')}.`
-          : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
+        entity.actor,
+        'were',
+      );
       identity.revision++;
       mind.revision++;
       (world.minds ??= {})[draft.actorId] = mind;

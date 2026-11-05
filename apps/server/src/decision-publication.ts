@@ -1,5 +1,11 @@
 import { entityGet, type Outcome, type WorldState } from '@open-legend/domain';
-import { DECISION_LIMITS, DecisionClaimLost, type DecisionState } from './decision-state.js';
+import {
+  DECISION_LIMITS,
+  DecisionClaimLost,
+  decisionEndMessage,
+  type DecisionState,
+  type DecisionEnd,
+} from './decision-state.js';
 import type { JobRecord, GameRepository } from './store.js';
 import type { DecisionAnswer } from './decision-task.js';
 import type { WorldService } from './world-service.js';
@@ -15,6 +21,9 @@ export interface DecisionPublication {
   receiptId: string;
   groups: Record<string, { operations: string[]; continued?: boolean }>;
   final: boolean;
+  /** Why independent open groups end at this final publication, if no native
+   * operation was refused (for example, an unresolved supplied choice). */
+  unresolvedReason?: DecisionEnd;
   now: () => number;
   /** Observation only, set after the owning transaction acknowledges durable publication. */
   deliveredAt?: number;
@@ -123,6 +132,34 @@ export async function finishDecisionPublication(
           group.state = 'ended-unresolved';
     const pending = Object.values(groups).some((group) => group.state === 'open');
     const resolved = Object.values(groups).every((group) => group.state === 'resolved');
+    // Inspect only this bounded decision's exact receipts. A failed independent
+    // component cannot erase speech already delivered or be relabeled abstention.
+    const components = [
+      ...new Set(Object.values(groups).flatMap((group) => group.receiptId ?? [])),
+    ].flatMap((id) => Object.values(world.responseReceipts?.[id]?.components ?? {}));
+    const partlyResolved =
+      Object.values(groups).some((group) => group.state === 'resolved') ||
+      components.some((part) => part.ok);
+    const refusals = components.filter((part) => !part.ok);
+    const unresolvedReason = refusals.length
+      ? 'native-rejection'
+      : (claim.unresolvedReason ?? 'native-rejection');
+    const unresolvedGroups = Object.values(groups).filter(
+      (group) => group.state === 'ended-unresolved',
+    );
+    const unresolvedMessage = refusals.length
+      ? [...new Set(refusals.map((part) => part.message))].join(' ')
+      : !outcome.ok
+        ? outcome.message
+        : unresolvedReason === 'abstained' &&
+            unresolvedGroups.every((group) => group.kind === 'choice')
+          ? unresolvedGroups.length === 1
+            ? 'A separate choice remains unresolved.'
+            : 'Other choices remain unresolved.'
+          : decisionEndMessage(unresolvedReason);
+    const completedMessage = components.some((part) => part.ok && part.code === 'spoken')
+      ? 'Speech completed.'
+      : 'Some parts of the response completed.';
     const now = claim.now();
     const immediate =
       state.immediate.kind !== 'pending'
@@ -143,6 +180,13 @@ export async function finishDecisionPublication(
     return {
       ...job,
       status: pending ? job.status : resolved ? 'completed' : 'failed',
+      message: pending
+        ? job.message
+        : !resolved && partlyResolved
+          ? `${completedMessage} ${unresolvedMessage}`
+          : resolved || !outcome.ok
+            ? outcome.message
+            : decisionEndMessage(unresolvedReason),
       decision: {
         ...state,
         groups,
@@ -153,11 +197,11 @@ export async function finishDecisionPublication(
               higher: {
                 ...state.higher,
                 state: 'finished',
-                ...(resolved ? {} : { end: 'native-rejection' }),
+                ...(resolved ? {} : { end: unresolvedReason }),
               },
             }
           : {}),
-        ...(!pending && !resolved ? { end: 'native-rejection' } : {}),
+        ...(!pending && !resolved ? { end: unresolvedReason } : {}),
       },
       ...(!pending ? { completedAt: now, totalLatencyMs: Math.max(0, now - job.createdAt) } : {}),
       result: {
@@ -184,6 +228,7 @@ export async function publishQuestionAnswers(
   answers: Record<string, DecisionAnswer>,
   sourcesCurrent: () => Promise<boolean>,
 ): Promise<ApiResult> {
+  const deliveredMessage = 'The scoped reader received the structured judgments.';
   return service.publishRecall(async () => {
     if (service.paused || !(await sourcesCurrent()))
       return { ok: false, code: 'stale', message: 'The question’s permitted evidence changed.' };
@@ -251,6 +296,11 @@ export async function publishQuestionAnswers(
       return {
         ...job,
         status: pending ? job.status : resolved ? 'completed' : 'failed',
+        message: pending
+          ? job.message
+          : resolved
+            ? deliveredMessage
+            : decisionEndMessage('abstained'),
         ...(!pending ? { completedAt: at, totalLatencyMs: Math.max(0, at - job.createdAt) } : {}),
         decision: {
           ...job.decision,
@@ -281,7 +331,7 @@ export async function publishQuestionAnswers(
       ? {
           ok: true,
           code: 'answered',
-          message: 'The scoped reader received the structured judgments.',
+          message: deliveredMessage,
         }
       : {
           ok: false,

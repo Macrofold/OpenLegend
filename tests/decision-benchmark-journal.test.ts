@@ -8,14 +8,23 @@ import {
   validateJournal,
   type BenchmarkManifest,
 } from '../scripts/decision-benchmark/journal.js';
-import { armById, benchmarkArms, resolveArm } from '../scripts/decision-benchmark/arms.js';
+import {
+  armById,
+  benchmarkArms,
+  resolveArm,
+  type BenchmarkArm,
+} from '../scripts/decision-benchmark/arms.js';
 import {
   committedMicroUsd,
   executionWorkers,
   runBenchmark,
 } from '../scripts/decision-benchmark/run.js';
 import { corpusVersion, modelInput, sha256 } from '../scripts/decision-benchmark/corpus.js';
-import { preparedArmInput } from '../scripts/decision-benchmark/execute.js';
+import {
+  benchmarkDeploymentPreparation,
+  executeArm,
+  preparedArmInput,
+} from '../scripts/decision-benchmark/execute.js';
 import type { BenchmarkRecoveryPlan } from '../scripts/decision-benchmark/recovery.js';
 import type { BenchmarkScene } from '../scripts/decision-benchmark/types.js';
 
@@ -89,6 +98,165 @@ const noCallPhaseOptions = () =>
     ['models', 'luna-decision'],
     ['workers', '16'],
   ]);
+
+describe('benchmark deployment credentials', () => {
+  const catalogArm = armById.get('meta/muse-spark-1.3-contributor')!;
+  const target = {
+    workspaceId: '44444444-4444-4444-8444-444444444444',
+    modelBinding: { deployment_id: '11111111-1111-4111-8111-111111111111' },
+  };
+  const customArm: BenchmarkArm = {
+    ...catalogArm,
+    id: 'fixture-deployment',
+    model: `deployment:${target.modelBinding.deployment_id}`,
+    macrofoldDeployment: target,
+    structuredOutput: 'json_schema',
+    effort: undefined,
+  };
+  const task = { id: workerScene.id, input: modelInput(workerScene) };
+
+  it.each([
+    {
+      title: 'custom target',
+      arm: customArm,
+      modelKey: 'model-fixture',
+      expected: 'model-fixture',
+    },
+    {
+      title: 'catalog target',
+      arm: catalogArm,
+      modelKey: 'model-fixture',
+      expected: 'fixture-key-never-dispatched',
+    },
+    {
+      title: 'custom backend fallback',
+      arm: customArm,
+      modelKey: undefined,
+      expected: 'fixture-key-never-dispatched',
+    },
+  ])('uses the correct credential for $title inference', async ({ arm, modelKey, expected }) => {
+    const fetcher = prepareNoCallPhase();
+    vi.stubEnv('MACROFOLD_MODEL_API_KEY', modelKey);
+    fetcher.mockImplementation(async () =>
+      Response.json({ error: { code: 'forbidden' } }, { status: 403 }),
+    );
+    try {
+      const { result } = await executeArm(
+        arm,
+        task,
+        manifest,
+        'credential-fixture',
+        0.02,
+        new AbortController().signal,
+        async () => {},
+        arm.macrofoldDeployment
+          ? { macrofoldOutputMode: 'json_schema', maxOutputTokens: 128, stream: false }
+          : undefined,
+      );
+      expect(result.outcome).toBe('unavailable');
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      const [url, init] = fetcher.mock.calls[0]!;
+      expect(String(url)).toBe(`${manifest.baseUrl}/v1/inferences`);
+      expect(new Headers(init?.headers).get('authorization')).toBe(`Bearer ${expected}`);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('uses the deployment credential for passive capability preparation', async () => {
+    const fetcher = prepareNoCallPhase();
+    vi.stubEnv('MACROFOLD_MODEL_API_KEY', 'model-fixture');
+    fetcher.mockImplementation(async () =>
+      Response.json({ error: { code: 'forbidden' } }, { status: 403 }),
+    );
+    try {
+      await expect(
+        benchmarkDeploymentPreparation(manifest).prepare(customArm, task),
+      ).rejects.toThrow();
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      const [url, init] = fetcher.mock.calls[0]!;
+      expect(String(url)).toContain(`/v1/model-deployments/${target.modelBinding.deployment_id}`);
+      expect(init?.method).toBe('GET');
+      expect(new Headers(init?.headers).get('authorization')).toBe('Bearer model-fixture');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it.each([false, true])(
+    'requires a backend key only when the cohort includes catalog work: %s',
+    async (includeCatalog) => {
+      const directory = await mkdtemp(join(tmpdir(), 'olbench-model-credential-'));
+      const fetcher = prepareNoCallPhase();
+      vi.stubEnv('MACROFOLD_API_KEY', undefined);
+      vi.stubEnv('MACROFOLD_MODEL_API_KEY', 'model-fixture');
+      const planPath = join(directory, 'plan.json');
+      try {
+        await writeFile(
+          planPath,
+          JSON.stringify({
+            schema_version: 1,
+            id: 'model_credential',
+            question: 'Keep deployment and catalog credentials separate.',
+            cases: [workerScene.id],
+            replicates: 1,
+            arms: [
+              {
+                id: 'candidate',
+                source: {
+                  kind: 'deployment',
+                  workspace_id: target.workspaceId,
+                  model_binding: target.modelBinding,
+                  structured_output: 'json_schema',
+                },
+              },
+              ...(includeCatalog
+                ? [{ id: 'catalog', source: { kind: 'existing', arm: 'spark-contributor' } }]
+                : []),
+            ],
+            limits: {
+              cap_usd: 1,
+              per_call_usd: 0.25,
+              timeout_ms: 1000,
+              concurrency: 1,
+              max_output_tokens: 128,
+            },
+            prior_commitment_usd: 0,
+            hosting_cost: { basis: 'already-funded-shared' },
+          }),
+        );
+        const run = runBenchmark(
+          'run',
+          directory,
+          new Map([
+            ['live', 'true'],
+            ['max-new', '0'],
+            ['model-experiment', planPath],
+          ]),
+          [workerScene],
+          () => ({}),
+        );
+        if (includeCatalog)
+          await expect(run).rejects.toThrow(
+            'Missing Macrofold credential for a selected model arm.',
+          );
+        else {
+          await run;
+          expect(await readFile(join(directory, 'journal.jsonl'), 'utf8')).toBe('');
+          const stored = JSON.parse(
+            await readFile(join(directory, 'manifest.json'), 'utf8'),
+          ) as BenchmarkManifest;
+          expect(stored.models).toEqual(['experiment/candidate/replicate-1']);
+        }
+        expect(fetcher).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllEnvs();
+        await rm(directory, { recursive: true, force: true });
+      }
+    },
+  );
+});
+
 function eventSet(scene = 'scene-a', selectedModel = model, modelIndex = 0) {
   const arm = armById.get(selectedModel);
   const key = `${selectedModel}:${scene}`,

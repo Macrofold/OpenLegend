@@ -1,5 +1,7 @@
 # AWS access for OpenLegend
 
+For verification machines, read the [managed-worker procedure](verification-workers.md) before provisioning, starting, claiming or using one, including an existing instance. It owns exclusive use, cleanup and the distinction between designed and available tooling; AWS access alone does not grant a claim.
+
 ## Project and profile isolation
 
 Use the explicitly selected `openlegend` profile and `us-east-2` Region for OpenLegend's current AWS project. Its AWS account ID is `027677879749`; verify it with STS before resource mutations. These settings do not apply to Mike's work projects.

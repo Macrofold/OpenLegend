@@ -45,6 +45,7 @@ import {
 import { prepareQuestionRead } from '../../apps/server/src/decision-question-reader.js';
 import { resolveLevel1 } from '../../apps/server/src/level1-selection.js';
 import {
+  attentionQuestionPolicy,
   batchedAttentionQuestions,
   ACTION_EVIDENCE_POLICY,
 } from '../../apps/server/src/jev-questions.js';
@@ -409,6 +410,10 @@ try {
           permittedContext: episode.context,
           candidates: choices,
           attentionPolicy: ACTION_EVIDENCE_POLICY,
+          actionQuestionPolicy: attentionQuestionPolicy(
+            'choose-action',
+            service.world.cognitionPolicy.actionGuidance,
+          ),
         },
         questions: batchedAttentionQuestions(
           Object.keys(choices),

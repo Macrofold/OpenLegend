@@ -533,43 +533,65 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
     }
     return undefined;
   },
-  requestChoices(world, actorId, prepared) {
+  requestChoices(world, actorId, prepared, query, families) {
     const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });
     if (!observed) return { choices: [], warnings: ['Your character is unavailable.'] };
-    const choices: ActivityRequestChoice[] = [
-      {
-        id: actorId,
-        label: 'My accessible possessions',
-        kind: 'entity',
-        roles: ['sourceId'],
-        requestIds: [requests[1]!.id],
-        distance: 0,
-        accessible: true,
-      },
-    ];
+    const wants = (family: string, field: string) =>
+      (!families || families.includes(family)) &&
+      (!query || (query.family === family && query.field === field));
+    const choices: ActivityRequestChoice[] = wants(requests[1]!.id, 'sourceId')
+      ? [
+          {
+            id: actorId,
+            label: 'My accessible possessions',
+            kind: 'entity',
+            roles: ['sourceId'],
+            requestIds: [requests[1]!.id],
+            distance: 0,
+            accessible: true,
+          },
+        ]
+      : [];
     const definitions = new Set<string>(),
       warnings: string[] = [];
-    const addDefinition = (definitionId: string) => {
+    const addDefinition = (definitionId: string, requestId: string, sourceId: string) => {
+      if (!wants(requestId, 'definitionId') || (query && query.arguments.sourceId !== sourceId))
+        return;
       const definition = world.itemDefinitions[definitionId];
-      if (!definition || !isFuel(definition) || definitions.has(definitionId)) return;
-      definitions.add(definitionId);
+      const key = JSON.stringify([requestId, sourceId, definitionId]);
+      if (!definition || !isFuel(definition) || definitions.has(key)) return;
+      definitions.add(key);
       choices.push({
         id: definitionId,
         label: definition.name,
         kind: 'definition',
         roles: ['definitionId'],
+        requestIds: [requestId],
+        requires: { sourceId },
         accessible: true,
       });
     };
     const position = worldPosition(observed.actor);
-    for (const target of observed.visibleEntities.slice(0, 32)) {
+    const visibleNeeded =
+      requests.some((request) => wants(request.id, 'fireId')) ||
+      wants(requests[0]!.id, 'sourceId') ||
+      wants(requests[0]!.id, 'definitionId');
+    for (const target of visibleNeeded ? observed.visibleEntities.slice(0, 32) : []) {
+      if (query?.field === 'definitionId') {
+        if (target.resource)
+          addDefinition(target.resource.definitionId, requests[0]!.id, target.id);
+        continue;
+      }
+      if (target.resource && !wants(requests[0]!.id, 'sourceId')) continue;
       const roles =
         target.resource && isFuel(world.itemDefinitions[target.resource.definitionId]!)
           ? ['sourceId']
           : target.heat
             ? ['fireId']
             : [];
-      if (!roles.length) continue;
+      const roleFamily = target.resource ? requests[0]!.id : query?.family;
+      if (!roles.length || (query && (!roles.includes(query.field) || roleFamily !== query.family)))
+        continue;
       const here = worldPosition(target),
         distance = Math.hypot(here.x - position.x, here.y - position.y, here.z - position.z);
       choices.push({
@@ -581,19 +603,23 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
         distance,
         accessible: true,
       });
-      if (target.resource) addDefinition(target.resource.definitionId);
+      if (target.resource) addDefinition(target.resource.definitionId, requests[0]!.id, target.id);
       if (target.heat)
         warnings.push(
           `${observerDescription(world, actorId, target.id)}: ${fireFuelDescription(target.heat)}. A full fire can refuse additional fuel; waiting alone is not a fuel-care result.`,
         );
     }
     let count = 0;
-    for (const item of observed.inventory) {
+    const stockNeeded =
+      wants(requests[0]!.id, 'containerId') ||
+      wants(requests[1]!.id, 'sourceId') ||
+      wants(requests[1]!.id, 'definitionId');
+    for (const item of stockNeeded ? observed.inventory : []) {
       if (++count > 32) {
         warnings.push('Some possessions are omitted. Inspect or narrow your selected supply.');
         break;
       }
-      addDefinition(item.definitionId);
+      addDefinition(item.definitionId, requests[1]!.id, actorId);
       if (item.container) {
         const choice = {
           id: item.id,
@@ -602,34 +628,40 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
           distance: 0,
           accessible: true,
         };
-        choices.push(
-          { ...choice, roles: ['containerId'], requestIds: [requests[0]!.id] },
-          { ...choice, roles: ['sourceId'], requestIds: [requests[1]!.id] },
-        );
+        if (wants(requests[0]!.id, 'containerId'))
+          choices.push({ ...choice, roles: ['containerId'], requestIds: [requests[0]!.id] });
+        if (wants(requests[1]!.id, 'sourceId'))
+          choices.push({ ...choice, roles: ['sourceId'], requestIds: [requests[1]!.id] });
       }
     }
     const selected = prepared ? prepared.inspectedContainer : inspectedContainer(world, actorId);
-    if (selected && !choices.some((choice) => choice.id === selected.id)) {
-      const root = objectAncestors(world, selected.id).at(-1)!,
-        here = worldPosition(root);
-      const choice = {
-        id: selected.id,
-        label: selected.name,
-        kind: 'entity' as const,
-        distance: Math.hypot(here.x - position.x, here.y - position.y, here.z - position.z),
-        accessible: true,
-      };
-      choices.push(
-        { ...choice, roles: ['containerId'], requestIds: [requests[0]!.id] },
-        { ...choice, roles: ['sourceId'], requestIds: [requests[1]!.id] },
+    if (stockNeeded && selected) {
+      if (!choices.some((choice) => choice.kind === 'entity' && choice.id === selected.id)) {
+        const root = objectAncestors(world, selected.id).at(-1)!,
+          here = worldPosition(root);
+        const choice = {
+          id: selected.id,
+          label: selected.name,
+          kind: 'entity' as const,
+          distance: Math.hypot(here.x - position.x, here.y - position.y, here.z - position.z),
+          accessible: true,
+        };
+        if (wants(requests[0]!.id, 'containerId'))
+          choices.push({ ...choice, roles: ['containerId'], requestIds: [requests[0]!.id] });
+        if (wants(requests[1]!.id, 'sourceId'))
+          choices.push({ ...choice, roles: ['sourceId'], requestIds: [requests[1]!.id] });
+      }
+      // An already-listed bag is still a distinct chosen supply. Its inspected
+      // materials keep that source association even when the inventory page ends.
+      selected.items.forEach((item) =>
+        addDefinition(item.definitionId, requests[1]!.id, selected.id),
       );
-      selected.items.forEach((item) => addDefinition(item.definitionId));
       if (selected.inspection.more)
         warnings.push(
           'The selected cache has further inspection pages; this page is not a complete stock count.',
         );
     }
-    if (observed.visibleEntities.length > 32)
+    if (visibleNeeded && observed.visibleEntities.length > 32)
       warnings.push('Some visible choices are omitted. Select or inspect a narrower target.');
     return { choices, warnings };
   },

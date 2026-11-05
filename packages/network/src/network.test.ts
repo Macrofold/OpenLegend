@@ -421,6 +421,35 @@ describe('owned HTTP bodies', () => {
     expect(owner.snapshot().occupied).toBe(0);
   });
 
+  it('retires a terminal body abort even when cancellation wins its guarded read', async () => {
+    const controller = new AbortController();
+    let body!: ReadableStreamDefaultController<Uint8Array>;
+    const owner = createNetworkOwner({
+      role: 'test',
+      capacity: 1,
+      fetch: async () =>
+        new Response(
+          new ReadableStream<Uint8Array>({
+            start(value) {
+              body = value;
+            },
+          }),
+        ),
+    });
+    const result = owner.run({ timeoutMs: 1_000, signal: controller.signal }, (operation) =>
+      requestBytes(operation, { url: 'https://example.invalid', bodyPolicy: policy }),
+    );
+    const rejection = expect(result).rejects.toMatchObject({ kind: 'cancelled' });
+    await flush();
+    // Native fetch can error its body before its abort listener cancels the reader.
+    // The guarded caller loses this same-turn race; the raw reader still proves closure.
+    body.error(new DOMException('Aborted', 'AbortError'));
+    controller.abort();
+    await rejection;
+    await flush();
+    expect(owner.snapshot()).toMatchObject({ occupied: 0, quarantined: 0 });
+  });
+
   it('preserves observed status when an error body stalls', async () => {
     const time = new ManualTime();
     const owner = createNetworkOwner({

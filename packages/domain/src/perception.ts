@@ -33,7 +33,7 @@ import {
 } from './acoustics.js';
 import { effectiveBodyProfile, spatialMap } from './spatial-state.js';
 import { current, isDraft } from 'immer';
-import { distance } from './spatial.js';
+import { distance, nearbyEntities } from './spatial.js';
 import type { Entity, Position, WorldState } from './types.js';
 
 export { PERCEPTION_RULES } from './worlds/base/senses.js';
@@ -557,6 +557,15 @@ export function entityVisionQuery(
       height: effectiveBodyProfile(world, source).height,
     });
   };
+}
+/** Current indexed visual candidates for trusted read-only consumers. Stored
+ * noticing masks describe sampled evidence; they are not a current sight query.
+ * Callers project these entities before any client/model disclosure. */
+export function visibleEntitiesFor(world: WorldState, observer: Entity): Entity[] {
+  const sees = entityVisionQuery(world, observer);
+  return nearbyEntities(world, worldPosition(observer), visionRadius(world, observer)).filter(
+    (entity) => entity.id !== observer.id && sees(entity),
+  );
 }
 export function soundOrigin(world: WorldState, entity: Entity): Position {
   const position = worldPosition(entity);

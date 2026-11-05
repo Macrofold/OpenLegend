@@ -1,4 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
+import { generationRequestAccounting } from './request-accounting.js';
 import { NetworkError, type NetworkOwner } from '@open-legend/network';
 import { MacrofoldTransport, MacrofoldHttpError, macrofoldObject as object } from './macrofold.js';
 import {
@@ -7,6 +8,7 @@ import {
   decodeMacrofoldGeneration,
   macrofoldDeploymentRequestFields,
   prepareMacrofoldGenerationInput,
+  defaultMacrofoldCatalogOutputMode,
   type MacrofoldDeploymentTarget,
   type MacrofoldOutputMode,
 } from './macrofold-inference-target.js';
@@ -39,7 +41,11 @@ import type {
   TokenUsage,
 } from './types.js';
 
-export type MacrofoldDecisionModel = 'typesafe/jev-1.13' | 'microsoft/microsoft-decision-1';
+export const MACROFOLD_DECISION_MODELS = [
+  'typesafe/jev-1.13',
+  'microsoft/microsoft-decision-1',
+] as const;
+export type MacrofoldDecisionModel = (typeof MACROFOLD_DECISION_MODELS)[number];
 export type MacrofoldBillingMode = NonNullable<AiReceipt['macrofoldBillingMode']>;
 
 interface MacrofoldTransportConfig {
@@ -57,7 +63,6 @@ type MacrofoldCatalogBinding<Model extends string> = {
   billingMode: MacrofoldBillingMode;
   providerConnectionId?: string;
   macrofoldDeployment?: never;
-  macrofoldOutputMode?: never;
 };
 
 type MacrofoldDeploymentBinding = {
@@ -69,17 +74,15 @@ type MacrofoldDeploymentBinding = {
 
 export type MacrofoldGenerationConfig = MacrofoldTransportConfig &
   (
-    | MacrofoldCatalogBinding<string>
+    | (MacrofoldCatalogBinding<string> & { macrofoldOutputMode?: MacrofoldOutputMode })
     | (MacrofoldDeploymentBinding & {
         macrofoldOutputMode: MacrofoldOutputMode;
       })
   );
 
-export type MacrofoldDecisionConfig = MacrofoldTransportConfig &
-  (
-    | MacrofoldCatalogBinding<MacrofoldDecisionModel>
-    | (MacrofoldDeploymentBinding & { macrofoldOutputMode?: never })
-  );
+export type MacrofoldDecisionConfig = MacrofoldTransportConfig & {
+  macrofoldOutputMode?: never;
+} & (MacrofoldCatalogBinding<MacrofoldDecisionModel> | MacrofoldDeploymentBinding);
 
 export interface MacrofoldGenerationRequest extends GenerateRequest {
   /** Stream delivery internally; only the completed, validated value is returned. */
@@ -437,6 +440,7 @@ interface PreparedInference<T> {
   input: Record<string, unknown>;
   maxOutputTokens: number;
   decode(raw: unknown): { value: T } | { refused: true };
+  accounting?: AiReceipt['requestAccounting'];
 }
 
 function outputTokenLimit(value: number): number {
@@ -475,15 +479,14 @@ function createMacrofoldExecutor(
     model.length > 200 ||
     !billingMode ||
     !['managed', 'byok'].includes(billingMode) ||
+    (config.macrofoldOutputMode !== undefined &&
+      (kind !== 'generation' ||
+        !['json_schema', 'json_object', 'prompted_json'].includes(config.macrofoldOutputMode))) ||
     (deployment !== undefined &&
       (config.model !== undefined ||
         config.billingMode !== undefined ||
         config.providerConnectionId !== undefined ||
-        (kind === 'decision'
-          ? config.macrofoldOutputMode !== undefined
-          : !['json_schema', 'json_object', 'prompted_json'].includes(
-              config.macrofoldOutputMode ?? '',
-            ))))
+        (kind === 'generation' && config.macrofoldOutputMode === undefined)))
   )
     throw new Error('Invalid Macrofold inference configuration.');
   const api = new MacrofoldTransport(config.baseUrl, config.apiKey, config.fetch, config.network);
@@ -566,6 +569,11 @@ function createMacrofoldExecutor(
           };
           const preparedBody = new PreparedJson(body, 500_000);
           receipt.providerRequestDigest = digest(preparedBody.text(500_000));
+          if (prepared.accounting)
+            receipt.requestAccounting = {
+              ...prepared.accounting,
+              transportBytes: Buffer.byteLength(preparedBody.text(500_000)),
+            };
           signal.throwIfAborted();
           receipt.dispatched = true;
           receipt.completionUncertain = true;
@@ -740,8 +748,8 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
   judge(request: MacrofoldDecisionRequest): Promise<AiResult<JudgeValue>>;
 } {
   if (
-    !configuration.macrofoldDeployment &&
-    !['typesafe/jev-1.13', 'microsoft/microsoft-decision-1'].includes(configuration.model)
+    configuration.macrofoldDeployment?.chatTemplateKwargs !== undefined ||
+    (!configuration.macrofoldDeployment && !MACROFOLD_DECISION_MODELS.includes(configuration.model))
   )
     throw new Error('Invalid Macrofold decision configuration.');
   const execute = createMacrofoldExecutor(configuration, 'decision');
@@ -774,7 +782,12 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
         ...configuration,
         macrofoldDeployment: captureMacrofoldDeploymentTarget(configuration.macrofoldDeployment),
       })
-    : Object.freeze({ ...configuration });
+    : Object.freeze({
+        ...configuration,
+        macrofoldOutputMode:
+          configuration.macrofoldOutputMode ??
+          defaultMacrofoldCatalogOutputMode(configuration.model),
+      });
   const execute = createMacrofoldExecutor(config, 'generation');
   return {
     generate<T = JsonValue>(request: MacrofoldGenerationRequest): Promise<AiResult<T>> {
@@ -789,7 +802,9 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
               selected.workspaceId !== deployment.workspaceId ||
               selected.modelBinding.deployment_id !== deployment.modelBinding.deployment_id ||
               selected.modelBinding.deployment_revision_id !==
-                deployment.modelBinding.deployment_revision_id
+                deployment.modelBinding.deployment_revision_id ||
+              selected.chatTemplateKwargs?.enable_thinking !==
+                deployment.chatTemplateKwargs?.enable_thinking
             )
               throw new InvalidData('deployment_not_authorized');
           }
@@ -799,22 +814,34 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
           )
             throw new InvalidData('deployment_output_mode_not_authorized');
         } else {
-          if (
-            request.macrofoldDeployment !== undefined ||
-            request.macrofoldOutputMode !== undefined
-          )
+          if (request.macrofoldDeployment !== undefined)
             throw new InvalidData('deployment_not_configured');
+          if (
+            request.macrofoldOutputMode !== undefined &&
+            request.macrofoldOutputMode !== config.macrofoldOutputMode
+          )
+            throw new InvalidData('catalog_output_mode_not_authorized');
           if (request.model !== undefined && request.model !== config.model)
             throw new InvalidData('model_not_authorized');
         }
         const preparedSchema = prepareSchema(request.schema, 500_000);
         const maxOutputTokens = outputTokenLimit(request.maxOutputTokens ?? 4096);
+        const input = prepareMacrofoldGenerationInput(
+          {
+            ...request,
+            ...(deployment ? { macrofoldDeployment: deployment } : {}),
+            maxOutputTokens,
+          },
+          preparedSchema,
+          config.macrofoldOutputMode,
+        );
         return {
           maxOutputTokens,
-          input: prepareMacrofoldGenerationInput(
-            { ...request, maxOutputTokens },
-            preparedSchema,
-            config.macrofoldOutputMode,
+          input,
+          accounting: generationRequestAccounting(
+            { ...request, schema: preparedSchema.schema },
+            deployment ? `deployment:${deployment.modelBinding.deployment_id}` : config.model!,
+            { input, transport: '', maxOutputTokens },
           ),
           decode: (raw) => decodeMacrofoldGeneration<T>(raw, preparedSchema),
         };

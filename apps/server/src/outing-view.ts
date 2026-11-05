@@ -416,26 +416,9 @@ export function cooperationProposals(
   const policy = world.socialOfferPolicy?.cooperation;
   if (!policy) return [];
   const helping = policy.families.includes('help');
-  // All proposals in this read share the same personal place knowledge. Preparing
-  // it for each quarry or carrying offer repeats the same memory/visibility work.
-  let destinations: ReturnType<typeof knownGuideDestinations> | undefined;
-  const knownDestinations = () => (destinations ??= knownGuideDestinations(world, actorId));
-  // Keep family ordering for bounded action retrieval; tuple fields prevent ID collisions.
-  // docs/identity-and-references.md#contract
-  const choices: OutingView['choices'] = policy.families.includes('guide')
-    ? knownDestinations().map((place) => ({
-        id: `guide:${JSON.stringify([recipientId, place.id])}`,
-        label: `${policy.labels.propose}: ${place.label}`,
-        description: policy.description,
-        command: {
-          type: 'outing',
-          outingOperation: 'propose',
-          cooperationKind: 'guide',
-          targetId: recipientId,
-          destinationId: place.id,
-        },
-      }))
-    : [];
+  // Parameterized proposals use the installed request reader. Concrete construction
+  // plans and received compact terms keep their existing exact native choices.
+  const choices: OutingView['choices'] = [];
   for (const [index, plan] of (helping ? constructionPlans : []).entries())
     choices.push({
       id: JSON.stringify(['construction-help', recipientId, index, plan]),
@@ -475,85 +458,6 @@ export function cooperationProposals(
         compactKind: kind,
       },
     });
-  }
-  if (policy.families.includes('hunt'))
-    for (const quarryId of [
-      ...(world.visibleObjects?.[actorId] ?? []),
-      ...(world.visiblePeople?.[actorId] ?? []),
-    ]) {
-      const quarry = entityGet(world.entities, quarryId);
-      if (!quarry?.animal || !quarry.actor?.alive) continue;
-      for (const place of knownDestinations())
-        choices.push({
-          id: `hunt:${JSON.stringify([recipientId, quarryId, place.id])}`,
-          label: `${policy.labels.hunt}: ${observerDescription(world, actorId, quarryId, 'definite')}; ${place.label}`,
-          description: policy.labels.huntTerms
-            .replaceAll('{quarry}', observerDescription(world, actorId, quarryId, 'definite'))
-            .replaceAll('{place}', place.label),
-          command: {
-            type: 'outing',
-            outingOperation: 'propose',
-            cooperationKind: 'hunt',
-            quarryId,
-            destinationId: place.id,
-            targetId: recipientId,
-          },
-        });
-    }
-  for (const record of helping ? (world.knowledge[actorId] ?? []) : []) {
-    const recipe = world.recipes[record.recipeId];
-    if (!recipe) continue;
-    const recipePin = recipeMechanicalPin(recipe);
-    if (!policy.helpMethods?.some((pin) => sameDefinitionPin(pin, recipePin))) continue;
-    for (const output of recipe.outputs)
-      choices.push({
-        id: `prepare-help:${JSON.stringify([recipientId, recipe.id, output.port])}`,
-        label: `${policy.labels.help}: ${world.itemDefinitions[output.definition.id]!.name}`,
-        description: policy.description,
-        command: {
-          type: 'outing',
-          outingOperation: 'propose',
-          cooperationKind: 'help',
-          targetId: recipientId,
-          cooperationTask: {
-            kind: 'prepare',
-            recipeId: recipe.id,
-            outputPort: output.port,
-            quantity: output.quantity,
-          },
-        },
-      });
-  }
-  for (const offer of helping ? perceivedOffersBetween(world, actorId, recipientId).outgoing : []) {
-    const item =
-      offer.offered.length === 1
-        ? entityGet(world.entities, offer.offered[0]!.itemId)?.item
-        : undefined;
-    if (
-      offer.requested.length ||
-      !item ||
-      item.revision !== offer.offered[0]!.revision ||
-      item.quantity !== offer.offered[0]!.quantity
-    )
-      continue;
-    for (const place of knownDestinations())
-      choices.push({
-        id: `carry-help:${JSON.stringify([offer.id, place.id])}`,
-        label: `${policy.labels.carry}: ${place.label}`,
-        description: policy.description,
-        command: {
-          type: 'outing',
-          outingOperation: 'propose',
-          cooperationKind: 'help',
-          targetId: recipientId,
-          cooperationTask: {
-            kind: 'carry',
-            offerId: offer.id,
-            offerRevision: offer.revision,
-            destinationId: place.id,
-          },
-        },
-      });
   }
   // Every installed purpose revises received terms, including profiles without helping.
   // docs/projects/first-playable-cooperation-tech-design.md#exact-consent-and-cancellation

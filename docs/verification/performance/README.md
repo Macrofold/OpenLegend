@@ -134,3 +134,5 @@ The previous reader report is preserved as [earlier reader-report detail](reader
 - [CPU clock alignment](63-cpu-clock-alignment.md): qualify known CPU/idle markers before placing calculation samples on the measured game timeline.
 
 - [Ordered database-write transport](64-ordered-database-write-pipeline.md): preregistered bounded protocol proof before any game-storage change.
+
+[Managed verification workers](2026-10/verification-workers.md) records cold/warm setup, source/cache reuse, controller/owner/tunnel faults and representative rendered input, separately from game-capacity acceptance. [Native campaigns](2026-10/verification-campaigns.md) adds 122-job/four-host isolation, durable publication, clean-image and device lifecycle evidence; larger-fleet qualification remains quota-blocked.

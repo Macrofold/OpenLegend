@@ -117,6 +117,29 @@ export type AiFailureOutcome =
   | 'cancelled'
   | 'uncertain';
 
+/** Components are contained in encodedInputBytes/transportBytes, not additional
+ * bytes to add to those totals. Provider usage remains the billing evidence. */
+export interface RequestInputAccounting {
+  instructionsBytes: number;
+  contextBytes: number;
+  schemaBytes: number;
+  /** Null for a Worker whose harness may supply additional context or tools. */
+  toolDefinitionBytes: number | null;
+  toolResultBytes: number | null;
+  encodedInputBytes: number;
+  transportBytes: number;
+  /** The Worker prompt is measured; its private harness additions are not observable. */
+  inputScope: 'adapter-input' | 'worker-prompt-only';
+  /** Null when the transport does not declare an output-token ceiling. */
+  maxOutputTokens: number | null;
+  estimatedInputTokens: {
+    value: number;
+    basis: 'captured-input-utf8-divided-by-three';
+    model: string;
+    exact: false;
+  };
+}
+
 export interface AiReceipt {
   requestId: string;
   provider: AiProvider;
@@ -136,7 +159,17 @@ export interface AiReceipt {
     deploymentId: string;
     infrastructureCostIncluded: false;
   };
+  sharedExecution?: {
+    grantId: string;
+    attemptId: string;
+    campaignId: string;
+    jobId: string;
+    caseId: string;
+    sourceHash: string;
+  };
   contextDigest: string;
+  /** Captured generation input, including the schema and actual adapter wrapper. */
+  requestAccounting?: RequestInputAccounting;
   providerRequestDigest?: string;
   startedAt: string;
   completedAt: string;

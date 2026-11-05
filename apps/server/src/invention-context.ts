@@ -53,6 +53,25 @@ export function inventionMaterials(world: WorldState, observed: ActorObservation
   });
 }
 
+/** The material catalogue needs ownership by definition, not every stock row or
+ * its quantities. Keep the full permitted definition set before native copying. */
+export function inventionMaterialsFor(world: WorldState, actorId: string) {
+  const observed = observeActor(world, actorId, {
+    includeMemories: false,
+    selectInventory(inventory) {
+      const definitions = new Set<string>();
+      const selected = new Set<string>();
+      for (const item of inventory)
+        if (!definitions.has(item.definitionId)) {
+          definitions.add(item.definitionId);
+          selected.add(item.id);
+        }
+      return selected;
+    },
+  });
+  return observed ? inventionMaterials(world, observed) : null;
+}
+
 /** Validate the actor's references before privileged native validation can describe unknown inputs. */
 export function scopedInventionErrors(
   service: WorldService,
@@ -60,9 +79,9 @@ export function scopedInventionErrors(
   candidate: unknown,
   world: WorldState = service.world,
 ): string[] {
-  const observed = observeActor(world, actorId, { includeMemories: false });
-  if (!observed) return ['The inventor is unavailable.'];
-  const materials = new Set(inventionMaterials(world, observed).map((material) => material.id));
+  const catalogue = inventionMaterialsFor(world, actorId);
+  if (!catalogue) return ['The inventor is unavailable.'];
+  const materials = new Set(catalogue.map((material) => material.id));
   if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
     const value = candidate as Record<string, unknown>;
     if (

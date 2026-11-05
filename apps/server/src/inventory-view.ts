@@ -504,9 +504,10 @@ export function activityStorageReader(
   service.assertScope(scope);
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId)!;
-  const host = activityRequestHost(world, activity.family);
+  const host = activityRequestHost(world, activity.family, scope.actorId);
   const field = (
-    host && activityHostRequests(world, host).find((entry) => entry.id === activity.family)
+    host &&
+    activityHostRequests(world, host, scope.actorId).find((entry) => entry.id === activity.family)
   )?.fields[activity.field];
   if (field?.discovery?.source !== 'storage')
     throw new HistoryCursorError('Choose an installed storage field.');
@@ -899,7 +900,13 @@ export function inventoryDestinationPage(
 /** The same permitted availability drives page refresh and item actions, including
  * silent capability restrictions and incapacitation without a public status label. */
 export function canUseInventory(service: WorldService, scope: RequestScope): boolean {
-  const player = entityGet(service.world.entities, scope.actorId),
+  return (
+    inventoryActorAvailable(service, scope.actorId) && service.currentScope(scope, 'play', true)
+  );
+}
+
+function inventoryActorAvailable(service: WorldService, actorId: string): boolean {
+  const player = entityGet(service.world.entities, actorId),
     actor = player?.actor;
   return (
     !!actor &&
@@ -907,8 +914,7 @@ export function canUseInventory(service: WorldService, scope: RequestScope): boo
     actor.alive &&
     !actor.incapacitated &&
     !capabilityBlocked(service.world, player, 'actions') &&
-    actor.participation?.phase !== 'inactive' &&
-    service.currentScope(scope, 'play', true)
+    actor.participation?.phase !== 'inactive'
   );
 }
 
@@ -934,11 +940,11 @@ export function inventoryItemsView(
 }
 
 /** Deliberate inspection controls method disclosure for both facts and explicit choices. */
-function inventoryRecordRead(service: WorldService, scope: RequestScope, item: ItemInstance) {
+function inventoryRecordRead(service: WorldService, actorId: string, item: ItemInstance) {
   const world = service.world;
   return world.itemDefinitions[item.definitionId]!.recipeRecord &&
-    currentInventoryInspection(world, scope.actorId)?.itemIds.includes(item.id)
-    ? readRecipeRecord(world, scope.actorId, item.id)
+    currentInventoryInspection(world, actorId)?.itemIds.includes(item.id)
+    ? readRecipeRecord(world, actorId, item.id)
     : undefined;
 }
 
@@ -950,11 +956,17 @@ export function inventoryItemChoices(
   preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
     service.previewCommand(command, scope),
   itemActions = prepareNativeInventoryActions(service.world, scope.actorId),
+  actorContext?: { actorId: string; controlling: boolean },
 ) {
+  // Operator catalogues already authorize their selected body. Keep that body and
+  // control result together rather than borrowing the principal's possessions.
+  const actorId = actorContext?.actorId ?? scope.actorId;
   const world = service.world,
-    player = entityGet(world.entities, scope.actorId)!,
+    player = entityGet(world.entities, actorId)!,
     actor = player.actor!;
-  const active = canUseInventory(service, scope);
+  const active = actorContext
+    ? actorContext.controlling && inventoryActorAvailable(service, actorId)
+    : canUseInventory(service, scope);
   const action = (
     id: string,
     label: string,
@@ -980,7 +992,7 @@ export function inventoryItemChoices(
 
   const definition = world.itemDefinitions[item.definitionId]!;
   const actions: ActionOption[] = [];
-  const recordRead = inventoryRecordRead(service, scope, item);
+  const recordRead = inventoryRecordRead(service, actorId, item);
   if (recordRead) {
     const read = recordRead;
     if ('recipe' in read) {
@@ -1060,7 +1072,7 @@ export function inventoryItemChoices(
         workReason ?? undefined,
       ),
     );
-  if (isEquipped(world, scope.actorId, item.id))
+  if (isEquipped(world, actorId, item.id))
     actions.push(
       action(
         `unequip-${item.id}`,
@@ -1124,7 +1136,7 @@ export function inventoryItemSummary(
   service: WorldService,
   scope: RequestScope,
   item: ItemInstance,
-  recordRead = inventoryRecordRead(service, scope, item),
+  recordRead = inventoryRecordRead(service, scope.actorId, item),
 ): InventoryItemSummary {
   const world = service.world,
     player = entityGet(world.entities, scope.actorId)!,

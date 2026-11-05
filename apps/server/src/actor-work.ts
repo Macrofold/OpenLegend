@@ -76,6 +76,26 @@ interface Work {
   dependencies?: readonly Dependency[];
   /** Save containing the latest relevant input change, not each subsequent poll. */
   durabilityTicket?: number;
+  observedReadiness?: string;
+}
+
+export interface IntakeReadinessObservation {
+  kind: 'readiness';
+  actorId: string;
+  scope: string;
+  actorGeneration: number;
+  ticket?: number;
+  blocked: boolean;
+  wallAt: number;
+  simTime: number;
+  pendingSince?: number;
+}
+
+export interface WorkReadiness {
+  actors: string[];
+  /** Highest captured evidence cut among otherwise eligible pending consumers. */
+  durabilityTicket?: number;
+  durabilityBlocked: number;
 }
 
 export interface WorkDurability {
@@ -108,6 +128,15 @@ export class ActorWork {
     private readonly durability?: WorkDurability,
   ) {}
   private worldId?: string;
+  private observed?: (event: IntakeReadinessObservation) => void;
+  get readinessObserver() {
+    return this.observed;
+  }
+  set readinessObserver(value: ((event: IntakeReadinessObservation) => void) | undefined) {
+    if (value && value !== this.observed)
+      for (const ticket of this.tickets.values()) delete ticket.observedReadiness;
+    this.observed = value;
+  }
   private scope?: string;
   private nextGeneration = 0;
   private readonly tickets = new Map<string, Work>();
@@ -261,7 +290,11 @@ export class ActorWork {
    * wait time, then the rest by wait time. Insertion order breaks ties deterministically.
    * A ticket whose read keeps failing keeps its age and cannot hide others: the caller
    * inspects every returned character until one is admitted. */
-  ready(now: number, simTime: number, eligible: (id: string) => boolean = () => true): string[] {
+  ready(
+    now: number,
+    simTime: number,
+    eligible: (id: string) => boolean = () => true,
+  ): WorkReadiness {
     for (const id of this.simDeadlines.takeDue(simTime)) {
       const ticket = this.tickets.get(id)!;
       if (now < ticket.wallAt) this.wallDeadlines.set(id, ticket.wallAt);
@@ -269,13 +302,37 @@ export class ActorWork {
     }
     for (const id of this.wallDeadlines.takeDue(now)) this.readyIds.add(id);
     let waiting = 0,
-      oldest = Infinity;
+      oldest = Infinity,
+      durabilityTicket: number | undefined,
+      durabilityBlocked = 0;
     const candidates: Array<{ id: string; rank: number; since: number; order: number }> = [];
     for (const id of this.readyIds) {
       const ticket = this.tickets.get(id)!;
       const due = !ticket.dirty && simTime >= ticket.simAt;
-      if (now < ticket.wallAt || !(ticket.dirty || due) || !this.isDurable(ticket) || !eligible(id))
+      if (now < ticket.wallAt || !(ticket.dirty || due) || !eligible(id)) continue;
+      const durable = this.isDurable(ticket);
+      if (this.readinessObserver) {
+        const key = `${ticket.generation}:${ticket.durabilityTicket}:${durable}`;
+        if (ticket.observedReadiness !== key) {
+          ticket.observedReadiness = key;
+          this.readinessObserver({
+            kind: 'readiness',
+            actorId: id,
+            scope: this.scope!,
+            actorGeneration: ticket.generation,
+            ticket: ticket.durabilityTicket,
+            blocked: !durable,
+            wallAt: now,
+            simTime,
+            pendingSince: ticket.dirtySince,
+          });
+        }
+      }
+      if (!durable) {
+        durabilityBlocked++;
+        durabilityTicket = Math.max(durabilityTicket ?? 0, ticket.durabilityTicket!);
         continue;
+      }
       // A due deadline starts waiting now, so it ages and cannot sort behind dirty work forever.
       if (due) {
         this.note(ticket, 'reminder');
@@ -297,7 +354,13 @@ export class ActorWork {
       this.stats.readCap++;
       if (profilingEnabled()) countMetric(`intake.${this.label}.readCap`);
     }
-    return candidates.slice(0, INTAKE_LIMITS.readsPerPass).map((candidate) => candidate.id);
+    if (profilingEnabled())
+      gaugeMetric(`intake.${this.label}.durabilityBlocked`, durabilityBlocked);
+    return {
+      actors: candidates.slice(0, INTAKE_LIMITS.readsPerPass).map((candidate) => candidate.id),
+      ...(durabilityTicket !== undefined ? { durabilityTicket } : {}),
+      durabilityBlocked,
+    };
   }
 
   /** Pending causes and queue age for one character (diagnostics and trigger selection). */

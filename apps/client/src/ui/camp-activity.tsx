@@ -289,6 +289,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const descriptor = choices?.requests.find((request) => request.id === entry?.familyId);
   const presentation = descriptor?.presentation;
   const invitation = presentation?.kind === 'outing-invitation';
+  const cooperation = presentation?.kind === 'cooperation-proposal';
   const bound =
     !!entry &&
     choices?.entries.some(
@@ -297,7 +298,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
   const values: Record<string, string> = { ...draft };
   if (presentation && entry && descriptor) {
     values[presentation.target] = entry.targetId;
-    values[presentation.workMode] = mode;
+    if (presentation.workMode) values[presentation.workMode] = mode;
     if (presentation.kind === 'resource-care' || presentation.kind === 'gather-store-use')
       values[presentation.reserve] ??= String(
         descriptor.fields[presentation.reserve]?.minimum ?? '',
@@ -333,12 +334,34 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       values[key],
       values[`${key}:witness`],
       sourceId,
+      fieldArguments(key),
       view.player.position,
       view.player.inventoryRevision,
       view.entities.find((entity) => entity.id === values[key]),
       view.entities.find((entity) => entity.id === sourceId),
       refresh,
     ]);
+  }
+  function dependencies(key: string): readonly string[] {
+    const field = descriptor?.fields[key];
+    return [
+      ...new Set([
+        ...(field?.dependencies ?? []),
+        ...(field?.discovery?.sourceField ? [field.discovery.sourceField] : []),
+      ]),
+    ];
+  }
+  function fieldArguments(key: string): Record<string, string | number | boolean> {
+    return Object.fromEntries(
+      dependencies(key).flatMap((dependency) => {
+        const value = values[dependency];
+        if (!value) return [];
+        const field = descriptor?.fields[dependency];
+        return [
+          [dependency, field?.type === 'integer' || field?.type === 'time' ? Number(value) : value],
+        ];
+      }),
+    );
   }
   function selectedPage(key: string) {
     const selected = selections[key];
@@ -348,12 +371,14 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
     const next = { ...draft, [key]: value };
     if (witnessId) next[`${key}:witness`] = witnessId;
     else delete next[`${key}:witness`];
-    for (const [dependent, field] of Object.entries(descriptor?.fields ?? {})) {
-      if (field.discovery?.sourceField === key) {
-        delete next[dependent];
-        delete next[`${dependent}:witness`];
-      }
-    }
+    const changed = new Set([key]);
+    for (const parent of changed)
+      for (const dependent of Object.keys(descriptor?.fields ?? {}))
+        if (!changed.has(dependent) && dependencies(dependent).includes(parent)) {
+          delete next[dependent];
+          delete next[`${dependent}:witness`];
+          changed.add(dependent);
+        }
     setDraft(next);
     setError('');
     setMessage('');
@@ -804,44 +829,48 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
       </>
     );
   }
-  const modeLabels = presentation
+  const modeLabels = presentation?.workMode
     ? descriptor?.fields[presentation.workMode]?.modeLabels
     : undefined;
-  const scheduling = (working || invitation) && entry && presentation && bound && (
-    <div className="ol-task-replacement">
-      <p>
-        {invitation
-          ? 'If the invitation is accepted, handle my current work as chosen below. Sending changes no work.'
-          : 'Preparing this task leaves current work unchanged.'}
-      </p>
-      <div className="ol-actions">
-        <Button
-          size="sm"
-          variant={mode === 'enqueue' ? 'secondary' : 'quiet'}
-          disabled={disabled}
-          onPress={() => change(':workMode', 'enqueue')}
-        >
-          {modeLabels?.enqueue ?? 'After current work'}
-        </Button>
-        <Button
-          size="sm"
-          variant={mode === 'replace' ? 'secondary' : 'quiet'}
-          disabled={disabled}
-          onPress={() => change(':workMode', 'replace')}
-        >
-          {modeLabels?.replace ?? 'Prepare replacement'}
-        </Button>
-        <Button
-          size="sm"
-          variant={mode === 'interrupt' ? 'secondary' : 'quiet'}
-          disabled={disabled}
-          onPress={() => change(':workMode', 'interrupt')}
-        >
-          {modeLabels?.interrupt ?? 'Pause and resume current work'}
-        </Button>
+  const scheduling = presentation?.workMode &&
+    (working || invitation) &&
+    entry &&
+    presentation &&
+    bound && (
+      <div className="ol-task-replacement">
+        <p>
+          {invitation
+            ? 'If the invitation is accepted, handle my current work as chosen below. Sending changes no work.'
+            : 'Preparing this task leaves current work unchanged.'}
+        </p>
+        <div className="ol-actions">
+          <Button
+            size="sm"
+            variant={mode === 'enqueue' ? 'secondary' : 'quiet'}
+            disabled={disabled}
+            onPress={() => change(':workMode', 'enqueue')}
+          >
+            {modeLabels?.enqueue ?? 'After current work'}
+          </Button>
+          <Button
+            size="sm"
+            variant={mode === 'replace' ? 'secondary' : 'quiet'}
+            disabled={disabled}
+            onPress={() => change(':workMode', 'replace')}
+          >
+            {modeLabels?.replace ?? 'Prepare replacement'}
+          </Button>
+          <Button
+            size="sm"
+            variant={mode === 'interrupt' ? 'secondary' : 'quiet'}
+            disabled={disabled}
+            onPress={() => change(':workMode', 'interrupt')}
+          >
+            {modeLabels?.interrupt ?? 'Pause and resume current work'}
+          </Button>
+        </div>
       </div>
-    </div>
-  );
+    );
   function editButton(kind: NonNullable<typeof editing>, label: string) {
     return (
       <Button
@@ -869,6 +898,7 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
         value={values[key] ?? ''}
         witnessId={values[`${key}:witness`]}
         sourceId={field.discovery.sourceField ? values[field.discovery.sourceField] : undefined}
+        arguments={fieldArguments(key)}
         scope={choices.scope}
         readKey={selectionKey(key)}
         page={selectedPage(key)}
@@ -1082,6 +1112,20 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               </p>
               {input.purpose && <p>Stated purpose: “{input.purpose}”</p>}
             </div>
+          ) : presentation.kind === 'cooperation-proposal' ? (
+            <div className="ol-task-overview">
+              <p>{descriptor.description}</p>
+              {[
+                presentation.agreement,
+                presentation.opponent,
+                presentation.quarry,
+                presentation.method,
+                presentation.output,
+                presentation.offer,
+                presentation.destination,
+              ].flatMap((key) => (key ? [objectChoice(key)] : []))}
+              {presentation.quantity && amountChoice(presentation.quantity)}
+            </div>
           ) : presentation.kind === 'replenish-session' ? (
             <div className="ol-task-overview">
               <p>{descriptor.description}</p>
@@ -1242,13 +1286,13 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               )}
             </>
           )}
-          {!invitation && mode === 'replace' && (
+          {!invitation && !cooperation && mode === 'replace' && (
             <p>
               Starting this replacement stops current work. Completed effects and spent materials
               remain.
             </p>
           )}
-          {!invitation && mode === 'interrupt' && (
+          {!invitation && !cooperation && mode === 'interrupt' && (
             <p>Starting pauses current work; resuming it later still requires valid conditions.</p>
           )}
           <div className="ol-task-summary" aria-live="polite">
@@ -1256,9 +1300,11 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
               currentReview.result.ok ? (
                 <details>
                   <summary>
-                    {invitation
-                      ? 'Invitation conditions checked'
-                      : 'Supplies and conditions checked'}
+                    {cooperation
+                      ? 'Agreement conditions checked'
+                      : invitation
+                        ? 'Invitation conditions checked'
+                        : 'Supplies and conditions checked'}
                   </summary>
                   <p>{currentReview.result.message}</p>
                   {presentation.kind === 'resource-care' && (
@@ -1281,18 +1327,15 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
             <summary>About this task</summary>
             <p>{descriptor.description}</p>
             <p>
-              {invitation
-                ? 'Sending rechecks the companion and destination. Acceptance rechecks both people’s chosen work; changed work needs a new invitation. Either person may leave the outing.'
+              {cooperation || invitation
+                ? 'Sending checks the selected details again.'
                 : 'Starting rechecks current conditions. Later work can stop if supplies, access or the target change.'}
             </p>
           </details>
         </Section>
       )}
       {preparing && !unavailable && entry && presentation && bound && (
-        <div
-          className="ol-actions ol-task-submit"
-          data-unresolved={retained.status !== 'empty' || undefined}
-        >
+        <div className="ol-actions ol-task-submit">
           <Button
             id={`${fieldId}-start`}
             variant="primary"

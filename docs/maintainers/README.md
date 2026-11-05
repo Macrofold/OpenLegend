@@ -64,11 +64,11 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Situation-aware cognition context
 
-[Context implementation and qualification (SC01–SC12)](cognition-context.md) coordinates the [feature specification](../projects/situation-aware-cognition-context-feature-spec.md), [technical design](../projects/situation-aware-cognition-context-tech-design.md), [supplied-request evidence and conversation decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md), [complete repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) and [SCX constraints](../limits/cognition.md#situation-aware-context-selection). The selected design is complete; runtime and gameplay qualification remain open. CR/CE/IS/PF retain their existing semantic and acceptance owners, including full accepted identity, required evidence, exact References, compatible speech/action and distinct SPK/CTR scope.
+[Focused cognition inputs (SC13–SC16)](cognition-context.md#sc13--select-supported-context-and-retain-it-across-routes) have a complete next-stage design for source-derived relevance, selected activity detail and faithful projection; implementation is pending. [SC12](cognition-context.md#sc12--bind-derivable-metadata-optionally-factor-local-schemas) retains separately deferred metadata optimization. Core [behavior](../features/situation-aware-cognition-context.md), [technical contracts](../technical/situation-aware-cognition-context.md), [filed delivery](completed/2026/cognition-context.md) and [qualification](../verification/situation-aware-cognition-context.md) distinguish implemented construction/native/provider evidence from broader character/player acceptance. CR/CE/IS/PF, speech and threat-response owners retain their separate scope.
 
 ## Standalone character cognition laboratory
 
-[Cognition Lab (CL00–CL11)](cognition-lab.md) owns the compact desktop workspace at `/cognition`: isolated scenarios through the ordinary game runtime, current character editing, real speech/action experiments, exact historical inspection, stage-specific one-shot input editing and retained comparisons. The [feature specification](../projects/cognition-lab-feature-spec.md), [technical design](../projects/cognition-lab-tech-design.md), [all-repertoire map](../projects/cognition-lab-repertoire-review.md) and [CLL constraints](../limits/cognition-lab.md) complete the selected design; runtime and usability/character-quality qualification remain open. CR/SC/CE/IS and native action, speech, emotion and persistence owners retain their mechanics.
+[Cognition Lab (CL11 acceptance)](cognition-lab.md) owns the compact desktop workspace at `/cognition`: isolated scenarios through the ordinary game runtime, current character editing, real speech/action experiments, exact historical inspection, stage-specific one-shot input editing and retained comparisons. The [feature specification](../projects/cognition-lab-feature-spec.md), [technical design](../projects/cognition-lab-tech-design.md), [all-repertoire map](../projects/cognition-lab-repertoire-review.md) and [CLL constraints](../limits/cognition-lab.md) document the installed workspace; [integrated verification](../verification/cognition-lab.md) records native/browser mechanisms, failure recovery and measured limits. [CL00–CL10 delivery records](completed/2026/cognition-lab.md) preserve the completed design and implementation scope. Independent human usability and character/enjoyment acceptance remain distinct. CR/SC/CE/IS and native action, speech, emotion and persistence owners retain their mechanics.
 
 ## Custom model deployments
 
@@ -212,6 +212,10 @@ Additional focused owners: [action reconciliation](action-reconciliation.md), [b
 Actual evidence: [continuation](../verification/workshop-continuation.md), [transport/funding](../verification/workshop-transport-funding.md) and [navigation/editing](../verification/workshop-navigation.md). Provider/browser/accounting qualification stays in the focused tracker.
 
 [Agent guidance](agent-guidance.md) and the [instruction-system guide](../../.agents/README.md) own developer tooling and cross-agent practices.
+
+The reusable [verification worker contracts](../technical/verification-workers.md) and [completed VW01–VW04 record](completed/2026/verification-workers.md) cover exclusive claims, preparation reuse and measured server/browser checks.
+
+[Parallel verification work](verification-workers.md) records completed native/paid campaigns and prepared capacity (VW05–VW08), future Lab integration (VW09) and quota-blocked fleet qualification (VW10).
 
 ## Supporting references
 

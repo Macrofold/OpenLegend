@@ -14,6 +14,7 @@ import type {
   BoundaryImpactPlan,
 } from './construction.js';
 export * from './construction.js';
+export * from './cognition-lab.js';
 import type { WorkBatchRequest, WorkBatchSelection } from './work-batches.js';
 export * from './work-batches.js';
 import type {
@@ -78,6 +79,7 @@ export interface CommandInput {
     | 'activity'
     | 'activity-request'
     | 'say'
+    | 'express'
     | 'pickup'
     | 'drop'
     | 'transfer-item'
@@ -137,6 +139,7 @@ export interface CommandInput {
   after?: string;
   containerId?: string;
   expectedScope?: string;
+  verb?: string;
   text?: string;
   volume?: SpeechVolume;
   facing?: number;
@@ -240,10 +243,21 @@ export interface CommandInput {
 /** Transport mirror of the installed world's trusted semantic presentation. */
 export type ActivityRequestPresentation = {
   target: string;
-  workMode: string;
+  workMode?: string;
 } & (
   | { kind: 'replenish-session' }
   | { kind: 'outing-invitation'; destination: string }
+  | {
+      kind: 'cooperation-proposal';
+      destination?: string;
+      quarry?: string;
+      method?: string;
+      output?: string;
+      quantity?: string;
+      agreement?: string;
+      offer?: string;
+      opponent?: string;
+    }
   | {
       kind: 'resource-care';
       supply: string;
@@ -290,9 +304,21 @@ export type ActivityRequestField = {
   minimumDuration?: number;
   maximumDuration?: number;
   required: true;
-  discovery?: { source: 'spatial' | 'storage' | 'materials'; sourceField?: string };
+  dependencies?: readonly string[];
+  discovery?: {
+    source:
+      | 'spatial'
+      | 'storage'
+      | 'materials'
+      | 'known-places'
+      | 'definitions'
+      | 'outputs'
+      | 'choices';
+    sourceField?: string;
+  };
 } & (
   | { type: 'definition'; definitionKind: 'item' | 'recipe' }
+  | { type: 'choice'; choices: readonly { value: string; label: string }[]; definitionKind?: never }
   | { type: 'entity' | 'integer' | 'time' | 'mode'; definitionKind?: never }
 );
 export interface ActivityRequestsView {
@@ -333,12 +359,13 @@ export interface ActivityRequestsView {
 export interface ActivityChoice {
   id: string;
   label: string;
-  kind: 'entity' | 'definition';
+  kind: 'entity' | 'definition' | 'choice';
   roles: string[];
   requestIds?: string[];
   distance?: number;
   accessible: boolean;
   reason?: string;
+  requires?: Readonly<Record<string, string | number | boolean>>;
   witnessId?: string;
   location?: string;
   needsInspection?: boolean;
@@ -1380,7 +1407,7 @@ export interface GodMindView {
   notepads?: {
     subjectId: string | null;
     subjectKind?: 'place' | 'map-marker';
-    origin: 'authored-starting' | 'actor-edit';
+    origin: 'authored-starting' | 'actor-edit' | 'unwritten';
     label: string;
     text: string;
     revision: number;

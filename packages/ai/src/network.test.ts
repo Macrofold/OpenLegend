@@ -1,9 +1,31 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createNetworkOwner } from '@open-legend/network';
-import { createEmbeddingClient } from './embedding.js';
+import { createEmbeddingClient, EMBEDDING_LIMITS } from './embedding.js';
 import { MacrofoldTransport } from './macrofold.js';
 
 describe('actual AI caller bounded network journeys (injected transport only)', () => {
+  it('admits capture for a valid maximum embedding result that expands beyond its wire size', async () => {
+    const vector = Array.from({ length: EMBEDDING_LIMITS.dimensions }, (_, index) =>
+      index % 10 === 0 ? '1e-6' : '-0.12345678901234568',
+    ).join(',');
+    const body = `{"data":[${Array.from({ length: EMBEDDING_LIMITS.texts }, (_, index) => `{"index":${index},"embedding":[${vector}]}`).join(',')}],"usage":{"prompt_tokens":33}}`;
+    expect(Buffer.byteLength(body)).toBeLessThan(EMBEDDING_LIMITS.responseBytes);
+    const fetch = vi.fn(async () => new Response(body));
+    const result = await createEmbeddingClient({
+      apiKey: 'fixture-only',
+      model: 'fixture-model',
+      dimensions: EMBEDDING_LIMITS.dimensions,
+      fetch,
+    }).embed({
+      requestId: 'expanded-embedding-fixture',
+      texts: Array.from({ length: EMBEDDING_LIMITS.texts }, () => 'Synthetic evidence.'),
+    });
+    expect(result.outcome).toBe('value');
+    const capturedBytes = Buffer.byteLength(JSON.stringify(result));
+    expect(capturedBytes).toBeGreaterThan(EMBEDDING_LIMITS.responseBytes);
+    expect(capturedBytes).toBeLessThan(EMBEDDING_LIMITS.resultBytes);
+    expect(fetch).toHaveBeenCalledOnce();
+  });
   it('clips embedding observation to its earlier absolute deadline even when fetch ignores abort', async () => {
     let resolveResponse: (response: Response) => void = () => {};
     const fetcher = vi.fn(

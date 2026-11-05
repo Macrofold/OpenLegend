@@ -363,6 +363,7 @@ export class HistoryRepository {
         payload TEXT NOT NULL,response_id TEXT,data_references TEXT[] NOT NULL,
         PRIMARY KEY(world_id,id));
       CREATE INDEX IF NOT EXISTS history_events_response ON history_events(world_id,response_id) WHERE response_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS history_events_time ON history_events(world_id,((payload::jsonb->>'at')::double precision) DESC,position DESC,id DESC);
       CREATE INDEX IF NOT EXISTS history_events_references ON history_events USING GIN(data_references);
       CREATE INDEX IF NOT EXISTS history_events_order ON history_events(world_id,position,id);
       CREATE TABLE IF NOT EXISTS story_narrations (
@@ -487,24 +488,53 @@ export class HistoryRepository {
     const batch = new HistoryAppendWriter(this.db, world.id);
     const rewrittenSources = new Map<string, Map<string, StorySource>>();
     const buildStarted = beginTiming();
-    for (const event of changed) {
-      const encoded = JSON.stringify(event);
-      const eventRevision = revisionOf(encoded);
+    let batchEnd = 0;
+    let encodedEvents = new Map<string, string>();
+    let retainedEvents = new Map<string, boolean>();
+    for (let index = 0; index < changed.length; index++) {
+      const event = changed[index]!;
+      if (!fastAppend && index >= batchEnd) {
+        const candidates: Array<{ id: string; payload: string }> = [];
+        encodedEvents = new Map();
+        let bytes = 0;
+        batchEnd = index;
+        while (batchEnd < changed.length && candidates.length < 64) {
+          const candidate = changed[batchEnd]!;
+          const payload = JSON.stringify(candidate);
+          const size = Buffer.byteLength(payload);
+          if (candidates.length && bytes + size > 262144) break;
+          candidates.push({ id: candidate.id, payload });
+          encodedEvents.set(candidate.id, payload);
+          bytes += size;
+          batchEnd++;
+        }
+        // Restoration already installed complete exact source rows. Compare in
+        // bounded batches before hydrating/revoking any genuinely changed source;
+        // one equality round trip per retained event starves other writer users.
+        const rows = await this.db
+          .prepare(
+            `SELECT h.id,(h.payload=candidate.payload) AS unchanged
+          FROM jsonb_to_recordset(?::jsonb) AS candidate(id TEXT,payload TEXT)
+          JOIN history_events h ON h.world_id=? AND h.id=candidate.id`,
+          )
+          .all(JSON.stringify(candidates), world.id);
+        retainedEvents = new Map(rows.map((row) => [String(row['id']), row['unchanged'] === true]));
+      }
+      const encoded = encodedEvents.get(event.id) ?? JSON.stringify(event);
       const retainedPerspectives = new Map<string, StorySource>();
       if (!fastAppend) {
-        const retained = await this.db
-          .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
-          .get(world.id, event.id);
-        if (retained?.['payload'] === encoded) continue;
-        if (retained)
+        if (retainedEvents.get(event.id) === true) continue;
+        if (retainedEvents.has(event.id)) {
           for (const row of await this.db
             .prepare(
               `SELECT p.actor_id,p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=?`,
             )
             .all(world.id, event.id))
             retainedPerspectives.set(String(row['actor_id']), storySourceRow(row));
-        removedEvents += await this.removeEvent(world.id, event.id);
+          removedEvents += await this.removeEvent(world.id, event.id);
+        }
       }
+      const eventRevision = revisionOf(encoded);
       const perspectives = new Map<string, StorySource>();
       const { position, pending: eventFlush } = batch.event(event, encoded);
       if (eventFlush) await eventFlush;
@@ -1066,24 +1096,61 @@ export class HistoryRepository {
     return result;
   }
 
-  async eventPage(worldId: string, before = Number.MAX_SAFE_INTEGER, actorId?: string) {
-    const rows = actorId
-      ? await this.db
-          .prepare(
-            `SELECT e.payload,p.position FROM history_perspectives p
-          JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id
-          WHERE p.world_id=? AND p.actor_id=? AND p.position<? ORDER BY p.position DESC,p.event_id DESC LIMIT 101`,
-          )
-          .all(worldId, actorId, before)
-      : await this.db
-          .prepare(
-            'SELECT payload,position FROM history_events WHERE world_id=? AND position<? ORDER BY position DESC,id DESC LIMIT 101',
-          )
-          .all(worldId, before);
-    const page = rows.slice(0, 100);
+  async eventPage(
+    worldId: string,
+    before = Number.MAX_SAFE_INTEGER,
+    actorId?: string,
+    options: {
+      limit?: number;
+      byTime?: boolean;
+      timeBefore?: [number, number, string];
+      types?: readonly string[];
+      search?: string;
+    } = {},
+  ) {
+    const limit = Math.max(1, Math.min(100, options.limit ?? 100));
+    const source = actorId
+      ? 'history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id'
+      : 'history_events e';
+    const position = actorId ? 'p.position' : 'e.position';
+    // Native perspectives retain the event's exact time and identity. Ordering
+    // through that owner lets its actor/time index stop at the selected page.
+    const at = actorId
+      ? "((p.payload::jsonb->>'time')::double precision)"
+      : "((e.payload::jsonb->>'at')::double precision)";
+    const id = actorId ? 'p.event_id' : 'e.id';
+    const clauses = ['e.world_id=?', `${position}<?`];
+    const params: unknown[] = [worldId, before];
+    if (actorId) {
+      clauses.push('p.actor_id=?');
+      params.push(actorId);
+    }
+    if (options.types) {
+      clauses.push(
+        options.types.length
+          ? `(e.payload::jsonb->>'type') IN (${options.types.map(() => '?').join(',')})`
+          : 'FALSE',
+      );
+      params.push(...options.types);
+    }
+    if (options.search) {
+      clauses.push("e.payload::jsonb->>'text' ILIKE ?");
+      params.push(`%${options.search.replace(/[\\%_]/g, '\\$&')}%`);
+    }
+    if (options.timeBefore) {
+      clauses.push(`(${at},${position},${id})<(?,?,?)`);
+      params.push(...options.timeBefore);
+    }
+    const rows = await this.db
+      .prepare(
+        `SELECT e.payload,${position} AS position FROM ${source} WHERE ${clauses.join(' AND ')} ORDER BY ${options.byTime ? `${at} DESC,` : ''}${position} DESC,${id} DESC LIMIT ?`,
+      )
+      .all(...params, limit + 1);
+    const page = rows.slice(0, limit);
     return {
       events: page.map((row) => JSON.parse(String(row['payload'])) as WorldEvent),
-      before: rows.length > 100 ? Number(page.at(-1)!['position']) : undefined,
+      positions: page.map((row) => Number(row['position'])),
+      before: rows.length > limit ? Number(page.at(-1)!['position']) : undefined,
     };
   }
   async latestNarration(worldId: string, ownerId: string): Promise<TranscriptItem | null> {

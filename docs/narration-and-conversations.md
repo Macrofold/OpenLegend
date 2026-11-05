@@ -85,15 +85,17 @@ The [technical design](projects/npc-speech-streaming-tech-design.md) owns exact 
 
 ## 4. Expressive and mechanical actions
 
-| Mode                             | Admission and result                                                                                                                                     |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Known mechanical action          | Select a server-offered action/version and validated arguments. Execute trusted rules; record actual resource/stat/condition changes and outcomes.       |
-| Expressive action, first slice   | Record a bounded observable gesture/reaction with actor/targets. No physical state, numerical relationship, injury, inventory or new definition effects. |
-| Missing mechanical action, later | Submit an invention candidate through policy, budget, validation and activation; execute only after admission and fresh prerequisite checks.             |
+| Mode                             | Admission and result                                                                                                                                                                   |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Known mechanical action          | Select a server-offered action/version and validated arguments. Execute trusted rules; record actual resource/stat/condition changes and outcomes.                                     |
+| Installed expression             | Record a bounded gesture or a validated one-shot contact occurrence. Definitions determine reach and evidence; no forced social response, injury, inventory or new definition effects. |
+| Missing mechanical action, later | Submit an invention candidate through policy, budget, validation and activation; execute only after admission and fresh prerequisite checks.                                           |
 
-The implemented expressions are nod, smile, frown, wave, shrug, shake_head and slap, rendered by trusted templates with no model-authored outcome clauses. A slap requires contact range and line of sight. Other unlisted NPC expression proposals receive an unsupported-action receipt. The player’s separate descriptive Act path is described below; mechanical invention remains separately admitted. Expressive actions allow a frown or a slap as enacted fiction without pretending a damage mechanic exists. The event explicitly has `mechanical=false`; no `-1 Health` is displayed. It can still be witnessed, remembered and influence a later character decision. That cognitive consequence is distinct from directly changing a relationship score or bodily state. The presentation uses a subtle “Expression · no mechanical effects” affordance, outside the prose, when the distinction matters.
+Installed expression definitions supply vocabulary, target requirements, trusted narration and optional one-shot contact. The ordinary typed `express` command and NPC response operations share native admission and one commit owner; ordered response dependencies and normal command/response receipts still apply. The [base-world expressions](worlds/base/actions.md#expressions-and-brief-contact) distinguish descriptive gestures from real brief contact. An omitted expression family offers no expressions, with no bundled fallback.
 
-Freeform expression cannot become a bypass for known costs or consequential claims: “I transfer my gold,” “I kill Ada,” or “I teleport” cannot be admitted as completed physical outcomes. Native scope checks govern contact/reach and available participants; rejected or unresolved contact can be described as an attempt only when that attempt itself was accepted. Known actions use their authoritative route, not an expressive duplicate. The initial expression contract permits gestures/contact fiction but forbids unsupported result clauses such as injury, forced movement, possession transfer or another character's private feelings. Constrain output to an action description; strict validation plus grounded rendering remains necessary, with semantic overclaiming an explicit acceptance risk.
+Descriptive gestures retain `mechanical=false`: they can be witnessed and remembered but grant no bodily result. An installed contact expression rechecks current perception, body capability, reachable target and unobstructed interaction anchors at commit. Success records `mechanical=true` with its contact kind and the recipient's felt evidence, even when the performer is unseen; an unseen identity remains undisclosed. Failure records no successful contact and does not approach or chase. Contact neither implies injury, consent, laughter, friendship, forced movement nor any other response. Existing event-time evidence governs witnesses and later recall.
+
+Freeform expression cannot become a bypass for known costs or consequential claims: “I transfer my gold,” “I kill Ada,” or “I teleport” cannot be admitted as completed physical outcomes. Native scope checks govern contact/reach and available participants; rejected or unresolved contact can be described as an attempt only when that attempt itself was accepted. Known actions use their authoritative route, not an expressive duplicate. The descriptive path permits gesture/contact fiction but forbids unsupported result clauses such as injury, forced movement, possession transfer or another character's private feelings. Constrain output to an action description; strict validation plus grounded rendering remains necessary, with semantic overclaiming an explicit acceptance risk.
 
 The later slap example might resolve an existing head injury under an admitted conditional rule and emit a health change plus bleeding condition. Only then may narration read:
 
@@ -299,11 +301,15 @@ of the former duplicate-recipient representation remains scoped to that build.
 
 The existing `conversation-context.ts` owner selects a bounded actor-scoped recent
 suffix from indexed linguistic eligibility and complete payload-size metadata before
-hydration. Complete structured sources and their readable prose share the existing
-allowance. Required current causes, committed work results, commitments and
-corrections retain their independent exact-source paths. Older unselected speech
+hydration. Each selected summary or exact turn appears once in the shared
+`character.experience` array, retaining its narrative and complete permitted structure.
+The chronological conversation section references those slots; trigger, recall and
+appraisal consumers use the same final mapping and byte allowance. Required current
+causes, committed work results, commitments and corrections retain their independent exact-source paths. Older unselected speech
 remains available through scoped recall and history, without an all-history count
-or compulsory compaction rebuild.
+or compulsory compaction rebuild. Complete attributed selected turns also supply
+bounded discovery cues, so a follow-up need not repeat the earlier topic’s name.
+Cue selection, relevance and memory contents retain the [memory owner](memory-architecture.md#4-jev-attention-before-context-inclusion).
 
 **Accepted NST integration:** all context/recall/compaction entry points enforce the [memory owner's terminal eligibility boundary](memory-architecture.md#progressive-speech--accepted-target-not-current-execution) by default, before ranking, limits, cursor maxima, hydration or summarization. A committed open prefix can appear in the human's Events reader while remaining absent from model-facing context. Closing an older utterance makes it eligible once without changing its original order; owned appends do not invalidate a captured unrelated semantic prefix. Final partial/interrupted evidence preserves its actual permitted words and lifecycle meaning. No per-part paid compaction or embedding is added. Exact readiness, source revisions and consumer changes belong to the [shared speech technical design](projects/npc-speech-streaming-tech-design.md); [NST](maintainers/npc-speech-streaming.md) owns their pending implementation.
 

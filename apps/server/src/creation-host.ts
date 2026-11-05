@@ -1,3 +1,4 @@
+import type { CognitionLab } from './cognition-lab.js';
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http';
 import type { Socket } from 'node:net';
 import { z } from 'zod';
@@ -24,12 +25,14 @@ import { AUTHORING_BODY_BYTES, readBoundedJson } from './http-json.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import type { ClientAssets } from './client-assets.js';
 import { digest } from './content-digest.js';
-import { macrofoldJudgmentModel } from './generation-config.js';
+import { macrofoldJudgmentModel, hasDeploymentTargets } from './generation-config.js';
 
 type ConfiguredModelTarget = NonNullable<AppConfig['modelTargets']>['purposes'];
 function deploymentSetting(target: ConfiguredModelTarget[keyof ConfiguredModelTarget]): string {
   if (!target) return 'Use existing provider settings';
   const output = 'structured_output' in target ? target.structured_output : undefined;
+  const thinking =
+    'chat_template_kwargs' in target ? target.chat_template_kwargs?.enable_thinking : undefined;
   const formats = {
     auto: 'automatic JSON format',
     json_schema: 'JSON Schema',
@@ -45,6 +48,7 @@ function deploymentSetting(target: ConfiguredModelTarget[keyof ConfiguredModelTa
       ? 'current output allowance'
       : `at most ${target.max_output_tokens} output tokens`,
     output ? formats[output] : 'native decisions',
+    ...(thinking === undefined ? [] : [`native thinking ${thinking ? 'enabled' : 'disabled'}`]),
   ].join('; ');
 }
 
@@ -55,6 +59,8 @@ export interface CreationHostRuntime {
   readonly isWorldRunning: boolean;
   readonly service: WorldService;
   readonly director: AiDirector;
+  /** Present only after an ordinary world/Lab runtime is available. */
+  readonly cognitionLab?: CognitionLab;
   close(): Promise<void>;
   shutdown(deadlineMs?: number): Promise<ShutdownReport>;
 }
@@ -79,7 +85,12 @@ export function creationOperatingConfiguration(config: AppConfig) {
     playerCapacity: config.capacity.players,
     departureGraceMs: config.exitGraceMs,
     creatorToolsEnabled: config.godMode,
-    liveAiConfigured: Boolean(config.macrofoldKey || config.jevKey || config.llmKey),
+    liveAiConfigured: Boolean(
+      config.macrofoldKey ||
+        config.jevKey ||
+        config.llmKey ||
+        (config.macrofoldModelKey && hasDeploymentTargets(config.modelTargets)),
+    ),
     jevOnly: config.jevOnly,
     jevModel: config.jevModel,
     macrofoldJevModel: macrofoldJudgmentModel(config),
@@ -89,9 +100,13 @@ export function creationOperatingConfiguration(config: AppConfig) {
     macrofoldComplexDeployment: deploymentSetting(
       config.modelTargets?.purposes.npc_response_complex,
     ),
+    macrofoldCatalogStructuredOutput: JSON.stringify(
+      config.modelTargets?.catalog_structured_output ?? {},
+    ),
     languageModel: config.llmModel,
     miniModel: config.miniModel,
     complexModel: config.complexModel,
+    higherDecisionModel: config.higherDecisionModel,
     summaryModel: config.summaryModel,
     macrofoldMiniModel: config.macrofoldMiniModel,
     macrofoldComplexModel: config.macrofoldComplexModel,
@@ -133,9 +148,11 @@ export function creationOperatingSettings(values: Record<string, string | number
     macrofoldJudgmentDeployment: 'Deployment for character decisions',
     macrofoldFastDeployment: 'Deployment for routine character replies',
     macrofoldComplexDeployment: 'Deployment for complex character replies',
+    macrofoldCatalogStructuredOutput: 'Exact-model catalog output formats',
     languageModel: 'Language model',
     miniModel: 'Routine character thinking model',
     complexModel: 'Complex character thinking model',
+    higherDecisionModel: 'Higher decision and dialogue model',
     summaryModel: 'Character memory summary model',
     macrofoldMiniModel: 'Routine character thinking model through Macrofold',
     macrofoldComplexModel: 'Complex character thinking model through Macrofold',
@@ -539,6 +556,9 @@ export async function createAwaitingCreationHost(
     config,
     get isWorldRunning() {
       return runtime !== undefined;
+    },
+    get cognitionLab() {
+      return runtime?.cognitionLab;
     },
     get service() {
       if (!runtime)

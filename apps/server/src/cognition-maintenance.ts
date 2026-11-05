@@ -1,10 +1,15 @@
+import { modelJsonSchema } from './ai-schemas.js';
+import { stageAllowance } from './cognition-stage-budget.js';
+import { applyCatalogGenerationFormat, hasGenerationAccess } from './generation-config.js';
+import type { ApiResult } from '@open-legend/protocol';
+import type { CognitionStageInput } from './cognition-runtime-control.js';
 import { entityGet, experienceEntryKey, experienceReading } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
 import { acquiredActivities, ACTIVITY_SYNTAX } from '@open-legend/domain';
 import type { TypedQuestionMap } from '@open-legend/ai';
-import { bindReflectionAppraisals } from './appraisal-context.js';
+import { bindReflectionAppraisals, captureDecisionAppraisalContext } from './appraisal-context.js';
 import { resolveResponseEntities } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
 import {
@@ -32,13 +37,19 @@ import {
   EXPERIENCE_LIMITS,
 } from '@open-legend/domain';
 import type { AiClient, AiResult, GenerateRequest } from '@open-legend/ai';
-import { summarySchema, reflectionSchema, REFLECTION_INSTRUCTIONS } from './cognition-contracts.js';
+import {
+  summarySchema,
+  reflectionSchema,
+  nativeGoalChange,
+  REFLECTION_INSTRUCTIONS,
+} from './cognition-contracts.js';
 import type { WorldService } from './world-service.js';
 import type { MacrofoldBackend } from './macrofold.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { digest, type JobRecord } from './store.js';
 import type { RecallService } from './recall.js';
-import { prepareDecision } from './decision-context.js';
+import { prepareDecision, type DecisionInputMeasure } from './decision-context.js';
+import { finalizeDecisionRequest } from './decision-context-selection.js';
 interface ReflectionRequest {
   actorId: string;
   origin: string;
@@ -225,6 +236,7 @@ export class CognitionMaintenance {
   private activeAdmission: {
     actorId: string;
     generation: string;
+    labEpoch?: number;
     fence: string;
     purpose: 'maintenance' | 'reflection';
     requiresBody: boolean;
@@ -294,6 +306,60 @@ export class CognitionMaintenance {
       exchanges: [],
     });
   }
+  /** An explicit operator request uses the same native reflection preparation,
+   * capacity queue and publication owner as ordinary safe downtime. */
+  async request(actorId: string, origin: string): Promise<ApiResult> {
+    const c = this.service.config;
+    if (c.jevOnly || !this.service.world.cognitionPolicy.reflection || !c.macrofoldKey)
+      return {
+        ok: false,
+        code: 'unavailable',
+        message:
+          'Reflection requires the installed world policy and configured workspace provider.',
+      };
+    if (this.stopped || this.service.paused || this.service.cognitionControl?.held)
+      return {
+        ok: false,
+        code: 'paused',
+        message: 'Open a guarded execution interval before requesting reflection.',
+      };
+    if (this.active || this.queuedId || this.dispatching)
+      return {
+        ok: false,
+        code: 'busy',
+        message: 'The native maintenance worker already has work.',
+      };
+    if (
+      !availableForMaintenance(this.service.world, actorId) ||
+      bodyThinkingBlocked(
+        this.service.world,
+        entityGet(this.service.world.entities, actorId)!,
+        'reflection',
+      )
+    )
+      return {
+        ok: false,
+        code: 'unavailable',
+        message: 'This character cannot currently reflect through the native body owner.',
+      };
+    const generation = this.service.generation;
+    const queued: ReflectionRequest = {
+      actorId,
+      origin,
+      reason: 'Operator requested reflection',
+      at: this.now(),
+    };
+    const accepted = await this.start(actorId, queued.reason, generation, (controller) =>
+      this.reflect(queued, controller),
+    );
+    return {
+      ok: accepted,
+      code: accepted ? 'queued' : 'capacity',
+      message: accepted
+        ? 'Native reflection queued.'
+        : 'Shared native maintenance capacity is occupied.',
+    };
+  }
   private scheduling = false;
   private readRetryAt = 0;
   private schedulingTask: Promise<void> | null = null;
@@ -318,6 +384,7 @@ export class CognitionMaintenance {
     });
   }
   async tick(interactiveBusy: boolean): Promise<void> {
+    if (this.service.cognitionControl?.held) return;
     if (this.schedulingTask || this.now() < this.readRetryAt) return;
     this.schedulingTask = this.schedule(interactiveBusy).catch(async (error) => {
       if (!(error instanceof MaintenanceReadFailure)) throw error;
@@ -387,7 +454,12 @@ export class CognitionMaintenance {
           );
       });
       const actors = this.work
-        .ready(this.now(), current.simTime)
+        .ready(this.now(), current.simTime).actors
+        .filter(
+          (id) =>
+            !this.service.cognitionControl ||
+            this.service.cognitionControl.allowsAutonomousActor(id),
+        )
         .map((id) => entityGet(current.entities, id)!);
       // Advisory maintenance need not reread SQL for every fresh sighting. Keep
       // changed actors dirty, but admit at most one inspection per real second.
@@ -671,9 +743,10 @@ export class CognitionMaintenance {
         },
       });
       if (!accepted) this.queuedId = undefined;
-      return;
+      return accepted;
     }
     await this.startNow(actorId, reason, generation, execute);
+    return true;
   }
   private async startNow(
     actorId: string,
@@ -691,6 +764,7 @@ export class CognitionMaintenance {
     const admission = {
       actorId,
       generation,
+      labEpoch: this.service.cognitionControl?.epoch,
       fence: bodyEligibilityRevision(
         this.service.world,
         entityGet(this.service.world.entities, actorId)!,
@@ -752,6 +826,7 @@ export class CognitionMaintenance {
     const job: JobRecord = {
       id,
       kind: 'thought',
+      nativeContext: { worldId: this.service.world.id, timelineId: this.service.timelineId },
       status: 'generating',
       message: trigger,
       request: { text: trigger, npcId: actorId },
@@ -789,7 +864,15 @@ export class CognitionMaintenance {
       exchanges: [],
     };
     await this.log.save(root);
+    const releaseNative = this.service.cognitionControl?.registerNative(id);
     try {
+      await this.service.cognitionControl?.emit({
+        kind: 'job',
+        jobId: id,
+        actorId,
+        status: 'queued',
+        originId: origin,
+      });
       await this.log.withTrigger(id, () =>
         this.executionLease
           ? this.recall.withExecution(id, this.executionLease, () => execute(job))
@@ -801,25 +884,50 @@ export class CognitionMaintenance {
       job.status = this.active?.signal.aborted ? 'cancelled' : 'failed';
       job.message = error instanceof Error ? error.message : 'Maintenance failed.';
     } finally {
-      job.completedAt = this.now();
-      await this.service.store.putJob(job);
-      await this.log.save({
-        ...root,
-        status: job.status === 'completed' ? 'completed' : 'failed',
-        disposition: job.status,
-        completedAt: new Date().toISOString(),
-        output: { message: job.message },
-      });
+      try {
+        job.completedAt = this.now();
+        await this.service.store.putJob(job);
+        await this.log.save({
+          ...root,
+          status: job.status === 'completed' ? 'completed' : 'failed',
+          disposition: job.status,
+          completedAt: new Date().toISOString(),
+          output: { message: job.message },
+        });
+        await this.service.cognitionControl?.emit({
+          kind: 'job',
+          jobId: id,
+          actorId,
+          status: job.status,
+          result: job.result,
+          originId: origin,
+        });
+      } finally {
+        releaseNative?.();
+      }
     }
   }
-  private async paid<T>(
+  private async paid<T, I extends CognitionStageInput>(
     id: string,
     provider: 'jev' | 'openai',
-    execute: () => Promise<AiResult<T>>,
+    input: I,
+    execute: (input: I) => Promise<AiResult<T>>,
     model?: string,
     beforeDispatch?: () => Promise<void>,
   ): Promise<T> {
     const c = this.service.config;
+    const requireConfiguredCatalogAccess = (request: { model?: string }) => {
+      const model = request.model ?? (c.macrofoldKey ? c.macrofoldModel : c.llmModel);
+      if (
+        c.modelTargets?.catalog_structured_output[model] !== undefined &&
+        !hasGenerationAccess(c, model)
+      )
+        throw new Error('The selected maintenance generation model is unavailable.');
+    };
+    if (input.kind === 'generate') {
+      requireConfiguredCatalogAccess(input.request);
+      input = { ...input, request: applyCatalogGenerationFormat(c, input.request) } as I;
+    }
     const sourceCurrent = this.budgetActor
       ? this.service.privateReadFence(this.budgetActor, () => {
           this.assertAdmission();
@@ -833,66 +941,143 @@ export class CognitionMaintenance {
     )
       throw new Error('Maintenance canceled.');
     this.assertAdmission();
-    const amount = decisionAllowance(c, provider, model);
-    // Leave one interactive request allowance untouched by background admission.
-    const ceiling = Math.max(0, c.budgetUsd - interactiveAllowance(c));
-    if (
-      !(await this.service.store.reserve(
-        id,
-        provider,
-        amount,
-        ceiling,
-        this.budgetActor,
-        undefined,
-        undefined,
-        this.execution
-          ? {
-              rootJobId: this.budgetJob!,
-              category: 'preparation',
-              stage: 'maintenance',
-              executionClass: 'background',
-            }
-          : undefined,
-      ))
-    )
-      throw new Error('Background allowance exhausted.');
-    const validateSource = async () => {
-      await beforeDispatch?.();
-      this.assertAdmission();
-      if (this.service.paused || this.active?.signal.aborted)
-        throw new Error('Maintenance canceled before dispatch.');
-      if (sourceCurrent && !sourceCurrent())
-        throw new Error('The character’s evidence changed before dispatch.');
-    };
+    const control = this.service.cognitionControl;
+    // Preparation owns no provider lease during human editing. The native lane is
+    // reacquired only after explicit continuation and source validation.
+    if (control) this.executionLease?.release();
+    const prepared = control
+      ? await control.prepare(
+          {
+            id,
+            rootId: this.budgetJob ?? id,
+            actorId: this.budgetActor,
+            purpose: input.kind === 'reflection' ? 'reflection' : 'maintenance',
+            modelPurpose:
+              input.kind === 'judge'
+                ? 'judgment'
+                : input.kind === 'reflection'
+                  ? 'reflection'
+                  : 'summary',
+            generation: this.service.generation,
+            responseBoundBytes: this.service.config.macrofoldKey ? 1_000_000 : 500_000,
+            wireBoundBytes: 1_000_000,
+            signal: this.active?.signal,
+            current: () => {
+              this.assertAdmission();
+              this.active?.signal.throwIfAborted();
+            },
+          },
+          input,
+        )
+      : undefined;
+    let reserved = false,
+      dispatchIntent = false,
+      providerStarted = false,
+      completed = false;
     try {
+      if (prepared && this.execution) {
+        this.executionLease = await this.execution.acquirePrepared(prepared.stage, 'background');
+        if (!this.executionLease)
+          throw new Error('Background model execution capacity is occupied.');
+      }
+      const selectedInput = prepared?.input ?? input;
+      const selected =
+        selectedInput.kind === 'generate'
+          ? ({
+              ...selectedInput,
+              request: applyCatalogGenerationFormat(c, selectedInput.request),
+            } as I)
+          : selectedInput;
+      if (selected.kind === 'generate') requireConfiguredCatalogAccess(selected.request);
+      const amount =
+        control || (selected.kind === 'generate' && selected.request.macrofoldOutputMode)
+          ? stageAllowance(c, selected, model)
+          : decisionAllowance(c, provider, model);
+      // Leave one interactive request allowance untouched by background admission.
+      const ceiling = Math.max(0, c.budgetUsd - interactiveAllowance(c));
+      if (
+        !(reserved = await this.service.store.reserve(
+          id,
+          provider,
+          amount,
+          ceiling,
+          this.budgetActor,
+          undefined,
+          undefined,
+          this.execution
+            ? {
+                rootJobId: this.budgetJob!,
+                category: 'preparation',
+                stage: 'maintenance',
+                executionClass: 'background',
+              }
+            : undefined,
+        ))
+      )
+        throw new Error('Background allowance exhausted.');
+      const validateSource = async () => {
+        await beforeDispatch?.();
+        this.assertAdmission();
+        if (this.service.paused || this.active?.signal.aborted)
+          throw new Error('Maintenance canceled before dispatch.');
+        if (sourceCurrent && !sourceCurrent())
+          throw new Error('The character’s evidence changed before dispatch.');
+      };
       await validateSource();
-    } catch (error) {
-      // Admission can change while the reservation is persisted. This receipt proves
-      // no dispatch; completed/uncertain provider receipts retain normal accounting.
-      await this.service.store.settle(id, undispatchedReceipt(id, provider, this.now()));
-      throw error;
+      let result: AiResult<T>;
+      try {
+        if (this.execution) {
+          dispatchIntent = true;
+          if (!(await this.service.store.markDecisionDispatch(id)))
+            throw new Error('Maintenance dispatch was already claimed.');
+        }
+        result = await this.macrofold.withSourceValidation(validateSource, () =>
+          prepared && control
+            ? control.dispatch(
+                prepared.stage,
+                selected,
+                () => {
+                  providerStarted = true;
+                  return execute(selected);
+                },
+                this.executionLease,
+              )
+            : ((providerStarted = true), execute(selected)),
+        );
+        result.receipt = normalizeReceiptCost(result.receipt);
+        if (result.receipt.completionUncertain) this.executionLease?.uncertain(id);
+        await this.service.store.settle(id, result.receipt);
+        completed = true;
+      } catch (error) {
+        // A lost dispatch or settlement acknowledgement must retain the shared
+        // execution slot until its durable receipt can establish completion.
+        if (providerStarted) this.executionLease?.uncertain(id);
+        throw error;
+      }
+      if (result.outcome !== 'value') throw new Error(`${result.outcome}: ${result.reason}`);
+      if (this.service.paused || this.active?.signal.aborted)
+        throw new Error('Maintenance canceled before publication.');
+      this.assertAdmission();
+      return result.value;
+    } finally {
+      try {
+        try {
+          if (reserved && !providerStarted && !completed) {
+            await this.service.store.settle(id, undispatchedReceipt(id, provider, this.now()));
+            completed = true;
+          }
+        } finally {
+          if (prepared && prepared.stage.status !== 'consumed')
+            await control!.decline(prepared.stage, 'Maintenance ended before provider dispatch.');
+        }
+      } finally {
+        if (dispatchIntent && !completed) this.executionLease?.uncertain(id);
+        if (control) this.executionLease?.release();
+      }
     }
-    let result: AiResult<T>;
-    try {
-      if (this.execution && !(await this.service.store.markDecisionDispatch(id)))
-        throw new Error('Maintenance dispatch was already claimed.');
-      result = await this.macrofold.withSourceValidation(validateSource, execute);
-      result.receipt = normalizeReceiptCost(result.receipt);
-      if (result.receipt.completionUncertain) this.executionLease?.uncertain(id);
-      await this.service.store.settle(id, result.receipt);
-    } catch (error) {
-      // A lost dispatch or settlement acknowledgement must retain the shared
-      // execution slot until its durable receipt can establish completion.
-      this.executionLease?.uncertain(id);
-      throw error;
-    }
-    if (result.outcome !== 'value') throw new Error(`${result.outcome}: ${result.reason}`);
-    if (this.service.paused || this.active?.signal.aborted)
-      throw new Error('Maintenance canceled before publication.');
-    this.assertAdmission();
-    return result.value;
   }
   private assertAdmission(world = this.service.world): void {
+    this.service.cognitionControl?.assertCurrent(this.activeAdmission?.labEpoch);
     const admission = this.activeAdmission;
     if (admission && admission.generation === this.service.generation && !admission.requiresBody)
       return;
@@ -962,14 +1147,15 @@ export class CognitionMaintenance {
               task: 'memory_consolidation',
               instructions: CONSOLIDATION_INSTRUCTIONS,
               context,
-              schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
+              schema: modelJsonSchema(summarySchema),
               signal: controller.signal,
             };
             const value = summarySchema.parse(
               await this.paid(
                 request.requestId,
                 'openai',
-                () => this.client.generate<unknown>(request),
+                { kind: 'generate', request },
+                (input) => this.client.generate<unknown>({ ...request, ...input.request }),
                 request.model,
               ),
             );
@@ -1092,13 +1278,14 @@ export class CognitionMaintenance {
         const value = await this.paid(
           requestId,
           'jev',
-          () =>
-            this.client.judge({
-              requestId,
-              signal: controller.signal,
+          {
+            kind: 'judge',
+            request: {
               state: `${ACTIVITY_SYNTAX}\n${batch.candidates.map((candidate, index) => `Method ${index + 1}: ${candidate.description}`).join('\n')}`,
               questions,
-            }),
+            },
+          },
+          (input) => this.client.judge({ ...input.request, requestId, signal: controller.signal }),
           undefined,
           async () => {
             if (!(await this.service.publishActivityLearning(batch, [], true, checkCurrent)))
@@ -1134,6 +1321,26 @@ export class CognitionMaintenance {
           (m) => m.kind === 'commitment' && !m.resolved,
         ),
       );
+      const instructions = `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, select policy, source, subject (null when none) and value. For reframe, select appraisal, expectedRevision, source and value. For resolve, supply only appraisal and expectedRevision. Qualitative values are null. Include only the fields declared for that kind. Never claim a typed change in prose unless proposing it atomically. Do not echo identity file contents.`;
+      const appraisalSnapshot = captureDecisionAppraisalContext(
+        this.service.world,
+        actorId,
+        'reflection',
+      );
+      const inputMeasure: DecisionInputMeasure = (input) =>
+        Buffer.byteLength(instructions) +
+        Buffer.byteLength(
+          JSON.stringify({
+            ...input.context,
+            feelings: appraisalSnapshot.project({
+              ...input.sources,
+              entityReferences: {
+                ...input.sources.entityReferences,
+                ...input.sources.knowledgeReferences,
+              },
+            }),
+          }),
+        );
       const prepared = await prepareDecision(
         this.service,
         this.recall,
@@ -1145,9 +1352,10 @@ export class CognitionMaintenance {
           await this.paid(
             `${job.id}:attention`,
             'jev',
-            async () =>
+            { kind: 'judge', request: r },
+            async (input) =>
               await this.client.judge({
-                ...r,
+                ...input.request,
                 requestId: `${job.id}:attention`,
                 signal: controller.signal,
               }),
@@ -1161,14 +1369,24 @@ export class CognitionMaintenance {
           this.paid(
             `${job.id}:${operation}`,
             'openai',
-            () =>
+            { kind: 'generate', request },
+            (input) =>
               this.client.generate<unknown>({
                 ...request,
+                ...input.request,
                 requestId: `${job.id}:${operation}`,
                 signal: controller.signal,
               }),
             request.model ?? this.service.config.llmModel,
           ),
+        'ordinary',
+        undefined,
+        inputMeasure,
+        {
+          question: `Reflect on the admitted concern: ${queued.reason}. Reconsider lasting understanding, goals and supported private feelings while preserving identity and native obligations.`,
+          enabledSemantics: ['think', 'goal', 'note', 'name', 'appraise'],
+          capabilityDetail: 'directory',
+        },
       );
       controller.signal.throwIfAborted();
       if (generation !== this.service.generation)
@@ -1179,22 +1397,38 @@ export class CognitionMaintenance {
         job.id,
         prepared.binding.evidenceIds,
         { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+        {
+          contextSnapshot: appraisalSnapshot,
+          sharedExperiences: prepared.sharedExperiences,
+          experienceRoot: 'experience',
+        },
       );
-      prepared.context['feelings'] = appraisals.context;
+      const context = { ...prepared.context, feelings: appraisals.context };
+      const finalized = finalizeDecisionRequest({
+        scope: prepared.manifest.scope,
+        instructions,
+        context: JSON.stringify(context),
+        schema: modelJsonSchema(reflectionSchema),
+        sourceKeys: prepared.manifest.units.map((unit) => unit.key),
+        references: { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+      });
       await this.log.record(
         `${job.id}:context`,
         'Reflection context',
-        prepared.diagnostics,
-        prepared.context,
+        {
+          ...prepared.diagnostics,
+          finalRequest: { digest: finalized.digest, bytes: finalized.bytes },
+        },
+        context,
       );
       const request: GenerateRequest = {
         requestId: `${job.id}:reflection`,
         actorScope: actorId,
         execution: 'full',
         task: 'background_reflection',
-        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, appraisal and expectedRevision are null; select policy, source and an optional subject. For reframe, select appraisal, expectedRevision and source; policy and subject are null. For resolve, only appraisal and expectedRevision are non-null. Qualitative values are null. Never claim a typed change in prose unless proposing it atomically. Do not echo identity file contents.`,
-        context: prepared.context,
-        schema: z.toJSONSchema(reflectionSchema, { target: 'draft-7' }),
+        instructions,
+        context: JSON.parse(finalized.context) as Record<string, unknown>,
+        schema: finalized.schema,
         signal: controller.signal,
       };
       if (
@@ -1204,12 +1438,17 @@ export class CognitionMaintenance {
       )
         throw new Error('Complete reflection context exceeds its admitted input budget.');
       await prepared.validateConversation();
-      const value = await this.paid(request.requestId, 'openai', () =>
-        this.log.run(
-          'Reflection harness',
-          request,
-          async () => await this.macrofold.reflect(request, snapshot.files),
-        ),
+      const value = await this.paid(
+        request.requestId,
+        'openai',
+        { kind: 'reflection', request, files: snapshot.files },
+        (input) =>
+          this.log.run(
+            'Reflection harness',
+            input,
+            () => this.macrofold.reflect({ ...request, ...input.request }, input.files),
+            { id: request.requestId },
+          ),
       );
       const parsedReflection = reflectionSchema.parse({
         appraisalChanges: value.appraisalChanges ?? [],
@@ -1224,21 +1463,11 @@ export class CognitionMaintenance {
             ...value.nameChanges.map((name, i) => ({
               localId: `name${i}`,
               requiresAccepted: [],
-              talk: null,
-              act: null,
-              think: null,
-              goal: null,
-              plan: null,
               name,
             })),
             ...value.knowledgeChanges.map((note, i) => ({
               localId: `note${i}`,
               requiresAccepted: [],
-              talk: null,
-              act: null,
-              think: null,
-              goal: null,
-              plan: null,
               note,
             })),
           ],
@@ -1277,7 +1506,7 @@ export class CognitionMaintenance {
             prepared.binding.evidenceIds,
             null,
             0,
-            value.goalChanges,
+            parsedReflection.goalChanges.map(nativeGoalChange),
             edits.operations.flatMap((op) => (op.note ? [op.note] : [])),
             edits.operations.flatMap((op) => (op.name ? [op.name] : [])),
             prepared.binding.entityIds,

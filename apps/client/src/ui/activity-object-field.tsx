@@ -22,6 +22,7 @@ export function ActivityObjectField({
   value,
   witnessId,
   sourceId,
+  arguments: arguments_,
   scope,
   readKey,
   page,
@@ -40,6 +41,7 @@ export function ActivityObjectField({
   value: string;
   witnessId?: string;
   sourceId?: string;
+  arguments?: Readonly<Record<string, string | number | boolean>>;
   scope: string;
   readKey: string;
   page?: ActivityChoicePage;
@@ -54,7 +56,7 @@ export function ActivityObjectField({
   onAction(input: CommandInput, label: string): Promise<ApiResult | undefined>;
 }) {
   const [open, setOpen] = useState(false);
-  const errorKey = JSON.stringify([scope, family, fieldId, value, witnessId, sourceId]);
+  const errorKey = JSON.stringify([scope, family, fieldId, value, witnessId, sourceId, arguments_]);
   const [error, setError] = useState<{ key: string; message: string }>();
   const [acting, setActing] = useState(false);
   const alive = useRef(true);
@@ -66,7 +68,14 @@ export function ActivityObjectField({
       alive.current = false;
     };
   }, []);
-  const body = { family, field: fieldId, sourceId, selectedId: value, witnessId };
+  const body = {
+    family,
+    field: fieldId,
+    sourceId,
+    selectedId: value,
+    witnessId,
+    arguments: arguments_,
+  };
   useEffect(() => {
     if (!visible || !connected || !value) return;
     const abort = new AbortController();
@@ -293,8 +302,8 @@ export function ActivityObjectField({
                 />
               ) : (
                 <RoleSearch
-                  key={JSON.stringify([scope, family, fieldId, sourceId])}
-                  body={{ family, field: fieldId, sourceId }}
+                  key={JSON.stringify([scope, family, fieldId, sourceId, arguments_])}
+                  body={{ family, field: fieldId, sourceId, arguments: arguments_ }}
                   scope={scope}
                   label={field.label}
                   connected={connected}
@@ -317,7 +326,12 @@ function RoleSearch({
   onCancel,
   onSelect,
 }: {
-  body: { family: string; field: string; sourceId?: string };
+  body: {
+    family: string;
+    field: string;
+    sourceId?: string;
+    arguments?: Readonly<Record<string, string | number | boolean>>;
+  };
   scope: string;
   label: string;
   connected: boolean;
@@ -442,10 +456,10 @@ function RoleSearch({
       {usable && !page?.choices.length && (
         <p role="status">
           {page?.next
-            ? 'No match in this part of the search. More objects remain to check.'
+            ? 'No match in this part of the search. More choices remain to check.'
             : query
-              ? 'No matching permitted object. Clear the search to try again.'
-              : 'No eligible objects in this scope.'}
+              ? 'No matching choice. Clear the search to try again.'
+              : 'No choices are currently available here.'}
         </p>
       )}
       <div className="ol-actions">

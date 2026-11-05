@@ -14,6 +14,8 @@ import {
 } from './creation-target-contracts.js';
 import { BASE_STARTING_WORLD_PRESETS, isSafeRecordId } from '@open-legend/domain';
 
+export const DEFAULT_JEV_INPUT_USD_PER_MILLION = 0.042;
+
 /** Trusted operator configuration. Secrets and arbitrary endpoints never come from the browser. */
 export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   const generation = readGenerationConfig(env);
@@ -137,6 +139,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     .number()
     .int()
     .parse(numberSetting(env, 'OPEN_LEGEND_PLAYER_CAPACITY', 100, 1, 10000));
+  const dataDirectory = resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data');
+  const labUrl = new URL(databaseUrl);
+  labUrl.pathname = `${labUrl.pathname}_cognition_lab`;
   return {
     ...generation,
     creation: {
@@ -164,6 +169,32 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     },
     worldPreset,
     databaseUrl,
+    cognitionLab: {
+      databaseUrl: env['OPEN_LEGEND_LAB_DATABASE_URL']?.trim() || labUrl.href,
+      dataDirectory: resolve(env['OPEN_LEGEND_LAB_DATA_DIR'] ?? `${dataDirectory}/cognition-lab`),
+      // A second database never duplicates the game's real spending entitlement.
+      budgetUsd: numberSetting(env, 'OPEN_LEGEND_LAB_BUDGET_USD', 0, 0, 100),
+      storageAllowanceBytes:
+        numberSetting(
+          env,
+          'OPEN_LEGEND_LAB_STORAGE_MIB',
+          2048,
+          1,
+          Math.floor(Number.MAX_SAFE_INTEGER / 1024 ** 2),
+        ) *
+        1024 *
+        1024,
+      runCaptureAllowanceBytes:
+        numberSetting(
+          env,
+          'OPEN_LEGEND_LAB_CAPTURE_MIB',
+          64,
+          1,
+          Math.floor(Number.MAX_SAFE_INTEGER / 1024 ** 2),
+        ) *
+        1024 *
+        1024,
+    },
     sqlWriteGroups: sqlWriteGroups === 'on',
     profiling: z.enum(['off', 'on']).parse(env['OPEN_LEGEND_PROFILING'] ?? 'off') === 'on',
     mcpRead: readMcpConfig(env),
@@ -177,7 +208,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     host,
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
     port,
-    dataDirectory: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data'),
+    dataDirectory,
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
@@ -186,7 +217,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     decisionEscalation: env['DECISION_ESCALATION_JSON']
       ? decisionEscalationConfigSchema.parse(JSON.parse(env['DECISION_ESCALATION_JSON']))
       : defaultDecisionEscalation(
-          macrofoldKey
+          macrofoldKey ||
+            (generation.macrofoldModelKey && generation.modelTargets?.purposes.judgment)
             ? `macrofold/${macrofoldJudgmentModel({ ...generation, macrofoldJevModel })}`
             : `jev/${jevModel}`,
         ),
@@ -212,11 +244,26 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     ),
     // Selected by the application/world compute owner; never allocated by an actor lane.
     macrofoldWorkerId: env['MACROFOLD_WORKER_ID']?.trim() ?? '',
+    // A Run's sandbox allowance is separate from its Worker Host's total memory.
+    // Omission preserves the platform default; see docs/live-ai-setup.md.
+    macrofoldRunMemoryMib: z.coerce
+      .number()
+      .int()
+      .positive()
+      .safe()
+      .optional()
+      .parse(env['MACROFOLD_RUN_MEMORY_MIB']),
     macrofoldTimeoutSeconds: numberSetting(env, 'MACROFOLD_TIMEOUT_SECONDS', 300, 5, 300),
     jevKey: env['TYPESAFE_API_KEY'] ?? env['JEV_API_KEY'] ?? '',
     jevModel,
     jevPrices: {
-      inputUsdPerMillion: numberSetting(env, 'JEV_INPUT_USD_PER_MILLION', 0.042, 0, 1000),
+      inputUsdPerMillion: numberSetting(
+        env,
+        'JEV_INPUT_USD_PER_MILLION',
+        DEFAULT_JEV_INPUT_USD_PER_MILLION,
+        0,
+        1000,
+      ),
       outputUsdPerMillion: 0,
     },
   };

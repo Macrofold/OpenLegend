@@ -12,6 +12,16 @@ import { MIND_LIMITS, RESPONSE_LIMITS } from '@open-legend/domain';
 import { LEVEL_LIMITS } from './cognition-contracts.js';
 import type { AppConfig } from './config.js';
 import { CONTEXT_BYTE_LIMIT } from './context.js';
+import { DECISION_LIMITS } from './decision-state.js';
+import {
+  configuredDeploymentModel,
+  hasNpcGenerationAccess,
+  judgmentDeploymentTarget,
+  NPC_GENERATION_PURPOSES,
+  npcGenerationModel,
+  resolveHigherDecisionGenerationConfig,
+  hasDeploymentTargets,
+} from './generation-config.js';
 import {
   assertAttemptReceiptContinuity,
   retainKnownAttemptCost,
@@ -28,6 +38,9 @@ export function generationAllowance(
   minimumUsd = Math.max(0.25, config.llmReserveUsd),
   transport: 'openai' | 'macrofold' = config.macrofoldKey ? 'macrofold' : 'openai',
 ): number {
+  // This configured deployment's request fee is zero; shared hosting is not an
+  // inference charge. Unknown model identities retain conservative admission.
+  if (configuredDeploymentModel(config, model)) return 0;
   if (transport === 'macrofold') return config.macrofoldRunUsd;
   const models = model
     ? [model]
@@ -57,6 +70,7 @@ export function decisionAllowance(
   model?: string,
 ): number {
   if (provider === 'openai') return generationAllowance(config, model);
+  if (judgmentDeploymentTarget(config.modelTargets)) return 0;
   // Macrofold reserves its prepared input as bytes plus padding before invoking Jev.
   // The configured minimum cannot replace the supported request's price bound.
   // docs/ai-providers.md#configuration-and-interface
@@ -81,7 +95,16 @@ export function interactiveAllowance(config: AppConfig): number {
   // The eventual route is not selected yet: hold the most expensive configured model.
   const generation = config.macrofoldKey
     ? config.macrofoldRunUsd
-    : generationAllowance(config, undefined, 120_000);
+    : hasDeploymentTargets(config.modelTargets) && !config.llmKey
+      ? Math.max(
+          0,
+          ...NPC_GENERATION_PURPOSES.filter((purpose) =>
+            hasNpcGenerationAccess(config, purpose),
+          ).map((purpose) =>
+            generationAllowance(config, npcGenerationModel(config, purpose), 120_000),
+          ),
+        )
+      : generationAllowance(config, undefined, 120_000);
   return sumRequestCosts([
     generation,
     generation,
@@ -127,6 +150,19 @@ export interface LevelLimits {
 export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimits> {
   const jev = decisionAllowance(config, 'jev');
   const llm = decisionAllowance(config, 'openai', config.llmModel);
+  // The same level-four ledger admits ordinary complex work and the independently
+  // selected higher route. A zero-fee complex target cannot erase a direct route's bound.
+  const higherTarget = resolveHigherDecisionGenerationConfig(config, {
+    maxOutputTokens: DECISION_LIMITS.outputTokens,
+  });
+  const higher = generationAllowance(
+    config,
+    config.higherDecisionModel,
+    500_000,
+    DECISION_LIMITS.outputTokens,
+    Math.max(0.25, config.llmReserveUsd),
+    higherTarget.transport,
+  );
   // Each SQL reservation rounds upward separately. Multiplying the raw USD first
   // would refuse the final advertised request for fractional-microdollar bounds.
   const requestAllowance = (requestsPerDecision: number, reserveUsd: number) => {
@@ -150,7 +186,14 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
     toolRounds: 0,
     ...requestAllowance(
       10,
-      decisionAllowance(config, 'openai', level === 2 ? config.miniModel : config.complexModel),
+      Math.max(
+        decisionAllowance(
+          config,
+          'openai',
+          npcGenerationModel(config, level === 2 ? 'npc_response_fast' : 'npc_response_complex'),
+        ),
+        level === 4 ? higher : 0,
+      ),
     ),
   });
   return {

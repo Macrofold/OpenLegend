@@ -18,6 +18,16 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
     irrelevant:
       'This supplied purpose does not fit this person and situation. Exclude this instance only.',
   },
+  voice: {
+    question:
+      'Independently of any movement, defense or attack I choose, do I want to say something now in my own voice about this personally experienced situation? Consider my personality, feelings, who can hear me, and anything I have already said. Physical action and speech can coexist; neither requires the other.',
+    silent:
+      'Continue without a new generated utterance. Silence fits, words would merely repeat what I already said, or whether I want to speak is uncertain.',
+    speak:
+      'I want to say something now in my own voice, independently of the physical response. An exclamation, demand, warning or other utterance fits me and this situation.',
+    instructions:
+      'Express this person’s own immediate reaction to the personally experienced situation. Use their actual voice and feelings; restrained or visceral words can both fit different people. Do not narrate someone else’s response. Any native action was decided separately: these words neither start nor cancel it. Silence remains possible if the current situation no longer warrants words.',
+  },
   purposes: [
     {
       id: 'TR01',

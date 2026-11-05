@@ -3,16 +3,18 @@ import type { ActivityHostDescriptor } from '../../activity-hosts.js';
 import { seesEntity } from '../../perception.js';
 import { capabilityBlocked } from '../../status-capabilities.js';
 import { BASE_LOW_FUEL_SECONDS } from './fire-rules.js';
+import { baseNativeRequestSupport } from './native-request-forms.js';
 
 /** The same visible band used by ordinary fire inspection; exact burn time is
  * scheduler-private and never part of the actor's observation. */
 export { BASE_LOW_FUEL_SECONDS } from './fire-rules.js';
 export const BASE_FIRE_ACTIVITY_HOST: ActivityHostDescriptor = {
+  ...baseNativeRequestSupport(['tend-fire']),
   definition: {
     id: 'base:fire-care',
     version: 1,
     interface: 'activity-host-v1',
-    implementationVersion: 1,
+    implementationVersion: 2,
     commands: ['tend-fire'],
     actions: {
       'tend-fire': {

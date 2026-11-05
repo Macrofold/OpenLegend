@@ -1,5 +1,5 @@
 import { WorkLane } from './work-lane.js';
-import { timed, beginTiming, endTiming } from './performance.js';
+import { timed, beginTiming, endTiming, recordBackgroundFailure } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
@@ -29,9 +29,12 @@ export class PostgresDatabase implements SqlDatabase {
   private failed = false;
   private sharedLease?: Promise<void>;
   private materializerClosing?: Promise<void>;
-  private fail(): void {
+  private fail(error?: unknown): void {
     if (this.failed) return;
     this.failed = true;
+    // Preserve the first safe cause; later queries only see the sticky failure.
+    // Intentional close() calls fail without an error and must stay silent.
+    if (error !== undefined) recordBackgroundFailure('postgres-connection', error);
     // A subordinate holds the same reservation until its server session ends.
     void this.closeMaterializer().catch(() => undefined);
     try {
@@ -71,15 +74,15 @@ export class PostgresDatabase implements SqlDatabase {
       connectionTimeoutMillis,
       statement_timeout: 5000,
     });
-    this.reader.on('error', () => {
-      this.fail();
+    this.reader.on('error', (error) => {
+      this.fail(error);
     });
     this.ready = this.connect();
-    this.ready.catch(() => {
-      this.fail();
+    this.ready.catch((error) => {
+      this.fail(error);
     });
-    this.client.on('error', () => {
-      this.fail();
+    this.client.on('error', (error) => {
+      this.fail(error);
     });
   }
   private async connect() {
@@ -199,8 +202,8 @@ export class PostgresDatabase implements SqlDatabase {
           connectionTimeoutMillis: 5000,
           statement_timeout: 5000,
         });
-        this.materializer.on('error', () => {
-          this.fail();
+        this.materializer.on('error', (error) => {
+          this.fail(error);
         });
         const client = this.materializer;
         this.materializerReady = client.connect().then(async () => {
@@ -320,8 +323,8 @@ export class PostgresDatabase implements SqlDatabase {
         result = await operation();
         await this.query('COMMIT');
       } catch (error) {
-        await this.query('ROLLBACK').catch(() => {
-          this.fail();
+        await this.query('ROLLBACK').catch((rollbackError) => {
+          this.fail(rollbackError);
         });
         scope.active = false;
         for (const callback of scope.rolledBack) callback();

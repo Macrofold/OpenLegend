@@ -18,17 +18,21 @@ import { WorldService } from './world-service.js';
 const stores = new Set<SqlGameRepository>();
 const services = new Map<WorldService, SqlGameRepository>();
 const directories: string[] = [];
-async function setup(path: string | undefined = undefined, existingClock?: { now: number }) {
+async function setup(
+  path: string | undefined = undefined,
+  options: { clock?: { now: number }; godMode?: boolean } = {},
+) {
   const store = await testRepository(path);
   await store.ready;
   if (!(await store.records.head()))
     await store.commit(0, { world: stockedCamp(), speed: 1, manuallyPaused: false });
   stores.add(store);
-  const clock = existingClock ?? { now: 1_800_000_000_000 };
+  const clock = options.clock ?? { now: 1_800_000_000_000 };
   const config = readConfig({
     WORLD_SEED: '73',
     TYPESAFE_API_KEY: 'private-jev-key',
     OPENAI_API_KEY: 'private-llm-key',
+    ...(options.godMode ? { OPEN_LEGEND_GOD_MODE: 'true' } : {}),
   });
   const service = new WorldService(store, config, () => clock.now);
   services.set(service, store);
@@ -124,12 +128,13 @@ describe('world presence, time and durable commands', () => {
     const directory = mkdtempSync(join(tmpdir(), 'open-legend-time-migration-'));
     directories.push(directory);
     const path = directory;
-    const initial = await setup(path);
+    const initial = await setup(path, { godMode: true });
     await initial.service.ready;
     await initial.service.setPreferences({ showUnavailableActions: true });
     await initial.service.setPreferences({ pauseWhenHidden: false });
     await initial.service.setPreferences({ showUnavailableActions: false });
-    await initial.service.control({ speed: 0.5 });
+    const controlResult = await initial.service.control({ speed: 0.5 });
+    expect(controlResult.ok, controlResult.message).toBe(true);
     await initial.store.close();
     stores.delete(initial.store);
     const restored = await setup(path);
@@ -152,7 +157,7 @@ describe('world presence, time and durable commands', () => {
   it('settles disconnected exposure and advances the requested game time at each speed', async () => {
     await Promise.all(
       [0.5, 1, 3, 8].map(async (speed) => {
-        const { service, clock } = await setup();
+        const { service, clock } = await setup(undefined, { godMode: true });
         // Establish an actual departure; paused startup alone is no physical exit.
         await activate(service);
         await service.setPresence('test-client', false);
@@ -165,7 +170,8 @@ describe('world presence, time and durable commands', () => {
         }
         expect(service.world.simTime).toBe(300);
         await activate(service);
-        expect((await service.control({ speed })).ok).toBe(true);
+        const controlResult = await service.control({ speed });
+        expect(controlResult.ok, controlResult.message).toBe(true);
         const restResult = await service.command('rest', {
           type: 'status-effect',
           definitionId: 'wilderness:restorative-rest',
@@ -286,9 +292,10 @@ describe('world presence, time and durable commands', () => {
     expect(service.world.simTime).toBe(15.6);
   }, 60_000);
   it('preserves short scheduling debt at the highest supported speed', async () => {
-    const { service, clock } = await setup();
+    const { service, clock } = await setup(undefined, { godMode: true });
     await activate(service);
-    await service.control({ speed: 8 });
+    const controlResult = await service.control({ speed: 8 });
+    expect(controlResult.ok, controlResult.message).toBe(true);
     clock.now += 1000;
     await service.tick(1);
     // Eight smaller frames provide room to drain a bounded backlog while time keeps running.
@@ -323,7 +330,7 @@ describe('world presence, time and durable commands', () => {
     directories.push(directory);
     const path = directory;
     const clock = { now: 1_800_000_000_000 };
-    const initial = await setup(path, clock);
+    const initial = await setup(path, { clock, godMode: true });
     await activate(initial.service);
     await withFixtureFood(initial.service);
     const berry = (await projectView(initial.service)).player.inventory.find(
@@ -339,12 +346,13 @@ describe('world presence, time and durable commands', () => {
       effectOperation: 'activate',
     });
     await run(initial.service, clock, 1);
-    await initial.service.control({ speed: 3, paused: true });
+    const controlResult = await initial.service.control({ speed: 3, paused: true });
+    expect(controlResult.ok, controlResult.message).toBe(true);
     const previous = structuredClone(initial.service.world);
     await initial.store.close();
     stores.delete(initial.store);
     clock.now += 7 * 86400_000;
-    const restored = await setup(path, clock);
+    const restored = await setup(path, { clock });
     await activate(restored.service);
     expect(restored.service.world.simTime).toBe(previous.simTime);
     // Clearing transports while paused is not a physical departure. The player has

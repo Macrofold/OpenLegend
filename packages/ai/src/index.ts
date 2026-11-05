@@ -5,6 +5,7 @@ export {
   decodeOpenAiDecision,
 } from './openai-decisions.js';
 export {
+  MACROFOLD_DECISION_MODELS,
   createMacrofoldDecisionClient,
   createMacrofoldGenerationClient,
   macrofoldInferenceEvidence,
@@ -25,6 +26,8 @@ export { JsonObjectStream } from './json-stream.js';
 export {
   captureMacrofoldDeploymentTarget,
   macrofoldDeploymentRequestFields,
+  macrofoldGenerationInstructions,
+  defaultMacrofoldCatalogOutputMode,
   prepareMacrofoldGenerationInput,
   decodeMacrofoldGeneration,
   captureMacrofoldDeploymentReceipt,
@@ -61,6 +64,7 @@ export {
   InvalidData,
   validateQuestions,
   validateJudgmentSize,
+  batchJudgmentQuestions,
   JUDGMENT_MAX_CHARACTERS,
   JUDGMENT_STATE_QUESTION_CHARACTERS,
   decodeJudge,
@@ -69,3 +73,15 @@ export {
 export type { PreparedSchema } from './validation.js';
 
 export { OpenAiRateGate } from './rate-gate.js';
+
+export { generationRequestAccounting } from './request-accounting.js';
+export {
+  createSharedExecutionClient,
+  loadJobExecutionClient,
+  sharedAttemptId,
+  selectSharedExecutionLane,
+  executionUrl,
+  executionCapability,
+  SHARED_EXECUTION_CONTROL_BYTES,
+} from './shared-execution.js';
+export type { SharedExecutionGrant, SharedLane, SharedModelSelection } from './shared-execution.js';

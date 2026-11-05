@@ -8,6 +8,7 @@ import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
 import {
   itemsForOwner,
+  directChildIds,
   itemFor,
   moveLot,
   validateObjects,
@@ -54,10 +55,20 @@ export function canHandleItems(world: WorldState, actor: Entity): boolean {
     world.itemHandling.actorBodyProfiles.includes(actor.spatial.body.id)
   );
 }
-export function portableItems(world: WorldState, ownerId: string): ItemInstance[] {
-  return itemsForOwner(world, ownerId).filter(
-    (item) => world.itemDefinitions[item.definitionId]?.portable === true,
-  );
+export function portableItems(
+  world: WorldState,
+  ownerId: string,
+  limit = Infinity,
+): ItemInstance[] {
+  const result: ItemInstance[] = [];
+  // Preserve the ownership index's order, and stop before projecting stock that
+  // a bounded consumer will discard. No extra inventory or portability index.
+  for (const id of directChildIds(world, ownerId)) {
+    if (result.length >= limit) break;
+    const item = itemFor(world, id);
+    if (item && world.itemDefinitions[item.definitionId]?.portable === true) result.push(item);
+  }
+  return result;
 }
 function pileAt(world: WorldState, position: SurfacePoint): Entity {
   // Merge only coincident positions on the same support: nearby floors never share custody.

@@ -159,6 +159,7 @@ describe('native optional contribution independent of target controller', () => 
       world = command(world, {
         type: 'aim',
         manualExecution: true,
+        // A point replaces subject aim; each arm must make one actual choice.
         ...(intended ? { targetId: NPC_ID } : { aimPoint: { x: p.x, y: p.y + 1.2, z: p.z } }),
       });
       world = advanceWorld(world, 18).world;

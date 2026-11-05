@@ -184,6 +184,13 @@ export interface DecisionState {
   /** Valid only in generation; restart ends the root rather than comparing another process clock. */
   fastPublishByMonotonic: number;
   usefulUntilMonotonic: number;
+  /** Actual lab waits excluded from existing deadlines; absent means no exclusion. */
+  timingExcluded?: {
+    immediateWallMs: number;
+    immediateMonotonicMs: number;
+    lifetimeWallMs: number;
+    lifetimeMonotonicMs: number;
+  };
   usefulUntilSim?: number;
   phase: 'immediate' | 'waiting-primary' | 'higher' | 'closed';
   immediate: {
@@ -196,11 +203,79 @@ export interface DecisionState {
   higher?: HigherDecision;
   primaryAwait?: { attemptId: string };
   refreshUsed: boolean;
+  /** One root-scoped read continuation, inherited by every ordinary/higher path. */
+  activityDetail?: {
+    family: string;
+    definitionDigest: string;
+    initialAttemptId: string;
+    finalAttemptId?: string;
+    phase: 'preparing-detail' | 'final-ready' | 'final-dispatched' | 'finished' | 'ended';
+  };
   origin: string;
   policyDigest: string;
   limits: Record<CognitionLevel, LevelLimits>;
   end?: DecisionEnd;
 }
+/** A deliberate lab wait suspends only undispatched work; accepted timing remains history.
+ * The caller clears/rearms its real timers and records this intervention separately. */
+export function shiftUndispatchedDecision(
+  state: DecisionState,
+  wallMs: number,
+  monotonicMs: number,
+  scope: 'all' | 'immediate' | 'lifetime' = 'all',
+): DecisionState {
+  const immediate = scope !== 'lifetime' && state.immediate.kind === 'pending';
+  const lifetime = scope !== 'immediate';
+  if (!immediate && !lifetime) return state;
+  // Recording cannot extend a choice beyond its original useful lifetime.
+  const immediateWallMs = immediate
+    ? lifetime
+      ? wallMs
+      : Math.min(wallMs, state.usefulUntilWall - state.fastPublishBy)
+    : 0;
+  const immediateMonotonicMs = immediate
+    ? lifetime
+      ? monotonicMs
+      : Math.min(monotonicMs, state.usefulUntilMonotonic - state.fastPublishByMonotonic)
+    : 0;
+  const excluded = state.timingExcluded;
+  return {
+    ...state,
+    timingExcluded: {
+      immediateWallMs: (excluded?.immediateWallMs ?? 0) + immediateWallMs,
+      immediateMonotonicMs: (excluded?.immediateMonotonicMs ?? 0) + immediateMonotonicMs,
+      lifetimeWallMs: (excluded?.lifetimeWallMs ?? 0) + (lifetime ? wallMs : 0),
+      lifetimeMonotonicMs: (excluded?.lifetimeMonotonicMs ?? 0) + (lifetime ? monotonicMs : 0),
+    },
+    ...(immediate
+      ? {
+          fastPublishBy: state.fastPublishBy + immediateWallMs,
+          fastPublishByMonotonic: state.fastPublishByMonotonic + immediateMonotonicMs,
+        }
+      : {}),
+    usefulUntilWall: state.usefulUntilWall + (lifetime ? wallMs : 0),
+    usefulUntilMonotonic: state.usefulUntilMonotonic + (lifetime ? monotonicMs : 0),
+    ...(lifetime &&
+    state.higher &&
+    (['queued', 'preparing', 'reserved'].includes(state.higher.state) ||
+      (state.higher.state === 'dispatched' &&
+        ['preparing-detail', 'final-ready'].includes(state.activityDetail?.phase ?? '')))
+      ? {
+          higher: {
+            ...state.higher,
+            dispatchBy:
+              state.higher.dispatchBy + (state.higher.state === 'dispatched' ? 0 : wallMs),
+            dispatchByMonotonic:
+              state.higher.dispatchByMonotonic +
+              (state.higher.state === 'dispatched' ? 0 : monotonicMs),
+            publishBy: state.higher.publishBy + wallMs,
+            publishByMonotonic: state.higher.publishByMonotonic + monotonicMs,
+          },
+        }
+      : {}),
+  };
+}
+
 /** One original opportunity; handing off never manufactures new clocks or allowances. */
 export function decisionRoot(
   input: Pick<
@@ -264,6 +339,9 @@ export function endDecision(state: DecisionState, reason: DecisionEnd, at: numbe
         group.state === 'open' ? { ...group, state: 'ended-unresolved' as const } : group,
       ]),
     ),
+    ...(state.activityDetail && !['finished', 'ended'].includes(state.activityDetail.phase)
+      ? { activityDetail: { ...state.activityDetail, phase: 'ended' as const } }
+      : {}),
     ...(state.higher && childLive(state)
       ? { higher: { ...state.higher, state: 'ended', end: reason } }
       : {}),
@@ -344,6 +422,15 @@ const stateSchema = z
     usefulUntilWall: integer,
     fastPublishByMonotonic: z.number().finite().nonnegative(),
     usefulUntilMonotonic: z.number().finite().nonnegative(),
+    timingExcluded: z
+      .object({
+        immediateWallMs: integer,
+        immediateMonotonicMs: z.number().finite().nonnegative(),
+        lifetimeWallMs: integer,
+        lifetimeMonotonicMs: z.number().finite().nonnegative(),
+      })
+      .strict()
+      .optional(),
     usefulUntilSim: z.number().finite().nonnegative().optional(),
     phase: z.enum(['immediate', 'waiting-primary', 'higher', 'closed']),
     immediate: z
@@ -398,6 +485,16 @@ const stateSchema = z
       .optional(),
     primaryAwait: z.object({ attemptId: identity }).strict().optional(),
     refreshUsed: z.boolean(),
+    activityDetail: z
+      .object({
+        family: identity,
+        definitionDigest: identity,
+        initialAttemptId: identity,
+        finalAttemptId: identity.optional(),
+        phase: z.enum(['preparing-detail', 'final-ready', 'final-dispatched', 'finished', 'ended']),
+      })
+      .strict()
+      .optional(),
     origin: identity,
     policyDigest: identity,
     limits: z.object({ 1: level, 2: level, 3: level, 4: level, 5: level }).strict(),
@@ -405,13 +502,25 @@ const stateSchema = z
   })
   .strict()
   .superRefine((state, context) => {
+    const excluded = state.timingExcluded;
     if (
       state.fastPublishBy <= state.acceptedAt ||
       state.usefulUntilWall < state.fastPublishBy ||
-      state.fastPublishBy !== state.acceptedAt + DECISION_LIMITS.immediateMs ||
-      state.usefulUntilWall > state.fastPublishBy + DECISION_LIMITS.lifetimeMs ||
+      state.fastPublishBy !==
+        state.acceptedAt + DECISION_LIMITS.immediateMs + (excluded?.immediateWallMs ?? 0) ||
+      state.usefulUntilWall >
+        state.fastPublishBy +
+          DECISION_LIMITS.lifetimeMs +
+          (excluded?.lifetimeWallMs ?? 0) -
+          (excluded?.immediateWallMs ?? 0) ||
       state.usefulUntilMonotonic < state.fastPublishByMonotonic ||
-      state.usefulUntilMonotonic > state.fastPublishByMonotonic + DECISION_LIMITS.lifetimeMs ||
+      state.usefulUntilMonotonic >
+        state.fastPublishByMonotonic +
+          DECISION_LIMITS.lifetimeMs +
+          (excluded?.lifetimeMonotonicMs ?? 0) -
+          (excluded?.immediateMonotonicMs ?? 0) +
+          // Repeated fractional waits can accumulate rounding; native timers resolve milliseconds.
+          1 ||
       !Object.keys(state.groups).length ||
       Object.keys(state.groups).length > 64 ||
       Object.entries(state.limits).some(([key, value]) => Number(key) !== value.level) ||

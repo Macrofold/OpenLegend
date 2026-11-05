@@ -31,14 +31,16 @@ export function prepareQuestionRead(
     generation === service.generation && expected === digest(await read.currentRevisions());
   return {
     tasks: read.questions,
-    context: JSON.stringify({
+    context: {
       sourceTime: read.sourceTime,
       validity:
         'All supplied mutable evidence is exact; a changed source revision invalidates this judgment.',
+      // Preserve the admitted reading while asynchronous revision checks run;
+      // the structured request must not borrow a caller's mutable source object.
       inputs: Object.fromEntries(
-        Object.entries(read.inputs).map(([key, input]) => [key, input.value]),
+        Object.entries(read.inputs).map(([key, input]) => [key, structuredClone(input.value)]),
       ),
-    }),
+    },
     bindingDigest: digest({ questions: read.questions, revisions: expected }),
     sourceTime: read.sourceTime,
     current,

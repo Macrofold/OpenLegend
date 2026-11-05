@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
+import type { DecisionPreparationWork } from './decision-context-selection.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import { insertRows, sqlRecordBatches, type SqlWriteBatch } from './sql-rows.js';
-import { LexicalProjection } from './lexical-projection.js';
+import { LexicalProjection, type MemoryReadControl } from './lexical-projection.js';
+export type { MemoryReadControl } from './lexical-projection.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
 import { matchesSearch, scanMatches, searchWords } from './text-search.js';
 // Preparation allowance, not a retained-history or searchable-corpus limit.
@@ -123,6 +125,19 @@ export const MEMORY_CACHE_TABLES = ['memory_vector_cache'] as const;
 export class MemoryReadCache {
   private values = new Map<string, { value: RetrievedMemory; bytes: number }>();
   private bytes = 0;
+  /** Last bounded optional read only; this is diagnostic coverage, not evidence
+   * that omitted sources were irrelevant or absent from the actor's history. */
+  optionalBodyAdmission?: {
+    scope: 'bounded-discovery-window';
+    allowanceBytes: number;
+    examined: number;
+    retained: number;
+    retainedBytes: number;
+    omittedForBytes: number;
+    unavailableSize: number;
+    coverage: 'complete-window' | 'partial';
+  };
+  constructor(readonly work?: Pick<DecisionPreparationWork, 'charge' | 'releaseRetained'>) {}
   private key(row: Record<string, unknown>): string {
     return JSON.stringify([
       row['world_id'],
@@ -143,10 +158,13 @@ export class MemoryReadCache {
       (this.bytes + bytes > RETRIEVAL_BYTES || this.values.size >= RETRIEVAL_ROWS)
     ) {
       const oldest = this.values.keys().next().value!;
-      this.bytes -= this.values.get(oldest)!.bytes;
+      const dropped = this.values.get(oldest)!.bytes;
+      this.bytes -= dropped;
+      this.work?.releaseRetained(dropped);
       this.values.delete(oldest);
     }
     if (bytes <= RETRIEVAL_BYTES) {
+      this.work?.charge({ retainedBytes: bytes });
       this.values.set(key, { value, bytes });
       this.bytes += bytes;
     }
@@ -154,6 +172,8 @@ export class MemoryReadCache {
 }
 
 export interface CognitionPreparation {
+  /** Shared by required reads, optional discovery and final fitting; never renewed by a refresh. */
+  work?: Pick<DecisionPreparationWork, 'charge'>;
   scope: MemoryScope;
   bodies: MemoryReadCache;
   conversation: Awaited<ReturnType<MemoryRepository['context']>>;
@@ -218,10 +238,17 @@ export interface RetrievedMemory {
   awareness?: Awareness;
   revision: string;
   score?: number;
+  discovery?: {
+    origins: readonly ('exact' | 'lexical' | 'semantic' | 'recent' | 'importance')[];
+    cueKeys: readonly string[];
+  };
   bodyBytes: number;
   /** A current eligible summary that admitted this exact retained original. */
   through?: SummarySourceBinding;
 }
+type MemoryRetrievalQuery =
+  | (MemoryModel & { query: number[] })
+  | { text: string | readonly string[]; cueKeys?: readonly string[] };
 export interface SummarySourceBinding {
   id: string;
   revision: string;
@@ -284,6 +311,11 @@ export interface MemoryModel {
  * interpretation remains with domain/AI owners; this repository invents no semantics.
  */
 export class MemoryRepository {
+  /** The native replacement transaction discards only this active world's
+   * derived source projection. Canonical history is preserved in its recovery cut. */
+  async releaseWorldSources(worldId: string): Promise<void> {
+    await this.db.prepare('DELETE FROM recall_sources WHERE world_id=?').run(worldId);
+  }
   publicationRevision = 0;
   private coverageCache = new Map<
     string,
@@ -1345,8 +1377,10 @@ export class MemoryRepository {
     requiredIds: string[],
     includeConversation: boolean,
     maxBytes = RETRIEVAL_BYTES,
+    work?: Pick<DecisionPreparationWork, 'charge'>,
   ) {
     return this.snapshot(async () => {
+      work?.charge({ tests: 1, candidates: requiredIds.length });
       // Reconsideration uses all perceived events, including physical danger. The
       // optional linguistic suffix is not the actor's complete observation frontier.
       const watermark = await this.db
@@ -1355,7 +1389,7 @@ export class MemoryRepository {
         )
         .get(...this.params(scope));
       const selected = includeConversation
-        ? await this.conversationSources(scope, maxBytes)
+        ? await this.conversationSources(scope, maxBytes, work)
         : { sources: [], more: false };
       const required = new Set(requiredIds);
       return {
@@ -1372,12 +1406,14 @@ export class MemoryRepository {
   async conversationSources(
     scope: MemoryScope,
     maxBytes = RETRIEVAL_BYTES,
+    work?: Pick<DecisionPreparationWork, 'charge'>,
   ): Promise<{ sources: ConversationSource[]; more: boolean }> {
     const sources: ConversationSource[] = [];
     let bytes = 0,
       before: { sequence: number; id: string } | undefined;
     for (;;) {
       const limit = Math.min(128, RETRIEVAL_ROWS + 1 - sources.length);
+      work?.charge({ candidates: limit, tests: limit });
       const rows = await this.db
         .prepare(
           `SELECT r.id,r.revision,r.sequence,r.payload_bytes,
@@ -1905,6 +1941,8 @@ export class MemoryRepository {
     scope: MemoryScope,
     query: string | null,
     limit: number,
+    control?: MemoryReadControl,
+    bodies?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 300)
       throw new Error('Invalid context limit.');
@@ -1913,6 +1951,7 @@ export class MemoryRepository {
     const cacheable = this.db.transactionActive === false;
     const terms = query === null ? [] : [...new Set(searchWords(query))];
     const read = async () => {
+      bodies?.work?.charge({ candidates: limit, tests: limit });
       if (query === null)
         return this.hydrate(
           await this.db
@@ -1920,6 +1959,7 @@ export class MemoryRepository {
               `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} ORDER BY r.at DESC,r.id LIMIT ?`,
             )
             .all(...this.params(scope), limit),
+          bodies,
         );
       const cacheKey = JSON.stringify([actorScopeKey(scope), terms, limit]);
       const cached = cacheable ? this.textSelection.get(cacheKey) : undefined;
@@ -1941,24 +1981,11 @@ export class MemoryRepository {
         revision === this.actorRevision(scope.actorId) &&
         reset === this.resetEpoch
       )
-        return this.hydrate(cached.rows);
+        return this.hydrate(cached.rows, bodies);
       // Token-prefix search uses the database's inverted index. Substring matching
       // required reparsing every retained JSON body; docs/memory-architecture.md#retrieval-preparation-admission.
-      let matched: Record<string, unknown>[] = [];
       const expression = lexicalQuery(terms);
-      if (expression) {
-        matched = await this.db
-          .prepare(
-            `SELECT ${sourceColumns},
-            ts_rank(d.search_vector,?::tsquery) AS score
-            FROM recall_sources r JOIN memory_lexical_documents d ON d.world_id=r.world_id
-              AND d.actor_id=r.actor_id AND d.id=r.id AND d.source_kind=r.source_kind AND d.source_revision=r.revision
-            WHERE ${this.eligible}
-            AND d.search_vector @@ ?::tsquery
-            ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
-          )
-          .all(expression, ...this.params(scope), expression, limit);
-      }
+      const matched = expression ? await this.lexicalMatches(scope, expression, limit) : [];
       const fallback = await this.db
         .prepare(
           `SELECT ${sourceColumns} FROM recall_sources r
@@ -1978,7 +2005,7 @@ export class MemoryRepository {
           ].map((row) => [`${row['source_kind']}:${row['id']}`, row]),
         ).values(),
       ].slice(0, limit);
-      const result = await this.hydrate(rows);
+      const result = await this.hydrate(rows, bodies);
       if (
         cacheable &&
         revision === this.actorRevision(scope.actorId) &&
@@ -1990,13 +2017,111 @@ export class MemoryRepository {
       }
       return result;
     };
-    return lexicalQuery(terms) ? this.lexical.snapshot(scope, read) : this.snapshot(read);
+    return lexicalQuery(terms) ? this.lexical.snapshot(scope, read, control) : this.snapshot(read);
   }
+  /** Both ordinary recall and inspected context use the current indexed source,
+   * with exclusions applied before ranking, limits and body hydration. */
+  private async lexicalMatches(
+    scope: MemoryScope,
+    expression: string | readonly string[],
+    limit: number,
+    excludedIds: string[] = [],
+  ): Promise<Record<string, unknown>[]> {
+    const clauses = typeof expression === 'string' ? [expression] : expression;
+    // Fresh projection statistics can estimate one row and choose a prefix scan
+    // per match (millions of comparisons for a few thousand memories). Keep the
+    // indexed metadata join on a hash/merge path only for this read; the exact
+    // previous setting is restored on the same snapshot/connection.
+    const settings = (await this.db
+      .prepare(
+        "SELECT current_setting('enable_nestloop') AS nested,current_setting('enable_mergejoin') AS merged",
+      )
+      .get())!;
+    const previous = [String(settings['nested']), String(settings['merged'])];
+    // A correlated multi-cue merge plan rescans the actor's metadata for each cue.
+    // Hashing that same eligible metadata once preserves ranking and current scope.
+    const wanted = ['off', clauses.length > 1 ? 'off' : previous[1]!];
+    const changed = wanted.some((value, index) => value !== previous[index]);
+    const configure = () =>
+      this.db.prepare(
+        "SELECT set_config('enable_nestloop',?,true),set_config('enable_mergejoin',?,true)",
+      );
+    if (changed) await configure().get(...wanted);
+    let failed = false;
+    try {
+      if (clauses.length > 1) {
+        // Bounded multi-cue retrieval ordinal: retain each source's best per-query
+        // position so an unrelated turn cannot drown a specific current cue. Raw
+        // ts_rank magnitudes from different term sets are not comparable. This is
+        // discovery order, not final context fitting. Hydrate only the final window.
+        return await this.db
+          .prepare(
+            `
+          WITH ranked AS MATERIALIZED (
+            SELECT matches.*,cue.ordinal AS cue_ordinal,ROW_NUMBER() OVER (
+              PARTITION BY cue.ordinal ORDER BY matches.score DESC,matches.importance DESC,matches.at DESC,matches.id
+            ) AS cue_rank
+            FROM jsonb_array_elements_text(?::jsonb) WITH ORDINALITY AS cue(expression,ordinal)
+            CROSS JOIN LATERAL (
+              SELECT r.id,r.source_kind,r.revision,r.importance,r.at,
+                ts_rank(d.search_vector,cue.expression::tsquery) AS score
+              FROM recall_sources r JOIN memory_lexical_documents d ON d.world_id=r.world_id
+                AND d.actor_id=r.actor_id AND d.id=r.id AND d.source_kind=r.source_kind AND d.source_revision=r.revision
+              WHERE ${this.eligible} AND d.search_vector @@ cue.expression::tsquery
+                AND NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))
+              ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?
+            ) matches
+          ), selected AS (
+            SELECT id,source_kind,revision,MIN(cue_rank) AS rank,array_agg(DISTINCT cue_ordinal) AS cue_ordinals
+            FROM ranked GROUP BY id,source_kind,revision ORDER BY rank,id LIMIT ?
+          )
+          SELECT ${sourceColumns},1.0/selected.rank AS score,selected.cue_ordinals
+          FROM selected JOIN recall_sources r ON r.id=selected.id
+            AND r.source_kind=selected.source_kind AND r.revision=selected.revision
+          WHERE ${this.eligible} ORDER BY selected.rank,r.id
+        `,
+          )
+          .all(
+            JSON.stringify(clauses),
+            ...this.params(scope),
+            excludedIds,
+            excludedIds,
+            limit,
+            limit,
+            ...this.params(scope),
+          );
+      }
+      return await this.db
+        .prepare(
+          `SELECT ${sourceColumns},ts_rank(d.search_vector,?::tsquery) AS score
+          FROM recall_sources r JOIN memory_lexical_documents d ON d.world_id=r.world_id
+            AND d.actor_id=r.actor_id AND d.id=r.id AND d.source_kind=r.source_kind AND d.source_revision=r.revision
+          WHERE ${this.eligible} AND d.search_vector @@ ?::tsquery
+            AND NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))
+          ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
+        )
+        .all(clauses[0], ...this.params(scope), clauses[0], excludedIds, excludedIds, limit);
+    } catch (error) {
+      failed = true;
+      throw error;
+    } finally {
+      if (changed)
+        try {
+          await configure().get(...previous);
+        } catch (error) {
+          // A SQL failure aborts the snapshot; its rollback also restores LOCAL
+          // settings. Do not mask that original error with the aborted restore.
+          if (!failed) throw error;
+        }
+    }
+  }
+
   private async hydrate(
     rows: Record<string, unknown>[],
     cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
     if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    cache?.work?.charge({ candidates: rows.length, tests: rows.length });
     // Check serialized source bytes in SQL before bringing bodies into the host. One
     // read snapshot binds the check and hydration to the same versions.
     const reused = rows.flatMap((row) => {
@@ -2020,9 +2145,18 @@ export class MemoryRepository {
         if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
       }
     }
+    const reusedBytes = reused.reduce((sum, entry) => sum + entry.bytes, 0);
+    cache?.work?.charge({
+      inputBytes: bytes,
+      outputBytes: bytes - reusedBytes,
+      tests: missing.length,
+    });
     const result: RetrievedMemory[] = reused.map(({ row, value }) => ({
       ...value,
       ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
+      ...(row['discovery']
+        ? { discovery: row['discovery'] as NonNullable<RetrievedMemory['discovery']> }
+        : {}),
     }));
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
       const selected = missing.filter((row) => row['source_kind'] === kind);
@@ -2036,7 +2170,10 @@ export class MemoryRepository {
         const byId = new Map(values.map((row) => [row['id'], String(row['payload'])]));
         for (const row of batch) {
           const payload = byId.get(row['record_id']);
-          if (!payload || personalAccountRevision(payload) !== row['revision']) continue;
+          // Eligibility was already admitted in this read snapshot. A missing or
+          // different body is unavailable support, never evidence of an empty query.
+          if (!payload || personalAccountRevision(payload) !== row['revision'])
+            throw new Error('A selected permitted memory source is unavailable or changed.');
           const actorId = String(row['actor_id']);
           const entry = decodeMemorySource(kind, payload, actorId);
           const memory = experienceReading(entry, actorId);
@@ -2053,6 +2190,9 @@ export class MemoryRepository {
           result.push({
             ...value,
             ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
+            ...(row['discovery']
+              ? { discovery: row['discovery'] as NonNullable<RetrievedMemory['discovery']> }
+              : {}),
           });
         }
       }
@@ -2086,8 +2226,10 @@ export class MemoryRepository {
     parent: SummarySourceBinding,
     references: ExperienceSourceReference[],
     maxBytes = RETRIEVAL_BYTES,
+    work?: Pick<DecisionPreparationWork, 'charge'>,
   ): Promise<RetrievedMemory[]> {
     return this.snapshot(async () => {
+      work?.charge({ candidates: references.length, tests: references.length });
       if (!(await this.current(scope, [{ ...parent, sourceKind: 'summary' }])))
         throw new Error('The remembered summary changed or is unavailable.');
       const key = (source: ExperienceSourceReference) =>
@@ -2120,6 +2262,7 @@ export class MemoryRepository {
       const bytes = headers.reduce((sum, row) => sum + Number(row['bytes']), 0);
       if (!Number.isSafeInteger(bytes) || bytes > Math.min(maxBytes, RETRIEVAL_BYTES))
         throw new MemoryPreparationError();
+      work?.charge({ inputBytes: bytes, outputBytes: bytes, tests: unique.length });
       const rows = await this.originalRows(scope, unique, true);
       if (rows.length !== unique.length)
         throw new Error('An exact original changed during preparation.');
@@ -2161,22 +2304,28 @@ export class MemoryRepository {
     ids: string[],
     existing: RetrievedMemory[],
     kinds: readonly SourceKind[] = ['awareness', 'memory'],
+    exact?: readonly ExperienceSourceReference[],
+    cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
+    cache?.work?.charge({ candidates: ids.length, tests: existing.length });
     const present = new Set(
       existing.map((source) => sourceKey(source.sourceKind, source.memory.id)),
     );
-    const wanted = [...new Set(ids)].flatMap((id) =>
-      kinds.filter((kind) => !present.has(sourceKey(kind, id))).map((kind) => ({ kind, id })),
-    );
+    const wanted = exact
+      ? exact.filter(({ kind, id }) => !present.has(sourceKey(kind, id)))
+      : [...new Set(ids)].flatMap((id) =>
+          kinds.filter((kind) => !present.has(sourceKey(kind, id))).map((kind) => ({ kind, id })),
+        );
     if (!wanted.length) return existing;
     if (wanted.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     const window = Math.floor(RETRIEVAL_ROWS / wanted.length);
     const rows = await this.db
       .prepare(
         `SELECT q.kind,q.id,s.source_revision,r.id AS parent_id,r.revision AS parent_revision,r.eligible
-      FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT)
+      FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
       JOIN LATERAL (SELECT summary_id,source_revision FROM mind_summary_sources s
         WHERE s.world_id=? AND s.actor_id=? AND s.source_kind=q.kind AND s.source_id=q.id AND s.support_key=''
+          AND (q.revision IS NULL OR s.source_revision=q.revision)
         ORDER BY summary_id,source_revision LIMIT ${window}) s ON true
       LEFT JOIN recall_sources r ON r.world_id=? AND r.actor_id=? AND r.source_kind='summary' AND r.id=s.summary_id
       WHERE (SELECT generation FROM world_head WHERE id=1)=?
@@ -2228,7 +2377,13 @@ export class MemoryRepository {
       RETRIEVAL_BYTES - existing.reduce((sum, source) => sum + source.bodyBytes, 0);
     const retained = [...existing];
     for (const group of parents.values()) {
-      const originals = await this.originals(scope, group.parent, group.references, remainingBytes);
+      const originals = await this.originals(
+        scope,
+        group.parent,
+        group.references,
+        remainingBytes,
+        cache?.work,
+      );
       remainingBytes -= originals.reduce((sum, source) => sum + source.bodyBytes, 0);
       retained.push(...originals);
     }
@@ -2424,24 +2579,42 @@ export class MemoryRepository {
             .all(...this.params(scope), ...batch)),
         );
       }
-      return this.requiredOriginals(scope, unique, await this.hydrate(rows, cache), ['awareness']);
+      return this.requiredOriginals(
+        scope,
+        unique,
+        await this.hydrate(rows, cache),
+        ['awareness'],
+        undefined,
+        cache,
+      );
     });
   }
   /** Exact, bounded sources already selected into one appraisal/reflection context.
    * No required-history union or whole actor hydration is needed for this binding. */
-  async appraisalSources(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
+  async appraisalSources(
+    scope: MemoryScope,
+    ids: string[],
+    exact?: readonly ExperienceSourceReference[],
+  ): Promise<RetrievedMemory[]> {
     const unique = [...new Set(ids)];
     if (unique.length > 48) throw new Error('Too many appraisal source bindings.');
     if (!unique.length) return [];
+    if (exact && exact.some((source) => !unique.includes(source.id)))
+      throw new Error('An appraisal source is outside its selected identity set.');
+    if (exact && exact.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    if (exact && !exact.length) return [];
     return this.snapshot(async () => {
       const selected = await this.hydrate(
         await this.db
           .prepare(
-            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${unique.map(() => '?').join(',')}) OR r.event_id IN (${unique.map(() => '?').join(',')})) ORDER BY r.id`,
+            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND ${exact ? `EXISTS (SELECT 1 FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT) WHERE (r.source_kind,r.id,r.revision)=(q.kind,q.id,q.revision))` : `(r.id IN (${unique.map(() => '?').join(',')}) OR r.event_id IN (${unique.map(() => '?').join(',')}))`} ORDER BY r.id`,
           )
-          .all(...this.params(scope), ...unique, ...unique),
+          .all(
+            ...this.params(scope),
+            ...(exact ? [JSON.stringify(exact)] : [...unique, ...unique]),
+          ),
       );
-      return this.requiredOriginals(scope, unique, selected);
+      return this.requiredOriginals(scope, unique, selected, undefined, exact);
     });
   }
   async required(
@@ -2458,6 +2631,7 @@ export class MemoryRepository {
   ): Promise<RetrievedMemory[]> {
     const unique = [...new Set(ids)];
     if (unique.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    cache?.work?.charge({ candidates: RETRIEVAL_ROWS + 1, tests: unique.length });
     const rows = await this.db
       .prepare(
         `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.required=1
@@ -2477,6 +2651,7 @@ export class MemoryRepository {
     for (let offset = 0; offset < unique.length; offset += 350) {
       const batch = unique.slice(offset, offset + 350),
         params = batch.map(() => '?').join(',');
+      cache?.work?.charge({ candidates: RETRIEVAL_ROWS + 1, tests: batch.length });
       const matches = await this.db
         .prepare(
           `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${params}) OR r.event_id IN (${params})) LIMIT ${RETRIEVAL_ROWS + 1}`,
@@ -2485,17 +2660,58 @@ export class MemoryRepository {
       for (const row of matches) selected.set(`${row['source_kind']}:${row['id']}`, row);
       if (selected.size > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     }
-    return this.requiredOriginals(scope, unique, await this.hydrate([...selected.values()], cache));
+    return this.requiredOriginals(
+      scope,
+      unique,
+      await this.hydrate([...selected.values()], cache),
+      undefined,
+      undefined,
+      cache,
+    );
   }
 
   async select(
     scope: MemoryScope,
     limit: number,
-    semantic?: MemoryModel & { query: number[] },
+    query?: MemoryRetrievalQuery,
     excludedIds: string[] = [],
     cache?: MemoryReadCache,
+    control?: MemoryReadControl,
+    optionalBodyBytes?: number,
   ): Promise<RetrievedMemory[]> {
-    return this.snapshot(() => this.readSelection(scope, limit, semantic, excludedIds, cache));
+    const texts =
+      query && 'text' in query ? (typeof query.text === 'string' ? [query.text] : query.text) : [];
+    if (
+      texts.length > RETRIEVAL_ROWS ||
+      texts.reduce((sum, text) => sum + Buffer.byteLength(text), 0) > RETRIEVAL_BYTES
+    )
+      throw new MemoryPreparationError();
+    const clauseCues = new Map<string, Set<string>>();
+    for (const [index, text] of texts.entries()) {
+      const clause = lexicalQuery([...new Set(searchWords(text))]);
+      if (!clause) continue;
+      const keys = clauseCues.get(clause) ?? new Set<string>();
+      keys.add(
+        query && 'text' in query ? (query.cueKeys?.[index] ?? `query:${index}`) : `query:${index}`,
+      );
+      clauseCues.set(clause, keys);
+    }
+    const clauses = [...clauseCues.keys()];
+    const lexicalCueKeys = [...clauseCues.values()].map((keys) => [...keys]);
+    const expression = clauses.length ? clauses : undefined;
+    const semantic = query && 'query' in query ? query : undefined;
+    const read = () =>
+      this.readSelection(
+        scope,
+        limit,
+        semantic,
+        excludedIds,
+        cache,
+        expression,
+        optionalBodyBytes,
+        lexicalCueKeys,
+      );
+    return expression ? this.lexical.snapshot(scope, read, control) : this.snapshot(read);
   }
   private async readSelection(
     scope: MemoryScope,
@@ -2503,51 +2719,170 @@ export class MemoryRepository {
     semantic?: MemoryModel & { query: number[] },
     excludedIds: string[] = [],
     cache?: MemoryReadCache,
+    expression?: string | readonly string[],
+    optionalBodyBytes?: number,
+    lexicalCueKeys: readonly (readonly string[])[] = [],
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
       throw new Error('Invalid memory selection size.');
     if (excludedIds.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     // Apply before LIMIT and body hydration; grouping cannot reintroduce covered turns.
     const optional = `NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))`;
+    cache?.work?.charge({ candidates: limit, tests: excludedIds.length });
     const fallback = await this.db
       .prepare(
         `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND ${optional} ORDER BY r.importance DESC,r.at DESC,r.id LIMIT ?`,
       )
       .all(...this.params(scope), excludedIds, excludedIds, limit);
-    if (!semantic) return this.hydrate(fallback, cache);
-    this.validateVector(semantic, semantic.query);
-    const rows = await this.db
-      .prepare(
-        `WITH matches AS MATERIALIZED (
+    if (!semantic && !expression)
+      return this.hydrate(
+        await this.fitOptionalBodies(
+          fallback.map((row) => ({ ...row, discovery: { origins: ['importance'], cueKeys: [] } })),
+          optionalBodyBytes,
+          cache,
+        ),
+        cache,
+      );
+    if (semantic) this.validateVector(semantic, semantic.query);
+    // A request uses one relevance scale. A usable semantic query retains its
+    // existing vector path; otherwise indexed text ranks current native cues.
+    const rows = semantic
+      ? await this.db
+          .prepare(
+            `WITH matches AS MATERIALIZED (
           SELECT source_id,source_revision,1-(embedding OPERATOR(public.<=>) ?::public.vector) AS score
           FROM memory_vectors WHERE world_id=? AND actor_id=? AND generation=? AND model=? AND dimensions=?
             AND (SELECT generation FROM world_head WHERE id=1)=? AND source_id <> ALL(?::text[])
           ORDER BY embedding OPERATOR(public.<=>) ?::public.vector,source_id LIMIT ?)
         SELECT ${sourceColumns},m.score FROM matches m JOIN recall_sources r ON r.id=m.source_id AND r.revision=m.source_revision
         WHERE ${this.eligible} AND ${optional} ORDER BY m.score DESC,r.id`,
-      )
-      .all(
-        JSON.stringify(semantic.query),
-        scope.worldId,
-        scope.actorId,
-        scope.generation,
-        semantic.model,
-        semantic.dimensions,
-        scope.generation,
-        excludedIds,
-        JSON.stringify(semantic.query),
-        limit,
-        ...this.params(scope),
-        excludedIds,
-        excludedIds,
-      );
+          )
+          .all(
+            JSON.stringify(semantic.query),
+            scope.worldId,
+            scope.actorId,
+            scope.generation,
+            semantic.model,
+            semantic.dimensions,
+            scope.generation,
+            excludedIds,
+            JSON.stringify(semantic.query),
+            limit,
+            ...this.params(scope),
+            excludedIds,
+            excludedIds,
+          )
+      : await this.lexicalMatches(scope, expression!, limit, excludedIds);
     const combined = [
-      ...new Map([...rows, ...fallback].map((row) => [row['id'], row])).values(),
+      ...new Map(
+        [...rows, ...fallback].map((row) => [
+          sourceKey(String(row['source_kind']), String(row['id'])),
+          row,
+        ]),
+      ).values(),
     ].slice(0, limit);
-    // Map above must prefer the semantic row when its fallback copy is also present.
-    const scores = new Map(rows.map((row) => [row['id'], row['score']]));
-    for (const row of combined) if (scores.has(row['id'])) row['score'] = scores.get(row['id']);
-    return this.hydrate(combined, cache);
+    // Preserve query relevance when the same source also appears in the fallback.
+    const scores = new Map(
+      rows.map((row) => [sourceKey(String(row['source_kind']), String(row['id'])), row['score']]),
+    );
+    const matchedRows = new Map(
+      rows.map((row) => [sourceKey(String(row['source_kind']), String(row['id'])), row]),
+    );
+    for (const row of combined) {
+      const key = sourceKey(String(row['source_kind']), String(row['id']));
+      if (scores.has(key)) {
+        row['score'] = scores.get(key);
+        row['cue_ordinals'] = matchedRows.get(key)?.['cue_ordinals'];
+      }
+    }
+    const matchKeys = new Set(
+      rows.map((row) => sourceKey(String(row['source_kind']), String(row['id']))),
+    );
+    return this.hydrate(
+      await this.fitOptionalBodies(
+        combined.map((row) => ({
+          ...row,
+          discovery: matchKeys.has(sourceKey(String(row['source_kind']), String(row['id'])))
+            ? {
+                origins: [semantic ? 'semantic' : 'lexical'],
+                cueKeys: semantic
+                  ? ['semantic-query']
+                  : Array.isArray(row['cue_ordinals'])
+                    ? row['cue_ordinals'].flatMap(
+                        (ordinal) => lexicalCueKeys[Number(ordinal) - 1] ?? [],
+                      )
+                    : (lexicalCueKeys[0] ?? []),
+              }
+            : { origins: ['importance'], cueKeys: [] },
+        })),
+        optionalBodyBytes,
+        cache,
+      ),
+      cache,
+    );
+  }
+  /** Source size admission precedes payload decoding. These are optional discovery
+   * rows, never required roots; a nonfitting source is unprepared, not irrelevant. */
+  private async fitOptionalBodies(
+    rows: Record<string, unknown>[],
+    budget: number | undefined,
+    cache?: MemoryReadCache,
+  ) {
+    if (cache) cache.optionalBodyAdmission = undefined;
+    if (budget === undefined) return rows;
+    if (!Number.isFinite(budget) || budget < 0)
+      throw new Error('Invalid optional source byte allowance.');
+    const sizes = new Map<string, number>();
+    for (const row of rows) {
+      const reused = cache?.get(row);
+      if (reused) sizes.set(sourceKey(String(row['source_kind']), String(row['id'])), reused.bytes);
+    }
+    for (const kind of Object.keys(sourceTables) as SourceKind[]) {
+      const selected = rows.filter((row) => row['source_kind'] === kind && !cache?.get(row));
+      if (!selected.length) continue;
+      const measured = await this.db
+        .prepare(
+          `SELECT id,octet_length(payload) AS bytes FROM ${sourceTables[kind]} WHERE world_id=? AND id = ANY(?::text[])`,
+        )
+        .all(
+          selected[0]!['world_id'],
+          selected.map((row) => String(row['record_id'])),
+        );
+      const byRecord = new Map(measured.map((row) => [String(row['id']), Number(row['bytes'])]));
+      for (const row of selected) {
+        const bytes = byRecord.get(String(row['record_id']));
+        if (bytes !== undefined) sizes.set(sourceKey(kind, String(row['id'])), bytes);
+      }
+    }
+    cache?.work?.charge({ candidates: rows.length, tests: rows.length });
+    let used = 0,
+      omittedForBytes = 0,
+      unavailableSize = 0;
+    const retained = rows.filter((row) => {
+      const bytes = sizes.get(sourceKey(String(row['source_kind']), String(row['id'])));
+      if (bytes === undefined) {
+        unavailableSize++;
+        return false;
+      }
+      if (used + bytes > budget) {
+        omittedForBytes++;
+        return false;
+      }
+      used += bytes;
+      return true;
+    });
+    if (cache)
+      cache.optionalBodyAdmission = {
+        scope: 'bounded-discovery-window',
+        allowanceBytes: budget,
+        examined: rows.length,
+        retained: retained.length,
+        retainedBytes: used,
+        omittedForBytes,
+        unavailableSize,
+        coverage: retained.length === rows.length ? 'complete-window' : 'partial',
+      };
+    return retained;
   }
   async pending(scope: MemoryScope, model: MemoryModel, limit = 32): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)

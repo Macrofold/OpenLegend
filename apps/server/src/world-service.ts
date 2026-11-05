@@ -1,4 +1,14 @@
+import type { EmbeddingClient } from '@open-legend/ai';
 import { selectedPlace } from './known-places.js';
+import {
+  nativeValueHoldCurrent,
+  validateNativeValueHolds,
+  attributeDefinition,
+  readAttribute,
+  type NativeValueHold,
+} from '@open-legend/domain';
+import { executionNamespace } from './execution-namespace.js';
+import { authorHistory as authorHistoryState, type AuthoredHistory } from '@open-legend/domain';
 import type { PreparedNavigationPublication } from './navigation/messages.js';
 import { WorldInputOwner, type WorldInputState } from './world-input.js';
 import { aimPointProblem } from './aim-point-binding.js';
@@ -33,6 +43,11 @@ import {
 import { workBatchDigest, previewWorkBatch } from './work-batches.js';
 import type { WorkBatchRequest, WorkBatchPreview } from '@open-legend/protocol';
 import { interactiveAllowance } from './cognition-budget.js';
+import {
+  hasJudgmentAccess,
+  hasNpcGenerationAccess,
+  hasGenerationAccess,
+} from './generation-config.js';
 import {
   canSpeak,
   activelyParticipates,
@@ -228,6 +243,7 @@ import {
 import {
   recordDuration,
   timed,
+  timedSync,
   countMetric,
   gaugeMetric,
   recordBackgroundFailure,
@@ -442,8 +458,31 @@ export class WorldService {
     return this.boundaryExitResults;
   }
   /** Resolve current operational grants at execution, never from a model's offer. */
+  private heldNativeValues: readonly NativeValueHold[] = Object.freeze([]);
+  get nativeValueHolds(): readonly NativeValueHold[] {
+    if (this.heldNativeValues.some((hold) => !nativeValueHoldCurrent(this.world, hold)))
+      this.heldNativeValues = Object.freeze(
+        this.heldNativeValues.filter((hold) => nativeValueHoldCurrent(this.world, hold)),
+      );
+    return this.heldNativeValues;
+  }
+  setNativeValueHolds(holds: readonly NativeValueHold[], scope = this.localScope): void {
+    this.assertScope(scope, 'create');
+    validateNativeValueHolds(this.world, holds);
+    for (const hold of holds)
+      if (!this.mayInspectPrivate(hold.entityId, scope)) throw new AuthorityError('forbidden');
+    this.acceptNativeValueHolds(holds);
+  }
+  private acceptNativeValueHolds(holds: readonly NativeValueHold[]): void {
+    this.heldNativeValues = Object.freeze(
+      holds.map((hold) =>
+        Object.freeze({ ...hold, definition: Object.freeze({ ...hold.definition }) }),
+      ),
+    );
+  }
   get nativeExecutionPermissions() {
     return {
+      ...(this.nativeValueHolds.length ? { nativeValueHolds: this.nativeValueHolds } : {}),
       constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
       campAssetPermissions: this.store.authority!.campAssetPermissions(this.world.id),
     };
@@ -665,6 +704,10 @@ export class WorldService {
       ...(input ? { assessment: evaluateTimedRelease(execution.profile, input) } : {}),
     };
   }
+  /** Maintained native body membership; presence and current control are separate. */
+  get playerActorIds(): readonly string[] {
+    return this.humanActorIds;
+  }
   private pauseWhenHidden = true;
   private currentProfile!: PlayerProfile;
   private localRequestScope?: RequestScope;
@@ -682,6 +725,7 @@ export class WorldService {
     return (
       scope.worldId === this.world.id &&
       scope.timelineId === this.timelineId &&
+      (this.startup.runtimeAuthority?.(scope) ?? true) &&
       !!this.store.authority?.current(scope, capability, controlling, this.now())
     );
   }
@@ -907,6 +951,20 @@ export class WorldService {
   memoryBacklog: string | null = null;
   generation = randomUUID();
   timelineId: string = randomUUID();
+  /** Repository identity survives checkpoint rewind and isolates mutable provider workspaces. */
+  executionNamespace = '';
+  private readonly participantBindings = new Set<string>();
+  get runtimeParticipants(): ReadonlySet<string> {
+    return this.participantBindings;
+  }
+
+  get cognitionControl() {
+    return this.startup.cognitionControl;
+  }
+
+  get embeddingClient(): EmbeddingClient | undefined {
+    return this.startup.embeddingClient;
+  }
 
   constructor(
     readonly store: GameRepository,
@@ -914,8 +972,15 @@ export class WorldService {
     private readonly now = Date.now,
     private readonly startup: {
       createdActivation?: CreationActivationReceipt;
+      embeddingClient?: EmbeddingClient;
       /** Trusted installed build lock. It never silently binds a saved world. */
       presentationRelease?: AssetRevisionReference;
+      cognitionControl?: import('./cognition-runtime-control.js').CognitionRuntimeControl;
+      runtimeLiveness?: () => boolean;
+      runtimeAuthority?: (scope: RequestScope) => boolean;
+      initialWorldId?: string;
+      /** Lab participation is operational input, independent of the inspected/acting person. */
+      runtimeParticipants?: boolean | readonly string[];
     } = {},
   ) {
     this.store.memories?.setBackgroundSearchAdmission(
@@ -927,6 +992,7 @@ export class WorldService {
     const { store, config } = this;
     await initializeCollisionRuntime();
     await store.ready;
+    this.executionNamespace = await executionNamespace(store);
     const existing = await store.load(true);
     const createdActivation = this.startup.createdActivation;
     if (createdActivation && (!existing || existing.state.world.id !== createdActivation.worldId))
@@ -943,7 +1009,12 @@ export class WorldService {
     };
     const initial = existing
       ? undefined
-      : createBaseStartingWorld(config.worldPreset, config.seed, creationAccounts);
+      : createBaseStartingWorld(
+          config.worldPreset,
+          config.seed,
+          creationAccounts,
+          this.startup.initialWorldId,
+        );
     // Native opening preparation requests installed artwork; the application
     // resolves its exact release. Reopening a saved world never makes this choice.
     const initialArtwork =
@@ -1110,6 +1181,12 @@ export class WorldService {
     this.humanActorIds = entityValues(this.world.entities)
       .filter((entity) => entity.actor?.controller === 'player')
       .map((entity) => entity.id);
+    if (this.startup.runtimeParticipants)
+      this.setRuntimeParticipants(
+        this.startup.runtimeParticipants === true
+          ? this.humanActorIds
+          : this.startup.runtimeParticipants,
+      );
     store.authority.subscribe(() => this.notify(false));
     this.assetAuthorityUnsubscribe = store.assets?.subscribeAuthority(() => this.notify(false));
     this.projectionUnsubscribe = store.onProjection(() => this.notify(false));
@@ -1371,6 +1448,7 @@ export class WorldService {
     });
   }
   private get absent(): boolean {
+    if (this.startup.runtimeLiveness?.()) return false;
     if (this.present) return false;
     if (Object.keys(this.world.exitExposures ?? {}).length) return false;
     // Non-browser clients may opt into connected background play. Game tabs
@@ -1809,24 +1887,48 @@ export class WorldService {
   /** Resolves once the live world as it is now has been durably committed. Outside the
    * mutation queue this waits without holding it; inside, it commits synchronously.
    * docs/projects/ordered-async-saves.md#durable-notification-epr05-seam */
-  async whenDurable(): Promise<DurableMark> {
+  async whenDurable(target?: Pick<DurableMark, 'generation' | 'sequence'>): Promise<DurableMark> {
     await this.ready;
+    const checkTarget = () => {
+      if (
+        target &&
+        (target.generation !== this.generation ||
+          !Number.isSafeInteger(target.sequence) ||
+          target.sequence < 0 ||
+          target.sequence > this.durabilityTicket())
+      )
+        throw new Error(
+          'The required save belongs to an unavailable world timeline or future cut.',
+        );
+    };
     if (this.mutationContext.getStore()?.active) {
-      await this.flush();
+      checkTarget();
+      if (!target || !this.isDurable(target.sequence)) await this.flush();
       return this.durable;
     }
-    const target = await this.mutate(() => this.requestDurable(), true);
-    if (target === undefined || this.durableSequence >= target) return this.durable;
-    if (this.storageError) throw new Error(this.storageError);
-    return new Promise((resolve, reject) =>
-      this.durableWaiters.push({ sequence: target, resolve, reject }),
-    );
+    // Register within the same serialized operation as the coverage check. A
+    // commit/restore cannot slip between checking coverage and installing a waiter.
+    // Keep the promise inside an object so the mutation lane never awaits the write.
+    const result = await this.mutate(async () => {
+      checkTarget();
+      const sequence = await this.requestDurable(target?.sequence);
+      if (sequence === undefined || this.isDurable(sequence)) return { mark: this.durable };
+      if (this.storageError) throw new Error(this.storageError);
+      const waiting = new Promise<DurableMark>((resolve, reject) =>
+        this.durableWaiters.push({ sequence, resolve, reject }),
+      );
+      return { waiting };
+    }, true);
+    return result.waiting ?? result.mark!;
   }
 
   /** In the queue: the snapshot sequence that will cover the current live world. */
-  private async requestDurable(): Promise<number | undefined> {
+  private async requestDurable(required?: number): Promise<number | undefined> {
     if (this.storageError) throw new Error(this.storageError);
+    if (required !== undefined && this.isDurable(required)) return undefined;
     if (this.backgroundSave) {
+      // A captured consumer does not need unrelated changes after this write.
+      if (required !== undefined && this.backgroundSave.sequence >= required) return required;
       if (!this.unpersisted) return this.backgroundSave.sequence;
       this.snapshotRequested = true;
       return this.snapshotSequence + 1;
@@ -2732,6 +2834,7 @@ export class WorldService {
     payload: SavePayload,
     scope = this.localScope,
   ): Promise<void> {
+    const previousWorldId = this.world.id;
     try {
       await this.mutate(async () => {
         await this.ready;
@@ -2747,7 +2850,7 @@ export class WorldService {
         await this.store.saves?.drain();
         if (!this.mayManageSaves(scope))
           throw new Error('World creator or host operator access required.');
-        const restored = structuredClone(payload.state);
+        const restored = timedSync('save.cloneCandidate', () => structuredClone(payload.state));
         // Operational grants outlive rewind. A later native item must never take
         // the identity of a material that was authorized on the abandoned timeline.
         // docs/identity-and-references.md#contract
@@ -2755,16 +2858,20 @@ export class WorldService {
         if (restored.presentationRelease)
           await this.assertPresentationRelease(restored.presentationRelease);
         const assetPrincipal = { accountId: scope.accountId };
+        const fileId =
+          id === 'before-load' && this.store.saves
+            ? (await this.store.saves.metadata(this.world.id, id)).id
+            : id;
         await this.store.saves?.assertAssetDependencies(
           payload,
           this.startup.presentationRelease,
           assetPrincipal,
-          id,
+          fileId,
         );
         await this.store.authority!.restoreBindings(restored.world);
         // Current-format validation precedes installation; the current privacy
         // ledger below still removes experience forgotten after this save.
-        const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
+        const ledger = (await this.store.getIntegration(`forget-ledger:${restored.world.id}`)) as
           | Record<string, string[]>
           | undefined;
         const events = payload.history.history_events.map(
@@ -2779,7 +2886,7 @@ export class WorldService {
           (a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence),
         );
         restored.world.archivedEventCount = 0;
-        const baseline = structuredClone(restored.world);
+        const baseline = timedSync('save.cloneBaseline', () => structuredClone(restored.world));
         for (const entity of entityValues(restored.world.entities))
           if (entity.actor) delete entity.actor.inventoryInspection;
         for (const [actorId, ids] of Object.entries(ledger ?? {}))
@@ -2820,6 +2927,7 @@ export class WorldService {
         if (
           !(await this.commit(restored, undefined, 'diff', baseline, undefined, {
             id,
+            fileId,
             requestId,
             payload,
             epoch,
@@ -2854,6 +2962,8 @@ export class WorldService {
     } finally {
       // Also after a refused or failed load: keeps two recovery files plus the pointer's.
       await this.store.saves?.retainRecovery(this.world.id);
+      if (this.world.id !== previousWorldId)
+        await this.store.saves?.retainRecovery(previousWorldId);
     }
   }
 
@@ -3066,6 +3176,12 @@ export class WorldService {
   }
   private participatingHumans(): Set<string> {
     const participating = new Set<string>();
+    for (const id of this.participantBindings) {
+      const entity = entityGet(this.world.entities, id);
+      if (entity?.actor?.controller === 'player' && entity.actor.alive && !entity.retirement)
+        participating.add(id);
+      else this.participantBindings.delete(id);
+    }
     const scopes = [
       ...this.connections.values(),
       ...[...this.presence.values()].map((entry) => entry.scope),
@@ -3075,6 +3191,15 @@ export class WorldService {
         participating.add(scope.actorId);
     }
     return participating;
+  }
+  /** Trusted runtime configuration only; it never changes account/control authority. */
+  setRuntimeParticipants(ids: readonly string[]): void {
+    this.participantBindings.clear();
+    for (const id of ids) {
+      const entity = entityGet(this.world.entities, id);
+      if (entity?.actor?.controller === 'player' && entity.actor.alive && !entity.retirement)
+        this.participantBindings.add(id);
+    }
   }
   private readonly awaitingRestoredPresence = new Set<string>();
   private async reconcileParticipation(pausedRestore = false): Promise<void> {
@@ -3301,14 +3426,14 @@ export class WorldService {
       clientId?: string;
       presenceSequence?: number;
     },
-    scope = this.localScope,
+    scope?: RequestScope,
   ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
 
       if (
         input.speed !== undefined &&
-        (!this.config.godMode || !this.currentScope(scope, 'create'))
+        (!this.config.godMode || !this.currentScope(scope ?? this.localScope, 'create'))
       )
         return {
           ok: false,
@@ -3327,7 +3452,13 @@ export class WorldService {
         // Clicking Resume is itself evidence that the player has returned. Do not
         // wait for the browser's next (possibly throttled) five-second heartbeat.
         if (input.clientId)
-          await this.setPresence(input.clientId, true, input.presenceSequence, scope);
+          // Pure clock control has no actor; only presence needs a default principal.
+          await this.setPresence(
+            input.clientId,
+            true,
+            input.presenceSequence,
+            scope ?? this.localScope,
+          );
         if (this.absent)
           return {
             ok: false,
@@ -3399,7 +3530,7 @@ export class WorldService {
   async tick(
     elapsedRealSeconds: number,
     suspendedRealSeconds = elapsedRealSeconds > 2 ? elapsedRealSeconds : 0,
-    options: { drain?: boolean; offeredUntil?: number } = {},
+    options: { drain?: boolean; offeredUntil?: number; offerCurrent?: () => boolean } = {},
   ): Promise<boolean> {
     if (
       !Number.isFinite(elapsedRealSeconds) ||
@@ -3421,7 +3552,12 @@ export class WorldService {
         countMetric('persistence.backpressureWaits');
         await outstanding.done;
       }
-      await this.tickBatch(elapsedRealSeconds, suspendedRealSeconds, options.offeredUntil);
+      await this.tickBatch(
+        elapsedRealSeconds,
+        suspendedRealSeconds,
+        options.offeredUntil,
+        options.offerCurrent,
+      );
       elapsedRealSeconds = 0;
       suspendedRealSeconds = 0;
       // The HTTP wake admits fresh elapsed time on every bounded batch. Draining
@@ -3450,13 +3586,27 @@ export class WorldService {
     elapsedRealSeconds: number,
     suspendedRealSeconds: number,
     offeredUntil?: number,
+    offerCurrent?: () => boolean,
   ): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
       await this.refreshCommandEpoch();
+      // A renderer-free driver can close a scoped inspection boundary while this
+      // elapsed offer waits for the native lane. Recheck at admission, not only
+      // at the earlier host wake; a stale offer must not advance behind a hold.
+      const discardStaleOffer = () => {
+        if (!offerCurrent || offerCurrent()) return false;
+        // A prior coherent batch can leave unadvanced debt. Discard it even when
+        // this offer was invalidated between batches, before another draft starts.
+        this.debtSeconds = 0;
+        gaugeMetric('clock.pendingSimSeconds', 0);
+        return true;
+      };
+      if (discardStaleOffer()) return;
 
       await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
+      if (discardStaleOffer()) return;
       // The host may have offered this interval before a queued pause/resume
       // completed. Clip again at admission, after every awaited pause owner.
       if (offeredUntil !== undefined)
@@ -3567,6 +3717,7 @@ export class WorldService {
           boundaryExits: this.boundaryExitPreparations,
           constructionPermissions: permissions.permissions,
           campAssetPermissions: permissions.campAssets,
+          ...(this.nativeValueHolds.length ? { nativeValueHolds: this.nativeValueHolds } : {}),
         });
         const nextSlice = (boundary?: boolean) => {
           const started = beginTiming();
@@ -3600,7 +3751,10 @@ export class WorldService {
           // start merely because the uncontended batch's clock target elapsed.
           result = nextSlice(
             ((result.value === 'boundary' || result.value === 'preparation') &&
-              this.pendingOperations > 0) ||
+              !!offerCurrent &&
+              !offerCurrent()) ||
+              ((result.value === 'boundary' || result.value === 'preparation') &&
+                this.pendingOperations > 0) ||
               (result.value === 'boundary' && performance.now() - batchStarted >= 32),
           );
         }
@@ -3639,6 +3793,7 @@ export class WorldService {
         if (
           candidateInputs.length ||
           delta <= 0 ||
+          (offerCurrent && !offerCurrent()) ||
           this.pendingOperations > 0 ||
           performance.now() - batchStarted >= 32
         )
@@ -3682,8 +3837,10 @@ export class WorldService {
           : due
             ? await this.saveProgress(saved)
             : this.acceptProgress(saved)
-      )
-        this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
+      ) {
+        if (!discardStaleOffer())
+          this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
+      }
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
     }, true);
@@ -5062,6 +5219,7 @@ export class WorldService {
       return { ok: false, code: 'forbidden', message: 'God access required.' };
 
     return this.godTransition(async (world) => {
+      if (mode === 'creator') this.assertScope(scope, 'create');
       if (
         !this.mayInspectPrivate(value.actorId, scope) ||
         (mode === 'owner' &&
@@ -5315,11 +5473,13 @@ export class WorldService {
   async godAttributeDeclaration(
     request: AttributeDeclarationRequest,
     expectedGeneration: string,
+    scope = this.localScope,
   ): Promise<ApiResult> {
     if (!this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
-    return this.godTransition((world) =>
-      expectedGeneration !== this.generation
+    return this.godTransition((world) => {
+      this.assertScope(scope, 'create');
+      return expectedGeneration !== this.generation
         ? {
             world,
             events: [],
@@ -5329,28 +5489,94 @@ export class WorldService {
               message: 'The world was restored; refresh before editing.',
             },
           }
-        : admitAttributeDeclaration(world, request),
-    );
+        : admitAttributeDeclaration(world, request);
+    });
   }
   async godAttributeEdit(
     request: AttributeEditRequest,
     expectedGeneration: string,
+    scope = this.localScope,
+    holdChanges?: readonly { attributeId: string; held: boolean }[],
   ): Promise<ApiResult> {
     if (!this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
-    return this.godTransition((world) =>
-      expectedGeneration !== this.generation
-        ? {
-            world,
-            events: [],
-            outcome: {
-              ok: false,
-              code: 'stale',
-              message: 'The world was restored; refresh before editing.',
-            },
+    return this.mutate(async () => {
+      await this.ready;
+      const world = this.world;
+      this.assertScope(scope, 'create');
+      if (!this.mayInspectPrivate(request.actorId, scope)) throw new AuthorityError('forbidden');
+      if (expectedGeneration !== this.generation)
+        return {
+          ok: false,
+          code: 'stale',
+          message: 'The world was restored; refresh before editing.',
+        };
+      const result = editActorAttributes(world, request);
+      if (!result.outcome.ok) return result.outcome;
+      let holds: NativeValueHold[] | undefined;
+      if (
+        holdChanges?.length ||
+        this.nativeValueHolds.some(
+          (hold) =>
+            hold.entityId === request.actorId &&
+            request.changes.some((change) => change.attributeId === hold.definition.id),
+        )
+      ) {
+        if (
+          new Set(holdChanges?.map((change) => change.attributeId)).size !==
+            (holdChanges?.length ?? 0) ||
+          (holdChanges ?? []).some(
+            (change) => !request.changes.some((value) => value.attributeId === change.attributeId),
+          )
+        )
+          throw new Error('A hold must belong to this exact native attribute Apply group.');
+        const desired = new Map(
+          (holdChanges ?? []).map((change) => [change.attributeId, change.held]),
+        );
+        for (const hold of this.nativeValueHolds)
+          if (
+            hold.entityId === request.actorId &&
+            request.changes.some((change) => change.attributeId === hold.definition.id) &&
+            !desired.has(hold.definition.id)
+          )
+            desired.set(hold.definition.id, true);
+        holds = this.nativeValueHolds.filter(
+          (hold) => hold.entityId !== request.actorId || !desired.has(hold.definition.id),
+        );
+        const actor = entityGet(result.world.entities, request.actorId)!.actor!;
+        for (const [attributeId, held] of desired)
+          if (held) {
+            const definition = attributeDefinition(result.world, attributeId);
+            if (!definition) throw new Error('The selected native attribute is unavailable.');
+            const value = readAttribute(
+              result.world,
+              entityGet(result.world.entities, request.actorId)!,
+              definition,
+            );
+            if (typeof value !== 'number')
+              throw new Error('This field has no numeric hold capability.');
+            holds.push({
+              entityId: request.actorId,
+              definition: definitionPin(definition),
+              physicalLife: actor.physicalLife ?? 0,
+              value,
+            });
           }
-        : editActorAttributes(world, request),
-    );
+        validateNativeValueHolds(result.world, holds);
+      }
+      if (
+        !(await this.commit(
+          { ...this.saved, world: result.world },
+          result.invalidatedMemoryIds,
+          'append',
+        ))
+      )
+        return { ok: false, code: 'storage', message: this.storageError! };
+      // Publish the already-admitted transient declarations before releasing this
+      // mutation lane; no second fallible Apply operation follows the native commit.
+      if (holds) this.acceptNativeValueHolds(holds);
+      return result.outcome;
+    });
   }
   async attributeEditor(actorId: string, scope = this.localScope) {
     await this.ready;
@@ -5420,6 +5646,41 @@ export class WorldService {
     );
   }
 
+  /** Current field projection only; history and dynamic option pages have their own reads. */
+  personEditorFields(actorId: string, scope?: RequestScope): GodPersonEditorDraft;
+  personEditorFields(
+    actorId: string,
+    scope: RequestScope,
+    fields: readonly (keyof GodPersonEditorDraft)[],
+  ): Partial<GodPersonEditorDraft>;
+  personEditorFields(
+    actorId: string,
+    scope = this.localScope,
+    fields?: readonly (keyof GodPersonEditorDraft)[],
+  ): GodPersonEditorDraft | Partial<GodPersonEditorDraft> {
+    if (!this.mayInspectPrivate(actorId, scope)) throw new AuthorityError('forbidden');
+    const entity = entityGet(this.world.entities, actorId);
+    if (!entity?.actor || !hasMemory(entity)) throw new Error('Choose a person.');
+    const selected = (key: keyof GodPersonEditorDraft) => !fields || fields.includes(key);
+    return {
+      ...(selected('inventory') ? { inventory: inventoryTotals(this.world, actorId) } : {}),
+      ...(selected('name') ? { name: entity.name } : {}),
+      ...(selected('description')
+        ? {
+            description:
+              entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
+          }
+        : {}),
+      ...(selected('personality') ? { personality: entity.actor.personality ?? '' } : {}),
+      ...(selected('backstory') ? { backstory: entity.actor.backstory ?? '' } : {}),
+      ...(selected('traitIds')
+        ? { traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [] }
+        : {}),
+      ...(selected('goals') ? { goals: goalTexts(entity.actor) } : {}),
+      ...(selected('meters') ? { meters: this.personMeters(entity) } : {}),
+    };
+  }
+
   async personEditor(
     actorId: string,
     before?: string,
@@ -5486,17 +5747,7 @@ export class WorldService {
         .map((item) => ({ id: item.id, name: item.name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
       traitOptions: entity.actor.traits?.map((trait) => ({ ...trait })) ?? [],
-      person: {
-        inventory: inventoryTotals(this.world, actorId),
-        name: entity.name,
-        description:
-          entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
-        personality: entity.actor.personality ?? '',
-        backstory: entity.actor.backstory ?? '',
-        traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
-        goals: goalTexts(entity.actor),
-        meters: this.personMeters(entity),
-      },
+      person: this.personEditorFields(actorId, scope),
     };
   }
 
@@ -5581,17 +5832,7 @@ export class WorldService {
         const entity = entityGet(this.world.entities, actorId);
         if (!entity?.actor || !hasMemory(entity))
           return { ok: false, code: 'actor', message: 'Choose a person.' };
-        const currentPerson: GodPersonEditorDraft = {
-          inventory: inventoryTotals(this.world, actorId),
-          name: entity.name,
-          description:
-            entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
-          personality: entity.actor.personality ?? '',
-          backstory: entity.actor.backstory ?? '',
-          traitIds: entity.actor.traits?.map((trait) => trait.id) ?? [],
-          goals: goalTexts(entity.actor),
-          meters: this.personMeters(entity),
-        };
+        const currentPerson = this.personEditorFields(actorId, scope);
         const changedFields = (Object.keys(person) as Array<keyof GodPersonEditorDraft>).filter(
           (key) => JSON.stringify(person[key]) !== JSON.stringify(basePerson[key]),
         );
@@ -5648,11 +5889,17 @@ export class WorldService {
     scope = this.localScope,
   ): Promise<GodWorldEventsEditorView> {
     await this.ready;
+    this.assertScope(scope, 'inspect');
+    // Current history includes already accepted native events even when the
+    // clock is held before its periodic save. Reuse ordered durability; a
+    // later tick must not be required to make a committed injury inspectable.
+    await this.whenDurable();
     const page = await this.store.history?.eventPage(
       this.world.id,
       before,
       this.config.authentication.mode === 'local' ? undefined : scope.actorId,
     );
+    this.assertScope(scope, 'inspect');
     return {
       before: page?.before,
       ok: true,
@@ -5716,6 +5963,83 @@ export class WorldService {
       : { ok: false as const, code: 'event', message: 'That world event no longer exists.' };
   }
 
+  /** Explicit creator insertion prepares linked cold evidence through the same history
+   * owner as correction. Current perception is never replayed for a backdated event. */
+  async authorHistory(
+    request: { generation: string; history: AuthoredHistory },
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    const history = request.history;
+    const eventIds =
+      history.kind === 'memory' && history.memory.eventId ? [history.memory.eventId] : [];
+    return this.withHistoryEdit({ eventIds }, async (prepared) => {
+      this.assertScope(scope, 'create');
+      if (!this.config.godMode) throw new AuthorityError('forbidden');
+      if (request.generation !== this.generation) throw new AuthorityError('stale-scope');
+      const actors =
+        history.kind === 'memory'
+          ? [history.actorId]
+          : history.perspectives.map((entry) => entry.actorId);
+      if (actors.some((id) => !this.mayInspectPrivate(id, scope)))
+        throw new AuthorityError('forbidden');
+      const linked = eventIds[0]
+        ? (this.worldEvent(eventIds[0]) ??
+          prepared?.events.find((event) => event.id === eventIds[0]))
+        : undefined;
+      const result = authorHistoryState(this.world, history, linked);
+      if (!result.outcome.ok) return result.outcome;
+      return (await this.commit(
+        { ...this.saved, world: result.world },
+        result.invalidatedMemoryIds,
+        'append',
+      ))
+        ? result.outcome
+        : { ok: false, code: 'storage', message: this.storageError! };
+    });
+  }
+
+  async authorRecognition(
+    request: { generation: string; actorId: string; subjectId: string; expectedRevision: number },
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      this.assertScope(scope, 'create');
+      if (!this.config.godMode || !this.mayInspectPrivate(request.actorId, scope))
+        throw new AuthorityError('forbidden');
+      if (request.generation !== this.generation) throw new AuthorityError('stale-scope');
+      if ((world.knowledgeRevisions?.[request.actorId] ?? 0) !== request.expectedRevision)
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'stale',
+            message: 'This person’s recognition changed. Refresh before applying.',
+          },
+        };
+      const observer = entityGet(world.entities, request.actorId),
+        subject = entityGet(world.entities, request.subjectId);
+      if (!observer?.actor || !subject || subject.retirement)
+        return {
+          world,
+          events: [],
+          outcome: { ok: false, code: 'subject', message: 'Select a current subject.' },
+        };
+      const candidate = updateWorld(world, (draft) =>
+        rememberSubject(draft, request.actorId, request.subjectId, true),
+      );
+      return {
+        world: candidate,
+        events: [],
+        outcome: {
+          ok: true,
+          code: 'recognition-authored',
+          message: 'Authored acquaintance added for this person. No encounter was invented.',
+        },
+      };
+    });
+  }
+
   async saveWorldEventsEditor(
     changes: Array<{ id: string; expectedHash: string; replacement: WorldEvent | null }>,
     scope = this.localScope,
@@ -5724,6 +6048,8 @@ export class WorldService {
       { eventIds: changes.map((change) => change.id) },
       async (prepared) => {
         await this.ready;
+        this.assertScope(scope, 'create');
+        if (!this.config.godMode) throw new AuthorityError('forbidden');
         const cold = prepared?.events.filter((event) => !this.worldEventsById.has(event.id)) ?? [];
         const original = cold.length
           ? {
@@ -5828,8 +6154,13 @@ export class WorldService {
       }
       if (
         this.config.jevOnly ||
-        !(this.config.macrofoldKey || this.config.jevKey) ||
-        !(this.config.macrofoldKey || this.config.llmKey) ||
+        !hasJudgmentAccess(this.config) ||
+        !(
+          hasGenerationAccess(this.config) ||
+          (mode === 'speak' &&
+            (hasNpcGenerationAccess(this.config, 'npc_response_fast') ||
+              hasNpcGenerationAccess(this.config, 'npc_response_complex')))
+        ) ||
         this.config.budgetUsd <= 0
       )
         return unavailable(
@@ -5923,26 +6254,9 @@ export class WorldService {
           ? primaryActionRefusal(this, input, scope ?? this.localScope)
           : undefined;
         if (refusal) return refusal;
-        if (
-          input.type === 'handover' &&
-          (input.handoverOperation === 'offer' || input.handoverOperation === 'counter') &&
-          input.targetId &&
-          input.requestedItems?.length
-        ) {
-          // Bound exact historical preparation by the existing native operation
-          // envelope. SQL evidence never becomes client-supplied authority.
-          if (input.requestedItems.length > STOCK_TRANSFER_LIMITS.movedLots)
-            return {
-              ok: false,
-              code: 'invalid-command',
-              message: 'Choose fewer items for one trade.',
-            };
-          const itemIds = input.requestedItems.map((lot) => lot.itemId);
-          const lots = scope
-            ? await retainedTradeDisclosureReferences(this, scope, input.targetId, itemIds)
-            : await retainedNativeTradeDisclosureReferences(this, actor, input.targetId, itemIds);
-          tradeDisclosures = { actorId: actor, personId: input.targetId, lots };
-        }
+        const disclosures = await this.prepareCommandTradeDisclosures(input, actor, scope);
+        if (disclosures && 'ok' in disclosures) return disclosures;
+        tradeDisclosures = disclosures;
         if (!input.knownPlace) return input;
         if (input.type !== 'move')
           return {
@@ -6014,6 +6328,113 @@ export class WorldService {
     });
   }
 
+  private async prepareCommandTradeDisclosures(
+    input: CommandInput,
+    actorId: string,
+    scope?: RequestScope,
+  ): Promise<TradeDisclosureContext | ApiResult | undefined> {
+    if (
+      input.type !== 'handover' ||
+      (input.handoverOperation !== 'offer' && input.handoverOperation !== 'counter') ||
+      !input.targetId ||
+      !input.requestedItems?.length
+    )
+      return undefined;
+    // Browser and creator intake share bounded retained evidence. Creator intake
+    // reads the selected person's memory, never the operator's inventory or memory.
+    if (input.requestedItems.length > STOCK_TRANSFER_LIMITS.movedLots)
+      return {
+        ok: false,
+        code: 'invalid-command',
+        message: 'Choose fewer items for one trade.',
+      };
+    const itemIds = input.requestedItems.map((lot) => lot.itemId);
+    const lots = scope
+      ? await retainedTradeDisclosureReferences(this, scope, input.targetId, itemIds)
+      : await retainedNativeTradeDisclosureReferences(this, actorId, input.targetId, itemIds);
+    return { actorId, personId: input.targetId, lots };
+  }
+
+  /** Explicit creator intake shares native binding/execution without borrowing a player's
+   * control scope or changing the selected actor's controller. */
+  async operatorCommand(
+    requestId: string,
+    actorId: string,
+    input: CommandInput,
+    scope = this.localScope,
+  ): Promise<ApiResult & { sourceIds?: string[] }> {
+    return this.authorized(scope, 'create', false, async () => {
+      this.assertScope(scope, 'inspect');
+      if (!this.mayInspectPrivate(actorId, scope))
+        return {
+          ok: false,
+          code: 'forbidden',
+          message: 'This character is unavailable to the operator.',
+        };
+      const id = `operator-command:${digest([this.world.id, this.timelineId, scope.accountId, requestId])}`;
+      const fingerprint = digest({ actorId, input, scope });
+      const previous = await this.store.getJob(id);
+      if (previous)
+        return previous.fingerprint === fingerprint
+          ? {
+              ok: true,
+              code: 'duplicate',
+              message: previous.message,
+              jobId: id,
+              jobStatus: previous.status,
+            }
+          : {
+              ok: false,
+              code: 'idempotency-conflict',
+              message: 'This request ID was already used for different input.',
+            };
+      const tradeDisclosures = await this.prepareCommandTradeDisclosures(input, actorId);
+      if (tradeDisclosures && 'ok' in tradeDisclosures) return tradeDisclosures;
+      const job: import('./store.js').JobRecord = {
+        id,
+        kind: 'action',
+        operatorAuthored: true,
+        authority: scope,
+        fingerprint,
+        createdAt: this.now(),
+        status: 'queued',
+        message: 'Applying the operator-authored action.',
+        request: { text: input.type, npcId: actorId },
+      };
+      await this.store.putJob(job);
+      this.assertScope(scope, 'create');
+      this.assertScope(scope, 'inspect');
+      const beforeSequence = this.world.sequence;
+      const result = this.mayInspectPrivate(actorId, scope)
+        ? await this.evaluateCommand(
+            id,
+            input,
+            actorId,
+            false,
+            undefined,
+            scope,
+            true,
+            id,
+            tradeDisclosures,
+          )
+        : {
+            ok: false,
+            code: 'forbidden',
+            message: 'This character is unavailable to the operator.',
+          };
+      const sourceIds = this.world.events
+        .filter((event) => event.sequence > beforeSequence)
+        .map((event) => event.id);
+      await this.store.putJob({
+        ...job,
+        status: result.ok ? 'completed' : 'failed',
+        message: result.message,
+        result,
+      });
+      return { ...result, jobId: id, sourceIds };
+    });
+  }
+
   /** Resolve an original request without re-admitting it under changed control. */
   async commandReceipt(
     commandId: string,
@@ -6058,6 +6479,20 @@ export class WorldService {
   previewCommand(input: CommandInput, scope: RequestScope): ApiResult {
     this.assertScope(scope);
     return this.previewForActor(input, scope.actorId, true, scope);
+  }
+
+  /** Creator inspection preserves the selected actor and the same admission used
+   * by operatorCommand, without borrowing control of that person's body. */
+  previewOperatorCommand(input: CommandInput, actorId: string, scope: RequestScope): ApiResult {
+    this.assertScope(scope, 'create');
+    this.assertScope(scope, 'inspect');
+    if (!this.mayInspectPrivate(actorId, scope))
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'This character is unavailable to the operator.',
+      };
+    return this.previewForActor(input, actorId, true, scope);
   }
 
   /** Trusted native preparation names its actor without impersonating a browser
@@ -6123,7 +6558,8 @@ export class WorldService {
     choices: readonly { invocation: Command; transition: WorkTransitionMode }[],
   ) {
     const world = this.world;
-    const permissions = this.store.authority!.constructionPermissions(world.id);
+    const nativePermissions = this.nativeExecutionPermissions;
+    const permissions = nativePermissions.constructionPermissions;
     const preparation: import('@open-legend/domain').NativeChoicePreparation = {
       world,
       permissions,
@@ -6139,10 +6575,22 @@ export class WorldService {
           transition,
           permissions,
           preparation,
-          this.store.authority!.campAssetPermissions(world.id),
+          nativePermissions.campAssetPermissions,
         ),
       ),
       physicalPreparations: preparation.physicalPreparations,
+      current: () => {
+        if (this.world !== world) return false;
+        const current = this.nativeExecutionPermissions;
+        // Authority updates replace these readonly arrays; native holds are
+        // frozen replacements too. Compare their snapshots, not every world's
+        // grant payload on a character's critical preparation path.
+        return (
+          current.constructionPermissions === nativePermissions.constructionPermissions &&
+          current.campAssetPermissions === nativePermissions.campAssetPermissions &&
+          current.nativeValueHolds === nativePermissions.nativeValueHolds
+        );
+      },
     };
   }
 
@@ -6408,6 +6856,15 @@ export class WorldService {
           methodId: input.methodId,
           bindings: input.bindings,
           ...(input.resume ? { resume: true } : {}),
+        };
+        break;
+      case 'express':
+        if (!input.verb) return { ok: false, code: 'expression', message: 'Choose an expression.' };
+        command = {
+          ...envelope,
+          type: 'express',
+          verb: input.verb,
+          ...(input.targetId ? { targetId: input.targetId } : {}),
         };
         break;
       case 'say':
@@ -6928,7 +7385,7 @@ export class WorldService {
       };
     const bound = this.bindCommand(id, input, scope.actorId, true, scope);
     return 'actorId' in bound
-      ? executeCommand(world, bound)
+      ? executeCommand(world, bound, this.nativeExecutionPermissions)
       : { world, events: [], outcome: bound };
   }
 
@@ -7027,6 +7484,7 @@ export class WorldService {
         constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
         campAssetPermissions: this.store.authority!.campAssetPermissions(this.world.id),
         tradeDisclosures,
+        ...(this.nativeValueHolds.length ? { nativeValueHolds: this.nativeValueHolds } : {}),
       });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
@@ -7255,6 +7713,7 @@ export class WorldService {
         preview: true,
         constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
         campAssetPermissions: this.store.authority!.campAssetPermissions(this.world.id),
+        ...(this.nativeValueHolds.length ? { nativeValueHolds: this.nativeValueHolds } : {}),
       }).outcome;
       if (preview.code === 'lethal-review-required') {
         const offer = lethalAttackOffer(this.world, command),
@@ -7349,6 +7808,7 @@ export class WorldService {
           constructionPermissions: this.store.authority!.constructionPermissions(world.id),
           campAssetPermissions: this.store.authority!.campAssetPermissions(world.id),
           tradeDisclosures,
+          ...(this.nativeValueHolds.length ? { nativeValueHolds: this.nativeValueHolds } : {}),
         }),
       gameplay,
       undefined,

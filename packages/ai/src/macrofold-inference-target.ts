@@ -1,9 +1,10 @@
 import { InvalidData, record, serialize, type PreparedSchema } from './validation.js';
-import type { AiReceipt, GenerateRequest } from './types.js';
+import type { AiReceipt, GenerateRequest, JsonSchema } from './types.js';
 
 /** Projection of Macrofold's canonical deployment binding, not another inference wire schema. */
 export interface MacrofoldDeploymentTarget {
   readonly workspaceId: string;
+  readonly chatTemplateKwargs?: Readonly<{ enable_thinking: boolean }>;
   readonly modelBinding: {
     readonly deployment_id: string;
     readonly deployment_revision_id?: string;
@@ -11,6 +12,12 @@ export interface MacrofoldDeploymentTarget {
 }
 
 export type MacrofoldOutputMode = 'json_schema' | 'json_object' | 'prompted_json';
+
+/** Catalog-only provider policy; explicit settings and deployment capabilities
+ * remain authoritative. See docs/ai-providers.md#current-macrofold-routes. */
+export function defaultMacrofoldCatalogOutputMode(model: string): MacrofoldOutputMode {
+  return model === 'meta/muse-spark-1.3-contributor' ? 'prompted_json' : 'json_schema';
+}
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -28,7 +35,13 @@ export function captureMacrofoldDeploymentTarget(
     (target.modelBinding.deployment_revision_id !== undefined &&
       (typeof target.modelBinding.deployment_revision_id !== 'string' ||
         !uuid.test(target.modelBinding.deployment_revision_id))) ||
-    Object.keys(target).some((key) => !['workspaceId', 'modelBinding'].includes(key)) ||
+    (target.chatTemplateKwargs !== undefined &&
+      (!record(target.chatTemplateKwargs) ||
+        typeof target.chatTemplateKwargs.enable_thinking !== 'boolean' ||
+        Object.keys(target.chatTemplateKwargs).some((key) => key !== 'enable_thinking'))) ||
+    Object.keys(target).some(
+      (key) => !['workspaceId', 'modelBinding', 'chatTemplateKwargs'].includes(key),
+    ) ||
     Object.keys(target.modelBinding).some(
       (key) => !['deployment_id', 'deployment_revision_id'].includes(key),
     )
@@ -37,6 +50,9 @@ export function captureMacrofoldDeploymentTarget(
   // PostgreSQL/API projections use canonical UUID spelling; casing cannot select a different service.
   return Object.freeze({
     workspaceId: target.workspaceId.toLowerCase(),
+    ...(target.chatTemplateKwargs
+      ? { chatTemplateKwargs: Object.freeze({ ...target.chatTemplateKwargs }) }
+      : {}),
     modelBinding: Object.freeze({
       deployment_id: target.modelBinding.deployment_id.toLowerCase(),
       ...(target.modelBinding.deployment_revision_id === undefined
@@ -49,6 +65,17 @@ export function captureMacrofoldDeploymentTarget(
 export function macrofoldDeploymentRequestFields(target: MacrofoldDeploymentTarget) {
   const captured = captureMacrofoldDeploymentTarget(target);
   return { workspace_id: captured.workspaceId, model_binding: captured.modelBinding };
+}
+
+/** One exact instruction projection serves dispatch and pre-dispatch sizing. */
+export function macrofoldGenerationInstructions(
+  instructions: string,
+  schema: JsonSchema,
+  mode?: MacrofoldOutputMode,
+): string {
+  return mode === 'json_object' || mode === 'prompted_json'
+    ? `${instructions}\n\nReturn only JSON matching this schema. Do not use Markdown fences or tools.\n${serialize(schema, 500_000)}`
+    : instructions;
 }
 
 /** All output strategies use the caller's one captured schema and complete local validation. */
@@ -68,19 +95,27 @@ export function prepareMacrofoldGenerationInput(
     (request.macrofoldOutputMode !== undefined && request.macrofoldOutputMode !== mode)
   )
     throw new InvalidData('invalid_deployment_output_mode');
-  if (mode !== undefined && (request.model !== undefined || request.reasoningEffort !== undefined))
+  if (
+    request.macrofoldDeployment !== undefined &&
+    (request.model !== undefined || request.reasoningEffort !== undefined)
+  )
     throw new InvalidData('deployment_provider_parameters_unsupported');
   if (
     request.reasoningEffort !== undefined &&
     !['none', 'low', 'medium', 'high'].includes(request.reasoningEffort)
   )
     throw new InvalidData('invalid_reasoning_effort');
+  const target = request.macrofoldDeployment
+    ? captureMacrofoldDeploymentTarget(request.macrofoldDeployment)
+    : undefined;
   const context = serialize(request.context, 500_000);
-  const instructions =
-    mode === 'json_object' || mode === 'prompted_json'
-      ? `${request.instructions}\n\nReturn only JSON matching this schema. Do not use Markdown fences or tools.\n${serialize(preparedSchema.schema, 500_000)}`
-      : request.instructions;
+  const instructions = macrofoldGenerationInstructions(
+    request.instructions,
+    preparedSchema.schema,
+    mode,
+  );
   return {
+    ...(target?.chatTemplateKwargs ? { chat_template_kwargs: target.chatTemplateKwargs } : {}),
     messages: [
       { role: 'system', content: instructions },
       { role: 'user', content: typeof request.context === 'string' ? request.context : context },
@@ -96,7 +131,9 @@ export function prepareMacrofoldGenerationInput(
               json_schema: { name, strict: true, schema: preparedSchema.schema },
             },
           }),
-    ...(mode === undefined ? { provider: { require_parameters: true } } : {}),
+    // Catalog routing still requires supported parameters for every output mode.
+    // Deployment runtimes do not accept OpenRouter's provider preferences.
+    ...(target === undefined ? { provider: { require_parameters: true } } : {}),
     ...(request.reasoningEffort ? { reasoning: { effort: request.reasoningEffort } } : {}),
   };
 }

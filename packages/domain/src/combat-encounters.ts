@@ -13,7 +13,11 @@ import { hasRecordFields, isSafeRecordId } from './records.js';
 import type { Action, Command, Entity, Position, WorldEvent, WorldState } from './types.js';
 import type { Awareness } from './experience.js';
 import { hasMemory } from './living.js';
-import { preparedResponseProfile, preparedResponseObservation } from './world-composition.js';
+import {
+  preparedResponseProfile,
+  preparedResponseObservation,
+  preparedResponseOpportunity,
+} from './world-composition.js';
 import { prepareCombatMeans } from './combat-means.js';
 import { possessionItems } from './object-access.js';
 import { resourcesAfterEnding } from './resource-claims.js';
@@ -586,7 +590,10 @@ function observeRecovery(world: WorldState, observer: Entity, events: WorldEvent
   const state = observer.actor?.encounters,
     recovery = state?.recovery;
   if (!state || !recovery) return;
-  const relevant = hasSelectedResponse(world, observer);
+  // Stop may clear selected work while an actually perceived encounter still
+  // warrants reconsideration. Reuse the installed world's opportunity policy.
+  const relevant =
+    hasSelectedResponse(world, observer) || preparedResponseOpportunity(world, observer.id, [], []);
   const profile = preparedResponseProfile(recovery.definition)!;
   for (const [field, change] of [
     ['combatUntil', 'combat-ready'],

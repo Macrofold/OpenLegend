@@ -1,3 +1,4 @@
+import { executionNamespace } from '../apps/server/src/execution-namespace.js';
 import { entityValues } from '../packages/domain/src/index.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 /** Reproducible, idempotent workspace-only provisioning. No model or compute calls.
@@ -20,7 +21,12 @@ const store = new SqlGameRepository(
 try {
   const saved = await store.load();
   if (!saved) throw new Error('Start Open Legend once to create a local world first.');
-  const provisioner = new MacrofoldProvisioner(config, store, saved.state.world.id);
+  const provisioner = new MacrofoldProvisioner(
+    config,
+    store,
+    saved.state.world.id,
+    await executionNamespace(store),
+  );
   for (const entity of entityValues(saved.state.world.entities).filter(
     (e) => e.actor?.controller === 'npc',
   )) {

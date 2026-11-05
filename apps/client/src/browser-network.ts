@@ -79,7 +79,7 @@ export function browserRequest(
   path: string,
   init: Omit<RequestInit, 'body' | 'method' | 'headers'> & {
     method?: 'GET' | 'POST';
-    body?: string;
+    body?: string | Blob;
     headers?: Record<string, string>;
   },
   body?: unknown,

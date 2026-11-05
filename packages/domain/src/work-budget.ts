@@ -99,26 +99,20 @@ function retainedAllocation(value: WorkDemand): WorkVector {
 export function addWork(a: WorkDemand, b: WorkDemand): WorkVector {
   const left = workVector(a),
     right = workVector(b);
-  return workVector(
-    Object.fromEntries(
-      WORK_UNITS.map((unit) => [
-        unit,
-        integer(unit === 'depth' ? Math.max(left.depth, right.depth) : left[unit] + right[unit]),
-      ]),
-    ),
-  );
+  // These are fresh validated copies. Reuse one instead of allocating entry
+  // arrays and validating the same known fields again for every candidate.
+  for (const unit of WORK_UNITS)
+    left[unit] = integer(
+      unit === 'depth' ? Math.max(left.depth, right.depth) : left[unit] + right[unit],
+    );
+  return left;
 }
 export function multiplyWork(value: WorkDemand, count: number): WorkVector {
   integer(count);
   const vector = workVector(value);
-  return workVector(
-    Object.fromEntries(
-      WORK_UNITS.map((unit) => [
-        unit,
-        integer(unit === 'depth' ? (count ? vector.depth : 0) : vector[unit] * count),
-      ]),
-    ),
-  );
+  for (const unit of WORK_UNITS)
+    vector[unit] = integer(unit === 'depth' ? (count ? vector.depth : 0) : vector[unit] * count);
+  return vector;
 }
 export function requireWork(
   demand: WorkDemand,

@@ -206,6 +206,38 @@ routes(
 routes('POST', ['/api/presence'], 'presence', 5_000, 'latest');
 // Fixed transient input never retries a stale direction or creates a durable action receipt.
 routes('POST', ['/api/input'], 'presence', 1_000, 'latest');
+routes(
+  'GET',
+  [
+    '/api/cognition-lab/workspace',
+    '/api/cognition-lab/actors',
+    '/api/cognition-lab/actions',
+    '/api/cognition-lab/recipes',
+    '/api/cognition-lab/events',
+    '/api/cognition-lab/runs',
+    '/api/cognition-lab/scenarios',
+    '/api/cognition-lab/current/:actorId',
+    '/api/cognition-lab/current/:actorId/choices/:fieldId',
+    '/api/cognition-lab/runs/:id',
+    '/api/cognition-lab/runs/:id/records',
+    '/api/cognition-lab/runs/:id/stages/:stageId',
+    '/api/cognition-lab/artifacts/:id',
+    '/api/cognition-lab/sources/:id',
+  ],
+  'read',
+  15_000,
+  'observation',
+);
+routes('GET', ['/api/cognition-lab/changes'], 'read', 30_000, 'observation');
+routes(
+  'POST',
+  ['/api/cognition-lab/runs/:id/stages/:stageId/receipt'],
+  'read',
+  30_000,
+  'observation',
+);
+routes('POST', ['/api/cognition-lab/operations'], 'mutation', 60_000, 'same-id');
+routes('POST', ['/api/cognition-lab/imports'], 'mutation', 120_000, 'same-id');
 entries.push(
   {
     method: 'POST',
@@ -240,6 +272,8 @@ entries.push(
     recovery: 'current-state',
   },
 );
+/** Resource builders use this root; the closed path shapes below still admit each request. */
+export const cognitionLabApiRoot = '/api/cognition-lab';
 export const browserRequestPolicies: readonly Readonly<BrowserRequestPolicy>[] = Object.freeze(
   entries.map((entry) => Object.freeze(entry)),
 );
@@ -252,7 +286,31 @@ export function browserRequestPolicy(
   // API requests are same-origin paths. Queries contain identities, not policy.
   if (!path.startsWith('/api/') || path.startsWith('//') || path.includes('#'))
     throw new Error('The requested server operation is unavailable.');
-  const pathname = path.split('?')[0];
+  let pathname = path.split('?')[0];
+  // Closed resource shapes share one policy; arbitrary lab paths remain unavailable.
+  const labPatterns: Array<[RegExp, string]> = [
+    [
+      /^\/api\/cognition-lab\/runs\/[^/]+\/stages\/[^/]+\/receipt$/,
+      '/api/cognition-lab/runs/:id/stages/:stageId/receipt',
+    ],
+    [
+      /^\/api\/cognition-lab\/current\/[^/]+\/choices\/[^/]+$/,
+      '/api/cognition-lab/current/:actorId/choices/:fieldId',
+    ],
+    [/^\/api\/cognition-lab\/current\/[^/]+$/, '/api/cognition-lab/current/:actorId'],
+    [
+      /^\/api\/cognition-lab\/runs\/[^/]+\/stages\/[^/]+$/,
+      '/api/cognition-lab/runs/:id/stages/:stageId',
+    ],
+    [/^\/api\/cognition-lab\/runs\/[^/]+\/records$/, '/api/cognition-lab/runs/:id/records'],
+    [/^\/api\/cognition-lab\/runs\/[^/]+$/, '/api/cognition-lab/runs/:id'],
+    [/^\/api\/cognition-lab\/(artifacts|sources)\/[^/]+$/, '/api/cognition-lab/$1/:id'],
+  ];
+  for (const [pattern, replacement] of labPatterns)
+    if (pathname && pattern.test(pathname)) {
+      pathname = pathname.replace(pattern, replacement);
+      break;
+    }
   const object = body && typeof body === 'object' ? body : {};
   const discriminator =
     pathname === '/api/world-agent/messages'

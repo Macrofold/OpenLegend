@@ -1,6 +1,6 @@
 # Custom models — implementation and acceptance
 
-**Status: In progress — native judgment, chat routing and tools implemented; live Kev/Huihui qualification blocked by current application-key access · October 24, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Passing local and synthetic checks does not establish hosted-model reliability or character quality.
+**Status: In progress — configured services, dedicated credentials, native chat options and higher routing are implemented; actual native responses are verified, while gameplay and operating qualification remain open · October 25, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Passing local and synthetic checks does not establish hosted-model reliability or character quality.
 
 ## Maintained records
 
@@ -9,7 +9,7 @@
 - Authorized delivery sequence: [Implementation plan](../projects/custom-models-implementation-plan.md).
 - Current evidence and remaining operating qualification: [Verification](../verification/custom-models.md).
 - Constraints: [MX-L01–MX-L08](../limits/custom-models.md).
-- Wire protocol: [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md).
+- Wire protocol: [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/main/docs/projects/hugging-face-model-deployments-contract.md).
 - Existing owners: [AI providers](../ai-providers.md), [cognition](cognition-redesign.md), [character experience](character-experience.md), [agency](agent-agency.md), [public speech](npc-speech-streaming.md), [production deployment](production-deployment.md).
 - Optional research: [October 20 library](../../archive/02-research/npc-cognition/README.md), [research design map](npc-cognition-research-needs-design.md).
 
@@ -23,7 +23,7 @@
 
 Production implementation and MX04/MX05 tooling are authorized; MX07 comparative research and selecting a new default model are outside this assignment. Use focused tests and suitable existing checks/ad-hoc cases under the current task's authorization and repository verification policy. Any live execution uses its existing authorization and bounded budget.
 
-Native judgments and ordinary NPC replies use separately configured deployment targets. Chat capability preparation precedes its existing spending reservation; native judgments retain the conservative existing reservation and prepare only genuinely new requests within their original execution budget. Shared immutable capability preparation and the existing inference executor retain original deadlines, permitted context, accepted Run identity, local validation and once-only settlement. The existing benchmark consumes the same target and request preparation. [Verification](../verification/custom-models.md) distinguishes static, injected-HTTP, native-gameplay and actual Macrofold evidence; MX06 owns operating acceptance.
+Native judgments and ordinary NPC replies use separately configured deployment targets. Capability preparation remains inside the original execution budget; native deployment request fees and reservations are zero while zero-budget/no-call controls remain effective. Shared immutable capability preparation and the existing inference executor retain original deadlines, permitted context, accepted Run identity, local validation and once-only settlement. The existing benchmark consumes the same target and request preparation. [Verification](../verification/custom-models.md) distinguishes static, injected-HTTP, native-gameplay and actual Macrofold evidence; MX06 owns operating acceptance.
 
 ## MX01 — Shared production deployment target
 
@@ -52,6 +52,8 @@ Native judgments and ordinary NPC replies use separately configured deployment t
 
 - [x] Accept operator-trusted external endpoints under their honest capability/provenance limits. Keep hosting credentials/management outside the game and preserve fixture, Jev-only and zero-budget no-call controls.
 - [x] Add `purposes.judgment` to the same trusted settings, with optional pin/output reduction and no `structured_output`. Resolve it before native request admission; preserve omitted-purpose defaults, Jev-only operation, no-call modes and the existing explicit escalation policy. Include the actual workspace/targets/pins/output settings in the existing world-host operating review and configuration fingerprint, without exposing credentials.
+
+- [x] Connect the supplied current services using the optional deployment-only credential, capability-checked native chat thinking setting, and configured complex target for higher decisions unless explicitly overridden by a direct model. Use zero native request-fee reservation while preserving zero-budget controls, omitted-setting defaults, original Run recovery and strict local decision/output validation. [Current integration evidence](../verification/custom-models.md#configured-service-integration--october-25-2026) records local checks and successful discovery of stopped services; live qualification remains in MX06. The [current plan](../projects/custom-models-implementation-plan.md#current-configured-service-follow-up--october-25-2026) owns exact references and selected trial settings.
 
 **Exit:** normal game configuration can select native judgment and either NPC chat generator without a study manifest; metadata and protocol/output modes match the actual request.
 
@@ -98,7 +100,7 @@ Native judgments and ordinary NPC replies use separately configured deployment t
 
 **Owner:** provider/gameplay verification through existing owners and Macrofold integration. **Design:** technical §7. **Dependencies:** MX01–MX03 and matching installed Macrofold API; **no dependency on MX04–MX05/MX07**.
 
-- [x] Verify target/role isolation, actual NPC response admission, output mode/local validation, optional streaming, no-call controls and unchanged native judgment/escalation.
+- [x] Verify target/role isolation, actual NPC response admission, output mode/local validation, optional streaming, no-call controls, native judgment semantics and the existing escalation policy.
 
   Actual Macrofold HTTP compatibility and native gameplay with synthetic model answers are evidenced separately. Both live configured NPC purposes reached the selected model. A corrected obsolete speech example preserves the unchanged schema: a later complex reply committed actual speech to the player; the fast reply was rejected for an invented operation dependency. No repair call or weaker parser was introduced.
 
@@ -114,9 +116,11 @@ Native judgments and ordinary NPC replies use separately configured deployment t
 
   Four live Qwen 2.5 7B JSON-object API calls returned validated values, including two concurrent requests and streaming; the ordinary complex NPC path published live speech. [Evidence](../verification/custom-models.md#live-external-model-checks) retains all four NPC attempts, measured limits/timings, native fast-reply rejection, separate provider/request fees and verified cleanup preserving accounting. This bounded workload does not establish sustained GPU capacity, reliable character quality or managed-worker recovery. Required current-head CI is reported with the implementation PR.
 
-- [ ] Qualify the native Kev and Huihui chat targets through this OpenLegend adapter against current authorized services. Native input must exercise multiple named questions/all three types, grant/workspace restrictions, service unavailability, context failure, same-key replay and uncertainty recovery; chat retains local JSON validation. Distinguish native scoring, provider interval and complete caller timing. The current application key receives HTTP 403 for deployment discovery, so neither live target is verified by this task. This does not prove that the account has no services. No replacement hosting or inference was launched.
+- [ ] Complete native Kev and Huihui qualification through this OpenLegend adapter against current authorized services. [October 25 live checks](../verification/custom-models.md#live-configured-model-smoke-tests--october-25-2026) returned actual pinned-model responses: Kev preserved multiple named choice/score/noul answers and reversed its action preference when the shelter became dangerous; Huihui returned locally validated JSON with thinking disabled. Huihui also contradicted a dangerous-shelter context; a neutral prompt/schema then classified safe and unsafe variants correctly. These few manually amended cases do not establish contextual reliability. Grant/workspace restrictions, service unavailability, context failure, same-key replay, uncertainty recovery and ordinary-game context fit still require current-service caller qualification. Record native scoring, provider interval and complete caller timing separately; current measured intervals are bounded smoke evidence, not full-game or load acceptance.
 
-  Exact intended sources and upstream qualification limits are in [operator setup](../live-ai-setup.md#discover-and-authorize-a-current-service). Official Kev is not the incompatible community uncensored checkpoint. Huihui's prior imported-endpoint inference does not qualify the protected managed chat runtime. Former upstream acceptance IDs were deleted and are not usable settings. Current-service evidence remains in the [verification report](../verification/custom-models.md).
+  The [repertoire-panel preflight](../verification/cognition-lab-repertoire-panel.md#model-comparisons) found ordinary route/generation inputs of about 19.9k/29.4k reported tokens, above the selected Kev/Huihui capacities. Qualify compact ordinary context before funding those full-scene requests; the small smoke probes do not close this gate.
+
+  Exact intended sources and upstream qualification limits are in [operator setup](../live-ai-setup.md#discover-and-authorize-a-current-service). Official Kev is not the incompatible community uncensored checkpoint. Huihui's prior imported-endpoint inference does not qualify this caller against the current managed service. Former upstream acceptance IDs were deleted and are not usable settings. Current-service evidence remains in the [verification report](../verification/custom-models.md).
 
 **Exit:** the production capability works through ordinary gameplay and supported failures with measured operating limits. A comparative study or model winner is not required.
 

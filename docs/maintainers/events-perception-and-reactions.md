@@ -143,6 +143,9 @@ Coordinate EWF02 typed state through [EWF](extensible-world-foundation.md); exis
 
 ## EPR05 — Change-fed ActorWork and one reaction intake
 
+- [x] Implement the [demand-driven durability/admission correction](../projects/combat-and-threat-responses-tech-design.md#demand-driven-durability-and-reaction-admission): captured target, one consumer demand, ordered wait registration and coalesced completion wake through the existing writer/intake/clock. [Isolated native and managed evidence](../verification/cognition-context/2026/2026-11-05-readiness-and-admission.md) separates these changes, covering-write savings, stopped/cognition-disabled controls and measured CPU. Wider storage-failure/restore, fairness and natural ordinary-clock response acceptance remain in the existing qualification below; this does not reopen FR13 or DE06.
+- [ ] Complete the remaining demand/wake lifecycle and ordinary-clock qualification listed in the linked evidence, retaining original uncertain requests and unchanged deadlines. Do not infer a latency pass from successful saving or a held-Lab reply.
+
 Coordinate EWF05 sense evidence through [EWF](extensible-world-foundation.md); existing native adapters suffice without full EWF qualification.
 
 **Dependencies:** EPR03–EPR04; coordinate PF02/PF09 and CR10.

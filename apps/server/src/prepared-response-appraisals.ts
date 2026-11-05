@@ -11,6 +11,7 @@ import { decodeJudge, type JudgeValue, type TypedQuestionMap } from '@open-legen
 import { bindDecisionAppraisals } from './appraisal-context.js';
 import type { DecisionAppraisalProposal } from './cognition-contracts.js';
 import type { WorldService } from './world-service.js';
+import type { SharedModelExperience } from './perceived-context.js';
 
 /** One exact newest cause per feeling/subject. Earlier causes remain in the supplied
  * situation; neither native eligibility nor an amount option chooses an interpretation.
@@ -159,18 +160,20 @@ export async function prepareResponseAppraisals(
   }
   if (!(await bound.current()))
     throw new Error('Personal appraisal sources changed before judgment.');
+  const withQuestions = (sourceContext: typeof bound.context) => ({
+    ...sourceContext,
+    subjects: Object.entries(subjects).map(([handle, id]) => ({
+      handle,
+      description: catalogue.subjectDescriptions[id],
+    })),
+    questions: context,
+  });
   return {
     bound,
     scopes,
     questions,
-    context: {
-      ...bound.context,
-      subjects: Object.entries(subjects).map(([handle, id]) => ({
-        handle,
-        description: catalogue.subjectDescriptions[id],
-      })),
-      questions: context,
-    },
+    projectContext: (sharedExperiences: ReadonlyMap<string, SharedModelExperience>) =>
+      withQuestions(bound.projectContext(sharedExperiences)),
     resolve(value: JudgeValue): {
       changes: AppraisalChange[];
       refused: Array<{ question: string; reason: string }>;
