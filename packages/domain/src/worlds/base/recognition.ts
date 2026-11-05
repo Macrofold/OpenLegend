@@ -1,4 +1,5 @@
 import { recordObservationSupport, observationReceiptMemberIndices } from '../../experience.js';
+import { personalFactAlias } from '../../experience-source.js';
 import { cloneValue, readOnlyDraftView } from '../../draft.js';
 import { entityGet, entityValues } from '../../entity-collection.js';
 import {
@@ -1139,8 +1140,26 @@ export function recognitionSupportSources(keys: readonly string[]): RecognitionS
     }
   });
 }
-export const recognitionSupportSourceIds = (keys: readonly string[]): string[] =>
-  recognitionSupportSources(keys).map((source) => source.id);
+export function recognitionSupportSourceIds(keys: readonly string[]): string[] {
+  const ids = new Set(recognitionSupportSources(keys).map((source) => source.id));
+  for (const key of keys) {
+    if (!key.startsWith('{')) continue;
+    try {
+      const value = JSON.parse(key) as {
+        source?: EvidenceSource;
+        ordinal?: number;
+        memberIndex?: number;
+      };
+      if (!value.source) continue;
+      const ordinal = isTemporalReceiptSource(value.source) ? value.memberIndex : value.ordinal;
+      if (Number.isSafeInteger(ordinal) && ordinal! >= 0)
+        ids.add(personalFactAlias(value.source.id, ordinal!));
+    } catch {
+      // Personal/authored keys have no typed fact coordinate.
+    }
+  }
+  return [...ids];
+}
 
 /** Remove only support revoked through the personal-history dependency closure.
  * Exact prior-source edges survive in original accounts after exemplar eviction. */

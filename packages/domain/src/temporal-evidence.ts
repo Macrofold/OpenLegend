@@ -448,6 +448,7 @@ function releaseTerminalReservation(world: WorldState, actorId: string, bytes: n
   if (!actor) return;
   if (bytes > actor.terminalReservedBytes)
     throw new Error('Received terminal reservation underflow.');
+  if (bytes) touchNativeEvidence(world, 'temporal', actorId);
   actor.terminalReservedBytes -= bytes;
 }
 export function clearTemporalRecordingReservations(world: WorldState, actorId: string): void {
@@ -1355,7 +1356,10 @@ export function appendTemporalReceipt(
     target.required = receipt.required;
     if (actor.terminalReservedBytes + (input.terminalReservationDelta ?? 0) < 0)
       throw new Error('Received terminal reservation underflow.');
-    actor.terminalReservedBytes += input.terminalReservationDelta ?? 0;
+    if (input.terminalReservationDelta) {
+      touchNativeEvidence(world, 'temporal', actorId);
+      actor.terminalReservedBytes += input.terminalReservationDelta;
+    }
     target.charge = { bytes, count };
     const retained: ReceivedEntry = {
       ...target,

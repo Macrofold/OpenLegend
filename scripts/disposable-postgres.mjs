@@ -25,7 +25,20 @@ export async function createDisposableDatabase(connectionString) {
 
   const require = createRequire(new URL('../apps/server/package.json', import.meta.url));
   const { Client } = require('pg');
-  const database = 'openlegend_fixture_' + randomUUID().replaceAll('-', '');
+  const prefix = process.env.OPENLEGEND_FIXTURE_DATABASE_PREFIX;
+  // The managed supervisor reclaims only its run-prefixed databases after an
+  // interrupted process. Keep 64 random bits and PostgreSQL's complete 63-byte
+  // identifier limit; server-side truncation would lose the ownership witness.
+  if (
+    prefix !== undefined &&
+    (!/^[a-z][a-z0-9_]*_$/.test(prefix) || Buffer.byteLength(prefix) + 16 > 63)
+  )
+    throw new Error('Disposable PostgreSQL database prefix is invalid.');
+  const random = randomUUID().replaceAll('-', '');
+  const database =
+    prefix === undefined ? 'openlegend_fixture_' + random : prefix + random.slice(0, 16);
+  if (Buffer.byteLength(database) > 63)
+    throw new Error('Disposable PostgreSQL database identifier exceeds its allowance.');
   const withAdmin = async (stage, operation) => {
     const client = new Client({
       connectionString: adminUrl.toString(),

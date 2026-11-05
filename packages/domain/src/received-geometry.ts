@@ -796,7 +796,15 @@ function refreshGeometry(
       );
     if (!result || state.bytes + result.bytes > policy.maxBytes) return;
     const fragment: GeometryFragment = {
-      ...candidate.extent,
+      // FeatureExtent's structural type does not strip a held fragment's live
+      // recording. Project coordinates explicitly so a new patch earns its own
+      // admission instead of inheriting a parent's reserved close.
+      // docs/performance/preparation.md#simulation-cpu-and-growing-history
+      featureId: candidate.extent.featureId,
+      u0: candidate.extent.u0,
+      u1: candidate.extent.u1,
+      v0: candidate.extent.v0,
+      v1: candidate.extent.v1,
       key,
       observation: result.observation,
       ...(retained && candidate.old?.recording ? { recording: candidate.old.recording } : {}),
