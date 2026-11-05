@@ -955,6 +955,12 @@ export class WorldService {
     } while (this.backgroundSave);
   }
   private debtSeconds = 0;
+  /** Already admitted game time awaiting a coherent native publication. This
+   * excludes wall time the host has not offered yet, and may include in-flight
+   * private native work. Reading it neither advances nor drains the clock. */
+  get pendingSimSeconds(): number {
+    return this.debtSeconds;
+  }
   private storageFailure: string | null = null;
   /** Latched storage failure. Every assignment, from any caller, rejects durability waiters:
    * no later snapshot will be written in this process. */

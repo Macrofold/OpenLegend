@@ -214,7 +214,7 @@ Use the union of affected **old and new neighborhoods** for changed sources. A r
 
 Registered attribute policies supply [typed state and concerns](../archive/07-technical-architecture/world-module-runtime.md#4-typed-state-and-attributes); threshold episodes and native protection remain owned here.
 
-Treat meaningful internal changes as owner-private stimuli. Initial sources should be current native needs/body state, not inferred LLM diagnoses.
+Treat meaningful internal changes as owner-private stimuli. Initial sources should be current native needs/body state, not inferred LLM diagnoses. Being an event’s subject grants no sensory account: reception requires a live participating receiver, and physical modalities additionally require its installed perception capability. Explicit internal own outcomes retain their existing private path without a physical receipt. World effects, occurrence history and eligible witnesses remain independent.
 
 A registered threshold policy defines the owning quantity, applicable actor capabilities, comparison/bands, recovery rule, episode identity, native response eligibility, and optional cognition eligibility. Emit only a meaningful crossing/escalation/recovery, not every decrement.
 

@@ -470,22 +470,36 @@ function recordEvent(
     }
     event.audience = [...audience];
   }
+  // Being an occurrence's subject is not a sensory grant. Native lifecycle/effect
+  // owners may emit after removing that body's ability to receive. An explicitly
+  // granted internal result still needs no physical channel; it cannot revive a body.
+  // docs/events-perception-and-reactions.md#7-internal-triggers-and-native-survival
+  const receivers = audience.flatMap((actorId) => {
+    const observer = entityGet(world.entities, actorId);
+    if (!observer?.actor?.alive || !activelyParticipates(observer)) return [];
+    const nativeContact = actorId === nativeTarget?.id && type === 'projectile-contact';
+    const modality: Awareness['modality'] =
+      speechAwareness.get(actorId)?.modality ??
+      (feltTargetId === actorId || nativeContact
+        ? 'felt'
+        : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
+          ? type === 'contact'
+            ? 'felt'
+            : type === 'encounter'
+              ? 'observed'
+              : 'internal'
+          : type === 'speech'
+            ? 'heard'
+            : 'observed');
+    return modality !== 'internal' && capabilityBlocked(world, observer, 'perception')
+      ? []
+      : [{ actorId, modality, nativeContact }];
+  });
+  audience = receivers.map((receiver) => receiver.actorId);
+  event.audience = [...audience];
   const acquired: Awareness[] = [];
   if (world.experience || audience.length) {
-    for (const actorId of audience) {
-      const nativeContact = actorId === nativeTarget?.id && type === 'projectile-contact';
-      const modality: Awareness['modality'] =
-        feltTargetId === actorId || nativeContact
-          ? 'felt'
-          : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
-            ? type === 'contact'
-              ? 'felt'
-              : type === 'encounter'
-                ? 'observed'
-                : 'internal'
-            : type === 'speech'
-              ? 'heard'
-              : 'observed';
+    for (const { actorId, modality, nativeContact } of receivers) {
       const triggerKind: Awareness['triggerKind'] =
         data?.['acquisition'] === true
           ? 'observed_event'

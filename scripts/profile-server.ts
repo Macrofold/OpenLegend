@@ -2095,6 +2095,8 @@ try {
     if (collectNativeCounters) observeDomainCounters(nativeCounters);
     const before = performanceSnapshot();
     const checkpointBefore = game.checkpointDiagnostics;
+    const pendingSimSecondsBefore = game.service.pendingSimSeconds;
+    const clockPausedBefore = game.service.paused;
     const growthSamples: ReturnType<typeof readGrowthSample>[] = [];
     let growthSamplesOmitted = 0,
       previousGrowthCpu = startingCpu,
@@ -2141,7 +2143,7 @@ try {
           0,
         ),
         residentMemories: Object.values(world.memories).reduce((n, rows) => n + rows.length, 0),
-        pendingSimSeconds: (game.service as unknown as { debtSeconds: number }).debtSeconds,
+        pendingSimSeconds: game.service.pendingSimSeconds,
         navigationBlocked: navigationBlocked(world),
         memoryPressure: !!game.service.memoryBacklog,
         queuedRoutineSelections: queuedRoutines.size,
@@ -2312,6 +2314,12 @@ try {
       })().catch((error: unknown) => failed('explicit tick pump', error));
     console.error(`profile server ready: ${base}; PostgreSQL, ${seconds}s at ${profileSpeed}x`);
     await new Promise<void>((done) => setTimeout(done, seconds * 1000));
+    // Capture the live offered-load boundary before waiting for any request,
+    // resident plan, pump or shutdown work to settle the clock.
+    const debtEndedAtUnixMs = performance.timeOrigin + performance.now();
+    const debtSimTimeAfter = game.service.world.simTime;
+    const pendingSimSecondsAfter = game.service.pendingSimSeconds;
+    const clockPausedAfter = game.service.paused;
     clearInterval(commandTimer);
     clearInterval(presenceTimer);
     clearInterval(speechTimer);
@@ -2561,6 +2569,24 @@ try {
       failures,
       ...(collectRejections ? { rejections } : {}),
       storageError: game.service.storageError,
+      clockDebt: {
+        from: {
+          atUnixMs: performance.timeOrigin + start,
+          simTime: simStart,
+          pendingSimSeconds: pendingSimSecondsBefore,
+          paused: clockPausedBefore,
+        },
+        through: {
+          atUnixMs: debtEndedAtUnixMs,
+          expectedAtUnixMs: performance.timeOrigin + start + seconds * 1000,
+          observationLagMs: debtEndedAtUnixMs - (performance.timeOrigin + start + seconds * 1000),
+          simTime: debtSimTimeAfter,
+          pendingSimSeconds: pendingSimSecondsAfter,
+          paused: clockPausedAfter,
+        },
+        scope:
+          'Running phase-boundary reads of admitted game time awaiting publication, including private in-flight native work. Excludes wall time not yet offered by the host; captured before pause or drain and independent of optional collection.',
+      },
       checkpoints: {
         before: checkpointBefore,
         after: checkpointAfter,

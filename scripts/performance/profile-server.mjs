@@ -539,9 +539,33 @@ async function clientLoad() {
   const [settings] = await settingsReady;
   const timestamp = () => performance.timeOrigin + performance.now();
   const timing = { measuredAt: undefined, end: Infinity };
+  let offeredEndTimer,
+    offeredEndSent = false;
+  const offeredEnd = (kind) => {
+    if (offeredEndSent || timing.measuredAt === undefined) return;
+    offeredEndSent = true;
+    clearTimeout(offeredEndTimer);
+    if (process.connected)
+      process.send({
+        offeredEnd: {
+          kind,
+          measurementStartsAtUnixMs: timing.measuredAt,
+          expectedAtUnixMs: timing.measuredAt + settings.seconds * 1000,
+          offeredAtUnixMs: timestamp(),
+        },
+      });
+  };
   const beginMeasurement = (at) => {
+    if (timing.measuredAt === at) return;
+    clearTimeout(offeredEndTimer);
     timing.measuredAt = at;
     timing.end = at - performance.timeOrigin + settings.seconds * 1000;
+    // One phase-boundary message precedes request draining; this is not a
+    // recurring observer or a change to the offered request schedule.
+    offeredEndTimer = setTimeout(
+      () => offeredEnd('offer-stop'),
+      Math.max(0, timing.end - performance.now()),
+    );
   };
   const measurementMessage = (message) => {
     if (message.measureAt !== undefined) beginMeasurement(message.measureAt);
@@ -741,6 +765,7 @@ async function clientLoad() {
   if (first.measureAt !== undefined) beginMeasurement(first.measureAt);
   begin();
   const samples = await pending;
+  offeredEnd('post-drain-fallback');
   process.off('message', measurementMessage);
   const completedAt = Math.max(...samples.map((sample) => sample.completedAt));
   const summarize = (rows, from, until) => {
@@ -799,7 +824,7 @@ async function clientLoad() {
   process.disconnect();
 }
 
-async function startLoad(settings) {
+async function startLoad(settings, onOfferedEnd) {
   const child = fork(fileURLToPath(import.meta.url), ['--client'], {
     execArgv: ['--import', 'tsx'],
     stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
@@ -825,6 +850,7 @@ async function startLoad(settings) {
     if (message.booted) child.send(settings);
     if (message.ready) readyResolve();
     if (message.result) resultResolve(message.result);
+    if (message.offeredEnd) onOfferedEnd?.(message.offeredEnd);
     if (message.streamFailure && !diagnostics.streamFailure)
       diagnostics.streamFailure = message.streamFailure;
   });
@@ -1077,6 +1103,8 @@ async function main() {
       startingMemory: process.memoryUsage(),
       activityStart: pressureRun?.snapshot().activity,
       sim: game.service.world.simTime,
+      pendingSimSeconds: game.service.pendingSimSeconds,
+      clockPaused: game.service.paused,
       cpu: process.cpuUsage(),
       threadCpu: typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : null,
       start: performance.now(),
@@ -1114,6 +1142,17 @@ async function main() {
       expectedSimSeconds: elapsed * config.baseRatio * game.service.speed,
       achievedSpeed: advanced / elapsed / nominalBaseRatio,
       achievedFraction: advanced / (elapsed * config.baseRatio * game.service.speed),
+      clockDebt: {
+        from: {
+          atUnixMs: phase.startedAtUnixMs,
+          simTime: phase.sim,
+          pendingSimSeconds: phase.pendingSimSeconds,
+          paused: phase.clockPaused,
+        },
+        through: phase.clockDebtEnd ?? null,
+        scope:
+          'Admitted game time awaiting coherent publication, including private in-flight native work; excludes host time not yet offered. End is the first parent observation of one child offer-stop message, before pressure stop or pause. Child/IPC lateness is explicit; a missing boundary or post-drain fallback is not steady-debt evidence.',
+      },
       // Endpoint state is not a measurement of how long a phase was paused.
       paused: game.service.paused,
       pauseReason: game.service.pauseReason,
@@ -1430,17 +1469,37 @@ async function main() {
           config.godMode = false;
         }
       }
-      load = await startLoad({
-        base,
-        clients,
-        epoch: game.service.commandEpoch,
-        seconds,
-        warmupSeconds,
-        commandIntervalMs,
-        continuousMovement: !!workload,
-        readIntervalMs: workload ? 0 : 250,
-        burst: !!workload,
-      });
+      load = await startLoad(
+        {
+          base,
+          clients,
+          epoch: game.service.commandEpoch,
+          seconds,
+          warmupSeconds,
+          commandIntervalMs,
+          continuousMovement: !!workload,
+          readIntervalMs: workload ? 0 : 250,
+          burst: !!workload,
+        },
+        (boundary) => {
+          if (
+            !activePhase ||
+            activePhase.clockDebtEnd ||
+            boundary.measurementStartsAtUnixMs !== activePhase.startedAtUnixMs
+          )
+            return;
+          const observedAtUnixMs = performance.timeOrigin + performance.now();
+          activePhase.clockDebtEnd = {
+            ...boundary,
+            observedAtUnixMs,
+            childLatenessMs: boundary.offeredAtUnixMs - boundary.expectedAtUnixMs,
+            receiptLagMs: observedAtUnixMs - boundary.offeredAtUnixMs,
+            simTime: game.service.world.simTime,
+            pendingSimSeconds: game.service.pendingSimSeconds,
+            paused: game.service.paused,
+          };
+        },
+      );
       (report.streamConnections ??= []).push({
         speed,
         actors: clients.length,
