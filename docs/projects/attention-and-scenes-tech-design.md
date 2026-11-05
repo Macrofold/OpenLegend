@@ -1,8 +1,8 @@
 # Attention and scenes — technical design
 
-| Status      | Current progress                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | All three additional performance corrections are integrated; complete-game operating acceptance remains open. | 2026-10-31   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Supported core and BK24 reception are installed; lifecycle repair and complete-game qualification remain open. | 2026-11-05   |
 
 **Selected design with supported core implementation; broader scene delivery remains separate.** This is the counterpart to the [feature specification](attention-and-scenes-feature-spec.md), particularly its [compact background family](attention-and-scenes-feature-spec.md#173-selected-compact-expressive-background-exchanges) and [shared-activity refinement](attention-and-scenes-feature-spec.md#18-research-refinement--independent-shared-activity-that-people-can-understand). It resolves the exact encounter and two-NPC compact meaning design under DG06/DG18 and PS04. Aggregate vocal activity, crowds, timed speech and broader ND13/ND15/ND16 scope remain separate. The psychological mechanism has its own [continuing-life owner](continuing-lives-tech-design.md#55-numerical-personal-reactions-without-required-prose).
 
@@ -144,7 +144,7 @@ An NPC's optional self-explanation is speech with normal hearing/uncertainty, no
 
 ## 5. Perception, attention, interpretation and memory
 
-**BK24 replacement target, not installed:** [compact current and change-only history](bookkeeping-simplification-tech-design.md#15-compact-native-evidence-and-change-history) replaces the installed historical-confirmation/proof machinery below, uses one final optional selection, and specifies separate due-work/cadence experiments. It preserves this feature’s broad visibility, independent received detail, required evidence, local identity and bounded private interpretation. Follow that owner for the coordinated replacement; future physical sensing and broader scene families remain separate.
+**BK24 source replacement installed; operating qualification remains open:** [compact current and change-only history](bookkeeping-simplification-tech-design.md#15-compact-native-evidence-and-change-history) supersedes the predecessor historical-confirmation/proof machinery below and uses one final optional selection. Its [BK25 execution/read design](bookkeeping-simplification-tech-design.md#16-proposed-native-execution-and-current-read-reduction) specifies further proposed cost removal; the demonstrated withdrawal/attention lifecycle repair remains open in BK24. It preserves this feature’s broad visibility, independent received detail, required evidence, local identity and bounded private interpretation. Follow that owner for the coordinated replacement; future physical sensing and broader scene families remain separate.
 
 **Implemented compact core contracts; complete-game qualification remains open.** Ordinary attention preserves a reliable recent sequence at the received resolution. Useful older accounts survive when warranted; trivial experience may disappear. Native heuristics can favor familiar subjects without knowing their emotional significance. Existing cognition interprets unfamiliar meaning when an actual cause merits a decision. The design preserves the received-evidence, identity, knowledge, experience, agency and decision owners:
 

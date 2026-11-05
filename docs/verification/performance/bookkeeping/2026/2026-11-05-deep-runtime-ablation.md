@@ -8,6 +8,8 @@ This follows the [sparse-reception investigation](2026-11-05-sparse-reception.md
 
 **Completed investigation:** 61 case procedures reached measurement across four groups. Two removals were unexercised; the final long baseline subsequently failed full cold validation. These are not 61 distinct variants or 61 acceptance passes. Production runtime is unchanged. Normal-clock results, CPU demand and lifecycle qualification are separate outcomes; no production speedup or scale pass is claimed.
 
+**Baseline clarification:** D12’s 0.999624 normal fraction and 996.5 ms accepted-command p95 use the unchanged complete runtime with all ordinary subsystems active. They include previously installed fixes, not experimental removals or a new production change from this campaign. Its subsequent full cold validation fails.
+
 ## Workload, hardware and interpretation
 
 - Standard managed AWS worker: m7i.xlarge, four logical CPUs, nominal 16 GiB, project `027677879749`, `us-east-2`; actual A/B receipt reports Intel Xeon Platinum 8488C, `MemTotal: 16078388 kB`, Node 24.13 x64. Instance `i-01bdb83b2c3aadf43`, slot 2; A/B/C generations 146/147/148. Each comparison group has its own controls. Do not assume a continuous OS session across claims; C was stopped before D generation 149 started.
