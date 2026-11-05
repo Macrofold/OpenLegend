@@ -553,5 +553,6 @@ export function updateTerritorialPlace(world: WorldState, entity: Entity): void 
   if (distance3D(threat.policy.home, point) > 0) {
     threat.policy.home = { ...point };
     threat.policy.refuge = { ...point };
+    recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
   }
 }

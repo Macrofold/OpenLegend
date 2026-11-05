@@ -5,6 +5,12 @@ import { foragingProfile } from '../../native-foraging.js';
 import { stopCurrentWork } from '../../agency.js';
 import type { Entity, WorldState } from '../../types.js';
 import type { NativeForagingIntention } from './foraging.js';
+import {
+  foragingBehaviorChanged,
+  setForagingMode,
+  setForagingDestination,
+  setForagingReviewAt,
+} from './foraging-state.js';
 
 /** Local visible joining, never a shared leader, hidden follow or second route. */
 export function nativeRegroupingIntention(
@@ -20,10 +26,13 @@ export function nativeRegroupingIntention(
   let work = state.work?.kind === 'regroup' ? state.work : undefined;
   const stop = () => {
     if (work && animal.actor?.action?.id === work.actionId) stopCurrentWork(world, animal.id);
-    delete state.work;
-    delete state.destination;
-    state.mode = 'routine';
-    state.reviewAt = world.simTime + rule.reviewGameSeconds;
+    if (state.work) {
+      delete state.work;
+      foragingBehaviorChanged(world, animal);
+    }
+    setForagingDestination(world, animal, undefined);
+    setForagingMode(world, animal, 'routine');
+    setForagingReviewAt(world, animal, world.simTime + rule.reviewGameSeconds);
   };
   let mate = work ? visible.find((other) => other.id === work!.targetId) : undefined;
   if (
@@ -58,14 +67,18 @@ export function nativeRegroupingIntention(
     if (work) stop();
     return;
   }
-  state.reviewAt = Math.min(work?.endsAt ?? Infinity, world.simTime + rule.reviewGameSeconds);
+  setForagingReviewAt(
+    world,
+    animal,
+    Math.min(work?.endsAt ?? Infinity, world.simTime + rule.reviewGameSeconds),
+  );
   if (
     work &&
     animal.actor?.action?.id === work.actionId &&
     distance3D(work.routeTarget ?? work.observed!.point, point) < rule.refreshDisplacementMetres
   )
     return 'holding';
-  if (!work)
+  if (!work) {
     work = state.work = {
       kind: 'regroup',
       actionId: animal.actor?.action?.id ?? `native-forage-${world.nextId}`,
@@ -77,6 +90,8 @@ export function nativeRegroupingIntention(
       travelledMetres: 0,
       lastPoint: { ...here },
     };
+    foragingBehaviorChanged(world, animal);
+  }
   work.observed = { point: { ...point }, at: world.simTime };
   work.routeTarget = { ...point };
   const leg = Math.min(
@@ -97,8 +112,8 @@ export function nativeRegroupingIntention(
     stop();
     return 'holding';
   }
-  state.mode = 'regrouping';
-  state.destination = { ...destination };
+  setForagingMode(world, animal, 'regrouping');
+  setForagingDestination(world, animal, destination);
   return {
     command: { type: 'move', id: `native-forage-${world.nextId}`, actorId: animal.id, destination },
     movement: {

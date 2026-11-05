@@ -19,6 +19,12 @@ import { activelyParticipates } from '../../participation-state.js';
 import type { Entity, WorldState } from '../../types.js';
 import type { NativeForagingProfile } from '../../native-foraging.js';
 import type { NativeForagingIntention } from './foraging.js';
+import {
+  foragingBehaviorChanged,
+  setForagingMode,
+  setForagingDestination,
+  setForagingReviewAt,
+} from './foraging-state.js';
 
 function packmates(animal: Entity, visible: readonly Entity[]): Entity[] {
   const pack = animal.animal!.foraging!.packId;
@@ -82,11 +88,14 @@ export function endNativeHunt(world: WorldState, animal: Entity): void {
   state.reconsiderAt =
     world.simTime +
     (profile?.hunt?.pursuit.reconsiderAfterGameSeconds ?? profile!.routine.choiceGameSeconds);
-  delete state.work;
+  if (state.work) {
+    delete state.work;
+    foragingBehaviorChanged(world, animal);
+  }
   delete state.proposal;
-  delete state.destination;
-  state.mode = 'resting';
-  state.reviewAt = state.reconsiderAt;
+  setForagingDestination(world, animal, undefined);
+  setForagingMode(world, animal, 'resting');
+  setForagingReviewAt(world, animal, state.reconsiderAt);
 }
 function move(
   world: WorldState,
@@ -150,17 +159,25 @@ export function nativeHuntingIntention(
         invocationId: work.actionId,
       });
     delete state.proposal;
-    state.mode = 'searching';
-    state.reviewAt = Math.min(
-      work.endsAt,
-      world.simTime + hunt.approach.reviewGameSeconds,
-      lost + hunt.lostSight.totalSearchGameSeconds,
+    setForagingMode(world, animal, 'searching');
+    setForagingReviewAt(
+      world,
+      animal,
+      Math.min(
+        work.endsAt,
+        world.simTime + hunt.approach.reviewGameSeconds,
+        lost + hunt.lostSight.totalSearchGameSeconds,
+      ),
     );
     if (animal.actor?.action?.id === work.actionId && animal.actor.action.type === 'move')
       return 'holding';
     if (world.simTime < lost + hunt.lostSight.lastPointGameSeconds) {
       if (distance3D(supportedPosition(animal)!, observed.point) <= world.itemHandling.reach) {
-        state.reviewAt = Math.min(work.endsAt, lost + hunt.lostSight.lastPointGameSeconds);
+        setForagingReviewAt(
+          world,
+          animal,
+          Math.min(work.endsAt, lost + hunt.lostSight.lastPointGameSeconds),
+        );
         return 'holding';
       }
       return move(world, animal, observed.point, undefined, true);
@@ -221,6 +238,7 @@ export function nativeHuntingIntention(
       travelledMetres: 0,
       lastPoint: { ...supportedPosition(animal)! },
     };
+    foragingBehaviorChanged(world, animal);
   }
   const point = supportedPosition(target);
   if (!point) {
@@ -231,12 +249,16 @@ export function nativeHuntingIntention(
   work!.observed = { point: { ...point }, at: world.simTime };
   delete work!.lostAt;
   delete work!.searchIndex;
-  state.reviewAt = Math.min(work!.endsAt, world.simTime + hunt.approach.reviewGameSeconds);
+  setForagingReviewAt(
+    world,
+    animal,
+    Math.min(work!.endsAt, world.simTime + hunt.approach.reviewGameSeconds),
+  );
   if (animal.actor?.action?.strikePhase === 'windup') return 'holding';
   const strike = strikeDefinition(hunt.strikeId, world)!,
     inStartRange = movingStrikeInReach(world, animal, target, strike.preparationMotion!.startRange);
   if (inStartRange && combatRecoveryDeadline(world, animal) <= world.simTime) {
-    state.mode = 'pursuing';
+    setForagingMode(world, animal, 'pursuing');
     delete state.proposal;
     return {
       command: {
@@ -312,7 +334,7 @@ export function nativeHuntingIntention(
   const routes = preparedForagingRoutes(world, animal, prepared);
   if (routes === 'pending') return 'pending';
   if (routes === 'unavailable') {
-    state.mode = 'blocked';
+    setForagingMode(world, animal, 'blocked');
     return 'holding';
   }
   routes.sort(
@@ -346,8 +368,8 @@ export function nativeHuntingIntention(
   )!.point;
   work!.routeTarget = { ...point };
   delete state.proposal;
-  state.mode = 'stalking';
-  state.destination = { ...destination };
+  setForagingMode(world, animal, 'stalking');
+  setForagingDestination(world, animal, destination);
   return move(
     world,
     animal,
