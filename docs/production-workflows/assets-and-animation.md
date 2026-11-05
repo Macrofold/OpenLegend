@@ -97,13 +97,15 @@ A second material, length, ornament or compatible attachment is useful evidence 
 
 ## Articulated people and creatures
 
+The [character-production specification](../projects/character-art-production-feature-spec.md) owns the selected offline decisions; its [execution guide](../projects/character-art-production-tech-design.md) expands the steps below into concrete checks and repair paths. Use its [prototype-to-polish profiles](../projects/character-art-production-tech-design.md#choose-the-effort-profile) to avoid making an early gameplay experiment wait for optional finishing. These profiles preserve the requested delivery boundary and required correctness; they do not create another art flow or qualify the general runtime family.
+
 ### 1. Connect visible identity to character purpose
 
 **Consume:** the selected character/body direction, permitted authored facts, actual supported behavior, equipment needs and the [creative brief](../../art-direction/final-board/creative-brief.md).
 
 **Produce:** a visual identity brief with silhouette, posture, body shape, clothing, hair, skin/material identity, carried possessions and the actions that matter first. Define what distinguishes this person at gameplay distance and what a portrait or close view adds.
 
-The character author and visual contributor work together. Clothing and habitual pose can suggest a person's concerns without requiring a generated biography to become public knowledge. Connect deeper authoring to [characters and play](characters-and-play.md); the art route does not invent personality, remembered events or authoritative anatomy.
+The character author and visual contributor work together. Clothing and habitual pose can suggest a person's concerns without requiring a generated biography to become public knowledge. Connect deeper authoring to [characters and play](characters-and-play.md); the art route does not invent personality, remembered events or authoritative anatomy. Preserve intended visible identity without exposing a deliberately concealed feature or overriding an adopted transformation to force recognition.
 
 Use the current mercenary source and [study record](../maintainers/art/mercenary.md) where compatible. Its existence means the next useful question can be motion quality, outfit fit, production effort or another expressive case, rather than another isolated proof that a 3D person can render.
 
@@ -124,6 +126,10 @@ A skeleton with familiar joint names is not enough to prove compatible scale, pr
 **Consume:** the accepted form, body/rig convention, materials, clothing and equipment boundaries.
 
 **Produce:** editable mesh, skeleton, skin weights and fitted parts, with meaningful pivots and attachments. Keep body, garments, hair and rigid equipment separate where their use requires it.
+
+Independent generation or editing can also justify a temporary boundary: replace an unsuccessful head while preserving a useful body, then join or retain the pieces according to deformation and actual equipment needs. The source operation does not decide the runtime object structure. Avoid unnecessary splitting, and inspect fit, seams and completed hidden surfaces before treating separately produced parts as compatible.
+
+Refine a direct mesh when its form, deformation and exported complexity meet the task. Rebuild topology or use a high-detail source and baked derivative when they solve a diagnosed problem, not as compulsory stages. Quad-based output and a requested polygon count are not acceptance evidence. The execution guide's [route choices](../projects/character-art-production-tech-design.md#4-select-the-source-and-model-route) and [worked repair](../projects/character-art-production-tech-design.md#worked-repair-a-weak-face-on-an-otherwise-useful-body) show how to preserve successful work.
 
 Use conventional modeling, generated candidates and manual repair as appropriate. Inspect deformation at representative joint extremes before creating a long animation set. Check shoulders, elbows, hips, knees, hands and other relevant joints for this anatomy. Test garment contact and silhouette under movement. Do not assume an authoring-tool cloth simulation survives the runtime export; determine which animation or simulation data the selected game path actually consumes.
 
@@ -186,6 +192,7 @@ Preserve the source body, rig, material family, clips, export settings and accep
 ## Maintained records
 
 - **Art and sources:** [art-direction progress](../maintainers/art-direction.md), [mercenary study](../maintainers/art/mercenary.md), [creative brief](../../art-direction/final-board/creative-brief.md).
+- **Detailed character production:** [feature specification](../projects/character-art-production-feature-spec.md), [execution guide](../projects/character-art-production-tech-design.md) and [research/repertoire application](../research/character-art-production/README.md).
 - **Implementation and qualification:** [V3D](../maintainers/3d-pixel-art.md), relevant [persistent-object work](../maintainers/persistent-objects.md), [spatial presentation](../maintainers/spatial-world.md), and the affected gameplay owner. Art study acceptance does not close their broader work.
 - **Limits and constraints:** [3D art inventory](../limits/3d-pixel-art.md), [spatial inventory](../limits/spatial.md), and the relevant object/action limits. This procedure introduces no new asset counts, geometry caps, animation cadence or hardware guarantees.
 - **Research:** [procedural art and animation](../../archive/02-research/ai-game-development/03-procedural-art-and-animation.md), [inspected tooling](../../archive/02-research/ai-game-development/04-skills-and-tooling.md), [specialist models](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md).
