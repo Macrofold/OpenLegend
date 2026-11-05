@@ -33,8 +33,12 @@ for (const catalog of catalogs)
 /** Current art comparison, applied only in presentation. The retained profile
  * keeps the previous source models available without changing a saved world. */
 const selectedAppearances = new Map(Object.entries(selections));
-export const studyAppearance = (appearance: string, sources: 'retained' | 'natural') =>
-  sources === 'natural' ? (selectedAppearances.get(appearance) ?? appearance) : appearance;
+export const studyAppearance = (appearance: string, sources: 'retained' | 'natural') => {
+  const selected = sources === 'natural' ? selectedAppearances.get(appearance) : undefined;
+  // Retain the authored choice for a later published release, while the current
+  // game uses its installed depiction rather than requesting an unshipped study.
+  return selected && studyAssets.has(selected) ? selected : appearance;
+};
 
 /** Every credit the shipped artwork's licenses require, once per work. Retained comparison
  * models ship too and can be shown, so their credits stay listed. */

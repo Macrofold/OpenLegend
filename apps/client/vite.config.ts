@@ -71,6 +71,7 @@ function deliveryProjection(
     watch: (path: string) => void,
   ): StudyCatalog<RuntimeStudyCatalogAsset>[] {
     const delivery = readDelivery();
+    const installedFiles = readIndex().files;
     return readdirSync(catalogsPath, { withFileTypes: true })
       .filter((entry) => entry.isDirectory() && (all || entry.name.startsWith('source-')))
       .filter((entry) => existsSync(resolve(catalogsPath, entry.name, 'catalog.json')))
@@ -123,10 +124,27 @@ function deliveryProjection(
               : undefined,
           // Public license credits that the game shows in Settings → Credits.
           attribution: catalog.attribution,
-          assets: catalog.assets.map(project),
+          // Study choices can precede publication. Runtime candidates must have
+          // every declared export in the exact installed release, including private
+          // files whose metadata is deliberately absent from the public projection.
+          assets: catalog.assets
+            .filter(
+              (asset) =>
+                all ||
+                [asset.file, asset.animatedFile, asset.depletedFile].every(
+                  (file) =>
+                    !file ||
+                    Object.hasOwn(
+                      installedFiles,
+                      `apps/client/src/props/art-study/${catalog.group}/${file}`,
+                    ),
+                ),
+            )
+            .map(project),
           controls: all ? catalog.controls?.map(project) : undefined,
         };
-      });
+      })
+      .filter((catalog) => all || catalog.assets.length > 0);
   }
   return {
     name: 'openlegend-asset-delivery',
@@ -177,8 +195,10 @@ function deliveryProjection(
         // Only the count of every selected file, private ones included, bounds waiting reads.
         return `export const files = ${JSON.stringify(files)};\nexport const releaseFileCount = ${Object.keys(index.files).length};\nexport const release = ${JSON.stringify(index.release)};\nexport const releaseSha256 = ${JSON.stringify(index.release.manifestSha256)};\nexport const delivery = ${JSON.stringify(delivery)};`;
       }
-      if (id.startsWith(catalogsModule))
+      if (id.startsWith(catalogsModule)) {
+        this.addWatchFile(indexPath);
         return `export default ${JSON.stringify(readCatalogs(id.endsWith(':all'), (path) => this.addWatchFile(path)))};`;
+      }
     },
     config() {
       if (localAssetDelivery) return;
