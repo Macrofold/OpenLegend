@@ -230,14 +230,12 @@ export function historicalSpatialMeasurements(
         !receipt.endedFields || receipt.endedFields.some(([kind]) => geometryKind(kind)),
       ended = terminal && affectsGeometry,
       gap = receipt.coverageGap && (!terminal || affectsGeometry);
-    // Losing a description or attribute says nothing about a still-received
-    // position/shape. Geometry joins stop only at their own availability boundary.
-    if (
-      (receipt.change === 'baseline' &&
-        selected.values.some((value) => geometryKind(value.kind))) ||
-      gap
-    )
-      segment++;
+    // A baseline starts recording one received field, not a new whole-body
+    // episode. Sibling shape/position baselines must still join at their actual
+    // supported time. Only an explicit geometry gap separates their tracks;
+    // losing a description or attribute does not end a still-received pose.
+    // docs/projects/bookkeeping-simplification-tech-design.md#recent-records-and-their-lifetime
+    if (gap) segment++;
     if (ended || gap) recordingIncomplete = true;
     segments.set(key, segment + (ended ? 1 : 0));
     for (const [facet, value] of selected.values.entries()) {
@@ -261,7 +259,7 @@ export function historicalSpatialMeasurements(
       });
     }
   }
-  const factSegments = new Map(facts.map((fact) => [fact.source, trackKey(fact)]));
+  const sourceFacts = new Map(facts.map((fact) => [fact.source, fact]));
   const bodies = receivedBodySamples(facts, request);
   const anchors = bodies
     .filter(
@@ -432,15 +430,36 @@ export function historicalSpatialMeasurements(
     string,
     { at: number; lower: number; support: HistoricalSpatialFact[] }
   >();
+  // A bounded/truncated read may omit the terminal separating two points.
+  // Known prefix retirement or an unrelated field ending only makes overall
+  // coverage partial; its retained geometry boundaries still govern each join.
+  const compareEndpoints = !selection.hasMore;
   for (const sample of samples) {
     const direct = [...sample.support];
-    const segment = JSON.stringify(direct.map((source) => factSegments.get(source)));
+    const anchorSupport = direct.filter(
+      (source) => sourceFacts.get(source)!.subject === request.anchor,
+    );
+    // A composed position has both shape and location proofs. Their count and
+    // order can change without ending either subject's received track.
+    const segments = (sources: readonly HistoricalSpatialFact[]) =>
+      JSON.stringify(
+        [...new Set(sources.map((source) => trackKey(sourceFacts.get(source)!)))].sort(),
+      );
+    const segment = segments(direct);
+    // A companion's availability cannot interrupt the anchor's relationship
+    // with a separately received boundary.
+    const anchorSegment = segments(anchorSupport);
     if (
       sample.other?.status === 'complete' &&
       sample.other.lower !== undefined &&
       sample.other.upper !== undefined
     ) {
-      if (previousOther && previousOther.segment === segment && previousOther.at < sample.at)
+      if (
+        compareEndpoints &&
+        previousOther &&
+        previousOther.segment === segment &&
+        previousOther.at < sample.at
+      )
         sample.other.endpointChange = {
           from: previousOther.at,
           through: sample.at,
@@ -452,13 +471,14 @@ export function historicalSpatialMeasurements(
     for (const edge of sample.boundaries) {
       const reference = selection.entries[edge.support.entry]!.receipt.facets[edge.support.facet]!;
       const key = JSON.stringify([
-          segment,
+          anchorSegment,
+          trackKey(sourceFacts.get(edge.support)!),
           reference.original ?? [edge.support, reference.memberIndex],
         ]),
         previous = previousEdges.get(key),
         measurement = edge.measurement;
       if (measurement.lower === undefined || measurement.upper === undefined) continue;
-      if (previous && previous.at < sample.at)
+      if (compareEndpoints && previous && previous.at < sample.at)
         measurement.endpointChange = {
           from: previous.at,
           through: sample.at,
@@ -468,7 +488,7 @@ export function historicalSpatialMeasurements(
       previousEdges.set(key, {
         at: sample.at,
         lower: measurement.lower,
-        support: [...direct, edge.support],
+        support: [...anchorSupport, edge.support],
       });
     }
   }

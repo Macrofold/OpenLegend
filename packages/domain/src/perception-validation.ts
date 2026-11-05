@@ -404,12 +404,8 @@ export function validatePerceptionEvidenceState(
               recording,
               world.simTime,
               group.metadata.flatMap((partition) => partition.members),
+              { actorId: observerId, physicalLife: state.life },
             );
-            if (
-              recording.lastSource.observer.actorId !== observerId ||
-              recording.lastSource.observer.physicalLife !== state.life
-            )
-              throw new Error('Current recording belongs to another received track.');
             for (const member of recording.members) {
               const part = recording.content.find(
                   (part) => part.kind === member.kind && part.part === member.part,

@@ -21,6 +21,7 @@ import {
   validPerceivedPoint as validPoint,
   validObservationExposure,
   validateEvidenceSource,
+  validateObservationOrigin,
   validateObservedLocation,
 } from './perception-values.js';
 export { validateEvidenceSource, validateObservedLocation } from './perception-values.js';
@@ -4277,10 +4278,6 @@ export function reconcileVisualEvidence(
             confirmedThrough: _confirmed,
             ...unchanged
           } = readOnlyDraftView(prior);
-          const initialAt = receivedObservationFacetMetadata(
-            currentFacetOriginal(state, prior),
-            prior.originalOrdinal,
-          ).measuredThrough;
           receiveCurrentSample(
             world,
             state,
@@ -4289,7 +4286,10 @@ export function reconcileVisualEvidence(
               ...unchanged,
               revision: prior.revision + 1,
               value: currentValue(facet, priorLease?.value),
-              ...(world.simTime === initialAt ? {} : { at: world.simTime }),
+              // A changed received value belongs to this actual measurement,
+              // even when replacing its original just rebound that source to now.
+              // docs/save-and-load.md#current-format-validation
+              at: world.simTime,
               ...(reacquired ? { confirmedFrom: world.simTime } : {}),
               ...(facet.kind === 'location'
                 ? {
@@ -5592,27 +5592,7 @@ export function validateObservationContribution(
       ))
   )
     throw new Error('Invalid received occurrence context.');
-  if (observation.origin.kind === 'occurrence') {
-    if (
-      typeof observation.origin.eventId !== 'string' ||
-      !Number.isFinite(observation.origin.at) ||
-      !Number.isSafeInteger(observation.origin.order)
-    )
-      throw new Error('Invalid perception occurrence binding.');
-  } else if (
-    observation.origin.kind !== 'exposure' ||
-    typeof observation.origin.episodeId !== 'string' ||
-    typeof observation.origin.detectorId !== 'string' ||
-    !Number.isFinite(observation.origin.measuredFrom) ||
-    !Number.isFinite(observation.origin.measuredThrough) ||
-    observation.origin.measuredThrough < observation.origin.measuredFrom
-  )
-    throw new Error('Invalid perception exposure binding.');
-  if (observation.origin.kind === 'exposure' && observation.origin.source) {
-    validateEvidenceSource(observation.origin.source);
-    if (canonicalJson(observation.origin.source.observer) !== canonicalJson(observation.observer))
-      throw new Error('Foreign physical support root.');
-  }
+  validateObservationOrigin(observation.origin, observation.observer, observation.acquiredAt);
   const key = canonicalJson([observation.observer, observation.id, observation.revision]);
   const body = canonicalJson(observation),
     prior = originals.get(key);

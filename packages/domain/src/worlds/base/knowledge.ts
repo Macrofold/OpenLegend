@@ -1,6 +1,6 @@
 import { receivedPositionEligible } from '../../received-batches.js';
 import { recordObservationSupport, observationReceiptMemberIndices } from '../../experience.js';
-import { currentContactEntries, currentFacetValues } from '../../perception-current.js';
+import { currentContactEntries, currentContactNativeFacet } from '../../perception-current.js';
 import { currentNativeFacet, currentFacetGrant } from '../../perception-current.js';
 import type { CurrentFacetGrant } from '../../perception-current.js';
 import { sameDefinitionPin } from '../../definition-pins.js';
@@ -542,17 +542,28 @@ export function pruneObserverIndividuals(
     }
   }
   const pinned = new Set(retainedPins);
-  for (const lease of currentFacetValues(world.perceptionEvidence?.[actorId])) {
-    if (lease.localSubject?.kind === 'individual') pinned.add(lease.localSubject.individualId);
-    const association =
-      lease.value.kind === 'association' && receivedFacetValue(world, lease.value);
-    if (
-      association &&
-      association.kind === 'association' &&
-      association.subject.kind === 'individual'
-    )
-      pinned.add(association.subject.individualId);
-  }
+  // Held last-known facts keep their local subjects without granting a current
+  // body. Inspect only identity-bearing fields; pruning needs no expanded proofs.
+  // docs/knowledge.md#subject-binding
+  const current = world.perceptionEvidence?.[actorId];
+  for (const [, contact] of current ? currentContactEntries(current) : [])
+    for (const group of readOnlyDraftView(contact.content).groups)
+      for (const [kind, field] of Object.entries(readOnlyDraftView(group.received.fields))) {
+        if (!field.localSubject && field.value.kind !== 'association') continue;
+        const held = currentContactNativeFacet(contact, kind, {
+          channel: group.received.grant.channel,
+        })?.field;
+        if (!held) continue;
+        if (held.localSubject?.kind === 'individual') pinned.add(held.localSubject.individualId);
+        const association =
+          held.value.kind === 'association' && receivedFacetValue(world, held.value);
+        if (
+          association &&
+          association.kind === 'association' &&
+          association.subject.kind === 'individual'
+        )
+          pinned.add(association.subject.individualId);
+      }
   let removed = 0;
   for (const key of input.candidates ?? Object.keys(identities)) {
     const identity = identities[key];

@@ -277,10 +277,8 @@ export interface TemporalCurrentGroupCheckpoint {
     part: 'value' | 'detail' | 'pose';
     value: ReceivedValueReference;
   }[];
-  lastTimes: CurrentFacetTimes;
   lastSource: NativeEvidenceSource;
   lastAt: number;
-  lastOrder: number;
   lastMeasurementRevision: number;
   /** Per-member closing-header bytes, secured with admission. Splitting members
    * preserves the unit, never duplicates an aggregate promise. */
@@ -1755,7 +1753,6 @@ export function captureTemporalCurrent(
       identity = Object.values(input.group.received.fields).find(
         (field) => field.localSubject,
       )?.localSubject,
-      times = currentGroupTimes(input.group, input.partition),
       field = input.group.received.fields[members[0]![0]]!,
       terminalBytes =
         reservationMark?.terminalBytes ??
@@ -1791,10 +1788,8 @@ export function captureTemporalCurrent(
         epoch: actor.epoch,
         members: members.map(([kind, part]) => ({ kind, part })),
         content,
-        lastTimes: times,
         lastSource: source,
         lastAt: world.simTime,
-        lastOrder: locator?.batchOrder ?? mark?.lastOrder ?? 0,
         lastMeasurementRevision: input.partition.revision,
         terminalBytes,
         gap: !locator,
@@ -1890,6 +1885,11 @@ export function captureTemporalObservation(
   ]);
   const previous = builder(world, actorId)?.sourceDecisions.get(sourceKey);
   if (previous !== undefined) return previous === false ? undefined : previous;
+  // A new recording segment starts now even when its held observation is older
+  // (for example, optional capacity recovered after a gap). Its facet dates and
+  // source still describe the actual earlier reception, never a new sensory sample.
+  // docs/projects/bookkeeping-simplification-tech-design.md#recent-records-and-their-lifetime
+  const recordingAdmission = options.change === 'baseline' || options.change === 'change';
   const locator = appendTemporalReceipt(
     world,
     actorId,
@@ -1900,8 +1900,10 @@ export function captureTemporalObservation(
           ? observation.origin.episodeId
           : observation.origin.eventId),
       change: options.change ?? 'occurrence',
-      receivedAt: observation.acquiredAt,
-      receivedOrder: observation.receivedOrder,
+      receivedAt: recordingAdmission ? world.simTime : observation.acquiredAt,
+      receivedOrder: recordingAdmission
+        ? temporalReceivedOrder(world, actorId)
+        : observation.receivedOrder,
       ...(options.contextSubjects?.length ? { contextSubjects: options.contextSubjects } : {}),
       required,
       ...(options.terminalReservationDelta === undefined
@@ -1993,16 +1995,8 @@ export function captureTemporalGeometry(
       epoch: world.experience!.temporal!.actors[actorId]!.epoch,
       members: members.map(([kind, part]) => ({ kind, part })),
       content: [],
-      lastTimes: {
-        valueMeasuredFrom: observation.facets[0]!.measuredFrom,
-        valueMeasuredThrough: observation.facets[0]!.measuredThrough,
-        valueAcquiredAt: observation.acquiredAt,
-        confirmedFrom: observation.acquiredAt,
-        confirmedThrough: through,
-      },
       lastSource: source,
       lastAt: world.simTime,
-      lastOrder: locator?.batchOrder ?? prior?.lastOrder ?? 0,
       lastMeasurementRevision: observation.revision,
       terminalBytes,
       gap: !locator,

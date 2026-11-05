@@ -4,6 +4,8 @@ import type {
   EvidenceSource,
   ObservedLocation,
   ObservationExposure,
+  ObservationOrigin,
+  ObserverLife,
 } from './perception-evidence.js';
 
 /** Canonical compound track identity is not a primitive record ID. Validate the
@@ -105,6 +107,47 @@ export function validateEvidenceSource(source: EvidenceSource): void {
   )
     return;
   throw new Error('Invalid evidence family revision.');
+}
+/** Acquired observations and selected history retain the same origin semantics.
+ * docs/save-and-load.md#current-format-validation */
+export function validateObservationOrigin(
+  origin: ObservationOrigin,
+  observer: ObserverLife,
+  acquiredAt: number,
+): void {
+  if (!origin || typeof origin !== 'object') throw new Error('Invalid perception origin.');
+  if (origin.kind === 'occurrence') {
+    if (
+      typeof origin.eventId !== 'string' ||
+      !origin.eventId ||
+      !Number.isFinite(origin.at) ||
+      origin.at < 0 ||
+      origin.at > acquiredAt ||
+      !Number.isSafeInteger(origin.order) ||
+      origin.order < 0
+    )
+      throw new Error('Invalid perception occurrence binding.');
+  } else if (
+    origin.kind !== 'exposure' ||
+    typeof origin.episodeId !== 'string' ||
+    !origin.episodeId ||
+    typeof origin.detectorId !== 'string' ||
+    !origin.detectorId ||
+    !Number.isFinite(origin.measuredFrom) ||
+    !Number.isFinite(origin.measuredThrough) ||
+    origin.measuredFrom < 0 ||
+    origin.measuredThrough < origin.measuredFrom ||
+    origin.measuredThrough > acquiredAt
+  )
+    throw new Error('Invalid perception exposure binding.');
+  if (origin.kind === 'exposure' && origin.source !== undefined) {
+    validateEvidenceSource(origin.source);
+    if (
+      origin.source.observer.actorId !== observer.actorId ||
+      origin.source.observer.physicalLife !== observer.physicalLife
+    )
+      throw new Error('Foreign physical support root.');
+  }
 }
 export function validateObservedLocation(location: ObservedLocation): void {
   if (!location || typeof location !== 'object') throw new Error('Invalid perceived location.');

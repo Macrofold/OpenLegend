@@ -1,6 +1,6 @@
 import { compactReceivedReceipt } from './received-record.js';
 import { canonicalJson } from './events.js';
-import { validReceivedTrackKey } from './perception-values.js';
+import { validReceivedTrackKey, validateObservationOrigin } from './perception-values.js';
 import { receivedValueAt } from './received-values.js';
 import { orderedRecordEntries, validateOrderedRecord } from './ordered-record.js';
 import {
@@ -31,8 +31,7 @@ import {
   type ObserverLife,
 } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
-import { hasRecordFields, isImmutableData, isSafeRecordId } from './records.js';
-import { selectedAttentionPolicy } from './world-composition.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
 import {
   temporalReceiptId,
   materializeTemporalValue,
@@ -197,22 +196,8 @@ function validateStoredValue(
   const value = materializeTemporalValue(reference, fragment, sources);
   if (!value) throw new Error('Temporal fragment has no matching personal reception.');
   validateTemporalValue(value, originals);
+  if (value.kind !== 'personal-account') validateReceivedParticipantObservers(value, observer);
   return value;
-}
-
-function validateReceiver(value: TemporalValue, observer: ObserverLife, acquiredAt: number): void {
-  if (value.kind === 'event' || value.kind === 'speech' || value.kind === 'sound')
-    validateReceivedParticipantObservers(value, observer);
-  if (
-    value.kind === 'observed-motion' &&
-    (value.exposure.observer.actorId !== observer.actorId ||
-      value.exposure.observer.physicalLife !== observer.physicalLife ||
-      value.earlier.acquiredAt > acquiredAt ||
-      value.later.acquiredAt > acquiredAt ||
-      value.earlier.confirmedThrough > acquiredAt ||
-      value.later.confirmedThrough > acquiredAt)
-  )
-    throw new Error('Foreign or future temporal motion reception.');
 }
 
 /** Validates retained exact receipts, not a second interpretation of world truth.
@@ -222,10 +207,11 @@ function validateReceiver(value: TemporalValue, observer: ObserverLife, acquired
 /** Shared current-format native binding validation, including bindings whose
  * older raw observations have already expired. */
 export function validateTemporalCurrentGroupCheckpoint(
-  _world: WorldState,
+  world: WorldState,
   value: unknown,
   now: number,
   parts: readonly (readonly [string, 'value' | 'detail' | 'pose'])[],
+  observer: ObserverLife,
 ): asserts value is import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint {
   const mark = value as import('./temporal-evidence.js').TemporalCurrentGroupCheckpoint;
   if (
@@ -236,10 +222,11 @@ export function validateTemporalCurrentGroupCheckpoint(
     !mark.members.length ||
     !Array.isArray(mark.content) ||
     !finite(mark.lastAt) ||
+    mark.lastAt < 0 ||
     mark.lastAt > now ||
-    !ordinal(mark.lastOrder) ||
     !ordinal(mark.lastMeasurementRevision) ||
     !ordinal(mark.terminalBytes) ||
+    mark.terminalBytes === 0 ||
     typeof mark.gap !== 'boolean' ||
     (mark.refusedAt !== undefined &&
       (!Array.isArray(mark.refusedAt) ||
@@ -249,12 +236,23 @@ export function validateTemporalCurrentGroupCheckpoint(
     !mark.members.every((member) =>
       parts.some(([kind, part]) => member.kind === kind && member.part === part),
     ) ||
+    new Set(mark.members.map(({ kind, part }) => JSON.stringify([kind, part]))).size !==
+      mark.members.length ||
     !mark.content.every((value) =>
       mark.members.some((member) => member.kind === value.kind && member.part === value.part),
     )
   )
     throw new Error('Invalid sparse recording continuation.');
   validateEvidenceSource(mark.lastSource);
+  const history = world.experience?.temporal?.actors[observer.actorId];
+  if (
+    !history ||
+    history.epoch !== mark.epoch ||
+    history.physicalLife !== observer.physicalLife ||
+    mark.lastSource.observer.actorId !== observer.actorId ||
+    mark.lastSource.observer.physicalLife !== observer.physicalLife
+  )
+    throw new Error('Recording continuation belongs to another receiver or timeline.');
 }
 function validateReceipt(
   world: WorldState,
@@ -278,6 +276,20 @@ function validateReceipt(
     !temporalSubject(receipt.subject) ||
     typeof receipt.required !== 'boolean' ||
     !strings(receipt.sourceIds) ||
+    (receipt.contextSubjects !== undefined &&
+      (!strings(receipt.contextSubjects) || !receipt.contextSubjects.every(temporalSubject))) ||
+    (receipt.spatialContext !== undefined && receipt.spatialContext !== true) ||
+    (receipt.availabilityAt !== undefined &&
+      (!finite(receipt.availabilityAt) ||
+        receipt.availabilityAt < 0 ||
+        receipt.availabilityAt > receipt.at)) ||
+    (receipt.coverageGap !== undefined &&
+      (!record(receipt.coverageGap) ||
+        !finite(receipt.coverageGap.from) ||
+        !finite(receipt.coverageGap.through) ||
+        receipt.coverageGap.from < 0 ||
+        receipt.coverageGap.from > receipt.coverageGap.through ||
+        receipt.coverageGap.through > receipt.at)) ||
     !Array.isArray(receipt.facets) ||
     (!receipt.facets.length &&
       !['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(receipt.change)) ||
@@ -297,6 +309,7 @@ function validateReceipt(
   const members = new Set<number>(),
     observer = { actorId, physicalLife: receipt.physicalLife },
     sources = world.receivedValues?.sources ?? {};
+  if (receipt.origin !== undefined) validateObservationOrigin(receipt.origin, observer, receipt.at);
   receipt.facets.forEach((facet, index) => {
     if (
       !ordinal(facet.memberIndex) ||
@@ -306,7 +319,11 @@ function validateReceipt(
       facet.measuredFrom < 0 ||
       facet.measuredThrough < facet.measuredFrom ||
       facet.measuredThrough > facet.acquiredAt ||
-      facet.acquiredAt > receipt.at
+      facet.acquiredAt > receipt.at ||
+      (facet.confirmedThrough !== undefined &&
+        (!finite(facet.confirmedThrough) ||
+          facet.confirmedThrough < facet.measuredThrough ||
+          facet.confirmedThrough > receipt.at))
     )
       throw new Error('Invalid received logical member.');
     members.add(facet.memberIndex);

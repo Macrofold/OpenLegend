@@ -1584,9 +1584,13 @@ export function validateReceivedGeometryState(
       throw new Error('Invalid received boundary owner.');
   for (const feature of receivedGeometryFeatures(state))
     if (feature.recording)
-      validateTemporalCurrentGroupCheckpoint(world, feature.recording, world.simTime, [
-        [feature.observation.facets[0]!.value.kind, 'value'],
-      ]);
+      validateTemporalCurrentGroupCheckpoint(
+        world,
+        feature.recording,
+        world.simTime,
+        [[feature.observation.facets[0]!.value.kind, 'value']],
+        feature.observation.observer,
+      );
   for (const observation of observations) {
     validateObservationContribution(observation, originals);
     if (
