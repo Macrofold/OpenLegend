@@ -1,0 +1,671 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "character-motion-2026-10-31",
+  "revisionId": "sha256-95a47e150510a00b774efe0f624d7473ecd6146ccc1002f973a4a1ab96e0eeac",
+  "manifestSha256": "69e432fa2a346568235ef6073ff886be3d2b97d9f6b3eb9add84a2fa30cced20"
+ },
+ "files": {
+  "export/f01-sela-tern-motion.clips.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9a0932dd13322fb27b21172be92d9e7bfe27083e9e170cbda50474329a326843",
+   "bytes": 456,
+   "mediaType": "application/json"
+  },
+  "export/f01-sela-tern-motion.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b59cb9cc283d4c01d95e93cc0a785bb91f8b5b03a991d2900ac40b464e2f7f86",
+   "bytes": 6193096,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/f02-jessa-cairn-motion.clips.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8256c51388325f9f710c44f273b80e0b75ac53eb74a25db4286e4e5b84d6de2f",
+   "bytes": 457,
+   "mediaType": "application/json"
+  },
+  "export/f02-jessa-cairn-motion.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "87e70ce8afebf621bd6573dc4f94b16d70c7d8b62cb6ac47ecdef8b55278ebed",
+   "bytes": 6140072,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/f03-ada-motion.clips.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "d57ec81a11110ef58a6dcf0d7dc5cc77705c538b9932195306a3499e476856cc",
+   "bytes": 457,
+   "mediaType": "application/json"
+  },
+  "export/f03-ada-motion.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f864e2fd37b8d6517c40c2679e56b2dd4fec983efc4d84be97889b3264b7809b",
+   "bytes": 5750636,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/f04-mara-reed-motion.clips.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5e38b2c252443227de00b13eb23ec86c7d9def55d03dda3c5be64d9ddba2a6ab",
+   "bytes": 458,
+   "mediaType": "application/json"
+  },
+  "export/f04-mara-reed-motion.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2c3b345a5d214434e557c921bf2f8197a6c6d1086675fe48f1cf47c95d7a0858",
+   "bytes": 5414116,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/f06-orin-motion.clips.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "aa7f7575307670d48b0323fcb42d556934304aab951c24d01e270a7a1d05638e",
+   "bytes": 458,
+   "mediaType": "application/json"
+  },
+  "export/f06-orin-motion.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2c1d5b0621f3553b5b7e4e84de32c58b0667ecc8d1646bb8b6ee4bf7d3cec99b",
+   "bytes": 1834544,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/mercenary-motion-only.clips.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5d7bf02c6db06a746ab98ec2569d7ab07bd3386d1632cf0954b19ed32df9bdfb",
+   "bytes": 595,
+   "mediaType": "application/json"
+  },
+  "export/mercenary-motion-only.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8621c3b3a2abee46f0f1450015086d84cb31ba6c704c70e8b8194f63c1a520b2",
+   "bytes": 403356,
+   "mediaType": "model/gltf-binary"
+  },
+  "export/mercenary-motion.clips.json": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5d7bf02c6db06a746ab98ec2569d7ab07bd3386d1632cf0954b19ed32df9bdfb",
+   "bytes": 595,
+   "mediaType": "application/json"
+  },
+  "export/mercenary-motion.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "18a328e0cc8fe584f502edb34c00b45ef416bb86db196cdfeb40471ec4212aea",
+   "bytes": 14595088,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k01-casual-walk--hf_20261031_234146_14dd3adf-cd25-424e-91f0-e7b951e41986.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "ec02cb201ab8431dfe4a90ef95c6527953d7df374c7109ae495d64c288641b7c",
+   "bytes": 1863716,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k02-walking-2--hf_20261031_234146_9d27b73e-ba20-4c17-8928-abaa19ee686e.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "dedf1919937e19a3e77d139151597ed302d14a687512368e3d11a41fdb85277a",
+   "bytes": 1784316,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k03-run-fast--hf_20261031_234146_3c2f3adc-cae8-4b5c-8bd2-3aa05d1e30c0.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f87a09ef506c131e4614af47ef998f5967b602e5972acbaacca6adfdc3166d88",
+   "bytes": 1765540,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k04-run-03--hf_20261031_234146_3e994ea7-45c8-49a0-b003-41b8d7730958.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "06f7424bd22e69c2fa99a2335603e03423cb57a38dea40c4301b5049d21c226e",
+   "bytes": 1773736,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k05-sword-slash--hf_20261031_234146_03a495a9-92ef-43a2-9bee-5c103bdd3802.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a9e498fa1af56f77c13cd9b4a6834fc09b4fa72a3bb6c9395bfd9d7046b6bc54",
+   "bytes": 1792064,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k06-jab--hf_20261031_234146_6707cadd-dbd2-4767-85d6-183670bb35c6.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3818543847990cbe8e7c99972415c298675314e3998a135741cda10856e1ef8d",
+   "bytes": 1805804,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k07-stand-dodge--hf_20261031_234146_0a224fe1-7ade-44b6-8831-15f9ecb6a705.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "d483d31fbd6be7f30ba1c881b421500f06c8b70451c40b2187ff70575a9b0cea",
+   "bytes": 1789680,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k08-wave-one-hand--hf_20261031_234146_c3453041-336d-41ea-8191-4915a6a8e2bb.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5a650d8f26bcbf0dee47018d329a4f0ee2cf6c4e8d682f68514222ccfbed4b2a",
+   "bytes": 1861336,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k09-big-wave--hf_20261031_234312_167dacb0-c57f-4d3d-950f-98ea206b73e3.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2c3ccaf7b9d7d6dbdc61948f7cd5712ffbace2d2f5cc494fac7ef13553ba5542",
+   "bytes": 1894096,
+   "mediaType": "model/gltf-binary"
+  },
+  "models/k10-idle-02--hf_20261031_234312_bd2d8e88-e28a-4074-996b-b81d23980233.glb": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a467e99a072a332af12f7f481711c5adf89a468c1a6fff09d3c49dbb29ca0c59",
+   "bytes": 1802076,
+   "mediaType": "model/gltf-binary"
+  },
+  "review/mercenary-pose-strips.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b5ca28ce759c70130315e333f15b11d0f5805136d47a1961393cded33c71554c",
+   "bytes": 711165,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "602b619d886fbaef3dbe60a6a54ff45380825934dfe94ee840606f89b9d3a0cc",
+   "bytes": 109576,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "775094d427120aa8835d3c849369dd07a8cb6010dacc1e84e22050ef99cf395b",
+   "bytes": 109409,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "d14f36af6b636d833ebfedab036bcd69b9cd135b5382abda557aa4add0a769fd",
+   "bytes": 109597,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "0b413bc0296041ce657f63c295467b87322ea4174d66d056230853290f811e52",
+   "bytes": 108248,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "5c03c6784df6ee910356061fa0d46f4aac57b5737245995d1133c890a10e49ff",
+   "bytes": 107561,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "68023a7a335138ab33e7c476ec6cbce9d36eccb40d2fd9ea6d0ffb883a57b4da",
+   "bytes": 110112,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7f9c8f45e70421060b5a99b9e97c149e3eea533e2ec4879cfddbde45de9ee856",
+   "bytes": 109951,
+   "mediaType": "image/png"
+  },
+  "review/poses/Attack-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "94d21e86ccfdcb92322e7299f259e49fc0e5b9d2b5b2832cb96459e66f69b0c2",
+   "bytes": 109681,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e47e79d1f46b4212227d3210513596ace03105b784128cc3322e0f0b55c89cef",
+   "bytes": 109039,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "b52beb4081ffd5b2404a862c841e791b89cd606753874e179a8c273f41ccc359",
+   "bytes": 109134,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "086eff041d0489172e189abe8252cb8e3a1e68924fba74439cd435de4698ecaf",
+   "bytes": 108617,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "42ee8b186ee8da95372c12f1264dd093b7df391ad3884555f048b33d935e12e4",
+   "bytes": 106089,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4b1e025a55141e825382cdf0ba5009625a2686855cf7445e5725a0eacef98a7d",
+   "bytes": 107968,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7975105a5e2e1c50886d766942fb47bce9eafb48c372253ec1285adf4474c031",
+   "bytes": 108564,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a5bfbe410f0b9eac85d73a895a659ef9599d41aadebef78ed287583612fde63c",
+   "bytes": 108965,
+   "mediaType": "image/png"
+  },
+  "review/poses/Dodge-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "905b545c9c7268b1f47284249fd077b5f994c176e9dc0116e02fc2449328702d",
+   "bytes": 109239,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e66b1300a82ba4e7d9dae15b04c0b4769c0a94b3d67324f32a1fe963aa77dc11",
+   "bytes": 110381,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7b4ac973dacda631c3a55faaed89f74a8abd2c9dcb77c55e16d3cb8958650a5e",
+   "bytes": 110254,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1730b0f9843ad6017d6060114a452d281dd480b87e5ec12f4c14a3ad99ed9286",
+   "bytes": 107970,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "867d03a618ae8b0e533c348c617287b269be67e598db714f434635cac2231301",
+   "bytes": 107555,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1478f319e2ed782952a02680b873909a7d147512e57ebe75212464328f81f5a7",
+   "bytes": 109614,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "00484ed7c01bac08a58f09a59d48a9d5add4feee31e756b8d6632d0c48274a9a",
+   "bytes": 107853,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1bba182b6fd8c71d6bd1da131e4c2f08a6249be279180d7e70874ae102c7fb85",
+   "bytes": 109778,
+   "mediaType": "image/png"
+  },
+  "review/poses/Idle-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "16a72496d7f0d7622fd6c2ffd53af93730d7312bc010434a83574a43256e4d59",
+   "bytes": 110081,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7e49348455aeb394d918d6335e7eb0322f2c748f129e0a2b3ba15f3b8fc8d694",
+   "bytes": 109406,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "49a212aa4a806ca513ecf0a84c7eba4fd5b91120a2a8d47d5b4808ebb7f4b653",
+   "bytes": 109915,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "dc79f222671cf5949a88a66479b924768f2c6eeaf69ab0257c0efdc17db262f7",
+   "bytes": 109422,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "fa25ceca4c3a7cc525a418a97edfe4618f008667e8b26d6563e4ef2cb5e1c893",
+   "bytes": 109134,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1874a7fd9c230b69c3d0a837e3dbfbb51528901197cdda9613cacaac460edbce",
+   "bytes": 110084,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1d3d4ebac285ffb569abff161a6bb380c7369bf079d7a2cc5bed5057daef223f",
+   "bytes": 109617,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "83474fd095df40a45e8f55f94ffa08f77d9462fb8aaf0671ba008fefe8d770b1",
+   "bytes": 109416,
+   "mediaType": "image/png"
+  },
+  "review/poses/Punch-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9257e475bf77a3c804a7ea28df8d73f58780221d3eddc753c21bcef7b247ca4a",
+   "bytes": 109639,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "17f8dd929155cf80082e09e4c80065c14d561d5a280f88d6ccd4676f355c9c9c",
+   "bytes": 106500,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2820374039f975caeb68de3325d646ebb25364a3560f50c7ac357176fd3b0d1d",
+   "bytes": 105640,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f885b7b056b51aafeacc9c5b1ef326b3196af91c68a5403299543ae3fdc59cd4",
+   "bytes": 104529,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "603b8d074f9901e15afe4a1bd2049eca7cdc495ecf04c80bdb28629696c1a2e6",
+   "bytes": 105694,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7e24bb4ab7db5ef8f07f0463897fe20814133e98d8892b29b297027a37e571e7",
+   "bytes": 106146,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4966439b4f83ea4e055dca2d8536a5d05ad0c870b5309d26e59394d21345754a",
+   "bytes": 105615,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6995e43c10f111ae9f814eb1dd877d7c33e616a202fc3b0310f64780a622b2ce",
+   "bytes": 104238,
+   "mediaType": "image/png"
+  },
+  "review/poses/Run-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c8796890c60cceabc4c69561361ca9894e45b5e0ad8d96bcbe0695fb45d2c2d0",
+   "bytes": 106667,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1e327e706f3a003cf5377eed5e8a5e53c6f3ce280e77868eedf4683629070eec",
+   "bytes": 104567,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "48dc60a0e576a7d667ad58fb619cdfe346c8b379a5f3671bbc081980c34d2c4f",
+   "bytes": 103344,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "72b63a5c9257b69ef5e676fc28331ea77b974649088aa6d849b4b410f67c9b67",
+   "bytes": 103155,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "3574698cfe2a8b5856121c1801c22efc205c9475e956532463a6a92de1c14b0c",
+   "bytes": 104086,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4c01f08c62387f7a6929cb3865b2d03352a9d13859e9285bae04887300a53aeb",
+   "bytes": 103730,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "8d00b9913951f540ac8a994fb65d0bb7a46f1a87748a8ef8c969316f6981454d",
+   "bytes": 102975,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "e587a9f24d7d6c9c361612691d288d8a3e26f25410fb19bc0130a8458e99d6be",
+   "bytes": 103917,
+   "mediaType": "image/png"
+  },
+  "review/poses/Sprint-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f07df3a2f26d1c642ce28badf40b8779bbab6a4971edcc42b026a001e18f4389",
+   "bytes": 103999,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "9f4f9361c8e891212b17c3aecb58c5c14f78a66490bc3655c1b5f6f35217cb32",
+   "bytes": 108602,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "de99b6b565f8cc0311872cee24347c5204136543a3f8c8d273c3059b5fcb9fb5",
+   "bytes": 108478,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "49bda3b2397cb3eece12e29fa4aca8b43dd06cfe46b0096af107676dbbdc99c8",
+   "bytes": 109076,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "57ec1967aee0ec39e4152cdd2f07b4a630eab02475b6c9ca7200a347891726da",
+   "bytes": 106366,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "893de4cdc01d0a345cec62f36ed0a41da9044db4f1b3f10c5ae314a68821a694",
+   "bytes": 104902,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "a61a82690dbcbac1e3904d42331e1c87fc0d26fc0457c99e09fb5fbb5800e188",
+   "bytes": 108314,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f9f6c9ea62ca1b5d8bbf8c655ecb3d41846fdbf7b9d359bd32cfd210da89b4b4",
+   "bytes": 107496,
+   "mediaType": "image/png"
+  },
+  "review/poses/Walk-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4f35f9cfdd1f20e022ce87c23abf24e49bfefe3cdf6afa94358d43053860a87d",
+   "bytes": 108786,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-00.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "212dd81226e1fefef62969114ed72b372cbec1774202cf080fbc17ae5b9ff427",
+   "bytes": 108390,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-01.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "539c71f0a3f445f6efe06328fddef81e114f8d8a3c87c3208667b3dfa88c6cf7",
+   "bytes": 108961,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-02.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "7067b0c4a0b8f068b5c53772996c140d97d1ffc6950a665ee9cd7d25186338f2",
+   "bytes": 110118,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-03.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "c0dd9bf7599fdfc156d53afb84d3c5acf22c6254deaf9bb5973abeed73a779cd",
+   "bytes": 109744,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-04.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "87b4192ae49ec4e596277c8d6e82dd989e6248a73e08cac3eaaf958050c685fc",
+   "bytes": 109754,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-05.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "466c1a98ee4d76ff537c057c74b91bea55c20061d199fea716402fe6edd194b9",
+   "bytes": 109698,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-06.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "4849a38674b9ba1cc39f4ca99ed545521fb894bd0d3f5001adaa16f6a54c5c2b",
+   "bytes": 108801,
+   "mediaType": "image/png"
+  },
+  "review/poses/Wave-07.png": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "731cb9533a961a3d8aade87c1e16dd421627ea3dce8b0ba2adf6d5f80e0eef3d",
+   "bytes": 108993,
+   "mediaType": "image/png"
+  },
+  "work/recipes/bones_all.py": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "0fccb8f937d546e0c6bee44596425e100916b4b7913128513b92628e7fd3eb27",
+   "bytes": 400,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "work/recipes/gait.py": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "1d3525402f0e60abf9c4368396b6fca3443528ae97d2235a96df411921728b47",
+   "bytes": 1417,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "work/recipes/mpfb_speed.py": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "2c2ef23c902ea41c0eac4e572087aecd4ab297b8fff68b7aae16ccfeba062919",
+   "bytes": 1594,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "work/recipes/pose_strip.py": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "f8ade0e7dd52b6fc789d0e2e60fc4a59c8424df35f799e9dc93d82b376b85d6f",
+   "bytes": 1900,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "work/recipes/rest_dirs.py": {
+   "boundary": "art-studies",
+   "accessDomain": "curated-private",
+   "sha256": "6bced598bfc4ff9186b55c93ffaebe81d636b5cd00725d55a4fcaebf967021de",
+   "bytes": 840,
+   "mediaType": "text/x-python; charset=utf-8"
+  }
+ }
+}

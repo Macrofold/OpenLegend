@@ -1,7 +1,7 @@
 {
   "runtimeBaseUrl": "https://assets.openlegend.ai",
   "studyBaseUrl": "https://assets.openlegend.ai/studies",
-  "studyViewerBaseUrl": "https://assets.openlegend.ai/studies/public/viewers/webgl-ef5d1b7b6a7c6f151929717b028a2f4b673b1de1a4a84ef236c3f0d1ece0f76f/",
+  "studyViewerBaseUrl": "https://assets.openlegend.ai/studies/public/viewers/webgl-b5e612ef55fe01b22918f69abd44a130b748051167d34b80365a10159130ef0b/",
   "sourcePages": {
     "apps/client/src/characters/mercenary-assets/mercenary-motion.glb": "https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/records/apps/client/src/characters/mercenary-assets/mercenary-motion.glb.html",
     "apps/client/src/characters/mercenary-assets/mercenary-sculpted.blend": "https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/records/apps/client/src/characters/mercenary-assets/mercenary-sculpted.blend.html",

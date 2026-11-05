@@ -12,7 +12,7 @@ import {
   spritePadding,
   updateBillboardBounds,
 } from './billboard';
-import { interpolateVisualFoot } from './world-motion';
+import { CueTrack, MotionTrack } from './world-motion';
 import { WorldPresentation, lightSprite, type RevealBinding } from './world-presentation';
 import { createSpriteRelief } from './sprite-relief';
 import * as pc from 'playcanvas';
@@ -114,6 +114,19 @@ import {
 } from './art';
 
 const restingCardBounds = new pc.BoundingBox(new pc.Vec3(0, 0, 0), new pc.Vec3(0.5, 0.05, 0.5));
+// Displayed travel replays admitted positions by game time, about one snapshot gap behind the
+// newest (within these bounds, real seconds), with starts and stops eased over ±EASE.
+// docs/world-presentation.md#motion-and-depth
+const MOTION_EASE_SECONDS = 0.15;
+const MOTION_MIN_DELAY_SECONDS = 0.05;
+const MOTION_MAX_DELAY_SECONDS = 0.25;
+// A long arrival gap raises the delay at once; steady arrivals relax it over about this long.
+const MOTION_DELAY_RELEASE_SECONDS = 5;
+// Playback slows over this long (real seconds) as it nears the newest sample, rather than
+// halting there, and regains speed over about as long once the next one arrives.
+const MOTION_SOFT_STOP_SECONDS = 0.05;
+// Positions further apart than this hold and then snap: unobserved movement is never bridged.
+const MOTION_LONG_GAP_SECONDS = 0.6;
 
 interface RenderedEntity {
   attackPose?: boolean;
@@ -130,7 +143,12 @@ interface RenderedEntity {
   meshes: pc.MeshInstance[];
   meshCasters: pc.MeshInstance[];
   reveal: RevealBinding;
-  renderedSupport: string | null;
+  /** Admitted positions played back in game time; see MotionTrack. */
+  motion: MotionTrack;
+  /** Heading and strike replayed on the same clock; see CueTrack. */
+  cues: CueTrack;
+  /** Displayed travel speed, metres per real second. */
+  speed: number;
   view: EntityView;
   materials: pc.StandardMaterial[];
   lastFrame: number;
@@ -158,8 +176,21 @@ export class WildernessScene implements WorldRenderer {
   private sun!: pc.Entity;
   private landscape!: pc.Entity;
   private actors = new Map<string, RenderedEntity>();
-  /** Only entries still approaching an accepted pose need interpolation math. */
+  /** Only entries with admitted travel still to play back need interpolation math. */
   private readonly movingEntries = new Set<string>();
+  /** Game-time playback clock for displayed travel: newest admitted snapshot time, the time
+   * being shown, the world's game seconds per real second, the playback's own pace this frame,
+   * the wanted delay behind the newest snapshot and its arrival, both in real seconds, and
+   * whether the world is halted (paused or preparing navigation). */
+  private readonly motionClock = {
+    newest: Number.NaN,
+    shown: 0,
+    rate: 0,
+    pace: 0,
+    delay: MOTION_MAX_DELAY_SECONDS,
+    arrival: 0,
+    halted: false,
+  };
   private knownEvents = new Set<string>();
   private textures: pc.Texture[] = [];
   private materials: pc.StandardMaterial[] = [];
@@ -699,6 +730,21 @@ export class WildernessScene implements WorldRenderer {
     }
     if (treatmentChanged && this.view) this.setView(this.view);
   }
+  /** Each modelled character's displayed speed and pose state, cheap enough for study captures
+   * to sample every frame (artDiagnostics measures far more). */
+  motionDiagnostics() {
+    return [...this.actors.values()]
+      .filter((entry) => entry.model)
+      .map((entry) => {
+        const p = entry.root.getPosition();
+        return {
+          id: entry.view.id,
+          speed: entry.speed,
+          position: [p.x, p.y, p.z],
+          ...entry.model!.motionDiagnostics(),
+        };
+      });
+  }
   artDiagnostics() {
     const stats = this.app.stats;
     const device = this.app.graphicsDevice;
@@ -811,6 +857,7 @@ export class WildernessScene implements WorldRenderer {
     }
     const controlChanged = this.view?.access?.scope !== view.access?.scope;
     this.view = view;
+    this.admitMotionTime(view);
     this.perception.setView(view);
     if (this.terrain !== view.map.terrain) {
       this.terrain = view.map.terrain;
@@ -923,7 +970,10 @@ export class WildernessScene implements WorldRenderer {
       }
     for (const entity of entities) {
       let entry = this.actors.get(entity.id);
-      if (entry?.observed && entry.view === entity) continue;
+      if (entry?.observed && entry.view === entity) {
+        entry.motion.confirm(view.clock.seconds);
+        continue;
+      }
       this.movingEntries.add(entity.id);
       const baseSignature = `${
         entity.contents
@@ -942,13 +992,18 @@ export class WildernessScene implements WorldRenderer {
             entity.assembly.shapes,
           ])
         : baseSignature;
+      // A changed appearance rebuilds the display but keeps an observed body's playback, so a
+      // walker who equips something does not jump ahead to its newest position.
+      let playback: Pick<RenderedEntity, 'motion' | 'cues'> | undefined;
       if (entry && entry.root.tags.list()[0] !== signature) {
+        if (entry.observed) playback = { motion: entry.motion, cues: entry.cues };
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
         entry = undefined;
       }
       if (!entry) {
         entry = this.makeEntity(entity, view);
+        if (playback) Object.assign(entry, playback);
         entry.root.tags.add(signature);
         this.actors.set(entity.id, entry);
       }
@@ -999,6 +1054,7 @@ export class WildernessScene implements WorldRenderer {
               : [entity.bodySize?.width ?? entry.width, entity.bodySize?.height ?? entry.height],
           );
       }
+      this.admitMotionSample(entry, entity, view);
       entry.view = entity;
       entry.observed = true;
       delete entry.departedAt;
@@ -1573,6 +1629,122 @@ export class WildernessScene implements WorldRenderer {
       b.z - a.z,
     );
   }
+  private motionStart(view: EntityView, game: GameView) {
+    const point = {
+      time: game.clock.seconds,
+      point: view.position,
+      support: view.supportSurfaceId,
+    };
+    const cue = {
+      time: game.clock.seconds,
+      heading: view.heading,
+      action: view.actionAnimation ?? null,
+    };
+    return { motion: new MotionTrack(point), cues: new CueTrack(cue), speed: 0 };
+  }
+  /** Place a snapshot on the travel playback clock (see MotionTrack). */
+  private admitMotionTime(view: GameView): void {
+    const clock = this.motionClock;
+    const seconds = view.clock.seconds,
+      rate = view.clock.speed * view.clock.baseRatio,
+      now = performance.now() / 1000;
+    const halted = view.clock.paused || !!view.clock.preparingNavigation;
+    if (seconds > clock.newest && !clock.halted) {
+      // Stay at least the longest recent arrival gap behind, so uneven ticks still have a next
+      // sample. Starting at the maximum keeps the first irregular ticks from starving playback.
+      const gap = now - clock.arrival;
+      clock.delay = pc.math.clamp(
+        Math.max(gap, clock.delay * Math.exp(-gap / MOTION_DELAY_RELEASE_SECONDS)),
+        MOTION_MIN_DELAY_SECONDS,
+        MOTION_MAX_DELAY_SECONDS,
+      );
+    }
+    // The world's present time is carried forward from here; a halt, its end and the first
+    // snapshot are not arrival gaps.
+    if (seconds > clock.newest || halted || clock.halted || !Number.isFinite(clock.newest))
+      clock.arrival = now;
+    clock.halted = halted;
+    // First snapshots, rewinds and long jumps restart playback. A speed change keeps playing:
+    // the pace nudges absorb it, and restarting would jump bodies back along their samples.
+    if (!(seconds >= clock.newest) || seconds - clock.newest > MOTION_LONG_GAP_SECONDS * rate) {
+      clock.shown = seconds - (clock.delay + MOTION_SOFT_STOP_SECONDS + MOTION_EASE_SECONDS) * rate;
+      clock.pace = rate;
+    }
+    clock.newest = seconds;
+    clock.rate = rate;
+  }
+  private admitMotionSample(entry: RenderedEntity, entity: EntityView, view: GameView): void {
+    const sample = {
+      time: view.clock.seconds,
+      point: entity.position,
+      support: entity.supportSurfaceId,
+    };
+    const latest = entry.motion.latest;
+    const cue = {
+      time: sample.time,
+      heading: entity.heading,
+      action: entity.actionAnimation ?? null,
+    };
+    // A body seen again after being out of sight snaps: the gap was not observed.
+    if (!entry.observed) {
+      entry.motion.reset(sample);
+      entry.cues.reset(cue);
+      return;
+    }
+    entry.cues.push(cue);
+    if (
+      latest.support !== sample.support ||
+      Math.abs(latest.point.x - sample.point.x) +
+        Math.abs(latest.point.y - sample.point.y) +
+        Math.abs(latest.point.z - sample.point.z) >
+        1e-6
+    )
+      entry.motion.push(sample, MOTION_LONG_GAP_SECONDS * this.motionClock.rate);
+    else entry.motion.confirm(sample.time);
+  }
+  private advanceMotionClock(dt: number): void {
+    const clock = this.motionClock;
+    if (!Number.isFinite(clock.newest)) {
+      clock.pace = 0;
+      return;
+    }
+    const step = Math.min(dt, 0.1),
+      rate = clock.rate,
+      ease = MOTION_EASE_SECONDS * rate;
+    if (clock.halted) {
+      // A halted world still finishes showing what it admitted, so bodies come to rest where it
+      // holds them; nothing moves after its newest sample, so the window may look past it.
+      const end = clock.newest + ease;
+      clock.pace = clock.shown < end ? rate : 0;
+      clock.shown = Math.min(clock.shown + step * clock.pace, end);
+      return;
+    }
+    // Steer by the world's present time, carried forward from the newest snapshot's arrival:
+    // it advances smoothly between uneven snapshots, whereas steering by the newest time
+    // itself surged displayed speed at every arrival. A bounded nudge toward the wanted lag
+    // is invisible.
+    const present = clock.newest + (performance.now() / 1000 - clock.arrival) * rate;
+    // The wanted lag spares the soft stop too, so gaps up to the delay never slow playback.
+    let late =
+      (present - clock.shown) / rate - clock.delay - MOTION_SOFT_STOP_SECONDS - MOTION_EASE_SECONDS;
+    // After a frame stall longer than an unobserved gap, catching up would take seconds of
+    // visibly fast travel; jump instead, as bodies already snap across such gaps.
+    if (late > MOTION_LONG_GAP_SECONDS) {
+      clock.shown += late * rate;
+      late = 0;
+    }
+    let pace = rate * (1 + pc.math.clamp(late, -0.1, 0.2));
+    // Never show beyond what the ease window can see; slow down approaching that edge.
+    const headroom = (clock.newest - ease - clock.shown) / rate;
+    pace *= pc.math.clamp(headroom / MOTION_SOFT_STOP_SECONDS, 0, 1);
+    // Slowing follows the headroom at once; regaining speed is gradual, so a late snapshot
+    // does not lurch the body forward.
+    clock.pace =
+      pace < clock.pace
+        ? pace
+        : clock.pace + (pace - clock.pace) * (1 - Math.exp(-step / MOTION_SOFT_STOP_SECONDS));
+    clock.shown = Math.min(clock.shown + step * clock.pace, clock.newest - ease);
+  }
   private releaseEntity(entry: RenderedEntity): void {
     this.movingEntries.delete(entry.view.id);
     if (this.hoveredId === entry.view.id) this.clearHover();
@@ -1673,7 +1845,7 @@ export class WildernessScene implements WorldRenderer {
         meshes,
         meshCasters: meshes,
         reveal: this.presentation.addReveal(sprite, asset.materials[0]!, false, false),
-        renderedSupport: view.supportSurfaceId,
+        ...this.motionStart(view, game),
         view,
         materials: asset.materials,
         images: [],
@@ -1895,7 +2067,7 @@ export class WildernessScene implements WorldRenderer {
         !crate,
         person || view.kind === 'animal',
       ),
-      renderedSupport: view.supportSurfaceId,
+      ...this.motionStart(view, game),
       view,
       materials: asset.materials,
       images: asset.images,
@@ -2480,6 +2652,7 @@ export class WildernessScene implements WorldRenderer {
     if (this.suspended) return;
     const profileStarted = this.profiler?.begin();
     this.elapsed += Math.min(dt, 0.1);
+    this.advanceMotionClock(dt);
     for (const [id, entry] of this.actors) {
       const opacity = this.entityOpacity(entry);
       if (entry.departedAt !== undefined && opacity === 0) {
@@ -2502,47 +2675,48 @@ export class WildernessScene implements WorldRenderer {
         );
         continue;
       }
-      const interpolating = this.movingEntries.has(entry.view.id);
-      const position = interpolating ? entry.root.getPosition().clone() : entry.root.getPosition();
-      const dx = interpolating ? entry.view.position.x - position.x : 0;
-      const dy = interpolating ? entry.view.position.y - position.y : 0;
-      const dz = interpolating ? entry.view.position.z - position.z : 0;
-      const moving = Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 0.025;
-      const screenMotion = dx * this.camera.right.x + dz * this.camera.right.z;
-      if (Math.abs(screenMotion) > 0.012) entry.facing = screenMotion < 0 ? -1 : 1;
-      if (
-        this.view &&
-        (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 1e-6 ||
-          entry.renderedSupport !== entry.view.supportSurfaceId)
-      ) {
-        const pose = interpolateVisualFoot(
-          this.view.map,
-          position,
-          entry.view.position,
-          entry.renderedSupport,
-          entry.view.supportSurfaceId,
-          1 - Math.exp(-Math.min(dt, 0.1) * 13),
-        );
-        position.set(pose.point.x, pose.point.y, pose.point.z);
-        entry.renderedSupport = pose.support;
+      const position = entry.root.getPosition();
+      let speed = 0,
+        screenMotion = 0,
+        positionChanged = false;
+      if (this.view && this.movingEntries.has(entry.view.id)) {
+        const clock = this.motionClock,
+          ease = MOTION_EASE_SECONDS * clock.rate;
+        const shown = entry.motion.evaluate(this.view.map, clock.shown, ease);
+        const dx = shown.point.x - position.x,
+          dz = shown.point.z - position.z;
+        screenMotion = dx * this.camera.right.x + dz * this.camera.right.z;
+        speed = entry.motion.speed(clock.shown, ease) * clock.pace;
+        positionChanged = Math.abs(dx) + Math.abs(shown.point.y - position.y) + Math.abs(dz) > 1e-6;
+        if (positionChanged) entry.root.setPosition(shown.point.x, shown.point.y, shown.point.z);
+        if (entry.motion.settled(this.motionClock.shown - ease))
+          this.movingEntries.delete(entry.view.id);
       }
-      const positionChanged = position.distance(entry.root.getPosition()) > 1e-6;
-      if (positionChanged) entry.root.setPosition(position);
-      if (interpolating && Math.abs(dx) + Math.abs(dy) + Math.abs(dz) <= 1e-6)
-        this.movingEntries.delete(entry.view.id);
-      this.updateModelVisibility(entry);
+      // A halted world freezes presentation once its playback has caught up.
+      const paused = this.motionClock.halted && this.motionClock.pace === 0;
+      // Displayed speed drives gait and sprite steps; it is what the player sees, not a fact.
+      entry.speed = paused ? 0 : speed;
+      const moving = entry.speed > 0.25;
+      if (Math.abs(screenMotion) > 0.004) entry.facing = screenMotion < 0 ? -1 : 1;
+      const replayed = entry.cues.at(this.motionClock.shown);
+      // The controlled body faces its newest heading, as the locked camera and its senses do.
+      const cue =
+        entry.view.id === this.view?.player.id
+          ? { heading: entry.view.heading, action: replayed.action }
+          : replayed;
+      this.updateModelVisibility(entry, cue.action);
       if (entry.root.enabled) this.installSceneProp(entry);
       entry.model?.update(
-        entry.view,
+        cue,
         dt,
-        moving,
-        !!this.view?.clock.paused || !!this.view?.clock.preparingNavigation,
+        entry.speed,
+        paused,
         this.revealStrength(entry),
         this.selected === entry.view.id && this.identifiable(entry),
         this.artSettings,
       );
       if (entry.model) entry.sprite.enabled = !entry.model.visible;
-      const punch = entry.view.actionAnimation;
+      const punch = cue.action;
       let punchFrame = 0;
       if (
         (punch?.kind === 'punch' || punch?.kind === 'melee') &&
@@ -2827,14 +3001,19 @@ export class WildernessScene implements WorldRenderer {
     this.resetFrameRate();
     if (document.visibilityState !== 'visible') this.blur();
   };
-  private updateModelVisibility(entry: RenderedEntity): void {
+  private updateModelVisibility(
+    entry: RenderedEntity,
+    action = entry.cues.at(this.motionClock.shown).action,
+  ): void {
     if (!entry.model) return;
+    // A strike shows on the model only if it has strike clips; otherwise the sprite's arm
+    // frames show it. Both follow the replayed strike, in step with displayed travel.
     const supported =
       entry.observed &&
       entry.root.enabled &&
       !entry.view.bodyState &&
       !entry.view.statusEffects?.some((effect) => effect.pose === 'horizontal') &&
-      !entry.view.actionAnimation &&
+      (!action || entry.model.animatesStrikes) &&
       entry.view.departureProgress === undefined;
     entry.model.setVisible(supported);
     entry.sprite.enabled = !entry.model.visible;

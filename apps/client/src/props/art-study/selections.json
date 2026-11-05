@@ -25,5 +25,7 @@
   "study:natural-leafy-berries-quiet": "study:rooted-berries-quiet",
   "study:natural-wolf-quiet": "study:woodland-wolf-quiet",
   "study:natural-arrow-clear": "study:field-arrow-quiet",
-  "study:natural-leafy-shrub-quiet": "study:rooted-shrub-quiet"
+  "study:natural-leafy-shrub-quiet": "study:rooted-shrub-quiet",
+  "study:ada-field-tunic": "study:ada-sheet-model",
+  "study:mara-travel-coat": "study:mara-sheet-model"
 }

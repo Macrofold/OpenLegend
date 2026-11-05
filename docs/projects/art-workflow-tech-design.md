@@ -1,0 +1,225 @@
+# Art workflow — technical design
+
+| Status      | Current progress                                                                                                                                                                                                                     | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Stages 1–3 are delivered: the pages, the art tool (`report`, `sheet models`, `normalize`, `clips`) and the local model preview. The proof run's character-sheet part is done; the wrapped-family test and a state-sheet prop remain. | 2026-11-01   |
+
+This design describes how the [art workflow](art-workflow-feature-spec.md) is built: which page owns what, the seam to the art direction, the naming and storage conventions, the helper tool, the local model preview, the consumer contract the 3D route relies on, and the delivery tasks. The workflow is an agent-operated procedure; almost all of it runs on tools that already exist (the Higgsfield CLI, the OpenAI Images API, Blender 5.2.2 and the `pnpm assets` CLI). The new code is deliberately small.
+
+## Maintained records
+
+- **Implementation:** [AF04–AF09](../maintainers/art-direction.md#art-flow-follow-through).
+- **Limits and constraints:** no new discretionary limits ([feature specification](art-workflow-feature-spec.md#maintained-records)). The helpers read the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) values from one table, and the preview applies [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload).
+- **Related:** [feature specification](art-workflow-feature-spec.md); [asset workflow](../asset-workflow.md); [PlayCanvas guidance](../../.agents/skills/openlegend-playcanvas/SKILL.md); [world presentation](../world-presentation.md); [V3D tracker](../maintainers/3d-pixel-art.md).
+
+## 1. Pages and owners
+
+| Page                                                                                            | Owns                                                                                                                                             | Read when                                                        |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| [`openlegend-art` skill](../../.agents/skills/openlegend-art/SKILL.md)                          | Entry point: read order, defaults, scope rules                                                                                                   | Any art request (root route)                                     |
+| [`ol-design` skill](../../.agents/skills/ol-design/SKILL.md)                                    | `/ol-design` alias of the above                                                                                                                  | `/ol-design`                                                     |
+| [Art workflow](../production-workflows/art-flows/README.md)                                     | Settings, the simple and full paths with step options, fidelity, look seam, the seven stages, review, spending, naming, comparison, preservation | Every request                                                    |
+| [Tools and defaults](../production-workflows/art-flows/tools.md)                                | Default roster, presets and overrides, per-tool commands, cost estimates, job recovery, check dates                                              | Every request with a tool step                                   |
+| [Profiles](../production-workflows/art-flows/profiles.md)                                       | Coverage per subject kind and the play checks                                                                                                    | The matching profile only                                        |
+| [3D models](../production-workflows/art-flows/3d-models.md)                                     | Concept or sheet → prop, character or creature GLB, step by step, on either path; consumer contract and budgets                                  | 3D props, characters, creatures                                  |
+| [Production packages](../production-workflows/art-flows/production.md)                          | Package contract; the finalize path; 2D, sprite, 2D rig, animation, material, environment, VFX and audio recipes                                 | Production of non-3D assets, package rules and the finalize path |
+| [Study record](../production-workflows/art-flows/study-record.md)                               | The record outline and final message                                                                                                             | Writing or resuming a study                                      |
+| [Current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance) | The look's entry point and its production notes                                                                                                  | Every brief                                                      |
+| [Asset workflow](../asset-workflow.md)                                                          | Storage commands, workspaces, publishing problems                                                                                                | Fetching, saving, publishing                                     |
+| [Production handbook](../production-workflows/README.md) chapters                               | Turning art into play: objects, characters, scenes, interfaces, feedback                                                                         | Integration work                                                 |
+
+**Removed:** `art-flows/standard.md` (its steps were duplicates of the shared procedure; its tool rules moved to the roster) and `art-flows/higgsfield.md` (its access, billing, reference-role, Canvas and recovery notes moved to the [Higgsfield section](../production-workflows/art-flows/tools.md#higgsfield) of the tools page). The production page's two 3D recipes moved, expanded, into the 3D page. Links were repaired in the same change.
+
+**Routing.** The root `AGENTS.md` art-direction route now points at the stable art-direction entry point, and the art route covers every art generation, study, 3D or production request, including `/ol-design` and any named tool or flow. Asset export and inspection work also loads the [PlayCanvas skill](../../.agents/skills/openlegend-playcanvas/SKILL.md) through the existing engineering route; the 3D page does not repeat it.
+
+## 2. The art-direction seam
+
+- **Interface.** The workflow needs five things from a world's art direction: target and rejects, proportion and scale rules, references with roles and rights, production notes, and review conditions. The bundled world supplies them through [current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance), a dateless heading that names the dated sections now current and carries **how the current look changes production**.
+- **Why a new heading instead of renaming.** The dated requirements heading is linked from 56 files. Renaming it would churn unrelated documents, while a stable entry point gives the workflow a durable target.
+- **Changing the look.** Edit the entry point, its production notes and the dated sections it names. Nothing in `docs/production-workflows/` should need to change; if it does, the seam leaked and the leaked rule moves to the art direction.
+- **Another world.** A world that brings its own art direction supplies the same five things in its own art-direction owner. The brief's Look block is filled from that owner instead. No registry or schema is needed until a second world exists.
+
+## 3. Conventions
+
+The [art workflow's working-files section](../production-workflows/art-flows/README.md#7-working-files-ids-and-records) owns the study and candidate IDs, the record location, the working folder and file names; the [preservation section](../production-workflows/art-flows/README.md#9-preserve-and-resume) owns the storage destinations. They settle what the audit found inconsistent:
+
+- three study-ID formats and two candidate-ID schemes in use;
+- art studies kept in temporary directories, against the tracker's stable-workspace rule. The asset workflow's generic `/private/tmp` command examples remain illustrations for disposable checks;
+- an uncertain private study domain. Every archived study file uses `curated-private`, in both `art-studies` and `art-library`, and the local study viewer serves only `public` and `curated-private`.
+
+## 4. Helper scripts
+
+One Blender command-line tool, `scripts/art/art-tool.py`, replaces the manual inspection and preparation steps that a junior would otherwise perform differently each time. It has five commands: `report`, `sheet models`, `normalize`, `clips` and `head`. The October 31 proof run repeated normalization twelve times and clip assembly five times, so those two were built with the first two; `head` followed when the November 3 character fixes gave seven people generated heads; `sheet images` stays unbuilt. It runs in Blender's bundled Python, needs no new dependency, and writes only outside Git through the existing `external_output` guard in [`scripts/asset_workspace.py`](../../scripts/asset_workspace.py). It never calls a provider, opens a world or publishes anything.
+
+Invocation, as for the existing recipes:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup \
+  --disable-autoexec --offline-mode --python-exit-code 1 \
+  --python scripts/art/art-tool.py -- <subcommand> [options]
+```
+
+### 4.1 `report`: what is this model?
+
+`report --out <dir> [--profile character|creature|prop] [--expect-height M] <model> [<model> …]` imports each GLB, glTF, FBX or OBJ into an empty scene (choosing the importer from the file's bytes, because Tripo has delivered FBX files named `.glb`), ignoring the bone-shape mesh the glTF importer adds in its `glTF_not_exported` collection, and writes `<dir>/<name>.report.json` plus a one-screen summary:
+
+| Group     | Values                                                                                                                                                                                                 |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Size      | Bounds in glTF axes (+Y up), height, width, depth; lowest point (feet should be at 0); horizontal centre offset; unapplied object scale or rotation                                                    |
+| Geometry  | Triangles, vertices, mesh objects, loose vertices and edges, non-manifold edges, zero-area faces, UV layer count                                                                                       |
+| Materials | Unique materials; each texture's name, size, colour space and alpha                                                                                                                                    |
+| Rig       | Joint count, root joint, maximum influences per vertex, object names that equal a bone name (PlayCanvas resolves the mesh first and deforms it as the joint)                                           |
+| Motion    | Clip names, frame ranges, frame rate, duration; whether the clips the game requires are present (`Idle` and `Run` for animated characters, per [the client](../../apps/client/src/model-animation.ts)) |
+| Budgets   | Each value against the A3D table for the profile (pass, warn or over), with the limit's ID                                                                                                             |
+
+The A3D numbers live in one dictionary at the top of the script with a comment linking [the inventory](../limits/3d-pixel-art.md); that is the only place to update them. Exit code 0 means a report was written; `--strict` returns 2 when a budget is over or a required clip is missing, so the check can gate an export.
+
+### 4.2 `sheet`: one picture to compare
+
+`sheet models --out <png> --reference-height M [--fit-height M] [--tile PX] [--label TEXT] <model>…` renders every model at the same scale with Blender's Workbench engine (fast, deterministic, no lighting setup, works in background mode). Each model gets five orthographic views (front, right, back, left, three-quarter), named in a header row, in two rows: plain clay (single colour, to judge shape) and textured (material colour). The header exists because a mislabelled facing went unnoticed in the proof run until the game showed the models' backs. A reference figure at `--reference-height` (the look's reference figure from the [production notes](../../art-direction/decisions.md#how-the-current-look-changes-production); the tool has no built-in default) stands beside each model, and a label tile gives each ID, height, triangles, texture count and bones. `--fit-height` scales raw candidates of unknown units to one height first.
+
+`sheet images --out <png> [--label TEXT] [--source <image>] <id>=<image> …` (deferred) lays concept or view images on equal-size planes with a text label under each, on a neutral background, the source first. It uses the same Workbench scene, so it needs no image library.
+
+### 4.3 `normalize`: make it match the game's conventions
+
+`normalize --in <model> --out <glb> --height M [--rotate-deg N] [--max-texture N] [--blend <path>]` applies transforms, rotates by the given angle about the vertical axis (facing is checked by eye on the sheet; automatic facing detection is unreliable), and scales uniformly so the mesh height equals `--height`. It then:
+
+- moves the lowest point to 0 and centres horizontally;
+- merges vertices closer than 0.1 mm, removes loose geometry and recalculates outward normals;
+- downscales embedded textures larger than `--max-texture`;
+- renames mesh objects that collide with bone names;
+- exports through the shared export (§4.4), with no cameras or lights;
+- saves the normalized `.blend` when asked, and finishes by running `report` on the output.
+
+It does not decimate: the proof run showed the triangle budget is better met by the provider request (Meshy's target counts quads), and a rigged body would need retopology rather than a collapse. It is meant for unrigged candidates; rescaling an animated rig would leave its bone keys at the old scale.
+
+### 4.4 `clips`: give a rig the clips the game plays
+
+`clips --model <rigged> --clip NAME=<file>[#ACTION] [--clip …] [--stride NAME …] [--in-place NAME …] [--bones <map.json>] [--motion-only] --out <glb>` keeps the first file's skeleton, mesh and weights and takes exactly one clip from each named file (`#ACTION` picks one of several). Meshy's rigger returns one library clip per job, so each clip is one job. It then:
+
+- imports at the clips' own key rate, read from the first clip file's key spacing (Meshy's are 30 fps), so every key lands on a whole frame and exports unchanged; resampling at Blender's default 24 fps shortened a 0.7 s run loop. An FBX clip whose import changes the rate is refused, because restoring the rate would re-time it;
+- retargets each clip in world space: every bone of the kept skeleton turns by the same world rotation from its own rest pose as the source's bone of that name, and the root travels by the source's displacement scaled by hip height. Rigs whose bone axes differ therefore share clips; the mercenary's rig is over 100° off Meshy's, and copying joint angles twisted it. Bones the source lacks, such as the mercenary's cape, stay at rest;
+- places the legs rather than copying their turns. Meshy's automatic rig puts the knee joint in front of a straight leg (10 cm on the clip rig, proof-run Maer Fen), so its leg joints read 28° bent while the leg stands straight, and the same turns dropped feet into the ground on legs that rest straight. Each ankle follows its clip ankle's path from rest, scaled like the root's travel, and a two-bone solve bends the knee in the plane the turned leg chose. A leg reaches no farther than it stands, so it never straightens past its own standing angle; where the clip rig's falsely bent knees straighten (Wave, a run's push-off) the foot falls short for those frames. Lowering the hips per frame to reach instead made them jump up to 11 cm between frames. An ankle never goes below its standing height (the library's Wave, Punch and Dodge sink the clip rig's own feet up to 4 cm), and a foot pitches up about its ankle, rolling onto its toes, before a toe would;
+- in a stride, holds each foot still while it is down. The library's feet speed up under the hips through each stance (a sprint foot from about 4 to 11 m/s on the ground). The earlier clips' feet floated and touched for a frame, so once the placed legs stood the clips on the ground no single pace kept a foot still: in the scene study's game travel the toes slid forward a median 43% of body speed, against 14% before. A foot is down while its toes are within 4 cm of their lowest and move back under the hips. The library walk's toes hover 1–3 cm through each stance and reach the floor only as the foot rolls off them, so a 1.5 cm band found only that roll. Through each run of at least three such frames the toes move at one steady speed relative to the hips, from where they land to where they lift; each ankle goal moves by the toes' error and the leg is solved again, twice;
+- in a stride, stands the body above the hips as a runner stands (`stride_posture`). The library run leans the hips 12° and curls the upper back 29° further (41° from upright at the shoulders, with the neck bent back 27° to look ahead), its sprint leans the hips 45° and curls 20° more, and its walk 4° and 11°, which read as a hunchback on every person. Straightening the back alone, which an earlier version did, left the shoulders, arms and neck at the clip's turns for the curled chest: the shoulders rolled forward against it, a muscled chest under a tight tunic bunched into mounds and the head stood 20 cm ahead of the hips mid-run. Now:
+  - a clip whose hips lean more than 20° beyond standing on average (`STRIDE_LEAN_MAX`) has its lean scaled down in every frame, so its rise and fall stay: the sprint leans 20°, the run and walk keep theirs;
+  - each spine bone between the hips and the neck leans with the hips, keeping its turns and side bends but none of its forward curl beyond them;
+  - the shoulders turn with the chest, so they keep the clip's hold on it, and the arms half as far (`STRIDE_ARM_CARRY`): turned fully, the sprint's forward hand rose above the head; left at the clip's turns, its back arm swung out straight behind;
+  - the neck keeps the direction it has standing, with its turns and side bends, so the head stays over the shoulders; tilted with the chest, a MakeHuman neck, which leans 38° forward standing, carried the head out in front, chin first. The head keeps the clip's turn, so the gaze stays where the clip looks.
+
+  The hips turn about their joints, not their middle: the root moves so each thigh stays where the clip's own hips put it, so the legs placed afterwards keep the clip's reach, the feet land and push off where the clip's do, and the strides' ground speeds stay within 0.5% of what they were before the hips stood up (the 21 library files; the mercenary's sprint moved 0.7%). Turned about their middle, the hip joints moved forward, the sprint's feet landed elsewhere and its ground speed rose by up to 31%, and in the scene study's game travel the watchpost runners' toes slid a median 26–30% of body speed, against 6–7%. Aiming the feet from the clip's hips under hips turned about their middle restored the speeds, but Ada's push-off leg could not reach back, her foot lifted early and slid 93% of body speed at travel speed;
+
+- grounds each clip: one constant offset lowers it until its lowest foot point over the clip stands where the foot rests. The library's walk, run and sprint float the clip rig 2–7 cm, and in Wave its hips rise as its knees straighten;
+- with `--bones`, retargets onto a rig of another family. The map's `bones` name the clip bone each model bone follows, several to one where needed; unlisted bones follow their parents. Its `alignRest` limbs first turn to the direction their clip bone rests in, so a different rest pose does not offset every frame; a limb with no followed bone below it (a hand) turns with the limb above. [`scripts/art/bone-maps/mpfb-meshy.json`](../../scripts/art/bone-maps/mpfb-meshy.json) puts Meshy's clips on the MPFB study people: their arms rest 47° below horizontal against Meshy's 67°, which unaligned left the arms 20° out. Spine, neck, head, legs and feet stay unaligned, because their rest differences are anatomy or joint placement: aligned legs copied Meshy's falsely bent knees and crouched about 37° in Idle, and a foot turned to Meshy's 51° sinks its toes 6 cm. Its `relax` holds give bones no clip moves a fixed turn from rest: MPFB's fingers rest spread flat and now curl gently, more from index to little finger;
+- with `--stride`, makes a gait clip one stride that starts at left heel strike (a closed loop is rotated to start there, a longer clip keeps its first whole stride), so the game can blend walk, run and sprint phase-aligned. The strike is sought among the loop's frames once round, since its last frame stands for its first: sought on that last frame too, the strike fell there on 13 of the 22 game motion files' sprints, which were then kept unrotated and ended on a frame that after retargeting no longer matched the first, so they hitched once a stride. A stride always plays on the spot: its travel is removed before trimming, because rotating a loop that still travels leaves a jump back that a later pass cannot see, and again after; its grounding is measured over the one stride kept. Each stride's seconds and the ground speed its feet imply go in `<out>.clips.json`; the game paces its legs by them. The ground speed is how fast a foot slides back under the hips as it touches down, over the frames within 1.5 cm of its lowest point while it moves back, by central difference over the loop, measured on the clip after its feet are held. Where a foot was held still it reads the speed the foot was held at. A foot down too briefly to hold is read where it touches: the mercenary's sprint touches for one frame a foot, and pacing to the one held stretch instead slid his left foot 80% of body speed;
+- with `--in-place`, removes another clip's net travel over each loop and keeps its bob;
+- names each clip as given and writes one NLA track per clip, as the working human recipe does;
+- with `--motion-only`, exports only the skeleton and clips, for a model that loads its motion separately (the mercenary's `mercenary-motion.glb`);
+- exports through the shared export with the [working recipe's glTF settings](../production-workflows/art-flows/tools.md#blender). Quaternion signs need no repair: the pinned PlayCanvas makes each rotation track continuous when it parses a clip;
+- reports the result.
+
+### 4.5 `head`: give a body a sculpted head
+
+`head --model <rigged> --head <head> --head-eyes X,Y,Z --neck-cut M [--model-eyes X,Y,Z] [--scale S | --head-eye-spacing D [--model-eye-spacing D]] [--neck-by-colour] [--head-bone NAME] --out <glb>` replaces a rigged body's head with a separately generated head and neck, keeping the body's skeleton, clothing and every clip. It exists because generated bodies came back with faces painted on smooth heads (nose 0.1–1.3 cm ahead of the eyes) and the MakeHuman study people kept a stock look the art direction rejects, while a head generated from close-up views is sculpted (2.1–4.0 cm on the cast). How the head is made is in the [3D route](../production-workflows/art-flows/3d-models.md#give-a-person-a-generated-head). It:
+
+- removes the old head: every mesh hanging at least a tenth on the head bone or the bones below it and at most a tenth on a limb (MakeHuman's eyes, brows, lashes and hair: a long braid hangs only 21% on the head, while the body's skin hangs 40% on its limbs), and every skin face hanging only on those bones. Only those faces go, not their vertices: deleting the vertices too renumbered the rest, so the per-vertex bone list no longer lined up, half the old nape read as finger skin and stayed over the new neck, and the tint sampled the wrong faces;
+- places the new head by one landmark, the point between the eyes at the front of the eyeballs. On a rig with two eye bones (the MakeHuman family) the body's point and pupil spacing come from those bones and the scale from the two spacings, which also lands the new crown where the old head's was; a painted face has neither, so its point is read from front and side renders and its scale keeps the old head's chin-to-crown height;
+- merges the head's vertices first (glTF splits them along texture seams, which would otherwise read as open edges all over the face), then cuts it flat at `--neck-cut`. It keeps the plain dark-grey undershirt its views give it, which at an open neckline reads as an undershirt; stripping it left the old skin showing, in another colour, between its neckline and the clothing;
+- fits the bust below the base of the neck onto the body's bare skin, as cloth is fitted. Everything below the head of the lowest neck bone joined to the cut's edge is pressed onto the nearest bare skin and relaxed in turns, twenty rounds, 1.5 mm outside the skin. The press is full at the base of the body's own neck, the height where its skin hangs half on the neck and head, read level all round the neck, and grows over the 4 cm above it (or over the room down to the cut, where that is less), never from above the bone: that base sits at the bone at the nape and about 6 cm lower at the throat. Pressed from the bone all round, a generated throat standing 2 cm in front of the old one was pushed onto it just under the jaw and left a ring across the neck; ended below where the generated chest juts out, part of that chest stayed out and pinched the neck above the collar. The open edge is laid level onto the skin at its own height and is not relaxed. What the skin cannot take, where it stops under clothing, goes; the rest lies under the clothing or shows at an open neckline. Placed by the eyes, the bust is the generated person's chest, not the body's: it stood up to 10 cm outside a coat, cut flat like a shelf, and since MakeHuman bodies have no skin under their clothes it took its weights from the throat and chin and swung with the head. Pushed under the clothing instead, it folded into a ruff at the neckline; pressed in one go, the shelf's flat top crumpled into a strip there; and drawn to the nearest skin without the level edge, the edge rose in the middle and opened a notch. A piece joined to the cut's edge that comes nowhere near the body (a braid's cut end) stays put, judged over the whole piece: judged by its cut edge alone, a cut through only the front of a chest was nowhere near and left the shelf. Put the cut about 4 cm below the lowest neckline's front and at least 1 cm above the bottom of the bust as placed on that body; cut at a neckline, the bust ended there and a strip of old skin showed. A cut below the placed head is refused: it cut nothing, so nothing was fitted and the whole bust stood off like a shelf;
+- elsewhere, as where the neck is cut above its base (the painted sheet bodies), draws the cut's edge onto the body left after the old head goes, fully at the edge and fading over 2 cm, 1.5 mm outside it, so the two meet without a step. Only that edge moves: hair locks are open sheets too, and drawing their edges out to the old head's shell raised a flap at a crown;
+- removes the old skin of the neck and upper back that the new head covers (within 4 cm), except within 1 cm of the seam, so no hole opens; faces hanging on shoulders or limbs do not go. Where skin is its own mesh, all of it above the base of the neck counts as neck (MakeHuman hangs the sides of the neck partly on the collarbones, and that skin, outside a slimmer new neck, showed at Ada's collar), and the skin the fitted bust lies on goes too, whatever it hangs on and even by the seam, or it showed through mid-run. On a body painted as one mesh, a collar, scarf or hood hangs on the neck and spine like the skin, so `--neck-by-colour` removes covered skin only where its paint falls in the old head's own colours (12 levels per channel, give or take one); without it a hood's brown-grey, close to the hair's, came out in shards;
+- where skin is its own mesh, tints the body's skin paint to the new neck, so the old skin below the seam and the hands match the face: per channel, the ratio of the two necks' colours, each the median of the lighter half of its warm samples (brown hair is warm too, but darker). A body painted as one mesh is not tinted: tinting by colour also shifted clothing near the skin's colours;
+- skins the new head with the inverse-distance mix of its four nearest old skin vertices' weights, with the bones below the head folded into it, so the jaw follows the head and the neck its neck bones in every clip, and the fitted bust, as far as it was pressed, with the skin's own weights at the point it lies on, so it moves with that skin;
+- downscales every map in the output, the head's and the body's, to the budget or to `--max-texture` (a generated body's own map is 2048², and the game's copies are capped at 1024²), names the head `generated head` (never a bone's name), exports through the shared export and reports the result;
+- works at the body's own clip rate, as `clips` does, so its clips export unchanged. At Blender's default 24 fps the export resampled 30 fps clips and cut the 0.7 s run loop to 0.667 s, dropping the frame that closes it.
+
+It does not merge the head into the body's material or repaint a body painted as one mesh: where such a body shows its old painted chest skin at an open neckline (Mara's sheet model), that skin keeps its old colour. Hair that hangs below the cut is cut with it.
+
+### 4.6 Verification
+
+The script is a tool, so verification is a disposable run, not a new test suite:
+
+- run `report` and `sheet models` on three published study GLBs (the mercenary, one fitted person, one rigid prop) and compare the reported triangles, bounds and textures with their catalogs;
+- confirm the facing convention beside the published mercenary ([§10](#10-open-questions));
+- confirm the output guard refuses a path inside the checkout;
+- run `normalize` on rotated, mis-scaled candidates and confirm the report shows the height, feet at 0 and centring;
+- run `clips` on two rigging outputs and confirm the clip names, durations and key rate, that stride clips stay on the spot (the root's first and last keys match and its span is only the body's bob), then watch every clip in the study viewer.
+- run `head` on a body painted as one mesh and on a MakeHuman body, then check the head as bare clay from the front and three-quarter, the neck close up from the front, side, three-quarter and back, standing and mid-run (a bust standing off the clothing, a ring or crease across the throat, a line down the back of the neck or old skin at the collar fail), and head-and-shoulders renders mid-clip in Idle, Walk, Attack, Wave and Sprint for the seam; confirm every clip survived and the file loads in the study viewer.
+
+**Evidence so far** (the [proof run](../../art-direction/studies/2026-10-31-character-sheet-proof/README.md), 2026-10-31): `report` measured 21 provider outputs, including Tripo FBX files named `.glb`; `normalize` brought 13 candidates to 1.85 m with feet at 0, and their facing was confirmed beside the published cast in the study viewer; `clips` built four characters whose `Idle` (4.0 s) and `Run` (0.7 s) kept every 30 fps key and played correctly in the viewer. `report` also matched the catalogs of three published study models (the mercenary at 42,500 triangles and 2.035 m, Kest at 32,462 and 1.85 m, the grounded chest at 13,996 and 0.709 m, with the same texture sizes; vertex counts differ by up to 22 where Blender's importer splits seams differently), and refused an output folder inside the checkout. The [character motion study](../../art-direction/studies/2026-10-31-character-motion/README.md) retargeted eight library clips onto the five people and the mercenary's differently oriented rig; it found that `--stride` rotated a single-stride loop before removing its travel, leaving 1.28 m of drift in Walk, now fixed by removing travel before and after trimming (every stride's root now ends where it starts, within 5 cm of bob). On November 1 `--bones` put the same eight clips on the 21 MPFB library people; their meshes, materials, texture bytes and node names came through unchanged and the bind pose within 0.00003. Ground speed measured at contact reproduces the mercenary's recorded speeds within 5%, and at the game's normal 6.6 m/s travel the library people's planted feet drift a median 12–17% of body speed ([library people](../../art-direction/studies/2026-10-31-character-motion/README.md#library-people)). On November 4 `head` put seven generated heads on 21 bodies (three proof-run sheet models on Meshy's rig, 18 MPFB library outfits): every file kept its eight clips, the faces measure 2.1–4.0 cm nose ahead of the eyes against 0.1–2.5 cm before, the seams held mid-clip in five clips on four people, and the files load in the study viewer ([character fixes](../../art-direction/studies/2026-11-03-character-fixes/README.md#faces-for-the-rest-of-the-cast)). Those checks missed what Mike then saw mid-run in the game's look: the bust standing up to 10 cm off the clothing and swinging with the head, and the old nape over the new neck. With the bust fitted and the faces-only removal, no head stands more than 2.2 cm outside the clothing below the neck (4 points on Ada), against up to 1,693 points and 10.2 cm off the dressed body before. A close check before Mike's look found that the press, begun at the lowest neck bone all round, had left a ring across Kest's throat; pressed down to the body's own neck base, his and Mike's throats keep their sculpted shape, up to 2.7 cm in front of the old throats whose skin goes, the other 15 heads come out byte for byte the same, and close renders of all 18 MakeHuman outfits from four sides, standing and mid-run, show a clean neck; the straightened run leans 17° beyond standing against 31° ([character fixes](../../art-direction/studies/2026-11-03-character-fixes/README.md#the-head-and-neck-and-the-runs-back)).
+
+## 5. Local model preview in the study viewer
+
+**Problem.** The [study viewer](../../apps/client/src/art-study.ts) shows only published catalog assets, so judging a fresh candidate in the game's own look requires publishing it first. Because the current look is applied by the renderer, a Blender viewport cannot show what Mike will see.
+
+**Change.**
+
+- **Control.** Add a **Compare a local model…** control (file picker and drag-and-drop) to the study page. The chosen GLB joins the current comparison (for example the cast) as one more subject, through the same preparation path as catalog assets: material treatment, small-subject density and `installLocomotion` when it has `Idle` and `Run` clips.
+- **Loader.** [`BundledModels`](../../apps/client/src/bundled-models.ts) gains `loadBytes(name, filename, bytes)`, sharing the existing parse path instead of `readAssetBytes`, so ownership, cancellation and teardown stay as they are.
+- **Bounds.** These come from the loaded meshes, since a local file has no catalog entry: world bounds for rigid meshes, and the bind pose for skinned ones, because a skin's inverse bind matrices already cancel the providers' 0.01-scaled armature node.
+- **Card.** Like a catalog subject's card, showing the file name, height, triangles, texture sizes and clip names, with a note when `Idle` or `Run` is missing; there is no download link, since the file is already local.
+
+**Boundaries:**
+
+- The file never leaves the browser and is never uploaded, cached or published.
+- Files over the [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload) 16 MiB runtime payload bound are refused with a message: the game would not load them either, so a larger raw candidate is resized or reduced first.
+- Replacing or removing the local model releases its resources like any other comparison.
+- It is a developer study tool, not a game feature.
+- It works on the hosted public viewer and the local study server alike.
+
+**Verification:**
+
+- **Browser check:** load a local candidate beside the cast, rotate the camera, switch Idle and Run, replace it, and leave the page.
+- **Resources:** check that it was released.
+- **Bad input:** a malformed file shows an error without breaking the page.
+- **Static checks:** typecheck and the client build.
+
+**Evidence** (2026-10-31, headless Chromium driving the local study server): 13 normalized candidates and four rigged characters each joined the seven-person cast in turn, replacing the previous local model; the rigged ones played `Run` and `Idle`; **Remove local model** restored the seven; a text file named `.glb` showed "That file could not be read as a GLB model. The previous comparison is retained." and hid the remove control. Running it found two defects, both fixed: the local study server refused every workspace package (it dropped the leading `/` of Vite's `/@fs/` paths and omitted `packages/network`), so the page never finished loading; and skinned models measured 0.02 m tall, which misplaced their labels and framing.
+
+## 6. Consumer contract used by the 3D route
+
+The [3D page's consumer contract](../production-workflows/art-flows/3d-models.md#consumer-contract-and-budgets) owns the current format, axes, size, clip, naming, compression and budget requirements, each linked to its owner. The helpers read the same facts: `report` checks the required clips and the mesh/bone name rule, and its budget dictionary mirrors A3D04–A3D06. The general intake rules for arbitrary assets remain the proposed [3D pipeline design](3d-pixel-art-asset-pipeline.md#6-quarantine-conversion-and-validation); a manually prepared trusted asset uses the existing delivery path.
+
+## 7. Security, privacy and spending
+
+- **Credentials:**
+  - **Higgsfield:** uses its own signed-in CLI session.
+  - **OpenAI Images API:** needs an API key that Mike has authorized for art. A discovered key is not authorization.
+  - **New platforms:** need Mike's account and permission.
+  - Keys never enter records, prompts, sheets or Git.
+- **Uploads:** a reference image goes to a provider only when its rights note permits it. Licensed library sources may forbid upload to AI services; reference-only screenshots are never uploaded as training or generation inputs without that permission.
+- **Spending:** the [policy](../../.agents/rules/verification.md#spending) controls. The tools page gives per-tool estimates and the record keeps balances before and after each batch. Higgsfield credits are valued at the plan's per-credit price, about $0.039–0.049 on the Plus plan (checked 2026-10-31), with its own check date.
+- **Private data:** never upload private world saves, conversations or unrelated files to a generator.
+
+## 8. Delivery stages and tasks
+
+| Stage | Task                                                                  | Done when                                                                                                            |
+| ----- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| 1     | **AF04** pages, skills, art-direction seam, conventions               | This change: pages rewritten, removed pages' links repaired, guidance check passes                                   |
+| 2     | **AF05** `art-tool.py` `report`, `sheet models`, `normalize`, `clips` | §4.1–4.4 behaviour and §4.6 verification pass; the 3D page calls the tool instead of describing manual inspection    |
+| 3     | **AF06** local model preview                                          | §5 behaviour and verification pass; the 3D page's review step uses it                                                |
+| 4     | **AF07** proof run                                                    | One first-playable person and one state-sheet prop go end to end with recorded cost, time, corrections and decisions |
+| 4     | **AF08** update defaults from the proof run                           | The roster's defaults and the rig and motion recommendations reflect the measured results                            |
+| —     | **AF09** retire the synced artgen skills                              | Mike deletes or replaces them ([OD4](art-workflow-feature-spec.md#od4--retire-the-synced-artgen-skills))             |
+
+Stages 2 and 3 are independent and can run in parallel; stage 4 benefits from both but can start without them using the manual steps the 3D page gives.
+
+## 9. Alternatives considered
+
+- **Rebuild artgen as a repository CLI.** Rejected: the Higgsfield CLI already provides cost estimates, waiting and job recovery; a wrapper would duplicate it and add a provider layer to maintain. Only inspection, sheets and normalization, which no existing tool does for this project's conventions, become code.
+- **A provider abstraction for many vendors.** Rejected for now. Two connected 3D models on Higgsfield (Meshy and Tripo) plus library fits are enough until the proof run shows a need ([OD2](art-workflow-feature-spec.md#od2--a-second-3d-provider)).
+- **Keep separate Standard and Higgsfield pages.** Rejected: they duplicated the shared procedure. Presets keep Mike's vocabulary.
+- **Rename the dated art-direction heading.** Rejected: 56 incoming links; a stable entry point achieves the same independence.
+- **Turntables in the game renderer instead of Blender.** The game renderer is used for look review (§5); Blender's Workbench is used for shape sheets because it runs headless and identically every time.
+- **An interactive review page with pick buttons.** Optional, not required ([OD6](art-workflow-feature-spec.md#od6--review-surface)); a labelled sheet in the conversation works in every host.
+- **Pillow or ImageMagick for image sheets.** Rejected: neither is a project dependency, and Blender is already required for the 3D route.
+- **`@gltf-transform/cli inspect` for model reports.** Rejected as a new dependency; Blender is already required and also renders the sheets. It remains a good manual cross-check.
+
+## 10. Open questions
+
+The product questions are [OD1–OD8](art-workflow-feature-spec.md#10-open-decisions-and-questions). The two technical questions this design began with are settled (checked 2026-10-31 on this Mac's Blender 5.2.2):
+
+- **Workbench rendering:** it renders in `--background` mode, so sheets need no GPU window.
+- **Importers:** factory startup enables glTF and FBX, and OBJ is built in. Rigify is bundled but disabled; `bpy.ops.preferences.addon_enable(module="rigify")` enables it headlessly, after which its metarig operators (for example the basic quadruped) work.
+
+The facing convention is settled too: models normalized to face glTF +Z face the camera beside the published cast, including the mercenary, in the study viewer (October 31 proof run), and the 3D page's consumer contract states it.

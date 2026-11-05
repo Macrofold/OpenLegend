@@ -1,4 +1,4 @@
-import type { GameView } from '@open-legend/protocol';
+import type { ActionAnimation, GameView } from '@open-legend/protocol';
 import { WildernessScene } from './scene';
 import { StudyCapture } from './study-capture';
 import { initialCamera } from './world-camera';
@@ -36,6 +36,7 @@ let phase = 0;
 let frame = 0;
 let prior = 0;
 let lastPublication = 0;
+let nextPublication = 100;
 let disposed = false;
 let capture = new StudyCapture(canvas);
 let measurement:
@@ -108,7 +109,6 @@ function treatment(): ArtTreatment {
     foliageLight: select('world-foliage').value === 'original' ? 'original' : 'diffuse',
     prop: 'grounded',
     vegetation: 'still',
-    cloth: 'settled',
     actionFixture: action,
     motion: select('world-motion').value as ArtTreatment['motion'],
   };
@@ -138,15 +138,55 @@ function setCamera(): void {
     point: { ...view.player.position, z: view.player.position.z - 1.5 },
   });
 }
+/** The game-travel fixture: back and forth along x, resting at each end. Its speed is a fixture
+ * choice that resembles normal-speed play at this revision; the world owns real travel. */
+const TRAVEL_SPEED = 6.6;
+const TRAVEL_HALF = 4;
+const TRAVEL_REST = 1.5;
+function travel(t: number): { x: number; heading: number } {
+  const leg = (2 * TRAVEL_HALF) / TRAVEL_SPEED,
+    period = 2 * (leg + TRAVEL_REST);
+  const at = ((t % period) + period) % period;
+  if (at < leg) return { x: -TRAVEL_HALF + at * TRAVEL_SPEED, heading: Math.PI / 2 };
+  if (at < leg + TRAVEL_REST) return { x: TRAVEL_HALF, heading: Math.PI / 2 };
+  if (at < 2 * leg + TRAVEL_REST)
+    return { x: TRAVEL_HALF - (at - leg - TRAVEL_REST) * TRAVEL_SPEED, heading: -Math.PI / 2 };
+  return { x: -TRAVEL_HALF, heading: -Math.PI / 2 };
+}
+/** The strike fixture: the mercenary stands and alternates club and fist strikes, described as
+ * snapshots would describe them. Its wind-up and recovery times are fixture choices resembling
+ * normal-speed play at this revision (docs/worlds/base/combat.md#equipped-melee); the world owns
+ * real strike timing. A punch has no recovery phase. */
+const STRIKE_PERIOD = 1.6;
+function strike(t: number): ActionAnimation | null {
+  const cycle = Math.floor(t / STRIKE_PERIOD),
+    at = t - cycle * STRIKE_PERIOD,
+    id = `study-strike-${cycle}`,
+    direction = { x: 1, z: 0 };
+  if (cycle % 2) return at < 0.5 ? { id, kind: 'punch', direction, progress: at / 0.5 } : null;
+  if (at < 0.2) return { id, kind: 'melee', direction, phase: 'windup', progress: at / 0.2 };
+  if (at < 0.6)
+    return { id, kind: 'melee', direction, phase: 'recovery', progress: (at - 0.2) / 0.4 };
+  return null;
+}
 function publish(): void {
   const item = stop();
   const light = select('world-light').value;
   const original = item.view as unknown as GameView;
+  const travelMode = select('world-travel').value;
+  const game = travelMode !== 'sway';
   view = {
     ...original,
+    // The recorded view predates the projected body size; re-recording it is the real fix.
+    player: {
+      ...original.player,
+      bodySize: original.player.bodySize ?? { width: 0.5, height: 1.75 },
+    },
     map: recorded.map as unknown as GameView['map'],
     clock: {
       ...original.clock,
+      // Displayed travel is placed by snapshot time, so staged snapshots advance it.
+      seconds: original.clock.seconds + phase * original.clock.speed * original.clock.baseRatio,
       paused: !motion,
       // Keep low sun visibly above twilight so its long directional shadows
       // remain a useful comparison against the separate firelit dusk study.
@@ -161,6 +201,17 @@ function publish(): void {
       // Explicit display fixture over a recorded permitted view; never a command.
       const offset = entity.subtype === 'hare' ? 0.7 : 0;
       const t = phase + offset;
+      if (travelMode === 'strikes' && entity.id === 'peacock-mercenary')
+        return { ...entity, heading: Math.PI / 2, actionAnimation: strike(phase) };
+      if (game) {
+        // Stagger bodies so starts and stops differ; hold support at the recorded surface.
+        const leg = travel(t + (entity.id.length % 5) * 0.9);
+        return {
+          ...entity,
+          position: { ...entity.position, x: entity.position.x + leg.x },
+          heading: leg.heading,
+        };
+      }
       return {
         ...entity,
         position: { ...entity.position, x: entity.position.x + Math.sin(t) * 0.8 },
@@ -222,6 +273,8 @@ function mount(): void {
     },
   );
   scene.setPerceptionOptions({ vision: false, hearing: false });
+  // Automated motion captures read the renderer's own diagnostics through this study page.
+  Object.assign(globalThis, { sceneStudy: scene });
   scene.setShadowQuality(select('world-shadows').value as 'detailed' | 'economy');
   publish();
   setCamera();
@@ -285,9 +338,16 @@ function update(now: number): void {
   }
   if (motion && !document.hidden) {
     phase += Math.min(elapsed, 100) / 1000;
-    if (now - lastPublication > 100) {
+    if (now - lastPublication > nextPublication) {
       publish();
       lastPublication = now;
+      // Game travel mimics a busy server: mostly 50 ms ticks, sometimes skipped ones.
+      nextPublication =
+        select('world-travel').value !== 'sway'
+          ? Math.random() < 0.6
+            ? 50
+            : [100, 150, 200, 300][Math.floor(Math.random() * 4)]!
+          : 100;
     }
   }
   if (orbit && !document.hidden)
@@ -301,6 +361,7 @@ select('place').onchange = () => {
   status.textContent = stop().label;
 };
 select('world-light').onchange = publish;
+select('world-travel').onchange = publish;
 for (const id of [
   'route',
   'mercenary',

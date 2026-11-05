@@ -1,6 +1,6 @@
 # From a visual intention to a playable scene or interface
 
-**Status:** proposed offline production procedures. Use the [shared production workflow](README.md) for briefs, handoffs and revision. The [creative brief](../../art-direction/final-board/creative-brief.md), [world presentation](../world-presentation.md), [UI brief](../ui-design-brief.md) and existing design system remain the decision owners.
+**Status:** proposed offline production procedures. Use the [shared production workflow](README.md) for briefs, handoffs and revision. The [current art direction](../../art-direction/decisions.md#current-direction-at-a-glance), [world presentation](../world-presentation.md), [UI brief](../ui-design-brief.md) and existing design system remain the decision owners.
 
 The two routes here share a production method: establish what deserves attention, create a coherent visual family, connect it to real behavior, and inspect the complete result. A world scene organizes space, light and things the player can approach. An interface organizes information and actions around the player's decision. Richness is useful when it strengthens those purposes.
 
@@ -16,9 +16,9 @@ The two routes here share a production method: establish what deserves attention
 
 A world-content author and environment contributor establish these choices together. A hypothetical sheltered camp might contrast a legible gathering area with darker trees and a visible departure route. Its usefulness as shelter, its supplies and the people who live there must come from the relevant world contracts. The composition is not evidence that those mechanics exist.
 
-The [creative brief](../../art-direction/final-board/creative-brief.md) calls for layered nature, expressive people, meaningful detail and purposeful light, including warmth and daylight. Its [living-place vignette](../../art-direction/final-board/creative-brief.md#a-living-place-with-visible-causes) illustrates a coherent scene where rain, materials, people's routines and animal behavior can contribute to beauty because they share actual causes. Treat that as a scene-design target, not proof those world systems already exist. The [Sea of Stars study](../../art-direction/research/sea-of-stars/README.md) adds a concrete review hierarchy: establish a recognizable large form or route, then material/use features, then selected fine accents, with quiet regions preserving legibility. Use density to reveal material, use and identity rather than to fill space.
+Take the look, palette and reference set from the [current art direction](../../art-direction/decisions.md#current-direction-at-a-glance). The bundled world's [living-place vignette](../../art-direction/final-board/creative-brief.md#a-living-place-with-visible-causes) illustrates a scene whose beauty comes from shared actual causes such as rain, materials, routines and animal behavior; treat it as a scene-design target, not proof those systems exist. A useful review order for any look: a recognizable large form or route first, then features that come from the place's materials and use, then a few selected accents, with quiet regions preserving legibility. Use density to reveal material, use and identity rather than to fill space.
 
-Use the [Emberville study](../../art-direction/research/emberville/README.md) when a journey needs distinct places. Describe how each stop changes enclosure, materials, everyday use and atmosphere: a welcoming interior and an exposed ruin can give different reasons to pause or proceed. Carry recognizable local materials or landmarks between views so variety still feels like one world.
+When a journey needs distinct places, describe how each stop changes enclosure, materials, everyday use and atmosphere: a welcoming interior and an exposed ruin can give different reasons to pause or proceed. Carry recognizable local materials or landmarks between views so variety still feels like one world.
 
 **Useful result:** the place fulfills its intended visual and player purpose, whether activity, discovery, orientation, atmosphere or a quiet interval. If that purpose is unclear or unrewarding, revise the situation or composition before multiplying decorative assets; [characters and play](characters-and-play.md) can help when the missing value is an encounter or activity.
 
@@ -44,7 +44,7 @@ Substance Designer, Material Maker, Blender or existing native art tools can cre
 
 Separate large forms, color grouping and roughness from optional tiny noise. When a place needs novelty, derive the distinctive feature from terrain, ecology, weather, history or actual use before introducing an unrelated prop family. Define controls that an artist can use intentionally: broad stone scale, growth distribution, wood direction or restrained wear, rather than an unexplained parameter list. Show purposeful variants together, including values that expose tiling, repetition or overly noisy output.
 
-When the representation supports it, keep surface color separate from lighting information. A normal map changes how light responds without adding the actual silhouette or opening of geometry. Review whether that detail survives the game's pixel sampling. A painted shadow may conflict with a changing sun or nearby fire; adding another map does not automatically repair that conflict.
+When the representation supports it, keep surface color separate from lighting information. A normal map changes how light responds without adding the actual silhouette or opening of geometry. Review whether that detail survives the game's rendering at play distance. A painted shadow may conflict with a changing sun or nearby fire; adding another map does not automatically repair that conflict.
 
 **Useful result:** related surfaces remain readable under the intended camera and light, and a useful style revision can be made from their sources. If the family will not recur, retain the simpler one-off source instead of inventing a procedural system.
 
@@ -66,7 +66,7 @@ Use a separate reproducible visual choice where the existing visual owner requir
 
 **Produce:** a recorded scene-light setup and controlled comparisons under relevant daylight, shadow and local-light conditions. Work with the existing renderer, supported quality choices and observer-relative source information.
 
-Establish the main light direction and value structure before adding effects. Record the intended source and reach of each dominant local light so nearby materials can respond to the same event without painting unrelated bright patches into their base color. Use contrast to lead attention and connect people to the ground. Check contact shadows, color relationships and whether the same materials remain recognizable as conditions change. Let luminous or warm moments feel special by retaining quieter surroundings.
+Establish the main light direction and value structure before adding effects. Record the intended source and reach of each dominant local light so nearby materials can respond to the same event without painting unrelated bright patches into their base color. Use contrast to lead attention and connect people to the ground. Check contact shadows, color relationships and whether the same materials remain recognizable as conditions change. Let bright or luminous moments stand out by retaining quieter surroundings.
 
 The [sprite-lighting contract](../world-presentation.md#sprite-lighting) already distinguishes ordinary lit imagery, emissive presentation, actual illumination and remembered sources. Preserve it. A bright texture does not create a native light source; a new shadow recipe must not reveal an unobserved change. Baked lighting can serve sufficiently stable surfaces but must not permanently encode a constructed or removed object's shadow into an editable world.
 
@@ -94,11 +94,11 @@ The goal is controlled expansion: recognizable regional materials, distinctive l
 
 ## Art-directed working interfaces
 
-For borders, textured panels, ornamental rails and connecting elements before screen design, use the [UI-style profile](art-flows/profiles.md#ui-style) through either [art flow](art-flows/README.md). Its output is a coherent set of style specimens and construction notes. The working-interface route below applies when the request includes full interface design or implementation; do not make it a prerequisite to a surface study.
+For interface surfaces, frames and ornament before screen design, use the [UI-style profile](art-flows/profiles.md#ui-style) through the [art workflow](art-flows/README.md). Its output is a coherent set of style specimens and construction notes. The working-interface route below applies when the request includes full interface design or implementation; do not make it a prerequisite to a surface study.
 
 **Route:** player decision → information/interaction sketch → visual alternatives → complete-screen exemplar and art kit → shared components → live states → game integration → visual and interaction review.
 
-OpenLegend already has a design system and a recent world-first interface redesign. Begin with the actual current screen and owner, not an old screenshot or an assumption that the theme is missing. The [UI research](../../archive/02-research/ai-game-development/08-ui-quality-and-production.md) separates plausible causes of a weak result; it does not claim to have diagnosed today's running interface.
+OpenLegend has a running design system and an accepted interface direction, named in [current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance). Begin with the actual current screen and owner, not an old screenshot or an assumption that the theme is missing. The [UI research](../../archive/02-research/ai-game-development/08-ui-quality-and-production.md) separates plausible causes of a weak result; it does not claim to have diagnosed today's running interface.
 
 ### 1. Define the player's task and capture its current state
 
@@ -120,7 +120,7 @@ The design stage may use an AI design tool, direct drawing, HTML/CSS or existing
 
 Inspect the screen over representative scenery. Decide the relative weight of the world, item imagery, title, primary action and optional details. Use ornament deliberately; quiet regions should support reading and decision-making. Follow the existing color and type roles rather than letting each agent invent a parallel theme.
 
-The [ROCKBEASTS study](../../art-direction/research/rockbeasts/README.md#4-make-menus-feel-like-objects-and-actions-in-this-world) shows how a notebook, contract or stage plan can connect decisions to a game's identity. Explore an equipment spread, annotated map or keepsake display when its arrangement helps the actual task. Choose the material metaphor for the selected world and decision, then retain the established information hierarchy and shared controls.
+A themed presentation can connect a decision to the world's identity when its arrangement helps the actual task. Take its material metaphor from the current interface direction, then retain the established information hierarchy and shared controls.
 
 **Useful result:** a coherent composition that can be implemented against a stable visual target. An early alternative may deliberately use placeholders, but label them and define which artwork still needs production.
 

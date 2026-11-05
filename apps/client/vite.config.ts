@@ -109,6 +109,7 @@ function deliveryProjection(
                 id: asset.id,
                 file: asset.file,
                 animatedFile: asset.animatedFile,
+                strides: asset.strides,
                 depletedFile: asset.depletedFile,
                 bounds: asset.bounds,
               };
@@ -171,7 +172,8 @@ function deliveryProjection(
           studyBaseUrl: studies && !localAssetDelivery ? configured.studyBaseUrl : undefined,
           studyViewerBaseUrl: studies ? './' : configured.studyViewerBaseUrl,
         };
-        return `export const files = ${JSON.stringify(files)};\nexport const release = ${JSON.stringify(index.release)};\nexport const releaseSha256 = ${JSON.stringify(index.release.manifestSha256)};\nexport const delivery = ${JSON.stringify(delivery)};`;
+        // Only the count of every selected file, private ones included, bounds waiting reads.
+        return `export const files = ${JSON.stringify(files)};\nexport const releaseFileCount = ${Object.keys(index.files).length};\nexport const release = ${JSON.stringify(index.release)};\nexport const releaseSha256 = ${JSON.stringify(index.release.manifestSha256)};\nexport const delivery = ${JSON.stringify(delivery)};`;
       }
       if (id.startsWith(catalogsModule))
         return `export default ${JSON.stringify(readCatalogs(id.endsWith(':all'), (path) => this.addWatchFile(path)))};`;

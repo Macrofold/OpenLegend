@@ -1,7 +1,6 @@
 import { assetUrl } from './asset-files';
 import * as pc from 'playcanvas';
 import { BundledModels, type BundledModel } from './bundled-models';
-import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
 import { ArtMaterials, type ArtTreatment } from './art-treatment';
 import { WorldPresentation, type RevealBinding } from './world-presentation';
@@ -9,6 +8,9 @@ import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
 import { studyAssets } from './study-assets';
 import { installLocomotion } from './model-animation';
+import { Gait, type Stride } from './characters/gait';
+import { CharacterMotion } from './characters/character-motion';
+import type { MotionCue } from './world-motion';
 import { markPixelDetail, needsFinePixels } from './scene-pixels';
 const fieldUrl = assetUrl('apps/client/src/props/library-animals/hare-field.glb');
 const russetUrl = assetUrl('apps/client/src/props/library-animals/hare-russet.glb');
@@ -18,6 +20,7 @@ interface ActorSource {
   url: string;
   height: number;
   width: number;
+  strides?: readonly Stride[];
 }
 const sources = new Map<string, ActorSource>([
   ['field', { url: fieldUrl, height: 0.45, width: 0.76 }],
@@ -30,6 +33,7 @@ for (const [key, asset] of studyAssets)
       url: asset.animationUrl,
       height: asset.height,
       width: Math.max(asset.width, asset.depth),
+      strides: asset.strides,
     });
 export const hasLibraryActor = (appearance: string): boolean => sources.has(appearance);
 /** Retained CC0 anatomy and fitted clothing, plus the animated wild hare.
@@ -114,7 +118,12 @@ export class LibraryActor {
   private material?: pc.StandardMaterial;
   private disposed = false;
   private yaw?: number;
+  /** People: Idle, strides paced to travel and strikes, from their catalog's stride facts. */
+  private motion?: CharacterMotion;
+  // Animals play one procedural Run at its own pace, which no measured stride describes; the
+  // gait only decides, with a dead band, when they are moving.
   private clip: 'Idle' | 'Run' = 'Idle';
+  private readonly gait = new Gait([{ name: 'Run', groundSpeed: 1, seconds: 1 }]);
   private elapsed = 0;
   private sampled = 0;
   private selected = false;
@@ -145,6 +154,10 @@ export class LibraryActor {
   get presentationReady(): boolean {
     return this.state === 'ready';
   }
+  /** People play their own strike clips; animals' strikes show on the sprite. */
+  get animatesStrikes(): boolean {
+    return !!this.motion;
+  }
   private install(resource: BundledModel): void {
     const node = (this.node = resource.instantiateRenderEntity({
       castShadows: true,
@@ -166,7 +179,13 @@ export class LibraryActor {
     const material = this.meshes[0]?.material;
     if (!(material instanceof pc.StandardMaterial)) throw new Error('Actor mesh missing.');
     this.material = material;
-    installLocomotion(node, resource);
+    if (this.source.strides) {
+      node.addComponent('anim', { activate: true });
+      const tracks = resource.animations
+        .map((asset) => asset.resource)
+        .filter((track): track is pc.AnimTrack => track instanceof pc.AnimTrack);
+      this.motion = new CharacterMotion(node.anim!, tracks, { strides: this.source.strides });
+    } else installLocomotion(node, resource);
     this.binding = this.presentation.addReveal(node, material, false, true, this.meshes);
     this.state = 'ready';
     // Loading never publishes appearance. The ordinary scene update admits the
@@ -205,9 +224,9 @@ export class LibraryActor {
       );
   }
   update(
-    view: EntityView,
+    cue: Readonly<Pick<MotionCue, 'heading' | 'action'>>,
     dt: number,
-    moving: boolean,
+    speed: number,
     paused: boolean,
     reveal: number,
     selected: boolean,
@@ -217,27 +236,19 @@ export class LibraryActor {
     if (!this.visible || !node?.anim || !this.binding || !this.material) return;
     this.selected = selected;
     const step = Math.min(dt, 0.1);
-    const target = view.heading * pc.math.RAD_TO_DEG;
+    // A strike shown on the model faces its own direction, as the sprite's arm frames do.
+    const strike = this.motion && cue.action?.direction;
+    const target =
+      (strike && (strike.x || strike.z) ? Math.atan2(strike.x, strike.z) : cue.heading) *
+      pc.math.RAD_TO_DEG;
     this.yaw =
       this.yaw === undefined
         ? target
         : pc.math.lerpAngle(this.yaw, target, 1 - Math.exp(-step * 12));
     node.setLocalEulerAngles(0, this.yaw, 0);
-    const next = moving ? 'Run' : 'Idle';
-    const changed = next !== this.clip;
-    if (changed) {
-      node.anim.baseLayer?.transition(next, 0.08);
-      this.clip = next;
-      this.elapsed = this.sampled = 0;
-    }
-    if (!paused) this.elapsed += step;
-    const frequency = art.motion === 'held8' ? 8 : art.motion === 'held12' ? 12 : 0;
-    const sampled = frequency ? Math.floor(this.elapsed * frequency) / frequency : this.elapsed;
-    // Holding a pose (or pausing) needs no repeat skeleton evaluation. Rendering
-    // still follows current placement and reveal, independently of pose cadence.
-    const advance = Math.max(0, sampled - this.sampled);
-    if (changed || advance > 0) node.anim.update(advance);
-    this.sampled = sampled;
+    if (this.motion)
+      this.motion.update(dt, speed, paused, art.motion, art.actionFixture, cue.action);
+    else this.run(node.anim, step, speed, paused, art);
     this.presentation.updateReveal(
       this.binding,
       this.material,
@@ -249,6 +260,30 @@ export class LibraryActor {
       true,
       selected,
     );
+  }
+  private run(
+    anim: pc.AnimComponent,
+    step: number,
+    speed: number,
+    paused: boolean,
+    art: Readonly<ArtTreatment>,
+  ): void {
+    this.gait.update(paused ? 0 : step, paused ? 0 : speed);
+    const next = this.gait.moving ? 'Run' : 'Idle';
+    const changed = next !== this.clip;
+    if (changed) {
+      anim.baseLayer?.transition(next, 0.2);
+      this.clip = next;
+      this.elapsed = this.sampled = 0;
+    }
+    if (!paused) this.elapsed += step;
+    const frequency = art.motion === 'held8' ? 8 : art.motion === 'held12' ? 12 : 0;
+    const sampled = frequency ? Math.floor(this.elapsed * frequency) / frequency : this.elapsed;
+    // Holding a pose (or pausing) needs no repeat skeleton evaluation. Rendering
+    // still follows current placement and reveal, independently of pose cadence.
+    const advance = Math.max(0, sampled - this.sampled);
+    if (changed || advance > 0) anim.update(advance);
+    this.sampled = sampled;
   }
   setReadThrough(strength: number): void {
     if (!this.binding || !this.material) return;
@@ -287,6 +322,12 @@ export class LibraryActor {
       ? null
       : { fraction: nearest, point: new pc.Vec3().lerp(from, to, nearest) };
   }
+  motionDiagnostics() {
+    return {
+      visible: this.visible,
+      motion: this.motion?.diagnostics() ?? { clip: this.clip, moving: this.gait.moving },
+    };
+  }
   diagnostics() {
     return {
       state: this.state,
@@ -299,6 +340,7 @@ export class LibraryActor {
       animation: this.node?.anim?.baseLayer?.activeState,
       animationTime: this.node?.anim?.baseLayer?.activeStateCurrentTime,
       automaticUpdate: this.node?.anim?.playing,
+      motion: this.motion?.diagnostics(),
       sharedRevealSkin: this.binding?.meshes.every(
         (mesh, i) => mesh.skinInstance === this.meshes[i]?.skinInstance,
       ),
@@ -307,6 +349,7 @@ export class LibraryActor {
   private clear(): void {
     if (this.binding) this.presentation.removeReveal(this.binding);
     this.binding = undefined;
+    this.motion = undefined;
     this.node?.destroy();
     this.node = undefined;
     this.meshes.length = 0;

@@ -24,20 +24,23 @@
           <select id="subject">
             <option value="calibration">Adult and prop scale comparison</option>
             <option value="cast">All seven people · working choices</option>
+            <option value="characters">Character lineup · own heights</option>
             <option value="composition">Earlier composition · rejected</option>
           </select></label
         >
         <label
           >Versions
           <select id="versions">
-            <option value="compare">Compare all three</option>
+            <option value="compare">Compare all</option>
             <option value="selected">Working choice</option>
             <option value="source">Original source control</option>
-            <option value="0">Option A</option>
-            <option value="1">Option B</option>
-            <option value="2">Option C</option>
           </select></label
         >
+        <label
+          >Compare a local model
+          <input id="local-model" type="file" accept=".glb,model/gltf-binary"
+        /></label>
+        <button id="local-model-remove" type="button" hidden>Remove local model</button>
         <label
           >Light
           <select id="light">
@@ -82,7 +85,13 @@
           >Motion<select id="pose">
             <option value="still">Frozen pose</option>
             <option value="Idle">Idle</option>
-            <option value="Run">Walk · source/study clip</option>
+            <option value="Walk">Walk</option>
+            <option value="Run">Run · earlier study people: their walk</option>
+            <option value="Sprint">Sprint</option>
+            <option value="Attack">Attack</option>
+            <option value="Punch">Punch</option>
+            <option value="Dodge">Dodge</option>
+            <option value="Wave">Wave</option>
           </select></label
         >
       </section>

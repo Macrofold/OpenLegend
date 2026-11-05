@@ -1,12 +1,14 @@
 import selections from './props/art-study/selections.json';
 import catalogs from 'virtual:openlegend-study-catalogs/runtime';
 import { assetUrl } from './asset-files';
+import type { Stride } from './characters/gait';
 
 /** Finite, offline-authored study exports. Exact references do not fetch models;
  * the scene's existing model owner loads only the selected appearances. */
 export interface StudyAsset {
   url: string;
   animationUrl?: string;
+  strides?: readonly Stride[];
   depletedUrl?: string;
   width: number;
   height: number;
@@ -19,6 +21,7 @@ for (const catalog of catalogs)
     studyAssets.set('study:' + asset.id, {
       url: assetUrl(prefix + asset.file),
       animationUrl: asset.animatedFile ? assetUrl(prefix + asset.animatedFile) : undefined,
+      strides: asset.strides,
       depletedUrl: asset.depletedFile ? assetUrl(prefix + asset.depletedFile) : undefined,
       width: asset.bounds.max[0]! - asset.bounds.min[0]!,
       height: asset.bounds.max[1]! - asset.bounds.min[1]!,

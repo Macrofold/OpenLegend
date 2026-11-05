@@ -5,8 +5,8 @@
       "id": "openlegend-curated"
     },
     "assetId": "development-runtime",
-    "revisionId": "sha256-002e98ac41c0b4439134eec34aa68ff19658193769215cb47868e2d3a5ebad6a",
-    "manifestSha256": "65c7cf24b430128e3cdb16d2fd8f57a279c64ff0af1f28e2159358b872482bb5"
+    "revisionId": "sha256-7d81191ca1c801356c82b4eb0d3362a052fdf822669029056882c5c67c4704a7",
+    "manifestSha256": "cd82ab7af905b8a3052e9f8acaaf83291784a80d631c13d085844fee4e14d0d6"
   },
   "files": {
     "apps/client/src/characters/mercenary-assets/mercenary-face.json": {
@@ -17,8 +17,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/characters/mercenary-assets/mercenary-motion.glb": {
-      "sha256": "4535feed7092a81ed121607d293459df68567276cc8a4f5857b130e43def2f82",
-      "bytes": 148660,
+      "sha256": "75608936467c951c808bf9b7a0a37fc15c030257829e95d5b8d96ffe450fb0f9",
+      "bytes": 400760,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4140,8 +4140,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-armor/armor-field-tunic-motion.glb": {
-      "sha256": "44c149a577c987b6afe5739769f9fa31904ff8dcff1d7b41f49412966c1de2ba",
-      "bytes": 2014028,
+      "sha256": "224260bd117b6c03d6ee4460ebd89b860f5264c69088d03630ab10c643c7cd9c",
+      "bytes": 2935572,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4154,8 +4154,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-armor/armor-travel-coat-motion.glb": {
-      "sha256": "e53f1a17cf2589a7821a6d6a734054b2b9703118ddf4d9d237f35005718f4d13",
-      "bytes": 2014068,
+      "sha256": "9ae15d3f9ca13f3bd868cd19a47b8989e44caa131b8e54af9304fb0e15b8ffea",
+      "bytes": 2935608,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4168,8 +4168,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-armor/armor-work-vest-motion.glb": {
-      "sha256": "963b25ebc9a8b14c7f9aba713479448503c6ccfe2ad9791de916f79d5991e822",
-      "bytes": 2068632,
+      "sha256": "ecf35fe3321690499828c74a65d9614da5c566159af5ece67e25cf7720fc6ca7",
+      "bytes": 2970972,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4602,8 +4602,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-kest/kest-field-tunic-motion.glb": {
-      "sha256": "31a0ffe265d94026b30caf0e6ab75c5526f94330f72452cdc918aedddc679ab8",
-      "bytes": 2001264,
+      "sha256": "044ee01c79461ca5615c202d7974174406ca77ff6bc1a302fdac9c9546425f45",
+      "bytes": 2924400,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4616,8 +4616,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-kest/kest-travel-coat-motion.glb": {
-      "sha256": "4a81114ee3c30dc64ae7eca8b639a50a8389aba08b880cf705f9b43980bbd03e",
-      "bytes": 1992748,
+      "sha256": "5bd1b0d240b1734d2261c896d11452db59c6b47efc3d8f0562b5c1e79207dd66",
+      "bytes": 2913600,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4630,8 +4630,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-kest/kest-work-vest-motion.glb": {
-      "sha256": "8ffdbc253cc20ceab695cf68f7463597753487aa4a3acd154a9f9c6d9cb33967",
-      "bytes": 2085016,
+      "sha256": "72d347e438dd9e1ef813dc9809e9ec21270a6786fd6931adaf14b8e99bfa326b",
+      "bytes": 3011472,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4644,8 +4644,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-mara/mara-field-tunic-motion.glb": {
-      "sha256": "36bda874dd1e58ee2ae4c53ad1b1b71f74e247cb0bc90920fda0cb2fa0f2b9f5",
-      "bytes": 2183208,
+      "sha256": "bfa97de7cf2ed656021573b64c0e97468250668bb2780fd2b6783c9fc44e1731",
+      "bytes": 3104608,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4658,8 +4658,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-mara/mara-travel-coat-motion.glb": {
-      "sha256": "a8ead52b86eade2a817fabd8bf4d2076d10b26b9e639daf3d74fb64b393a7270",
-      "bytes": 2116772,
+      "sha256": "2653ebbb292cf27b1e20be715945c09614f271bf36b725f818a28478d5967b06",
+      "bytes": 3049788,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4672,8 +4672,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-mara/mara-work-vest-motion.glb": {
-      "sha256": "0792680cf8696e58ab3c6c299bc93b9661c671b5c33f1315e90a499145e90485",
-      "bytes": 2337940,
+      "sha256": "7d8eb490aab0c580a380d6e321aa05ffe8daf5a88ea56f4f7e0d20fd3fbb5768",
+      "bytes": 3256116,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4756,8 +4756,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-mike/mike-field-tunic-motion.glb": {
-      "sha256": "d9ebfa5170a3d995acd52368c77b39502d9b62c016a9896e8972bb177d3873af",
-      "bytes": 2036424,
+      "sha256": "0c6eb7ce72dc13790a0b833f09b451d05ba2390b30245ee0e1517c74ba9137af",
+      "bytes": 2962388,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4770,8 +4770,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-mike/mike-travel-coat-motion.glb": {
-      "sha256": "7ad51f82dcc9904022c296e2f9d826638893af088cdce89bbf7be1bb732a8442",
-      "bytes": 1991460,
+      "sha256": "b4e4320ea3eb51247ad575e1483c9ecf23c494d0566036379b320565cd9aaefa",
+      "bytes": 2920100,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -4784,8 +4784,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-mike/mike-work-vest-motion.glb": {
-      "sha256": "50d673151f6243f56e097ccd859d15fd239731fecec8d68ddcdc70ca7f5504ee",
-      "bytes": 2055272,
+      "sha256": "0f4492568b573afa3fdb5e0cc1a0c1d698d647dd8022fc0aff7975d53bc3be39",
+      "bytes": 2965464,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5323,8 +5323,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-orin/orin-field-tunic-motion.glb": {
-      "sha256": "d0bc25da016798f6641617778b4dbe1d986e94987c596ed16955b3a2d7beffd8",
-      "bytes": 2038612,
+      "sha256": "4ea1f02addd230bea71627d96ff0b8f45ae88d6ab44577e433fb1355d1c1ab2e",
+      "bytes": 2948240,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5337,8 +5337,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-orin/orin-travel-coat-motion.glb": {
-      "sha256": "3749ec9ac9590112ee090de5d8f58cebc3107d8116082c45f03b789b4f3c7513",
-      "bytes": 2193084,
+      "sha256": "87c076198a29ff9df240ac990122c57bb7da50f5ffaf3af776d7b10950b955d8",
+      "bytes": 3103324,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5351,8 +5351,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-orin/orin-work-vest-motion.glb": {
-      "sha256": "bb04d84635d7820c365bf0790551a8ea41640c704d50abb3d6c045bb9e9ccb9a",
-      "bytes": 2192876,
+      "sha256": "b5914237307ad3655f48136d7ebf32f75629a392531f49aea4330b7aaf0060be",
+      "bytes": 3108236,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5365,8 +5365,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-people/ada-field-tunic-motion.glb": {
-      "sha256": "fbaf9e5e879c323fa6a5853bc865bc2bac28b619f7d295d5767c840d7441fb73",
-      "bytes": 2270148,
+      "sha256": "1d20a96ab6dc5f54605dff1a6d2c3b26ff5393b55a7ae3b5844d677fc5c3a806",
+      "bytes": 3192544,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5379,8 +5379,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-people/ada-travel-coat-motion.glb": {
-      "sha256": "08c008e985b79795041b430369805020b23633e7593230d7e2dc56f9f9f5b124",
-      "bytes": 2282396,
+      "sha256": "e73661057e1a88b69a635e29486f5281011b3c948b076e034dc66518c580fd0e",
+      "bytes": 3188200,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5393,8 +5393,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-people/ada-work-vest-motion.glb": {
-      "sha256": "c5452174917afacf11c6875cf401408f5b65e9136fe6e817b75f6072a03d0948",
-      "bytes": 2221532,
+      "sha256": "4c3d139232d04226d574a403077c46d9e7bc62d617412ba45d42e77969f25230",
+      "bytes": 3146808,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5827,8 +5827,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-tavin/tavin-field-tunic-motion.glb": {
-      "sha256": "9f71b31170c3fae291fdba356be62d4d6d867b3953939bd3e606394548bbaea9",
-      "bytes": 1969236,
+      "sha256": "15ee259176daf2b85926a24020cd1f20761c57f64131b6d8ff559fe4660d74f8",
+      "bytes": 2882416,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5841,8 +5841,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-tavin/tavin-travel-coat-motion.glb": {
-      "sha256": "6ddeb3c4ececca253bdeb0d62f7713895b0d8dd5e57170910fd904c8007ad4c0",
-      "bytes": 2064076,
+      "sha256": "342e4fbba7924b33fe463434728a938e5d7bd6aedfacda8f564a01939a5c9e5f",
+      "bytes": 2970768,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"
@@ -5855,8 +5855,8 @@
       "accessDomain": "public"
     },
     "apps/client/src/props/art-study/source-tavin/tavin-work-vest-motion.glb": {
-      "sha256": "c0cf785a804ebd1cd3c91aa9a979ab91780149571077d718260a51b14ac0897b",
-      "bytes": 2033828,
+      "sha256": "c6ffe9699e41b16be8965a0bbe8cfb0d22efdd2273dbe7e0548057ad5262dcba",
+      "bytes": 2946336,
       "mediaType": "model/gltf-binary",
       "boundary": "runtime",
       "accessDomain": "public"

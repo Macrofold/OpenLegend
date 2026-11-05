@@ -14,6 +14,7 @@ Projects own proposed/accepted scope and delivery plans; their focused trackers 
 | Creation, travel and shared worlds | [Participant travel](participants-and-world-travel-feature-spec.md), [shared campaigns](shared-campaigns-feature-spec.md), [creation work](../maintainers/parallel-batch-07-playable-world-creation.md)           |
 | Commercial and creator proposals   | [Customer offers](customer-and-supporter-offers-feature-spec.md), [published packs](published-packs-and-creator-revenue-feature-spec.md), [creator fund](creator-fund-and-contributor-governance-feature-spec.md) |
 | Workflow/document organization     | [Adoption](agent-workflow-efficiency/01-workflow-feature-spec.md)                                                                                                                                                 |
+| Art production workflow            | [Feature specification](art-workflow-feature-spec.md), [technical design](art-workflow-tech-design.md)                                                                                                            |
 
 The [Spirit and mental-status design note](spirit-and-mental-statuses-design-note.md) records the selected naming and coexistence model. [Character and map additions](character-and-map-additions-feature-spec.md) specifies Spirit, stats, more equipment slots, map markers and nicknames.
 
