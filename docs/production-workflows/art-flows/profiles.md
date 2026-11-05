@@ -77,7 +77,7 @@ Read the character's established identity, the art brief and the look. Preserve 
 
 Study outputs can include silhouette, face or portrait, front, side and back views and a small expression or pose range; request only views that answer the design question. Generated views often disagree: name the canonical construction instead of pretending they form one modeling sheet.
 
-Production branches by the consumer: [portrait](production.md#static-2d-artwork), [sprite family](production.md#sprites-and-frame-animation), [2D rig](production.md#2d-rigs) or [3D character](3d-models.md). A static (unrigged) person or creature follows the [rigid route](3d-models.md#props-structures-and-state-sheets) without automatic rigging or clips; rigging is added only when articulation or deformation is required. Follow the recipe at the requested [quality](README.md#quality-the-simple-and-full-paths).
+Production branches by the consumer: [portrait](production.md#static-2d-artwork), [sprite family](production.md#sprites-and-frame-animation), [2D rig](production.md#2d-rigs) or [3D character](3d-models.md). The [current people design](../../maintainers/art/people.md) still governs source, body/face/hair separation and removable clothes at either quality. A static (unrigged) person or creature follows the [rigid route](3d-models.md#props-structures-and-state-sheets) without automatic rigging or clips; rigging is added only when articulation or deformation is required. Follow the recipe at the requested [quality](README.md#quality-the-simple-and-full-paths).
 
 **Play checks:** name, same thing, state (for supported conditions such as held items or death), scale.
 

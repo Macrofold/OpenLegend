@@ -8,6 +8,8 @@ Steps 1–3 belong to Brief and Prepare, 4–6 to Make, 7–9 to Finish, 10 to C
 
 The [quality setting](README.md#quality-the-simple-and-full-paths) picks the path; [step options](README.md#step-options) change one step at a time, and [supplied material](README.md#what-supplied-material-skips) skips the steps it already answers. On the simple path the [prototype path](README.md#prototype-path) uses these steps:
 
+Both paths obey the [people-from-parts requirement and pending-design gate](../../maintainers/art/people.md): until PPL03 lands, ask Mike before making a person, and never generate one whose clothes are part of the body. The historical one-shell character examples below document retained study assets and tools; they are not a shortcut around that requirement. Props, creatures and an authorized edit to a selected existing source retain their applicable routes.
+
 | Step           | Simple path (`prototype`)                                                                                                                                                                                       | Full path (`finished`)                                    |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | 1 Route        | The cheapest route that keeps the identity, usually image to 3D                                                                                                                                                 | As written                                                |
@@ -61,33 +63,33 @@ Pick the cheapest route that can meet the locks. Record the choice and the reaso
 
 ### Family fit for people
 
-The fitted cast comes from [`scripts/prepare-human-study.py`](../../../scripts/prepare-human-study.py). These stock bodies are rejected as people's visible bodies ([art direction](../../../art-direction/decisions.md#how-the-current-look-changes-production)): rebuild them only to maintain the existing study cast or as the hidden base of a wrap test, never as a new person's look.
+The fitted cast comes from [`scripts/prepare-human-study.py`](../../../scripts/prepare-human-study.py). These stock bodies are rejected as people's visible bodies ([art direction](../../../art-direction/decisions.md#how-the-current-look-changes-production)). This recipe is for explicitly authorized maintenance of the retained study or a hidden-base experiment, never a new person's look; PPL01 owns the future body and rig choice.
 
 - **What it uses:** CC0 MakeHuman/MPFB sources (the `mpfb2-master`, `makehuman_system_assets` and `suits02` packages listed in the [source study](../../../art-direction/assets/source-study/README.md)).
-- **What it builds:** a body on the MPFB default rig, with fitted garments, eye accents and the procedural `Idle` and `Run` clips from [`study_human_motion.py`](../../../scripts/study_human_motion.py). The cast's motion files were then rebuilt with the motion study's eight library clips through `clips --bones` ([step 9](#step-9--make-the-clips)) and are in the development runtime and public studies releases ([AF12](../../maintainers/art-direction.md#art-flow-follow-through)); give a new person the same.
+- **What it builds:** a body on the MPFB default rig, with fitted garments, eye accents and the procedural `Idle` and `Run` clips from [`study_human_motion.py`](../../../scripts/study_human_motion.py). The cast's motion files were then rebuilt with the motion study's eight library clips through `clips --bones` ([step 9](#step-9--make-the-clips)) and are in the development runtime and public studies releases ([AF12](../../maintainers/art-direction.md#art-flow-follow-through)). These are retained study facts, not acceptance of the bodies or their rig for new people.
 
-To add a person:
+To reproduce an existing study person for authorized maintenance:
 
 1. Fetch the exact source packages into a workspace ([asset workflow](../../asset-workflow.md#run-the-existing-offline-recipes)).
-2. Add a row to the recipe's `PEOPLE` table: name, body proportions, base, hair options and palette.
+2. Select that person's existing row in the recipe's `PEOPLE` table: name, body proportions, base, hair options and palette. Do not add a new visible cast member through this retained recipe.
 3. Run the recipe headless with `--sources <packages> --person <name>`.
-4. Dress the result to the concept with the CC0 garments, or with a generated or hand-made garment fitted and weighted to the same rig (the hybrid route).
+4. Apply only the requested maintenance to its existing fitted garments, weights and clips, and recheck the [affected dependencies](../assets-and-animation.md#repair-map-and-downstream-effects).
 
-The recipe was written for the study cast, so this is an experienced-artist route today; the [proof run](../../maintainers/art-direction.md#art-flow-follow-through) (AF07) turns it into exact steps.
+The recipe was written for the study cast. The [proof run](../../maintainers/art-direction.md#art-flow-follow-through) (AF07) and PPL01 must establish any different production use; replaying this recipe does not qualify a family.
 
-**Look:** Mike judged the current fitted study people not good enough on October 31, 2026; the mercenary sets the bar. Use the family for its skeleton, mesh layout, weights and clips, and take each person's look from their own concept by wrapping.
+**Look:** the mercenary sets the bar. MPFB's skeleton, mesh layout and weights may be inputs to an authorized hidden-base experiment; wrapping them onto another form remains unproven and does not reverse the visible-body rejection.
 
 ### Wrapped family members
 
-This is an experienced-artist route, unproven here; the proof run measures it. It joins a person made the mercenary's way to the shared family:
+This is an experienced-artist candidate method, unproven here and subject to PPL01's source and body-family decisions. An authorized proof measures whether a separately produced body or face can join a shared mesh layout; a dressed one-piece shell cannot supply the removable clothes or underlying body the people requirement needs:
 
-1. Generate the person from their concept (Steps 3–6) and clean the picked model (Step 7).
+1. Use the approved body-only or face target and the selected canonical source. Generate only a missing, authorized target (Steps 3–6), then clean it (Step 7); do not generate fused clothing for this experiment.
 2. Pose the family base mesh to match: the same A-pose, height and proportions as closely as its shape targets allow.
 3. Fit the base onto the generated surface:
-   - Shrinkwrap it, then use Surface Deform for detail, pinning landmarks (eyes, mouth corners, fingertips, feet) so features land in the right places.
+   - Fit the surface while keeping landmarks (eyes, mouth corners, fingertips, feet) aligned. Shrinkwrap and Surface Deform are possible authoring aids, not an automatic anatomical fit; select and inspect the method on the actual source.
    - Fix by hand where the fit folds or slides; faces need the most care.
-4. Bake the generated model's colour (and, where the look uses it, normal detail) onto the base mesh's UVs.
-5. Store the result as a shape target of the base, or as a mesh with identical layout. It keeps the family's skeleton, weights, garments and clips, and blends with other people for variety.
+4. Transfer the target's colour (and normal detail only where needed) onto the base mesh's UVs, following the [material recipe](production.md#materials-and-textures).
+5. Keep vertex order unchanged when storing a shape target. Check the fitted body and face at the required poses; refit garments, inspect skin weights and recheck contacts for the changed proportions. Shared topology permits the representation but does not prove valid blends, garment fit or motion compatibility. Test the declared combinations before adding them to a family.
 
 ## Step 2 — Add the 3D facts to the brief
 
@@ -189,9 +191,9 @@ REF=<reference figure height from the production notes>
   --label "m01 Meshy" --label "m02 Meshy" --label "m03 Tripo" "$S"/models/m0[1-3]*.glb
 ```
 
-Use `--profile prop` for rigid models and `--profile creature` for animals: `character` applies the body budget and also requires `Idle` and `Run`. The report reads the file's bytes, so an FBX saved under a `.glb` name is measured correctly. Record each candidate's pass or fail per row and an estimate of the cleanup each needs; a candidate that fails a lock is rejected even if it is the most attractive.
+Use `--profile prop` for rigid models and `--profile creature` for animals: `character` applies the body budget and also requires `Idle` and `Run`. At this unrigged candidate stage, a missing-clip finding is expected, not grounds for rejection; record it as pending Step 8–9 and do not run `--strict` as the raw-candidate gate. The report reads the file's bytes, so an FBX saved under a `.glb` name is measured correctly. Record each candidate's pass or fail per relevant row and an estimate of the cleanup each needs; a candidate that fails a lock is rejected even if it is the most attractive.
 
-If every candidate fails the same way, the input is the problem. Return to Step 3 and change the views (separate the prop, open the arm gap, simplify a cape) rather than rerolling.
+If candidates repeat a failure, identify its cause before another paid attempt. Correct contradictory views, fused reference props or hidden limb gaps at Step 3. When the views are adequate but the chosen model cannot preserve the needed topology, use local modeling, a suitable permitted source or a deliberately selected alternative route. Repeated failure does not by itself prove the input is wrong, and is not permission to reroll automatically.
 
 ## Step 6 — Mike picks a candidate
 
@@ -213,28 +215,33 @@ For an unrigged model, `normalize` does points 1–3 and the texture resize in o
 1. **Import** the GLB, apply all transforms, and delete cameras, lights and empty helper objects the provider added.
 2. **Face and scale:** rotate about the vertical axis until the model faces Blender's Front view (−Y), then scale uniformly so its height is the brief's real height. Move it so the lowest point sits at 0 and it is centred horizontally.
 3. **Geometry repair:**
-   - Merge vertices closer than 0.1 mm and delete loose vertices and edges.
+   - Inspect the normalization result: its 0.1 mm merge and loose-geometry cleanup must not destroy a deliberate seam, opening or independent part. Repair only accidental duplicates when working manually.
    - Recalculate normals outward, and check winding with backface culling on.
-   - Fix fused parts locally (cut them apart, rebuild the gap, smooth), and fill holes.
+   - Fix accidental fused parts locally (cut them apart, rebuild the gap, smooth), and fill unintended holes. Keep deliberate openings, thin garment surfaces and separate attachment boundaries.
    - Remove invented ornaments that break a lock.
 4. **Separate** held items, removable gear and moving parts into their own objects, with their pivots at their real hinge or grip. Appearance never sets collision, reach or capacity; those stay with the game's own definitions. Generate a part separately only when the extra control earns its fitting work, for example replacing a weak head while keeping an approved body and outfit; production parts, exported draw units and gameplay equipment are three separate decisions.
 5. **Topology:**
    - Rigid models may be decimated to budget after checking the silhouette stays.
    - When a generated mesh keeps the intended form and supports the required movement, materials and budgets, refine it directly; repair or rebuild only the topology that fails a needed deformation or silhouette.
    - A body that will bend needs clean loops at shoulders, elbows, hips and knees. Where it lacks them, use a quad-topology generation setting, Blender's remesh followed by retopology, or a family body, rather than collapsing triangles. Quad output is an authoring option, not an acceptance test: the joints' structure, the exported triangles, the skinning and the rendered result decide.
-6. **Materials and textures:** at most 8 materials, named by region (skin, hair, coat, leather, metal). Resize textures to the budget. Treat lighting baked into colour, identity accents and anything else the look depends on as the [production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production) say.
+6. **Materials and textures:** use the [material recipe](production.md#materials-and-textures), the selected budget and the [look's production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production).
+   - Keep usable UVs. Repair or unwrap only where stretching, seams, map resolution or a required edit demands it; preserve the original textured source first. When UVs change, transfer or rebake every map using them onto the new layout, then inspect the face, neck, joints and garment seams at the intended distance.
+   - Name materials by region and reuse appropriate sets; the proposed profile allows 8, not 8 per generated part. Use simple material values when they suffice. A high-to-low bake, a texture set for every region and a new shader are not routine finishing requirements.
+   - Follow the consumer's supported channel, colour-space and normal-map conventions. A custom Blender node graph or another engine's material setup does not imply a compatible exported material; inspect the GLB's actual assignments and maps under the game's light. A texture-only repair keeps the working geometry, rig and clips.
 7. **Names:** `<subject>` for the root, `<subject>-<part>` for meshes, with no mesh named like a bone.
 8. **Save** the `.blend` and record what was reconstructed in the record's Interpretations list.
+
+For an already rigged source, keep the armature transforms, rest pose, topology and vertex order when a local repair can do so. If the required change breaks those dependencies, return to the rig/skin step deliberately and recheck the [affected work](../assets-and-animation.md#repair-map-and-downstream-effects). Higgsfield's raw-candidate rigging limitation is a route constraint, not permission to keep a broken bend or to submit a new paid job automatically.
 
 ## Step 8 — Rig and skin
 
 ### Rig routes
 
-| Route                      | Use for                                                                                                                            | How                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Family rig**             | The shared skeleton under people's bodies, garments and hair, once the [people design](../../maintainers/art/people.md) settles it | Fit the body or garments to the shared human skeleton. Until [V3D05](../../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family) qualifies one, this is the MakeHuman/MPFB body ([family fit](#family-fit-for-people)), used only hidden under a person's own look. The study cast uses MPFB's bone-heavy Default rig; for new work prefer its Mixamo or GameEngine rig, and record the choice as provisional ([OD3](../../projects/art-workflow-feature-spec.md#od3--the-humanoid-body-family-and-rig-for-the-cast)). |
-| **Automatic humanoid rig** | A distinctive two-legged humanoid with clear limbs                                                                                 | Rig the picked candidate with the automatic rigging route at its real height ([tools](tools.md#rigging-and-clips)): a textured GLB facing +Z. Through Higgsfield this is the raw candidate, so later cleanup must keep the weights. Proven on four people in the October 31 proof run. Then make its clips (Step 9), retarget shared clips onto it, or transfer its weights to the family rig.                                                                                                                                             |
-| **Authored rig**           | Animals and every other nonhuman body; humanoids the automatic rig fails                                                           | In Blender, enable Rigify ([tools](tools.md#blender)) and start from its closest template (basic quadruped, horse, cat, wolf, bird, shark), or build a simple armature by hand. Use automatic weights as a start and hand painting to finish. A humanoid rig is never renamed onto an animal.                                                                                                                                                                                                                                              |
+| Route                      | Use for                                                                                                                            | How                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Family rig**             | The shared skeleton under people's bodies, garments and hair, once the [people design](../../maintainers/art/people.md) settles it | Use the exact accepted body/rig family and its declared fit range; [V3D05](../../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family) owns qualification. No family is automatically selected while PPL01 is open. The retained study cast uses MPFB's bone-heavy Default rig ([family fit](#family-fit-for-people)); its Mixamo and GameEngine rigs remain possible hidden-base inputs to an authorized comparison, not the default for a new person. |
+| **Automatic humanoid rig** | A distinctive two-legged humanoid with clear limbs                                                                                 | Rig the picked candidate with the automatic rigging route at its real height ([tools](tools.md#rigging-and-clips)): a textured GLB facing +Z. Through Higgsfield this is the raw candidate, so later cleanup must keep the weights. Proven on four people in the October 31 proof run. Then make its clips (Step 9), retarget shared clips onto it, or transfer its weights to the family rig.                                                                              |
+| **Authored rig**           | Animals and every other nonhuman body; humanoids the automatic rig fails                                                           | In Blender, enable Rigify ([tools](tools.md#blender)) and start from its closest template (basic quadruped, horse, cat, wolf, bird, shark), or build a simple armature by hand. Use automatic weights as a start and hand painting to finish. A humanoid rig is never renamed onto an animal.                                                                                                                                                                               |
 
 ### Skinning checks
 
@@ -254,7 +261,7 @@ Check shoulders, armpits, hips, hems and anything worn over the body; garments m
 
 ### Give a person a generated head
 
-When a person's face fails the [head check](#step-10--export-and-check-in-the-games-look) (paint on a smooth head, or a stock face the look rejects), replace the head and keep the body, clothing, rig and clips. One head serves every outfit of the same person. This is the `head` [step option](README.md#step-options), about 29 credits a person.
+For a selected source approved to continue, a face that fails the [head check](#step-10--export-and-check-in-the-games-look) may be replaced while retaining its body, clothing, rig and clips. This is the `head` [step option](README.md#step-options), about 29 credits a person. It is a repair of that source, not approval to reuse a rejected body or proof of PPL01's adjustable face/hair family. Reuse one head source across that person's outfits, but inspect the join for each outfit's neckline.
 
 1. Make the [head views](#head-views), about 11 credits.
 2. Make one head with Tripo H3.1 Multiview, about 18 credits ([settings](tools.md#generated-heads)). Look at it as bare clay before going on: a real nose, brow and lips, and hair in locks.
@@ -268,7 +275,7 @@ When a person's face fails the [head check](#step-10--export-and-check-in-the-ga
 
    For a face painted on a body that is one mesh, give `--model-eyes X,Y,Z --scale S --neck-by-colour` instead of `--head-eye-spacing`, with S the old head's chin-to-crown height over the new one's.
 
-5. **Check** it as Step 10's head check says, and look closely at the neck from the front, side, three-quarter and back, standing and mid-run: a bust standing off the clothing, a ring or crease across the throat, a line down the back of the neck or old skin showing at the collar is a failure. Then look in head-and-shoulders frames mid-clip in Idle, Walk, Attack, Wave and Sprint for the seam.
+5. **Check** it as Step 10's head check says, and look closely at the neck from the front, side, three-quarter and back, standing and mid-run: a bust standing off the clothing, a ring or crease across the throat, a line down the back of the neck or old skin showing at the collar is a failure. Inspect mid-clip poses in every retained motion that changes this join, including Idle, Walk, Attack, Wave and Sprint when present. Compare clip names, durations and key rates with the input so no unrelated motion is lost. This helper cuts hair below its cut plane; preserve or rebuild an affected braid as its own supported piece rather than silently delivering cropped hair.
 
 What the character fixes study found ([record](../../../art-direction/studies/2026-11-03-character-fixes/README.md#faces-for-the-rest-of-the-cast)):
 
@@ -300,7 +307,7 @@ What the character fixes study found ([record](../../../art-direction/studies/20
      --out "$S/export/f01-<subject>.glb"
    ```
 
-   It keeps the first file's skeleton and mesh, takes the single clip from each named file, retargets it onto that skeleton (so a clip from another rig with the same bone names fits), names the clips as the game expects, keeps the provider's frame rate, exports with the recipe's settings and reports the result.
+   It keeps the first file's skeleton and mesh, takes the single clip from each named file, retargets it onto that skeleton, names the clips as the game expects, keeps the provider's frame rate, exports with the recipe's settings and reports the result. Matching bone names provide correspondence; inspect proportions, rest pose and actual foot/grip contacts before treating the motion as compatible.
    - **Gait clips** that the game paces to travel speed (`Walk`, `Run`, `Sprint`) take `--stride NAME`: each becomes one in-place stride from left heel strike, each foot is held still while it is down, and the stride's measured ground speed goes in `<out>.clips.json` for the game's [gait](../../../apps/client/src/characters/gait.ts). Copy those facts where the game reads them: a catalog person's `strides` beside its animated file's hash, the mercenary's in [`mercenary.ts`](../../../apps/client/src/characters/mercenary.ts).
    - **Other clips that travel** take `--in-place NAME`.
    - **A rig of another family** takes `--bones` with a map naming the clip bone each of its bones follows, plus the limbs whose rest pose differs from the clip rig's; [`mpfb-meshy.json`](../../../scripts/art/bone-maps/mpfb-meshy.json) puts Meshy's clips on the MPFB family rig ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)).
@@ -309,7 +316,7 @@ What the character fixes study found ([record](../../../art-direction/studies/20
    Otherwise hand-key them on that rig: adapt the bone names in `study_human_motion.py` for `Idle` and `Run`, and key `Walk` in Blender.
 
 3. **Block first, then author in place:** review the key poses and contacts at play distance before polishing the motion; polished clips follow the [motion order](../assets-and-animation.md#4-produce-motion-that-serves-an-action) for each needed motion. The game moves the body, so clips must not travel. Loop `Idle` and `Run` seamlessly; check feet planting, hand contact and held items on every frame that matters.
-4. **Timing:** follow the look's production notes on how poses are held.
+4. **Timing:** follow the current look's production notes and the native action's timing. Preserve useful source key rates and clip durations; a stepped authoring preview does not select a stepped runtime cadence.
 5. **Name** each action exactly as the consumer expects and push it to its own NLA track, so the glTF exporter writes one clip per action.
 
 ### Animate a saved model
@@ -321,7 +328,7 @@ A model kept in the archive has no live provider job, and the Higgsfield CLI can
 - ask Mike to fetch a clip from Mixamo ([manual](tools.md#other-platforms-opt-in));
 - or hand-key it in Blender.
 
-Keep the model's existing clips by naming each one, `--clip Idle="$MODEL#Idle"`, beside the new one. The study viewer's Motion menu plays only Idle, Walk, Run, Sprint, Attack, Punch, Dodge and Wave; check any other clip in Blender's viewport.
+Keep the model's existing clips by naming each one, `--clip Idle="$MODEL#Idle"`, beside the new one; compare the input and output clip lists so a custom motion is not dropped. The study viewer's Motion menu plays only Idle, Walk, Run, Sprint, Attack, Punch, Dodge and Wave; check any other clip on its target body in Blender's viewport and the exported file. `Idle` and `Run` are required when that output is consumed as a game animated character; they are not extra requested motions for an unrelated animation-only consumer, and do not justify a human skeleton on another anatomy.
 
 ## Step 10 — Export and check in the game's look
 

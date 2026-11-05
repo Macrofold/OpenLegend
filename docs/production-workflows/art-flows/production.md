@@ -32,8 +32,10 @@ adequate materials unless the intended final use requires a change.
 2. Inspect gaps against the intended consumer and finish. Preserve approved identity and working
    components. Identify only needed shape, topology, material, skin/contact or motion repairs;
    missing source editability is a concrete repair constraint, not permission to replace the identity.
+   Check that the selected source is still approved to continue; an older selection does not reverse a
+   later rejection or bypass the [people design](../../maintainers/art/people.md).
 3. Apply the matching recipes below, or the [3D models](3d-models.md) steps for a model, to those
-   gaps, then export and recheck affected dependencies.
+   gaps, then export and recheck affected dependencies using the [repair map](../assets-and-animation.md#repair-map-and-downstream-effects).
    Reuse still-valid evidence and preserve the delivered source/output through the shared handoff.
    Do not regenerate the whole model, add unrequested clips, or expand one asset into a reusable
    family merely because finishing was requested. Integration, when requested, uses its existing owner.

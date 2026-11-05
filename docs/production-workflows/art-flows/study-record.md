@@ -40,7 +40,7 @@ Each consequential judgment the workflow made rather than copied: which view was
 
 ### Construction and sources
 
-Available sources, actual formats, exports, dimensions or height, triangle and texture counts, joints and clips, and assembly or playback information, with editing limits. For production, name the consumer and the applicable [package contract](production.md#1-define-the-package-before-finishing), linking the catalogs and manifests for exact inventory.
+Available sources, actual formats, exports, dimensions or height, triangle and texture counts, joints and clips, and assembly or playback information, with editing limits. For production, name the consumer and the applicable [package contract](production.md#1-define-the-package-before-finishing), linking the catalogs and manifests for exact inventory. For a fitted part or focused repair, name the parent and target body/rig revisions, the actual attachment/fit assumptions, what changed, and the preserved parts/materials/clips. Use the [technical handoff](../../projects/art-workflow-tech-design.md#source-part-and-revision-handoff) only for applicable fields; no second inventory is required.
 
 For a UI kit with sliced raster parts, record fixed corners, repeated edges, joins, accents, text-safe regions and demonstrated states; record tiling or clean alpha only after checking the actual exported bytes. For native CSS or vector UI, record the tokens and components instead.
 
@@ -48,9 +48,11 @@ Keep prompts and recipes, input revisions, the exact tool, model, mode and setti
 
 ### Review and remaining gaps
 
-Observed strengths and defects, fit with the brief and look, play-check results, critique findings and what was fixed. For production checks, name the export revision, tool or viewer, and conditions. Keep visual judgment, export checks and runtime evidence distinct.
+Observed strengths and defects, fit with the brief and look, play-check results, critique findings and what was fixed. For production checks, name the export revision, tool or viewer, and conditions. Keep visual judgment, export checks and runtime evidence distinct. For a revision, name the affected checks repeated under the [repair map](../assets-and-animation.md#repair-map-and-downstream-effects) and the prior evidence that remains valid.
 
 **Cost:** balance before and after each paid batch, exact model IDs, request counts, dollar values (with the conversion used) and the running task total; mark unknowns. Note use of Mike's plan quotas (for example Claude Design) and his manual involvement.
+
+**Effort (for a production proof or method comparison):** hands-on work, provider wait/run time, meaningful repair passes and total elapsed time. Separate estimates from observations and do not add overlapping waits as though they were sequential labour. One successful character does not establish the cost of a varied, compatible population. Routine focused edits need no timing study.
 
 ### Resume
 

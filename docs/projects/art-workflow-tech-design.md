@@ -1,14 +1,14 @@
 # Art workflow — technical design
 
-| Status      | Current progress                                                                                                                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Stages 1–3 are delivered: the pages, the art tool (`report`, `sheet models`, `normalize`, `clips`) and the local model preview. The proof run's character-sheet part is done; the wrapped-family test and a state-sheet prop remain. | 2026-11-01   |
+| Status      | Current progress                                                                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The existing tools and preview are delivered; source/part handoffs and focused rechecks are specified. The accepted people design, family proof, state-sheet prop and artistic acceptance remain open. | 2026-11-05   |
 
 This design describes how the [art workflow](art-workflow-feature-spec.md) is built: which page owns what, the seam to the art direction, the naming and storage conventions, the helper tool, the local model preview, the consumer contract the 3D route relies on, and the delivery tasks. The workflow is an agent-operated procedure; almost all of it runs on tools that already exist (the Higgsfield CLI, the OpenAI Images API, Blender 5.2.2 and the `pnpm assets` CLI). The new code is deliberately small.
 
 ## Maintained records
 
-- **Implementation:** [AF04–AF09](../maintainers/art-direction.md#art-flow-follow-through).
+- **Implementation:** [AF04–AF14](../maintainers/art-direction.md#art-flow-follow-through); [PPL01–PPL03](../maintainers/art/people.md) own ND39–ND42 and their body/face/hair/clothing design dependencies. The handoff below supports those owners without choosing their unresolved source or runtime policy.
 - **Limits and constraints:** no new discretionary limits ([feature specification](art-workflow-feature-spec.md#maintained-records)). The helpers read the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) values from one table, and the preview applies [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload).
 - **Related:** [feature specification](art-workflow-feature-spec.md); [asset workflow](../asset-workflow.md); [PlayCanvas guidance](../../.agents/skills/openlegend-playcanvas/SKILL.md); [world presentation](../world-presentation.md); [V3D tracker](../maintainers/3d-pixel-art.md).
 
@@ -180,6 +180,31 @@ The script is a tool, so verification is a disposable run, not a new test suite:
 
 The [3D page's consumer contract](../production-workflows/art-flows/3d-models.md#consumer-contract-and-budgets) owns the current format, axes, size, clip, naming, compression and budget requirements, each linked to its owner. The helpers read the same facts: `report` checks the required clips and the mesh/bone name rule, and its budget dictionary mirrors A3D04–A3D06. The general intake rules for arbitrary assets remain the proposed [3D pipeline design](3d-pixel-art-asset-pipeline.md#6-quarantine-conversion-and-validation); a manually prepared trusted asset uses the existing delivery path.
 
+### Source, part and revision handoff
+
+Use the existing study record and storage references, not a second manifest, database or orchestration service. Before a focused change, resolve the selected candidate and exact input revisions, named consumer, requested change and stopping point. Record only fields relevant to that job:
+
+| Boundary                                  | Required handoff                                                                                                                                                       | Failure and owner                                                                                                                                                                                                                    |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Reference → source part                   | Canonical views, locked identity, actual dimensions, part role and target attachment/fit; source rights and permitted provider upload                                  | Resolve a consequential contradictory reference before changing identity. A provider cannot decide body coverage or add world possessions.                                                                                           |
+| Body/head/hair/garment → assembled source | Exact parts and body/family revisions, common scale/rest frame, fit method, applicable body range, head/neck and hair/hat interfaces, layering/hidden-skin assumptions | PPL01/PPL02 settle new-person contracts. No fitted body or no removable garment means a missing part, not a fused-shell fallback. Nonhuman families retain V3D06.                                                                    |
+| Source rig → requested motion             | Target hierarchy and rest/bind pose, bone correspondence, relevant proportions, clip names/duration/key rate, loop/root convention, required contacts and attachments  | Retarget against the actual target. Matching names are insufficient; repair affected weights/pose/contact before calling the requested movement usable.                                                                              |
+| Editable source → runtime export          | Exact source/output revisions, supported geometry/material/animation features, texture roles and colour spaces, resource report and the applicable consumer profile    | Source-only shaders, constraints or physics are not delivered runtime features. Export supported results or report the missing consumer capability; do not silently add an engine service.                                           |
+| Prior revision → repaired revision        | Parent reference, changed dependency, affected checks and still-valid evidence; preserved requested clips/materials/parts                                              | Follow the single [repair map](../production-workflows/assets-and-animation.md#repair-map-and-downstream-effects). UV, topology and rest-pose edits invalidate different work. A texture edit does not authorize rebuilding the rig. |
+
+These are authoring facts in the existing **Construction and sources** and **Resume** sections. Keep exact inventories in the asset catalogs. Preserve rejected and selected inputs, and create a new output revision instead of overwriting review evidence. An unrigged candidate may report missing consumer clips; a final game-consumed animated export may not. `report` returning zero means it wrote its report, not that every row or visual requirement passed.
+
+For a repair, reopen the changed exported bytes and compare with the parent under the affected use. Confirm retained clips and materials actually survived; do not infer preservation from a successful tool exit. Use an early rough export before expensive finishing to expose importer, proportions, gait/contact and supported-material problems. Existing `normalize`, `clips` and `head` commands have their documented input restrictions; notably an external rigger that can only accept its own raw candidate cannot preserve arbitrary local geometry repairs.
+
+Required semantic parts remain editable even if a permitted export combines their draw primitives. Authoring in parts is not a mandate for a mesh/material per detail. Current GLB exports do not add wearable-item authority, a live character creator or arbitrary morph support. Runtime clothing/equipment state, actor decisions and physical action timing stay with their existing owners; clips display those facts and do not create them. No save migration, compatibility adapter, new provider wrapper or recurring population-generation process is introduced by this design.
+
+### Evidence appropriate to the request
+
+- **Prototype export — required pass:** the selected file loads, preserves required identity/scale, and performs only the requested motion with usable contacts. Cosmetic gaps may remain. A raw candidate's missing rig is expected; a requested animated deliverable's missing motion is not.
+- **Polish — required pass:** the stated repairs pass the affected source/export/play checks, with the selected identity and unaffected working components retained. Broad family and device qualification is not repeated for a material-only repair.
+- **Production proof — required measurement:** AF07 records provider spend, hands-on work, queue/run time, repair passes and limitations for the named source and consumer. Record overlapping elapsed intervals once. The video's timings and triangle counts establish no target. An unsuccessful method is useful evidence but cannot be called a qualified family.
+- **Art acceptance — human evidence:** Mike's actual response determines acceptance; a file report, agent recommendation or absence of criticism does not. PPL source acceptance and a part's fit/rights evidence are separate from an individual image or head being liked.
+
 ## 7. Security, privacy and spending
 
 - **Credentials:**
@@ -193,16 +218,16 @@ The [3D page's consumer contract](../production-workflows/art-flows/3d-models.md
 
 ## 8. Delivery stages and tasks
 
-| Stage | Task                                                                  | Done when                                                                                                            |
-| ----- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 1     | **AF04** pages, skills, art-direction seam, conventions               | This change: pages rewritten, removed pages' links repaired, guidance check passes                                   |
-| 2     | **AF05** `art-tool.py` `report`, `sheet models`, `normalize`, `clips` | §4.1–4.4 behaviour and §4.6 verification pass; the 3D page calls the tool instead of describing manual inspection    |
-| 3     | **AF06** local model preview                                          | §5 behaviour and verification pass; the 3D page's review step uses it                                                |
-| 4     | **AF07** proof run                                                    | One first-playable person and one state-sheet prop go end to end with recorded cost, time, corrections and decisions |
-| 4     | **AF08** update defaults from the proof run                           | The roster's defaults and the rig and motion recommendations reflect the measured results                            |
-| —     | **AF09** retire the synced artgen skills                              | Mike deletes or replaces them ([OD4](art-workflow-feature-spec.md#od4--retire-the-synced-artgen-skills))             |
+| Stage | Task                                                                  | Done when                                                                                                                                         |
+| ----- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | **AF04** pages, skills, art-direction seam, conventions               | This change: pages rewritten, removed pages' links repaired, guidance check passes                                                                |
+| 2     | **AF05** `art-tool.py` `report`, `sheet models`, `normalize`, `clips` | §4.1–4.4 behaviour and §4.6 verification pass; the 3D page calls the tool instead of describing manual inspection                                 |
+| 3     | **AF06** local model preview                                          | §5 behaviour and verification pass; the 3D page's review step uses it                                                                             |
+| 4     | **AF07** proof run                                                    | One person using the accepted PPL route and one state-sheet prop go end to end with recorded cost, active/elapsed time, corrections and decisions |
+| 4     | **AF08** update defaults from the proof run                           | The roster's defaults and the rig and motion recommendations reflect the measured results                                                         |
+| —     | **AF09** retire the synced artgen skills                              | Mike deletes or replaces them ([OD4](art-workflow-feature-spec.md#od4--retire-the-synced-artgen-skills))                                          |
 
-Stages 2 and 3 are independent and can run in parallel; stage 4 benefits from both but can start without them using the manual steps the 3D page gives.
+Stages 2 and 3 are delivered. AF07 can complete an independent prop while PPL01/PPL02 settle the people route; their unresolved body/garment decisions block a new family proof, not unrelated art. AF10 builds only the accepted kit, and AF11 batches it only after fit and motion are demonstrated. No new helper or mandatory provider comparison is required for the handoff refinements above.
 
 ## 9. Alternatives considered
 

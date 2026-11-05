@@ -104,6 +104,8 @@ A second material, length, ornament or compatible attachment is useful evidence 
 
 ## Articulated people and creatures
 
+New bundled-world people follow the [people-from-parts requirement and pending-design gate](../maintainers/art/people.md). The general techniques below do not authorize a clothed one-piece person or turn a rejected body into an approved source. Required body, face, hair and clothing separation is distinct from optional separation merely to improve a generation result.
+
 ### 1. Connect visible identity to character purpose
 
 **Consume:** the selected character/body direction, permitted authored facts, actual supported behavior, equipment needs and the [current art direction](../../art-direction/decisions.md#current-direction-at-a-glance).
@@ -142,7 +144,7 @@ Generate separate parts when independent control over an important feature saves
 
 When a directly generated mesh preserves the intended form and supports the required movement, materials and runtime complexity, refine it instead of automatically rebuilding it. Use a high-detail source, rebuilt topology or baked surface detail only when it solves a specific silhouette, deformation, shading or delivery problem. Quad output is an authoring option, not an acceptance criterion: useful joint structure, final exported triangles, vertex splits, skinning and the rendered result matter. A low polygon count does not authorize the rejected visibly low-poly aesthetic.
 
-Inspect deformation at representative joint extremes before creating a long animation set. Check shoulders, elbows, hips, knees, hands and other relevant joints for this anatomy. Test garment contact and silhouette under movement. Do not assume an authoring-tool cloth simulation survives the runtime export; determine which animation or simulation data the selected game path actually consumes. Choose fitted skinning, authored or baked bone motion, or rigid attachment first when those meet the need; add secondary motion only when it improves the visible result without obscuring the action or destabilizing pixels.
+Inspect deformation at representative joint extremes before creating a long animation set. Check shoulders, elbows, hips, knees, hands and other relevant joints for this anatomy. Test garment contact and silhouette under movement. Do not assume an authoring-tool cloth simulation survives the runtime export; determine which animation or simulation data the selected game path actually consumes. Choose fitted skinning, authored or baked bone motion, or rigid attachment first when those meet the need; add secondary motion only when it improves the visible result without obscuring the action or destabilizing the moving image.
 
 This work can run alongside rough action timing on the agreed rig, but changes to the body or skeleton must be communicated before dependent skinning or final clips are treated as complete.
 
@@ -208,15 +210,25 @@ Use the [matched character-production comparison](../projects/3d-pixel-art-valid
 
 ## Repair map and downstream effects
 
-| Finding                                 | Repair owner                                         | Dependent work to revisit                                                      |
-| --------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Weak identity at normal camera distance | Silhouette, proportions, outfit/material contrast    | World representation, portrait/icon agreement and poses that hide key features |
-| Wrong scale or attachment location      | Source transforms and canonical grip/pivot           | Ground contact, held view, selected body/equipment fits and export             |
-| Fused parts or unusable openings        | Source geometry or candidate supplier                | Materials/UVs, articulation and any depiction of use                           |
-| Bad deformation                         | Geometry, skin weights or rig                        | Affected clips, garment fits and runtime bounds                                |
-| Sliding or mistimed contact             | Motion, retargeting or its native-timing integration | Transition, effect/audio timing and relevant actions                           |
-| Correct source but broken runtime view  | Export and renderer consumption                      | Final artifacts, actual game poses and loading/replacement behavior            |
-| Repeated variants lose identity         | Shared brief, references or family controls          | Variant generation and cross-representation review                             |
+For a revision or finalization, reopen the exact selected source and record which inputs change. Keep unaffected geometry, rigs, clips, materials and still-valid evidence; rebuild and inspect the affected export rather than restarting generation. The table names the checks a change invalidates, scoped to the requested use. A failed identity requirement, unusable requested motion or broken file is a blocker on the prototype path too; only nonblocking cosmetic limitations can be left for later polish.
+
+| Finding                                          | Repair owner                                         | Dependent work to revisit                                                                                                                              |
+| ------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Weak identity at normal camera distance          | Silhouette, proportions, outfit/material contrast    | World representation, portrait/icon agreement and poses that hide key features                                                                         |
+| Wrong scale or attachment location               | Source transforms and canonical grip/pivot           | Ground contact, held view, selected body/equipment fits and export                                                                                     |
+| Fused parts or unusable openings                 | Source geometry or candidate supplier                | Materials/UVs, articulation and any depiction of use                                                                                                   |
+| Bad deformation                                  | Geometry, skin weights or rig                        | Affected clips, garment fits and runtime bounds                                                                                                        |
+| Sliding or mistimed contact                      | Motion, retargeting or its native-timing integration | Transition, effect/audio timing and relevant actions                                                                                                   |
+| Surface colour, roughness or texture detail only | Material/image source, keeping mesh and UVs          | Changed maps and export assignments, lighting, viewing distance and identity; keep the rig, weights and clips                                          |
+| UV layout changes                                | UV source and dependent texture transfer/bakes       | Every map using that UV set, seams, texel scale and exported materials; no new rig unless geometry also changes                                        |
+| Topology or vertex order changes                 | Editable mesh and affected skin/morph bindings       | Weight/shape transfer, needed deformations, fitted parts, bounds and export; an old vertex binding cannot be assumed valid                             |
+| Skeleton, rest pose or body proportions change   | Rig/body source and retargeting                      | Dependent skins, all retained clips, garment fits, attachments, foot/grip contacts and gait metadata; matching bone names do not preserve these checks |
+| A selected head or hairstyle changes             | Head/hair source and its fit to the approved body    | Identity, neck seams and weights through retained motion, hair/hat clearance, material match and bounds; keep the unchanged body and clip data         |
+| One clip is added or revised                     | Motion source and the selected rig                   | That clip's duration, loop/end/contact, root travel and transitions, plus required gait metadata; preserve every other requested clip                  |
+| Correct source but broken runtime view           | Export and renderer consumption                      | Final artifacts, actual game poses and loading/replacement behavior                                                                                    |
+| Repeated variants lose identity                  | Shared brief, references or family controls          | Variant generation and cross-representation review                                                                                                     |
+
+Reimport and inspect the exact final artifact after the repair. If a previously checked dependency, consumer or look changed, its relevant check is no longer reusable. New family or device qualification is required only when that coverage is part of the task; one repaired character supplies evidence for its inspected combination.
 
 ## Maintained records
 

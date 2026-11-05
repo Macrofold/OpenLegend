@@ -1,16 +1,16 @@
 # Art workflow — feature specification
 
-| Status      | Current progress                                                                                                                                                                                                                                                                                            | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The workflow pages, with simple and full paths and step options, the skills, art-direction seam, art tool and local model preview are delivered. The first proof run took Mike's five character sheets to rigged, animated models, not yet accepted; the wrapped-family test and a state-sheet prop remain. | 2026-11-01   |
+| Status      | Current progress                                                                                                                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The procedure and tools are delivered; selective repair and prototype-to-polish handoffs are specified. New people still require the PPL body/clothing decisions; art acceptance and the remaining proof assets are open. | 2026-11-05   |
 
-This project redesigns how OpenLegend makes art: one procedure that turns a request such as "turn this character sheet into a rigged model for the game" into finished, reviewed, preserved files, with explicit tool defaults, explicit artistic latitude and no built-in look. Mike asks; an agent, or a junior artist following the pages, does the work; Mike decides at most three things per request.
+This project redesigns how OpenLegend makes art: one procedure that turns a request such as "turn this character sheet into a rigged model for the game" into finished, reviewed, preserved files, with explicit tool defaults, explicit artistic latitude and no built-in look. Mike asks; an agent, or a junior artist following the pages, does the work; The normal full path has three review points; unresolved consequential choices are resolved before dependent work, and the prototype path needs no candidate-selection round.
 
-The procedure itself lives in the [art workflow pages](../production-workflows/art-flows/README.md). This document owns the purpose, the decisions and their reasons, the scenarios, acceptance and what remains; the [technical design](art-workflow-tech-design.md) owns the page structure, the helper tools still to build and the delivery tasks.
+The procedure itself lives in the [art workflow pages](../production-workflows/art-flows/README.md). This document owns the purpose, the decisions and their reasons, the scenarios, acceptance and what remains; the [technical design](art-workflow-tech-design.md) owns the page structure, the helper tools, source/export handoffs and remaining delivery tasks.
 
 ## Maintained records
 
-- **Implementation:** [AF04–AF09](../maintainers/art-direction.md#art-flow-follow-through) in the art-direction tracker.
+- **Implementation:** [AF04–AF14](../maintainers/art-direction.md#art-flow-follow-through) in the art-direction tracker; [PPL01–PPL03](../maintainers/art/people.md) own the ND39–ND42 body, face, hair, clothing and character-sheet design decisions. This workflow refinement does not close those decisions.
 - **Limits and constraints:** no new discretionary limits. Model budgets are the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) profile, the local preview applies the existing [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload) intake bound, and storage follows [AST](../limits/game-asset-storage.md). Spending follows the repository [spending policy](../../.agents/rules/verification.md#spending).
 - **Related contracts and designs:** [technical design](art-workflow-tech-design.md); the workflow pages ([README](../production-workflows/art-flows/README.md), [tools](../production-workflows/art-flows/tools.md), [profiles](../production-workflows/art-flows/profiles.md), [3D models](../production-workflows/art-flows/3d-models.md), [production](../production-workflows/art-flows/production.md), [study record](../production-workflows/art-flows/study-record.md)); the art direction's [current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance); the [runtime invention art contract](../invention-art-pipeline.md) and the proposed [generation and publication design](3d-pixel-art-asset-pipeline.md); rig families under [V3D05–V3D06](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
 
@@ -39,24 +39,24 @@ The pipeline should spend effort where OpenLegend differs from ordinary survival
 | **Danger you can read**                       | **Telegraph-first animation:** wind-up, aim, release and recovery for each weapon and for wolves, the bear and the stag, before idles are polished. The game discloses attack preparation to observers through the attacker's pose and motion ([combat](../worlds/base/combat.md)), so these clips must show that cue clearly; the animation itself decides nothing. The **threat check** reads them from front, side and behind. | Core     |
 | **A camp that is real construction**          | Walls and gates are built from their real parts (posts, wattle panels, ties, rails, bar, the 0.30 m hand window), so a missing panel looks like the real gap and raw poles look different from trimmed posts ([editable shelters](../worlds/base/editable-shelters.md)). The **construction check** covers it.                                                                                                                    | Core     |
 | **Clues you can solve by looking**            | Authored evidence that already exists in the world (Mara's torn red fastening, the stag's hoof tracks, breached Watchpost walls) gets art matching its inspection text, cheaply, because it is static.                                                                                                                                                                                                                            | Core     |
-| **Fast iteration on the world**               | Idea to in-game look in hours: defaults remove tool decisions, scripted checks remove manual inspection, and a local model preview shows a candidate in the game's own renderer without publishing it ([technical design](art-workflow-tech-design.md#5-local-model-preview-in-the-study-viewer)).                                                                                                                                | Complete |
+| **Fast iteration on the world**               | A short route to an inspectable result: defaults remove repeated tool decisions, reports cover mechanical file checks, and a local model preview shows a candidate in the game's own renderer without publishing it ([technical design](art-workflow-tech-design.md#5-local-model-preview-in-the-study-viewer)).                                                                                                                  | Complete |
 | **Worlds with their own looks**               | The workflow carries no look, so another authored world can bring its own art direction to the same procedure.                                                                                                                                                                                                                                                                                                                    | Depth    |
 
 **What the first playable needs drawn** (from the world specifications; the [repertoire priorities](../repertoires/gameplay-priorities.md) defer to the first-scenario list):
 
 - **People:** seven: the player, Ada, the Peacock Mercenary, Mara Reed, Tavin Vale, and Kest (shield) and Orin (bow) at the Watchpost. The restored mercenary and fitted library humans exist as candidates; none is accepted yet.
-- **Animals:** about twenty: hares, deer, birds, three wolves, two bears and a territorial stag. The bear's anatomy is unresolved.
+- **Animals:** hares, deer, birds, wolves, bears and the territorial stag. The current sourced animals and remaining gaps are owned by [AD09](../maintainers/art-direction.md#ad09--follow-through-on-the-grounded-stylized-direction); an earlier unresolved bear-source question does not override the selected WildMesh source. Motion and population qualification still need their own evidence.
 - **Tools and weapons:** knife, knapped stone tool, club, shield, spear, camp hammer, field sling, Orin's bow and arrows, reed comb, pole hook, branch hook, river line. The club, hammer, hooks, comb, river line and knapped stone have no art in the current look.
 - **Camp:** posts, wattle panels with damage bands and salvage, the sliding barred gate, a reed-mat roof, canopy posts with weather cloth, and a four-stone hearth.
 - **Containers and stock:** pouch, open basket, woven containers of varying size, satchels and caches; ground piles of real items; poles, fibre, cord, stone, flint and bone.
 
 **Ideas this review surfaced for other owners** are recorded in [showing the world's actual state](../game-ideas/visible-world-state.md): wetness from the moisture value, camp stock drawn from real items, and animating the ecology the game already runs.
 
-**Deliberately not now** (over-engineering at zero players): paid generation during play, a universal clothing system or many-slot equipment figure before clothing is scheduled, per-object history art, live footprints and wound decals, seasonal growth, face-landmark exports before NPC face recognition exists, and any automated multi-provider fan-out service.
+**Deliberately not now** (over-engineering at zero players): paid generation during play, a universal wardrobe implementation before the selected [PPL clothing design](../maintainers/art/people.md) is settled, per-object history art, live footprints and wound decals, seasonal growth, face-landmark exports before NPC face recognition exists, and any automated multi-provider fan-out service.
 
 ## 3. Decisions
 
-Sections 3.1–3.5 come from the October 31, 2026 discussion and 3.6 from November 1.
+The decisions below retain their recorded provenance. Current production follows the latest art direction and the people-from-parts requirement; older proof methods do not authorize a rejected source or a fused-clothing replacement.
 
 ### 3.1 The outdated "artgen" skills
 
@@ -72,7 +72,7 @@ Mike asked what the claude.ai-synced skill `/anthropic-skills:openlegend-art-pip
 | A clean-reference-views step (A-pose front plus left, back, right) before any 3D spend | **Adopted** as [Stage 3](../production-workflows/art-flows/3d-models.md#step-3--make-clean-reference-views), with view rules and an agreement check.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Concrete default tools and candidate counts                                            | **Adopted** as the [default roster](../production-workflows/art-flows/tools.md#default-roster) and the candidate defaults in the request settings.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | Spreading one prepared input across several 3D providers, then picking                 | **Adopted** as three candidates by default on the full path: two Meshy and one Tripo, both reachable through the already-connected Higgsfield account. Further providers are [OD2](#od2--a-second-3d-provider).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Outside models (MakeHuman/MPFB bodies, hand-made, CC0) as equal candidates             | **Adopted**: library and family-body fits compete with generated candidates.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Outside models (MakeHuman/MPFB bodies, hand-made, CC0) as equal candidates             | **Adopted as a sourcing option**, subject to current source acceptance. Stock MakeHuman bodies are rejected for the game; a hidden-base experiment is unresolved under PPL01, not an approved exception.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | A real height in metres in the brief                                                   | **Adopted** as a required game fact.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Estimates before paid steps, a cost cap, no automatic paid retry                       | **Kept** (already policy); made concrete with per-tool estimate commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Baking pixelation into models in Blender (triangles, texels per metre, palette)        | **Rejected as a workflow step.** It was an automatic, model-wide treatment written into the procedure and tied to one look. How surfaces are prepared for the current look (deliberately painted fixed-pixel textures, limited palettes) belongs to the art direction's [production notes](../../art-direction/decisions.md#how-the-current-look-changes-production). Triangle budgets for performance remain. _Correction during review:_ the conversation first said baking would "double" the renderer's pass. The current recipes do paint fixed palette cells on rigid surfaces, so that reason was wrong; the real reason is that any such treatment belongs to the look, not the workflow. |
@@ -129,11 +129,20 @@ Two requests met on November 1. The prototype work merged into `main` made model
 - **Default clips.** An animated walking character gets `Idle`, `Walk` and `Run`: the prototype work's idle and walk plus the `Run` the game's loader requires, with named motions added. Mike confirmed on November 3 that a walk is expected by default.
 - **What no option removes.** A model the game will load keeps the file check, an animated character always carries the `Idle` and `Run` the game's loader requires, every 3D model gets one look in the game's renderer, and both paths preserve every meaningful output.
 
-Most requests want either a quick usable look or finished art, and neither Mike nor a junior should decide every step. The simple path keeps a rigged person to about $1.75; the full path keeps the review points that caught the rejected mercenary iterations and the flattened Gildmoss export. The tradeoff: a prototype skips the fidelity sheet and the critique, so it is never evidence of acceptance or of family qualification. The step options are request words read by the agent, not provider settings or a service.
+Most requests want either a quick usable look or finished art, and neither Mike nor a junior should decide every step. The simple path reduces optional work; dated provider estimates belong in [tools](../production-workflows/art-flows/tools.md), and actual cost includes repair and inspection, not just generation. The full path keeps the review points that caught rejected art. The tradeoff: a prototype skips the fidelity sheet and the critique, so it is never evidence of acceptance or of family qualification. The step options are request words read by the agent, not provider settings or a service.
+
+### 3.7 Repair only the failed dependency
+
+The [character-production research](../../art-direction/research/3d-pixel-worlds/character-production-2026-10-31.md) supports selective part generation, directly useful meshes, rough motion before polish and checking the exported result. These refine the existing procedure; they add no required provider comparison, retopology, high-poly sculpt, cloth simulation or inverse-kinematics pass.
+
+- **Part control has two meanings.** A separate generation job can repair a head or accessory without remaking successful work. Separately, the selected world can require a part to remain removable or adjustable. Future people have that requirement under [PPL](../maintainers/art/people.md); it cannot be waived by choosing prototype quality. A rigid prop without exchangeable parts does not acquire it merely because it was generated in pieces.
+- **Use what already works.** Refine a direct mesh if its form, requested deformation, material mapping and export meet the brief. Rebuild topology or bake detailed geometry only to solve a demonstrated problem. Simple utility-map baking for a chosen material method is a separate decision.
+- **Polish resumes the selected asset.** Preserve its exact source, rig, requested clips and adequate materials. The [repair table](../production-workflows/assets-and-animation.md#repair-map-and-downstream-effects) determines which downstream checks become stale; no wholesale regeneration or repeat candidate contest is implied.
+- **The short path has a real exit.** A prototype must load and perform its stated use with the required identity and proportions. Record cosmetic limitations, but do not call a broken requested motion usable merely because it is labelled a prototype. A checked export, a shared-family qualification and Mike's artistic acceptance are separate outcomes.
 
 ## 4. Scenarios
 
-Each scenario names its trigger, what Mike sees, the decision points and a meaningful failure.
+Each scenario names its trigger, what Mike sees, the decision points and a meaningful failure. New-person scenarios apply only after the [PPL decisions](../maintainers/art/people.md) authorize the body/parts route; retained study exceptions are not a general production method.
 
 1. **Concept study.** _"Concept art for Tavin Vale, three directions."_ The agent reads the look and Tavin's facts, states the plan line (about $0.35), generates three distinct directions, fixes anatomy and placeholder defects with targeted edits, and shows one labelled sheet. Mike picks c02 or asks for another round. The study ends archived. _Failure:_ the default model keeps producing the same face; the agent audits a second model on the same brief and says so.
 2. **Character sheet to game model.** _"Turn this sheet into a finished, rigged model; keep the face and coat exactly."_
@@ -141,13 +150,16 @@ Each scenario names its trigger, what Mike sees, the decision points and a meani
    - **Pick.** The agent shows the views with a turntable sheet of the three candidates beside the reference figure, and each candidate in the game's own look beside the cast through the study viewer's local preview. Mike picks m02.
    - **Finish.** The agent cleans m02 in Blender, fits it to the shared body family or rigs it, adds the required clips, checks budgets and play checks, gets a critique, and shows a matched-scale sheet.
    - **Accept.** Mike accepts and the package is archived. Integration is a separate request.
-   - _Failure:_ every candidate fuses the satchel to the hip. The agent returns to Stage 3, removes the satchel from the views to make it a separate prop, and regenerates within budget.
+   - _Failure:_ every candidate fuses the satchel to the hip. The agent identifies whether the views or the generator caused it. If separation resolves the defect, it repairs only that part and its fit within budget; changing all successful geometry is not the default.
 3. **State sheet.** _"Production models of the wattle panels, intact and damaged."_ The agent reads the shelter specification, finds intact, damaged, nearly broken and salvage, and makes one source with four states built from real parts. The state check confirms the four read apart at play distance. _Failure:_ the game has no "burnt" state; the agent does not make one.
 4. **Tool override.** _"Concepts with Nano Banana Pro, 3D with Rodin."_ Nano Banana Pro runs through Higgsfield, already connected. Rodin is offered through fal.ai, which needs an account and key that are not configured, so the agent reports the requirement and asks, while preparing everything else. (Tripo, by contrast, is already reachable through Higgsfield.)
 5. **Resume.** A new thread receives `2026-11-02-mara-reed-3d/m02`. It reads the record's Resume section, recovers any outstanding job, fetches the archived files and continues at Stage 5 without regenerating.
 6. **Comparison.** _"Use both flows for a character appearance study."_ Shared inputs are frozen once; Standard and Higgsfield run independently with distinct IDs; one index compares coverage, quality, cost and Mike's involvement.
 7. **Creature.** _"A wolf for the game."_ A library or specialist source fitted to a nonhuman rig, with stalking, bite wind-up and recovery clips authored before idles; the threat check reads the bite from three sides.
-8. **Quick prototype.** _"A quick model of Tavin from this sheet."_ The plan line states the simple path: one Meshy candidate from the sheet's front view, the automatic rig with `Idle`, `Walk` and `Run`, the short check, about $1.75. The agent crops the front view, generates one candidate, rigs it once and adds the cast's `Walk` and `Run` with `clips`, reads the file report, looks at it beside the cast in the study viewer, uploads everything and stops; Mike sees the result, not a candidate sheet. _Failure:_ the coat splits with each stride in `Walk` and `Run`; the agent records it as a known limit of the prototype rather than reweighting, and a later "polish/finalize" takes it to the full path.
+8. **Quick prototype.** _"A quick model of Tavin from this sheet."_ The plan line states the simple path: one Meshy candidate from the sheet's front view, the automatic rig with `Idle`, `Walk` and `Run`, the short check, about $1.75. The agent crops the front view, generates one candidate, rigs it once and adds the cast's `Walk` and `Run` with `clips`, reads the file report, looks at it beside the cast in the study viewer, uploads everything and stops; Mike sees the result, not a candidate sheet. _Failure:_ the coat splits enough to make the requested walk unusable; fix the affected weights or report the result incomplete. Minor cosmetic limits may remain for later polish, but prototype quality does not waive the stated use or the separate-clothing requirement.
+
+9. **Animation only.** _"Give this selected rig a reaching motion; keep the model and materials."_ Reuse the exact target, block the reach and its return, check the hand against the actual target position, export and reopen. Preserve other clips. No new body, garment set, concepts or unrelated motion library is required. _Failure:_ a same-named source skeleton has a different rest pose; correct the mapping or pose and recheck contact rather than declaring compatibility from names.
+10. **Finish a retained prototype.** _"Polish this face and coat, keeping the walk."_ Inspect the selected revision, repair the failed face/material or weights, then repeat its affected export and motion checks. A texture-only correction keeps geometry and the rig. A topology change rechecks affected weights and textures. _Failure:_ the available service can rig only its raw output, so rerigging there would discard local repair; use a supported local route or report that dependency before spending.
 
 ## 5. Behaviour
 
@@ -173,27 +185,28 @@ In scope: every offline art request, from concepts to production packages and th
 
 ## 7. Failure cases
 
-| Situation                                                     | Required behaviour                                                                                               |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| A named tool needs an account, key or plan that is not set up | Prepare everything else, report the exact requirement, ask. Never sign up, buy or reuse an unrelated credential. |
-| Generated views disagree                                      | Name the canonical view, correct the others with targeted edits, record the interpretation.                      |
-| All candidates fail a lock (fused props, wrong face)          | Return to the stage that caused it; change the input (views, separation), not the number of rerolls.             |
-| Budget would exceed the ceiling                               | Stop before dispatch, preserve finished work, report the shortfall and ask.                                      |
-| A job times out or the session ends                           | Recover the submitted job from its ID; never resubmit while its status is uncertain.                             |
-| Technical checks pass but Mike rejects                        | Record his words, identify the responsible choice, revise that source; preserve the rejected candidate.          |
-| The request conflicts with the current direction              | Prepare, then ask which applies; a one-study exception does not change the direction.                            |
-| Storage is unavailable                                        | Keep the working folder, mark "not yet archived", report the access needed.                                      |
-| A state or detail the game does not record is requested       | Explain that art cannot assert it, offer the closest supported state, and route a missing mechanic to its owner. |
+| Situation                                                     | Required behaviour                                                                                                                                  |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A named tool needs an account, key or plan that is not set up | Prepare everything else, report the exact requirement, ask. Never sign up, buy or reuse an unrelated credential.                                    |
+| Generated views disagree                                      | Name the canonical view, correct the others with targeted edits, record the interpretation.                                                         |
+| All candidates fail a lock (fused props, wrong face)          | Identify the failed input, source method or provider capability; repair that cause or change method within scope. More rerolls are not a diagnosis. |
+| Budget would exceed the ceiling                               | Stop before dispatch, preserve finished work, report the shortfall and ask.                                                                         |
+| A job times out or the session ends                           | Recover the submitted job from its ID; never resubmit while its status is uncertain.                                                                |
+| Technical checks pass but Mike rejects                        | Record his words, identify the responsible choice, revise that source; preserve the rejected candidate.                                             |
+| The request conflicts with the current direction              | Prepare, then ask which applies; a one-study exception does not change the direction.                                                               |
+| Storage is unavailable                                        | Keep the working folder, mark "not yet archived", report the access needed.                                                                         |
+| A state or detail the game does not record is requested       | Explain that art cannot assert it, offer the closest supported state, and route a missing mechanic to its owner.                                    |
 
 ## 8. Acceptance criteria
 
-1. A junior following the pages can take a supplied character sheet to an archived, checked, owner-accepted rigged GLB, using only the documented commands, defaults and decision points (demonstrated by the [first proof run](art-workflow-tech-design.md#8-delivery-stages-and-tasks)).
+1. A junior following the pages can take a supplied character sheet to an archived, checked, owner-accepted rigged GLB, using the documented commands, defaults and decision points after applicable design decisions are settled. The [first proof run](art-workflow-tech-design.md#8-delivery-stages-and-tasks) supplies partial tool evidence; it does not establish owner acceptance, modular people or independent junior execution.
 2. No workflow or handbook page states a specific look; changing the look requires editing only the art-direction entry point and the sections it names.
 3. Every stage has a named default tool, a cost estimate method and a recovery method; overrides work per stage.
 4. Every study record shows fidelity, locks, interpretations, decisions and costs.
 5. Candidates are reviewed in the game's own look at the default camera before acceptance, and the profile's play checks are recorded.
 6. The guidance checker passes and no link to the removed pages remains.
 7. A request chooses the simple or the full path in ordinary words and changes any single step (concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format, critique) without restating the rest; supplied material skips the steps it already answers.
+8. A selected prototype can be finalized without replacing valid geometry, rig, clips or materials. The record identifies what changed, which evidence was reused and which affected checks were repeated; unsupported source editing or consumer features remain explicit gaps.
 
 ## 9. Delivery stages
 
@@ -207,7 +220,7 @@ In scope: every offline art request, from concepts to production packages and th
 
 ## 10. Open decisions and questions
 
-Each needs Mike unless marked otherwise; the recommendation is the agent's.
+This section retains settled decisions and unresolved alternatives. OD1 and OD8 are answered; OD2 adds no account by default. PPL01/PPL02 own the required body/rig, face/hair and clothing choices in OD3; OD4 is an account-level cleanup. Optional study subjects or techniques do not block unrelated prop or animation work.
 
 ### OD1 — Default generation platform
 
@@ -259,7 +272,7 @@ Each needs Mike unless marked otherwise; the recommendation is the agent's.
 
 MPFB's other rigs (CMU, for motion capture, and Rigify) suit specialist cases.
 
-**Recommendation:** our own wrapped family, using MPFB's mesh, shape targets and Mixamo or GameEngine rig as the hidden base. People then look like their own concepts (the mercenary's quality) while sharing one family. Test it in the proof run on one person, and measure the joint count and the time wrapping takes. Do not use the Default rig for new work.
+**Current disposition:** the earlier wrapped-MPFB recommendation is an unqualified candidate, not the chosen source after the body rejection. PPL01 compares the preferred Quaternius character sources, generation, hand authoring and any explicitly accepted hidden base against body coverage, independent clothes, face adjustment, deformation, rights and cost. Wrapping preserves useful vertex correspondence only when deliberately constructed; it does not prove valid weights, arbitrary slider combinations or garment fit. Do not start that experiment on a rejected or provisional base without Mike's decision.
 
 **Proof-run evidence (October 31):** Meshy's automatic rig worked on all five sheets' people: a 24-bone humanoid with at most 4 influences, well inside the 64-joint budget, for 8 credits per clip. It gives each person a one-off mesh, so it does not answer the family question; the wrap test still does.
 
@@ -275,7 +288,7 @@ MPFB's other rigs (CMU, for motion capture, and Rigify) suit specialist cases.
 
 **Mike's decisions (October 31):** first "not yet". Later that day he supplied five character sheets (Sela Tern, Ser Jessa Cairn, Ada, Mara Reed and Orin) with "Run whatever tests you want on these now. Spend whatever you want." The [character-sheet proof run](../../art-direction/studies/2026-10-31-character-sheet-proof/README.md) took all five to rigged models with `Idle` and `Run` that day, by image to 3D and automatic rigging.
 
-**Still to choose:** a person made as a wrapped family member (the [method](#11-people-families-a-character-creator-and-npc-variety) is untested) and a state-sheet prop. The recommendation stands: Tavin Vale for the wrap, and the wattle wall panel. The bear is the strongest creature candidate later, because its anatomy is the open problem.
+**Still to choose:** a person proving the accepted PPL parts/family route and a state-sheet prop. Tavin Vale and a wattle wall panel remain possible subjects, not selections. Wrapping is one candidate method, not a required MPFB path; use current AD09 animal choices for later creature work.
 
 ### OD6 — Review surface
 
@@ -321,91 +334,44 @@ Blender 5.2 has no built-in retargeting, so any shared-clip source also needs a 
 
 ## 11. People families, a character creator and NPC variety
 
-Mike asked (October 31) how a player character creator with editable face and body would work, how many NPCs get distinct looks, and whether that changes this pipeline.
+**Current requirement; design still open:** [PPL01/PPL02](../maintainers/art/people.md) and [DG37](../maintainers/needs-design.md#dg37--character-appearance-a-creator-and-varied-populations) own ND39–ND42. Every new person has a canonical body or an explicit no-fit outcome, an adjustable face and hairstyle, and separately wearable clothing. The stock MakeHuman bodies are rejected. The selected source family, fitting ranges and gameplay clothing rules require Mike's accepted design before PPL03 replaces the current procedure. Existing shipped exceptions stay exactly within their recorded scope.
 
-**How games usually build a character creator.** Almost always from one base body and head that every character shares: the same mesh layout (topology) and the same skeleton. They vary it in four ways that combine freely:
+### What can be shared, and what still needs proof
 
-1. **Shape targets** (morph targets or blend shapes): stored differences of the base mesh, such as nose width, jaw, cheekbones, eye spacing, weight, muscle and age, each driven by a slider. Because every character shares the layout, any mix of sliders is valid.
-2. **Bone controls:** scaling or moving bones for height, limb length, shoulder width, head size and some facial features. Cheap at runtime and compatible with ordinary skinning, so most games combine it with shape targets.
-3. **Swappable parts:** hair, beards, brows, sometimes whole heads, and clothing, all fitted to the base body and skeleton. Clothes follow the body because they carry matching shape targets or are skinned to the same bones.
-4. **Colour and material values:** skin, hair and eye colour, freckles, scars, tattoos and ageing, as tints, masks and decals.
+A family can use measured body presets, compatible head/hair parts, a shared humanoid skeleton, fitted garments and material variations. There is no fixed number of body types, heads or sliders in this workflow. The selected world's population and first useful characters determine coverage; canonical means documented and deliberately supported, not a Cartesian product of every age, build and outfit.
 
-Presets are saved sets of these values. Some games offer only preset heads and bodies plus colours; others expose dozens of sliders.
+| Reusable element                           | What it makes possible                                                            | What it does not establish                                                                         |
+| ------------------------------------------ | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Shared vertex layout and shape targets     | Offline face/body adjustments and, with a supported consumer, morph interpolation | Every combination is anatomically sound, within fit limits or supported by the current renderer    |
+| A shared skeleton and clip convention      | Reuse of motion, attachment definitions and bone maps                             | Matching names alone establish equal hierarchy, bind pose, proportions, contacts or weights        |
+| Fitted hair and garments                   | Reusable identity and outfit pieces                                               | Every layer fits every body or clips safely under all motion; supported combinations need evidence |
+| Material masks and colours                 | Cheap controlled visual variation                                                 | A new possession, injury, age, rank or other world fact exists because artwork depicts it          |
+| A retained recipe and exact part revisions | Repeatable offline assembly without another generation call                       | Free total production, distinct-looking combinations, accepted rights or measured crowd capacity   |
 
-**NPC variety is the same system driven by code.**
+The current prototype defaults apply to the selected output, not to designing a complete kit. An animation-only request keeps its selected target. A static model need not acquire a rig. A future quadruped, bird or other body family is not forced onto the humanoid skeleton; [V3D06](../maintainers/3d-pixel-art.md#v3d06--nonhuman-animation-families) owns its separate qualification.
 
-- **Each NPC is a few numbers:** slider values, part choices and colours, sampled from population ranges (by region, culture or family) with a seed. Named characters get authored values.
-- **No per-NPC generation:** nothing is paid for, and a save stores only those numbers.
-- **"Fifteen canonical body shapes" need not be fifteen models.** They become fifteen presets, or fifteen clusters in the population ranges, over continuous values.
+### Candidate production methods
 
-**What it changes in this pipeline:**
+1. **Reuse or adapt accepted parts first.** Inspect the preferred source's actual body, head, hair and garments, rights, skeleton and editable data. A visually liked dressed model may lack a body under its clothes or independently removable garments. Report the missing part instead of inventing hidden usable anatomy.
+2. **Generate or author only the missing part.** Use the character sheet to preserve identity and the target family to preserve dimensions, joints and interfaces. A body source is body-only with the approved underlayer; a garment is a garment. A whole dressed shell cannot be treated as a removable outfit or body.
+3. **Wrap only when shared topology solves a real need.** Fitting a clean source mesh to a generated form can provide common vertex correspondence. Keep body, face and garments separate where required, transfer or rebuild the affected UVs and weights, then prove the requested deformation and fit. A generic shrink-wrap or surface-deform operation does not automatically preserve useful morph targets, contacts or skinning. Whether MPFB is permitted as a hidden construction source remains PPL01's decision.
+4. **Preserve the supported family, not arbitrary blends.** Record allowed body/face controls and tested ranges with their source family. Do not expose untested mixtures as usable merely because coordinates interpolate. Start with the smallest useful body and outfit coverage; expand only when an actual character has no supported fit.
 
-- **People are produced as a family.** For people, the pipeline's main product becomes the family itself: the base body and head with shape targets or bone controls, one skeleton, garments and hair fitted with matching shapes, and colour masks. MakeHuman/MPFB is such a parametric human (it is itself a character creator, with CC0 shape targets and several rigs), which is why [OD3](#od3--the-humanoid-body-family-and-rig-for-the-cast) matters beyond the skeleton.
-- **Generation keeps its place:**
-  - concepts for faces, outfits and cultures;
-  - distinctive named characters as bespoke models;
-  - garments, packs and props fitted onto the family body (the hybrid route).
+The [production handbook](../production-workflows/assets-and-animation.md#articulated-people-and-creatures) supplies the fitting, motion and repair procedure. The [technical handoff](art-workflow-tech-design.md#6-consumer-contract-used-by-the-3d-route) records exact dependencies without introducing another asset database.
 
-  A generated one-off person cannot take shared sliders unless wrapped onto the family mesh, an advanced retopology step.
+### Delivering the selected combination
 
-- **Garments must follow the body.** Each body shape target needs a matching garment target (transferred offline in Blender), or variation is limited to bone scaling. This is family production work in Blender.
-- **Faces at play distance:** a person is small at the default camera, so face sliders show mainly in portraits, close inspection and the creator itself. Build, silhouette, hair, clothing and colour carry identity in play, which is why the profiles' signature and name check focus there.
+**Offline assembly** can use today's GLB delivery path for an explicit fixed-outfit study or approved retained exception. Preserve editable semantic parts even if an export combines primitives. That export alone does not satisfy the new requirement that clothing be removable in play. It also does not authorize another fixed-outfit person while PPL decisions are unresolved.
 
-**Our own families instead of stock MakeHuman looks.** The standard way to make many good-looking people share one family is **wrapping**:
+**Runtime assembly or outfit replacement** needs PPL02's clothing-state design and [V3D05](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family): allowed combinations, hidden skin, fit, shared animation, actual item state and renderer lifetimes. More separate skinned parts can increase draws, material changes and skinning/bounds work; shared source meshes do not by themselves make crowds cheaper. Compare the actual exported scene under the existing budgets. Do not build a general mesh-merging service for this workflow.
 
-1. Keep one base mesh with good deforming topology, shape targets and a skeleton. MPFB's base can serve, hidden underneath.
-2. For each person, make the concept and generate the model the mercenary's way.
-3. Fit the base mesh onto that model's surface, then bake the model's texture onto the base.
+**Live face/body sliders** also require the existing morph/lifetime work before admission. A recipe can bake selected values offline without promising a live creator. If a chosen part or consumer is unavailable, retain the approved current result and report the missing capability; never silently change the person, attach unsupported data or claim a prototype finished that feature.
 
-Each person then looks like their own concept, yet keeps the family's layout, skeleton, weights and clips. People can also blend into each other as shape targets, so a population can come from a few authored people. Blender can do the fitting (shrink-wrap and surface-deform modifiers) and the baking; dedicated wrapping tools do it faster. It is unproven here, and the proof run should test it on one person ([OD3](#od3--the-humanoid-body-family-and-rig-for-the-cast)).
+### Staged delivery and ownership
 
-**Meshy's automatic skeleton.** When Meshy rigs a model (`--enable_rigging`, or the `3d_rigging` job), it places a standard humanoid skeleton inside that one mesh and paints its skin weights automatically. The mercenary's has 34 joints. The bone names are always the same, so any of Meshy's roughly 680 library clips plays on any Meshy-rigged model. But each rigged person is still a separate mesh with its own layout, so it cannot share shape targets, garments or sliders with anyone else.
+1. **PPL01/PPL02 — Settle the design.** Body coverage and source, adjustable face/hair, rig, garment fit/layers/removal and existing-character exceptions are the decisions. ND39–ND42 stay open until their actual exit criteria are met.
+2. **PPL03 — Publish the accepted production procedure.** Map each character-sheet input to an existing part, a bounded repair/generation step or no-fit. This is the prerequisite for AF10, not evidence that parts already exist.
+3. **AF07/AF10 — Prove one useful person and a contrasting supported fit.** Use the agreed source, separate garments and requested motions; retain time, provider cost, hands-on repair and failure evidence. Expand to the first-playable cast only after the method works. This is a required measurement and acceptance exercise, not a six-hour production promise copied from the video.
+4. **AF11 — Batch only a qualified kit.** Reuse exact parts, settings and sources; inspect meaningful variation rather than count mathematical combinations. Named people follow authored facts. Broader generated populations, creator UI and runtime appearance selection stay with DG37 and their world owners.
 
-**Pre-built parts, combined per character.** The family can also be a kit made once and combined many times:
-
-- a few body builds sharing one skeleton (or one body with shape targets);
-- a set of heads, made by wrapping as above;
-- hairstyles and beards;
-- clothing and gear for each role and culture, fitted to every build;
-- colour and material ranges.
-
-Ten builds, twelve heads, ten hairstyles and fifteen outfits give 18,000 combinations before colour, from under fifty pieces. Every piece must fit every body it can meet, which is why shared shape targets (garments follow the body) matter. Rigify, Blender's rig-building tool, is one way to make the shared skeleton; it is not needed for combining parts.
-
-**Delivering combinations:**
-
-1. **Now:** bake each character's combination offline into its own GLB, which works with today's renderer.
-2. **Later:** assemble parts at runtime on one shared skeleton. This is cheaper for crowds, but the renderer must support several skinned parts per character, which V3D05's garment and hair work covers.
-
-**The production sequence** (October 31, 2026; the order matters more than the counts):
-
-1. **Prove the method on one person**, when Mike says go: the MPFB hidden base with its Mixamo or GameEngine rig, one person wrapped end to end, with time and cost measured (AF07).
-2. **Make the first-playable people as wrapped family members.** Their faces, builds and outfits become the kit's first pieces. Do not build a large kit before any character exists.
-3. **Fill the kit's gaps for crowds** (AF10):
-   - **Bodies come from measurements, not concept art.** The base's sliders for height, weight, muscle, age and sex give about eight to twelve build presets spanning the world's population ranges.
-   - **Faces, hair and outfits come from concept art**, because identity and culture live there. Each is made once (wrapped or fitted) and then reused.
-   - The world's own people (ages, roles, cultures) set the ranges.
-4. **Produce characters** in one of two ways:
-   - **Kit characters**, for most NPCs. There is no generation and no wrapping. The agent picks combinations and slider values within the world's ranges, avoids repeats, bakes each to a GLB, shows a sheet, uploads, and records the recipe. A batch of a hundred costs nothing paid; AF11 provides the batch tool.
-   - **Signature characters from a concept sheet.** First try to match the sheet with the kit (nearest face, adjusted sliders, an existing outfit). Generate and wrap only the piece the kit cannot reproduce, usually the face. That piece then joins the kit. A request names neither route; the plan line says which one applies and what it costs, and Mike can say "kit only" or "wrap".
-
-**Faces and sliders.**
-
-- **How faces are made:** each kit face is a concept, a generated head and a wrap onto the shared head, stored as a face shape.
-- **Sliders are possible.** Every face shares one mesh layout, so faces can be blended (sixty per cent one face, forty another), and MPFB's feature sliders (nose, jaw, eyes) work on all of them. Presets only would also work.
-- **Live sliders come later.** In-game sliders need the V3D05 renderer work; until then, chosen values are baked into files.
-
-**What stays separate (runtime work, not this workflow):**
-
-- **Appearance values as world data:** which sliders exist and their ranges per population belong to the world's definitions, saved with each character.
-- **An engine mechanism** that turns those values into shape weights, bone scales and material values in the renderer.
-- **A creator interface.**
-- **A visual seed** separate from simulation randomness, as the [runtime art contract](../invention-art-pipeline.md) requires.
-- **Recognition stays independent:** NPC recognition must not read mesh or asset identity ([perception and recognition](../worlds/base/perception-recognition.md)).
-- **Renderer support is missing:** the pinned engine destroys a previous morph instance on assignment, so shape targets need the lifetime work [V3D05](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family) already lists before any GLB with them can be admitted.
-
-**A staged path:**
-
-1. Bake a set of family variants offline (MPFB values to separate GLBs) for the cast and early NPCs. This works with today's renderer.
-2. Later, add runtime shape targets and bone controls with a creator, after the V3D05 renderer work and a design.
-
-The future design is registered as [DG37](../maintainers/needs-design.md#dg37--character-appearance-a-creator-and-varied-populations). It is not selected or scheduled.
+The world's definitions own appearance choices and ranges; the renderer displays permitted state. Cosmetic randomness stays separate from simulation randomness. Recognition uses acquired world evidence, never mesh IDs or generator metadata ([perception and recognition](../worlds/base/perception-recognition.md)). A pose may communicate an admitted action or selected performance direction; it does not reveal a private motive or make the character choose that action. The same person must remain recognizable after an ordinary equipment change without assuming a clothing-based identity rule.
