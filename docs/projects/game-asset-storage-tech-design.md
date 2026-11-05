@@ -1,8 +1,8 @@
 # Game asset storage, delivery and art studies — technical design
 
-| Status      | Current progress                                                                                                                                                 | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Curated delivery and current-world owner selection pass; the shared authority (AS09) awaits record migration, and Git history reclamation remains gated in AS08. | 2026-11-05   |
+| Status      | Current progress                                                                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Curated delivery passes and the shared catalog is migrated; signed-in art loading, remaining-machine sync and AS09 qualification stay open alongside AS08 history reclamation. | 2026-11-05   |
 
 **Technical design used for implementation review:** 2026-10-18 04:00:12 UTC. [Actual review evidence](../verification/game-asset-storage.md#implementation-review) remains separate from the design contract.
 

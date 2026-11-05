@@ -39,6 +39,7 @@ import type {
 } from '../../apps/server/src/asset-storage.js';
 import { hashAssetFile } from '../../apps/server/src/asset-storage.js';
 import { tableRows } from '../../apps/server/src/record-pages.js';
+import { insertRows } from '../../apps/server/src/sql-rows.js';
 import { CHECKPOINT_LIMITS } from '../../apps/server/src/checkpoint-format.js';
 import { writeOperationalBackup } from '../../apps/server/src/operational-backup.js';
 import { syncDirectory } from '../../apps/server/src/save-files.js';
@@ -1145,26 +1146,43 @@ export async function restoreAssetRecoveryCatalog(
       if (await repo.db.prepare(`SELECT 1 AS present FROM ${table} LIMIT 1`).get())
         throw new Error('Recovery catalog target is not empty.');
     let index = -1;
+    let columns: string[] = [];
+    let rows: unknown[][] = [];
+    let bytes = 0;
+    // Stream the verified catalog in bounded chunks rather than making a remote
+    // round trip per row. Table order and the enclosing quarantine transaction stay intact.
+    const flush = async () => {
+      if (!rows.length) return;
+      await insertRows(repo.db, `${ASSET_TABLES[index]} (${columns.join(',')})`, rows);
+      rows = [];
+      bytes = 0;
+    };
     for await (const line of catalogLines(join(directory, 'metadata/asset-catalog.jsonl'))) {
       const entry = JSON.parse(line) as { table: string; row?: Record<string, unknown> };
       if (!entry.row) {
+        await flush();
         if (ASSET_TABLES[++index] !== entry.table)
           throw new Error('Recovery catalog table coverage mismatch.');
         continue;
       }
-      const columns = Object.keys(entry.row);
+      const nextColumns = Object.keys(entry.row);
       if (
         ASSET_TABLES[index] !== entry.table ||
-        !columns.length ||
-        columns.some((column) => !/^[a-z_][a-z0-9_]*$/.test(column))
+        !nextColumns.length ||
+        nextColumns.some((column) => !/^[a-z_][a-z0-9_]*$/.test(column))
       )
         throw new Error('Invalid recovery catalog row.');
-      await repo.db
-        .prepare(
-          `INSERT INTO ${entry.table} (${columns.join(',')}) VALUES (${columns.map(() => '?').join(',')})`,
-        )
-        .run(...columns.map((column) => entry.row![column]));
+      const size = Buffer.byteLength(line);
+      if (
+        rows.length &&
+        (rows.length >= 200 || bytes + size > 262144 || columns.join(',') !== nextColumns.join(','))
+      )
+        await flush();
+      columns = nextColumns;
+      rows.push(columns.map((column) => entry.row![column]));
+      bytes += size;
     }
+    await flush();
     if (index !== ASSET_TABLES.length - 1) throw new Error('Recovery catalog is incomplete.');
     await repo.quarantineAuthority();
   });

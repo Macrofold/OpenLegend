@@ -120,12 +120,12 @@ The game reads releases and pins saves in its own database, so each machine keep
 
 #### Move a machine's existing records into the shared authority
 
-Do this once, from the machine that published before the shared authority existed (as of November 2026, Mike's other Mac; this Mac mini never had an asset database). Until it is done the shared authority is empty: do not publish to it yet, because a game save that pins already-published art would then block that machine's sync. All directories below are outside every checkout.
+The original publishing catalog is now in the shared authority; [AS09](maintainers/game-asset-storage.md#as09--shared-asset-authority-across-machines) records the migration and remaining qualification. Other machines use the setup above and `pnpm assets sync`; they do not repeat catalog recovery. The procedure below is for an initial move into an empty authority. Keep publication paused during that move, because a save pinning an omitted release would block sync. All directories below are outside every checkout.
 
-1. **Back up with the old code.** In that machine's existing checkout, before it pulls the shared-authority change, stop the local game and run, with `OPEN_LEGEND_DATABASE_URL` still naming its game database:
+1. **Find the original catalog and back up with the old code.** Identify the publishing database and confirm that it contains the required exact releases; a configured game's synced copy may be incomplete. Stop its writers. Before pulling the shared-authority change, run the commands below with `OPEN_LEGEND_DATABASE_URL` naming that original database. If shared-authority code is already installed, use an isolated pre-authority checkout and confirm its CLI still reads the local database. Resolve `original_data_dir` to the original absolute operational directory, rather than the isolated checkout's default `.data`:
 
    ```sh
-   pnpm assets recovery-create --operation shared-authority-move-YYYYMMDD --output ~/OpenLegend-authority-move/checkpoint
+   pnpm assets recovery-create --operation shared-authority-move-YYYYMMDD --source-root "$original_data_dir" --output ~/OpenLegend-authority-move/checkpoint
    pnpm assets recovery-verify --manifest ~/OpenLegend-authority-move/checkpoint/locator.json --output ~/OpenLegend-authority-move/verified
    ```
 
@@ -151,7 +151,7 @@ Do this once, from the machine that published before the shared authority existe
 These were found while archiving real studies; check them before and during publication.
 
 - **Use the shared asset authority.** Publication and permissions use `assets/config.json`'s shared authority. `OPEN_LEGEND_DATABASE_URL` names only the local game's database; synchronize it with `pnpm assets sync` after publication.
-- **Check the AWS sign-in immediately before `approve` and `publish`.** The `openlegend` profile's session expires overnight and has lapsed within an hour of a successful check. Run `"$HOME/.local/bin/aws" sts get-caller-identity --profile openlegend --region us-east-2` (the [AWS rules](../.agents/rules/aws.md) explain why the explicit executable); if it fails, finish other work and ask Mike to renew the sign-in. Never request or handle his credentials.
+- **Check the AWS sign-in immediately before `approve` and `publish`.** The `openlegend` profile's session expires overnight and has lapsed within an hour of a successful check. Run `"$HOME/.local/bin/aws" sts get-caller-identity --profile openlegend --region us-east-2` (the [AWS rules](../.agents/rules/aws.md) explain why the explicit executable); if it fails, finish other work and ask Mike to renew the sign-in. Never request or handle his credentials. A cached identity check can still succeed while SDK or CLI credential refresh fails. For refresh errors about missing response fields, renew with `aws login` rather than changing the catalog or copying credentials.
 - **Split large manifests.** A manifest of about 450 KB (roughly 2,000 files) fails with "Asset metadata exceeds the recoverable SQL record allowance"; a 141 KB manifest succeeds. Split with `splitMigrationManifest` from [the migration tools](../scripts/assets/migration.ts) (a `maxManifestBytes` of 196608 worked), publish the parts first, then a parent that pins them.
 - **Freeze the folder first.** The manifest hashes files when it is built; any edit during publication leaves the working copy different from the archive. Make every edit, then build the manifest, then publish.
 - **Resume, do not restart.** After a network failure or a transient "non-retryable streaming request" message, rerun the same `publish` with the same operation ID and exact request, then `verify`.

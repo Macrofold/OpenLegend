@@ -531,11 +531,16 @@ export class S3AssetStorage {
     key = artifactKey(reference),
     versionId?: string,
   ): Promise<void> {
-    return this.transfer(() => this.consume(reference, key, versionId));
+    return this.transfer(() =>
+      this.retryExactTransfer(() => this.consume(reference, key, versionId)),
+    );
   }
   download(reference: ArtifactReference, destination: string, signal?: AbortSignal): Promise<void> {
     return this.transfer(
-      () => this.downloadPath(reference, artifactKey(reference), destination, signal),
+      () =>
+        this.retryExactTransfer(() =>
+          this.downloadPath(reference, artifactKey(reference), destination, signal),
+        ),
       signal,
     );
   }
@@ -547,7 +552,10 @@ export class S3AssetStorage {
     versionId?: string,
   ): Promise<void> {
     return this.transfer(
-      () => this.downloadPath(reference, key, destination, signal, versionId),
+      () =>
+        this.retryExactTransfer(() =>
+          this.downloadPath(reference, key, destination, signal, versionId),
+        ),
       signal,
     );
   }
@@ -585,7 +593,11 @@ export class S3AssetStorage {
         const transient =
           (status !== undefined && (status === 429 || status >= 500)) ||
           (error instanceof Error &&
-            /\b(?:ECONNRESET|ETIMEDOUT|EPIPE|ECONNABORTED)\b/.test(error.message));
+            // Known S3 endpoints can suffer transient resolver failures too;
+            // retries retain this transfer's original deadline and settlement gate.
+            /\b(?:ECONNRESET|ETIMEDOUT|EPIPE|ECONNABORTED|EAI_AGAIN|ENOTFOUND)\b/.test(
+              error.message,
+            ));
         if (!transient || attempt >= 2) throw error;
         try {
           await waitForOperationResources(this.operation(), { bounded: true });

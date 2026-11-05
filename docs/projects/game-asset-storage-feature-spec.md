@@ -1,8 +1,8 @@
 # Game asset storage, delivery and art studies — feature specification
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Curated delivery and current-world owner selection pass; separately gated Git history reclamation remains in AS08. | 2026-11-01   |
+| Status      | Current progress                                                                                                                                                               | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Curated delivery passes and the shared catalog is migrated; signed-in art loading, remaining-machine sync and AS09 qualification stay open alongside AS08 history reclamation. | 2026-11-05   |
 
 **Specification reconciled with implementation:** 2026-10-18 04:11 UTC. The [review evidence](../verification/game-asset-storage.md#implementation-review) records the checked scope and limits.
 
