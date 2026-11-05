@@ -352,6 +352,8 @@ export interface TemporalRetentionPolicy {
   maxChanges: number;
 }
 export interface TemporalCaptureInput {
+  /** A received geometry boundary keeps its scope even when it carries no values. */
+  spatialContext?: true;
   availabilityAt?: number;
   coverageGap?: { from: number; through: number };
   endedFields?: readonly CurrentMemberPart[];
@@ -437,6 +439,7 @@ function terminalMemberBytes(
     availabilityAt: numberToken,
     coverageGap: { from: numberToken, through: numberToken },
     endedFields: [largest],
+    spatialContext: true,
     required: false,
     sourceIds: [],
     facets: [],
@@ -1197,6 +1200,7 @@ export function appendTemporalReceipt(
           parts.set(JSON.stringify([kind, part]), [kind, part]);
         prior.endedFields = [...parts.values()];
       } else delete prior.endedFields;
+      if (input.spatialContext) prior.spatialContext = true;
       const addedBytes = byteLength(prior) - beforeBytes;
       previousTerminal.reservedBytes += input.terminalReservationBytes;
       previousTerminal.entry.charge.bytes += addedBytes;
@@ -1255,7 +1259,8 @@ export function appendTemporalReceipt(
         acquisition: prepared.batch.batchOrder,
         subject: input.subject,
         change: input.change,
-        ...(input.facets.some((facet) =>
+        ...(input.spatialContext ||
+        input.facets.some((facet) =>
           temporalSpatialContextValue(
             'received' in facet ? facet.received.projection.value : facet.value,
           ),
@@ -1957,10 +1962,10 @@ export function captureTemporalGeometry(
       continue;
     const actor = actorHistory(world, actorId)?.actor;
     if (!actor) continue;
-    const subject =
-        observation.origin.kind === 'exposure'
-          ? observation.origin.episodeId
-          : observation.origin.eventId,
+    // The receiving exposure can contain many same-kind features. Each acquired
+    // original owns its own availability boundary; its origin still records that exposure.
+    // docs/projects/bookkeeping-simplification-tech-design.md#recent-records-and-their-lifetime
+    const subject = observation.id,
       members = observation.facets.map((facet) => [facet.value.kind, 'value'] as const),
       terminalBytes =
         prior?.terminalBytes ?? terminalMemberBytes(actorId, actor.epoch, subject, members),
@@ -2028,11 +2033,9 @@ export function closeTemporalGeometry(
       world,
       actorId,
       {
-        subject:
-          feature.observation.origin.kind === 'exposure'
-            ? feature.observation.origin.episodeId
-            : feature.observation.origin.eventId,
+        subject: feature.observation.id,
         change: reason === 'retained-state' ? 'unchecked' : reason,
+        spatialContext: true,
         coverageGap: { from: Math.max(mark.lastAt, _through), through: world.simTime },
         endedFields: mark.members.map(({ kind, part }) => [kind, part] as const),
         facets: [],

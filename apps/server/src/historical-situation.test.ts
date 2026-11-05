@@ -1,5 +1,5 @@
-import { temporalHistoryWindow } from './temporal-storage.js';
-import { temporalPageReceipts, temporalPageReferences } from '@open-legend/domain';
+import { captureTemporalHistoryReadContext, temporalHistoryWindow } from './temporal-storage.js';
+import { temporalPageReceipts } from '@open-legend/domain';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import * as worldComposition from '../../../packages/domain/src/world-composition.js';
 import {
@@ -19,7 +19,6 @@ import {
   worldSupport,
   currentDetailedAttention,
   currentReceivedGeometry,
-  projectWorldHistory,
   type WorldState,
 } from '@open-legend/domain';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -35,17 +34,9 @@ beforeEach(() => {
   );
 });
 
-/** Evict committed receipt placement explicitly; timestamps no longer force chunks. */
-function coldReceiptWorld(world: WorldState): WorldState {
-  const temporal = world.experience!.temporal!;
-  return projectWorldHistory(world, {
-    temporal: {
-      ...temporal,
-      actors: Object.fromEntries(
-        Object.entries(temporal.actors).map(([id, actor]) => [id, { ...actor, chunks: [] }]),
-      ),
-    },
-  });
+/** Capture authority before evicting payloads; SQL must supply the selected blocks/values. */
+function coldReceiptContext(world: WorldState) {
+  return { ...captureTemporalHistoryReadContext(world, PLAYER_ID), pages: [], sources: {} };
 }
 
 const cleanup: Array<() => Promise<void>> = [];
@@ -118,7 +109,7 @@ it('retrieves independent shared terrain from cold storage for both outgoing and
         !selected.has(candidate.sourceId),
     )!,
     subject = currentBodyObservation(service.world, PLAYER_ID, entering[1].sourceId)!.exposure
-      .episodeId,
+      .track,
     original = currentReceivedGeometry(service.world, PLAYER_ID).observations[0]!;
   expect(original).toBeDefined();
   await editWorld(service, (world) => {
@@ -142,27 +133,29 @@ it('retrieves independent shared terrain from cold storage for both outgoing and
     actorId: PLAYER_ID,
     generation: (await store.records.head())!.generation,
   };
-  const coldWorld = coldReceiptWorld(service.world);
-  const subjects = [...previous.map((entry) => entry.exposure.episodeId), subject];
+  const coldContext = coldReceiptContext(service.world);
+  const subjects = [...previous.map((entry) => entry.exposure.track), subject];
   const ids = new Set<string>();
   const resident = new Set(
-    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.pages.flatMap((chunk) =>
-      temporalPageReceipts(chunk).map((receipt) => receipt.id),
-    ),
+    coldContext.pages.flatMap((chunk) => temporalPageReceipts(chunk).map((receipt) => receipt.id)),
   );
   for (const subject of subjects) {
     const history = await store.memories.temporalHistory(
       scope,
       {
         subjects: [subject],
+        cut: coldContext.cut,
         includeGeometry: true,
         kinds: ['surface-patch', 'physical-boundary'],
-        measurements: { from: 16, through: 16 },
+        measurements: {
+          from: original.facets[0]!.measuredFrom,
+          through: original.facets[0]!.measuredThrough,
+        },
         through: 24,
         bytes: 65536,
         limit: 128,
       },
-      coldWorld,
+      coldContext,
     );
     const matches = history.entries.filter((entry) =>
       entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
@@ -176,15 +169,17 @@ it('retrieves independent shared terrain from cold storage for both outgoing and
     expect(entry.receipt.facets[0]).toMatchObject({
       acquiredAt: original.acquiredAt,
       measuredThrough: original.facets[0]!.measuredThrough,
-      confirmedThrough: 24,
+      confirmedThrough: original.facets[0]!.measuredThrough,
     });
+    expect(entry.receipt.at).toBe(original.acquiredAt);
+    expect(currentReceivedGeometry(service.world, PLAYER_ID).supportedThrough).toBe(24);
     expect(resident.has(entry.receipt.id)).toBe(false);
     ids.add(entry.receipt.id);
   }
   expect(ids.size).toBe(1);
 });
 
-it('reads historical native distances through cold actor receipts, including a later issued held confirmation', async () => {
+it('reads actual historical distance samples from cold receipts without copying them into a later loss', async () => {
   const store = await testRepository(undefined, stockedCamp()),
     service = new WorldService(
       store,
@@ -213,13 +208,17 @@ it('reads historical native distances through cold actor receipts, including a l
       .map(([key]) => key);
     expect(setAttentionFocus(world, PLAYER_ID, keys)).toBe(true);
   });
-  const anchor = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  const anchor = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.track;
   const other = currentBodyObservation(service.world, PLAYER_ID, 'historical-other')!.exposure
-    .episodeId;
+    .track;
   await editWorld(service, (world) => {
     world.simTime = 18;
     const body = entityGet(world.entities, NPC_ID)!;
     setSpatialPosition(world, body, { x: 43, y: 0, z: 2 }, worldSupport(body), {
+      continuity: 'physical',
+    });
+    const otherBody = entityGet(world.entities, 'historical-other')!;
+    setSpatialPosition(world, otherBody, { x: 43.5, y: 0, z: 2 }, worldSupport(otherBody), {
       continuity: 'physical',
     });
     initializePerception(world, []);
@@ -236,8 +235,10 @@ it('reads historical native distances through cold actor receipts, including a l
   await service.flushMemorySources(PLAYER_ID);
   const head = await store.records.head(),
     scope = { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation };
+  const coldContext = coldReceiptContext(service.world);
   const query = {
     subjects: [anchor, other],
+    cut: coldContext.cut,
     // This initial pair-distance read needs body samples, not every associated terrain patch.
     kinds: ['body', 'location'] as const,
     measurements: { from: 15, through: 18 },
@@ -245,18 +246,13 @@ it('reads historical native distances through cold actor receipts, including a l
     bytes: 8192,
     limit: 128,
   };
-  const coldWorld = coldReceiptWorld(service.world);
-  const history = await store.memories.temporalHistory(scope, query, coldWorld);
+  const history = await store.memories.temporalHistory(scope, query, coldContext);
   expect(
     history.entries.some(
       (entry) =>
         entry.receipt.subject === other &&
-        entry.receipt.at === 30 &&
-        entry.receipt.facets.some(
-          (facet) =>
-            facet.measuredThrough === 15 &&
-            (facet.support?.confirmedThrough ?? facet.confirmedThrough) === 18,
-        ),
+        entry.receipt.at === 18 &&
+        entry.receipt.facets.some((facet) => facet.measuredThrough === 18),
     ),
     JSON.stringify({
       incomplete: history.incomplete,
@@ -273,13 +269,20 @@ it('reads historical native distances through cold actor receipts, including a l
       })),
     }),
   ).toBe(true);
+  const loss = history.entries.find(
+    ({ receipt }) => receipt.subject === other && receipt.change === 'loss',
+  )!;
+  expect(loss).toBeDefined();
+  expect(loss.receipt.at).toBe(30);
+  expect(loss.receipt.coverageGap).toEqual({ from: 18, through: 30 });
+  expect(loss.receipt.endedFields).toContainEqual(['location', 'value']);
+  expect(loss.receipt.facets).toEqual([]);
+  expect(loss.values).toEqual([]);
   const residentIds = new Set(
-    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.pages.flatMap((chunk) =>
-      temporalPageReceipts(chunk).map((receipt) => receipt.id),
-    ),
+    coldContext.pages.flatMap((chunk) => temporalPageReceipts(chunk).map((receipt) => receipt.id)),
   );
   expect(history.entries.some((entry) => !residentIds.has(entry.receipt.id))).toBe(true);
-  const captured = captureSituation(coldWorld, PLAYER_ID, 'cold-historical-spatial', history);
+  const captured = captureSituation(service.world, PLAYER_ID, 'cold-historical-spatial', history);
   const response = await expandSituation(
     captured,
     [
@@ -292,7 +295,7 @@ it('reads historical native distances through cold actor receipts, including a l
         radius: 20,
       },
     ],
-    (query) => store.memories.temporalHistory(scope, query, coldWorld),
+    (query) => store.memories.temporalHistory(scope, query, coldContext),
   );
   const result = (
     response.results[0] as {

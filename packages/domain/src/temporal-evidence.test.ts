@@ -157,14 +157,25 @@ it('retains intermediate actually received movement and its exact last sample on
   );
   expect(positions).toEqual(expect.arrayContaining([3, 4, 5]));
   const loss = recordedBoundaries(world, exposure).find(
-    (operation) =>
-      operation.receipt.change === 'loss' &&
-      operation.receipt.facets.some((facet) => facet.measuredThrough === 2),
+    (operation) => operation.receipt.change === 'loss',
   )!;
   expect(loss).toBeDefined();
   expect(loss.entry.receivedAt).toBe(3);
   expect(loss.receipt.at).toBe(3);
-  expect(loss.receipt.facets.some((facet) => facet.measuredThrough === 2)).toBe(true);
+  expect(loss.receipt.coverageGap).toEqual({ from: 2, through: 3 });
+  expect(loss.receipt.endedFields).toContainEqual(['location', 'value']);
+  expect(loss.receipt.facets).toEqual([]);
+  expect(
+    selected.entries.some(({ receipt, values }) =>
+      values.some(
+        (value, index) =>
+          value.kind === 'location' &&
+          value.location.kind === 'point' &&
+          value.location.point.x === 5 &&
+          receipt.facets[index]!.measuredThrough === 2,
+      ),
+    ),
+  ).toBe(true);
   expect(selected.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(true);
   expect(selected.incomplete).toBe(true);
 });
@@ -287,7 +298,20 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   );
   expect(loss).toBeDefined();
   expect(loss!.entry.receivedAt).toBe(3);
-  expect(loss!.receipt.facets.some((facet) => facet.measuredThrough < 3)).toBe(true);
+  expect(loss!.receipt.coverageGap).toEqual({ from: 2, through: 3 });
+  expect(loss!.receipt.endedFields).toContainEqual(['location', 'value']);
+  expect(loss!.receipt.facets).toEqual([]);
+  expect(
+    lost.entries.some(({ receipt, values }) =>
+      values.some(
+        (value, index) =>
+          value.kind === 'location' &&
+          value.location.kind === 'point' &&
+          value.location.point.x === 3 &&
+          receipt.facets[index]!.measuredThrough < 3,
+      ),
+    ),
+  ).toBe(true);
   expect(
     recordedBoundaries(world, subject).some(
       (operation) => operation.receipt.change === 'attention-exit',
@@ -611,9 +635,7 @@ it('captures an attended person recipient while the actually visible speaker is 
   expect(() => validateObservationContribution(invalid)).toThrow(
     'Invalid received occurrence context',
   );
-  expect(observation.context?.subjects.some((subject) => subject.episodeId === exposure)).toBe(
-    true,
-  );
+  expect(observation.context?.subjects.some((subject) => subject.track === exposure)).toBe(true);
   expect(
     selectTemporalHistory(result.world, PLAYER_ID, {
       subjects: [exposure],
@@ -640,7 +662,7 @@ it('keeps an actually heard unseen voice separate from a previously seen body', 
   expect(
     visible.world
       .experience!.awareness[PLAYER_ID]!.find((entry) => entry.eventId === visibleEvent.id)!
-      .observation!.context!.subjects.map((subject) => subject.episodeId),
+      .observation!.context!.subjects.map((subject) => subject.track),
   ).toContain(exposure);
   world = structuredClone(visible.world);
   world.map.spatial.blockers.push({
@@ -896,6 +918,7 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   const owner = world.perceptionEvidence![PLAYER_ID]!,
     raw = currentFacetGet(owner, `${NPC_ID}:body`)!;
   const originalTime = currentFacetTimes(owner, raw).valueMeasuredThrough;
+  const originalHistoryCount = world.experience!.temporal!.actors[PLAYER_ID]!.count;
   for (const at of [1, 2, 3]) {
     world.simTime = at;
     initializePerception(world, []);
@@ -907,6 +930,7 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   expect(
     currentFacetTimes(owner, currentFacetGet(owner, `${NPC_ID}:body`)!).valueMeasuredThrough,
   ).toBe(originalTime);
+  expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(originalHistoryCount);
   const cut = captureEvidenceCut(world, PLAYER_ID, {
     current: currentObservedFacets(world, PLAYER_ID, NPC_ID),
   });
@@ -949,7 +973,11 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
     losses.some(
       (operation) =>
         operation.entry.receivedAt === 5 &&
-        operation.receipt.facets.some((facet) => facet.measuredThrough === 4),
+        operation.receipt.coverageGap?.from === 4 &&
+        operation.receipt.coverageGap.through === 5 &&
+        operation.receipt.endedFields?.some(
+          ([kind, part]) => kind === 'location' && part === 'value',
+        ),
     ),
   ).toBe(true);
   const remembered = selectTemporalHistory(world, PLAYER_ID, {
@@ -957,6 +985,18 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
     bytes: 1024 * 1024,
     limit: 1000,
   });
+  expect(
+    remembered.entries.some(({ receipt, values }) =>
+      values.some(
+        (value, index) =>
+          value.kind === 'location' &&
+          value.location.kind === 'point' &&
+          value.location.point.x === 4 &&
+          receipt.facets[index]!.measuredThrough === 4,
+      ),
+    ),
+  ).toBe(true);
+  expect(losses.every(({ receipt }) => receipt.facets.length === 0)).toBe(true);
   expect(
     remembered.entries.some(({ receipt, values }) =>
       receipt.facets.some(

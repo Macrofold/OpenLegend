@@ -510,7 +510,7 @@ describe('native received relation producers', () => {
     expect(attention.latches[key]!.clearSince).toBeUndefined();
   });
 
-  it('reads actual held geometry checks without sensing, sealing or duplicate confirmation', () => {
+  it('keeps unchanged geometry current without creating historical check records', () => {
     const { world, people } = nativeScene(1, map());
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.track;
@@ -520,32 +520,42 @@ describe('native received relation producers', () => {
     initializePerception(world, []);
     const afterCheck = world.experience!.temporal!.actors[PLAYER_ID]!.count;
     expect(afterCheck).toBeGreaterThan(before);
-    const received = selectTemporalHistory(world, PLAYER_ID, {
+    const unchanged = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       includeGeometry: true,
       from: 2,
       through: 2,
       bytes: 1024 * 1024,
       limit: 1000,
+    }).entries.filter((entry) =>
+      entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
+    );
+    expect(unchanged).toEqual([]);
+    expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(afterCheck);
+    const received = selectTemporalHistory(world, PLAYER_ID, {
+      subject,
+      includeGeometry: true,
+      bytes: 1024 * 1024,
+      limit: 1000,
     }).entries.find((entry) =>
       entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
     )!;
-    expect(received.receipt.at).toBe(2);
-    expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(afterCheck);
+    expect(received.receipt.at).toBe(0);
     expect(
       received.receipt.facets.find((facet) => facet.original?.source.id === original.id),
     ).toMatchObject({
       measuredThrough: 0,
       acquiredAt: 0,
-      confirmedThrough: 2,
+      confirmedThrough: 0,
     });
+    expect(currentReceivedGeometry(world, PLAYER_ID).supportedThrough).toBe(2);
     expect(currentReceivedGeometry(world, PLAYER_ID).observations[0]!.id).toBe(original.id);
     const count = world.experience!.temporal!.actors[PLAYER_ID]!.count;
     selectTemporalHistory(world, PLAYER_ID, { includeGeometry: true, bytes: 1024 * 1024 });
     expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(count);
     validateTemporalEvidenceState(world, world.experience?.temporal);
   });
-  it('records held geometry from its current acquisition after old history is retired', () => {
+  it('keeps current geometry after old history retires without recreating a recent acquisition', () => {
     const { world, player, people } = nativeScene(1, map());
     people[0]!.actor!.capabilities!.memory = false;
     world.simTime = 15;
@@ -595,16 +605,13 @@ describe('native received relation producers', () => {
       .filter((entry) =>
         entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
       )
-      .at(-1)!;
-    expect(held.receipt.at).toBe(21616);
-    expect(
-      held.receipt.facets.find((facet) => facet.original?.source.id === original.id),
-    ).toMatchObject({
-      acquiredAt: 15,
-      measuredThrough: 15,
-      confirmedThrough: 21616,
-    });
-    expect(currentReceivedGeometry(world, PLAYER_ID).observations[0]!.id).toBe(original.id);
+      .at(-1);
+    expect(held).toBeUndefined();
+    const current = currentReceivedGeometry(world, PLAYER_ID);
+    expect(current.observations[0]!.id).toBe(original.id);
+    expect(current.observations[0]!.acquiredAt).toBe(15);
+    expect(current.observations[0]!.facets[0]!.measuredThrough).toBe(15);
+    expect(current.supportedThrough).toBe(21616);
     validateTemporalEvidenceState(world, world.experience?.temporal);
   });
   it('retains contemporaneous received terrain without an alarm and never substitutes a later view', () => {
@@ -715,14 +722,14 @@ describe('native received relation producers', () => {
       }).entries.some((entry) =>
         entry.receipt.facets.some((facet) => facet.original?.source.id === observation.id),
       ),
-    ).toBe(true);
+    ).toBe(false);
     expect(JSON.parse(JSON.stringify(world.experience!.temporal))).toEqual(
       restored.experience!.temporal,
     );
     const baseline = selectTemporalHistory(world, PLAYER_ID, {
       subject: exposure,
       includeGeometry: true,
-      from: 1,
+      from: 0,
       through: 1,
       bytes: 1024 * 1024,
     });
@@ -735,8 +742,9 @@ describe('native received relation producers', () => {
       (facet) => facet.original?.source.id === observation.id,
     )!;
     expect(terrainFacet.acquiredAt).toBe(observation.acquiredAt);
-    expect(terrain.receipt.at).toBe(1);
-    expect(terrainFacet.confirmedThrough).toBe(1);
+    expect(terrain.receipt.at).toBe(0);
+    expect(terrainFacet.confirmedThrough).toBe(0);
+    expect(currentReceivedGeometry(world, PLAYER_ID).supportedThrough).toBe(1);
     const history = world.experience!.temporal!.actors[PLAYER_ID]!;
     expect(
       history.pages
@@ -768,13 +776,13 @@ describe('native received relation producers', () => {
         ),
       ),
     );
-    expect(actualChecks).toHaveLength(1);
+    expect(actualChecks).toHaveLength(0);
     for (const subject of outgoing)
       expect(
         selectTemporalHistory(world, PLAYER_ID, {
           subject,
           includeGeometry: true,
-          from: 1,
+          from: 0,
           through: 1,
           bytes: 1024 * 1024,
         }).entries.some((entry) => entry.receipt.id === terrain.receipt.id),
@@ -795,11 +803,14 @@ describe('native received relation producers', () => {
     });
     const cold = JSON.parse(JSON.stringify(world)) as WorldState;
     for (const subject of [...outgoing, exposure]) {
-      const query = { subject, includeGeometry: true, from: 1, through: 1, bytes: 1024 * 1024 };
+      const query = { subject, includeGeometry: true, from: 0, through: 1, bytes: 1024 * 1024 };
       const retained = selectTemporalHistory(world, PLAYER_ID, query);
       expect(retained).toEqual(selectTemporalHistory(cold, PLAYER_ID, query));
-      expect(retained.entries.some((entry) => entry.receipt.id === terrain.receipt.id)).toBe(true);
+      expect(retained.entries.some((entry) => entry.receipt.id === terrain.receipt.id)).toBe(false);
+      expect(retained.incomplete).toBe(true);
     }
+    expect(currentReceivedGeometry(cold, PLAYER_ID).observations[0]!.id).toBe(observation.id);
+    expect(currentReceivedGeometry(cold, PLAYER_ID).supportedThrough).toBe(1);
     validateTemporalEvidenceState(world, world.experience?.temporal);
   });
   it('closes an actual held terrain interval when a later view replaces it, without resampling each body movement', () => {
@@ -827,8 +838,8 @@ describe('native received relation producers', () => {
     const checkedEdges = atMovement.entries.filter((entry) =>
       entry.values.some((value) => value.kind === 'physical-boundary'),
     );
-    expect(checkedEdges).toHaveLength(2);
-    expect(checkedEdges.map((entry) => entry.receipt.at)).toEqual([0, 2]);
+    expect(checkedEdges).toHaveLength(1);
+    expect(checkedEdges.map((entry) => entry.receipt.at)).toEqual([0]);
     expect(
       checkedEdges.every((entry) =>
         entry.receipt.facets
@@ -849,20 +860,32 @@ describe('native received relation producers', () => {
     const edges = historical.entries.filter((entry) =>
       entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
     );
-    expect(edges).toHaveLength(3);
-    const closed = edges.find((entry) => entry.receipt.at === 3)!;
+    expect(edges).toHaveLength(1);
+    const closed = historical.entries.find(
+      (entry) => entry.receipt.subject === original.id && entry.receipt.at === 3,
+    )!;
     const first = edges.find((entry) => entry.receipt.at === 0)!;
-    expect(closed.receipt.at).toBe(3);
     expect(
-      closed.receipt.facets.find((facet) => facet.original?.source.id === original.id),
+      first.receipt.facets.find((facet) => facet.original?.source.id === original.id),
     ).toMatchObject({
       measuredFrom: 0,
       measuredThrough: 0,
       acquiredAt: 0,
-      confirmedThrough: 2,
-      valueRef: first.receipt.facets.find((facet) => facet.original?.source.id === original.id)!
-        .valueRef,
+      confirmedThrough: 0,
     });
+    expect(closed.receipt.change).toBe('unchecked');
+    expect(closed.receipt.spatialContext).toBe(true);
+    expect(closed.receipt.coverageGap).toEqual({ from: 2, through: 3 });
+    expect(closed.receipt.endedFields).toContainEqual(['physical-boundary', 'value']);
+    expect(closed.receipt.facets).toEqual([]);
+    expect(closed.values).toEqual([]);
+    expect(closed.receipt.contextSubjects).toBeUndefined();
+    expect(
+      selectTemporalHistory(world, PLAYER_ID, {
+        subject: original.id,
+        bytes: 1024 * 1024,
+      }).entries.some((entry) => entry.receipt.id === closed.receipt.id),
+    ).toBe(true);
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
     const current = currentReceivedGeometry(world, PLAYER_ID).observations;
     expect(current.some((value) => value.id === original.id)).toBe(false);
