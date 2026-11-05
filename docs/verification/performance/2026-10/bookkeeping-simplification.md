@@ -2,6 +2,8 @@
 
 **Campaign:** October 31, 2026. **Repository:** Macrofold/OpenLegend, `origin https://github.com/Macrofold/OpenLegend.git`. **Base:** `39aa9775a5cf48e4318227410d0ab5625f92db9d`. **Runtime:** `codex/bookkeeping-runtime-01`, through `3d4d4a0bd`; individual measurements below identify their cuts. [BK](../../../maintainers/production-data.md#bookkeeping-simplification) and [SR11](../../../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) retain acceptance, not this evidence record.
 
+The later [matched AWS source/subsystem investigation](../bookkeeping/2026/2026-11-05-runtime-ablation.md) follows the completed-source failure. Results below retain their original sources and workload limits.
+
 ## Environment and limits
 
 Runs use owned disposable local PostgreSQL databases, actual server/domain consumers and existing profiling tools. Providers and embeddings are disabled; additional and cumulative campaign Jev/provider spending is **$0**. No new maintained tests were written and the full unit suite was not run. Existing cases/fixtures were converted with their current representation; the obsolete custom-journal-only case was removed. Assets, access, accounting and the ordinary development database were not reset.
