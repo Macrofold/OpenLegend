@@ -155,6 +155,8 @@ Independent pieces can proceed in parallel under the [shared working-file rules]
 
 ### Static 2D artwork
 
+For construction rather than only finish, the optional [illustration reference](../../../art-direction/research/ai-asset-prompting/illustration-and-process.md) covers proportions, value layers, material-specific marks, readable maps/banners and the difference between making and revealing artwork.
+
 1. Establish each asset's actual use, framing, aspect ratio, view/lighting, padding and
    identity anchors. For backgrounds, define safe regions and permitted crop behavior.
 2. Separate requested items into usable files. Clean edges and unwanted backgrounds,
@@ -204,6 +206,8 @@ library fitting, candidate checks, Blender cleanup, rigging, clips, export and i
 review. Apply its consumer contract and budgets together with the package rules on this page.
 
 ### Animation clips
+
+The optional [motion reference](../../../art-direction/research/ai-asset-prompting/motion-and-visible-work.md) preserves practical phase, contact, grip, cloth and mechanism methods. Use it for the specific defect or action; a polished video does not replace the clip/package requirements below.
 
 1. Pin the actual rig/source revision and requested actions. Define clip identity, duration,
    time units, loop behavior, start/end poses, supported blending and root-motion convention.

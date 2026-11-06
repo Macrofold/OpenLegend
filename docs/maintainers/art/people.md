@@ -6,6 +6,10 @@
 
 The [general workflow](../../projects/art-workflow-feature-spec.md#37-repair-only-the-failed-dependency) supplies repair/reuse guidance and the isolated experiments for uncertain method effects. It does not settle body source/coverage, face controls, clothing or acceptance; PPL01/PPL02 and ND39–ND42 remain open.
 
+## Research inputs
+
+The retained [body, face, hair and garment methods](../../../art-direction/research/ai-asset-prompting/characters-and-clothing.md) and [contact/cloth methods](../../../art-direction/research/ai-asset-prompting/motion-and-visible-work.md) give PPL01/PPL02 concrete construction and inspection steps. The source kit is not a qualified family: its dressed assembly lacks a demonstrated complete independent body, its raw rebuild inputs are incomplete, and its 65-joint render skeleton does not meet the current 64-joint target without a deliberate compatible design. Preserve its useful fitting/material mechanisms while resolving these requirements through the tasks below.
+
 ## Tasks
 
 - [ ] **PPL01 — Design the parts: bodies, faces, hair and the character-sheet build** (ND39, ND40, ND42). Write the design with Mike's decisions, starting from the [people-family analysis](../../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety); wrapping is one candidate method to assess, while AF07 proves whichever parts/family route Mike accepts. The design must settle:

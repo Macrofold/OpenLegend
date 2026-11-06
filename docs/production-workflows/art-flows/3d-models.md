@@ -45,7 +45,7 @@ The budgets are a first proposed profile, not proof that more triangles look bet
 
 ## Step 1 — Choose the build route
 
-Pick the cheapest route that can meet the locks. Record the choice and the reason in the brief.
+Pick the cheapest route that can meet the locks. Record the choice and the reason in the brief. The optional [outcome references](prompting.md#detailed-references-for-specific-outcomes) supply construction methods for bodies and separate garments, creatures, buildings, weapons/tools, surfaces and actual hand contacts. Use the relevant method when it helps solve the requested form; the route and consumer requirements here still govern delivery.
 
 | Route                     | Use when                                                                                                                                             | Typical subjects                                                                                                      |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |

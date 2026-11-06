@@ -6,6 +6,8 @@ The two routes here share a production method: establish what deserves attention
 
 ## Places, materials and lighting
 
+The optional [building and world reference](../../art-direction/research/ai-asset-prompting/architecture-and-worlds.md) supplies concrete construction vocabulary, interior/circulation steps, landscape methods and setting variations for this route. The [motion reference](../../art-direction/research/ai-asset-prompting/motion-and-visible-work.md#work-that-makes-openlegend-rewarding-to-watch) connects visible work to real outcomes. Select the relevant details for this place; they do not require a new building system or more scene content.
+
 **Route:** place/experience idea → spatial blockout → material and shape studies → reusable environment pieces → authored and procedural composition → lighting → playable scene → purposeful revision.
 
 ### 1. Describe the place through the experience it offers

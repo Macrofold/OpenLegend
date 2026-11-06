@@ -2,6 +2,19 @@
 
 Research dates: November 5–6, 2026. Scope: art direction, concepts, model inputs, materials, motion and reusable art instructions; not game-feature implementation. This record separates inspected source material, project-specific adaptations and unperformed qualification. The maintained procedure is [art prompt direction](../../../docs/production-workflows/art-flows/prompting.md); [intake and verification](../../../docs/maintainers/art/prompting-and-library.md) has one progress owner.
 
+## Outcome-specific references
+
+The [coverage and destination inventory](coverage.md) connects all seven packages and four prompt packs to retained methods. Detailed original guides preserve the construction knowledge, including techniques whose implementation is deferred:
+
+- [Characters and clothing](characters-and-clothing.md): complete bodies, sculpted identity, fitted parts, garment construction and family-design dependencies.
+- [Architecture and worlds](architecture-and-worlds.md): building grammar, interiors, terrain, vegetation, contextual light and distinct world styles.
+- [Props and materials](props-and-materials.md): tools/weapons, profiles, joins, pivots, mesh-aware grips and practical surface diagnosis.
+- [Motion and visible work](motion-and-visible-work.md): phases, contact, pose correction, cloth, mechanisms, travel and demonstrations.
+- [Illustration and process](illustration-and-process.md): medium-specific marks, maps/banners/books, intermediate identity and honest process animation.
+- [Production and future use](production-and-future-use.md): reusable inputs, integration failures, performance candidates, review/capture methods and existing design destinations.
+
+These are optional references for the matching task, not a new production stage or a required bundle. Current methods connect through the prompt, 3D, scene and production procedures; future capabilities retain their design dependencies. Preserving useful detail does not select every technique or change accepted defaults.
+
 ## Coverage and evidence limits
 
 The authenticated library was inspected on November 6. All 266 full prompt bodies and all 60 Markdown files supplied across seven skill packages were read, including reference guides, role notes and bundled engine instructions. Supporting art code, asset metadata, dependencies and a character lineup were inspected selectively. This is an art-guidance review, not an exhaustive source-code audit or execution of the builds requested by those prompts. No package was installed, no downloaded script was run, and no art-quality, performance or test-pass claim was independently reproduced.
@@ -10,7 +23,7 @@ The authenticated library was inspected on November 6. All 266 full prompt bodie
 | ------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Animation](https://learn.marketwithmark.com/vault/pack/animation)        | 90/90 prompt bodies and included follow-ups | Official text export preserved; 40 substantial multi-part briefs and 50 mostly short concept requests, not 90 distinct reusable methods.                                                          |
 | [Artist Toolkit](https://learn.marketwithmark.com/vault/pack/artist)      | 27/27 expanded prompt bodies                | Read in the authenticated page; Chrome blocked the text-export request. No archived Artist export is claimed.                                                                                     |
-| [Game Development](https://learn.marketwithmark.com/vault/pack/gamedev)   | 72/72 prompt bodies                         | Official text export preserved; art findings retained, gameplay requests excluded.                                                                                                                |
+| [Game Development](https://learn.marketwithmark.com/vault/pack/gamedev)   | 72/72 prompt bodies                         | Official text export preserved; construction methods and useful design questions retained; genre mechanics are not adopted.                                                                       |
 | [World Builder](https://learn.marketwithmark.com/vault/pack/worldbuilder) | 77/77 prompt bodies                         | Official text export preserved; scene composition separated from proposed simulation.                                                                                                             |
 | [Skills](https://learn.marketwithmark.com/vault/skills)                   | 7/7 packages, 60/60 Markdown files          | All seven official ZIPs preserved privately on Mike's Mac; 733 extracted files reopened and byte-compared with their ZIP members, all ZIP CRCs checked, ZIP and individual-file SHA-256 recorded. |
 | [Education](https://learn.marketwithmark.com/vault/learn)                 | Availability inspected                      | One bundle-navigation video is available without a text transcript; its audio was not transcribed. Four substantive workflow lessons remain marked coming soon.                                   |

@@ -4,6 +4,20 @@ Use this page when writing or repairing an art prompt, not as an additional prod
 
 The examples are original, adaptable instructions, not imported vendor prompts or measured quality guarantees. [Research and source limitations](../../../art-direction/research/ai-asset-prompting/README.md) explain their basis. Read only the section needed for the current output.
 
+## Detailed references for specific outcomes
+
+When the task needs construction detail, the optional references below supply step-by-step methods and worked applications. Choose the relevant subject; do not preload the collection or add stages to a quick request.
+
+| Outcome                                                  | Practical reference                                                                                                    |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Body, face, hair, creature or removable garment          | [Character construction and fitting](../../../art-direction/research/ai-asset-prompting/characters-and-clothing.md)    |
+| Building, interior, landscape or a different world style | [Architecture and world construction](../../../art-direction/research/ai-asset-prompting/architecture-and-worlds.md)   |
+| Tool, weapon, prop, grip or material                     | [Construction, contact and surface methods](../../../art-direction/research/ai-asset-prompting/props-and-materials.md) |
+| Action, cloth, mechanism or visible work                 | [Motion and contact methods](../../../art-direction/research/ai-asset-prompting/motion-and-visible-work.md)            |
+| Illustration, map, banner or visible drawing process     | [Illustration and mark-making](../../../art-direction/research/ai-asset-prompting/illustration-and-process.md)         |
+
+Keep decisions that affect the actual result in the brief/provider operation: body and garment separation; important joins, openings and pivots; material structure; real contacts; and meaningful motion phases. A link alone is not a provider payload. The references retain deeper mechanisms and future design dependencies without selecting a new body family, feature or tool.
+
 ## Start with the current brief
 
 Translate the existing brief rather than asking Mike to fill another form. Use this order to connect the decisions already required by the workflow; it is not another production stage:
