@@ -1530,20 +1530,21 @@ export function receiveCurrentChange(
 ): ReceivedObservation | undefined {
   const state = owner(world, observer);
   // Required occurrences keep their own causal cut, even inside a detector helper.
-  if (change.kind === 'occurrence') {
-    currentPerceptionBatches.get(state)?.flush();
-    if (
-      change.contribution.channel &&
-      !currentChannelEligible(world, observer.id, change.contribution.channel)
-    )
-      throw new Error('Prepared occurrence uses an inactive channel.');
-    return withTemporalReceivedTransition(
-      world,
-      observer.id,
-      () => acquireReceivedObservation(world, observer, change.contribution),
-      change.sampleToken,
-    );
-  }
+  if (change.kind === 'occurrence')
+    return withReceivedChanges(world, observer, () => {
+      currentPerceptionBatches.get(state)?.flush();
+      if (
+        change.contribution.channel &&
+        !currentChannelEligible(world, observer.id, change.contribution.channel)
+      )
+        throw new Error('Prepared occurrence uses an inactive channel.');
+      return withTemporalReceivedTransition(
+        world,
+        observer.id,
+        () => acquireReceivedObservation(world, observer, change.contribution),
+        change.sampleToken,
+      );
+    });
   return withCurrentPerceptionBatch(world, observer.id, state, () => {
     const delta = receivedPhaseDeltas.get(state)!;
     const previousToken = delta.sampleToken;
@@ -1849,9 +1850,14 @@ function applyReceivedCurrentSample(
 /** One detector phase or causal receiver boundary, including source construction. */
 export function withReceivedChanges<T>(world: WorldState, observer: Entity, work: () => T): T {
   const state = owner(world, observer);
-  if (currentPerceptionBatches.has(state)) return work();
+  const existing = currentPerceptionBatches.get(state);
+  if (existing) {
+    existing.ensureTemporal();
+    return work();
+  }
   const lifetime = beginCurrentReception(world, observer.id);
   try {
+    lifetime.ensureTemporal();
     const result = work();
     lifetime.finish();
     return result;
@@ -2119,6 +2125,7 @@ function noteReceivedAttention(
   mergeReceivedTracks(phase.selected, tracks);
 }
 interface CurrentReceivingLifetime {
+  ensureTemporal(): void;
   ensure(): void;
   flush(): void;
   finish(): void;
@@ -2132,10 +2139,10 @@ export function beginCurrentReception(
   observerId: string,
 ): CurrentReceivingLifetime {
   const observer = entityGet(world.entities, observerId);
-  if (!observer) return { ensure() {}, flush() {}, finish() {}, abort() {} };
+  if (!observer) return { ensureTemporal() {}, ensure() {}, flush() {}, finish() {}, abort() {} };
   const state = owner(world, observer);
   if (currentPerceptionBatches.has(state))
-    return { ensure() {}, flush() {}, finish() {}, abort() {} };
+    return { ensureTemporal() {}, ensure() {}, flush() {}, finish() {}, abort() {} };
   let prefix: { finish(): void; abort(): void } | undefined;
   let temporal: ReturnType<typeof beginTemporalAcquisition> | undefined;
   let closed = false;
@@ -2178,14 +2185,22 @@ export function beginCurrentReception(
   };
   const lifetime: CurrentReceivingLifetime = {
     flush,
+    ensureTemporal() {
+      if (closed || temporal) return;
+      const currentObserver = entityGet(world.entities, observerId)!;
+      temporal = beginTemporalAcquisition(
+        world,
+        observerId,
+        {
+          positionAtObservation: { ...worldPosition(currentObserver) },
+          forwardAtObservation: currentObserver.spatial.heading,
+        },
+        flush,
+      );
+    },
     ensure() {
       if (closed || prefix) return;
-      const currentObserver = entityGet(world.entities, observerId)!;
-      const frame = {
-        positionAtObservation: worldPosition(currentObserver),
-        forwardAtObservation: currentObserver.spatial.heading,
-      };
-      temporal ??= beginTemporalAcquisition(world, observerId, frame, flush);
+      lifetime.ensureTemporal();
       prefix = beginCurrentContactBatch(state);
       const entryEntries = currentDetailedAttention(world, observerId);
       const descriptors = receivedDescriptors(
