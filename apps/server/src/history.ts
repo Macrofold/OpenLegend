@@ -22,7 +22,6 @@ import {
   type EventPresentationPolicy,
 } from '@open-legend/domain';
 import {
-  appendedEventCount,
   appendedRecordCount,
   defaultStoryPolicy,
   selectStory,
@@ -36,11 +35,11 @@ import { createHash } from 'node:crypto';
 import type { WorldState, WorldEvent, Awareness, TemporalReceipt } from '@open-legend/domain';
 import { beginTiming, endTiming } from './performance.js';
 import {
-  prepareHistory,
   captureHistoryAccountCut,
   historyAccountAtCapturedCut,
   temporalHistoryAccountAvailable,
   type HistoryAccountCut,
+  type PreparedHistory,
 } from './history-preparation.js';
 import { HistoryAppendWriter, perspectiveColumns } from './history-append.js';
 import type { SqlWriteBatch } from './sql-rows.js';
@@ -585,9 +584,8 @@ export class HistoryRepository {
   async project(
     previous: WorldState | undefined,
     world: WorldState,
-    appendCount?: number,
+    inputs: PreparedHistory,
     reapplyForgetting = false,
-    prepared?: ReturnType<typeof prepareHistory>,
     sharedWrites?: SqlWriteBatch,
     sourceChanges?: RecordChanges,
   ) {
@@ -611,14 +609,9 @@ export class HistoryRepository {
         await this.saveStory(world.id, job);
       }
     }
-    // Prepared data is reusable only for its exact frozen snapshots; mutable callers use live preparation.
-    const inputs =
-      prepared?.world === world &&
-      prepared.previous === previous &&
-      Object.isFrozen(world) &&
-      (!previous || Object.isFrozen(previous))
-        ? prepared
-        : prepareHistory(previous, world, appendCount);
+    // Store.commit validated this exact captured intent. `previous` is the
+    // durable privacy baseline, which can differ from the first live predecessor.
+    // Re-diffing its resident feed here would turn eviction into deletion.
     const { fastAppend, changed, removed, previousIds, forgotten, perspective } = inputs;
     // Exact canonical changes, rather than event append status, prove that no old
     // personal account/privacy relationship needs the edit/revocation path below.

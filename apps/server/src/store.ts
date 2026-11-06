@@ -317,7 +317,7 @@ export interface PreparedCommit {
   readonly revision: number;
   readonly state: SavedWorld;
   readonly changes: ReturnType<WorldRecords['prepare']>;
-  readonly history?: ReturnType<typeof prepareHistory>;
+  readonly history: ReturnType<typeof prepareHistory>;
 }
 
 interface TableWrite {
@@ -327,7 +327,7 @@ interface TableWrite {
   changes: ReturnType<WorldRecords['prepare']>;
   historyBefore?: WorldState;
   historyAfter: WorldState;
-  preparedHistory?: ReturnType<typeof prepareHistory>;
+  preparedHistory: ReturnType<typeof prepareHistory>;
   preparedSources?: PreparedMemorySources;
   restore: boolean;
 }
@@ -1070,27 +1070,35 @@ export class SqlGameRepository implements GameRepository {
       ),
       history:
         pending?.history ??
-        this.prepareHistoryWrite(state, history.before ?? baseline?.world, history.after),
+        this.prepareHistoryWrite(
+          history.before ?? baseline?.world,
+          history.after,
+          history.before ? 'selected' : 'resident',
+        ),
     };
   }
   // The world writer owns this immutable candidate. Do not eagerly encode a second full burst;
   // prepare lookup inputs here, then stream bounded rows within the atomic transaction.
   private prepareHistoryWrite(
-    state: SavedWorld,
     historyBefore: WorldState | undefined,
     historyAfter: WorldState,
-    restore = false,
+    scope: 'resident' | 'selected' | 'restore',
   ) {
-    return this.readyHistoryWorlds.has(state.world.id) &&
-      !restore &&
-      Object.isFrozen(historyAfter) &&
-      (!historyBefore || Object.isFrozen(historyBefore))
-      ? prepareHistory(
-          historyBefore,
-          historyAfter,
-          historyBefore ? provenAppendCount(historyBefore.events, historyAfter.events) : undefined,
-        )
+    const appendCount = historyBefore
+      ? provenAppendCount(historyBefore.events, historyAfter.events)
       : undefined;
+    if (
+      scope === 'resident' &&
+      (historyBefore?.archivedEventCount ?? 0) > 0 &&
+      appendCount === undefined
+    )
+      throw new Error('History edits require their explicit predecessor scope.');
+    // The commit owner captures immutable history intent once. Residency release
+    // can replace the durable predecessor before this intent reaches SQL.
+    // docs/projects/bookkeeping-simplification-runtime-design.md#r1--apply-the-history-change-that-was-actually-admitted
+    freezeWorld(historyAfter);
+    if (historyBefore) freezeWorld(historyBefore);
+    return prepareHistory(historyBefore, historyAfter, appendCount);
   }
   adoptHistory(original: SavedWorld, prepared: SavedWorld): void {
     if (original !== this.acceptedState || original.world.id !== prepared.world.id)
@@ -1207,6 +1215,12 @@ export class SqlGameRepository implements GameRepository {
       if ((persisted?.revision ?? 0) !== expectedRevision)
         throw new Error('Save conflict: another writer changed this world.');
     }
+    const historyAfter = historyProjection?.after ?? state.world;
+    if (
+      historyAfter.id !== state.world.id ||
+      (historyProjection?.before && historyProjection.before.id !== state.world.id)
+    )
+      throw new Error('History scope belongs to another world.');
     // A restore diffs against the complete stored world. If it fails before its rollback hook
     // runs (refused admission, a fence failure), the released baseline must come back: a later
     // commit diffing the released live world against the complete one would delete cold rows.
@@ -1231,9 +1245,20 @@ export class SqlGameRepository implements GameRepository {
         prepared.revision !== expectedRevision ||
         prepared.baseline !== this.acceptedState ||
         this.acceptedRevision !== expectedRevision ||
+        prepared.history.world !== historyAfter ||
+        !Object.isFrozen(historyAfter) ||
+        (!!prepared.history.previous && !Object.isFrozen(prepared.history.previous)) ||
         historyProjection?.restore)
     )
       throw new Error('Prepared world changes no longer match the committed baseline.');
+    const historyBefore = historyProjection?.before ?? this.acceptedState?.world;
+    const preparedHistory =
+      prepared?.history ??
+      this.prepareHistoryWrite(
+        historyBefore,
+        historyAfter,
+        historyProjection?.restore ? 'restore' : historyProjection?.before ? 'selected' : 'resident',
+      );
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)
       : undefined;
@@ -1281,20 +1306,12 @@ export class SqlGameRepository implements GameRepository {
       revision: expectedRevision + 1,
       changes,
       historyBefore: historyProjection?.before,
-      historyAfter: historyProjection?.after ?? state.world,
+      historyAfter,
+      preparedHistory,
       restore: !!historyProjection?.restore,
     };
     const publish = () => this.publishWorldTables(write);
     let publicationDeferred = false;
-    const preparedHistory = prepared
-      ? prepared.history
-      : this.prepareHistoryWrite(
-          state,
-          historyProjection?.before ?? this.acceptedState?.world,
-          historyProjection?.after ?? state.world,
-          !!historyProjection?.restore,
-        );
-    write.preparedHistory = preparedHistory;
     const transaction = timed('persistence.transaction', () =>
       this.db.transaction(async () => {
         for (const permission of historyProjection?.constructionSeeds ?? [])
@@ -1492,11 +1509,8 @@ export class SqlGameRepository implements GameRepository {
       this.history.project(
         historyReady ? (historyBefore ?? before?.world) : undefined,
         historyAfter,
-        historyReady
-          ? provenAppendCount((historyBefore ?? before?.world)?.events ?? [], historyAfter.events)
-          : undefined,
-        !!restore,
         preparedHistory,
+        !!restore,
         sharedWrites,
         changes,
       ),

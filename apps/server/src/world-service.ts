@@ -1733,6 +1733,9 @@ export class WorldService {
         undefined,
         saved.world.paused && !this.world.paused,
       );
+    // Capture the transition's scope before the flush can release its residency.
+    // Privacy/source comparison still uses the commit owner's durable baseline.
+    const transitionBefore = historyBefore ?? this.saved.world;
     // Operational effects and privacy changes remain ordered behind accepted play.
     await this.flushAcceptedProgress();
     if (restore) {
@@ -1766,7 +1769,7 @@ export class WorldService {
     try {
       freezeWorld(saved.world);
       allocation = this.hostWork.reserve(saved.world);
-      if (eventMode === 'unchanged' && saved.world.events !== this.saved.world.events)
+      if (eventMode === 'unchanged' && saved.world.events !== transitionBefore.events)
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
         );
@@ -1790,10 +1793,17 @@ export class WorldService {
       this.store.memories?.stageSourceVersions(prepared.snapshot.world, retention.versions);
       const { historyWorld, appendEventCount, currentAppendCount } = prepared;
       saved = prepared.snapshot;
+      const commitPreparation = restore
+        ? undefined
+        : this.store.prepareCommit?.(this.persistedRevision, saved, {
+            before: transitionBefore,
+            after: historyWorld,
+          });
       const revision = await timed('world.commit', () =>
         this.store.commit(this.persistedRevision, saved, invalidatedMemoryIds, appendEventCount, {
-          before: historyBefore,
+          before: restore ? historyBefore : transitionBefore,
           after: historyWorld,
+          prepared: commitPreparation,
           ...(!restore ? this.operationFences(historyWorld, appendEventCount) : {}),
           receipt,
           restore,
