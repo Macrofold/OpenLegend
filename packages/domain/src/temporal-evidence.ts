@@ -14,6 +14,8 @@ import {
   currentContactEntries,
   currentContactGet,
   currentGroupTimes,
+  effectiveCurrentPartition,
+  effectiveCurrentCheck,
   currentGroupRecordings,
   type CurrentPartPartition,
   type CurrentFacetTimes,
@@ -1560,6 +1562,30 @@ function temporalFacetProofInput(lease: CurrentFacetProof, body: boolean) {
   };
 }
 
+/** Recording and independently retained support use the same effective check
+ * as current readers, without rewriting the current contact to obtain it. */
+function currentTemporalFacetSupport(
+  owner: NonNullable<WorldState['perceptionEvidence']>[string],
+  record: CurrentFacetRecord,
+  partition?: CurrentPartPartition,
+): LiveFacetSupport {
+  const held = currentFacetSupport(owner, record);
+  const metadata =
+    partition ??
+    currentNativeFacet(
+      owner,
+      currentFacetKey(record.grant.subjectId, record.value.kind, record.grant.channel),
+      { exposure: record.grant.exposure },
+    )?.metadata;
+  const check = metadata && effectiveCurrentCheck(owner, record.grant, metadata);
+  return check
+    ? {
+        ...held,
+        confirmedThrough: check.through,
+        revision: Math.max(held.revision, check.revision),
+      }
+    : held;
+}
 export function temporalFacetInput(
   world: WorldState,
   lease: LiveFacetSupport,
@@ -1799,7 +1825,9 @@ export function captureTemporalCurrent(
         input.partition,
       );
       if (!record) throw new Error('Received change has no current typed value.');
-      facets.push(temporalFacetInput(world, currentFacetSupport(owner, record)));
+      facets.push(
+        temporalFacetInput(world, currentTemporalFacetSupport(owner, record, input.partition)),
+      );
     }
     if (!facets.length) continue;
     const actor = actorHistory(world, actorId)?.actor;
@@ -1904,7 +1932,13 @@ export function closeTemporalCurrentGroup(
           change: reason === 'retained-state' ? 'unchecked' : reason,
           availabilityAt: world.simTime,
           coverageGap: {
-            from: Math.max(mark.lastAt, currentGroupTimes(group, partition).confirmedThrough),
+            from: Math.max(
+              mark.lastAt,
+              currentGroupTimes(
+                group,
+                partition ? effectiveCurrentPartition(owner, group, partition) : undefined,
+              ).confirmedThrough,
+            ),
             through: world.simTime,
           },
           endedFields: members,
@@ -2531,7 +2565,7 @@ export function invalidateTemporalFacets(
           const members = mark.members.filter(({ kind }) => {
             const record = currentGroupFacetRecord(group, original, kind);
             if (!record) return true;
-            const input = temporalFacetInput(world, currentFacetSupport(owner, record));
+            const input = temporalFacetInput(world, currentTemporalFacetSupport(owner, record));
             if (!('received' in input)) return false;
             const { received, ...facet } = input;
             const value = materializeTemporalValue(
@@ -3372,7 +3406,7 @@ export function retainTemporalCurrentSupport(
   )
     return;
   // Selection keys choose the member; value, grant and dates come only from its current owner.
-  const lease = currentFacetSupport(owner, owned),
+  const lease = currentTemporalFacetSupport(owner, owned),
     facet = temporalFacetInput(world, lease);
   return retainTemporalCaptureSupport(
     world,

@@ -1,4 +1,4 @@
-import { currentFacetEntries, currentFacetGet } from '@open-legend/domain';
+import { currentContactEntries, currentContactGet } from '@open-legend/domain';
 import {
   receiptLookupBuckets,
   decodeTemporalPageRow,
@@ -19,9 +19,8 @@ import {
   receivedRecordValueReferences,
   selectCapturedTemporalHistory,
   receivedObservationValueReferences,
-  receivedFacetValueReferences,
-  currentFacetGrant,
-  currentFacetOriginal,
+  receivedContactValueReferences,
+  receivedVisualConfirmationValueReferences,
   recordMapChangesBetween,
   type TemporalReadContext,
   type WorldState,
@@ -196,30 +195,23 @@ export function receivedValueReleaseCandidates(
   if (before?.perceptionEvidence !== after.perceptionEvidence)
     for (const [actorId, owner] of Object.entries(before?.perceptionEvidence ?? {})) {
       const current = after.perceptionEvidence?.[actorId];
-      const frame = owner.visualConfirmation?.frameRef;
-      const nextFrame = current?.visualConfirmation?.frameRef;
-      if (typeof frame === 'string' && frame !== nextFrame) candidates.add(frame);
+      if (owner === current) continue;
+      if (owner.visualConfirmation !== current?.visualConfirmation) {
+        const nextFrames = receivedVisualConfirmationValueReferences(current?.visualConfirmation);
+        for (const frame of receivedVisualConfirmationValueReferences(owner.visualConfirmation))
+          if (!nextFrames.has(frame)) candidates.add(frame);
+      }
       if (owner.received !== current?.received) {
         const retained = new Set(current?.received);
         for (const source of owner.received) if (!retained.has(source)) addObservation(source);
       }
       if (owner.current !== current?.current)
-        for (const [key, lease] of currentFacetEntries(owner)) {
-          const next = currentFacetGet(current, key);
-          const original = currentFacetGrant(owner, lease).original;
-          const nextOriginal =
-            next && current ? currentFacetGrant(current, next).original : undefined;
-          if (original === nextOriginal && lease.value === next?.value) continue;
-          const beforeRefs = receivedFacetValueReferences(lease.value),
-            afterRefs = next ? receivedFacetValueReferences(next.value) : [];
-          if (
-            original !== nextOriginal ||
-            beforeRefs.length !== afterRefs.length ||
-            beforeRefs.some((reference, index) => reference !== afterRefs[index])
-          ) {
-            for (const reference of beforeRefs) candidates.add(reference);
-            addObservation(currentFacetOriginal(owner, lease));
-          }
+        for (const [key, contact] of currentContactEntries(owner)) {
+          const next = current && currentContactGet(current, key);
+          if (contact === next) continue;
+          const nextRefs = next && receivedContactValueReferences(next);
+          for (const reference of receivedContactValueReferences(contact))
+            if (!nextRefs?.has(reference)) candidates.add(reference);
         }
     }
   if (before?.experience?.temporal !== after.experience?.temporal)

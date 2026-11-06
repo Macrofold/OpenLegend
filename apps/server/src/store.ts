@@ -179,7 +179,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '55';
+export const DATABASE_SCHEMA = '56';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(
@@ -1257,7 +1257,11 @@ export class SqlGameRepository implements GameRepository {
       this.prepareHistoryWrite(
         historyBefore,
         historyAfter,
-        historyProjection?.restore ? 'restore' : historyProjection?.before ? 'selected' : 'resident',
+        historyProjection?.restore
+          ? 'restore'
+          : historyProjection?.before
+            ? 'selected'
+            : 'resident',
       );
     appendEventCount = this.acceptedState
       ? provenAppendCount(this.acceptedState.world.events, state.world.events)

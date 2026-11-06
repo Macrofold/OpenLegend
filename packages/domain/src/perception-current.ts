@@ -211,11 +211,91 @@ export function currentGroupTimes(
 export function currentGroupSelections(group: CurrentReceivedGroup): CurrentGroupSelection[] {
   return readOnlyDraftView(group.metadata).map((partition) => ({ group, partition }));
 }
-export interface CurrentSightCheck {
+export interface CurrentSightStamp {
   through: number;
   revision: number;
   inputRevision: number;
-  detail?: { through: number; revision: number; inputRevision: number };
+  receivedOrder: number;
+  frameRef: ReceivedValueReference;
+}
+export interface CurrentSightCheck extends CurrentSightStamp {
+  detail?: CurrentSightStamp;
+}
+/** Select one actual check, preserving its complete stamp. No current value or
+ * unavailable member can be reconstructed from the observer's completed cut. */
+export function effectiveCurrentCheck(
+  owner: Pick<PerceptionEvidenceOwner, 'observer' | 'life' | 'current' | 'visualConfirmation'>,
+  grant: CurrentFacetGrant,
+  partition: CurrentPartPartition,
+  presenceOnly = false,
+  knownBody?: CurrentNativeFacet,
+): CurrentSightStamp | undefined {
+  if (
+    partition.availability ||
+    grant.modality !== 'sight' ||
+    owner.observer?.physicalLife !== owner.life
+  )
+    return;
+  const phase = owner.visualConfirmation;
+  if (!phase || !sameChannel(grant.channel, phase.channel)) return;
+  const body =
+    knownBody ??
+    currentNativeFacetAt(owner, grant.subjectId, 'body', {
+      channel: grant.channel,
+      exposure: grant.exposure,
+    });
+  if (!body || body.metadata.availability || body.grant.exposure !== grant.exposure) return;
+  const check = presenceOnly ? 'broad' : partition.check;
+  if (check === 'none' || partition.members.every(([, part]) => part === 'pose')) return;
+  const explicit = currentContactGet(owner, grant.subjectId)?.sight;
+  const through = expandedTimes(partition.times).confirmedThrough;
+  const candidate = check === 'detail' ? explicit?.detail : explicit;
+  const selected = currentCheckCovers(candidate, partition, through) ? candidate : undefined;
+  const complete = check === 'broad' ? phase.complete : undefined;
+  return currentCheckCovers(complete, partition, through) &&
+    (!selected ||
+      complete.through > selected.through ||
+      (complete.through === selected.through && complete.receivedOrder > selected.receivedOrder))
+    ? complete
+    : selected;
+}
+function currentCheckCovers(
+  stamp: CurrentSightStamp | undefined,
+  partition: CurrentPartPartition,
+  through: number,
+): stamp is CurrentSightStamp {
+  return (
+    !!stamp &&
+    stamp.through >= through &&
+    (stamp.through > partition.receivedAt ||
+      (stamp.through === partition.receivedAt && stamp.receivedOrder >= partition.receivedOrder))
+  );
+}
+/** A selected read/terminal may detach the effective proof; unchanged current
+ * contacts remain untouched when the observer completes another broad check. */
+export function effectiveCurrentPartition(
+  owner: Pick<PerceptionEvidenceOwner, 'observer' | 'life' | 'current' | 'visualConfirmation'>,
+  group: CurrentReceivedGroup,
+  partition: CurrentPartPartition,
+): CurrentPartPartition {
+  const confirmation = effectiveCurrentCheck(owner, group.received.grant, partition);
+  if (!confirmation) return partition;
+  const times = expandedTimes(partition.times);
+  if (
+    times.confirmedThrough === confirmation.through &&
+    partition.confirmedRevision >= confirmation.revision &&
+    partition.receivedOrder === confirmation.receivedOrder &&
+    partition.frameRef !== undefined &&
+    sameReceivedValueReference(partition.frameRef, confirmation.frameRef)
+  )
+    return partition;
+  return {
+    ...partition,
+    confirmedRevision: Math.max(partition.confirmedRevision, confirmation.revision),
+    receivedOrder: confirmation.receivedOrder,
+    frameRef: confirmation.frameRef,
+    times: packedTimes({ ...times, confirmedThrough: confirmation.through }),
+  };
 }
 export interface CurrentContactContent {
   fieldOrder: string[];
@@ -309,6 +389,15 @@ export function currentFacetCheckScope(
     ['description', 'carried', 'pile-contents', 'public-attributes'].includes(kind)
     ? 'detail'
     : 'broad';
+}
+/** The body's onset pose is historical content. New placement belongs to
+ * location; an ordinary broad check renews appearance, never that old pose. */
+export function currentMemberCheckScope(
+  kind: string,
+  part: CurrentReceivedPart,
+  modality: LiveFacetSupport['modality'],
+): CurrentPartPartition['check'] {
+  return part === 'pose' ? 'none' : currentFacetCheckScope(kind, modality);
 }
 type ContactDraft = Omit<CurrentContact, 'content'> & { content: CurrentContactContent };
 interface ContactBatch {
@@ -742,8 +831,7 @@ export function currentFacetSet(
       const input = readOnlyDraftView(value),
         grant = readOnlyDraftView(input.grant),
         source = readOnlyDraftView(input.originalSource),
-        times = packedTimes(currentFacetTimes(owner, input)),
-        check = currentFacetCheckScope(input.value.kind, grant.modality);
+        times = packedTimes(currentFacetTimes(owner, input));
       const original = content.originals[grant.original];
       if (
         original &&
@@ -755,24 +843,23 @@ export function currentFacetSet(
       content.originals[grant.original] ??= immutableDataSnapshot(source, readOnlyDraftView);
       if (!content.fieldOrder.includes(identity!)) content.fieldOrder.push(identity!);
       const field = fieldValues(input),
-        members = currentFieldParts(field).map((part) => [kind, part] as const),
-        partition: CurrentPartPartition = {
+        partitions: CurrentPartPartition[] = currentFieldParts(field).map((part) => ({
           ...received!,
-          members,
+          members: [[kind, part]],
           times,
           revision: input.revision,
-          check,
+          check: currentMemberCheckScope(kind, part, grant.modality),
           ...(input.availability ? { availability: input.availability } : {}),
-        };
+        }));
       const existing = content.groups.findIndex((group) => equalGrant(group.received.grant, grant));
       if (existing >= 0) {
         const group = mutableGroup(content, existing);
         group.received.fields[kind] = field;
-        group.metadata = mergePartitions([...group.metadata, partition]);
+        group.metadata = mergePartitions([...group.metadata, ...partitions]);
       } else {
         const group: CurrentReceivedGroup = {
           received: { grant, fields: { [kind]: field } },
-          metadata: [partition],
+          metadata: mergePartitions(partitions),
         };
         mutableGroups.add(group);
         content.groups.push(group);
@@ -851,6 +938,34 @@ function coveredPartitions(
   });
   return changed ? metadataGroup(group, { metadata: mergePartitions(metadata) }) : group;
 }
+/** Resolve outgoing support while the contact's body exposure still exists.
+ * Only fields being removed/replaced are touched; complete-phase renewal never
+ * calls this operation for surviving contacts. */
+export function materializeCurrentChecks(
+  owner: PerceptionEvidenceOwner,
+  keys: readonly string[],
+): void {
+  const selected = new Map<string, Set<string>>();
+  for (const key of keys) {
+    const address = currentFacetAddress(key);
+    let kinds = selected.get(address.subjectId);
+    if (!kinds) selected.set(address.subjectId, (kinds = new Set()));
+    kinds.add(address.kind);
+  }
+  withCurrentContactBatch(owner, () => {
+    for (const [id, kinds] of selected) {
+      const contact = currentContactGet(owner, id);
+      if (!contact) continue;
+      const groups = contact.content.groups.map((group) =>
+        coveredPartitions(group, kinds, (partition) =>
+          effectiveCurrentPartition(owner, group, partition),
+        ),
+      );
+      if (groups.some((group, index) => group !== contact.content.groups[index]))
+        setContactMetadataGroups(owner, id, contact, groups);
+    }
+  });
+}
 export interface CurrentGroupCoverage {
   subjectId: string;
   fields: object;
@@ -884,12 +999,13 @@ export function currentSetUnchecked(
         const fields = readOnlyDraftView(group.received.fields);
         if (!masks.has(fields)) return group;
         return coveredPartitions(group, masks.get(fields), (partition) => {
+          const effective = effectiveCurrentPartition(owner, group, partition);
           if (
-            at < expandedTimes(partition.times).confirmedThrough ||
+            at < expandedTimes(effective.times).confirmedThrough ||
             (partition.availability && partition.availability.at <= at)
           )
             return partition;
-          const next = { ...partition, availability: { state: 'unchecked' as const, at } };
+          const next = { ...effective, availability: { state: 'unchecked' as const, at } };
           return next;
         });
       });

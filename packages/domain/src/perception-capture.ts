@@ -7,6 +7,7 @@ import { sameDefinitionPin } from './definition-pins.js';
 import {
   currentFacetGet,
   currentGroupNativeFacet,
+  effectiveCurrentPartition,
   currentFacetSupport,
   currentFacetTimes,
   currentContactEntries,
@@ -96,7 +97,16 @@ export function captureCurrentSources(
     for (const [id, contact] of selectedContacts) {
       const groups: CurrentReceivedGroup[] = [];
       for (const raw of contact.content.groups) {
-        const group = readOnlyDraftView(raw),
+        const live = readOnlyDraftView(raw);
+        const metadata = live.metadata.map((partition) => {
+          const effective = effectiveCurrentPartition(state, live, partition);
+          return effective === partition
+            ? partition
+            : { ...effective, revision: Math.max(effective.revision, effective.confirmedRevision) };
+        });
+        const group = metadata.some((partition, index) => partition !== live.metadata[index])
+            ? { ...live, metadata }
+            : live,
           kinds = Object.keys(group.received.fields),
           representative = kinds.find((kind) => kind !== 'association') ?? kinds[0];
         if (!representative) continue;
@@ -148,6 +158,8 @@ export function captureCurrentSources(
                 }),
               },
         );
+        for (const partition of group.metadata)
+          if (partition.frameRef) captureRef(partition.frameRef);
         captureRef(contact.content.originals[group.received.grant.original]!.headerRef);
         for (const field of Object.values(fields)) {
           captureValue(field.value);
@@ -191,6 +203,14 @@ export function captureCurrentSources(
         });
       }
     }
+  }
+  if (state?.visualConfirmation) {
+    captureRef(state.visualConfirmation.frameRef);
+    if (state.visualConfirmation.complete) captureRef(state.visualConfirmation.complete.frameRef);
+  }
+  for (const [, contact] of currentContactEntries({ current })) {
+    if (contact.sight) captureRef(contact.sight.frameRef);
+    if (contact.sight?.detail) captureRef(contact.sight.detail.frameRef);
   }
   const motions: CapturedCurrentSources['motions'] = {};
   for (const [id, motion] of Object.entries(state?.motionSamples ?? {})) {

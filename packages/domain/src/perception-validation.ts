@@ -5,12 +5,13 @@ import { sameReceivedValueReference } from './received-values.js';
 import {
   currentFacetGet,
   currentFacetEntries,
-  currentFacetCheckScope,
+  currentMemberCheckScope,
   currentFacetKey,
   currentFieldIdentity,
   currentFieldParts,
   receivedTrackKey,
   type CurrentContact,
+  type CurrentSightStamp,
 } from './perception-current.js';
 import { validateOrderedRecord, orderedRecordEntries } from './ordered-record.js';
 import { currentFacetGrant } from './perception-current.js';
@@ -58,6 +59,36 @@ function validReceivedReference(
       !Array.isArray(value) &&
       'kind' in value &&
       typeof value.kind === 'string')
+  );
+}
+
+function validCurrentSightStamp(
+  world: WorldState,
+  stamp: CurrentSightStamp,
+  through: number,
+  revision: number,
+  withDetail = false,
+): boolean {
+  return (
+    hasRecordFields(
+      stamp,
+      ['through', 'revision', 'inputRevision', 'receivedOrder', 'frameRef'],
+      withDetail ? ['detail'] : [],
+    ) &&
+    Number.isFinite(stamp.through) &&
+    stamp.through >= 0 &&
+    stamp.through <= through &&
+    Number.isSafeInteger(stamp.revision) &&
+    stamp.revision >= 1 &&
+    stamp.revision <= revision &&
+    Number.isSafeInteger(stamp.inputRevision) &&
+    stamp.inputRevision >= 0 &&
+    stamp.inputRevision <= (world.sensory?.revision ?? 0) &&
+    Number.isSafeInteger(stamp.receivedOrder) &&
+    stamp.receivedOrder > 0 &&
+    stamp.receivedOrder < world.nextId &&
+    validReceivedReference(stamp.frameRef) &&
+    validObservationFrame(receivedObservationFrame(world, stamp.frameRef))
   );
 }
 
@@ -363,7 +394,7 @@ export function validatePerceptionEvidenceState(
               !currentFieldParts(group.received.fields[address[0]]!).includes(address[1])
             )
               throw new Error('Invalid current part membership.');
-            if (partition.check !== currentFacetCheckScope(address[0], grant.modality))
+            if (partition.check !== currentMemberCheckScope(address[0], address[1], grant.modality))
               throw new Error('Current part check scope disagrees with its field.');
             const key = JSON.stringify(address);
             if (heldParts.has(key)) throw new Error('Duplicate current part membership.');
@@ -473,26 +504,9 @@ export function validatePerceptionEvidenceState(
           phase = state.visualConfirmation;
         if (
           !phase ||
-          !hasRecordFields(check, ['through', 'revision', 'inputRevision'], ['detail']) ||
-          !Number.isFinite(check.through) ||
-          check.through < 0 ||
-          check.through > phase.through ||
-          !Number.isSafeInteger(check.revision) ||
-          check.revision < 1 ||
-          check.revision > phase.revision ||
-          !Number.isSafeInteger(check.inputRevision) ||
-          check.inputRevision < 0 ||
-          check.inputRevision > (world.sensory?.revision ?? 0) ||
+          !validCurrentSightStamp(world, check, phase.through, phase.revision, true) ||
           (check.detail !== undefined &&
-            (!hasRecordFields(check.detail, ['through', 'revision', 'inputRevision']) ||
-              !Number.isFinite(check.detail.through) ||
-              check.detail.through < 0 ||
-              check.detail.through > check.through ||
-              !Number.isSafeInteger(check.detail.revision) ||
-              check.detail.revision < 1 ||
-              check.detail.revision > check.revision ||
-              !Number.isSafeInteger(check.detail.inputRevision) ||
-              check.detail.inputRevision < 0 ||
+            (!validCurrentSightStamp(world, check.detail, check.through, check.revision) ||
               check.detail.inputRevision > check.inputRevision))
         )
           throw new Error('Invalid completed contact check.');
@@ -572,21 +586,24 @@ export function validatePerceptionEvidenceState(
       throw new Error('Current motion deadline has no support.');
     if (
       state.visualConfirmation &&
-      (!isDefinitionPin(state.visualConfirmation.channel) ||
+      (!hasRecordFields(
+        state.visualConfirmation,
+        ['channel', 'through', 'revision', 'frameRef', 'frameRevision'],
+        ['complete'],
+      ) ||
+        !isDefinitionPin(state.visualConfirmation.channel) ||
         !Number.isFinite(state.visualConfirmation.through) ||
         state.visualConfirmation.through < 0 ||
         state.visualConfirmation.through > world.simTime ||
         !Number.isSafeInteger(state.visualConfirmation.revision) ||
         state.visualConfirmation.revision < 1 ||
-        !Number.isFinite(state.visualConfirmation.completeThrough) ||
-        state.visualConfirmation.completeThrough < 0 ||
-        state.visualConfirmation.completeThrough > state.visualConfirmation.through ||
-        !Number.isSafeInteger(state.visualConfirmation.completeRevision) ||
-        state.visualConfirmation.completeRevision < 0 ||
-        state.visualConfirmation.completeRevision > state.visualConfirmation.revision ||
-        !Number.isSafeInteger(state.visualConfirmation.completeInputRevision) ||
-        state.visualConfirmation.completeInputRevision < 0 ||
-        state.visualConfirmation.completeInputRevision > (world.sensory?.revision ?? 0) ||
+        (state.visualConfirmation.complete !== undefined &&
+          !validCurrentSightStamp(
+            world,
+            state.visualConfirmation.complete,
+            state.visualConfirmation.through,
+            state.visualConfirmation.revision,
+          )) ||
         !Number.isSafeInteger(state.visualConfirmation.frameRevision) ||
         state.visualConfirmation.frameRevision < 1 ||
         state.visualConfirmation.frameRevision > state.visualConfirmation.revision ||

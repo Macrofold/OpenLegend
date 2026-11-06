@@ -187,7 +187,7 @@ interface ReferenceOwner {
     received: PerceptionOwner['received'];
     current: PerceptionOwner['current'];
     motion: PerceptionOwner['motionSamples'];
-    frame: ReceivedValueReference | undefined;
+    phase: PerceptionOwner['visualConfirmation'];
     counts: ReferenceCounts;
   };
 }
@@ -280,10 +280,20 @@ export function receivedContactValueReferences(input: CurrentContact): ReceivedV
     for (const partition of readOnlyDraftView(group.metadata))
       if (typeof partition.frameRef === 'string' && !stable.has(partition.frameRef))
         (result ??= new Set(stable)).add(partition.frameRef);
+  for (const stamp of [contact.sight, contact.sight?.detail])
+    if (typeof stamp?.frameRef === 'string' && !stable.has(stamp.frameRef))
+      (result ??= new Set(stable)).add(stamp.frameRef);
   return result ?? stable;
 }
-function frameReferences(frame: ReceivedValueReference | undefined) {
-  return frame ? collectReferences(typeof frame === 'string' ? [frame] : []) : undefined;
+/** The latest partial frame and completed broad frame have independent owners. */
+export function receivedVisualConfirmationValueReferences(
+  phase: PerceptionOwner['visualConfirmation'],
+): ReceivedValueReferences {
+  return collectReferences(
+    [phase?.frameRef, phase?.complete?.frameRef].filter(
+      (ref): ref is string => typeof ref === 'string',
+    ),
+  );
 }
 function phaseReferences(sources: PerceptionOwner['received']): ReceivedValueReferences {
   return collectReferences(
@@ -300,7 +310,7 @@ function perceptionReferences(
     current = readOnlyDraftView(owner.current),
     received = readOnlyDraftView(owner.received),
     motion = owner.motionSamples && readOnlyDraftView(owner.motionSamples),
-    frame = owner.visualConfirmation?.frameRef,
+    phase = owner.visualConfirmation,
     old = previous?.perception;
   if (
     previous &&
@@ -308,7 +318,7 @@ function perceptionReferences(
     old.current === current &&
     old.received === received &&
     old.motion === motion &&
-    old.frame === frame
+    old.phase === phase
   )
     return { ...previous, identity: owner };
   const changed = old && orderedRecordChangedKeys(old.current, current),
@@ -327,14 +337,17 @@ function perceptionReferences(
     }
     if (old!.received !== received)
       delta.update(phaseReferences(old!.received), phaseReferences(received));
-    delta.update(frameReferences(old!.frame), frameReferences(frame));
+    delta.update(
+      receivedVisualConfirmationValueReferences(old!.phase),
+      receivedVisualConfirmationValueReferences(phase),
+    );
   } else {
     countDomainWork('receivedReferenceOwnersRebuilt');
     // Contact values are bounded; no individual proof or body is materialized.
     for (const [, contact] of orderedRecordEntries(current))
       delta.update(undefined, receivedContactValueReferences(contact));
     delta.update(undefined, phaseReferences(received));
-    delta.update(undefined, frameReferences(frame));
+    delta.update(undefined, receivedVisualConfirmationValueReferences(phase));
   }
   if (!incremental || old!.motion !== motion) {
     const refs = (items: PerceptionOwner['motionSamples']) =>
@@ -357,7 +370,7 @@ function perceptionReferences(
           },
         }
       : {}),
-    perception: { current, received, motion, frame, counts },
+    perception: { current, received, motion, phase, counts },
   };
 }
 /** Native rows are resident; the persistence owner adds exact cold receipt

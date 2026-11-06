@@ -1,6 +1,8 @@
 import {
   receivedFacetValueReferences,
   receivedContactValueReferences,
+  receivedVisualConfirmationValueReferences,
+  type PerceptionEvidenceOwner,
   type CurrentContact,
   receivedObservationValueReferences,
   type ReceivedObservation,
@@ -26,10 +28,10 @@ export function receivedRecordReferences(table: string, value: Record<string, un
       (value['earlier'] as { value: ReceivedFacetValue }).value,
     );
   if (table === 'mind_perception_owners') {
-    const frame = (value['visualConfirmation'] as { frameRef?: ReceivedValueReference } | undefined)
-      ?.frameRef;
     references = [
-      ...(frame ? [frame] : []),
+      ...receivedVisualConfirmationValueReferences(
+        value['visualConfirmation'] as PerceptionEvidenceOwner['visualConfirmation'],
+      ),
       ...((value['received'] ?? []) as ReceivedObservation[]).flatMap(
         receivedObservationValueReferences,
       ),
