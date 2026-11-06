@@ -12,7 +12,7 @@ One line: the current stage and what is true now, using the separate facts **cre
 
 ### Brief
 
-- **Purpose:** the subject, the play moment it serves, and the requested finish and quality.
+- **Purpose:** the subject, the play moment it serves, what someone should notice, understand or enjoy, and the requested finish and quality. Name the visible result that would answer this request; a focused repair can name its defect, and beauty need not supply a mechanical advantage.
 - **Settings:** profile, finish, quality (simple or full path) and any step options, fidelity with its locks and free areas, tools (preset and any per-stage overrides), candidate counts, selection authority, stop point and budget.
 - **Look:** what the [current art direction](README.md#3-read-the-look-from-the-art-direction) requires for this subject: target and rejects, proportion and scale rules, production notes, review conditions. Link the owners rather than copying long passages.
 - **Game facts:** real size in metres, handedness and carried things, supported actions, the visible states the simulation records, and the consumer that will use the files. Link each fact's owner.

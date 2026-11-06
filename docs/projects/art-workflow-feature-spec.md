@@ -1,8 +1,8 @@
 # Art workflow — feature specification
 
-| Status      | Current progress                                                                                                                                                                                                          | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The procedure and tools are delivered; selective repair and prototype-to-polish handoffs are specified. New people still require the PPL body/clothing decisions; art acceptance and the remaining proof assets are open. | 2026-11-05   |
+| Status      | Current progress                                                                                                                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The procedure and tools are delivered; selective repair, prototype-to-polish and prompt guidance are specified. People design, production qualification and artistic acceptance remain open. | 2026-11-06   |
 
 This project redesigns how OpenLegend makes art: one procedure that turns a request such as "turn this character sheet into a rigged model for the game" into finished, reviewed, preserved files, with explicit tool defaults, explicit artistic latitude and no built-in look. Mike asks; an agent, or a junior artist following the pages, does the work. The normal full path has three review points; unresolved consequential choices are resolved before dependent work, and the prototype path needs no candidate-selection round.
 
@@ -10,7 +10,7 @@ The procedure itself lives in the [art workflow pages](../production-workflows/a
 
 ## Maintained records
 
-- **Implementation:** [AF04–AF14](../maintainers/art-direction.md#art-flow-follow-through) in the art-direction tracker; [PPL01–PPL03](../maintainers/art/people.md) own the ND39–ND42 body, face, hair, clothing and character-sheet design decisions. This workflow refinement does not close those decisions.
+- **Implementation:** [AF04–AF14](../maintainers/art-direction.md#art-flow-follow-through) in the art-direction tracker; [AP01–AP03](../maintainers/art/prompting-and-library.md) own prompt guidance, source coverage and its verification; [PPL01–PPL03](../maintainers/art/people.md) own the ND39–ND42 body, face, hair, clothing and character-sheet design decisions. This workflow refinement does not close those decisions.
 - **Limits and constraints:** no new discretionary limits. Model budgets are the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) profile, the local preview applies the existing [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload) intake bound, and storage follows [AST](../limits/game-asset-storage.md). Spending follows the repository [spending policy](../../.agents/rules/verification.md#spending).
 - **Related contracts and designs:** [technical design](art-workflow-tech-design.md); the workflow pages ([README](../production-workflows/art-flows/README.md), [tools](../production-workflows/art-flows/tools.md), [profiles](../production-workflows/art-flows/profiles.md), [3D models](../production-workflows/art-flows/3d-models.md), [production](../production-workflows/art-flows/production.md), [study record](../production-workflows/art-flows/study-record.md)); the art direction's [current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance); the [runtime invention art contract](../invention-art-pipeline.md) and the proposed [generation and publication design](3d-pixel-art-asset-pipeline.md); rig families under [V3D05–V3D06](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
 
@@ -18,9 +18,7 @@ The procedure itself lives in the [art workflow pages](../production-workflows/a
 
 OpenLegend's art problem is not making one beautiful image. It is producing, at a steady pace, the people, creatures, tools, structures and states that the first playable game needs, in whatever look Mike has currently chosen, without Mike having to manage tools, prompts or files.
 
-The previous workflow pages were sound in principle but abstract: no tool was named as a default, no step said which command to run, the route from a character sheet to a rigged model was a paragraph, and pieces of the current look (pixel treatment, proportions, interface parts) were written into the procedure itself. A junior could not follow them, and a change of look would have meant editing the workflow.
-
-The redesigned workflow is:
+The workflow is:
 
 - **Concrete:** every stage names its default tool, command, output, check and stop, with costs.
 - **Adjustable:** a simple or full path, per-step options, tools, fidelity, candidate counts and the stopping point are request settings with defaults, and supplied material skips the steps it already answers.
@@ -42,11 +40,11 @@ The pipeline should spend effort where OpenLegend differs from ordinary survival
 | **Fast iteration on the world**               | A short route to an inspectable result: defaults remove repeated tool decisions, reports cover mechanical file checks, and a local model preview shows a candidate in the game's own renderer without publishing it ([technical design](art-workflow-tech-design.md#5-local-model-preview-in-the-study-viewer)).                                                                                                                                                                                      | Complete |
 | **Worlds with their own looks**               | The workflow carries no look, so another authored world can bring its own art direction to the same procedure.                                                                                                                                                                                                                                                                                                                                                                                        | Depth    |
 
-**What the first playable needs drawn** (from the world specifications; the [repertoire priorities](../repertoires/gameplay-priorities.md) defer to the first-scenario list):
+**Representative first-playable production coverage** (the world specifications own actual content and counts; the [art tracker](../maintainers/art-direction.md) owns current asset status and acceptance):
 
-- **People:** seven: the player, Ada, the Peacock Mercenary, Mara Reed, Tavin Vale, and Kest (shield) and Orin (bow) at the Watchpost. The restored mercenary and fitted library humans exist as candidates; none is accepted yet.
+- **People:** the player, Ada, the Peacock Mercenary, Mara Reed, Tavin Vale, and Kest and Orin at the Watchpost, retaining their authored identity and equipment.
 - **Animals:** hares, deer, birds, wolves, bears and the territorial stag. The current sourced animals and remaining gaps are owned by [AD09](../maintainers/art-direction.md#ad09--follow-through-on-the-grounded-stylized-direction); an earlier unresolved bear-source question does not override the selected WildMesh source. Motion and population qualification still need their own evidence.
-- **Tools and weapons:** knife, knapped stone tool, club, shield, spear, camp hammer, field sling, Orin's bow and arrows, reed comb, pole hook, branch hook, river line. The club, hammer, hooks, comb, river line and knapped stone have no art in the current look.
+- **Tools and weapons:** knife, knapped stone tool, club, shield, spear, camp hammer, field sling, bow and arrows, reed comb, pole hook, branch hook and river line.
 - **Camp:** posts, wattle panels with damage bands and salvage, the sliding barred gate, a reed-mat roof, canopy posts with weather cloth, and a four-stone hearth.
 - **Containers and stock:** pouch, open basket, woven containers of varying size, satchels and caches; ground piles of real items; poles, fibre, cord, stone, flint and bone.
 
@@ -142,6 +140,16 @@ The [character-production research](../../art-direction/research/3d-pixel-worlds
 - **Polish resumes the selected asset.** Preserve its exact source, rig, requested clips and adequate materials. The [repair table](../production-workflows/assets-and-animation.md#repair-map-and-downstream-effects) determines which downstream checks become stale; no wholesale regeneration or repeat candidate contest is implied.
 - **The short path has a real exit.** A prototype must load and perform its stated use with the required identity and proportions. Record cosmetic limitations, but do not call a broken requested motion usable merely because it is labelled a prototype. A checked export, a shared-family qualification and Mike's artistic acceptance are separate outcomes.
 
+### 3.8 Prompt direction serves the requested experience
+
+[Prompt direction](../production-workflows/art-flows/prompting.md) translates the existing brief into an operation the selected tool can perform. It is part of Brief, Prepare and the relevant repair step, not an eighth stage. The existing Purpose field connects visible decisions to what someone should notice, understand or enjoy: a familiar person remains recognizable while acting independently, a tool's construction suggests its actual use, and a place invites curiosity or quiet appreciation. The [repertoire priorities](../repertoires/gameplay-priorities.md#make-execution-and-presentation-earn-their-attention) already own those goals; this project adds no gameplay system or ranking.
+
+The purchased-library review supports concrete instructions about form, references, contacts, materials and motion, but not adoption of its engines, art styles or body families. Its character recipes rely on supplied assets and rig/clip data as well as prose. Use the smallest relevant lesson and diagnose the responsible layer before adding detail. Prefer retaining a suitable source or making one focused correction over regenerating accepted work. New infrastructure, automatic provider fan-out, numerical self-scoring and mandatory comparison campaigns would increase cost without an established player benefit.
+
+A prompt-only request ends with a usable draft and material assumptions. An execution request follows the existing quality path and output checks. Static authored surface character may express construction, age and taste without a simulation for each mark; an appearance used to report a changing game condition must match that state. State coverage comes from the requested consumer, not from a blanket requirement that every prop needs variants. Beauty and expression need no extra mechanic to justify them.
+
+This is a completed guidance design, not evidence of improved generated-art quality or enjoyment. Existing production proof and player-evidence owners retain those questions. The [source record](../../art-direction/research/ai-asset-prompting/README.md) keeps the evidence and exclusions optional for ordinary art requests.
+
 ## 4. Scenarios
 
 Each scenario names its trigger, what Mike sees, the decision points and a meaningful failure. New-person scenarios apply only after the [PPL decisions](../maintainers/art/people.md) authorize the body/parts route; retained study exceptions are not a general production method.
@@ -158,9 +166,20 @@ Each scenario names its trigger, what Mike sees, the decision points and a meani
 5. **Resume.** A new thread receives `2026-11-02-mara-reed-3d/m02`. It reads the record's Resume section, recovers any outstanding job, fetches the archived files and continues at Stage 5 without regenerating.
 6. **Comparison.** _"Use both flows for a character appearance study."_ Shared inputs are frozen once; Standard and Higgsfield run independently with distinct IDs; one index compares coverage, quality, cost and Mike's involvement.
 7. **Creature.** _"A wolf for the game."_ A library or specialist source fitted to a nonhuman rig, with stalking, bite wind-up and recovery clips authored before idles; the threat check reads the bite from three sides.
+
+   **Focused creature-motion revision.** _"Finish the bite motion on this approved wolf so its preparation is readable."_ Keep the selected body and compatible rig, read the action's native timing and adapt a suitable clip before authoring missing motion. Show preparation, contact and recovery coherently; inspect the actual clip with the existing threat check. _Failure:_ a still looks threatening but motion hides the preparation or slides the support feet. Repair the motion or contact, not the creature's accepted anatomy. A clip review does not prove the encounter is fun or integrated correctly; integration stays a separate requested scope.
+
 8. **Quick prototype.** _"A quick static model of this stone tool from the sheet."_ Reuse an adequate source or make one candidate from the usable supplied view, keep simple materials, normalize only as required, reopen the export and inspect its form/scale in the intended view. Preserve it and stop; no rig, animation, candidate sheet or polish pass is added. _Failure:_ the grip or silhouette violates a named lock; repair that defect or report an incomplete result. A minor surface blemish can remain for later polish.
 9. **Animation only.** _"Give this selected rig a reaching motion; keep the model and materials."_ Reuse the exact target, block the reach and its return, check the hand against the actual target position, export and reopen. Preserve other clips. No new body, garment set, concepts or unrelated motion library is required. _Failure:_ a same-named source skeleton has a different rest pose; correct the mapping or pose and recheck contact rather than declaring compatibility from names.
 10. **Finish a retained prototype.** _"Polish this face and coat, keeping the walk."_ Inspect the selected revision, repair the failed face/material or weights, then repeat its affected export and motion checks. A texture-only correction keeps geometry and the rig. A topology change rechecks affected weights and textures. _Failure:_ the available service can rig only its raw output, so rerigging there would discard local repair; use a supported local route or report that dependency before spending.
+11. **Prompt-only repair.** _"Rewrite my material prompt for this accepted chest; keep its shape and do not generate."_ Inspect the source and lighting context, distinguish muddy texture from multiplied colour or illumination, and return a supported material-edit prompt with reference roles and protected regions. _Failure:_ the chosen route cannot retain the mesh or accept the supplied input. State that limitation instead of promising a repair through unsupported words. Stop at the text; no job, asset or study folder is required.
+12. **Character sheet to game model — target after the parts design is accepted.** _"Turn this sheet into a finished, rigged model; keep the face and coat exactly."_ [PPL01–PPL03](../maintainers/art/people.md) must first supply the accepted body, face, hair and removable-clothing procedure. This scenario does not approve a whole-person generation shortcut.
+
+- **Plan.** `faithful`, with locks on face and coat; use the accepted parts route to select the body and compatible parts, identify permitted missing parts and estimate their actual tool work. Do not invent a universal whole-person candidate count or price for an unresolved route.
+- **Pick.** Show the requested alternatives and relevant assembled views beside the reference and cast, using the existing full-path decision points. Mike selects the candidate.
+- **Finish.** Complete only the accepted route's missing construction, fitting, rig and required clips; check part separation, budgets and play checks, obtain the existing critique, and show the matched-scale result.
+- **Accept.** Mike accepts and the package is archived. Integration is a separate request.
+- _Failure:_ a candidate fuses the satchel to the hip. Keep the accepted body, rig and other usable parts; repair the affected permitted part or its source views, then regenerate only that part if needed within the existing spending authority. Recheck its attachment and required part separation.
 
 ## 5. Behaviour
 
@@ -172,6 +191,7 @@ The workflow pages own the procedure; in summary:
 - **Tools** ([tools](../production-workflows/art-flows/tools.md)): a dated default roster per stage, presets, overrides, how to estimate cost, and how to recover jobs.
 - **3D** ([3D models](../production-workflows/art-flows/3d-models.md)): build-route choice (library, family fit, image-to-3D, hybrid, hand-modelled), view rules, candidate checks, cleanup, rig routes, clips, consumer contract, budgets and in-game review.
 - **Play checks** ([profiles](../production-workflows/art-flows/profiles.md#play-checks)): name, same thing, state, threat, construction and scale.
+- **Prompt direction** ([guide](../production-workflows/art-flows/prompting.md#start-with-the-current-brief)): purpose, exact source and locks, defect diagnosis, a supported operation and the existing check/stop. Load only the relevant operation; the research is optional.
 - **Records** ([study record](../production-workflows/art-flows/study-record.md)): state, brief, candidates, decisions, interpretations, construction, review, cost and resume.
 
 ## 6. Scope and non-goals
@@ -186,21 +206,21 @@ In scope: every offline art request, from concepts to production packages and th
 
 ## 7. Failure cases
 
-| Situation                                                     | Required behaviour                                                                                                                                  |
-| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A named tool needs an account, key or plan that is not set up | Prepare everything else, report the exact requirement, ask. Never sign up, buy or reuse an unrelated credential.                                    |
-| Generated views disagree                                      | Name the canonical view, correct the others with targeted edits, record the interpretation.                                                         |
-| All candidates fail a lock (fused props, wrong face)          | Identify the failed input, source method or provider capability; repair that cause or change method within scope. More rerolls are not a diagnosis. |
-| Budget would exceed the ceiling                               | Stop before dispatch, preserve finished work, report the shortfall and ask.                                                                         |
-| A job times out or the session ends                           | Recover the submitted job from its ID; never resubmit while its status is uncertain.                                                                |
-| Technical checks pass but Mike rejects                        | Record his words, identify the responsible choice, revise that source; preserve the rejected candidate.                                             |
-| The request conflicts with the current direction              | Prepare, then ask which applies; a one-study exception does not change the direction.                                                               |
-| Storage is unavailable                                        | Keep the working folder, mark "not yet archived", report the access needed.                                                                         |
-| A state or detail the game does not record is requested       | Explain that art cannot assert it, offer the closest supported state, and route a missing mechanic to its owner.                                    |
+| Situation                                                     | Required behaviour                                                                                                                                                                       |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A named tool needs an account, key or plan that is not set up | Prepare everything else, report the exact requirement, ask. Never sign up, buy or reuse an unrelated credential.                                                                         |
+| Generated views disagree                                      | Name the canonical view, correct the others with targeted edits, record the interpretation.                                                                                              |
+| All candidates fail a lock (fused props, wrong face)          | Identify the failed input, source method or provider capability; repair that cause or change method within scope. More rerolls are not a diagnosis.                                      |
+| Budget would exceed the ceiling                               | Stop before dispatch, preserve finished work, report the shortfall and ask.                                                                                                              |
+| A job times out or the session ends                           | Recover the submitted job from its ID; never resubmit while its status is uncertain.                                                                                                     |
+| Technical checks pass but Mike rejects                        | Record his words, identify the responsible choice, revise that source; preserve the rejected candidate.                                                                                  |
+| The request conflicts with the current direction              | Prepare, then ask which applies; a one-study exception does not change the direction.                                                                                                    |
+| Storage is unavailable                                        | Keep the working folder, mark "not yet archived", report the access needed.                                                                                                              |
+| An appearance would falsely report a game condition           | Resolve the relevant world fact before production; route a missing mechanic to its owner. Static authored detail and clearly labelled concept proposals do not require a new simulation. |
 
 ## 8. Acceptance criteria
 
-1. A junior following the pages can take a supplied character sheet to an archived, checked, owner-accepted rigged GLB, using the documented commands, defaults and decision points after applicable design decisions are settled. The [first proof run](art-workflow-tech-design.md#8-delivery-stages-and-tasks) supplies partial tool evidence; it does not establish owner acceptance, modular people or independent junior execution.
+1. A junior following the pages can take a supplied character sheet through the accepted parts route to an archived, checked, owner-accepted rigged GLB, using the documented commands, defaults and decision points after applicable design decisions are settled. The [first proof run](art-workflow-tech-design.md#8-delivery-stages-and-tasks) supplies partial tool evidence; it does not establish owner acceptance, modular people or independent junior execution.
 2. No workflow or handbook page states a specific look; changing the look requires editing only the art-direction entry point and the sections it names.
 3. Every stage has a named default tool, a cost estimate method and a recovery method; overrides work per stage.
 4. Every study record shows fidelity, locks, interpretations, decisions and costs.
@@ -208,13 +228,14 @@ In scope: every offline art request, from concepts to production packages and th
 6. The guidance checker passes and no link to the removed pages remains.
 7. A request chooses the simple or the full path in ordinary words and changes any single step (concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format, critique) without restating the rest; supplied material skips the steps it already answers.
 8. A selected prototype can be finalized without replacing valid geometry, rig, clips or materials. The AF07 proof record identifies what changed, which evidence was reused and which affected checks were repeated; unsupported source editing or consumer features remain explicit gaps.
+9. A prompt-only request produces actionable text without executing it; a focused asset correction retains its source and scope. The relevant guide is discoverable without loading the source library, and neither draft wording nor passing static/routing checks is reported as proof of art quality or player enjoyment.
 
 ## 9. Delivery stages
 
-1. **Pages and seam (this change):** the rewritten workflow pages and skills, the art-direction entry point, the conventions and the publishing problems list.
+1. **Pages and seam:** the shared workflow pages and skills, the art-direction entry point, the conventions and the publishing problems list.
 2. **Helpers:** the model report and turntable sheet, normalization, and clip assembly for automatic rigs ([technical design §4](art-workflow-tech-design.md#4-helper-scripts)); the image contact sheet stays unbuilt.
 3. **Local model preview** in the study viewer ([technical design §5](art-workflow-tech-design.md#5-local-model-preview-in-the-study-viewer)).
-4. **Proof run:** one first-playable person without accepted art, plus one state-sheet prop, taken end to end with measured cost, time, correction effort and Mike's decisions; then update the default roster from the evidence.
+4. **Proof run:** after the people-parts design is accepted, one first-playable person through that route, plus one state-sheet prop, taken end to end with measured cost, time, correction effort and Mike's decisions; then update the default roster from the evidence. The prop does not depend on the people design.
 5. **Proposed, after the proof run:** the people family kit (AF10).
 6. **Proposed:** kit-character batches (AF11).
 7. **Simple and full paths (November 1):** the quality setting's two paths, the step options and what supplied material skips, reconciled with the prototype and finalize paths.
