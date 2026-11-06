@@ -54,6 +54,7 @@ import {
   noteAttentionSourceChange,
   invalidateAttentionPreparation,
   attentionReceivedPartChange,
+  attentionReceivedPartUnavailable,
   type AttentionEntry,
   type AttentionUpdate,
   type AttentionChangedParts,
@@ -1054,10 +1055,22 @@ export function nextPerceptionMeasurementAt(
   );
   return Number.isFinite(at) ? at : undefined;
 }
+const noPerceptionContacts: PerceptionContactPreparation = {
+  eligible: false,
+  selected: new Set(),
+  tickets: [],
+};
 function perceptionContactPreparation(
   world: WorldState,
   observerId: string,
 ): PerceptionContactPreparation {
+  // Memoryless/no-attention receivers have no measurement work. Keep this scalar
+  // fast path outside preparation; a newly admitted geometry continuation is
+  // reconsidered on the next read, without a stale cached negative.
+  const held = readOnlyDraftView(world).perceptionEvidence?.[observerId];
+  const current = held && readOnlyDraftView(held);
+  if (!current?.attention?.entries.length && (!current?.geometry || current.geometry.finished))
+    return noPerceptionContacts;
   return preparedPerceptionContacts(world, observerId, () => {
     const source = readOnlyDraftView(world).perceptionEvidence?.[observerId];
     const state = source && readOnlyDraftView(source);
@@ -1080,7 +1093,15 @@ function perceptionContactPreparation(
       const body = currentNativeFacetAt(state, entry.sourceId, 'body', { modality: 'sight' });
       if (!body || body.field.id !== entry.leaseId || body.metadata.availability) continue;
       const local = body.field.localSubject,
-        recognized = entry.subject;
+        recognized = receivedBodyAssociation(
+          world,
+          observerId,
+          body,
+          currentFacetGet(state, `${entry.sourceId}:association`, {
+            channel: body.grant.channel,
+            exposure: body.grant.exposure,
+          }),
+        );
       const through = Math.max(
         currentNativeFacetTimes(body).confirmedThrough,
         currentContactGet(state, entry.sourceId)?.sight?.through ?? -Infinity,
@@ -1710,8 +1731,6 @@ export function receiveCurrentChange(
               return;
             }
             case 'availability': {
-              invalidatePerceptionMeasurements(world, observer.id);
-              invalidateAttentionPreparation(world, observer.id);
               const keys = [...(change.keys ?? [])];
               const sourceIds = new Set([
                 ...(change.groups ?? []).map((source) => source.subjectId),
@@ -1756,6 +1775,7 @@ export function receiveCurrentChange(
                 mask.kinds.add(field.value.kind);
               }
               coverage.push(...[...masks].map(([fields, mask]) => ({ fields, ...mask })));
+              const correspondenceSources = new Set<string>();
               for (const covered of coverage) {
                 const contact = currentContactGet(state, covered.subjectId);
                 if (!contact) continue;
@@ -1771,6 +1791,14 @@ export function receiveCurrentChange(
                     const members = partition.members.filter(
                       ([kind]) => !covered.kinds || covered.kinds.has(kind),
                     );
+                    for (const [kind] of members) {
+                      const parts = attentionReceivedPartUnavailable(kind, 'unchecked');
+                      noteAttentionSourceChange(world, observer.id, covered.subjectId, parts);
+                      if (parts.membership || parts.association) {
+                        correspondenceSources.add(covered.subjectId);
+                        invalidatePerceptionMeasurements(world, observer.id, covered.subjectId);
+                      }
+                    }
                     if (members.length && currentGroupRecordings(group, members).length)
                       closeTemporalCurrentGroup(
                         world,
@@ -1786,6 +1814,8 @@ export function receiveCurrentChange(
                 }
               }
               currentSetUnchecked(state, coverage, change.at ?? world.simTime);
+              for (const sourceId of correspondenceSources)
+                refreshReceivedCorrespondence(world, state, sourceId);
               const geometrySources = new Set(
                 coverage
                   .filter(
@@ -1968,7 +1998,15 @@ function enrollReceivedCorrespondence(
   sourceId: string,
 ): void {
   const phase = receivedPhaseDeltas.get(state);
-  if (!phase || phase.descriptors.has(sourceId)) return;
+  if (
+    !phase ||
+    phase.descriptors.has(sourceId) ||
+    (!phase.entryEntries.length &&
+      !phase.active.size &&
+      !phase.subjects.size &&
+      !phase.activeSubjects.size)
+  )
+    return;
   const descriptors = receivedDescriptors(world, state, [sourceId]);
   phase.descriptors.set(sourceId, descriptors);
   const linked = descriptorTracksForSubjects(phase.subjects, descriptors);
@@ -1982,7 +2020,14 @@ function refreshReceivedCorrespondence(
   sourceId: string,
 ): void {
   const phase = receivedPhaseDeltas.get(state);
-  if (!phase) return;
+  if (
+    !phase ||
+    (!phase.entryEntries.length &&
+      !phase.active.size &&
+      !phase.subjects.size &&
+      !phase.activeSubjects.size)
+  )
+    return;
   const descriptors = receivedDescriptors(world, state, [sourceId]);
   const prior = phase.descriptors.get(sourceId) ?? [];
   if (
@@ -2290,17 +2335,24 @@ export function removeCurrentFacets(
 ): void {
   const state = world.perceptionEvidence?.[observerId];
   if (!state) return;
-  invalidatePerceptionMeasurements(world, observerId);
-  invalidateAttentionPreparation(world, observerId);
   return withTemporalReceivedTransition(world, observerId, () =>
     withCurrentPerceptionBatch(world, observerId, state, () => {
       const retiredMotion = new Set<string>();
       const withdrawnSources = new Set<string>(),
         withdrawnGeometry = new Set<string>();
+      const correspondenceSources = new Set<string>();
       let needSight: 'broad' | 'detail' | undefined;
       for (const key of keys) {
         const previous = currentFacetGet(state, key);
         if (!previous) continue;
+        const sourceId = previous.grant.subjectId;
+        enrollReceivedCorrespondence(world, state, sourceId);
+        const parts = attentionReceivedPartUnavailable(previous.value.kind, 'removed');
+        noteAttentionSourceChange(world, observerId, sourceId, parts);
+        if (parts.membership || parts.association) {
+          correspondenceSources.add(sourceId);
+          invalidatePerceptionMeasurements(world, observerId, sourceId);
+        }
         withdrawnSources.add(previous.grant.subjectId);
         if (previous.value.kind === 'body' || previous.value.kind === 'location')
           withdrawnGeometry.add(previous.grant.subjectId);
@@ -2346,6 +2398,8 @@ export function removeCurrentFacets(
         );
         currentFacetSet(state, key, undefined);
       }
+      for (const sourceId of correspondenceSources)
+        refreshReceivedCorrespondence(world, state, sourceId);
       retireCurrentMotion(world, observerId, retiredMotion);
       pruneWithdrawnAttention(world, observerId, withdrawnSources, withdrawnGeometry);
       if (needSight) requestSightWork(world, observerId, needSight);

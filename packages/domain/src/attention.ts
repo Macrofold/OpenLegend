@@ -387,8 +387,13 @@ export function pruneWithdrawnAttention(
   }
   if (!removed.size && !changedAnchors.size) return;
   touchNativeEvidence(world, 'perception', observerId);
-  invalidateAttentionPreparation(world, observerId);
-  if (removed.size) invalidatePerceptionMeasurements(world, observerId);
+  if (removed.size) {
+    invalidateAttentionPreparation(world, observerId);
+    invalidatePerceptionMeasurements(world, observerId);
+  } else {
+    for (const key of changedAnchors)
+      noteAttentionSourceChange(world, observerId, annotations[key]!.sourceId, { pose: true });
+  }
   for (const key of removed) delete state.annotations[key];
   if (removed.size) {
     state.entries = state.entries.filter((entry) => !removed.has(entry.key));
@@ -455,6 +460,29 @@ function bodyDescriptionMeaning(
     remainsPhase: appearance.remainsPhase,
     storage: !!appearance.storage,
   };
+}
+/** Availability/removal owns a typed member mask, so it need not decode a rich
+ * value to invalidate attention. Unchecked detail preserves held descriptive
+ * meaning; removing it changes that meaning. Representatives/associations still
+ * recheck eligibility and acquired correspondence immediately. */
+export function attentionReceivedPartUnavailable(
+  kind: string,
+  mode: 'removed' | 'unchecked',
+): AttentionChangedParts {
+  if (kind === 'body' || kind === 'contact' || kind === 'detected')
+    return { membership: true, association: true, description: true, pose: true };
+  if (kind === 'association')
+    return { association: true, ...(mode === 'removed' ? { description: true } : {}), clock: true };
+  if (
+    kind === 'location' ||
+    kind === 'observed-motion' ||
+    kind === 'surface-patch' ||
+    kind === 'physical-boundary'
+  )
+    return { pose: true, clock: true };
+  if (kind === 'description' || kind === 'carried' || kind === 'public-attributes')
+    return mode === 'removed' ? { description: true } : { clock: true };
+  return { membership: true, description: true, association: true };
 }
 /** Admission already has these two values. Classify their consumed meaning here,
  * beside its projection, without gathering siblings or treating animation as novelty. */
