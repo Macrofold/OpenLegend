@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Installed BK26–BK27 work has open operating gates; remaining integration repairs and isolated work-removal experiments are fully designed. | 2026-11-06   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | R1/R2 and P1 implementation passes focused checks; isolated performance adoption and wider operating gates remain open. | 2026-11-06   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
@@ -228,7 +228,7 @@ These changes add no gameplay feature or numerical cap. Their purpose is respons
 
 ## 16. Save intent and shared confirmation
 
-**Design complete November 6, 2026, 09:04 UTC; implementation and experimental adoption remain open.** Source inspected: Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `98a720f3c`; executable baseline `aeb2012c2`. The [reviewed-source investigation](../verification/performance/bookkeeping/2026/2026-11-06-reviewed-runtime-isolation.md) includes an untouched-product run at 99.986% normal clock, 96.14% of the main CPU core and 971 ms command p95. That is normal time with almost no headroom and slow controls, not acceptable population capacity. Five warmup failures are excluded; clean later runs do not resolve the intermittent pending-history read failure. The evidence report owns all counts, workload differences and limitations.
+**Focused implementation checks passed November 6, 2026, 22:08 UTC; experimental adoption remains open.** Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, source `6dd7e38c9` installs R1/R2/P1 and the N2 candidate; [implementation evidence](../verification/performance/bookkeeping/2026/2026-11-06-shared-confirmation.md) retains exact controls and limits. The [reviewed-source investigation](../verification/performance/bookkeeping/2026/2026-11-06-reviewed-runtime-isolation.md) includes an untouched-product run at 99.986% normal clock, 96.14% of the main CPU core and 971 ms command p95. That is normal time with almost no headroom and slow controls, not acceptable population capacity. Five warmup failures are excluded; clean later runs do not resolve the intermittent pending-history read failure. The evidence report owns all counts, workload differences and limitations.
 
 The intended experience remains a responsive world with active wildlife, distinct witnesses and useful recollection. A person can notice a departure, remember an attended route, learn a name without retaining that route forever, and later compare their account with another person's different evidence. These existing capabilities—not an exhaustive diary or flawless omniscient reaction—make investigation, pursuit, cooperation and deception interesting. The existing [repertoire journeys](#repertoire-acceptance-connections) exercise them; no additional feature, compulsory thought or narrative classifier is needed.
 

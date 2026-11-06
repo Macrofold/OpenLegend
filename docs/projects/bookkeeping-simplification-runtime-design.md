@@ -305,7 +305,7 @@ The [BK24 sparse native contract](bookkeeping-simplification-tech-design.md#15-c
 
 ## 11. History intent and metadata-read repairs
 
-**Design complete November 6, 2026, 09:04 UTC; not implemented.** The inspected branch is Macrofold/OpenLegend `codex/stealth-runtime-01-evidence` at `98a720f3c`, executable baseline `aeb2012c2`. [Feature behavior](bookkeeping-simplification-feature-spec.md#16-save-intent-and-shared-confirmation) and [the experiment/adoption plan](bookkeeping-simplification-tech-design.md#19-reviewed-source-work-removal) distinguish required repair from optional acceleration. Reuse one pending buffer, commit owner, history repository and retention metadata view. Do not copy historical bodies into another journal or retain complete worlds merely to prove membership.
+**R1/R2 implemented; connected checks pass, isolated cost measurement pending.** Architecture used November 6, 2026, 22:08 UTC, Macrofold/OpenLegend `codex/stealth-runtime-01-evidence`, current source `6dd7e38c9`. [Implementation evidence](../verification/performance/bookkeeping/2026/2026-11-06-shared-confirmation.md) separates those checks from performance adoption. [Feature behavior](bookkeeping-simplification-feature-spec.md#16-save-intent-and-shared-confirmation) and [the experiment/adoption plan](bookkeeping-simplification-tech-design.md#19-reviewed-source-work-removal) distinguish required repair from optional acceleration. Reuse one pending buffer, commit owner, history repository and retention metadata view. Do not copy historical bodies into another journal or retain complete worlds merely to prove membership.
 
 ### R1 — Apply the history change that was actually admitted
 
