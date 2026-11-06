@@ -315,7 +315,7 @@ What the character fixes study found ([record](../../../art-direction/studies/20
    - **A rig of another family** takes `--bones` with a map naming the clip bone each of its bones follows, plus the limbs whose rest pose differs from the clip rig's; [`mpfb-meshy.json`](../../../scripts/art/bone-maps/mpfb-meshy.json) puts Meshy's clips on the MPFB family rig ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)).
    - **A model that loads its motion separately**, like the mercenary, takes `--motion-only` to export just the skeleton and clips.
 
-   Otherwise hand-key them on that rig: adapt the bone names in `study_human_motion.py` for `Idle` and `Run`, and key `Walk` in Blender.
+   For other rigs, reuse anatomy-compatible motion through the [local retargeting route](tools.md#rigging-and-clips), or hand-key the requested clips on the selected rig. Check that anatomy's support contacts and gait; `study_human_motion.py` is a retained humanoid example, not a nonhuman motion recipe.
 
 3. **Block first, then author in place:** review the key poses and contacts at play distance before polishing the motion; polished clips follow the [motion order](../assets-and-animation.md#4-produce-motion-that-serves-an-action) for each needed motion. The game moves the body, so clips must not travel. Loop `Idle` and `Run` seamlessly; check feet planting, hand contact and held items on every frame that matters.
 4. **Timing:** follow the current look's production notes and the native action's timing. Preserve useful source key rates and clip durations; a stepped authoring preview does not select a stepped runtime cadence.
