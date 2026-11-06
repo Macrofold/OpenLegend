@@ -6,13 +6,15 @@
 
 The [sourcing research](../research/audio/README.md) and [player-appreciation study](../research/player-music-appreciation/README.md) retain their evidence limits. No audio was generated, auditioned, commissioned, acquired or integrated by this design task. Provider evidence does not establish musical quality. Project status remains In progress because delivery is unfinished; design completion is not implementation authorization.
 
-The shared [production process](../production-workflows/production-process.md) and art guidance are reconciled. Runtime code, audio CLI commands and listening pages remain targets. [Audio limits](../limits/audio-production.md) records starting envelopes; existing storage, hearing and presentation owners retain authority.
+The shared [production process](../production-workflows/production-process.md) and art guidance are reconciled. Runtime code, audio CLI commands and listening pages remain targets. Their uncertain executable changes are experiments until the [isolated before/after adoption gates](../projects/audio-production-tech-design.md#experimental-adoption-gate) pass; no runtime comparison has run in this design-only task. [Audio limits](../limits/audio-production.md) records starting envelopes; existing storage, hearing and presentation owners retain authority.
 
-## AUD01 — Qualify a useful generation and revision route
+## AUD01 — Audition Suno and Eleven Music, then obtain the provider decision
 
-- [ ] Execute the [bounded audition](../production-workflows/audio-tools.md#qualify-the-operation-before-scaling) after production authorization: a few candidates, one preferred result revised while retaining a named feature, and useful final exports. Qualify effects separately when selected. A paid composer comparison is unnecessary after a suitable route is found.
-- **Dependencies:** authorized account/plan, current cost/input rights, brief and listening access. Initial entrants are Suno for music and Eleven SFX for effects, with Stable Audio for needed editing/alternatives; these are trial choices, not quality winners.
-- **Outcome/evidence:** exact usable operations or an honest failed result; full-recording/repeated listening, meaningful revision, exports, entitlement, cash/credits and review/repair effort. Mike's listening choice remains explicit. Fixtures and provider success responses cannot substitute.
+- [ ] Execute the [bounded comparison](../production-workflows/audio-tools.md#qualify-the-operation-before-scaling) after production authorization: both Suno and Eleven Music, the same brief, promising candidates, a targeted revision of each route's favored result and actual exports.
+- [ ] Compare **musical appeal, targeted revisions, exports, licensing and total cost**, including rejected attempts and review/repair effort. Present recordings, evidence, limitations and a recommendation.
+- [ ] **Ask Mike before treating either as selected.** Record his explicit choice of default, operation-specific combination, neither or more evidence. Until then the initial music default remains unresolved; a successful trial or accepted song is not provider selection.
+- **Dependencies:** actual account/plan access, current input/output terms, admitted shared budget and listening access. An inaccessible/ineligible route remains a reported gap; it does not silently waive the two-provider comparison. No new subscription or excess spending is authorized by this design.
+- **Outcome/evidence:** actual usable operations and an explicit owner decision, with quality/control/cost tradeoffs retained. Fixtures and provider success responses cannot substitute. Qualify effects separately when requested; ElevenLabs SFX and Stable Audio remain operation-specific candidates, not winners of this music audition.
 
 ## AUD02 — Clear rights and publish the selected package
 
@@ -31,8 +33,9 @@ The shared [production process](../production-workflows/production-process.md) a
 ## AUD04 — Implement the designed binding and playback slice
 
 - [x] **Design:** [integration contract](../projects/audio-production-tech-design.md#9-integration-contract-and-initial-selection) defines world bindings, permitted projection, cue selection/transitions, effect/loop lifecycle, controls and bounded resources.
-- [ ] Inventory actual event/context producers and fulfill only missing prerequisites for the selected scene. Reuse [ACS](acoustic-stealth.md), hearing and presentation; do not create a parallel sound-evidence path.
+- [ ] Inventory actual event/context producers and map only supported facts for the selected scene. Physical SFX requires permitted acoustic reception; missing emitters remain separately qualified ACS prerequisites. Reuse [ACS](acoustic-stealth.md), hearing and presentation; do not create a parallel sound-evidence path.
 - [ ] Implement world-owned bindings/exact-release selection, server-permitted projection, renderer-independent client audio, music/effects/ambience controls and source-stop/reconnect behavior.
+- [ ] Run isolated projection, controller and selector experiments under the linked adoption gate; verify unchanged native/cognition inputs and actual resource/latency costs before combined acceptance.
 - [ ] Qualify hit/miss/material outcomes, two perspectives, changing context without rapid switching, activation/suspension, loading/permission failure, resource/overlap measurements and audio-off use.
 - **Dependencies:** runtime implementation authorization, selected assets/rights and actual producer capabilities. AUD03 preparation can proceed independently. Missing acoustic emitters remain prerequisites, not facts inferred from animation or captions.
 - **Completion:** implementation, required static/manual checks and in-play evidence pass. No synchronized stems, hidden-trait selector, per-event paid classifier or musician progression is required.
@@ -41,8 +44,8 @@ The shared [production process](../production-workflows/production-process.md) a
 
 - [ ] Implement the [command/module plan](../projects/audio-production-tech-design.md#4-minimal-command-contract): external records, exact sources/groups, provider operations, receipt recovery, cost admission and local inspection/finishing/export.
 - [ ] Add a discoverable audio skill only after it distinguishes available operations from targets; route to the shared process/procedure/tools/assets without copying their bodies.
-- **Dependencies:** AUD01 evidence for operations actually automated. Start with one provider, not an adapter matrix or universal workflow engine.
-- **Completion evidence:** new candidates, focused/group edits, six children from A/B, partial failure, preserved-study resume, uncertain-submission recovery without duplicate generation, and retained unknown cost commitments. No gameplay database or legacy adapter.
+- **Dependencies:** AUD01 evidence for operations actually automated. Provider-independent records and narrow audition helpers can proceed before selection. Production defaults require AUD01’s explicit owner decision. Support different providers as actual uses arise without a generalized provider framework, adapter matrix or universal workflow engine.
+- **Completion evidence:** new candidates, focused/group edits, six children from A/B, partial failure, manual-provider import, exact-revision decisions/time-range feedback, preserved-study resume, uncertain-submission recovery without duplicate generation, and retained unknown cost commitments. The isolated helper/record experiment must pass. No gameplay database or legacy adapter.
 
 ## AUD06 — Deliver metadata, tag review and library retrieval
 
@@ -50,14 +53,14 @@ The shared [production process](../production-workflows/production-process.md) a
 - [ ] Qualify actual audio-input analysis and suggest tags from output; distinguish measurement/inference/approval, record listening coverage, show related entries and uses/exclusions, and preserve manual corrections through reanalysis.
 - [ ] Build the derived exact-release index and paged query without whole-library audio decoding or model upload.
 - **Dependencies:** a few retained actual assets and vocabulary/source owners. No embeddings or new database required.
-- **Completion evidence:** correction without generation, alias/new-tag review, accepted/rejected browse, family retrieval, unknown values, 1,000-entry metadata measurements and actual tag usefulness reviewed by Mike. Synthetic records qualify query mechanics only.
+- **Completion evidence:** correction without generation, alias/new-tag review, accepted/rejected browse, family retrieval, unknown values, 1,000-entry metadata measurements and actual tag usefulness reviewed by Mike. The isolated metadata/index/analysis experiments must pass; synthetic records qualify query mechanics only.
 
 ## AUD07 — Deliver the listening and continuation surface
 
 - [ ] Generate an accessible exact-revision listening page with full playback, stable aliases/parents, one foreground audition, seek/timestamps, original/matched levels, findings and proposed tags.
 - [ ] Keep chat/agent feedback primary; record exact-revision decisions and publish through existing study hosting. Static pages do not edit the asset authority directly.
 - **Dependencies:** usable retained candidates and trusted study/access route. Can proceed alongside AUD05/AUD06 once record interfaces are fixed.
-- **Completion evidence:** keyboard/narrow-screen/long-name review, unavailable media, time-range feedback, A/B selection and another-session continuation with correct jobs/candidates. No new web-editor framework.
+- **Completion evidence:** keyboard/narrow-screen/long-name review, unavailable media, time-range feedback, A/B selection and another-session continuation with correct jobs/candidates. The isolated page experiment must pass. Native guidance routing remains CG05; no new web-editor framework.
 
 ## Design needs deliberately left separate
 

@@ -2,7 +2,7 @@
 
 **Designed procedure; automation and provider qualification remain open in [AUD](../maintainers/audio-production.md).** Use existing authorized tools for supported steps. Future `pnpm audio` commands in the [technical design](../projects/audio-production-tech-design.md#4-minimal-command-contract) are implementation targets, not installed capabilities.
 
-Read the [shared production process](production-process.md), then the matching provider section in [audio tools](audio-tools.md). Read [asset workflow](../asset-workflow.md) before creating, transferring or publishing files. This page owns audio-specific execution; world musical choices come from the selected world's direction, including the [bundled world](../worlds/base/audio-direction.md). A music study does not authorize game integration or a musician gameplay mechanic.
+Read the relevant [shared process](production-process.md) sections (Brief/Operation for prompt-only work; the remaining sections for execution/resumption), then the matching provider section in [audio tools](audio-tools.md). Read [asset workflow](../asset-workflow.md) before creating, transferring or publishing files. This page owns audio-specific execution; world musical choices come from the selected world's direction, including the [bundled world](../worlds/base/audio-direction.md). A music study does not authorize game integration or a musician gameplay mechanic.
 
 ## 1. Establish the exact starting point
 
@@ -37,7 +37,7 @@ Defaults are reversible convenience choices, not artistic laws or per-provider g
 - A focused edit/finish: **one child per selected source**. “Three variations of A and B” means six children. “All” means the explicitly resolved current group, not the entire library.
 - A new one-shot effect family: **five related takes**, with duration inferred from the event and enough natural tail. If duration cannot be inferred, start at **three seconds**; do not stretch a short impact to fill the request.
 - Source-loop/ambience exploration: **three candidates**, normally **20 seconds** each, with loop intent stated. Musical accents use their actual brief, with **five seconds** as an absent-duration starting point.
-- One provider route per batch unless comparison is requested or needed to resolve a real capability/quality decision. Do not generate extra comparisons solely because alternatives exist.
+- Use the [required Suno/Eleven Music comparison](audio-tools.md#qualify-the-operation-before-scaling) before selecting an initial music default; ask Mike after presenting results. Keep the default unresolved until his explicit answer. Outside that audition, normally use one approved route per batch unless a comparison or another operation is useful. A default does not make the workflow exclusive to that provider.
 - Two concurrent generation jobs at most initially, subject to provider limits and spending admission. The requested batch can be larger and runs in bounded waves.
 - Draft means unapproved/exploratory, not low-bitrate or deliberately damaged. Use a cheaper model only when its output answers the question and its later refinement limitations are understood.
 

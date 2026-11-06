@@ -6,7 +6,7 @@ One procedure for every art request: concept studies, character sheets, UI kits,
 
 The [feature specification](../../projects/art-workflow-feature-spec.md) records why it works this way and what remains open; these pages own the procedure itself.
 
-Read the [shared production process](../production-process.md) with this route. It owns brief/source handling, reference roles, candidate revisions and group feedback, recoverable jobs and the distinction between preservation, selection and integration. This page retains the visual stages and defaults; [audio production](../audio-production.md) uses its own route and does not inherit them.
+Read the matching sections of the [shared production process](../production-process.md): Brief/Operation for prompt-only work; Recovery/Review/Handoff additionally for execution or resumption. It owns brief/source handling, reference roles, candidate revisions and group feedback, recoverable jobs and the distinction between preservation, selection and integration. This page retains the visual stages and defaults; [audio production](../audio-production.md) uses its own route and does not inherit them.
 
 ## Contents
 

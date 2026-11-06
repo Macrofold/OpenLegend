@@ -1,6 +1,6 @@
 # Music and sound direction for the bundled world
 
-**Selected production direction and initial playback target; audio assets and playback are not yet qualified or delivered.** The [audio feature specification](../../projects/audio-production-feature-spec.md) owns the workflow and [AUD](../../maintainers/audio-production.md) owns implementation/acceptance. These musical choices belong to this world, not the engine.
+**Selected production direction and initial playback target; audio assets and playback are not yet qualified or delivered.** The [audio feature specification](../../projects/audio-production-feature-spec.md) owns the workflow and [AUD](../../maintainers/audio-production.md) owns implementation/acceptance. These musical choices belong to this world, not the engine. Their executable playback adoption is experimental until the technical design’s isolated gates pass.
 
 ## Creative range and purpose
 

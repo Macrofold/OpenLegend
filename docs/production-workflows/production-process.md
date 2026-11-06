@@ -1,128 +1,48 @@
 # Shared asset-production process
 
-Read this with the selected [visual-art](art-flows/README.md) or [audio](audio-production.md)
-route when creating, revising or resuming assets. It owns the common brief, reference,
-revision, recovery and handoff mechanics. Each route owns its stages, defaults, creative
-direction, provider choices, deliverables and checks. Sharing this process neither adds a
-stage nor transfers one medium's candidate counts, tools or quality settings to another.
-Use only the parts the request needs; a prompt-only request ends with its text and material
-assumptions, without a generation job or study folder.
+Use with the selected [visual-art](art-flows/README.md) or [audio](audio-production.md) route. Read **Brief** and **Operation** below for prompt/brief work; add **Recovery**, **Review** and **Handoff** when executing or resuming production. Each route keeps its stages, creative direction, tools, counts, fidelity and consumer checks. This adds no stage: a prompt-only request ends with text and material assumptions, without a job or study folder.
 
 ## Start with the current brief
 
-1. **Name the result and purpose.** Read the request, prior decisions and existing record.
-   State what should exist, what someone should notice or enjoy, its consumer, requested
-   finish, selection authority and stopping point. Fill settled facts from their owners;
-   do not make the person repeat them in a new form.
-2. **Pin the starting source.** Identify the exact accepted asset or reference revision,
-   including any previously rejected or provisional choice that cannot be used without
-   resolving it. Search for useful approved sources before planning new generation. Keep
-   accepted features distinct from the areas open to change.
-3. **Give each reference a job.** Inspect supplied references through available authorized
-   access. Record their order, exact source, contribution, what to ignore, rights and
-   whether the payload may be submitted to a provider. An inspiration link is not an
-   editable source or permission to upload its content. Say when the reference cannot be
-   inspected; do not invent its contents. Resolve conflicting references when they would
-   change dependent work.
-4. **Identify the actual delivery needs.** Use the named consumer's supported representation
-   and the route's checks. A preview is not evidence of editable parts or a usable export.
-   Reuse supplied work that already answers a step. Resolve only consequential missing
-   choices before their dependent work; independent preparation can continue.
-
-Before a paid batch, state the resolved operation, candidates, estimate and next decision
-point in a short plan line. Existing authorization remains controlling. The repository's
-[spending policy](../../.agents/rules/verification.md#spending) owns the shared ceiling,
-admission and accounting; this page creates no additional allowance or approval gate.
+1. State the result, purpose, consumer, requested finish, selection authority and stopping point. Reuse the request, prior decisions and current record; do not ask for settled facts again.
+2. Pin the exact starting asset/revision, accepted features and areas open to change. Search useful approved sources first. Resolve rejected or provisional inputs before dependent work.
+3. Inspect references through authorized access. Record their order, source, contribution, what to ignore and rights, including permission to submit the payload. Inspiration is not an editable source. Say what could not be inspected; resolve consequential conflicts rather than inventing content.
+4. Identify supported delivery formats and checks. A preview does not prove editable parts or usable exports. Reuse completed work and resolve only consequential missing choices; independent preparation can continue.
 
 ## Direct the operation
 
-Translate the brief into the chosen tool's supported inputs. Keep instructions for the
-artist, the provider payload and the checks on the delivered files distinct: a provider
-cannot read a repository path, and a prompt asking for an export property does not prove it.
-Attach only permitted inputs through the route's real reference mechanism; verify the
-capabilities used on that exact model and access surface. Provider syntax and current
-prices stay with the route's tool owner.
+Separate the artist's instructions, supported provider inputs and checks on actual files. A provider cannot read a repository path; a requested output property is not proof it exists. Attach permitted references through the real input mechanism and verify the exact model/access route. Tool syntax and prices stay with the route's tool owner.
 
-For **exploration**, vary a meaningful unresolved choice while preserving accepted facts.
-For a **revision**, name the exact input, observable change and protected features. Diagnose
-the responsible source or operation before adding more detail to the prompt. Use a clear
-positive target and only supported controls. A requested preservation lock is a requirement
-to inspect, not a guarantee that a generative edit will preserve it. Prefer a suitable
-controlled edit when regeneration would unnecessarily replace accepted work.
+Exploration varies an unresolved choice while preserving accepted facts. A revision names the exact source, observable change and protected features. Diagnose the responsible input or operation; prefer a suitable controlled edit to needless regeneration. Use positive targets and supported controls. A preservation lock still needs inspection.
 
-For **group feedback**, resolve the target members to stable IDs before dispatch. “Redo all”
-means the established set being reviewed, not an unrelated library; ask if the set is
-consequentially ambiguous. Apply the requested change to each exact parent, preserving
-unrelated members. “Three variations of A and B” produces three children of each, with
-their parents recorded. Keep the requested count visible; do not silently reduce it to
-fit a budget or increase it because a provider offers a batch default.
+For group feedback, freeze the reviewed members before dispatch. “All” means that set; resolve consequential ambiguity. “Three variations of A and B” means three children of each. Keep counts visible, preserve unrelated members and report partial outcomes. Do not silently change scope to fit a budget or provider default.
 
-An edit, a new variation and a final export have different relationships to their source.
-Record which occurred. A polished derivative resumes the selected candidate; it does not
-start another contender study unless the request or an actual source failure requires one.
-Recheck the affected exports and dependents, preserving evidence that remains valid.
+Record whether work is an edit, variation or export. A polished derivative resumes selected work without automatically opening another contender study. Recheck affected dependents and retain valid evidence.
 
 ## Keep candidates and jobs recoverable
 
-Use each route's existing record and ID convention. Keep every meaningful candidate,
-including rejected ones; do not renumber after selection. A revision receives a new ID
-with its exact parent or parents. Retain originals, provider filenames, job/output IDs,
-ordered inputs, the authored prompt, any available submitted or provider-rewritten prompt,
-model/route and meaningful settings. Mark unavailable information as unknown. A seed or
-remembered prompt is not a reproducible asset.
+Use the route's IDs and one current record. Retain meaningful candidates, including rejected ones; never renumber. Creative children get new candidate IDs and exact parents; metadata/export revisions follow the route's convention. Retain originals, provider filenames, job/output IDs, ordered inputs, authored and available submitted/rewritten prompts, model/route and settings. Mark missing information unknown; seeds and remembered prompts are not assets.
 
-Before and during a batch, record job status and committed or uncertain cost in the
-continuation record. On interruption, recover the existing jobs and outputs before any new
-dispatch. An unknown job outcome is not a failed free attempt: never automatically repeat
-a paid request, and do not treat cancellation or a missing receipt as zero cost. A deliberate
-refinement is a new bounded batch under the same task accounting.
+Before dispatch, state the operation, finite count, cost estimate and next decision point. Record submitted jobs and settled/uncertain commitments under the existing [spending policy](../../.agents/rules/verification.md#spending). Recover jobs before replacement; missing responses or cancelled waits do not prove zero charge. No automatic paid retry or new allowance per batch.
 
-One coordinator owns the complete result. Give contributors exact inputs, ownership,
-constraints, output location/format, stopping point and their share of the existing budget.
-Keep one writer per source, serialize dependent work and operations sharing a stateful
-session or publication writer, and let independent work proceed in parallel. The requester
-should not have to relay files or feedback between contributors.
+One coordinator owns the result. Delegates receive exact inputs, permitted references, ownership, constraints, output location/format, stopping point and budget share. Keep one writer per source; serialize dependencies and shared stateful sessions/publication, parallelize independent work. The requester need not relay files or feedback.
 
 ## Review, preserve and use are separate
 
-Present the route's actual reviewable files with stable IDs and comparable conditions,
-plus a short recommendation when useful. Record what was selected, accepted or rejected,
-by whom and why, retaining the owner's words. Technical checks establish their named
-conditions; they do not establish artistic acceptance or enjoyment.
+Present actual reviewable outputs with stable IDs and comparable conditions. Give a recommendation when useful; record selection/rejection, reviewer and reasons, retaining the owner's words. Technical checks do not establish artistic acceptance or enjoyment.
 
-Track **created**, **checked for the named consumer**, **archived**, **selected** and
-**integrated** as separate facts. Keep candidate selection distinct from final acceptance
-and label agent selection honestly. Archiving a draft does not accept it; selecting a
-candidate does not install it; game integration requires its own authorized scope and checks.
+Track created, consumer-checked, archived, selected and integrated separately. Label agent selection honestly; choosing a preferred candidate is not final artistic acceptance. Preservation does not approve distribution or installation; existing authorization determines the next action without repeated permission requests.
 
-Preserve each meaningful batch as it finishes through the existing
-[asset workflow](../asset-workflow.md), with its exact verified revision references and
-permitted visibility. Keep only very likely temporary scratch outside that preservation
-requirement. That owner supplies storage, permissions, external working files and
-publication verification; each route names its appropriate existing collections. Do not
-invent a second catalog or treat local caches, provider links or expiring URLs as archives.
-When publication is blocked, retain the working files and state “not yet archived” with the
-actual blocker. Preserve alternatives while promoting only the explicitly selected assets.
+Preserve meaningful batches through the [asset workflow](../asset-workflow.md), using verified exact revisions and permitted visibility; only very likely temporary scratch is exempt. Its collections, permissions and external-workspace rules remain authoritative. Local caches and provider/expiring URLs are not archives. When preservation is blocked, retain files and report “not yet archived” with the blocker. Promote selected assets while preserving alternatives.
 
 ## Record and handoff
 
-Use one current record with the route's relevant fields, not a diary or duplicate inventory.
-It must let another contributor continue without guessing:
+Keep current facts in the route's record, linking existing manifests rather than copying inventories:
 
-- The brief, exact sources/references, locks, selection authority and stopping point.
-- Stable candidates and parent relationships, exact preview/source/export references, and
-  their separate completion and selection facts.
-- Consequential decisions and interpretations, including deviations from the brief and
-  unavailable source or editing capability.
-- The actual tools, prompts, settings and processing needed for useful revision.
-- The inspected revision, consumer/conditions, results and concrete remaining gaps.
-- Actual or estimated cost and uncertainty under
-  [cost reporting](../../.agents/rules/verification.md#cost-reporting).
-- The exact candidate to resume, outstanding jobs/accounting to recover, available files,
-  open decision and next operation.
+- Brief, sources/references, locks, selection authority and stopping point.
+- Stable candidates, parents, exact source/preview/export references and separate review/preservation/use facts.
+- Consequential interpretations, deviations, unavailable capabilities, actual tools/prompts/settings and useful processing recipes.
+- Inspected revision/consumer/conditions, results and remaining gaps; actual/estimated cost and uncertainty under [cost reporting](../../.agents/rules/verification.md#cost-reporting).
+- Exact candidate to resume, outstanding jobs/accounting, available files, open decision and next operation.
 
-Link existing manifests/catalogs for exact inventory instead of transcribing them. Return
-the reviewable outputs, IDs, relevant cost/gaps and one reachable record reference. A local
-record or commit must be identified as local when another contributor cannot fetch it.
-Finish at the authorized boundary; when the next stage is already authorized, continue
-without asking for the same permission again.
+Return reviewable outputs, IDs, relevant costs/gaps and one reachable continuation record. Identify local-only records honestly. Finish at the authorized boundary, or continue when the next stage is already authorized.

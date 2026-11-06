@@ -29,6 +29,7 @@ Feedback can resume from any selected recording; publication does not end its cr
 
 - Explore substantially broad genres. The earlier folk/chamber/electroacoustic palette is an optional reference direction, not a required style. Sci-fi and EDM are unlikely fits for the bundled world, not forbidden engine categories. Select by listening and the intended use; no stricter genre decision is needed before production.
 - Automate as far as practical, with quality as the ultimate goal. A provider interface, ordinary editing, recording, licensed source or specialist may be preferable for a particular result. The agent explains a consequential change of route; no requirement to use AI for every ingredient.
+- Support different music providers through small operation-specific integrations, sharing records and asset handling without a generalized provider framework. The initial music default is unresolved: audition Suno and Eleven Music for musical appeal, targeted revisions, exports, licensing and total cost, then ask Mike before treating either as selected. His choice may approve one provider or different providers for different operations.
 - Produce fixed recordings offline. Initial adaptive music selects and transitions between complete cues; synchronized stems, live composition and per-event generation are not prerequisites.
 - Support the rights and asset needs of official game playback and an internal jukebox initially; this workflow does not itself build a player jukebox interface or song-unlock mechanic. Downloadable soundtracks, creator asset packs and independent hosts are optional only when already permitted without material work or expense. No subscription or permission expansion is assumed.
 - A future musician activity can play one fixed recording. The authored arrangement says which instrument/skill roles must be filled; three required roles may require three performers. The recording does not have to change when a part is absent. The mechanic's admission, interruption and progression remain separate design work.
@@ -109,7 +110,7 @@ Installing a recording is a small reviewable change to world-owned data, backed 
 
 ### Effects and ambience
 
-Bind effects to actual permitted events with the relevant known material/action facts. Select among coherent variants without immediate repetition when alternatives exist. A swing, contact, damage and death are different facts; missing a target cannot play a successful strike merely because an animation reached its contact pose.
+Bind physical effects to actual events with permitted acoustic reception and the relevant known material/action facts; visual knowledge alone does not grant the sound. Select among coherent variants without immediate repetition when alternatives exist. A swing, contact, damage and death are different facts; missing a target cannot play a successful strike merely because an animation reached its contact pose.
 
 Continuous source audio follows the actual source lifecycle: begin, update, stop, replacement and loss of permitted perception. A fire loop does not grant a character hearing evidence. Environmental beds must not introduce intelligible speech, identifiable threats or meaningful work sounds unsupported by the scene. Spatial precision must never exceed the listener's permitted evidence.
 
@@ -135,10 +136,12 @@ Background score is not a physical sound heard by NPCs. An actual musician perfo
 
 Use [AUD tasks](../maintainers/audio-production.md) for dependencies and completion evidence. Each stage ends with an inspectable result:
 
-1. **Procedure and capability qualification:** settle current access/terms, execute a small candidate → meaningful revision → export trial, and identify a usable route. Quality preference belongs to Mike. A failed trial reports its result; it does not require endless provider comparisons.
+1. **Procedure and capability qualification:** compare Suno and Eleven Music through the [bounded audition](../production-workflows/audio-tools.md#qualify-the-operation-before-scaling), including musical appeal, targeted revisions, exports, licensing and total cost. Present actual results and ask Mike to select the initial default or approved combination; neither a first success nor a favored song selects a provider automatically.
 2. **Repeatable production:** run records, focused and batch edits, recovery, finishing, listening handoff, tagging, library retrieval and preservation work end to end. No game server is required for ordinary production.
 3. **Representative assets:** a small musical family and coherent effect/ambience families expose real strengths and shortcomings. Expand based on accepted results and actual coverage gaps, not a track-count quota.
 4. **Optional integration:** install exact bindings, initial selection/transitions, audio controls and resource ownership; qualify a real playable sequence and muted mode. This is a distinct implementation continuation, not implied by a study.
+
+Executable delivery is experimental until the [isolated adoption gates](audio-production-tech-design.md#experimental-adoption-gate) establish correctness and the actual performance/cognition impact of each change. No runtime guarantees or results follow from design completion.
 
 Required production acceptance covers every request class in §2, including one exact-source revision, a six-child A/B branch, a tag correction, an unknown provider submission recovered without resubmission, retrieval on another session, and one deliberately unavailable input/permission. Reuse actual trial outputs for several checks; do not multiply paid calls solely to fill a matrix. Fixture/static evidence may establish record handling but not musical quality or provider editing fidelity.
 
@@ -146,7 +149,7 @@ Required integration acceptance covers actual event binding, no false impact on 
 
 ## 9. Decisions, remaining uncertainties and exclusions
 
-No unanswered product decision blocks this design. Reversible operational defaults are selected in the procedure and [limits inventory](../limits/audio-production.md); they are starting values, not measured optima.
+**Open decision: initial music provider/default.** Suno and Eleven Music must both be auditioned, with results presented to Mike for explicit selection. This does not block designing the workflow or implementing provider-independent records and narrow audition helpers, but it blocks treating either as the selected production default. Other reversible operational defaults are selected in the procedure and [limits inventory](../limits/audio-production.md); they are starting values, not measured optima.
 
 Implementation must establish provider access, current contract eligibility, actual revision fidelity, export utility, listening preference, auto-tag usefulness and cost per accepted asset. Those are qualification tasks with explicit failure outcomes, not undisclosed design gaps. Unknown reference input rights block only that source/operation; use an independent abstract brief when suitable.
 
