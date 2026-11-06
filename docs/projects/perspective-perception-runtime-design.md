@@ -1,8 +1,8 @@
 # Shared reception and change runtime
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared reception is installed; shared-completion follow-through is designed, with implementation and operating gates open in BK26/BK27. | 2026-11-06   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared reception and shared completion are installed; operating and population gates remain open in BK26/BK27. | 2026-11-06   |
 
 This is the implementation companion to the [perspective-perception feature specification](perspective-perception-feature-spec.md#shared-reception-and-change) and [technical contract](perspective-perception-tech-design.md). It owns the common receiving procedure, not new physical senses, attention policy, a new context compiler or storage engine. [PP08](../maintainers/perspective-perception.md#pp08--shared-reception-and-change) owns the conversion; [branch integration](attention-and-scenes-runtime-design.md#139-branch-ownership-and-integration) assigns overlapping implementation to BK and RU. Design does not authorize runtime edits.
 
@@ -23,7 +23,7 @@ Keep the physically different producers: sight tests visibility, hearing determi
 
 The feature specification owns play and remaining product scope. The [grouped representation](attention-and-scenes-runtime-design.md#132-b-data-and-mutation-ownership) owns compact contacts/groups; [bookkeeping](bookkeeping-simplification-tech-design.md) owns direct saves, stable shared values, inline small values and reclamation. This document supplies their shared native contract. There is one current store and one admitted personal chronology.
 
-The [BK database-work reduction](bookkeeping-simplification-runtime-design.md) consumes the received-change result through existing storage/retention owners. Column-specific writes, independent support and async publication are installed; [BK08–BK16](../maintainers/production-data.md#database-work-reduction) retains operating qualification. The [remaining save/read repairs](bookkeeping-simplification-runtime-design.md#11-history-intent-and-metadata-read-repairs) and [P1 shared-completion experiment](bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions) are designed but unimplemented. They extend this same receiving boundary, with no new physical channel, weaker independent freshness or second knowledge store.
+The [BK database-work reduction](bookkeeping-simplification-runtime-design.md) consumes the received-change result through existing storage/retention owners. Column-specific writes, independent support and async publication are installed; [BK08–BK16](../maintainers/production-data.md#database-work-reduction) retains operating qualification. The [installed save/read repairs](bookkeeping-simplification-runtime-design.md#11-history-intent-and-metadata-read-repairs) and [P1 shared-completion experiment](bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions) are installed with [focused checks and limited server evidence](../verification/performance/bookkeeping/2026/2026-11-06-shared-confirmation.md). They extend this same receiving boundary, with no new physical channel, weaker independent freshness or second knowledge store.
 
 ## 2. Owners and extension seam
 
