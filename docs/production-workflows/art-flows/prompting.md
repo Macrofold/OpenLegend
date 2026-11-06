@@ -22,6 +22,8 @@ Lead with the subject and the particular result. Give distinguishing shape, cons
 
 For example, an object's refinement instruction can identify a handle's open gap and attachment, the thickness of the rim and the direction of its grain. This is more actionable than asking for a better fantasy prop. It still does not specify a universal handle shape or invent an object's game function. Geometry, texture and lighting solve different problems: do not request new surface noise to compensate for missing form.
 
+Work from the largest identifying forms to construction details, then surface finish. Spend detail on the surfaces and movements the intended camera exposes. Procedural construction can produce convincing forms; replacing a primitive with more primitives or more polygons is not evidence of improvement. Judge the contour, anatomy, joins and material response that the result actually shows.
+
 The following is a brief-to-payload pattern, not a mandatory literal prefix:
 
 > Produce [one named output] for [the current stage]. Its defining visible features are [the few features that matter]. Apply [the relevant look requirements]. Use [reference A] for [identity/construction] and [reference B] only for [material/palette]. Keep [specific accepted features]. Change or explore [the allowed dimensions]. Show [the view and presentation needed for this decision]. Exclude [only consequential unwanted elements].
@@ -33,6 +35,8 @@ Fill placeholders before execution. Remove irrelevant clauses. For a new design,
 Name the supplied inputs in their actual order and assign a role to each: identity, proportion, construction, surface, palette, composition or a defect to avoid. An admired lighting reference is not permission to copy its anatomy. A material reference is not a replacement character. Use accepted project outputs where they answer the question; do not attach a giant moodboard by default.
 
 Resolve conflicting references before downstream generation. Identify which accepted view governs the disputed feature. Keep left/right descriptions in the subject's coordinates, adding an image-edge direction when useful. Do not mirror an asymmetric garment, scar or hairstyle to manufacture a missing view.
+
+For a reference-matching repair, first distinguish shape differences from presentation differences. Camera height, field of view, pitch, subject distance and scale jointly change apparent proportions. Compare under suitable matched conditions before deforming an accepted body to imitate perspective. This is a diagnostic within the existing fidelity check, not permission to change the game's camera or a requirement for extra prototype views.
 
 Use the [clean-view procedure](3d-models.md#step-3--make-clean-reference-views) rather than writing another view standard here. A presentation illustration and a reconstruction reference have different jobs. A multi-view layout is not several independent image inputs until its views are separated for the selected tool; generated views must depict the same form rather than unrelated alternatives.
 
@@ -58,11 +62,15 @@ The [3D route](3d-models.md#step-1--choose-the-build-route) owns the body, cloth
 
 Separate an identity change from an anatomy correction. Preserve approved age, build, distinctive facial structure, hair arrangement and asymmetry unless the brief changes them. For creatures, describe the relevant anatomical relationships and locomotion constraints rather than assuming a humanoid rig or borrowing a dramatic pose that hides the limbs. These are inputs to the existing checks, not a new character-generation authorization.
 
+When a character holds or wears something, name the actual contact: which surface supports the palm, where fingers close, how a wrist bends and where the object clears the body. Evaluate the rendered hand, garment and prop together through the requested movement; a rig target reaching its coordinate does not prove a convincing grip or prevent intersecting meshes. An attractive dressed assembly does not establish a complete body under removable clothes.
+
 ### Props, structures and environments
 
 Name the meaningful outline, construction joins, openings, movable parts and scale relationships. Generate or model separately what the consumer requires separately. Do not assume a generated image of a hinged lid delivers a separate lid mesh and usable pivot. Repeated modules and exact fitting dimensions may need the hand-modelled route already defined in the 3D procedure.
 
 For an environment concept, distinguish composition from individual production assets. Describe large forms, focal areas, quiet areas and visible causes of variation. Keep accepted routes, scale and world facts fixed. A concept's water, wear or vegetation does not authorize new simulated conditions or traversable geometry.
+
+Explain a place through construction and use: roof and wall forms, openings, circulation and the few objects that reveal an activity. A setting change may require different construction or plant forms as well as colour; only change what the brief authorizes. Inspect the relevant approach and normal camera: an aerial composition can be dominated by roofs while the same scene at eye level is dominated by walls. Where an approved object needs several depictions, reuse its defining shape and materials across held, ground and icon views instead of independently redesigning each.
 
 ### Material-only changes
 
@@ -72,11 +80,17 @@ Keep an accepted mesh when the defect is a surface problem. Specify material reg
 
 A rendered material picture is not a set of coherent PBR maps. Tiling, alpha, normal orientation, channel meaning and supported texture budgets remain production checks where relevant. Select actual transparency/output controls when needed; a checkerboard painted behind an icon is not alpha. Do not promise seamlessness from the word alone.
 
+For colour variants, identify the material regions allowed to change and preserve useful value structure, marks and material differences. A uniform tint can erase the distinctions between skin, cloth and metal or multiply already coloured shading. When a surface looks muddy, noisy or too dark, check texture scale, seams, colour multiplication and illumination before requesting additional painted detail. Apply one coherent material family across related parts.
+
+For drawn or painted work, describe the marks that create the intended appearance: their direction along a form, edge softness, layering and contrast against the paper, cloth or other support. If the work develops visibly over time, retain recognizable proportions and identity through the intermediate states. Distinguish producing those marks from revealing an existing image; choose the process that serves the brief and describe the result honestly.
+
 ### Motion
 
 Use a motion brief for the selected body and rig, not a request to generate a replacement character. Specify the action's readable intent, key contacts, timing, start/end states, loop or one-shot nature and allowed secondary movement. Reuse compatible clips first, as the existing workflow requires. A generated video is reference, not an animation clip delivered to the game.
 
 > On [the selected rig], author or adapt [the requested motion]. Keep [the source body, proportions and attachment conventions]. The important contacts are [feet, grip or other contact]. Start at [pose], express [intent] through [key pose/timing], and finish at [pose or loop boundary]. Deliver the required animation data; identify any unsupported body or attachment rather than hiding it in a camera cut.
+
+Make the meaningful phases visible: preparation, action/contact, release and settling as appropriate. If a hand draws, carries or uses a tool, coordinate its motion with the visible mark, load or contact; independent decorative motion can look disconnected even when both pieces animate. Feet need the actual support surface, and linked parts need a consistent phase relationship. Runtime consequences still come from the owning game state, never from the animation inventing an action or effect. Review the relevant transitions and loop boundary in motion; a contact sheet or successful counter cannot establish continuity. For a scrubbed animation study, revisiting the same time should show the same intended pose and event state.
 
 ## Adapt to the actual tool
 
@@ -89,5 +103,9 @@ Prefer a clear positive target. Use negative prompts only where that exact route
 Use the existing [study record](study-record.md). Keep the exact authored prompt, available submitted or provider-rewritten prompt, selected model/route, meaningful settings, ordered input references, source revision and output IDs. Mark an unavailable submitted prompt as unknown. Preserve the accepted wording when reusing a successful recipe; record focused changes rather than silently paraphrasing it. A seed alone is not a reproducible asset.
 
 Package a useful result as its smallest reusable unit: the original project instructions, approved reference, compatible editable source or parts, applicable rig/material requirements, a relevant failure example and evidence of the result. Keep payloads in the established asset storage, not Git, and do not install or execute an unfamiliar external skill merely because it is being reviewed. Public documentation must respect the source license; private paid originals are not public prompt templates.
+
+Before adapting an external recipe, distinguish supplied instructions, finished assets, source assets, rig/clip data and executable helpers. Check the specific dependency that explains the desired result: a packed model does not imply its raw sources or working rebaker are included. Treat claimed test counts, screenshots and promotional comparisons as different kinds of evidence. Carry transferable art decisions into this workflow in original wording; leave incompatible styles, engine assumptions and unsupported numerical prescriptions with their source.
+
+Ground repair instructions in the exact candidate and relevant view or moment. Confirm that a capture actually shows the named subject and defect, and label a representative sample as a sample. Record the observable correction and its evidence; a numerical self-rating is not a substitute for seeing the requested result.
 
 For a proposed improvement, distinguish a hypothesis from demonstrated benefit. If a change would replace defaults or add meaningful cost, compare the current route with the candidate on a representative, already-authorized art task before promotion. Hold inputs and requirements constant, vary the relevant factor, and record accepted-output quality, identity preservation, repair effort, elapsed time and actual charges. Report a disappointing result honestly; do not turn every request into this comparison or keep spending until an arbitrary self-rating is reached. Existing budget and approval boundaries remain controlling.
