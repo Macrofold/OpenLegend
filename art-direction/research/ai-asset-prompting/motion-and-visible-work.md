@@ -28,6 +28,8 @@ The source character system layers a clip, prop-directed arm/foot correction and
 
 For a visible pop, inspect whether it originates in the prop path, clip transition, grip orientation or arm solver. Per-frame angular changes and contact distance can locate the moment; they do not replace looking at the result. Retargeting by bind-relative rotations is a possible technique, but skeleton agreement alone does not prove good proportions, contact or deformation.
 
+When blending locomotion clips, align the same contact event—such as a particular foot's landing—before mixing walk and run poses. Relate playback to the clip's observed travel/stance motion and the actor's actual speed; do not copy source speed constants. On a transition, blend from the pose currently displayed, including an interrupted transition, rather than jumping back to a nominal start. Give arms explicit ownership: a free arm may follow the clip while a carrying arm follows its prop target. Avoid applying a procedural root flip or crouch again when the selected clip already contains it. After an uprightness correction, re-establish the feet against their actual support.
+
 ## Cloth and carried motion
 
 For hanging cloth, define attachment points, length, rest shape and the body/surface it must clear. A few authored bones or a compatible clip may be enough. Use simulation only when the requested motion needs it and its cost/fit are justified.
@@ -40,6 +42,8 @@ If a particle-panel method is selected later, preserve these source lessons:
 4. Check spin, start/stop, seated/standing transitions and the relevant collision surfaces. A good still drape does not establish motion quality.
 5. Keep material readability separate from dynamics. Black fabric losing form or becoming a bright rim is a lighting/material problem, not a reason to add more particles.
 
+A soft rest-shape influence can keep a skirt panel near a plausible hang while allowing local motion. Use only the body/carrier collision shapes needed for the visible clearance; an irrelevant narrow attachment can snag an entire cape. Prepare a settled starting drape when necessary instead of displaying a flared reset pose. These are alternatives to investigate within a selected cloth method, not reasons to add simulation to every garment.
+
 PPL02 owns the choice of cloth method and its garment/body integration; no cloth simulator is selected here.
 
 ## Mechanisms and travel
@@ -48,9 +52,13 @@ Use a shared meaningful driver for linked motion. A wheel's rotation follows dis
 
 Author pivots at real hinges and check the full travel range. Smooth interpolation can overshoot a mechanical stop; constrain a channel when the physical mechanism requires it. An exploded view can separate components for understanding, but should retain their relationships and avoid labels or parts obscuring the operation.
 
+Derive the moving part and its contact target from the same parent transform. During a handoff, preserve the object's world pose while changing attachment, then move toward the new supported pose. A tipped object needs its pivot at the intended ground contact; rotating about an arbitrary base origin can bury half the model. For illustration controls, keep zoom, exploded separation and mechanism phase independent so changing one does not unexpectedly reset another.
+
 For a curved travel route, distinguish distance along the route from a curve parameter: equal parameter increments need not represent equal distance. An arc-length lookup is a candidate when controlled travel speed is needed. A long vehicle can orient from two support points along the route instead of treating the entire body as a point; check curvature, coupling and clearance. Wheels, supports, passenger seats, attachment motion and camera should agree on the vehicle's position. These are retained techniques, not authorization to add transport.
 
 Relative speed must explain passing or pursuit. A moving camera can exaggerate speed but cannot demonstrate that one subject overtook another. An anchored view helps establish actual travel. Bridges and route approaches need continuous support; a correct path curve does not prevent the model from floating above its road or intersecting terrain.
+
+When physical motion is selected, distinguish integrated velocity from corrections that place a body back on its support; deriving velocity from a snapped position can create a false launch. Choose support from surfaces valid for that body's current movement, rather than taking an unrelated highest roof. Keep contact height and surface normal distinct. Before blending steering inputs, establish whether each represents a unit direction, a weighted preference or a force with meaningful magnitude. The source's unconditional normalization, buoyancy-order and air-speed prescriptions are specific to its controllers, not portable physics laws.
 
 ## Work that makes OpenLegend rewarding to watch
 

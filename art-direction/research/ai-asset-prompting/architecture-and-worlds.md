@@ -31,6 +31,14 @@ These are alternatives to choose from according to a verified design, not a requ
 
 A reusable building grammar should vary connected choices rather than scatter unrelated ornaments. A low, broad roof with deep eaves and substantial porch supports forms one coherent family; a narrow steep-roofed dwelling with projecting upper floors forms another. Materials, openings and supporting members should reinforce the selected family. The library's historical labels and measurements are examples, not historical verification.
 
+### Building connected roofs and openings
+
+For a procedural or hand-authored roof, first define its footprint, eave height, ridge direction, slope and overhang. A gable rises from two opposing eaves; a hip also falls toward the ends; a shed rises from one low edge; a gambrel changes slope between its lower and upper sections. Use those relationships to construct surfaces, then give them an underside and thickness. The source combines simple roof height functions by taking the upper envelope where their footprints overlap; this is useful for its selected house forms, not a universal solution for every roof or overhang.
+
+Resolve intersections before ornament: connect the valley/ridge, close exposed end walls, and check the underside from the room. A dormer needs cheek walls and an actual opening through the main slope; a chimney needs a coherent penetration through the roof. Check both ends of a window against the sloping ceiling, and reserve the stair opening in the upper floor before furnishing it. Mirror or rotate the entire local plan, including doors, paths, signs, lights and activity positions, rather than transforming only the visible shell.
+
+For vaulted masonry, define the bay, springing height, arch profile and supporting piers first. Extend one arch along a bay for a barrel vault; resolve the intersecting surfaces and their supported ribs for a groin vault. Keep the wall openings, vault and supports in the same dimensional plan. Decorative ribs or texture cannot repair an unsupported or disconnected intersection. Choose this method only when that construction belongs to the accepted place.
+
 ## Compose a place at several scales
 
 Start with a small number of large relationships: terrain, water, access route, settlement masses and a landmark. The landmark can be a distinctive tree, rock or ordinary workshop; a castle is not compulsory. Connect destinations visibly through paths, bridges, thresholds or clear terrain rather than placing isolated attractions on an empty plane.
@@ -48,6 +56,10 @@ For a workshop by water, for example: place the workshop where access and its ap
 - **Ground plants:** place reeds near suitable water, open-ground plants where light and space permit, and litter or moss where the authored setting supports them. Organize patches and bare areas instead of evenly scattering every species. Check the ground at normal viewing distance: high-contrast speckles that look rich overhead can read as confetti close up.
 - **Water:** distinguish bank, shallow edge, deeper area and contact with built structures. Align visible flow with the chosen watercourse; place foam or mist where a fall or disturbance explains it. Reflections, transparency and surface motion are material/presentation decisions, not proof of fluid simulation.
 - **Season and weather:** coordinate foliage, ground, sky, exposure, particles and relevant material response. Changing only a global tint rarely communicates a coherent season. Static authored patina is allowed; changing wetness, snow, smoke, animal activity or resources must follow the actual world facts when represented as gameplay.
+
+Place vegetation using its footprint, not just its centre: reserve approach/route corridors, inspect slope and occupied space across the footprint, then distribute related plants in patches. Distinguish deliberately placed framing trees from background populations. A shoreline or fall can combine a shaped water surface, a contact band of foam and localized spray; each should meet the same bank/lip/pool geometry. These layers describe an authored scene without requiring fluid simulation.
+
+For terrain artifacts, inspect geometry and shading separately. Regular stripes may expose grid-normal discontinuities; a triangular pattern may come from a normal-map projection that changes between faces. Keep the colour and normal projections coherent and inspect grazing light. Broad fog interpolated over enormous triangles can also create misleading gradients. Fix the responsible representation instead of hiding it with more fog or random detail.
 
 ## Develop a different setting without merely recolouring it
 

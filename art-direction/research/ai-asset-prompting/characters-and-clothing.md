@@ -18,9 +18,23 @@ For an authorized body study or the PPL01 design, use this sequence:
 
 These steps describe what a successful body needs, not a claim that the library contains a complete anatomical generator. PPL01 must still choose the body source and coverage method. Keep the accepted source, dimensions, bind data and fitted parts together so later prompts can reproduce a person rather than reinterpret them.
 
+### Optional continuous-surface construction
+
+If a selected authoring task needs procedural anatomy, the supporting character and hand code contains a useful method beyond assembling visible primitives. A signed-distance field describes where a surface lies around connected volumes; a mesher turns that description into editable geometry. This is an offline construction option, not a selected body source or runtime generator.
+
+1. Lay out anatomical masses and joints in the rest pose. Blend only joins that should become continuous. Preserve separating spaces at fingers, armpits, the mouth and garment openings; a stronger blend can erase the very anatomy being built.
+2. Cover the complete shape with the sampling bounds, including extended hands, hair or protrusions. Use finer sampling where the requested detail needs it, such as the face, instead of increasing the entire body's density. Coarse rejection must not discard a thin feature.
+3. Extract the boundary. The source's surface-net method places a vertex in each cell crossed by the surface and joins neighbouring crossed cells. Gentle smoothing followed by projection back toward the intended surface can reduce grid steps without simply shrinking the body. Inspect thin parts and joins after this operation.
+4. Give the surface appropriate normals and deformation weights. Geometry that looks connected at rest can stretch or split at duplicated seams when adjacent regions follow unrelated joints. For fingers, limit influence to the appropriate finger chain and its palm transition; proximity to another finger is not a reason to bind to it.
+5. Inspect clay, topology and deformation before textures. Keep any needed retopology, UV work and target-format qualification explicit: a smooth extracted surface is not automatically a production-ready skinned asset.
+
+For a hand, establish palm thickness, the knuckle arc, the fleshy thumb base and its web, then individually tapered fingers with joint changes and padded tips. Preserve the finger gaps through meshing and curling. This provides a more useful construction brief than asking for a detailed hand while retaining a mitten-shaped base. Exact source sample spacing, blending constants and skeleton counts are not portable defaults.
+
 ## Give the face and hair real form
 
 Resolve the skull and jaw profile, brow, eye sockets, cheek planes, nose projection, lips, chin and ears before skin detail. Eyes or makeup on a smooth lump do not establish a face. Use a close frontal view and profile to preserve a person's identity; inspect the generated geometry as clay. Fit a replacement head to the actual neck and shoulder width, including the join and skin/material transition, rather than applying a tutorial's uniform head multiplier.
+
+Seat an eye within an actual socket and fit the lid around its exposed portion; an eyeball pasted onto the face remains visibly separate. Give an opening mouth depth, with its lower lip and chin following the jaw when that motion is required. Keep expression-dependent surfaces distinct from a static sculpt bake, and attach markings in the same deforming frame as the skin they mark. Do not add an expression system to a static-head request.
 
 Hair should describe a mass with a hairline, part, locks and a believable attachment to the scalp. Keep brows and facial hair deliberately fitted; a hairstyle borrowed from another head often needs refitting at the temples, ears and nape. Long hair, braids and hanging ornaments need the motion/attachment treatment selected by the current workflow. A hat or hood needs an explicit fit and hair-visibility decision, not simply a larger shell intersecting the hairstyle.
 
@@ -36,6 +50,8 @@ Preserve identity through back views and motion: hair silhouette, asymmetrical c
 6. Review materials in the actual light. Pale cloth can be mistaken for skin; excessive gloss makes leather and hardware look plastic; a very dark garment can lose its form or turn grey under excessive rim light. Diagnose material values and illumination separately before changing the design.
 
 The source recolour script and current source materials disagree on their expected texture products. Do not describe a packed outfit as rebuildable until its raw inputs and current processing recipe are available. The source's normal-map sign correction is renderer-specific; verify the target convention instead of applying a blanket channel flip.
+
+For a garment shell derived from an approved body, keep seam duplicates moving together while reshaping, smooth anatomical detail that fabric should bridge, and restore the required clearance before adding thickness. Preserve openings and a separate body. A uniform outward offset still reproduces every muscle and is not a complete draping method. Shape folds around their causes: compression inside an elbow, downward gathers from a belt, tension toward a fastening, and bunching above a boot. Avoid evenly spaced rings around every limb. Keep fold coordinates attached to the garment's rest surface so texture detail does not slide during motion.
 
 ## Creatures and unusual bodies
 

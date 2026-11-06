@@ -110,8 +110,35 @@ Record numbers refer to the publisher's exported/expanded order. Grouping retain
 | 1–17    | Illustration/motion: form-following marks, anatomy before detail, layered values, meaningful gesture, material/support contrast, layout, readable intermediate states, actual tool contact, repeatable timing and honest distinction between drawing and masked reveal |
 | 18–27   | Short subject variants of those methods; no additional reproducible technique. Preserve the medium/process ideas without copying source paintings or franchise heraldry                                                                                                |
 
+## Supporting implementation and file inventory
+
+The private `supporting-files-audit.json` indexes all 733 extracted files by path, size, SHA-256, duplicate identity and purpose. They contain 675 distinct byte payloads. These are inventory/classification counts, not 675 independently understood algorithms:
+
+| File purpose                                           | Count | Treatment                                                                   |
+| ------------------------------------------------------ | ----: | --------------------------------------------------------------------------- |
+| Markdown instructions and references                   |    60 | Full written intake; dispositions above                                     |
+| Authored implementation and scene definitions          |   281 | Indexed by purpose; selected mechanism reads; no whole-codebase audit claim |
+| Authoring, capture, test, build and deployment helpers |   297 | Indexed by purpose; selected fitting helpers inspected; none executed       |
+| Asset/build/configuration metadata                     |    22 | Dependencies and representation evidence, not proof of asset qualification  |
+| Binary assets                                          |    65 | Preserved inputs; no complete visual/deformation audit                      |
+| Encoded photographic payloads and loaders              |     2 | Source-specific material inputs; no photographic-style adoption             |
+| Bundled third-party renderer files                     |     5 | Dependencies, not additional publisher-authored recipes                     |
+| Generated implementation bundle                        |     1 | Authored parts are the review entry                                         |
+
+The following supporting-code mechanisms have self-contained destinations. Internal paths identify evidence in the official packages; the retained prose adapts methods rather than reproducing implementations.
+
+| Evidence                                                                              | Retained method                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Character Kit `p05_sdf`, `p10b_qbody`, `p15b_heads`, `p15c_humans`; FPS `fk05b_hand`  | [Continuous surfaces](characters-and-clothing.md#optional-continuous-surface-construction), bounded sampling, finger separation/weights, facial relief, garment reshaping and fold causes |
+| FPS `fk02_geo`, `fitbake_page`; Crawler `p17b_gear`                                   | [Hard-surface construction and actual-mesh hand fitting](props-and-materials.md), normals, bevel bounds, contact and fitting limitations                                                  |
+| Voxel `40-homes`, `12-nature`, `10-terrain`; Crawler `p06_arch`                       | [Connected roofs/openings](architecture-and-worlds.md#building-connected-roofs-and-openings), local plans, vault/support relationships, plant footprints and water contacts               |
+| Character Kit `p13b_mocap`, `p11_cloth`, `p11b_cloak`; FPS `fk06_ik`, `fk07_clip`     | [Phase-aligned motion and contacts](motion-and-visible-work.md#contacts-and-pose-correction), pose ownership, cloth support and coherent transitions                                      |
+| Voxel `02-voxel`, `03-render`, `60-atmos`; Doom `p25_perf`, `p27_clean`, `p15d_squad` | [Conditional rendering techniques and future applications](production-and-future-use.md), combined frame workload, representation-specific meshing, legible roles and restrained feedback |
+
+Concrete diagnostics in Game Development 6–7, 10, 31, 33 and 37–41, World Builder 6, 40, 42–44, 47, 49 and 54, Animation 34 and 36–38, and Artist 8 and 15–17 were cross-checked against the retained references. Relevant geometry, coordinates, materials, state/transform freshness, mask/mark construction, deterministic inputs and label-fit methods have destinations. Source-specific API assertions, exact numerical fixes and arbitrary test quotas are not universal instructions; use the actual consumer's contract.
+
 ## Deliberate limits
 
-No complete source-code or asset-by-asset audit is claimed. All preserved ZIP members were integrity-checked, but supporting code and metadata were inspected selectively. The source files contain many historical commands, tunings and bug reports for their own scaffolds; this collection retains transferable mechanisms and consequential counterexamples, not an alternate copy of those engines. No package installation, downloaded-code execution or paid art experiment occurred.
+No complete source-code or asset-by-asset audit is claimed. Every preserved file is indexed and integrity-checked, while semantic code review remains selective as described above. The source files contain many historical commands, tunings and bug reports for their own scaffolds; this collection retains transferable mechanisms and consequential counterexamples, not an alternate copy of those engines. The 266 accompanying gallery builds were not all downloaded or executed. No library package installation, downloaded-code execution, generated demonstration or paid art experiment occurred.
 
-The unreviewed introductory video audio, unpublished lessons, missing reference attachments and missing raw build inputs remain in [AP01 and the source record](../../../docs/maintainers/art/prompting-and-library.md#remaining-source-coverage). Useful material that was available in the written intake has concrete destinations above. Unavailable information cannot be represented as ingested, and neither original adaptation nor the private archive guarantees identical provider output.
+The authenticated library still listed seven skills and 266 prompts on November 6. Education still had four unpublished lessons; its introductory video exposed neither a transcript nor a caption track in the inspected page. The unreviewed audio, missing reference attachments and missing raw build inputs remain in [AP01 and the source record](../../../docs/maintainers/art/prompting-and-library.md#remaining-source-coverage). Useful material identified in the written intake and selected implementation reads has concrete destinations above. Unavailable information cannot be represented as ingested, and neither original adaptation nor the private archive guarantees identical provider output.

@@ -32,6 +32,16 @@ When a visible hand, brush or quill accompanies the process, its tip must meet t
 
 Develop the subject in meaningful stages: layout, structural drawing, broad values/colour, focused details and final accents. Preserve characteristic proportions throughout. Select diagnostic moments that reveal the transition; do not inspect only the last frame. A progress slider or replay must restore the correct mark state at the selected time rather than leave later strokes behind. The [motion reference](motion-and-visible-work.md#sequences-study-cameras-and-demonstrations) explains the study-time distinction.
 
+For a selected procedural illustration or reveal, retain these implementation details:
+
+- Build reproducible texture/mark inputs from explicit seeds before playback. Independent random streams keep a tool sprite from changing merely because the map used more random samples; avoid relying on accidental initialization order.
+- Treat continuous ink coverage differently from translucent paint. Repeated alpha compositing at adjoining ink segments can create dark beads. Use a continuous opaque mark or a coverage mask composited once for that mark; preserve intentional layering for washes.
+- Keep the reveal mask and subject in explicitly related coordinate frames. Separate transform and masking containers when that makes the relationship clear; check movement, zoom and replay for drift.
+- Size curved label paths from the actual glyph advances and letter spacing, then inspect the endpoints. A fixed path-length multiplier is not portable. Reserve padding for blurred shadow falloff so a sprite's rectangular edge does not clip it.
+- Build a map's rivers from the chosen drainage/source/outlet relationships, then derive dependent markers from the final geography. Neither an arbitrary high point nor a decorative stroke establishes a believable river. A generated illustration still does not define gameplay geography.
+
+Wait for the relevant assets and construction work to be ready before capturing a completed stage. A fixed delay or a test-count badge is not evidence that the final image exists.
+
 ## Original reusable brief
 
 > Create the approved subject as a layered illustration on the selected support. Establish its identifying proportions and large value groups before texture. Let stroke direction follow the forms, with sharper contrast reserved for the focal feature. Preserve the approved layout through intermediate stages. If showing a tool, align its tip and orientation with the marks it actually creates, lifting it between strokes. State whether the result is generated marks, a reveal of supplied art or a combination, and preserve the source and final artifact accordingly.

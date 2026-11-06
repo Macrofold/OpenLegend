@@ -14,6 +14,8 @@ Original synthesis from [FPS Kit](https://learn.marketwithmark.com/vault/skills/
 
 Shared static geometry/materials can be reused, but moving parts and item-specific appearance need the ownership supported by the renderer. This reference does not prescribe a mesh count or import the source cache/API.
 
+For code-authored hard surfaces, preserve a sharp normal boundary at a real corner while smoothing across a rounded bevel. Split vertices where faces require different normals, UVs or attributes; indiscriminately smoothing everything makes a machined edge look inflated. Inspect the generated bounds: an extrusion's bevel can extend beyond the nominal profile/depth and move the contact surface. A reflected transform also changes handedness; preserve outward winding and the intended normal orientation. Group compatible static pieces only after their appearance is correct, retaining independent pivots for moving parts.
+
 ## Worked applications
 
 ### A hand axe or hammer
@@ -40,6 +42,8 @@ Inspect the contact from the palm side, back of hand and along the handle; the n
 
 If fit data is baked, record the mesh, socket, body, bind pose and hand pose it depends on. Refit after a relevant change instead of reusing stale angles. Parent moving contact targets to the component the hand touches; offsets must remain in that target's frame. [Motion and visible work](motion-and-visible-work.md#contacts-and-pose-correction) retains continuity and solver-order considerations.
 
+A useful offline fitting sequence is: clear the palm and thumb base from the object; close each finger from its base toward its tip; stop the relevant joints as their segments meet the surface; place the thumb in opposition; then check the other hand and nearby fittings. Retain the authored pose where it already fits. The source samples solid occupancy around a hand to assist this process, but that approximation depends on closed geometry, sampling resolution and the parts included. A zero sampled-penetration count can miss thin surfaces or leave a floating grip. Judge the resulting contact and anatomy, and retain fitted poses rather than introducing a per-frame search by default.
+
 ## Author materials by their structure
 
 | Material problem                | Useful construction instruction                                                                             | Check before accepting                                                                             |
@@ -52,6 +56,8 @@ If fit data is baked, record the mesh, socket, body, bind pose and hand pose it 
 | A repeated texture has seams    | Make crossing motifs continuous at tile boundaries and use a consistent physical repeat size                | A repeated strip or tiled patch, then the actual adjoining meshes and camera distance              |
 
 For procedural painted textures, establish meaningful shapes first and restrained grain last. If a motif crosses a tile boundary, wrap its continuation onto the opposite edge; checking only the centre cannot prove seamlessness. Match physical repeat size across building parts so bricks or planks do not change apparent dimensions at a join. Keep texture value variation compatible with dynamic lighting rather than baking a full lighting solution into colour.
+
+When constructing a material set, keep colour, height, roughness, metal response and emission as distinct meanings. Derive small surface normals from the height gradient using wrapped edge samples for a tile; a seamless colour map with a discontinuous normal map still shows a seam. Grain direction, weave and machined grooves should agree across the channels. Match physical texel density and the target renderer's colour/data encodings. For chunked terrain, sample one coherent field in shared coordinates rather than restarting unrelated noise at each chunk origin.
 
 ## Diagnose the image before repainting it
 
