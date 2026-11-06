@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Chrono Trigger and Expedition 33 — November 2026 research
+
+[Chrono Trigger — G187](chrono-trigger.md) and [Clair Obscur: Expedition 33 — G77](clair-obscur-expedition-33.md) examine how authored adventures connect distinctive companions, useful growth, changing understanding, presentation and finite resolution. Their mechanics, audience disagreements, production, economics and creation tools remain separate cases. The [scoped record](../research-progress-chrono-trigger-expedition-33-2026-11-06.md) owns this pass and its actual completion.
+
 ## Crimson Desert — October 2026 addition
 
 [Crimson Desert — G185](crimson-desert.md) covers the released game and Enhanced, major mechanics and lore, broad reception, development/marketing/commercial evidence and the community modding ecosystem. Start with its question-based reading routes; [Open Legend applications](crimson-desert/05-openlegend-lessons.md) connect research proposals to existing owners. The [scoped record](../research-progress-crimson-desert-2026-10-26.md) preserves completion and evidence limits.
@@ -67,3 +71,4 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 **Does a convenience preserve the interesting decision?** Read the reviews and version histories beside the mechanics: saving, encounter controls, growth boosts, equipment information and timed-input support alter different costs. A launch complaint is not proof that every later version behaves the same way.
 
 For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md). The separate [D&D packet status](../games/dungeons-and-dragons.md#evidence-and-completion-status) covers the additive tabletop expansion.
+
