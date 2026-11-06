@@ -5,7 +5,7 @@ import {
   type BoundsQueryCursor,
 } from '@open-legend/spatial';
 import {
-  currentBodyGeometryInputs,
+  prepareCurrentBodyGeometryRead,
   currentReceivedObservationSources,
   type BodyGeometrySample,
   type CurrentBodyGeometryInput,
@@ -37,6 +37,38 @@ export interface ReceivedScene {
 }
 const cached = new WeakMap<WorldState, Map<string, ReceivedScene>>();
 
+/** One compatible current read: catalogue membership is cheap, while geometry
+ * and proof are owned values produced only for selected relation inputs. */
+export function prepareReceivedSceneRead(world: WorldState, observerId: string) {
+  const input = prepareCurrentBodyGeometryRead(world, observerId);
+  const bodies = new Map<string, ReceivedSceneBody>();
+  let byTrack: Map<string, string> | undefined;
+  const body = (sourceId: string): ReceivedSceneBody | undefined => {
+    const cached = bodies.get(sourceId);
+    if (cached) return cached;
+    const value = input.get(sourceId);
+    if (!value) return;
+    const error =
+      value.location?.location.kind === 'point' ? value.location.location.errorRadius : 0;
+    const result = { ...value, bounds: receivedBodyBounds(value.body, error) };
+    bodies.set(sourceId, result);
+    return result;
+  };
+  return {
+    catalogue: input.catalogue,
+    body,
+    allBodies(): ReadonlyMap<string, ReceivedSceneBody> {
+      for (const { sourceId } of input.catalogue) body(sourceId);
+      return bodies;
+    },
+    bodyByTrack(track: string) {
+      byTrack ??= new Map(input.catalogue.map((value) => [value.track, value.sourceId]));
+      const sourceId = byTrack.get(track);
+      return sourceId === undefined ? undefined : body(sourceId);
+    },
+  };
+}
+
 /** Derived only when a reader actually needs scene context. This never polls a
  * target transform or keeps a second writable position. */
 export function receivedScene(world: WorldState, observerId: string): ReceivedScene {
@@ -50,16 +82,9 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
     return previous;
   const reception = currentReceivedObservationSources(world, observerId);
   const physicalLife = reception.physicalLife;
-  const bodies = new Map<string, ReceivedSceneBody>();
   let nonlocalized = 0;
-  for (const input of currentBodyGeometryInputs(world, observerId)) {
-    const error =
-      input.location?.location.kind === 'point' ? input.location.location.errorRadius : 0;
-    bodies.set(input.sourceId, {
-      ...input,
-      bounds: receivedBodyBounds(input.body, error),
-    });
-  }
+  const read = prepareReceivedSceneRead(world, observerId);
+  const bodies = read.allBodies();
   // This coverage count needs only the admitted facet kinds. Expanding complete
   // originals would copy body/history proof that no scene measurement consumes.
   for (const contribution of reception.observations) {
@@ -75,8 +100,8 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
     observerId,
     physicalLife,
     bodies,
-    // Native relation checks visit a bounded array. Prepare the spatial tree
-    // only for readers that actually ask this same received scene for a query.
+    // Prepare the spatial tree only for readers actually requesting a spatial
+    // query; native relation paging uses the lightweight reader directly.
     get index() {
       return (index ??= new BoundsIndex(
         [...bodies.values()].map((value) => ({ value, bounds: value.bounds })),

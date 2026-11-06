@@ -253,7 +253,7 @@ import {
   type ExitAttempt,
   type BindingRequest,
 } from './authority.js';
-import { compactHistory } from './history-residency.js';
+import { compactHistory, selectMemoryAwarenessResidency } from './history-residency.js';
 import { consolidationBatch, type ConsolidationBatch } from './memory-consolidation.js';
 import {
   editMapMarker,
@@ -1662,8 +1662,8 @@ export class WorldService {
     );
     const historyWorld = snapshot.world;
     if (this.store.history) {
-      const hot = retainHotEvents(
-        compactHistory(historyWorld, this.saved.world, { preview: true }),
+      const hot = retainHotEvents(historyWorld, () =>
+        selectMemoryAwarenessResidency(historyWorld, this.saved.world),
       );
       snapshot = {
         ...snapshot,

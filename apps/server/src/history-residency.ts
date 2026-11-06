@@ -238,6 +238,149 @@ const placementPlans = new WeakMap<object, PlacementPlan>();
 const emptyTemporalOwners: NonNullable<
   NonNullable<WorldState['experience']>['temporal']
 >['actors'] = Object.freeze({});
+function compactResidentRows<T>(
+  cutoff: number,
+  entries: T[],
+  prior: T[] | undefined,
+  at: (entry: T, index: number, length: number) => number,
+  tail = 0,
+  maximum = Infinity,
+  pinned?: ReadonlySet<string>,
+): T[] {
+  let startIndex = Math.max(0, entries.length - maximum);
+  if (Number.isFinite(maximum)) {
+    let bytes = 0;
+    for (let i = entries.length - 1; i >= startIndex; i--) {
+      const record = entries[i] as object;
+      let size = recordBytes.get(record);
+      if (size === undefined) {
+        size = Buffer.byteLength(JSON.stringify(record));
+        recordBytes.set(record, size);
+      }
+      bytes += size;
+      if (bytes > HOT_AWARENESS_BYTES && i < entries.length - tail) {
+        startIndex = i + 1;
+        break;
+      }
+    }
+  }
+  let earliest = expiry.get(entries);
+  if (earliest === undefined) {
+    const appended = prior ? appendedRecordCount(prior, entries) : undefined;
+    const oldExpiry = prior ? expiry.get(prior) : undefined;
+    earliest = appended !== undefined && oldExpiry !== undefined ? oldExpiry : Infinity;
+    const start =
+      appended !== undefined && oldExpiry !== undefined ? Math.max(0, prior!.length - tail) : 0;
+    for (let i = start; i < entries.length; i++)
+      earliest = Math.min(earliest, at(entries[i]!, i, entries.length));
+    expiry.set(entries, earliest);
+  }
+  // Residency can lag semantic expiry by one game minute. Amortize array compaction
+  // across commits rather than copying a six-hour window for each expired second.
+  if (startIndex === 0 && earliest + 60 >= cutoff) return entries;
+  const retained: T[] = [];
+  const old = historyPositions.get(entries);
+  const selected = new Map<string, number>();
+  let nextExpiry = Infinity;
+  for (let i = 0; i < entries.length; i++) {
+    const entry = entries[i]!,
+      required = pinned?.has(historyKey(entry)),
+      expires = required ? Infinity : at(entry, i, entries.length);
+    if (i < startIndex && !required) continue;
+    if (expires < cutoff) continue;
+    retained.push(entry);
+    nextExpiry = Math.min(nextExpiry, expires);
+    const key = historyKey(entry);
+    selected.set(key, old?.positions.get(key) ?? i);
+  }
+  if (retained.length === entries.length) return entries;
+  expiry.set(retained, nextExpiry);
+  historyPositions.set(retained, { positions: selected, next: old?.next ?? entries.length });
+  return retained;
+}
+
+interface MemoryAwarenessSelection {
+  at: number;
+  sourceAwareness: unknown;
+  forgotten: unknown;
+  corrections: unknown;
+  memories: WorldState['memories'];
+  awareness: NonNullable<WorldState['experience']>['awareness'];
+  placements: Placement[];
+}
+const memoryAwarenessSelections = new WeakMap<object, MemoryAwarenessSelection>();
+/** Select only event-pin owners. The live feed needs no projected world, temporal
+ * page placement or received-value closure. Full release shares these exact rules.
+ * docs/projects/bookkeeping-simplification-tech-design.md#s1--ask-only-which-events-belong-in-the-live-feed */
+export function selectMemoryAwarenessResidency(
+  world: WorldState,
+  previous?: WorldState,
+): MemoryAwarenessSelection {
+  const reusable = isImmutableData(world);
+  const cached = reusable ? memoryAwarenessSelections.get(world.memories) : undefined;
+  if (
+    cached &&
+    cached.at === world.simTime &&
+    cached.sourceAwareness === world.experience?.awareness &&
+    cached.forgotten === world.experience?.forgotten &&
+    cached.corrections === world.experience?.corrections
+  )
+    return cached;
+  const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
+  let memories = world.memories;
+  let awareness = world.experience?.awareness ?? noOwners;
+  const placements: Placement[] = [];
+  for (const [actorId] of objectIndexEntriesAtLeast(memoryDue.read(memories), -world.simTime)) {
+    const entries = memories[actorId]!;
+    const retained = compactResidentRows(cutoff, entries, previous?.memories[actorId], (entry) =>
+      entry.kind === 'commitment' && !entry.resolved ? Infinity : entry.at,
+    );
+    if (retained !== entries) {
+      if (memories === world.memories) memories = { ...memories };
+      memories[actorId] = retained;
+      placements.push({ kind: 'memories', actorId, source: entries, selected: retained });
+    }
+  }
+  for (const [actorId] of objectIndexEntriesAtLeast(awarenessDue.read(awareness), -world.simTime)) {
+    const entries = awareness[actorId]!;
+    // Sensory rows must remain resident until their native absolute expiry; evicting
+    // them would strand their expiry in SQL. Native operation admission bounds intake.
+    if (entries.some((entry) => entry.retentionClass === 'sensory')) continue;
+    const retained = compactResidentRows(
+      cutoff,
+      entries,
+      previous?.experience?.awareness[actorId],
+      (entry, index, length) => (index >= length - 24 ? Infinity : entry.at),
+      24,
+      HOT_AWARENESS_ROWS,
+      retainedAgreementEvidence(world, actorId),
+    );
+    if (retained !== entries) {
+      if (awareness === world.experience?.awareness) awareness = { ...awareness };
+      awareness[actorId] = retained;
+      placements.push({ kind: 'awareness', actorId, source: entries, selected: retained });
+    }
+  }
+  const selected: MemoryAwarenessSelection = {
+    at: world.simTime,
+    sourceAwareness: world.experience?.awareness,
+    forgotten: world.experience?.forgotten,
+    corrections: world.experience?.corrections,
+    memories,
+    awareness,
+    placements,
+  };
+  if (reusable) {
+    // These selected containers are owned here and contain immutable source rows.
+    // Preserve their identity for derived pin indexes without projecting a world.
+    for (const placement of placements) Object.freeze(placement.selected);
+    Object.freeze(memories);
+    Object.freeze(awareness);
+    memoryAwarenessSelections.set(world.memories, selected);
+  }
+  return selected;
+}
+
 export function compactHistory(
   world: WorldState,
   previous?: WorldState,
@@ -258,106 +401,16 @@ export function compactHistory(
       projectPlacement(world, cached.projection, cached.placements, options),
       options,
     );
-  const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
-  const compact = <T>(
-    entries: T[],
-    prior: T[] | undefined,
-    at: (entry: T, index: number, length: number) => number,
-    tail = 0,
-    maximum = Infinity,
-    pinned?: ReadonlySet<string>,
-  ): T[] => {
-    let startIndex = Math.max(0, entries.length - maximum);
-    if (Number.isFinite(maximum)) {
-      let bytes = 0;
-      for (let i = entries.length - 1; i >= startIndex; i--) {
-        const record = entries[i] as object;
-        let size = recordBytes.get(record);
-        if (size === undefined) {
-          size = Buffer.byteLength(JSON.stringify(record));
-          recordBytes.set(record, size);
-        }
-        bytes += size;
-        if (bytes > HOT_AWARENESS_BYTES && i < entries.length - tail) {
-          startIndex = i + 1;
-          break;
-        }
-      }
-    }
-    let earliest = expiry.get(entries);
-    if (earliest === undefined) {
-      const appended = prior ? appendedRecordCount(prior, entries) : undefined;
-      const oldExpiry = prior ? expiry.get(prior) : undefined;
-      earliest = appended !== undefined && oldExpiry !== undefined ? oldExpiry : Infinity;
-      const start =
-        appended !== undefined && oldExpiry !== undefined ? Math.max(0, prior!.length - tail) : 0;
-      for (let i = start; i < entries.length; i++)
-        earliest = Math.min(earliest, at(entries[i]!, i, entries.length));
-      expiry.set(entries, earliest);
-    }
-    // Residency can lag semantic expiry by one game minute. Amortize array compaction
-    // across commits rather than copying a six-hour window for each expired second.
-    if (startIndex === 0 && earliest + 60 >= cutoff) return entries;
-    const retained: T[] = [];
-    const old = historyPositions.get(entries);
-    const selected = new Map<string, number>();
-    let nextExpiry = Infinity;
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i]!,
-        required = pinned?.has(historyKey(entry)),
-        expires = required ? Infinity : at(entry, i, entries.length);
-      if (i < startIndex && !required) continue;
-      if (expires < cutoff) continue;
-      retained.push(entry);
-      nextExpiry = Math.min(nextExpiry, expires);
-      const key = historyKey(entry);
-      selected.set(key, old?.positions.get(key) ?? i);
-    }
-    if (retained.length === entries.length) return entries;
-    expiry.set(retained, nextExpiry);
-    historyPositions.set(retained, { positions: selected, next: old?.next ?? entries.length });
-    return retained;
-  };
-  let memories = world.memories;
-  let awareness = world.experience?.awareness ?? noOwners;
+  const selected = selectMemoryAwarenessResidency(world, previous);
+  const { memories, awareness } = selected;
   let summaries = world.experience?.summaries ?? noOwners;
-  let changed = false;
-  const placements: Placement[] = [];
-  for (const [actorId] of objectIndexEntriesAtLeast(memoryDue.read(memories), -world.simTime)) {
-    const entries = memories[actorId]!;
-    const retained = compact(entries, previous?.memories[actorId], (entry) =>
-      entry.kind === 'commitment' && !entry.resolved ? Infinity : entry.at,
-    );
-    if (retained !== entries) {
-      if (memories === world.memories) memories = { ...memories };
-      memories[actorId] = retained;
-      placements.push({ kind: 'memories', actorId, source: entries, selected: retained });
-      changed = true;
-    }
-  }
-  for (const [actorId] of objectIndexEntriesAtLeast(awarenessDue.read(awareness), -world.simTime)) {
-    const entries = awareness[actorId]!;
-    // Sensory rows must remain resident until their native absolute expiry; evicting
-    // them would strand their expiry in SQL. Native operation admission bounds intake.
-    if (entries.some((entry) => entry.retentionClass === 'sensory')) continue;
-    const retained = compact(
-      entries,
-      previous?.experience?.awareness[actorId],
-      (entry, index, length) => (index >= length - 24 ? Infinity : entry.at),
-      24,
-      HOT_AWARENESS_ROWS,
-      retainedAgreementEvidence(world, actorId),
-    );
-    if (retained !== entries) {
-      if (awareness === world.experience?.awareness) awareness = { ...awareness };
-      awareness[actorId] = retained;
-      placements.push({ kind: 'awareness', actorId, source: entries, selected: retained });
-      changed = true;
-    }
-  }
+  let changed =
+    memories !== world.memories || awareness !== (world.experience?.awareness ?? noOwners);
+  const placements = [...selected.placements];
+  const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
   for (const [actorId] of objectIndexEntriesAtLeast(summaryDue.read(summaries), -world.simTime)) {
     const entries = summaries[actorId]!,
-      retained = compact(entries, undefined, () => -Infinity);
+      retained = compactResidentRows(cutoff, entries, undefined, () => -Infinity);
     if (retained !== entries) {
       if (summaries === world.experience?.summaries) summaries = { ...summaries };
       summaries[actorId] = retained;

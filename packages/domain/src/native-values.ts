@@ -1,3 +1,6 @@
+import { invalidateAttentionPreparation } from './attention.js';
+import { selectedAttributeAffectsObservation } from './world-composition.js';
+import { invalidatePerceptionMeasurements } from './perception-timing.js';
 import { draftWorld, finishWorld, readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { recordSemanticChange, recordSensoryChange } from './dependencies.js';
@@ -277,6 +280,17 @@ export function retainNativeIntegration(
         attribute.changed && attributeDefinition(world, id)?.disclosure === 'public',
     );
     if (outwardChange) recordSensoryChange(world, binding.entityId);
+    const observer = entityGet(world.entities, binding.entityId);
+    if (
+      observer &&
+      Object.entries(binding.attributes).some(
+        ([id, attribute]) =>
+          attribute.changed && selectedAttributeAffectsObservation(world, observer, id),
+      )
+    ) {
+      invalidatePerceptionMeasurements(world, binding.entityId);
+      invalidateAttentionPreparation(world, binding.entityId);
+    }
     if (Object.values(binding.attributes).some((attribute) => attribute.changed))
       recordSemanticChange(world, {
         kind: 'state',

@@ -1,10 +1,12 @@
+import { invalidateAttentionPreparation } from './attention.js';
 import type { SemanticChange } from './dependencies.js';
 import type { WorldState } from './types.js';
-import { queueSightChange } from './perception-timing.js';
+import { queueSightChange, invalidatePerceptionMeasurements } from './perception-timing.js';
+import { countDomainWork } from './diagnostic-counters.js';
 
 type Feed = {
   complete: boolean;
-  changes: Array<{ id: string; physical: boolean }>;
+  changes: Array<{ id: string; physical: boolean; status: boolean }>;
   readers: WeakMap<object, number>;
 };
 const feeds = new WeakMap<WorldState, Feed>();
@@ -21,6 +23,16 @@ export function nativeChangesComplete(world: WorldState): boolean {
 }
 export function recordNativeChange(world: WorldState, change: SemanticChange): void {
   queueSightChange(world, change);
+  if (
+    change.kind === 'state' &&
+    ['body', 'behavior', 'participation', 'contribution'].includes(change.field)
+  ) {
+    invalidatePerceptionMeasurements(world, change.entityId);
+    invalidateAttentionPreparation(world, change.entityId);
+  } else if (change.kind === 'geometry' || change.kind === 'membership') {
+    invalidatePerceptionMeasurements(world);
+    invalidateAttentionPreparation(world);
+  }
   const feed = feeds.get(world);
   if (!feed?.complete) return;
   const id =
@@ -36,6 +48,13 @@ export function recordNativeChange(world: WorldState, change: SemanticChange): v
   }
   feed.changes.push({
     id,
+    // Knowledge is outside the supported status grammar. Positional motion is
+    // irrelevant only when the spatial owner proves support unchanged; other
+    // readers still receive every notice and unknown/global edits fall back.
+    // docs/projects/bookkeeping-simplification-tech-design.md#n1--invalidate-status-preparation-only-when-its-inputs-may-change
+    status:
+      change.kind !== 'knowledge' &&
+      !(change.kind === 'spatial' && change.supportUnchanged === true),
     physical:
       change.kind === 'spatial' ||
       (change.kind === 'state' && ['body', 'participation'].includes(change.field)),
@@ -47,7 +66,7 @@ export function recordNativeChange(world: WorldState, change: SemanticChange): v
 export function takeNativeChanges(
   world: WorldState,
   owner: object,
-  physical = false,
+  kind: 'all' | 'physical' | 'status' = 'all',
 ): ReadonlySet<string> | undefined {
   const feed = feeds.get(world);
   if (!feed?.complete) return;
@@ -57,7 +76,8 @@ export function takeNativeChanges(
   const ids = new Set<string>();
   for (let index = before; index < feed.changes.length; index++) {
     const change = feed.changes[index]!;
-    if (!physical || change.physical) ids.add(change.id);
+    if (kind === 'all' || change[kind]) ids.add(change.id);
+    else if (kind === 'status') countDomainWork('nativeStatusIrrelevantNoticesSkipped');
   }
   return ids;
 }

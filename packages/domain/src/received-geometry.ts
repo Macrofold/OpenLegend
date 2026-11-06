@@ -35,7 +35,7 @@ import {
   type AttentionRelationWitness,
 } from './attention.js';
 import {
-  receivedScene,
+  prepareReceivedSceneRead,
   receivedSeparation,
   type ReceivedSceneBody,
   type ReceivedBodyGeometry,
@@ -1163,7 +1163,7 @@ export function receivedBoundarySeparation(
 export function evaluateAttentionRelations(world: WorldState, observerId: string): void {
   const opportunity = attentionRelationOpportunity(world, observerId);
   if (!opportunity) return;
-  const scene = receivedScene(world, observerId),
+  const scene = prepareReceivedSceneRead(world, observerId),
     geometry = currentReceivedGeometry(world, observerId),
     policy = selectedAttentionPolicy(world).relation;
   const boundaries = geometry.observations.flatMap((observation) =>
@@ -1173,9 +1173,8 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
         : [],
     ),
   );
-  const bodies = [...scene.bodies.values()];
+  const bodies = scene.catalogue;
   const state = world.perceptionEvidence![observerId]!.attention!;
-  const bodiesByTrack = new Map(bodies.map((body) => [body.track, body]));
   const boundariesById = new Map(boundaries.map((value) => [value.observation.id, value]));
   const evaluations: AttentionRelationEvaluation[] = [];
   const observer = entityGet(world.entities, observerId)!,
@@ -1304,14 +1303,20 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   let remaining = opportunity.candidates;
   for (let ordinal = 0; ordinal < opportunity.anchors.length; ordinal++) {
     const entry = opportunity.anchors[ordinal]!,
-      anchor = entry.sourceId === observerId ? ownBody : scene.bodies.get(entry.sourceId),
+      anchor = entry.sourceId === observerId ? ownBody : scene.body(entry.sourceId),
       families = opportunity.families.get(entry.key)!;
     if (!anchor) continue;
     const anchorProof = entry.sourceId === observerId ? [] : bodyProof(anchor as ReceivedSceneBody);
     const share = Math.floor(remaining / (opportunity.anchors.length - ordinal));
     const bodyKey = JSON.stringify([entry.key, 'closing-body']),
       bodyLatch = state.latches[bodyKey];
-    const bodyMeasure = (neighbor: ReceivedSceneBody): AttentionRelationWitness | undefined => {
+    const bodyMeasure = (
+      candidate: (typeof bodies)[number],
+    ): AttentionRelationWitness | undefined => {
+      const neighbor = scene.body(candidate.sourceId);
+      // An unavailable lazy input is incomplete evidence, never a negative
+      // relationship or permission to clear an existing danger latch.
+      if (!neighbor) return undefined;
       if (neighbor.sourceId === entry.sourceId)
         return {
           id: neighbor.track,
@@ -1334,7 +1339,10 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
         proof: [...anchorProof, ...bodyProof(neighbor)].slice(0, 8),
       };
     };
-    const priorBody = bodyLatch?.witnessId ? bodiesByTrack.get(bodyLatch.witnessId) : undefined;
+    const priorBody =
+      families.has('closing-body') && share > 0 && bodyLatch?.witnessId
+        ? scene.bodyByTrack(bodyLatch.witnessId)
+        : undefined;
     const body = page(
       entry,
       'closing-body',

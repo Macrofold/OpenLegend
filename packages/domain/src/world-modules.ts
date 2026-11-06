@@ -1,3 +1,4 @@
+import { invalidateAttentionPreparation } from './attention.js';
 import { currentFacetGet, currentFacetGrant, receivedTrackKey } from './perception-current.js';
 import { validateCartography } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
@@ -923,8 +924,10 @@ export function setAttribute(
   });
   // A private receiver parameter can change its own next interpretation without
   // presenting that value to anyone else or sensing during the attribute write.
-  if (selectedAttributeAffectsObservation(world, entity, d.id))
+  if (selectedAttributeAffectsObservation(world, entity, d.id)) {
+    invalidateAttentionPreparation(world, entity.id);
     requestSightWork(world, entity.id, 'detail');
+  }
   // Notice actual one-off outcomes, never infer their cause from later meter readings.
   // Passive rate/transfer callers opt out, avoiding per-interval history and UI noise.
   if (

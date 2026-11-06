@@ -1100,7 +1100,8 @@ function workingBodyIndex(world: WorldState, actorsOnly: boolean) {
   if (!isDraft(world)) return entityIndex(world, actorsOnly);
   const frames = actorsOnly ? workingActorBodies : workingRootBodies;
   let frame = frames.get(world);
-  const changed = (frame && takeNativeChanges(world, frame, true)) ?? changedDraftEntityIds(world),
+  const changed =
+      (frame && takeNativeChanges(world, frame, 'physical')) ?? changedDraftEntityIds(world),
     entities = readOnlyDraftView(world).entities,
     audit = entityDraftAudit(entities),
     base = original(world)!,
@@ -1158,7 +1159,7 @@ function workingBodyIndex(world: WorldState, actorsOnly: boolean) {
     };
     frame = owned;
     frames.set(world, frame);
-    takeNativeChanges(world, frame, true);
+    takeNativeChanges(world, frame, 'physical');
   }
   for (const id of audit.removed ?? []) {
     if (

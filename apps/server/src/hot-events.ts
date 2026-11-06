@@ -45,18 +45,22 @@ const knowledge = dependencies<WorldState['knowledge'][string]>(function* (rows)
   for (const row of rows) yield row.evidenceId;
 });
 const empty = Object.freeze({});
-function pins(world: WorldState) {
+type EventPinRoots = {
+  memories: WorldState['memories'];
+  awareness: NonNullable<WorldState['experience']>['awareness'];
+};
+function pins(world: WorldState, selected?: EventPinRoots) {
   return [
-    awareness.read(world.experience?.awareness ?? empty),
-    memories.read(world.memories),
+    awareness.read(selected?.awareness ?? world.experience?.awareness ?? empty),
+    memories.read(selected?.memories ?? world.memories),
     knowledge.read(world.knowledge),
   ];
 }
 const checked = new WeakMap<WorldState['events'], Counts[]>();
 /** Placement is never forgetting. Reference counts preserve independent owners. */
-export function retainHotEvents(world: WorldState): WorldState {
+export function retainHotEvents(world: WorldState, selectPins?: () => EventPinRoots): WorldState {
   if (world.events.length <= RECENT_EVENTS + EVICTION_BATCH) return world;
-  const counts = pins(world),
+  const counts = pins(world, selectPins?.()),
     prior = Object.isFrozen(world.events) ? checked.get(world.events) : undefined;
   if (prior && counts.every((tree, index) => tree === prior[index])) return world;
   const held = (id: string) => counts.some((tree) => objectIndexGet(tree, id) !== undefined);

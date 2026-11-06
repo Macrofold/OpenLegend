@@ -247,7 +247,7 @@ export function settleLocalPoses(
   events: WorldEvent[],
 ): boolean {
   const state = preparation(world, bodyIds),
-    changes = takeNativeChanges(world, state, true);
+    changes = takeNativeChanges(world, state, 'physical');
   // Keep the change cursor current, but ordinary movement needs no posture
   // neighborhood work when there is no retained shape waiting to return.
   if (!state.ids.size) return false;

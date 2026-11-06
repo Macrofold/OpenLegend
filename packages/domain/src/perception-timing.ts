@@ -8,6 +8,53 @@ import type { Entity, WorldState } from './types.js';
 import type { SemanticChange } from './dependencies.js';
 import { MAX_CHANGE_SCOPES } from './dependencies.js';
 import { entityGet } from './entity-collection.js';
+import { countDomainWork } from './diagnostic-counters.js';
+
+/** Private to one native mutation lease; these dates never grant an observation.
+ * docs/projects/bookkeeping-simplification-tech-design.md#d1--ask-for-a-deadline-without-preparing-an-observation */
+export interface PerceptionContactPreparation {
+  eligible: boolean;
+  selected: ReadonlySet<string>;
+  tickets: readonly { sourceId: string; at: number }[];
+  nextAt?: number;
+}
+const contactPreparations = new WeakMap<WorldState, Map<string, PerceptionContactPreparation>>();
+export function beginPerceptionMeasurements(world: WorldState): () => void {
+  const prepared = new Map<string, PerceptionContactPreparation>();
+  contactPreparations.set(world, prepared);
+  return () => {
+    if (contactPreparations.get(world) === prepared) contactPreparations.delete(world);
+  };
+}
+export function preparedPerceptionContacts(
+  world: WorldState,
+  observerId: string,
+  prepare: () => PerceptionContactPreparation,
+): PerceptionContactPreparation {
+  const scope = contactPreparations.get(world);
+  const prior = scope?.get(observerId);
+  if (prior) return prior;
+  countDomainWork('perceptionContactPreparations');
+  const value = prepare();
+  scope?.set(observerId, value);
+  return value;
+}
+export function invalidatePerceptionMeasurements(
+  world: WorldState,
+  observerId?: string,
+  sourceId?: string,
+): void {
+  const scope = contactPreparations.get(world);
+  if (!scope) return;
+  if (observerId === undefined) {
+    if (scope.size) countDomainWork('perceptionContactInvalidations', scope.size);
+    scope.clear();
+  } else if (
+    (sourceId === undefined || scope.get(observerId)?.selected.has(sourceId)) &&
+    scope.delete(observerId)
+  )
+    countDomainWork('perceptionContactInvalidations');
+}
 
 export interface PendingSightScope {
   broad: boolean;
@@ -133,6 +180,7 @@ export function requestSightWork(
   observerId: string,
   coverage: 'broad' | 'detail',
 ): void {
+  invalidatePerceptionMeasurements(world, observerId);
   initializeSightContinuation(world);
   const pending = world.sensory!;
   const prior = pending.scopes[observerId];

@@ -536,6 +536,37 @@ export function currentContactNativeFacet(
   if (!original) throw new Error('A current group has no acquired original.');
   return currentGroupNativeFacet(selected, original, kind);
 }
+/** Borrowed exact-channel/exposure projection. Selection happens once for all
+ * requested siblings; missing/ambiguous members retain their independent result. */
+export function prepareCurrentContactTrack(
+  contact: CurrentContact,
+  selector: CurrentFacetSelector,
+): { native(kind: string): CurrentNativeFacet | undefined } {
+  const content = readOnlyDraftView(readOnlyDraftView(contact).content);
+  const groups = new Map<string, CurrentReceivedGroup | undefined>();
+  for (const stored of content.groups) {
+    const group = readOnlyDraftView(stored);
+    if (!selectedGroup(group, selector)) continue;
+    for (const kind of Object.keys(readOnlyDraftView(group.received.fields)))
+      groups.set(kind, groups.has(kind) ? undefined : group);
+  }
+  const selected = new Map<string, CurrentNativeFacet | undefined>();
+  return {
+    native(kind) {
+      if (!selected.has(kind)) {
+        const group = groups.get(kind);
+        const original =
+          group && readOnlyDraftView(content.originals)[group.received.grant.original];
+        if (group && !original) throw new Error('A current group has no acquired original.');
+        selected.set(
+          kind,
+          group && original ? currentGroupNativeFacet(group, original, kind) : undefined,
+        );
+      }
+      return selected.get(kind);
+    },
+  };
+}
 /** Typed internal address; display/storage key parsing stays at its boundary. */
 export function currentNativeFacetAt(
   owner: CurrentReadOwner | undefined,
@@ -1376,94 +1407,147 @@ export interface SelectedReceivedTrack {
   channel: DefinitionPin;
 }
 export type SelectedReceivedTracks = Map<string, Map<string, SelectedReceivedTrack>>;
-function addSelectedTrack(
-  tracks: SelectedReceivedTracks,
-  sourceId: string,
-  source: CurrentNativeFacet,
-): void {
-  let held = tracks.get(sourceId);
-  if (!held) tracks.set(sourceId, (held = new Map()));
-  held.set(receivedTrackKey(source.grant.exposure, source.grant.channel), {
-    exposure: source.grant.exposure,
-    channel: source.grant.channel,
-  });
+export interface ReceivedTrackDescriptor {
+  sourceId: string;
+  leaseId: string;
+  track: string;
+  exposure: string;
+  channel: DefinitionPin;
+  localSubject?: ObserverSubject;
+  subject?: ObserverSubject;
 }
-/** Only acquired personal identities can connect independently received tracks. */
+export function receivedTrackDescriptor(
+  source: CurrentNativeFacet,
+  subject?: ObserverSubject,
+): ReceivedTrackDescriptor {
+  return {
+    sourceId: source.grant.subjectId,
+    leaseId: source.field.id,
+    track: receivedTrackKey(source.grant.exposure, source.grant.channel),
+    exposure: source.grant.exposure,
+    channel: { ...source.grant.channel },
+    ...(source.field.localSubject ? { localSubject: { ...source.field.localSubject } } : {}),
+    ...(subject ? { subject: { ...subject } } : {}),
+  };
+}
+function descriptorInputs(
+  owner: CurrentReadOwner,
+  sourceIds: Iterable<string>,
+  resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
+): ReceivedTrackDescriptor[] {
+  return [...sourceIds].flatMap((id) =>
+    receivedAttentionSources(owner, id).map((source) =>
+      receivedTrackDescriptor(
+        source,
+        resolvedSubjects?.get(receivedTrackKey(source.grant.exposure, source.grant.channel)),
+      ),
+    ),
+  );
+}
+function addDescriptorTrack(tracks: SelectedReceivedTracks, source: ReceivedTrackDescriptor): void {
+  let held = tracks.get(source.sourceId);
+  if (!held) tracks.set(source.sourceId, (held = new Map()));
+  held.set(source.track, { exposure: source.exposure, channel: source.channel });
+}
+/** Pure one-hop correspondence, shared by live reception and finite captured readers. */
+export function descriptorSelectionSubjects(
+  entries: readonly CurrentTrackSelection[],
+  descriptors: readonly ReceivedTrackDescriptor[],
+): ReadonlySet<string> {
+  const bySource = new Map<string, Map<string, ReceivedTrackDescriptor>>();
+  for (const value of descriptors) {
+    let tracks = bySource.get(value.sourceId);
+    if (!tracks) bySource.set(value.sourceId, (tracks = new Map()));
+    tracks.set(value.track, value);
+  }
+  const subjects = new Set<string>();
+  for (const entry of entries) {
+    const source = bySource.get(entry.sourceId)?.get(entry.exposure.track);
+    if (!source || source.sourceId !== entry.sourceId || source.leaseId !== entry.leaseId) continue;
+    for (const subject of [source.localSubject, source.subject])
+      if (subject) subjects.add(subjectKey(subject));
+  }
+  return subjects;
+}
+export function descriptorTracksForSubjects(
+  subjects: ReadonlySet<string>,
+  descriptors: readonly ReceivedTrackDescriptor[],
+): SelectedReceivedTracks {
+  const tracks: SelectedReceivedTracks = new Map();
+  if (subjects.size)
+    for (const source of descriptors)
+      if (
+        [source.localSubject, source.subject].some(
+          (subject) => subject && subjects.has(subjectKey(subject)),
+        )
+      )
+        addDescriptorTrack(tracks, source);
+  return tracks;
+}
+export function descriptorSelectionTracks(
+  entries: readonly CurrentTrackSelection[],
+  descriptors: readonly ReceivedTrackDescriptor[],
+): SelectedReceivedTracks {
+  const subjects = descriptorSelectionSubjects(entries, descriptors),
+    tracks: SelectedReceivedTracks = new Map();
+  const bySource = new Map<string, Map<string, ReceivedTrackDescriptor>>();
+  for (const value of descriptors) {
+    let tracks = bySource.get(value.sourceId);
+    if (!tracks) bySource.set(value.sourceId, (tracks = new Map()));
+    tracks.set(value.track, value);
+  }
+  for (const entry of entries) {
+    const source = bySource.get(entry.sourceId)?.get(entry.exposure.track);
+    if (source && source.sourceId === entry.sourceId && source.leaseId === entry.leaseId)
+      addDescriptorTrack(tracks, source);
+  }
+  for (const [id, bindings] of descriptorTracksForSubjects(subjects, descriptors)) {
+    let held = tracks.get(id);
+    if (!held) tracks.set(id, (held = new Map()));
+    for (const [key, binding] of bindings) held.set(key, binding);
+  }
+  return tracks;
+}
 export function currentSelectionSubjects(
   owner: CurrentReadOwner,
   entries: readonly CurrentTrackSelection[],
   resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
 ): ReadonlySet<string> {
-  const subjects = new Set<string>();
-  for (const entry of entries) {
-    const source = receivedAttentionSource(owner, entry.sourceId, entry.leaseId);
-    if (
-      !source ||
-      receivedTrackKey(source.grant.exposure, source.grant.channel) !== entry.exposure.track
-    )
-      continue;
-    for (const subject of [
-      resolvedSubjects ? resolvedSubjects.get(entry.exposure.track) : entry.subject,
-      source.field.localSubject,
-    ])
-      if (subject) subjects.add(subjectKey(subject));
-  }
-  return subjects;
+  const descriptors = descriptorInputs(
+    owner,
+    new Set(entries.map((entry) => entry.sourceId)),
+    resolvedSubjects,
+  );
+  // A caller without a resolved map may supply its finite acquired association.
+  if (!resolvedSubjects)
+    for (const source of descriptors)
+      source.subject = entries.find((entry) => entry.exposure.track === source.track)?.subject;
+  return descriptorSelectionSubjects(entries, descriptors);
 }
-/** Callers supply changed buckets or reuse an existing candidate pass; this never
- * walks unrelated contacts or treats producer routing as observed correspondence. */
 export function currentTracksForSubjects(
   owner: CurrentReadOwner,
   subjects: ReadonlySet<string>,
   sourceIds: Iterable<string>,
   resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
 ): SelectedReceivedTracks {
-  const tracks: SelectedReceivedTracks = new Map();
-  if (!subjects.size) return tracks;
-  for (const sourceId of sourceIds)
-    for (const source of receivedAttentionSources(owner, sourceId)) {
-      const resolved = resolvedSubjects?.get(
-        receivedTrackKey(source.grant.exposure, source.grant.channel),
-      );
-      if (
-        [source.field.localSubject, resolved].some(
-          (subject) => subject !== undefined && subjects.has(subjectKey(subject)),
-        )
-      )
-        addSelectedTrack(tracks, sourceId, source);
-    }
-  return tracks;
+  return descriptorTracksForSubjects(
+    subjects,
+    descriptorInputs(owner, sourceIds, resolvedSubjects),
+  );
 }
-/** Select exact primary tracks plus independently supported tracks of the same
- * acquired individual. The optional subject map is the existing permitted
- * candidate projection, not a second identity authority. */
 export function currentSelectionTracks(
   owner: CurrentReadOwner,
   entries: readonly CurrentTrackSelection[],
   candidateSourceIds: Iterable<string> = [],
   resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
 ): SelectedReceivedTracks {
-  const sourceIds = new Set(candidateSourceIds),
-    tracks: SelectedReceivedTracks = new Map();
-  for (const entry of entries) {
-    sourceIds.add(entry.sourceId);
-    const source = receivedAttentionSource(owner, entry.sourceId, entry.leaseId);
-    if (
-      source &&
-      receivedTrackKey(source.grant.exposure, source.grant.channel) === entry.exposure.track
-    )
-      addSelectedTrack(tracks, entry.sourceId, source);
-  }
-  const linked = currentTracksForSubjects(
+  const descriptors = descriptorInputs(
     owner,
-    currentSelectionSubjects(owner, entries, resolvedSubjects),
-    sourceIds,
+    new Set([...candidateSourceIds, ...entries.map((entry) => entry.sourceId)]),
     resolvedSubjects,
   );
-  for (const [id, bindings] of linked) {
-    let held = tracks.get(id);
-    if (!held) tracks.set(id, (held = new Map()));
-    for (const [key, binding] of bindings) held.set(key, binding);
-  }
-  return tracks;
+  if (!resolvedSubjects)
+    for (const source of descriptors)
+      source.subject = entries.find((entry) => entry.exposure.track === source.track)?.subject;
+  return descriptorSelectionTracks(entries, descriptors);
 }

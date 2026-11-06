@@ -1,5 +1,6 @@
 import { entityGet } from './entity-collection.js';
 import { statusDefinitions } from './status-capabilities.js';
+import { prepareStatusDefinitionStructure } from './status-condition-references.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   effectBindings,
@@ -162,7 +163,7 @@ export function statusBoundary(
 ): number {
   let result = Infinity;
   const definitions = statusDefinitions(world);
-  const byId = new Map(definitions.map((definition) => [definition.id, definition]));
+  const prepared = prepareStatusDefinitionStructure(definitions);
   const currentEntities = readOnlyDraftView(world.entities);
   for (const id of entities) {
     const storedEntity = entityGet(currentEntities, id);
@@ -179,24 +180,24 @@ export function statusBoundary(
         result = Math.min(result, lifetime.expiresAt - world.simTime);
         at(lifetime.expiresAt);
       }
-      const definition = byId.get(definitionId);
+      const definition = prepared.byId.get(definitionId);
       if (!definition) continue;
       const bindings = effectBindings(world, entity, state);
-      for (const condition of [definition.requires, definition.automaticDeactivation])
-        if (condition)
-          result = Math.min(
-            result,
-            conditionTransition(world, bindings, condition, rates, attributes).afterSeconds,
-          );
+      for (const condition of definition.contribution)
+        result = Math.min(
+          result,
+          conditionTransition(world, bindings, condition, rates, attributes).afterSeconds,
+        );
     }
     if (!activelyParticipates(entity)) continue;
-    for (const d of definitions) {
+    for (const structure of prepared.entries) {
+      const d = structure.definition;
       const stored = states?.[d.id];
       const state = stored && readOnlyDraftView(stored);
       if (!state?.active) {
         // Only automatic activation can happen without a command. Retired episode bindings
         // must not predict reactivation against its old source/target: activation binds self.
-        if (!d.enabled || !d.automaticActivation) continue;
+        if (!d.enabled || !structure.activation) continue;
         const delay = (state?.automaticAfter ?? 0) - world.simTime;
         if (delay > 0) {
           result = Math.min(result, delay);
@@ -208,13 +209,7 @@ export function statusBoundary(
           conditionTransition(
             world,
             effectBindings(world, entity),
-            {
-              all: [
-                d.requires,
-                ...(d.activationCondition ? [d.activationCondition] : []),
-                d.automaticActivation,
-              ],
-            },
+            structure.activation,
             rates,
             attributes,
           ).afterSeconds,
@@ -232,17 +227,11 @@ export function statusBoundary(
         result = Math.min(result, after);
         at(dueAt);
       }
-      const conditions = [
-        d.requires,
-        d.automaticDeactivation,
-        ...d.whileActive.map((op) => ('when' in op ? op.when : undefined)),
-      ];
-      for (const condition of conditions)
-        if (condition)
-          result = Math.min(
-            result,
-            conditionTransition(world, bindings, condition, rates, attributes).afterSeconds,
-          );
+      for (const condition of structure.active)
+        result = Math.min(
+          result,
+          conditionTransition(world, bindings, condition, rates, attributes).afterSeconds,
+        );
     }
   }
   return result;

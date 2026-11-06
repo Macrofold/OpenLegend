@@ -1,3 +1,6 @@
+import { prepareReceivedIdentityChange } from '../../perception-evidence.js';
+import { invalidatePerceptionMeasurements } from '../../perception-timing.js';
+import { noteAttentionFamiliarityChange } from '../../attention.js';
 import { receivedPositionEligible } from '../../received-batches.js';
 import { recordObservationSupport, observationReceiptMemberIndices } from '../../experience.js';
 import { currentContactEntries, currentContactNativeFacet } from '../../perception-current.js';
@@ -96,6 +99,35 @@ export function adjustObserverIdentityAccounting(
 ): boolean {
   return adjustRetainedKnowledgeAccounting(world, actorId, before, after, options);
 }
+/** Only correspondence changes need old/new cohort capture. Familiarity credit is
+ * score input for the next opportunity, never another competition now. */
+export function prepareObserverIdentityReplacement(
+  world: WorldState,
+  actorId: string,
+  previous: ObserverIdentity | undefined,
+  next: ObserverIdentity | undefined,
+): () => void {
+  const removesSamples = (modality: 'sight' | 'voice') => {
+    const after = new Set(next?.[modality]?.samples.map((sample) => sample.key));
+    return previous?.[modality]?.samples.some((sample) => !after.has(sample.key)) ?? false;
+  };
+  const correspondence =
+    !!previous &&
+    (!next ||
+      previous.individualId !== next.individualId ||
+      previous.canonicalId !== next.canonicalId ||
+      previous.seedOnly !== next.seedOnly ||
+      previous.authored !== next.authored ||
+      removesSamples('sight') ||
+      removesSamples('voice'));
+  const finish = correspondence ? prepareReceivedIdentityChange(world, actorId) : undefined;
+  return () => {
+    invalidatePerceptionMeasurements(world, actorId);
+    if (finish) finish();
+    else
+      noteAttentionFamiliarityChange(world, actorId, next?.individualId ?? previous?.individualId);
+  };
+}
 /** The existing identity owner installs lasting learning only after its complete
  * encoded record fits the same personal-knowledge pool as notes and accounts. */
 export function commitObserverIdentity(
@@ -116,7 +148,9 @@ export function commitObserverIdentity(
     )
   )
     return false;
+  const finishIdentity = prepareObserverIdentityReplacement(world, actorId, previous, next);
   records[key] = next;
+  finishIdentity();
   const due = recognitionSeedDeadline(world, next),
     accounts = world.experience?.temporal?.actors[actorId]?.accounts;
   if (due !== null && accounts) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, due);

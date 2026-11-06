@@ -45,6 +45,9 @@ export type SemanticChange =
       before: Position | null;
       after: Position | null;
       discontinuity?: true;
+      /** Only the spatial owner may certify that positional motion leaves the
+       * support-dependent status inputs unchanged. Shape/unknown writers omit it. */
+      supportUnchanged?: true;
     }
   | { kind: 'membership'; family: QueryFamily; scopeId: string }
   | {

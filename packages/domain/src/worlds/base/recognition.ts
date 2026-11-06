@@ -12,6 +12,7 @@ import { readAttribute, definitionPin } from '../../world-modules.js';
 import type { WorldEvent, WorldState } from '../../types.js';
 import {
   commitObserverIdentity,
+  prepareObserverIdentityReplacement,
   identitiesForEntity,
   adjustObserverIdentityAccounting,
   type ObserverIdentity,
@@ -812,7 +813,14 @@ function perceiveIndividual(
         if (prior === seed.identity) {
           if (prior.retained && !prior.authored)
             adjustObserverIdentityAccounting(world, observerId, prior, undefined);
+          const finishIdentity = prepareObserverIdentityReplacement(
+            world,
+            observerId,
+            prior,
+            undefined,
+          );
           delete records[key];
+          finishIdentity();
         }
     result.learnedSubject = localSubject(identity);
     advanceKnowledgeRevision(world, observerId);
@@ -865,7 +873,9 @@ export function retireRecognitionIdentity(
 ): void {
   if (identity.retained && !identity.authored)
     adjustObserverIdentityAccounting(world, observerId, identity, undefined);
+  const finishIdentity = prepareObserverIdentityReplacement(world, observerId, identity, undefined);
   delete world.observerIdentities![observerId]![key];
+  finishIdentity();
   for (const source of recognitionSupportSources(identity.nameEvidenceIds ?? []))
     if ('family' in source && isTemporalReceiptSource(source))
       releaseTemporalSupport(world, observerId, source.id);
@@ -1254,7 +1264,11 @@ export function revokeRecognitionEvidence(
     const key = identity.individualId ?? keyByIdentity.get(original);
     if (key && identity.retained && !commitObserverIdentity(world, actorId, key, identity))
       throw new Error('Revoked recognition did not fit its prior personal allocation.');
-    else if (key && !identity.retained) recordMap![key] = identity;
+    else if (key && !identity.retained) {
+      const finishIdentity = prepareObserverIdentityReplacement(world, actorId, original, identity);
+      recordMap![key] = identity;
+      finishIdentity();
+    }
     changed = true;
   }
   if (changed) advanceKnowledgeRevision(world, actorId);
