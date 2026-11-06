@@ -1488,12 +1488,31 @@ async function main() {
             boundary.measurementStartsAtUnixMs !== activePhase.startedAtUnixMs
           )
             return;
-          const observedAtUnixMs = performance.timeOrigin + performance.now();
+          const observedAt = performance.now();
+          const observedAtUnixMs = performance.timeOrigin + observedAt;
+          const offeredCpu = process.cpuUsage(activePhase.cpu);
+          const offeredThreadCpu = activePhase.threadCpu
+            ? process.threadCpuUsage(activePhase.threadCpu)
+            : null;
+          const offeredElapsed = (observedAt - activePhase.start) / 1000;
           activePhase.clockDebtEnd = {
             ...boundary,
             observedAtUnixMs,
             childLatenessMs: boundary.offeredAtUnixMs - boundary.expectedAtUnixMs,
             receiptLagMs: observedAtUnixMs - boundary.offeredAtUnixMs,
+            // Completion below also includes outstanding-request drain. Capture
+            // clock and CPU at the same offered-load boundary before that wait.
+            offerStopCpu: {
+              scope:
+                'Phase begin through first parent observation of offer-stop IPC, before request drain; child lateness and IPC lag remain explicit.',
+              elapsedSeconds: offeredElapsed,
+              advancedSimSeconds: game.service.world.simTime - activePhase.sim,
+              expectedSimSeconds: offeredElapsed * config.baseRatio * game.service.speed,
+              mainThreadCpuMs: offeredThreadCpu
+                ? (offeredThreadCpu.user + offeredThreadCpu.system) / 1000
+                : null,
+              serverCpuMs: (offeredCpu.user + offeredCpu.system) / 1000,
+            },
             simTime: game.service.world.simTime,
             pendingSimSeconds: game.service.pendingSimSeconds,
             paused: game.service.paused,
