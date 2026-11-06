@@ -211,15 +211,6 @@ export class NativeStatusPreparation {
     }
     return result;
   }
-  private currentChecks(world: WorldState) {
-    if (!nativeChangesComplete(world)) return;
-    let checks = this.checks.get(world);
-    const changed = takeNativeChanges(world, this, 'status');
-    if (!changed) this.checks.set(world, (checks = new Map()));
-    else for (const id of changed) checks?.delete(id);
-    if (!checks) this.checks.set(world, (checks = new Map()));
-    return checks;
-  }
   private valid(world: WorldState, entity: Entity): Entry | undefined {
     const entry = this.entries.get(entity.id);
     if (
@@ -230,7 +221,13 @@ export class NativeStatusPreparation {
       statusDefinitions(world) !== entry.definitions
     )
       return;
-    const checks = this.currentChecks(world);
+    const reusable = nativeChangesComplete(world);
+    let checks = reusable ? this.checks.get(world) : undefined;
+    if (reusable) {
+      const changed = takeNativeChanges(world, this, 'status');
+      if (!changed) this.checks.set(world, (checks = new Map()));
+      else for (const id of changed) checks?.delete(id);
+    }
     // Retained signatures are subject-local; foreign inputs do not qualify.
     // Their owned deadline above handles elapsed time. An unrelated body's move
     // must not reconstruct every subject's unchanged rule inputs.
@@ -241,7 +238,10 @@ export class NativeStatusPreparation {
         !!signature &&
         signature.length === entry.signature.length &&
         signature.every((value, i) => value === entry.signature[i]);
-    checks?.set(entity.id, { entry, valid });
+    if (reusable) {
+      if (!checks) this.checks.set(world, (checks = new Map()));
+      checks.set(entity.id, { entry, valid });
+    }
     return valid ? entry : undefined;
   }
   private retain(
@@ -253,16 +253,13 @@ export class NativeStatusPreparation {
     const definitions = statusDefinitions(world);
     if (!isImmutableData(definitions) || !isImmutableData(readOnlyDraftView(world.moduleManifest)))
       return;
-    // Drain every subject's invalidation before advancing this reader's cursor.
-    // The exact signature below certifies only the entry retained here.
-    const checks = this.currentChecks(world);
     const signature = this.signature(world, entity, definitions);
     if (!signature) {
       this.entries.delete(entity.id);
       return;
     }
     const attributeRates = statusAttributeRates(rates);
-    const entry: Entry = {
+    this.entries.set(entity.id, {
       definitions,
       manifest: readOnlyDraftView(world.moduleManifest),
       signature,
@@ -271,9 +268,7 @@ export class NativeStatusPreparation {
       rates,
       attributeRates: attributeRates.get(entity.id) ?? new Map(),
       reconciled,
-    };
-    this.entries.set(entity.id, entry);
-    checks?.set(entity.id, { entry, valid: true });
+    });
   }
   retainParticipants(ids: readonly string[]): void {
     const current = new Set(ids);
