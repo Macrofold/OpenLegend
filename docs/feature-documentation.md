@@ -8,6 +8,8 @@ Project feature specifications and technical designs follow [Project status and 
 
 A feature specification describes purpose, supported behavior, target scenarios and user/agent journeys, scope/non-goals, meaningful failure cases, acceptance criteria and staged capabilities. Distinguish implemented behavior from accepted targets and proposals.
 
+When the selected feature needs new or changed visuals or motion, identify the intended visible result, the state or action it represents, and its presentation consumer. Identify suitable existing assets and actual gaps; consult only the matching [production route](production-workflows/README.md#choose-the-route), and track necessary production, integration and acceptance in the feature's existing tracker. This does not require new art or a research review when existing assets already answer the scenario.
+
 For costly qualification, specify the workload and distinguish a required pass, required measurement, exploration and human/external acceptance. State what a failed result means; do not silently create a capacity promise.
 
 Its technical design describes semantic owners and callers, contracts/data flow, persistence/migration, security/privacy and authority, performance, extension seams, stages, verification and tradeoffs/open decisions. Relevant world-specific choices remain under the world’s own contract.

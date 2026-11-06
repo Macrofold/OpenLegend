@@ -10,7 +10,7 @@ Translate the existing brief rather than asking Mike to fill another form. Use t
 
 1. **Name the result and its purpose.** Use the existing Purpose field: what should someone notice, understand or enjoy, and where will they see or use it? Recognizing a returning person, reading a creature's preparation, understanding an invented tool's construction and enjoying a beautiful place are all valid purposes. A focused repair can simply name the defect; it needs no new gameplay justification.
 2. **Start from the exact source.** Identify the accepted asset/reference and relevant look rules. Separate identity and construction locks from the permitted changes. A provisional or rejected source is not an approved starting point.
-3. **Locate the missing quality.** Decide whether the problem lies in form, camera/presentation, material, motion or a capability the tool does not supply. Use the relevant section below; extra detail or a longer prompt is not a general repair.
+3. **Choose the creative opportunity or needed correction.** For new work, identify the forms, material contrasts, expressive poses or spatial arrangements that could make the intended experience distinctive. For an existing result, locate the issue in form, camera/presentation, material, motion or a capability the tool does not supply. Use the relevant section below; extra detail or a longer prompt is not a general repair.
 4. **Write the matching operation.** Give references distinct jobs, describe observable changes, and select only supported controls. Keep the current candidate count and stopping point. For a prompt-only request, deliver the text and material assumptions here; do not dispatch generation or create a study folder just to complete an outline.
 5. **When execution is requested, inspect and finish within that scope.** Compare the actual output with the named purpose and locks using the existing profile checks. Repair the relevant defect through its owning operation, preserve the result in the existing record and stop at the requested boundary. A prototype does not acquire a polish campaign, additional states or family qualification from this guide.
 
@@ -54,7 +54,7 @@ Use the [clean-view procedure](3d-models.md#step-3--make-clean-reference-views) 
 
 Ask for different solutions to an unresolved design question, not arbitrary detail changes. Use the workflow's selected number of candidates and approval points. A useful variation changes silhouette, construction or identity while holding accepted facts and the look constant. Do not claim that an illustrated mechanism already works in the game.
 
-> Explore [the unresolved visual choice] within [the approved brief]. Keep [identity, scale relationships and look]. The allowed variation is [one meaningful design axis]. Present the result so [the decision] is visible. Treat [unconfirmed feature] as a proposal, not established world content.
+> Explore [the unresolved visual choices] within [the approved brief]. Keep [identity, scale relationships and look]. The allowed variation is [the meaningful design choices open for exploration]. Present the result so [the decision] is visible. Treat [unconfirmed feature] as a proposal, not established world content.
 
 ### Targeted image correction
 
