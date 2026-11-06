@@ -88,7 +88,7 @@ No unbounded fixed-point loop is allowed. Bound zero-time transitions, computati
 
 ## Host and persistence
 
-[S2's proposed offered-horizon experiment](projects/bookkeeping-simplification-tech-design.md#s2--end-the-invocation-for-a-consumer-not-an-exhausted-old-offer) may avoid finalizing an uncontended invocation solely for its exhausted old offer, without changing the limits below. It is unimplemented, excludes transient steering/release inputs, preserves every endpoint's native effects and admits only newly elapsed time; no cross-operation draft retention or new clock policy is selected.
+[Offered-horizon continuation (S2)](projects/bookkeeping-simplification-tech-design.md#s2--end-the-invocation-for-a-consumer-not-an-exhausted-old-offer) is not selected: the existing work meter cannot prove safe continuation without risking rollback of an already completed horizon. Keep the coherent return and direct-call duration guarantees below; no new clock policy or cross-operation draft retention is selected.
 
 **Current durability conversion under verification:** [BK14](maintainers/production-data.md#database-work-reduction) publishes ordinary accepted effects before disk, with one-second save opportunities and five-second/byte admission backpressure under [BKS-L08](limits/persistence.md#bks-l08--ordinary-live-acceptance-target). Accepted and durable cuts retain actual clock/debt and physical chronology. Protected operations retain durable barriers; operating acceptance remains open.
 
