@@ -12,6 +12,7 @@ import {
   type TemporalReceiptLocator,
   type TemporalValue,
   type TemporalPage,
+  type ReceivedBatch,
 } from '@open-legend/domain';
 import type { StorySource } from './history.js';
 import { receivedValueSql } from './temporal-page-storage.js';
@@ -258,7 +259,7 @@ function storyTemporalBlockEligibleSql(alias: string): string {
       AND (a.pressure_batch_order IS NULL OR ${receiptPositionSql(alias)}>(a.pressure_batch_order,a.pressure_entry,a.pressure_member)))`;
 }
 function storyTemporalOccurrenceSql(alias: string): string {
-  return `SELECT e.value AS entry FROM jsonb_array_elements(c.payload::jsonb->'batches') b(value)
+  return `SELECT e.value AS entry,b.value->'batchOrder' AS batch_order FROM jsonb_array_elements(c.payload::jsonb->'batches') b(value)
     CROSS JOIN LATERAL jsonb_array_elements(b.value->'entries') e(value)
     WHERE (b.value->>'batchOrder')::bigint=${receiptBatchSql(alias)}
       AND (e.value->>'entryIndex')::bigint=${receiptEntrySql(alias)} AND e.value->>'kind'='occurrence'
@@ -291,9 +292,11 @@ export function storyAccountSql(alias = 'p'): string {
       AND v.actor_id=${alias}.actor_id AND v.source_kind=${kind}
       AND v.source_id=${alias}.event_id AND v.revision=${revision}
     UNION ALL
-    SELECT json_build_object('receipt',o.entry->'receipt',
-      'values',COALESCE((SELECT json_agg(${receivedValueSql('c.world_id', "(f.value->'valueRef')::json")})
-        FROM jsonb_array_elements(o.entry->'receipt'->'facets') f(value)
+    SELECT json_build_object('batch',json_build_object('actorId',c.actor_id,
+      'physicalLife',c.physical_life,'epoch',c.receipt_epoch,'batchOrder',o.batch_order,
+      'entries',json_build_array(o.entry)),
+      'values',COALESCE((SELECT json_agg(${receivedValueSql('c.world_id', "(f.value->'valueRef')::json")} ORDER BY f.ordinal)
+        FROM jsonb_array_elements(o.entry->'receipt'->'facets') WITH ORDINALITY f(value,ordinal)
         WHERE ${receivedValueSql('c.world_id', "(f.value->'valueRef')::json")}->>'kind' IN ('event','sound')),'[]'::json))::text AS payload
       FROM ${storyTemporalBlockSql(alias)} c CROSS JOIN LATERAL (${storyTemporalOccurrenceSql(alias)}) o
       WHERE ${kind}='temporal' AND ${storyTemporalBlockEligibleSql(alias)}
@@ -310,9 +313,15 @@ export function storyTemporalPreparationBytesSql(alias = 'p'): string {
 function temporalStorySelection(stored: StoredStorySource, body: unknown) {
   if (stored.account.kind !== 'temporal' || typeof body !== 'string')
     throw new Error('Recent personal receipt is unavailable.');
-  const selected = JSON.parse(body) as { receipt: TemporalReceipt; values: TemporalValue[] };
-  if (!selected.receipt) throw new Error('Recent personal receipt is unavailable.');
-  return selected;
+  const selected = JSON.parse(body) as { batch: ReceivedBatch; values: TemporalValue[] };
+  const entry = selected.batch?.entries?.[0];
+  if (!entry || entry.kind !== 'occurrence')
+    throw new Error('Recent personal receipt is unavailable.');
+  // SQL selects one compact native entry. Restore its inherited owner, clocks
+  // and proof dictionaries through the same owner used by live/cold readers.
+  const receipt = materializeReceivedEntry(selected.batch, entry);
+  if (!receipt) throw new Error('Recent personal receipt is unavailable.');
+  return { receipt, values: selected.values };
 }
 
 function decodeTemporalStoryAccount(

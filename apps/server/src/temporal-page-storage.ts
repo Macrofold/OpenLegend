@@ -11,6 +11,9 @@ import {
   type ReceivedBatch,
   type ReceivedAddress,
   type WorldState,
+  type ReceivedValueLookup,
+  type CapturedTemporalHistoryContext,
+  captureTemporalReadContext,
 } from '@open-legend/domain';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 import type { SqlDatabase } from './store.js';
@@ -23,6 +26,54 @@ export interface PendingTemporalPage {
   replacement: boolean;
   deleted?: true;
   reservedBytes: number;
+}
+/** Selected immutable inputs for a SQL read of the accepted, unsaved suffix.
+ * Capture does no packing; the actual temporal-table consumer shares the save
+ * projection without retaining a world root or borrowing later disclosure.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#63-reads-while-progress-is-unsaved */
+type TemporalStorageActor = Pick<CapturedTemporalHistoryContext, 'frontier' | 'disclosure'>;
+export interface TemporalStorageContext {
+  readonly id: string;
+  readonly sources: ReceivedValueLookup;
+  readonly actors: ReadonlyMap<string, TemporalStorageActor>;
+}
+export type TemporalStorageSource = WorldState | TemporalStorageContext;
+export function captureTemporalStorageContext(
+  world: WorldState,
+  intents: Iterable<PendingTemporalPage>,
+): TemporalStorageContext {
+  const actors = new Map<string, TemporalStorageActor>();
+  for (const { after: page } of intents) {
+    if (!actors.has(page.actorId))
+      actors.set(page.actorId, {
+        frontier: world.experience?.temporal?.actors[page.actorId]?.frontier,
+        disclosure: captureTemporalReadContext(world, page.actorId),
+      });
+  }
+  // Internal unscoped metadata reads retain this immutable payload index without
+  // walking it. An actor-scoped reader must select its references before export.
+  return { id: world.id, actors, sources: world.receivedValues?.sources ?? {} };
+}
+export function selectTemporalStorageContext(
+  context: TemporalStorageContext,
+  intents: Iterable<PendingTemporalPage>,
+): TemporalStorageContext {
+  const actors = new Map<string, TemporalStorageActor>();
+  const sources: Record<string, ReceivedValueLookup[string]> = {};
+  for (const { after: page } of intents) {
+    const actor = context.actors.get(page.actorId);
+    if (actor) actors.set(page.actorId, actor);
+    for (const id of temporalPageReferences(page)) {
+      const source = context.sources[id];
+      if (source) sources[id] = source;
+    }
+  }
+  return { id: context.id, actors, sources };
+}
+function projectionInputs(world: TemporalStorageSource, actorId: string) {
+  return 'actors' in world
+    ? { sources: world.sources, disclosure: world.actors.get(actorId)?.disclosure }
+    : { world, sources: world.receivedValues?.sources };
 }
 export const TEMPORAL_PAGE_TARGET_BYTES = 64 * 1024;
 export const temporalPageRecordId = (actorId: string, id: string) =>
@@ -109,13 +160,12 @@ const encodings = new WeakMap<object, StoredTemporalPage>();
 const residentBytes = new WeakMap<object, number>();
 export function encodeTemporalPage(
   page: TemporalPage,
-  world: WorldState,
+  world: TemporalStorageSource,
   prepared?: ReturnType<typeof temporalPageMetadata>,
 ): StoredTemporalPage {
   const existing = encodings.get(page);
   if (existing) return existing;
-  const projection =
-    prepared ?? temporalPageMetadata(page, { world, sources: world.receivedValues?.sources });
+  const projection = prepared ?? temporalPageMetadata(page, projectionInputs(world, page.actorId));
   const metadata = { ...projection, references: [...projection.references].sort() };
   const payload = serializeTemporalPage(page);
   const lookupBuckets = unique([
@@ -133,7 +183,7 @@ export function encodeTemporalPage(
  * must not retain a facet-split predecessor chain or a per-member directory. */
 export function packTemporalSave(
   intents: Iterable<PendingTemporalPage>,
-  world: WorldState,
+  world: TemporalStorageSource,
   acknowledgedBefore: number | undefined,
 ): StoredTemporalPage[] {
   const result: StoredTemporalPage[] = [];
@@ -162,14 +212,21 @@ export function packTemporalSave(
       result.push({ ...encoded, replacement: intent.replacement });
       continue;
     }
-    const frontier = world.experience?.temporal?.actors[source.actorId]?.frontier;
+    const frontier =
+      'actors' in world
+        ? world.actors.get(source.actorId)?.frontier
+        : world.experience?.temporal?.actors[source.actorId]?.frontier;
+    const inputs = projectionInputs(world, source.actorId);
     const appended = source.batches.filter((batch) => {
       if (acknowledgedBefore !== undefined && batch.batchOrder < acknowledgedBefore) return false;
       const last = batch.entries.at(-1);
       if (!last) return false;
       if (!frontier) return true;
-      const header = receivedBatchChargeDirectory(batch, world.receivedValues?.sources ?? {}, world)
-        .entries[0];
+      const header = receivedBatchChargeDirectory(
+        batch,
+        inputs.sources ?? {},
+        inputs.disclosure ?? inputs.world,
+      ).entries[0];
       if (
         header &&
         frontier.expiredThroughTime !== null &&
@@ -197,7 +254,7 @@ export function packTemporalSave(
   for (const { prototype, batches } of owners.values()) {
     const encode = (selected: readonly ReceivedBatch[]): StoredTemporalPage => {
       const page: TemporalPage = { ...prototype, batches: [...selected] };
-      const metadata = temporalPageMetadata(page, { world });
+      const metadata = temporalPageMetadata(page, projectionInputs(world, page.actorId));
       const id = JSON.stringify([
         prototype.actorId,
         prototype.physicalLife,

@@ -1,5 +1,5 @@
 import { temporalPageReferences } from '@open-legend/domain';
-import type { PendingTemporalPage } from './temporal-page-storage.js';
+import { selectTemporalStorageContext, type PendingTemporalPage } from './temporal-page-storage.js';
 import { RECORD_ACTOR_PATHS, RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
 import { mayReadLiveRecordTable, type LiveReadCuts } from './live-read-overlay.js';
 import type { RecordChanges, RowChange } from './world-records.js';
@@ -266,6 +266,17 @@ export function selectActorLiveReadCuts(
       return {
         through: cut.through,
         changes,
+        ...(cut.temporalContext && changes.temporal?.size
+          ? {
+              temporalContext: selectTemporalStorageContext(
+                cut.temporalContext,
+                changes.temporal.values(),
+              ),
+            }
+          : {}),
+        ...(cut.temporalAcknowledgedBefore === undefined
+          ? {}
+          : { temporalAcknowledgedBefore: cut.temporalAcknowledgedBefore }),
         ...(cut.history ? { history: selectedHistory(cut.history, actors) } : {}),
         ...(versions ? { versions } : {}),
         ...(captureSources ? { getSources: captureSources(input.worldId, changes, versions) } : {}),

@@ -1,4 +1,5 @@
 import type { WorldState } from './types.js';
+import type { TemporalReadContext } from './temporal-read-context.js';
 import type { ReceivedValueLookup } from './received-values.js';
 import { receivedValueAt } from './received-values.js';
 import type {
@@ -196,7 +197,11 @@ export function receivedBatchChargeDirectory(
 }
 export function temporalPageMetadata(
   page: TemporalPage,
-  options: { world?: WorldState; sources?: ReceivedValueLookup } = {},
+  options: {
+    world?: WorldState;
+    sources?: ReceivedValueLookup;
+    disclosure?: TemporalReadContext;
+  } = {},
 ): TemporalPageMetadata {
   const sources = options.sources ?? options.world?.receivedValues?.sources ?? {},
     subjects = new Set<string>(),
@@ -205,7 +210,7 @@ export function temporalPageMetadata(
     individuals = new Set<string>(),
     occurrences = new Set<string>();
   const blockDirectories = page.batches.map((batch) =>
-      receivedBatchChargeDirectory(batch, sources, options.world),
+      receivedBatchChargeDirectory(batch, sources, options.disclosure ?? options.world),
     ),
     headers = blockDirectories.flatMap((directory) => directory.entries);
   for (const batch of page.batches)

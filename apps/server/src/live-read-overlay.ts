@@ -1,7 +1,17 @@
 import { temporalPageReferences } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
-import { mergeRowChange, type RecordChanges, type RowChange } from './world-records.js';
+import {
+  materializeTemporalChanges,
+  mergeRowChange,
+  type RecordChanges,
+  type RowChange,
+} from './world-records.js';
+import {
+  selectTemporalStorageContext,
+  temporalPageRecordId,
+  type TemporalStorageContext,
+} from './temporal-page-storage.js';
 import {
   mergeSourceVersionChanges,
   sourceVersionKey,
@@ -39,6 +49,8 @@ export interface LiveReadCut {
   history?: PreparedHistoryRead;
   getSources?: (actorId?: string) => PreparedMemorySources;
   versions?: SourceVersionPlan;
+  temporalContext?: TemporalStorageContext;
+  temporalAcknowledgedBefore?: number;
 }
 export interface LiveReadCuts {
   worldId: string;
@@ -240,6 +252,24 @@ export class LiveReadOverlay {
       if (Object.entries(scope).every(([field, value]) => row[field] === value))
         table.rows.delete(key);
   }
+  private canonicalChanges(cut: LiveReadCut, table: string): RecordChanges {
+    if (table !== 'mind_temporal_pages' || !cut.changes.temporal?.size) return cut.changes;
+    if (!cut.temporalContext || cut.temporalAcknowledgedBefore === undefined)
+      throw new MemoryPreparationError();
+    let changes = cut.changes,
+      context = cut.temporalContext;
+    // An explicit internal cut can later acquire an actor scope. Select before
+    // packing, not merely while discarding the other actors' encoded SQL rows.
+    if (this.actor && (context.actors.size !== 1 || !context.actors.has(this.actor.actorId))) {
+      const actorId = this.actor.actorId;
+      const temporal = new Map(
+        [...changes.temporal!].filter(([, intent]) => intent.after.actorId === actorId),
+      );
+      changes = { ...changes, temporal };
+      context = selectTemporalStorageContext(context, temporal.values());
+    }
+    return materializeTemporalChanges(changes, context, cut.temporalAcknowledgedBefore);
+  }
   private netDeletes(table: string): string[] {
     let cached = this.deletes.get(table);
     if (cached) return cached;
@@ -247,6 +277,12 @@ export class LiveReadOverlay {
     for (const cut of this.cuts) {
       for (const id of cut.changes.deletes.get(table) ?? []) removed.add(id);
       for (const row of cut.changes.writes.get(table) ?? []) removed.delete(row.id);
+      // A physical replacement has its canonical address already. Discovering
+      // deletions for history metadata must never pack the native append suffix.
+      if (table === 'mind_temporal_pages')
+        for (const intent of cut.changes.temporal?.values() ?? [])
+          if (intent.replacement && !intent.deleted)
+            removed.delete(temporalPageRecordId(intent.after.actorId, intent.after.id));
     }
     cached = [...removed];
     this.deletes.set(table, cached);
@@ -279,8 +315,9 @@ export class LiveReadOverlay {
       actorColumn = fields.indexOf('actor_id');
     const rows = new Map<string, RowChange>();
     for (const cut of this.cuts) {
-      for (const id of cut.changes.deletes.get(name) ?? []) rows.delete(id);
-      for (const row of cut.changes.writes.get(name) ?? []) {
+      const changes = this.canonicalChanges(cut, name);
+      for (const id of changes.deletes.get(name) ?? []) rows.delete(id);
+      for (const row of changes.writes.get(name) ?? []) {
         if (
           this.actor &&
           actorColumn >= 0 &&

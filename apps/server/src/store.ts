@@ -57,6 +57,7 @@ import {
 } from './history-residency.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
 import {
+  materializeTemporalChanges,
   WorldRecords,
   mergeRecordChanges,
   retainedSourceTables,
@@ -1252,17 +1253,13 @@ export class SqlGameRepository implements GameRepository {
       : undefined;
     if (sameWorldBaseline && acknowledgedBefore === undefined)
       throw new Error('The committed temporal allocation cut is unavailable.');
-    const changes = this.records.materializeTemporalChanges(
-      nativeChanges,
-      state.world,
-      acknowledgedBefore,
-    );
+    const changes = materializeTemporalChanges(nativeChanges, state.world, acknowledgedBefore);
     if (historyProjection?.restore) {
       // Installation replaces recent history, including physically retained but
       // logically retired rows absent from the complete readable predecessor.
       // Reinsert the checkpoint's complete batches instead of diffing that gap.
       const tables = new Set(['mind_temporal_pages']);
-      const replacement = this.records.materializeTemporalChanges(
+      const replacement = materializeTemporalChanges(
         this.records.prepare(undefined, state, tables),
         state.world,
         undefined,

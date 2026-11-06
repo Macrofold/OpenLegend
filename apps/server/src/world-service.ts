@@ -1,5 +1,9 @@
 import { nextRecentRetentionAt, nextAccountRetentionAt } from './retention-deadlines.js';
 import { selectActorLiveReadCuts } from './actor-record-selection.js';
+import {
+  captureTemporalStorageContext,
+  selectTemporalStorageContext,
+} from './temporal-page-storage.js';
 import { releaseIdentityAllocationProof, preserveIdentityHighWater } from '@open-legend/domain';
 import { applyAccountRetentionPlan } from './account-retention.js';
 import { retireRecentHistory } from './recent-retention.js';
@@ -1977,6 +1981,10 @@ export class WorldService {
     if (held) return held;
     const historyActors = new Set<string>(actor ? [actor.actorId] : []);
     const worldId = this.saved?.world.id ?? '';
+    const pendingCuts = [this.inFlightSave, this.pendingSave].filter(
+      (pending): pending is PendingWorldSave & { state: SavedWorld } => !!pending?.state,
+    );
+    let temporalFloor = this.durable.nextId;
     const cut: import('./live-read-overlay.js').LiveReadCuts = {
       worldId,
       timeline: this.timelineId,
@@ -1986,8 +1994,9 @@ export class WorldService {
       durableSequence: this.durableSequence,
       revision: this.persistedRevision,
       inFlightThrough: this.inFlightSave?.through,
-      cuts: [this.inFlightSave, this.pendingSave].flatMap((pending) => {
-        if (!pending?.state) return [];
+      cuts: pendingCuts.map((pending) => {
+        const temporalAcknowledgedBefore = temporalFloor;
+        temporalFloor = pending.state.world.nextId;
         // Capture only immutable pending rows and selected received inputs. No
         // old world/entity/catalogue root leaves the writer with a cold reader.
         const changes = pending.changes(),
@@ -2010,7 +2019,14 @@ export class WorldService {
           getSources = this.store.memories.captureSources(worldId, changes, versions);
           this.pendingSourceReaders.set(changes, getSources);
         }
-        return [{ through: pending.through, changes, history, versions, getSources }];
+        return {
+          through: pending.through,
+          changes,
+          history,
+          versions,
+          getSources,
+          temporalAcknowledgedBefore,
+        };
       }),
       historyEligibility: new Map(),
     };
@@ -2024,6 +2040,18 @@ export class WorldService {
           this.store.memories?.captureSources.bind(this.store.memories),
         )
       : cut;
+    // Filter the native intents before capturing their immutable decoding inputs.
+    // Packing remains lazy, including for metadata-only maintenance reads.
+    for (const [index, selectedCut] of selected.cuts.entries())
+      if (selectedCut.changes.temporal?.size) {
+        const context = captureTemporalStorageContext(
+          pendingCuts[index]!.state.world,
+          selectedCut.changes.temporal.values(),
+        );
+        selectedCut.temporalContext = actor
+          ? selectTemporalStorageContext(context, selectedCut.changes.temporal.values())
+          : context;
+      }
     this.liveReadCache.set(scope, selected);
     return selected;
   }

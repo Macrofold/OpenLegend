@@ -279,25 +279,32 @@ export async function projectView(
   const milestones = service.milestonesFor(scope.actorId);
   const storageError = service.storageError;
   const telemetryRevision = service.telemetryRevision;
+  const player = entityGet(world.entities, scope.actorId)!;
+  const currentEvidence = world.perceptionEvidence?.[scope.actorId];
+  // Current membership and historical-role links must share the grant owner's
+  // inputs. Geometry can invalidate a lease without changing its stored contact.
+  const currentBodyInputs = [
+    world.entities,
+    world.moduleManifest,
+    world.statusEffectPolicy,
+    currentEvidence?.current,
+    currentEvidence?.visualConfirmation,
+    currentEvidence?.life,
+    currentEvidence?.observer?.physicalLife,
+    world.sensory,
+    capabilityBlocked(world, player, 'perception'),
+  ];
   const observation = {
     inventory: memo(
       'ownedItems',
       [entityGet(world.entities, scope.actorId)?.inventoryRevision],
       () => inventoryFor(world, scope.actorId),
     ),
-    visibleEntities: memo(
-      'visibleEntities',
-      [
-        world.entities,
-        world.moduleManifest,
-        world.statusEffectPolicy,
-        world.perceptionEvidence?.[scope.actorId],
-      ],
-      () =>
-        currentObservedBodyIds(world, scope.actorId).flatMap((id) => {
-          const entity = entityGet(world.entities, id);
-          return entity ? [entity] : [];
-        }),
+    visibleEntities: memo('visibleEntities', currentBodyInputs, () =>
+      currentObservedBodyIds(world, scope.actorId).flatMap((id) => {
+        const entity = entityGet(world.entities, id);
+        return entity ? [entity] : [];
+      }),
     ),
     knownRecipes: memo('knownRecipes', [world.knowledge[scope.actorId], world.recipes], () =>
       (world.knowledge[scope.actorId] ?? [])
@@ -309,7 +316,6 @@ export async function projectView(
   for (const id of cache.entities.keys()) if (!visibleIds.has(id)) cache.entities.delete(id);
   for (const key of cache.values.keys())
     if (key.startsWith('entity:') && !visibleIds.has(key.slice(7))) cache.values.delete(key);
-  const player = entityGet(world.entities, scope.actorId)!;
   const sightConfirmedThrough = currentSightConfirmedThrough(world, player.id);
   // The receiver's actual completed sample is shared transport metadata. Unequal
   // detail times stay explicit; the world clock can never fill a missing sample.
@@ -1645,14 +1651,9 @@ export async function projectView(
       // without another event. Never memoize that body grant on history alone.
       [
         events,
-        world.perceptionEvidence?.[player.id]?.current,
-        world.perceptionEvidence?.[player.id]?.visualConfirmation,
+        ...currentBodyInputs,
         world.observerIdentities?.[player.id],
         world.perceptionEpisodes?.[player.id],
-        world.sensory,
-        world.entities,
-        world.moduleManifest,
-        capabilityBlocked(world, player, 'perception'),
         service.timelineId,
       ],
       () => {

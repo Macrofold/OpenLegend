@@ -12,6 +12,8 @@ import {
   captureTemporalPageChange,
   mergeTemporalPageIntent,
   packTemporalSave,
+  temporalPageColumns,
+  type TemporalStorageSource,
   temporalPageIntentKey,
   temporalPageRecordId,
   temporalPagePosition,
@@ -90,6 +92,60 @@ const encodedTemporalCuts = new WeakMap<
   RecordChanges,
   { acknowledgedBefore: number | undefined; changes: RecordChanges }
 >();
+/** Convert the detached native suffix once, outside simulation advancement. */
+export function materializeTemporalChanges(
+  changes: RecordChanges,
+  world: TemporalStorageSource,
+  acknowledgedBefore: number | undefined,
+): RecordChanges {
+  if (!changes.temporal?.size) return changes;
+  const cached = encodedTemporalCuts.get(changes);
+  if (cached && cached.acknowledgedBefore === acknowledgedBefore) return cached.changes;
+  const writes = new Map(changes.writes);
+  const rows = [...(writes.get('mind_temporal_pages') ?? [])];
+  const node = RECORD_NODES.get('mind_temporal_pages')!;
+  const encodedPages = packTemporalSave(changes.temporal.values(), world, acknowledgedBefore);
+  for (const encoded of encodedPages) {
+    const page = encoded.native;
+    const columns = temporalPageColumns(encoded);
+    const path = ['world', 'experience', 'temporal', 'actors', page.actorId, 'pages', page.id];
+    rows.push({
+      id: temporalPageRecordId(page.actorId, page.id),
+      parent: recordId(path.slice(0, -2)),
+      slot: page.id,
+      position: temporalPagePosition(page),
+      payload: encoded.payload,
+      extra: Object.keys(node.columns!).map((name) => columns[name]),
+      create: !encoded.replacement,
+      logicalRemoval: encoded.replacement === true,
+      ...(encoded.replacement ? {} : { receivedValueAdditions: encoded.metadata.references }),
+    });
+  }
+  writes.set('mind_temporal_pages', rows);
+  const result = {
+    ...changes,
+    writes,
+    rows: changes.rows + encodedPages.length,
+    temporal: undefined,
+    temporalEdits: [
+      ...(changes.temporalEdits ?? []),
+      ...[...changes.temporal.values()].filter((intent) => intent.replacement || intent.deleted),
+    ],
+    savedTemporalPages: [
+      ...(changes.savedTemporalPages ?? []),
+      ...encodedPages.map((page) => page.native),
+    ],
+    savedTemporalActors: [
+      ...new Set([
+        ...(changes.savedTemporalActors ?? []),
+        ...[...changes.temporal.values()].map((intent) => intent.after.actorId),
+      ]),
+    ],
+  };
+  encodedTemporalCuts.set(changes, { acknowledgedBefore, changes: result });
+  return result;
+}
+
 type Value = unknown;
 const personalMetadataTables = new Set([
   'mind_temporal_actors',
@@ -1108,60 +1164,6 @@ export class WorldRecords {
       }
     }
     return changes;
-  }
-  /** Convert the detached native suffix once, outside simulation advancement. */
-  materializeTemporalChanges(
-    changes: RecordChanges,
-    world: SavedWorld['world'],
-    acknowledgedBefore: number | undefined,
-  ): RecordChanges {
-    if (!changes.temporal?.size) return changes;
-    const cached = encodedTemporalCuts.get(changes);
-    if (cached && cached.acknowledgedBefore === acknowledgedBefore) return cached.changes;
-    const writes = new Map(changes.writes);
-    const rows = [...(writes.get('mind_temporal_pages') ?? [])];
-    const node = RECORD_NODES.get('mind_temporal_pages')!;
-    const encodedPages = packTemporalSave(changes.temporal.values(), world, acknowledgedBefore);
-    for (const encoded of encodedPages) {
-      const page = encoded.native;
-      const path = ['world', 'experience', 'temporal', 'actors', page.actorId, 'pages', page.id];
-      rows.push({
-        id: temporalPageRecordId(page.actorId, page.id),
-        parent: recordId(path.slice(0, -2)),
-        slot: page.id,
-        position: temporalPagePosition(page),
-        payload: encoded.payload,
-        extra: Object.values(node.columns!).map((column) =>
-          column.value(page as unknown as JsonRecord, path, world),
-        ),
-        create: !encoded.replacement,
-        logicalRemoval: encoded.replacement === true,
-        ...(encoded.replacement ? {} : { receivedValueAdditions: encoded.metadata.references }),
-      });
-    }
-    writes.set('mind_temporal_pages', rows);
-    const result = {
-      ...changes,
-      writes,
-      rows: changes.rows + encodedPages.length,
-      temporal: undefined,
-      temporalEdits: [
-        ...(changes.temporalEdits ?? []),
-        ...[...changes.temporal.values()].filter((intent) => intent.replacement || intent.deleted),
-      ],
-      savedTemporalPages: [
-        ...(changes.savedTemporalPages ?? []),
-        ...encodedPages.map((page) => page.native),
-      ],
-      savedTemporalActors: [
-        ...new Set([
-          ...(changes.savedTemporalActors ?? []),
-          ...[...changes.temporal.values()].map((intent) => intent.after.actorId),
-        ]),
-      ],
-    };
-    encodedTemporalCuts.set(changes, { acknowledgedBefore, changes: result });
-    return result;
   }
   async write(
     worldId: string,
