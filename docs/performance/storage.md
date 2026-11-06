@@ -18,6 +18,8 @@ The derived full-text vector/index is prepared after source commit using durable
 
 Captured live reads overlay only the selected actor/table’s immutable pending deltas on one recognized database revision. Apply replacements/removals before selection limits and preserve exact chronological identities. A save/read overlap must map the snapshot to the captured through-sequence; unknown revisions recapture once for a current read or report unavailable preparation for an exact cut. This derived read projection is not another writable store.
 
+When changing compact storage or deferred write paths, exercise accepted-but-unsaved reads, durable SQL hydration and cold restoration through the same owning codec and logical checks; a cold round trip alone does not qualify live reading. Metadata-only paths, including counts and deletion checks, must not indirectly pack bodies. Check an uncached cut so earlier materialization cannot hide that work.
+
 Received changes retain stable logical addresses and compact native owner/clock/source/frame sharing from the first retained write. Current confirmations allocate no historical builder or proof graph. The writer packs complete captured blocks, and block totals plus unique rich-value lists replace exact per-member closure ledgers. Whole-block frontiers govern recent eligibility; cleanup and retained-state export share that meaning. Partial live physical blocks stay intact, current/support ownership remains independent, and finite copied thoughts distinguish ordinary expiry from explicit revocation. [BK24](../projects/bookkeeping-simplification-tech-design.md#15-compact-native-evidence-and-change-history) owns the conversion and its still-open operating qualification.
 
 ### Fast append and deliberate edits
