@@ -3267,11 +3267,21 @@ export function currentFacetConfirmation(
   confirmedThrough: number,
   presenceOnly = false,
 ) {
+  if ('field' in value) {
+    const confirmation = effectiveCurrentCheck(
+      state,
+      value.grant,
+      value.metadata,
+      presenceOnly,
+      value.field.value.kind === 'body' ? value : undefined,
+    );
+    return confirmation && confirmation.through >= confirmedThrough ? confirmation : undefined;
+  }
   return currentConfirmationFor(
     state,
     value.grant,
-    'field' in value ? value.field.value.kind : value.value.kind,
-    'field' in value ? value.metadata.availability : value.availability,
+    value.value.kind,
+    value.availability,
     confirmedThrough,
     presenceOnly,
   );
