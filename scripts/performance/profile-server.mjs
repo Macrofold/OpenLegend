@@ -1502,6 +1502,7 @@ async function main() {
             receiptLagMs: observedAtUnixMs - boundary.offeredAtUnixMs,
             // Completion below also includes outstanding-request drain. Capture
             // clock and CPU at the same offered-load boundary before that wait.
+            // docs/maintainers/performance-profiling.md#full-server-workload
             offerStopCpu: {
               scope:
                 'Phase begin through first parent observation of offer-stop IPC, before request drain; child lateness and IPC lag remain explicit.',
