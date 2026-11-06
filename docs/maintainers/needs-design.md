@@ -213,10 +213,10 @@ The [Enshrouded/Dragonwilds comparison](../../archive/02-research/game-inspirati
 
 #### DG37 — Character appearance: a creator and varied populations
 
-Let players shape their character's face and body, and give every NPC a distinct, believable look, without generating a model per person. The usual implementation shares one parametric body family across all people: one mesh layout and skeleton, shape targets or bone controls for face and body, swappable hair and garments that follow the body's shape, and colour and material values. NPC variety samples the same values from world-owned population ranges with a visual seed; named characters get authored values. The [art workflow's people-family section](../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety) records the analysis and the pipeline consequences:
+Let players shape their character's face and body, and give every NPC a distinct, believable look, without generating a model per person. A possible implementation shares one parametric body family across people: one mesh layout and skeleton, shape targets or bone controls for face and body, swappable hair and garments that follow the body's shape, and colour and material values. NPC variety could sample the same values from world-owned population ranges with a visual seed; named characters get authored values. The [art workflow's people-family section](../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety) records candidate approaches, not an accepted method:
 
 - people are made as a family;
-- each person's look comes from their own concept, wrapped onto a shared base mesh (MPFB's, hidden underneath);
+- an individual concept might be wrapped onto a suitable shared hidden base mesh; MPFB is one candidate, with its stock visible bodies still rejected;
 - pre-built parts are combined per character;
 - offline-baked combinations come first, with runtime assembly later.
 

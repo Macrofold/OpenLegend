@@ -6,7 +6,15 @@ The examples are original, adaptable instructions, not imported vendor prompts o
 
 ## Start with the current brief
 
-Translate the existing brief rather than asking Mike to fill another form. Resolve the subject, intended output, accepted reference, relevant look rules, identity locks, permitted changes and the defect or decision this step addresses. Omit fields that do not affect it. Keep a quick prototype quick: one suitable input and the already-selected candidate count, not an automatic reference sheet, comparison campaign or polish pass.
+Translate the existing brief rather than asking Mike to fill another form. Use this order to connect the decisions already required by the workflow; it is not another production stage:
+
+1. **Name the result and its purpose.** Use the existing Purpose field: what should someone notice, understand or enjoy, and where will they see or use it? Recognizing a returning person, reading a creature's preparation, understanding an invented tool's construction and enjoying a beautiful place are all valid purposes. A focused repair can simply name the defect; it needs no new gameplay justification.
+2. **Start from the exact source.** Identify the accepted asset/reference and relevant look rules. Separate identity and construction locks from the permitted changes. A provisional or rejected source is not an approved starting point.
+3. **Locate the missing quality.** Decide whether the problem lies in form, camera/presentation, material, motion or a capability the tool does not supply. Use the relevant section below; extra detail or a longer prompt is not a general repair.
+4. **Write the matching operation.** Give references distinct jobs, describe observable changes, and select only supported controls. Keep the current candidate count and stopping point. For a prompt-only request, deliver the text and material assumptions here; do not dispatch generation or create a study folder just to complete an outline.
+5. **When execution is requested, inspect and finish within that scope.** Compare the actual output with the named purpose and locks using the existing profile checks. Repair the relevant defect through its owning operation, preserve the result in the existing record and stop at the requested boundary. A prototype does not acquire a polish campaign, additional states or family qualification from this guide.
+
+Omit decisions that do not affect the task. Keep a quick prototype quick: one suitable input and the already-selected candidate count, not an automatic reference sheet, comparison campaign or polish pass. Observable readability or continuity supports an art judgment; whether an encounter or repeated activity is fun needs gameplay evidence, not a provider's self-rating.
 
 There are three different instructions:
 
