@@ -3,10 +3,7 @@ import { readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { activelyParticipates } from './participation-state.js';
 import { isStatusDefinitionActive, statusDefinitions } from './status-capabilities.js';
-import {
-  prepareStatusDefinitionStructure,
-  visitStatusCondition,
-} from './status-condition-references.js';
+import { statusDefinitionConditions, visitStatusCondition } from './status-condition-references.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { isImmutableData } from './records.js';
 import { prepareAttributeForecast, readAttribute } from './world-modules.js';
@@ -39,7 +36,7 @@ function inputs(definitions: StatusEffectDefinition[]): readonly Input[] {
   const retained = compiled.get(definitions);
   if (retained) return retained;
   const result = new Map<string, Input>();
-  for (const { definition, references } of prepareStatusDefinitionStructure(definitions).entries) {
+  for (const definition of definitions) {
     const add = (input: Input) =>
       result.set(
         JSON.stringify({
@@ -48,7 +45,7 @@ function inputs(definitions: StatusEffectDefinition[]): readonly Input[] {
         }),
         input,
       );
-    for (const { condition, sourcePath } of references)
+    for (const { condition, sourcePath } of statusDefinitionConditions(definition))
       visitStatusCondition(condition, sourcePath, (part) => {
         if ('compare' in part || 'hasAttribute' in part) {
           const leaf = 'compare' in part ? part.compare : part.hasAttribute;
