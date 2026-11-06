@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK26–BK27 source is installed; isolated adoption and operating qualification remain open. | 2026-11-06   |
+| Status      | Current progress                                                                           | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------ | ------------ |
+| In progress | BK26–BK27 implementation and comparisons are complete; operating acceptance remains unmet. | 2026-11-06   |
 
 **Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. Architecture used and implementation reconciled 2026-10-31 10:59 UTC on `codex/bookkeeping-runtime-01`, based on `39aa9775a5cf48e4318227410d0ab5625f92db9d`. [BK](../maintainers/production-data.md#bookkeeping-simplification) owns remaining qualification; concurrent unrelated work is outside this project. The [integration contract](attention-and-scenes-runtime-design.md#14-integration-contract-for-the-completed-bk-ru-and-vw-branches) coordinates BK with RU consumers and VW tooling without duplicating this implementation.
 
@@ -863,7 +863,7 @@ No unanswered product choice is required for A. Its main uncertainties are measu
 
 ## 17. Proposed sensory deadlines and attention preparation
 
-**Source implemented; adoption/operating qualification pending. November 6, 2026, 01:33 UTC.** Architecture used for implementation: Macrofold/OpenLegend `cd5b084a4`; installed runtime `0829ec3e0`. [Current evidence](../verification/performance/bookkeeping/2026/2026-11-06-preparation-removal.md) separates connected correctness from pending speed adoption. [Feature behavior](bookkeeping-simplification-feature-spec.md#14-proposed-sensory-deadlines-and-attention-preparation), [BK26](../maintainers/production-data.md#bk26--sensory-deadlines-and-attention-preparation-proposed) and [BKS-L11](../limits/persistence.md#bks-l11--sparse-history-and-bounded-capture-proposal) own scope, delivery and limits. This extends the installed receiving, attention and native-execution owners; it does not select Section 16's conditional direct-field conversion.
+**Implementation and bounded verification complete; performance adoption remains unqualified. November 6, 2026, 03:18 UTC.** Architecture used for implementation: Macrofold/OpenLegend `cd5b084a4`; installed runtime `0829ec3e0`. [Current evidence](../verification/performance/bookkeeping/2026/2026-11-06-preparation-removal.md) records connected correctness, inconclusive individual gains and failed operating acceptance. [Feature behavior](bookkeeping-simplification-feature-spec.md#14-proposed-sensory-deadlines-and-attention-preparation), [BK26](../maintainers/production-data.md#bk26--sensory-deadlines-and-attention-preparation-proposed) and [BKS-L11](../limits/persistence.md#bks-l11--sparse-history-and-bounded-capture-proposal) own scope, delivery and limits. This extends the installed receiving, attention and native-execution owners; it does not select Section 16's conditional direct-field conversion.
 
 ### Diagnosis and choice
 
@@ -977,7 +977,7 @@ Then reuse the complete-opening procedure and unchanged operating gates in Secti
 
 ## 18. Proposed status invalidation and event-only publication
 
-**Source implemented; adoption/operating qualification pending. November 6, 2026, 01:33 UTC.** Architecture used for implementation: Macrofold/OpenLegend `cd5b084a4`; installed runtime `0829ec3e0`. [Current evidence](../verification/performance/bookkeeping/2026/2026-11-06-preparation-removal.md) owns qualification. [Feature behavior](bookkeeping-simplification-feature-spec.md#15-proposed-status-invalidation-and-event-only-publication) and [BK27](../maintainers/production-data.md#bk27--status-invalidation-and-event-only-publication-proposed) own delivery. The [source-backed audit](../verification/performance/bookkeeping/2026/2026-11-05-native-execution.md#source-backed-removal-audit) separates observed work, removable paths and unknown net benefit. These are independent experiments through existing owners, not another runtime/store or a relaxation of gameplay.
+**Implementation and bounded verification complete; performance adoption remains unqualified. November 6, 2026, 03:18 UTC.** Architecture used for implementation: Macrofold/OpenLegend `cd5b084a4`; installed runtime `0829ec3e0`. [Current evidence](../verification/performance/bookkeeping/2026/2026-11-06-preparation-removal.md) owns qualification. [Feature behavior](bookkeeping-simplification-feature-spec.md#15-proposed-status-invalidation-and-event-only-publication) and [BK27](../maintainers/production-data.md#bk27--status-invalidation-and-event-only-publication-proposed) own delivery. The [source-backed audit](../verification/performance/bookkeeping/2026/2026-11-05-native-execution.md#source-backed-removal-audit) separates observed work, removable paths and unknown net benefit. These are independent experiments through existing owners, not another runtime/store or a relaxation of gameplay.
 
 ### N1 — Invalidate status preparation only when its inputs may change
 
@@ -1007,7 +1007,7 @@ Extract that selection from `history-residency.ts` into one shared helper return
 
 Keep `historyWorld` captured before hot-feed trimming and pass it to canonical history preparation: a newly accepted event omitted from the live feed still has to be saved. `projectPlacement` must continue rebinding selected rows to source positions at actual release; preview-selected array indices are not SQL append addresses, because preparation may assign canonical positions later. Failed/refused save or superseding pending work cannot mark history released, claim another native continuation or lose newly accepted events. Preserve successful-save `releasedHistory` and `releaseResidentHistory` after scoped hydration; this proposal removes unused preview work, not real residency management.
 
-S1 targets zero residency/dependency preparation below the live-feed bound and zero temporal/source/summary/occurrence placement solely for event selection above it. Above-bound memory/awareness/pin work and actual history release remain proportional to their existing changed/due data. It adds no persisted rows, format, cleanup queue, index or retention limit. Some preparation may currently warm caches for later release, so sample percentages are not a promised net saving.
+S1 targets zero residency/dependency preparation below the live-feed bound and zero temporal/source/summary/occurrence placement solely for event selection above it. Above-bound memory/awareness/pin work and actual history release remain proportional to their existing changed/due data. It adds no persisted rows, format, cleanup queue, index or retention limit. The former preview could warm preparation for later release, so its sample share was not a promised net saving.
 
 ### Implementation order and isolated acceptance
 
