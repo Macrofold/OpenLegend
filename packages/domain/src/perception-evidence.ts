@@ -1702,16 +1702,28 @@ export function receiveCurrentChange(
               noteAttentionSourceChange(world, observer.id, change.subjectId, { clock: true });
               delta.reconciled = false;
 
+              // A contact-wide stamp certifies every broad member of its body
+              // exposure. Restricted kinds, detail-only checks and other exposures
+              // retain their exact partition clocks without refreshing siblings.
+              // docs/projects/bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions
+              const wholeBroadContact =
+                stamp &&
+                !change.kinds &&
+                (!change.scopes || change.scopes.has('broad')) &&
+                checked.some(({ partition }) =>
+                  partition.members.some(([kind, part]) => kind === 'body' && part === 'detail'),
+                );
               if (
                 change.sight &&
-                change.sight.through >=
+                wholeBroadContact &&
+                stamp.through >=
                   (currentContactGet(state, change.subjectId)?.sight?.through ?? -Infinity)
               )
                 setCurrentSightCheck(state, change.subjectId, {
                   ...currentContactGet(state, change.subjectId)?.sight,
-                  ...stamp!,
-                  ...(change.scopes?.has('detail') && change.sight.detail
-                    ? { detail: { ...stamp!, ...change.sight.detail } }
+                  ...stamp,
+                  ...((!change.scopes || change.scopes.has('detail')) && change.sight.detail
+                    ? { detail: { ...stamp, ...change.sight.detail } }
                     : {}),
                 });
               delta.checked.add(change.subjectId);

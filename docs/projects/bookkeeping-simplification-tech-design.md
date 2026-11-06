@@ -317,7 +317,7 @@ No blocking product question remains. The selected hybrid and direct writer are 
 
 ## 13. Compact representation
 
-The [compact reception companion](bookkeeping-simplification-reception-design.md) records the BK17–BK19 foundation; the batch companion below supersedes its span/check storage and expiry mechanics. That predecessor batch format was schema 54. Section 15 now owns current-format schema 55’s sparse native blocks, with no old reader, second timeline, writer or model maintenance loop. Semantic and operating evidence are tracked separately by [BK17–BK19 and BK12/BK16](../maintainers/production-data.md#received-state-and-history-representation). Source implementation does not establish normal-speed or population qualification.
+The [compact reception companion](bookkeeping-simplification-reception-design.md) records the BK17–BK19 foundation; the batch companion below supersedes its span/check storage and expiry mechanics. That predecessor batch format was schema 54. Section 15 owns the sparse native blocks, extended by [section 19's shared confirmation](#19-reviewed-source-work-removal) in current-format schema 56, with no old reader, second timeline, writer or model maintenance loop. Semantic and operating evidence are tracked separately by [BK17–BK19 and BK12/BK16](../maintainers/production-data.md#received-state-and-history-representation). Source implementation does not establish normal-speed or population qualification.
 
 ## 14. Received batches
 

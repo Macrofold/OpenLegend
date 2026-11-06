@@ -309,7 +309,7 @@ The [BK24 sparse native contract](bookkeeping-simplification-tech-design.md#15-c
 
 ### R1 — Apply the history change that was actually admitted
 
-The history preparation records actual new/changed events, removals and their captured personal accounts. Its first live predecessor can differ by object identity from the durable predecessor later used for a save. `HistoryRepository.project` currently rejects this preparation on that identity difference, reconstructs a diff of resident event arrays and can mistake hot-feed eviction for canonical deletion. The diagnostic proves discarded intent and 256 actual deletions absent from supplied removal intent; exact ID preservation remains required acceptance, not an already completed audit.
+The history preparation records actual new/changed events, removals and their captured personal accounts. Its first live predecessor can differ by object identity from the durable predecessor later used for a save. The former `HistoryRepository.project` fallback rejected preparation on that identity difference and could mistake hot-feed eviction for canonical deletion. The installed repair applies the admitted intent independently of that predecessor identity. [Connected preservation checks](../verification/performance/bookkeeping/2026/2026-11-06-shared-confirmation.md#connected-correctness) verify exact IDs, bodies, accounts and totals through pending eviction, protected edits, failure and cold reopening; broader operating/scale qualification remains separate.
 
 Keep these three meanings separate, using existing arguments and records rather than another authority:
 

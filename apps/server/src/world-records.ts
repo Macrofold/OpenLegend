@@ -190,13 +190,13 @@ export interface RowChange {
   payload: string;
   extra: unknown[];
   create: boolean;
-  /** Prepared metadata delta; unchanged poses must not revisit shared ownership. */
+  /** Exact reference-closure comparison; unchanged dependencies skip shared ownership. */
   receivedUsesChanged?: boolean;
   /** Undefined writes the complete row; a mask writes only those owned columns and revision. */
   writeColumns?: readonly string[];
   /** Changed block with actual removed/replaced members, not an append. */
   logicalRemoval?: boolean;
-  /** Proved new references for an append-only page. */
+  /** Exact reference deltas from a known predecessor or a proved append. */
   receivedValueAdditions?: readonly string[];
   receivedValueRemovals?: readonly string[];
 }
@@ -759,18 +759,11 @@ export class WorldRecords {
             position,
             payload,
             create,
-            ...(contactMetadataOnly
-              ? { writeColumns: ['metadata'], receivedUsesChanged: false }
-              : {}),
-            extra: Object.entries(node.columns ?? {}).map(([name, column]) =>
-              contactMetadataOnly && name === 'value_refs'
-                ? []
-                : column.value(next as JsonRecord, path, after.world),
+            extra: Object.values(node.columns ?? {}).map((column) =>
+              column.value(next as JsonRecord, path, after.world),
             ),
           };
           if (
-            old !== undefined &&
-            !contactMetadataOnly &&
             receivedCurrentOwnerTables.includes(
               node.table as (typeof receivedCurrentOwnerTables)[number],
             )
@@ -778,23 +771,21 @@ export class WorldRecords {
             const nextRefs = row.extra[
               Object.keys(node.columns!).indexOf('value_refs')
             ] as string[];
-            const previousRefs = receivedRecordReferences(node.table, old as JsonRecord);
+            const previousRefs =
+              old === undefined ? [] : receivedRecordReferences(node.table, old as JsonRecord);
             row.receivedUsesChanged =
+              old === undefined ||
               nextRefs.length !== previousRefs.length ||
               nextRefs.some((id, at) => id !== previousRefs[at]);
-          }
-          if (
-            receivedCurrentOwnerTables.includes(
-              node.table as (typeof receivedCurrentOwnerTables)[number],
-            ) &&
-            !contactMetadataOnly
-          ) {
-            const fields = Object.keys(node.columns!);
-            const nextRefs = row.extra[fields.indexOf('value_refs')] as string[];
-            if (old !== undefined || create) {
-              const beforeRefs = new Set(
-                old === undefined ? [] : receivedRecordReferences(node.table, old as JsonRecord),
-              );
+            // Fresh check metadata can replace its frame without changing the
+            // acquired payload. Its exact stored ownership must change with it.
+            // docs/projects/bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions
+            if (contactMetadataOnly)
+              row.writeColumns = row.receivedUsesChanged
+                ? ['metadata', 'value_refs']
+                : ['metadata'];
+            if (row.receivedUsesChanged && (old !== undefined || create)) {
+              const beforeRefs = new Set(previousRefs);
               const afterRefs = new Set(nextRefs);
               row.receivedValueAdditions = nextRefs.filter((id) => !beforeRefs.has(id));
               row.receivedValueRemovals = [...beforeRefs].filter((id) => !afterRefs.has(id));
