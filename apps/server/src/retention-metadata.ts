@@ -1004,9 +1004,10 @@ export class RetentionMetadataView {
             (t.source_id=ANY(q.aliases) OR t.event_id=ANY(q.aliases) OR
               jsonb_exists_any(t.retention_metadata->'aliases',q.aliases) OR t.individual_ids && q.individuals)`;
       });
-      const rows = await db
-        .prepare(
-          `WITH requested AS MATERIALIZED (
+      const readMembership = () =>
+        db
+          .prepare(
+            `WITH requested AS MATERIALIZED (
           SELECT * FROM jsonb_to_recordset(?::jsonb) q(key int,actor_id text,aliases text[],recent_aliases text[],individuals text[],
             awareness boolean,memories boolean,summaries boolean,recent boolean,
             excluded_awareness text[],excluded_memories text[],excluded_summaries text[],excluded_segments text[],buckets smallint[],
@@ -1026,8 +1027,28 @@ export class RetentionMetadataView {
           FROM recent_pages
         ) SELECT h.world_id,h.revision,p.key,p.aliases,p.individuals,p.page_id,p.page_bytes
           FROM world_head h LEFT JOIN proofs p ON true WHERE h.id=1`,
-        )
-        .all(encoded, worldId, ...accountTables.map(() => worldId));
+          )
+          .all(encoded, worldId, ...accountTables.map(() => worldId));
+      // This view already applied pending membership and excluded its replaced
+      // cold rows. A no-recent query needs only headers: the ordinary live SQL
+      // overlay would pack unrelated temporal bodies before q.recent filters
+      // them out. Keep actual recent/page/value reads on the live path below.
+      // docs/projects/bookkeeping-simplification-runtime-design.md#r2--ask-for-membership-without-preparing-history-bodies
+      const rows =
+        !batch.some((request) => request.recent) && db.readMetadataBaseline
+          ? await db.readMetadataBaseline(
+              [...new Set(batch.map((request) => request.actor_id))],
+              (baseline) => {
+                if (baseline.worldId !== worldId)
+                  throw new Error('Personal retention membership belongs to another world.');
+                if (baseline.revision !== this.baselineRevision)
+                  throw new RetentionSnapshotChangedError(
+                    'Personal retention membership snapshot changed.',
+                  );
+                return readMembership();
+              },
+            )
+          : await readMembership();
       if (!rows.length || rows.some((row) => row['world_id'] !== worldId))
         throw new Error('Personal retention membership belongs to another world.');
       if (rows.some((row) => Number(row['revision']) !== this.baselineRevision))
