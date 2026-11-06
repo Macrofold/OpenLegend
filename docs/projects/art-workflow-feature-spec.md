@@ -126,8 +126,8 @@ Two requests met on November 1. The prototype work merged into `main` made model
 - **Two paths, one setting.** `quality=prototype` is the simple path and `quality=finished` the full path, chosen in ordinary words ("quick", "rough", "prototype"; "finished", "polished", "game-ready"). A quality word decides; a destination such as "for the game" does not, and asking to pick gives that step the full path's candidates. Model and animation generation default to the simple path; finished or game-ready assets and every other request default to the full path; "polish/finalize" moves a prototype to the full path at Finish.
 - **Step options.** Concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format and critique each have a default per path, and naming one changes that step only, as in "a prototype, but with a polished walk".
 - **Supplied material skips what it answers.** A sheet or concept skips concepts, clean sheet views are cropped, a saved model starts at Finish, and a compatible rig and adequate materials are kept.
-- **Default clips.** An animated walking character gets `Idle`, `Walk` and `Run`: the prototype work's idle and walk plus the `Run` the game's loader requires, with named motions added. Mike confirmed on November 3 that a walk is expected by default.
-- **What no option removes.** A model the game will load keeps the file check, an animated character always carries the `Idle` and `Run` the game's loader requires, every 3D model gets one look in the game's renderer, and both paths preserve every meaningful output.
+- **Default clips.** An animated walking character for OpenLegend gets `Idle`, `Walk` and `Run`: the prototype work's idle and walk plus the `Run` the game's loader requires, with named motions added. Mike confirmed on November 3 that a walk is expected by default.
+- **What no option removes.** Both paths keep the [selected consumer's required checks](../production-workflows/art-flows/README.md#what-no-option-removes) and preserve every meaningful output.
 
 Most requests want either a quick usable look or finished art, and neither Mike nor a junior should decide every step. The simple path reduces optional work; dated provider estimates belong in [tools](../production-workflows/art-flows/tools.md), and actual cost includes repair and inspection, not just generation. The full path keeps the review points that caught rejected art. A prototype skips the fidelity sheet and critique by default; `fidelity=exact` still requires its matched-scale comparison, and explicit step options can request critique. These checks do not by themselves establish artistic acceptance or family qualification. The step options are request words read by the agent, not provider settings or a service.
 
@@ -204,10 +204,10 @@ In scope: every offline art request, from concepts to production packages and th
 2. No workflow or handbook page states a specific look; changing the look requires editing only the art-direction entry point and the sections it names.
 3. Every stage has a named default tool, a cost estimate method and a recovery method; overrides work per stage.
 4. Every study record shows fidelity, locks, interpretations, decisions and costs.
-5. Candidates are reviewed in the game's own look at the default camera before acceptance, and the profile's play checks are recorded.
+5. Candidates are reviewed in their named consumer before acceptance. OpenLegend output uses the game's own look at the default camera, with the profile's applicable play checks recorded.
 6. The guidance checker passes and no link to the removed pages remains.
 7. A request chooses the simple or the full path in ordinary words and changes any single step (concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format, critique) without restating the rest; supplied material skips the steps it already answers.
-8. A selected prototype can be finalized without replacing valid geometry, rig, clips or materials. The record identifies what changed, which evidence was reused and which affected checks were repeated; unsupported source editing or consumer features remain explicit gaps.
+8. A selected prototype can be finalized without replacing valid geometry, rig, clips or materials. The AF07 proof record identifies what changed, which evidence was reused and which affected checks were repeated; unsupported source editing or consumer features remain explicit gaps.
 
 ## 9. Delivery stages
 
