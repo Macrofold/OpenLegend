@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK25 source is installed; BK26–BK27 work-removal designs are complete. Implementation and operating acceptance remain open. | 2026-11-05   |
+| Status      | Current progress                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK26–BK27 source is installed; isolated adoption and operating qualification remain open. | 2026-11-06   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
@@ -204,7 +204,7 @@ No new gameplay limits, model cadence, sight interval, animal behavior, memory h
 
 ## 14. Proposed sensory deadlines and attention preparation
 
-**Design complete; not implemented. November 5, 2026, 23:35 UTC.** The final BK25 opening maintains normal clock time but still nearly saturates a core and has roughly one-second command replies. Its separate short diagnostic counts 1,849,635 temporary current-field selections, not new observations or database reads. [The counter audit](../verification/performance/bookkeeping/2026/2026-11-05-native-execution.md#lookup-counter-semantics) distinguishes those reads from separately sampled deadline/track reconstruction. No additional profile or performance gain accompanies this proposal.
+**Source implemented; adoption/operating qualification pending. November 6, 2026, 01:33 UTC.** The final BK25 opening maintains normal clock time but still nearly saturates a core and has roughly one-second command replies. Its separate short diagnostic counts 1,849,635 temporary current-field selections, not new observations or database reads. [The counter audit](../verification/performance/bookkeeping/2026/2026-11-05-native-execution.md#lookup-counter-semantics) distinguishes those reads from separately sampled deadline/track reconstruction. The [installed-source checks](../verification/performance/bookkeeping/2026/2026-11-06-preparation-removal.md) pass connected correctness; isolated AWS adoption is pending.
 
 The intended improvement is responsive play while people and animals keep their existing senses and meaningful memories. Asking when someone should next inspect an attended person should read an already prepared deadline. Opening an ordinary observation batch should prepare the selected people and the sources actually changing, rather than rediscover how every quiet sensed source relates to attention. Seeing movement should update position and motion significance without gathering unchanged appearance, possessions and identity just to reuse the same description.
 
@@ -216,7 +216,7 @@ The work removed is preparation, not perception. Actual first exposure, actual r
 
 ## 15. Proposed status invalidation and event-only publication
 
-**Design complete; not implemented. November 5, 2026, 23:35 UTC.** [The source audit](../verification/performance/bookkeeping/2026/2026-11-05-native-execution.md#source-backed-removal-audit) identifies two independent forms of repeated work: reconsidering unchanged bodily-rule inputs after irrelevant motion/knowledge changes, and preparing history placement that live event-feed publication discards. [Exact mechanics and acceptance](bookkeeping-simplification-tech-design.md#18-proposed-status-invalidation-and-event-only-publication) and [BK27](../maintainers/production-data.md#bk27--status-invalidation-and-event-only-publication-proposed) keep implementation and qualification open.
+**Source implemented; adoption/operating qualification pending. November 6, 2026, 01:33 UTC.** [The source audit](../verification/performance/bookkeeping/2026/2026-11-05-native-execution.md#source-backed-removal-audit) identifies two independent forms of repeated work: reconsidering unchanged bodily-rule inputs after irrelevant motion/knowledge changes, and preparing history placement that live event-feed publication discards. [Exact mechanics and acceptance](bookkeeping-simplification-tech-design.md#18-proposed-status-invalidation-and-event-only-publication) and [BK27](../maintainers/production-data.md#bk27--status-invalidation-and-event-only-publication-proposed) track installed source and pending adoption/qualification.
 
 Walking on the same support must retain existing bodily effects, needs and exact thresholds without rebuilding status preparation solely because coordinates changed. Falling, landing, working, reacting, attribute changes and other real rule inputs still take effect at their current times. World-authored rules remain world-owned. Sharing immutable rule structure is a separate, smaller experiment; live predicates and effects are never cached as constants.
 
