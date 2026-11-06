@@ -213,12 +213,12 @@ The [Enshrouded/Dragonwilds comparison](../../archive/02-research/game-inspirati
 
 #### DG37 — Character appearance: a creator and varied populations
 
-Let players shape their character's face and body, and give every NPC a distinct, believable look, without generating a model per person. The usual implementation shares one parametric body family across all people: one mesh layout and skeleton, shape targets or bone controls for face and body, swappable hair and garments that follow the body's shape, and colour and material values. NPC variety samples the same values from world-owned population ranges with a visual seed; named characters get authored values. The [art workflow's people-family section](../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety) records the analysis and the pipeline consequences:
+Let players shape their character's face and body, and give NPCs distinct, believable looks while reusing an admitted family rather than requiring a generated model for every person. Candidate mechanisms include a shared mesh layout and skeleton, shape targets or authored bone controls, compatible hair and garments, and material variation. Their supported ranges and fit still require design and evidence. Population ranges and visual seeds belong to the world; named people retain authored choices. The [art workflow's people-family analysis](../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety) distinguishes these options from current capability:
 
-- people are made as a family;
-- each person's look comes from their own concept, wrapped onto a shared base mesh (MPFB's, hidden underneath);
-- pre-built parts are combined per character;
-- offline-baked combinations come first, with runtime assembly later.
+- the canonical body source, coverage and rig are PPL01 decisions; MPFB wrapping is one unqualified candidate, not the selected pipeline after the body rejection;
+- required semantic parts remain separate and supported combinations need actual fit/contact checks;
+- offline combined exports can review an outfit but do not satisfy removable clothes in play; PPL02 and V3D05 determine the needed runtime representation;
+- a shared layout, matching bone names or a large count of possible combinations does not establish believable variation or population performance.
 
 **Mike's requirements (November 4, 2026):** every person, character or actor is built from separate parts, each selected or generated from their character sheet:
 
@@ -491,7 +491,7 @@ The [scalability suite](../product-scalability/README.md), [feature specificatio
 
 Use the [AI game-development research](../../archive/02-research/ai-game-development/README.md) for evidence and tool comparisons, and the [production handbook](../production-workflows/README.md) for reusable routes from ideas through editable art, assets, animation, scenes, interfaces, character situations and feedback to a working game result. Existing feature designs and trackers own runtime behavior, delivery and acceptance.
 
-The [art workflow](../production-workflows/art-flows/README.md) defines short-request studies, production and explicit integration, with tool defaults, fidelity levels and a 3D route. [AF01–AF02](art-direction.md#art-flow-follow-through) own preservation of the existing six UI contenders and execution of the separate surface-language study; these are tracked art and qualification work, not an undesigned automation platform.
+The [art workflow](../production-workflows/art-flows/README.md) defines short-request studies, production and explicit integration, with tool defaults, fidelity levels and a 3D route. **Offline production procedure and experiment plan: Done — designed.** The [workflow pair](../projects/art-workflow-feature-spec.md#37-repair-only-the-failed-dependency) specifies prototype defaults, focused repair and preservation. Added handoff/recheck process and uncertain method effects remain [unqualified experiments](../projects/art-workflow-tech-design.md#isolated-workflow-experiments); [AF07/AF08](art-direction.md#art-flow-follow-through) retain their isolated proof and measured selection. This does not close [PPL01/PPL02](art/people.md), DG37 or ND39–ND42: canonical body coverage/source, adjustable face/hair, removable clothing and Mike's acceptance remain unresolved. [AF01–AF02](art-direction.md#art-flow-follow-through) own preservation of the existing six UI contenders and execution of the separate surface-language study; these are tracked art and qualification work, not an undesigned automation platform.
 
 Production should give inventions a recognizable identity; residents should be worth spending time with; places should support discovery, atmosphere and meaningful approaches; and coordinated presentation should make actions understandable and satisfying. The existing [playability gates](../projects/five-product-feature-specs.md#playability-gates) own judgment of the complete experience. These opportunities guide a selected slice without requiring a new generic AI-production feature or a second fun-evaluation system.
 

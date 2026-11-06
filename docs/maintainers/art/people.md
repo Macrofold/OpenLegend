@@ -4,9 +4,11 @@
 
 **Status:** Not started. Selected for design on November 4, 2026; implementation is not authorized. The design need is [DG37](../needs-design.md#dg37--character-appearance-a-creator-and-varied-populations) (ND39–ND42). Until PPL03 lands, ask Mike before making a person, and never generate one whose clothes are part of the body. Until the cast is rebuilt ([AF10](../art-direction.md#art-flow-follow-through)), Ada and Mara Reed use the models generated from their sheets, with their clothes fused into the body, and the other people keep their MakeHuman bodies ([AF14](../art-direction.md#art-flow-follow-through)).
 
+The [general workflow](../../projects/art-workflow-feature-spec.md#37-repair-only-the-failed-dependency) supplies repair/reuse guidance and the isolated experiments for uncertain method effects. It does not settle body source/coverage, face controls, clothing or acceptance; PPL01/PPL02 and ND39–ND42 remain open.
+
 ## Tasks
 
-- [ ] **PPL01 — Design the parts: bodies, faces, hair and the character-sheet build** (ND39, ND40, ND42). Write the design with Mike's decisions, starting from the [people-family analysis](../../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety); AF07's planned wrap test is one candidate method for the bodies. The design must settle:
+- [ ] **PPL01 — Design the parts: bodies, faces, hair and the character-sheet build** (ND39, ND40, ND42). Write the design with Mike's decisions, starting from the [people-family analysis](../../projects/art-workflow-feature-spec.md#11-people-families-a-character-creator-and-npc-variety); wrapping is one candidate method to assess, while AF07 proves whichever parts/family route Mike accepts. The design must settle:
   - **Body types:** which traits define one (sex, age, height, build, muscle) and how many there are. Every combination multiplies quickly, so decide which traits are separate bodies and which are sliders on a shared body.
   - **One skeleton:** every body, hairstyle and garment shares one skeleton, so clips, held items and attachment points work on all of them within the 64-joint budget, and clips suit each body's proportions.
   - **Where the bodies come from:** assess the Quaternius characters Mike preferred in the November 5 survey under [AD09](../art-direction.md#ad09--follow-through-on-the-grounded-stylized-direction), alongside generation, MPFB as a hidden base or hand authoring, with rights recorded. The kit preference does not waive canonical body coverage, adjustable faces or removable clothing; game preparation remains deferred. The stock MakeHuman look stays [rejected](../../../art-direction/decisions.md#how-the-current-look-changes-production).
@@ -24,7 +26,7 @@
   - **Wearing and taking off:** who can put on or remove what, the layering order (a shirt under a coat under a cloak), what wearing changes (warmth, armour), what other people do about clothing, and what a person wears with nothing else on.
   - **Fit:** every garment fits every body type it can meet, at the extremes, either through one version per body type or through shape targets that follow the body.
   - **Drawing:** a person drawn as their body plus what they are wearing, on one skeleton, with the skin under each garment hidden, no clipping between layers, cloth motion for capes and cloaks, and clean seams in the plain-3D presentation.
-  - **Cost:** several skinned parts per person, against baking each combination offline. The art workflow's plan is to bake first and assemble at runtime later, with the renderer side in [V3D05](../3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
+  - **Cost:** several skinned parts per person, against baking each combination offline. An offline combined export can inspect a selected outfit, but cannot satisfy removable clothing in play. Select the runtime representation from the required item behavior and measured scene cost; the renderer side remains [V3D05](../3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
 
   Exit: Mike accepts the design. Not authorized for implementation.
 
