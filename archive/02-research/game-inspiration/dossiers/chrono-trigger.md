@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Research standard](../research-requirements.md) · [This investigation](../research-progress-chrono-trigger-expedition-33-2026-11-06.md)
 
-**Research capture: November 6, 2026. In progress.** This pass separates the original SNES design from PlayStation, Nintendo DS, mobile and PC changes. Mechanics, commercial evidence, creation tools and the final requirement audit are still being integrated. Research informs possible OpenLegend choices; it does not approve new game features. **Major story and ending spoilers follow.** No hands-on gameplay or video viewing is claimed.
+**Full dossier — November 6, 2026.** Covers R01–R14 and the applicable R15 creator-ecosystem investigation. The original Super Famicom/SNES adventure is the baseline; PlayStation, DS, mobile and PC differences are identified. **Major story and ending spoilers follow.** Research informs OpenLegend choices without approving features. No new playthrough, executed mod or watched video is claimed.
 
 ## Reading map
 
@@ -10,63 +10,123 @@
 
 ## The player promise and the shape of the adventure
 
-Chrono Trigger begins with a small, understandable commitment: follow a new acquaintance through a malfunctioning invention. The journey widens from a fair and a missing person into an effort to prevent a future catastrophe. Its party travels among authored eras, meets people who belong to those places, fights, acquires capabilities and changes selected historical outcomes. It is a finite single-player adventure, not a general simulation of every possible timeline. [CTN01][CTN02]
+Chrono Trigger follows Crono and his companions from a fair and an accidental journey through time to preventing a future catastrophe. Exploring authored eras changes what they know and what they can attempt. It is a finite single-player campaign with selected historical consequences. [CTN02]
 
 **Research interpretation:** its useful unit is a situation that changes what the player wants to do next. A new location can also explain an old enemy; an upgrade can finish a friend's story; a return visit can reveal that an earlier action mattered. This is more specific than saying the game has time travel or memorable characters. The research below tests that reading against mechanics, original creator accounts and contrasting reception rather than assuming that acclaim proves every design choice works.
 
 ## Mechanics, editions and worked situations
 
-**Working research checkpoint, November 6, 2026.** This file owns the mechanics and edition comparison for the full dossier. It is being expanded; its present state must not be counted as a completed full dossier. The original Super Famicom/SNES game is the baseline. Later additions and modern interface options are identified by edition.
+### Evidence and edition boundary
 
-### The original encounter contract
+This section describes the original campaign's mechanical structure. Original English terminology is retained where practical; later localizations rename several techniques and items. Original manuals and current publisher material establish the broad rules. Detailed numerical and item behavior comes from explicitly identified community reference databases. This is desk research, without a newly completed playthrough, direct input testing, or frame-by-frame verification. Edition-specific exploration, additions, controls, and interface options are covered in the companion exploration section. [CTM01][CTM02][CTM03][CTM04][CTM05]
 
-Chrono Trigger uses a three-character party, finite authored areas, visible enemy encounters and Active Time Battle. Commands become available as each participant's time gauge fills. Position matters to the shape of an attack, but this is not a grid-movement or player-directed tactical-positioning system. Players choose an attack's target and its timing while the battle staging and enemy behavior determine positions. Square Enix describes this as Active Time Battle Version 2 and advertises more than fifty double and triple combination techniques. [CTM02]
+### Encounter structure, time, and decisions
 
-The 1995 manual distinguishes Active from Wait: Active keeps the pressure of enemy action while the player chooses; Wait offers more planning room. Crucially, later technical/player descriptions specify that Wait pauses during the technique/item selection submenus rather than suspending the entire battle whenever a character is ready. Already queued actions can still resolve. A player can therefore reduce decision pressure without turning the system into strictly alternating turns. [CTM01][CTM03][CTM04]
+Chrono Trigger normally stages combat directly in the location being explored, using visible enemies and a party of up to three. Its Active Time Battle system makes each character's readiness an independent resource. The player chooses commands as gauges fill; characters and enemies reposition through battle animations and encounter scripting. Position affects some attacks, but the player does not issue free movement commands on a tactical grid. The publisher describes more than fifty combined attacks, making party composition a substantial part of the command set rather than merely a choice of damage statistics. [CTM02]
 
-### Saves and current-version promises
+The original manual offers Active and Wait modes and a battle-speed setting. Wait provides more thinking time, but should not be described as pausing the entire encounter whenever any menu is visible. A DS guide and a later PC community explanation describe the pause during Tech or Item selection; already queued actions can still resolve. That precise boundary is community corroboration, not a new instrumented comparison of every port. [CTM01][CTM03][CTM04]
 
-The original manual documents three save files and saving on the world map or at field save points. Character exchange is normally a field/menu action once more than three characters are available, subject to the current story situation. [CTM01]
+**Design interpretation.** The encounter loop combines a simple immediate choice—attack, technique, or item—with scheduling. A character who is ready can act now, preserve readiness for a partner, heal, or wait for a more useful enemy arrangement. This makes hesitation potentially productive, while Active mode also gives it a cost. Wait reduces menu pressure without removing the encounter's timing structure. Accessibility assessment should distinguish time to select a command from the absence of time pressure altogether.
 
-The PC storefront identifies the PC release as February 27, 2018. It advertises keyboard and controller support, automatic saving during map traversal in addition to conventional saving, and two additional dungeons: the Dimensional Vortex and Lost Sanctum. These additions must not be described as content present in the 1995 original. [CTM02][CTM05]
+The interface communicates state through gauges, HP/MP, command availability, targeting, status effects, and damage results. Gray combination commands communicate an unmet requirement. [CTM08]
 
-### Progression and character construction
+### Party identity and growth
 
-The party is mechanically differentiated before equipment enters the picture. Crono is a fast sword attacker with lightning/lightning-equivalent magic; Marle combines bow attacks, healing and support with water/ice magic; Lucca combines guns and fire; Frog mixes swords, water and healing; Robo contributes physical techniques, healing and technology-flavored attacks; Ayla emphasizes physical attacks and item acquisition; Magus supplies powerful offensive magic. The important distinction is between a character's presentation and the damage properties of the actual technique: a robot can produce an elemental attack without possessing the same story-unlocked magic system as the human characters. Detailed individual technique and combination prerequisites remain under verification in this checkpoint. [CTM06]
+The seven playable characters have fixed identities rather than selectable classes. The following is a mechanical orientation, not a complete technique list. [CTM18][CTM09][CTM14][CTM22][CTM23]
 
-Experience and technique development are separate rewards. Levels increase combat statistics; technique points advance a character's authored technique sequence. The player does not allocate a branching skill tree or respec class points. The strategic growth choice is therefore whom to bring and develop, then which learned abilities to combine. Exact reserve-party experience and technique-point eligibility will be stated only after the source check is complete.
+| Character | Mechanical orientation | Elemental association |
+|---|---|---|
+| Crono | Sword attacks, mobile area attacks, offensive magic, and broad combination access | Lightning |
+| Marle | Bow, healing, revival, haste, and support combinations | Water |
+| Lucca | Gun, fire attacks, and area damage | Fire |
+| Robo | Physical strength, mechanical attacks, healing, and combinations | No innate magic association |
+| Frog | Sword attacks, healing, and combined techniques | Water |
+| Ayla | Physical attacks, combinations, and item theft through Charm | No innate magic association |
+| Magus | Strong magical offense and a distinct combination profile | Shadow |
 
-The statistics have meaningful asymmetry. Ordinary weapon damage for Marle's bow and Lucca's gun depends on Hit rather than the Power used by most physical attackers. Speed determines gauge growth and normally does not rise through ordinary leveling; permanent Tabs and equipment consequently have different strategic weight from simply gaining another level. HP and MP have caps of 999 and 99, Speed caps at 16, and the other principal numeric attributes cap at 99. Permanent growth items and accessory effects can alter a character's usefulness without creating a new class. [CTM06]
+These associations do not mean that every action uses the character's named element. The reference distinguishes physical damage, Lightning, Water, Fire, and Shadow; attack-specific properties should govern an enemy-resistance decision. Robo's lack of innate magic, for example, does not mean every mechanical attack behaves as ordinary physical damage. [CTM14]
 
-### Resources, incapacitation, and recovery
+Experience advances levels; Tech Points advance a prescribed technique sequence. Some techniques begin known or are taught through a story event. Learned components unlock combinations. [CTM09][CTM10]
 
-MP pays for techniques, including physical-looking and technological techniques, rather than only for spells. A resource-saving accessory therefore affects much more than one elemental caster. Equipment can compete for the same slot while supporting quite different roles: raw offense, MP efficiency, speed, resistance or utility. Items provide a parallel command route for recovery; they preserve the option to act when the appropriate healer is unavailable. The exact catalog of accessories, consumable magnitudes and resistances is being checked independently rather than inferred from names. [CTM06]
+**Evidence boundary.** The inspected references establish this growth loop, but not a reliable platform-by-platform reserve-party XP/TP distribution formula. None is asserted here.
 
-A knocked-out character is unable to contribute to the current action economy. Victory is forgiving: defeated party members return with one HP. This separates winning an encounter from leaving it in good condition. A player may survive the final enemy and still need to heal before continuing. The Revive consumable is a battle recovery tool, not a general substitute for field healing. [CTM06]
+HP measures survival and MP funds techniques. Power, Hit, Magic, Speed, Evade, Stamina, and Magic Defense contribute to different outcomes; Hit is particularly relevant to bow and gun damage. Equipment modifies both offense and protection. The community systems reference identifies 999 HP, 99 MP, and a normal Speed ceiling of 16. Speed does not ordinarily rise through leveling in the same way as other attributes. These are named boundaries, not a claim that every displayed statistic caps at 99; equipment-derived Defense must be treated separately. [CTM06][CTM18]
 
-### Replay has a strong carry-over boundary
+**Design interpretation.** Fixed roles provide immediately legible characters, while combinations make their value relational. A player can understand Marle as a support character and still discover a new offensive or restorative use for her alongside a different partner. The cost is limited individual build authorship: growth mostly reveals authored capabilities, with customization concentrated in party selection, equipment, consumables, and timing.
 
-New Game Plus repeats the authored story while retaining character levels, statistics and much of the inventory. Characters still rejoin at the appropriate story points: the opening is not an unrestricted endgame party selection screen. The Caves of Narshe DS reference also identifies money and numerous story-linked objects and rewards as excluded. Its list includes both Masamune forms, Slasher weapons, Taban equipment, Ozzie Pants, Flea Bustier, Green Dream and Hero's Badge, together with the Gate Key, Pendant, Epoch-related keys and other quest objects. These are DS-guide facts and should not silently become a claim that every port shares an identical carry-over whitelist. [CTM07]
+### Single, double, and triple techniques
 
-The design consequence is that replay accelerates combat and permits otherwise unreasonable boss challenges while preserving the gates that make the narrative sequence legible. Retaining combat capability and resetting story permissions are separate operations. For Open Legend, that is a useful distinction whenever progression survives a campaign reset: power can persist while narrative prerequisites remain explicit.
+Single techniques consume MP and readiness. Targeting patterns include nearby, area, line, horizontal, single-target, and all-enemy attacks; the selected pattern determines coverage. Cyclone and Slash illustrate this distinction. [CTM09]
 
-### What this system does not establish
+Double and triple techniques require the appropriate learned components, participating characters, readiness, and sufficient MP. The PlayStation manual explains unavailable combined commands through participant requirements, making a gray command meaningful feedback rather than a missing skill. Each participant contributes the relevant component cost, so the combined action spends multiple characters' resources. [CTM08]
 
-The examined core rules describe a finite, authored RPG with predefined characters and encounter content. They do not establish a general-purpose world simulation, a branching class-building system, user-authored quests, player construction, a persistent online economy, or a multiplayer campaign. Combination techniques are authored interactions between named characters, not a chemistry engine that promises every possible spell pairing will work. These absence claims describe the documented baseline; later bonus modes must be considered separately.
+Examples include Aura Whirl, which joins Crono's Cyclone with Marle's Aura for party healing; Fire Whirl, combining Cyclone and Lucca's Flame Toss for fire damage; and X-Strike, joining Crono and Frog's attacks. Some triple techniques require an accessory, adding an equipment prerequisite to composition and learned abilities. [CTM10][CTM17]
 
-### Worked system situations — verified core and pending detail
+Magus is an exception to ordinary combination breadth: his database lists two accessory-enabled triples, DarkEternal with Marle and Lucca and Omega Flare with Lucca and Robo, with no ordinary double techniques. His individual spell list spans several elements despite his Shadow association. [CTM23]
 
-**1. Delaying a combination.** Prerequisites: two active characters possess the constituent techniques. Each must have sufficient MP and a ready action gauge before the combination can be selected. If one is ready first, spending that actor's turn immediately delays the combined move. Holding the turn instead exchanges immediate pressure for a stronger or wider joint action. The next choice is whether the enemies' current position and threat still justify waiting. This is a scheduling tradeoff inside the party, not simply a stronger command becoming free. The original PlayStation compilation manual explicitly describes the combination command becoming unavailable when a required gauge or MP condition fails. [CTM08]
+**Design interpretation.** The system converts friendship into a visible combat verb. It also creates an opportunity cost: synchronizing two gauges can postpone a useful independent action, and spending a partner's MP can weaken the next recovery turn. A larger animation is therefore not automatically the best decision. Its value depends on target coverage, recovery need, readiness alignment, and the actions displaced.
 
-**2. Winning with a fallen ally.** Prerequisites: one party member is knocked out and the remaining characters can plausibly finish the encounter. The player can spend a turn and item recovering that ally, or use the action to defeat the final enemy. A victory returns the fallen character at one HP, making the second option viable when the immediate threat is low. The resulting state still needs recovery before the next encounter. The tradeoff is battle safety and participation now against conserving a command and consumable; it is not automatic full-party restoration. [CTM06]
+### Equipment, items, money, and protection
 
-**3. Preparing a replay route.** Prerequisites: a completed game and an eligible New Game Plus save. The player selects that save, returns to the opening with retained combat progression, and regains the cast through story events. Important quest permissions have reset even though the characters are powerful. The next decision is how far to advance the plot before challenging the final threat. The benefit is rapid experimentation with endings; the cost is that substantial story interaction still must be repeated. Exact first-clear unlock conditions and ending-route differences remain under verification. [CTM07]
+Characters use weapon, armor, helmet, and accessory slots. Availability is constrained by character eligibility, including character-specific weapons and some gender-restricted armor. The equipment loop is compact enough to compare individual changes, but not reducible to a single attack or defense rating. [CTM18][CTM20][CTM21]
 
-**4. Choosing planning room.** Prerequisites: a player has selected Wait mode. During a technique or item submenu, that mode gives room to inspect choices. It does not mean every moment of battle is suspended, and previously queued actions may still resolve. The player still needs to identify which submenu actually pauses time and distinguish selection time from animation or queued resolution. The next choice is between this reduced pressure and Active mode's continuing urgency. This option improves planning access without creating separate turn-based battle rules. [CTM03][CTM04]
+Weapons can supply secondary behavior. The reference lists Slasher with a Speed bonus and other swords with magical bonuses or unusual critical-hit properties. A weapon upgrade can therefore change action frequency or situational damage, not only the ordinary attack figure. The practical question is what the character will do in the coming encounters. [CTM20]
 
-### Remaining verification for this mechanics section
+Accessories support recognizably different priorities: Speed, offensive attributes, maximum HP, evasion, counters, status immunity, reduced MP expenditure, or access to a special triple technique. The Silver Stud halves MP costs and the Gold Stud reduces them by three quarters; choosing one occupies the same accessory opportunity that could supply another benefit. [CTM17]
 
-The next pass is bounded to the missing systems inventory: era navigation and vehicles; fixed and conditional NPC behavior; exploration and optional quest ordering; inventory, shops and Ioka barter; minigames; elements and status; technique learning and reserve growth; eight complete cross-system examples; and an explicit SNES/PS1/DS/mobile/PC comparison. This checkpoint is source-backed where marked, but it is not the final completeness claim for the dossier.
+Armor can trade elemental protection, magical defense, status protection, and general defense. Ruby Vest reduces fire damage; later protective equipment offers stronger or different special effects. These properties are encounter preparation tools, especially when the player understands an enemy's element or disabling attack. Eligibility restrictions also distribute valuable protection across the party rather than making every item interchangeable. [CTM21]
+
+The consumable ladder spans HP restoration, MP restoration, status cures, revival, and broad recovery. The database lists Tonic at 50 HP, Mid Tonic at 200, and Full Tonic at 500; Ether, Mid Ether, and Full Ether restore 10, 30, and 60 MP. Elixir restores one character's HP/MP, while MegaElixir restores the party. Shelter restores HP/MP at a save point. Permanent Power, Magic, and Speed Tabs supplement ordinary growth. [CTM16]
+
+Shops use gold and have location-dependent stock and prices; availability can change with world events. The early Melchior listing puts an Iron Blade at 350 G and a Lode Sword at 4,000 G, a large difference in saving commitment. Ordinary restorative supplies compete with purchases for the same budget. This is a finite authored shop economy, without evidence of simulated merchant inventories, dynamic player-driven markets, or an auction system. [CTM12]
+
+Prehistoric trading adds a separate resource loop: enemy-dropped materials can be exchanged for equipment. The recorded Ruby Vest recipe is three Fangs and three Feathers; later stock includes a more demanding Ruby Armor exchange. This is fixed barter, rather than an open recipe construction or equipment-upgrading profession. [CTM13]
+
+Ayla adds an active loot decision through **Charm**, a single-enemy technique costing 4 MP that attempts to steal an item. Twin Charm combines it with Marle's Provoke. This links party selection and combat actions to item acquisition: the player can spend readiness pursuing loot before finishing the encounter. The reference does not justify assuming every target yields an item or that success is guaranteed. [CTM22]
+
+### Status, recovery, and failure
+
+Status effects modify choices as well as survivability. Poison drains HP and weakens attacks; Darkness reduces physical accuracy; Chaos can redirect attacks; Sleep, Stop, and Lock restrict available action in different ways. Slow and Haste change gauge timing. Protect reduces physical damage, while Magic Wall reduces magical damage. The reference describes Haste as doubling gauge speed and both defensive effects as reducing their respective damage by one third. [CTM19]
+
+At zero HP a character is incapacitated. The systems guide describes revival through battle items or techniques and a defeated character returning with 1 HP after a victory; a battle-only revival item should not be assumed to work freely on the field. If the party cannot win, ordinary progress depends on reloading saved state rather than a persistent injury or corpse-recovery system. This dossier does not claim special scripted losses follow the ordinary rule. [CTM06]
+
+The original manual provides three save files and saving on the world map or at designated save points. This creates a recovery-and-risk rhythm: identify the checkpoint, restore resources, prepare, then attempt the next sequence. Later ports add different save conveniences, covered in the edition section. The original save structure should not be silently replaced by a modern autosave assumption. [CTM01]
+
+**Design interpretation.** Resource depletion matters mainly over a run of encounters between reliable recovery opportunities. Broad restorative items can rescue a poor sequence, but using one removes a future option. Status protection can be more valuable than a small defense increase when losing a turn would break the party's recovery plan.
+
+### Eight worked situations: decisions crossing systems
+
+These examples explain decision structure. Where no exact enemy, level, or damage value was verified, the outcome is conditional rather than an invented guaranteed kill.
+
+1. **Synchronize a heal or keep attacking.** Prerequisites: Crono and Marle have learned the components of Aura Whirl, have enough MP, and can both become ready. Several allies are hurt. The player waits for both gauges and chooses the combined heal. The outcome is party recovery with two actors committed; the next decision is whether the third member attacks or stabilizes the fight further. The tradeoff is recovery coverage against the independent actions and MP spent. If one participant lacks readiness or MP, the command cannot simply bypass the requirement. [CTM08][CTM10]
+
+2. **Spend time aiming an area attack.** Prerequisites: a spatial technique is available and several enemies remain. Using the targeting rules above, the player checks coverage before confirming. The outcome may be several damaged targets rather than one. The next choice is whether to clean up survivors or preserve MP. Waiting can improve coverage but costs time in Active mode; the player cannot manually move everyone into the desired arrangement. [CTM09][CTM02]
+
+3. **Equip for a disabling enemy.** Prerequisites: the player has observed or otherwise learned that an upcoming fight repeatedly applies a troublesome status and owns suitable protection. The player assigns a status-protective accessory or armor to the character responsible for recovery. If that protection matches the threat, the healer remains more dependable. The next choice is whether the remaining party can tolerate lower raw offense or defense elsewhere. The tradeoff is a general numerical benefit versus preventing a specific lost action; protection should not be assumed to cancel an unverified boss mechanic. [CTM17][CTM19][CTM21]
+
+4. **Recover after a narrow victory.** Prerequisites: the party wins with one member incapacitated and reaches a save point with a Shelter. The fallen member returns to 1 HP, then the player uses checkpoint recovery before continuing. The outcome is restored readiness for the next dungeon segment, with a consumable spent. The next decision is whether to save, explore farther, or return for supplies. Pressing on without recovery preserves the item but leaves the party fragile; a field use of the battle-only revival item is not an interchangeable solution. [CTM01][CTM06][CTM16]
+
+5. **Choose MP efficiency over speed.** Prerequisites: the player owns competing accessories described above and anticipates a long sequence without recovery. Equipping the MP-saving option extends the technique budget. The next choice is whether to spend that saving on stronger actions or preserve it. The cost is the alternative accessory benefit, making this a situational specialization. [CTM17]
+
+6. **Convert hunting materials into protection.** Prerequisites: prehistoric trading is available and the party can obtain the materials for the listed Ruby Vest exchange. The player gathers the necessary drops, returns to the trader, and exchanges them for equipment. The outcome converts combat effort into fire protection; the next decision is which eligible character needs that protection most. The cost is additional encounters and the materials no longer available for another exchange. It demonstrates an authored alternative to simply accumulating gold. [CTM13][CTM21]
+
+7. **Use time travel to improve a reward.** Prerequisites: the relevant sealed-treasure interactions are available in both eras. The reference records that the Truce Inn's future Blue Vest can become Blue Mail through the earlier-era treasure interaction. The player investigates the earlier version before taking the later reward, then returns to collect the improved item. The next decision is whether to inspect similar cross-era opportunities. This example establishes the state dependency; exact dialogue choices should be checked in a route guide rather than inferred from this database entry. The tradeoff is extra travel and attention for better equipment. [CTM15]
+
+8. **Buy a weapon or preserve the expedition budget.** Prerequisites: limited gold and the early merchant choices listed above. The player compares a substantial weapon purchase with cheaper equipment plus supplies. The outcome prioritizes stronger ordinary attacks or a larger recovery reserve. The next choice is whether to fight, save more gold, or postpone the upgrade. The better purchase depends on survivability and expected technique use, not a universal optimal route. [CTM12][CTM20]
+
+### New Game Plus and the limit of retained power
+
+New Game Plus restarts the story with substantial accumulated power, enabling different routes to the final confrontation and different endings. The DS-oriented guide describes selecting a completed file after viewing an ending and resetting, retaining levels, stats, and most ordinary items while recruiting characters again. Money does **not** carry over in that guide. Key items and some story-related equipment are excluded, including the Masamune variants, Slasher variants, Taban equipment, Ozzie Pants, Flea Bustier, GreenDream, and Hero Badge under that localization's names. [CTM07]
+
+The retained inventory must therefore not be described as literally everything, nor as uninterrupted party membership. This research does not establish an exact universal unlock condition for every release or every clear route; a platform-specific claim about whether one particular route unlocks the mode requires separate verification. The edition supplement also records that DS Arena progress resets. [CTM07]
+
+**Design interpretation.** Carrying power forward changes the meaning of the opening hours. Earlier plot positions become possible final-boss entry points because the party's strength no longer matches its narrative stage. Replay therefore rearranges access to authored outcomes, rather than relying solely on stronger repeat enemies or randomized loot. Its limits also matter: a returning player can overwhelm much of the ordinary campaign, reducing tactical tension while gaining freedom to explore consequences.
+
+### Meaningful boundaries and absences
+
+**Documented-system audit.** The researched campaign provides no player-authored classes, branching skill-point trees, tactical movement grid, general construction mode, relationship approval meter, camp-management economy, or open-ended crafting profession. Its equipment and barter systems should not be recast as those systems merely because they permit resource choices. Party relationships are expressed through authored scenes and combat cooperation; the campaign is not a social simulation. These are scoped observations about the documented campaign mechanics, not claims that no later port, fan modification, or ancillary mode adds related behavior. The DS Arena is a separate exception discussed in the edition supplement.
+
+**Open Legend interpretation.** The strongest transferable structure is a compact action vocabulary whose implications expand through context: partners change a command, position changes coverage, time travel changes a reward, and equipment changes what is sustainable. A comparable design needs visible prerequisites and clear feedback. If collaboration, geometry, or future consequences become opaque, the same interdependence that makes discovery satisfying can turn into guesswork. Chrono Trigger is therefore evidence for carefully authored interactions between understandable systems; it is not evidence that adding more interacting subsystems always improves play.
 
 ## Editions, exploration and activities beyond combat
 
@@ -205,86 +265,126 @@ For a selected OpenLegend scene, a practical hypothesis is to give a place or pe
 
 ## Production, distribution, economics and creation
 
-Research date: 2026-11-06. **Substantive checkpoint: economics and full creator-ecosystem analysis saved (2,462 words); final production and distribution evidence being integrated.** Reference research for Open Legend, not an accepted feature specification. All mod workflows below are reconstructed from documentation; no game, ROM, mod, or installer was executed during research.
+Research date: 2026-11-06. Completed research component for the Open Legend dossier. These are reference findings and hypotheses, not accepted Open Legend features. No game, mod, ROM, editor or installer was executed; workflows were reconstructed from maintainer documentation. Edition dates and commercial observations below retain their stated geographic and temporal scope.
 
-### Commercial evidence and the limits of a financial reconstruction
+### Production: collaboration, constraints and iteration
 
-Square Enix's fiscal-year briefing reports **790,000 Chrono Trigger DS units** for **April 1, 2008–March 31, 2009**. This is an edition-specific fiscal-period result, not a lifetime total or revenue statement. The chart is denominated in thousands. Company-wide revenue and profit in the same presentation cannot be attributed to this title. [CTP01]
+**Origins and responsibilities.** Aoki recalls Sakaguchi, Horii and Toriyama discussing a joint RPG roughly four years before the 1995 interview, with planning beginning later. An early CD-ROM concept became a Super Famicom cartridge. Sakaguchi describes approximately 50 contributors, about half with Final Fantasy VI experience. Duration recollections differ: Tokita estimates nearly two and a half years; Kitase describes roughly one year of discussion and one of production. Toriyama's concepts guided visual cohesion; Horii revised dialogue; Sakaguchi also adjusted events and enemy statistics. These are participants' retrospective approximations, not payroll or schedule records. The useful organizational lesson is to distinguish creative leadership from the broader implementation team, and establish who reconciles their competing priorities. [CTP12]
 
-A 2025 anniversary announcement is reported by contemporary coverage as **more than five million copies shipped worldwide across editions**. Nintendo Life's March 23 article reproduces and links the publisher's milestone wording. The official article body did not render in the research interface, so this is a publisher statement verified through contemporary reporting, not a directly inspected primary statement. Its scope starts with the 1995 Super Famicom release and includes subsequent editions. Do not equate it with five million distinct people, paid full-price transactions, or Steam owners. [CTP02][CTP03]
+**Iteration and its costs.** The other interview identifies Aoki as producer, Tokita and Kitase as directors, and Sakaguchi as designer. The team experimented with encounter formats, hand-authored over 100 battle introductions, and described that work as comparable in effort to story events. Its prerelease Active Time Event Logic proposal sought player movement during dialogue; the translator cautions that the more expansive concept was not fully implemented. Graphic variety across eras contributed to expansion from 24 to 32 megabits. Developers describe coding ideas, discarding dull results, and removing a weapon-specific enemy vulnerability mechanic. This supports prototyping and subtraction, while showing that apparently effortless pacing can require expensive bespoke content. It does not establish a universal method, fixed staffing ratio or budget. [CTP11]
 
-#### R11 economic model and uncertainty ledger
+**Credits are broader than the interview's participants.** The preserved credit list names Takashi Tokita, Yoshinori Kitase and Akihiko Matsui as directors, Kazuhiko Aoki as producer, and Masato Kato for story planning. This is a transcribed credit record, not a claim that titles fully describe daily responsibilities. [CTP21]
 
-| Quantity | Supported result | What remains unknown |
+**A later first-party conversation makes the production tradeoff concrete.** Kato describes a weekly cycle of discussing the scenario with Horii and implementing it for review. He credits a reduction in eligible character combinations with making the combination-tech workload manageable. Matsui and Kato also contrast manually staged encounters with automation. Their discussion warns that praise for labor-intensive work encouraged later teams to normalize exhausting methods; Kato says directors and producers should intervene. These are retrospective accounts, not measured efficiency comparisons. [CTP20]
+
+**Interpretation:** preserve the player's valuable choice while controlling the authoring burden. A small set of distinctive combinations can be preferable to a nominally universal system whose possibilities cannot all be made worthwhile. Reuse and automation should support deliberate exceptions, with visible costs.
+
+**What is not known.** These interviews do not establish the complete internal toolchain, source-control system, exact editor implementation, production burn rate, milestone acceptance criteria, outsourcing allocation, staff-month count, or quantitative playtest sample. Their observations are stronger evidence of intent and remembered working practices than of measured productivity. The community tools discussed below must not be retroactively described as Square's original tools. No inspectable production ledger was found; detailed internal economics remain unknown.
+
+### Editions, distribution and post-release maintenance
+
+The Japanese DS release announcement moved the planned date forward one week to **November 20, 2008**, setting a recommended price of **¥4,800 before tax / ¥5,040 including tax**. It positioned the edition around dual-screen presentation, new systems and additional content, attributing the schedule change to fan anticipation. The announcement is evidence of publisher positioning, not an independent demand measurement. This nominal Japanese retail price cannot be multiplied by worldwide DS shipments to reconstruct receipts. [CTP13]
+
+The edition and reception sections document PC maintenance and regressions. [CTE03][CTR15] The economic implication is a continuing compatibility and support obligation alongside expanded distribution. [Analysis]
+
+The dossier's advertisement case studies separately examine DS nostalgia-led print positioning and a television spot. Those artifacts are evidence of creative execution and audience targeting, not campaign conversion, marketing spend or incremental sales. Across editions, evaluate three distinct promises: access on a new platform, preservation of the familiar experience, and additional functionality. A release can satisfy one and disappoint on another; a famous underlying game does not remove port-specific execution risk. [CTA01][CTA02][CTA03]
+
+### R11: commercial evidence, modeled estimates and uncertainty
+
+#### Measurements with defined scope
+
+Square Enix's fiscal-year briefing reports **790,000 Chrono Trigger DS units during April 1, 2008–March 31, 2009**. The chart uses thousands; this is an edition-specific fiscal-period result, not lifetime sales or title revenue. Company revenue and profit elsewhere in the presentation cannot be allocated to this title. [CTP01]
+
+Contemporary reporting of the 2025 anniversary announcement states **more than five million copies shipped worldwide across editions**. Nintendo Life reproduces and links the publisher statement. The official article body did not render in the research interface, so the primary claim is verified through that secondary relay. This is neither five million distinct people nor five million full-price purchases, and it must not be presented as a Steam-only number. [CTP02][CTP03]
+
+#### Audit of available third-party estimates
+
+An **excluded calculator** illustrates the evidence problem. SteamRev's **October 21, 2025** snapshot claims approximately **415.9 thousand Steam owners**, **US$6.23 million list-price gross** and **US$2.25 million modeled net**. It uses approximately 11.9 thousand reviews ×35 ×US$14.99, then sequential assumptions for regional prices (15%), discounts (25%), refunds (5%), platform fees (30%) and taxes (15%). The site states that model version, input observation dates and confidence were not recorded. Its production metadata also includes an uncorroborated purported 2022 HD-2D remaster. The arithmetic is recorded here for the rejection audit, not accepted as an estimate of this game's finances. Its current-price starting point, unsupported multiplier, unverified deductions and suspect metadata do not establish consumer spending, publisher receipts or profit. [CTP15]
+
+A SteamDB search result displayed owner estimates of approximately **197.2 thousand from Video Game Insights versus 709.4 thousand from Gamalytic**, a roughly 3.6-fold spread. This was search-level evidence rather than a reconciled provider dataset, so it is an uncertainty diagnostic, not a verified sales interval or statistical confidence band. Provider models, observation dates and owner-versus-purchase definitions can differ. [CTP16]
+
+Gamalytic's own methodology combines sales-rank, concurrency, review-based inference and disclosed results. It distinguishes owners from direct Steam purchasers and warns that external revenue, bundles and estimation errors can affect results. That methodological disclosure helps explain why a modeled owner count should not silently become paid-unit revenue. It does not validate the particular estimates above. [CTP17]
+
+#### Financial-search record and decision
+
+Research searched title-specific combinations of **Chrono Trigger, Steam, revenue, sales estimates, VG Insights, Gamalytic, app 613830, development budget, Square, cost and development team**. It inspected the publisher's fiscal briefing and DS announcement, the anniversary report, SteamRev's model, Gamalytic's methodology, and the SteamDB search evidence. Search also surfaced Gameselo, another review-multiplier calculator, several small statistics aggregators, and an unattributed development-budget claim. Gameselo's page failed to open; the other summaries lacked adequate provenance for a stronger conclusion. No title-level audited income statement, original budget, port budget, actual realized-price series, marketing cost or rights split was found in the material reviewed. These are bounded search results, not a claim that no such records exist anywhere. [CTP01][CTP02][CTP03][CTP13][CTP15][CTP16][CTP17][CTP18]
+
+| Quantity | Defensible conclusion | Missing inputs or boundary |
 |---|---|---|
-| DS units during FY ended March 2009 | 790,000 | Lifetime DS sell-through, regional realized prices and returns |
-| Cumulative worldwide units through the 2025 anniversary report | More than five million shipped across editions, publisher statement relayed by contemporary coverage | Edition split, unique purchasers, precise shipment/digital-sale definitions |
-| Consumer spending | Not estimable from inspected evidence | Historical actual prices, discounts, bundles, currencies, tax and refunds |
-| Publisher revenue or net receipts | Not estimable | Wholesale realization, retailer/store deductions, accounting recognition, rights-sharing arrangements |
-| Project and port costs | Not disclosed in inspected evidence | Staff time, development overhead, localization, manufacturing, marketing, QA, platform certification, port maintenance |
-| Title profit, breakeven, return on investment | Not estimable | Both attributable receipts and fully allocated costs |
+| Historical units | Edition-period and all-edition milestone reported above | Shipment/sell-through distinction, platform and regional split, repeat buyers |
+| Steam partial-market economics | Public models were inspected; **no sufficiently supported financial estimate adopted** | Purchase validation, actual prices, regional mix, keys, refunds, taxes and model provenance |
+| All-edition consumer spending | **Not estimable from inspected evidence** | Historical realized prices, geography, currencies, discounts, bundles and returns |
+| Publisher receipts | **Not estimable** | Wholesale realization, retailer/platform deductions, contracts and accounting recognition |
+| Original and subsequent project costs | **Not established** | Development, overhead, localization, manufacturing, marketing, QA, rights and maintenance |
+| Title profit, breakeven and return on investment | **Not estimable** | Attributable receipts and fully allocated costs |
 
-This is a deliberately bounded model, not a fabricated low/base/high forecast. A numerical range would not become defensible merely by choosing plausible percentages for every missing input. For a future reconstruction, use **sum of edition/region units × realized unit receipts**, then subtract attributable development, manufacturing, distribution, marketing, rights and support costs. Calculate each period in its historical nominal currency before applying a stated conversion or inflation method. Multiplying the cumulative shipment count by a current digital list price is not a historical revenue estimate. [CTP01][CTP02][CTP03]
+For a defensible future reconstruction, calculate each edition/region/period's paid units ×realized receipts per unit, then subtract attributable costs. Retain historical nominal currencies until a specified conversion or inflation step. A low/base/high forecast requires justified input ranges and correlated assumptions; giving a rejected calculator arbitrary error bars would manufacture precision. The available owner-model spread is not sufficient for a defensible financial range, and multiplying the cumulative shipment milestone by a current digital list price is invalid. [Analysis of evidence limits above]
 
-**Commercial outcome: strong evidence of durable demand; financial return indeterminate.** Repeated paid editions and a cumulative shipment milestone decades after release support commercial longevity. They do not identify the original margin, the profitability of any particular port, or the causal contribution of a mechanic or advertisement. A buyer can repurchase an edition, physical shipments can precede consumer purchases, and editions have different price and distribution economics. [CTP01][CTP02][CTP03]
+#### What plausibly explains commercial durability
 
-**Sustainability for whom?** Players and preservation communities benefit from continued access and community tools; publisher benefit requires port revenue to cover ongoing costs; volunteer creators can obtain satisfaction, reputation and an active audience without earning sustainable income. These are separate outcomes. No inspected source establishes creator salaries, mod sales, donations received, or publisher profit attributable to modding. Completion of a finite RPG is also not evidence of failed retention: replay, recommendation, later repurchase, and community participation are different forms of continuing value. [CTP05][CTP06][CTP07][CTP08][CTP09][CTP10]
+| Mechanism or hypothesis | Evidence and causal limit | Open Legend implication |
+|---|---|---|
+| Platform reach and renewed purchase occasions | The DS period result and later all-edition milestone demonstrate demand across time, but do not isolate new audiences from repeat buyers or any port's incremental return. [CTP01][CTP02][CTP03] | Treat platform adaptation as a separate investment with its own audience, costs and acceptance criteria. |
+| Preservation plus added convenience can create premium reissue value | The DS announcement sells platform-specific additions; willingness to pay for each addition is unmeasured. [CTP13] | Test which changes improve the promised experience and which undermine familiarity or usability. |
+| Quality and support affect the value of distribution | See the edition/reception evidence above; revenue recovered by support is unmeasured. [Analysis] | Budget for launch readiness and continuing support. A large installed audience can magnify support costs as well as sales. |
+| Memorable work can produce recommendation, replay and repurchase | This is consistent with the milestone and the separate reception findings, but reputation, platform availability, price and historical audience formation are confounded. [CTP03] | Evaluate completion, recommendation and later return separately; finishing a finite RPG is not automatically failed retention. |
+| Community creation can extend reasons to revisit | The documented ecosystem below supplies additional activities, but no causal sales uplift, creator earnings or publisher return is established. | Enable creation where its value exceeds tool, moderation and compatibility costs; do not assume a marketplace or volunteer labor will be self-sustaining. |
+
+**Commercial outcome: durable demand is supported; financial profitability is unresolved.** Player enjoyment, publisher return and creator sustainability are different outcomes. This case does not establish that longer engagement would have been more profitable, that every rerelease paid back its costs, or that replicating a celebrated mechanic will reproduce the same business result.
 
 ### R15 creator-ecosystem gate: yes
 
-The gate passes on documented tools, playable outputs and sustained support. Jets of Time has an online generator, local distribution, wiki, guides, trackers and a racing community; a guide is explicitly dated December 2020 and a getting-started page was updated in December 2025. This establishes multi-year community activity, not its population size or growth rate. Temporal Redux and CTViewer expose substantial independent editing and inspection work. These are community projects, not evidence that Square shipped its original development tools. [CTP05][CTP06][CTP07][CTP08][CTP09][CTP10]
+The documented ecosystem includes playable transformations, maintained tools, supporting guides and organized play. The dated documentation below establishes activity across multiple years; the separate authored Chrono Trigger+ case strengthens the evidence beyond tool availability. No reliable active-creator census, download total, retention curve or earnings distribution was established. [CTP05][CTP06][CTP07][CTP08][CTP09][CTP10][CTC01][CTC02][CTC03]
 
-#### Tool and output map
+#### Tool map and factual owners
 
-| Project | Documented role and inputs | Creative reach | Material boundary |
-|---|---|---|---|
-| **Jets of Time** | Community open-world randomizer; valid US SNES ROM supplied by user; online or local generation | Rearranges access to characters, key items and routes to Lavos; supports multiple rule sets | Generated seeds depend on selected version and flags; this is not official support or permission to redistribute the base game |
-| **Temporal Redux** | Community remake of Michael Springer's Temporal Flux, incorporating Jets of Time code; Python/PyQt implementation | Rebuilds an editing interface over reverse-engineered game structures | README explicitly lists incomplete string editing, command-editing crashes and limited testing |
-| **CTViewer** | Community debug viewer for North American SNES input or Steam resources | Inspects scenes, world maps, sprites, animations, event-driven behavior, collision and exits | A viewer with incomplete emulation and unsupported PC map extensions, not a complete authoring or validation environment |
-| **JetsGuide** | Community interactive progression guide, version 1.4 dated December 14, 2020 | Makes an altered game's progression legible and supports race preparation | Historical flags and modes must not be silently presented as current defaults |
-
-[CTP05][CTP06][CTP07][CTP08][CTP09][CTP10]
-
-**Jets of Time changes the game at the level of progression and rules, not only appearances.** Its public release notes describe additional modes, broader boss placement, item/gear variation and configurable access to Lavos. The useful lesson is that a reusable world, encounters and reward structure can support radically different runs when creators can alter dependency rules. This requires enough tooling and validation to keep generated routes playable; randomization alone does not guarantee coherence. [CTP09]
-
-#### Reconstructed end-to-end workflow
-
-1. **Select a target version and input.** Jets of Time's getting-started guide requires a valid US SNES game ROM, then directs the player to an online generator or a local release. It recommends beginner or standard race presets for newcomers. Record the generator version, preset, flags and seed so a result can be reproduced. The recording step is our operational recommendation, not a claimed publisher workflow. [CTP06]
-2. **Generate and play a rules variant.** Supply the input, choose supported options and build the randomized game. Documentation points to emulators or a flash cartridge for play. Guides and trackers support progression discovery; weekly Twitch races and YouTube VODs provide examples of community use. Hardware, input provenance and software compatibility remain separate responsibilities. [CTP06]
-3. **Inspect behavior and assets.** CTViewer accepts a headered or unheadered North American SNES ROM, Steam `resources.bin`, or an extracted Steam resource directory. It links CTExplore for extraction. Its debug overlays expose collision, exits, music regions, movement and actors; it can dump diagnostic information and a screenshot. These affordances shorten the distance between seeing a defect and identifying the relevant data. [CTP08]
-4. **Edit with explicit maturity limits.** Temporal Redux documents a Python virtual environment, package installation and module startup, with Python 3.7+ and PyQt6 requirements. Its own known-issues list says strings cannot be edited and repeated command editing can crash. A promising open-source editor should therefore be described as limited and evolving, not as a fully compatible replacement for Temporal Flux. [CTP07]
-5. **Package, distribute and support the result.** Jets of Time supplies online generation and downloadable releases, then routes users to its wiki and Discord. The distributed software, the user's copyrighted base-game input and the resulting modified game are different artifacts. Documentation observed here does not authorize shipping copyrighted game data with a tool. For an Open Legend ecosystem, publish a supported project/package format and dependency manifest rather than making creators guess these boundaries. [CTP05][CTP06][CTP07]
-
-#### Compatibility, saves, testing and failure modes
-
-**Version and flag compatibility are part of the product.** Jets of Time's release notes explicitly make Bucket Fragments incompatible with Lost Worlds, Legacy of Cyrus and Ice Age. They also acknowledge recruitment-related softlocks, including a remaining Lost Worlds party-transition problem after other related fixes. This is concrete evidence that progression modifications can invalidate apparently ordinary game states. It is not evidence that every seed is broken or that the current release retains every historical defect. [CTP09]
-
-**A preview is not the shipped runtime.** CTViewer documents absent scanline effects, incomplete scripts, imperfect world-map wrapping and unsupported PC map extensions; it therefore cannot validate widescreen PC behavior completely. Treat its overlays as diagnostic tools and reproduce final results in the intended game environment. Its Rust/SDL3/SDL3_ttf build dependencies are those of the community viewer, not Square's 1990s production stack. [CTP08]
-
-**Save safety is unresolved in the inspected maintainer material.** No reviewed source establishes a general guarantee that a save survives changing seeds, switching randomizer versions, stacking unrelated patches, or installing an alteration midway through a playthrough. Do not promise any of these. Preserve the original input and independent save backups, start a fresh run for a changed ruleset unless that project's documentation says otherwise, and retain the exact version used. These are risk controls inferred from structural modifications, not a claim that a particular project requires a universal reset. [CTP06][CTP07][CTP08][CTP09]
-
-**Load order is not a substitute for patch compatibility.** The reviewed projects span ROM edits, resource extraction and runtime viewers. They are not a single official plug-in API with a common loader. If two tools change the same game data, a generic instruction to install one after the other does not establish a valid merge. Shared hashes, target revisions and explicit conflict detection would be useful design requirements for Open Legend. No multiplayer engine or network-cooperative mode is established by the sources inspected; racing separate runs is a community format and must not be mislabeled as in-game multiplayer. [CTP05][CTP06][CTP07][CTP08][CTP09][CTP10]
-
-#### Governance, rights, creator incentives and maintenance
-
-Jets of Time's public wiki and Discord provide visible support routes. Its dated guide and later wiki maintenance show that usability depends on documentation and community assistance as well as executable code. They do not disclose response-time guarantees, moderator staffing, enforcement procedures, download totals, active creators or audience retention. The guide credits multiple community contributors. [CTP06][CTP10]
-
-Temporal Redux's repository carries GPL-3.0 licensing; CTViewer uses MIT; the wiki carries a Creative Commons attribution/share-alike notice. **These licenses cover the relevant community code or documentation, not blanket rights in Chrono Trigger's characters, graphics, music or original game data.** This dossier does not resolve the legal status of a specific ROM acquisition, patch or redistribution. The publisher's media-sharing rules must be read separately; a video policy cannot be used as authorization for mods. [CTP06][CTP07][CTP08]
-
-Observed incentives include playable creative work, contribution credit, technical experimentation, racing and sharing expertise. None of these supports a claim that creators receive publisher payouts or meaningful earnings. Likewise, free distribution can reduce adoption friction without eliminating hosting, maintenance, support or rights costs. A creator ecosystem needs a sustainable maintenance arrangement even when it has no paid marketplace. [CTP05][CTP06][CTP07][CTP08][CTP09][CTP10]
-
-#### Transfer to Open Legend
-
-| Mechanism worth studying | Why it can work | Prerequisite and limit |
+| Project | Role | Evidence boundary |
 |---|---|---|
-| Expose progression and encounter data | Enables new runs and rules without recreating all art and maps | Validate reachability, required items and failure states; a seed generator must explain incompatible flags |
-| Provide a scene inspector with overlays | Connects a visible problem to collision, events and other underlying data | Inspector fidelity must match the shipped runtime; publish known gaps |
-| Offer beginner presets and reproducible configurations | Reduces setup friction while preserving depth for experts | Pin versions, seed and option schemas; old guides need version labels |
-| Keep editing, packaging and distribution boundaries explicit | Helps creators share their own contributions safely and predictably | Document asset rights, project formats and dependencies; tool openness alone does not provide content rights |
-| Treat guides and community support as infrastructure | Helps unfamiliar rulesets become playable and explainable | Fund or otherwise sustain maintenance; visible activity is not an earnings or adoption metric |
-| Design save migration and compatibility checks early | Reduces the cost of later ecosystem growth | Backups, project IDs, version checks and migration policy need implementation; no such universal guarantee is established for these CT tools |
+| Jets of Time | Progression/rules transformation and generation | Maintainer homepage and installation guide |
+| Temporal Flux | Established authoring system | Separate CTC case study |
+| Temporal Redux | Developing alternative editor | Repository documents incomplete functionality |
+| CTViewer | Scene/resource inspection | Diagnostic fidelity is limited |
+| JetsGuide | Human-facing progression assistance | Historical guide with explicit version |
 
-These are research implications, not approved Open Legend implementation scope. Chrono Trigger's fandom and existing world were accumulated over decades; an unknown new game cannot assume that volunteer toolmaking will appear automatically. The transferable mechanism is reducing the cost of meaningful creation and safe distribution, not copying a famous property's expected audience. [CTP05][CTP06][CTP07][CTP08][CTP09][CTP10]
+**Jets of Time — design.** The maintainer describes an open-world randomizer in which players use the Epoch to find characters and key items, ultimately reaching Lavos. It provides online generation, downloadable executables and older releases. This is a community transformation of the game, not a Square-supported editing platform. [CTP05]
+
+**Jets of Time — documented play path.** The Getting Started page, modified December 16, 2025, requires a valid US SNES ROM, offers beginner/standard race presets, and directs users through online or local generation to emulator or flash-cartridge play. It links trackers, guides, known-issue help, Discord, weekly Twitch races and YouTube VODs. The wiki carries a CC BY-SA notice. This supplies a documented generator-to-play route; its existence does not establish user population or legal permission to distribute the base game. [CTP06]
+
+**Jets of Time — exact inspected release.** The release page labels **v3.2.0**, commit `3af9a5a`, as latest; its rendered timestamp says **16 January, 17:48 without a year**, so the year remains unverified. Added modes include Legacy of Cyrus, Ice Age and VanillaRando; other options change bosses, gear, healing, flight access and victory conditions. Bucket Fragments is incompatible with Lost Worlds, Legacy of Cyrus and Ice Age. The notes include softlock fixes and a remaining recruitment-related party-transition qualification, especially in Lost Worlds. They also offer reduced flashes. These are version-specific statements, not a claim about every historical or future seed. [CTP09]
+
+**Temporal Redux.** The repository describes a remake of Michael Springer's Temporal Flux incorporating Jets of Time code. It documents Python 3.7+, PyQt6, virtual-environment/package setup and a module entry point; its license is GPL-3.0. Known limitations include absent string editing, crashes when editing a command twice, command-switching problems and limited testing. It should be evaluated as an evolving community editor, not assumed to be a fully compatible replacement or Square's original development environment. [CTP07]
+
+**CTViewer.** The MIT-licensed viewer accepts headered/unheadered North American SNES input, Steam `resources.bin`, or extracted Steam resources; its README links CTExplore. It exposes scene/world views, actors, animations, scripts, collision/exits and other debug overlays, plus diagnostic/screenshot dumps. Its Rust/SDL3/SDL3_ttf build and documented gaps—scanline effects, incomplete scripts, world wrapping and unsupported PC map extensions—belong to this community tool. No reviewed evidence establishes a complete authoring/export system or a validated bridge to the other editors. [CTP08]
+
+**JetsGuide.** Version 1.4 is dated December 14, 2020; the interactive guide credits multiple contributors and organizes progression by modes, characters, eras and items. Its historical race flags and GPL-v3 code notice belong to that guide. It demonstrates supporting community work, but its configuration should not be substituted for current generator documentation. [CTP10]
+
+#### Workflow, updating and support boundaries
+
+**Documented route:** use the generator-to-play sequence above. **Unverified route:** inspect with one tool, edit with another, then assume that both interpret the same revision identically. This research found no end-to-end compatibility contract joining every tool in the map. Treat cross-tool composition as a hypothesis requiring target-specific validation, not an installation recipe. [CTP05][CTP06][CTP07][CTP08]
+
+For reproducibility, record the target game revision, generator/editor version, seed, flags, dependencies and distribution artifact. When updating a creation, retain the old configuration and input, inspect the relevant release notes, generate or build a separate output, and compare the intended behavior before replacing a published version. A seed identifier alone need not reproduce the same output after algorithm changes. These are recommended controls, not claimed features already supplied by every project.
+
+**Bug routing:** Jets of Time advertises wiki/Discord support; for an editor or viewer defect, start with that project's own repository and contribution/support guidance. Separate a generation failure, a game softlock, an editor crash and a preview-only discrepancy. Supply versions, reproduction steps and allowed diagnostic material; do not attach copyrighted base-game data by default. This routing is a practical inference from separate maintainership, not a support guarantee or verified maintainer response-time commitment. [CTP05][CTP06][CTP07][CTP08]
+
+**Saves and conflicts:** no inspected material establishes universal save migration across seeds, rulesets, arbitrary patch combinations or tool versions. Preserve independent backups and an unchanged base input; use a new run for changed rules unless the specific project documents a supported migration. Two patches touching the same data do not become compatible merely through a proposed load order. No shared official plug-in loader or general conflict resolver was established. Similarly, the documented race format should not be mislabeled as in-game cooperative multiplayer. These are explicit unresolved boundaries and operational recommendations, not claims that all modifications corrupt saves.
+
+#### Rights, distribution, incentives and governance
+
+Community code/documentation licenses do not automatically grant rights in Square's game code, characters, images, music or resulting modified game data. Separate the tool, original input, creator's contribution and distribution package. No inspected source establishes blanket publisher permission for these modifications, a creator revenue share, paid marketplace, moderation staffing, enforcement procedure or funded maintenance commitment. This dossier does not determine the legal status of a particular acquisition or patch.
+
+Square Enix's media guidelines, updated **April 10, 2025**, permit specified individual video/image sharing and platform advertising monetization while restricting uses such as access paywalls and isolated music/cinematic uploads; attribution and spoiler provisions apply. This is a bounded media policy, not a modding license. A creator using gameplay footage should consult its current complete terms rather than treating this summary as permission for every commercial use. [CTP19]
+
+Observed contributions, guides, races and published tools are compatible with intrinsic enjoyment, social recognition and technical learning as incentives. They do not establish meaningful earnings. Free availability can lower adoption friction while leaving maintenance, hosting, documentation and support costs with creators. Any comparison with Open Legend must therefore ask who pays those costs and what happens when an essential maintainer leaves. [CTP05][CTP06][CTP07][CTP08][CTP09][CTP10]
+
+#### Transfer hypotheses for Open Legend
+
+- **Expose meaningful rules, not only surface customization.** Progression dependencies, encounters and victory conditions can produce substantial variation. The prerequisite is validation of reachability and failure states, with intelligible incompatibility messages.
+- **Make creation inspectable.** A useful inspector should connect visible behavior to its underlying data, disclose preview gaps and support reproduction in the actual runtime.
+- **Make packages reproducible and updateable.** Specify target revisions, dependencies, versioned formats, saved-state policy and compatibility checks before a large catalog accumulates.
+- **Make distribution and rights understandable.** Give creators an explicit format for their contributions, documented permitted assets and clear rules for packaging, attribution and sharing.
+- **Maintain the human support layer.** Guides, examples, presets and help channels should be treated as continuing product responsibilities, with version labels and a maintenance arrangement.
+
+These are research implications, not approved implementation scope. An unfamiliar new game cannot assume that decades of audience attachment and volunteer toolmaking will appear automatically. The next useful validation would be a narrowly scoped creator task with observed completion time, failure modes, support burden and repeat participation; tool availability alone is not success.
 
 ### A mature authoring route and a concrete expanded adventure
 
@@ -399,7 +499,7 @@ These are research conclusions to use when a corresponding design is selected. T
 
 ### Make a desired next action easy to see
 
-The opening supplies a place to enjoy and a person to help before its larger explanation. Later, a changed understanding makes another visit worthwhile. A useful OpenLegend opening could make an attainable concern, an intriguing destination and a particular person's purpose visible together. That is compatible with player initiative: the player still needs a reason to choose one of the possibilities. Compare the first-session and late-game evidence above, rather than using “freedom” as a substitute for a legible invitation. [CTN01][CTN20]
+The opening supplies a place to enjoy and a person to help before its larger explanation. Later, a changed understanding makes another visit worthwhile. A useful OpenLegend opening could make an attainable concern, an intriguing destination and a particular person's purpose visible together. That is compatible with player initiative: the player still needs a reason to choose one of the possibilities. Compare the first-session and late-game evidence above, rather than using “freedom” as a substitute for a legible invitation. [CTN02]
 
 **Existing owner:** [Playable game first](../../../../docs/repertoires/gameplay-priorities.md#the-game-we-need-to-be-able-to-play). **Counterpoint:** over-directed introductions can make alternatives seem decorative; the invitation must lead into actual usable options.
 
@@ -504,7 +604,6 @@ Research accessed **November 6, 2026**. Dated claims retain the date and edition
 
 Accessed November 6, 2026. Community references distinguish documentation of play from official authorial statements. Repeated facts and interpretations are reconciled with the other sections before completion.
 
-- **CTN01 — Square Enix, Chrono Trigger digital product description.** https://gb.store.square-enix-games.com/chrono-trigger---digital — Publisher description; text retrieved through web search. Supports the premise and current product framing, not independent reception.
 - **CTN02 — Chronicles, “Chrono Trigger Plot Summary,” 2015.** https://scalar.usc.edu/works/chronicles/chrono-trigger-plot-summary — A preservation project reproducing ZeaLitY's community synopsis; relevant body read. Used for bounded plot structure, not as an official statement that every ending is canon.
 - **CTN03 — Chrono Wiki, “Antiquity.”** https://www.chronowiki.org/wiki/Antiquity — Community lore reference; relevant story and character sections read. Some explanatory claims are interpretive, so the dossier limits itself to supported setting and scene relationships.
 - **CTN04 — Chrono Wiki, “Entity.”** https://www.chronowiki.org/wiki/Entity — Community page; overview and explicitly labeled speculation read. The distinction between party belief and certainty is retained.
@@ -533,55 +632,31 @@ Accessed November 6, 2026. Community references distinguish documentation of pla
 
 ### Mechanics and editions
 
-- **CTM01 — Chrono Trigger SNES instruction booklet, web transcription.** Original 1995; transcript attributed to Mike Liu. https://www.world-of-nintendo.com/manuals/super_nes/chrono_trigger.shtml . Inspected November 6, 2026. Primary game instructions through a secondary transcription; button labels and page layout can differ from the original scan. Relevant sections: Playing Modes; Saving; Switching Characters; Battle. Keep total substantive paraphrase of this URL within its returned 200-word source budget.
-- **CTM02 — Square Enix, Chrono Trigger Steam store.** PC release February 27, 2018; current store accessed November 6, 2026. https://store.steampowered.com/app/613830/CHRONO_TRIGGER/ . First-party feature descriptions and current platform capabilities; storefront statements are not independent verification of technical quality.
-- **CTM03 — Steam Community, “Wait mode.”** May 29–30, 2021. https://steamcommunity.com/app/613830/discussions/0/3083256496968675873/ . Accessed November 6, 2026. Small player discussion used only to clarify menu-specific pausing, not as authoritative evidence of developer intent or community prevalence.
-- **CTM04 — Chrono Trigger DS guide, SuperCheats text mirror.** https://www.supercheats.com/nintendods/walkthroughs/chronotrigger-walkthrough07.txt . Accessed November 6, 2026. Community walkthrough; Classic/DS display modes and Wait-menu explanations are edition-specific secondary evidence, not a firsthand play test.
-- **CTM05 — Square Enix, “Chrono Trigger Now Available on PC.”** February 27, 2018. https://press.na.square-enix.com/CHRONO-TRIGGER-NOW-AVAILABLE-ON-PC . Accessed November 6, 2026. First-party launch announcement; video links are catalogued as publicity metadata only, not watched footage.
+All sources accessed **2026-11-06**. Manuals describe their own editions. Community references support detailed mechanics but are not official guarantees for every port. Database counts are not a claim that every individual entry was inspected. No linked trailer or gameplay video was watched for this section.
 
-- **CTM06 — Gamer Corner Guides, Chrono Trigger Systems.** Undated community mechanics reference. https://guides.gamercorner.net/ct/systems/ . Accessed November 6, 2026. Technical secondary source; no exact damage coefficients reproduced. The current checkpoint exceeds its eventual prose allocation and will be split across independent character/item pages or tightened before final integration.
-- **CTM07 — Caves of Narshe, New Game Plus, Nintendo DS mode.** Author Rangers51; undated. https://mail.cavesofnarshe.com/ct/ngplus.php?ctmode=nds . Accessed November 6, 2026. Community edition-specific carry-over inventory; canonical www host returned access failure, mail host rendered the article.
-- **CTM08 — Square, Final Fantasy Chronicles instruction booklet, preserved PDF.** PlayStation release manual, 2001. https://www.videogamemanual.com/ps1/Final%20Fantasy%20Chronicles%20%28USA%29.pdf . Accessed November 6, 2026. Primary instruction content hosted by a preservation site; combination-gauge/MP requirements inspected through indexed text; not a firsthand play session.
-
-## Mechanics completion checkpoint: topology, targeting, resources, economy
-
-The game's area attacks use several distinct geometries: a circle around the acting character, a circle around the selected enemy, a line extending from the user through an enemy, and a horizontal grouping. These are authored targeting rules, not freely placed templates. The player chooses the target and timing while combatants' automatic positions determine which secondary enemies qualify. This makes animation and targeting previews part of the tactical interface; positioning is consequential even though walking characters around the battlefield is not an available command. The technique list separates these geometries explicitly. [CTM09]
-
-Combination techniques require the participants' prerequisite single techniques. Aura Whirl combines Crono's Cyclone with Marle's Aura and heals the entire party; Fire Whirl combines Cyclone with Lucca's Flame Toss for a fire attack around the target; X Strike combines Cyclone with Frog's Slurp Cut against one enemy. Rocket Roll joins Cyclone and Robo's Laser Spin to strike all enemies with shadow damage. These relationships make party composition a selectable action vocabulary: changing one member can change both the available damage types and the shape of the party's recovery options. [CTM10]
-
-### Time travel as an authored network
-
-Time Gates initially connect particular locations in pairs. After the End of Time becomes the travel hub, the party reaches discovered destinations through its pillars. The network links Leene Square in 1000 AD with Truce Canyon in 600 AD; Guardia Forest in 1000 AD with Bangor Dome in 2300 AD; and Proto Dome in 2300 AD with a Medina residence in 1000 AD. Other gates introduce the prehistoric and ancient eras. Travel consequently opens a finite network of authored maps and story states. The useful design lesson is the legibility of revisiting a place under a different historical condition; it does not require a continuously simulated planet. [CTM11]
-
-### Economy and supplies
-
-Gold shops sell weapons, armor, accessories and consumables, with stock tied to place and sometimes story progress. The early fair's Melchior offers a cheap Iron Blade alongside a much more expensive Lode Sword, making the future upgrade visible before it is affordable. Tonic, Heal, Revive and Shelter serve different recovery jobs rather than being interchangeable healing stock. Shopping therefore asks the player to balance a permanent improvement against a reserve of emergency tools. The shop database also documents inventory changes and stores that disappear, so a store's availability should not be described as globally permanent. [CTM12]
-
-Prehistory adds a second, local economy. Hunting yields trading materials used at Ioka's Trading Hut. The recipe for a Ruby Vest uses three Fangs and three Feathers. A late Ruby Armor trade, available after obtaining the Chrono Trigger, demands ten each of Fangs, Feathers, Horns and Petals. This is a fixed exchange list. Calling it a general crafting system would overstate its scope: the player acquires the required materials and exchanges them for a named output rather than designing items, choosing arbitrary ingredients, or discovering a procedural recipe space. [CTM13]
-
-### Elemental taxonomy
-
-The mechanics database distinguishes physical attacks from lightning, water, fire and shadow. This taxonomy is more informative than assigning a single combat identity to every character: the relevant property belongs to the actual attack, and combinations can supply another type. Resistance, absorption and particular enemy responses can make the strongest listed attack the wrong action. The dossier should retain the individual technique's damage type when explaining an encounter instead of assuming that every attack by a caster has the caster's headline element. [CTM14]
-
-### Additional worked situations
-
-**5. Two encounters, different targeting geometry.** Prerequisite: Crono knows Cyclone and the party has MP available. Action: inspect clustered enemies and select an enemy whose nearby group can be caught by the attack. Outcome: one expenditure can affect several enemies when they occupy the required area. Next choice: wait for another useful arrangement, attack a single dangerous enemy, or spend a different technique. Tradeoff: efficiency from geometry competes with acting before enemies move or attack. This is an interpretation of documented area rules, not a claim of manual positioning. [CTM09]
-
-**6. A local materials economy.** Prerequisite: access to prehistoric hunting and the Trading Hut. Action: collect three Fangs and three Feathers and exchange them for a Ruby Vest. Outcome: a specified armor reward replaces the ingredient stock. Next choice: equip it now or save further materials for another fixed trade. Tradeoff: additional encounters consume time and recovery resources, while the reward is guaranteed once its prerequisites are met. The late Ruby Armor recipe changes both the material demand and the progression gate. [CTM13]
-
-**7. A chest that rewards postponement.** Prerequisite: access to sealed treasures in both the Middle Ages and Present. Action: follow the earlier-era interaction that upgrades the corresponding future chest, then collect the future reward. Outcome: the Present Truce Inn chest can yield Blue Mail instead of Blue Vest; the analogous Guardia Castle treasure upgrades Red Vest to Red Mail. Next choice: claim the reward immediately or revisit the historical counterpart. Tradeoff: the better result depends on understanding the order of operations, making this a knowledge puzzle whose rules are easy to spoil or miss. Exact prompt wording should be checked against the chosen translation. [CTM15]
-
-**8. An upgrade competes with safety.** Prerequisite: arrive at an early gold shop with limited funds. Action: compare a permanent weapon upgrade with buying recovery items. Outcome: damage improvement can shorten repeated fights, whereas consumables preserve recovery options after a mistake. Next choice: purchase now, explore for treasure, or fight for more currency. Tradeoff: the displayed shop inventory communicates a reachable aspiration, but spending every coin on it can leave the party less resilient. This is design analysis grounded in the documented shop prices and stock, not a measured optimal purchasing strategy. [CTM12]
-
-### Additional source register for this checkpoint
-
-- **CTM09:** Gamer Corner Guides, *Chrono Trigger: Techs*. https://guides.gamercorner.net/ct/techs/ . Community mechanics database; accessed 2026-11-06. Technique geometries, prerequisites and costs; the inspected listing is paginated.
-- **CTM10:** Gamer Corner Guides, *Chrono Trigger: Combo Techs*. https://guides.gamercorner.net/ct/combo-techs/ . Community mechanics database; accessed 2026-11-06. Named prerequisites, participants, damage types and target shapes.
-- **CTM11:** Gamer Corner Guides, *Chrono Trigger: Gates*. https://guides.gamercorner.net/ct/gates/ . Community mechanics database; accessed 2026-11-06. Paired gates and the End of Time hub.
-- **CTM12:** Gamer Corner Guides, *Chrono Trigger: Shops*. https://guides.gamercorner.net/ct/shops/ . Community mechanics database; accessed 2026-11-06. Shop inventories, prices and changing availability.
-- **CTM13:** Caves of Narshe, *Chrono Trigger: Hunting and Trading*. https://mail.cavesofnarshe.com/ct/hunting.php . Community guide; accessed 2026-11-06. Ioka material recipes and late-game availability. Main host was inaccessible; the same site's mail subdomain was readable.
-- **CTM14:** Gamer Corner Guides, *Chrono Trigger: Elements*. https://guides.gamercorner.net/ct/elements/ . Community mechanics database; accessed 2026-11-06.
-- **CTM15:** Gamer Corner Guides, *Chrono Trigger: Sealed Treasures*. https://guides.gamercorner.net/ct/sealed-treasures/ . Community mechanics database; accessed 2026-11-06. Earlier-era upgrade states and future rewards.
+- **CTM01 — Original SNES manual, fan transcription.** https://www.world-of-nintendo.com/manuals/super_nes/chrono_trigger.shtml — Manual attributed to Square, 1995; hosted transcription credited to Mike Liu. Original controls, battle settings, saving, party management. Transcription, not newly authenticated scan.
+- **CTM02 — Square Enix, Steam product page.** https://store.steampowered.com/app/613830/CHRONO_TRIGGER/ — PC release listed February 27, 2018; live store text. Official broad battle and platform description; marketing overview rather than detailed rules.
+- **CTM03 — Steam community discussion, Wait mode.** https://steamcommunity.com/app/613830/discussions/0/3083256496968675873/ — May 29–30, 2021. Player explanation of submenu pauses and queued actions; anecdotal corroboration.
+- **CTM04 — SuperCheats-hosted DS walkthrough.** https://www.supercheats.com/nintendods/walkthroughs/chronotrigger-walkthrough07.txt — Community guide; publication/version date not independently established. DS interface and battle-mode explanation.
+- **CTM05 — Square Enix, PC launch announcement.** https://press.na.square-enix.com/CHRONO-TRIGGER-NOW-AVAILABLE-ON-PC — February 27, 2018. Official PC/mobile content description; edition supplement also uses this source.
+- **CTM06 — Gamer Corner Guides, Systems.** https://guides.gamercorner.net/ct/systems/ — Undated community mechanics reference. Named stat boundaries, attribute behavior, and incapacitation/recovery. Not a platform-by-platform test report.
+- **CTM07 — Caves of Narshe, New Game Plus, DS view.** https://mail.cavesofnarshe.com/ct/ngplus.php?ctmode=nds — Undated community reference. Carryover and exclusions; do not generalize its edition boundary to every release.
+- **CTM08 — Final Fantasy Chronicles English manual, hosted PDF.** https://www.videogamemanual.com/ps1/Final%20Fantasy%20Chronicles%20%28USA%29.pdf — Square, 2001. Official PlayStation rules, accessed through a third-party manual archive.
+- **CTM09 — Gamer Corner Guides, Techs.** https://guides.gamercorner.net/ct/techs/ — Undated community database. Technique learning, MP, and targeting patterns; not every paginated entry reviewed.
+- **CTM10 — Gamer Corner Guides, Combo Techs.** https://guides.gamercorner.net/ct/combo-techs/ — Undated community database. Component techniques, combined effects, and requirements.
+- **CTM11 — Gamer Corner Guides, Gates.** https://guides.gamercorner.net/ct/gates/ — Undated community location reference, examined during research; traversal detail belongs to the exploration supplement.
+- **CTM12 — Gamer Corner Guides, Shops.** https://guides.gamercorner.net/ct/shops/ — Undated community database. Merchant stock, prices, and conditional availability.
+- **CTM13 — Caves of Narshe, Hunting and Trading.** https://mail.cavesofnarshe.com/ct/hunting.php — Undated community guide. Prehistoric material exchanges and later stock.
+- **CTM14 — Gamer Corner Guides, Elements.** https://guides.gamercorner.net/ct/elements/ — Undated community reference. Damage categories and elemental associations.
+- **CTM15 — Gamer Corner Guides, Sealed Treasures.** https://guides.gamercorner.net/ct/sealed-treasures/ — Undated community database. Cross-era treasure upgrades; not a complete dialogue walkthrough.
+- **CTM16 — Gamer Corner Guides, Items.** https://guides.gamercorner.net/ct/items/ — Undated community database. Restoration, status items, and permanent stat consumables.
+- **CTM17 — Gamer Corner Guides, Accessories.** https://guides.gamercorner.net/ct/accessories/ — Undated community database. Equipment effects and special-tech access.
+- **CTM18 — Gamer Corner Guides, Party Members.** https://guides.gamercorner.net/ct/party-members/ — Undated community reference. Character attributes, affinities, and equipment framework.
+- **CTM19 — Gamer Corner Guides, Statuses.** https://guides.gamercorner.net/ct/statuses/ — Undated community reference. Action restrictions, timing, and defensive effects.
+- **CTM20 — Gamer Corner Guides, Weapons.** https://guides.gamercorner.net/ct/weapons/ — Undated community database. Prices, eligibility, bonuses, and damage-related properties.
+- **CTM21 — Gamer Corner Guides, Armors.** https://guides.gamercorner.net/ct/armors/ — Undated community database. Eligibility and elemental/status protection.
+- **CTM22 — Gamer Corner Guides, Charm.** https://guides.gamercorner.net/ct/techs/charm — Undated community technique entry. Item theft, MP cost, and combination requirements.
+- **CTM23 — Gamer Corner Guides, Magus.** https://guides.gamercorner.net/ct/party-members/magus — Undated community character reference. Spell elements and two accessory-enabled triple techniques; distinct from the narrative section's Chrono Wiki biography.
 
 ### Exploration and platform comparison
 
@@ -604,25 +679,31 @@ The original campaign examples use community guides, often with SNES-era English
 
 ### Production, commercial evidence and creator ecosystem
 
-All sources accessed 2026-11-06. Dates below identify publication or version information where available. Source-derived prose is kept within the observed source word limits; interpretation is identified separately.
+All sources accessed **2026-11-06**. Raw URLs are retained for rechecking. Primary, translated, secondary, modeled and search-only evidence are distinguished. Individual source-derived summaries are deliberately compact; repeated references point back to their factual owners.
 
-- **CTP01 — Square Enix Holdings, results briefing held May 19, 2009.** https://www.hd.square-enix.com/eng/ir/pdf/20090622_01en.pdf — Primary investor PDF, read. Page 2 reports April 1, 2008–March 31, 2009 game units; Chrono Trigger DS 790 thousand. June 12 revision note relates to regional/company totals. No title revenue, costs or profit.
-- **CTP02 — Square Enix Japan, anniversary announcement.** https://www.jp.square-enix.com/topics/detail/3459/ — Official URL located, but current read returned navigation without the article body. Archive candidate https://web.archive.org/web/20250314075456/https://www.jp.square-enix.com/topics/detail/3459/ also failed. Primary body not directly verified.
-- **CTP03 — Liam Doolan, Nintendo Life, March 23, 2025.** https://www.nintendolife.com/news/2025/03/chrono-triggers-lifetime-sales-have-now-surpassed-the-five-million-mark — Article read; reproduces and links the publisher's more-than-five-million worldwide shipment statement across editions. Reader comments are excluded from this production analysis. Secondary relay, not audited accounts.
-- **CTP05 — Jets of Time maintainer homepage.** https://ctjot.com/ — Direct project documentation, read. Open-world randomizer, US SNES input, online/local routes, wiki/community/trackers. Does not establish audience size, income or legal permission.
-- **CTP06 — Jets of Time wiki, Getting Started.** https://www.wiki.ctjot.com/doku.php?id=get_the_game — Direct community documentation, read. Last modification shown December 16, 2025, by lordbatsy. Generator/local-release routes, presets, emulator/flashcart, trackers, guides and race/VOD routes. No general cross-version save guarantee.
-- **CTP07 — OnemusCT, Temporal Redux repository and README.** https://github.com/OnemusCT/temporal-redux — Direct source documentation, read. Describes Temporal Flux remake/Jets of Time code reuse, installation requirements, GPL-3.0 and known editing defects. Current repository is not evidence of Square's original internal tools.
-- **CTP08 — GitExl, CTViewer repository and README.** https://github.com/GitExl/CTViewer — Direct maintainer documentation, read. Inputs, overlays, debug dumps, limitations, Rust/SDL dependencies and MIT license. CTExplore dependency link: https://rivernyxx.com/downloads.html . Viewer limitations are explicitly recorded; no execution performed.
-- **CTP09 — Jets of Time public release notes.** https://github.com/Pseudoarc/jetsoftime/releases — Direct project release page read. Documents modes, incompatible flags, softlock fixes and a remaining qualification. Historical release notes are not a blanket statement of the latest release's defect status; version/date header reconciliation pending.
-- **CTP10 — JetsGuide.** https://guides.ctjot.com/JetsGuide/ — Direct community guide, read. Version 1.4 dated December 14, 2020; contributor credits, interactive route checklist, historical modes/flags and GPL-v3 code notice. Useful evidence of sustained supporting infrastructure; not a current installation authority.
+- **CTP01 — Square Enix Holdings, May 19, 2009 results briefing.** https://www.hd.square-enix.com/eng/ir/pdf/20090622_01en.pdf — Primary PDF, read; **PDF page 3 of 11 / slide 7**. Period unit chart, not title financial accounts.
+- **CTP02 — Square Enix Japan anniversary announcement.** https://www.jp.square-enix.com/topics/detail/3459/ — Official body unavailable in the read interface; archive attempt also failed. Used only through CTP03's explicit relay.
+- **CTP03 — Liam Doolan, Nintendo Life, March 23, 2025.** https://www.nintendolife.com/news/2025/03/chrono-triggers-lifetime-sales-have-now-surpassed-the-five-million-mark — Read; contemporary secondary reproduction of the publisher's shipment statement.
+- **CTP05 — Jets of Time homepage.** https://ctjot.com/ — Direct maintainer documentation, read; scope and distribution paths.
+- **CTP06 — Jets of Time, Getting Started.** https://www.wiki.ctjot.com/doku.php?id=get_the_game — Direct community documentation, read; setup and organized-play links. No audience census.
+- **CTP07 — OnemusCT, Temporal Redux.** https://github.com/OnemusCT/temporal-redux — Maintainer README/source repository, read; incomplete editor, not original Square tooling.
+- **CTP08 — GitExl, CTViewer.** https://github.com/GitExl/CTViewer — Maintainer README, read. Linked extractor: https://rivernyxx.com/downloads.html . No tools executed.
+- **CTP09 — Pseudoarc, Jets of Time releases.** https://github.com/Pseudoarc/jetsoftime/releases — Direct version-specific notes, read; rendered release year unavailable.
+- **CTP10 — JetsGuide.** https://guides.ctjot.com/JetsGuide/ — Direct historical guide, read; versioned documentation rather than current installation authority.
+- **CTP11 — Shmuplations, 1994/95 developer interviews.** https://shmuplations.com/chronotrigger/ — Translation of period interviews; retrospective/pre-release claims require the distinctions above.
+- **CTP12 — Shmuplations, 1995 interview collection.** https://shmuplations.com/chronotrigger2/ — Translated participant testimony; approximate staffing and timelines.
+- **CTP13 — Square Enix, October 2, 2008 Japanese announcement.** https://www.jp.square-enix.com/company/ja/news/2008/download/20081002_146.pdf — Primary regional release and price statement, read.
+- **CTP14 — Shared source alias only:** official Steam archive, owned by CTE03/CTR15; no separate factual summary. https://store.steampowered.com/oldnews/?appgroupname=Chrono+Trigger+Limited+Edition&appids=613830&feed=steam_community_announcements&headlines=0
+- **CTP15 — SteamRev title model.** https://steamrev.com/games/chrono-trigger — Read and rejected as financial evidence: missing provenance, unverified assumptions and suspect metadata. Its reported arithmetic is preserved only in the rejection audit.
+- **CTP16 — SteamDB title charts.** https://steamdb.info/app/613830/charts/ — Search-result figures only; provider estimates not reconciled or promoted to verified sales.
+- **CTP17 — Gamalytic methodology.** https://gamalytic.com/about — Direct model documentation, read; provider explanations are not an independent accuracy audit.
+- **CTP18 — Financial-search exclusions.** https://gameselo.com/game/613830/chrono-trigger failed to open; https://steam-revenue-calculator.com/app/613830/chrono-trigger%28r%29 surfaced a review-based estimate; https://bosnan.vercel.app/games/chrono-trigger surfaced an unattributed budget. These were excluded from factual financial conclusions.
+- **CTP19 — Square Enix media-sharing guidelines.** https://www.square-enix-games.com/en_US/documents/chrono-trigger-guidelines-for-livestreaming-and-posting-videos-images — Publisher policy, read; scope is media sharing, not modification rights.
 
-## Captured closing evidence — integration checkpoint
+- **CTP20 — Square Enix, WE DISCUSS VANA'DIEL, Masato Kato Part 2, March 9, 2022.** https://we-are-vanadiel.finalfantasyxi.com/post/?id=306&lang=en — First-party conversation with Kato and Matsui; Chrono Trigger production passages read November 6, 2026. Retrospective testimony, not a measured cost study.
+- **CTP21 — Chrono Series Database, Chrono Trigger credits.** https://csd.varlew.net/ct/ctcredits — Preserved credits read November 6, 2026; transcription rather than a newly inspected in-game credits sequence.
 
-- **Production:** the translated 1994/95 developer interview identifies Kazuhiko Aoki, Takashi Tokita, Yoshinori Kitase and Hironobu Sakaguchi, discusses collaboration with Yuji Horii, experimental event control, bespoke battle transitions, cartridge expansion and pruning ideas. These are interview claims, not independently reconstructed project accounts. https://shmuplations.com/chronotrigger/
-- **DS distribution:** Square Enix's October 2, 2008 announcement advances Japan's release to November 20 and states ¥4,800 before tax/¥5,040 including tax. This regional historical price cannot be applied to all worldwide DS units. https://www.jp.square-enix.com/company/ja/news/2008/download/20081002_146.pdf
-- **Commercial search:** searched title-specific Steam sales/revenue estimates and development-budget sources; inspected SteamRev, SteamDB search evidence, Gamalytic methodology, and publisher financial material. SteamRev's October 21, 2025 snapshot models ~415.9k Steam owners, ~$6.23m list-price gross and ~$2.25m net after assumed deductions. Its method is reviews ×35 ×current price; it lacks recorded model version/input dates/confidence and contains suspect production metadata. This is a weak partial-market illustration, not actual sales, profit or an all-edition financial result. https://steamrev.com/games/chrono-trigger
-- **Support:** official Steam announcements document controller/UI/key-binding work in 2018, subsequent save/progression fixes, 2022 aspect/control/save-slot additions and an achievement regression/fix, then a 2023 battle-speed correction. All are edition-specific dated changes, not a claim about current universal defect status. https://store.steampowered.com/oldnews/?appgroupname=Chrono+Trigger+Limited+Edition&appids=613830&feed=steam_community_announcements&headlines=0
-- **Creator cleanup queued:** source-owner paragraphs replace duplicated CTP06/08 facts; generator-to-play path stays separate from unverified cross-tool editing/preview compatibility; JOT release is v3.2.0 (rendered 16 January timestamp lacks year); report issues to the relevant maintainer, retain version/seed/flags and backups. Parent supplies mature Temporal Flux and Chrono Trigger+ cases.
+Cross-references **CTA01–CTA03**, **CTC01–CTC03**, **CTE03** and **CTR15** belong to the integrated dossier's advertisement, authored-mod, edition and reception source registers.
 
 ### Additional creator examples
 
@@ -695,7 +776,14 @@ All sources accessed 2026-11-06. Dates below are publication dates or explicit d
 [CTM13]: https://mail.cavesofnarshe.com/ct/hunting.php
 [CTM14]: https://guides.gamercorner.net/ct/elements/
 [CTM15]: https://guides.gamercorner.net/ct/sealed-treasures/
-[CTN01]: https://gb.store.square-enix-games.com/chrono-trigger---digital
+[CTM16]: https://guides.gamercorner.net/ct/items/
+[CTM17]: https://guides.gamercorner.net/ct/accessories/
+[CTM18]: https://guides.gamercorner.net/ct/party-members/
+[CTM19]: https://guides.gamercorner.net/ct/statuses/
+[CTM20]: https://guides.gamercorner.net/ct/weapons/
+[CTM21]: https://guides.gamercorner.net/ct/armors/
+[CTM22]: https://guides.gamercorner.net/ct/techs/charm
+[CTM23]: https://guides.gamercorner.net/ct/party-members/magus
 [CTN02]: https://scalar.usc.edu/works/chronicles/chrono-trigger-plot-summary
 [CTN03]: https://www.chronowiki.org/wiki/Antiquity
 [CTN04]: https://www.chronowiki.org/wiki/Entity
@@ -727,6 +815,17 @@ All sources accessed 2026-11-06. Dates below are publication dates or explicit d
 [CTP08]: https://github.com/GitExl/CTViewer
 [CTP09]: https://github.com/Pseudoarc/jetsoftime/releases
 [CTP10]: https://guides.ctjot.com/JetsGuide/
+[CTP11]: https://shmuplations.com/chronotrigger/
+[CTP12]: https://shmuplations.com/chronotrigger2/
+[CTP13]: https://www.jp.square-enix.com/company/ja/news/2008/download/20081002_146.pdf
+[CTP14]: https://store.steampowered.com/oldnews/?appgroupname=Chrono+Trigger+Limited+Edition&appids=613830&feed=steam_community_announcements&headlines=0
+[CTP15]: https://steamrev.com/games/chrono-trigger
+[CTP16]: https://steamdb.info/app/613830/charts/
+[CTP17]: https://gamalytic.com/about
+[CTP18]: https://gameselo.com/game/613830/chrono-trigger
+[CTP19]: https://www.square-enix-games.com/en_US/documents/chrono-trigger-guidelines-for-livestreaming-and-posting-videos-images
+[CTP20]: https://we-are-vanadiel.finalfantasyxi.com/post/?id=306&lang=en
+[CTP21]: https://csd.varlew.net/ct/ctcredits
 [CTR01]: https://www.nintendolife.com/reviews/2009/03/chrono_trigger_ds
 [CTR02]: https://www.rpgfan.com/review/chrono-trigger-2008/
 [CTR03]: https://rpgamer.com/review/chrono-trigger-ds-review/

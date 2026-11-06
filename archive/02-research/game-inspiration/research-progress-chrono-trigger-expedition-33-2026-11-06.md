@@ -8,10 +8,10 @@ Base: `Macrofold/OpenLegend`, published `main` at `e1df4d4d5866190b580aedc34dff2
 
 | Subject | State | Evidence and remaining work |
 | --- | --- | --- |
-| G187 — [Chrono Trigger](dossiers/chrono-trigger.md) | In progress | Narrative/presentation foundation and five independent written-review bodies captured. Mechanics, production/commercial results, modding, contrasting player testimony and final reconciliation are being integrated. |
+| G187 — [Chrono Trigger](dossiers/chrono-trigger.md) | Complete full dossier | R01–R14 and applicable R15 covered; 104 annotated source labels, five full independent written reviews plus contrasting player testimony, twelve worked mechanics/exploration situations, edition boundaries and explicit financial/access limits. Reviewed and committed before beginning G77 expansion. |
 | G77 — [Clair Obscur: Expedition 33](dossiers/clair-obscur-expedition-33.md) | Queued for expansion | Preserve the September 26–27 dossier and November 4 music research. Reassess every requirement, current release evidence, lore, reception disagreements, economics and creator tools after Chrono Trigger is committed complete. |
 
-Next boundary: finish and review Chrono Trigger, commit it, then begin Expedition 33. Root owns integration and GitHub commits; parallel investigators own disjoint Chrono Trigger evidence sections. All share the same task authorization and spending ceiling.
+Next boundary: begin Expedition 33 after the Chrono Trigger completion commit, then reconcile the two completed dossiers into the existing STORY and PACING synthesis owners. CT-only synthesis drafts are prepared; their matrix incorporation is not claimed until publication. Root owns integration and GitHub commits. All investigators share the same task authorization and spending ceiling.
 
 ## Completion evidence
 
@@ -19,3 +19,9 @@ Completion requires substantive requirement coverage, five independent written-r
 
 Whole-library packet reconciliation and unrelated queued subjects remain in their existing ledgers; this two-game assignment does not certify them.
 
+
+## Chrono Trigger review record
+
+Reviewed narrative/source provenance, five independent review bodies, helpful Steam testimony and edition-specific disagreements. Checked mechanics, items, party combinations, status/recovery, optional activities, twelve worked situations, production attribution, commercial metric definitions and creator-tool boundaries. Corrected the V-Jump interview-date inference, the DS local-wireless exception, a blanket statistic-cap statement and the investor-PDF page reference. Consolidated duplicated publisher copy and shared Steam-announcement sources. Public financial calculators were searched and assessed; unsupported outputs were rejected rather than adopted as actual revenue.
+
+The assembled dossier has one title, resolved source labels, a requirement map and valid in-file navigation. New archive-relative destinations were checked against the inspected repository tree; known design-owner paths/anchors were checked during independent review. The actual navigation/roster/requirements diff was reviewed. This documentation-only task did not run gameplay tests or execute community tools.
