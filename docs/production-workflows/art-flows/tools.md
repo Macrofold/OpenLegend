@@ -212,7 +212,7 @@ higgsfield generate create 3d_rigging --model_url "$URL" --height_meters "$H" \
   --enable_animation true --animation_action_id 14 --wait --json    # Run_02
 ```
 
-- **Input:** a GLB at a URL Higgsfield can fetch, in practice a candidate job's own `result_url`, because the CLI cannot upload models ([limits](#higgsfield)). So the **raw** candidate is rigged; cleanup afterwards must be weight-safe: local fixes only, no remeshing or retopology.
+- **Input:** a GLB at a URL Higgsfield can fetch, in practice a candidate job's own `result_url`, because the CLI cannot upload models ([limits](#higgsfield)). So the **raw** candidate is rigged. Preserve its bindings for weight-safe cleanup; necessary topology or binding repairs require the supported local route in [Step 7](3d-models.md#step-7--clean-and-normalize-in-blender), or remain blocked.
 - **Facing:** the model must face the front (glTF +Z) **before** rigging. The rigger places the skeleton assuming that facing: a Tripo model turned sideways came back with its arm bones running through the chest. Turning the model afterwards cannot repair it. Meshy candidates face the front as delivered.
 - **Format:** an FBX is refused (the job fails and is refunded); Tripo returns FBX when `--quad true` ([image to 3D](#image-to-3d)).
 - **Output:** one GLB at the requested height with feet at 0, a 24-bone humanoid skeleton (root `Hips`, at most 4 influences) inside an armature scaled 0.01, and exactly the one requested clip, keyed at 30 fps and named like `Armature|Idle|baselayer`. A second job on the same model gives the same 24 bones with slightly different joint placement: 3–7 mm on average, but up to 6 cm at a knee hidden by a long skirt. Each job costs 8 credits.
@@ -231,7 +231,7 @@ Direct GPT Image 2.5 generation and editing, used by the [direct-method study](.
 
 ## Blender
 
-Blender 5.2.2 LTS at `/Applications/Blender.app/Contents/MacOS/Blender`; it is not on the shell path. Run scripts headless exactly like the existing recipes:
+The verified working recipe uses Blender 5.2.2 LTS at `/Applications/Blender.app/Contents/MacOS/Blender`; that Mac installation is not on the shell path. Other environments must locate a compatible executable: the animation helper uses Blender 5 action slots and cannot run unchanged on Blender 4.3.2. Use the working version rather than adding a legacy compatibility path. Run scripts headless like the existing recipes:
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --disable-autoexec \

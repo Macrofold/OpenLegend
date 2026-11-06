@@ -78,7 +78,7 @@ Every request runs on one of two paths. The **simple path** (`quality=prototype`
 
 **Defaults.** Model and animation generation default to the simple path, `finish=production` (exported files only) and one candidate. A new finished or game-ready asset goes straight to the full path ([3D models](3d-models.md) for props, characters and creatures, otherwise the [production procedure](production.md)); it does not need a prototype first. Every other request, such as a concept study, a UI kit or a material, defaults to the full path, and "quick" or "rough" moves it to the simple one. Existing context and explicit constraints take precedence. These are request options read from ordinary language, not provider settings or a new service.
 
-**Finalize later.** "Polish/finalize this model" reopens a simple-path result through the [finalize path](production.md#polish-or-finalize-a-selected-model). Its Finish repairs only what the final use needs and keeps the rig, clips and materials unless the request changes them or that use needs a change; a body rigged through Higgsfield takes only weight-safe local fixes ([rigging](tools.md#rigging-and-clips)). It then gets the full path's Check and Mike's acceptance.
+**Finalize later.** "Polish/finalize this model" reopens a simple-path result through the [finalize path](production.md#polish-or-finalize-a-selected-model). Its Finish repairs only what the final use needs and keeps the rig, clips and materials unless the request changes them or that use needs a change; necessary topology or binding repairs follow [Step 7's supported local route](3d-models.md#step-7--clean-and-normalize-in-blender). It then gets the full path's Check and Mike's acceptance.
 
 | Stage      | Simple path (`prototype`)                                                                                                                                                                                      | Full path (`finished`)                                                                                                                                                                                                     |
 | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -143,15 +143,16 @@ How `auto` decides, on either path:
 
 Ordinary words set the common options too:
 
-| Say                               | Effect                                                                                                                                             |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| "Pick the best yourself"          | The agent makes decisions B (and C, if asked) and records them as agent-selected, not owner-approved                                               |
-| "Just one candidate"              | `candidates=1`: one model instead of three, so a lock failure costs a rerun instead of a fallback                                                  |
-| "Skip the critique"               | `critique=skip`                                                                                                                                    |
-| "No concepts"                     | `concepts=skip`: start from the supplied image, or from a front view generated from the brief (shown to Mike before any 3D spend on the full path) |
-| "This is scratch"                 | Files very likely to be temporary (test renders, failed exports, throwaway trials) stay local and are never uploaded                               |
-| "Stop after the model"            | Ends at decision B with the candidates, before finishing                                                                                           |
-| "Fix the face", "a sculpted head" | `head=generated`, on either path                                                                                                                   |
+| Say                                       | Effect                                                                                                                                             |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Pick the best yourself"                  | The agent makes decisions B (and C, if asked) and records them as agent-selected, not owner-approved                                               |
+| "Just one candidate"                      | `candidates=1`: one model, with no alternate candidate ready if it fails                                                                           |
+| "Skip the critique"                       | `critique=skip`                                                                                                                                    |
+| "No concepts"                             | `concepts=skip`: start from the supplied image, or from a front view generated from the brief (shown to Mike before any 3D spend on the full path) |
+| "This is scratch"                         | Files very likely to be temporary (test renders, failed exports, throwaway trials) stay local and are never uploaded                               |
+| "Stop after the model"                    | Ends at decision B with the candidates, before finishing                                                                                           |
+| "Fix the face", "a sculpted face"         | `head=auto` on either path: diagnose the failure and keep adequate geometry                                                                        |
+| "Generate a new head", "replace the head" | `head=generated`, on either path                                                                                                                   |
 
 ### What supplied material skips
 

@@ -129,7 +129,7 @@ Two requests met on November 1. The prototype work merged into `main` made model
 - **Default clips.** An animated walking character gets `Idle`, `Walk` and `Run`: the prototype work's idle and walk plus the `Run` the game's loader requires, with named motions added. Mike confirmed on November 3 that a walk is expected by default.
 - **What no option removes.** A model the game will load keeps the file check, an animated character always carries the `Idle` and `Run` the game's loader requires, every 3D model gets one look in the game's renderer, and both paths preserve every meaningful output.
 
-Most requests want either a quick usable look or finished art, and neither Mike nor a junior should decide every step. The simple path reduces optional work; dated provider estimates belong in [tools](../production-workflows/art-flows/tools.md), and actual cost includes repair and inspection, not just generation. The full path keeps the review points that caught rejected art. The tradeoff: a prototype skips the fidelity sheet and the critique, so it is never evidence of acceptance or of family qualification. The step options are request words read by the agent, not provider settings or a service.
+Most requests want either a quick usable look or finished art, and neither Mike nor a junior should decide every step. The simple path reduces optional work; dated provider estimates belong in [tools](../production-workflows/art-flows/tools.md), and actual cost includes repair and inspection, not just generation. The full path keeps the review points that caught rejected art. A prototype skips the fidelity sheet and critique by default; `fidelity=exact` still requires its matched-scale comparison, and explicit step options can request critique. These checks do not by themselves establish artistic acceptance or family qualification. The step options are request words read by the agent, not provider settings or a service.
 
 ### 3.7 Repair only the failed dependency
 
@@ -252,7 +252,7 @@ This section retains settled decisions and unresolved alternatives. OD1 and OD8 
 
 ### OD3 — The humanoid body family and rig for the cast
 
-**Mike's answer (October 31):** "Ok" to the MPFB direction, with a request to see the options. The body family is therefore provisionally MPFB; the rig variant stays open. Qualification still belongs to [V3D05](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
+**Mike's answer (October 31):** "Ok" to the MPFB direction, with a request to see the options. The body family was provisionally MPFB; the rig variant remained open. Qualification still belongs to [V3D05](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
 
 **Mike's feedback (October 31):** the fitted MPFB study people "don't look very good"; the Peacock Mercenary "is much better". Their look comes from stock CC0 MakeHuman skin, eyes and hair, study garments, little face shaping and simple procedural motion. It is not the limit of the system: MPFB has hundreds of body and face shape targets, and any part can be replaced. But stock MakeHuman parts look generic, and the mercenary's quality came from its own concept, generation and finishing.
 
