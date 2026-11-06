@@ -90,7 +90,7 @@ The useful comparison axes are character proportions; texture and detail density
 
 ## Reference scope
 
-Game screenshots and art studies are linked for discussion and inspiration. Reuse rights are not assumed. The original reference-board asset-pack previews are references; later acquired 3D source packs and exact provenance are indexed in [assets](assets/README.md). Acquisition and provisional integration do not establish a finished or accepted art result. Prices are intentionally omitted because they change.
+Game screenshots and art studies are linked for discussion and inspiration. Reuse rights are not assumed. The original board's asset-pack previews are references; later acquired 3D source packs and exact provenance are indexed in [assets](assets/README.md). Acquisition and provisional integration do not establish a finished or accepted art result. Prices are intentionally omitted because they change.
 
 Some references show historical promotional art. Those are labeled and do not establish current release status. C05 is explicitly a non-pixel concept painting. Visual descriptions are curatorial observations, not technical claims about rendering pipelines.
 
