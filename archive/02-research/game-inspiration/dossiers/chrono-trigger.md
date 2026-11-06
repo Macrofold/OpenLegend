@@ -68,6 +68,48 @@ The examined core rules describe a finite, authored RPG with predefined characte
 
 The next pass is bounded to the missing systems inventory: era navigation and vehicles; fixed and conditional NPC behavior; exploration and optional quest ordering; inventory, shops and Ioka barter; minigames; elements and status; technique learning and reserve growth; eight complete cross-system examples; and an explicit SNES/PS1/DS/mobile/PC comparison. This checkpoint is source-backed where marked, but it is not the final completeness claim for the dossier.
 
+## Editions, exploration and activities beyond combat
+
+**Research scope: November 6, 2026.** This supplement complements the mechanics section without repeating its combat, shops, barter or sealed-treasure inventories. Worked situations reconstruct documented rules; none represents a personally played session. Story and optional-quest spoilers follow.
+
+### Edition boundaries that change the activity
+
+| Edition | Material difference for this study |
+| --- | --- |
+| **Super Famicom/SNES, 1995** | Original campaign; no later animated cutscenes or DS additions. [CTE01][CTE02] |
+| **PlayStation, 1999/2001** | Animated scenes and extras; North America’s Final Fantasy Chronicles paired it with Final Fantasy IV. Loading delays affect pacing. [CTE02] |
+| **Nintendo DS, 2008–2009** | Revised localization, dual screens, mapping and three additions. [CTE01] Arena of the Ages trains monsters for prizes and local wireless contests, not campaign cooperation. [CTE02] |
+| **iOS/Android** | Two added dungeons; no Arena or dual screens. Distinguish the 2018 overhaul from earlier builds. [CTE01][CTE02] |
+| **Windows/Steam, 2018 onward** | Two added dungeons; no Arena. Later patches add original-style graphics; RPG Site’s 2025 mobile comparison lacked that option. [CTE02] |
+
+The official **March 10, 2022 Steam update** specifies up to 21:9 display, twenty save slots, clearer interaction and entrance indicators, control adjustments, and 1.5× auto-battle speed. The same announcement feed records a March 22 achievement fix and an August 29, 2023 battle-speed fix. This verifies published options and maintenance history, not their flawless operation on every current device. [CTE03]
+
+**DS Arena actions.** The Stable Master offers four elemental Smidges and starter items. Choose an item and a previously visited era for training; their combination affects growth, learned techniques and possible class changes. The guide specifies ten-minute sessions, with the monster returning upon re-entry. Buy further Arena-only items from the Nu. For a Prize Match, choose an available tier and pay its fee; victory draws a random reward from that tier. Higher tiers cost more and can offer better rewards without guaranteeing a desirable item. Battles largely proceed automatically: offered items influence actions, with Trust affecting responsiveness. Training can also lower stats, and advancing tiers removes lower prize pools. Wireless battles are a separate opponent choice. New Game Plus resets Arena progress. [CTE13]
+
+### Geography, mobility and optional destinations
+
+The six principal dates are 65,000,000 BC, 12,000 BC, 600 AD, 1000 AD, 1999 AD and 2300 AD, with the End of Time connecting travel and party support. These are selected authored destinations, not an arbitrary calendar. The End of Time provides saving, recovery and access to waiting companions. Its late-game role becomes important in situation 3 below. [CTE05] **1999 AD leads to the Lavos confrontation; normal play does not provide explorable towns or a full civilization there.** The guide’s discussion of inaccessible map data is not evidence of delivered exploration. [CTE14]
+
+The gate-pair network is documented in the mechanics section. Vehicles alter access: prehistoric Dactyls provide regional flight; the Epoch later separates changing eras from finding a Gate, and its subsequent wing upgrade adds overworld flight. Temporal reach and geographical reach are distinct unlocks. [CTE04][CTE06]
+
+Two DS additions also differ in timing. **Lost Sanctum** opens after recovering the flight-capable Epoch and the Black Omen's emergence; Reptite villagers offer linked quests across Prehistory and the Middle Ages. It is not exclusively postgame content. [CTE10] **Dimensional Vortex** opens after a first completion, with entrances in Antiquity, Present and Future; a sequence of selected rooms leads toward a checkpoint and a more specific concluding area. Its added ending and dungeons also appear on mobile/PC; an older wiki's DS-exclusive wording is superseded by the platform evidence above. [CTE11][CTE02]
+
+### Actual activities and conditional people
+
+The fair supports timed bell ringing, a drinking contest, race predictions, dancing and prize games. Lab 32 adds a different activity: racing Johnny can bypass a route otherwise traversed through encounters. These are authored minigames with their own input demands and rewards, not evidence of a general sports or performance simulation. [CTE09][CTE06]
+
+NPC reactions depend on particular actions and story conditions. At the fair, a cat follows after one interaction but runs away after another; returning it to its owner records a later-recognized action. Marle's candy stop requires waiting, and the early overworld allows wandering without random battles. This creates room for small choices before the main departure. [CTE12] Such conditional behavior does not establish continuous needs, independent offscreen careers, an economy that evolves without the party, or freely generated quests. The cited examples concern authored states; absence of those broader systems should not be mistaken for absence of memorable people.
+
+### Four worked exploration situations
+
+**1. Choose what a fair victory is worth.** A player wants a prize but has few Silver Points. They can predict a race winner, using the nearby spectator's hint if desired. A correct prediction earns twenty points; the money tent exchanges ten points for fifty G. Keeping the points instead preserves access to Bekkler's prize games, which can award cats, food or dolls. The next decision is whether to pursue those activities or leave with spendable money. The constraint is successful participation and accumulated points, not an automatic quest reward. **Interpretation:** a small local currency gives leisure a distinct purpose, but repeated attempts can become an unwanted obstacle when the player only wants the prize. [CTE09]
+
+**2. Let two optional achievements meet.** After recovering the Rainbow Shell and completing the associated castle sequence, the player visits Melchior. He offers a choice between one Prism Dress and three Prism Helms. If the Sun Stone quest is also complete, speaking again yields the Rainbow and PrismSpecs. The player therefore has a concrete reason to connect discoveries from separate optional routes. The extra rewards require the additional achievement; they do not follow merely from selecting the armor option. **Interpretation:** independent quests can reinforce one another through a shared practical result without requiring every optional journey to be completed in one compulsory order. Equipment formulas and comparative optimization belong to the mechanics account. [CTE08]
+
+**3. Recover a wanted direction after a break.** A player returning near the campaign's end may remember the larger threat but not a useful next destination. At the End of Time, Gaspar offers clues to available sidequests, including the Sun Stone, Cyrus, Robo and Fiona-related routes. The player can select one concern or proceed toward the finale. The cost of an optional excursion competes with readiness to finish; completion of every quest is not the universal entrance fee. **Interpretation:** a stable place for recovering context can support freedom without becoming a mandatory task list. A clue may still be insufficient for someone who has forgotten the associated person or location. [CTE07]
+
+**4. Solve a travel blockage by changing capability.** The party wants to return to Antiquity after its Gate is sealed. Gaspar's direction and the Keeper's Dome route lead to Belthasar's Epoch. The player boards it and selects the target era, bypassing the need for that Gate. Initially the machine changes time without providing ordinary geographical flight; the later wing modification is a separate event. The next question is where to travel within the newly reachable era. **Interpretation:** a traversal upgrade can answer an intelligible obstacle before opening broader possibilities. Here it remains a deliberately bounded set of destinations, not permission to visit any imagined date or undo every loss. [CTE04]
+
 ## Story, history and what the player learns
 
 ### Escalation, reversals and personal choice
@@ -440,12 +482,12 @@ Research accessed **November 6, 2026**. Dated claims retain the date and edition
 
 | Requirement | Substantive coverage in this dossier |
 | --- | --- |
-| **R01 — Identity and promise** | [Player promise](#the-player-promise-and-the-shape-of-the-adventure); [editions and mechanics](#mechanics-editions-and-worked-situations); dated release/distribution boundaries. |
+| **R01 — Identity and promise** | [Player promise](#the-player-promise-and-the-shape-of-the-adventure); [edition boundaries](#editions-exploration-and-activities-beyond-combat) and [mechanics](#mechanics-editions-and-worked-situations); dated release/distribution boundaries. |
 | **R02 — Actions and major mechanics** | [Systems inventory](#mechanics-editions-and-worked-situations): command timing, party composition, traversal, interactions, activities and meaningful absences. |
 | **R03 — Items and composition** | [Systems inventory](#mechanics-editions-and-worked-situations): equipment, consumables, attributes, individual/cooperative techniques, acquisition and tradeoffs. |
 | **R04 — Progression, economy and time** | [Systems inventory](#mechanics-editions-and-worked-situations): experience/tech progression, currency and exchange, saves/failure, optional resolution and New Game Plus; [return and abandonment](#reception-and-player-experience). |
-| **R05 — Concrete situations** | [Worked situations](#mechanics-editions-and-worked-situations), plus the [trial, restoration and character choices](#story-history-and-what-the-player-learns). Rules-based illustrations are distinguished from attributed personal accounts. |
-| **R06 — People, AI and social systems** | [Party/NPC boundaries](#mechanics-editions-and-worked-situations) and [specific character arcs](#people-whose-histories-change-the-next-decision); authored NPCs, single-player campaign and the DS Arena's separate local-wireless boundary. |
+| **R05 — Concrete situations** | [Combat/resource situations](#mechanics-editions-and-worked-situations) and [four exploration situations](#four-worked-exploration-situations), plus the [trial, restoration and character choices](#story-history-and-what-the-player-learns). Rules-based illustrations are distinguished from attributed personal accounts. |
+| **R06 — People, AI and social systems** | [Party/NPC and edition boundaries](#editions-exploration-and-activities-beyond-combat) and [specific character arcs](#people-whose-histories-change-the-next-decision); authored NPCs, single-player campaign and the DS Arena's separate local-wireless boundary. |
 | **R07 — Presentation and feel** | [Art and music](#art-music-and-the-production-of-feeling); edition-specific controls/interface/accessibility in [systems](#mechanics-editions-and-worked-situations) and [reviews](#reception-and-player-experience). |
 | **R08 — Story and lore in play** | [Narrative](#story-history-and-what-the-player-learns): eras, Zeal, Lavos, uncertain cosmology, individual arcs, major loss, authored consequences and localization/sequel boundaries. |
 | **R09 — Production and development** | [Production investigation](#production-distribution-economics-and-creation): creators, collaboration, constraints, iterations, ports and maintenance; composer evidence in [presentation](#art-music-and-the-production-of-feeling). |
@@ -541,6 +583,25 @@ The mechanics database distinguishes physical attacks from lightning, water, fir
 - **CTM14:** Gamer Corner Guides, *Chrono Trigger: Elements*. https://guides.gamercorner.net/ct/elements/ . Community mechanics database; accessed 2026-11-06.
 - **CTM15:** Gamer Corner Guides, *Chrono Trigger: Sealed Treasures*. https://guides.gamercorner.net/ct/sealed-treasures/ . Community mechanics database; accessed 2026-11-06. Earlier-era upgrade states and future rewards.
 
+### Exploration and platform comparison
+
+The original campaign examples use community guides, often with SNES-era English names; DS and later localization changes can rename the same item or place. Platform conclusions combine publisher notices and an independently written comparison. No video was watched, no minigame timing was measured, and no claim is made that these are all optional activities. All sources accessed November 6, 2026; each factual summary and its source description are kept within the returned per-source budget.
+
+- **CTE01 — Chrono Wiki, “Chrono Trigger (DS).”** https://www.chronowiki.org/wiki/Chrono_Trigger_(DS) — Edition differences and mobile-update passages read; inconsistent mobile release-date metadata was not used.
+- **CTE02 — Mikhail Madnani, RPG Site, August 13, 2025, platform comparison.** https://www.rpgsite.net/feature/18126-chrono-trigger-pc-vs-mobile-vs-ps1-vs-nintendo-ds-steam-features-visuals-content-compared — Full article read; includes attributed firsthand device comparisons, not our testing.
+- **CTE03 — Square Enix, Steam announcement feed, March 2022/August 2023 entries.** https://store.steampowered.com/oldnews/?appgroupname=Chrono+Trigger&appids=613830&feed=steam_community_announcements&headlines=0 — Relevant official bodies read; direct individual announcement returned an image-only shell. Same underlying announcements as CTR15.
+- **CTE04 — Chrono Wiki, “Epoch.”** https://www.chronowiki.org/wiki/Epoch — Original-game acquisition, destination and flight passages read; Chrono Cross material excluded.
+- **CTE05 — Chrono Wiki, “End of Time.”** https://www.chronowiki.org/wiki/End_of_Time — Hub functions and era list read; speculative cosmological explanations excluded.
+- **CTE06 — Thonky, “Break the Seal!”** https://www.thonky.com/chrono-trigger/break-the-seal — Dactyl, Johnny, Keeper's Dome and Epoch instructions read; chest rules remain in the mechanics section.
+- **CTE07 — Thonky, “The Fated Hour,” updated March 16, 2025.** https://www.thonky.com/chrono-trigger/fated-hour — Complete relevant body read; source's preferred route is not a mandatory quest order.
+- **CTE08 — Thonky, “The Rainbow Shell.”** https://www.thonky.com/chrono-trigger/rainbow-shell — Quest and Melchior outcome passages read; no equipment-stat claims imported.
+- **CTE09 — Chrono Wiki, “Millennial Fair (Location),” displayed edit June 23, 2020.** https://www.chronowiki.org/wiki/Millennial_Fair_(Location) — Games, point exchanges and prize passages read.
+- **CTE10 — Chrono Wiki, “Lost Sanctum.”** https://www.chronowiki.org/wiki/Lost_Sanctum — Unlock and cross-era village quests read; quest list is not a personal completion record.
+- **CTE11 — Chrono Wiki, “Dimensional Vortex.”** https://www.chronowiki.org/wiki/Dimensional_Vortex — Post-completion structure read; page's obsolete DS-exclusivity claim explicitly qualified above.
+- **CTE12 — Thonky, “The Millennial Fair.”** https://www.thonky.com/chrono-trigger/millennial-fair — Opening movement and conditional interaction instructions read.
+- **CTE13 — Fallacia, “Arena of the Ages Guide,” version 2.00, September 20, 2017.** https://gamefaqs.gamespot.com/ds/950181-chrono-trigger/faqs/54975 — Substantial indexed guide sections read for acquisition, training, matches, prizes and limits; direct page retrieval blocked. Uncertain exact higher-tier unlock requirements omitted.
+- **CTE14 — Chrono Wiki, “Apocalypse.”** https://www.chronowiki.org/wiki/1999_A.D. — Gameplay and inaccessible-map passages read; speculative city identifications and developer-intent claims excluded.
+
 ### Production, commercial evidence and creator ecosystem
 
 All sources accessed 2026-11-06. Dates below identify publication or version information where available. Source-derived prose is kept within the observed source word limits; interpretation is identified separately.
@@ -554,6 +615,14 @@ All sources accessed 2026-11-06. Dates below identify publication or version inf
 - **CTP08 — GitExl, CTViewer repository and README.** https://github.com/GitExl/CTViewer — Direct maintainer documentation, read. Inputs, overlays, debug dumps, limitations, Rust/SDL dependencies and MIT license. CTExplore dependency link: https://rivernyxx.com/downloads.html . Viewer limitations are explicitly recorded; no execution performed.
 - **CTP09 — Jets of Time public release notes.** https://github.com/Pseudoarc/jetsoftime/releases — Direct project release page read. Documents modes, incompatible flags, softlock fixes and a remaining qualification. Historical release notes are not a blanket statement of the latest release's defect status; version/date header reconciliation pending.
 - **CTP10 — JetsGuide.** https://guides.ctjot.com/JetsGuide/ — Direct community guide, read. Version 1.4 dated December 14, 2020; contributor credits, interactive route checklist, historical modes/flags and GPL-v3 code notice. Useful evidence of sustained supporting infrastructure; not a current installation authority.
+
+## Captured closing evidence — integration checkpoint
+
+- **Production:** the translated 1994/95 developer interview identifies Kazuhiko Aoki, Takashi Tokita, Yoshinori Kitase and Hironobu Sakaguchi, discusses collaboration with Yuji Horii, experimental event control, bespoke battle transitions, cartridge expansion and pruning ideas. These are interview claims, not independently reconstructed project accounts. https://shmuplations.com/chronotrigger/
+- **DS distribution:** Square Enix's October 2, 2008 announcement advances Japan's release to November 20 and states ¥4,800 before tax/¥5,040 including tax. This regional historical price cannot be applied to all worldwide DS units. https://www.jp.square-enix.com/company/ja/news/2008/download/20081002_146.pdf
+- **Commercial search:** searched title-specific Steam sales/revenue estimates and development-budget sources; inspected SteamRev, SteamDB search evidence, Gamalytic methodology, and publisher financial material. SteamRev's October 21, 2025 snapshot models ~415.9k Steam owners, ~$6.23m list-price gross and ~$2.25m net after assumed deductions. Its method is reviews ×35 ×current price; it lacks recorded model version/input dates/confidence and contains suspect production metadata. This is a weak partial-market illustration, not actual sales, profit or an all-edition financial result. https://steamrev.com/games/chrono-trigger
+- **Support:** official Steam announcements document controller/UI/key-binding work in 2018, subsequent save/progression fixes, 2022 aspect/control/save-slot additions and an achievement regression/fix, then a 2023 battle-speed correction. All are edition-specific dated changes, not a claim about current universal defect status. https://store.steampowered.com/oldnews/?appgroupname=Chrono+Trigger+Limited+Edition&appids=613830&feed=steam_community_announcements&headlines=0
+- **Creator cleanup queued:** source-owner paragraphs replace duplicated CTP06/08 facts; generator-to-play path stays separate from unverified cross-tool editing/preview compatibility; JOT release is v3.2.0 (rendered 16 January timestamp lacks year); report issues to the relevant maintainer, retain version/seed/flags and backups. Parent supplies mature Temporal Flux and Chrono Trigger+ cases.
 
 ### Additional creator examples
 
@@ -597,6 +666,20 @@ All sources accessed 2026-11-06. Dates below are publication dates or explicit d
 [CTC01]: https://datacrystal.tcrf.net/wiki/Chrono_Trigger_%28SNES%29
 [CTC02]: https://datacrystal.tcrf.net/wiki/Chrono_Trigger_%28SNES%29/Temporal_Flux_Event_Tricks
 [CTC03]: https://www.reddit.com/r/chronotrigger/comments/1bd29v4/chrono_trigger_plus_30/
+[CTE01]: https://www.chronowiki.org/wiki/Chrono_Trigger_(DS)
+[CTE02]: https://www.rpgsite.net/feature/18126-chrono-trigger-pc-vs-mobile-vs-ps1-vs-nintendo-ds-steam-features-visuals-content-compared
+[CTE03]: https://store.steampowered.com/oldnews/?appgroupname=Chrono+Trigger&appids=613830&feed=steam_community_announcements&headlines=0
+[CTE04]: https://www.chronowiki.org/wiki/Epoch
+[CTE05]: https://www.chronowiki.org/wiki/End_of_Time
+[CTE06]: https://www.thonky.com/chrono-trigger/break-the-seal
+[CTE07]: https://www.thonky.com/chrono-trigger/fated-hour
+[CTE08]: https://www.thonky.com/chrono-trigger/rainbow-shell
+[CTE09]: https://www.chronowiki.org/wiki/Millennial_Fair_(Location)
+[CTE10]: https://www.chronowiki.org/wiki/Lost_Sanctum
+[CTE11]: https://www.chronowiki.org/wiki/Dimensional_Vortex
+[CTE12]: https://www.thonky.com/chrono-trigger/millennial-fair
+[CTE13]: https://gamefaqs.gamespot.com/ds/950181-chrono-trigger/faqs/54975
+[CTE14]: https://www.chronowiki.org/wiki/1999_A.D
 [CTM01]: https://www.world-of-nintendo.com/manuals/super_nes/chrono_trigger.shtml
 [CTM02]: https://store.steampowered.com/app/613830/CHRONO_TRIGGER/
 [CTM03]: https://steamcommunity.com/app/613830/discussions/0/3083256496968675873/
