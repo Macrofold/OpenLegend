@@ -55,6 +55,16 @@ The trial reuses selected behavior from the fair: testimony can make an apparent
 **OpenLegend interpretation:** remembered treatment, a changed greeting or a credible witness can reward attention without requiring a second plot. The response should follow an actual observation or report; a supposedly perceptive character who knows an unwitnessed private act would undermine the same trust this pattern could build. Material promises still need material consequences: acknowledgment is insufficient if the game presents a choice as changing whether a bridge is repaired or a person survives.
 
 
+### Institutions, displaced expertise and an opponent's future
+
+**Guardia makes history familiar through institutions as well as landscapes.** The same kingdom appears in a medieval war and a later civic celebration; royal relatives, a cathedral, a castle and a court connect public structures to particular people. The returning player can recognize continuity while encountering different circumstances. The community reference also mixes later-series events and speculative ancestry, which this account does not adopt as original-game facts. A trial's existence is not evidence of a fully simulated justice system or democratic politics. [CTN21]
+
+**The Gurus make useful expertise part of the mystery.** Melchior, Belthasar and Gaspar originate in Zeal but are encountered in different times. Their contributions are practical: repairing the Masamune, making time travel possible through the Epoch, and providing guidance and the Time Egg. Learning their shared origin changes the meaning of earlier assistance. The community page proposes extra motives and connections for some objects; these remain speculation unless the game establishes them. [CTN22]
+
+**Azala prevents the prehistoric conflict from ending as a simple victory celebration.** The Reptite leader recognizes the coming catastrophe after defeat. Ayla's side offers rescue, and Azala declines while speaking about the planet's future. The impending extinction and the victors' offer make the rival more than another source of rewards. This description concerns the original confrontation; later additions and Chrono Cross develop other possibilities separately. It does not endorse the wiki's unsupported biological generalizations or treat a species as one person's beliefs. [CTN23]
+
+**Interpretation:** recurring institutions establish continuity; helpful specialists can have histories beyond their service function; and an opponent can have a comprehensible concern without making every past action justified. These effects do not require a reputation meter for every institution or a branching resolution for every enemy. OpenLegend's authored history could supply particular traces and relationships, while its present-day individuals act on what they actually know. The evidence does not determine how an autonomous society should resolve those conflicts.
+
 ### People whose histories change the next decision
 
 The table records specific authored arcs. Its lessons are interpretations, not claims of autonomous NPC reasoning.
@@ -123,6 +133,13 @@ Accessed November 6, 2026. Community references distinguish documentation of pla
 - **CTN19 — Square Enix Music Online, Dave, Chrono Trigger Original Sound Version review.** https://www.squareenixmusic.com/reviews/dave/chronotrigger.shtml — Independent music criticism, relevant body read; publication date not established. Praise and criticism retained as that reviewer's taste.
 - **CTN20 — Eric Van Allen, Destructoid, “Chrono Trigger's trial is still absolutely brilliant,” September 5, 2023.** https://www.destructoid.com/chrono-triggers-trial-is-still-absolutely-brilliant/ — Original first-play account of the opening/trial; body read. A focused account, not a complete-game review or population survey.
 
+
+
+
+- **CTN21 — Chrono Wiki, Guardia.** https://www.chronowiki.org/wiki/Kingdom_of_Guardia — Community reference; relevant story/institution sections read November 6, 2026. Speculative ancestry, political interpretation and Chrono Cross aftermath are not imported as established original-game facts.
+- **CTN22 — Chrono Wiki, Guru.** https://www.chronowiki.org/wiki/Guru — Community reference; relevant character roles and story passages read November 6, 2026. Explicit speculation about motives and the Pendant is excluded; no independent NPC simulation inferred.
+- **CTN23 — Chrono Wiki, Azala.** https://www.chronowiki.org/wiki/Azala — Community reference; original-game biography/final confrontation read November 6, 2026. Combat recommendations, speculative sequel outcomes and biological claims are not adopted.
+
 ## Systems research — Chrono Trigger
 
 **Working research checkpoint, November 6, 2026.** This file owns the mechanics and edition comparison for the full dossier. It is being expanded; its present state must not be counted as a completed full dossier. The original Super Famicom/SNES game is the baseline. Later additions and modern interface options are identified by edition.
@@ -139,6 +156,44 @@ The original manual documents three save files and saving on the world map or at
 
 The PC storefront identifies the PC release as February 27, 2018. It advertises keyboard and controller support, automatic saving during map traversal in addition to conventional saving, and two additional dungeons: the Dimensional Vortex and Lost Sanctum. These additions must not be described as content present in the 1995 original. [CTM02, CTM05]
 
+### Progression and character construction
+
+The party is mechanically differentiated before equipment enters the picture. Crono is a fast sword attacker with lightning/lightning-equivalent magic; Marle combines bow attacks, healing and support with water/ice magic; Lucca combines guns and fire; Frog mixes swords, water and healing; Robo contributes physical techniques, healing and technology-flavored attacks; Ayla emphasizes physical attacks and item acquisition; Magus supplies powerful offensive magic. The important distinction is between a character's presentation and the damage properties of the actual technique: a robot can produce an elemental attack without possessing the same story-unlocked magic system as the human characters. Detailed individual technique and combination prerequisites remain under verification in this checkpoint. [CTM06]
+
+Experience and technique development are separate rewards. Levels increase combat statistics; technique points advance a character's authored technique sequence. The player does not allocate a branching skill tree or respec class points. The strategic growth choice is therefore whom to bring and develop, then which learned abilities to combine. Exact reserve-party experience and technique-point eligibility will be stated only after the source check is complete.
+
+The statistics have meaningful asymmetry. Ordinary weapon damage for Marle's bow and Lucca's gun depends on Hit rather than the Power used by most physical attackers. Speed determines gauge growth and normally does not rise through ordinary leveling; permanent Tabs and equipment consequently have different strategic weight from simply gaining another level. HP and MP have caps of 999 and 99, Speed caps at 16, and the other principal numeric attributes cap at 99. Permanent growth items and accessory effects can alter a character's usefulness without creating a new class. [CTM06]
+
+### Resources, incapacitation, and recovery
+
+MP pays for techniques, including physical-looking and technological techniques, rather than only for spells. A resource-saving accessory therefore affects much more than one elemental caster. Equipment can compete for the same slot while supporting quite different roles: raw offense, MP efficiency, speed, resistance or utility. Items provide a parallel command route for recovery; they preserve the option to act when the appropriate healer is unavailable. The exact catalog of accessories, consumable magnitudes and resistances is being checked independently rather than inferred from names. [CTM06]
+
+A knocked-out character is unable to contribute to the current action economy. Victory is forgiving: defeated party members return with one HP. This separates winning an encounter from leaving it in good condition. A player may survive the final enemy and still need to heal before continuing. The Revive consumable is a battle recovery tool, not a general substitute for field healing. [CTM06]
+
+### Replay has a strong carry-over boundary
+
+New Game Plus repeats the authored story while retaining character levels, statistics and much of the inventory. Characters still rejoin at the appropriate story points: the opening is not an unrestricted endgame party selection screen. The Caves of Narshe DS reference also identifies money and numerous story-linked objects and rewards as excluded. Its list includes both Masamune forms, Slasher weapons, Taban equipment, Ozzie Pants, Flea Bustier, Green Dream and Hero's Badge, together with the Gate Key, Pendant, Epoch-related keys and other quest objects. These are DS-guide facts and should not silently become a claim that every port shares an identical carry-over whitelist. [CTM07]
+
+The design consequence is that replay accelerates combat and permits otherwise unreasonable boss challenges while preserving the gates that make the narrative sequence legible. Retaining combat capability and resetting story permissions are separate operations. For Open Legend, that is a useful distinction whenever progression survives a campaign reset: power can persist while narrative prerequisites remain explicit.
+
+### What this system does not establish
+
+The examined core rules describe a finite, authored RPG with predefined characters and encounter content. They do not establish a general-purpose world simulation, a branching class-building system, user-authored quests, player construction, a persistent online economy, or a multiplayer campaign. Combination techniques are authored interactions between named characters, not a chemistry engine that promises every possible spell pairing will work. These absence claims describe the documented baseline; later bonus modes must be considered separately.
+
+### Worked system situations — verified core and pending detail
+
+**1. Delaying a combination.** Prerequisites: two active characters possess the constituent techniques. Each must have sufficient MP and a ready action gauge before the combination can be selected. If one is ready first, spending that actor's turn immediately delays the combined move. Holding the turn instead exchanges immediate pressure for a stronger or wider joint action. The next choice is whether the enemies' current position and threat still justify waiting. This is a scheduling tradeoff inside the party, not simply a stronger command becoming free. The original PlayStation compilation manual explicitly describes the combination command becoming unavailable when a required gauge or MP condition fails. [CTM08]
+
+**2. Winning with a fallen ally.** Prerequisites: one party member is knocked out and the remaining characters can plausibly finish the encounter. The player can spend a turn and item recovering that ally, or use the action to defeat the final enemy. A victory returns the fallen character at one HP, making the second option viable when the immediate threat is low. The resulting state still needs recovery before the next encounter. The tradeoff is battle safety and participation now against conserving a command and consumable; it is not automatic full-party restoration. [CTM06]
+
+**3. Preparing a replay route.** Prerequisites: a completed game and an eligible New Game Plus save. The player selects that save, returns to the opening with retained combat progression, and regains the cast through story events. Important quest permissions have reset even though the characters are powerful. The next decision is how far to advance the plot before challenging the final threat. The benefit is rapid experimentation with endings; the cost is that substantial story interaction still must be repeated. Exact first-clear unlock conditions and ending-route differences remain under verification. [CTM07]
+
+**4. Choosing planning room.** Prerequisites: a player has selected Wait mode. During a technique or item submenu, that mode gives room to inspect choices. It does not mean every moment of battle is suspended, and previously queued actions may still resolve. The player still needs to identify which submenu actually pauses time and distinguish selection time from animation or queued resolution. The next choice is between this reduced pressure and Active mode's continuing urgency. This option improves planning access without creating separate turn-based battle rules. [CTM03, CTM04]
+
+### Remaining verification for this mechanics section
+
+The next pass is bounded to the missing systems inventory: era navigation and vehicles; fixed and conditional NPC behavior; exploration and optional quest ordering; inventory, shops and Ioka barter; minigames; elements and status; technique learning and reserve growth; eight complete cross-system examples; and an explicit SNES/PS1/DS/mobile/PC comparison. This checkpoint is source-backed where marked, but it is not the final completeness claim for the dossier.
+
 ### Source register for this checkpoint
 
 - **CTM01 — Chrono Trigger SNES instruction booklet, web transcription.** Original 1995; transcript attributed to Mike Liu. https://www.world-of-nintendo.com/manuals/super_nes/chrono_trigger.shtml . Inspected November 6, 2026. Primary game instructions through a secondary transcription; button labels and page layout can differ from the original scan. Relevant sections: Playing Modes; Saving; Switching Characters; Battle. Keep total substantive paraphrase of this URL within its returned 200-word source budget.
@@ -147,9 +202,13 @@ The PC storefront identifies the PC release as February 27, 2018. It advertises 
 - **CTM04 — Chrono Trigger DS guide, SuperCheats text mirror.** https://www.supercheats.com/nintendods/walkthroughs/chronotrigger-walkthrough07.txt . Accessed November 6, 2026. Community walkthrough; Classic/DS display modes and Wait-menu explanations are edition-specific secondary evidence, not a firsthand play test.
 - **CTM05 — Square Enix, “Chrono Trigger Now Available on PC.”** February 27, 2018. https://press.na.square-enix.com/CHRONO-TRIGGER-NOW-AVAILABLE-ON-PC . Accessed November 6, 2026. First-party launch announcement; video links are catalogued as publicity metadata only, not watched footage.
 
+- **CTM06 — Gamer Corner Guides, Chrono Trigger Systems.** Undated community mechanics reference. https://guides.gamercorner.net/ct/systems/ . Accessed November 6, 2026. Technical secondary source; no exact damage coefficients reproduced. The current checkpoint exceeds its eventual prose allocation and will be split across independent character/item pages or tightened before final integration.
+- **CTM07 — Caves of Narshe, New Game Plus, Nintendo DS mode.** Author Rangers51; undated. https://mail.cavesofnarshe.com/ct/ngplus.php?ctmode=nds . Accessed November 6, 2026. Community edition-specific carry-over inventory; canonical www host returned access failure, mail host rendered the article.
+- **CTM08 — Square, Final Fantasy Chronicles instruction booklet, preserved PDF.** PlayStation release manual, 2001. https://www.videogamemanual.com/ps1/Final%20Fantasy%20Chronicles%20%28USA%29.pdf . Accessed November 6, 2026. Primary instruction content hosted by a preservation site; combination-gauge/MP requirements inspected through indexed text; not a firsthand play session.
+
 # Chrono Trigger — production, distribution, economics, and creator ecosystem
 
-Research date: 2026-11-06. **Substantive checkpoint: economics and full creator-ecosystem analysis saved; production and publisher marketing evidence being finalized.** Reference research for Open Legend, not an accepted feature specification. All mod workflows below are reconstructed from documentation; no game, ROM, mod, or installer was executed during research.
+Research date: 2026-11-06. **Substantive checkpoint: economics and full creator-ecosystem analysis saved (2,462 words); final production and distribution evidence being integrated.** Reference research for Open Legend, not an accepted feature specification. All mod workflows below are reconstructed from documentation; no game, ROM, mod, or installer was executed during research.
 
 ## Commercial evidence and the limits of a financial reconstruction
 
@@ -243,6 +302,22 @@ All sources accessed 2026-11-06. Dates below identify publication or version inf
 - **CTP08 — GitExl, CTViewer repository and README.** https://github.com/GitExl/CTViewer — Direct maintainer documentation, read. Inputs, overlays, debug dumps, limitations, Rust/SDL dependencies and MIT license. CTExplore dependency link: https://rivernyxx.com/downloads.html . Viewer limitations are explicitly recorded; no execution performed.
 - **CTP09 — Jets of Time public release notes.** https://github.com/Pseudoarc/jetsoftime/releases — Direct project release page read. Documents modes, incompatible flags, softlock fixes and a remaining qualification. Historical release notes are not a blanket statement of the latest release's defect status; version/date header reconciliation pending.
 - **CTP10 — JetsGuide.** https://guides.ctjot.com/JetsGuide/ — Direct community guide, read. Version 1.4 dated December 14, 2020; contributor credits, interactive route checklist, historical modes/flags and GPL-v3 code notice. Useful evidence of sustained supporting infrastructure; not a current installation authority.
+
+### A mature authoring route and a concrete expanded adventure
+
+**Temporal Flux is the established editor lineage behind the newer experiments.** Data Crystal's community documentation identifies Geiger's .NET editor and complementary tools for data and instrument editing. Its original authoring tutorial shows that event work reaches beyond swapping images: an author can stage an encounter, change an opening scene, coordinate movement and screen transitions, inspect stored conditions and place the Epoch. The documented encounter sequence disables exploration, positions the actors, starts combat, removes the relevant object and restores exploration. That is a concrete, data-driven authoring vocabulary. The same tutorial flags uncertain command behavior and ordering hazards; its existence does not make every field safe or fully understood. [CTC01][CTC02]
+
+**Interpretation:** useful authoring tools expose coherent actions and inspectable conditions. The OpenLegend opportunity is to make a small situation editable and understandable without requiring a creator to reverse-engineer memory addresses. That still requires reliable validation: a visually convincing scene can leave interaction disabled, strand a person or skip a necessary transition. Original Temporal Flux's maintainer site was inaccessible in this pass, so no claim is made about its latest supported build or current installation requirements.
+
+**Chrono Trigger+ demonstrates a different creative ambition from randomization.** In its 3.0 announcement and subsequent support thread, the creator describes breaking Frog's curse and alternate character appearances. Later replies discuss additional 1999 content, altered dialogue, prerequisites and corrected progression barriers. Players report enjoyment alongside patching uncertainty, hardware failures and confusion over “3.0” versus a later “Final 2.1” designation. One player cannot tell whether the intended alteration actually installed; another mistakes an older package for the current one. The creator provides identifying scene changes and explains versions. These are attributed reports, not reproduced tests or a universal compatibility verdict. [CTC03]
+
+**Interpretation:** creation success includes discoverability, packaging, version identity and diagnosis. A distinctive expansion can still be hard to enjoy when a player cannot tell what is installed. An explicit project/version screen, validated inputs, a clear update route and documentation matched to that version would reduce this uncertainty. A mod may also deliberately change interpretation, progression or characterization; an “enhanced” edition is an author's alternative, not automatically a definitive preservation of the original.
+
+### Sources — additional creator examples
+
+- **CTC01 — Data Crystal, Chrono Trigger (SNES), utilities section.** https://datacrystal.tcrf.net/wiki/Chrono_Trigger_%28SNES%29 — Community reverse-engineering documentation; relevant indexed text read November 6, 2026. Identifies tools, not a measured popularity ranking or official Square tool release.
+- **CTC02 — Data Crystal, Temporal Flux Event Tricks.** https://datacrystal.tcrf.net/wiki/Chrono_Trigger_%28SNES%29/Temporal_Flux_Event_Tricks — Original community authoring instructions; substantial relevant text retrieved through search on November 6, 2026 after direct open returned 403. Commands and caveats inspected; not executed. Linked maintainer site https://geigercount.net/crypt/ could not be retrieved.
+- **CTC03 — TheGreatBDoyle, “Chrono Trigger Plus 3.0,” r/chronotrigger, with creator replies and player reports.** https://www.reddit.com/r/chronotrigger/comments/1bd29v4/chrono_trigger_plus_30/ — Original announcement and relevant support exchanges read November 6, 2026; publication appears in March 2024 search context, while individual replies use relative dates. Do not infer a single current build from the thread title. The linked Romhacking.net project page returned 403; no patch or game was downloaded.
 
 ## Advertising cases: what the promotion chose to communicate
 
