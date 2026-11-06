@@ -8,9 +8,11 @@ Use sound, motion, visual effects and interface feedback together to make play e
 
 ## Music and sound sourcing
 
-Music can be authored offline as fixed assets, with responsive selection, silence and transitions; procedural composition is unnecessary and SFX generation is optional. The [audio research](../research/audio/README.md) owns current composer, library and AI sourcing evidence. Its [proposed direction and audition](../research/audio/openlegend-direction.md) guide a compact first package. Signature music benefits from coherent themes and useful revision; licensed recordings can supply consistent action/material effects. Select sources by their job and request stems only for a chosen playback need.
+Use the [audio production procedure](audio-production.md) for briefs, references, draft batches, targeted revisions, finishing, approved tags and publication. The [feature specification](../projects/audio-production-feature-spec.md) and [technical design](../projects/audio-production-tech-design.md) specify that designed workflow and optional first playback integration; commands and runtime support remain implementation work. This document owns coordinated event timing and whole-scene feedback review.
 
-Apply the [rights brief](../research/audio/archive/2026/2026-11-04-rights-and-delivery.md) to the actual browser release, edits, collaborators and intended downstream uses. Preserve masters, derivatives and entitlement through the [asset workflow](../asset-workflow.md). [AUD01–AUD04](../maintainers/audio-production.md) tracks auditions, accepted rights/assets, the representative soundscape and any missing playback work. Offline acquisition does not change mechanical hearing or select optional speech media.
+The selected [world direction](../worlds/base/audio-direction.md) allows broad genres, fixed recordings and intelligent cue selection/transitions. Coherent themes and useful revision matter; AI, licensed recordings, original recording and specialists are source options. Synchronized stems and live generation are not prerequisites. The [audio research](../research/audio/README.md) retains dated sourcing evidence and the [provider notes](audio-tools.md) distinguish advertised capabilities from qualified operations.
+
+Apply the actual rights brief to browser release, edits, collaborators and downstream uses. Preserve masters, derivatives and entitlement through the [asset workflow](../asset-workflow.md). [AUD01–AUD07](../maintainers/audio-production.md) tracks unfinished qualification, production tooling, acquisition and integration. Offline production does not change mechanical hearing or select optional speech media.
 
 ## 1. Map the experience to actual events
 
@@ -133,5 +135,5 @@ For voice, casting and dialogue authoring can explore together, but final record
 
 - **Implementation:** the affected action tracker, [spatial/presentation work](../maintainers/spatial-world.md), [3D animation](../maintainers/3d-pixel-art.md), [UIUX](../maintainers/ui-ux.md), [hearing/media](../maintainers/hearing-and-speech.md) and [narration/conversations](../maintainers/narration-and-conversations.md), according to scope.
 - **Limits and constraints:** [hearing and optional media](../limits/hearing-and-speech.md), [interface/presentation](../limits/interface.md), [AI execution](../limits/ai-execution.md) and the relevant action/asset inventory. No new audio quota, playback system or voice policy is selected here.
-- **Music/SFX sourcing and proposed production:** [current research](../research/audio/README.md), [musical direction](../research/audio/openlegend-direction.md) and [AUD01–AUD04](../maintainers/audio-production.md).
+- **Music/SFX production:** [procedure](audio-production.md), [selected direction](../worlds/base/audio-direction.md), [research](../research/audio/README.md) and [AUD01–AUD07](../maintainers/audio-production.md).
 - **Evidence:** [asset/audio research](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), [production cases](../../archive/02-research/ai-game-development/02-developer-case-studies.md) and actual topic reports under [verification](../verification.md).

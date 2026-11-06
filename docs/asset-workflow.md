@@ -2,6 +2,8 @@
 
 Use this guide whenever creating, importing, capturing, inspecting, editing or linking art, models, textures, fonts, audio, video, generated scenery or study files. The [storage decisions](projects/game-asset-storage-feature-spec.md#2-agreed-product-decisions), [URL contract](projects/game-asset-storage-tech-design.md#5-url-and-repository-contract) and [limits inventory](limits/game-asset-storage.md) own the detailed contracts. The [AS tracker](maintainers/game-asset-storage.md) records migration and verification that remain unfinished; installed tooling alone does not establish that every cloud copy or viewer has been qualified.
 
+For music and sound-effect production, use the [audio procedure](production-workflows/audio-production.md) with this storage/permission owner. The audio design adds metadata and local operations, not another publication authority.
+
 ## Where files belong
 
 Keep all asset payloads outside every Git checkout, regardless of size. This includes standalone media and SVGs, editable Blender/source files, exported mesh or animation JSON, vector/icon bundles, captures, asset archives and study outputs. Embedded images, including base64 or percent-encoded SVG data URLs in CSS or other source files, follow the same rule. The Node asset commands, capture tool and cache check existing ancestors and symbolic-link destinations before creating output directories. Save active work in a deliberately named external directory. Publish immutable, verified copies to asset storage before recording permanent links. Temporary files and expiring download links are not durable preservation.

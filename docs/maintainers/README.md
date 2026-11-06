@@ -20,7 +20,7 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 ## Game production methods
 
-[Music and sound production (AUD01–AUD04)](audio-production.md) connects the [audio sourcing research](../research/audio/README.md) and [proposed musical direction](../research/audio/openlegend-direction.md) to a bounded audition, rights/source handoff, representative soundscape and any selected playback work. Existing hearing, speech-media and asset owners retain their contracts.
+[Music and sound production (AUD01–AUD07)](audio-production.md) tracks the designed [audio workflow](../projects/audio-production-feature-spec.md): provider qualification, acquisition/rights, production and listening tools, metadata/library retrieval, and optional first fixed-recording playback. The [selected world direction](../worlds/base/audio-direction.md) allows broad musical exploration. Hearing, speech-media and asset owners retain their contracts; design completion does not close delivery.
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
 

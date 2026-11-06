@@ -2,7 +2,7 @@
 
 Use one record at `art-direction/studies/<study-id>/README.md` ([naming](README.md#7-working-files-ids-and-records)) and link it from the [study index](../../../art-direction/studies/README.md). Adapt the outline below and omit fields that do not apply. Exact asset inventories stay in the existing storage catalogs and indexes; the record links them rather than inventing another schema.
 
-The record holds current state, not a diary: replace stale lines as the study moves on, and keep Mike's decisions and words.
+Apply the [shared record and handoff requirements](../production-process.md#record-and-handoff) using the visual fields below. The record holds current state, not a diary: replace stale lines as the study moves on, and keep Mike's decisions and words.
 
 ## Record outline
 
@@ -28,7 +28,7 @@ One line: the current stage and what is true now, using the separate facts **cre
 | --- | --------------------- | -------------------------------- | -------------------------------------------------- | ----------------------------------------- | ----------------------------------------------- |
 | m02 | Model, from v01 (c03) | Short description                | Verified manifest/revision and durable access path | What actually exists and what was checked | Unselected, agent-recommended or owner-selected |
 
-Keep every candidate, including rejected ones. Do not renumber after one is dropped; a revision gets a new ID naming its parent. Keep provider filenames and job IDs. For comparisons, record the shared inputs once and link both routes' results.
+Use the [shared candidate-lineage rules](../production-process.md#keep-candidates-and-jobs-recoverable). For comparisons, record the shared inputs once and link both routes' results.
 
 ### Decisions
 
@@ -44,7 +44,7 @@ Available sources, actual formats, exports, dimensions or height, triangle and t
 
 For a UI kit with sliced raster parts, record fixed corners, repeated edges, joins, accents, text-safe regions and demonstrated states; record tiling or clean alpha only after checking the actual exported bytes. For native CSS or vector UI, record the tokens and components instead.
 
-Keep prompts and recipes, input revisions, the exact tool, model, mode and settings, and repeatable scripts. Separate observed metadata from inference. Proprietary or private source payloads and receipts stay in their permitted external locations; credentials never enter Git. A reconstructed layer is never described as an original layered source.
+Retain the [shared prompt/source provenance](../production-process.md#keep-candidates-and-jobs-recoverable), recipes and repeatable scripts. Separate observed metadata from inference. Proprietary or private source payloads and receipts stay in their permitted external locations; credentials never enter Git. A reconstructed layer is never described as an original layered source.
 
 ### Review and remaining gaps
 
@@ -56,7 +56,7 @@ Observed strengths and defects, fit with the brief and look, play-check results,
 
 ### Resume
 
-The exact candidate or revision, available files, open decision and next stage. While a batch runs: its job IDs, status and committed cost, so a new thread recovers them before submitting anything new. The exact S3 references of every uploaded file, and how to fetch them into a working folder through existing tooling. Local copies are caches, not records. A temporary path can help find unsaved work but is never the archive, and expiring signed URLs are never stored.
+Use the [shared continuation fields](../production-process.md#record-and-handoff), including outstanding jobs and accounting. Include the exact S3 references of every uploaded file and how to fetch them through existing tooling. A temporary path can help find unsaved work but is never the archive; local copies are caches and expiring signed URLs are never stored.
 
 ## Final message from a run
 

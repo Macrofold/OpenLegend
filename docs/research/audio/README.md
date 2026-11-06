@@ -1,26 +1,23 @@
 # Music and sound research
 
-**Current synthesis: November 4, 2026.** Research and recommendations are complete for this sourcing investigation. No audio was acquired or qualified through listening or in-game tests, and no provider or collaborator was selected. Exact provider terms and prices should be checked again when an asset is acquired.
+**Sourcing investigation: November 4, 2026; selected direction reconciled November 6.** Research evidence is retained below. No audio was acquired or qualified through listening or in-game tests by these documentation tasks. Check the actual product, operation and acquisition terms before use.
 
-## Recommendation for Open Legend
+## Selected direction for Open Legend
 
-Build a small, coherent original score with one musical lead, and give a properly licensed AI route a serious audition before commissioning the full package. Use carefully selected free/paid recordings extensively for sound effects, with original Foley, editing and a few distinctive signatures. Produce fixed assets offline. Procedural composition and live SFX generation are not prerequisites.
+Explore broad genres and build coherent selected families through an automated agent-led workflow, allowing manual or specialist work when it improves quality. Produce fixed recordings offline; first adaptive playback selects and transitions between finished cues. A large retained library is compatible with a small useful first production batch. No composer-first purchase, fixed composition quota or mandatory folk/chamber palette remains selected.
 
-The [Open Legend music and sound direction](openlegend-direction.md) is the main recommendation: musical identity, player scenarios, an initial cue package, a bounded composer-versus-AI audition, staged spending, and the boundary between background score and actual world sound. Its palette and budgets are proposals, not measured results or universal rules for every world.
+The [current direction](openlegend-direction.md) routes to the canonical world policy and [complete workflow design](../../projects/audio-production-feature-spec.md). The [original direction proposal](archive/2026/2026-11-04-direction-proposal.md) preserves the earlier recommendations without making them requirements. The [provider notes](../../production-workflows/audio-tools.md) own current trial entrants and capability checks; there is no listening winner yet.
 
 ## Choose the appropriate route
 
-| Route                                | Best use here                                                           | Decision                                                                                                                                                                   |
-| ------------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commission a composer/producer       | Identity themes, related arrangements, controlled revisions             | Preferred starting investment: a small paid pilot, then a compact score if it succeeds                                                                                     |
-| AI music generation                  | Rapid musical exploration; potentially finished or producer-edited cues | Serious candidate; shortlist Suno for its preference evidence and editing tools, and Stable Audio for its instrumental/SFX workflow and documented hosted commercial terms |
-| Direct artist license                | An exceptional existing piece with a fitting identity                   | Good alternative when the artist can grant the needed composition/master, editing and release rights                                                                       |
-| Stock/production music               | Temporary coverage and specific secondary uses                          | Can be musically excellent; less control of identity and revision makes it a weaker foundation for this brief                                                              |
-| Free/CC/public-domain music          | Selective reference, temporary or deliberate production use             | Price does not establish quality or unrestricted permission; examine each composition and recording                                                                        |
-| Paid/free SFX recordings             | Movement, materials, weather, animals and practical actions             | Recommended broad foundation, curated around real playable events                                                                                                          |
-| Foley, field recording and synthesis | Tactile details and memorable exceptional sounds                        | Add selectively where ownership, specificity or sound character justifies the work                                                                                         |
-| Offline AI SFX                       | Difficult-to-source effects and creative variants                       | Optional source route; accept by listening, editability and actual rights                                                                                                  |
-| Self-hosted audio models             | Repeated production that demonstrably needs local control               | Defer deployment work until a hosted comparison proves the output is worthwhile; weights and code can carry different licenses                                             |
+| Route                                         | Useful role and decision                                                                                                                         |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| AI music and SFX                              | Initial exploration/generation candidates, qualified for actual revision quality, export, account access and rights before scaling               |
+| Composer, producer or specialist              | Quality-driven alternative or finishing help for a favored source; no compulsory commission or comparison after a suitable route succeeds        |
+| Direct artist license or stock music          | A fitting existing recording when its composition/master and intended delivery rights are suitable; production method does not determine quality |
+| Free, paid or public-domain sources           | Useful music and effects; price and a public-domain composition do not establish recording rights                                                |
+| Foley, field recording, editing and synthesis | Material/action specificity, clean variants and distinctive signatures; use where practical                                                      |
+| Self-hosted models                            | Defer deployment until a concrete control/volume need and actual output justify it; code and weights may have different licenses                 |
 
 ## Evidence records
 
@@ -35,10 +32,10 @@ The Suno answer is affirmative for eligible commercial output, with an authorize
 
 Evidence includes provider contracts/help, official platform and copyright guidance, a professional survey, firsthand creator accounts and an external blind preference benchmark. Reports identify their dates and limits. Vendor capability claims and successful-game anecdotes are not our own audio-quality tests. Budget scenarios are explicitly estimated allocations, not supplier quotes.
 
-## Existing owners and proposed follow-through
+## Current owners and follow-through
 
-- [Audio and coordinated feedback production](../../production-workflows/audio-and-feedback.md) remains the production owner for actual event binding, editing, timing, mixing and acceptance.
-- [AUD01–AUD04](../../maintainers/audio-production.md) owns proposed auditions, rights/source handoff, the representative soundscape and any subsequently selected playback preparation.
+- [Audio production](../../production-workflows/audio-production.md) owns idea-to-library operations; [coordinated feedback](../../production-workflows/audio-and-feedback.md) owns event timing, whole-scene mixing and acceptance.
+- [AUD01–AUD07](../../maintainers/audio-production.md) owns qualification, rights, soundscape, optional playback and repeatable production/catalogue/listening tooling. Design is complete; delivery remains open.
 - [Hearing](../../hearing-and-speech.md) and [base-world physical sound](../../worlds/base/physical-sound.md) own mechanical evidence. Music playback does not authorize new character knowledge.
 - [Asset workflow](../../asset-workflow.md) and [repository licensing](../../../LICENSING.md) retain storage and code/asset license boundaries.
 - [Bards and shared history](../../narrative/authored-worlds-and-personal-discovery.md#bards-carry-player-legends-and-world-news) remains a separate narrative opportunity. This research does not require generated singing or close its feature work.

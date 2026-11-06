@@ -55,6 +55,8 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Missing belonging](missing-belonging.md) — delivered finite investigation with two independent witnesses, permitted evidence and a real container return.
 - [Playable openings](playable-openings.md) — authored ready-world starting choices for the delivered creation journey.
 
+- [Music and sound direction](audio-direction.md) — broad selected musical range, editorial tags and initial playback policy; fixed-recording integration remains designed, not delivered. Mechanical sound stays with [physical sound](physical-sound.md).
+
 ## Code boundary
 
 The corresponding bundled content lives in `packages/domain/src/worlds/base/`: world/actor initialization, initial map, terrain/body presets and flight routes, item/preparation definitions, creation categories/templates, body and attribute/sense defaults, physiology, strike definitions, fire care (`fire.ts`), item-handling defaults and status-effect/trait configuration. YAML and generated JSON stay together under its `config/` directory; generators and reusable validators stay outside. The pure domain reads generated data, never YAML or filesystem APIs.

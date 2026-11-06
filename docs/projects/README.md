@@ -15,6 +15,7 @@ Projects own proposed/accepted scope and delivery plans; their focused trackers 
 | Commercial and creator proposals   | [Customer offers](customer-and-supporter-offers-feature-spec.md), [published packs](published-packs-and-creator-revenue-feature-spec.md), [creator fund](creator-fund-and-contributor-governance-feature-spec.md) |
 | Workflow/document organization     | [Adoption](agent-workflow-efficiency/01-workflow-feature-spec.md), [parallel verification campaigns](verification-campaigns-feature-spec.md)                                                                      |
 | Art production workflow            | [Feature specification](art-workflow-feature-spec.md), [technical design](art-workflow-tech-design.md)                                                                                                            |
+| Audio production and playback      | [Feature specification](audio-production-feature-spec.md), [technical design](audio-production-tech-design.md), [repertoire application](audio-production-repertoire-review.md)                                   |
 
 The [Spirit and mental-status design note](spirit-and-mental-statuses-design-note.md) records the selected naming and coexistence model. [Character and map additions](character-and-map-additions-feature-spec.md) specifies Spirit, stats, more equipment slots, map markers and nicknames.
 

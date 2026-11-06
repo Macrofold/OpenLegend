@@ -20,23 +20,28 @@ Keep decisions that affect the actual result in the brief/provider operation: bo
 
 ## Start with the current brief
 
-Translate the existing brief rather than asking Mike to fill another form. Use this order to connect the decisions already required by the workflow; it is not another production stage:
+Use the [shared brief](../production-process.md#start-with-the-current-brief) and
+[operation procedure](../production-process.md#direct-the-operation) within the existing
+stages. The purpose may be recognizing a returning person, reading a creature's preparation,
+understanding an invented tool's construction or enjoying a beautiful place. A focused
+repair can simply name its defect; it needs no new gameplay justification.
 
-1. **Name the result and its purpose.** Use the existing Purpose field: what should someone notice, understand or enjoy, and where will they see or use it? Recognizing a returning person, reading a creature's preparation, understanding an invented tool's construction and enjoying a beautiful place are all valid purposes. A focused repair can simply name the defect; it needs no new gameplay justification.
-2. **Start from the exact source.** Identify the accepted asset/reference and relevant look rules. Separate identity and construction locks from the permitted changes. A provisional or rejected source is not an approved starting point.
-3. **Choose the creative opportunity or needed correction.** For new work, identify the forms, material contrasts, expressive poses or spatial arrangements that could make the intended experience distinctive. For an existing result, locate the issue in form, camera/presentation, material, motion or a capability the tool does not supply. Use the relevant section below; extra detail or a longer prompt is not a general repair.
-4. **Write the matching operation.** Give references distinct jobs, describe observable changes, and select only supported controls. Keep the current candidate count and stopping point. For a prompt-only request, deliver the text and material assumptions here; do not dispatch generation or create a study folder just to complete an outline.
-5. **When execution is requested, inspect and finish within that scope.** Compare the actual output with the named purpose and locks using the existing profile checks. Repair the relevant defect through its owning operation, preserve the result in the existing record and stop at the requested boundary. A prototype does not acquire a polish campaign, additional states or family qualification from this guide.
+For new visual work, identify the forms, material contrasts, expressive poses or spatial
+arrangements that could make the intended experience distinctive. For an existing result,
+locate the issue in form, camera/presentation, material, motion or a capability the tool
+does not supply. Use the relevant section below; extra detail or a longer prompt is not a
+general repair. Better source meshes and compatible motion can improve a result independently
+of wording. A screenshot of a finely drawn person does not prove a usable body, separate
+clothing, a working rig or good deformation.
 
-Omit decisions that do not affect the task. Keep a quick prototype quick: one suitable input and the already-selected candidate count, not an automatic reference sheet, comparison campaign or polish pass. Observable readability or continuity supports an art judgment; whether an encounter or repeated activity is fun needs gameplay evidence, not a provider's self-rating.
-
-There are three different instructions:
-
-- **Art direction for the agent:** what the asset means, what is already accepted, which source to build on, and what evidence will answer this task.
-- **A provider payload:** only the visual information and supported controls needed for this image, mesh, texture or motion operation. Expand relevant local references into concrete descriptions and attach the actual permitted images; a provider cannot read a repository path named in prose.
-- **Production checks:** dimensions, topology, editable parts, rig compatibility, clips, material maps and export requirements verified on the actual output. Asking an image model for these does not deliver them.
-
-A screenshot of a finely drawn person does not prove a usable body, separate clothing, a working rig or good deformation. Likewise, better source meshes and compatible motion can improve a result independently of prompt wording. Diagnose the missing input or capability before adding adjectives. Do not substitute a rejected source merely because a tutorial or skill makes it convenient.
+Translate the look and source locks into concrete visual descriptions and actual permitted
+images for the provider. Dimensions, topology, editable parts, rig compatibility, clips,
+material maps and export requirements remain checks on the files. Apply the existing
+profile checks to the actual result and repair only the responsible source. Keep a quick
+prototype quick: one suitable input and the selected candidate count, without an automatic
+reference sheet, comparison campaign, polish pass, additional states or family qualification.
+Observable readability or continuity supports an art judgment; whether an encounter or
+repeated activity is fun needs gameplay evidence, not a provider's self-rating.
 
 ## Describe visible decisions, not a quality score
 
@@ -54,7 +59,7 @@ Fill placeholders before execution. Remove irrelevant clauses. For a new design,
 
 ## Give references distinct jobs
 
-Name the supplied inputs in their actual order and assign a role to each: identity, proportion, construction, surface, palette, composition or a defect to avoid. An admired lighting reference is not permission to copy its anatomy. A material reference is not a replacement character. Use accepted project outputs where they answer the question; do not attach a giant moodboard by default.
+Apply the [shared reference procedure](../production-process.md#start-with-the-current-brief). Visual roles include identity, proportion, construction, surface, palette, composition and a defect to avoid. An admired lighting reference is not permission to copy its anatomy. A material reference is not a replacement character. Do not attach a giant moodboard by default.
 
 Resolve conflicting references before downstream generation. Identify which accepted view governs the disputed feature. Keep left/right descriptions in the subject's coordinates, adding an image-edge direction when useful. Do not mirror an asymmetric garment, scar or hairstyle to manufacture a missing view.
 
@@ -122,7 +127,7 @@ Prefer a clear positive target. Use negative prompts only where that exact route
 
 ## Preserve wording and learn without slowing ordinary work
 
-Use the existing [study record](study-record.md). Keep the exact authored prompt, available submitted or provider-rewritten prompt, selected model/route, meaningful settings, ordered input references, source revision and output IDs. Mark an unavailable submitted prompt as unknown. Preserve the accepted wording when reusing a successful recipe; record focused changes rather than silently paraphrasing it. A seed alone is not a reproducible asset.
+Use the existing [study record](study-record.md) for the [shared prompt/source provenance](../production-process.md#keep-candidates-and-jobs-recoverable). Preserve the accepted wording when reusing a successful recipe; record focused changes rather than silently paraphrasing it.
 
 Package a useful result as its smallest reusable unit: the original project instructions, approved reference, compatible editable source or parts, applicable rig/material requirements, a relevant failure example and evidence of the result. Keep payloads in the established asset storage, not Git, and do not install or execute an unfamiliar external skill merely because it is being reviewed. Public documentation must respect the source license; private paid originals are not public prompt templates.
 

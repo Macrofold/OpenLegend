@@ -150,6 +150,24 @@ A prompt-only request ends with a usable draft and material assumptions. An exec
 
 This is a completed guidance design, not evidence of improved generated-art quality or enjoyment. Existing production proof and player-evidence owners retain those questions. The [source record](../../art-direction/research/ai-asset-prompting/README.md) keeps the evidence and exclusions optional for ordinary art requests.
 
+### 3.9 Share production mechanics with audio
+
+The [shared production process](../production-workflows/production-process.md) owns the
+brief/source/reference procedure, candidate lineage and group revisions, recoverable jobs,
+coordinator responsibilities and record/handoff facts for visual art and
+[audio production](audio-production-feature-spec.md). These are substantial common needs:
+both routes must preserve selected work through revision, recover paid operations without
+duplicate dispatch and distinguish archived candidates from accepted or integrated assets.
+Existing asset storage and spending retain their own owners.
+
+The visual route keeps its stages, simple/full paths, fidelity meanings, candidate counts,
+look, roster and technical checks. Audio gets its own creative operations and listening
+checks rather than inheriting a concept-to-model sequence or visual provider decision.
+Shared prompting principles stay in the common process; detailed visual direction stays
+in the prompt guide. No generalized stage engine, new mandatory comparison or universal
+quality setting is introduced. This preserves useful specialization while avoiding two
+copies of revision and recovery rules.
+
 ## 4. Scenarios
 
 Each scenario names its trigger, what Mike sees, the decision points and a meaningful failure. New-person scenarios apply only after the [PPL decisions](../maintainers/art/people.md) authorize the body/parts route; retained study exceptions are not a general production method.
