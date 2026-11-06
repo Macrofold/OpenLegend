@@ -536,37 +536,6 @@ export function currentContactNativeFacet(
   if (!original) throw new Error('A current group has no acquired original.');
   return currentGroupNativeFacet(selected, original, kind);
 }
-/** Borrowed exact-channel/exposure projection. Selection happens once for all
- * requested siblings; missing/ambiguous members retain their independent result. */
-export function prepareCurrentContactTrack(
-  contact: CurrentContact,
-  selector: CurrentFacetSelector,
-): { native(kind: string): CurrentNativeFacet | undefined } {
-  const content = readOnlyDraftView(readOnlyDraftView(contact).content);
-  const groups = new Map<string, CurrentReceivedGroup | undefined>();
-  for (const stored of content.groups) {
-    const group = readOnlyDraftView(stored);
-    if (!selectedGroup(group, selector)) continue;
-    for (const kind of Object.keys(readOnlyDraftView(group.received.fields)))
-      groups.set(kind, groups.has(kind) ? undefined : group);
-  }
-  const selected = new Map<string, CurrentNativeFacet | undefined>();
-  return {
-    native(kind) {
-      if (!selected.has(kind)) {
-        const group = groups.get(kind);
-        const original =
-          group && readOnlyDraftView(content.originals)[group.received.grant.original];
-        if (group && !original) throw new Error('A current group has no acquired original.');
-        selected.set(
-          kind,
-          group && original ? currentGroupNativeFacet(group, original, kind) : undefined,
-        );
-      }
-      return selected.get(kind);
-    },
-  };
-}
 /** Typed internal address; display/storage key parsing stays at its boundary. */
 export function currentNativeFacetAt(
   owner: CurrentReadOwner | undefined,

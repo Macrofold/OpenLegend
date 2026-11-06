@@ -1,6 +1,10 @@
 import { setPlayerAttention } from './attention-intent.js';
 import { resolveRecentObservationReference } from './recent-history.js';
-import { KnownPlacePreparationError } from '@open-legend/domain';
+import {
+  KnownPlacePreparationError,
+  prepareCurrentBodyReadScope,
+  type WorldState,
+} from '@open-legend/domain';
 import { MemoryPreparationError } from './memory-repository.js';
 import {
   validateEventEvidence,
@@ -1298,6 +1302,8 @@ async function initializeGameServer(
           const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
           const sourceEpoch = `${service.timelineId}:${scopeKey(scope)}`;
           const corrections = service.world.experience?.corrections?.[scope.actorId];
+          let roleWorld: WorldState | undefined;
+          let roleReads: ReturnType<typeof prepareCurrentBodyReadScope>;
           const page = await store.history.perceivedEvents(
             service.world.id,
             scope.accountId,
@@ -1307,7 +1313,16 @@ async function initializeGameServer(
             sourceEpoch,
             corrections,
             selectedEventPresentation(service.world),
-            (event) => perceivedParticipantReferences(service.world, scope, event),
+            (event) => {
+              // SQL finishes before this synchronous projection. Borrow current
+              // grants here, never retain a sensory reader across that wait.
+              const currentWorld = service.world;
+              if (roleWorld !== currentWorld) {
+                roleWorld = currentWorld;
+                roleReads = prepareCurrentBodyReadScope(currentWorld, scope.actorId);
+              }
+              return perceivedParticipantReferences(currentWorld, scope, event, roleReads ?? null);
+            },
           );
           await assertHistoryRead(scope, epoch);
           if (options.showAll) service.assertScope(scope, 'inspect');

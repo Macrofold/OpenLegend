@@ -671,7 +671,9 @@ export class HistoryRepository {
             const temporalCut = storyTemporalCut(payload);
             if (temporalCut) retainedTemporal.set(actorId, temporalCut);
           }
-        removedEvents += await this.removeEvent(world.id, event.id);
+        // A missing canonical predecessor needs no story/perspective cleanup.
+        // Resident absence alone is insufficient; this SQL read proved absence.
+        if (retained) removedEvents += await this.removeEvent(world.id, event.id);
       }
       const perspectives = new Map<string, StorySource>();
       const { position, pending: eventFlush } = batch.event(event, encoded);

@@ -110,8 +110,12 @@ export function projectObservedAssembly(
   rootId: string,
   assembly: ObservedAssembly,
 ): AssemblyView {
+  const reads = prepareCurrentBodyReadScope(world, scope.actorId);
   const references = new Map(
-    assembly.parts.map((part) => [part.id, assemblyPartReference(world, scope, rootId, part.id)]),
+    assembly.parts.map((part) => [
+      part.id,
+      assemblyPartReference(world, scope, rootId, part.id, reads),
+    ]),
   );
   const shapes = assembly.shapes.map((shape) => ({ ...shape, id: references.get(shape.id)! }));
   if (assembly.implementation === 'grounded-panel-boundary')
@@ -131,26 +135,28 @@ export function projectObservedAssembly(
 }
 
 /** Historical participant wording and current permissions are separate facts.
- * A now-recognized stranger never rewrites an earlier anonymous voice. */
+ * A now-recognized stranger never rewrites an earlier anonymous voice. A null
+ * reader preserves a batch's already-prepared absence of current grants. */
 export function perceivedParticipantReferences(
   world: WorldState,
   scope: RequestScope,
   event: ActorEvent,
+  reads: ReturnType<typeof prepareCurrentBodyReadScope> | null = prepareCurrentBodyReadScope(
+    world,
+    scope.actorId,
+  ),
 ) {
   const result: ReturnType<import('./perceived-events.js').PublicEventRoleProjection> = {};
   const body = event.sourceBody;
   if (body) {
     const entity = entityGet(world.entities, body.entityId);
-    const received = currentBodyGrant(world, scope.actorId, body.entityId);
     if (body.entityId === scope.actorId && body.physicalLife === (entity?.actor?.physicalLife ?? 0))
       result.actor = { contactReference: scope.actorId };
-    else if (
-      entity &&
-      received &&
-      received.leaseId === body.leaseId &&
-      body.physicalLife === (entity.actor?.physicalLife ?? 0)
-    )
-      result.actor = { contactReference: currentContactReference(world, scope, entity) };
+    else if (entity && reads && body.physicalLife === (entity.actor?.physicalLife ?? 0)) {
+      const received = currentBodyGrant(world, scope.actorId, body.entityId, reads);
+      if (received?.leaseId === body.leaseId)
+        result.actor = { contactReference: currentContactReference(world, scope, entity, reads) };
+    }
   }
   const subject = event.sourceSubject;
   const identity =
@@ -171,8 +177,12 @@ export function perceivedParticipantReferences(
   ) {
     result.target = { communicationReference: communicationReference(scope, { id: targetId }) };
     const target = entityGet(world.entities, targetId);
-    if (target && currentCommunicationSubject(world, scope.actorId, targetId) === targetId)
-      result.target.contactReference = currentContactReference(world, scope, target);
+    if (
+      target &&
+      reads &&
+      currentCommunicationSubject(world, scope.actorId, targetId, reads) === targetId
+    )
+      result.target.contactReference = currentContactReference(world, scope, target, reads);
   }
   return result;
 }
@@ -185,7 +195,8 @@ export function projectConstructionView(
   view: ConstructionView,
 ): ConstructionView {
   if (!view.ok) return view;
-  const ref = (id: string) => physicalContactReference(world, scope, id);
+  const reads = prepareCurrentBodyReadScope(world, scope.actorId);
+  const ref = (id: string) => physicalContactReference(world, scope, id, reads);
   return {
     ...view,
     materials: view.materials.map((material) => ({ ...material, id: ref(material.id) })),

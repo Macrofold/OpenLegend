@@ -208,7 +208,6 @@ export const DOMAIN_COUNTERS = [
   'attentionWorkingPreparations',
   'attentionCatalogueEntries',
   'attentionPartDescriptionReuses',
-  'currentReadTrackPreparations',
   'viewAppearanceReads',
   'viewAppearancePreparations',
   'viewNameReads',

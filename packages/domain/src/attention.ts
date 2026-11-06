@@ -769,7 +769,6 @@ interface PreparedAttentionSelection {
   candidates: Record<string, AttentionCandidate>;
   candidateKeys: Map<string, string[]>;
   subjects: ReadonlyMap<string, ObserverSubject>;
-  anchors: ReadonlySet<string>;
 }
 interface AnnotationCatalogue {
   bySource: Map<string, string[]>;
@@ -1391,7 +1390,6 @@ export function updateAttention(
       candidates: candidateView,
       candidateKeys,
       subjects,
-      anchors: attentionRelationKeys(world, observerId),
     };
   return {
     before,

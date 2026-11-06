@@ -165,7 +165,6 @@ import {
   currentFacetAt,
   currentNativeFacetTimes,
   currentContactNativeFacet,
-  prepareCurrentContactTrack,
   projectCurrentFacet,
   type CurrentNativeFacet,
   currentSetUnchecked,
@@ -3474,7 +3473,6 @@ export interface CurrentBodyReadScope {
   current: PerceptionEvidenceOwner['current'];
   subject(id: string): CurrentContact | undefined;
   native(id: string, kind: string, selector?: CurrentFacetSelector): CurrentNativeFacet | undefined;
-  track(input: CurrentNativeFacet): { native(kind: string): CurrentNativeFacet | undefined };
   nativeBody(id: string): CurrentNativeFacet | undefined;
   nativeLocation(id: string): CurrentNativeFacet | undefined;
   channelEligible(pin: import('./world-modules.js').DefinitionPin): boolean;
@@ -3512,8 +3510,7 @@ export function prepareCurrentBodyReadScope(
   const current = readOnlyDraftView(state.current),
     contacts = new Map<string, CurrentContact | undefined>(),
     natives = new Map<string, Map<string, CurrentNativeFacet | undefined>>(),
-    bodies = new Map<string, CurrentNativeFacet | undefined>(),
-    tracks = new Map<string, ReturnType<typeof prepareCurrentContactTrack>>();
+    bodies = new Map<string, CurrentNativeFacet | undefined>();
   let projected: Map<CurrentNativeFacet, CurrentFacetRecord> | undefined,
     values: Map<CurrentNativeFacet, CurrentFacetValue> | undefined,
     proofs: Map<CurrentNativeFacet, CapturedCurrentFacet> | undefined,
@@ -3549,66 +3546,22 @@ export function prepareCurrentBodyReadScope(
     }
     return visualPin;
   };
-  const trackKey = (id: string, selector: CurrentFacetSelector) =>
-    JSON.stringify([
-      id,
-      selector.modality ?? null,
-      selector.exposure ?? null,
-      selector.channel
-        ? [selector.channel.id, selector.channel.version, selector.channel.digest]
-        : null,
-    ]);
-  const exactTrack = (id: string, selector: CurrentFacetSelector) => {
-    const key = trackKey(id, selector);
-    let prepared = tracks.get(key);
-    if (!prepared) {
-      const contact = subject(id);
-      if (!contact) return;
-      countDomainWork('currentReadTrackPreparations');
-      tracks.set(key, (prepared = prepareCurrentContactTrack(contact, selector)));
-    }
-    return prepared;
-  };
   const native = (id: string, kind: string, selector?: CurrentFacetSelector) => {
     let fields = natives.get(id);
     if (!fields) natives.set(id, (fields = new Map()));
-    const key = JSON.stringify([kind, trackKey(id, selector ?? {})]);
+    const pin = selector?.channel,
+      key = JSON.stringify([
+        kind,
+        selector?.modality ?? null,
+        selector?.exposure ?? null,
+        pin ? [pin.id, pin.version, pin.digest] : null,
+      ]);
     if (!fields.has(key)) {
       countDomainWork('currentReadNativeSelections');
       const contact = subject(id);
-      const value =
-        selector?.channel && selector.exposure
-          ? exactTrack(id, selector)?.native(kind)
-          : contact && currentContactNativeFacet(contact, kind, selector);
-      fields.set(key, value);
-      if (value) {
-        // A unique wider selection also proves this exact binding. Keep each
-        // field's own dates/availability and never alias an ambiguous result.
-        fields.set(
-          JSON.stringify([
-            kind,
-            trackKey(id, {
-              channel: value.grant.channel,
-              exposure: value.grant.exposure,
-              ...(selector?.modality ? { modality: selector.modality } : {}),
-            }),
-          ]),
-          value,
-        );
-      }
+      fields.set(key, contact && currentContactNativeFacet(contact, kind, selector));
     }
     return fields.get(key);
-  };
-  const track = (input: CurrentNativeFacet) => {
-    const selector = { channel: input.grant.channel, exposure: input.grant.exposure };
-    return {
-      native(kind: string) {
-        const value = native(input.grant.subjectId, kind, selector);
-        return value?.grant.subjectPhysicalLife === input.grant.subjectPhysicalLife
-          ? value
-          : undefined;
-      },
-    };
   };
   const record = (input: CurrentNativeFacet) => {
     let result = projected?.get(input);
@@ -3675,7 +3628,6 @@ export function prepareCurrentBodyReadScope(
     current,
     subject,
     native,
-    track,
     nativeBody,
     nativeLocation,
     channelEligible,

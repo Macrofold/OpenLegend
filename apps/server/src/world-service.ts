@@ -880,21 +880,18 @@ export class WorldService {
     };
   }
   private closed = false;
+  private saveAdmissionClosed = false;
   stopAdmission(): void {
     this.closed = true;
     clearTimeout(this.saveTimer);
+    this.saveTimer = undefined;
     clearTimeout(this.retentionTimer);
     // Shutdown is an explicit barrier. Start the captured prefix now so cancelled
     // paid work waiting for evidence can settle before the later final-save stage.
-    if (this.pendingSave && !this.storageError)
-      this.runDetached(() => {
-        void this.mutate(async () => {
-          await this.backgroundSave?.done;
-          await this.saveRequestedProgress();
-        }, true).catch((error) => this.failProgressSave(error));
-      });
+    this.scheduleSave(0);
   }
   releaseHostWork(): void {
+    this.saveAdmissionClosed = true;
     this.stopAdmission();
     this.assetAuthorityUnsubscribe?.();
     this.assetAuthorityUnsubscribe = undefined;
@@ -2159,31 +2156,56 @@ export class WorldService {
     );
   }
 
-  private scheduleSave(): void {
-    if (
-      this.closed ||
-      this.saveTimer ||
-      this.backgroundSave ||
-      !this.pendingSave ||
-      this.storageError
-    )
+  /** A refused queue admission has not touched a save. Failures after admission
+   * still reach the existing storage-fault owner; they must never be retried here.
+   * docs/performance/scheduling.md#bounded-admission */
+  private async tryProgressMutation(operation: () => Promise<void>): Promise<boolean> {
+    let started = false;
+    try {
+      await this.mutate(async () => {
+        started = true;
+        await operation();
+      }, true);
+      return true;
+    } catch (error) {
+      if (!started && error instanceof OverloadError) return false;
+      throw error;
+    }
+  }
+
+  private scheduleSave(delayOverride?: number): void {
+    if (this.saveAdmissionClosed || this.backgroundSave || !this.pendingSave || this.storageError)
       return;
-    const delay = Math.max(
-      0,
-      LIVE_SAVE_INTERVAL_MS - (performance.now() - this.pendingSave.acceptedAt),
-    );
+    if (delayOverride === 0) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = undefined;
+    }
+    if (this.saveTimer) return;
+    // Closing gameplay admission still drains accepted work for shutdown's
+    // durability waiters. Resource release ends this scheduling owner separately.
+    const delay =
+      delayOverride ??
+      (this.closed
+        ? 0
+        : Math.max(0, LIVE_SAVE_INTERVAL_MS - (performance.now() - this.pendingSave.acceptedAt)));
     const timer = this.runDetached(() =>
       setTimeout(() => {
         void this.ready
-          .then(() => {
-            if (this.saveTimer !== timer || this.closed) return;
-            return this.mutate(async () => {
+          .then(async () => {
+            if (this.saveTimer !== timer || this.saveAdmissionClosed) return;
+            const admitted = await this.tryProgressMutation(async () => {
               // A protected flush may cancel this timer while it waits for ready
               // or mutation ownership. It cannot consume a newer batch's timer.
-              if (this.saveTimer !== timer || this.closed) return;
+              if (this.saveTimer !== timer || this.saveAdmissionClosed) return;
               this.saveTimer = undefined;
               await this.saveRequestedProgress();
-            }, true);
+            });
+            if (!admitted && this.saveTimer === timer) {
+              this.saveTimer = undefined;
+              // Reuse one timer, with a delay even when overdue: a full lane must
+              // not turn a harmless refusal into an immediate retry loop.
+              this.scheduleSave(LIVE_SAVE_INTERVAL_MS);
+            }
           })
           .catch((error) => this.failProgressSave(error));
       }, delay),
@@ -2243,12 +2265,15 @@ export class WorldService {
 
         this.store.memories?.acceptedSettled(snapshot.world.id, pending.through);
         this.publishDurable(revision, pending.through, snapshot.world);
-        void this.mutate(async () => {
+        // A refused residency turn can wait for the next save or explicit flush.
+        // The committed prefix is already durable; placement is not forgetting.
+        void this.tryProgressMutation(async () => {
+          if (this.saveAdmissionClosed) return;
           if (this.store.releasedHistory && !this.storageError) {
             const released = this.store.releasedHistory(this.saved);
             if (released !== this.saved) this.installWorld(released, this.saved.world, undefined);
           }
-        }, true).catch((error) => this.failProgressSave(error));
+        }).catch((error) => this.failProgressSave(error));
 
         // Keep a bounded hot retry window across the save completion race. Pending
         // outcomes are additionally charged to the finite save buffer.
@@ -4214,10 +4239,7 @@ export class WorldService {
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
       const resuming = this.world.paused && !next.world.paused;
       const ok = await this.commit(next, undefined, 'unchanged');
-      if (ok && next.world.paused)
-        this.runDetached(() => {
-          void this.flush().catch((error) => this.failProgressSave(error));
-        });
+      if (ok && next.world.paused) this.scheduleSave(0);
       if (ok && resuming) this.clockStartedAt = performance.now();
       if (ok) this.scheduleRetention(true);
       return {

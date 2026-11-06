@@ -1646,17 +1646,23 @@ export async function projectView(
       [
         events,
         world.perceptionEvidence?.[player.id]?.current,
+        world.perceptionEvidence?.[player.id]?.visualConfirmation,
+        world.observerIdentities?.[player.id],
+        world.perceptionEpisodes?.[player.id],
+        world.sensory,
         world.entities,
         world.moduleManifest,
+        capabilityBlocked(world, player, 'perception'),
         service.timelineId,
       ],
-      () =>
-        events
+      () => {
+        const reads = prepareCurrentBodyReadScope(world, scope.actorId);
+        const presentation = selectedEventPresentation(world);
+        return events
           .filter(isJournalEvent)
           .slice(-60)
           .map((event) => {
-            const roles = perceivedParticipantReferences(world, scope, event);
-            const presentation = selectedEventPresentation(world);
+            const roles = perceivedParticipantReferences(world, scope, event, reads ?? null);
             return memo(
               `event:${event.id}`,
               [
@@ -1676,7 +1682,8 @@ export async function projectView(
                   () => roles,
                 ),
             );
-          }),
+          });
+      },
     ),
     conversation: conversationEntries.map((event) => {
       const reply = replies.get(event.id);
