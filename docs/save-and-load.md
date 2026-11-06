@@ -63,6 +63,8 @@ Implementation is tracked in [SL00–SL10](maintainers/save-and-load.md), with a
 
 ## Current history capture boundary
 
+**Open integration repairs:** [BK27 R1/R2](projects/bookkeeping-simplification-runtime-design.md#11-history-intent-and-metadata-read-repairs) specifies preserving admitted pre-trim history through asynchronous saving and keeping metadata-only retention reads out of pending-body preparation. These restore the existing contract; they are not implemented or qualified by earlier cold-save passes. [P1](projects/bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions) is a separate proposed current-format conversion of completed broad checks and frame ownership, with coordinated validation/restoration required before adoption.
+
 **BK24 retained-state export installed:** [SL08/BK24](projects/bookkeeping-simplification-tech-design.md#retained-state-checkpoint-and-recovery) omits wholly collectible history and only its dependent obsolete perspectives/values from one captured cut, with the same selection in ownership validation and full recovery. [SL08](maintainers/save-and-load.md#sl08--rolling-autosaves-and-retention) records the repaired automatic-capture allowance failure and remaining sustained/large-debt qualification; no limits or restore guarantees are weakened.
 
 Portable verification copies use the same complete checkpoint capture and restore owners as gameplay. `WorldRecords.load(true)` reconstructs the active working set, with cold history and retired records still in SQL; serializing it is not a complete export. Even a full world-record read does not copy the other repositories. Keep original checkpoints and use their complete payloads when constructing an owned disposable continuation.

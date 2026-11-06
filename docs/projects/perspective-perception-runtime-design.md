@@ -1,8 +1,8 @@
 # Shared reception and change runtime
 
-| Status      | Current progress                                                                              | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared reception and scoped retirement are implemented; operating qualification remains open. | 2026-11-05   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared reception is installed; shared-completion follow-through is designed, with implementation and operating gates open in BK26/BK27. | 2026-11-06   |
 
 This is the implementation companion to the [perspective-perception feature specification](perspective-perception-feature-spec.md#shared-reception-and-change) and [technical contract](perspective-perception-tech-design.md). It owns the common receiving procedure, not new physical senses, attention policy, a new context compiler or storage engine. [PP08](../maintainers/perspective-perception.md#pp08--shared-reception-and-change) owns the conversion; [branch integration](attention-and-scenes-runtime-design.md#139-branch-ownership-and-integration) assigns overlapping implementation to BK and RU. Design does not authorize runtime edits.
 
@@ -23,7 +23,7 @@ Keep the physically different producers: sight tests visibility, hearing determi
 
 The feature specification owns play and remaining product scope. The [grouped representation](attention-and-scenes-runtime-design.md#132-b-data-and-mutation-ownership) owns compact contacts/groups; [bookkeeping](bookkeeping-simplification-tech-design.md) owns direct saves, stable shared values, inline small values and reclamation. This document supplies their shared native contract. There is one current store and one admitted personal chronology.
 
-The selected [BK database-work reduction](bookkeeping-simplification-runtime-design.md) consumes the received-change result and extends existing storage/retention owners. Its future column-specific writes, independent support and async publication do not add a receiving procedure or change the physical channels. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns that unfinished implementation.
+The [BK database-work reduction](bookkeeping-simplification-runtime-design.md) consumes the received-change result through existing storage/retention owners. Column-specific writes, independent support and async publication are installed; [BK08–BK16](../maintainers/production-data.md#database-work-reduction) retains operating qualification. The [remaining save/read repairs](bookkeeping-simplification-runtime-design.md#11-history-intent-and-metadata-read-repairs) and [P1 shared-completion experiment](bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions) are designed but unimplemented. They extend this same receiving boundary, with no new physical channel, weaker independent freshness or second knowledge store.
 
 ## 2. Owners and extension seam
 
@@ -62,7 +62,7 @@ Do not merge value identity, occurrence identity, track continuity or learned id
 
 These names specify semantic roles; extend the existing types/entry points instead of introducing wrappers solely to match the names. `TrackKey`, `FieldMask`, typed values and source references reuse the owning identities and group layout. A field mask selects already defined members; it is not a dictionary of arbitrary sensor property names.
 
-The implementation uses `ReceivedCurrentChange` and `receiveCurrentChange`, batched by `withReceivedChanges`/`receiveCurrentChanges` inside the existing observer boundary. `receiveObservation` admits actual source contributions; `acquireInterpretedObservation` admits supported non-direct interpretation separately. Current groups separate immutable received content from exact part-partition clocks and optional recording annotations. Closed spans, check stamps and occurrences use the [BK17–BK19 chronology](bookkeeping-simplification-reception-design.md); they have no actor-wide per-field capture/check maps. Pure live/frozen projection shares `perception-capture.ts`; evidence cuts contain only explicitly selected facts.
+The implementation uses `ReceivedCurrentChange` and `receiveCurrentChange`, batched by `withReceivedChanges`/`receiveCurrentChanges` inside the existing observer boundary. `receiveObservation` admits actual source contributions; `acquireInterpretedObservation` admits supported non-direct interpretation separately. Current groups separate immutable received content from exact part-partition clocks and optional recording annotations. [BK24 sparse chronology](bookkeeping-simplification-tech-design.md#15-compact-native-evidence-and-change-history) stores admitted changes, baselines, scoped boundaries and occurrences, superseding BK17–BK19's historical check/span representation. Pure live/frozen projection shares `perception-capture.ts`; evidence cuts contain only explicitly selected facts. P1, if adopted, uses one effective check for current reads, terminal capture and recording deadlines; explicit partial/detail/availability handling and due familiarity credit remain in these owners.
 
 ```ts
 type ReceivedUpdate =
