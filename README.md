@@ -52,6 +52,8 @@ Hearing uses pinned acoustic/sense descriptors and persists event-time fragments
 
 ## Inspect characters in Cognition Lab
 
+Start with the [Cognition Lab guide](docs/cognition-lab-guide.md) for step-by-step experiments, controls, comparisons and troubleshooting.
+
 Open `/cognition` on the running development server to edit an independent situation, speak to a character, inspect the actual model requests and native effects, and compare retained runs. The page uses the ordinary simulation without loading the game renderer. Its current editor and historical inspector remain separate; loading a checkpoint explicitly replaces only the lab situation.
 
 The page requires your existing authenticated creator access. For local development, that access uses the existing `OPEN_LEGEND_GOD_MODE=true` setting; OIDC hosts use the signed-in account's current creator grant.

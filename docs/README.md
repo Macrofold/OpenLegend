@@ -5,6 +5,7 @@ Choose the owner for your question; these indexes are navigation, not required r
 | Need                               | Start here                                                                                         |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------- |
 | What the game supports             | [Feature owners](features/README.md)                                                               |
+| Use Cognition Lab                  | [Step-by-step guide, controls and troubleshooting](cognition-lab-guide.md)                         |
 | How the engine works               | [Technical contracts](technical/README.md), [architecture](architecture.md)                        |
 | Bundled world rules/content        | [Base world](worlds/base/README.md)                                                                |
 | Work being designed or delivered   | [Unfinished projects](projects/README.md), [maintainer tasks](maintainers/README.md)               |

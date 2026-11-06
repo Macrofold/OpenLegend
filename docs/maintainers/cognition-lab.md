@@ -1,5 +1,7 @@
 # Cognition Lab — implementation and acceptance
 
+For everyday use, see the [Cognition Lab guide](../cognition-lab-guide.md).
+
 The [feature specification](../projects/cognition-lab-feature-spec.md) owns the experience; the [technical design](../projects/cognition-lab-tech-design.md) owns contracts; the [repertoire map](../projects/cognition-lab-repertoire-review.md) connects all 28 catalogues to experiments. [CLL01–CLL09](../limits/cognition-lab.md) records installed bounds. **CL00 is complete; CL01–CL10 and CL12 are implemented; CL11 technical qualification passed, with human usability and broader behavior acceptance still in progress.** CL13 records the bounded live panel, native comparisons and their remaining quality limits. See [integrated verification](../verification/cognition-lab.md), [controller evidence](../verification/cognition-lab-control.md), [retained-storage measurements](../verification/cognition-lab-storage.md) and [native capture/restore measurements](../verification/cognition-lab-runtime.md). Provider fixtures establish mechanism and native effects, not independent character quality or enjoyment.
 
 ## Delivery order and ownership
