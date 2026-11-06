@@ -6,6 +6,8 @@ This folder is the shared home for visual direction, feedback, decisions and ref
 
 **Reusable art requests:** use the [art workflow](../docs/production-workflows/art-flows/README.md) for any style, asset, character, creature, 3D model, scene, material, motion or UI-system work, optionally naming tools, fidelity or a stopping point. The agent handles the steps and file handoffs. The workflow takes its look from [current direction at a glance](decisions.md#current-direction-at-a-glance). The [UI surface-language brief](studies/ui-surface-language/brief.md) records the supplied border/panel/connector study request; it is not a completed visual study.
 
+**Art prompting:** [Prompt direction](../docs/production-workflows/art-flows/prompting.md) translates the existing brief into stage-specific generation and editing instructions without adding production steps. [AI asset-prompting research](research/ai-asset-prompting/README.md) distinguishes primary-source findings, OpenLegend applications and unreviewed paid-library content; [intake and verification work](../docs/maintainers/art/prompting-and-library.md) tracks the remaining obligations.
+
 **Asset storage and authoring:** follow [Asset workflows](../docs/asset-workflow.md) before fetching, creating, editing, capturing or publishing assets. Substantial models, editable sources, reference media and study captures belong in the separate library/study/runtime collections; Git retains direction, recipes, small pins and verified hosted links. [AS01–AS08](../docs/maintainers/game-asset-storage.md) tracks the remaining migration and recovery gates. Original license, attribution and reference-only limits still apply to publicly hosted sources.
 
 **Published studies:** [Current interactive tools and preserved boards](https://assets.openlegend.ai/studies/public/viewers/navigation-81bd67a16da37540aa1b9688cc22b05b5ed495c727692cab64ab5ffd5b877d36/index.html). Historical comparisons keep their recorded captures and verification limits; today's interactive tools use the current renderer.
@@ -88,7 +90,7 @@ The useful comparison axes are character proportions; texture and detail density
 
 ## Reference scope
 
-Game screenshots and art studies are linked for discussion and inspiration. Reuse rights are not assumed. The original board's asset-pack previews are references; later acquired 3D source packs and exact provenance are indexed in [assets](assets/README.md). Acquisition and provisional integration do not establish a finished or accepted art result. Prices are intentionally omitted because they change.
+Game screenshots and art studies are linked for discussion and inspiration. Reuse rights are not assumed. The original reference-board asset-pack previews are references; later acquired 3D source packs and exact provenance are indexed in [assets](assets/README.md). Acquisition and provisional integration do not establish a finished or accepted art result. Prices are intentionally omitted because they change.
 
 Some references show historical promotional art. Those are labeled and do not establish current release status. C05 is explicitly a non-pixel concept painting. Visual descriptions are curatorial observations, not technical claims about rendering pipelines.
 
