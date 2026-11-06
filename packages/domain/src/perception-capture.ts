@@ -7,7 +7,7 @@ import { sameDefinitionPin } from './definition-pins.js';
 import {
   currentFacetGet,
   currentGroupNativeFacet,
-  effectiveCurrentPartition,
+  detachedCurrentPartition,
   currentFacetSupport,
   currentFacetTimes,
   currentContactEntries,
@@ -98,12 +98,9 @@ export function captureCurrentSources(
       const groups: CurrentReceivedGroup[] = [];
       for (const raw of contact.content.groups) {
         const live = readOnlyDraftView(raw);
-        const metadata = live.metadata.map((partition) => {
-          const effective = effectiveCurrentPartition(state, live, partition);
-          return effective === partition
-            ? partition
-            : { ...effective, revision: Math.max(effective.revision, effective.confirmedRevision) };
-        });
+        const metadata = live.metadata.map((partition) =>
+          detachedCurrentPartition(state, live, partition),
+        );
         const group = metadata.some((partition, index) => partition !== live.metadata[index])
             ? { ...live, metadata }
             : live,

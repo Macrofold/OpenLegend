@@ -279,9 +279,19 @@ export function effectiveCurrentPartition(
   partition: CurrentPartPartition,
 ): CurrentPartPartition {
   const confirmation = effectiveCurrentCheck(owner, group.received.grant, partition);
-  if (!confirmation) return partition;
+  return confirmation ? currentPartitionWithCheck(partition, confirmation) : partition;
+}
+function currentPartitionWithCheck(
+  partition: CurrentPartPartition,
+  confirmation: CurrentSightStamp,
+  detach = false,
+): CurrentPartPartition {
   const times = expandedTimes(partition.times);
+  const revision = detach
+    ? Math.max(partition.revision, confirmation.revision)
+    : partition.revision;
   if (
+    revision === partition.revision &&
     times.confirmedThrough === confirmation.through &&
     partition.confirmedRevision >= confirmation.revision &&
     partition.receivedOrder === confirmation.receivedOrder &&
@@ -291,11 +301,23 @@ export function effectiveCurrentPartition(
     return partition;
   return {
     ...partition,
+    revision,
     confirmedRevision: Math.max(partition.confirmedRevision, confirmation.revision),
     receivedOrder: confirmation.receivedOrder,
     frameRef: confirmation.frameRef,
     times: packedTimes({ ...times, confirmedThrough: confirmation.through }),
   };
+}
+/** A finite cut or outgoing member keeps the selected check after its live body
+ * prerequisite disappears. Its proof revision must travel with the clock.
+ * docs/projects/bookkeeping-simplification-tech-design.md#p1--one-completed-broad-cut-and-explicit-exceptions */
+export function detachedCurrentPartition(
+  owner: Pick<PerceptionEvidenceOwner, 'observer' | 'life' | 'current' | 'visualConfirmation'>,
+  group: CurrentReceivedGroup,
+  partition: CurrentPartPartition,
+): CurrentPartPartition {
+  const confirmation = effectiveCurrentCheck(owner, group.received.grant, partition);
+  return confirmation ? currentPartitionWithCheck(partition, confirmation, true) : partition;
 }
 export interface CurrentContactContent {
   fieldOrder: string[];
@@ -939,28 +961,53 @@ function coveredPartitions(
   return changed ? metadataGroup(group, { metadata: mergePartitions(metadata) }) : group;
 }
 /** Resolve outgoing support while the contact's body exposure still exists.
- * Only fields being removed/replaced are touched; complete-phase renewal never
- * calls this operation for surviving contacts. */
+ * Removing a body also detaches the last checks of its independently held
+ * siblings before their shared-check applicability ends. Complete-phase renewal
+ * never calls this operation for surviving contacts. */
 export function materializeCurrentChecks(
   owner: PerceptionEvidenceOwner,
   keys: readonly string[],
 ): void {
-  const selected = new Map<string, Set<string>>();
+  const selected = new Map<string, Array<ReturnType<typeof currentFacetAddress>>>();
   for (const key of keys) {
     const address = currentFacetAddress(key);
-    let kinds = selected.get(address.subjectId);
-    if (!kinds) selected.set(address.subjectId, (kinds = new Set()));
-    kinds.add(address.kind);
+    let fields = selected.get(address.subjectId);
+    if (!fields) selected.set(address.subjectId, (fields = []));
+    fields.push(address);
   }
   withCurrentContactBatch(owner, () => {
-    for (const [id, kinds] of selected) {
+    for (const [id, fields] of selected) {
       const contact = currentContactGet(owner, id);
       if (!contact) continue;
-      const groups = contact.content.groups.map((group) =>
-        coveredPartitions(group, kinds, (partition) =>
-          effectiveCurrentPartition(owner, group, partition),
-        ),
-      );
+      const bodyFields = fields.filter(({ kind }) => kind === 'body');
+      const bodyTracks = bodyFields.length
+        ? new Set(
+            contact.content.groups
+              .filter(
+                (group) =>
+                  group.received.fields['body'] &&
+                  bodyFields.some(
+                    ({ channel }) => !channel || sameChannel(group.received.grant.channel, channel),
+                  ),
+              )
+              .map((group) =>
+                receivedTrackKey(group.received.grant.exposure, group.received.grant.channel),
+              ),
+          )
+        : undefined;
+      const groups = contact.content.groups.map((group) => {
+        const grant = group.received.grant;
+        const kinds = bodyTracks?.has(receivedTrackKey(grant.exposure, grant.channel))
+          ? undefined
+          : new Set(
+              fields
+                .filter(({ channel }) => !channel || sameChannel(grant.channel, channel))
+                .map(({ kind }) => kind),
+            );
+        return coveredPartitions(group, kinds, (partition) =>
+          detachedCurrentPartition(owner, group, partition),
+        );
+      });
       if (groups.some((group, index) => group !== contact.content.groups[index]))
         setContactMetadataGroups(owner, id, contact, groups);
     }
@@ -995,11 +1042,42 @@ export function currentSetUnchecked(
     for (const [id, masks] of bySubject) {
       const contact = contactAt(owner.current, id);
       if (!contact) continue;
+      const bodyTracks = new Set(
+        contact.content.groups.flatMap((group) => {
+          const fields = readOnlyDraftView(group.received.fields),
+            kinds = masks.get(fields);
+          if (!masks.has(fields) || (kinds && !kinds.has('body'))) return [];
+          const body = currentGroupMetadata(group, 'body');
+          if (
+            !body ||
+            body.availability ||
+            at < expandedTimes(effectiveCurrentPartition(owner, group, body).times).confirmedThrough
+          )
+            return [];
+          return [receivedTrackKey(group.received.grant.exposure, group.received.grant.channel)];
+        }),
+      );
       const groups = contact.content.groups.map((group) => {
         const fields = readOnlyDraftView(group.received.fields);
-        if (!masks.has(fields)) return group;
-        return coveredPartitions(group, masks.get(fields), (partition) => {
-          const effective = effectiveCurrentPartition(owner, group, partition);
+        const selected = masks.has(fields),
+          kinds = masks.get(fields),
+          grant = group.received.grant;
+        // Independent siblings keep their own availability; they only lose the
+        // body prerequisite for consulting the last completed broad check.
+        const detached = bodyTracks.has(receivedTrackKey(grant.exposure, grant.channel))
+          ? coveredPartitions(
+              group,
+              new Set(
+                Object.keys(fields).filter(
+                  (kind) => !selected || (kinds !== undefined && !kinds.has(kind)),
+                ),
+              ),
+              (partition) => detachedCurrentPartition(owner, group, partition),
+            )
+          : group;
+        if (!selected) return detached;
+        return coveredPartitions(detached, kinds, (partition) => {
+          const effective = detachedCurrentPartition(owner, group, partition);
           if (
             at < expandedTimes(effective.times).confirmedThrough ||
             (partition.availability && partition.availability.at <= at)
