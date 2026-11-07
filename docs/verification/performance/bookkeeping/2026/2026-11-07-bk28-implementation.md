@@ -4,7 +4,7 @@
 
 [BK28](../../../../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) implements the [receiving/retention design](../../../../projects/bookkeeping-simplification-tech-design.md#20-receiving-preparation-and-command-wait-removal). Source conversion, affected review, functional checks and selected AWS comparisons are complete. The measured source passes the single-run normal-clock check, but reliable progress, CPU headroom and broader operating qualification remain unmet. The configured local startup gate is separately blocked below.
 
-Repository: Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `/Users/mzw/.codex/worktrees/7f12/OpenLegend`. Accepted design base `11e2e395681639f527b912dcff11ef7b2931f520`; measured adopted runtime `d435c054b6a510fa25634750ff64d44d0c46d583`; subsequent complete-closure review fix `2931e44e393b2fb32c65f9f9aba494c0a3d9931a` has focused correctness evidence below, without a new speed measurement. No branch/checkout switch, push or merge. Development format is schema 57; comparison sources initialize their own matching databases without migration.
+Repository: Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `/Users/mzw/.codex/worktrees/7f12/OpenLegend`. Accepted design base `11e2e395681639f527b912dcff11ef7b2931f520`; measured adopted runtime `d435c054b6a510fa25634750ff64d44d0c46d583`; subsequent complete-closure fix `2931e44e393b2fb32c65f9f9aba494c0a3d9931a` and maintenance retry fix `c301196d81b3774b303556aa1468f953943f810b` have focused correctness evidence below, without new speed measurements. No branch/checkout switch, push or merge. Development format is schema 57; comparison sources initialize their own matching databases without migration.
 
 The [pre-BK28 investigation](2026-11-07-latest-runtime-isolation.md) measures source `934190d80`, not this implementation. Its clock/CPU/latency and checkpoint census remain historical evidence.
 
@@ -20,13 +20,21 @@ The [pre-BK28 investigation](2026-11-07-latest-runtime-isolation.md) measures so
 
 All fixtures are disposable and use native acquisition and existing storage owners. There are no paid game-model calls; these checks do not qualify live-model quality, enjoyment, mature memory or population capacity.
 
-## Complete-closure predecessor reuse — November 7
+## Focused review fixes — November 7
+
+### Complete-closure predecessor reuse
 
 `2931e44e3` carries already-selected old account bodies from `MemoryRepository.prepareRetention` into the existing exact-source closure. Both retention stages and closure rounds share one merge helper preserving the first original. This completes E2 reuse without changing archives, memory policy or storage format; an unused predecessor-world argument is removed from the sole affected caller.
 
 Six disposable local native/PostgreSQL checks use a genuinely completed movement and an independently admitted commitment holding its exact source. Reproducing only the old handoff yields one fallback body query; the repaired handoff yields zero with identical archive plans, payloads and revisions. Mixed-table/repeated-key merge preserves the first original, a mismatched body still refuses, and actual save/close/cold reopening preserves the archive and its surviving owner. One initial fixture setup correctly refused a derivation admitted before its source closure; corrected ordered setup passes. Owned databases/directories are removed, and configured development data is untouched. Typecheck, production build/asset guard, changed-file formatting and whitespace pass. No unit suite, new maintained tests, speed measurement, cloud resource or paid call. Artifacts: `/Users/mzw/.codex/verification/OpenLegend/experiments/2026-11-07-bk28-review/predecessor-reuse.mts` and `predecessor-reuse-result.json`.
 
-The full affected BK28 review finds no other actionable runtime defect. This complete-closure fix does not eliminate ordinary account-aging transactions or resolve the progress/CPU gates below. All AWS numbers retain their original measured source; no whole-game improvement from this repair is claimed.
+### Accepted retries across maintenance
+
+`c301196d8` preserves accepted command outcomes across maintenance entry/exit, including while saves are pending or in flight. The prior cache clear could erase the only immediately recoverable receipt without rotating its command epoch. Generation fences still reject unfinished work, and restore still clears resident outcomes after its durable timeline/epoch replacement. Existing pruning and pending-save limits bound retention; no new cache, query or save barrier is introduced.
+
+Seven local real-service/PostgreSQL checks reproduce the old behavior and verify the repair. With the removed clearing restored as a negative control, retrying a movement after a separate cancellation and maintenance hold reexecutes it, restarting movement and adding one native event. Pending and in-flight repaired paths return the exact accepted outcome with no re-admission/event; conflicting fingerprints refuse, and settled receipts cold-replay after hot eviction. Unaccepted preparation spanning a maintenance generation refuses; real session revocation while a retry waits also refuses. Only save triggering and the in-flight boundary are controlled; native admission and PostgreSQL settlement use their actual owners. Typecheck, production build/asset guard, changed-file formatting and whitespace pass. All three owned databases/directories are removed; configured development data is untouched. No unit suite, speed measurement, cloud resource or paid call. Artifacts: `/Users/mzw/.codex/verification/OpenLegend/experiments/2026-11-07-bk28-review/maintenance-receipts.mts` and `maintenance-receipts-result.json`.
+
+The full affected BK28 re-review finds no other actionable runtime defect. These fixes do not eliminate ordinary account-aging transactions or resolve the progress/CPU gates below. All AWS numbers retain their original measured source; no whole-game improvement from either repair is claimed.
 
 ## Measurement protocol
 
