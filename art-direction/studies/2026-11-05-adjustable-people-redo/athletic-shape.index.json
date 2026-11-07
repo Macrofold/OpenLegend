@@ -1,0 +1,2134 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "adjustable-people-redo-athletic-shape",
+    "revisionId": "sha256-30965da4e68b163c6787f7b6d4089698f89236fd70676d563e878a4f2a000c43",
+    "manifestSha256": "9f1ef7ea68114abee1c62a58247e33e9d57d7d41e57dc75ee3fe5c2185f8691e"
+  },
+  "files": {
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c0d9a192f0de9e7eacc1a3756112c96031cc3e326e8236f4af56cfd044d2986d",
+      "bytes": 7646,
+      "mediaType": "text/markdown"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/author-athletic-preview.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "73e8db638efd82479b4cf196e2a9cff9212a2053a838290b6bc86893ddf18974",
+      "bytes": 27172,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/final/athletic-shape.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc9b566680cc6b25656307d67a4f05cf8aa0de81f6be245c584006994c69e80b",
+      "bytes": 5476010,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/final/native-control-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "749fefc07ccbccfcefcd4e792fa844e86f88de31c3c9a3346862148d5ac1ce11",
+      "bytes": 15692,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/final/reimport-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0a5d3d85fab32ecead47e213c77fdb19bfe271206346bbbcd675dc9ed4894f6",
+      "bytes": 1906,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/final/saved-source-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e16f1454b808315ea01144ebbb18e395ab3b45ab45b3233a8bd42162e3c7d5a7",
+      "bytes": 1034,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/final/technical-frame-midpoint.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aefefbc5bd31fc888587698145116bd23d6d29fc23a83127d3a442364f4da022",
+      "bytes": 1719687,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/final/wearer-rests.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1fab1ef304b20cc7dda18e6e180442fd872362711d3bf0226caac88df6d34445",
+      "bytes": 133444,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/finalize-athletic-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20698aeae5b75377bf7d17f8c69088b35132605712ed1d3086eda9056f2c942d",
+      "bytes": 11292,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/geometry-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3bacbc6e546d09a3365932dee36265072cf30f65ec8b840489d64d39bfe3b2d",
+      "bytes": 6284,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/input-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f48be9172e69781c45977e118e73e77578cbb016ac050ce624ae9139b516aa24",
+      "bytes": 2043,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/canonical-controls.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e473efed3e3c34bb302edbf832e69ae903e185321aaab7a502a31d6a6c9fba8a",
+      "bytes": 12043953,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/completed.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "397aa88c6be09a4f9f887aa4cfd89a3680bb9d487039aec7af669a5d5aca6fa8",
+      "bytes": 613,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/covered/compact-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43517960ebe2be721fe22677e2119feaa1db48e925e17088749141e8363fa036",
+      "bytes": 1531928,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/covered/intermediate-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "acca59a9ce278854765cf7f2c18b58aecc43f615ce643630272297e222393050",
+      "bytes": 1531940,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/covered/tall-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a67d923ab8ebf3bfeda41cea356ef66fc774dbc5cb2c3f0ed1a07a0edd7b4aa",
+      "bytes": 1371248,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/matched-wearer-arrays.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0412aa59f3b6a55c628c9cd59120877166e2aa1db1e3d6ec2037ddbdb2f7b4e2",
+      "bytes": 14349631,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/muscle-definition.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7331415571f90779cdce3773ee5ddcb97d9e165db8385a1d0c35cb869845fde5",
+      "bytes": 4874176,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a6c5f2a723bd52ee6f9ea4fc525d67fc01e94b4e639588d5d934d9ec1e817c9d",
+      "bytes": 2033,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/compact-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "83d421c73de964d582189b3640aaaa27d84ca955aac8c24e33ff8dcff02757e7",
+      "bytes": 1281540,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/compact-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2755c39fc5fa0684a29a3679295f7771aa7efceb9d1e3ee6969d665d0a1517e3",
+      "bytes": 1286799,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/compact-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ef85f28b77999b4a546a59f32a52c208ccf42e9199167fa1aad858be3075843",
+      "bytes": 1520520,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/compact-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "69197ccf16b5313101557153277d6cd181f31ec43f4b098720253bd605db2ad2",
+      "bytes": 1184267,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/compact-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc713aff44141e838bcbfd9ae0279d03085795b6993cf8d491d03c7ade1029bc",
+      "bytes": 1327896,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/compact-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "29dde99c1a3d5dac579e8eaf93f2eaa7a46b3e31f093a52b4232d4eb6044eb0e",
+      "bytes": 1287228,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/compact-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82cd336dce9478daef501785c4deec8b63f0f9689c940864bab984cad4aa1908",
+      "bytes": 1526219,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1bf2c2bf68ce6ca95b5fd9aa8ac050154d6124613038e520d2fcf5ac0b403e58",
+      "bytes": 1301674,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b029282b5f1e9a49c871ab7ff1e413234200fd29bafdab72ffd98aa46ca25c09",
+      "bytes": 1308678,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93f3df1a7528f7efee89348b37a1f5ca63a53fe55e135ab1f483665804106a90",
+      "bytes": 1568210,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-front-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "71e09700f56112d5189d2e9e9f159bff8410b51fc4af511f858a0fa2c207f7da",
+      "bytes": 1568210,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fd6921509e3b77d5cbade3f70a490cdd2b2a5c8848a4609a62233dd552f469c1",
+      "bytes": 1198239,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1232bd9b268eb87c1d09810c9070905240c3952fd333568b18728f5637dab764",
+      "bytes": 1361329,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-profile-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4124b8c76d9395b88be1becaf34639c5d4340c104dee151e566500cc491cdcb5",
+      "bytes": 1361329,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "12b25252ac8b7cb4cb4b30922e516f312d93df68f57e119b46af630dd1686fbf",
+      "bytes": 1309320,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/intermediate-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c3283a25ee9a51493380a462b64f3ad96eff0853f2acd6c018c5841e336dae03",
+      "bytes": 1575717,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/tall-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "81fe60f91be0039c63235ce986e242a839e57d2d345f9fb1b7c2e8c721744e8c",
+      "bytes": 1347214,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/tall-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c505f0143324149009ba1f4580bf425bfd7c2db1e2f5bf8cbc2a893ccca3ce8e",
+      "bytes": 1353324,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/tall-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc4ac90b8808df922ceda415da85cb1573350264b4a46ed95c36384b1933cda9",
+      "bytes": 1630481,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/tall-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "898070428835959f31d8510a0c03897de78c8dcc38b9dd22dbd5274052281806",
+      "bytes": 1223821,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/tall-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84dc954999dafc70a48a47304fa48864f5e263659fe515f71dbc4b92052eaef4",
+      "bytes": 1390288,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/tall-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e9df147592c207e2de14222ca657f1b54aee42f9d7af529b8689651adb1e860d",
+      "bytes": 1354108,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/renders/tall-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cef0ae133b469f05eef1fb4cc5695b02fc9adf58a45b55e83baa3e4440bcac6",
+      "bytes": 1634339,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/sculpt-muscle-definition.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2797db699984af8c269ee02cd4890392d00884bc25a2bc2f921b16f8fa45569d",
+      "bytes": 25491,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4966a440d00d00c56e12ee54d2db89aa4778bb37e68914befa1d10bbeee23af3",
+      "bytes": 1015,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape01/wearer-recipes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ac65b31519ebb5f16f0f3f8a4e5923c1fa1be435b42379de1221edf9c607ae8",
+      "bytes": 741,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/canonical-controls.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8dfb3e0adbdcb2445451932b6ee81f66d0441caac17bb9e180467f7449f29a7f",
+      "bytes": 12044912,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/completed.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce1df947ad9f18b795382f877a4affdd9db606d6fe4ba6db07cb7325bb4f6fa8",
+      "bytes": 613,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/covered/compact-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d6653e47ff9d18cd00bf3ee22e439551654628479641c0e0d2e89aaf384a4402",
+      "bytes": 1531928,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/covered/intermediate-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7b4628dcb6da479cf538dd453e22620e15de7ef233760db6b0ccafdefb821892",
+      "bytes": 1531940,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/covered/tall-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f4e59c0a6ebfec3c87eb93afe1ebf9b311c27dd543acc6bf4a2e7613dec6514a",
+      "bytes": 1371252,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/matched-wearer-arrays.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5b407673131968b7ae1c81660986113aa7cc5c999130f9532305092eab0479f",
+      "bytes": 14349592,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/muscle-definition.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "254d11f15022bde083915cadfb282576c00eeae98552e6349a8fcb3631afb804",
+      "bytes": 4874228,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a6f409f1f1023c7f2e01d5b101e8a3466913f90a3454f04450ff7ba7a4502f5",
+      "bytes": 2033,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "268143c567e999ad8f6fdc5c9744ef188cab0ead39bf45b5fc97d0fdbbb2859a",
+      "bytes": 1281539,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bbdbda79cb5ca649b44e3f037433cda88179cfb60a24cefa61fe421234eb70c4",
+      "bytes": 1286917,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "47a94dbb3838132ab2f29e51136c58be86fcc91ad1691981bd0dace2429e8490",
+      "bytes": 1520469,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-front-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c06354ce48e6a2c5b3454061cb30e4b4a7e1356abdb325bf5ced3e44f07d4cd",
+      "bytes": 1520469,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42d78b5b6e340e2aaf960247f1e423e4cdf10d75a79877f3708c9eef2b7243d4",
+      "bytes": 1184340,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0e71d9f942351049b366e161b552c9b4d1c1bb8940e5633726962b73cd27f4d",
+      "bytes": 1327858,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-profile-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cd866dde3088fcbbda07a706433489456837ebe4c17190db404acf8154690ff7",
+      "bytes": 1327858,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b564a7eff5c06a8f8b47e4f7c6b4cccfebd06d9eb9c1c7f92de65b0531e47be",
+      "bytes": 1287135,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/compact-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "845eb9f6f856b2bf658cedad5ae3098971cbc87f7c13fddc14bc62274921320a",
+      "bytes": 1526426,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5310c308b3c83e60f0385f7e433ecedc347c08b90cbc7b8c7292cd96ba476f0",
+      "bytes": 1301713,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb7c8bd3b6cb5ef5b001e3e1dc142d378885a8ba5ec04031c4ef4fa7d5f96268",
+      "bytes": 1308045,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "90ce9fc9805e056c1546c50571e3be8cf7e76424ff980cab60aa4d2ca021c4b1",
+      "bytes": 1568433,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "260c3dc42ba10da9a4961049304d384bf94f76d16e1f5417895955f65b340d37",
+      "bytes": 1198253,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc3c0b24a197a99caab1d45ac9a533be24550f75b481d2d35a8391e12a51d597",
+      "bytes": 1361675,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-profile-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "57884a60d91adc6e70b9cdca1b6c32c3e050cd555c271d30c4e1d6b51dcd2b5d",
+      "bytes": 1361675,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fcd0441c4b664823a39e7378b0f761f001181454d7b04e777537d675c7e4344",
+      "bytes": 1309057,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e357807a729fc287fe506019f89d7ce92b0d4990776c71c2e5f8b7b77807664",
+      "bytes": 1575587,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/intermediate-quarter-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "100f6323a77c6054bc259e68e3d621a5fcb538a9d5ed3c26b9aa2c19aeeced11",
+      "bytes": 1575587,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c310bd8dfe6cffda6893b7f2d46b8a36fcbd0e8564b423fa2cfbe8c776e3c1a4",
+      "bytes": 1347977,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "305dcf68a018826e8a6c95afedbd701ae48ff1c55cec34b769094c3eea3d9a34",
+      "bytes": 1354615,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5600878f7854c5d50887166b29f9dd7446b08e9cb9274a4cfb8ecd601225d3db",
+      "bytes": 1632273,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-front-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "befa3a80b57ad5852fb277f65f92d37f5e60cb675678371e5525fcbaf67cdd31",
+      "bytes": 1632273,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4249f3671d73509f3bdc6d5045a39e9bdcadf499264be4b62ecf9e0aae30712b",
+      "bytes": 1224907,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb7ed55159fa55885df1e3f21aafea1b0bb0c5cf7e5610bd436f270c1b615d5",
+      "bytes": 1392219,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-profile-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c8f431cb20afdc5da1e3ac816933dd8c24d1eb4e0d4d280975a14186721710ad",
+      "bytes": 1392219,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bccd8443635d7e85003c5caedc8dc37d74bfc44f7a5455d721fbc570ff8cd64a",
+      "bytes": 1354332,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2305973a8aad098a158d9c575fc0fc703373fb449895e28f98d353715e9d92e",
+      "bytes": 1634850,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/renders/tall-quarter-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "30d46c6a76c9ce5235c114cc180fba33436d4ad5a173af0dff6ec12a01ec3bff",
+      "bytes": 1634850,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/sculpt-muscle-definition.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a02b4e5e64df2e37431fd6ddd3fb69a74cf48b5fdf44e127c329ac755970dc25",
+      "bytes": 26700,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape02/verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "106a61c95fbaf534f5d6c110c976ca78c550b06efbec3cf9a4764029c768dec8",
+      "bytes": 1017,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/canonical-controls.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "05e1b9dc083549e22a68ced7ee751650a207ab946a3415cebcb35a993d5177d8",
+      "bytes": 12045063,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/completed.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "957d7ce119c785adcfbabe8d47b6a09939fddb787d7adec45ab2553b45b3f75a",
+      "bytes": 613,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/covered/intermediate-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b367fdd848d353a7ddff7ef06f386a7011cf65ab256709056dca6523fa6eaea0",
+      "bytes": 1531940,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/covered/tall-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a09a5c769a5124bd722767c4a7d5a523d6a5d88fb0d4f807badbeac085e62b8b",
+      "bytes": 1371252,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/matched-wearer-arrays.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8930b54b7cbb2ecb348f033290863ed446cbf392f2e9a2bf2099feeb5947a93c",
+      "bytes": 14349546,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/muscle-definition.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a345b09f5e6d603ff5e98b12e375308154128eb138ab882d94fedd0d600f43a6",
+      "bytes": 4874193,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "499b5ae05bcead476e66bf813d1f245e770fbb050a11bbc60d4ccc8ceb9909e8",
+      "bytes": 2034,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/compact-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f464cfe29cf554e3e6fdd9197f9b6eb091d1710149d3d96bc0a2396eb26f3315",
+      "bytes": 1281539,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/compact-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40214ab64713ede66863d9c3e3b3edbdffcd15cc8d7cb83f943f1ac1fe1934f9",
+      "bytes": 1286917,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/compact-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5d35f5127d8d6f49cf084f4d8f4f58534608848a92e3fd5d97c17fe0adde422d",
+      "bytes": 1520469,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/compact-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bcd179425394c21903a88638e065574c64c1ee9ddc7709b42e24863c2d6be0de",
+      "bytes": 1184340,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/compact-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "270931c8fb441d3b0f2a5405c5b264172aa28e421660f96e8545427c5a114e2e",
+      "bytes": 1327858,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/compact-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "22fc8ba606d078c2a7a74246405be9ac8e07a4042cb6e4625bd55ed390a8ac66",
+      "bytes": 1287135,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/compact-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ac95fec258075d89bf03edc756630005f6a6e66a3afec8992517f9f4a3de534",
+      "bytes": 1526426,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c78e23751a6f9957395ff8f9c46ac6ac30679e33329e1183e373ad08d03f3a46",
+      "bytes": 1301713,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8866ea443904ff0fc2027e3da06e6823dcf933c071652a0438eb88317ddbfbbb",
+      "bytes": 1308374,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "da598a74192ec799f8c47a1c935d2ae58d1808265a4677697a6735f39f89ec37",
+      "bytes": 1568413,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-front-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40da727c72163d2672a9b3d4d77e7b2248ff0e840d8d33b730dd44f2d018560f",
+      "bytes": 1568413,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c01fdeb61032ef7e84c7358472a684eff3e9b8a5db8bcf42504a4d27c5e5c00",
+      "bytes": 1198276,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ee907dd519dc4073576baf5e1be92ad06adfbcd1294f97a20649fac34c5d2e8",
+      "bytes": 1361562,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-profile-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f9e1df1e7aa126769a9db57975960bbc0cc01efe21b4b55298bd60c72f5bb60",
+      "bytes": 1361562,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14a9529176d446b3c680cfee0a1c60bba14be78d8f24349fb209eca6c1635da2",
+      "bytes": 1309125,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa8be8c77c64a993cda5c2c09a228fbeb81c1fe93e0d34c26a86f7d62292836e",
+      "bytes": 1575582,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/intermediate-quarter-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93a52c7afbbb3b49e6119e736a36d30e160aca4c921cda241cc87ba4c597f3aa",
+      "bytes": 1575582,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/tall-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "633f7ff714773ef305bbb02f0e8763f232a73d7e43609e88496a536f74970ea1",
+      "bytes": 1348011,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/tall-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c3472be4021af8e2119e0e6ec3ae37acafddd7c3581573b54f7be7de55afadb",
+      "bytes": 1354328,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/tall-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dcc61b4f88a82b4f2382cb01f1a57d36f3e51c78beba7e38bae437d5aea0bfc7",
+      "bytes": 1631559,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/tall-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8134d136943fadf44c72b710a338e5c65eca75930d78d1e9eb3cc3ed9271f9c",
+      "bytes": 1224832,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/tall-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9cde29b9d6f0222d26805e41e7c9d71aa1ed236b9890ac4211b30bba33dbd50b",
+      "bytes": 1392059,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/tall-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e776543bd1241a876739953f348305da33b479fca67517e595895fb0ad913019",
+      "bytes": 1353536,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/renders/tall-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "75c69acdeb2edebaaa4e26b700305f19ddd377cb8d6a2ad4ff819cb03248405d",
+      "bytes": 1634315,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/iterations/shape03/verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "940dc8a3c74df5f606299f063bff1ff9e340722618379bf9fc9fe3c268b0b4fe",
+      "bytes": 1016,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f29cdcf3493342de0007f0513ee3914fa7fe9487f7e013220f2121d0cadae071",
+      "bytes": 35909,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-revision/verify-saved-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe03baea0224eea996a7ee797ad196af9761aa05fad88279ec62c7f01bb06a29",
+      "bytes": 2925,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "151464f049bb603c700aeb854c5341894f6540bf37c58d69916e20526551ccae",
+      "bytes": 10257,
+      "mediaType": "text/markdown"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/actual-used-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a50ad65b0366918e9611090b13c2a42d289411da28f351f10978937819a94d17",
+      "bytes": 26171,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/admit-core-actions.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ce5370a955a38fe0778206683256d89db039539908bef5714ededdcd3450459",
+      "bytes": 709,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/assembly-plan.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c355dd71732cd82f3c91447bf6dd4465f77bcbd8825675b6c3d98e1dcc259d39",
+      "bytes": 2352,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/baseline-pattern/compact-baseline-pattern.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18925a131e7bea621c1dbe6b000c941983015c3c727d852524a59116001ce173",
+      "bytes": 1531932,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/baseline-pattern/intermediate-baseline-pattern.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b6d3158373e192c0a3ee4d1a799b836ca366b24849c457138f3d1c691781132",
+      "bytes": 1531940,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/baseline-pattern/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "98404d988b2682b626bb7a825b0497471545ecd4c09839576400a630b98ec992",
+      "bytes": 3281,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/checks/fit01-headed-covered-source-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf0a3e26b5d213a1a0d90c278fadb3a4f8142adf1fc712d20363feb3ecbda1f1",
+      "bytes": 7581,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/checks/headed-action-integrity.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7d417000e983dda159e905b87839b29a67e8ffba72eb975393df5a2f3a0f95d",
+      "bytes": 7528,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/core-motion/compact-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "298a8c1e15d40bbec6279538a97823255045721f308ccae6d62aa915db56a781",
+      "bytes": 1712136,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/core-motion/intermediate-covered-motion-52bone-motion-only.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bef2207d69e4da3200d081e39bffc0cd37dd3f85022f3f33f5c3dde7975cfcbc",
+      "bytes": 198376,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/core-motion/intermediate-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad41d5ed89c7fc1d41c437630fb992a2cb58abda5c93592225d09f7a1f63ad53",
+      "bytes": 1714072,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/core-motion/intermediate-fresh-helper.clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ac622e79d6f5f81ade40d1431768986353e8d0fda134a0f5d7c3068887259652",
+      "bytes": 172,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/core-motion/intermediate-fresh-helper.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d52657485cafce277ec54d5a2664eee1f38afeeb11bd69edd43ec9636df7c42f",
+      "bytes": 1714140,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/core-motion/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f45ad19ccc1b5de0699054add23984aa7af21b5cefc8459f4a6b44c5e338526",
+      "bytes": 7724,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/core-motion/tall-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "31bc5c7c9a6e17058302eae2b8587ea5a22305c6a1dab42768f61d758d6fb97b",
+      "bytes": 1553120,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/dependency-plan.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa09ceae231218645f4aefd57351dbfbbc6c743944df348da72de27a8d085a81",
+      "bytes": 17965,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/diagnostic-poses/compact.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92b938f8a65bd5eb243ea241e7de95f6c1e8aa1d87dffd13c3965f1b3e987404",
+      "bytes": 33626,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/diagnostic-poses/intermediate.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "48909b838e122ee24670eb011c712000ce0852611e2946108cd5c1a7cc3f256d",
+      "bytes": 33614,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/diagnostic-poses/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f6b47449e7ae0955a9df1038d51b7faa3d449cd0b7ababeb3f4ae7b2ba8d6f0c",
+      "bytes": 2226,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/diagnostic-poses/tall.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "48b9caff212bb1c140cf84b6a4c0b79ea5780fdb9357bd7d77a26809843ffeaa",
+      "bytes": 33613,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/fit01/fit-body-cloth.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b16e0d184277d15f8ea0fa0c87703f4807ff5ddb8cab05950d51b73ea5a2b13",
+      "bytes": 4874203,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/fit01/frozen-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0586f8c10772684b223454a9fc96c5c80b3b2a5a19ce9a76ea74ddea7c8e864b",
+      "bytes": 6041,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/fit01-clothing/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "81c2a25cad1ecfc927e3f1712e6ab33c6df325136039af5b3624c4b48553661f",
+      "bytes": 6303,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/frozen-anatomy-input.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e4d522719cf5a55b7cc11fc565f0c10ce5e78ede519f6759c3ba7bc0390aa6b0",
+      "bytes": 5372,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/frozen-body-rest/fit-landmarks-rest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f10c0d4b2d45afb5413c740f051b842bb3fc096573a381aba68bb5aaf5f2ae1d",
+      "bytes": 6505,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/compact-assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1dd6f19bd5df147221bdccaa9a670a10773288e502a6735e3aa79b6b0c2b4d33",
+      "bytes": 6537,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/compact-headed-covered.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "effdb4867bd7082cb91ebddf58e99f336f8d343a8006eca4777d1ef8f0e1e5c6",
+      "bytes": 6182650,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/compact-headed-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca8d8aed29032a98ae4f8ea6ad9217aba45b2db91e273db819c66236c0176cd0",
+      "bytes": 6004064,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/intermediate-assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "155f9f65efcd5c396c4c1f83148dc821ac007c5b9903f2a16000c55b79cba045",
+      "bytes": 6590,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/intermediate-headed-covered.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a2997d55ad5345ebb60e0a68852abae1037827db3f7d0478815ec666266e2d35",
+      "bytes": 6181062,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/intermediate-headed-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f2f17bd47d4f58a62b9d14695a7ff92db5f8332801408cc2541c4a1716a8075e",
+      "bytes": 6003348,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/tall-assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58fa727f00c4d5ec31efcca99eb45a8c5fc00ccae2ef97d342e1da5ce92edd22",
+      "bytes": 6486,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/tall-headed-covered.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d0c2c49df000d26853e1a6c39902a5bc728f672057ded7775050c833d169619c",
+      "bytes": 6020106,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/headed-fit01/tall-headed-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e6e8685cf15d63a05eef8a9b55df1c74edd135ef328b0d64f771987b424a8e4",
+      "bytes": 5834384,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/input-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "942607b83e78527d870fb40a27ce413f6d8967a790d2613c82e92dd308e2c236",
+      "bytes": 9691,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/inspect-contact-closeups.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6c4a729868640a29c39cf16bdab346d9e9eeb9cb487ce576b1693daccaae9294",
+      "bytes": 904,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/inspect-poses.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "77d3fa28a27b940777922b4ece159fd94a5dad307f421175d87f6cc85564091d",
+      "bytes": 1081,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/inspection-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6fa6be3284154d41baa2512208078b8f36d74147d6a2f946a062d7a60b6fb011",
+      "bytes": 3056,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-compact/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92deb2613be9309931461307f4cd22e1f1dfcb9eff2580b3b4ed825d1b2020e8",
+      "bytes": 3842,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-compact/compact-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df9f7342f2156e3b608945ae0dd9f0340f468be8400d335da77ff9d1ea2adf9d",
+      "bytes": 6014404,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-compact/compact-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b66789f356965c633dc94cb9727c8c7f88355b64f9b905ee0b80a50a1a866a99",
+      "bytes": 6181225,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-intermediate/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc12b7782abe222bfa77bb2deabcf2d1dce278805f3f97fe7588939bd1f80abb",
+      "bytes": 3860,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-intermediate/intermediate-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c0a7cca13809f618bb709776d90f7293db960f97a6932f7bfb4bf7e2d66c1070",
+      "bytes": 6012532,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-intermediate/intermediate-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04a379320aa3d91b59b9fa83fcfcdf40ab657e87312346d81be8ac94c166e99a",
+      "bytes": 6157351,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-intermediate/neck-skin-transition.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3dd8c35c5f95fd64237ea6b8486bcf89ba73a13b2748ed93eb2691641916a10a",
+      "bytes": 13019,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-tall/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b104e7f772a9ef79c5840ac11c17762755e6b8bbc067fa97e2ec69e9f84a230",
+      "bytes": 3834,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-tall/neck-skin-transition.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1af131b168e959439784d9f0dafc5d7b594a1da712014934b1e07b98cbcf452b",
+      "bytes": 13625,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-tall/tall-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "176810bbc2e412f76dc77c9a32902fa39da4d01f9a40569c4135f91b15a9dad6",
+      "bytes": 5844736,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-bridge-profile-tall/tall-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a18b8fd1915e8a4b54d6b9bb89713ff89932aeffdab7406c051c804e2f0cdd4",
+      "bytes": 5994190,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-compact/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d12e0da0b1a9c7f4ddb7cf6c0b13688fa33182ddc32716893455f364fa1562a",
+      "bytes": 5036,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-compact/compact-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f0fca2a5d46e4d23f611ce582ff74f4411ea88fd8383b0cf4c0c3941459a3b42",
+      "bytes": 6004056,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-compact/compact-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "153363b9a61a5d7e25a1e49778fd66b636b171503fec6fe44e031bc4b69719ae",
+      "bytes": 6143157,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-intermediate/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "484c913bf43e1152599d1deb04d5ca86755e233fba771c055a1e6a5d07628dde",
+      "bytes": 5064,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-intermediate/intermediate-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3a7d44a52273564920df724449cdbed8b22a19f36d798280b9f61d7b3740444",
+      "bytes": 6003344,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-intermediate/intermediate-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9a620e3afaea34e684b0f7171176c17d321a43e61d15d768e9b32ded7471c60b",
+      "bytes": 6140859,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-intermediate/neck-skin-transition.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ad14efbb13cddee3f2d1bc43fc0cc75b787511b4876014bbb08cf167c5d70ef",
+      "bytes": 3831,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-tall/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "481f23d42779bc3409ab8838205b63b7313704a9a1bae4ee0ad0f640799da2ff",
+      "bytes": 5021,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-tall/tall-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a7525ca96783973bd2b5796a8ed676d6f2de4779c442e37312edaa239384614a",
+      "bytes": 5834376,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/neck-final-tall/tall-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f952fffe8194fc10bc7d608e76b0fd306f8236f687951a11180922643321464b",
+      "bytes": 5973165,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/pilot-compact/helper-graft.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b961ca74e8421c4a629cd7774c0370d3340c3aca1cc6eae66a767f98558de96",
+      "bytes": 5869168,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/pilot-intermediate/helper-graft.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93dad80c9474d2a2838005279de57463d9f7ab3cb626cf61a5ec13255598c0f3",
+      "bytes": 5869188,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/iterations/pilot-tall/helper-graft.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed2acb2f84701a7e8110ddd6fca19728793675a9f2817b7ae6bdc9515a5439ae",
+      "bytes": 5701160,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/make-baseline-pattern.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e9cb9c5bf1b4a45c03212b0e25d2173800db327bab20198e8b32c5f8940f71a",
+      "bytes": 2568,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/make-matched-before.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "607a893ffee80224ba7fdc35128d06caa262e76548a2203351014031e25bf6be",
+      "bytes": 7242,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/make-shape-control.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a10acd67923c914b37d7e0272e7120e578620651ec43813bcfd18bfce664156",
+      "bytes": 1858,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b88d421afc7b42c48a37d32482a325715d1b97cc505ef9937c18db2447a03879",
+      "bytes": 13515,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/model-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8dba63f963ab4def4aa7a594890324e500ea2f8dc846bd8351c115c0f6c57abe",
+      "bytes": 6311,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-before-shape-control/compact-canonical-map.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c32ca3c06d42a04f209dcc5366ef5f2af5302c6c5cfa6ef1b1ff5d4cab75e8f2",
+      "bytes": 392097,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-before-shape-control/compact-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea37edc2e2e7f9630d85b80c2b95574bf175c0f747388168336967f65684e49a",
+      "bytes": 6974628,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-before-shape-control/intermediate-canonical-map.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d2088121dbbb95c3712c5e893c8a571c5b81f5bd22cb7d780ddfc425bd0b367",
+      "bytes": 393062,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-before-shape-control/intermediate-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "03be893c53563687a69ddf54948d54b2b409b840bf47a00c14aa00657ce98b4b",
+      "bytes": 6975468,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-before-shape-control/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e653474abb1138297dc894e916d1039976c25e573b57acaef8572957bfb569c4",
+      "bytes": 8441,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-before-shape-control/tall-canonical-map.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35be389a29e7c7f80602ab510a2d0af6164a082738088b9c116933101c91cb56",
+      "bytes": 398199,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-before-shape-control/tall-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "57fa49f756b11385fbac78e5b6ff444057a0543d41216735310e53360a76b64d",
+      "bytes": 6644736,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/compact-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2985bc902e276cca02c9a913e9d9fd160fe0c6993666c6d5aa88e4a0170c8808",
+      "bytes": 6184296,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/compact-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "76b7de51f01d5c2d8fcef8de16b593df303ee680697c818f2d2b15b79db00669",
+      "bytes": 222585,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/intermediate-headed-covered-motion-52bone-motion-only.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "136218ab6d5f52af210f841ec4737db2849bfeabd419612fef82fd7da43eaaf7",
+      "bytes": 198428,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/intermediate-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42b0c125e08047e0bf67dc95537192b7e9d309ddc3eb748a366d9e4ba0176ef8",
+      "bytes": 6185512,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/intermediate-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d7aad2e887cb5ebb7c7d0a3119c39316ea3d5b119263050a9ff0325ff08ab6a",
+      "bytes": 222390,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "60f096871e688905a0b1f89557103c8ff010d332b8bc322a34aaa3934097025c",
+      "bytes": 6771,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/tall-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63687b1841635b69d81333c720ee46c0280b6922dfcfd63299e7a6c4ef1f8a09",
+      "bytes": 6016284,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-final/tall-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "396d1c72e7ae4e40eba30a4823516fcfdb0b4f98bc761376d58fda066dbb9004",
+      "bytes": 221391,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-shape-control/compact-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fbd592e3e0785110001b37978bf5ec542626173f277aa0d32c5a5fb0a62776f0",
+      "bytes": 6665252,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-shape-control/compact-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "85103875fe296117a0d15280541a06b54a625c5e0e8884015cb999711fff5169",
+      "bytes": 222595,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-shape-control/intermediate-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb655cbee05d52e9afb852eb8abddef3f0236a31c49cad20ca559bd417eed751",
+      "bytes": 6666076,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-shape-control/intermediate-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f69265933a8234dc337444b80149c7c2982aefe91c7ffda7015f1bc443317315",
+      "bytes": 222398,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-shape-control/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e70a231677ab56bb3474bbd67674b727f46d4181e9b0a128f963bc9b0df7c6a",
+      "bytes": 6997,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-shape-control/tall-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9733f73e7e90c5fb43153810d4168d54328d5377553998f97e0e44a3606b378a",
+      "bytes": 6334932,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/motion-shape-control/tall-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5ce9d9583de8634f114122caa6c4c424befacdef2359bba8843cb483708b0119",
+      "bytes": 221401,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/prepare-assembly-inputs.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3444bbd6587dc5ffd290c492dd8c2e18d9d13c389ca0beb19bbf255ad7031368",
+      "bytes": 3806,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/prepare-diagnostic-poses.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f8909b7f5ad9b388d6572cfcc5f44a21df80b59dfc97fbee6627ad151fd7506",
+      "bytes": 2718,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/prior-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ba0b125bb6d07a53ad2ca9eb670c244fb01b08d7dc8762288d6a3bce8351260",
+      "bytes": 5412,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/producer-final-input.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74609f9862d9856e280202633e912a8c10739e10de091e4bc469a51ab933585f",
+      "bytes": 357,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/render-lineup.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "001066d65707af5c420740ade17bfc01a8f3ca1e396a4fa72d37cc7f2faa0b85",
+      "bytes": 1522,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/reuse-stage.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dcca2a7dd39a841a9bf8c75d71c5a86e46957bb18eb2d589f97a69741502e8da",
+      "bytes": 1744,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/stage-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f60e7dc81ae974425f321b8d0be9021bed0c14d32d116af4688cc19bd3612078",
+      "bytes": 2163,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/static-final-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b1a54cb3265f74800a8db3e97c7ab0ac592b472ef41fc6e015c473a330f5fee",
+      "bytes": 2872,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/athletic-shape-assembly/static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed74d6310333578e502760d3a7b1e7d52df192a964e2a64e8f7f2004c720c86e",
+      "bytes": 5442,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "05e989cad78a9cce1e202da8e39cb89eb88fe059b429011c25daa9611791869b",
+      "bytes": 3796,
+      "mediaType": "text/markdown"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-idle-browser.mp4": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c716a4a5cd7b0fdc3331d804a37bbe08bf4c2eac8194440ea29d1cb4d22936d1",
+      "bytes": 340223,
+      "mediaType": "video/mp4"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-idle-browser.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eeb82a07f266dc053946925cd98dad87f1194ff2a54bd17a06dc5001509caa8a",
+      "bytes": 2084550,
+      "mediaType": "video/webm"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-rest-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfaae626a8f6f83b8feee8d60e1fabd3f5381f0f66a04cbb1fa782bf7edfd1e2",
+      "bytes": 109128,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-rest-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af73439471abe23eced9b4996e68fdd90e7256864b25d38b53c1f68e0bcc4770",
+      "bytes": 109675,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-rest-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f8946d1d2fbaed020fdc221b1e747ec1f17f7ead214f33ddc556e76071323f7",
+      "bytes": 71149,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-rest-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "716edcbf98391047f01405debfa734475c526385deef1859fb9e519373ac4ad0",
+      "bytes": 108670,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-run-browser.mp4": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be3f22f235af3052345d03f75a6b8f7a664315056c9db6bd94c5d1051bbc6674",
+      "bytes": 1184093,
+      "mediaType": "video/mp4"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-run-browser.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42aa9ef75cc60b8ce5f8918ab79a07bc7eaea6d5ebbcef8549975b3746e4e68f",
+      "bytes": 2754318,
+      "mediaType": "video/webm"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-walk-browser.mp4": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c981a0a1f6549b0cd3ee1f2bed4e4e1607e1b709a02f54598ad135bcaee0967",
+      "bytes": 923435,
+      "mediaType": "video/mp4"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/athletic-walk-browser.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b96a4094499df62ff27ee611c94e6ab94fa58c25c4f882d172adf8f4c3fe6837",
+      "bytes": 2714785,
+      "mediaType": "video/webm"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/consumer-captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6c2ab2da6a5bbf19be8b2ead83f161c4e267c3348a66ace5876d59edc9dec638",
+      "bytes": 1883,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/consumer-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7635ee09d76b81e13b522dfb1703f2199c98b6f84efe57d1e384bf7a44171318",
+      "bytes": 10161,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/model-copy-record.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d79da0f3456e01044723ea5207915d8c8dda58e5e4f706ac582b8ffbd9f43bf3",
+      "bytes": 3387,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/body-after-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c3b462b6926ed23d5ea6d9ff8a2e7eb62438f5dbcc1a4b44469391a6e700a22",
+      "bytes": 34141,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/body-after-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "627cf769e5107887b62b65c0e4f6a6fb0b98cd1f81e5b6b136433d998c1ec4f0",
+      "bytes": 34093,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/body-before-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3a1163db2dc4da78fd107db4b7c0697d967cfa81b1edccf7ddf13acdd87183e4",
+      "bytes": 34110,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/body-before-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6061f68dbbfa45ebb90c7ffa89c9664b85279b1e093b14cbfedd438af775392e",
+      "bytes": 33897,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ccee7692295b665b424831682eb6d20f3e3c2a97533999ea957a80d1e4b3676a",
+      "bytes": 8813,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/fit-after-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "641dda3191da5de67855e4c1f29e80e46eb26945059a529f2f2505aea68221f2",
+      "bytes": 33349,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/fit-after-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dd4fb3c992a6c9043a8213c283a2703258d17d3299bc5a642c86ac62705c04a8",
+      "bytes": 33750,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/fit-before-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f90bd85f887769b1ff5693a71ced2667303c2d2d1c44e2131072e4efd13c2aab",
+      "bytes": 33564,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/performance/fit-before-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd28d02a9d30eab63917847be6c39e5f28c5fbbe4c07641c24d7aab4f27d2f03",
+      "bytes": 34177,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/preview-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df72c36245d5f77c0671b38a5f61c2109a098507ec01473cdd64f268de30b590",
+      "bytes": 3726,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/prior-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a95c6d13b881e4b954880a695fa525de2ea83af8f83a540ae7bc2787393507f8",
+      "bytes": 2351,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/review-notes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94c571cabd144ce7d7dfb4f8039ef4f335d9536e00d27e73836351cc037acd5a",
+      "bytes": 1528,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/serve-proof.cjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4db3b04a7b5d9f34094bbac455cb61ef1e5d339a79114b56880ca5fd8eefb284",
+      "bytes": 6465,
+      "mediaType": "text/javascript"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/idle-ffmpeg-frame-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cbaec93dd1b972d8e01cf9e38e40cc4004220834d2f3cb097259ad8909287600",
+      "bytes": 149997,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/idle-ffmpeg-frame-002.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af39815d31130dc253555a8fafbfc8f1c976c7dd8414d123420c4f3751570eda",
+      "bytes": 139481,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/idle-ffmpeg-frame-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b19eb2c13f314099de43fa311b8e9b55554ef44fff19889c5d638fcb45a2b909",
+      "bytes": 139927,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/idle-ffmpeg-frame-004.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "142f639dd58024f301562aec1ac9785b2b46ba00b0cf30dcd86e46ac1bfa34c7",
+      "bytes": 143032,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/inspect-with-ffmpeg.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "886a07e902c53577e6d4de1a250a0b3360d69909eeccb478e46de4fdf89f8e81",
+      "bytes": 2719,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/run-ffmpeg-frame-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "65b6d923d9caa3447066df754e76057098613f6ca3be57b28e2dd09b9dfd27b5",
+      "bytes": 131227,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/run-ffmpeg-frame-002.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1caa3e263a59fd9a2690b04636dd2d05d0008a2782515c1e966704baee0f94a6",
+      "bytes": 143680,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/run-ffmpeg-frame-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9dc31113c25fb1eda30b5ab398832ea1b440fde8662fae9b35a7debc6624f491",
+      "bytes": 142697,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/run-ffmpeg-frame-004.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16efcf9305d4f41fa9d1d82aa86fb6e735bc46e1e288034984d02da6c179f230",
+      "bytes": 143187,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/verified-video-facts.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c88a5079d61e956a1819db08c17b057b2217e437c00af2678a17fbff7a56a2c1",
+      "bytes": 5509,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/walk-ffmpeg-frame-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a7141c714826c9c39ec47e375c46f12a99df6c2947967be4c3ea1b2cb42eb67",
+      "bytes": 139455,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/walk-ffmpeg-frame-002.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a1b9bcba72ae2f3c04a85fdb0e81406a59e7ba3ebd469993cc83c63be7693957",
+      "bytes": 150582,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/walk-ffmpeg-frame-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8eceb0824a7d417a283997e92007bab8bd7fcfcfb2525f8631a2ea72d730f977",
+      "bytes": 150797,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/video-qa/walk-ffmpeg-frame-004.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae4187ef031407124cbcac3fdf0df2215c02bf14a2230016e4212bcb47e8fce0",
+      "bytes": 150008,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-revision/viewer.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ee542744fe32a8cbaddcb543cb28401467509d84c96f0eda085a1b770c4148e4",
+      "bytes": 42159,
+      "mediaType": "text/html"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-compact-static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa850d200b93e2a9ca2f62a4a3e28c70900a0288a834ba7f929071c75ee90d1b",
+      "bytes": 5305,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-intermediate-run-2-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "98db7c71b1fd9bafac0538e24430aad0586e44f289d677dea8d0e955ca82f359",
+      "bytes": 765474,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-intermediate-run-2-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "548ff0010090cdaaf6914fbd6927a360a880d2bb75e27d79d6b8b2f8e7677b3f",
+      "bytes": 758237,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-intermediate-run-2-low-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fce27c3ab27f0c25ac75b4727a9fbd14744cd808860074f76c91f49ebb8e1c1d",
+      "bytes": 747797,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-intermediate-run-2-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a69029e2d5dcf0d1ef78986e65a0f911b3b913ed938bf71090968e91a431436",
+      "bytes": 707371,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-run-11-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e9dfe12b9654dad2d426005ac3ef3e5e22df4582f9fe1a2ee48fdf819eed1402",
+      "bytes": 677350,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-run-11-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b229ed5d91a2e108f6df8ec629949678adad60e9c381a9fc90c1ba0f3950e873",
+      "bytes": 677627,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-run-11-low-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e789ccd608c5c3d65cc92f9f525e2746991221550c1e4a1b246f981228902cbf",
+      "bytes": 671559,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-run-11-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32cfd78028c8215c2b0c7333b3cf1612bb69e38b9593ca54bf1ed4a711204c6d",
+      "bytes": 663320,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-walk-4-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6c7cb639671447502da7b924c9f6783bd4b98ba0385e3ea70c1aee294a30b86e",
+      "bytes": 694348,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-walk-4-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "add6634389345744886dca817f96de8aa49fd006574943f50ee76e072d4b0efc",
+      "bytes": 694345,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-walk-4-low-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7def7271d7d6d5bfa15dd5200f13dff270cb97ae47eeaebef438c0873c1d612",
+      "bytes": 693507,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-contact-motion-final-tall-walk-4-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1aea978d4e6e6610d25224a3b543bb9fe16d33fe1ad16424d3de955e7c927d7",
+      "bytes": 660159,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-reach-back-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "118986e0e803223d545563d5952bcea63923d3751957c3f5d47e54466e859139",
+      "bytes": 927867,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-reach-front-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6fdc7096ad06b1c7e76c748d8fd6080ca542609c3a20c3bd7bd6c00046330884",
+      "bytes": 921394,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-reach-profile-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f4626162203e87d5868e6d9e132059cdebf05ebba3e69b5fc8091cea61199cc",
+      "bytes": 855289,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-reach-quarter-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "364561d36b4be4f4cd900ba6b2f80e482f18f6abcc97a8c75111d778c94fa94e",
+      "bytes": 909383,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-rest-back-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bae5d393b90d7a8ddcee507178baa72f67667ea8ca48de88aa73e276e00024f3",
+      "bytes": 933932,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-rest-front-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "920a7a89b3ccd539fee6791bbb118457677d43e43f5fdc68232e897ad5f46f95",
+      "bytes": 928467,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-rest-front-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "feab62d6d3c63f2a2db27c5ec189e57bfed1f6d44381c605cf5e266b27860888",
+      "bytes": 928467,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-rest-profile-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2374626ff713da380a54b4f16504102785cb37a46a12a97269a11202ae0e7d01",
+      "bytes": 837182,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-rest-quarter-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "992d3ebb3f10a952f1d941577b976df374c6f101fd5a32944912e20de47cf7d0",
+      "bytes": 931839,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-shallow-crouch-back-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9590214c55581e057787b79fbcd82a9a34d3f11631a45d98fdb3a971c3539e3e",
+      "bytes": 930085,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-shallow-crouch-front-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb0374ddd306dfc6359ab5a72801358b8f255912a4c881ff3ea380f73e247879",
+      "bytes": 923817,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-shallow-crouch-front-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d398af0925d6d95c3b90e13501b304ec4b5a95d74e0bac0e395549159293d6b",
+      "bytes": 923817,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-shallow-crouch-profile-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "964a0beed16bf97157cece4a93906e3b4903c029d53623d3ca8bfa3c033aaa72",
+      "bytes": 843538,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-fit01-headed-covered-shallow-crouch-quarter-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fdff3be2efa2381b2ace2266f0d2c6d00321fec70379df024c93aaaf24beb75f",
+      "bytes": 930075,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-intermediate-static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "adef5c55101033b015084ad28b933e7fec03aad5317972c99543f463292bb2ae",
+      "bytes": 5335,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-compact-motion-final-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc57b5615e7c17ad7714c3bb33f42a8f4da37da97414a08b9d02980790f11872",
+      "bytes": 2940769,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-compact-motion-final-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00b4d48bfb9bc021e14d4911866a85bd375d7539275c13eef336926c8a66ea16",
+      "bytes": 2954624,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-compact-motion-final-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc5e46e4fad942aadd169f46eb17de686756371c0051fc395e49f5d17e44df9e",
+      "bytes": 2887810,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-intermediate-motion-final-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6011ea45bbc978577f8fc042a386412e2f2c0f7eef25d3ce7eac0109ecff6c68",
+      "bytes": 2920644,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-intermediate-motion-final-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "62af054b0fbe767911e59b6fc99ad67792a5b7b36ba34e230093d476589d961a",
+      "bytes": 2932812,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-intermediate-motion-final-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "34b1d82ec915ffbab7a93ecafe2fa47c2f27d9528ef867a14f10ef31da17bf4e",
+      "bytes": 2881870,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-tall-motion-final-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a99096f1cdf242638714cfb8644ddd3bdeced534bd939257a140506f8f6d95e",
+      "bytes": 2927708,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-tall-motion-final-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "44bc3843f2770d962664c065971ed70a1069943c98b93e087418526f4e6d31ce",
+      "bytes": 2944451,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-motion-tall-motion-final-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0aba662a4c687acca823de79f9fc40d5974e48641d947b17534f2a2713d21f8",
+      "bytes": 2894212,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-static-lineup.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "729eee1138393b3d749f5153bf283b732a546d3327fd0d3d97c531e65de56603",
+      "bytes": 1703,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-static-lineup.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5d0fd0ec8810e8768b823266b8521b16522d479dbad2dc8a292fd21d291e8e03",
+      "bytes": 1586588,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-static-quarter.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a6f09734c1774a1593b92303b0ff29680de6d616cf8aac854db5bbd9270e23b",
+      "bytes": 1704,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-static-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6629431734a77280514fb7312859375bd89994791b53b05a9e485d4c6722ac08",
+      "bytes": 1594345,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/athletic-shape-assembly-tall-static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e772171ad601862e932121bfc1e3e692f9a2df7f13aea385d376630b5eb7051",
+      "bytes": 5041,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/archive/athletic-shape-revision/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec7a672b85f4073ced9be76151cfae638b249959f130f44693972bbc8c608789",
+      "bytes": 205729,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/archive/athletic-shape-revision/files.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8eeccc1f0d85f68446b5ecde2d4cad3f0ca597c4c237fdac771a2fb866a3ba4f",
+      "bytes": 21928,
+      "mediaType": "text/plain"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/archive/athletic-shape-revision/RESTORE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a266069fecd3e3df587f55f7fbfbee2398d63d3dcac02f12dfb5087cbe0076f8",
+      "bytes": 3320,
+      "mediaType": "text/markdown"
+    }
+  }
+}

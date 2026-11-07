@@ -1,0 +1,461 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-secondary-motion-proof",
+    "revisionId": "sha256-6f63366165ae4d48b8aefef5b0e4b1a52ee99e6d7921e8ac62901af397bc491b",
+    "manifestSha256": "f4da30821654a47a78e0781a2121cad15429c4bf223d953d7119030ebc32057f"
+  },
+  "files": {
+    "character-creator-pilot/secondary-motion-01/QUALIFICATION-LIMITS.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dfbe96b6b4f9778ffcd106f84b318a92127f76778ba9dbef8e06d65d65c588a4",
+      "bytes": 712,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/secondary-motion-01/RECONSTRUCT.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "37541c45eb758bf0dcd38cad1edb7147f2330da049edf6aca257608bc479d756",
+      "bytes": 2098,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/clamp-typescript.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7a8c8dbd56a4e57ce576d6b2965bc50046768c437d01afeae4f93d1a2362aa4f",
+      "bytes": 1940174,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/compiler-export-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0fc654028c8ac743a65e68e15859b484b39f0854aba5ea5b1710b99f3a33a14a",
+      "bytes": 1625,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/compiler-export-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a11c6747d5d93c7310442308a01d0b5a5ef2c36855b5f8439dcbb97a4aeb872b",
+      "bytes": 3099,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/construction-secondary-export.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c16e9b867357cd728d542b7f20b0c0030cb26af293ad12a5414ec60be3017604",
+      "bytes": 1248828,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/family.compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e690540a65bc34122b20eabe1d933a30b4407311e0122f13089ed69af8b02a2c",
+      "bytes": 5879504,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/fk-clamp-final-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ced6c660d84843c143468b919d03b17c654d128c954a8c7bed896de111af340",
+      "bytes": 1351,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/fk-clamp-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ced6c660d84843c143468b919d03b17c654d128c954a8c7bed896de111af340",
+      "bytes": 1351,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/native-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ffc407289d5332c261b0ec3556aef190d8234514046e9f19ea1acc656689eb7",
+      "bytes": 917,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/native-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ce99c7902b0cab62a62c4c6dcc663814937b41410c45ebf3ac993fbe3cd1b30",
+      "bytes": 5916,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/observation-final-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b318c316c0bcda4e5e13e417abb67c198a9c6bb0b49fee35d05bb12d31d0e6e",
+      "bytes": 3352,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/observation-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a01e92dbc9cbe5e2f7d7b4b9de9bf2214a6a4fb07ad8c638348298387b449c9f",
+      "bytes": 3340,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/parity-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e9c228d2a82acffecd4ca8de460904d8eca061e04a2e3e8bb021ac2b02ab99c",
+      "bytes": 2080,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/people-after-first-reuse.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e64b2a6a727e44dfc43256cdf9d07f3893b5318be987c42c37e35ba01ad408c",
+      "bytes": 68022,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/people-before-reuse.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "819855673222188b5be7e831a770357393e9e4d5d90f46d75896cd78ed1543f3",
+      "bytes": 66735,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/people-final.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "705aa54af19fbf2251e6ae85281b662eeab8acc55ddc6621c66d8e76acb78159",
+      "bytes": 68228,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/person-motion-after-first-reuse.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9eb3f460bf3f7c37fdc099a0cea8f104320e8e43708fc4d4c4281e6068034637",
+      "bytes": 25778,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/person-motion-before-reuse-runnable.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2100eddc8e78e9a17fac3c25a3acec4d0c25971c4d5c85786138c985d2ba4b0c",
+      "bytes": 24398,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/person-motion-before-reuse.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0bdf86294a35eecf294b1b401a25547dcac1d5c19f4991118d03e417705c5634",
+      "bytes": 24325,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/person-motion-final.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c53cb8c252c1bcbbf184a61c7425c80fcfe69462690885d49338b2f4fc01a7b",
+      "bytes": 26084,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-inactive-driver-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbe15ee0aadc86aafce6ecc95b3c268930d57bb06c44b2229869c3237de23744",
+      "bytes": 382,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-inactive-driver-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e36f8a70c8d65ab807cfb101c6e6a3f71871d411bdd77e6c888fc60e423da6e3",
+      "bytes": 2106,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-measurement.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b27b3eb3e30b82433db89409e7a17788e9409aa21f639528244725fe7bb15346",
+      "bytes": 2855,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-onoff-final-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc149e5a02f4415b9a4922e1940bea8be2d04d47a868d785264ef59cb66b3d58",
+      "bytes": 1788,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-onoff-final.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "38aebfc4decce4aabcb7a60513f85d8e250dbc687c4807d1dd01624c9acad591",
+      "bytes": 2855,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-reuse-final-measurement-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "970c4e65381313534f77f172c48d6a997c514c1e2399460da0ee42de7caa1335",
+      "bytes": 2551,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-reuse-final-measurement.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b54ddd1195d5e6bc487f5f3d9fdfc77f1ae7e7c54663903dded4876bb281d3f4",
+      "bytes": 3673,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-reuse-measurement-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c09bf8d69c042a25e75c5d0607c25e20182d1bb83293c637db6c2e9dd1a0432",
+      "bytes": 2539,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python-reuse-measurement.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b813aa71c251980c79e789f6bdef20216bcb966cb1efb49170a3eaeadf6c1824",
+      "bytes": 3677,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/python.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d03ea4b92fabb6deabd75d8b0d9c3d8b07c2db2a80444638a7b5c577c6c3e5c5",
+      "bytes": 7799037,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/recipes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ebec351baf30dd055387182199055a0cccf6ef8ec93d7814dc8d8911a4b58939",
+      "bytes": 2136,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/secondary-declarations.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "112b1c3c97df9fc037a0d512a756059daa2a29f0cef66aaa254f24734f02a654",
+      "bytes": 1064,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95f68fcaf37288a95b86f2ec4c92f9bd369c6ee81a07c09800fc0e9901b9520c",
+      "bytes": 4068,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-measurement-final-runner.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f234a188c5533d597983c1270bd0916478780ecddec0016dd3517bb4a4cc1038",
+      "bytes": 2059,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-measurement-final.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7489d600e001c59479b6f58f11f3ab8b27ab4d41193d51307be852b289529a66",
+      "bytes": 2653,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-measurement-runner.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4cb798ab16bda87131977b608ea1238db73de4dae5d36d3361fc8aaa3cda6df7",
+      "bytes": 2771,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-measurement.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f6c53428137bb244cd550174d71477993b0c7e9be38b94b60d91326a5dfa09d",
+      "bytes": 2664,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-onoff-final-runner.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78733354d745824b25d6883f993f5153c2d1ab166a7ef85d3d123498becb3e13",
+      "bytes": 2038,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-onoff-final.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "087bb1b12df10592ba3695e9216c455b1943a3870a7062430f3a4dfbc9c52963",
+      "bytes": 2675,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-reuse-final-measurement-runner.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dfca9f96ac4333b9aea0c6a4a5b313587d7b96f4a93388b6576b07bd5b527e82",
+      "bytes": 2139,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-reuse-final-measurement.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b38be9d351642d663895c90c1a8a7ff3322c544149768a473d454a8cde3e60bf",
+      "bytes": 3025,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-reuse-measurement-runner.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d1705bda8bebae5027d7cf66b8c612af9b5c2602a4a24ef1083906e145624dd",
+      "bytes": 2121,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-reuse-measurement.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ec935961d751e1cf10ba9509292dd89a0d64fdb2e41e0617266da94e4464762",
+      "bytes": 3029,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-reuse-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc376b85a0071a119ef872c761499375846d65fe4ba9457abfbabeb15fe63960",
+      "bytes": 1120,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-reuse-runner.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1636df05d9739537af34cd6ded3a152b456f0ef2c04f5c6ffd254ff71fcb3ec",
+      "bytes": 4574,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript-runner.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b827743c396e6e0c3266c118ecd019964abfe7ee6acd284959f805f3ca424218",
+      "bytes": 3809,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/evidence/typescript.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb056031d135784b1d7d6ebc92759164952cd6a3fac19b25b745bab0c948c19b",
+      "bytes": 7783717,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/freeze-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b519400456ae9855022b774597d5e632cebd278005e29e78a55c06ec7a52b48b",
+      "bytes": 19903,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/inputs/construction-sample.compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cdbeb8bc65da878139b28e8d711d134c0bee9dc3d9cc76b2fbca1466030f6f9a",
+      "bytes": 5821948,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/inputs/construction-sample.recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "141dd2a540715e6efd9c7f8a4d45be13acf255c5ad00769e329f48f9a988d48c",
+      "bytes": 470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/inputs/construction-sample.scope.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95b72f0340dac394a75eb58606c58921009830c51b7d250e615c9dea6f63e682",
+      "bytes": 866,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/inputs/intermediate-52bone-motion-only.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c80a2d6a0d1f03095bf10efe541d100089dc0b099d6bb2f6c43c06464314f78a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/secondary-motion-01/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/secondary-motion-01/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ede6e3025a5d13c21f09600de7faa13c635f033630e27bd647942eb71c619f3c",
+      "bytes": 68160,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84dc3c4cdb08cf3957afeda11a5a1d71b1342b3a172dd56d7112c5afe20bf566",
+      "bytes": 3330,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/packages/assets/src/index.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "942c57c8f418421d686410cc07d14ba882f50b2ad5212066ab3b229d78e7c57a",
+      "bytes": 12848,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/pnpm-lock.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e02f12f1ac7978d97ac3a57a0b4f8cc270d330e4349df5c13916835a4c4fd617",
+      "bytes": 88155,
+      "mediaType": "application/yaml"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/scripts/art/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "034a5e9b0bc349ef5a9526ea1d2004c8c0e5a9d85266f6a32f1531f3f5649259",
+      "bytes": 95804,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/scripts/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/tsconfig.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5843198c9127598ba58b045b127dba02caf59284d42e4bbf8185b9d3b978a79e",
+      "bytes": 1461,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/secondary-motion-01/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ec13eb163f363d1aff236721dd69235d0f779d20b80e386ba33942b70376c9f",
+      "bytes": 1655,
+      "mediaType": "application/json"
+    }
+  }
+}

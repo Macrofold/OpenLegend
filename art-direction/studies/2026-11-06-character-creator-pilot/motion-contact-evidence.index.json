@@ -1,0 +1,1756 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-motion-contact-evidence",
+    "revisionId": "sha256-204c9b36f6f7c11a971c0b61c59041a016bf1d9f88f5a3bd9734b31afe470a34",
+    "manifestSha256": "6ffabfc319a1cdb92e8c125c8a9635c2ea3378f7674e354aa9c60daddab5f71e"
+  },
+  "files": {
+    "character-creator-pilot/motion-contact-evidence/MEANINGFUL-EVIDENCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35c6a2a5f6e3390987340d87130391fb8b6258c0d3bf421641489f20b08d9c1e",
+      "bytes": 2814,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/RECONSTRUCT.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c920dff5c233798a17e8f274f96892fe8c2fd28b66ef69b7f4f3bb9a533e0bf9",
+      "bytes": 2508,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/records/freeze-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5bcf91ccc81e0c16f1547417c94fc9c47422118720e9b3ff57ec99215518478",
+      "bytes": 84715,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/records/native-dependencies.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "73b58272124f3fcb93fdb36a5193d4c4417a837b52b28d9aadc48c93346ea2be",
+      "bytes": 1644,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/records/native-scan.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc7432f6efe8ea72e0c7b3ad3c4b8329000436aa2d3343e3b521666d5e16abc7",
+      "bytes": 983,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/records/rights-and-review.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1733eef272e90406ef1d4a2b6edc2a19eaa2eece3ee3d55c77357c1ba9cfe3b1",
+      "bytes": 2881,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9372c1450533c497a525e87c7f444d5c6b5a3b8d0617f600c8cb03b7bdd09d14",
+      "bytes": 12423,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/repository/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/motion-contact-evidence/repository/package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84dc3c4cdb08cf3957afeda11a5a1d71b1342b3a172dd56d7112c5afe20bf566",
+      "bytes": 3330,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/repository/pnpm-lock.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e02f12f1ac7978d97ac3a57a0b4f8cc270d330e4349df5c13916835a4c4fd617",
+      "bytes": 88155,
+      "mediaType": "application/yaml"
+    },
+    "character-creator-pilot/motion-contact-evidence/repository/tsconfig.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5843198c9127598ba58b045b127dba02caf59284d42e4bbf8185b9d3b978a79e",
+      "bytes": 1461,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/SUMMARY.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2dec57eaa5bc9e32764f988df34ef31794b0181e97fdc527ed5a9096b086ae26",
+      "bytes": 2339,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/actual-posed-soles.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3e69ffc9434dfd97eda61539000f1261b4d565266fbcc44fc60f37a75e7ab04",
+      "bytes": 3843824,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/before-frozen-phases.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c1bfcb74bf4ab3635a1e3ee8764c18085cb92a17a3291987c2398d84483522ba",
+      "bytes": 9604,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/canonical-selection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fa54a7fec3d3abe343c2d34ae873f1678dc91a5d5905cc47ce67b83e91c3a46",
+      "bytes": 13533,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/capture-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fb0f6796f4c9bda23b396d1f27e190768f8f175ad1feafdfb4c86f61e270e4f6",
+      "bytes": 4944,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/capture-record.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a6af24218fc51b6aaab20eea68c822880a5f37ffe53fee786ee0d62e6f16060",
+      "bytes": 2504,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/capture-rerun.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d10a265574870f15dfbf51e2664328d65530dfa8b9b4236059ddd4cfd31e8045",
+      "bytes": 6755,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/capture.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c0a384962f1d7e6f0d5988a779883032d49faabf6468ec61410c601ff8d04e7",
+      "bytes": 588,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/captures/after-Idle-Left-080.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e94606a0479a0a632d3ed08ea57c7a56e1aa23832448d9de7a1ba8876a50662",
+      "bytes": 346422,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/captures/after-Run-Left-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0979132c97ec9480c84116a17bcd19aebb05d3164a0908006a95b4e16aec7ffb",
+      "bytes": 344574,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/captures/after-Walk-Right-007.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd9500e8d28bdfb039766347952a10f6dea30200ed6ba4fbfaca77af56628dd8",
+      "bytes": 336768,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/captures/before-Idle-Left-080.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b66ff7db2015935ff36fbbcdcf19a571e895c463c1fdd81ad4834b44e523875",
+      "bytes": 345508,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/captures/before-Run-Left-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c83986ed7e426dd076642b1cd829851ee116a7fc64403308ee314900dadf1ff",
+      "bytes": 343922,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/captures/before-Walk-Right-007.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc6ce1100b58f2b36f7d7209bc2e4117450c6be0499e9c85a7a4ff59298aca32",
+      "bytes": 337307,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/check-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3a0bfa93a48c9d4bc783375db34cb2d0e3908a500b8b26e6e034a8b3a39da5ad",
+      "bytes": 12103,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-check.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c085de2fcdcebe0cd22228cc2a16cc01f2fa69ab38607c0765d690f64c3387f4",
+      "bytes": 23635,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/actual-posed-soles.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bcb132ea2a000454810cf677cc833d213f91109327e7365cfbf6a9604848c18c",
+      "bytes": 9393230,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/before-frozen-phases.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c1bfcb74bf4ab3635a1e3ee8764c18085cb92a17a3291987c2398d84483522ba",
+      "bytes": 9604,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/canonical-selection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "199bc0112e2aa6d3336650d9e7d981d1f0b2788ce9c801d5dd177527ad770958",
+      "bytes": 30796,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/check-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b8dc44b3fb1ac4dd5c1feb013f2b8079ce94ee847e02e5b0a62ecd41a258d79",
+      "bytes": 12204,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/per-sample.csv": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "994c1e6378bad93496b148e921bc61f3cbef72b198433ed8d4b9e0945816c08a",
+      "bytes": 163513,
+      "mediaType": "text/csv"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a506a1169ff23f437fccaab85400c1753ac9d8716598682138587d227c6660de",
+      "bytes": 2972,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/render-mapping.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cde874d4876e8ee2348aac254e96525371169f0f34250d0a253f4d443df704db",
+      "bytes": 102660,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/expanded-envelope-check/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e173a8d3e8de07de795860858578bc402af5803058b8101aeff6a2a26fce563c",
+      "bytes": 74097,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/inspect-inputs.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fef7d2da451de66433effd1740ffacfc34afa82c4294eb487518761c2d5a3b30",
+      "bytes": 2061,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "62fe6f64d594fedda3ae14c18ecf7f62dc8af99914833b7fce549de50cf89555",
+      "bytes": 7323,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/per-sample.csv": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f90aee107b8ce310aadac125ee30b94f1757d902cb0fa1fa83b5885bcd0ea21",
+      "bytes": 164159,
+      "mediaType": "text/csv"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "69a4a1fdc2c78149a176bb94996b848a3099f5b5f4ff39cd49b26055ccf1eb1e",
+      "bytes": 2901,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/render-mapping.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec7dcb044e0936447c546432dfc4aacc6d56c35efc9663c3ad0e0266738bf42e",
+      "bytes": 46297,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "157cced127066ed569c197ce1242a3bdb9e0ecc9af0ec22bbb96791f4310ac0c",
+      "bytes": 74174,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/foot-contact-check-01/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "824ecee322a12eb43ef4454c0446fab5392084c8ea17d64dad691c029950891d",
+      "bytes": 11369,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9f83bc83ff871b4172409f3d6e29266807095ebea697ebaf0078aba79f37953",
+      "bytes": 1652,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/build-cpu.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ee5d93cc123fd998652992f1225d2f27ae24dd147ac778c541666e54291c1a6",
+      "bytes": 381,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/cpu-receipt-virtual-clock-invalid.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5026b3aca6978d1fff1cad09b9654a230bf1482eb77bb1aa6b8b9a06ba4128b5",
+      "bytes": 12228,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/cpu-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36e0c955cfebb3c98f241c17164c610f900174db430213ffab418397f4c60f48",
+      "bytes": 12577,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/cpu.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21e9f7e58865056e0d100e6c6a40e78cd6c7b0395fb61f171eb154788bb74123",
+      "bytes": 3903,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/invalid-attempt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87e331cfb4d1ffe1c11e03d2459c953c408d74b47acad9a3b1ab8419b0918269",
+      "bytes": 384,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/old-fitter-source.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca8f2dddc9d4305f661a03f9bc1ec515ece1e204ef4f8489ec2d19c00079f458",
+      "bytes": 383,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/person-motion-before-sole-original.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c53cb8c252c1bcbbf184a61c7425c80fcfe69462690885d49338b2f4fc01a7b",
+      "bytes": 26084,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/person-motion-before-sole.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e229e10dc1a68056617879b5cdf11107a550a8f252a8357683d13effa07bdbf7",
+      "bytes": 26154,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cd051888a9fa730f2bad3bcd68d98042e65d3c453e909a0d4b0d026c85ceafcc",
+      "bytes": 1239,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/qualified-fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3600c5b48d39065a92c0b9fb08b11f5ef2db62ab89134a6979abf29d1bbbb1b4",
+      "bytes": 2773192,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74d591b7e456e600cb67b4cb7a892114118ca6ff50a97a75db22cc9d04341de4",
+      "bytes": 1437,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/source/apps/client/src/characters/character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d16c47faaf3a6ae8d6d23388ca984d66c44dcdb7ace23e50eec3c5e847d6668",
+      "bytes": 6165,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/source/apps/client/src/characters/gait.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ea1b2a68b39c28429d3a1971d387fb3a569f9bdf468e38bad58d326a704736c",
+      "bytes": 4465,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/source/apps/client/src/characters/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e969c0baee4ba23d2c7a0c233910a5dde2f27e0ae320d917d89b7f15d2f1deaf",
+      "bytes": 26537,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/source/apps/client/src/characters/person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/source/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf08532686b9bfad7f7ff800750bc3a4f2938444d703a8773f464fb6a66f926e",
+      "bytes": 69658,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/source/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "929e11ca1daba38fe2056ac30091dcc8952cc0ff86d0d294508fab43b6bb8bcc",
+      "bytes": 36543,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/source-hashes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b1be8a689258b43a60fdd936433d3f77cade3cf17d504f99f81cc1ca55d32ea",
+      "bytes": 701,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-fitter-setup-280/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95d4fe47f677a6dab8d4aaac272851ad816e543554a42a7ce0b2c02be35d4e90",
+      "bytes": 2747,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95a422d7e2d2918e176acaf5fd53bd411077eebc3f8e759b37aff156c5612c6a",
+      "bytes": 543,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/actor-fixed-preview-before-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32c9533ef1279844ced6e032307531d8a6da3e2b79fb9263305b7a9d556c91bc",
+      "bytes": 63654,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e18deacd0cd29fbdc16b529e4a507cdb68e6bce100b5cfadc2eae7c27560992",
+      "bytes": 959,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/calibrate-changed.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e76491418d04be324ce518e344a93a5dfb2c0f528909a6d343ccb7cc5495d7c",
+      "bytes": 1221,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/calibrate.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d505c4e81114a8c5f96caa737aca134f18982e1df4b04cfc8320329b35942a59",
+      "bytes": 1130,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/calibration.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c680a4be1f1b7be33e63ee88075861b60ccabd68933cfeb62cdc53445a3fb1d",
+      "bytes": 1924,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/fixture.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9e044daa24af8bdbb841f8fc1c8f600b5fff587e430a756cb45f306b9cc343c3",
+      "bytes": 2875572,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/person-actor-before-original.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e969c0baee4ba23d2c7a0c233910a5dde2f27e0ae320d917d89b7f15d2f1deaf",
+      "bytes": 26537,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/person-actor-before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27d5c796cb2ecc70a786805e30a892498d0aa99b8bffcbc040ca14013060f12d",
+      "bytes": 27189,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/person-preview-before-original.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82381f8bf5d27f8906b0ebc51f420d079f2521c7b33aed1d508180f75e2d7e2c",
+      "bytes": 9154,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/person-preview-before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8564d13428474cbea917565c58ecce26041cc0eaa724524026ff76b97ac62f0d",
+      "bytes": 9468,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aedc5a6dd4dfa5ac4fa22bac208f80f5608d74bcc8f01eae52dc7d5dd717e771",
+      "bytes": 9912,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e32902d02b434aa76c38e051380ab0494e116c53afdabc6d8e377cd02da5bf8c",
+      "bytes": 1589,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f121009bc343f02680ff510be68954c7491500b874174ee1a92c6b3b8a53973f",
+      "bytes": 64992,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39c3bfe76a810c1a679aac7342aeadb0e1a57c36e881759e532b896edd9383bf",
+      "bytes": 861,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/characters/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c1e5bc135a121ec01fca35b0a68e522bd07985998f672c0378892552af118fca",
+      "bytes": 28093,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/characters/person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf08532686b9bfad7f7ff800750bc3a4f2938444d703a8773f464fb6a66f926e",
+      "bytes": 69658,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/characters/person-materials.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a97968cf2d4b98d762ecc020df01bf0c50ff60176d326329550c6665a993e82",
+      "bytes": 17611,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "929e11ca1daba38fe2056ac30091dcc8952cc0ff86d0d294508fab43b6bb8bcc",
+      "bytes": 36543,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/characters/person-preview.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78a3854f72ccd4a4926ea27953e7a4b983736c267a20e93eaf9a44dc22af11cf",
+      "bytes": 9526,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/ui/person-appearance-editor.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9dfb6c301d99adb2449936f9a402e2e1aab9c4048d8c04a1bad7b289fea3b45f",
+      "bytes": 16231,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source/apps/client/src/world-renderer.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5ef4ec657d73a4405f1de7852e0d08bc6e8d13fe4327181c1866e9d6e91c95d0",
+      "bytes": 4992,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/source-hashes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32aab402b40c8615979369227e5d0785419bd9830e6ca713f567b1dfc49635e2",
+      "bytes": 1256,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-atomic-failure/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a0258273bf460b96f35a0905d6e786ba85617267d722f1b416eed9005def251",
+      "bytes": 2199,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c41160101b40c4c484d597330b56f6bb964646d50962d7d7dd30e9cfd6eefdce",
+      "bytes": 2736,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c18afd9281e165ebfc381845650250f795e3d0f6034afa0fefaaf89e8e5f4ad",
+      "bytes": 967,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d6e9a1315e6929f5e9601a15660d044f5a1ebf2b2271403c3c7bd6a51067145c",
+      "bytes": 613346,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e413ded2bfc4a12ab0a68f54a2bfa64c48fdf19d6e049f2a46c029ffeaedb80",
+      "bytes": 2773152,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/person-actor-after-original.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e969c0baee4ba23d2c7a0c233910a5dde2f27e0ae320d917d89b7f15d2f1deaf",
+      "bytes": 26537,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/person-actor-before-input-key.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3d87ead87f34f02bcda57ad5173ed8c9c34aba045cbe5ebe87d644cd2c0095c",
+      "bytes": 27311,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0f76ba8f06be73a5c00b3432d1e4c9aaf32302cdcb7bae646773806b5c92193",
+      "bytes": 13468,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9893f9e62098a746f86fec96f8db3cc4a2108fe5a55e54477c196215d4c30351",
+      "bytes": 1871,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b27beaf78334e3c4e98c919e6663f6f8ea68304a215bfc01119926df4c1fcb5d",
+      "bytes": 208091,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4602850ec1af6b17f25f06814371ca68cce63542a233df501f8b37873807b56d",
+      "bytes": 1113,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/source/apps/client/src/characters/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e969c0baee4ba23d2c7a0c233910a5dde2f27e0ae320d917d89b7f15d2f1deaf",
+      "bytes": 26537,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/source/apps/client/src/characters/person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/source/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf08532686b9bfad7f7ff800750bc3a4f2938444d703a8773f464fb6a66f926e",
+      "bytes": 69658,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/source/apps/client/src/characters/person-materials.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a97968cf2d4b98d762ecc020df01bf0c50ff60176d326329550c6665a993e82",
+      "bytes": 17611,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/source/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "929e11ca1daba38fe2056ac30091dcc8952cc0ff86d0d294508fab43b6bb8bcc",
+      "bytes": 36543,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/source-hashes-after-run.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "61717dd84d2a2be626019718b8d887fc16c9d5204476056521a2dd103125db5b",
+      "bytes": 593,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/source-hashes-before-run.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "61717dd84d2a2be626019718b8d887fc16c9d5204476056521a2dd103125db5b",
+      "bytes": 593,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-motion-input-cache/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "701783db9b0d6fca2bc1d86503b05141030bada954542ec8beafcef37b58a8db",
+      "bytes": 9005,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70563c9ca5499667a5bc32b939ed7c42fb4728d292ea054e8f41c067314ba22d",
+      "bytes": 1710,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c4ac47afbed39926ed33e811170d65a264c496ac4204de45a348764eba8e9d47",
+      "bytes": 961,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d6e9a1315e6929f5e9601a15660d044f5a1ebf2b2271403c3c7bd6a51067145c",
+      "bytes": 613346,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e413ded2bfc4a12ab0a68f54a2bfa64c48fdf19d6e049f2a46c029ffeaedb80",
+      "bytes": 2773152,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20b623ab25e635fd930c085c5989a36551aecbbe874f93e168ba5c008626a548",
+      "bytes": 9804,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8999801a633ea43117f7a70370e7da27eaa06b43262e63bc0dc89e7a38b7dd2a",
+      "bytes": 1429,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/qualified-fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3600c5b48d39065a92c0b9fb08b11f5ef2db62ab89134a6979abf29d1bbbb1b4",
+      "bytes": 2773192,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "334df04b004e3b9217818b43ee56a946c2eb053d676316dd6b6b4af807582281",
+      "bytes": 967926,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74d591b7e456e600cb67b4cb7a892114118ca6ff50a97a75db22cc9d04341de4",
+      "bytes": 1437,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/source/apps/client/src/characters/character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d16c47faaf3a6ae8d6d23388ca984d66c44dcdb7ace23e50eec3c5e847d6668",
+      "bytes": 6165,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/source/apps/client/src/characters/gait.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ea1b2a68b39c28429d3a1971d387fb3a569f9bdf468e38bad58d326a704736c",
+      "bytes": 4465,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/source/apps/client/src/characters/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e969c0baee4ba23d2c7a0c233910a5dde2f27e0ae320d917d89b7f15d2f1deaf",
+      "bytes": 26537,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/source/apps/client/src/characters/person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/source/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf08532686b9bfad7f7ff800750bc3a4f2938444d703a8773f464fb6a66f926e",
+      "bytes": 69658,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/source/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "929e11ca1daba38fe2056ac30091dcc8952cc0ff86d0d294508fab43b6bb8bcc",
+      "bytes": 36543,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/source-hashes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b1be8a689258b43a60fdd936433d3f77cade3cf17d504f99f81cc1ca55d32ea",
+      "bytes": 701,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/implementation-evidence/browser-player-footprint-280/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dee6a095c303fc389a3c3e79e3d09f1c04f5610d11a5ae650126f613db7f5779",
+      "bytes": 3648,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/analysis-helpers.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "34b6affc417a4a0e7c5ffad4ac08d88042120601437aeb149bfbddce675e8beb",
+      "bytes": 4248,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/authored-probes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6fe48f40e174521d4860e6c1c39b6fd88eea1bb6051f37637c0474876fb05be5",
+      "bytes": 6221,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/baseline-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "73714102958e506db025d46afad7f67a39b25348de23cb0d46c1a4bbf526587f",
+      "bytes": 1842501,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/body.compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b710d418c7520840565e422e6460f5fe847b20965220b95751331978f5ed2e00",
+      "bytes": 3667338,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys/covered-source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "079b44d8792158867a1830b0b7036d26de89665ecb7cbba35a4cdcb2828e3cfa",
+      "bytes": 2743075,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c618a21a3358aad2c145fece2a41f1f4944d21351c4b33867274a5d9170dffd4",
+      "bytes": 1681024,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys-02/covered-source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36bc23c4ae7f130255a9219479a02f0cdf1b61a229226241ef31fbf6c4b9c200",
+      "bytes": 2742854,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys-02/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b2de0e3cea02208b823d7783da94e7c8b8d6b0332c3c8d5ef128d7d73738026",
+      "bytes": 1975600,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys-02/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c1017a8861be794ccb3696b394b2a116415fb8439db823ed66f6aa5e59e91b72",
+      "bytes": 1336,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys-02-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6702697cbf4147404e1eae318a6e6dafbb3c11dcf129ee0e51bdf6e1c4670fa4",
+      "bytes": 4572,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys-02.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dd0a757aef6172cadc770fda1afc08db5ee5c7341b8e0b7de05ab9e591bb4241",
+      "bytes": 2791,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "018c5ec02fb48c08fa4569aa6a21038dcdbc427022b1cc3dd148fe67b20a4aeb",
+      "bytes": 4584,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/export-preserved-keys.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e1f037474160ac9e0353ac10f555e4a9abeea31ddd58e262ff6d5ed605e3bfd",
+      "bytes": 1456,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/family-with-probes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dcd440a365b89800aa763ae6e03511ff163266fa601690b2bcab99548d86ea9a",
+      "bytes": 3669293,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/family-with-qualified-probes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b87dd0052212e033f0301e304005eec27d41552c228b7d8f4ba8a75fc0874e5e",
+      "bytes": 3669357,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/first-pass-metrics.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "319965e56955d44b4fc71814db01a49723f8f43b3374df42e0736501faade56f",
+      "bytes": 415509,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/first-pass-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4efcf0ab32aba4ae14c647de494f18fff3996f3a1ce2ccc8e5f948d90e1c9144",
+      "bytes": 38450,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/first-pass-rerun.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "544b52b259986c98b8cb9499fbf914e51592632cfd0d56b3f12aab96bc68cb1b",
+      "bytes": 10157,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/first-pass-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "abb00ab353cde1a68337a6b2ee3e5a08ba4e80537525934f232dcbb7b73f1939",
+      "bytes": 5406,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/first-pass.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a190c16374f0f760c0d4e59269ce73e13f9c2623e83f6120c6e091d32131ddc",
+      "bytes": 78,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/fixed-schedule-check-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "396c4059ea7a256c2b113aba2b7e8c1bfd2da63e02f5c47272f70ba1239efbd5",
+      "bytes": 1569,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/fixed-schedule-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b12df8d43789dcb2ca660f1681371732c4f7ab00a1848787a0a432e3bf0eb78",
+      "bytes": 2142051,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/fixed-schedule-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dfac7b5f955ead379decbee362aebe633d8b717b44a407c2339252d80e722472",
+      "bytes": 389,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/no-floor-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "24bcc16c279d49fdea7d1a7bf83a7b374dc6875ced1b894f3d43be3f339a94ea",
+      "bytes": 1842503,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/people-baseline.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ccf3c2d815ceab849a0d0c6cebeb902b9774a27d363529ecb5ea4c91f58df7ab",
+      "bytes": 69547,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/people-sole-prototype-first-pass.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae423c18176462466e4aedab99c6d0d6a99948e222a1de7d13f5ab3efd78ff5b",
+      "bytes": 72284,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/people-sole-prototype.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3775457f898ea9f8b4f70b659d4057c740abf7509e969041cc476884e31fd06e",
+      "bytes": 72288,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/postplant-adaptive-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b12df8d43789dcb2ca660f1681371732c4f7ab00a1848787a0a432e3bf0eb78",
+      "bytes": 2142051,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/postplant-adaptive-metrics.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2014fc6fe7660642d5fc2be12bac573e8a64db6ef78efec9846df03e51ddb87",
+      "bytes": 9874,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/postplant-adaptive-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a6ba26e7bc2dbc1542287d09383c22dd017b01f18d5b1fa2bc924baa5c12f3c",
+      "bytes": 3782,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/postplant-adaptive-runner.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c1dbbfdb89b1853a229461f8a9ff08b1e53ab22abd0ea31b4df9ae3d3ab9181",
+      "bytes": 2720,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/postplant-adaptive.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1bfd3981f1e455b6ef55e794a98dab5a275e71bdcaa9ad4ded9b6151638d8e66",
+      "bytes": 3690,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/prepare-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "026f3de46d3f5ac2086ef9691c7fe5f4ee6b7ce29baa1b87c963079c6e105b76",
+      "bytes": 3933,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/probe-coverage-findings.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d2c20228b5c7be48cbb554117a2e0f115a159eb28797fbad0698284301fb3a58",
+      "bytes": 14630,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/qualified-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b386de0100fcfbe0a86b47aed2eb856b049f22ae26f8a10cd40cc02dd41183c3",
+      "bytes": 1842459,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/qualified-metrics.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1998f8cb7d24938521bc5ee95836984cb13c8e27c3d084a6a5316c19495a365b",
+      "bytes": 140777,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/qualified-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea78693ca7f4f4ce3e0f50695d1db427c246e098f0060808df5b3647afe78b0c",
+      "bytes": 5566,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/qualified-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "152b9bc1ea7c4a8a3de739d549030226c7a29385bfda33186bec55603a6c4d19",
+      "bytes": 16336,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/qualified.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b0b48c0bc8069129ab916305d1a662a7504b586ef593daa8b947f8be898b1b7",
+      "bytes": 4585,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/qualify-probes-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c272a3562a674a60eb570aaa61894951743176f6ccf13fdbded1ed2f328bc285",
+      "bytes": 1886,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/raise-only-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "efbb34ab24e31b2b2397f26d9d75acd12dc27128d9e01bd88b237e3656a1f662",
+      "bytes": 1842509,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sequence-export/cleanup/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "936e32fecd6f6edd354a99d21d99ca1ba234d92972b190f37a3c7133b6c0852c",
+      "bytes": 1236396,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sequence-export/cleanup/dressed.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43c0a886f667a8cbe1c92c15daae27529ee4510aaa6a3e050ec1d69b1a779f19",
+      "bytes": 1293340,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sequence-export/no-cleanup/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "936e32fecd6f6edd354a99d21d99ca1ba234d92972b190f37a3c7133b6c0852c",
+      "bytes": 1236396,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sequence-export/no-cleanup/dressed.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ddc6f3a9c817a98156bb1167d65c5ed1f0ee30dcd11a17e5763523953ae9446b",
+      "bytes": 1711640,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sequence-export/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e25eba1d7632f1b0d20a01e40b4d9371e894054a36091f5f51f6ae5acfa16bfe",
+      "bytes": 4730,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sequence-export-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a859857546ea880b1d702a0ad6f7265aa145e9b0d3a72bb20249006751a559df",
+      "bytes": 3502,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sequence-export.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f5e74fafba93a8756d844c8404999c3272a05fc9d3c4c9133f4533d01758256b",
+      "bytes": 5546,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sole-fixed-schedule.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dff761400cae61dd7506141a5d0831706d3ac53ccbd0be534592c868d9bd5c53",
+      "bytes": 872,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/sole-postprocess.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "539c854bc4e115b851910dc6836a26a08e754daa7836b9a687a41f5f54b61799",
+      "bytes": 6777,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/support-times.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ee68eb1ce936b47df7c9fb1ce5a3bd2edab457b2f8b604f49b1ded181a7cfb75",
+      "bytes": 6417,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-experiment-01/target-rest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "abe23af5935c4bb41f864199f0d8db6f4640c615d4600710a0405786e9109792",
+      "bytes": 613326,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/SUMMARY.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c7b82492253e64ec845e5d67cb8a10ae00eb42d740708cccfe2ccf0833f2c45",
+      "bytes": 6411,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin/audit-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3bc7cb2b7e4754d6c553b170443749ee106c1c9e0d3b61e3b615ad43a3eaa66",
+      "bytes": 11588,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin/between-key-investigation-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad049d9c774858dff2a952e4a9f4664226caa6ce5ddd894bbf82abe629c454bd",
+      "bytes": 1303,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin/between-key-investigation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6ebab68414e2ba82cda7f307fcec7a845d887b60e0575f98fc1f422436f540c",
+      "bytes": 793,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7a2c4e840bf2e40c987859d311fc5228d618c44501699976f108d7a00fa92c34",
+      "bytes": 61524,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin/samples.csv": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d7b2db2a0539d66c84b9714c7523a064e6d012e3b7eaa11b902def195ac0136",
+      "bytes": 616594,
+      "mediaType": "text/csv"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin/skin-minima.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "505984c17cb7493bea9b97901b61b3690864c5a8374a20f6a8c0004266b4e88d",
+      "bytes": 65794,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin-qualified/audit-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "763e753b55670675ffe3db0f01eef59f577a12193c9fb60ea0b037b771238b9b",
+      "bytes": 11606,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin-qualified/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a500ec5ad57f6b04e527b31c7df954bad2239713123e66ce4e09630d5c7de9fd",
+      "bytes": 61535,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin-qualified/samples.csv": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "71ffcb35b586ee928a3f4b438998e640ae3938f45f4ed16814e99749fbd30439",
+      "bytes": 618997,
+      "mediaType": "text/csv"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin-qualified/skin-minima.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87d636d491141990cf24dc66c8c806c364bdb56196c3c35d767599b16e953eaa",
+      "bytes": 66038,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin-qualified.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "933fc8eba8b343e1050d743a9bb08475ba25bfcb9a81deffc0ce7fa7aca2fa8c",
+      "bytes": 3107,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/actual-skin.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8502f773fee965592d426c4cb99075c127b5b46bab9b5339c638487b92ed49c6",
+      "bytes": 3105,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/current-export-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8668efcfc628257fa53528fe4e09f6f278c07b5e00d2db8d4410cf3cedd225cf",
+      "bytes": 2248,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/current-export.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d66d99171ffd9af72b6c543696cfbebf271d4804c0cbc2e316ebd56357dbc921",
+      "bytes": 1016,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d6e9a1315e6929f5e9601a15660d044f5a1ebf2b2271403c3c7bd6a51067145c",
+      "bytes": 613346,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/fixed-wearer-family-before-landmark-fixture-repair.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94303be6fe4c0d53c3314a8b4a649124fd6567df18b3b504138b76dec1ab906b",
+      "bytes": 2773319,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e413ded2bfc4a12ab0a68f54a2bfa64c48fdf19d6e049f2a46c029ffeaedb80",
+      "bytes": 2773152,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/helper-preservation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0bb71e6bb8bdb2d4a454e8a5b3ba592475eadddf3340e01618912ac8cf01fed9",
+      "bytes": 381,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/local-source.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8868ddb0965fb6d4d63ac01f5d60f6c7071f8338a25e8ec3b3edc0c566c4140d",
+      "bytes": 1041,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/measurement-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36d7508fb3a9d5fd437d7349fe8b17735cea6e8537f9c41b7d426dcbd2233ccd",
+      "bytes": 4100,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/measurement-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7b53489ce495944f173d78d0a5bb38cb1f1648038af81921c599ee65ad1d641f",
+      "bytes": 9728,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/measurement.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4cedb4b4a00492e24c26cb73dfa79511263eaa4b4edc6213541ebe8a85660745",
+      "bytes": 1572,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/native-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ede9ae7b4c79c3a6b781ee267fe89c5d3946d28e44daa77e292843cd05f3ad22",
+      "bytes": 2142132,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/native-residual-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "52afd16de395322467a9c5d67f68003684d0e5f15c804fe847ec466dd510c6ec",
+      "bytes": 1580,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/native-residual-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84377b7f5f37571d91a7c6e4e5fe7c75d0fb172023c1ae2c0f71eaf7714e0b1c",
+      "bytes": 310,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/native-smoke-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be65bade307cd551d221a18965f23fe18efcbca3ac936bd12d74419e1d399088",
+      "bytes": 1271,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/native-smoke.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc6027ba1d6703e9e36b98f415cec5d8f846867d423a9d7036149e86c2e52fec",
+      "bytes": 208,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical/minima.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b4c46a3c6c986bf9cc32687ece38aed58b0ed4bac47aebd192aa2667791db551",
+      "bytes": 16951,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical/numerical-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3aea7db785853e7aa88fe90396db3413a913471186524b003c58fc56af486304",
+      "bytes": 7904,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ef37c1eaf839c57f4a24d20cf05fca7290849d0bac20f3e163f356454701d135",
+      "bytes": 12730,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical-qualified/minima.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "038a2c0597e715be096e1a3268d45860f017141b7a175e0a72a54b8390e22fa4",
+      "bytes": 17068,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical-qualified/numerical-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "30b866a3673fb4423b252d513eba0a65acf3d7b915fbbfd73c7f9ffa1b5dd654",
+      "bytes": 7949,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical-qualified/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e58a6f5ca2861c3399ccbe126bd5a9ee7a2ef4efc7df6b496cbd0a211e4df32",
+      "bytes": 12752,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical-qualified.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a53157b7ccc99aa2335096d9bf1c8757e66d537674f3af053ea003a7c73d8d77",
+      "bytes": 11498,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/numerical.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "616896e742f8c0ad015410bc2474e47b62f3d9710bda7a59f0d91415e5c7b6d1",
+      "bytes": 16323,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/pair-export/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b0f00b154f2f0a94aa7aa927709872008b3f59207d19bc2ff12f49d22825d508",
+      "bytes": 997944,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/pair-export/dressed.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d898b150506a272cbfdf048a305892b2828e110d3dafd34e7ac898ab46297a1c",
+      "bytes": 1054892,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/pair-export/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "83b3481b5b0edbe68f9767661b5beadf61cf387604388ffc51e3475b46970832",
+      "bytes": 2089,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/prepare-fixed-wearer.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c0cdd6824208e7f51b935a3f4a58ccac57f747871cee230abaa5a84df9fb05a",
+      "bytes": 5316,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-export/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3d0751ce9bd9148d84e2a3aab637ba99bcdd273ffcb82cdc997368a45ee37de",
+      "bytes": 1057800,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-export/export-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3e11e3b411d9dc824d616d839a48684d161d13fc99905fb2492b77716dd9f60",
+      "bytes": 2528,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-export/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5009f0c6d4a2eb4199cf9e0b27605a50c3b642bf2231d4d34da04f487cdab284",
+      "bytes": 1440,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-export.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d028ef8bef170378c414ee87aab6efd4bc557b7686d47db5115132a1bb941ad7",
+      "bytes": 2032,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3600c5b48d39065a92c0b9fb08b11f5ef2db62ab89134a6979abf29d1bbbb1b4",
+      "bytes": 2773192,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-native-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e984db52e8045e443de9905e99bcbe70d6fbeee82178b37a7c4c3ec90dc8ba77",
+      "bytes": 2157491,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-typescript-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6c217f42349a6c59e7a9ec5661b182e12ade2dcc1003ca553b1d98d063f67acc",
+      "bytes": 2147880,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-typescript-recipe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc27ade3e7bd1076ccd3a0aba08db4169714909dff34fac3a518df116b0cf031",
+      "bytes": 2509,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-typescript-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c23ea10643a571d928353f8468606fea4fc5e14e887f88623b038af9aafb123",
+      "bytes": 258,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5ec95df234c9a10c6a37d8f8ff181d3d7cd0d0c4510cedabbb6193a3211ac285",
+      "bytes": 973,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/replay-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "08df58ed5ee1a6b7b15dc7096fcb09b5509a8cf482d9b2b9b836e5fe0318f791",
+      "bytes": 2021,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/apps/client/src/characters/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e969c0baee4ba23d2c7a0c233910a5dde2f27e0ae320d917d89b7f15d2f1deaf",
+      "bytes": 26537,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf08532686b9bfad7f7ff800750bc3a4f2938444d703a8773f464fb6a66f926e",
+      "bytes": 69658,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "929e11ca1daba38fe2056ac30091dcc8952cc0ff86d0d294508fab43b6bb8bcc",
+      "bytes": 36543,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ae68693f294dd0fca0170dff56b6200b8535b6aea709cd981021cabb7873abd",
+      "bytes": 1215,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/scripts/art/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8d76979a0f6df1ed2c97016cf4a0e09765bcdc23453ec5ddb5ea0d43700d123",
+      "bytes": 96024,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/scripts/art/people.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d5e40be5ed76990f1329fdb2bcf460f3e9d6dfe61d9235e0dc6d40ad434be6f",
+      "bytes": 78908,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/scripts/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/typescript-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "53c3bcce9ee1c1ff3a1d7369cdd56f3435c19bfcf86995167d28f3648da84f4b",
+      "bytes": 2132564,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/typescript-recipe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a64cff446f08f2f67f19fb3eb2b6f23a825be4829c2c86077c939584b8bf384",
+      "bytes": 2461,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/typescript-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01fa4aa2349f93640d0f725f2a480f00334e81fbf3b3a22f73382ee46087e013",
+      "bytes": 258,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/typescript-residual-recipe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b872a96b5b0c48f98e8894640190152eed257cf389584034549a5745689c153e",
+      "bytes": 1550,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/typescript-residual-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ea8666c92a23da71cb485e68e78bea136968c5fa20b630aa24879b52c012a65",
+      "bytes": 111,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-replay-01/clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e984db52e8045e443de9905e99bcbe70d6fbeee82178b37a7c4c3ec90dc8ba77",
+      "bytes": 2157491,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-replay-01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a13a4d15962c327cc9d90f93aa5ef0c6c660f7243b7a02ef2e8eaf7e1505dd31",
+      "bytes": 283,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates01-43/work/family/candidate41/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "23f742324b567abff145285fda4ff5c091337dcd1c3533268d24ab88b87a3988",
+      "bytes": 6065786,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates01-43/work/family/candidate43/foot-rest-before-after.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec644bffef55cee3f5743282eb251bcff781ae101143a1e1222eab37faedd7f0",
+      "bytes": 247844,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates45-101/work/covered-before-foot62/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "434453c2d819584a4666cc5b4f4d34772c6a8d345b12c9b5442b536a3aa81be6",
+      "bytes": 1681552,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates45-101/work/covered-after-foot66/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d0983e865dd68f06d95022883b32f3578859f5222489cd259f87c91f74c9cd88",
+      "bytes": 1680884,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates01-43/work/family/candidate43/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67161554ce1bc51ba5023eb208e7a8cd8d1a3ae931ff0c448e1609109581616e",
+      "bytes": 1970492,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/secondary-motion-01/inputs/construction-sample.compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cdbeb8bc65da878139b28e8d711d134c0bee9dc3d9cc76b2fbca1466030f6f9a",
+      "bytes": 5821948,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/renderer-body107-motion-snapshot/body-snapshot.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc34cb38dd5b36f703978b21e325b0abf00e570cd74582086da44c0ce497f2fa",
+      "bytes": 1453988,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/family/candidate107/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8eac47d836b2cf05deeb94a7f2d3b19d2f4ad3e3445c2baaec4abb155da44345",
+      "bytes": 1901963,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/secondary-motion-01/inputs/intermediate-52bone-motion-only.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c80a2d6a0d1f03095bf10efe541d100089dc0b099d6bb2f6c43c06464314f78a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/secondary-motion-01/repository/scripts/art/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "034a5e9b0bc349ef5a9526ea1d2004c8c0e5a9d85266f6a32f1531f3f5649259",
+      "bytes": 95804,
+      "mediaType": "text/x-python"
+    }
+  }
+}

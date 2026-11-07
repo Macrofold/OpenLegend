@@ -18,6 +18,7 @@ import type { GameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import { OverloadError } from './work-lane.js';
 import type { RequestScope } from './authority.js';
+import type { AppearanceFamilyDefinition } from '@open-legend/domain';
 
 export interface WorldRuntimeOptions {
   store: GameRepository;
@@ -29,6 +30,7 @@ export interface WorldRuntimeOptions {
   execution?: CognitionExecution;
   labControl?: CognitionRuntimeControl;
   presentationRelease?: AssetRevisionReference;
+  appearanceFamilies?: () => Promise<readonly AppearanceFamilyDefinition[]>;
   createdActivation?: CreationActivationReceipt;
   runtimeAuthority?: (scope: RequestScope) => boolean;
   initialWorldId?: string;
@@ -343,6 +345,7 @@ export async function createWorldRuntime(options: WorldRuntimeOptions) {
     createdActivation: options.createdActivation,
     embeddingClient: options.embeddingClient,
     presentationRelease: options.presentationRelease,
+    appearanceFamilies: options.appearanceFamilies,
     cognitionControl: options.labControl,
     runtimeAuthority: options.runtimeAuthority,
     initialWorldId: options.initialWorldId,

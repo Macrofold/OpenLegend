@@ -1,3 +1,13 @@
+export {
+  BASE_APPEARANCE_PROFILE,
+  BASE_APPEARANCE_ASSET,
+  installBaseOpeningAppearances,
+  BASE_WARDROBE,
+  baseAppearanceFamily,
+  installBaseAppearanceKit,
+} from './worlds/base/people-appearance.js';
+export * from './appearance-state.js';
+export * from './appearance.js';
 export * from './expression-definitions.js';
 export * from './expressions.js';
 export * from './entity-collection.js';

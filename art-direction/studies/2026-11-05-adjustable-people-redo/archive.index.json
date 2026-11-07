@@ -1,0 +1,118 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "adjustable-people-redo-preservation",
+    "revisionId": "source-records-2026-11-06",
+    "manifestSha256": "3fedc4b2895675c42e7b50bf962271a8a0df64cc1ae9e8f67fff794323f8047d"
+  },
+  "files": {
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/concepts.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c70609237948e3544d8d27d0f2184c3313d8ae30f8fa1b95d682cf97cf138ac1",
+      "bytes": 1598,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/rejected-proof-source.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9b6692f5531741927e45aabaebb52041e226da2b4e13a7cebe344ebd6544de6",
+      "bytes": 7002,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/rejected-proof-study.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1eea3e6764b3848abc141178db1beb1f6a17c207156220fb3368588a6a87649c",
+      "bytes": 8976,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/rejected-proof-iterations.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8839b47206dda89d0c2b7b4323fdce6d80fefb067e60859bb4a0e7b36b3311ae",
+      "bytes": 26456,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/source-batch.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e59b89f9cf2b621122c96bdbf253b795fd0ef52a40b23845eebe77a4dd3378d",
+      "bytes": 50449,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/static-body-source.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "242230228b874584740e661e8a52646fdef3a94d3feb56ad84d58432d04fecdd",
+      "bytes": 21104,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/static-body-review.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68c7f947a01d31b08ca934c8b1b02d60786c9f8b5a0218ad80414bd0e32706dd",
+      "bytes": 20515,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/fit-reference-source.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9fb2382496be68a258c9ffb81d07cd72435c49faf82910d5f2b6db8dcb1848c7",
+      "bytes": 3968,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/s03-source-test.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8fcc6acd7dfbedfc5d14d39e3d853215a142ac410bf7f1840a977cbba65409a0",
+      "bytes": 8349,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/technical-part-001.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b209506352745078612e4a4548ccf93efef18e901c6e96a071a2e1ae2fa85f00",
+      "bytes": 116825,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/technical-part-002.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ffd9edb69c3c631d0e70bb4ccd580f5fb206b1775fc44d3e690b3fb7d25b7a8",
+      "bytes": 116970,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/technical-part-003.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "97aaf99ed31594f1fe9160f422ac8418ef5e7a5e18671815e17bd75738bca227",
+      "bytes": 116898,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/technical-part-004.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8db9dbcd6818359da2b266d64a03ff974da2f87f6e0624d4250530dc718c676",
+      "bytes": 116948,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/technical-part-005.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b4e9bd366d2915804702a33e2c963f91c0daef47d613a1f7f91e58592315bd1d",
+      "bytes": 37867,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/archive/records/technical-parent.manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a6027598c03ee4588b0c69720e6eba5a0be6080cd89d9cc9777780e99d912228",
+      "bytes": 5322,
+      "mediaType": "application/json"
+    }
+  }
+}

@@ -16,6 +16,7 @@ import {
   type BaseOpeningScene,
 } from './initial-opening.js';
 import { checkBaseOpeningReadiness } from './opening-readiness.js';
+import { installBaseOpeningAppearances } from './people-appearance.js';
 
 /** A finite authored template, not a snapshot or a second copy of scenario content. */
 export interface BaseMainWorldCandidate {
@@ -86,7 +87,10 @@ export function createBaseMainWorldCandidate(
 }
 
 /** Both ordinary and interactive Main request this deployment's approved artwork. */
-export const BASE_MAIN_ARTWORK = { useInstalledArtwork: true } as const;
+export const BASE_MAIN_ARTWORK = {
+  useInstalledArtwork: true,
+  installAppearanceFamilies: installBaseOpeningAppearances,
+} as const;
 
 export function buildBaseMainWorld(
   candidate: BaseMainWorldCandidate,

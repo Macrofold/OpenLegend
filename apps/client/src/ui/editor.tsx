@@ -23,6 +23,7 @@ export function EditorPanel({
   saving,
   error,
   saveReason,
+  reload,
   closeGuard,
   scope,
   saveLabel = 'Save',
@@ -38,6 +39,8 @@ export function EditorPanel({
   saving: boolean;
   error?: string;
   saveReason?: string;
+  /** An acknowledged write awaits current data; keep the window and section. */
+  reload?: { loading: boolean; refresh(): Promise<boolean> };
   /** A separately saved section can guard Close without changing this Save action's scope. */
   closeGuard?: { reason: string; pending: boolean; discard(): void };
   scope?: string;
@@ -127,6 +130,17 @@ export function EditorPanel({
   };
   const requestClose = () => {
     if (!saving && !closeGuard?.pending) dirty || closeGuard ? setConfirmClose(true) : onClose();
+  };
+  const withEditorFocus = async (operation: () => Promise<boolean>) => {
+    const ownedFocus =
+      editor.current?.contains(document.activeElement) ||
+      confirmation.current?.contains(document.activeElement);
+    const succeeded = await operation();
+    // Disabling the submitted control can move focus to body. Keep keyboard
+    // ownership with this task unless the player deliberately focused elsewhere.
+    if (ownedFocus && document.activeElement === document.body)
+      editor.current?.focus({ preventScroll: true });
+    return succeeded;
   };
   const startDrag = (event: PointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest('button')) return;
@@ -247,13 +261,17 @@ export function EditorPanel({
             </button>
           ))}
         </nav>
-        <main className="ol-editor-content" inert={saving || undefined}>
+        <main className="ol-editor-content" inert={saving || !!reload || undefined}>
           {selected?.content}
         </main>
       </div>
       <footer className="ol-editor-actions">
         <span className="ol-editor-state">
-          {error ? (
+          {reload ? (
+            <span role={error ? 'alert' : 'status'}>
+              Changes saved. {error || 'Reload the latest entries to continue editing.'}
+            </span>
+          ) : error ? (
             <span role="alert">{error}</span>
           ) : saveReason ? (
             <span role="status">{saveReason}</span>
@@ -268,6 +286,11 @@ export function EditorPanel({
           )}
         </span>
         <div className="ol-editor-save-actions">
+          {reload && (
+            <Button busy={reload.loading} onPress={() => void withEditorFocus(reload.refresh)}>
+              Refresh entries
+            </Button>
+          )}
           {dirty && onDiscard && (
             <Button variant="quiet" disabled={saving} onPress={onDiscard}>
               Discard changes
@@ -276,8 +299,8 @@ export function EditorPanel({
           <Button
             variant="primary"
             busy={saving}
-            disabled={!dirty || saving || !!saveReason}
-            onPress={() => void onSave()}
+            disabled={!dirty || saving || !!saveReason || !!reload}
+            onPress={() => void withEditorFocus(onSave)}
           >
             {saveLabel}
           </Button>
@@ -324,7 +347,7 @@ export function EditorPanel({
                   variant="primary"
                   busy={saving}
                   disabled={saving || !!saveReason || !!closeGuard}
-                  onPress={() => void onSave().then((saved) => saved && onClose())}
+                  onPress={() => void withEditorFocus(onSave).then((saved) => saved && onClose())}
                 >
                   Save and Close
                 </Button>

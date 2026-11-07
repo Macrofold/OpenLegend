@@ -1,3 +1,22 @@
+import type { AppearanceRecipe, AppearanceFamilyDefinition } from '@open-legend/domain/appearance';
+import type { ArtifactReference } from '@open-legend/assets';
+export {
+  resolveAppearanceRecipe,
+  appearanceControlFraction,
+  appearanceControlRange,
+  sameAppearanceFamily,
+  validAppearanceRecipeShape,
+} from '@open-legend/domain/appearance';
+export type {
+  AppearanceRecipe,
+  AppearanceRecipeInput,
+  AppearanceControlDefinition,
+  AppearanceSelectionDefinition,
+  AppearancePreset,
+  AppearanceConstraint,
+  AppearanceFamilyDefinition,
+  AppearanceResolution,
+} from '@open-legend/domain/appearance';
 import type { CartographyView } from './cartography.js';
 export type { CartographyView } from './cartography.js';
 export { worldClockParts, worldDayText, worldClockText } from './calendar.js';
@@ -498,7 +517,16 @@ export interface ItemArt {
   path: string;
   detailPath?: string;
 }
+export interface AppearanceView {
+  revision: number;
+  recipe: AppearanceRecipe;
+  compiled: ArtifactReference;
+  compiledPath: string;
+  outfit: Array<{ itemId: string; definitionId: string; partId: string; revision: number }>;
+}
+
 export interface EntityView extends Named {
+  modularAppearance?: AppearanceView;
   /** Only this observer's recognized name and private nickname. */
   identity?: { knownName?: string; nickname?: string; revision: number };
   icon?: string;
@@ -1022,6 +1050,14 @@ export interface GameView {
   narrator?: TranscriptItem | null;
   godMode?: boolean;
   godTools?: {
+    appearanceFamilies?: AppearanceFamilyDefinition[];
+    outfitOptions?: Array<{
+      id: string;
+      label: string;
+      family: AssetRevisionReference;
+      partId: string;
+      defaultForCreation: boolean;
+    }>;
     familyLabel: string;
     traits: Array<{ id: string; name: string; description: string }>;
     spawnOptions: Array<{
@@ -1092,6 +1128,7 @@ export interface GameView {
     offsetHours: number;
   };
   player: Named & {
+    modularAppearance?: AppearanceView;
     inputScope?: WorldInputScope;
     attackModeNotice?: AttackModeNotice;
     attackSource?: {
@@ -1301,6 +1338,7 @@ export type CommandReceiptResult =
     };
 
 export interface GodPersonFields {
+  appearance?: { revision: number; physicalLife: number; recipe: AppearanceRecipe };
   inventory?: Array<{ definitionId: string; quantity: number }>;
   name: string;
   description: string;
@@ -1324,6 +1362,9 @@ export interface GodMemoryEditorEntry {
 }
 
 export interface GodPersonEditorView {
+  appearanceView?: AppearanceView;
+  physicalLife: number;
+  appearanceFamilies?: AppearanceFamilyDefinition[];
   /** Applicable editable numeric attributes in their declared units. */
   meters: AttributeView[];
   manifestRevision: number;

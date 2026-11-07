@@ -42,7 +42,7 @@ import {
 } from './object-index.js';
 import type { Entity, ItemInstance, RecipeDefinition, WorldState } from './types.js';
 import { isAssemblyPlacement } from './spatial-state.js';
-import { equipmentConflicts, equipmentProblem } from './equipment.js';
+import { equipmentAppearanceFits, equipmentConflicts, equipmentProblem } from './equipment.js';
 
 /** Container capacity is authored by its exact current item definition. */
 export function itemContainerCapacity(world: WorldState, entity: Entity): number | undefined {
@@ -1568,7 +1568,8 @@ export function validateObjects(world: WorldState): void {
             profile.ports.some(
               (port) => !parent.actor?.body?.equipmentPorts.some((p) => p.id === port),
             ) ||
-            entity.item.individuality !== 'individual'
+            entity.item.individuality !== 'individual' ||
+            !equipmentAppearanceFits(world, parent, entity.item.definitionPin.id)
           )
             throw new Error('Invalid equipment attachment.');
           const occupied = slots.get(placement.parentEntityId) ?? new Set<string>();

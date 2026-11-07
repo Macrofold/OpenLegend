@@ -1,0 +1,958 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-hair-repair-20261107",
+    "revisionId": "sha256-02f381b8ff784874538a4a454bc7aad5c51ff2703aeae2b0170c12a47b895efb",
+    "manifestSha256": "803c1e512e5976d8737d9b2b70a78edce0a724c3793eca1125737602a11adca7"
+  },
+  "files": {
+    "character-creator-finish/head-hair-motion-20261107/head/stages/combined35/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad59e508f81f6727df540266039272966900eaf8f62402b880559898bd2de402",
+      "bytes": 3700596,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair20/h02-projected-master-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7236ad36231bb34553f61987866615d379ef10217380c9dfba706b75658a368b",
+      "bytes": 1756007,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair20/h02-projected-runtime-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "879559a7843500fa5eabfb50cbc5e5546ce4d28a772a79822882979cb7085aeb",
+      "bytes": 599423,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates01-43/work/family/candidate01/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0591a52196ec0709368784ba0774f822ea130dbec38667c61f90dfc0679e5194",
+      "bytes": 6032327,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/canonical_person_normals.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c48c8acba597d2f3aec5ee425f8293d1a6341ea5d6aca7d02a3a24acd2cf0f8",
+      "bytes": 2192,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/people-16cfcfcc1ff3.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16cfcfcc1ff341478d013b48d2774995d260e507f17a1890d4823a1876da907e",
+      "bytes": 87033,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/views/v23-male-head-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d352622479f0ad0339366cdde889b8cf2b1006755dadc4f49d7a962c5e8bf004",
+      "bytes": 6357312,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates01-43/work/inputs/v28-fit-male-body-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02ccf01277f8bbf59d10b073239aafa60bcdabdab7b8e4765107022947bf17ff",
+      "bytes": 3295990,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates01-43/work/inputs/c01-wayfarer.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5af40e413559a48aec8ec4bec0a8672f785bd00b5a9ef07b1f57a36aba9d891",
+      "bytes": 2204146,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/h02-textured-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0529fdabf99aaeb4b4de17e00eb17d8bf37408133ce93b424683fee741109ba2",
+      "bytes": 730745,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/h02-textured-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8b33541a9733d821f9655bde0ed82627a4863700ea1ca30c9da37a70b295ed8a",
+      "bytes": 729581,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-source-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "717418a0b9e4cc63713acd579b79a50723a3cacf97f7c9572ca04088eab4efc7",
+      "bytes": 887048,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-source-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7eca6cde441163344798478661c68ef6751d7c705cb1a7ef56571b3540eca2c3",
+      "bytes": 920214,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/License.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddc945c9d2c6a5306a04466345d539e5a1ed46a48ecf68df8d985128f1e78a3",
+      "bytes": 147,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/README.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8708d99262179f480eeb8c2f8f8ff86ec9cd27dbbec962ef66f2ba58e122d4fe",
+      "bytes": 1100,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/head-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7430927c598337acffbbd2bdbc875a281910a77b7b14f497fa2e0621d5b8773",
+      "bytes": 10362,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aed8d2b38aeb5f29cae914b1720fc6e64c5293d6e20a1d942e8a9b14471ac9ac",
+      "bytes": 2608,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0e1a52f01ed60e2cfc6c848048b5274902ec5527ce6e49621d68f919bbe8625",
+      "bytes": 33782,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5dddf76b238ea1d90ffe7f181838a36e4765a68a813fec7e813c1782b41c4320",
+      "bytes": 4462,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/atlas08-failed-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d779459d6d054cc115a9049f70bc5061e5359f7af872da30ef91d1aceb193faf",
+      "bytes": 5878,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/atlas08.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d779459d6d054cc115a9049f70bc5061e5359f7af872da30ef91d1aceb193faf",
+      "bytes": 5878,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/atlas09.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f531cb74284c98c85cde82fbc39c797d304b783ef40508f1eb9db78dfc0493a9",
+      "bytes": 2310,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/atlas09.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "541e9cfb6d2c2d024f79cf38d8aa04a7a6bfbeaa1833b94827c6a0418f358e68",
+      "bytes": 5949,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/audit-atlas09.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3cbfde4f372bd4a805f3050871950dd35010cc5955a686d2e1b1a65f63df334d",
+      "bytes": 1900,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate01/failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "363457966e3fd2429fb7b96b61c2448f32399115e5045c5a1a6d200097f221f7",
+      "bytes": 294,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate02/h02-hair-warm-brown-1024.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36e45914ce253dd02539d3c9028d1c62d7adb11d7109cc8b10b04d7a950c5d47",
+      "bytes": 731735,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate02/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dadce597abf77695370a8f88ce7e08c4ac48cb6d74068f202199292cd737f96e",
+      "bytes": 3980,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate02/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ee2eb2600380deaa40615108f2e4e6272c3f706e06386dd5a3e31dd42ebd18c2",
+      "bytes": 4438939,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate03/failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f585395ff4eae33122f516dc4aa0cc2e75a022f3295b1bbf420a388d00588af",
+      "bytes": 323,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate04/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "71576e558f6def6e012a4da2ed092911e25409fca15ab852346c6147eaf8ddc6",
+      "bytes": 3044,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate04/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c19cd58043ce897effbebd7716249a83cf7c9ffaa8e51567a96338f1fe873c1",
+      "bytes": 3837753,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate05/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e26b27299fbeb62c47f422f2f024bdf7d84e7ee489e55255a0353366994b5e3",
+      "bytes": 3235,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate05/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6cbef9a12db9be5695cd60f41215e445b716656ddfb42b592dcc080feff9f16b",
+      "bytes": 3837791,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate08/failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8b78d9bc5802caff1855e45dea284881eb4a42dc4c14aa9748e269cd596191dd",
+      "bytes": 269,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate08/h02-dense-original-albedo-1024.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2d3f2d1c2054d2cd3d0e72c2e42fb1e50e7366db441273b82b0be5c7757e54c",
+      "bytes": 585681,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate09/h02-dense-original-albedo-1024.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6a0d6cc852ea9d871805652e7a159da2bec2440bce385669703ce186373c5db",
+      "bytes": 1163224,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate09/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ef16269c51f0b89d20d331f3037451b87abaab12d7cff2f94568237a8aa3199",
+      "bytes": 3319,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate09/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9cd78d0729d035110cb785282f9aab308626c63a1fc07f7bfdb8d0431fde9891",
+      "bytes": 4998747,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate09/uv-audit.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f8f9422ead3e49f013aec96ad6d8ca341a849ea61fdff51f32f584b42ab0a561",
+      "bytes": 1284,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/external-dependencies.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "643fe8d1ff4a1ca0e4082e44f43854383be349ba7a8f22e7e4087886ae84a2ca",
+      "bytes": 3738,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/front05.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "046507e8154c3a90f0f2ee9254485d3292fd139d435dcdd98038684e7a3f4e0a",
+      "bytes": 4251,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/inspect-atlas07.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d8b0f80d69048a771ca9af09509c1115be5ca37e8c6ce66b53c33cb943fbd5a",
+      "bytes": 1728,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/inspect-pigment06.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9757c558e4d09e8d126fdc079ff0a175e5f2a6bb29a9cbda1aa240effd202f3b",
+      "bytes": 3062,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/inspect-source-material10.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db183e76abe393bf87144f1450a5024672b1a51f96c98a74067a90f756a389ce",
+      "bytes": 1167,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/inspect.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1e55a3f9ff68326125a45c1e8f2c8fdc6da05b391856d47ceae5309fbdfd9448",
+      "bytes": 2675,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/inspection-coordinates.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea7989ed2f3222842aef4e71cd04b7f8af3b26998b0b82c507323934e4c487d0",
+      "bytes": 109169,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6adbf857605753225650e14aa5bc71a4a764a0838a730da764ae65ccbd4100c7",
+      "bytes": 11456,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/pigment-inspection06/atlas-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f120c3d5d4ab41f1e2a9f9a54c26dc8e3e3896473fdf9fc2ef0bec6311ed981e",
+      "bytes": 401,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/pigment-inspection06/generated-byte-Linear.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "104603d2d49e14bc2477b7803c27d831a95756374debf2834a07e2887f35cf7a",
+      "bytes": 257,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/pigment-inspection06/generated-byte-sRGB.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c1e94bd1b4984a61616f7972396da2b96ed5645e2403b8deb0cfee490b743a7",
+      "bytes": 257,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/pigment-inspection06/generated-float-sRGB.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3d8edb95acb647f5f3102b8563c66ec2cccdc057e325738f6d9b12052d54364b",
+      "bytes": 260,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/pigment-inspection06/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e9e2c981abcf7570adf6787ecde8c0b0c360c01e2953705d9aba6636b48cb8b",
+      "bytes": 3669,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/pigment-inspection06/source-material.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21bcbb69a64bd8e2fc965cfa0e1f09086d5adb3187f9907521476a2bc2dacef9",
+      "bytes": 4193,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualification04/hair-fit.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c76f4d7f708dee04c6daf90365ba8fa82a4b52527ff1d8ee8c36b63bc56d4799",
+      "bytes": 451683,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualification04/head-surface.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a7bdfb6f69972264d830c738ed20f39bd0663fb3ee1760e43ad2fa8ae1fda57",
+      "bytes": 341215,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualification04/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf2e97e6c4d48bf402537012c82e49c8785d36946e6c9510802785915c5ebbc2",
+      "bytes": 2808,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualification09/hair-fit.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c76f4d7f708dee04c6daf90365ba8fa82a4b52527ff1d8ee8c36b63bc56d4799",
+      "bytes": 451683,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualification09/head-surface.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a7bdfb6f69972264d830c738ed20f39bd0663fb3ee1760e43ad2fa8ae1fda57",
+      "bytes": 341215,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualification09/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c85005800d04d0fdf80da278a71e5cc7d77c527b08618f15afb0035df07d6b3",
+      "bytes": 2843,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualify04.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a1a0647a0532c125d0e5c88ce2908722029a3da6bff7620f63f4721e417786b8",
+      "bytes": 2188,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualify04.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eedc0eb0fb86aba029dd8cca5355e6c75c49c2045d1c9c7c22404257089338df",
+      "bytes": 6979,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualify09.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bb46f91baa57d7369bae2a6c4ac04dfb8bdc7d1c1bc759ce29d80969a3d212dc",
+      "bytes": 2216,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/qualify09.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "81f682c7ea25c5b09abf450184df6967d628114b25647f80dd8a7b81bf20afc6",
+      "bytes": 7012,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render02.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8f2f4afb44a3a1a46aa16cec2085cba711a70a75494e79b0c272607973587fa4",
+      "bytes": 4678,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c85138eab2e2894a32cd996cbc44d7e37cd7e8add4f50a932eaf3d3796e6470d",
+      "bytes": 3175,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render04.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad36ff7abfc619b5204b3d1163140a09bdf766f2da34a6f7e3f14adc12a0c4ef",
+      "bytes": 3033,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render04.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96a1984e07a7dfa2057b179cdc4f8a56134d47bdeed7181bbb128ee9212c8465",
+      "bytes": 3152,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render05.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e0ce9328d5d1b4a7beae1f625762584b37653ffc440033201cfbed3117b4fb5",
+      "bytes": 3033,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render05.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9980c2289913ddd164008fdb2b29d5fd003ca6dd43a7ef3a05a1757c412bbf2a",
+      "bytes": 3161,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render08.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "73f4ee40bd7b05c2ee5bba99571d76e5323f99c2b04c6759cf22b37501011066",
+      "bytes": 3156,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render09.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c793475839645301abd359f094011ed97c73a95d41b1521c8998905a83fa1986",
+      "bytes": 3033,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/render09.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5db45642af7293a5e77dc8e9cf99665c0427e5fd34c307581b8d6ee54ebfaa0f",
+      "bytes": 3157,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/repair01-failed-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c402eb7b61a8f0c88bd4ff6f6eb32d2b6e48e147050dc79fcfab5ff425d7ddf",
+      "bytes": 10434,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/repair01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c402eb7b61a8f0c88bd4ff6f6eb32d2b6e48e147050dc79fcfab5ff425d7ddf",
+      "bytes": 10434,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/repair02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ef138f5906be4b6d221af8e078023bc13649503773ed6e1b2d6c8a5b44337044",
+      "bytes": 10544,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-clay-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3dbfac68fc328ef01c15f0fac33c2218c87760c7be19a048c2fb43b12ee2658",
+      "bytes": 227403,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de53bebcae3e75fb1f9f4f95e9c41a2d29158f5357a5ce8e61f4405217e67cae",
+      "bytes": 228316,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f0415a2a07fb53fa52e8544c456663287e009f8daa78c093c1d6dc9a60a791f1",
+      "bytes": 238384,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40cc35e7401e09f628226b568d4b9c557f4c39a9014bc1d608f6ff48319e4d86",
+      "bytes": 230870,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-colour-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67e809c768d0438245e6013cbcd5be0793311c63d5ca202cd74941d52e05b82a",
+      "bytes": 364197,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6f21bca3c09bbe238e82face1dbd03cb69e88057df1453f60ee9975f6619b",
+      "bytes": 350615,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "47d6d60e813e9706b901ca75c0b5d6382099135bbdc919827a442fc14e2c424f",
+      "bytes": 363654,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/before-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e943a3cb4b2ef5a2995511c2147c9b11bc204ab849b87026c4ab29ba455702a",
+      "bytes": 355570,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-clay-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c71dc8ccae4b0387ff5a44fc753ceaa84b4b3a014aa1ccbd73672b815d64710c",
+      "bytes": 226101,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14648f240b2854dbc71f7df6b6a302a0dd8b4d4fac14d3ce0709353ab12244e3",
+      "bytes": 227285,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b5a7e0368b65cdbfe8d62779a961bdc732a0d11578d94ab42f5a86c29a20987",
+      "bytes": 237522,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2bbf51053af993345bf8679b76fe7f96b30b05917bffd6b9efa04173a01a0d56",
+      "bytes": 230719,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-colour-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a4307109c3a5f518258ba33494c3b6830175ff6c7cf85d24ff863658a32435e7",
+      "bytes": 350735,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "76ba3eec4dbf28f7ede50985ad39165af6a93090d8d0dd9d1522ca6c189b86ec",
+      "bytes": 343911,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d2beb73bac2d9524752844e6714281e4d853bd57aeea53f46cd1d92792402c9c",
+      "bytes": 353976,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/candidate-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2488b4c4e1b683959ee1093d6ccc91778a86e78779ed79e50dd93806550de973",
+      "bytes": 349885,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review02/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "41f37826790a08ed0218b12ad28db12bc86d54d8188762c4a850965dfce660d5",
+      "bytes": 9773,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-clay-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5893d1daeaf675caf5ebb50b63b22b9418539e39559686f9d2558d4beb207493",
+      "bytes": 224719,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c9fa4e0f15ad3c9dc153029ebb6473d3a2ea74efb44707a45b9d76aba9af800",
+      "bytes": 227439,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f31de2f68c7a05f6c8ce5d5353d2843c816d2bba76a2ecc2b3b2611e760d181",
+      "bytes": 235130,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b6a6b8291db1babfcce7d3d957fed46f0bc829ad488f7e8418b971e6707f0a1e",
+      "bytes": 230021,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-colour-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c4a71c88a9610bb72e82b1c9f1d2599e1a9ff737cb0d729114bf09ca50d9e2d1",
+      "bytes": 344117,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "739ab888df675209aa64f1b0ddec72ed27a442b6e3558828d40458086a1e49f0",
+      "bytes": 343854,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "59290e9a68c88e3610dfb86f1dad8089185aacbdb066f1e8c9d9dfeb59a5a900",
+      "bytes": 350745,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/candidate-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e77124ac157044e2e160c21534a286296eede44995761d1b12a9d1aef183cca5",
+      "bytes": 348803,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review04/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c8268de7f058fef67e2b329eddd846f304bd09a685731d2bd44f98c6619036c",
+      "bytes": 5085,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-clay-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "79905c68695b768816cb7a401448f64a8210a30188c476a436c61d052845bd6e",
+      "bytes": 224723,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e2288bf14eef1ca4dad42fff7744170c8224fa31033fab5a35266006a5768008",
+      "bytes": 227450,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb883be2406f77cdc8fa863181a5569e236571bc6496076f877deb2f000aa841",
+      "bytes": 234886,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "03d7090818b34b8de6b62278a7add4665b768cdcbabf8b90ce565378bc477d91",
+      "bytes": 229309,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-colour-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba6a10380a8ab59e34f1e23c2f656ebb97fbf7b2699b7ce65b224b9959a2151d",
+      "bytes": 344274,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fb33c2d7871f9ba28e40f1ad02e623f65da9e0949821935c314c5210191a7c46",
+      "bytes": 344826,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8229f43adcc3bbed23c41c4868e4e93531ae5c6408ba30d3762ceea374eddd5",
+      "bytes": 351029,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/candidate-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b490494e1d1d01619aa2962217514e06702121a675b567488f2113f68ab88d85",
+      "bytes": 348940,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review05/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "81b4b1f6789d803c52b885f45f5fdbe38351bdb89d7b72c4efe09b598d4a1081",
+      "bytes": 5094,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-clay-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "713f51ae8967bafdf201b2d7dd4859982672ea8101c2a3d7106fbc9a4a313e8c",
+      "bytes": 224719,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2098c4cc008267bd66ab74cb271af922380f904f283d4da0722096bbdd8b0216",
+      "bytes": 227439,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed17a965eb1be21fcd31bb409bcbb14bec0a1a9b3ef09571221bd4a53eac710f",
+      "bytes": 235130,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b41b5410922c9da32af8a7f0edb282ce012a6b7bdb5a20a8e2bf87390fa6b146",
+      "bytes": 230021,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-colour-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1138115e2c844448ef6c9309ca292713f0a185e7b58d715817bab085824c8c39",
+      "bytes": 375012,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae89d875626261aa72c0895a61c1f085e357d5db8a2cfb80faa35ddf97d13899",
+      "bytes": 353194,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc257b4879958775499cac08eb801ab44112d844603710dca59382374711b10d",
+      "bytes": 371310,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/candidate-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "766d559f1e05f7f23ce62d74a509a8b988a956ebe15c83d4cbea9a7d95d3ed67",
+      "bytes": 359583,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/review09/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa0ba333e3a5715f271daf8fb565f5c44343ea4aec4367f63ea2edd9bbb169b1",
+      "bytes": 5090,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/taper03-failed-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "163ac26be60293d8ed0a6dc244a5f95e1be8aaf20271bfbff002cef7a1917feb",
+      "bytes": 4528,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/taper03.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "163ac26be60293d8ed0a6dc244a5f95e1be8aaf20271bfbff002cef7a1917feb",
+      "bytes": 4528,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/taper04.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "391a9e7908a50e41b471014d3907b88ca4917dc82475ee85f434e14190b8a48c",
+      "bytes": 4336,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b6819d85a9a69039bbb5ddbed6368e8546c68e282a97eb06e5d44ed663b7166d",
+      "bytes": 28972,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/inspect-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "22cc8171a861ea0950670bb67f44b5293a2893f3f10b0ab2a777163e7ef81257",
+      "bytes": 1525,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/records/native-files.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5170c61a4c271a6e91f2b46c031e71652347c0ace6c1537de5d40f0991914dd",
+      "bytes": 575,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/native-image-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f5f71d10036fc88771327480448b05c58c2464ff774d4967fdddf2f03a532cf",
+      "bytes": 10000,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e84303388323d43b8813ed1fded466de6a19552a0ad57fe2e06f99b3d03ca231",
+      "bytes": 1447,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dab6497b2081b46a5e604b433263865b1037b8b56a1fc22b2ad3f2fbbaf88e19",
+      "bytes": 10038,
+      "mediaType": "application/json"
+    }
+  }
+}

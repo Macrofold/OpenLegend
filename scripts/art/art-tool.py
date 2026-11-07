@@ -409,12 +409,16 @@ def sheet_models(args):
     return 0
 
 
-def export_glb(out):
-    """Export the selection with the working human recipe's settings (scripts/study_human_motion.py)."""
+def export_glb(out, *, force_sampling=True):
+    """Bake ordinary sources; already-baked fixed wearers retain explicit LINEAR keys.
+
+    Blender forces NLA_TRACKS to sample, even with force_sampling=False. ACTIONS
+    preserves the fitted subframe schedule of the constraint-free assembled rig.
+    """
     bpy.ops.export_scene.gltf(filepath=str(out), export_format='GLB', use_selection=True,
                               export_apply=True, export_animations=True,
-                              export_animation_mode='NLA_TRACKS', export_yup=True,
-                              export_skins=True, export_def_bones=True, export_force_sampling=True)
+                              export_animation_mode='NLA_TRACKS' if force_sampling else 'ACTIONS', export_yup=True,
+                              export_skins=True, export_def_bones=True, export_force_sampling=force_sampling)
 
 
 def normalize(args):
@@ -624,9 +628,16 @@ def joint_heads(order, posed, held, root, root_head):
     return heads
 
 
-def bend_leg(posed, thigh, shin, hip, knee, ankle, target, limit):
+def perpendicular_component(vector, axis):
+    """Project off a unit axis, discarding scale-relative float32 collinearity noise."""
+    side = vector - axis * vector.dot(axis)
+    # Normalizing a straight leg's rounding residue can send its knee to either side.
+    return side if side.length > vector.length * 1e-6 else Vector()
+
+
+def bend_leg(posed, thigh, shin, hip, knee, ankle, target, limit, source_side):
     """Two-bone IK in armature space: turn the thigh and shin so the ankle reaches `target`,
-    keeping the knee in its current bend plane. The leg reaches at most `limit`, its standing
+    keeping the source knee's bend plane. The leg reaches at most `limit`, its standing
     reach, so it never straightens past how it stands; a farther target is pointed at."""
     upper, lower = (knee - hip).length, (ankle - knee).length
     to_target = target - hip
@@ -634,10 +645,12 @@ def bend_leg(posed, thigh, shin, hip, knee, ankle, target, limit):
         return
     along = to_target.normalized()
     reach = min(to_target.length, limit, upper + lower - 1e-6)
-    side = (knee - hip) - along * (knee - hip).dot(along)
-    if side.length < 1e-9:  # a straight leg gives no plane; keep it straight
-        side = Vector((0.0, 0.0, 0.0))
-    else:
+    # A displaced ankle goal can cross the receiver's current knee plane and flip its
+    # solution. Preserve the source's side; a straight source retains the receiver's plane.
+    side = perpendicular_component(source_side, along)
+    if side.length_squared == 0.0:
+        side = perpendicular_component(knee - hip, along)
+    if side.length_squared != 0.0:
         side.normalize()
     out = (upper * upper - lower * lower + reach * reach) / (2 * reach)
     new_knee = hip + along * out + side * math.sqrt(max(upper * upper - out * out, 0.0))
@@ -691,7 +704,8 @@ def plant_feet(steps, tw, toe_points):
     from where they land to where they lift, through the heel's roll too. Each ankle goal moves
     by its toes' error and the leg is solved again; the second round takes up what the foot's
     roll changed. A contact across a closed loop's seam is one run. `steps` holds (frame,
-    turns, root head, ankle goals) per frame in armature space, and its goals change in place;
+    turns, root head, ankle goals, source bend sides) per frame in armature space, and its
+    goals change in place;
     `toe_points(step)` solves one frame on a copy and returns each foot's mean toe point in
     world space (None for a foot without toes). Returns the planted distance (metres) and the
     frames it took, summed over every run, for the clip's report; None if no foot was down long
@@ -799,8 +813,9 @@ def retarget(source, target, name, frames, names, align, relax, stride=False):
     by the same rotation from its own rest pose, so rigs whose bone axes, rest proportions or
     extra bones differ (the mercenary's rig against Meshy's) share a clip; copying joint angles
     would twist them. The root travels by the source root's displacement scaled by hip height,
-    and each ankle by its clip ankle's path from rest, scaled alike, with the knee solved to
-    reach it. In a `stride` clip (walk, run, sprint) a foot stays still while it is down
+    and each ankle by its clip ankle's path from rest, scaled alike, with the knee solved in
+    the source's bend plane to reach it. In a `stride` clip (walk, run, sprint) a foot stays
+    still while it is down
     (plant_feet), and the body above the hips stands as a runner's (stride_posture).
     Bones the source lacks (the mercenary's cape) stay at rest. `names`, `align` and
     `relax` come from bone_map: an aligned limb first turns to the direction its clip bone
@@ -877,7 +892,7 @@ def retarget(source, target, name, frames, names, align, relax, stride=False):
     # front of a straight leg (its joints read 28° bent at rest), so the same turns on a leg
     # resting straight dropped MPFB feet 3-8 cm into the ground in Run and Sprint. Each ankle
     # follows its clip ankle's path from rest, scaled like the root's travel, so a planted clip
-    # foot stays planted; the knee bends in the plane the turned leg chose, and a leg reaches
+    # foot stays planted; the knee follows the source bend plane, and a leg reaches
     # no farther than it stands, so it never straightens past its own standing angle. Lowering
     # the hips per frame to reach instead made them jump up to 11 cm between frames; clips()
     # grounds each clip with one constant offset.
@@ -893,7 +908,7 @@ def retarget(source, target, name, frames, names, align, relax, stride=False):
     to_model = tw.inverted().to_3x3()  # world vectors into armature units
     target.animation_data_create()
     action = target.animation_data.action = bpy.data.actions.new(name)
-    steps = []  # each frame's bone turns, root head and ankle goals, before the legs bend
+    steps = []  # each frame's turns, root head, ankle goals and source bend sides, before IK
     for frame in frames:
         bpy.context.scene.frame_set(frame)
         turns = {n: world_rotation(sw @ source.pose.bones[clip[n]].matrix) @ source_rest[n].inverted()
@@ -904,7 +919,7 @@ def retarget(source, target, name, frames, names, align, relax, stride=False):
         posed = {n: to_armature @ turns[n] @ target_rest[n] for n in shared}  # armature-space rotations
         travel = (sw @ source.pose.bones[clip[root.name]].matrix).translation - source_root
         head = tw.inverted() @ (target_root + travel * scale)
-        goals = []
+        goals, sides = [], []
         if legs:
             if stride:
                 # Hips that stand up (stride_posture) turn about their joints, not their middle:
@@ -919,19 +934,26 @@ def retarget(source, target, name, frames, names, align, relax, stride=False):
                 head = head + sum((at_clip[t] - at_now[t] for t in thighs), Vector()) / len(thighs)
             heads = joint_heads(order, posed, held, root.name, head)
             for chain, (thigh, shin, foot), reach, rest_reach, toes in legs:
-                now = sw @ source.pose.bones[chain[2]].head - sw @ source.pose.bones[chain[0]].head
+                source_hip = sw @ source.pose.bones[chain[0]].head
+                now = sw @ source.pose.bones[chain[2]].head - source_hip
+                source_upper = sw @ source.pose.bones[chain[1]].head - source_hip
+                source_side = Vector()
+                if now.length > 1e-9:
+                    along = now.normalized()
+                    source_side = perpendicular_component(source_upper, along)
+                sides.append(to_model @ source_side)
                 goal = tw @ (heads[thigh] + rest_reach + to_model @ ((now - reach) * scale))
                 # The library's Wave, Punch and Dodge sink the clip rig's feet up to 4 cm below
                 # where it stands; an ankle stays at or above its standing height.
                 goal.z = max(goal.z, (tw @ target.data.bones[foot].head_local).z)
                 goals.append(tw.inverted() @ goal)
-        steps.append((frame, posed, head, goals))
+        steps.append((frame, posed, head, goals, sides))
 
-    def solve(posed, head, goals):
+    def solve(posed, head, goals, sides):
         """Bend each leg to its ankle goal, then roll its foot off the ground (changes `posed`)."""
         heads = joint_heads(order, posed, held, root.name, head)
-        for (chain, (thigh, shin, foot), reach, rest_reach, toes), goal in zip(legs, goals):
-            bend_leg(posed, thigh, shin, heads[thigh], heads[shin], heads[foot], goal, rest_reach.length)
+        for (chain, (thigh, shin, foot), reach, rest_reach, toes), goal, side in zip(legs, goals, sides):
+            bend_leg(posed, thigh, shin, heads[thigh], heads[shin], heads[foot], goal, rest_reach.length, side)
         # Feet roll on their toes instead of pushing them into the ground: MPFB's foot rests
         # 20° down to its toes and Meshy's 51°, so the clip's roll dropped MPFB toes 3-6 cm.
         heads = joint_heads(order, posed, held, root.name, head)
@@ -940,17 +962,17 @@ def retarget(source, target, name, frames, names, align, relax, stride=False):
                       [(tw @ heads[n], (tw @ target.data.bones[n].head_local).z) for n in toes], to_armature)
 
     def toe_points(step):
-        _, posed, head, goals = step
+        _, posed, head, goals, sides = step
         trial = dict(posed)
-        solve(trial, head, goals)
+        solve(trial, head, goals, sides)
         heads = joint_heads(order, trial, held, root.name, head)
         return [sum((tw @ heads[n] for n in toes), Vector()) / len(toes) if toes else None
                 for *_, toes in legs]
 
     planted = plant_feet(steps, tw, toe_points) if stride and legs else None
-    for frame, posed, head, goals in steps:
+    for frame, posed, head, goals, sides in steps:
         if legs:
-            solve(posed, head, goals)
+            solve(posed, head, goals, sides)
         for bone in order:  # parents first, so each inherits its parent's final rotation
             if bone.parent:
                 inherited = posed[bone.parent.name] @ (
@@ -1630,6 +1652,17 @@ def graft_head(args):
     return 0
 
 
+def assemble_people(args):
+    # The generic recipe and compiled geometry owner are shared by single and batch calls.
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import people
+    try:
+        return people.run_assemble(args, sys.modules[__name__])
+    except people.PeopleError as error:
+        print(json.dumps({'status': 'failed', 'failure': error.record()}, indent=2))
+        return 2
+
+
 def main():
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     parser = argparse.ArgumentParser(prog='art-tool.py')
@@ -1697,9 +1730,16 @@ def main():
     graft.add_argument('--head-bone', help='The head bone, when it is not named head.')
     graft.add_argument('--max-texture', type=int, default=BUDGETS['texture_edge'])
     graft.add_argument('--profile', choices=['character', 'creature', 'prop'], default='character')
+    person = commands.add_parser('assemble-person', help='Bake covered and dressed people from one exact local family.')
+    person.add_argument('--family', required=True, help='External family.json with exact compiled/master/profile references.')
+    person.add_argument('--recipe', action='append', required=True, help='Appearance input JSON; repeat for an ordered batch.')
+    person.add_argument('--out', required=True, help='Fresh external output directory.')
+    person.add_argument('--part', action='append', help='Reusable outfit part ID; repeat for the requested outfit.')
+    person.add_argument('--variant', action='append', metavar='PART=CUT', help='Explicit garment cut; otherwise authored order applies.')
+    person.add_argument('--inspection-candidate', action='store_true', help='Explicitly export an unqualified study candidate, never an accepted family member.')
     args = parser.parse_args(argv)
     code = {'report': report, 'sheet': sheet_models, 'normalize': normalize, 'clips': clips,
-            'head': graft_head}[args.command](args)
+            'head': graft_head, 'assemble-person': assemble_people}[args.command](args)
     sys.exit(code)
 
 

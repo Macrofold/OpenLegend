@@ -479,6 +479,8 @@ export interface CommandReceipt {
   outcome: Outcome;
 }
 export interface WorldState {
+  appearanceDefinitions?: import('./appearance-state.js').AppearanceDefinitions;
+  appearanceRecipes?: Record<string, import('./appearance-state.js').AppearanceState>;
   hearthDefinitions?: Record<string, import('./hearths.js').HearthDefinition>;
   socialOfferPolicy?: import('./social-offer-policy.js').SocialOfferPolicy;
   workBatchPolicy?: import('./work-batches.js').WorkBatchPolicy;
@@ -926,6 +928,8 @@ export type GodSpawnType =
   | 'river-stones';
 
 export interface GodPersonDraft {
+  appearance?: import('./appearance.js').AppearanceRecipe;
+  initialOutfit?: string[];
   name: string;
   personality: string;
   backstory: string;
@@ -934,6 +938,11 @@ export interface GodPersonDraft {
 }
 
 export interface GodPersonEditorDraft {
+  appearance?: {
+    revision: number;
+    physicalLife: number;
+    recipe: import('./appearance.js').AppearanceRecipe;
+  };
   inventory?: Array<{ definitionId: string; quantity: number }>;
   name: string;
   description: string;

@@ -132,6 +132,10 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   delete corpse.spatial.localPose;
   delete corpse.spatial.localAvoidanceReadyAt;
   entitySet(world.entities, corpseId, corpse);
+  const appearances = world.appearanceRecipes;
+  const appearance = appearances?.[entity.id];
+  if (appearances && appearance && appearance.physicalLife === (actor.physicalLife ?? 0))
+    appearances[corpseId] = { ...appearance };
   rootMembershipChanged(world, corpseId);
   // Snapshot the existing indexed custody tree before moving anything. Deepest first lets
   // a retained child leave a lost bag without exceeding another bag's capacity or depth.
@@ -313,6 +317,8 @@ export function respawnPlayer(world: WorldState, entity: Entity, events: WorldEv
   const point = choice.points[Math.floor(nextRandom(world) * choice.points.length)]!;
   forgetProjectileBodyEncounters(world, entity.id, actor.physicalLife ?? 0);
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
+  const appearance = world.appearanceRecipes?.[entity.id];
+  if (appearance) appearance.physicalLife = actor.physicalLife;
   actor.alive = true;
   actor.incapacitated = false;
   actor.body!.conditions = { wetness: 0, burning: 0 };

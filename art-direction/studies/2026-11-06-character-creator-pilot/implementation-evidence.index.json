@@ -1,0 +1,657 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-implementation-evidence",
+    "revisionId": "sha256-9438529cb6981d8742d5afcc1ab417b00ff2b691d2b9bc3dba1bc6ec5ec65ec7",
+    "manifestSha256": "55946438c42165612637226f7183c08f0b50db176402411d5156dd9543e1ba29"
+  },
+  "files": {
+    "character-creator-pilot/implementation-evidence/RECONSTRUCT.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0d9ce20f5cb94b93d82b63e67bd6b001026df4600cd3d237910c0f87c0f367a",
+      "bytes": 3235,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/active-evaluation-correctness.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8453cc2120c6dcd53bf77277ad8d3cec3a705753b99adc72a45d0961e721984c",
+      "bytes": 672,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/active-evaluation-paired.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a6dd97400b3369d0a13afe8c8f3b3c4cf06d62db5a735b1a75985d006e5df7b7",
+      "bytes": 1690,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/branch-and-motion-preservation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7464efc24daa7845b8de408aea9a6b5b86789378be44f2fcb2d0dfb2e237c8d",
+      "bytes": 617,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/branch-final-differences.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c66c695033bbcb46eaa534cdc6cb965dbe29153f15e74a41b98deb02c3eefeee",
+      "bytes": 10546,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2af4451c219bc4d33a762412a8550984df6c0c6b881396ec3ada011e5edd0bce",
+      "bytes": 957,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2af4451c219bc4d33a762412a8550984df6c0c6b881396ec3ada011e5edd0bce",
+      "bytes": 957,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/person-actor-before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8028780ac92f58ce998e02074635475822114663db5b1f1686c51528580cb315",
+      "bytes": 25278,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/person-materials-before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbc588cbd2337417736bebf5d8911d8d162e703f7980dac9ea852a6692440825",
+      "bytes": 15707,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3f4e20a7251bc3d6bb343dd43b8d20fb6284924f3012067ce0cb42de1226487",
+      "bytes": 8823,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc21abb05999a8509030a9e197437f26bfcb83ca9aab849806302c93f153140b",
+      "bytes": 750,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "815c2b369353790683e96a29c73a5aaafdd2b17079030ce2c346f463efe250ec",
+      "bytes": 49003,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f11b044e6fea0b15363f375a61c32a0ecc61fcc30bbf95a7927fe8563ad54118",
+      "bytes": 1101,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/cancellation-release/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e2856dca2bc3a243e169f154fa9bd2f0c204efc5262e9cb940ed80ad481c2f7",
+      "bytes": 2817,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/person-actor-before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8028780ac92f58ce998e02074635475822114663db5b1f1686c51528580cb315",
+      "bytes": 25278,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/person-materials-before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbc588cbd2337417736bebf5d8911d8d162e703f7980dac9ea852a6692440825",
+      "bytes": 15707,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68249af2d52756b9424fe3da7a8ef0847861b8ce05564713000e5d901f205a75",
+      "bytes": 8660,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca497a23a54b9c87fab46bf9108d761442c6e6f497627fbee7208e38e5cbfc31",
+      "bytes": 797,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d123caa29d7bdda37a1628a8a1d7366fcab0c599b5a315aa13b8c55ae98d1c4",
+      "bytes": 47445,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f11b044e6fea0b15363f375a61c32a0ecc61fcc30bbf95a7927fe8563ad54118",
+      "bytes": 1101,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-atomic-parts/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2dd80763bc694f58215536a84f1eeeed6f5df06dc118e92f7d517b24e8af0140",
+      "bytes": 2260,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-material-shader/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "655171f04e031728b477330bf8a7724ff56dd08a3946a08bf30d34827916869f",
+      "bytes": 961,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-material-shader/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce547af30bba500b5bfffa62c065f2b0796d65c33efcc25ef7a4c0eb2b605e74",
+      "bytes": 4567,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-material-shader/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f5187ea7be1ebd6274e6c4ea1c2ac2c9707fc039c46567256c06228026999614",
+      "bytes": 1729,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-material-shader/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b317c4378d4ff310fbfd5f679403a677864d8c75b9b7da10d17250c4a8888f18",
+      "bytes": 5083,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-material-shader/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "960b3196e0824ba7f81316c1539589f88379cc71ec9073b565452c8374905ea9",
+      "bytes": 1830,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-secondary-motion-cache/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fbe8c908857af73acd98130f23521a8edf3142424f8b6fcfb16bfef409a44703",
+      "bytes": 961,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-secondary-motion-cache/person-actor-before-cache.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa3d65b00bac71e6287e7322091f149c91137d5514a29e19f3157ffc0b04687e",
+      "bytes": 26760,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-secondary-motion-cache/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "62cb7695db8e283b22887f1b929faa5254711450a1710538a4ecf862f02bb00c",
+      "bytes": 8956,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-secondary-motion-cache/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "15e4fd20092004d16c7a7cc8925d78aea24950cbbab9e0b9c5b6cca09137eefd",
+      "bytes": 1814,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-secondary-motion-cache/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "248b3c578b4b2fd2f4f469de4d815e693ca1ba5834581dcea8a852e3608e6735",
+      "bytes": 52473,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-secondary-motion-cache/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a549a23ede44b339b6602ff1f8b9139402f5c9409c2a81867e7a0fc572816e62",
+      "bytes": 1001,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-secondary-motion-cache/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0755f5e1b8243de69b8808bddcabaacbe1ead8554606402a660ea5ac7713754d",
+      "bytes": 3863,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-texture-orientation-runner.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0857a085207d9ea7135c095b4f8fcc4f42514f1d29ef00ee7bb30441bef5a67e",
+      "bytes": 3269,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/browser-texture-orientation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0b8451d6cfca4fe1bbde0c86164fdbe93f9c234fd52bd4dedc2112fb54e80f2",
+      "bytes": 825,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/canonical-body-bounds.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a30a344857631c1728e506e77a21dd5481004c5fc4eb850e73387ea1e701ee2a",
+      "bytes": 716,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/foot-plane39.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b00e5b932e4f88b4ccab1ac7afd67c7fb8fbb8d9cf441ce04dfd72c46f9b9ab",
+      "bytes": 6307,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/head-topology43.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "577257ee17e6aa808e138497aed67b926b079e4d8019511d44733bb66ed9d775",
+      "bytes": 5993,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/material-roundtrip/output/skin-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e21c03370d8e455d2150b95b80b839f0e77f34f7f2b036486e56480c824e75d3",
+      "bytes": 260,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/material-roundtrip/source.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "55aceb6a6d0575755a3ea0dc0a9fda2aa630afac93db5048c2fd51bd64fac10d",
+      "bytes": 75,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/native-batch-repeat.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb318156ccde7572b3d24923ce4368d5fc0fe19eb9ed3518051f86dbc6e65532",
+      "bytes": 1076,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/native-export-boundary-check.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "deccb06bf907fca952fbb0c26fd123e54db2d0f2823ac439aeaef973ab788268",
+      "bytes": 879,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/native-export-motion-after.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0d5ed912a2549ba17a20e9ef1fd9bf87e87e53f0255eca6501c8798fc70ec5e",
+      "bytes": 638,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/native-export-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5289d764444d9037e6a0df17867aa7f069fe924f3d295539e9aabf7364d941a7",
+      "bytes": 628,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/native-rest-after.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "333791b40065faa7583ae4ce881ff6721295a931e4cd98650ecfd9e516782834",
+      "bytes": 6023,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/native-rest-before.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d61ae6e60083a4c7e7c67c9b05b45e446d62fb31d1fad3bab6861f5a3121bea9",
+      "bytes": 6580,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/neck-seam32.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1952b08a0cd213802f482c8f69d9dfa17caa38143765002434959ab737f90956",
+      "bytes": 749,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/neck-seam34.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8f203c3feb5587677c75e9a6e199157dcfa10b85569833a7531f20e91adb147e",
+      "bytes": 753,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-e5-e6-before.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "11b29c74a92076614c5ce42bed8b13ce698ae8800921c3433a2ab4468a5ba25d",
+      "bytes": 759,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-e5-e6-native.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "53b06a3aa41112080841a34faaf8c546ef6d68f652cd643ad4b1f28b9f61b98e",
+      "bytes": 1409,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-e5-e6-paired.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a5d5ff6a9c46b3e2f56ba397c38d473ce538623f18f44392890363d779f309ab",
+      "bytes": 23165,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-e5-service.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9967c0cf4828ffdae9c692f493e9d4a474fb917bef8edaa403d586fc796376a7",
+      "bytes": 827,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-editor-reload-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9156f3d6953c84bc8eeb954e7995b2026df67458bc6eda3b53c31898b9a7531e",
+      "bytes": 1022,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-install-cognition-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26d01bf72357729346b36374be3f8e2150730a979f8b1acda223cd4ef230cfdb",
+      "bytes": 4141,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-install-cognition.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f8715ca301dc8045270fc26708814589dbe101eccc73252199733c7b609f5f6c",
+      "bytes": 6785,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-installation-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b212fb54f01b3d8932470361a10fcde6ec29cc1f52cf1df1b00c5fb82b8c6e65",
+      "bytes": 859,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-map-after.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d8e7921037e3f69d59a134c006233a5c1046832d13d5488120fd137a2b0357d",
+      "bytes": 8009,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-appearance-map-before.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "48644999fa1994c411faef583242039423d4f8a53d48394496d5bedb61409d12",
+      "bytes": 8016,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-family-dependencies-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ef692f5919cf9805876a62023dcec07147f29548564f2c37a181fe211bad183",
+      "bytes": 1398,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-person-admission-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c399dbc815f7430aa3533406e4274c69f8080c2fb661fb07d67879ecec0ec218",
+      "bytes": 545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-person-input-boundaries-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "423bf226137087641ac8d344950ba33e20ca80a1834fbf9d6a28e55bc01836b0",
+      "bytes": 1018,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/evidence/openlegend-person-parity-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "accea148cfe70688863ec9ef9e390887be714a540d63ad1471702ea473daec02",
+      "bytes": 1199,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/freeze-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "62b3bb96a83b54c6376923387f214f5bb16e330bbb3ebf77d8f703e052ade293",
+      "bytes": 27693,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/18/probe-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d3a612a6620ff5c0eed86949cad02bfeb76235584cf212811eef765c5c538c9",
+      "bytes": 264,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/49/probe-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "270a332dee14598d8492f11495268aea3274a771197e86b993fc67c83b171f0e",
+      "bytes": 264,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/49-grey10/probe-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ac6e7d2e53f2c2023fa8af4814867cfd86b1e3db91b531894263c11af77e5833",
+      "bytes": 264,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/49-grey30/probe-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dba454fb56ccdc2d4b7d9c0d5bfe386991adfa1b3d0d3849d1c2085d7e9ea2c4",
+      "bytes": 264,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/80/probe-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5522a04bfcd752be3ea0dbf81930468bc8f61e515f225bba3813497d2b56499e",
+      "bytes": 264,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/colour-endpoints.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ae00dfadd6e643720a2eaea642e17b6ab75f2c1af08d392b0657bc322532147",
+      "bytes": 3199,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/mask.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b5bd39d88400c458d630a2005ccac6c7c5b36f057db53b83009f34f8f142e58d",
+      "bytes": 261,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/old.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3aa39b45d91c5d36e66a5299430c97b83c3ef0f452d45620e6bd2ade981b643f",
+      "bytes": 264,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f87f618e9d9ee565e9474ab2a6c5b225298ae1501b6bd2fb6d9b927cb733fb76",
+      "bytes": 6586,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/inputs/material-age-probe/source.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f95d9632f8e41720342cfa612977024352d30a4315c41260a6509a6b98cba1d2",
+      "bytes": 264,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/implementation-evidence/repository/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/art-treatment.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa1b45a278e83aa6c029838b6c6b345a8aee2882585fbee1ed9858b1d1011949",
+      "bytes": 11981,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/characters/character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d16c47faaf3a6ae8d6d23388ca984d66c44dcdb7ace23e50eec3c5e847d6668",
+      "bytes": 6165,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/characters/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "77ce686e837bcacf98119e87abdc178d36d46f171aae0951a465a730bb1d67be",
+      "bytes": 26634,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/characters/person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ede6e3025a5d13c21f09600de7faa13c635f033630e27bd647942eb71c619f3c",
+      "bytes": 68160,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/characters/person-materials.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a97968cf2d4b98d762ecc020df01bf0c50ff60176d326329550c6665a993e82",
+      "bytes": 17611,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c53cb8c252c1bcbbf184a61c7425c80fcfe69462690885d49338b2f4fc01a7b",
+      "bytes": 26084,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/apps/client/src/shadow-material.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4922e2c0098b4bc58f2ece4e20fa14ba1c86866fb08f82a12e089ab1bf601e04",
+      "bytes": 6934,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84dc3c4cdb08cf3957afeda11a5a1d71b1342b3a172dd56d7112c5afe20bf566",
+      "bytes": 3330,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/repository/packages/assets/src/index.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "942c57c8f418421d686410cc07d14ba882f50b2ad5212066ab3b229d78e7c57a",
+      "bytes": 12848,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/repository/pnpm-lock.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e02f12f1ac7978d97ac3a57a0b4f8cc270d330e4349df5c13916835a4c4fd617",
+      "bytes": 88155,
+      "mediaType": "application/yaml"
+    },
+    "character-creator-pilot/implementation-evidence/repository/tsconfig.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5843198c9127598ba58b045b127dba02caf59284d42e4bbf8185b9d3b978a79e",
+      "bytes": 1461,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68fd99d792b2a99768c619e79b5cf5b87daa3113f6fdb39306a0dbbd2f707e49",
+      "bytes": 1456,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/implementation-evidence/sources-at-check/atomic-parts/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "48c3630b38884be0bfa8e1c38f6035eecb45bef59a308cb5622d21e790fb81b1",
+      "bytes": 26108,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/sources-at-check/atomic-parts/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "61b6dfb375dde7437d10fb61b04c8eb16986ed60b34190a5d6a1731aa4dd61e2",
+      "bytes": 66208,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/sources-at-check/atomic-parts-before-callback-release/person-materials.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "404e987ebfb03e3cc94a81309cfba67b4612c4a188d659fafef54f89f7f7895d",
+      "bytes": 17579,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/sources-at-check/material-shader/person-materials.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "562da4e3265df7e68561eada6f36981019e9855d148e8b12692fd68bc2f8bcca",
+      "bytes": 15405,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-pilot/implementation-evidence/sources-at-check.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce0e6496a3f38014f2ab3fffc1d0ecbde28f0d95f728b25725c3c15e955c4b4b",
+      "bytes": 1529,
+      "mediaType": "application/json"
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { validAppearanceRecipeShape, type AppearanceRecipe } from '@open-legend/domain';
 import { z } from 'zod';
 import {
   ACTIVITY_LIMITS,
@@ -14,11 +15,21 @@ export const godPersonCreation = z
     backstory: z.string().trim().max(4000),
     traitIds: z.array(requestIdSchema).max(8),
     initialGoals: z.array(z.string().trim().min(1).max(500)).max(8),
+    appearance: z.custom<AppearanceRecipe>(validAppearanceRecipeShape).optional(),
+    initialOutfit: z.array(requestIdSchema).optional(),
   })
   .strict();
 
 export const godPersonEditor = z
   .object({
+    appearance: z
+      .object({
+        revision: z.number().int().safe().min(0),
+        physicalLife: z.number().int().safe().min(0),
+        recipe: z.custom<AppearanceRecipe>(validAppearanceRecipeShape),
+      })
+      .strict()
+      .optional(),
     inventory: z
       .array(
         z

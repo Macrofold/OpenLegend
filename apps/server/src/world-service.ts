@@ -1,3 +1,5 @@
+import { projectAppearance } from './appearance-view.js';
+import { appearanceFor, editAppearance } from '@open-legend/domain';
 import type { EmbeddingClient } from '@open-legend/ai';
 import { selectedPlace } from './known-places.js';
 import {
@@ -319,7 +321,11 @@ import {
   type AssetRevisionReference,
 } from '@open-legend/assets';
 import type { CreationActivationReceipt } from './creation-target-contracts.js';
-import { initialWorldArtwork, prepareWorldForStartup } from './initial-world-preparation.js';
+import {
+  initialWorldArtwork,
+  prepareInitialAppearance,
+  prepareWorldForStartup,
+} from './initial-world-preparation.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { primaryActionRefusal } from './action-catalogue.js';
 
@@ -975,6 +981,9 @@ export class WorldService {
       embeddingClient?: EmbeddingClient;
       /** Trusted installed build lock. It never silently binds a saved world. */
       presentationRelease?: AssetRevisionReference;
+      appearanceFamilies?: () => Promise<
+        readonly import('@open-legend/domain').AppearanceFamilyDefinition[]
+      >;
       cognitionControl?: import('./cognition-runtime-control.js').CognitionRuntimeControl;
       runtimeLiveness?: () => boolean;
       runtimeAuthority?: (scope: RequestScope) => boolean;
@@ -1015,6 +1024,8 @@ export class WorldService {
           creationAccounts,
           this.startup.initialWorldId,
         );
+    if (initial && this.startup.presentationRelease)
+      initial.world = await prepareInitialAppearance(initial, this.startup.appearanceFamilies);
     // Native opening preparation requests installed artwork; the application
     // resolves its exact release. Reopening a saved world never makes this choice.
     const initialArtwork =
@@ -5662,7 +5673,17 @@ export class WorldService {
     const entity = entityGet(this.world.entities, actorId);
     if (!entity?.actor || !hasMemory(entity)) throw new Error('Choose a person.');
     const selected = (key: keyof GodPersonEditorDraft) => !fields || fields.includes(key);
+    const appearance = selected('appearance') ? appearanceFor(this.world, entity) : undefined;
     return {
+      ...(appearance
+        ? {
+            appearance: {
+              revision: appearance.revision,
+              physicalLife: appearance.physicalLife,
+              recipe: appearance.recipe,
+            },
+          }
+        : {}),
       ...(selected('inventory') ? { inventory: inventoryTotals(this.world, actorId) } : {}),
       ...(selected('name') ? { name: entity.name } : {}),
       ...(selected('description')
@@ -5747,6 +5768,9 @@ export class WorldService {
         .map((item) => ({ id: item.id, name: item.name }))
         .sort((a, b) => a.name.localeCompare(b.name)),
       traitOptions: entity.actor.traits?.map((trait) => ({ ...trait })) ?? [],
+      appearanceView: projectAppearance(this.world, entity),
+      physicalLife: entity.actor.physicalLife ?? 0,
+      appearanceFamilies: Object.values(this.world.appearanceDefinitions?.families ?? {}),
       person: this.personEditorFields(actorId, scope),
     };
   }
@@ -5833,16 +5857,17 @@ export class WorldService {
         if (!entity?.actor || !hasMemory(entity))
           return { ok: false, code: 'actor', message: 'Choose a person.' };
         const currentPerson = this.personEditorFields(actorId, scope);
+        // JSONB may reorder recipe keys after reload. Presentation equality must
+        // preserve the same field-level merge semantics across that boundary.
+        const fieldValue = (draft: GodPersonEditorDraft, key: keyof GodPersonEditorDraft) =>
+          key === 'appearance' ? canonicalJson(draft.appearance) : JSON.stringify(draft[key]);
         const changedFields = (Object.keys(person) as Array<keyof GodPersonEditorDraft>).filter(
-          (key) => JSON.stringify(person[key]) !== JSON.stringify(basePerson[key]),
+          (key) => fieldValue(person, key) !== fieldValue(basePerson, key),
         );
         for (const key of changedFields) {
           // Simulation-owned meters may drift after opening; an explicit god edit overrides
           // that snapshot. Other fields retain field-level optimistic concurrency.
-          if (
-            key !== 'meters' &&
-            JSON.stringify(currentPerson[key]) !== JSON.stringify(basePerson[key])
-          )
+          if (key !== 'meters' && fieldValue(currentPerson, key) !== fieldValue(basePerson, key))
             return {
               ok: false,
               code: 'stale',
@@ -5864,11 +5889,16 @@ export class WorldService {
               revision: this.viewRevision,
             };
         }
-        const result = editPersonState(this.world, {
-          actorId,
-          person: mergedPerson,
-          memoryChanges,
-        });
+        const result =
+          changedFields.every((key) => key === 'appearance') &&
+          !memoryChanges.length &&
+          mergedPerson.appearance
+            ? editAppearance(this.world, actorId, mergedPerson.appearance)
+            : editPersonState(this.world, {
+                actorId,
+                person: mergedPerson,
+                memoryChanges,
+              });
         if (!result.outcome.ok) return result.outcome;
         if (
           !(await this.commit(

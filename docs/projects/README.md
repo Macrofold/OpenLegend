@@ -15,6 +15,9 @@ Projects own proposed/accepted scope and delivery plans; their focused trackers 
 | Commercial and creator proposals   | [Customer offers](customer-and-supporter-offers-feature-spec.md), [published packs](published-packs-and-creator-revenue-feature-spec.md), [creator fund](creator-fund-and-contributor-governance-feature-spec.md) |
 | Workflow/document organization     | [Adoption](agent-workflow-efficiency/01-workflow-feature-spec.md), [parallel verification campaigns](verification-campaigns-feature-spec.md)                                                                      |
 | Art production workflow            | [Feature specification](art-workflow-feature-spec.md), [technical design](art-workflow-tech-design.md)                                                                                                            |
+| Adjustable people and wardrobe     | [Feature specification](people-from-parts-feature-spec.md), [technical design](people-from-parts-tech-design.md), [bundled human profile](../worlds/base/people-appearance.md)                                    |
+
+The standalone [MetaHuman foundation proof](metahuman-foundation-poc-feature-spec.md), with its [execution guide](metahuman-foundation-poc-tech-design.md), evaluates a reusable exported character kit before any change to the regular art workflow.
 
 The [Spirit and mental-status design note](spirit-and-mental-statuses-design-note.md) records the selected naming and coexistence model. [Character and map additions](character-and-map-additions-feature-spec.md) specifies Spirit, stats, more equipment slots, map markers and nicknames.
 

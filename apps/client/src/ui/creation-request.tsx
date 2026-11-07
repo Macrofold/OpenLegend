@@ -3,6 +3,7 @@ import { LoadingDialog } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import { Modal, ModalOverlay } from 'react-aria-components';
 import type { ApiResult, GameView } from '@open-legend/protocol';
+import { validAppearanceRecipeShape } from '@open-legend/protocol';
 import { post, privateDraftScope } from '../api';
 import { Button, IconButton, Tag } from '../design-system/components';
 import { validatePerson } from './god-tools';
@@ -26,6 +27,7 @@ type State = {
   visible: boolean;
   message: string;
 };
+const maximumRetainedLength = 32768;
 const paths = { item: '/api/god/items', person: '/api/god/person', environment: '/api/god/spawn' };
 const spawnRefusals = new Set([
   'identity',
@@ -35,6 +37,11 @@ const spawnRefusals = new Set([
   'invalid-person',
   'invalid-object',
   'work-unavailable',
+  'appearance-family',
+  'appearance-control',
+  'appearance-selection',
+  'appearance-envelope',
+  'initial-outfit',
 ]);
 const refused = (kind: Kind, code: string) =>
   kind === 'item' ? ['invalid-item', 'unavailable'].includes(code) : spawnRefusals.has(code);
@@ -109,22 +116,21 @@ function validRequest(value: unknown): value is Request {
   if (kind === 'environment')
     return keys(body, ['id', 'type', 'position']) && id(body.type) && position(body.position);
   if (
-    !keys(body, [
-      'id',
-      'position',
-      'name',
-      'personality',
-      'backstory',
-      'traitIds',
-      'initialGoals',
-    ]) ||
+    !keys(
+      body,
+      ['id', 'position', 'name', 'personality', 'backstory', 'traitIds', 'initialGoals'],
+      ['appearance', 'initialOutfit'],
+    ) ||
     !position(body.position) ||
     !text(body.name, 80) ||
     !text(body.personality, 1000) ||
     !text(body.backstory, 4000) ||
     !strings(body.traitIds, 8, 200) ||
     !body.traitIds.every(id) ||
-    !strings(body.initialGoals, 8, 500)
+    !strings(body.initialGoals, 8, 500) ||
+    (body.appearance !== undefined && !validAppearanceRecipeShape(body.appearance)) ||
+    (body.initialOutfit !== undefined &&
+      (!Array.isArray(body.initialOutfit) || !body.initialOutfit.every(id)))
   )
     return false;
   return !validatePerson({
@@ -138,7 +144,7 @@ function validRequest(value: unknown): value is Request {
 function read(key: string): Request | undefined {
   const raw = sessionStorage.getItem(key);
   if (raw === null) return;
-  if (raw.length > 32768)
+  if (raw.length > maximumRetainedLength)
     throw new Error('The retained creation is too large to read safely. No new creation was sent.');
   const value: unknown = JSON.parse(raw);
   if (!validRequest(value))
@@ -231,13 +237,12 @@ export function useCreationRequest(view: GameView | null, connected: boolean) {
       !latest.current.busy && !latest.current.blocked && !latest.current.request && available()
     );
   }
-  function persist(request: Request) {
+  function persist(request: Request, serialized: string) {
     if (!key || !live())
       throw new Error('Character access changed. Reopen creation after reconnecting.');
     const existing = read(key);
     if (existing && !same(request, existing))
       throw new Error('Another creation remains unresolved. Nothing new was sent.');
-    const serialized = JSON.stringify(request);
     sessionStorage.setItem(key, serialized);
     if (sessionStorage.getItem(key) !== serialized)
       throw new Error('This browser could not retain the exact creation. Nothing was sent.');
@@ -251,7 +256,10 @@ export function useCreationRequest(view: GameView | null, connected: boolean) {
       const existing = read(key!);
       if (existing && !same(request, existing)) throw new Error('The retained creation changed.');
       try {
-        sessionStorage.setItem(key!, JSON.stringify(resolved));
+        const serialized = JSON.stringify(resolved);
+        // Keep the original request readable if its confirmed result would
+        // exceed the same recovery boundary. Memory still owns the outcome.
+        if (serialized.length <= maximumRetainedLength) sessionStorage.setItem(key!, serialized);
       } catch {
         // A full store may reject the larger confirmed result but still allow deletion.
         // Memory keeps the result; matching removal and its read-back remain mandatory.
@@ -312,9 +320,16 @@ export function useCreationRequest(view: GameView | null, connected: boolean) {
       });
       return;
     }
+    const serialized = JSON.stringify(request);
+    if (serialized.length > maximumRetainedLength)
+      return {
+        ok: false,
+        code: 'invalid',
+        message: 'These creation details are too large to retain safely. Nothing was sent.',
+      };
     update({ request, busy: true, blocked: false, message: '' });
     try {
-      persist(request);
+      persist(request, serialized);
     } catch (reason) {
       update({
         busy: false,

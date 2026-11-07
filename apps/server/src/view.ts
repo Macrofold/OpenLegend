@@ -1,3 +1,4 @@
+import { projectAppearance } from './appearance-view.js';
 import { equippedItems, recognizesSubject, knowledgeDocument } from '@open-legend/domain';
 import { worldClockParts, worldDayText } from '@open-legend/protocol';
 import { attackSourceView } from './attack-execution-view.js';
@@ -570,6 +571,9 @@ export async function projectView(
                 ]);
               })()
             : []),
+          world.appearanceRecipes?.[entity.id],
+          world.appearanceDefinitions,
+          entity.inventoryRevision,
           entity.actor ? world.socialOfferPolicy : undefined,
           entity.actor ? world.constructionProfile?.materialContributions : undefined,
           entity.actor ? knownTradeLots(world, scope.actorId, entity.id) : undefined,
@@ -763,6 +767,7 @@ export async function projectView(
             supportSurfaceId: worldSupport(entity),
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
+            modularAppearance: projectAppearance(world, entity),
             ...(entity.actor ? { portrait: portraitArt(world, entity.appearance) } : {}),
             ...(entity.heat ? { heat: { lit: entity.heat.lit } } : {}),
             radius: bodySize ? bodySize.width / 2 : entity.kind === 'campfire' ? 0.5 : 0.35,
@@ -1225,6 +1230,15 @@ export async function projectView(
     ...(service.config.godMode && service.currentScope(scope, 'create')
       ? {
           godTools: {
+            appearanceFamilies: Object.values(world.appearanceDefinitions?.families ?? {}),
+            outfitOptions: Object.entries(world.appearanceDefinitions?.wearables ?? {}).map(
+              ([id, part]) => ({
+                id,
+                label: world.itemDefinitions[id]?.name ?? id,
+                ...part,
+                defaultForCreation: part.defaultForCreation === true,
+              }),
+            ),
             familyLabel: BASE_FAMILY_POLICY.title,
             traits: godAuthoringCatalogue(world).traits.map((trait) => ({ ...trait })),
             spawnOptions: godAuthoringCatalogue(world).spawnOptions.map((option) => ({
@@ -1273,6 +1287,7 @@ export async function projectView(
     player: {
       knowledgeRevision: world.knowledgeRevisions?.[player.id] ?? 0,
       appearance: player.appearance ?? 'sprite',
+      modularAppearance: projectAppearance(world, player),
       portrait: portraitArt(world, player.appearance),
       participation: actor.participation?.phase ?? 'active',
       departureNotice: world.participationPolicy?.exitDescription,

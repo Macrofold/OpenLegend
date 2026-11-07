@@ -1055,11 +1055,16 @@ export class AssetRepository {
     reference: AssetRevisionReference,
     principal?: AssetPrincipal,
   ): Promise<StoredAssetRevision> {
+    return (await this.permittedRevisionClosure(reference, principal)).record;
+  }
+  /** Read metadata for one selected graph after the same complete current-use
+   * admission as revision(). This grants neither publication nor arbitrary files. */
+  async permittedRevisionClosure(reference: AssetRevisionReference, principal?: AssetPrincipal) {
     const closure = await this.revisionClosure(reference),
       use = publicationUse(closure.record.destination);
     for (const record of [closure.record, ...closure.dependencies])
       await this.permitRevision(record, principal, use);
-    return closure.record;
+    return closure;
   }
   /** Retaining a known unavailable picture never grants delivery. Native depiction
    * can continue through licensing/grant changes; unknown authority stays blocked. */

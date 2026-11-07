@@ -487,9 +487,15 @@ export function finishWorld(
   let perceptionRootReplaced = false;
   const correctionIds = new Map<string, Set<string> | null>();
   let correctionRootReplaced = false;
+  const appearanceIds = new Set<string>();
+  let appearanceRootReplaced = false;
   const result = drafts.finishDraft(world, (patches) => {
     capturePatches?.(patches);
     for (const { op, path, value: patchValue } of patches) {
+      if (path[0] === 'appearanceRecipes') {
+        if (typeof path[1] === 'string') appearanceIds.add(path[1]);
+        else appearanceRootReplaced = true;
+      }
       if (path[0] === 'perceptionEpisodes') {
         const observer = path[1];
         if (typeof observer !== 'string') perceptionRootReplaced = true;
@@ -564,6 +570,8 @@ export function finishWorld(
       if (before && after && before !== after && Object.isFrozen(before))
         recordMapSuccessors.set(before, { next: new WeakRef(after), changed });
     };
+    if (!appearanceRootReplaced && appearanceIds.size)
+      publishMap(base.appearanceRecipes, result.appearanceRecipes, appearanceIds);
     if (!perceptionRootReplaced) {
       if (perceptionIds.size)
         publishMap(

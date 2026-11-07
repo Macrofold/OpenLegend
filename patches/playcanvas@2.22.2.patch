@@ -1,0 +1,270 @@
+diff --git a/build/playcanvas/src/framework/anim/controller/anim-controller.js b/build/playcanvas/src/framework/anim/controller/anim-controller.js
+index 4c9f7f27a04b29b2ad1f23e992ce3623f8c265e5..8dff684429409e36def293a5e217b5cdf936fc42 100644
+--- a/build/playcanvas/src/framework/anim/controller/anim-controller.js
++++ b/build/playcanvas/src/framework/anim/controller/anim-controller.js
+@@ -335,6 +335,8 @@ class AnimController {
+ 			if (!clip) {
+ 				const speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
+ 				clip = new AnimClip(activeState.animations[i].animTrack, this._timeInState, speed, true, activeState.loop, this._eventHandler);
++				// Inactive synchronized children must share the live cycle clock.
++				clip._syncAnimations = !!activeState.animations[i].parent?.syncAnimations;
+ 				clip.name = activeState.animations[i].name;
+ 				this._animEvaluator.addClip(clip);
+ 			} else {
+@@ -374,7 +376,7 @@ class AnimController {
+ 			this._stateNames.push(path[0]);
+ 		}
+ 		state.addAnimation(path, animTrack);
+-		this._animEvaluator.updateClipTrack(state.name, animTrack);
++		this._animEvaluator.updateClipTrack(path[path.length - 1], animTrack);
+ 		if (speed !== void 0) {
+ 			state.speed = speed;
+ 		}
+@@ -439,6 +441,7 @@ class AnimController {
+ 		if (transition) {
+ 			this.updateStateFromTransition(transition);
+ 		}
++		// Weight calculation also refreshes synchronized speeds during crossfades.
+ 		if (this._isTransitioning) {
+ 			this._currTransitionTime += dt;
+ 			if (this._currTransitionTime <= this._totalTransitionTime) {
+@@ -451,13 +454,16 @@ class AnimController {
+ 						clip = this._animEvaluator.findClip(`${animation.name}.previous.${i}`);
+ 						if (clip) {
+ 							clip.blendWeight = (1 - interpolatedTime) * animation.normalizedWeight * stateWeight;
++							if (clip._syncAnimations) clip.speed = animation.speed;
+ 						}
+ 					}
+ 				}
+ 				state = this.activeState;
+ 				for (let i = 0; i < state.animations.length; i++) {
+ 					animation = state.animations[i];
+-					this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
++					clip = this._animEvaluator.findClip(animation.name);
++					clip.blendWeight = interpolatedTime * animation.normalizedWeight;
++					if (clip._syncAnimations) clip.speed = animation.speed;
+ 				}
+ 			} else {
+ 				this._isTransitioning = false;
+@@ -473,6 +479,7 @@ class AnimController {
+ 					clip = this._animEvaluator.findClip(animation.name);
+ 					if (clip) {
+ 						clip.blendWeight = animation.normalizedWeight;
++						if (clip._syncAnimations) clip.speed = animation.speed;
+ 					}
+ 				}
+ 			}
+@@ -484,7 +491,7 @@ class AnimController {
+ 					clip = this._animEvaluator.findClip(animation.name);
+ 					if (clip) {
+ 						clip.blendWeight = animation.normalizedWeight;
+-						if (animation.parent.syncAnimations) {
++						if (clip._syncAnimations) {
+ 							clip.speed = animation.speed;
+ 						}
+ 					}
+diff --git a/build/playcanvas/src/framework/anim/evaluator/anim-clip.js b/build/playcanvas/src/framework/anim/evaluator/anim-clip.js
+index 2e70543c77eb16322aa6652a03d9369750185afd..824d4725e22452de8da6e232dd921014b1d9e117 100644
+--- a/build/playcanvas/src/framework/anim/evaluator/anim-clip.js
++++ b/build/playcanvas/src/framework/anim/evaluator/anim-clip.js
+@@ -15,6 +15,8 @@ class AnimClip {
+ 		this._loop = loop;
+ 		this._blendWeight = 1;
+ 		this._blendOrder = 0;
++		this._syncAnimations = false;
++		this._eventsSkipped = false;
+ 		this._eventHandler = eventHandler;
+ 		this.alignCursorToCurrentTime();
+ 	}
+@@ -158,13 +160,21 @@ class AnimClip {
+ 	progressForTime(time) {
+ 		return time * this._speed / this._track.duration;
+ 	}
+-	_update(deltaTime) {
++	_update(deltaTime, evaluate = true) {
+ 		if (this._playing) {
+ 			let time = this._time;
+ 			const duration = this._track.duration;
+ 			const speed = this._speed;
+ 			const loop = this._loop;
+-			if (this._track.events.length > 0 && duration > 0) {
++			// A hidden synchronized clip advances only time, not poses or events.
++			// Align once when it becomes visible instead of replaying skipped events.
++			if (evaluate && this._eventsSkipped) {
++				this.alignCursorToCurrentTime();
++				this._eventsSkipped = false;
++			} else if (!evaluate) {
++				this._eventsSkipped = true;
++			}
++			if (evaluate && this._track.events.length > 0 && duration > 0) {
+ 				this.activeEventsForFrame(time, time + speed * deltaTime);
+ 			}
+ 			time += speed * deltaTime;
+@@ -189,7 +199,7 @@ class AnimClip {
+ 			}
+ 			this._time = time;
+ 		}
+-		if (this._time !== this._snapshot._time) {
++		if (evaluate && this._time !== this._snapshot._time) {
+ 			this._track.eval(this._time, this._snapshot);
+ 		}
+ 	}
+diff --git a/build/playcanvas/src/framework/anim/evaluator/anim-evaluator.js b/build/playcanvas/src/framework/anim/evaluator/anim-evaluator.js
+index d7d85b2dcd97199e234cbb69cf113a7a5b034c9f..499957af757690e7c5e634544737b5ac2742f02f 100644
+--- a/build/playcanvas/src/framework/anim/evaluator/anim-evaluator.js
++++ b/build/playcanvas/src/framework/anim/evaluator/anim-evaluator.js
+@@ -100,7 +100,7 @@ class AnimEvaluator {
+ 	}
+ 	updateClipTrack(name, animTrack) {
+ 		this._clips.forEach((clip) => {
+-			if (clip.name.includes(name)) {
++			if (clip.name === name || clip.name.startsWith(`${name}.previous.`)) {
+ 				clip.track = animTrack;
+ 			}
+ 		});
+@@ -142,8 +142,8 @@ class AnimEvaluator {
+ 			const inputs = this._inputs[index];
+ 			const outputs = this._outputs[index];
+ 			const blendWeight = clip.blendWeight;
+-			if (blendWeight > 0) {
+-				clip._update(deltaTime);
++			if (blendWeight > 0 || clip._syncAnimations) {
++				clip._update(deltaTime, blendWeight > 0);
+ 			}
+ 			if (!outputAnimation) break;
+ 			let input;
+diff --git a/build/playcanvas.dbg/src/framework/anim/controller/anim-controller.js b/build/playcanvas.dbg/src/framework/anim/controller/anim-controller.js
+index a30e8ce7b4111ff8f0eb68db26dbf56b3d082eed..29767aefde71fe349c47a89425aee4addb27a8a8 100644
+--- a/build/playcanvas.dbg/src/framework/anim/controller/anim-controller.js
++++ b/build/playcanvas.dbg/src/framework/anim/controller/anim-controller.js
+@@ -421,6 +421,8 @@ class AnimController {
+       if (!clip) {
+         const speed = Number.isFinite(activeState.animations[i].speed) ? activeState.animations[i].speed : activeState.speed;
+         clip = new AnimClip(activeState.animations[i].animTrack, this._timeInState, speed, true, activeState.loop, this._eventHandler);
++        // Inactive synchronized children must share the live cycle clock.
++        clip._syncAnimations = !!activeState.animations[i].parent?.syncAnimations;
+         clip.name = activeState.animations[i].name;
+         this._animEvaluator.addClip(clip);
+       } else {
+@@ -460,7 +462,7 @@ class AnimController {
+       this._stateNames.push(path[0]);
+     }
+     state.addAnimation(path, animTrack);
+-    this._animEvaluator.updateClipTrack(state.name, animTrack);
++    this._animEvaluator.updateClipTrack(path[path.length - 1], animTrack);
+     if (speed !== void 0) {
+       state.speed = speed;
+     }
+@@ -526,6 +528,7 @@ class AnimController {
+     if (transition) {
+       this.updateStateFromTransition(transition);
+     }
++    // Weight calculation also refreshes synchronized speeds during crossfades.
+     if (this._isTransitioning) {
+       this._currTransitionTime += dt;
+       if (this._currTransitionTime <= this._totalTransitionTime) {
+@@ -538,13 +541,16 @@ class AnimController {
+             clip = this._animEvaluator.findClip(`${animation.name}.previous.${i}`);
+             if (clip) {
+               clip.blendWeight = (1 - interpolatedTime) * animation.normalizedWeight * stateWeight;
++              if (clip._syncAnimations) clip.speed = animation.speed;
+             }
+           }
+         }
+         state = this.activeState;
+         for (let i = 0; i < state.animations.length; i++) {
+           animation = state.animations[i];
+-          this._animEvaluator.findClip(animation.name).blendWeight = interpolatedTime * animation.normalizedWeight;
++          clip = this._animEvaluator.findClip(animation.name);
++          clip.blendWeight = interpolatedTime * animation.normalizedWeight;
++          if (clip._syncAnimations) clip.speed = animation.speed;
+         }
+       } else {
+         this._isTransitioning = false;
+@@ -560,6 +566,7 @@ class AnimController {
+           clip = this._animEvaluator.findClip(animation.name);
+           if (clip) {
+             clip.blendWeight = animation.normalizedWeight;
++            if (clip._syncAnimations) clip.speed = animation.speed;
+           }
+         }
+       }
+@@ -571,7 +578,7 @@ class AnimController {
+           clip = this._animEvaluator.findClip(animation.name);
+           if (clip) {
+             clip.blendWeight = animation.normalizedWeight;
+-            if (animation.parent.syncAnimations) {
++            if (clip._syncAnimations) {
+               clip.speed = animation.speed;
+             }
+           }
+diff --git a/build/playcanvas.dbg/src/framework/anim/evaluator/anim-clip.js b/build/playcanvas.dbg/src/framework/anim/evaluator/anim-clip.js
+index 6d986c5f518c02394c5863a15b37005e802c2868..053a9956fd8ab076deebb0bd9c28836c7aeddd46 100644
+--- a/build/playcanvas.dbg/src/framework/anim/evaluator/anim-clip.js
++++ b/build/playcanvas.dbg/src/framework/anim/evaluator/anim-clip.js
+@@ -23,6 +23,8 @@ const _AnimClip = class _AnimClip {
+     this._loop = loop;
+     this._blendWeight = 1;
+     this._blendOrder = 0;
++    this._syncAnimations = false;
++    this._eventsSkipped = false;
+     this._eventHandler = eventHandler;
+     this.alignCursorToCurrentTime();
+   }
+@@ -166,13 +168,21 @@ const _AnimClip = class _AnimClip {
+   progressForTime(time) {
+     return time * this._speed / this._track.duration;
+   }
+-  _update(deltaTime) {
++  _update(deltaTime, evaluate = true) {
+     if (this._playing) {
+       let time = this._time;
+       const duration = this._track.duration;
+       const speed = this._speed;
+       const loop = this._loop;
+-      if (this._track.events.length > 0 && duration > 0) {
++      // A hidden synchronized clip advances only time, not poses or events.
++      // Align once when it becomes visible instead of replaying skipped events.
++      if (evaluate && this._eventsSkipped) {
++        this.alignCursorToCurrentTime();
++        this._eventsSkipped = false;
++      } else if (!evaluate) {
++        this._eventsSkipped = true;
++      }
++      if (evaluate && this._track.events.length > 0 && duration > 0) {
+         this.activeEventsForFrame(time, time + speed * deltaTime);
+       }
+       time += speed * deltaTime;
+@@ -197,7 +207,7 @@ const _AnimClip = class _AnimClip {
+       }
+       this._time = time;
+     }
+-    if (this._time !== this._snapshot._time) {
++    if (evaluate && this._time !== this._snapshot._time) {
+       this._track.eval(this._time, this._snapshot);
+     }
+   }
+diff --git a/build/playcanvas.dbg/src/framework/anim/evaluator/anim-evaluator.js b/build/playcanvas.dbg/src/framework/anim/evaluator/anim-evaluator.js
+index 5a371f4bf9588fdb7fbf86540e13d7268b5fd8a7..469e24510d60654948eb2da5ecb71e11486036f1 100644
+--- a/build/playcanvas.dbg/src/framework/anim/evaluator/anim-evaluator.js
++++ b/build/playcanvas.dbg/src/framework/anim/evaluator/anim-evaluator.js
+@@ -124,7 +124,7 @@ class AnimEvaluator {
+   }
+   updateClipTrack(name, animTrack) {
+     this._clips.forEach((clip) => {
+-      if (clip.name.includes(name)) {
++      if (clip.name === name || clip.name.startsWith(`${name}.previous.`)) {
+         clip.track = animTrack;
+       }
+     });
+@@ -181,8 +181,8 @@ class AnimEvaluator {
+       const inputs = this._inputs[index];
+       const outputs = this._outputs[index];
+       const blendWeight = clip.blendWeight;
+-      if (blendWeight > 0) {
+-        clip._update(deltaTime);
++      if (blendWeight > 0 || clip._syncAnimations) {
++        clip._update(deltaTime, blendWeight > 0);
+       }
+       if (!outputAnimation) break;
+       let input;

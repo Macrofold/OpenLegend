@@ -104,7 +104,7 @@ A second material, length, ornament or compatible attachment is useful evidence 
 
 ## Articulated people and creatures
 
-New bundled-world people follow the [people-from-parts requirement and pending-design gate](../maintainers/art/people.md). The general techniques below do not authorize a clothed one-piece person or turn a rejected body into an approved source. Required body, face, hair and clothing separation is distinct from optional separation merely to improve a generation result.
+New bundled-world people follow the [people-from-parts production gate](../maintainers/art/people.md). The general techniques below do not authorize a clothed one-piece person or turn a rejected body into an approved source. Required body, face, hair and clothing separation is distinct from optional separation merely to improve a generation result.
 
 ### 1. Connect visible identity to character purpose
 
@@ -158,7 +158,7 @@ Finish materials after the rough deformation pass. Check eyes/brows/hair, hands,
 
 **Consume:** a compatible rig, the actual action's start, interruption and outcome meanings, equipment, contact targets and the intended emotional reading.
 
-**Produce:** editable selected clips and transition requirements. Start with compatible existing motion where useful; otherwise author, capture, retarget or use a constrained skeletal-motion route. The [motion assessment](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md) distinguishes motion tools from image-to-video references.
+**Produce:** editable selected clips and transition requirements. Start with compatible existing motion where useful. For missing human motions, the [animation procedure](art-flows/animation.md) owns the selected Kimodo route, exact qualification status and target-preserving authoring steps; MotionBricks is optional for supplied-pose transitions. These routes run only when animation is needed, produce ordinary baked assets, and do not replace creature/specialist or hand-keyed work. The [current NVIDIA research](../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md) records access, versions and rights; the earlier [motion assessment](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md) remains historical source context.
 
 Shape anticipation, weight transfer, contact and recovery so the player can read intention. Avoid treating every action as an arbitrary loop. Check feet, hands, held items, root displacement, turns and relevant interruption points. A clip that looks impressive in isolation may delay response, imply contact before a native outcome, or slide through the ground when attached to real movement.
 

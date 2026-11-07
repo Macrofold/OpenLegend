@@ -6,8 +6,8 @@ Which platform and model each stage of the [art workflow](README.md) uses, how t
 
 | Preset               | Meaning                                                                                                                                                                                                                                                                                                |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `standard` (default) | Every stage uses the [default roster](#default-roster), in which every generation stage runs on Higgsfield (Mike's decision, October 31, 2026). "Regular", "manual" and "standard" all mean this.                                                                                                      |
-| `higgsfield`         | Now the same as `standard` for generation. The word is kept because Mike uses it.                                                                                                                                                                                                                      |
+| `standard` (default) | Every stage uses the [default roster](#default-roster). Image and geometry generation use Higgsfield; new or replacement compatible human motion starts with the [human-motion route](#human-motion-generation). "Regular", "manual" and "standard" all mean this.                                     |
+| `higgsfield`         | Keeps Higgsfield for its supported image, geometry and rigging stages. It does not silently override the shared motion-source order; an explicit motion-source request can do that.                                                                                                                    |
 | `both`               | A comparison of Higgsfield against direct routes, from one frozen input set ([comparisons](README.md#8-compare-tools-or-methods)). The direct side uses the OpenAI Images API for 2D and an authorized direct 3D account; a stage with no authorized direct route is excluded, and the record says so. |
 
 **Overrides.** A request may name a platform or model for any stage: "concepts with Nano Banana Pro", "3D with Tripo", "views with Seedream". The named tool replaces that stage's default only; every other stage keeps the preset.
@@ -21,22 +21,22 @@ Which platform and model each stage of the [art workflow](README.md) uses, how t
 
 Checked 2026-10-31. "Connected" means usable today without new accounts or keys.
 
-| Stage                           | Default                                                                                                                                                                                                                                                                                                                                            | Alternatives you can name                                                                                                                                                                                 |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Concept images                  | **GPT Image 2.5 on [Higgsfield](#higgsfield)** (`gpt_image_2_5`, quality `high`, `2k`)                                                                                                                                                                                                                                                             | Nano Banana Pro, Nano Banana 2, Seedream 5.0 Pro, FLUX.2 on Higgsfield; the [OpenAI Images API](#openai-images-api) or the host's built-in image tool when named; Midjourney ([manual only](#midjourney)) |
-| Reference views and image edits | **GPT Image 2.5 on Higgsfield**, editing with the concept and accepted views as references                                                                                                                                                                                                                                                         | **Seedream 5.0 Pro** on Higgsfield (faces, character sheets); Nano Banana Pro on Higgsfield (up to 14 references)                                                                                         |
-| Image to 3D                     | **Three candidates on Higgsfield** (connected) on the full path: two from Multi-Image to 3D (Meshy) with different seeds, one from Tripo H3.1 Multiview; **one Meshy candidate** on the simple path ([details](#image-to-3d))                                                                                                                      | Hunyuan3D v3 and Meshy 7 single-image on Higgsfield; direct Meshy, Tripo, fal.ai models ([opt-in](#other-platforms-opt-in))                                                                               |
-| Library sources                 | [Approved sources](#library-sources)                                                                                                                                                                                                                                                                                                               | Other CC0 or properly licensed sources, after rights review                                                                                                                                               |
-| Cleanup, normalization, export  | **Blender 5.2.2** ([details](#blender)), with recipe scripts beside the work                                                                                                                                                                                                                                                                       | —                                                                                                                                                                                                         |
-| Human rig                       | **3D Rigging** on Higgsfield applied to the picked candidate ([rigging](#rigging-and-clips)); for people, the body/rig route the [people design](../../maintainers/art/people.md) must settle, including whether MPFB may be a hidden base ([OD3](../../projects/art-workflow-feature-spec.md#od3--the-humanoid-body-family-and-rig-for-the-cast)) | Mixamo or AccuRIG ([manual](#other-platforms-opt-in)); hand-built in Blender                                                                                                                              |
-| Nonhuman rig                    | Blender's bundled **Rigify** templates (basic quadruped, horse, cat, wolf, bird, shark) or a hand-built armature                                                                                                                                                                                                                                   | Tripo's creature rig types (direct Tripo, opt-in)                                                                                                                                                         |
-| Clips                           | Family clips, then the Meshy animation library through Higgsfield, then hand-keyed in Blender ([order](3d-models.md#step-9--make-the-clips))                                                                                                                                                                                                       | Mixamo (manual); text-to-motion services ([opt-in](#other-platforms-opt-in))                                                                                                                              |
-| UI composition and typography   | **Claude Design** ([notes](#claude-design))                                                                                                                                                                                                                                                                                                        | A native layout or vector tool, or a source preview                                                                                                                                                       |
-| Review sheets                   | [Image and turntable sheets](#review-sheets)                                                                                                                                                                                                                                                                                                       | —                                                                                                                                                                                                         |
-| Look check                      | The game's [study viewer](../../asset-workflow.md#inspect-in-a-browser-and-use-files-in-the-game)                                                                                                                                                                                                                                                  | —                                                                                                                                                                                                         |
-| Preservation                    | `pnpm assets` ([asset workflow](../../asset-workflow.md#publish-an-exact-revision))                                                                                                                                                                                                                                                                | —                                                                                                                                                                                                         |
+| Stage                           | Default                                                                                                                                                                                                                                                                                                                       | Alternatives you can name                                                                                                                                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Concept images                  | **GPT Image 2.5 on [Higgsfield](#higgsfield)** (`gpt_image_2_5`, quality `high`, `2k`)                                                                                                                                                                                                                                        | Nano Banana Pro, Nano Banana 2, Seedream 5.0 Pro, FLUX.2 on Higgsfield; the [OpenAI Images API](#openai-images-api) or the host's built-in image tool when named; Midjourney ([manual only](#midjourney)) |
+| Reference views and image edits | **GPT Image 2.5 on Higgsfield**, editing with the concept and accepted views as references                                                                                                                                                                                                                                    | **Seedream 5.0 Pro** on Higgsfield (faces, character sheets); Nano Banana Pro on Higgsfield (up to 14 references)                                                                                         |
+| Image to 3D                     | **Three candidates on Higgsfield** (connected) on the full path: two from Multi-Image to 3D (Meshy) with different seeds, one from Tripo H3.1 Multiview; **one Meshy candidate** on the simple path ([details](#image-to-3d))                                                                                                 | Hunyuan3D v3 and Meshy 7 single-image on Higgsfield; direct Meshy, Tripo, fal.ai models ([opt-in](#other-platforms-opt-in))                                                                               |
+| Library sources                 | [Approved sources](#library-sources)                                                                                                                                                                                                                                                                                          | Other CC0 or properly licensed sources, after rights review                                                                                                                                               |
+| Cleanup, normalization, export  | **Blender 5.2.2** ([details](#blender)), with recipe scripts beside the work                                                                                                                                                                                                                                                  | —                                                                                                                                                                                                         |
+| Human rig                       | New people use the selected body/rig source under the [family authoring contract](../../projects/people-from-parts-authoring-contract.md#source-choice-and-quality-boundary), with the pilot qualified before routine production. The existing [automatic rigging route](#rigging-and-clips) serves eligible individual rigs. | Blender hand authoring, Mixamo or AccuRIG under their applicable terms. [People procedure](people.md)                                                                                                     |
+| Nonhuman rig                    | Blender's bundled **Rigify** templates (basic quadruped, horse, cat, wolf, bird, shark) or a hand-built armature                                                                                                                                                                                                              | Tripo's creature rig types (direct Tripo, opt-in)                                                                                                                                                         |
+| Clips                           | **Kimodo** for new/replacement compatible human motion and shared motion-library authoring; reuse accepted clips across characters; qualify each target-rig route before final export ([procedure](animation.md), [readiness](#human-motion-generation))                                                                      | Licensed clip libraries; Blender authoring; Mixamo (manual); explicit alternative motion services ([access](#other-platforms-opt-in))                                                                     |
+| UI composition and typography   | **Claude Design** ([notes](#claude-design))                                                                                                                                                                                                                                                                                   | A native layout or vector tool, or a source preview                                                                                                                                                       |
+| Review sheets                   | [Image and turntable sheets](#review-sheets)                                                                                                                                                                                                                                                                                  | —                                                                                                                                                                                                         |
+| Look check                      | The game's [study viewer](../../asset-workflow.md#inspect-in-a-browser-and-use-files-in-the-game)                                                                                                                                                                                                                             | —                                                                                                                                                                                                         |
+| Preservation                    | `pnpm assets` ([asset workflow](../../asset-workflow.md#publish-an-exact-revision))                                                                                                                                                                                                                                           | —                                                                                                                                                                                                         |
 
-Mike chose Higgsfield for every generation stage on October 31, 2026 ([OD1](../../projects/art-workflow-feature-spec.md#od1--default-generation-platform)). Higgsfield's terms let it train on uploads ([rights and data](#image-to-3d)); a design Mike wants kept private goes through a route he names for it.
+The October 31, 2026 Higgsfield choice still applies to image and geometry generation ([OD1](../../projects/art-workflow-feature-spec.md#od1--default-generation-platform)). The November 5 motion decision makes Kimodo the core human-motion authoring source below; adequate accepted clips remain reusable. Higgsfield's terms let it train on uploads ([rights and data](#image-to-3d)); a design Mike wants kept private goes through a route he names for it.
 
 **Settings to state explicitly every time** (defaults are often wrong for art):
 
@@ -45,7 +45,7 @@ Mike chose Higgsfield for every generation stage on October 31, 2026 ([OD1](../.
 - **Seedream 5.0 Pro:** resolution, aspect ratio and background removal.
 - **Image to 3D:** texture (Meshy multi-image defaults to untextured), pose mode, topology and polycount and, when rigging, the real height.
 
-**Historical whole-person pricing, October 31 proof run.** This is evidence for the former route, not a current new-person procedure or quote; new-person estimates depend on the accepted [parts design](../../maintainers/art/people.md). The parts-based people route has no qualified total cost yet. The recorded operation costs were: four views at about 11 credits (plus about 3 for each view redone), two Meshy candidates at 30 each, one Tripo candidate at 15, and a rig at 8 (one rigging job; `Walk` and `Run` come from the motion study's clips at no cost). That is about 95–110 credits, roughly $3.70–5.40 at the Plus plan's value, inside the $10 ceiling; three concepts add about 8. The former simple whole-person route was estimated at about 38 credits (roughly $1.50–1.85): one Meshy candidate from the sheet's front view at about 30 (the charge measured with four views; one image is not yet measured) and the rigging job at 8, or about 30 for a static model; a generated front view adds about 3. Record the real charges rather than trusting this estimate ([the proof run's record](../../../art-direction/studies/2026-10-31-character-sheet-proof/README.md) shows how).
+**Historical whole-person pricing, October 31 proof run.** This is evidence for the former route, not a current new-person procedure or quote; new-person estimates depend on the accepted [parts design](../../maintainers/art/people.md). The parts-based people route has no qualified total cost yet. The recorded operation costs were: four views at about 11 credits (plus about 3 for each view redone), two Meshy candidates at 30 each, one Tripo candidate at 15, and a rig at 8 (one rigging job; `Walk` and `Run` come from the motion study's clips at no cost). That is about 95–110 credits, roughly $3.70–5.40 at the Plus plan's value, inside the $10 ceiling; three concepts add about 8. The former simple whole-person route was estimated at about 38 credits (roughly $1.50–1.85): one Meshy candidate from the sheet's front view at about 30 (the charge measured with four views; one image is not yet measured) and the rigging job at 8, or about 30 for a static model; a generated front view adds about 3. Record the real charges rather than trusting this estimate ([the proof run's record](../../../art-direction/studies/2026-10-31-character-sheet-proof/README.md) shows how). For the separate-parts pilot, estimate each missing source independently and record the actual total, including fitting effort. Reused parts need no new generation.
 
 ## Estimate and record cost
 
@@ -185,12 +185,14 @@ Submit at most 8 image jobs at once, and save each job's JSON beside its downloa
 
 #### Generated heads
 
+The recipe below made replacement study heads. For an adjustable family head, use an isolated sculpt as the reference, transfer the canonical face layout and check the controls, eyes and neck seam. Author and fit hair separately. Production requires the qualified kit described in the [people procedure](people.md) and the [technical design](../../projects/people-from-parts-tech-design.md).
+
 The [head pass](3d-models.md#give-a-person-a-generated-head) gave Sela and seven more people sculpted heads in November 2026 (the [character fixes study](../../../art-direction/studies/2026-11-03-character-fixes/README.md#faces-for-the-rest-of-the-cast) holds the recipes):
 
 - **Views:** GPT Image 2.5 with `--quality high --resolution 2k --aspect_ratio 3:4 --background opaque`, 2.75 credits each ([what to show](3d-models.md#head-views)). The front takes the sheet as `--image`, when there is one; the other views take the front view and the sheet.
 - **Head:** Tripo H3.1 Multiview with the views as **left, back, right, front**, `--geometry_quality detailed --texture_quality detailed --texture_alignment geometry --pbr false --face_limit 20000`, 18 credits. All eight heads came back facing the front with 16,900–19,400 triangles and one 4096² map, which the graft reduces to 2048².
 - **Not picked:** Hunyuan3D v3 from the front view (`--face_count 40000`, its minimum; 15 credits) gave a strong face but a smooth helmet of hair with two lumps at the back, and blotched cheeks.
-- **A person** costs about 29 credits (four views and one head), roughly $1.15–1.40; mirroring the left view for the right saves 2.75. One head serves all that person's outfits.
+- **One historical head pass** cost about 29 credits (four views and one head), roughly $1.15–1.40; mirroring the left view for the right saves 2.75. One head serves all that person's outfits.
 
 **Rights and data** (checked 2026-10-31):
 
@@ -200,7 +202,131 @@ The [head pass](3d-models.md#give-a-person-a-generated-head) gave Sela and seven
 - **OpenAI Images API:** does not train on API data by default and keeps it up to 30 days for abuse monitoring ([business data](https://openai.com/business-data/)).
 - **Uploads:** never upload a reference whose license or privacy forbids it. [OD8](../../projects/art-workflow-feature-spec.md#od8--training-on-uploaded-art) covers how to handle designs Mike wants kept out of training data.
 
+## Human motion generation
+
+Checked 2026-11-06. **Kimodo is the core source for new and replacement compatible human motion,**
+including the shared animation library. Reuse accepted results across compatible characters;
+existing library availability is not a reason to defer generation requested by the brief.
+This does not select a model/rigging provider for creatures or
+replace a supplied character's rig. See [Animation authoring](animation.md) for the shared procedure
+and the [NVIDIA research record](../../../art-direction/research/3d-pixel-worlds/nvidia-animation-2026-11-04.md)
+for source links and release/access evidence.
+
+**Execution status: source generation verified; target conversion pending.** The
+[one-call source proof](../../../art-direction/studies/2026-11-05-kimodo-api-test/README.md)
+establishes authorized API access, a BVH export, source-skeleton import in Blender 5.2.3 and Mike's
+preview acceptance. AF15 still owns the maintained request/import/assembly tools and AF16 the
+source-to-target checks. The current helper has no direct SOMA/BONES mapping or BVH import;
+no character, clothing, loop or runtime result has been qualified by this source proof.
+
+| Route                                                      | Intended use and status                                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Replicate `sprited/kimodo`, explicitly pinned SOMA-RP v1.1 | Selected hosted source; API generation and BVH source import verified in the linked proof. Read the authorized `REPLICATE_API_KEY` at use and reserve bounded spend. Target-rig adaptation remains pending. This is a third-party deployment, not NVIDIA's hosted production API. |
+| Official Kimodo v1.2                                       | Optional self-hosted route and a later upgrade candidate. Its checkpoint, skeleton/export behavior, dependencies, hardware, license and target mapping require their own qualification. Never silently substitute it for the hosted v1.1 pin.                                     |
+| MotionBricks                                               | Optional offline pose-conditioned transition authoring when a requested asset needs it. Bake and retarget the output through the same target checks. No runtime inference service is part of this workflow.                                                                       |
+
+### Prompting and controls
+
+Use `A person [action and direction] [pace or manner] [essential posture or contact]` as a starting
+shape, not a required parser grammar. Describe one action, or two closely related actions, with
+moderate detail. Translate character lore into observable movement; leave appearance and camera
+instructions to their own stages. For example: `A person walks slowly forward carrying a heavy
+crate in both hands at waist height` or `A person raises their right hand in a hesitant greeting
+while standing still`. These are authored examples, not qualified clips. NVIDIA recommends this
+level of detail over vague verbs or exhaustive joint choreography. [Prompting guidance](https://research.nvidia.com/labs/sil/projects/kimodo/docs/key_concepts/limitations.html).
+
+Start with locomotion, gestures, everyday work or supported combat; unusual actions need an
+audition rather than an assumed capability. Allocate enough duration for the action to finish.
+For an explicitly requested connected sequence, each segment must restate its action/context;
+allow time for the transition at the start of the next segment. Keep ordinary single-clip requests
+as one clause without periods, because this host uses periods to split segments. Connected
+sequences remain outside the initial single-segment helper. [Sequence behavior](https://research.nvidia.com/labs/sil/projects/kimodo/docs/user_guide/cli.html).
+
+Use pose/path/hand/foot constraints when exact placement matters; text alone does not specify an
+object's geometry or guarantee a grip. Prefer sparse, reachable targets consistent with the prompt
+(NVIDIA recommends fewer than 20 keyed frames per constraint type, except dense root paths).
+Keep foot/constraint postprocessing enabled. [Constraint guidance](https://research.nvidia.com/labs/sil/projects/kimodo/docs/key_concepts/limitations.html).
+The pinned API's `constraints_json` is an uploaded-file URI, not inline JSON. Native guidance
+weights and transition-frame controls are absent from this hosted schema; do not send unsupported
+fields. Coordinate conversion and target checks follow [technical §11.3](../../projects/art-workflow-tech-design.md#113-acquire-one-kimodo-candidate).
+
+### Hosted Kimodo request profile
+
+This is the maintained request shape for one candidate; the walk illustrates the fields, not a requirement to replace an adequate clip. The [immutable deployment schema](https://replicate.com/sprited/kimodo/versions/17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545/api) defines the fields. The source proof used this API shape through an external test script; the maintained AF15 helper remains planned.
+
+```json
+{
+  "version": "17111248e89aa145d768cc1e5f7baae228f69d854b996b860becfee287379545",
+  "input": {
+    "prompt": "A person walks forward at an even pace",
+    "model": "Kimodo-SOMA-RP-v1.1",
+    "duration": 4,
+    "seed": 42,
+    "num_samples": 1,
+    "diffusion_steps": 100,
+    "postprocess": true,
+    "root_margin": 0.04,
+    "output_format": "bvh",
+    "output_delivery": "individual",
+    "include_auxiliary": true,
+    "filename_prefix": "openlegend_walk_c01",
+    "sample_index": 0,
+    "preview": true,
+    "image_size": 512
+  }
+}
+```
+
+Use one natural-language segment, normally 2–5 seconds and at most the upstream 10-second limit. Periods delimit segments in this wrapper; write a single clause. BVH is the initial source; a provider GLB needs separate evidence that it imports as a usable armature. The API returns an array of output URIs. Download and preserve required files within one hour, retaining the prediction ID for recovery. [Tech design §11.3](../../projects/art-workflow-tech-design.md#113-acquire-one-kimodo-candidate) owns bounded submission, artifact selection and recovery. No settings here imply a qualified target export.
+
+Prefer a repeatable CLI/API and headless conversion over requiring a Blender GUI plugin. Exact
+commands and mapping implementation belong to [tech design §11](../../projects/art-workflow-tech-design.md#11-nvidia-motion-authoring)
+and remain prospective until AF15 ships. If the hosted candidate cannot meet the export, license,
+quality or cost requirements, report the specific failure and use an authorized available route;
+do not describe an untested target route as operational or change the pin without recording the choice.
+
+Keep provider charges and any self-hosted GPU/storage commitment inside the existing task budget;
+check current pricing and retain settled cost plus outstanding commitments. Existing typical asset
+cost examples assume their stated reused clips and do not include new motion-generation charges.
+A successful prediction is not proof that retargeting or game export works.
+
+### Cost and useful output
+
+The [source proof](../../../art-direction/studies/2026-11-05-kimodo-api-test/README.md) records
+36.164281869 processing seconds and an estimated **$0.035260174822275** at the published
+[L40S rate](https://replicate.com/pricing) of $0.000975/second; no cash invoice was observed.
+The [model page](https://replicate.com/sprited/kimodo) currently estimates $0.015/run. Both that
+figure and the earlier $0.0076 are variable typical estimates. Public-model setup/idle time is
+free under [Replicate's billing rules](https://replicate.com/docs/topics/billing); record queue/wall
+time separately from processing and do not buy warm-up jobs or a dedicated deployment for occasional use.
+
+Keep the tested baseline: one sample, 100 steps, postprocessing, BVH, metadata and a review preview.
+RP uses the larger training corpus and NVIDIA recommends it for motion generation; SEED
+is not a demonstrated cost optimization. [Model selection](https://github.com/nv-tlabs/kimodo).
+Request alternatives deliberately: `sample_index` selects a preview/FBX sample, not how many
+BVH samples are generated or charged. A one-sample preview does not review a whole batch.
+
+**Optional experiments, not defaults:** compare 50 versus 100 steps, or separately compare
+`preview=false` with local preview rendering. NVIDIA documents a [step-count quality/speed tradeoff](https://research.nvidia.com/labs/sil/projects/kimodo/docs/user_guide/configuration.html);
+the host exposes a [preview switch](https://replicate.com/sprited/kimodo/readme), but neither saving
+has been measured here. Hold prompt, seed, model, duration and other controls fixed; vary one
+setting at a time and retain both outputs. Compare processing time/cost, complete review time,
+action fidelity, feet/contacts and correction effort on the target rig. Repeat matched pairs if host
+timing noise could change the conclusion. Keep metadata enabled;
+the HTML viewer comes bundled with it. Promote a setting only when useful output is cheaper
+without failing those checks; halve neither the cost estimate nor the task reservation just
+because the step count halves. Judge value by total spend and correction time per accepted clip,
+including rejected candidates. These comparisons are optional within AF16, not extra release gates.
+
+Record model/code rights separately from the source motion and conditioning data. In particular,
+MotionBricks' bundled BONES example motions are for nonproduction use; exclude them from shipped
+assets and production motion sources. Preserve the applicable terms and the rights to the actual
+inputs/output with the study. The research record holds the detailed license evidence.
+
 ## Rigging and clips
+
+This stage supplies a needed rig and may include a useful library clip. For an already rigged model,
+start with [Animation authoring](animation.md); do not rerig it to reach the new human-motion default.
 
 **3D Rigging** (`3d_rigging`) rigs a humanoid at a given height and adds one library clip. Measured on five people on 2026-10-31:
 
@@ -223,7 +349,7 @@ higgsfield generate create 3d_rigging --model_url "$URL" --height_meters "$H" \
 - **Fallbacks** when a model cannot be rigged this way: rig in the generation call (`--enable_rigging true --rigging_height_meters H`, Meshy candidates only), Mixamo or AccuRIG (manual, opt-in), or a rig built in Blender.
 - **Direct Meshy** (opt-in) merges up to 10 clips per request.
 - **Nonhumans:** Blender's bundled Rigify (0.6.10 in Blender 5.2.2; enable it first, [Blender](#blender)) includes basic quadruped, horse, cat, wolf, bird and shark templates. Fit one, generate the rig, then weight-paint; export deform bones only. A humanoid rig is never renamed onto an animal.
-- **Retargeting** shared clips onto a different skeleton has no built-in one-click tool in Blender 5.2. Between humanoid rigs, `art-tool.py clips` retargets in world space ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)): it moved Meshy's library clips onto the mercenary's differently oriented rig, and with a `--bones` map onto the MPFB family rig, whose bone names and rest pose differ. Non-humanoid skeletons need bone constraints in a small script or an opt-in add-on (the free Rokoko plugin, compatibility with 5.2 unverified, or the paid Auto-Rig Pro Remap). [OD7](../../projects/art-workflow-feature-spec.md#od7--motion-source-for-shared-clips) decides the long-term clip source.
+- **Retargeting** shared clips onto a different skeleton has no built-in one-click tool in Blender 5.2. Between humanoid rigs, `art-tool.py clips` retargets in world space ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)): it moved Meshy's library clips onto the mercenary's differently oriented rig, and with a `--bones` map onto the MPFB family rig, whose bone names and rest pose differ. Non-humanoid skeletons need bone constraints in a small script or an opt-in add-on (the free Rokoko plugin, compatibility with 5.2 unverified, or the paid Auto-Rig Pro Remap). The [human-motion default](#human-motion-generation) and [shared procedure](animation.md) govern missing motion; this existing library route remains usable for suitable clips.
 
 ## OpenAI Images API
 

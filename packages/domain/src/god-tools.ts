@@ -1,4 +1,7 @@
 import { reconcileNativeControl } from './native-response-controller.js';
+import { appearanceFamily, appearanceBodyProfile, setAppearance } from './appearance-state.js';
+import { resolveAppearanceRecipe, sameAppearanceFamily } from './appearance.js';
+import { equipLot } from './objects.js';
 import { currentAttributeState } from './native-values.js';
 import { entityGet, entitySet } from './entity-collection.js';
 import { orderedRecordGet, orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
@@ -99,7 +102,21 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
       : reject(original, 'identity', 'That request identity was already used.');
   if (!GOD_SPAWN_OPTIONS.some((option) => option.id === draft.type))
     return reject(original, 'unsupported', 'That object type cannot be added.');
-  if (!canStand(spatialMap(original), draft.position, spawnSpatial(draft.type).body))
+  let proposedBody = spawnSpatial(draft.type).body;
+  const appearance = draft.person?.appearance;
+  if (appearance) {
+    const family = appearanceFamily(original, appearance.family);
+    if (!family?.compiled)
+      return reject(
+        original,
+        'appearance-family',
+        'This appearance collection is not ready to use.',
+      );
+    const resolved = resolveAppearanceRecipe(family, appearance);
+    if (!resolved.ok) return reject(original, `appearance-${resolved.code}`, resolved.message);
+    proposedBody = appearanceBodyProfile(original, resolved.recipe, proposedBody);
+  }
+  if (!canStand(spatialMap(original), draft.position, proposedBody))
     return reject(original, 'blocked', 'Choose an unobstructed walkable surface.');
   if (
     worldRootEntities(original).some(
@@ -123,12 +140,36 @@ export function spawnWorldEntity(original: WorldState, request: GodSpawnRequest)
   } else if (draft.person) {
     return reject(original, 'invalid-object', 'Person details only apply to a person.');
   }
+  const outfit = draft.person?.initialOutfit ?? [];
+  const occupiedPorts = new Set<string>();
+  for (const definitionId of outfit) {
+    const definition = getOwn(original.itemDefinitions, definitionId);
+    const visual = original.appearanceDefinitions?.wearables[definitionId];
+    if (
+      !appearance ||
+      !definition?.equipment ||
+      !visual ||
+      !sameAppearanceFamily(appearance.family, visual.family) ||
+      definition.equipment.ports.some((port) => occupiedPorts.has(port))
+    )
+      return reject(
+        original,
+        'initial-outfit',
+        'Choose compatible clothing with one item for each place.',
+      );
+    for (const port of definition.equipment.ports) occupiedPorts.add(port);
+  }
   const world = draftWorld(original);
   const entity = spawnedEntity(world, draft);
   if (!entity) return reject(original, 'invalid-object', 'That object could not be added.');
   entitySet(world.entities, entity.id, entity);
   rootMembershipChanged(world, entity.id);
   try {
+    const wearer = entityGet(world.entities, entity.id);
+    if (!wearer) throw new Error('This person could not be created.');
+    if (appearance) setAppearance(world, wearer, appearance, 0, 0);
+    for (const definitionId of outfit)
+      equipLot(world, entity.id, addItem(world, entity.id, definitionId, 1), 'creator-outfit');
     validateStatusInstallation(world, world.statusEffectPolicy);
   } catch (error) {
     return reject(
@@ -217,6 +258,8 @@ export function reviveActor(
   if (!Number.isSafeInteger((actor.physicalLife ?? 0) + 1))
     throw new Error('Physical life exhausted.');
   actor.physicalLife = (actor.physicalLife ?? 0) + 1;
+  const appearance = world.appearanceRecipes?.[entity.id];
+  if (appearance) appearance.physicalLife = actor.physicalLife;
   delete actor.combatReadyAt;
   actor.alive = true;
   actor.incapacitated = false;
@@ -455,6 +498,23 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
 
   const world = draftWorld(original);
   const entity = entityGet(world.entities, draft.actorId)!;
+  if (draft.person.appearance) {
+    try {
+      setAppearance(
+        world,
+        entity,
+        draft.person.appearance.recipe,
+        draft.person.appearance.revision,
+        draft.person.appearance.physicalLife,
+      );
+    } catch (error) {
+      return reject(
+        original,
+        'appearance',
+        error instanceof Error ? error.message : 'This appearance could not be saved.',
+      );
+    }
+  }
   const healthBefore = entity.actor!.health;
   const events: WorldEvent[] = [];
   const goals = draft.person.goals.map((goal) => goal.trim());

@@ -1,0 +1,2337 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-art-candidates149-172",
+    "revisionId": "sha256-84619cbeb7de96e62c4c7421f5ab1e06e253cb2770f20c27e2d987186809db31",
+    "manifestSha256": "f88c69c0744049a87e574d68495c9eadb50fd422b9819228593610713d55d14c"
+  },
+  "files": {
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/E_face_color_original_hair-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "004153f874619b3617d65e50c4cf196ae0b6cfdb63744e1d479aab7f752f8574",
+      "bytes": 744723,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/E_face_color_original_hair-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a4a124d72b1317da891b3d5e139b9090dcd48a44c254c12bb4b38b515a158b7d",
+      "bytes": 754978,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/E_face_color_original_hair-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ea4536b7b7c6063e070cfda3276964e5dc2f3b40db570ba94b08c8ceeccffbe",
+      "bytes": 740905,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/E_face_color_original_hair-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46e0196dcdfb816fd77a160865ec8932557b83f061423624896b8b91cca67af1",
+      "bytes": 741814,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/F_face_color_original_hair_normal-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "841c8baee19662cfab3b772c2ea78a4cecb0b02eb7ef9a7657c2bf6b176247b3",
+      "bytes": 772870,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/F_face_color_original_hair_normal-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f15e564cd209dd7ae93205baa56a34eed5b3215982b9a7b67f9bb75878e65120",
+      "bytes": 786329,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/F_face_color_original_hair_normal-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01f75e593cf91e2742a325e3f0e1e25708981c5531434cb6a62f87ac42a9178f",
+      "bytes": 768245,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof171/F_face_color_original_hair_normal-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18fdd2ea6665996cece248b4e457bc79dd2e4786a4b6ba10405c797b55d1cb19",
+      "bytes": 772059,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/E_face_color_original_hair-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d54c95c27889e93804b6abd24ae463224a0b0ee3229ce703456e855ad624ea0",
+      "bytes": 744723,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/E_face_color_original_hair-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "53f3273529e6211d934a56b247eefd3cea11abbd187f98d651e1307891e77bb7",
+      "bytes": 754978,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/E_face_color_original_hair-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e633ba095df12b44dd9aeacd070e5c09edf8e89e574042ba8039ce3ea40c0d1c",
+      "bytes": 740905,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/E_face_color_original_hair-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "022141adf7f1b8cfb861d0d7580b7241bfa9f5de0c9d169bf0136dea5827d9c4",
+      "bytes": 741814,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/F_face_color_original_hair_normal-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9415f51d292cf39477b222f9aa6d5997851966f7c0a47f7d9ab37d36c121765e",
+      "bytes": 772870,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/F_face_color_original_hair_normal-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "026c86ec769c54cecbba05883ae9e544c743cfc0e96527739f201991fb03fc1e",
+      "bytes": 786329,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/F_face_color_original_hair_normal-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20a6479ebcf17c87528573b3414b7a5fbafaefb76549941f4cbace15e9eed49d",
+      "bytes": 768245,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/F_face_color_original_hair_normal-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e315917b599af49923b70bc270895f8396dcefaa3d2608fc4c32e234a5ae75bb",
+      "bytes": 772059,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/canonical-motion-proof172/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04f54f28f583ff9e239c1de45056c741bcdac092a3332172ebec3c026698c7a7",
+      "bytes": 3382,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets149/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82d00fc30fff8813a0086b8b48186ff2255f86b3e388aae46709abbdb3105acc",
+      "bytes": 672377,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets149/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b37e428f966efa857b4947e91aa9c86323613459128489f5688cb302f78fb4b",
+      "bytes": 677936,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets149/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bdc69801835a75dd16978f564a9b6b4536cb1c4114897b9053d91c03296967c0",
+      "bytes": 684209,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets149/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f364a620d3abe461385769a4d67400a04b8808c215f0361b999821bacb0b6d10",
+      "bytes": 658873,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets149/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "25bc3db72e321cfdc72671de23b47babfe18149679f8d6e0d891c8597380529b",
+      "bytes": 2001,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets149/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "da7c250ab246395b70c350d8d260a0ac76ea4632889e641106e147f437f82082",
+      "bytes": 664455,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets149/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "99435314660de18ef8bca82df59943b8781b0d3f72f519ffba14eb8604c9b484",
+      "bytes": 669933,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets151/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "550d0c939e2f6690105dcf5824f5792090e9cdae5cbffcd8d0ebae85f0fef2e3",
+      "bytes": 673230,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets151/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a46eb90c3560b8bd018c383d8b9631f6f93aca085b56e2bc9f644f451e2c9111",
+      "bytes": 678715,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets151/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa305156a2f02dfa752557e3822230c1e77bdef7bdfb20a189faa3ef52cee231",
+      "bytes": 683591,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets151/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b06c66eb213b6c73f87529c32654f9ec05b8649ee0217c4b1ebbb8bb710b2c30",
+      "bytes": 658658,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets151/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0db985e8a9d25c3eb52349ff6a09cb9d8913cd0f086b67651c969db42ebd749c",
+      "bytes": 2001,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets151/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af95d4f86f5778d358ba2550e2eeac3998fddd7e30cffb22a12957a5bd51b781",
+      "bytes": 664241,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets151/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afd501629f7d2f541dba0f40c8e8e3145d1021ad5265464b6417229bf7c5dfa1",
+      "bytes": 669745,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets153/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "394d9bc37321bb7de77effc4370e80bec7621009a7579a35363b1ca02dd43d7e",
+      "bytes": 675539,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets153/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "62bd3610c9d8617b38396fe692c46bb0740c3a44c664e0b2ddaa51403a0be6ea",
+      "bytes": 680935,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets153/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "37ecb6025caeab74dc5fc79dee54514304fb601828dd447d67055c3a444dd61d",
+      "bytes": 687698,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets153/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b0c60732072a280f262b04066971d1335e7ec62e0e815058d897aa16e76f08e",
+      "bytes": 658658,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets153/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0691b9953317ec23b9d390b1369254c29a414039fb8eeb7c183290e8db3e96a3",
+      "bytes": 2001,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets153/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c4cb4995eea3316fe77fb43a3489301278def8b8620eafc6a6dcf422f51b4671",
+      "bytes": 664241,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets153/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1113489c1534ad99c05701a4fe9d81d352c5f7d72de4e6ef08cb0551de10e7d3",
+      "bytes": 669745,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155-canonical/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93ecde1eef1bfefe6364200c1a02cfe5516682c40847fc46edb8890b3ae38c5f",
+      "bytes": 675390,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155-canonical/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20fba9c407b9406a111b1cd3ac341e3130f19f937669669ceab495bbb357631f",
+      "bytes": 681284,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155-canonical/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6429ec74f6e1fa72220d6bd512e949027f1b9c72bec53fa45ed288991e141ce9",
+      "bytes": 688330,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155-canonical/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "469a10f0e5dc3a9aa0a3e711586e95a90a8522b0b0b7c8b036352b94403f4a60",
+      "bytes": 658331,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155-canonical/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "90ad36552c22cc9e18269687ae305966e62a04c896915cddebc2a2b8c66e1a10",
+      "bytes": 8757,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155-canonical/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b95d0c732107c25bb13d58b7b6e0ddc70edf8c7f930c89646688e80c24bc1282",
+      "bytes": 664107,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155-canonical/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b392d09dfe050e17489e498e8535f4b4314a2dc436be60358b10efc45ee4a2bc",
+      "bytes": 669726,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "57e4bd13b0fbbed6e99048c34c30701b4441f05d6d146a21767c2500e2718fc4",
+      "bytes": 673450,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4f5627808aba6ca50af5922b9a1b862e6dea5727c9b2ef99d6638ff2620862a9",
+      "bytes": 678964,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "493a917785825a1afc8709c51d305f7da6e2aa854276241c33fe04944044c1c8",
+      "bytes": 686095,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86cdd52238aacb69560e5ea3ab0116d2116992591f25c6f423ec39426b7375dd",
+      "bytes": 658658,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4120825c7c0fcbbfd1eecea99f2cbff8ea4116f021448559a1ce8a5e8cf6151b",
+      "bytes": 2001,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5fc1f0040c76fc99cd95c2892f605a2c03e789802b324e674af57976e002d3b8",
+      "bytes": 664241,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets155/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f67906739271e9d8867ccc7eddf7ded2faeb03bf5705b0917bd4c07d5b42abaf",
+      "bytes": 669745,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8fdb464ebddffe92ad1fed22edb089b519dc934010057c1e9871c88d8927c76e",
+      "bytes": 673352,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "11cac1f478db5d9deade720d75880d5ef4070501eff72e2f309882284395a6f6",
+      "bytes": 678964,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/jaw-open-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82174d36c7f412887689fdb5938475f5d7215d95cf4ce0801385b5feedf0fd7b",
+      "bytes": 667859,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "672f29078e4c3f258fb74d36df68da790afcd13d482a9eec759df3f31ebd8331",
+      "bytes": 686095,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e9828071762926a4f1c6d7030f369fe77af331e9a11a14de36129a1675ce7b14",
+      "bytes": 658706,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/lids-closed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "394f831dd7f1ad7a15c4ada77b3126e567ca5db54a704af451904571a14bc0c7",
+      "bytes": 661514,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/lids-closed-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "559520090633b678ae71baab17dba6ced79ddf88dd17774823f57b825d48953b",
+      "bytes": 665123,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84acd1252e37ee7a89f1b92e38b58f1fb5256e566741c92a5f0c931c75815657",
+      "bytes": 3172,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a380eeee76a2b1e77a64febe34a968bed1b5b35f1299bce6f3d141bdc1ba39ea",
+      "bytes": 664241,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb72ca251dd2a690bf3357630478f30f2b66a914b5d0807e7dd137cfa9bb9428",
+      "bytes": 662522,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets159/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "650f710211cf4cda4de1716c9a9557e2d0e3a6630c6759d26722127416beb051",
+      "bytes": 669745,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c316336686c9e68ebad6fc9487e193cde73c518cb6945eff5f998ad54e9e6591",
+      "bytes": 660561,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e98991fe8cf611676870b168a868156ccfefb4e8d9e9bb8a8a95f27da2c90d33",
+      "bytes": 665974,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/jaw-open-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cce59112f4016b0ef1efc35c01fed1162e7ff8e0a9212e04750bf6d88d8f8db6",
+      "bytes": 666354,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04a30e05c89f61ccaf6b42694b0628748d01cf79c467912d8b7b88564c48119d",
+      "bytes": 674357,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dcef17b87d5d27957f07ec06b9aa2257d4dbfa3be75a326ed7be57e2f94dc5e2",
+      "bytes": 659031,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/lids-closed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d679168c3a1e9207edc3e2ae27ea60b2cb57f6f2fba4d4db609e7d7257757c20",
+      "bytes": 661648,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/lids-closed-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "25b3a69c492d40c8035fc9e4f4c63760cc1d900352c73e9495c0e2233620b6ee",
+      "bytes": 665263,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de27091a916cca9e0ca6c330dc5821b966e7195c994b5257ede0d744d4a0b020",
+      "bytes": 3172,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d56195a638bf0ebafdcc59df5b2c312fc7fe30228019bb5e1b90df5803f34165",
+      "bytes": 664468,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e038afa3ae67f74ce8b8836cf86655ef26ed8f9520deb010b688d372f700c0c",
+      "bytes": 662638,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets161/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a344d09f0dfb183de0eb9e4a2ec9ab10bd0373a5f90fd968cdd4a087fe61e5a3",
+      "bytes": 669776,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8b2b0e98a1d98eecc552fbfd286e3025ba977688320bf53a30888696a0dbb621",
+      "bytes": 660561,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "45cfc138bb277a6e9700b126bbdcbf08b95e01d1e03e8c83f0ec3695c22316b1",
+      "bytes": 665974,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/jaw-open-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec24b5814756d7409a538b6d47fd0791cb681bb6ee441b3e2e5a0c062c005575",
+      "bytes": 666354,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c2b06b0ccca09979b667f533d9f26f35b39b51c59e58aea7990021fd811f3cd",
+      "bytes": 674357,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f96cf827ac20dcc4cb7be02843f2f5387d5a001cf0848160421ef25531819f70",
+      "bytes": 659031,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/lids-closed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93d25fbea78f0f239b8baec6c127e225799222e8432b62e2d33582d23d31119f",
+      "bytes": 661648,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/lids-closed-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc98edbc1901a66df5241ce63fb5d85223dc387284f5d30c1392adad85fd1592",
+      "bytes": 665263,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6c69ae05be63bae5ec38c0ed88b0b73a3e56e0d2719b48f91665b7c58772161f",
+      "bytes": 3172,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "47707c208a442b9dce575e0b358b1c8a041c05f5ec3c33fb66c406eaed03cc09",
+      "bytes": 664468,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67b2a7ef6ee8c4a9639a749f1e14d9591dc5fb3411d604af33c5aaaa637a5cea",
+      "bytes": 662638,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets163/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ff5321bf991641f5e86e2d21eda161e8284636e988194a9f2fa357c68553706",
+      "bytes": 669776,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1b46522231d5563fdcfd32fad268e29091105a211632334b990be3484f7555b",
+      "bytes": 661309,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe32359d5ad1179cdc853ccbbd016380961038eb9191589ddf8a2081e8deab57",
+      "bytes": 666261,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/jaw-open-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f9feb7c1d48a2bdbb0ed2b7876dd39d79c109df4a5dfecd1c0255df7fad3cf3a",
+      "bytes": 666302,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14e4ee3a58dc5b5cb24032178ef99251138e20b7408d4a5105fa48bf98527bdf",
+      "bytes": 675185,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a791e44b81307ec4308db8b3e3f097597929eeb18cb89debb9a6449ee504840a",
+      "bytes": 659642,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/lids-closed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e87c9316b22461b34bd4c961d820a1f68ba6904f41c5165fb5bd117602d1b6b9",
+      "bytes": 662027,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/lids-closed-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b55ae58e463dcc60de96a4e144323e039ca4b7a92e8c5ac6b2606366375e89d0",
+      "bytes": 665346,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01aa4269eb7923bd100221ea0d4f7dac59b50d1ce0d05ce5b2b99ebf50351939",
+      "bytes": 3172,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67e8e184dcb1b179565c9f7e2a64b7cd037ac584c842f7567a2e457395cd10cf",
+      "bytes": 664806,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e4f80a37324ec0cb1e724c250212ffd43fd7904f858fc460582e4fc2e9261b35",
+      "bytes": 662602,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets165/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b7f1daca84cdebf8ed5a24b9ecbe864290068dce997022e3e97af3437cff284",
+      "bytes": 670443,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167-canonical/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cdee097c7d3f5671bd133c5807de9c68f4f2731edf46a368dd32a7e1805b19a4",
+      "bytes": 675390,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167-canonical/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "25ea6626cf747e1fe7cd2911b8efa09e78b7f7e219863a1452e8c350912244b9",
+      "bytes": 681284,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167-canonical/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ac16912fd2cd3ea95656de7cbebe9a16dfd3bd78bada60a25689efc52366120a",
+      "bytes": 688330,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167-canonical/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f76843a3a384d8e9c10a7dab74ab7b6326c4246f7462aad2bc01e0d5424460eb",
+      "bytes": 658331,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167-canonical/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "73c0f739d1049d1932ec79cd72699ddc74c008ff11dd3c513e717d7022be5528",
+      "bytes": 8757,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167-canonical/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5135f9b7c8b676aaf4d5698af8fb96e923962c487b7f08b5a065f15f8ee1b96d",
+      "bytes": 664107,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167-canonical/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd15ade86e137e3e0c55678bb09c25e78b9135e6ef49e9ae3d347eb38cb0137f",
+      "bytes": 669726,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167/jaw-and-lids-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b11e5f2c9ed583011036e8cfd95e7e75186f69a4383278cd156db0c04aa679f",
+      "bytes": 673442,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167/jaw-open-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28ff3ff25ad6e93a59ef4f45323ee54a3c2d8462c73cfb9d7bb99f6f9a55be5f",
+      "bytes": 678937,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167/jaw-open-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "893d8cd085b63600e27627a9b4b04f92a4834b8790e898c068727151335859ca",
+      "bytes": 685991,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c44e58a22bd7864e61515eb80f2a8a530cca4e655956f4ba1c7d8bcf5ff124e",
+      "bytes": 658725,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c441ecf6bfad60d0649142a431cadb7b4deb41d0d61b10b3f07c523b82b90618",
+      "bytes": 2001,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1a72bf8f7bc2c65e91441428eb804efb578987949b06a2a1f5c8ccc4426c359",
+      "bytes": 664312,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/face-targets167/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5536789c2c83c0bccb550fad7a9a26d24cee356033e390030b64b0c9ac9e4d03",
+      "bytes": 669718,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/lid-normal-diagnostic155/lids-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3e00bb9483a003ae73144228ef73e12350728fb0754e8d1145373bac83cf042",
+      "bytes": 658729,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/lid-normal-diagnostic155/lids-closed-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "069aa21f6d516cb92edb6b7bf324a3d51614091c9c8d900885714f9afb83cf33",
+      "bytes": 664873,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/lid-normal-diagnostic155/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4dbb3edfc541442000cb87579cf5553a3bf88709274868d2adcf048ede6d89a3",
+      "bytes": 872,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/E_face_color_original_hair-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a469615560f02bd1ffc93e0b4e095b5c20654129f8f53bcb6c19d242901ee7f9",
+      "bytes": 744783,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/E_face_color_original_hair-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb26da1d8605be805917697d82fc7198f27660a103b6b92cb19c65125d6be543",
+      "bytes": 754976,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/E_face_color_original_hair-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f67cd00c626bb9c631374da0c5fb7f96c86ad68fa0553ddc8ccf761e9a692087",
+      "bytes": 740976,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/E_face_color_original_hair-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d5a928ad498c821cbfa7140444a4a290097a2227a045d07ef4e56708479bd7fe",
+      "bytes": 742104,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/F_face_color_original_hair_normal-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96f77a0e10a2c8da998cb95e2c665e346c3bfed6dbe671a60189184f87412151",
+      "bytes": 772703,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/F_face_color_original_hair_normal-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6683e1e12de72be52ed7d4834a825b51db17a76c90cbe9f3750ea36c9c3bae85",
+      "bytes": 786111,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/F_face_color_original_hair_normal-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "252871b2f109ed04b6597d0ba426b8edf9b197a55a37bf279bf28ec81ca07050",
+      "bytes": 768325,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/F_face_color_original_hair_normal-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d151e1d3095b2ae41461d50a73a6d0eb35ccee380d7b33d08b0327e9085c6fd0",
+      "bytes": 771869,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair-canonical/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba1e0ead6a97ee6b61f18176ba14403d01eb08eea6d7f99c85b9cf6bf6c6645b",
+      "bytes": 3361,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/E_face_color_original_hair-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e4a182a9b84a3da834c26a29d4acf8786a2c6759649a431609a4cb98d8c7b6f3",
+      "bytes": 744485,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/E_face_color_original_hair-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "69908f266bc4cf5ccf4c91ad302b4ce4fc61a3ce7afd58e9f59f578ecad4397b",
+      "bytes": 753479,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/E_face_color_original_hair-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96c68b63c17c4ff7bf9a4dbf628761c2e6e2e792aa8405908192e89e1b27e53e",
+      "bytes": 740862,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/E_face_color_original_hair-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a33b27ed70d1bb6d44bc41edd62ed2ee52c775e84c02ead46af2f4d1243f7d21",
+      "bytes": 740713,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/F_face_color_original_hair_normal-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28c363264636df91cd1b27303dae059b1494cee7d80015ed215c3fb782a1fb03",
+      "bytes": 771694,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/F_face_color_original_hair_normal-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42d7b380ae5948c7122d78b850c175795a8d89b24bc48153aa304dbb3ab8fae8",
+      "bytes": 785606,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/F_face_color_original_hair_normal-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64ee23c300862017a70b0ec84896fba266da3ec254c32b95a3219907a8ba6536",
+      "bytes": 768493,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/F_face_color_original_hair_normal-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92a663b4978324fd71c46653f47904583ce0f089dd58b1fd550a81a1f65b1b92",
+      "bytes": 771711,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157-fair/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b437da39a03ac1a847fb51229130b040666bc05b865634b669447c4e58b8484",
+      "bytes": 3217,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/A_baseline-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de1bd44bf2ab4b7c1ee58b258294e209e7767f1f4ad735ce08a1a685d0ba95e5",
+      "bytes": 724689,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/A_baseline-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70f67295fe4f585f26bbc5e9f84e5ecb95b5b2bd1c87bb41875fee173432d94b",
+      "bytes": 735265,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/A_baseline-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "caf6d829587e56f8f565c0d99b87d900e292c6e9904f8a3766ad42a271abe4d2",
+      "bytes": 721291,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/A_baseline-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "904aa4f6b31a8612717b2fbc2ff5a45ce00fe378344f4c089f81e161bc636764",
+      "bytes": 723601,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/B_color-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d227c63f9bebe8745bd0dca09ea3d3f41ff08dee2fcdc60126408a1626e44ae8",
+      "bytes": 789419,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/B_color-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9cc2eacbc430d48e7b04a7b4c1bea13e4b62ab3674fa5e8e448c3590518d6693",
+      "bytes": 799275,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/B_color-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a584a0381628f4a33412840f9b4be4edc745895fe7b8df305e51ccbe952c55fc",
+      "bytes": 787291,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/B_color-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7c0fef2b3e15dfb62155a8cb0a708c09aa471c0cc02074b5242ee1151d28eb9",
+      "bytes": 792200,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/C_color_skin_normal-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a63bb75f3563f47d09c2db51043a6c8f9ce9e82f48d21fce38e1446e537ffed4",
+      "bytes": 789031,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/C_color_skin_normal-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec7faf2891aacf49cfb25069ef8b805893ce31bf80c8e52d64310e1083156e4c",
+      "bytes": 799599,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/C_color_skin_normal-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e9dfa7f2dd67e994ff85205b8f80cce483f5e47550f7260e4a73bb8f75bee7c",
+      "bytes": 786247,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/C_color_skin_normal-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fadcae6b770da6e6050cc45298b94c8153ebdba9970b5bde44e485382457c15f",
+      "bytes": 792277,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/D_color_hair_normal-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21edd12497444845e102b7f0de75a2058eaa746f9d1c907551e4418644979375",
+      "bytes": 804484,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/D_color_hair_normal-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3d59b59a651fbd8cd5af78311d5a2f6f308624f8f9653d55a28c4eea01bf0f2",
+      "bytes": 818180,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/D_color_hair_normal-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "297f12a2b1806ab489fa0ebd08b8694856d98131defa49bc5c84f92d8529691d",
+      "bytes": 801605,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/D_color_hair_normal-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a7bc71c5b655d7cba6f8565f4da14ed2a8448c723819e00cc904c6157d65199",
+      "bytes": 810223,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/material-detail157/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d75aa27c11ad417de45e1e1bacbbba6839f129fffaf7f2e40718762647ae8041",
+      "bytes": 5633,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/E_face_color_original_hair-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35853ddfa0bc5e2bc89d5c62385769c92326879ed81be05ce5e9e5f00788bf50",
+      "bytes": 744723,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/E_face_color_original_hair-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a7bb44f135e0c3f07cc65afbc6289770d8b6132598ed7b71949bfa0da1b9fab7",
+      "bytes": 754978,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/E_face_color_original_hair-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78889c077a1cf055a6f5eabd7d7d6618b8c192edcb3010a8f8f539e70be31486",
+      "bytes": 740905,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/E_face_color_original_hair-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8bed735c91882cb81062a61d3914470dbd95ea98f34006522d561cfbb750f889",
+      "bytes": 741814,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/F_face_color_original_hair_normal-left-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ef5aacbff3f2b97d527898d3239710171015771f59c33a28bbb4b4a3f72f87b",
+      "bytes": 772870,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/F_face_color_original_hair_normal-left-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e99440fc64a87139f86ab3d3bf0fd9e1937429c8d647911aa5fee252b0fd04c3",
+      "bytes": 786329,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/F_face_color_original_hair_normal-right-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de2b96f7b1bf55704d65f711380e3984b89baccea7802d187b0689925b366b7e",
+      "bytes": 768245,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/F_face_color_original_hair_normal-right-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1fe844cd3f0646f06012fb9762bc6b62aa649dd53ff808a4cef272b696db6173",
+      "bytes": 772059,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/render-map-normal-proof170/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8fe149d0fa335827ee7fe64e3948ca1867a752848a801a41b187e48abea4e567",
+      "bytes": 3305,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder157/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21c3cb5c776fc6e59cbeae2c991bdedc6f164675a59773cd7362ba298d60da08",
+      "bytes": 679035,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder157/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "606764c0c6ee635ac71b89f2ded2fd1171604fdd63a9d436c02896209c35cd28",
+      "bytes": 683283,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder157/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7dec8a2996a199b9a9f5a4eb1a4b1def7dbcecc21eb6dd14cad773dcb260f8e0",
+      "bytes": 2327,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder157/walk-forward-arm-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8420a8b581ef93a77853dfdb5805249980d81b396680736ac218ae7747b8d8a6",
+      "bytes": 692384,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder157/walk-forward-arm-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba820cfeaed867172b039d079762652423ace509dcd590313a7ce702e37d829b",
+      "bytes": 688502,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder172/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f64e0fee4c24c70dbddd498064f1156534ed045f99bf1a80a101cdf88fe2b061",
+      "bytes": 677476,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder172/neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea493c33533ab43397ea7ab202c13da5a1dd07db11f84d9e957068718b195234",
+      "bytes": 684297,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder172/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80c036d76c7a528782073eed0d0292b91d9c724b2ee2cc31e46b94ed6e074f54",
+      "bytes": 2360,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder172/walk-forward-arm-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d4cb95a0307803e5fc9a31f25b69113f687e4cf0de5c7ed11f9f15fbe98e2e59",
+      "bytes": 692226,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/review/walk-shoulder172/walk-forward-arm-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b05dc8c2ca73fdc6b10d15136e0237477d78d37cf2652a8fa9d2393d6e7377b4",
+      "bytes": 689417,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof171/cases/E_face_color_original_hair.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4242e0763bd5f46eefcc893ba3eebfa71892b853e735a7cc4408e68de6b66dc9",
+      "bytes": 2813680,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof171/cases/F_face_color_original_hair_normal.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3ab092c60410be04a15dfbb2e8bbab46dbe0a22c1ce599ba049aa002c6cadef",
+      "bytes": 3075152,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof171/compiled-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0551f578a65797ee542a6b79e7279b67cf53b089db582fff7f887ed3a461669f",
+      "bytes": 1061589,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof171/failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e8faae577c27b4395f783fcf2b1cdfa4772d5cb4fe1510d2207bdaba368102c",
+      "bytes": 373,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof171/fitted-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afe55b8f8f51ec574d606f9cf52297df1b48d1988e30821bee9a7fe33dd22298",
+      "bytes": 2157612,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof171/proof-source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42d96c065cc4a113ae719a45362963cd247f32a51b5af9cd61325a3a3f870a42",
+      "bytes": 8639990,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/actual-skin/audit-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d504640dc6dc33d77561698dd131b177446e1de9f6fecbf5472e93d59e27df38",
+      "bytes": 11677,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/actual-skin/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "074b35ad33c81331510e1238325cba213181bfee7ec2a16f7c289da221485c14",
+      "bytes": 61356,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/actual-skin/samples.csv": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be09ab378f4692d0676cde2c7d8ad9d7e9d263338fa65ef25c4d0983ed75fe52",
+      "bytes": 667326,
+      "mediaType": "text/csv"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/actual-skin/skin-minima.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1c745d8234c886d62bbc07a4752119b784092a8653981f716e75631cc268b1d",
+      "bytes": 71148,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/cases/E_face_color_original_hair.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4242e0763bd5f46eefcc893ba3eebfa71892b853e735a7cc4408e68de6b66dc9",
+      "bytes": 2813680,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/cases/F_face_color_original_hair_normal.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3ab092c60410be04a15dfbb2e8bbab46dbe0a22c1ce599ba049aa002c6cadef",
+      "bytes": 3075152,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/cases/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "acd1286f2b8654ac5453f3748e969b751b45febf805f959af7ecc4b800864154",
+      "bytes": 9958,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/compiled-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0551f578a65797ee542a6b79e7279b67cf53b089db582fff7f887ed3a461669f",
+      "bytes": 1061589,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/export-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5cc41ec593e10f70eb14de3bca54e55d8f70d0803046065676759f821312429e",
+      "bytes": 14463,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/fitted-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afe55b8f8f51ec574d606f9cf52297df1b48d1988e30821bee9a7fe33dd22298",
+      "bytes": 2157612,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/neck-seam.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "170b4010bc8539b18601809bbd9658514f93004dc3be1b89734b193bb650eb47",
+      "bytes": 789,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/proof-source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "13d2290b55088b86b147f00a809e16a74ce26b8d70fb569919d439b1456f966b",
+      "bytes": 8640014,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/canonical-motion-proof172/raw-normal-export-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5f468f7af70c4b122e0653d4ffbf680a4733eaa16ef20954e052c7c5f203284",
+      "bytes": 2452,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/closed-lid-normals163.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "45d0645b61f80420b5ed3c69c3487f7dce95751953f185b2f4ab2cc5252e7ab7",
+      "bytes": 4016,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/eye-plane159.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "49ea0b71b01047dc5723a82620fcb7d2b189d7d8c9f25be7b5467266198936d6",
+      "bytes": 4975,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/face-target-source149.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1eb374415cf524247261547e99a0ae7bbd6f8b79c956b165de903cdf48e669b",
+      "bytes": 8160,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate149/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2741ccd7c0004d7b5b2a5e8a57e25a27ed9e89cd04f1f980b6ee5fc5a38c48f4",
+      "bytes": 2193259,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate149/canonical-neck-seam-parent.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1726419eb2739eedd16b38ceeecce0428b3f1b6b70a94b6c173c8f95a004b7ad",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate149/lip-contours.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28ecf7fb358ed932693778c513aed59cd7ee33262965c91ead7dcfeecb67caf5",
+      "bytes": 532,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate149/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df4451a53238f909a4a482ebff64d8241d010aa6226b47dbe26cd76e1ca8ace4",
+      "bytes": 641,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate151/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a81da8d767f641de055e082ae8cd859e92713930b4f0ee477de0424a5bd054ac",
+      "bytes": 2217777,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate151/canonical-neck-seam-parent.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1726419eb2739eedd16b38ceeecce0428b3f1b6b70a94b6c173c8f95a004b7ad",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate151/lip-contours.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8bc352fe9cabf6ef8195d12ed7beb9085308fad89268356bc8266d8ae1579860",
+      "bytes": 648,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate151/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "24ec14264143476f34fa1517695dd343fe2969a84f5eaa0ef160644464f0305c",
+      "bytes": 699,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate153/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8b0a6b5d10f333717f550409f05c1626c1dc284fbcec1c0ec2b93c075e2b9ffd",
+      "bytes": 2217070,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate153/canonical-neck-seam-parent.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1726419eb2739eedd16b38ceeecce0428b3f1b6b70a94b6c173c8f95a004b7ad",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate153/lip-contours.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8bc352fe9cabf6ef8195d12ed7beb9085308fad89268356bc8266d8ae1579860",
+      "bytes": 648,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate153/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7a1af60ad8acf2dc46d9e685840e52dc7b7cf14b460c5ce9e7dfc581262799af",
+      "bytes": 698,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate155/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70f84e5ebd6c1e0ca805cfa49dc56aabac688203798b4a35e6a77f4e7d4de957",
+      "bytes": 2214461,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate155/canonical-neck-seam-parent.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1726419eb2739eedd16b38ceeecce0428b3f1b6b70a94b6c173c8f95a004b7ad",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate155/lip-contours.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8bc352fe9cabf6ef8195d12ed7beb9085308fad89268356bc8266d8ae1579860",
+      "bytes": 648,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate155/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9db142e09f81716b48f86e7ec2c2eb6f415acb92fd05aea7306a624b4f363121",
+      "bytes": 698,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/body-atlas-byte-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ebd7d51a57b6a2858efd30ca82af071bc2c4e7f0e4a62aadb08350c0d052415a",
+      "bytes": 400,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db10eae30c5baf45298dbd8415bc6dd3d4412284ff8f4edce4e0f8a40c3e00cb",
+      "bytes": 7775119,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/face-source-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80894b09123189c8cd5a06a2659ad22a469827be2ea9fb60a7594682eb42b69d",
+      "bytes": 839329,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/hair-color-recovered.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "689182be385ef42ac10bf5f7fc5ebb492e97950284d6fdcca31760d4db25b552",
+      "bytes": 267051,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/hair-normal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a71d540ddd69c5b718426c406ee80e9690e7b1687043d887d603e50c9d8d4594",
+      "bytes": 261295,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/hair-source-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "49bff8fec7b7d714613d759c576b2cf61143139f28aca18a558ffb30c0182a38",
+      "bytes": 496407,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/hair-source-normal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72dd52120a68f28a771002ff7b43687411276d276a6586e43e4aed76318c3f37",
+      "bytes": 442295,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5621df7892f9cd26b2efe7bc78d1631870ab0925ace69038201296a164e8e04b",
+      "bytes": 1883,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/skin-color-recovered.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f97d6ee96cde0eae9922303e47a14ee33bde5a0e81f053ac4c9f1773a6eebb09",
+      "bytes": 820018,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/skin-normal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4038e119b6a9a5dec68edfa13a446cd4b5280e3a68d599c59d98c543acacba02",
+      "bytes": 157775,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate157/skin-source-normal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be2bb50a05f221e27b96eceeefaf9886f78e22cb6c3c00f1f8b086642beb68c9",
+      "bytes": 213277,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate159/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a76020ec2936f7bc8b7f0f459e0d53c41d926e450b846b910cc4fcd1950c31b7",
+      "bytes": 7767123,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate159/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95c0b0fdd1f2f559dc41b1f53da2ed76a97716cde326e785148076cb4422ffd3",
+      "bytes": 454,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate161/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bdcdb59dde2ccedc81b2538712dc92469b045de5da9b63c78e5d8215295aef73",
+      "bytes": 3679498,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate161/failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d5ae281e875fc323092efad012fa90936adf5ea3a6197e72a585536cf946b681",
+      "bytes": 202,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate163/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab779b13675abad07d1595b19858b3d7c8002fe1d9cf82047c57352197001a6d",
+      "bytes": 3679566,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate163/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4f20624dced130372f6cc7a28357108624fafd15e3e79e1d9bfa5d3c9fbeca10",
+      "bytes": 403,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate165/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80b585e75b18c3cf66a1455e2c85eb2cb37ad73e0c9d5a52717acaa685c3b610",
+      "bytes": 7788811,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate165/eye-structure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a05148e71b119f14a80d9c57eed5845347430e7001c20ea4b0e28658e006877a",
+      "bytes": 2878,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate165/inspection-failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "753df71ed98a4cfe1338f52268925fc4abca5c77f3d53e1af05eeed7430eeb85",
+      "bytes": 1085,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate165/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc60a85dce6692a9f64a27b3cd93b9afa3dafdc64ab69bc24664e8b88f7d08f7",
+      "bytes": 559,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate167/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ede4cc010952a81f60718b79ed17e21a67c0b8b677680b3001e2299d919859b5",
+      "bytes": 2222025,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates149-172/work/family/candidate167/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7201699455d768ce12b26b4b186fac73dd3068ec86ef2b19e22b82ac6b894fcb",
+      "bytes": 421,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/h02-bake-source151.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b575dde2427229a65ef0be87dbc191aeb60ca1f0c33685d6b9f72c8d13601642",
+      "bytes": 1432,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/lid-closure155.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43a834af4e1ac06cce7353779e7743e7689c718675019c254f2dc7705dbc97eb",
+      "bytes": 228,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/lip-crease153.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7ece9accef937b01033b84dda1386af11c99a8d10451fcd1041ad51c1b1abde",
+      "bytes": 9424,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-cases/A_baseline.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72d2ef537e582208b2efcb0722f9a1bb4a5e9adfb834b93cf03de0765d08bc81",
+      "bytes": 2340304,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-cases/B_color.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a70e7ffdfdc16e84f4cccd028026f8ba3ea3d45f3209be6b37e1d56a94314e3",
+      "bytes": 3011008,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-cases/C_color_skin_normal.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3569e9a3d034b8b30b621dde582bef9ae47296d6f9ffa3f3cc863ce943c40512",
+      "bytes": 3168948,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-cases/D_color_hair_normal.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "283337204ea9f7637c086b7b359ba09137edd52af5293a93d5e1226421c5f4b8",
+      "bytes": 3272468,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-cases/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a3644175eaa8b142cb2c1f82ece100df921ae67f7378294ebf6d91e5b05de3a",
+      "bytes": 7564,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-fair-canonical-cases/E_face_color_original_hair.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bfa48a2007af4e42971f596699125f37853f3e22cb98e642022f18404ba71cb1",
+      "bytes": 2813680,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-fair-canonical-cases/F_face_color_original_hair_normal.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc6970a4322823c462cfb7cf363206aeeee3d526a107ddfb73c862919de7746c",
+      "bytes": 3075152,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-fair-canonical-cases/normal-export-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a13a4990504183e793aa1beb2573175eff33b117ab2ca8bfd4bb7124900d5a8d",
+      "bytes": 2583,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-fair-canonical-cases/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea0e256100e459eb779dfb88e51da5729fa4dada8af5f48a59a4d973bb986c23",
+      "bytes": 5480,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-fair-cases/E_face_color_original_hair.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b8999de405e94bc801b686da59bd375c80aa2178e7c327c0fa43c6b5279af1c",
+      "bytes": 2813680,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-fair-cases/F_face_color_original_hair_normal.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db9927deb9e714306de327e94f6b81cb25a7adb39d57e74c245acff817f4da0a",
+      "bytes": 3075152,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/material-detail157-fair-cases/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b6f9d4e1ed2d95eb11c06b8d74864f1898fa72ae89a3e83223d34d321a42e5a1",
+      "bytes": 4264,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/mouth-canonical-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "612cbec433a4cfa196452bb895b0931852f03f7ebea6d50100652e1458ba46b1",
+      "bytes": 1206,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/mouth-canonical-pixel-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87f32a73570703dd7cda1d8489521ad658548cdece0ab171392c1331f4556edf",
+      "bytes": 1078,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/mouth-target-check153.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "789ff1fc2f2dccfcedbc7bc0ba97e0e34c06433d1348bc6c7daf12931de4dc98",
+      "bytes": 606,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/mouth-topology155.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "419bf90f0baaec93d9bcd41875148af0d682fe807ab78c0112707f0e9a82d356",
+      "bytes": 1555,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/preservation149-163/CONTEXT.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02a993151967319ef1493332015fa79b27dcfec28fb2f4b17805bb2680b29e22",
+      "bytes": 2286,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/preservation149-163/frozen149-163-self-contained.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e8154bb4ba39993c64d2fa9ba4dacda20fed3a4c49c2ac937b8653a039286dd1",
+      "bytes": 36603,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/preservation149-172/CONTEXT.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c1201bc0970c97eb0842b6cc67dfa35ad5a50646ada63f5716792412bcb9c1e",
+      "bytes": 4278,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/preservation149-172/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a1e3a09ba6114d4bc28513f3a929f082e91ea42ef91340c3fde99e26fab1c438",
+      "bytes": 2037,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/align-h02-eyes165.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de843c963c72930935abd12e9363feda9068e718c14791944708f597e29561e9",
+      "bytes": 6929,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/bake-selected-detail157.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "636bc8723f32eddab53e443ce6a8b54478bac81863e23eb129419e66391c6bb8",
+      "bytes": 10305,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/canonical_person_normals.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c48c8acba597d2f3aec5ee425f8293d1a6341ea5d6aca7d02a3a24acd2cf0f8",
+      "bytes": 2192,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/canonical_render_mask.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d6a4f96f5f53dc17f35b9bea430fff50ebe7b43b1da65f2858e1ef168207c0a",
+      "bytes": 1508,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-canonical-export157.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b861d7b03357f6891effa38652433d30a7f02fa840650c9e7ae27fa7433d3b83",
+      "bytes": 2501,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-eye-experiment165.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "629c9e9f1ac2320b90a37a064adf9cb015775259fe575ff392a18d6c26718cde",
+      "bytes": 2008,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-face-color-body157.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "187f37316e3de26c2020fccb5e08df2f1aa81153cc546264415f272f0d2311b9",
+      "bytes": 1121,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-final-skin172.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d504640dc6dc33d77561698dd131b177446e1de9f6fecbf5472e93d59e27df38",
+      "bytes": 11677,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-lid-closure155.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4397bd4719e0ac69ca196fb78545eacf8fb7e847eaef3da322243a5d9c908aaf",
+      "bytes": 1284,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-neck-seam172.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a91ad4969b15ea4014e18030639f43540c5bb56e03774d8c60b9c758d980330a",
+      "bytes": 3553,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-raw-canonical-motion172.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "51dcaa5c8309a205d85ccb8eb97b228186ceb525c652711a493210dca8409066",
+      "bytes": 3782,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-raw-render-map-normal170.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1af6d0f9533218b74df02d9d650e222fbbf30197842f9b4ef0ee470876e8b7f1",
+      "bytes": 3784,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/check-render-map-normal170.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b561e9ed441bd54f3d9d2e58c53a703c2cb2fc3ee73f9a05991c7d5795afa00",
+      "bytes": 2506,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/close-lid-seam159.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fc0810ad73870766bd3ce993a3a8258b64cb22abf052e785a04a59fa6ef9f6a",
+      "bytes": 2278,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/compare-canonical-motion171.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e499718bd4d3e1c373ecd7402bf567fed433f2d5a2c9bd5135a382b9727c3963",
+      "bytes": 11976,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/compare-canonical-motion172.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a6522c5bc2db90a57c33781399666957b64665009ec0afde009c27d54ebb071",
+      "bytes": 11983,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/compare-canonical-mouth-pixels.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e698ec835c4fe4fdaccba2e352df27223f357216241bde3ce3057b0bb85c0a30",
+      "bytes": 992,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/compare-render-map-normal170.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "15d962556b0ebb3ba2d0f1dce06b4074ed8e4958f961ce400b29501d9586772a",
+      "bytes": 8225,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/compare-selected-detail157-fair-canonical.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ecada3813d93008a4b6612aaacaf5e70b23068619662a99d149916dfb610f9f3",
+      "bytes": 8315,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/compare-selected-detail157-fair.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "264e4ec07b53b499bb4ad7948f52506121b50fe96421b5122950b0cee8e86a0d",
+      "bytes": 7920,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/compare-selected-detail157.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02992bfd54cc6f7edabe65820b1d6d8d0c3d53f1f4f433684a41da8a927c7a92",
+      "bytes": 7475,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/complete-source-mouth149.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "10f141325fdca0d6158b33618f9b3c4a402f1a186c3014811f9e91f539cdcabb",
+      "bytes": 10027,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/complete-source-mouth151.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae700b0c2fc021ca288dd55202aa0bee61122b09040adcfe1f63682a25ea7c73",
+      "bytes": 10872,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/complete-source-mouth153.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c4332b83f26b9d3c0152266ff3a03be1a55b0e18a5dc2118b20dd607d542bb6",
+      "bytes": 10971,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/complete-source-mouth155.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "79966b33f1dee3305bf7412a07111578e144275407fa7769121fb72be4f66634",
+      "bytes": 11211,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/diagnose-lid-normals155.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff4acc2dea72cb34fed44be7ae5f39405b1d6c81c2aa02cbf932706fbd1f7240",
+      "bytes": 3055,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/freeze-art149-172.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a22fe2a960c9bad2e9ebb79be57707192c119d6ee2f817883088103f066677f2",
+      "bytes": 8889,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-closed-lid-normals163.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d16241c8bef64a609efc4e86d8b4a702cdd3f044d3d6166b102f1dfb2b4b2b0",
+      "bytes": 882,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-export172.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca6a1a5e9fb52001e6536b64db5c3575e74f82e13370a892907e678f8b6561bd",
+      "bytes": 5271,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-eye-plane159.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ff11d746a53f4d545641468ec3888a11c974ef35710436006c98f9d6ef9f8d6",
+      "bytes": 944,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-face-target-source149.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b841ed18de17e34be1d46c39b22e805c1b9420c31710f69c08447378f62424a6",
+      "bytes": 899,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-h02-bake-source151.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9493098876538fca29dc197a9a78caca1d847bee6c7d689b3c38d4b7f28b5f3",
+      "bytes": 870,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-mouth-targets153.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b701c1f2694b9ce825de46e307dea249e536fe8393a59dd0eaa4a5f3c53f919",
+      "bytes": 1223,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-mouth-topology155.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d05dda005fa5ddda7452b01e242ab957681cfebc261a1856df3867d03070d25",
+      "bytes": 1266,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-walk-shoulder157.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95353d863a93d14cdb8514a239ac29bb0c8b35c3a3158ceed9304314dfb1a53e",
+      "bytes": 4519,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/inspect-walk-shoulder172.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1dad540773ee3108b0e9d07b4efb343d7b78676224304b015e8559b85eaf6956",
+      "bytes": 4550,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/locate-lip-crease153.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3c3cfbfe46b693bcb0bc8e536c6850906f446b10ae6dda03a2d33902e4382f2",
+      "bytes": 906,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets149.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7c71a49a6f9f14a204419878d5fb1c8c4d563749084a2e5b503aaafe33387c1",
+      "bytes": 2953,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets151.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0022ec1b18c0475193c09b4bae8704ff48b1b0875af5659275d468f37f5d7a7",
+      "bytes": 2953,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets153.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cc98f5e4f013fe0d2f256c58a2a3d5b93155efabd9beb40347a7d8501c9a507",
+      "bytes": 2953,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets155-canonical.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5ec1a687054a2620a9c48349e163eeda0a231a68c7cf821de53fbd7c5404635b",
+      "bytes": 3263,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets155.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8275cf292eb078233002520dc11f683c185671d4c64b36cbc14f250035fdd11d",
+      "bytes": 2953,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets159.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9dba3fe1f11f05853739b5e503e469c30f4497613fcb8f93c4f99b1888a5f1dd",
+      "bytes": 3004,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets161.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d6fbcea39d7195dd1f4735fde59f064e69576b6a91eb4a202a81e795f03922f4",
+      "bytes": 3004,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets163.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f9225a1f1169a9de5c0e882def45a58d38c5ade7458b9dd7e5da2c2e366752d5",
+      "bytes": 3004,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets165.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "352d518d9f1df96af5a503e8f1ba193b8732893cd3fd9d7e88f797715c28bc22",
+      "bytes": 3004,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets167-canonical.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "83d0c000ed200f7edd210b6a1141d8494f044774e3571429e30807e1864f723a",
+      "bytes": 3263,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/render-face-targets167.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a02c105071fca0f8f4e77311a22ba2147a9f48cf16acf13cc713f284d486ec16",
+      "bytes": 2953,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/repair-mouth-seam167.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b668c96b787c719ca43973938bb9e2a4963b6538c1bb031f93e6ce9510e13f0",
+      "bytes": 2525,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/support-lid-seam161.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "09adc3679c41a10295515257b5c448638dce6a1d573e0bdd2f12c0ba14e9e79f",
+      "bytes": 3914,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/recipes/support-lid-seam163.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86b222bbd58f81133918de5ba9d96dbd1e295974f43cc0753d728c479219bf0e",
+      "bytes": 3940,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates149-172/work/render-map-normal-proof170/cases/E_face_color_original_hair.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "98aea0e1624b27d3a6cdfbe37665e3c42177e02cf3c6a947b40657a1e18abc85",
+      "bytes": 2813680,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/render-map-normal-proof170/cases/F_face_color_original_hair_normal.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc1506fec12d839fe01b3e4f7211887a46d58e6da2dc6c67bcf93a5f710f72de",
+      "bytes": 3075152,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates149-172/work/render-map-normal-proof170/cases/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f78cfe50def10efef6972aaa8df4cd6737cd2ca60c86c66dc70eaa340357812",
+      "bytes": 5700,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/render-map-normal-proof170/normal-export-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94078ed5114f7e22b4bb6df3e3c0413e02d7833fda558f5ba9bc9b8d2362333d",
+      "bytes": 2581,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/render-map-normal-proof170/raw-normal-export-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5f468f7af70c4b122e0653d4ffbf680a4733eaa16ef20954e052c7c5f203284",
+      "bytes": 2452,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates149-172/work/preservation149-172/frozen149-172.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "25c91ae9645087374bdad44a7e715f7db0aeef85886e96535b1991d18fb375a5",
+      "bytes": 64482,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/covered-source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39ef64723c060bd5ee6d46f2d7ebf8da22a3f5797600927bbf4cc3b58c3babb5",
+      "bytes": 3106257,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7dabb54402dd5115f09d93cdbbae07cc68eee020b0de9d861da22aa0a878ea97",
+      "bytes": 2265500,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates45-101/work/family/candidate101/skin-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "24f5707da440f3483a016dae5a3335d299cb7063ab4063ddbc90d3a270146194",
+      "bytes": 346664,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates103-148/work/family/candidate147/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7569bcba81027ab14e70b5895f0709d2a406e1ec0c2cdb0f4de1a5726174034a",
+      "bytes": 2102584,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates103-148/work/family/candidate147/canonical-neck-seam.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1726419eb2739eedd16b38ceeecce0428b3f1b6b70a94b6c173c8f95a004b7ad",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/art-candidates103-148/work/family/candidate147/short-swept-scalp-mask.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7759d9210bfc4560cfec53b77c34d85068e9535975fa981acb21bb84e68f954",
+      "bytes": 7325,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates01-43/work/inputs/tall-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f952fffe8194fc10bc7d608e76b0fd306f8236f687951a11180922643321464b",
+      "bytes": 5973165,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates103-148/work/renderer-body145-motion-snapshot/evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9504639dc506e6d0be49f0bac9ceeb184d9ac03f8cf719880a9b8ecc2e7ce6c8",
+      "bytes": 613345,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/renderer-body145-motion-snapshot/fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "621100a8c78b60e972ec6e62d32385ffeaabe9311255a52c3bf3339ef5a651fe",
+      "bytes": 2773190,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/foot-contact-check-01/before-frozen-phases.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c1bfcb74bf4ab3635a1e3ee8764c18085cb92a17a3291987c2398d84483522ba",
+      "bytes": 9604,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/foot-contact-check-01/canonical-selection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fa54a7fec3d3abe343c2d34ae873f1678dc91a5d5905cc47ce67b83e91c3a46",
+      "bytes": 13533,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/compact/source-walk-clavicles.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "251c148d8f1bb07e13fcb5179c148653d1beab45b1d590bdb1e0bb4d5fbffc8a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/scripts/art/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8d76979a0f6df1ed2c97016cf4a0e09765bcdc23453ec5ddb5ea0d43700d123",
+      "bytes": 96024,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/scripts/art/people.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d5e40be5ed76990f1329fdb2bcf460f3e9d6dfe61d9235e0dc6d40ad434be6f",
+      "bytes": 78908,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/scripts/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f5640d8ae44faf1f0da28c813bf7a49d9adbb9d6c353906c2541eb2ebafef89e",
+      "bytes": 896,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/rights-and-review.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ae897cb9ff9ebda28210ff47fcc3f1c71414829dab45b1c77f694506261a6f7",
+      "bytes": 1298,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates01-43/work/input-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27bc29e0e82c21cd66eb9d792d36550c07047863d6960916b74a591ec9bb85a0",
+      "bytes": 3354,
+      "mediaType": "application/json"
+    }
+  }
+}

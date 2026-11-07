@@ -11,7 +11,11 @@ import {
 } from 'react';
 import { EventTime } from './event-time';
 import { Modal, ModalOverlay } from 'react-aria-components';
+import { resolveAppearanceRecipe, sameAppearanceFamily } from '@open-legend/protocol';
 import type {
+  AppearanceFamilyDefinition,
+  AppearanceRecipe,
+  GameView,
   ApiResult,
   AttributeView,
   GodMemoryEditorEntry,
@@ -25,6 +29,14 @@ import { post } from '../api';
 import { Button, Condition, IconButton, SelectField, Tag } from '../design-system/components';
 import { EditorPanel } from './editor';
 import { memoryEditorChanges, worldEventEditorChanges } from './editor-changes';
+import { createPersonAppearanceDraft } from './person-appearance-controls';
+import {
+  PersonAppearanceEditor,
+  appearancePreviewProblem,
+  useAppearanceDraft,
+  type AppearancePreviewValidity,
+} from './person-appearance-editor';
+import type { PersonAppearanceDraft } from './person-appearance-draft';
 
 type TraitOption = { id: string; name: string; description: string };
 
@@ -34,6 +46,8 @@ type PersonCreationDraft = {
   backstory: string;
   traitIds: string[];
   initialGoals: string[];
+  appearance?: AppearanceRecipe;
+  initialOutfit?: string[];
 };
 
 export type PersonDraft = PersonCreationDraft;
@@ -45,6 +59,8 @@ function normalizedPerson(person: PersonDraft): PersonDraft {
     backstory: person.backstory.trim(),
     traitIds: [...new Set(person.traitIds)],
     initialGoals: person.initialGoals.map((goal) => goal.trim()).filter(Boolean),
+    appearance: person.appearance,
+    initialOutfit: person.initialOutfit,
   };
 }
 
@@ -71,6 +87,7 @@ function normalizedEditorPerson(person: GodPersonFields): GodPersonFields {
     goals: person.goals.map((goal) => goal.trim()).filter(Boolean),
     meters: { ...person.meters },
     inventory: person.inventory?.map((item) => ({ ...item })),
+    appearance: person.appearance,
   };
 }
 
@@ -350,15 +367,48 @@ function PersonEditorFields({
   );
 }
 
+interface AppearanceChoice {
+  family: AppearanceFamilyDefinition;
+  draft: PersonAppearanceDraft;
+}
+function appearanceChoice(
+  family: AppearanceFamilyDefinition | undefined,
+  recipe?: AppearanceRecipe,
+): AppearanceChoice | undefined {
+  if (!family?.compiled || !family.compiledPath) return;
+  const resolved = resolveAppearanceRecipe(family, recipe ?? { family: family.reference });
+  return resolved.ok
+    ? { family, draft: createPersonAppearanceDraft(family, resolved.recipe) }
+    : undefined;
+}
+const noOutfitParts: readonly string[] = [];
+function initialOutfitFor(
+  family: AppearanceFamilyDefinition | undefined,
+  options: NonNullable<GameView['godTools']>['outfitOptions'],
+): string[] {
+  return family
+    ? (options ?? [])
+        .filter(
+          (option) =>
+            option.defaultForCreation && sameAppearanceFamily(option.family, family.reference),
+        )
+        .map((option) => option.id)
+    : [];
+}
+
 export function PersonCreationModal({
   position,
   traits,
+  appearanceFamilies,
+  outfitOptions,
   enabled,
   create,
   close,
 }: {
   position: Position;
   traits: TraitOption[];
+  appearanceFamilies: AppearanceFamilyDefinition[];
+  outfitOptions: NonNullable<GameView['godTools']>['outfitOptions'];
   enabled: boolean;
   create(draft: PersonDraft): Promise<ApiResult | undefined>;
   close(): void;
@@ -370,6 +420,23 @@ export function PersonCreationModal({
     traitIds: [],
     initialGoals: [],
   });
+  const [appearance, setAppearance] = useState(() => appearanceChoice(appearanceFamilies[0]));
+  const appearanceSnapshot = useAppearanceDraft(appearance?.draft);
+  const [preview, setPreview] = useState<AppearancePreviewValidity>();
+  const [outfit, setOutfit] = useState(() => initialOutfitFor(appearance?.family, outfitOptions));
+  const wardrobe = useMemo(
+    () =>
+      (outfitOptions ?? []).filter(
+        (option) => appearance && sameAppearanceFamily(option.family, appearance.family.reference),
+      ),
+    [outfitOptions, appearance],
+  );
+  const parts = useMemo(
+    () => wardrobe.filter((option) => outfit.includes(option.id)).map((option) => option.partId),
+    [wardrobe, outfit],
+  );
+  const appearanceError =
+    appearanceSnapshot && appearancePreviewProblem(appearanceSnapshot, preview, parts);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const alive = useRef(true);
@@ -381,12 +448,18 @@ export function PersonCreationModal({
   }, []);
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const invalid = validatePerson(person);
-    if (invalid || saving || !enabled) return setError(invalid);
+    const invalid = validatePerson(person) || appearanceError;
+    if (invalid || saving || !enabled) return setError(invalid ?? '');
     setSaving(true);
     setError('');
     try {
-      const result = await create(normalizedPerson(person));
+      const result = await create(
+        normalizedPerson({
+          ...person,
+          appearance: appearanceSnapshot?.recipe,
+          initialOutfit: appearance ? outfit : undefined,
+        }),
+      );
       if (!alive.current || !result) return;
       if (result.ok) close();
       else setError(result.message);
@@ -426,6 +499,66 @@ export function PersonCreationModal({
             </p>
             <div inert={saving || undefined}>
               <PersonFields person={person} traits={traits} onChange={setPerson} autoFocus />
+              {appearanceFamilies.length > 1 && (
+                <SelectField
+                  label="Appearance collection"
+                  value={String(
+                    appearanceFamilies.findIndex(
+                      (family) =>
+                        appearance &&
+                        sameAppearanceFamily(family.reference, appearance.family.reference),
+                    ),
+                  )}
+                  options={appearanceFamilies.map((family, index) => ({
+                    id: String(index),
+                    label: family.label,
+                  }))}
+                  onChange={(id) => {
+                    const next = appearanceChoice(appearanceFamilies[Number(id)]);
+                    setAppearance(next);
+                    setOutfit(initialOutfitFor(next?.family, outfitOptions));
+                    setPreview(undefined);
+                  }}
+                />
+              )}
+              {appearance && (
+                <>
+                  {!!wardrobe.length && (
+                    <fieldset>
+                      <legend>Starting outfit</legend>
+                      {wardrobe.map((option) => (
+                        <label key={option.id}>
+                          <input
+                            type="checkbox"
+                            checked={outfit.includes(option.id)}
+                            onChange={(event) =>
+                              setOutfit((current) =>
+                                event.target.checked
+                                  ? [...current, option.id]
+                                  : current.filter((id) => id !== option.id),
+                              )
+                            }
+                          />{' '}
+                          {option.label}
+                        </label>
+                      ))}
+                    </fieldset>
+                  )}
+                  <PersonAppearanceEditor
+                    family={appearance.family}
+                    draft={appearance.draft}
+                    parts={parts}
+                    disabled={saving || !enabled}
+                    onPreview={setPreview}
+                  />
+                </>
+              )}
+              {!appearance && (
+                <p className="ol-caption">
+                  No adjustable appearance collection is available in this world. This person will
+                  use the world’s starting appearance.
+                </p>
+              )}
             </div>
             {error && (
               <p className="ol-form-error ol-person-error" role="alert">
@@ -441,7 +574,11 @@ export function PersonCreationModal({
               <Button type="button" variant="quiet" onPress={close} disabled={saving}>
                 Cancel
               </Button>
-              <Button type="submit" busy={saving} disabled={!enabled || !person.name.trim()}>
+              <Button
+                type="submit"
+                busy={saving}
+                disabled={!enabled || !person.name.trim() || !!appearanceError}
+              >
                 Create person
               </Button>
             </footer>
@@ -573,6 +710,20 @@ export function PersonEditor({
   const [needsReload, setNeedsReload] = useState(false);
   const [loaded, setLoaded] = useState<GodPersonEditorView | null>(null);
   const [person, setPerson] = useState<GodPersonFields | null>(null);
+  const [appearance, setAppearance] = useState<AppearanceChoice>();
+  const appearanceSnapshot = useAppearanceDraft(appearance?.draft);
+  const [preview, setPreview] = useState<AppearancePreviewValidity>();
+  const outfitParts = useMemo(
+    () => loaded?.appearanceView?.outfit.map((item) => item.partId) ?? noOutfitParts,
+    [loaded?.appearanceView],
+  );
+  const appearanceDirty =
+    !!appearanceSnapshot && (appearanceSnapshot.dirty || !loaded?.person.appearance);
+  const appearanceError =
+    appearanceSnapshot &&
+    (appearanceDirty
+      ? appearancePreviewProblem(appearanceSnapshot, preview, outfitParts)
+      : Object.values(appearanceSnapshot.errors)[0]);
   const [meterText, setMeterText] = useState<Record<string, string>>({});
   const [memories, setMemories] = useState<GodMemoryEditorEntry[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<string | null>(null);
@@ -610,7 +761,7 @@ export function PersonEditor({
         : [];
     }),
   );
-  const dirty = personDirty || meterDirty || dirtyMemoryIds.size > 0;
+  const dirty = personDirty || meterDirty || appearanceDirty || dirtyMemoryIds.size > 0;
   const editMeter = (id: string, text: string) => {
     setMeterText((current) => ({ ...current, [id]: text }));
     if (text.trim() && Number.isFinite(Number(text)))
@@ -675,6 +826,18 @@ export function PersonEditor({
       setNeedsReload(false);
       setLoaded(result);
       setPerson(result.person);
+      const savedAppearance = result.person.appearance;
+      setAppearance(
+        savedAppearance
+          ? appearanceChoice(
+              result.appearanceFamilies?.find((family) =>
+                sameAppearanceFamily(family.reference, savedAppearance.recipe.family),
+              ),
+              savedAppearance.recipe,
+            )
+          : undefined,
+      );
+      setPreview(undefined);
       setMeterText(
         Object.fromEntries(
           Object.entries(result.person.meters).map(([id, value]) => [id, String(value)]),
@@ -706,7 +869,10 @@ export function PersonEditor({
   };
   const save = async () => {
     if (!loaded || !person || loading || saving || needsReload) return false;
-    const invalid = Object.values(meterErrors)[0] ?? validateEditorPerson(person, loaded.meters);
+    const invalid =
+      appearanceError ??
+      Object.values(meterErrors)[0] ??
+      validateEditorPerson(person, loaded.meters);
     if (invalid) {
       setError(invalid);
       return false;
@@ -733,14 +899,25 @@ export function PersonEditor({
         bodyPolicyPin: loaded.bodyPolicyPin,
         generation: loaded.generation,
         basePerson: loaded.person,
-        person: normalizedEditorPerson(person),
+        person: normalizedEditorPerson({
+          ...person,
+          appearance: appearanceSnapshot
+            ? {
+                revision: loaded.person.appearance?.revision ?? 0,
+                physicalLife: loaded.physicalLife,
+                recipe: appearanceSnapshot.recipe,
+              }
+            : person.appearance,
+        }),
         memoryChanges,
       });
       if (requestGeneration !== generation.current) return false;
       if (!result.ok) throw new Error(result.message);
       setNeedsReload(true);
       setSaving(false);
-      return await load();
+      void load();
+      // Close follows the acknowledged write, even if the later read fails.
+      return true;
     } catch (reason) {
       if (requestGeneration === generation.current) setError(String(reason));
       return false;
@@ -775,7 +952,7 @@ export function PersonEditor({
       if (requestGeneration === generation.current) setError(String(reason));
     }
   };
-  if (!loaded || !person || needsReload)
+  if (!loaded || !person)
     return (
       <EditorReload
         title="Edit Person"
@@ -795,14 +972,17 @@ export function PersonEditor({
       opener={opener}
       scope="Save commits changes across this person’s sections. The separate World Events editor saves world records independently."
       saveLabel="Save person changes"
-      dirty={dirty}
-      saving={saving || loading}
+      dirty={!needsReload && dirty}
+      saving={saving || (!needsReload && loading)}
+      reload={needsReload ? { loading, refresh: load } : undefined}
       error={error}
-      saveReason={Object.values(meterErrors)[0]}
+      saveReason={appearanceError ?? Object.values(meterErrors)[0]}
       onSave={save}
       onDiscard={() => {
         generation.current++;
         setPerson(structuredClone(loaded.person));
+        if (loaded.person.appearance) appearance?.draft.discard();
+        else setAppearance(undefined);
         setMeterText(
           Object.fromEntries(
             Object.entries(loaded.person.meters).map(([id, value]) => [id, String(value)]),
@@ -817,6 +997,42 @@ export function PersonEditor({
       }}
       onClose={close}
       tabs={[
+        {
+          id: 'appearance',
+          label: 'Appearance',
+          icon: 'ui.character',
+          content: appearance ? (
+            <PersonAppearanceEditor
+              family={appearance.family}
+              draft={appearance.draft}
+              parts={outfitParts}
+              disabled={saving || loading}
+              onPreview={setPreview}
+            />
+          ) : (
+            <div className="ol-person-editor-tab">
+              <p>
+                {loaded.person.appearance
+                  ? 'This person’s appearance collection is currently unavailable. Their saved appearance is retained.'
+                  : loaded.appearanceFamilies?.length
+                    ? 'Choose an appearance collection to adjust this person. Your changes stay private until Save person changes.'
+                    : 'No adjustable appearance collection is available in this world. You can edit this person’s other details in the sections alongside.'}
+              </p>
+              {(loaded.appearanceFamilies ?? []).map((family) => (
+                <Button
+                  key={JSON.stringify(family.reference)}
+                  disabled={saving || loading}
+                  onPress={() => {
+                    setAppearance(appearanceChoice(family));
+                    setPreview(undefined);
+                  }}
+                >
+                  {family.label}
+                </Button>
+              ))}
+            </div>
+          ),
+        },
         {
           id: 'character',
           label: 'Character',
@@ -1285,7 +1501,9 @@ export function WorldEventsEditor({ close, opener }: { close(): void; opener: HT
       });
       if (!result.ok) throw new Error(result.message);
       setNeedsReload(true);
-      return await load();
+      setSaving(false);
+      void load();
+      return true;
     } catch (reason) {
       setError(String(reason));
       return false;
@@ -1326,7 +1544,7 @@ export function WorldEventsEditor({ close, opener }: { close(): void; opener: HT
           discard: story.discard,
         }
       : undefined;
-  if (!loaded || needsReload)
+  if (!loaded)
     return (
       <EditorReload
         title="World Events"
@@ -1347,8 +1565,9 @@ export function WorldEventsEditor({ close, opener }: { close(): void; opener: HT
       opener={opener}
       scope="Save event changes commits the record edits and deletions below. Future narration has its own separate save."
       saveLabel="Save event changes"
-      dirty={dirty}
-      saving={saving || loading}
+      dirty={!needsReload && dirty}
+      saving={saving || (!needsReload && loading)}
+      reload={needsReload ? { loading, refresh: load } : undefined}
       error={error}
       closeGuard={closeGuard}
       onSave={save}

@@ -5,6 +5,15 @@ export const BASE_EQUIPMENT_PORTS: readonly EquipmentPort[] = [
   { id: 'main-hand', label: 'Main hand', icon: 'body.main-hand' },
   { id: 'off-hand', label: 'Off hand', icon: 'body.off-hand' },
   { id: 'back', label: 'Back', icon: 'body.back' },
+  { id: 'torso', label: 'Torso' },
+  { id: 'legs', label: 'Legs' },
+  { id: 'hands', label: 'Hands' },
+  { id: 'inner-torso', label: 'Inner layer' },
+  { id: 'outer-torso', label: 'Outer layer' },
+  { id: 'head', label: 'Head' },
+  { id: 'feet', label: 'Feet' },
+  { id: 'neck', label: 'Neck' },
+  { id: 'ears', label: 'Ears' },
 ];
 export const BASE_KNIFE_EQUIPMENT: EquipmentProfile = { ports: ['main-hand'], uses: ['melee'] };
 export const BASE_SPEAR_EQUIPMENT: EquipmentProfile = {

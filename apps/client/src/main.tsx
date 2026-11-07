@@ -3413,6 +3413,8 @@ function App({
                   key={`person:${creation.key}`}
                   position={personPosition}
                   traits={view.godTools?.traits ?? []}
+                  appearanceFamilies={view.godTools?.appearanceFamilies ?? []}
+                  outfitOptions={view.godTools?.outfitOptions}
                   enabled={creation.enabled}
                   create={(draft) => createPerson(personPosition, draft)}
                   close={() => setPersonPosition(null)}

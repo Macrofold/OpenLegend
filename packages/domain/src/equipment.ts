@@ -5,7 +5,8 @@ import { itemHasReservations, type ResourceAvailability } from './resource-claim
 import { definitionPin } from './world-modules.js';
 import { sameDefinitionPin } from './state-owners.js';
 import { isSafeRecordId, hasRecordFields } from './records.js';
-import type { ItemInstance, WorldState } from './types.js';
+import { sameAppearanceFamily } from './appearance.js';
+import type { Entity, ItemInstance, WorldState } from './types.js';
 
 /** Trusted finite consumers; port names and permitted combinations are world-authored. */
 export type EquipmentUse = 'melee' | 'ranged' | 'gather' | 'guard';
@@ -107,6 +108,24 @@ export function equipmentConflicts(
       ),
   );
 }
+
+/** Live attachment and current-save admission must agree on the wearer's family.
+ * Ordinary carried stock needs no matching appearance until it is equipped. */
+export function equipmentAppearanceFits(
+  world: WorldState,
+  wearer: Entity,
+  definitionId: string,
+): boolean {
+  const part = world.appearanceDefinitions?.wearables[definitionId];
+  if (!part) return true;
+  const appearance = world.appearanceRecipes?.[wearer.id];
+  return (
+    !!appearance &&
+    appearance.physicalLife === (wearer.actor?.physicalLife ?? 0) &&
+    sameAppearanceFamily(part.family, appearance.recipe.family)
+  );
+}
+
 /** Shared read-only prerequisites; unavailable conflicts fail before any attachment changes. */
 export function equipmentProblem(
   world: WorldState,
@@ -115,15 +134,18 @@ export function equipmentProblem(
   use?: EquipmentUse,
   availability?: ResourceAvailability,
 ): string | undefined {
-  const actor = entityGet(world.entities, actorId)?.actor;
+  const wearer = entityGet(world.entities, actorId);
+  const actor = wearer?.actor;
   const item = itemFor(world, itemId);
   const definition = item && world.itemDefinitions[item.definitionId];
   const profile = definition?.equipment;
-  if (!actor?.body || !item || !profile || !accessiblePossession(world, actorId, itemId))
+  if (!wearer || !actor?.body || !item || !profile || !accessiblePossession(world, actorId, itemId))
     return 'Choose accessible equipment in this inventory.';
   if (use && !profile.uses.includes(use)) return 'Choose equipment that supports this action.';
   if (profile.ports.some((port) => !actor.body!.equipmentPorts.some((p) => p.id === port)))
     return 'This body cannot hold this equipment.';
+  if (!equipmentAppearanceFits(world, wearer, item.definitionId))
+    return 'This item does not fit this body.';
   if (
     itemHasReservations(world, itemId, availability) ||
     equipmentConflicts(world, actorId, itemId).some((conflict) =>

@@ -1,0 +1,713 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-eye-hair-control-20261107",
+    "revisionId": "sha256-5bb415dbb304b0c0050aee4b9c12b4240ffeb1a4ad451659858dc52527a8f0da",
+    "manifestSha256": "4ce3955de714ac496465266b59b7c038f1981d99dd6a2db9ccd851024197029a"
+  },
+  "files": {
+    "character-creator-finish/integration-control-20261107/work/visual-repair01/final01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14e4d6ff1fae0e5cf2d4b7ce8efe3ac8e9709dee8a9c444896118ca3e8b11ad3",
+      "bytes": 9318372,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/integration-control-20261107/work/visual-repair01/integration05/assemble-and-transfer.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "241073f571c892ae5c65fe1bae2cdd90d91e9e4bff9c4231f92afcb2abe8a13a",
+      "bytes": 14437,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate09/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9cd78d0729d035110cb785282f9aab308626c63a1fc07f7bfdb8d0431fde9891",
+      "bytes": 4998747,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/hair-repair-20261107/work/visual-repair01/hair/candidate09/h02-dense-original-albedo-1024.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6a0d6cc852ea9d871805652e7a159da2bec2440bce385669703ce186373c5db",
+      "bytes": 1163224,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/mouth-coverage-20261107/work/visual-repair01/head-mouth01/candidate12/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8bf7679bd3ae172e96d875e456756e605ad97e8f2f8a6d4924b079d8ac386f55",
+      "bytes": 3701959,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/stages/neutral16/neck-seam.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "41e1b9eca0e5f6fc4ff4bef778ee60d58bf898171a67ba4d3bfd494aee4b1d5d",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/people-16cfcfcc1ff3.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16cfcfcc1ff341478d013b48d2774995d260e507f17a1890d4823a1876da907e",
+      "bytes": 87033,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/views/v23-male-head-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d352622479f0ad0339366cdde889b8cf2b1006755dadc4f49d7a962c5e8bf004",
+      "bytes": 6357312,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-source-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "717418a0b9e4cc63713acd579b79a50723a3cacf97f7c9572ca04088eab4efc7",
+      "bytes": 887048,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-source-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7eca6cde441163344798478661c68ef6751d7c705cb1a7ef56571b3540eca2c3",
+      "bytes": 920214,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/License.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddc945c9d2c6a5306a04466345d539e5a1ed46a48ecf68df8d985128f1e78a3",
+      "bytes": 147,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/README.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8708d99262179f480eeb8c2f8f8ff86ec9cd27dbbec962ef66f2ba58e122d4fe",
+      "bytes": 1100,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/head-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7430927c598337acffbbd2bdbc875a281910a77b7b14f497fa2e0621d5b8773",
+      "bytes": 10362,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aed8d2b38aeb5f29cae914b1720fc6e64c5293d6e20a1d942e8a9b14471ac9ac",
+      "bytes": 2608,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0e1a52f01ed60e2cfc6c848048b5274902ec5527ce6e49621d68f919bbe8625",
+      "bytes": 33782,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/body-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d514a7ca8e3c43ea50007babcb3aae111d2c29dce838d7db2ad8bb51b3a46c7",
+      "bytes": 1444,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/body-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d3a138ef2d1add8896401e6901efd21fd9a495bdf5c8fcce41f37bbc255f654",
+      "bytes": 5092,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c149a022ba009717d1676de876814e46c540cd99cbb8fc5839e513dd23cbc04",
+      "bytes": 3934,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed1c5ff7f3c3dc0872eb1c20f349a59800aaf7a7667e3320d62852c4606612ae",
+      "bytes": 30465,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e84303388323d43b8813ed1fded466de6a19552a0ad57fe2e06f99b3d03ca231",
+      "bytes": 1447,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dab6497b2081b46a5e604b433263865b1037b8b56a1fc22b2ad3f2fbbaf88e19",
+      "bytes": 10038,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mouth-coverage-20261107/records/glb-source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2daab3c945f10f67ba187426f3077f92e7c065391006ebdf02e8a6d62b77bcd8",
+      "bytes": 5968,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mouth-coverage-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c687ced955227fa42b90f9dfa7adfd1ad909cf7e50975a2e9b8c25c0e1fd04b7",
+      "bytes": 1530,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mouth-coverage-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f50c0c7135bee03c807495ca6901f708ea4fee239e2ceed06198f2e0a1825780",
+      "bytes": 12297,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/integration-control-20261107/records/glb-source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a1b13833da201c4d5f3384e47aae1979408907a3b690bd77037adbc28910d60",
+      "bytes": 4022,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/integration-control-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f40b28711d91aafc037f278a662f029c4f9ee3601e15ef43744eec699606583e",
+      "bytes": 2507,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/integration-control-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7266da6c1fafcedd0b771c58c4cd88b50735f85ee195912c9e6d22fced72140",
+      "bytes": 16753,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment-preservation01/STATUS.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3a25d7385b99ab5d6af445910884c4596a31c11b42dfb66e5e59268d71f47f9f",
+      "bytes": 1257,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment-preservation01/dependencies.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87bb6cb8ac7b5198ee29675c279d1b6df9799bf7351050242d34ebb807e1f3d3",
+      "bytes": 672,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/author-and-review.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0291e434d86d0f24fab41dc8bcc1334d52c872a7f17ce472414648e4cd117cf",
+      "bytes": 4237,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/bootstrap-failure.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0cdde4699d91984c0e92ef777389dd4ae04c8006319fd5bef5099cde658c9fe3",
+      "bytes": 475,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/eye-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7baaa64537e5d52decd440f205369b15dc69b9d828c1f5df431c1a4e453b4538",
+      "bytes": 6987,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "684aef7074d8dd545e1e32d2df2f62c8e70093de1d21f8b0226b1fc296fe097c",
+      "bytes": 1659,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/review/after-face-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cab0ff7f535b9a8c8702d542adf1f5fe35347e0301078135ddf9020872c86fe",
+      "bytes": 812401,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/review/after-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3d7220db68c4244dccb46638e77d01a6d6bec9eb08ee4bdb5b30c99162b95a68",
+      "bytes": 826031,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/review/before-face-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e020015f0b1bc07f4d728c9ecae6208bd1afe9603b91b8a1f6e2eb02caafc93",
+      "bytes": 811961,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/review/before-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbd9ef56f436e29b4e1af700d236cc0e208906c3249c13fe7c54300c4a517c6b",
+      "bytes": 825913,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bfda771826cd07e9f7047178564d4afcbc50683997c25bfa3528f34376122de1",
+      "bytes": 1753,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f04b2ec5b99e0b49006e1dd4902469bdf1b2b8b029441764c45ece0effeaa62",
+      "bytes": 4627155,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/author-and-review.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aeaab68f6dc257510f089437da1ded0880cef704d1b739434347f34ab2edddaa",
+      "bytes": 4237,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/eye-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6920d9bca8c67f51eddfbfc6b384431371cc7a0aa9cb50ec7c449e0c8ba35873",
+      "bytes": 6873,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c14ac641d4bc9fa6cb3ade181fc6679885b54c5ae21ba35f437370745de9fa84",
+      "bytes": 1659,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/review/after-face-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a812171e74887c9e9df8151c697f69a532bc0fa49f5929b988cbb9943219f15",
+      "bytes": 812182,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/review/after-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "79d36163f929c5a93d4265a889ed19974880f57909bc453b82a7ca41a1ec591a",
+      "bytes": 825795,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/review/before-face-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "429b4d41f9ac40f7882571223e5ceb230e6b56fb001aa941d4849c7974c111b7",
+      "bytes": 811961,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/review/before-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db2a2753a6f0a12c3acca8d1d5549209ab4013b4da664e11413592bc7caa9cf2",
+      "bytes": 825913,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fd395d56992bdfb2b0e4fe25ac9376e8f0bae1d12940c50b31adda76eb4e25fd",
+      "bytes": 1753,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be06abd33dc75408fd1786802c51c8afd65f74a53eb54fc7478334674a3c82b0",
+      "bytes": 4626959,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/STATUS.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bee81638c65cc9b97605e1cd0733c4629dfde0392ba7fcf4df3cc97cf9889719",
+      "bytes": 4018,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/attribute-overlaps.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a7461a45a70b4483652bcc50bfb8f1729fcc0cda80c25e632d9086b434870ad",
+      "bytes": 3258,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/attribute-overlaps.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "316db99007412f1dd74c35dc04a5eefc1319d0f64eade9ccd6e904c58b255d88",
+      "bytes": 1592,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/author.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "027ef48a1bc63ce0024281b807b0509593786b27e8e64db8e8cdc6bdb7bdd92a",
+      "bytes": 4613,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/author.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3bbb2cf2228aae240ce2eba228c8fe586f3f31d66f3ee2457138495d421ad5e",
+      "bytes": 8393,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/candidate01/deformation.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "adf5daac8b35c59cb516c053deb1378e8e02148ba83268b8960df1ca68b14b2f",
+      "bytes": 151485,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/candidate01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad99a1c9e404ec51decbb9097caef2e18a262a5bad2bd4003b6c9b4df20ec853",
+      "bytes": 4332,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/candidate01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cab8484bd898eba94e84eb6f6a29407e26201122b408aea592512fc571d8026f",
+      "bytes": 4622224,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "06b093f1c175a9d3a3e3c51694cd62d765b0e96bbf57e31da4826cb57467b707",
+      "bytes": 6232,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/external-dependencies.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ecd7076a93d78f8967f8b01fa27ab56896b3aa0a97ed44346af7af011f7cbedc",
+      "bytes": 2769,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/inspect.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3a87ec3927305a9bdc88a92e054c79b41f374c6feccbdde449acecf5f99d1d23",
+      "bytes": 28078,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/inspect.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b7e9d659890b4a4d9eb0d8a82b86c996dea729ada84beb5a364e8451bd7dd69",
+      "bytes": 1920,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "54192d5d07c1a5eb41aca74a58b6fa34eb1c5e4b296bbbecd48f843ec8a77f86",
+      "bytes": 30999,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/inspection.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dcd1566d0aed134df245384c118eb4a6b69c15ca609d88b1e1742ee4748dd68a",
+      "bytes": 293247,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/new-overlap-attribution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ffe2d7c5c7a941b5e2eb14732bd30b408ee84b8adccd18744cdc034f351f70b6",
+      "bytes": 3483,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/qualification01/hair-fit.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1527db06b490c479be38eb60750aac58247ba3bd7f1b5f27cd6aa76f3b74a85e",
+      "bytes": 451808,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/qualification01/head-surface.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46007cdae9ba1db8dabc8aa80a6236e737c620e1502b33b30b4fa5055c390ad6",
+      "bytes": 358896,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/qualification01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7fbcf3ea1dd169f164652d350371deeea65325e12eea98105c5de76ed968e25a",
+      "bytes": 2855,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/qualify.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70ee3ee32b901421c60b64368d9afa25c210743b6dd31a2429ba4c491b35afcb",
+      "bytes": 2222,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/qualify.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c62d4ac5f4e3f8c6c24a7b51d97862152f7549290ecc1faf28a6b5321f18191e",
+      "bytes": 7026,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/render.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58a8a6f601b66110b36115427e29b0c4d11735afdb33d765e5438ffdb3d0f229",
+      "bytes": 4831,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/render.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8399dbcf4d251f3dc91b831d5d6ba75d33e6c8511ba24eb9e87000ad120674bc",
+      "bytes": 3467,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-clay-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "024c993100a6510ca926ed222d2f62b0cd3dac16b7e1f16c18ce36d3cf4b6c78",
+      "bytes": 229192,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "75e0bf740aa8600fea76a6b4e676756b128017cebcd1dbdbf8db5421d867c67d",
+      "bytes": 230129,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "69aea819875483e5b7a8f1b2cd4139e0c2980ea9a12470ffb7b289fbc407137f",
+      "bytes": 238210,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "217d4e46a66e831e013f30d0f913a8dcbc89bf198d505f24028a8c10ceb6b8b9",
+      "bytes": 232941,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-colour-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d540d461aa59ccca88fe00c8b74b3e13a5cb1a103fd5fd0bc6ac6c8ca5751dc3",
+      "bytes": 375897,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b4132e4aa0441196b9723fce75c194b3425227365a9df434ee29f93b8c3d14f2",
+      "bytes": 353621,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "785c7457f148da08e4bafbaa4ee288eda89f6a6a63c37afd106bb2c0b67df0b0",
+      "bytes": 370379,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/before09-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "37fd96c874297615b24b8664740fd84bafb3aec6645a65a0498f9c0ba3e03397",
+      "bytes": 358900,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-clay-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ddb95e5b93ad888233d1fb0fbe250a3c0147ff791db0ecf8aaab3bacf303bf4c",
+      "bytes": 229194,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93d6beec33b2670c37162d901738bf0ab249759d6be5f06bdc59acb2db473c95",
+      "bytes": 230509,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce01717ae463cab563ae7abb91b9e01775a90283501fa05b547ac3053e06904c",
+      "bytes": 238763,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "249395b8855a994cdd6a3195aaea8ee9a9c6870e5700d7c9ec0fc01c49a9b2db",
+      "bytes": 233220,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-colour-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2582a9512b344edec336922e98b0d309409d5a79584a3d0329d67f91229e3a6f",
+      "bytes": 375969,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "37215cd2ac1de42637e817f03f7a7fd4da9df0e75c6233b3ee4eff679a5c177c",
+      "bytes": 354300,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "61c0e48dd4edadf6c75ce221f80afb2076a91e9ab4090d5cb98da5b74548e4e6",
+      "bytes": 371176,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/review/proposal01-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40dced3132eb452ee444276be60670cc49a13bf6a83b6b4cac682c2ae8a22286",
+      "bytes": 359736,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment-preservation01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa8f64e8c245a64f6bb6d78640e410572d21da33ec833d5033897bf436c07270",
+      "bytes": 7678,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/hair-locks01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26b3b7b067d6848bdc8144fae0c3522b6b68894854b31beac7cf75bac381eadc",
+      "bytes": 6402,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/records/inspect-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "22cc8171a861ea0950670bb67f44b5293a2893f3f10b0ab2a777163e7ef81257",
+      "bytes": 1525,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/eye-hair-control-20261107/records/native-files.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "91ae4688ba7008df03ecbc8f93914ae479251491e451512e5bcba7df1ffddf72",
+      "bytes": 434,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/records/native-image-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74a5ca6f7fb0d1785036b19a8d3072d8a7ec2c2084be598d785bc38dc85e7240",
+      "bytes": 9677,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bcf6d063c10ecb9216f37539a553114314abcc42f3f67147331c3a0c3a874a36",
+      "bytes": 1371,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c138b93c67b05a8f978fac3593a3f04260dba4d4ba7d92b9afc47d41b49cbb8d",
+      "bytes": 9130,
+      "mediaType": "application/json"
+    }
+  }
+}

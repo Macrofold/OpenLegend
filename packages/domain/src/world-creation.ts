@@ -2,6 +2,7 @@ import type { NavigationRequest, NavigationResult } from '@open-legend/spatial';
 import type { ConstructionPermission } from './assembly-types.js';
 import type { WorldCreationAccounts } from './invention-attribution.js';
 import type { WorldState } from './types.js';
+import type { AppearanceFamilyDefinition } from './appearance.js';
 
 /** Only transport identity is shared. A trusted selected profile validates all content. */
 export interface WorldCreationCandidate {
@@ -17,6 +18,11 @@ export interface InitialWorldPreparation {
   /** The trusted opening uses this deployment's installed artwork; the server
    * resolves its exact release and current permission before publication. */
   useInstalledArtwork?: true;
+  /** Trusted selected-opening policy, never serialized into a world or proposal. */
+  installAppearanceFamilies?: (
+    world: WorldState,
+    families: readonly AppearanceFamilyDefinition[],
+  ) => void;
   accountRoles: Array<{ accountId: string; actorId: string | null; role: 'creator' | 'player' }>;
   constructionSeeds: ConstructionPermission[];
 }

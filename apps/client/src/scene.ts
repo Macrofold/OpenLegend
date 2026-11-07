@@ -16,6 +16,7 @@ import { CueTrack, MotionTrack } from './world-motion';
 import { WorldPresentation, lightSprite, type RevealBinding } from './world-presentation';
 import { createSpriteRelief } from './sprite-relief';
 import * as pc from 'playcanvas';
+import { currentCameraProjection } from './camera-projection';
 import { ShadowMaterial } from './shadow-material';
 import { SpriteShadowBatches } from './shadow-batches';
 import { HoverOutline } from './hover-outline';
@@ -72,6 +73,12 @@ import {
 } from './spatial-art';
 import { playerEntity } from './entity-view';
 import { MercenaryModels, type MercenaryActor } from './characters/mercenary';
+import {
+  PersonActor,
+  PersonActors,
+  projectedPersonAppearance,
+  sameProjectedPersonAppearance,
+} from './characters/person-actor';
 import {
   ArtMaterials,
   baselineArt,
@@ -133,7 +140,7 @@ const sceneryCellMetres = 8;
 
 interface RenderedEntity {
   attackPose?: boolean;
-  model?: MercenaryActor | LibraryActor;
+  model?: MercenaryActor | LibraryActor | PersonActor;
   sceneProp?: ScenePropActor;
   propInstalled?: boolean;
   departedAt?: number;
@@ -308,6 +315,7 @@ export class WildernessScene implements WorldRenderer {
   private sceneProps!: ScenePropResources;
   private libraryScenery!: LibraryScenery;
   private libraryActors!: LibraryActors;
+  private personActors!: PersonActors;
   private mercenary?: MercenaryModels;
   private artMaterials!: ArtMaterials;
   private artSettings: ArtTreatment = { ...baselineArt };
@@ -439,6 +447,16 @@ export class WildernessScene implements WorldRenderer {
         sun.light!.light,
         this.artMaterials,
       );
+      this.personActors = new PersonActors({
+        app: this.app,
+        camera: this.camera,
+        presentation: this.presentation,
+        sun: sun.light!.light,
+        art: this.artMaterials,
+        changed: () => {
+          this.app.renderNextFrame = true;
+        },
+      });
       this.sceneProps = new ScenePropResources(this.app, this.artMaterials, sun.light!.light);
       this.outline = new HoverOutline(this.app, this.camera);
       this.presentation.prepareHover(this.outline);
@@ -771,6 +789,7 @@ export class WildernessScene implements WorldRenderer {
       entities: this.actors.size,
       scenery: this.view?.map.spatial.scenery?.length,
       libraryScenery: this.libraryScenery.diagnostics(),
+      people: this.personActors.diagnostics(),
       materials: this.materials.length,
       textures: this.textures.length,
       character: [...this.actors.values()]
@@ -981,7 +1000,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${!entity.modularAppearance && entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}:${entity.modularAppearance ? JSON.stringify([entity.modularAppearance.recipe.family, entity.modularAppearance.compiled, entity.modularAppearance.compiledPath]) : ''}`;
       // Restoring another valid construction branch can retain the same edit
       // count. The actual permitted pieces/palette decide appearance and picking.
       const signature = entity.assembly
@@ -1008,6 +1027,12 @@ export class WildernessScene implements WorldRenderer {
         entry.root.tags.add(signature);
         this.actors.set(entity.id, entry);
       }
+      if (
+        entry.model instanceof PersonActor &&
+        entity.modularAppearance &&
+        !sameProjectedPersonAppearance(entry.view.modularAppearance, entity.modularAppearance)
+      )
+        void entry.model.setAppearance(projectedPersonAppearance(entity.modularAppearance));
       const card = this.cards.get(entry.sprite);
       const horizontal = entity.statusEffects?.some((effect) => effect.pose === 'horizontal');
       // Fit the visible painted extent, not transparent artwork padding. A native
@@ -1022,8 +1047,14 @@ export class WildernessScene implements WorldRenderer {
       if (heightChanged && card && currentHeight !== undefined) {
         entry.height = card.height = currentHeight / (1 - card.padding.top - card.padding.bottom);
       }
-      if (currentHeight !== undefined && !entity.bodyState && !horizontal)
-        entry.model?.setBodyHeight(currentHeight);
+      if (
+        currentHeight !== undefined &&
+        !entity.bodyState &&
+        !horizontal &&
+        entry.model &&
+        'setBodyHeight' in entry.model
+      )
+        entry.model.setBodyHeight(currentHeight);
       const groundPoseChanged =
         card &&
         (card.horizontalHeading !== entity.heading ||
@@ -2024,22 +2055,24 @@ export class WildernessScene implements WorldRenderer {
     const meshes = this.appearanceMeshes(root);
     const entry: RenderedEntity = {
       model:
-        this.externalAssetsAllowed && !dead && view.appearance === 'mercenary-model'
-          ? this.mercenary?.create(root)
-          : this.externalAssetsAllowed &&
-              !dead &&
-              hasLibraryActor(studyAppearance(view.appearance, this.artSettings.assetSources))
-            ? this.libraryActors.create(
-                root,
-                studyAppearance(view.appearance, this.artSettings.assetSources),
-              )
+        this.externalAssetsAllowed && !dead && view.modularAppearance
+          ? this.personActors.create(root, projectedPersonAppearance(view.modularAppearance))
+          : this.externalAssetsAllowed && !dead && view.appearance === 'mercenary-model'
+            ? this.mercenary?.create(root)
             : this.externalAssetsAllowed &&
                 !dead &&
-                view.kind === 'animal' &&
-                view.subtype === 'hare' &&
-                this.artSettings.hareArt !== 'sprite'
-              ? this.libraryActors.create(root, this.artSettings.hareArt)
-              : undefined,
+                hasLibraryActor(studyAppearance(view.appearance, this.artSettings.assetSources))
+              ? this.libraryActors.create(
+                  root,
+                  studyAppearance(view.appearance, this.artSettings.assetSources),
+                )
+              : this.externalAssetsAllowed &&
+                  !dead &&
+                  view.kind === 'animal' &&
+                  view.subtype === 'hare' &&
+                  this.artSettings.hareArt !== 'sprite'
+                ? this.libraryActors.create(root, this.artSettings.hareArt)
+                : undefined,
       root,
       sprite,
       meshes,
@@ -3062,11 +3095,8 @@ export class WildernessScene implements WorldRenderer {
     y: number,
   ): { from: pc.Vec3; to: pc.Vec3; screenX: number; screenY: number } {
     const camera = this.camera.camera!;
-    // Camera commands can arrive before the engine refreshes its cached view.
-    // Use the current transform so picking agrees with the character image now.
-    const inverse = new pc.Mat4()
-      .mul2(camera.projectionMatrix, this.camera.getWorldTransform().clone().invert())
-      .invert();
+    // Picking and preview handles use the same current-camera transform.
+    const inverse = currentCameraProjection(camera).invert();
     const viewport = this.app.graphicsDevice.clientRect;
     const rect = camera.rect;
     const clipX = ((x - rect.x * viewport.width) / (rect.z * viewport.width)) * 2 - 1;
@@ -3722,6 +3752,7 @@ export class WildernessScene implements WorldRenderer {
     const propParsing = this.sceneProps?.destroy();
     const mercenaryParsing = this.mercenary?.destroy();
     const animalParsing = this.libraryActors?.destroy();
+    this.personActors?.destroy();
     this.landscape?.destroy();
     this.libraryScenery?.destroy();
     for (const { mesh } of this.reliefMeshes.values()) {

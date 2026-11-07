@@ -63,6 +63,13 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       gatheringPolicy: one('config_gathering'),
       workBatchPolicy: one('config_work_batches'),
       socialOfferPolicy: one('config_social_offers'),
+      appearanceDefinitions: one('config_appearance', {
+        families: map('config_appearance_families'),
+        wearables: map('config_wearable_appearance'),
+        stature: map('config_appearance_stature'),
+      }),
+      // Wearer identity owns a recipe; insertion order has no presentation meaning.
+      appearanceRecipes: { ...map('sim_appearance_recipes'), unordered: true },
       hearthDefinitions: map('config_hearth_definitions'),
       assemblyFamilies: map('config_assembly_families'),
       constructionProfile: one('config_construction_profile'),

@@ -24,7 +24,7 @@ export function createBaseStartingWorld(
   seed: number,
   accounts: WorldCreationAccounts,
   worldId?: string,
-): Pick<InitialWorldPreparation, 'world' | 'useInstalledArtwork'> {
+): Pick<InitialWorldPreparation, 'world' | 'useInstalledArtwork' | 'installAppearanceFamilies'> {
   switch (preset) {
     case 'wilderness':
       return {

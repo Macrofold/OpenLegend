@@ -207,6 +207,11 @@ review. Apply its consumer contract and budgets together with the package rules 
 
 ### Animation clips
 
+Use [Animation authoring](animation.md) for reuse, the conditional new-human-motion default, source
+adaptation and retained-clip assembly. It preserves the selected model and rig and distinguishes
+current commands from the planned adapter/qualification. These finishing checks apply to the
+actual target clip regardless of source; `motion=polished` does not imply regenerating suitable clips.
+
 The optional [motion reference](../../../art-direction/research/ai-asset-prompting/motion-and-visible-work.md) preserves practical phase, contact, grip, cloth and mechanism methods. Use it for the specific defect or action; a polished video does not replace the clip/package requirements below.
 
 1. Pin the actual rig/source revision and requested actions. Define clip identity, duration,

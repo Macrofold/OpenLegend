@@ -1,3 +1,4 @@
+import { validateAppearanceState } from './appearance-state.js';
 import { validateCartography } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
@@ -1420,6 +1421,7 @@ export function validateWorldModules(world: WorldState): void {
   validateSupplyOpportunities(world);
   validatePersonalSocialEvidence(world);
   validateReincarnation(world);
+  validateAppearanceState(world);
   validateRangedActions(world);
   validateNativeStrikes(world);
   validateTerritorialThreats(world);

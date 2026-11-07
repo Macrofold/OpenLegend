@@ -1,0 +1,1399 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-root-aperture-control-20261107",
+    "revisionId": "sha256-9d5f13d20bb6be22086fbaf799e9b2da8cee7d7208ef910c8fc71cbd5e3c8192",
+    "manifestSha256": "2c46ec0d93653b9eadea1fc3d439d6c669b68e03656c993da7d63d9964079605"
+  },
+  "files": {
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2cb7bcec4658b6414ae77864ba522eeb1eab486216bce505885e58e536a1af9",
+      "bytes": 4620409,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/head-likeness02/coherent02/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5aa27c7ee372d358c1b2a40c301ec21bc8d6df904e6125f7593e3387c902d8b8",
+      "bytes": 3720128,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates01-43/work/inputs/tall-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f952fffe8194fc10bc7d608e76b0fd306f8236f687951a11180922643321464b",
+      "bytes": 5973165,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/mouth-coverage-20261107/work/visual-repair01/head-classification01/head12-regions.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fbe1ec11c21af7368847ff33735a7398865c6d20a15ba9116081c27a6c960e9a",
+      "bytes": 119116,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-hair-control-20261107/work/visual-repair01/eye-pigment02/eye-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6920d9bca8c67f51eddfbfc6b384431371cc7a0aa9cb50ec7c449e0c8ba35873",
+      "bytes": 6873,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/head-likeness02/coherent08/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b04d6774287fea7d2e253a94dc6a9ccba9c201d651971cd7001820d1adcaa278",
+      "bytes": 3717849,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/head-likeness02/coherent08/head-material-regions.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3377d2d5949b4f5acb01c706d81d7f50558e00a8bd632516cf9117e9bd3ff0e8",
+      "bytes": 2185,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/people-16cfcfcc1ff3.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16cfcfcc1ff341478d013b48d2774995d260e507f17a1890d4823a1876da907e",
+      "bytes": 87033,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8d76979a0f6df1ed2c97016cf4a0e09765bcdc23453ec5ddb5ea0d43700d123",
+      "bytes": 96024,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/head-likeness02/coherent08/head-and-eye-targets.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b6ec09c8b225fb9a3df639bf98470e700ebc8b2be59b9ba51335727236ca4e1c",
+      "bytes": 165431,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/stages/neutral16/neck-seam.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "41e1b9eca0e5f6fc4ff4bef778ee60d58bf898171a67ba4d3bfd494aee4b1d5d",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/head-likeness02/coherent05/head-targets.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21cc99f480839f8b5d0e36cd3e5fd3bb2db847d189b1642ffa83dc876072256b",
+      "bytes": 156270,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/head-likeness02/nostril-audit01/proposed-nostril-cavity-faces.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ef6a52e46710dee391e958ca48b238562d5339db41b515eb167311350694d73",
+      "bytes": 3449,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/anatomical-regions.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e82bdfb5d9f681cb742532c9fed73c211fcee6bc75e919d0af321b136595f54",
+      "bytes": 7501,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/vertex-stencils.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64b474ce81b5b63e9a9e8c6676c5f27a24a3c5942473f60fc6628d46d624acf8",
+      "bytes": 65808,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/head-likeness02/coherent08/ocular-anatomy.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "388342aef26c45a37b5988bcf596b05746b76d556af032c53f0eb76676d4a20a",
+      "bytes": 109507,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-budget-20261107/work/visual-repair01/eye-budget01/export15/proposal15.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af9203daddfc4f1875557419326ada3265dac80bf14e8edd2637a324be15fb1a",
+      "bytes": 3699812,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/License.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddc945c9d2c6a5306a04466345d539e5a1ed46a48ecf68df8d985128f1e78a3",
+      "bytes": 147,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/README.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8708d99262179f480eeb8c2f8f8ff86ec9cd27dbbec962ef66f2ba58e122d4fe",
+      "bytes": 1100,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/head-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7430927c598337acffbbd2bdbc875a281910a77b7b14f497fa2e0621d5b8773",
+      "bytes": 10362,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-budget-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1761076dce4e50e1cf35e65fea06a947f3a492eca9369a2671c862ec272a4eab",
+      "bytes": 2221,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/eye-budget-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d340dee358dd03e81fc37765f31d803b259e13c3bcad39cba932c891acc7200e",
+      "bytes": 9828,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/integration06/raw-final-cage-colour.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c18a6bdcbcb8ad18d7dde5dd57882f5222ce14dc17d415ba649845a6c8ec1582",
+      "bytes": 1272097,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/eye-budget-20261107/work/visual-repair01/integration07/raw-final-cage-colour.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db3d8d38c0713f4532880fedc27dfbbcc3c9270049ceb6913866a776208f788c",
+      "bytes": 1275084,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-continuation-20261107/work/visual-repair01/integration06/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dcd391db0579e06b3b79ad88644fc3b271aa9fb095eebdf66e219d2438224a66",
+      "bytes": 9045193,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/eye-budget-20261107/work/visual-repair01/eye-budget01/control/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00436858ac04bd528950e30a32b7e10abe5db451713ac958efced05545c7d37e",
+      "bytes": 9041877,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/eye-budget-20261107/records/inspect-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "22cc8171a861ea0950670bb67f44b5293a2893f3f10b0ab2a777163e7ef81257",
+      "bytes": 1525,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/assemble-and-transfer.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9df056077cc7c1fbc44ffdbfa9572a494affaa9d608fb532329dc5cadee5abc2",
+      "bytes": 15142,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1fe58cf725f026b6f09252ceb6ab4bfc162c0248c508469d6a8c4659737fb0a8",
+      "bytes": 4358,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/review/covered-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "09dc4574606d63e67c4580aadc92d9d133b6164d16d0f389c8cb4f135ea9f93b",
+      "bytes": 611331,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/review/face-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46b7326ac699452695ef1d9e9f3ed88798a71e0ddb892f2af494ed3157596d05",
+      "bytes": 812222,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/review/face-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d61349c0ca9101e85be526f84b79f0f392f45f27b3a778da58402aa6e77c4242",
+      "bytes": 855800,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/review/face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed3f3f3726433e10bc06fe1ca3627b028fc692849ff2b71b87504579379c5494",
+      "bytes": 825885,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b6a85d4a4adbfc55976c8e40216e71c4de16c2a97af4e3a1560bd63ae802850",
+      "bytes": 6167,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration06/skin-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "532c79c9dabaecb266eef35a2d43d727fcf3bf5c20e92cf5196a61670c4dd7cb",
+      "bytes": 352519,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/assemble-and-transfer.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e42c00962b0acd2624d49a6d729ff409502da7b4917f0742e759e57f78ac0b4f",
+      "bytes": 16109,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fefaa0fc50e6d8b511a4c7bf52b52150275fd7b2b9dcb7d9fe346c0a039599bd",
+      "bytes": 5687,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/review/covered-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74c6a41dbad74d074e27c0ab430189a763d20ce2a8acc31ab4ebd4723beca629",
+      "bytes": 611308,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/review/face-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c45e3f6c46e6ea076b620f71ad987cd187be2d4e11fbc9f965a8b2a7e7f450b1",
+      "bytes": 812270,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/review/face-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70104f8b832c04217e55838519178b259ff9754cebdf011b06c20062c1166998",
+      "bytes": 856081,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/review/face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "434e6374915e93f239af58986a46fbe9a170b21ba16d12b12593b3bc90bee9f8",
+      "bytes": 825593,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ecbc2eb8d11336cde6f83cd18ce0ac4240365bda700257ac8c289a57dfc2b97",
+      "bytes": 7496,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/integration07/skin-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "66493fadd4d49794cf5206a3f349ba58f77f4489b72531b30829cf3a34469d20",
+      "bytes": 351763,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/STATUS.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed36f33f66b7626050ebd2db0122bb2801d8725ea69d8c09fe15a24e701ac070",
+      "bytes": 785,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/preview.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a40e87e96a24dc268655cfbdce33e9daa47c11b56f82606511cbc9e18b78748a",
+      "bytes": 3063,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f48dd15be024c59c80fb025283b2f87088f18d85eb2f1c09a98055a48e86542a",
+      "bytes": 2109,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/review/lid-0-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1dc780a120f4e86baaa045d3b530a87a4dc926e9ea5c1df9ed2221889323c47",
+      "bytes": 812242,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/review/lid-0-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "48fe3e1db4e9257d92579437305a57a191e639df70d42a5d7e667e40d949afd2",
+      "bytes": 825905,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/review/lid-0p1-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "251fedce7e86cf1a71783fddb18de5e1a75502f49748259a4609a024003efd6e",
+      "bytes": 811975,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/review/lid-0p1-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a5904d01cce7ac772cf2f8787c959aa62ff57c87e31609171269f97994757022",
+      "bytes": 825513,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/review/lid-0p2-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "321c2ffba02ce5a8cad90dca633c34ec1f30fa2f4b448a62c3a937c73fa5d617",
+      "bytes": 811612,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/review/lid-0p2-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00fb365293ff85e35f5db61ff5f9c817d340916b583d042097730e60a5ed7087",
+      "bytes": 825693,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cd1aba5d1666951cf35536a43c4b9ec4d927fd136c261b1f28ce39ed10fc5e7",
+      "bytes": 2149,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-lid-appeal01/source-with-valid-keys.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fcb3b29f7fbee4fdd86e4be6b63627abcc2eff71336cb733e8a27f73b91da3a0",
+      "bytes": 8723065,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3bcc4a5c707aa950cbb6efd8026bfbd5ef106fec1e75b9d96708d404af70d823",
+      "bytes": 2163,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/review/after116-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddd73107a9e3affcfb20d074da3da8d6210c45c9e44d88bcf8f867b56879a5f",
+      "bytes": 812043,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/review/after116-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1aa9ba11cbaa44fc1f1eebdee92765cf7cd24014eaa75fc1ae4332fe1714dbf7",
+      "bytes": 856218,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/review/after116-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "916ec12aed0326b45a8bd3a0d193cddee32c9db4bc65684d6ca94a68a1e31315",
+      "bytes": 825713,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/review/before40-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d92fe389f594ee9867bbe04c4aa3bb63e4cc1f7a1c728ee77835a338affdc82",
+      "bytes": 811612,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/review/before40-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c27beb62b83ff6c6945c85b5289ed3a4736eccf069372e3bc1562355ef1e31c2",
+      "bytes": 855718,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/review/before40-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "09ca5d9284faf731d9a5f677921d351e42678754d50d390eb2fa95bf201e4560",
+      "bytes": 825693,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/review.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16e624805a55d976e45489c665830d06684c779ebe79d5e096d721b7b731b780",
+      "bytes": 3500,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c70bb774ae9f9ac931cc68d9b4228c5163b8dbdbef73d14f71417ff95e4ca548",
+      "bytes": 2985,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-material-appeal01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "beaa5e9649d317238dca3dde0a1835c55e9138c91b7aafaf58b407c8f85b99bb",
+      "bytes": 4300458,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/final02/character-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70069d7631ef44327931df201fd0d969d6a2006f3211bb46d10935af3b36880b",
+      "bytes": 2835,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/final02/covered-character.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ad04acf9aa78e407a2c6bbc4969f23fc6e7b0334d79d1c4b3f0df6e9049a95d",
+      "bytes": 3718796,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/final02/export-control.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a1020179367360dacaf16c86f7d6d2e8892725036e82f670694af0000acbe6e",
+      "bytes": 2563,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/final02/export.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14ff5716c4508e833985872e7c78f4d907e364bba2ee6b54c3c264fb0b6329c9",
+      "bytes": 1109,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/final02/export.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "91533ddce02328ee0b92370f1baf9b7fca4f63e7e214b8128266b86bebe20ef7",
+      "bytes": 3277,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/final02/qualification.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a72acd6fec528f40657100ae721123455151e71c1fbb827006bd40e7264f2337",
+      "bytes": 3622,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/final02/qualify-existing.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c310e41827cc14c7fbff3cf4b8c544adac21e623fa21a1860451db11c4fb3e1a",
+      "bytes": 1926,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/STATUS.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a4f76efe99a5d8f2657f94f4262ecd1c3716c505fcb60d5c76e31e0607aba791",
+      "bytes": 872,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7a7eb0642a90a03510a7c209b6157ca5eb30425ef042f760a4eb546a92a4756",
+      "bytes": 3395,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/after-clay-upper-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df59cdf8cfd87466f19a6c77f6829879cfb7e0b49091d4087df33b388ede19be",
+      "bytes": 608747,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/after-clay-upper-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "186f256e5d85c96954eccc74b99c658437b8d8d4ded50354e678c352e7996e5a",
+      "bytes": 588861,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/after-clay-upper-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e131215ef252e4d9b5c7a3daa0f51e1af962b6a1c8e1ff01c02f42361c0052a6",
+      "bytes": 601079,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/after-colour-covered-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "983372ec6788b64ab040bd185d184d0b26bd8339262f782765d667aef5cd68ac",
+      "bytes": 611193,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/before-clay-upper-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32ff8d4b8535374ae5310a3431731400fef7b2c797a4c9189744dc77261e647c",
+      "bytes": 608554,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/before-clay-upper-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "50d3c49084ff012dede3e735cb5ef6bbe5a844ad8db86554798989af62cad9d2",
+      "bytes": 588610,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/before-clay-upper-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b686c2fc0817562b44373e728e0d3ff1bacd69e0317ce15389c95cb8c938709",
+      "bytes": 600881,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/review/before-colour-covered-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "413c45f8e4b12d9d3b453e5436281e928780ef0725dd0892c2a4a05d694f723a",
+      "bytes": 611309,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c288f31cb4915a7d85032933344894f2052c6f2ac82616c97f9c976b199ea401",
+      "bytes": 8722939,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/visual-repair-final02/day-face-front.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c87d2cf0ed0769e134bfe1129b280056d620f9aefb2dc11b1a354244c829a7af",
+      "bytes": 112076,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/visual-repair-final02/day-face-quarter.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be0f650226fddefd20c7b661274ca33b76ef73b2b42907a4d15a0d4a6143091f",
+      "bytes": 111112,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/visual-repair-final02/eye15-day-face-quarter.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3cc1ce94064f24d0971ef78c7a21d223adc5638f09c885bbe6bb31644dafabc1",
+      "bytes": 110651,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/visual-repair-final02/eye15-day-game.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "32785971a438edf00fc99d59662afc44e2f0d7947c66d96f22fe70dc58c4b031",
+      "bytes": 102719,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/visual-repair-final02/eye15-warm-face-front.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1f3da0956274493f7576081c120590436b275ee8582e5a1136efdc97870e153",
+      "bytes": 112610,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/visual-repair-final02/warm-face-front.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "44583bd9e9d684c7c9df0f0e85fd8e2d69b6eabf6c3cb0b2e1e3ad191b7aaaec",
+      "bytes": 113005,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5dd236950ec6752d0874a4ae54d57c199afaf7655ee08c3dd90bedb91e6226f1",
+      "bytes": 7918,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/body-definition01-run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f6fd6b8a221b0f713dcb79dd5ae9360e93ff6bfee98cb0a4679521334c7f6726",
+      "bytes": 6479,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-source-diagnosis01/cup-boundary-loops.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa7410844cf3b98ff93e804f47f641418b48da06832a4ddbefbfb97065314c18",
+      "bytes": 10595,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-source-diagnosis01/current-head.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b69ebf2cc6240a90e617971ad083b1e8ea5a834320a75a13807c007ebcba72cf",
+      "bytes": 148798,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-source-diagnosis01/inspect-cup-loops.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f705d4565a53031096a0f3c3ef79747f344bb0460c57d417fe260de24153716d",
+      "bytes": 1272,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-source-diagnosis01/inspect-current.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7600210ef3ef9b3fbef8b48136e1b7130ec04deb11fcaf7ea111126c2590850b",
+      "bytes": 9643,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-source-diagnosis01/inspect-current.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c233a623da0337109e917586128c178881887ce4a33990902572a1af12a0ca0c",
+      "bytes": 5934,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/head-source-diagnosis01/inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe255ee25bfd0c3fef8e9f8b36f3c06d764db00727624a3220102f30374b7ae3",
+      "bytes": 59378,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/author01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "49d2795dec122d92797e4ca4ec40514a0c66ccfe58ac645b11be1d5ecfbca7b7",
+      "bytes": 4313,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/author01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "883c72872b9cb4eb0d8b75027ae20771410d296536fbbc221aac00e75f4a6f5e",
+      "bytes": 7706,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/candidate01/deformation.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3cfcacdda9e5cf4762a458bee7f77715c3801d68bbc8b3670482cb98200e1a52",
+      "bytes": 255565,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/candidate01/nasal-roles.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "443d8f18b17050780aaf784e50ff1d2d98e4cbe6c38a448aa3174a3aa6925921",
+      "bytes": 3389,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/candidate01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c15fc9366b3444e5315012392679efe439d70a5233200007fe0b55b727f06b0c",
+      "bytes": 3773,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/candidate01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1e214671dc9486d70d4c6ddaca04c89c365a1f18162a5c0e3f33a1f85daeb5d5",
+      "bytes": 8723068,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/check-export-normals01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f77ce5a7186793712d00586081c25e52cafb8dd5e87a7ce108de1e79e3f85de2",
+      "bytes": 1417,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/check-export-normals01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "65ea724560ecf3b995fa618e848d2db70bec71258bd307aefe4a8daeb992dc9e",
+      "bytes": 3465,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/export/covered-character.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8c9f4c9ef18d61ce8d18a2255961480c9c07403dc2ae2977b5b74ed58b43a16",
+      "bytes": 3718900,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/export/normals.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d85e59cef6ee546eba7fde8deae6fbf8f7ae166dd3a5f7506d7e2c52e3321c1",
+      "bytes": 1143,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/export/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3dc8dea37c5b5513fc14de282792b731156f0bac05b9724794ec81d8f848ad1f",
+      "bytes": 4295,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/export01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c8e4b0c42e75fd42ee5b809645d057bb772de178624be574fcc86f188b9a600",
+      "bytes": 5260,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/export01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a8652633f5bf773c8ef8587cf2a45dac94ce4210cff02ff62e01b919137b6af2",
+      "bytes": 1957,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/material02/anatomical-uv-field.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f2d21eaaaa5723247bdbee5a0c7952f34411c3e18c36ee181dd057131ba4829",
+      "bytes": 28552,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/material02/nasal-tissue-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6abc4616606e99c6106add05e9205e3492c0e217e76c8d8ff6c296a70d843549",
+      "bytes": 352846,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/material02/original-albedo.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "66493fadd4d49794cf5206a3f349ba58f77f4489b72531b30829cf3a34469d20",
+      "bytes": 351763,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/material02/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db8cc2ddeaa9a7879adccab7e709d545ce084607eddd0623cb10760a7b7d0bd7",
+      "bytes": 2532,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/material02/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82edabf7c6c39b7f24c0be0e2d1fa8d8ba005c2f1fba55e85a11fc52279a2c64",
+      "bytes": 4305014,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/material02.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3a721bb0557bc76b299cc86911932e2e5f604d19816fd397b68da16e98baa30",
+      "bytes": 3614,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/material02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e9aaa7142111ac708f14224eabf4027100c607e8b499f6a27210b7138fc5aab8",
+      "bytes": 5214,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/render-material02.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "faf65bf64acbd994b363f96a8b7b9683cf2514486b83401b31f5512518e851df",
+      "bytes": 2502,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/render-material02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2c760ce2e46f8a0e2c65430d2012f4b6676f6e9f059eb84cde7e949fc8cd05f3",
+      "bytes": 3206,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/render01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "391b2b9e468af19f954db151ee1ad8ffdf2d3472deb67041c261d1b374432e35",
+      "bytes": 5035,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/render01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "730341b62cd9d51c9d2446aaa551eab4d025615489c2feefa5d5d938888e9527",
+      "bytes": 3249,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5cda39ffd798faee722f59fa8121212394a6614b8b422f16dbebcccf09fe96a7",
+      "bytes": 5800,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-clay-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16f880c3a3ebbb0fc4ec6abfb7e4825127826c2c8bf0660a0ec8d2860fd4b13e",
+      "bytes": 683137,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5e09e7c93a1ed7c4ebec01ae457bdeef0732db29633d7c27f9c519059334d20",
+      "bytes": 554712,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "867f2d3a115f6f93b1d82bd30bc615f14490bded337d36b6bc1c3f2a7433d412",
+      "bytes": 531193,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-clay-underside.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cac914a88670be4238591523df9801a25880f2ebcaff39774931be28264eaf59",
+      "bytes": 562653,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-colour-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f4c327af3c1b741c15b297a79611720983d57e7d55001591b35977eec7ba719",
+      "bytes": 800186,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58ba1e56ae7941a230cc7fecda83a5f1b80c5cc590feb43f9300051c4a91ff82",
+      "bytes": 892332,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f2a233783da43abafdec228fe2cd6b285d3cf5f1816739410fe1cd949ebe24ab",
+      "bytes": 872754,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/control-colour-underside.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b4596f3506d0a460f5463f56ca2f7e52ad29d6bffb213bcca4d33c996cd9980",
+      "bytes": 914779,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-clay-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c4ace1910374202be8bb03d3945405fcaba90a311229876b1e83a13105f4e1ae",
+      "bytes": 683103,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "668e294e5937ea1bce83108eb12d90a63e580ef01aae8d2220389eace48c97bc",
+      "bytes": 554893,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9221222f67e7a337eaf6c2a06374f3345d34ef4b1fa42433da6d93fb7bf259dd",
+      "bytes": 531190,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-clay-underside.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "750f0697aa51a427b842a19c845c89e0db687fb579ce36b57cb996ec6c6cb84c",
+      "bytes": 563010,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-colour-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2988c0c454b68483fbed31f07c17a0d6c64fdcf78f5412d131e6d28b9227a5b7",
+      "bytes": 800234,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d03aa5fc8711e16ed976484bb8295b46fd45d06351e2b93647afa5b25084a073",
+      "bytes": 893530,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b66e09e36bb185c420d73acf44ac2fbf6cc7de253cb27ef7673d893c22bce06",
+      "bytes": 873154,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review/repaired-colour-underside.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43a7c23fba1a1bd0ca4774f51326191a5c99e55ff2eaaa81a36890a271cdb5a1",
+      "bytes": 916263,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review-material02/after-colour-face-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a7c9744fd55c49cfd96f32171a5653aebeac401c6f24f81619a073af54c8598b",
+      "bytes": 800133,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review-material02/after-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ee4afd267da1ad62c04e4c22efd4a55296e8b526915bb9afef097c8ba53b85c0",
+      "bytes": 893157,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review-material02/after-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "abb779eef570a981334c3f3027fd2e6b443a00612939e64028db2af2f3b5f749",
+      "bytes": 872888,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review-material02/after-colour-underside.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "56f83f5d8b1f59411b1aa6c4b65c72182924dfc4e8ea2b2994a43b1146478363",
+      "bytes": 915693,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-cup-repair01/review-material02/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3d5127f9149a33b7d57d027712d6c925d8a349a606de74202abac4e8286bde69",
+      "bytes": 1578,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/author.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80f7a1a6f98c177023bada285ee6a031e3220dca5bc18dc2edfd3be1a7d2038b",
+      "bytes": 5514,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/author.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b9015c6ba5dafd1bfbddf00f7c7c516918c466240cffe53dead6788d81bc6dd5",
+      "bytes": 3858,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/check-clips.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8f21d4cdec5703b8e87ebc8d232db87973db9f6ce27b86864e6d8bc0e101e3f",
+      "bytes": 1878,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/check-normals.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2102b28ea20bc8df1ff9140315763be42e3667068c0492117e18411cc393f80d",
+      "bytes": 4149,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/check-normals.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5dd8ba79aef5987bf16956de78fd82cd7921d3a639ae4c9d3c8957217a3a585",
+      "bytes": 3567,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/check-source.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "23631cf0731ac8a7d2597b6e94cd92561998859187173f54bead389d5534f474",
+      "bytes": 2588,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/check-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d0a49283ac53af964bdd0c0d6763b860ee45f7264ce6c2d9903277a1940e5b01",
+      "bytes": 3819,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export/clip-byte-parity.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d1b9872aabb3380c23718750eaf53e5557a2e6858d5ba70f3a8365740caff8a",
+      "bytes": 976,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export/image-byte-parity.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "692299ad2daf2abe7f7dc046a943e5467d0a6014559cf840d9f6eb74a19531a2",
+      "bytes": 1922,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export/neutral00.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab0befc579ca923604b822beb03ff7c7b259c8c9315b35d6691549bf11a08cad",
+      "bytes": 3717288,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export/neutral10.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "402816620740c1cdcb7a04f78d77bfb02d1bbc5e0a54b5e9d785aad0eec126ad",
+      "bytes": 3717288,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export/neutral20.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "421598e3f3e7934af03c93f3dcdbfb9bfcb7ff38095324ad77b342e1ac1d5c7c",
+      "bytes": 3717288,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export/normal-checks.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b4484d2f290ad0fffcdc5d64cd0591ba91b1618eea70fcb120199e4569c7443",
+      "bytes": 3489,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2ab418c9111292caa9e8b9ecc29be4c8ff9ae1efcd88348d1bc69810dc643fd",
+      "bytes": 13654,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4135ed7c07b9bc5a65b13076bedb9562aec181c8bcec6ee116d29977f1fd9ed1",
+      "bytes": 8139,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/export.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad049fe5eb9722fb9cbf20e5926ffee104dcb7a81f71ca5376307feea05c170a",
+      "bytes": 2096,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/neutral00/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0142e9e55c182a6218fc89aa48c624b9df9391362a6afc807b980f58c37036df",
+      "bytes": 4304988,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/neutral00/targets.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4cc238123ba95c214ee565a6e95940521e270e183183402a51b0217bdafce911",
+      "bytes": 153030,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/neutral10/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00b574f9bdb8e6a0f7c7fc818cc9b4f06a1636e4fab22ef22ba0719ccafd5c14",
+      "bytes": 4305287,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/neutral10/targets.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c5661678e0bc3f35b2ca17de600671fe1fac8fe1a58eb805c1fbaf51a8e7f9a",
+      "bytes": 152982,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/neutral20/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "09c052b3e1efddbffa1e45facc49ee6354e7f206cfc9e4d70cdeb9c4d22eaf94",
+      "bytes": 4305011,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/neutral20/targets.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e058da99e218f51b2848af77e1e17f6ca2d22d3f1520d706d1bb6f08cc807cc7",
+      "bytes": 152942,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/render.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "699413109f4a4401b11fe0979cea880436f66b1992f7870af24aab141e8fde34",
+      "bytes": 3200,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/render.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ebdb0004e4f344833a60e5a03040f3915f0be386b0ca6a30f074a83449922d2e",
+      "bytes": 4087,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc8a28b39db7452233d1622811f6e914f53be8cdeee532c6febc5a4e28f8c0a2",
+      "bytes": 5972,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d82f068c3b8b6ad7515384af443ec6dcf4b88d895caa6d698d0907c61dc64f06",
+      "bytes": 3534,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral00-Basis-eye-detail.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74791a21d14d8b9958a98ba57eefc51e9b306ff6655f62f500d4d8fa5c98d921",
+      "bytes": 860234,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral00-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9a68e1882abde2c44d5439afb7cb0f9147df5dbe7dd015d5a1168d4cd6a7984",
+      "bytes": 812499,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral00-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a2ef0d7876e1174f99fabb1e6f9513e878e4eb1ada34e0848e48b0eb06cdd24",
+      "bytes": 825755,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral10-Basis-eye-detail.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4f1537cd6051b65771b2fb741c952d60b6ac2a7933ba487dc7d5cff2a8442df3",
+      "bytes": 858730,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral10-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be6b48190b4308b4b7b99bde1cae93d408c85deb477c915734ca5006fca0f096",
+      "bytes": 812335,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral10-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f6b2f537bdabd36cc154214cbb6da9e866a7596e3cd1c4d0bc417a143315959",
+      "bytes": 825548,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral20-Basis-eye-detail.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0928512a275c75fb04ead987bffad2fe7ea5cc970571d6ecf038c00ccd22fa1e",
+      "bytes": 857328,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral20-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e6c8b520ee530073865758b4c50e0ca3eae9849aa6139dd32e7900994f9fee7b",
+      "bytes": 812066,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/review/neutral20-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b37f498a9d43a85e2a10c0df0d819744bb92fdf797e91cb23129788e25de362f",
+      "bytes": 825253,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/neutral-aperture01/source-qualification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d87980d01d2e77244c1e962001f16a86cac80c18d7cbeefc7e489669a6e325f7",
+      "bytes": 1537,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/aperture-art01/neutral00-day-front.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68abd2e868cad054a14c70ba1280e4e62ff7e9138931408991ab6ff668a52113",
+      "bytes": 111526,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/aperture-art01/neutral10-day-front.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "065d911e877385974856ee8eb9f9682fad64662adbdfc59addc02d00b435702e",
+      "bytes": 111502,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/aperture-art01/neutral10-day-quarter.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d932ee015025b4522279acf84e583dca6b98df0e4b91da82068e064f38c60ad",
+      "bytes": 110417,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/aperture-art01/neutral10-warm-front.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c3d53f80d0b0f33b53e0fb2579b815e540f2a898ae2a7bd1cf3a61a15aa188b",
+      "bytes": 112353,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/aperture-art01/neutral10-warm-quarter.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f5025aed89c7a699e2e6df1cb9203106aa3904a3ee7408bfc01d7b6db0685f81",
+      "bytes": 111087,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/aperture-art01/neutral20-day-front.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5c73b954cbb0531330157df1e8a3af7598dfe5d7f50d78d1ce7af057cbd19d7",
+      "bytes": 111630,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/root-aperture-control-20261107/review/aperture-art01/review.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "260a357f2c2853beecafcf0806116e5458891713c13797a9d5ed8f52d768e501",
+      "bytes": 2189,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/root-control-preservation02/freeze.inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78453e7142d0f6bece8fa56d65b1049d322aa25d2999304d791abbb8883473e7",
+      "bytes": 25488,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-aperture-preservation01/freeze.inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c3a2dd01e7d965dc3200271ef137f6ed976d8bb8faa1cda1d5a9957d09980edc",
+      "bytes": 31941,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/aperture-renderer-preservation01/freeze.inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf6000a7df35e8a25b2c8511c2f634c48c8135be51674dc8bbd3ae8f3bc8f720",
+      "bytes": 2552,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/work/visual-repair01/nasal-aperture-preservation01/HANDOFF.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "059fd2d6d61fec319b77220ffadb44c3e80af588168cfabaacfd2403cf914e90",
+      "bytes": 4391,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/root-aperture-control-20261107/records/native-files.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9356389ea641fd61ed5e6dc6a4c0168a7eb6db34d4db8d0589791153002a8ab9",
+      "bytes": 1514,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/records/native-image-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "285665717ba1e60ef17faa56c8463a0820f977f54c092ff54ce7e52527c228aa",
+      "bytes": 42053,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/records/glb-source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f47aa9451aede4d478e1af6a8656bd34073d5e74fc9be985247233c8a89668f7",
+      "bytes": 5762,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bce1d8a972bdb967ce976a5075013e485843fc80218969ea6d6a7048c521353a",
+      "bytes": 1635,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/root-aperture-control-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2192b22d0834db7d7cc266a41006dc002fdebfa6ab80099ffb975f4ce9aa9f38",
+      "bytes": 29187,
+      "mediaType": "application/json"
+    }
+  }
+}

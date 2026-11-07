@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  playcanvas@2.22.2:
+    hash: 3379a2bbed5e62b1c4e5f8e5835cd60591025d11baef4f0b4cecf465b0de06c4
+    path: patches/playcanvas@2.22.2.patch
+
 importers:
 
   .:
@@ -104,7 +109,7 @@ importers:
         version: link:../../packages/spatial
       playcanvas:
         specifier: 2.22.2
-        version: 2.22.2
+        version: 2.22.2(patch_hash=3379a2bbed5e62b1c4e5f8e5835cd60591025d11baef4f0b4cecf465b0de06c4)
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -205,6 +210,9 @@ importers:
       '@noble/hashes':
         specifier: 2.0.1
         version: 2.0.1
+      '@open-legend/assets':
+        specifier: workspace:*
+        version: link:../assets
       '@open-legend/language':
         specifier: workspace:*
         version: link:../language
@@ -2456,7 +2464,7 @@ snapshots:
 
   picomatch@4.0.7: {}
 
-  playcanvas@2.22.2:
+  playcanvas@2.22.2(patch_hash=3379a2bbed5e62b1c4e5f8e5835cd60591025d11baef4f0b4cecf465b0de06c4):
     dependencies:
       '@types/webxr': 0.5.24
       '@webgpu/types': 0.1.74

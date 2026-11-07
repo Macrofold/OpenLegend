@@ -17,6 +17,7 @@ export function playerEntity(view: GameView): EntityView {
     bodySize: view.player.bodySize,
     appearance: view.player.appearance ?? 'sprite',
     portrait: view.player.portrait,
+    modularAppearance: view.player.modularAppearance,
     radius: view.player.bodySize.width / 2,
     status: !view.player.alive
       ? 'Dead'

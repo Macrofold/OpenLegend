@@ -4,14 +4,14 @@ Evidence date: November 6, 2026. This inventory connects the full written intake
 
 ## How to use the retained knowledge
 
-| Desired result                                                                    | Detailed reference                                        | Production or design consumer                                            |
-| --------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Believable bodies, faces, hair, creatures and separate garments                   | [Characters and clothing](characters-and-clothing.md)     | Existing 3D procedure; PPL01–PPL03 for the unselected parts family       |
-| Buildings, interiors, terrain, vegetation and different world styles              | [Architecture and worlds](architecture-and-worlds.md)     | Scene workflow and selected world/place feature                          |
-| Good tools, weapons, props, grips and surfaces                                    | [Props and materials](props-and-materials.md)             | 3D/material procedure; supported invention-art families                  |
-| Readable action, contact, cloth, mechanisms and satisfying work                   | [Motion and visible work](motion-and-visible-work.md)     | Motion profile; selected action/character feature                        |
-| Illustrations, banners, maps, books and animated mark-making                      | [Illustration and process](illustration-and-process.md)   | Matching art profile; existing map/journal/interface feature if selected |
-| Reusable production, integrated review, performance candidates and demonstrations | [Production and future use](production-and-future-use.md) | Existing production, performance, feedback and first-playable owners     |
+| Desired result                                                                    | Detailed reference                                        | Production or design consumer                                                           |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Believable bodies, faces, hair, creatures and separate garments                   | [Characters and clothing](characters-and-clothing.md)     | Existing 3D procedure; PPL01–PPL03 for accepted design and pending family qualification |
+| Buildings, interiors, terrain, vegetation and different world styles              | [Architecture and worlds](architecture-and-worlds.md)     | Scene workflow and selected world/place feature                                         |
+| Good tools, weapons, props, grips and surfaces                                    | [Props and materials](props-and-materials.md)             | 3D/material procedure; supported invention-art families                                 |
+| Readable action, contact, cloth, mechanisms and satisfying work                   | [Motion and visible work](motion-and-visible-work.md)     | Motion profile; selected action/character feature                                       |
+| Illustrations, banners, maps, books and animated mark-making                      | [Illustration and process](illustration-and-process.md)   | Matching art profile; existing map/journal/interface feature if selected                |
+| Reusable production, integrated review, performance candidates and demonstrations | [Production and future use](production-and-future-use.md) | Existing production, performance, feedback and first-playable owners                    |
 
 Use the matching reference when its detail helps the requested outcome; these are not an additional required reading bundle. General prompt construction, reference roles, supported provider controls, exact authored wording and preservation remain in [prompt direction](../../../docs/production-workflows/art-flows/prompting.md). The [future-use table](production-and-future-use.md#useful-future-questions-and-their-existing-homes) connects deferred applications to existing owners. A useful future method is retained there even when its runtime implementation is not selected.
 

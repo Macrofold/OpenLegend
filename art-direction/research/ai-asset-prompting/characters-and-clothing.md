@@ -6,7 +6,7 @@ Original OpenLegend synthesis from [Game Character Kit](https://learn.marketwith
 
 The practical improvement behind the source examples is an assembled set of modeled parts, a compatible skeleton and motion, plus deliberate fitting. A longer prompt cannot supply missing anatomy or reconstruct an absent body beneath a costume. The source's regular-proportion body entries contain bind information without complete body geometry; its attractive dressed people therefore do not satisfy OpenLegend's removable-clothing requirement.
 
-For an authorized body study or the PPL01 design, use this sequence:
+For an authorized body study, use this sequence within the accepted PPL01 contract:
 
 1. Identify the person from the accepted sheet: height, age, build, posture, head shape and distinguishing features. Separate these from clothing. Start with an approved anatomical source; rejected visible MakeHuman bodies are not a shortcut.
 2. Establish the full silhouette in front and side views. Compare head size, shoulder width, ribcage, pelvis, torso length, limb lengths and hand/foot scale as relationships, not independent sliders. Check the person beside a known-scale person in the same camera. Match camera height, pitch, field of view and distance before concluding the body is wrong.
@@ -16,7 +16,7 @@ For an authorized body study or the PPL01 design, use this sequence:
 6. Add separately editable face, hair and clothing according to the accepted parts design. Preserve a complete supported body when clothing is removed. Hiding covered skin can reduce intersections; it cannot replace missing body geometry.
 7. Inspect the complete person standing, turning and moving at normal game distance, then inspect identity details close up. A neutral pose passing is not evidence that walking, gripping or garment layering passes.
 
-These steps describe what a successful body needs, not a claim that the library contains a complete anatomical generator. PPL01 must still choose the body source and coverage method. Keep the accepted source, dimensions, bind data and fitted parts together so later prompts can reproduce a person rather than reinterpret them.
+These steps describe what a successful body needs, not a claim that the library contains a complete anatomical generator. PPL01 owns the accepted source and coverage choices; their production qualification remains open. Keep the accepted source, dimensions, bind data and fitted parts together so later prompts can reproduce a person rather than reinterpret them.
 
 ### Optional continuous-surface construction
 
@@ -71,4 +71,4 @@ The agent expands this into separate geometry, fitting, texture and motion opera
 
 ## Design handoff
 
-PPL01 needs to decide complete-body coverage, body traits versus deformation parameters, head joins, skeleton compatibility and missing-fit handling. PPL02 needs garment fit across those bodies, layer visibility, removal, cloth motion and cost. Retain the mechanism above as input to those decisions. A library's 65-joint render skeleton cannot silently replace OpenLegend's current 64-joint budget; neither deleting an arbitrary joint nor relabeling the skeleton qualifies it. PPL03 promotes only the accepted procedure. [Motion and contact](motion-and-visible-work.md) preserves the useful fitting and cloth techniques for that design.
+PPL01 defines complete-body coverage, body traits versus deformation parameters, head joins, skeleton compatibility and missing-fit handling. PPL02 defines garment fit across those bodies, layer visibility, removal, cloth motion and cost. Retain the mechanism above as a production option within those accepted contracts; it does not qualify the resulting family. A library's 65-joint render skeleton cannot silently replace OpenLegend's current 64-joint budget; neither deleting an arbitrary joint nor relabeling the skeleton qualifies it. PPL03 promotes only the accepted procedure. [Motion and contact](motion-and-visible-work.md) preserves the useful fitting and cloth techniques for that design.

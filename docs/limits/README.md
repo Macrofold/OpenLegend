@@ -12,6 +12,8 @@ The integrated [stealth and awareness inventory](stealth-awareness.md) routes sh
 
 The selected [acoustic-stealth inventory](acoustic-stealth.md) owns physical-source, quiet-movement, real-overlap and acoustic-work constraints. It consumes the existing [hearing/speech inventory](hearing-and-speech.md) for shared quantities, speech and native sound-response boundaries; it does not duplicate those limits or imply runtime qualification.
 
+The proposed [adult body and garment fit envelope](3d-pixel-art.md#adult-family-and-garment-fit) records the first bundled adult controls and sheet-match tolerances for [people built from parts](../projects/people-from-parts-feature-spec.md). The intended ranges need a dressed motion proof.
+
 ## One owner per purpose
 
 The selected [renderer comparison inventory](renderer-comparison.md) owns one-active-backend switching, initial API coverage, bounded permitted replay and comparison defaults. Existing observability, asset, spatial and art constraints retain their owners; no renderer speed or capacity result follows from the design.

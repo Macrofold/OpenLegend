@@ -1,0 +1,580 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-eye-topology-source-inspection",
+    "revisionId": "sha256-3cea4978d2f9869ea41d7ec3e2f3c11c6cc783cf8c3939ff285c9890f0b6cd8c",
+    "manifestSha256": "ae88b3d7e7a3c33d248f9a75b5db061ab51b00338021fc82a46004ff6b3a49af"
+  },
+  "files": {
+    "character-creator-pilot/walk-shoulder-source-evidence/work/recipes/canonical_person_normals.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c48c8acba597d2f3aec5ee425f8293d1a6341ea5d6aca7d02a3a24acd2cf0f8",
+      "bytes": 2192,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/AGPL-3.0-only.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/scripts/art/people.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d5e40be5ed76990f1329fdb2bcf460f3e9d6dfe61d9235e0dc6d40ad434be6f",
+      "bytes": 78908,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates01-43/helpers/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/family/candidate155/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70f84e5ebd6c1e0ca805cfa49dc56aabac688203798b4a35e6a77f4e7d4de957",
+      "bytes": 2214461,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates01-43/work/inputs/tall-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f952fffe8194fc10bc7d608e76b0fd306f8236f687951a11180922643321464b",
+      "bytes": 5973165,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2c0ca630092bc5916808d6344a35765afe2999961e17916a2796e3990613d70a",
+      "bytes": 2364,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/ASSESSMENT.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7d218405a4a29d2b706c37cf02cf6f67c8a422fd39a35772df86ee31536093de",
+      "bytes": 5524,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/License.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddc945c9d2c6a5306a04466345d539e5a1ed46a48ecf68df8d985128f1e78a3",
+      "bytes": 147,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/README.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8708d99262179f480eeb8c2f8f8ff86ec9cd27dbbec962ef66f2ba58e122d4fe",
+      "bytes": 1100,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/archive.headers": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b51679164ef5c89219874823d5928aa4fa6586437a4c3302c772b8deaa0ec600",
+      "bytes": 858,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/bundle-download-page.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b92337aabb1c995fded53ead7c10105f07fbfdf4894af9f0d949d0ca91de19b2",
+      "bytes": 48259,
+      "mediaType": "text/html"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/bundle.headers": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "11953338045893c7b081aed120d399592ec46511068ba60e8ce816829e95a02a",
+      "bytes": 1214,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/capture-front-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a4f01f85a577b75d786cc64c702105c9050ebc3e73e22afc561975a299c86076",
+      "bytes": 1604,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/capture-front.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b46c9a7fcba646ff5884566002d09637f5f99df9f400f471e70a748c19369263",
+      "bytes": 6643,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/capture-front.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "66441cf99800096c6bd8fbabab471ba7e44ffa2f0d38bb69ff13fbdc523c578d",
+      "bytes": 5001,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/capture-inspection.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fb154e4c0e2df09a510bb5b8212e9f2e8ec60869fdd81ef5e872b81db18b86d3",
+      "bytes": 8544,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/capture-inspection.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7305725ac6b5c5b3cc4f7b5bf52b906d90938da23936859dd33a71a4acb07bd7",
+      "bytes": 5298,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/capture-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "948cbbddbf91b0b6714f3b73e5f9e947b91fea4c777219bcc90f99fa09455c8f",
+      "bytes": 2883,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/demo-files.headers": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6250c0473effe6d8a49e0c5404c8d0e45ee798a266c0cafadd940e69b42c949d",
+      "bytes": 529,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/demo-files.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbf10eef1c5a515adebd21d62eafc189795d6cd16794c8b522b5ab85d755d980",
+      "bytes": 178097,
+      "mediaType": "text/html"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/extracted/human-base-meshes-bundle-v1.4.1/blender_assets.cats.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dfd8261cae28403a179f67c8d8a10cc0d566407608e3066eb7f29f5fad81f027",
+      "bytes": 713,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/extracted/human-base-meshes-bundle-v1.4.1/human_base_meshes_bundle.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
+      "bytes": 49420489,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/extracted/human-base-meshes-bundle-v1.4.1/thumbnails/realistic_head_anim.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36a3f33a554ab4b934a6eb7b96012e3e73256678c35bd0eedbb202f76afa1f52",
+      "bytes": 57406,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b2f5d612f78fb05b63495b74cdbe4b3b380d541374b3c565225e5bbf90bfa7a",
+      "bytes": 6142,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/head-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7430927c598337acffbbd2bdbc875a281910a77b7b14f497fa2e0621d5b8773",
+      "bytes": 10362,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/human-base-meshes-bundle-v1.4.1.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "811f43accbb31a88266d932f8f5563b2d13586fca0ba2693aad1f5fe582b3515",
+      "bytes": 50643039,
+      "mediaType": "application/zip"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/inspect-head.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c019a94aa65f0cd04da83e9bc511ef958a519da8bc0416553ebd1cf085e6fb50",
+      "bytes": 14070,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/inspect-head.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e13b2d1ab4ddceeb0c29872e44de8c7b8a71503ec5eceb020a0664f39a6ffd2a",
+      "bytes": 3479,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/inspect-inventory.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "60199626614280a20e89d799ec81bf162132bce668c0f3b4b64989d5f5ed009a",
+      "bytes": 8679,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/inspect-inventory.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b6f0662aa9933bf54ffa4d0703d0663ab98f68977341549b17e5936ce14d6d7a",
+      "bytes": 1223,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e2b2ed6539954ee37245bb46e96fcc939f9ed68e795873fbe4fe36b37787c9f",
+      "bytes": 4971,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/views/base-front-topology.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fdce277c44de2ed2d1e24b031af7d90746b7760960de8afcadaea0f3614d14b6",
+      "bytes": 715525,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/views/base-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b0706c6f0cfdd18f9f7423491efa8e42262b2f41a7c578e4ff539c59433ac1e7",
+      "bytes": 635908,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/views/base-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68ed091fbe7fae1e5df84aa741ecece6a144d81e6166aae4800ef8ace5c4b91e",
+      "bytes": 649557,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/views/base-quarter-topology.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "789b90803e49ad6c81a64020d1d282dc9a3b0fd2bc690822bd4d9087f557ccb9",
+      "bytes": 722255,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/views/base-sagittal-cutaway.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0b51471f60bb51f0257fa693961ce84ac5f7bc827abd4cabad40bf6e2f4157d",
+      "bytes": 741961,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b1c0fe12446a0547c8c45a4080250fbaf13c87d5c63df66a36ffa2b63d916aa0",
+      "bytes": 1260,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c87788a1e455533384ae4f2d737f4d4ce78e860b63d6efb8cac4d1376e8e4919",
+      "bytes": 64389,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/records/transport-review.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "181abefbafe3c41b8ff38b36a9355786433fb0e8e4a1903d03c7effbbaba35c7",
+      "bytes": 4140,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/corrective-pass/experiment-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bb3f835406d3f476d29c70285edf12b7094e2575bb52213ea6875e4e171629fb",
+      "bytes": 658411,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/corrective-pass/experiment-closed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5765d021bfcc16ac9d565124dbdc4fad9ee9ed8c39ff7be227901b534ffc5acc",
+      "bytes": 661733,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/corrective-pass/experiment-neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2c991cd3a300e33fed7e8e0d1ef490162e222ce36f9a9c97f292bfb0a66298e0",
+      "bytes": 663607,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/corrective-pass/experiment-neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d784235ee09ddeb74e92e5a2c06d0c6591a6dfeebe7d678d34498050ae49d4e8",
+      "bytes": 662430,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/corrective-pass/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "297209eddf85dd73d07156d6466b7ed76c7a2bc4b15f482c93bce6d5e4a7ed17",
+      "bytes": 10017,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/corrective-pass/source155-neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93070102506de0ca45235ae6125ba8fef8af53072c894c54df6436ffc921e2ad",
+      "bytes": 664627,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/corrective-pass/source155-neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "536e70274e1e00c3cb9169576730dc6360a7aa6b5d182ecbc2508fb2cff6b6a2",
+      "bytes": 663154,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/experiment-closed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d56e3df65d217a23555a72a72784111b09048d1c9a1dbec7261c6c087af7c7f",
+      "bytes": 659639,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/experiment-closed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2db7912a1a72d8634de08b0291b3d5f3b858f6899cb6b62dbffb4e5fdede6d0d",
+      "bytes": 662342,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/experiment-neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f167ff71d82a7636872c0bc50685a62b495031d8da63955df8a48c5df00704a",
+      "bytes": 665718,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/experiment-neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7213a8502bf78f094160ae99651d7823407c6d92f664bda5f0138fe898cd4f32",
+      "bytes": 663663,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78c2839645c8fb178cb7d69277dd4cffa638ffb493012d0e00ba50a9017c2b96",
+      "bytes": 9835,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/source155-neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eaf642dfcde80a6cb1f8da7224e4ac788c7cfdb6b08726d16710d36e113de65f",
+      "bytes": 664627,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/review/eyelid-topology-experiment-01/source155-neutral-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f0a8b5ff26b48404f44852f074c6fbf2ccb685c6dcb9ba52e47799065a0430a3",
+      "bytes": 663154,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/REVIEW.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27be7fe0f26612f2aa82708d2192dcbed5863b22ed1b6866e7cb79d8ddd09d96",
+      "bytes": 4517,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/author.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a5bd36fa8f9dedb1fd10b52214c0d95dfdd0032a3409bc175f281a70fd3f2dc5",
+      "bytes": 12113,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c93cf4a0e9bc3c7d1a01fc7fef22e7f895389f9e4cc1faeeb25fc2a3f8c9c372",
+      "bytes": 2174252,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/capture.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd790087c24d8e82adbb857658aa6f3188f3aa4d3669abba12855ea5b75813d4",
+      "bytes": 4469,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/corrective-pass/author.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d40400bc0dab119f5c2b00f7b0a69346cafd21016bba13608d399fb385bafdf",
+      "bytes": 5801,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/corrective-pass/author.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae3bbba692807fe8bccaccff6f00c22d882cad82311ede9d48f8cc3a9ad5f6b9",
+      "bytes": 17279,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/corrective-pass/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6abb49b7f1152d46bf4caafb0b7483a63c2f9ab6c8fb32cf5aa576b6e1aca84e",
+      "bytes": 2175022,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/corrective-pass/capture.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "90edb7c1dd6e5187b9e5d2b2cf6f538d4166be9e336b73589aaede16ba4a7803",
+      "bytes": 2971,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/corrective-pass/capture.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1066d3bea4ea51651e9c4b87b87dc9aa81a1b69351a86bdb8646933731f1d5a0",
+      "bytes": 4523,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/corrective-pass/prepare.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21ed11e56b13d765844d59ad50b8878849bebbdc9204821818c766d042fac94b",
+      "bytes": 6857,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/corrective-pass/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "99b173fa2960a191980745770d14bd9d0a51189bbbd330009a4885c5fc2c80e4",
+      "bytes": 233388,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/diagnose.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f9a0110e6e44676199da5fabfb0e06495318ce48e03a1ce3e11ee24717ba9f61",
+      "bytes": 1897,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/diagnose.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a2c2f8397e588617c0c8391b48d935ca208aca62692a763d9c6e4c14901f40ad",
+      "bytes": 4523,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "15d27d44353b688cac531ee9a60b0eeac74f1a42532a7351f60b702449f81002",
+      "bytes": 9375,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/inspect-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4db97f61056e24452e6b9a03cb4d640886e3de7d24be85a05260c8faadcd2b3d",
+      "bytes": 3715,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/native-image-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e37a0230be3c5463e1ca191b70921dfd6185be5996da9dfb038f0ced96a4c98",
+      "bytes": 4625,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/native-image-closure.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2b21eb42f5ada8c18dd92637ed77dde8110d692058950815dbd514d3385fdf98",
+      "bytes": 4983,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/native-image-closure.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e946a0e98322e7a4da10cfc62076f1cff0102564e0330eeb1770876cb11d6769",
+      "bytes": 1273,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a61dcb2e8e92ea1ed64812076d9dea4f49b21590d15db0b79a27818a4f466786",
+      "bytes": 38554,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/saved-source-diagnostics.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95507d4f77d9f87f558d93ace4cd7f47e004b48d406fd10616f68fba21f1a2ed",
+      "bytes": 16459,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/eyelid-topology-experiment-01/source-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0dbf7a0fb23638b1c87110c366cc7910e1db7d80668ce5aed34d183a192b1aa4",
+      "bytes": 33221,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/work/family/candidate165/eye-structure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a05148e71b119f14a80d9c57eed5845347430e7001c20ea4b0e28658e006877a",
+      "bytes": 2878,
+      "mediaType": "application/json"
+    }
+  }
+}

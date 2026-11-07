@@ -23,7 +23,8 @@
       "@open-legend/language": ["./packages/language/src/index.ts"],
       "@open-legend/network": ["./packages/network/src/index.ts"],
       "@open-legend/network/node": ["./packages/network/src/node.ts"],
-      "@open-legend/network/sdk": ["./packages/network/src/sdk.ts"]
+      "@open-legend/network/sdk": ["./packages/network/src/sdk.ts"],
+      "@open-legend/domain/appearance": ["./packages/domain/src/appearance.ts"]
     },
     "jsx": "react-jsx"
   },

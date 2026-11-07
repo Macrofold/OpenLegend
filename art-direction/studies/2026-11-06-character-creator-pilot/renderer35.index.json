@@ -1,0 +1,258 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-renderer35-20261107",
+    "revisionId": "sha256-4ecb1873be0454e4c7324c6fae02e5ea11efdb8db2022cf1e310a8a732511ff0",
+    "manifestSha256": "91d4b0e50963e239d7bb2f13f759c3bf313a04275f522423bff44b4115b1116d"
+  },
+  "files": {
+    "character-creator-finish/head-hair-motion-20261107/head/stages/combined35/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad59e508f81f6727df540266039272966900eaf8f62402b880559898bd2de402",
+      "bytes": 3700596,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/stages/combined35/covered-character-candidate.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5fc04bc21f012c3d4f845cb292d68283fb7e269ae18f3fabf5aa9e7a160de404",
+      "bytes": 3176456,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/gait-clock03/source/patches/playcanvas@2.22.2.patch": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3379a2bbed5e62b1c4e5f8e5835cd60591025d11baef4f0b4cecf465b0de06c4",
+      "bytes": 11994,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/gait-clock03/source/pnpm-lock.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c4192366d3a73cd2cfc3f02b8afa8b36805e4cd228ad5b9985292e356a9847c",
+      "bytes": 88469,
+      "mediaType": "text/yaml"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/licenses/PlayCanvas-MIT-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42fa51ddd556be151a29f381fb97ee975825dcc454e805ea3ea9c079cca04d34",
+      "bytes": 1064,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/License.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddc945c9d2c6a5306a04466345d539e5a1ed46a48ecf68df8d985128f1e78a3",
+      "bytes": 147,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/README.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8708d99262179f480eeb8c2f8f8ff86ec9cd27dbbec962ef66f2ba58e122d4fe",
+      "bytes": 1100,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/head-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7430927c598337acffbbd2bdbc875a281910a77b7b14f497fa2e0621d5b8773",
+      "bytes": 10362,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aed8d2b38aeb5f29cae914b1720fc6e64c5293d6e20a1d942e8a9b14471ac9ac",
+      "bytes": 2608,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0e1a52f01ed60e2cfc6c848048b5274902ec5527ce6e49621d68f919bbe8625",
+      "bytes": 33782,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/01-game-camera-daylight.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4f555b9aa67ab056e2e2440762586b91b51b238d97e523b5760db12432aa731a",
+      "bytes": 131378,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/02-front-daylight.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af0a14c1710a163f5d1a19e3bc6cb3d7552d3c99bd2f257851966034e2143afa",
+      "bytes": 144798,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/03-face-natural-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "589cbb8375dd48446de52235f9405066dfd00d662f9ac5caaf1f21c79bd317ba",
+      "bytes": 153066,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/04-face-level-natural-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d469f2b6879f0ca9f80063828d1fbada966c28138ea462ae5a0ab74dd0eb9f6b",
+      "bytes": 151335,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/05-body-level-natural-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eefd49e34954867da23b08065d90cf4fd1591c765da1bb3ba278331e47924b48",
+      "bytes": 144011,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/06-back-natural-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f60cbafc09d665ed495642d09d411b5c422ebda630334c4ad483682d5ff41f9e",
+      "bytes": 140060,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/07-walk-quarter-natural-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e87b6bba5e713a19cc798dd08b22a3f24f7c2e512a4d5b8fedf93fac72344c4",
+      "bytes": 144330,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/08-walk-quarter.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "553f406429e311c56b05242cb37ac5b771ddb3f36541bfef7111bded48a3e178",
+      "bytes": 1204550,
+      "mediaType": "video/webm"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/09-run-quarter-natural-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e9cb2ca58dda2cc3bebc60489d2416ec2af25b5a5e45e4be173a9050474f441",
+      "bytes": 144658,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/10-face-quarter-warm-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "15e26482e12c421e4b36c96c367e72980a7dbf5a3fdda9d908fb773c636a9d1b",
+      "bytes": 149356,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/11-run-quarter.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd80e7b7066fae8209770023e01f1831814fcfa53c12818f9b0ee1cc9474ff14",
+      "bytes": 1341675,
+      "mediaType": "video/webm"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/12-camera-turn-warm.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a5bc8ff4ad136a640ff36b8b256368e94ee8b480f6dbc6f88847bd9963d39b0",
+      "bytes": 2578711,
+      "mediaType": "video/webm"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/13-idle-quarter-natural-light.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "203da722318d747bd4b740e25ce07099beadebaf5a54d4ef98f43d1c57eed1e5",
+      "bytes": 144253,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "207a36b60fbcdcd0da521d3eec8d4dc22ab34fd2c802290c5c662d9d3adb6baa",
+      "bytes": 1845,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/inspect-movie.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "efe2a36626caf0a6e7bf0816dcd121ac7f58c5784ab2f38df4d5d733e62b6e60",
+      "bytes": 734,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/movie-metadata.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea7b78325bdf0bb3466df17a4817f26bdba3ede34ba8a91867022144358d0a35",
+      "bytes": 1059,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/settings-and-scope.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5bfddb32ae6a172e16fec1696aa8c9a271933f42341caf21f0335d71e1561d84",
+      "bytes": 4521,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "07b98fa5b6405f3f5c05fc02db1b3954a2b17f4874e294720922186e69dff6a8",
+      "bytes": 4658,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/renderer35-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "05f2163ca9981bf6a213cd0986b0137e4e5560fff88e8826d9b4f13419539705",
+      "bytes": 1402,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/renderer35-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "49ea99e448ee0f6228543a94eaf0bce5df0c242d5064c5ec323b05b93a98af93",
+      "bytes": 6331,
+      "mediaType": "application/json"
+    }
+  }
+}

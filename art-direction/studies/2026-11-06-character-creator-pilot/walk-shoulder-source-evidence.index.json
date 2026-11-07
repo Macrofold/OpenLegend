@@ -1,0 +1,776 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-walk-shoulder-source-evidence",
+    "revisionId": "sha256-c7f0ea0c908f3b601da14f2fcf0348220643e264ce83cb6740538836f7388dc5",
+    "manifestSha256": "0ceb0095a8ba1bcaa3c41377e7d8956ba6207d16c4d58221193e185156f861f2"
+  },
+  "files": {
+    "character-creator-pilot/walk-shoulder-source-evidence/MEANINGFUL-EVIDENCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74656f54eed03487142c55cbe4d6c90dd52b873740aaa6e0bdcfe82e6d638387",
+      "bytes": 2663,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/RECONSTRUCT.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e2ea2007198b6e4f94cbc175060d412a3c8068645bfaba45946cde59f58b666",
+      "bytes": 2599,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/freeze-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0aa3c713f617edd4dddf2cf90984637a62572eb36ff02f4fa6e31cf437b3e180",
+      "bytes": 31940,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/native-input-scan.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c03e46541de26d5898b0933760225444728e9408d0b387257c9a4e2775b4532",
+      "bytes": 1409,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/native-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f98ab2577232f180f1a9d45ba08ca3776fbd40410ee334c07f5e35ea74e4df5c",
+      "bytes": 1361,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/rights-and-review.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ae897cb9ff9ebda28210ff47fcc3f1c71414829dab45b1c77f694506261a6f7",
+      "bytes": 1298,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26fceff8236a2a25074d811fe613ba9c47686b28e6ffe9db6baab0a0fee45f96",
+      "bytes": 31966,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/family/candidate155/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70f84e5ebd6c1e0ca805cfa49dc56aabac688203798b4a35e6a77f4e7d4de957",
+      "bytes": 2214461,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/material-detail157-cases/A_baseline.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72d2ef537e582208b2efcb0722f9a1bb4a5e9adfb834b93cf03de0765d08bc81",
+      "bytes": 2340304,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/recipes/canonical_person_normals.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c48c8acba597d2f3aec5ee425f8293d1a6341ea5d6aca7d02a3a24acd2cf0f8",
+      "bytes": 2192,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/SUMMARY.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64503d0992d57f396207df66913dacb891f34346e1f27e5d2e4a1eb147393ac7",
+      "bytes": 1964,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/all-clip-clavicle-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "51a2f0c560f544fa598b182d292fe5ac613766055826c89f8bc0b237450df8f1",
+      "bytes": 2152,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/all-clip-clavicle-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "60aa1b540c724675fb261ea2ce8e13514d4a09612de7403ad4127f360d162001",
+      "bytes": 1836,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/all-clip-clavicle-samples.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e7459a82df3fa2ec1f64baed24d57c55a8a7ee3ff8c559196a8b38a12ce8cbf8",
+      "bytes": 9167,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls/chest-only-weight-diagnostic.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cdaf634d921ca5b02a851b564fd42304077dc0004c0fe404a35be6e073feeac2",
+      "bytes": 683261,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls/clavicle-elevation-only.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "745fcba7dfa16f979558b37dd56291b6917bf214e67e4a18d769965d20a94798",
+      "bytes": 683282,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls/original-walk.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d146e5e3a941a4a4cad424005218ba3841892743cfeae4e2116e7ea279b971a",
+      "bytes": 683282,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls-02/chest-only-weight-diagnostic.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7db1ca4a6448e0cca1ad476794a2f80d8e14323caac2bed7eb118b319e887cc1",
+      "bytes": 692892,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls-02/clavicle-elevation-only.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8670c26d1825c693998bcd00fe2d8cb603eae440bbaf09859cbd4e4a734e49bc",
+      "bytes": 690096,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls-02/original-walk.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e8225bdf2135e766b4dc9243922afcbd4847117e1d9d239f2925f8717121c7df",
+      "bytes": 688672,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls-02.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f6fd9a50679deed98cba28cd82ea86d8e501f97129427ca1d9d349d10707804",
+      "bytes": 8058,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls-fixture-note.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb12357e508b3928304adaa61b3f1faf8ecf96374d80828bc16e066dd5f8a5bb",
+      "bytes": 425,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/controls.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "10db0cbdf378250b93c3af657bed3b74e6baeab63e51d2db7ac2c7bcc8beb121",
+      "bytes": 7781,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a294b2755427d4e7a91132f20783feb0ee04b1555347a41a698b8e8414e1ff67",
+      "bytes": 3890,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/joint-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "486ae62097713471deab2f968571adff97f046d9afa832d31d7d86c176e6a8ff",
+      "bytes": 4264,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/joint-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46741960961ad916f2972f29628b27b427f6c5305f01e1e322151d7ee3807d1b",
+      "bytes": 22855,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/pose-weight-control-02-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a60f4bc325b57732a412654d136985e8d5730748212b08c95e57424e0c7e06c4",
+      "bytes": 9379,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/pose-weight-control-02-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "720cb356bacaac3041286e55bcc64fb026d0f88aa5e81110748e0be413f2889b",
+      "bytes": 6177,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/pose-weight-control-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc2c875389337e6995e15009901b59113198926b5b07ae85372fbb8952d0c8b9",
+      "bytes": 9131,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/pose-weight-control-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e2a251634bf35be44a3202fdf9e34dd84b80666344301b12a0f6ba400c81a4f8",
+      "bytes": 5915,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/raw-source-native-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74797ad5d851dcd0ece6908b2315cf5ce6d6a86ad09bda22fd466d8109959a56",
+      "bytes": 4109,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/raw-source-native-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42a7ebbc2747436238506abca532bfe066f4f87af52ee3f24eda029a32b6634a",
+      "bytes": 2209,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/source-lineage-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01dc3ffbb62ae2608713639bdd28306e95061850a14333d896a3efa672b37de8",
+      "bytes": 2474,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-motion-diagnosis157/source-lineage-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "636026bb1a60f8d35274bed0d907ae476c924e7f95011e50ec0cfc028037b08f",
+      "bytes": 321,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158/failed-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "804a6ba0fef6a47dda6c80ef7b8664b904aad33e585c5286d668aa04cd928794",
+      "bytes": 10944,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e16cd00a5b1dfc178f9d08a79c740848d082731d51551f0c9bfa83c1e701a00",
+      "bytes": 597,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158/fixture-note.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0712dd5ef79804913586d4648ced5fbc09c31c79a3201ab59f093735355046f8",
+      "bytes": 513,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158/walk-clavicles-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ece22ebea9e7101cb8a096989abc1038badb0c2f89decbaf8c0115e88e747381",
+      "bytes": 200136,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/SUMMARY.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36c7dd9e9b5624664f57452122c92036ed88773b568a320c8549d700ec1e94dc",
+      "bytes": 5222,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/after-neutral-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "326a2def541d2c099e48aa42f26e8b3d1cf626f57a9c190c98f56ffff2aa0be7",
+      "bytes": 128160,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/after-walk0-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "652aadfc550d683db8068bdedd4e5f3b0d89641ac50b0d53ddf32260f59e22a9",
+      "bytes": 686953,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/after-walk0-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02f389e690bfbcea80647b10e44aad06df5e438dc998440d0c4a2e260ea1e870",
+      "bytes": 124116,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/after-walk06-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a194010dbf2fe343092ae4e4996f6e7de43c901a492436fce6a6b85f7402a52",
+      "bytes": 689636,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/after-walk06-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d054c287ea349ad44f2bf6bfbbfe2ac56501b5b959d5287380d285fc12ce32c",
+      "bytes": 124132,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/before-neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e2b6156351e1b4416701c374a944b9fc11074364a5124e8ad3196ecefbd2716",
+      "bytes": 683302,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/before-neutral-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "326a2def541d2c099e48aa42f26e8b3d1cf626f57a9c190c98f56ffff2aa0be7",
+      "bytes": 128160,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/before-walk0-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a5187a9dc6c6d766aec0d4f785ae233479b8f6faa38f4fc8a0adda7d72ccea9",
+      "bytes": 690287,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/before-walk0-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8414270bd3c5ebac4f97f6060d07608a08a35eb510478c8ceb5e16ce25ea24ff",
+      "bytes": 124212,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/before-walk06-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a4758321f94044f90cdd5e5e651eff1668fe32b36d49e3bcec670ddf7c326cb",
+      "bytes": 688521,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures/before-walk06-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64710e44066e653d64c9d470dd3c4261b86c750eb364e612cc10fc3db6490f54",
+      "bytes": 124262,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/captures.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df694c157abf9f6b43391d4c0341b70912f0c575a8f3c70f89d4041282fc79e3",
+      "bytes": 6075,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/compact/actual157-walk-clavicles.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5ff1e5e0dabca5628875b6312cd0181b2eef2c162e3785c4926c100bbd31be22",
+      "bytes": 2340304,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/compact/recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c944760e8b3acd26e0356b9c5b4a2032412f2a75ed05b25c30622ae27ce1980c",
+      "bytes": 4149,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/compact/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7b53890fb8ce3f3423e1526a47caea575b342041792ebce2f66d3b816999896d",
+      "bytes": 2385,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/compact/source-walk-clavicles.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "251c148d8f1bb07e13fcb5179c148653d1beab45b1d590bdb1e0bb4d5fbffc8a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/current157-walk-clavicles.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "99faef2a1d87fdd777c23992e8af97ddb0b97f7366bd91cdebe0a9ebc4930e23",
+      "bytes": 2344436,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/experiment-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d562d4d3d20f62c966b4981c5624eac3154c67b102ae6fe726baff509540202f",
+      "bytes": 12044,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eac1910a50c631f9a1020586af292fa20e505ea42bdf98d7cf3d83439850a3f5",
+      "bytes": 4523,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/invariant-audit-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e43b7bed0ad9eef76cca42e97f461ef64552727156caba66a797bd28bd7c6bb4",
+      "bytes": 3060,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/invariant-audit.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0343074d0da721709960462ed180f76160b4dc6b196d730001cff9729dd8524a",
+      "bytes": 2078,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/native-after-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afe55b8f8f51ec574d606f9cf52297df1b48d1988e30821bee9a7fe33dd22298",
+      "bytes": 2157612,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/native-before-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e984db52e8045e443de9905e99bcbe70d6fbeee82178b37a7c4c3ec90dc8ba77",
+      "bytes": 2157491,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1586e9ab0705680124a71ee6f956fe33f2459c8269e2a5ee92a60f4064e5181b",
+      "bytes": 4389,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/skin-capture-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b64b9781f37cd40d02afe9a3ae61378356239a142e908348ad53c8208a8ab6e",
+      "bytes": 5121,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/skin-capture-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "06609946a24bbd5297c79ddd71d9534fd7e0b1c202b6957aadc6b65d8741b140",
+      "bytes": 7144,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-experiment158-02/walk-clavicles-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ece22ebea9e7101cb8a096989abc1038badb0c2f89decbaf8c0115e88e747381",
+      "bytes": 200136,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/SUMMARY.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6968211c27f803439ee005232be355003288f72b90df8c90077a207afb2f96ce",
+      "bytes": 4628,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/after-fitted-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afe55b8f8f51ec574d606f9cf52297df1b48d1988e30821bee9a7fe33dd22298",
+      "bytes": 2157612,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/before-fitted-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e984db52e8045e443de9905e99bcbe70d6fbeee82178b37a7c4c3ec90dc8ba77",
+      "bytes": 2157491,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/after-neutral-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "326a2def541d2c099e48aa42f26e8b3d1cf626f57a9c190c98f56ffff2aa0be7",
+      "bytes": 128160,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/after-walk0-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a6682a86c43b7273750605eb1eca34fbe8c73dbe9a5c574bdce08aec1365461d",
+      "bytes": 685547,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/after-walk0-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0bca04b8844c14f98a9240bafd80f0f00478589d06f65788aafdd564af8dc6e4",
+      "bytes": 124130,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/after-walk06-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "77c400d254a629fb52b83409924f4760830b616054a6065b800e7f9d1c5ec709",
+      "bytes": 689545,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/after-walk06-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "23f9d11b23327a70c86ab8f46610a37d6bc196cb54ea35cabc24a81af0451509",
+      "bytes": 124194,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/before-neutral-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89a3b79061606c45c224409b8bae8163a56ce4cc90c3a2f18834b6370dfaf860",
+      "bytes": 684301,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/before-neutral-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "326a2def541d2c099e48aa42f26e8b3d1cf626f57a9c190c98f56ffff2aa0be7",
+      "bytes": 128160,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/before-walk0-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58101a874aede2ced24f47dcbaf402821636b40efb0c77d00c6af798b2ab2aed",
+      "bytes": 689824,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/before-walk0-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8414270bd3c5ebac4f97f6060d07608a08a35eb510478c8ceb5e16ce25ea24ff",
+      "bytes": 124212,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/before-walk06-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a80a39857a35e58127eb3e8acb45b49da4fc0f12597da629e96bb343da59fabd",
+      "bytes": 687925,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures/before-walk06-skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64710e44066e653d64c9d470dd3c4261b86c750eb364e612cc10fc3db6490f54",
+      "bytes": 124262,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/captures.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "45ded878234c28516d6a58d462fa958254880ffbfce702ce3df4f7a3e77355df",
+      "bytes": 6040,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/corrected-compiled-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0551f578a65797ee542a6b79e7279b67cf53b089db582fff7f887ed3a461669f",
+      "bytes": 1061589,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/corrected-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "251c148d8f1bb07e13fcb5179c148653d1beab45b1d590bdb1e0bb4d5fbffc8a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0801c66ac8ceaaeaf3d7db94b8ae6566e9ba96a18bec7381f237cc31c842288",
+      "bytes": 4708,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/original-compiled-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1543a0da0422dea6c3c2e70b3f70d1511e98b4225b2daa62dd740d9d5ef4465a",
+      "bytes": 1061523,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7672cff5e9d959dd48f80e03d84e5c3387574e058ce372004a5c45eb1903e586",
+      "bytes": 5588,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/skin-capture-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e7758740b7b2d634637dfc8117ee53f830d95140616d2419483a5381916e7a61",
+      "bytes": 5162,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/skin-capture-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e4b4a82debaf860e99144ea7840515e50d10bdec832d0b8be62b90ead6322552",
+      "bytes": 7177,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/source-host.stdout.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e8a06713f1995e8f89f4d8ab89966967f1ce0ca43db348285f0d20196a49961a",
+      "bytes": 7377,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/source-host155/after.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "60e42074e1e5ef63b996a29346a690556c25083123918e043f801c1384691be6",
+      "bytes": 2340304,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/source-host155/before.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "949616c53bb790ca872163f0b671fd072c1026e199e26042125358f360a57447",
+      "bytes": 2340304,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/source-host155/export-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f533fec3b2c61e7f10725ab0efb30dba744d8a16efb709541d5d191d58e87438",
+      "bytes": 6356,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/source-host155/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c422b3b67c14731fa5c726d7aa0dbaefc7423cc303313b48193e3f2ac4cfad8",
+      "bytes": 5132,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/source-path-recipe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1bb651ea94bf037190d960b64255a7bf9a944745e821247de58bce45034a200e",
+      "bytes": 7496,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/source-pins.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "38ed6f3e8ba5b01ba7c8ac2fe7844fde2e82b50c51888f658ad774aa3be2d652",
+      "bytes": 3819,
+      "mediaType": "application/json"
+    },
+    "models/k02-walking-2--hf_20261031_234146_9d27b73e-ba20-4c17-8928-abaa19ee686e.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "dedf1919937e19a3e77d139151597ed302d14a687512368e3d11a41fdb85277a",
+      "bytes": 1784316,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/motion-inputs/upright-idle-walk-run-skeleton.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "def246204fbf02bc29f4e720ab27ef49ab7d7e7e052cb5ecb4ef90227b2e0997",
+      "bytes": 136440,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates103-148/work/renderer-body145-motion-snapshot/fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "621100a8c78b60e972ec6e62d32385ffeaabe9311255a52c3bf3339ef5a651fe",
+      "bytes": 2773190,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/motion-targets/maintained-source-plane/intermediate-52bone-motion-only.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c80a2d6a0d1f03095bf10efe541d100089dc0b099d6bb2f6c43c06464314f78a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates103-148/work/renderer-body145-motion-snapshot/evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9504639dc506e6d0be49f0bac9ceeb184d9ac03f8cf719880a9b8ecc2e7ce6c8",
+      "bytes": 613345,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/qualified-fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3600c5b48d39065a92c0b9fb08b11f5ef2db62ab89134a6979abf29d1bbbb1b4",
+      "bytes": 2773192,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d6e9a1315e6929f5e9601a15660d044f5a1ebf2b2271403c3c7bd6a51067145c",
+      "bytes": 613346,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-replay-01/clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e984db52e8045e443de9905e99bcbe70d6fbeee82178b37a7c4c3ec90dc8ba77",
+      "bytes": 2157491,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/scripts/art/people.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d5e40be5ed76990f1329fdb2bcf460f3e9d6dfe61d9235e0dc6d40ad434be6f",
+      "bytes": 78908,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/scripts/art/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8d76979a0f6df1ed2c97016cf4a0e09765bcdc23453ec5ddb5ea0d43700d123",
+      "bytes": 96024,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/art-candidates103-148/work/family/candidate147/candidate.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7569bcba81027ab14e70b5895f0709d2a406e1ec0c2cdb0f4de1a5726174034a",
+      "bytes": 2102584,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/art-candidates103-148/work/family/candidate147/short-swept-scalp-mask.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7759d9210bfc4560cfec53b77c34d85068e9535975fa981acb21bb84e68f954",
+      "bytes": 7325,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/motion-contact-evidence/work/sole-probe-integration-01/source-final/scripts/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-pilot/motion-contact-evidence/repository/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  }
+}

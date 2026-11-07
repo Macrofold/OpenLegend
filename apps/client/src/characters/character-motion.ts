@@ -5,7 +5,8 @@ import { Gait, gaitStateGraph, type Stride } from './gait';
 // Committed strikes play the matching clip with its pose taken from the native progress: the
 // windup ends, and the blow lands, at `contact` of the clip. Every rig that animates strikes
 // carries the same two library clips from the character motion study, so they share this
-// timing. docs/targeted-actions.md#presentation
+// timing. Other rigs keep the scene's established strike fallback until both clips qualify.
+// docs/targeted-actions.md#presentation
 const STRIKES: Record<ActionAnimation['kind'], { clip: string; contact: number }> = {
   melee: { clip: 'Attack', contact: 0.5 },
   punch: { clip: 'Punch', contact: 0.36 },
@@ -27,6 +28,7 @@ export interface CharacterClips {
  * Travel and heading remain owned by the scene; these clips never move it.
  * docs/projects/3d-pixel-art-tech-design.md#7-animation-attachments-and-time */
 export class CharacterMotion {
+  readonly animatesStrikes: boolean;
   private clip = 'Idle';
   private readonly gait: Gait;
   private readonly durations = new Map<string, number>();
@@ -43,15 +45,19 @@ export class CharacterMotion {
       return found;
     };
     const fixtures = clips.fixture ? [clips.fixture] : [];
+    const strikes = Object.values(STRIKES).filter(({ clip }) =>
+      tracks.some((track) => track.name === clip),
+    );
+    this.animatesStrikes = strikes.length === Object.keys(STRIKES).length;
     anim.loadStateGraph(
       gaitStateGraph(clips.strides, [
         // Strike poses follow native progress, so their own playback stays still.
-        ...Object.values(STRIKES).map(({ clip }) => ({ name: clip, loop: false, speed: 0 })),
+        ...strikes.map(({ clip }) => ({ name: clip, loop: false, speed: 0 })),
         ...fixtures.map((name) => ({ name, loop: true })),
       ]),
     );
     const strides = clips.strides.map((s) => s.name);
-    for (const name of ['Idle', ...strides, 'Attack', 'Punch', ...fixtures]) {
+    for (const name of ['Idle', ...strides, ...strikes.map(({ clip }) => clip), ...fixtures]) {
       // Assigning resets a state's speed and looping, so strikes restate theirs.
       const held = Object.values(STRIKES).some((strike) => strike.clip === name);
       anim.assignAnimation(
@@ -71,6 +77,50 @@ export class CharacterMotion {
     anim.update(0);
     // Clips are measured on the source rig; the display scale lengthens every stride.
     this.gait = new Gait(clips.strides, displayScale);
+  }
+  /** Replace fitted poses without restarting this wearer's gait or active crossfade. */
+  replaceTracks(tracks: readonly pc.AnimTrack[], strides: readonly Stride[]): boolean {
+    if (
+      strides.length !== this.clips.strides.length ||
+      strides.some((stride, index) => {
+        const existing = this.clips.strides[index];
+        return (
+          !existing ||
+          stride.name !== existing.name ||
+          stride.groundSpeed !== existing.groundSpeed ||
+          stride.seconds !== existing.seconds
+        );
+      })
+    )
+      return false;
+    if (
+      Object.values(STRIKES).some(
+        ({ clip }) => tracks.some((track) => track.name === clip) !== this.durations.has(clip),
+      )
+    )
+      return false;
+    const replacements: pc.AnimTrack[] = [];
+    for (const [name, duration] of this.durations) {
+      const track = tracks.find((candidate) => candidate.name === name);
+      if (!track || track.duration !== duration) return false;
+      replacements.push(track);
+    }
+    for (const track of replacements) {
+      const held = Object.values(STRIKES).some((strike) => strike.clip === track.name);
+      // The pinned PlayCanvas patch addresses the animation leaf, including its
+      // fading history. Rebinding the whole Move state would mix Walk and Run.
+      this.anim.assignAnimation(
+        strides.some((stride) => stride.name === track.name) ? 'Move.' + track.name : track.name,
+        track,
+        undefined,
+        held ? 0 : 1,
+        !held,
+      );
+    }
+    // Replacement snapshots must evaluate at the current clock, including while paused.
+    this.anim.playing = false;
+    this.anim.update(0);
+    return true;
   }
   rest(): void {
     // A visibility/position discontinuity cancels the whole blend. In the
@@ -93,7 +143,7 @@ export class CharacterMotion {
     // travel still follows the current permitted position independently.
     const step = paused ? 0 : Math.min(dt, 0.1);
     this.gait.update(step, paused ? 0 : speed);
-    const strike = action ? STRIKES[action.kind] : undefined;
+    const strike = action && this.animatesStrikes ? STRIKES[action.kind] : undefined;
     const fixture = actionFixture ? this.clips.fixture : undefined;
     const next = fixture ?? strike?.clip ?? (this.gait.moving ? 'Move' : 'Idle');
     const layer = this.anim.baseLayer;

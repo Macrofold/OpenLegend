@@ -95,6 +95,7 @@ import { prepareCreatedWorld } from './initial-world-preparation.js';
 import { randomBytes } from 'node:crypto';
 import { createClientAssets, type ClientAssets } from './client-assets.js';
 import { readAssetIndex } from './asset-configuration.js';
+import { installedAppearanceFamilies } from './appearance-installation.js';
 import { assertAssetRevisionReference, type ArtifactReference } from '@open-legend/assets';
 import { z } from 'zod';
 import { intentSlotsSchema } from './navigation-contracts.js';
@@ -355,7 +356,9 @@ async function initializeGameServer(
       now: options.now,
       closeStore: !options.store,
       prepare: (initial, binding, candidate) =>
-        prepareCreatedWorld(initial, binding, config, candidate, assetIndex.release),
+        prepareCreatedWorld(initial, binding, config, candidate, assetIndex.release, () =>
+          installedAppearanceFamilies(store.assets, assetIndex),
+        ),
       adopt: (receipt, publicServer) =>
         createGameServer({
           ...options,
@@ -376,6 +379,7 @@ async function initializeGameServer(
     executionSource: options.executionSource,
     createdActivation: options.createdActivation,
     presentationRelease: assetIndex.release,
+    appearanceFamilies: () => installedAppearanceFamilies(store.assets, assetIndex),
   });
   const { service, autosaves, navigation } = runtime;
   const cognitionExecution = runtime.execution;
@@ -2239,6 +2243,8 @@ async function initializeGameServer(
                       backstory: value.backstory,
                       traitIds: value.traitIds,
                       initialGoals: value.initialGoals,
+                      appearance: value.appearance,
+                      initialOutfit: value.initialOutfit,
                     },
                   },
                   scope,

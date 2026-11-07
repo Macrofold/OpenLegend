@@ -77,7 +77,7 @@ Read the character's established identity, the art brief and the look. Preserve 
 
 Study outputs can include silhouette, face or portrait, front, side and back views and a small expression or pose range; request only views that answer the design question. Generated views often disagree: name the canonical construction instead of pretending they form one modeling sheet.
 
-Production branches by the consumer: [portrait](production.md#static-2d-artwork), [sprite family](production.md#sprites-and-frame-animation), [2D rig](production.md#2d-rigs) or [3D character](3d-models.md). The [current people design](../../maintainers/art/people.md) still governs source, body/face/hair separation and removable clothes at either quality. A static (unrigged) person or creature follows the [rigid route](3d-models.md#props-structures-and-state-sheets) without automatic rigging or clips; rigging is added only when articulation or deformation is required. Follow the recipe at the requested [quality](README.md#quality-the-simple-and-full-paths).
+For a new 3D person, including a static 3D prototype, apply the [people-from-parts production gate](people.md) for source, body/face/hair separation and removable clothes before selecting rig or mesh shortcuts. Production branches by the consumer: [portrait](production.md#static-2d-artwork), [sprite family](production.md#sprites-and-frame-animation), [2D rig](production.md#2d-rigs) or [3D character](3d-models.md). A static (unrigged) person or creature follows the [rigid route](3d-models.md#props-structures-and-state-sheets) without automatic rigging or clips; rigging is added only when articulation or deformation is required. Follow the recipe at the requested [quality](README.md#quality-the-simple-and-full-paths).
 
 **Play checks:** name, same thing, state (for supported conditions such as held items or death), scale.
 
@@ -110,6 +110,8 @@ the selected body/rig; animation-only work reuses it. The brief records exact cl
 resolved [rig, motion, material and format defaults](README.md#step-options).
 An existing clip keeps its useful timing; a new game-action clip respects that action's native
 timing. A model containing an animation timer without the required movement is not usable output.
+
+Playable 3D motion follows [Animation authoring](animation.md): use the default source for new/replacement human motion, reuse accepted clips across compatible characters and preserve the supplied model. Source generation is verified; target conversion remains planned until its adapter and target-rig checks are complete.
 
 Other production follows the [animation](production.md#animation-clips), [sprite](production.md#sprites-and-frame-animation), [VFX](production.md#visual-effects) or [audio](production.md#audio) recipe; integration follows [assets and animation](../assets-and-animation.md) or [audio and feedback](../audio-and-feedback.md).
 

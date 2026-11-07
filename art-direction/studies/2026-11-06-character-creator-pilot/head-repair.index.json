@@ -1,0 +1,1189 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-head-repair-20261107",
+    "revisionId": "sha256-b06bbb4daf9d5f8894b7086d21707a417ee2def678408606a891970acc6bb9b7",
+    "manifestSha256": "ae63902df707a12358be97b418559be8c06a0894b02a51f8507bc30ff29f1f03"
+  },
+  "files": {
+    "character-creator-finish/head-hair-motion-20261107/head/stages/combined35/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad59e508f81f6727df540266039272966900eaf8f62402b880559898bd2de402",
+      "bytes": 3700596,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/stages/neutral16/anatomical-regions.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fd7ba73db7966d6cb4b5229db0def0018f6185ceffa99e9c198755a93b83ced",
+      "bytes": 7494,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/stages/neutral16/neck-seam.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "41e1b9eca0e5f6fc4ff4bef778ee60d58bf898171a67ba4d3bfd494aee4b1d5d",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/inspection/raw01/h02-tall_grafted_body_head_skin.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "976b6a434e1db101e7309bbd1131f38c8be884162acc015dd6e2e604015c55f8",
+      "bytes": 703885,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/inspection/raw01/donor-GEO-head_animation_realistic.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "60479199be8b956fa71e323bd09091278497b3270892da8a2e12f94071d70e96",
+      "bytes": 145859,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/people-16cfcfcc1ff3.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16cfcfcc1ff341478d013b48d2774995d260e507f17a1890d4823a1876da907e",
+      "bytes": 87033,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/records/final35-external-dependencies.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa6bdf0d66aac3c9fad2ef24d1959f00e4f8980e0f503cad4d26843927c6824f",
+      "bytes": 6921,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/License.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddc945c9d2c6a5306a04466345d539e5a1ed46a48ecf68df8d985128f1e78a3",
+      "bytes": 147,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/README.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8708d99262179f480eeb8c2f8f8ff86ec9cd27dbbec962ef66f2ba58e122d4fe",
+      "bytes": 1100,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/extracted/human-base-meshes-bundle-v1.4.1/human_base_meshes_bundle.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c121505651140ceb4d69fd1d8923f7788ffadd81672f5be14845a5f2c75c137",
+      "bytes": 49420489,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/head-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7430927c598337acffbbd2bdbc875a281910a77b7b14f497fa2e0621d5b8773",
+      "bytes": 10362,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-clay-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "458d74db21029ed58e422fde9a29da78016554b4a103e9a89e228aa423f58898",
+      "bytes": 534252,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-clay-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1078d9f2e91286c6f89dfc7d687797799638589cf6fc3fad9380e7ac4a371ff6",
+      "bytes": 579121,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "668d09d16011bf355b592ca195d070a275d9d42a2a6629827d9d8d14e9f76c62",
+      "bytes": 541896,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-source-colour-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "717418a0b9e4cc63713acd579b79a50723a3cacf97f7c9572ca04088eab4efc7",
+      "bytes": 887048,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-source-colour-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27277a56460dcd8b3fb48575fcace60d0d1df69f652b8bb76bda736e07d904e3",
+      "bytes": 992654,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/comparison24/H02-source-colour-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7eca6cde441163344798478661c68ef6751d7c705cb1a7ef56571b3540eca2c3",
+      "bytes": 920214,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/matched35/clay-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f321f501d3843dc55f6924ea1c7fd4221e89a90ef1438e9673c960171ea2bcf",
+      "bytes": 524582,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/matched35/clay-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "859d37a9d785011b4f55cc7671101bcabeff19783c7c40dc36c3be8670bf82df",
+      "bytes": 545540,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/matched35/clay-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "add2c9c9dca8a70d79cc25fd5d55b2f1c44b5e3c805796d1c06be04eb2d20f6e",
+      "bytes": 530209,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/matched35/colour-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "56803398764da00b9f9b3183773c28f7ecc3a15ece277ebd7c8744dc2b809a9c",
+      "bytes": 800834,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/matched35/colour-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a793534d207422233538e93732991632950e39de9d347d15e91178d705ffed8",
+      "bytes": 833826,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/review/matched35/colour-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2435807b2183f16c5dc2e47f60826316f9bfd157a84a82812a1e6e36c0732ddf",
+      "bytes": 811578,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aed8d2b38aeb5f29cae914b1720fc6e64c5293d6e20a1d942e8a9b14471ac9ac",
+      "bytes": 2608,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0e1a52f01ed60e2cfc6c848048b5274902ec5527ce6e49621d68f919bbe8625",
+      "bytes": 33782,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates01-43/work/inputs/c01-wayfarer.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5af40e413559a48aec8ec4bec0a8672f785bd00b5a9ef07b1f57a36aba9d891",
+      "bytes": 2204146,
+      "mediaType": "image/png"
+    },
+    "character-creator-pilot/art-candidates01-43/work/inputs/v28-fit-male-body-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02ccf01277f8bbf59d10b073239aafa60bcdabdab7b8e4765107022947bf17ff",
+      "bytes": 3295990,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/views/v23-male-head-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d352622479f0ad0339366cdde889b8cf2b1006755dadc4f49d7a962c5e8bf004",
+      "bytes": 6357312,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/STATUS.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8f4ddb354997ac8397b060f4a05f74e6233a59f699794fc95232fe3f65b54f8a",
+      "bytes": 4237,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/author-head01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a7363bb506e1756f01f842a176a4c1662c39424bfafe7b22eac3c573fd938730",
+      "bytes": 9365,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/author-head02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fb921a6c7d4ec78012a21b8f260e380d4f967e4b37779c3464ee510940fde936",
+      "bytes": 10725,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/author-head03.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a5d39c62dec81d10a81f2a52702378a0e7cd716a245087f90898de1dcc2d1d26",
+      "bytes": 8395,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/author-head04.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94f49470d66f617c09edd38e6d9380f078a350727f1ab0e308c4f02a38eebb5c",
+      "bytes": 7664,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/author-head05.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00dda6ced8584d2b087b956c3599bec353f876c8ac517889a61c91d4f705701f",
+      "bytes": 7594,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/REJECTED.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d99234203a6aa086782b56a3f9d6d89461ca3f02d187b8f15e48841cb461ebe2",
+      "bytes": 395,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7617a753db4a57f5ff22a656418783f90e7bb1e66e117ba347a6a9b8b11e6a6d",
+      "bytes": 4156,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/deformation.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "29c6620401cce0c00f9215639c63301fb000da8067e801cbfae4cbc6c19f486b",
+      "bytes": 284664,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a9e48ba8882ae2aed56d2384d2e47adaffd315d08250bc361b228bb1bc1aace",
+      "bytes": 2680,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/clay-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cd9f3909644cc9b68e644eb0851e443e34600ca273ae60331638359bbfd9194f",
+      "bytes": 523682,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/clay-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db4e1bd384fec5882d63da52c42913c0c867714d792d14b8b6445acbfd26c2ea",
+      "bytes": 545327,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/clay-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e4340990484b5808ca334b8974c22c35c78289fa316299a7023175831595c045",
+      "bytes": 529359,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/clay-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18a555867b1556b361b40f208b5d56a00671643a0bee8ad8a8e521cc6ed6aae5",
+      "bytes": 532543,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/clay-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cabdc93ec06f1e01db5b5973bf4dd60f558ca63fd7aed18d4ecc8be732e37006",
+      "bytes": 547519,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/clay-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f4b1feafe375a3d8c3d0577e0ab549847b3e7ac84f69f671a02b560b5e39f463",
+      "bytes": 521227,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/clay-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "324695b46166389aa1f8daa5aee7f463ec309bd484ed9b7cdce5d853c3ab77c1",
+      "bytes": 544918,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/colour-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5922843df9cb6b9d058d679257d162f213c259acef5af74e1a757eb67b9dea1a",
+      "bytes": 799378,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/colour-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c7b4b8fe847c02b38f6fc069d96435135746999516d437d7740b8db478a9924",
+      "bytes": 832155,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/colour-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ac517fc54c2c3159bcc13c5bf3a453755542dd34b25c3516da5d2db0d5cfc40",
+      "bytes": 810409,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/colour-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "505684276246cd27db0d7a60a60a3cd6331d37bc603ff69a295879b827372e4a",
+      "bytes": 805971,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/colour-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7d0e92723bb4c2de2663cb634bcc37e47f01bb32ef97bb25921acae6fafffbff",
+      "bytes": 836708,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/colour-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b47b35a0af7e9b507c30a311e00136908cb63e0cdeab35a6d080dfca289072a",
+      "bytes": 797938,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/review/colour-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2027a42846c2b8ffa8cddb471a1974b30e332cce16b7dae7febd92956a566f8c",
+      "bytes": 831981,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c9919850cb15c760cf1ba54002d68824765630f5ace18aa72b64a0798286951",
+      "bytes": 3700651,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c40719a2f8f5ab6f57a5b24cbcd1d70e0b70bca3d25bf109a6c5d666777531be",
+      "bytes": 4156,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/deformation.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c14e663fdaf06f19a2a69e1697ea399741009bf43d14b1b2747a5c803f1575f",
+      "bytes": 284451,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/inspection-overlaps.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ada90a616492ce4331956406f2d364fc2fe07d4419c0fd9912ddee516c9a7c12",
+      "bytes": 6863,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/inspection-turns.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be568350ada0573e145c893ebac41de601eb5cf0fb31628ed734f2809fc19b7d",
+      "bytes": 5471,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87561ddb82c441f25a2160cb79826d49035164dfbee64b9de0944ea4a141d159",
+      "bytes": 2079,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f975e9396680905f2da7e3afdb5a3a17eac3304a1a155b76f2e8d4bada314c2",
+      "bytes": 2797,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/clay-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b71cd6d1646f520d8bd39a68652c7bfb36d0657cc5fc417c83c74ec0060c3e10",
+      "bytes": 524448,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/clay-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf5d82c58a84e8ea16af5c308625e05bf791b1285f6398ea447b3d7825c15cda",
+      "bytes": 545518,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/clay-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b99e4125614bc5bb2c5561a39d72b88d61e1104ab46afb2fe2cb7d1beb0fd520",
+      "bytes": 529633,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/clay-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e6f0bb9ddd60ed89f677c73509bb545f37ed574087cf97a06e03960785367a54",
+      "bytes": 533039,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/clay-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "61972d6ad5d6f5aacfe7d0eef9ad91b5cc8074d3bc670d83e2cdb468c890aaae",
+      "bytes": 547982,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/clay-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94e2361f959693e78300a9411c196e406ff53af59413944332eb0b27d973c534",
+      "bytes": 521294,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/clay-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b33f2d6e88da289da4789bdd01ac389daaa53f00b5e3dc0adfbfd9ca4460e4e",
+      "bytes": 544900,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/colour-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f26ae0cb49787d0e8075b0e89ead55a83fee7653a0b7a0e867716bb2df3b2d91",
+      "bytes": 799879,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/colour-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8fad70f49ee0cedf171249d02d8a549729a4cfd3d4842ead56dc40aeaa923153",
+      "bytes": 832846,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/colour-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e512533c51e2e4d68b1ab53a30dc27a3b76bdf04fed98314df4a2d9670e8747c",
+      "bytes": 810634,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/colour-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b801ead9f05946945e674a8f41fb5d9862f7b35b7b55f4fb8a3bf74ec1733de",
+      "bytes": 806231,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/colour-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc90ffe13c085f7e2f6d259b737a03f8a542f9342f0ae2791135a985c241e8de",
+      "bytes": 837376,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/colour-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e365011ee18bdd6d2d431947400e12678f3e13f1f53ed607cc8de5af37645a4",
+      "bytes": 798062,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/review/colour-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b9707f94430083d491ba0e34bf05a2484982cd185fef2b1eec0845fd6d484006",
+      "bytes": 832461,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate02/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1575077310f1216f633b6289042b6a82d1db4b493141e9465996bfd094221d90",
+      "bytes": 3700433,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/anatomical-regions.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e82bdfb5d9f681cb742532c9fed73c211fcee6bc75e919d0af321b136595f54",
+      "bytes": 7501,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d034dd467d532ad78fc2809bc20d6e889676ed4669eecfa160cdf700acf70fc4",
+      "bytes": 4156,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d992399910ff11f2e49622c94f41da02a608d2dabe491df61e1caa050b641c5",
+      "bytes": 2631,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/regional-subdivision.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42a8d9ac667aa42980a71d5e3e35929e075666b91cbf6c1a94fc79a89cad2045",
+      "bytes": 214906,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "13e955a5a4efad1947050a2ae1fcbc0b5e3b009d6a701ee25cb7dedc8c0a0502",
+      "bytes": 1689,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/clay-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78ed7677bfa7bec2605e57e4537e0428516b59c9f38f4c80801426cc7ce8fddf",
+      "bytes": 524532,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/clay-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "59d88de6d0962bb6305140e6269ec1791660434b999fd64874de2ecc7d009900",
+      "bytes": 546013,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/clay-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fd1c92191c8754fff15aef4f7192148eff6fb32d4aaf58336cfae04219f6f45e",
+      "bytes": 529473,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/clay-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f0672a12a9ffce484add557f57d55e2ba42685494a61a0182caaab5c3c001e5",
+      "bytes": 533905,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/clay-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e6835424f3e382ee14767362c885068899d154616f3bd6314b9bc3cbd5ea87c",
+      "bytes": 548569,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/clay-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e95fa248a302a9dc7a5748ae791c8151db45e392b4d12fb50b079257a3dd7669",
+      "bytes": 521233,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/clay-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "991c99804de6b7af70cf139ba0e45c2c2762979f99f07cf34092f9b492d71b60",
+      "bytes": 545236,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/colour-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "912b1bb72293ebe763b858c89c987214db44b97987686219f21fb3359d0d803c",
+      "bytes": 799684,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/colour-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f64b826128a30a11c3ba69d720aa5dc7800c38e3686d730ab7825883eec37aab",
+      "bytes": 832650,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/colour-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72025cef27a1d0ee76db0579e040ca08feb518c2164303adf288d283433eb3e2",
+      "bytes": 810876,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/colour-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e196e77c443d65dc23a8d79d25157e124288778488b95c7ef41346272c2da84e",
+      "bytes": 806655,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/colour-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1e6096eda1f2c9a300d5067050abe2c14aa1372e2ca308f0539e411298b2a0d3",
+      "bytes": 837069,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/colour-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e6b4c53c5d9be81c7f6be56dfb19c478ab5d98b5d9bc4bdd0e90d4868c9fec63",
+      "bytes": 797723,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/review/colour-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28ff9ca80593f86c02db44849ecb00dbdee53ea167b353baeaa83650f0fa5c52",
+      "bytes": 832107,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2dcab9562eed799b31ab66bb9b4014e73a3d38f953a4e38a54d18a317e8bba17",
+      "bytes": 3700776,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate03/vertex-stencils.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64b474ce81b5b63e9a9e8c6676c5f27a24a3c5942473f60fc6628d46d624acf8",
+      "bytes": 65808,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "935d73f8890625000dbefbf0ea1219d882e6198791c6f9cfb0c4ac216de7e901",
+      "bytes": 4156,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/deformation.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f0d9790daa777f4a92063332bad35e38a9eb80c166ce9e03efd8a4da7271267b",
+      "bytes": 219677,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fc13f278fe5bb068eeb6a4ac13c5f27d3f32ea70a1962a5fdde8285ff3af9984",
+      "bytes": 3354,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c451d4f62641d8db01183eed6573cf2a8b8d789d42caae4eb90c30c7b96d0e4e",
+      "bytes": 1887,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/clay-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f1b5f50620d60d155a864ea3f29f382d84937280b849cf6380f7c77a4813aec",
+      "bytes": 524222,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/clay-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9deca5608a8df4a4dff3f49cc9f061b7bd1bb21cf3d14091a36c360fc7aebd8b",
+      "bytes": 545866,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/clay-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2b73ad6a22bccb0b52ddf561c701ba91098ac3398f21d126ca7c34df269962c9",
+      "bytes": 529185,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/clay-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c121246e164930c266affca0e09a2604670bbab1822dbabca55cfcf8fc07554",
+      "bytes": 533563,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/clay-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a35ad2a5c8f69e7243dcfe83f33f51b915dab66db04ecd4ec4a47a4221723d08",
+      "bytes": 548333,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/clay-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d287664cc6759d22f81a8bc8355788970ab945d2226b92a060f70a769ca097c1",
+      "bytes": 521180,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/clay-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c0aaea8e91d4ac0d8773fca547eff25f2f53ce9dc7920cb82ee2898be45b90e6",
+      "bytes": 545247,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/colour-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "05df53f812ddd8fcd8a6a4bde357f7b50b3a49f8c72f4a5cc0ffd5bdf5e16852",
+      "bytes": 799226,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/colour-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "73b355b7eb5d2aa63f16f2e716d19679bfab907357cae43c7fbe8e24cfcfe517",
+      "bytes": 832775,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/colour-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36fae271cd929c1944014b4e9d5e67635f89a9be8332c67d3ead35d7355215b4",
+      "bytes": 810644,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/colour-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d0f93dd348c2c9abe5f5e3585ba68933e799cf1e791390678baab9c1e1327ab",
+      "bytes": 806631,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/colour-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9282b116722e5558da6bc9615cf158728f7e142f7b353ee81fbdad9f56e55dab",
+      "bytes": 837302,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/colour-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26c28a3d7da64466de84edd28e65d3e5724d56e687859dd16f3d4beaa68d7eb0",
+      "bytes": 797472,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/review/colour-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "329ac6e3185b9b412268fed39e6f8270c65d4d909580c72db85535e51c3b92c9",
+      "bytes": 832614,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate04/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86caed1191385953ebfb791e623aa92b85fc015340bd591bfd1908da04d9bbdf",
+      "bytes": 3701357,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f23966b684852b7d246c8673e1c095a6fb00d79ef31a450c0ef280beac3be350",
+      "bytes": 4156,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/deformation.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3996563d575c96183eb65894dc26f8e1201690d927ba8e7b37a46170280aedc4",
+      "bytes": 213325,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "75537acf7a8790d77ec76265ed3d92782681f793c44b3c5e3b6e8a4dea107714",
+      "bytes": 2680,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b80e4756df176ccd93a73ff837264ba1e081dbe422856f219872eef90d096ea8",
+      "bytes": 2036,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/clay-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "29d95be80775596df376a63c62fa449ef6df43483488f81c7b8f316c9dfcda78",
+      "bytes": 525257,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/clay-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5aef69d7c475b42b5a37f7fe283120032aa5f126fe36e42c8cac05cca3e1321a",
+      "bytes": 546109,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/clay-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ba87a84ac321ebea0fe9f65f90068641f9092d3803626383a8c1056c3e75906",
+      "bytes": 529844,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/clay-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19c699d52893efe9ded30b6679f1646eeef282c46c25e011dabf4c9e4f2b0a89",
+      "bytes": 534457,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/clay-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f73a1e107e8627a043e737a8f6d7556becf3fccc51d563d2cf73bcbbaa4585f5",
+      "bytes": 548549,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/clay-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "201359668292aa54e6f3523db15dd42231c3216aaef937c2113480184119cd90",
+      "bytes": 520703,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/clay-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "77f81204fb58c64f6a4d5cbbffd84fb1bc649700c77cb280375f28a92e82ce6e",
+      "bytes": 545136,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/colour-Basis-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0942e05b8543a9489667c1e5c58c60c423f1f9a3092ed079f873711715263966",
+      "bytes": 799763,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/colour-Basis-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a22cde66d6f3af686b6ae7e78e4f99fdc6e154a241370ace456ecbf523ef48d7",
+      "bytes": 832940,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/colour-Basis-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e280191836ff6a09515c3e9689c12d33c46e637e7357567e27455deaf025adb",
+      "bytes": 811015,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/colour-JawOpen-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f2c0b519ed3a2b947c53683b427a07428f57c446a6265bdf68d9b82eb7481e2c",
+      "bytes": 806684,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/colour-JawOpen-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eccb6d6829b2e099e6eff49588cecc1015e1a1f13601379597cd0dd85868167a",
+      "bytes": 837476,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/colour-LidsClosed-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b4bd64d1eac76b8df412ac5304731c74812c55537654a1cf91feac8cad4ea0e3",
+      "bytes": 797305,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/review/colour-LidsClosed-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c69eb1d747d18b616f1880f169ec429ba9012a4e23d0631297817f3d62b2a5b",
+      "bytes": 832455,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/candidate05/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "52a1fc5077b14f1e938dc94c69afcac69efa57d97c0c10a6795069af4a379ed1",
+      "bytes": 3702426,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/count-nasal-refinement.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce4f4329c05aeb6745161bde967af67c7cf58368dff4c985e50bc5bd83fe2ba5",
+      "bytes": 1137,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/count-selected-nasal-band.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "79720ea0657a214943a46da4cfc00f5f1ffe26b9880a384eb4f68de95c64040d",
+      "bytes": 1082,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/dependencies.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fbdf934b1a70cdfa2664d098d99eda19365d2e33a096c61e3974d8cd88a3d667",
+      "bytes": 2346,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/head35.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f862ce2f7a43ea55f8a53166a2f1baf9929826c7a60c63a6aa79362457cc2933",
+      "bytes": 260297,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-candidate02-overlaps.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb16f3fb756015dbd3c321456ae713d4c276421eab3e52c5083054ef22ae0fa5",
+      "bytes": 2983,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-candidate02-turns.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1dc543b8fe7f5f22502e48e29a307031134a1197f6d44d6b5e8a26684b588f7",
+      "bytes": 2444,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-candidate02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a2d1d7aa9802181e6c33b73e088f66add96a9b62402c923f450271c0bc54654",
+      "bytes": 2315,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-candidate03.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c622aa1c2595622a39bfebb7fcaf6a888e543648094aed12a82dfd5e8abc4b5",
+      "bytes": 4443,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-candidate04.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d66a682dc58cd1a2bd620ec5865954fb590b46268937d33ebea8b24310bc0bc",
+      "bytes": 4443,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-candidate05.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "563b51cb5f44f8963aabe864644343a123f1c8a5a1f7e521004f328749c20182",
+      "bytes": 4443,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-corner-membership.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b60280ab169ff039096d4806ebaa2f0ec12e3d95e7093e184fdbf9a6bb4d1aa3",
+      "bytes": 822,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/inspect-head.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "088f894a4a1b2a2a66bd529ffed0420e001f4af89fb9804593bd6f0e1798e834",
+      "bytes": 1423,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/nose-normal-diagnosis.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c4bb6ecbc5cfe41650738e8252b86ccea585254e48babd385789c2b871d8abaf",
+      "bytes": 174579,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/nose-normal-diagnosis.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "65c7230b189d5f86332b58bba367e151ab8e6e1f3578093f080e2b785c51f639",
+      "bytes": 839,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/reference-measurements.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d727307d7938ed38f63e9fcd4f19b2435dac60f45049fddc18deccd86304644d",
+      "bytes": 1688,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/regions.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5612f87e93e4f6874bc43bf0fd45f0354945655cff70f0d270ca80b09537b4c5",
+      "bytes": 955,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/render-head01.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87cb81f339a13ded330c71c7110e36deacf283ce9430b5461a47658c35ab253a",
+      "bytes": 4775,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/render-head02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "faf549e4c8d1d010d6da1fa25b2a7e018183dd70b60fd13599da31668f8aed80",
+      "bytes": 4775,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/render-head03.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1ce667eca92680a480ec16a2b5059f3a8dd557984e5b6758cc3b5fe4973a0a5",
+      "bytes": 4775,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/render-head04.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93dbd04136ad68284126dfc74d05de059298e5cb0f9c3a473b539b412bb33767",
+      "bytes": 4775,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/render-head05.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5242fcdfab6af84aa87bcc7eaa29efc7ef1c7aab26acde129f072d01f23771d",
+      "bytes": 4775,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/sample-reference.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2666d8829c1b66a15c734a716bcbcbcd4e08c460bede2c2aef180b445a81bdfc",
+      "bytes": 1221,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/work/visual-repair01/head/freeze.inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d9f4a2692cf8934005d165eb275c851f1ed102b416c96bef84e8df5fce122ad",
+      "bytes": 44023,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/inspect-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "22cc8171a861ea0950670bb67f44b5293a2893f3f10b0ab2a777163e7ef81257",
+      "bytes": 1525,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-repair-20261107/records/native-files.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a43d27d0e879867de9390c1505c4e577610501087cbdf0fdb764aa28f0ff1992",
+      "bytes": 718,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/native-image-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a688b83822908b68bff95713dc63f3b04f4af13031d704e7aa42cea086a2284c",
+      "bytes": 10818,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c149a022ba009717d1676de876814e46c540cd99cbb8fc5839e513dd23cbc04",
+      "bytes": 3934,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed1c5ff7f3c3dc0872eb1c20f349a59800aaf7a7667e3320d62852c4606612ae",
+      "bytes": 30465,
+      "mediaType": "application/json"
+    }
+  }
+}

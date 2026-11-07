@@ -1,0 +1,1707 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "adjustable-people-redo-muscle-definition",
+    "revisionId": "sha256-b27b805f60ebde94bb76e83225ee3b9726104bc1f20ae2818d33384705d41921",
+    "manifestSha256": "6044fc528057ee9ce6a9a04127c58cc6ac077bef73f67813e98dcc3ea54f41d0"
+  },
+  "files": {
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4398cbe855374549666a389de50d2e35adfcaaeb3cb18fd3e585d1633f9cc738",
+      "bytes": 4483,
+      "mediaType": "text/markdown"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle01/endpoint-muscle-arrays.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf95ec328799b3d8003e21746c4388d7aca055cf5544b7cef9275d1628e950f9",
+      "bytes": 7901391,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle01/failed-geometry-gate.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "859288ddfb9e205a4b73c0fcb517953c6fea1d5a66eaa9ce14c2cf637061a655",
+      "bytes": 8569,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle01/sculpt-muscle-definition.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20f7ba0aadb12d09234d2b7603120136eadc531c3420954e1df6a06ea9bb82f9",
+      "bytes": 18857,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/completed.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4dc433e3c5493e0d21ad854d8dc3b5de4a94d0b425726a1cb8f1548eaa90ba70",
+      "bytes": 621,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/covered/compact-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b63ae91394db1ca51935f0e61eab27a70facb0462b9dc5edee2a3c486770c82",
+      "bytes": 1531932,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/covered/intermediate-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8434f3e5c630b5dd8eaa644115ad747b7cbe79a96f0b7f6eda35215928d162a2",
+      "bytes": 1532044,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/covered/tall-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "45481da974a1d91e1744f5d7509e13838ccb76279cb184fdb2098b73118304a9",
+      "bytes": 1367832,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/endpoint-muscle-arrays.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "903966c23713d893bcbe1aba06bc2af4ddfcf5b98d5c66448f4dcccbd2de11c1",
+      "bytes": 7899838,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/muscle-definition.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fc80bc6295ed3a79758460b61fb092dbb391b86564d6cc50278393f68c0a9d9b",
+      "bytes": 5980803,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "208f3a735aca2f2da314d60f312a02eb539bc22145c6828b2bdb1b1d13305618",
+      "bytes": 1575,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/compact-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3682ad46cf2755ae7b9f8d112a5e5d3f6fedac0c68ebe6ca9244b5c007e8bfad",
+      "bytes": 1279819,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/compact-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a81b3b518579a24fd8074a0656c189b70315edff07692b838b7d06e8bcf3e55",
+      "bytes": 1285417,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/compact-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f0499ef984f4b1bffc4b29729cd9bb0862b6efc84d6f78f404b7c69232d84b89",
+      "bytes": 1182404,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/compact-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f31d02adceebc69e6ec34d9889a58abe4ca895f69503d733e66dfb7a4b9a2eb5",
+      "bytes": 1285466,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/intermediate-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1499edc3706d5aac76ff92228eae3434c3b4d30f84e85ea01d34ee5b72c65173",
+      "bytes": 1314907,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/intermediate-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4137900df8fa72afe2872d10590897a9f03a2e4bcacc9b6bc26499f19922d00d",
+      "bytes": 1319849,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/intermediate-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b0caa698d416f4d301955f74372a9a15c023b34886669cc149acc2b56c80bb01",
+      "bytes": 1203550,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/intermediate-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4cb08561bc2a62031351ed3d4c0b02607a6b7f4d74ddc174f42457f10cb49cdd",
+      "bytes": 1318858,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/tall-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dfbb65221f4bd01365e07f72c5542e34c8ff459b2d97f37d2f52c81b38c7e8e9",
+      "bytes": 1341824,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/tall-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "900f5436c21dcd2785eb8d035d83c02dd21e0858d60657f0fa391933097635f5",
+      "bytes": 1347985,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/tall-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d8d5fe71db89f9521f0361359cb0c8c329f16bafe5c263cf52decb4c01347a3",
+      "bytes": 1219267,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/renders/tall-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "17e07f11e3116183730c734c8ebed765c01bd12bfadf9376ac299c71c3c97b16",
+      "bytes": 1345979,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/sculpt-muscle-definition.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b478d06677aed62bd03801345085ae2ac3d93af0ca85a29c8314d005dbc82f62",
+      "bytes": 19648,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3bf31a1deee3c54370358a84ddabf4332c9d7582e919a6485fb061916fb560f9",
+      "bytes": 996,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle02/wearer-recipes.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1093ce13716f636c068616460c3cb6c120d65fb12d8c58f3eccc921ba96cbf1b",
+      "bytes": 464,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/completed.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "65fdae6864219cc58574ec3ddf04d646cddb11f123243b391a22037f447a46c4",
+      "bytes": 621,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/covered/compact-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6c304b31760d15357522e24b8ddead9dae24b9e86c691ff00c2a9d7974c5c39b",
+      "bytes": 1531932,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/covered/intermediate-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce614c77e35cef28c5d961829e59ac9f39dccd170b248f934d523d007cd4abf8",
+      "bytes": 1532044,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/covered/tall-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf6c6c430904faad81f4f6047dc163e2d47eeb7fbf41a51a687416d803ddb4ea",
+      "bytes": 1367832,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/endpoint-muscle-arrays.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02d688b1129fd3d44336d3bb2aad4c3427d32d675fdc4c84313085398a6d9f9e",
+      "bytes": 7900426,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/muscle-definition.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78c20f4033f83b9fe390306362448c9d2eb394e90ff4edbd0419a68f332995c9",
+      "bytes": 5981058,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/native-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a8177e914c2807778247f2a5cee52aeb477890134097061f7615c6a1e9dd0ae",
+      "bytes": 14243,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "906722e5d134c73fffe9823cb8eef1634219fc2e607f8e87fbcd0ee8ae1a17e8",
+      "bytes": 1595,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bec3f0254a000cb9fe952a159dad0c3e705f13810a5eb4d0826322eb1d5b22dd",
+      "bytes": 1279759,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "334d98616e9059a2ad1ca914d63e1d5f969dfea7e38872220e61b6b20b65708c",
+      "bytes": 1285076,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d429121748306e38794549be7b464bcabf74c48a8bbe7c81d42a1cfa7cded79c",
+      "bytes": 1517319,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6fcd5b395e6a800f372b73e1355f5c779eab4c261961b2175ae64ae5d048cf34",
+      "bytes": 1182245,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "efb4bb3e2a93e62d3c5e21fb3dd16166880ad10745862890374c35ab952350f4",
+      "bytes": 1325083,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-profile-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7541cb7c42db50dc8c3d773fb24fa79b51d0e33893584cb622d595c343668a24",
+      "bytes": 1325083,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bdb21cbb853cc45a189aec8499b71b67cbe04f08529188f6ef356c5cc118e379",
+      "bytes": 1285137,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/compact-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f734d47e3305666cfb4a07776d8741546b506f95959d888a4fb09d0f1da64f7",
+      "bytes": 1521411,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4f05a68dac3780e963d8655340188ce43410bd72fbad418bfe5fbf61f1113c9e",
+      "bytes": 1314690,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a4eddea0083351fd4d9b52979b0cc642d81524ea8a8c279feb444df6da41b28e",
+      "bytes": 1319313,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74ecd7feed7f8d29bcccd5df36a7328acbfbdaa3f8fb9b1c3320a94cc1b23b95",
+      "bytes": 1588835,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-front-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d289aca7e47e5b1517b9f88c6776ff044cd288ce4aa6ea084060ceac638d99b6",
+      "bytes": 1588835,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0886ab4693f71c3564779bae5023d554a2e48f2a64c2be68f66557f0b18a3f85",
+      "bytes": 1203321,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4008b6bcf3d300f39105afbba23ffed7a9ffefd0f03609e35441bae626b61251",
+      "bytes": 1373206,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f6e4305ccb3ad6ee6073b35166424722bf17355cc91a10679115ec67b31b8180",
+      "bytes": 1319123,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fad53119f5fd76494c8c1820bb483ddaf3a85a25fa061953afc3935eeda2467",
+      "bytes": 1589308,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/intermediate-quarter-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0249652279710ced4638e7e704e8ecdd35be932fbb1e6a3cc4b2a7d4d2bfaa2b",
+      "bytes": 1589308,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-back-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e52667ddde5d06f5b0c6fbdd32515dff2eff5c9268257abd0f64b172117e20df",
+      "bytes": 1341522,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-front-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e1007dfe35f8991c6ec6e421f40b9c3cc97f5edefc24d69c11ba1f6677886f4d",
+      "bytes": 1347201,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-front-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "feaad9db4d2592b046d5250b470d439c931429a51ded8fd631d143d7c0c72126",
+      "bytes": 1621078,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-profile-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a45ed315fbbbef1add2208c7d9ec677abd2ab2a9b56810f8cbda0b15fbf57531",
+      "bytes": 1219061,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-profile-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5eb825955efbe1d3ae39cd802df2b3a082742566d4308a24cf57b07a662d95cf",
+      "bytes": 1381506,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-profile-detail-light-b.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "249d60d7dbcf3f038c6a98c23b5e864e2f6d63b43ce4303e963cb0a16dfa9ef2",
+      "bytes": 1381506,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-quarter-ablation.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "572e45772dfd9d9d88cd128f82bf5d51c055d004b7275354f3c253fa6e69dbde",
+      "bytes": 1345932,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/renders/tall-quarter-detail-light-a.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dd5ca13f95c8aaa6a404133a2a9e00e6ebabd59fdb915966a1cba926a7d777e8",
+      "bytes": 1622197,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/sculpt-muscle-definition.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9bec8007aa938555640be78fe55b5bf0d89c0c1dbc150eda60fe90417c3719a5",
+      "bytes": 22149,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/iterations/muscle03/verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f27b0b1016ab380091e2dd430d2e611915f5251ae9c6671a72a51e3aa799354",
+      "bytes": 999,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0d33b633e99540d657dd9a092aebdc9d75d989c62cf60aed50086bd21cfa327",
+      "bytes": 7263,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition/verify-native-muscle-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b47b4fb1b6e9f9b7fe3cb39055042e276471d2b26733a505e4b083a30f8f7f0",
+      "bytes": 6464,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58735c9be734f18bf275c39a2f07eb71dd0cdcbf9d86b43520661e719ba4318f",
+      "bytes": 10033,
+      "mediaType": "text/markdown"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/checks/fit01-headed-covered-source-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec7d1d67d26d7c2573b8166b92bdc315c57ed190b9342543ae0616f1a79bf8b3",
+      "bytes": 7583,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/checks/headed-action-integrity.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "131f8320764fdc86c3d3be2001a19e972591f84646d27b04bd673f0c2f7f4217",
+      "bytes": 7555,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/fit-covered-parts.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d930d8009fbb4816a4410ad7971606bdff2b9caebaaa387c998d152c9b74ffdb",
+      "bytes": 5133,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/fit01/compact-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39c33d5de0bf39b2aa0334900a232de6c1d4a95ecaa05d18e8e67d09a888effb",
+      "bytes": 1531932,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/fit01/fit-body-cloth.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f3c85fb681b499be60187aa03c96d27fe87bf6e62d37059e475e461fdb02cc81",
+      "bytes": 5981145,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/fit01/frozen-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5da2e62d433c5156611b7ec7792cd4a4cc1242a7a446ca2eeb2533244b5c588e",
+      "bytes": 6051,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/fit01/intermediate-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7d778f3dcca4714cdc0aefc00a4c1cc09827be0fde0cae35e692b8c366dfabae",
+      "bytes": 1531820,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/fit01/tall-covered-body.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "acf590fb8bd49cfabd0c46eff1b16a1b621e811acacb827e4ad1d644f581b383",
+      "bytes": 1369792,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/fit01-clothing/provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "47959c2d31b39fecaafbd81b038125407be9ea82b4ed3abf0f6c11bf559e2428",
+      "bytes": 6316,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/freeze-stage-record.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3a1bf49bb113dda2cf9b721f2f915dac0d6b215d9043d976421f880bf51e083c",
+      "bytes": 1336,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/frozen-anatomy-input.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95189b2f1cd1794efc5d7ab923fe2c965a79db9da18970e79f75668280330b5a",
+      "bytes": 3532,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/frozen-body-rest/fit-landmarks-rest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35a0690e5e77081bb64a8aae12bf3bc2d3403d3de4e8dd8a220495b836848ab3",
+      "bytes": 6606,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/compact-assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1761d4da2380a4417f4f02fb5651def373ba68d7df01384412bd5e18999295d",
+      "bytes": 6566,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/compact-headed-covered.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "55b1be33eb2a6f632b86a179ba1ed85ab65897430818fbc8492540035e3b6581",
+      "bytes": 6181871,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/compact-headed-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1e5082cdc0eca9397734ff28fea13a4f9e1542fc75e7ab7aaa2c1d5cddb4818",
+      "bytes": 6004064,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/intermediate-assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1c6409698a594796e6961cfa51fd72766e9d056052451ea030b3b0750d783b0",
+      "bytes": 6625,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/intermediate-headed-covered.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7f35ecab337f3e3870042e792e26d6fba79a460ab263c71fa1f2011ea41af9fa",
+      "bytes": 6179420,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/intermediate-headed-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e370ce25a970b8bb676bce45a4ca8e66ba644cd6999776e1f33df448ab8c7aaf",
+      "bytes": 6003420,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/tall-assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1326730c1fccc2d1622786bba425c855f69b2b5579cbf63d444c49b81516fb9e",
+      "bytes": 6517,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/tall-headed-covered.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "358e26e59b39cd38c61b80b39e69d1f6c3caa24f40e0ec6f0e58e47d48643d9d",
+      "bytes": 6021602,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/headed-fit01/tall-headed-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f111e210454f3d44394a45384a9928945f1157f258c3ce5a01997920caa1f10",
+      "bytes": 5832932,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/input-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ab610b604fa32832e64f2316cd275b4a3b5220e49eab1f8ac10b4458337188e",
+      "bytes": 10277,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/inspect-contact-closeups.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9ddcd0f973a4c1d04745fa32e0fdd7f8977cb1a5e5509a6138fe7b59ce6a5f9",
+      "bytes": 790,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/inspect-motion.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36a9d66183e564c9cbdb24917eb78e034cac70113560d07f053f00af51bebe91",
+      "bytes": 1032,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/inspect-poses.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "252fe6a9d910c0af665883ba343db97fc7b787f258e382dad3f8430a305a1687",
+      "bytes": 1019,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/inspection-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a13832dd20458b99ba0620733ad3d0bc735e658cf57ae2864bac41d9e016979",
+      "bytes": 1928,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/isolation-and-counts.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "226c6f39cca45d33bf7dab5b464388d7c67e7669b0213b4a98ef2e06ebd59cac",
+      "bytes": 17831,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-compact/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3d36baf0eba7dad7783f01d3203290f87fdaf367f6375438b7aef5c60283112",
+      "bytes": 3850,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-compact/compact-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b7b2a256080f1ad91a893165efebde01f1a4620cef95193f16bbb027513f6cd",
+      "bytes": 6014408,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-compact/compact-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64e1889887888754febeafb09ceab4978ac8ba49f71acb5f3d79e090d9c605d4",
+      "bytes": 6183060,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-intermediate/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "81e17028ca3e1e058e8768b606373a95424542e6251d9b9f69f150e785a1e707",
+      "bytes": 3875,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-intermediate/intermediate-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "75d098f20a3b70562b7deab19425774939817d4e4a480ed48bf1e2c3fb3ffbf3",
+      "bytes": 6013588,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-intermediate/intermediate-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5887cb711cb6ec6e9f0b363220a9faeedcb204e22fb240417c4b675913793d4f",
+      "bytes": 6182193,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-tall/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d94b157b067434ee5f4a56bd6b77c78abb0ac26a45ed2667723927b31d30229",
+      "bytes": 3843,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-tall/tall-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35dda056a82e085e7a51a2649781661738cc7b086fc30e5e96e432cda78cf7b8",
+      "bytes": 5841308,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-bridge-profile-tall/tall-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be253482aa200f6497f73b017a0fff77f8ca4763559aeb2dbe18eb43944af1c7",
+      "bytes": 5988481,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-compact/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be9e1939a0b6175d6c22f695b06df870319bd7a273bc3cf37909135b2d8576b1",
+      "bytes": 5050,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-compact/compact-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3875e5797e3412154d9a002ab49f4f9e246d655c3bd69caafa3ad0f35090a645",
+      "bytes": 6004056,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-compact/compact-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63661359e22f7d8a524df8f736f5e7922b3b68c5d12ed15c240777064ce1cc7f",
+      "bytes": 6142750,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-intermediate/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c92a8bc774c134eadee9e078e773948141e2af614bbc00b7d765fdd0195e1dd",
+      "bytes": 5083,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-intermediate/intermediate-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3ac440556992e7256e6c6cafe7c0c346119792d4bcd2c2480d82cbe349ee522b",
+      "bytes": 6003632,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-intermediate/intermediate-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad7c4bbf5645c96112f0e473fd0f338e3f1ac7c3d39841931a576b97ff50db7c",
+      "bytes": 6139849,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-tall/assembly.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b31efd51c2dc6c55b005ca8157d7ecc85a4d2c51feeec4e56e829968eb404b0",
+      "bytes": 5037,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-tall/tall-grafted-covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "66673fa8e2e09ca5c83b7222b3b8aaf4d466ec659fbd92b4de6dc5240b7f62cf",
+      "bytes": 5830956,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/neck-final-tall/tall-headfit.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6379e250d97f5393993afb38f1ccb1258305017b309e3b8b275f3a7214c92c31",
+      "bytes": 5967368,
+      "mediaType": "application/x-blender"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/pilot-compact/helper-graft.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "abd1c1606c86dfdad4633fddb49be874962636010ccca8428b65eb0dbae89dae",
+      "bytes": 5869160,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/pilot-intermediate/helper-graft.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b8856f7b056832992b9f2d4ce21e28f1e0c81783edc9171f434a67448c6e17a",
+      "bytes": 5869264,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/iterations/pilot-tall/helper-graft.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92403196d1539d337f894f0fffb274ecefc595078bdba4343a3a4a3dd5231c93",
+      "bytes": 5697740,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/join-core-actions.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3ba8883fc08080e8b0a34266eb8cea2f434fe7d1e0126d1fde2de6285b67dd7",
+      "bytes": 3308,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/make-matched-before.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aabb3b6036576e5389300b2434c2453ec82b47b78f5a4685ef2cddd88bba1289",
+      "bytes": 8640,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/make-shape-control.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e95604e687f5b151db82db0810460926c72fe1afd5eb17298a1bfb07b274c68",
+      "bytes": 3809,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "789fd7fb1f489149a6ef3a23bbb9d34dfb68c26c0214ad2f350e2152933ce4b3",
+      "bytes": 1484,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-before-muscle-control/compact-canonical-map.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff77389221f9913d36064718f26388a60d74e60186264ee9429af9041894daa2",
+      "bytes": 392014,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-before-muscle-control/compact-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f8eec2185b5637f31caf55c7b39b67e95a91f3a1b6f699941ef13e3d953bfcf",
+      "bytes": 6974632,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-before-muscle-control/intermediate-canonical-map.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a63916c8f5a0414e67935531fc71cd4bdf6f67853cb681c85fdadb037a0db812",
+      "bytes": 394715,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-before-muscle-control/intermediate-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3d020f4658cab3cb64b0e74a282f775a61fd28567e4329188ef896cc5184c2f7",
+      "bytes": 6974892,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-before-muscle-control/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a700d08a3c3ffdf49284d04a323e3b23b097ffd20967ed5e1ef0a4f350e7afd5",
+      "bytes": 9338,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-before-muscle-control/tall-canonical-map.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbbcb9f3dc2fe9c505ee992b5bcdf7a92feee8023becd3c81d2e714e870e73bf",
+      "bytes": 396705,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-before-muscle-control/tall-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c8f7b249aa6c9b4c499cef5e96e21ab80b39ef237fe7b6a2899ed1e591510c0a",
+      "bytes": 6641320,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-final/compact-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a782c11987e552cbe08e9cd3968d18652bfa429d4b5e40c834b8c9f387adf11f",
+      "bytes": 6184300,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-final/compact-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8eb5c785f82403ea576a6dc8e1410da0691571cc9d77e412aa00d2ffbfa980b6",
+      "bytes": 222590,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-final/intermediate-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "62b56cebc7ca239a4259f14cc8f33deae2e9f8ce0bcb46c39d80205125048a3c",
+      "bytes": 6184480,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-final/intermediate-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "646973b71f8436cb166cf65995ac1b06b0dd4f5f7dcf72e0cd4ee62ff98b460c",
+      "bytes": 222941,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-final/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84f6e8b14cf036c89d9bfbc1fe93d4ddf006c77e48e9ac82465bc3019762ea84",
+      "bytes": 11812,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-final/tall-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e71be4ec9252d4be4e81ec434eee989a13720870176c85cc9ea5a1f624386f04",
+      "bytes": 6014832,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-final/tall-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84ec52806462d792809404d148d69f302fed7be6b3be5cb072ac2627863a9fb3",
+      "bytes": 221393,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-shape-control/compact-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c0ca1512ae61ff66d6b601f4783faa17c2c7650f8e9f488749aa559d0fcf38e7",
+      "bytes": 6665256,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-shape-control/compact-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0f35500cd83680f079c59fc1f856e3187981575f52286e27f7d0989184a3f372",
+      "bytes": 222607,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-shape-control/intermediate-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c5a3282f126673fc976a7af4680b1fe64651dc00ac2df2ffb6d45ab61d0b6f5",
+      "bytes": 6665380,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-shape-control/intermediate-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "66924af10a34c20e6705823e58fc9d67c342f081d6e82d6f2921d491684467a0",
+      "bytes": 222960,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-shape-control/manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c73a23004e38ab02f6121ba66618c99e3e34bbd0e6308a43d391337228e534a",
+      "bytes": 7327,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-shape-control/tall-headed-covered-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba0ef72916d84344335119b7956e3b823963912707eb1d0db083266128741562",
+      "bytes": 6331516,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/motion-shape-control/tall-motion-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "77da6ff43d1dfc49498fdfa2b0533dd9bc78853374fa172dd57b8c4374b4364f",
+      "bytes": 221404,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/prepare-assembly-inputs.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9151334a299b9000d7b978b2b50a4987e3fdd73771184fa24165f1c5372cbe27",
+      "bytes": 3319,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/prior-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "12a3072fc9219c2972efa6924cb528a0de8dc097f5fdb8b3c056254943a6e0a9",
+      "bytes": 6843,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/record-isolation.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f697f184944137d823d993fef0a6eca416ebbc4c9046e0e60d005368762ba416",
+      "bytes": 4987,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/render-lineup.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "03394dc3bd84907269c7cbf2c890d77f57241f008d1d4a1be25faf1dfc3261c2",
+      "bytes": 933,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/run-head-stage.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3435ab4f116687017d510482d5c24d412c980f919464b9033efa143f95bb04ed",
+      "bytes": 1895,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/static-final-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab342ff50cf1f4d86364e102ffa326384bc721e8d5d6e9f3b0a77ef1afc669b3",
+      "bytes": 2710,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ad9eca44a4a459a63cc81324ced2d1470d265e6fa67233f0758c1cde1da0f00",
+      "bytes": 5428,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/verify-motion-integrity.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68e0ec5d5a2edb3c0ed661c44990f2fcb7ea0edb1fe0e1c554504e51eef34c24",
+      "bytes": 845,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/muscle-definition-assembly/verify-static.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67245fd26279c6d95e9c4ced2732c3dcdf49dcea1f4727e771fac9a502c6bbdc",
+      "bytes": 789,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/REPRODUCE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fed3d1ce9f0bf7bbd8ad0a074aeaa8cee7c4ab001c194622908d896200049c72",
+      "bytes": 2770,
+      "mediaType": "text/markdown"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/compact-after.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aad0bbb2b030ed6380b5520886b8ffbec1e633ee4900de77261998f3285f4a73",
+      "bytes": 830453,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/compact-before.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3ffa2a5610929dfdd701fe3a5d722a93f17b8a97d90c4bed2f8dfe2c61c333f",
+      "bytes": 828175,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2019b5c3606aa9dd75133cba2e76dd80270ce4a265bf972cffaffd2643a99bd9",
+      "bytes": 4559,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/headed-before-after.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70dfe0589d25ccdf6d67a12a6ba03d87d67c48c8d97d84e57e30d390dda26f0e",
+      "bytes": 3146060,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/compact-after.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7929493b30d8d39904d4ff03150c5c594f8eb763da646bd29ce6f77e6bc025a7",
+      "bytes": 869963,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/compact-before.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4162cdc3e1902317c08bdf819cb0539b16e95ecee3320b26717412429461efd6",
+      "bytes": 866224,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8f01638afadf8c38e4a0be3592769f1182c164f8533f981cc6aeda47588b7075",
+      "bytes": 4559,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/headed-before-after.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "074d8761b84636207b4a9e68d86241c24ef9e95f4a63fca4df1d2207d1dc63f9",
+      "bytes": 1655932,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/layout-issue.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7ebbaa88c72e79611a19ba6c5d7402987e904ad8f70f2ee88d899562f2940fd",
+      "bytes": 406,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/render-headed-comparison.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0bce62d6917f74315b884379cda70401d9810df1d7e30a0c1bdb94f11dccf308",
+      "bytes": 6237,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/tall-after.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3f0b72c799cbd3cbfead186e6b33f107d68d462e0113872597cd4294f63f9558",
+      "bytes": 904394,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/layout01/tall-before.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86dc0b56c46d2980720ac7a3e2bfaff83a1daca76adf62eec0e159d5c3c80c97",
+      "bytes": 899236,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/pixel-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9ec886804a975e71aa3e261fbbfcd1d10a9d0b5f576767c1125e16c6e98b9a66",
+      "bytes": 735,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/render-headed-comparison.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "067c3f0389f8196b15f11ffc757bf7d1429329f07c704ab28aaa55848ba28c41",
+      "bytes": 6216,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/tall-after.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "30ec8ee340e07cd0f26dfc04a90c22c99d72435d54985a8ffa45ff330a4d5f34",
+      "bytes": 858735,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/tall-before.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70e177c5afc3d6d94e1fe60a614cf1486e8e768b05072bac83f2b5fc2df6a796",
+      "bytes": 854159,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/comparison/verify-panel-pixels.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1e9c89bb8d06dd4eff5cad7b6c13dad0218163d00fcbfa0587c618197c405f26",
+      "bytes": 1368,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/consumer-captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a5ed29559ccc491631e1be6aea9ed480d5a2fdc411cfb33655a280f8f39034f",
+      "bytes": 1959,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/consumer-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82f999e51cd57fa677302e41a96ffc80b45c0bef066e324c8431e8bd5e5717b4",
+      "bytes": 10982,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/model-copy-record.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c52416585af82b17ce6d40f8846313fe35867f24831f51f787e071432631370a",
+      "bytes": 3348,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/muscle-idle-browser.mp4": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7e7233a744e31840fc30fece426649a969e6aace125c14d7d3035de1321e3e4e",
+      "bytes": 318244,
+      "mediaType": "video/mp4"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/muscle-idle-browser.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de2312da2689dfd0def66a8821d3b3be95a5ca01b49edee20263f8ccfaf6003b",
+      "bytes": 1854482,
+      "mediaType": "video/webm"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/muscle-run-browser.mp4": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "97f5a02a605f5c1dabc7bcad596b864f09448b3520caa46bd5c0bab54d8dd121",
+      "bytes": 1050265,
+      "mediaType": "video/mp4"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/muscle-run-browser.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "114c5672582f0f477add1f44374be7481ba0302ee22dbcb69edb170d254bd274",
+      "bytes": 2592979,
+      "mediaType": "video/webm"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/muscle-walk-browser.mp4": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f780246737f3281ab195e3b679e2a05ed56e4faa5ac3a25f0afc8c6462879c96",
+      "bytes": 828105,
+      "mediaType": "video/mp4"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/muscle-walk-browser.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db6ec017c3ea7d2c73efb8e1e62eddb16fa24ca0363e3baecaa6827704318881",
+      "bytes": 2555261,
+      "mediaType": "video/webm"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/body-after-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "75cef57b64648dfb2e51af96c6dc1701ba3fd9df688d75e5645ae3e8495387b3",
+      "bytes": 33909,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/body-after-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "92f066f9d83a6c6649e1c10b1b5831c562be4ea68bb8916c4e019096447e07f1",
+      "bytes": 34050,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/body-before-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bae4a71eec209285ac1d806e1963d582c6bbf3c275dad35c2bf5dc957ce04466",
+      "bytes": 33812,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/body-before-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39f1bc978fa9a8e4dd15558b7dcd83bf17888ea2e4eb592c21ba7d6a47b1a847",
+      "bytes": 34162,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "76e1751c5787cf8f37360eff10cc4b410810da534dd4611ed439e38b5fb95da7",
+      "bytes": 6564,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/fit-after-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dfeeae1e7180f23108a3b4d4bb81ed2feeb0e07ccaa2231373989564e830c6cd",
+      "bytes": 33750,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/fit-after-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c8a7758c16225b1890550589e7011beb2f56c6ae133a9b034c67dc67481304ee",
+      "bytes": 33549,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/fit-before-01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19e7d5b547ab0605390c93f9909c8edf98f70d7fe2c9c3c10e5110dd25897734",
+      "bytes": 32971,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/performance/fit-before-02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce0a2a0b9e3bfd9e58b8f303f80cb4afd258956ee995aaffab972b419a1252c8",
+      "bytes": 33683,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/preview-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a9d13dc913a8943c36dbfd06d4d4dfe80b612925ea6ea3e296a27d1f67cf07f",
+      "bytes": 3551,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/rest-browser.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a20a815261194ea2930ff3b8c95519a13ec8c49a320256075050aba6bd51e112",
+      "bytes": 96656,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/serve-proof.cjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7aa8361a029bb6fc79540be6b660846230696148118dc4e3daa4d7169d52fbf",
+      "bytes": 6866,
+      "mediaType": "text/javascript"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/static-lineup.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "567176f441bedff5b940b77556ad60b94dc94928722ca50ce547d2753242ce83",
+      "bytes": 1586612,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/static-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b45500d254d48acec8d5e7a511186f508db88e55c455187d5e52ad1d467ba13",
+      "bytes": 1593826,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/idle-ffmpeg-frame-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b1f4b2c8e940c44962596724c89371392f0981a41348d1df02ccf1e66be2b6a4",
+      "bytes": 132176,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/idle-ffmpeg-frame-002.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9efc16c923d4482608ea2f43c966ee785718a25c09130723bc3892199f03ec6a",
+      "bytes": 123762,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/idle-ffmpeg-frame-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96f6df0d27bd2fa30b0480a819162af073d680f75c24fb0fd9f7b0027b4939d0",
+      "bytes": 123033,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/idle-ffmpeg-frame-004.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f99e6e51a7655fa6a2868b0b883655318c23d7531335600c78b110213120a7e",
+      "bytes": 126373,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/inspect-with-ffmpeg.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "551492ca5b8f24216d08a331a4ed1d4aaba883a5ddce48340704f3bf7aaa0a34",
+      "bytes": 2715,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/run-ffmpeg-frame-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "182ae5cabf81b559b7d41d5f235f845fc5a53ed4411947deea8d3a84898b80fe",
+      "bytes": 123819,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/run-ffmpeg-frame-002.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df0c2044d7e574ad1ec835a12f87d9b55045805ea7e74a39af421d36b406573d",
+      "bytes": 137840,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/run-ffmpeg-frame-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b87aaf8418ef199196aa32c77909364ad45b43b90271299c1bb6840b35def54",
+      "bytes": 126774,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/run-ffmpeg-frame-004.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce8867d9c2d053b8e7781eaf6e39b8b13add0af36766c9b902eff194e84eef59",
+      "bytes": 134375,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/verified-video-facts.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "527dba15b1955dd2605069130002305b939d7f7685835bac00b9005321e58509",
+      "bytes": 5496,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/walk-ffmpeg-frame-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b72c5e2c901f2fa512d78398d289cfc745189adb241d723c8555454d4517d132",
+      "bytes": 120962,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/walk-ffmpeg-frame-002.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04553ba59162faf511782e3d9f515cc61357b0a0aab60c2540fabdfcb569a015",
+      "bytes": 133551,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/walk-ffmpeg-frame-003.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67e649f964dd0cb6737ba50f695e859e35870c748ccf2843f5fb709afbbb5319",
+      "bytes": 130968,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/video-qa/walk-ffmpeg-frame-004.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db0d8475735655bf3149fefdf1904194dcc26aafa80596b635c1e6749109a386",
+      "bytes": 131726,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition/viewer.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ebf7a77dfb8814cbe9d2580ca67038d617c86279ef6dda382346bb7640bcb503",
+      "bytes": 42812,
+      "mediaType": "text/html"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-compact-static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9731b0c7ee89d48e26b6fda70fa61a120bb747fedb716823fbb3ca2cb755d86a",
+      "bytes": 5300,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-intermediate-run-2-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eeb3a67b7838c1a054c4fcdfc9128d0c39bcc73533badbb28532f70a8b9d566e",
+      "bytes": 767085,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-intermediate-run-2-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "318cb5217ee2278efc44b38c04f82ffad903723759dd97200793171a38384bd6",
+      "bytes": 760675,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-intermediate-run-2-low-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f04f0cdf1546dce35fced4c21834ef3a6745e7d14a3a18afba68a069bb18ca8d",
+      "bytes": 748821,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-intermediate-run-2-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80717ab3893006a9f2cb0fb4d15b4f54837598967655fda8ef16356f8c6e7532",
+      "bytes": 706101,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-tall-run-0-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "054099664b60fdcb52eb965c861a3453d2fd22b9393336492ea8e6b9e81e8d4c",
+      "bytes": 655560,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-tall-run-0-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a5a435a86e663d3e10543b6dda714460a8fa440ed909b8631f38d60b5805f005",
+      "bytes": 653431,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-tall-run-0-low-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2d249e9562a499b76d936c4914a6cae8a0dccb30e9d73a94d1fc50c793407b97",
+      "bytes": 647815,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-contact-motion-final-tall-run-0-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be8f8702e1b375300ae29f7d8ca87dae270adbdc5356fc6a6207d5d47c462f11",
+      "bytes": 663293,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-reach-back-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35e2fff8470554ccd5b696e7b6de1d4c23e2ae771c849e8f585b928e9bd962c7",
+      "bytes": 929381,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-reach-front-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "caf3a9a7747c4cb93dbd4cfd7b8fc0c3b85b794e89c3977632abd50c6b78aa7d",
+      "bytes": 921691,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-reach-profile-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3525a2a5553bae1030c77d04b9789f9645a3312601e22d22235764a0cbde6cff",
+      "bytes": 856676,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-reach-quarter-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2b5e4efa1cdecffaeab1625798f6ae95be1cd80d71de74ea469ead29ae42a26f",
+      "bytes": 909251,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-rest-back-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f62650abb7751e2c386b2444438b872b8e5f3d740532af2a208cf60b06b66482",
+      "bytes": 935645,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-rest-back-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e856e2b135440feac67b4a5c01f022f40892709333fc7754654921ab1471265e",
+      "bytes": 935645,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-rest-front-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "66b72e58f414481da910f192fb7f72d53e352a476d3ca1090d815780b2b33a05",
+      "bytes": 929445,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-rest-front-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b9fc7b62eb7c0f8eb547a4120c9159070b5b10e607bc4a9947493153a1086be5",
+      "bytes": 929445,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-rest-profile-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d4b575dd9ccc2c894788e69c59417c4f10eb6f754bd19bc781d391ad36f8d1f",
+      "bytes": 838228,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-rest-quarter-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd93a82fc6214dbf0e5da9466f8946bca12c4ba790538c067160952832511464",
+      "bytes": 932318,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-shallow-crouch-back-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e81c1fd1720b0bd392c9ac465328d730eb65f8490a7b26661f425a6c20f00ce",
+      "bytes": 932457,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-shallow-crouch-front-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d26974ac5ef7b61f9c8e2bedab9ff40db0a7bffb04edfef075119bef3665f49",
+      "bytes": 924515,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-shallow-crouch-profile-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ebd53b6b2cab41bbbb4dcb42cad525bdfb6df6f1fa4f6b907a54c81813b19e6",
+      "bytes": 845391,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-shallow-crouch-profile-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e990caef1142b8583a0d3e062c36e86d848bfb1eb0ce4df0e57150432c5a2a34",
+      "bytes": 845391,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-fit01-headed-covered-shallow-crouch-quarter-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cdc71c00170223a33941858a5cfc1968d01d74d112347421178cbe3d0538f1f1",
+      "bytes": 931622,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-intermediate-static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4da35038314f645932120f91919ead234a2d376cfdbc5b8dd230a06ac6ca1f24",
+      "bytes": 5331,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-compact-motion-final-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fa37e40116f188aa7ef202cb23b66a67a2417e82a67f0c398498e47a00552589",
+      "bytes": 2938255,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-compact-motion-final-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ece24278e36322b3cd320de8886814a7e8ddae16d6c9e7bc0ead89cf2673991",
+      "bytes": 2954874,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-compact-motion-final-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5410a816efc0757a536b9a87d78f3c47f36c60a56dba5cc7fb74b732973e275e",
+      "bytes": 2888569,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-intermediate-motion-final-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1bec550290558ed7700be3a9a6b579babc7af592be0c7fab79e0dabaee2dd090",
+      "bytes": 2942318,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-intermediate-motion-final-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0738dfacfb42a22ae175b0043769250ea7da5405eb5175dbdd73646b432aeed7",
+      "bytes": 2952630,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-intermediate-motion-final-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fcd0b0a02cd796db7fa04f1e08deb2f0b6aa00a7899d76f7d323ee4d0bd08a31",
+      "bytes": 2895903,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-tall-motion-final-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f8850e9caa861e089191e8d18c75b9bfac04e8017320850384e4acd9156f8192",
+      "bytes": 2921687,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-tall-motion-final-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "57095a9bb793ee4517fa5d30d5a35bcb628c19b7c01775cfeb73d577587abb23",
+      "bytes": 2938186,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-motion-tall-motion-final-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "521842ff01904b96a8d8425a3026a6f4c593b9d2003826095a51fcb8b9391b81",
+      "bytes": 2893219,
+      "mediaType": "image/png"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-static-lineup.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e318a22628e8b9faea1863d26295707d42dd4c7852c7fb4976e009d49424c89",
+      "bytes": 1719,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-static-quarter.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0a6471f24cf099c26e281f9d3fa57eecb0d9b130d06430a99580045466e60ed9",
+      "bytes": 1720,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/review/muscle-definition-assembly-tall-static-verification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e8ed85549aea47c7bfe05193fe06352a74597905396780dc6286ccd412edb082",
+      "bytes": 5033,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/archive/muscle-definition/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01e1c8658f1a724d271b8ad909d767d1d52c21a90d3919e7155f774345e5039e",
+      "bytes": 157760,
+      "mediaType": "application/json"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/archive/muscle-definition/files.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ed3952178df3b512008aacd872f8639783880da3befb95bbacf28a47f95f707",
+      "bytes": 16658,
+      "mediaType": "text/plain"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/archive/muscle-definition/RESTORE.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d85976350e056a4efe5a7bf3ef390b7e9f4b99074ca2eb1474916c3fdfa7fe51",
+      "bytes": 2972,
+      "mediaType": "text/markdown"
+    }
+  }
+}

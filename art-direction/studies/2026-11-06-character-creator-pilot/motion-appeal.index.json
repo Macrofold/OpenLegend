@@ -1,0 +1,1098 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-motion-appeal-20261107",
+    "revisionId": "sha256-fdb9575a1b14057c7f4cdaf15177fe5ef4175d6d5d0b82fe54d8c59cbaec8471",
+    "manifestSha256": "f1bbe42ca4583000046b3a92d533c2fac0c38139c7ad169f98793ae0f496635e"
+  },
+  "files": {
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/corrected-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "251c148d8f1bb07e13fcb5179c148653d1beab45b1d590bdb1e0bb4d5fbffc8a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/integration-control-20261107/work/visual-repair01/final01/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14e4d6ff1fae0e5cf2d4b7ce8efe3ac8e9709dee8a9c444896118ca3e8b11ad3",
+      "bytes": 9318372,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/integration-control-20261107/work/visual-repair01/final01/covered-character-checked.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca59791dd8097e95dc5f61467e50bb962a17183d30476eaa7cb6b432c71a302c",
+      "bytes": 3717760,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/integration-control-20261107/work/visual-repair01/final01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "37574acc7d60573feb5d493bb88b5e485d05a6532f3390aa2a48262400376aa1",
+      "bytes": 10236,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/sole-probe-integration-01/qualified-fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3600c5b48d39065a92c0b9fb08b11f5ef2db62ab89134a6979abf29d1bbbb1b4",
+      "bytes": 2773192,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/head/stages/neutral16/neck-seam.npz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "41e1b9eca0e5f6fc4ff4bef778ee60d58bf898171a67ba4d3bfd494aee4b1d5d",
+      "bytes": 678,
+      "mediaType": "application/octet-stream"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/people-16cfcfcc1ff3.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16cfcfcc1ff341478d013b48d2774995d260e507f17a1890d4823a1876da907e",
+      "bytes": 87033,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8d76979a0f6df1ed2c97016cf4a0e09765bcdc23453ec5ddb5ea0d43700d123",
+      "bytes": 96024,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/head-hair-motion-20261107/work/hair-preservation-04-22/tool-snapshots/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/motion-targets/maintained-source-plane/intermediate-52bone-motion-only.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c80a2d6a0d1f03095bf10efe541d100089dc0b099d6bb2f6c43c06464314f78a",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "art-direction/studies/2026-11-05-adjustable-people-redo/work/motion-inputs/upright-idle-walk-run-skeleton.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "def246204fbf02bc29f4e720ab27ef49ab7d7e7e052cb5ecb4ef90227b2e0997",
+      "bytes": 136440,
+      "mediaType": "model/gltf-binary"
+    },
+    "models/k02-walking-2--hf_20261031_234146_9d27b73e-ba20-4c17-8928-abaa19ee686e.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "dedf1919937e19a3e77d139151597ed302d14a687512368e3d11a41fdb85277a",
+      "bytes": 1784316,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/License.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ddc945c9d2c6a5306a04466345d539e5a1ed46a48ecf68df8d985128f1e78a3",
+      "bytes": 147,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/README.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8708d99262179f480eeb8c2f8f8ff86ec9cd27dbbec962ef66f2ba58e122d4fe",
+      "bytes": 1100,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/eye-topology-source-inspection/intake/blender-human-base-meshes-inspection-01/head-inspection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7430927c598337acffbbd2bdbc875a281910a77b7b14f497fa2e0621d5b8773",
+      "bytes": 10362,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aed8d2b38aeb5f29cae914b1720fc6e64c5293d6e20a1d942e8a9b14471ac9ac",
+      "bytes": 2608,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-hair-motion-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0e1a52f01ed60e2cfc6c848048b5274902ec5527ce6e49621d68f919bbe8625",
+      "bytes": 33782,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/body-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d514a7ca8e3c43ea50007babcb3aae111d2c29dce838d7db2ad8bb51b3a46c7",
+      "bytes": 1444,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/body-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d3a138ef2d1add8896401e6901efd21fd9a495bdf5c8fcce41f37bbc255f654",
+      "bytes": 5092,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/renderer35-20261107/review/renderer35/settings-and-scope.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5bfddb32ae6a172e16fec1696aa8c9a271933f42341caf21f0335d71e1561d84",
+      "bytes": 4521,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c149a022ba009717d1676de876814e46c540cd99cbb8fc5839e513dd23cbc04",
+      "bytes": 3934,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/head-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed1c5ff7f3c3dc0872eb1c20f349a59800aaf7a7667e3320d62852c4606612ae",
+      "bytes": 30465,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e84303388323d43b8813ed1fded466de6a19552a0ad57fe2e06f99b3d03ca231",
+      "bytes": 1447,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/hair-repair-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dab6497b2081b46a5e604b433263865b1037b8b56a1fc22b2ad3f2fbbaf88e19",
+      "bytes": 10038,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mouth-coverage-20261107/records/glb-source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2daab3c945f10f67ba187426f3077f92e7c065391006ebdf02e8a6d62b77bcd8",
+      "bytes": 5968,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mouth-coverage-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c687ced955227fa42b90f9dfa7adfd1ad909cf7e50975a2e9b8c25c0e1fd04b7",
+      "bytes": 1530,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mouth-coverage-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f50c0c7135bee03c807495ca6901f708ea4fee239e2ceed06198f2e0a1825780",
+      "bytes": 12297,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/integration-control-20261107/records/glb-source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a1b13833da201c4d5f3384e47aae1979408907a3b690bd77037adbc28910d60",
+      "bytes": 4022,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/integration-control-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f40b28711d91aafc037f278a662f029c4f9ee3601e15ef43744eec699606583e",
+      "bytes": 2507,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/integration-control-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7266da6c1fafcedd0b771c58c4cd88b50735f85ee195912c9e6d22fced72140",
+      "bytes": 16753,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/freeze-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0aa3c713f617edd4dddf2cf90984637a62572eb36ff02f4fa6e31cf437b3e180",
+      "bytes": 31940,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26fceff8236a2a25074d811fe613ba9c47686b28e6ffe9db6baab0a0fee45f96",
+      "bytes": 31966,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/STATUS.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2a251ddbaf0654d5ec81110f9d4288e82c9434f221f85fd77f8c6d4ab022a44",
+      "bytes": 7171,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/actual-reimport.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f69d4d0b7cb9865327c475421058b9c1e24008e6bd32fa9bfa43083518b4631",
+      "bytes": 46983,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/actual-reimport.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bfbb2c8508029fbd0708875cc6d2bf9353105b50c6b7ac9ac5b09ae06d2b3cca",
+      "bytes": 9819,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/appeal-kinematics.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f9af8d6c3a77c6783b945358b5c7399c2e55ce82b48a61f97ed5189b0f6395b",
+      "bytes": 1934604,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/author-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63944ddda7315b4621443163919950061eca999d70d8e2e22717a9048e6fee65",
+      "bytes": 5827,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/author-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0edb93f2744ce03401ccbf05b262b3d957a3c87627bd2ddf38ccd8fbde40bb4f",
+      "bytes": 4992,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/author.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9dac3567077acd5c32c8c0adf862a7813b8c90fbabeb2d5a5ff55ada199776b0",
+      "bytes": 6245,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/check-yaw-roll.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e7562663eb1d42f7c14e82c96da35a901fa0570e18c7f7f85a5d15eeaeb94a8c",
+      "bytes": 3182,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/correction_fields.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5545293b30fb65eb5fbc4bed456fedcfa331ee1b9e8690307f6538f1c7aa697f",
+      "bytes": 3838,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/dependencies.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82b23ac24c9a136f0ff2c58e869058099529b84729b6aebd9b3ae0145507ee65",
+      "bytes": 3720,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/export-qualification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3ed5c16809c384f8eefc595435a00930654f0f822c0188bc1cce51aebe89ea3",
+      "bytes": 4769,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/actual-person.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7af2881fce3bb887f4ca0adfcd93df050d32ffa1ad2d05b01539db08e6775ea1",
+      "bytes": 3717760,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/head-arms-embedded/0.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9965ccaaa5b0ff33056c0ba43e7f60bed36dbec2e3c0dfbeb17a94dbf3742a90",
+      "bytes": 351762,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/head-arms-embedded/1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c392b39b933275803e9f1c1eddec896cdc8cbbd2cb821622489c9ee47b0ce67",
+      "bytes": 6152,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/head-arms-embedded/2.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6a0d6cc852ea9d871805652e7a159da2bec2440bce385669703ce186373c5db",
+      "bytes": 1163224,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/maintained-export.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3d7818de88e040cace14587ea7bf599af2ac45c775d5cfa7eb01fa126d0b3a9",
+      "bytes": 3717760,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/shared-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7de9cd7d3d1db5493563e28e3f8641d9cf42c12923ee74de3b5bf422041e7144",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-arms/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2cb7bcec4658b6414ae77864ba522eeb1eab486216bce505885e58e536a1af9",
+      "bytes": 4620409,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-only/actual-person.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "191b9d8463cffe11a77fd6a57194697fdd8bd4fb7a36a4e875ec5100a5cb4d03",
+      "bytes": 3717760,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-only/head-only-embedded/0.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9965ccaaa5b0ff33056c0ba43e7f60bed36dbec2e3c0dfbeb17a94dbf3742a90",
+      "bytes": 351762,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-only/head-only-embedded/1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8c392b39b933275803e9f1c1eddec896cdc8cbbd2cb821622489c9ee47b0ce67",
+      "bytes": 6152,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-only/head-only-embedded/2.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6a0d6cc852ea9d871805652e7a159da2bec2440bce385669703ce186373c5db",
+      "bytes": 1163224,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-only/maintained-export.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a25dc5bc3a73dca66f7c43f931616914616469cdd1f4fe1c3d9b3ed8c0d5d74",
+      "bytes": 3717760,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-only/shared-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "797a00f39dc1944aa59066ea0c5cd00a29088a47778c303cf3fa4bc54a0ea7d8",
+      "bytes": 197164,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/head-only/source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b46f32c05c380f24d6bd69a29a4423401e4729ec6677836d7f2c833354515a8b",
+      "bytes": 4620994,
+      "mediaType": "application/x-blender"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/inspect-appeal.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80e5284922118c6e82ae2912480c71eb4b3fda7f14a46f62fd881bac6a15e771",
+      "bytes": 6844,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/kinematics.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad3d39e14cb9201d77157c68521566bfb8bdda66b2cbbcfa7ae31974b60d2272",
+      "bytes": 51723,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/native-bake-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7524ee713166db50f5e643d5223e97a657955c0b42d0a47c530f2efeb06423f1",
+      "bytes": 3393,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/native-bake.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e21aed8ec0aa4e5cb959c5ca881508b2aa445a586264afdfaea8125bb35ebc8d",
+      "bytes": 6244,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/native-bake.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fbda3fe5ebbdf83dd71924a99b050a5f921360a1316e8882bf2b1e92091998c5",
+      "bytes": 5246,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/pose_io.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "efb088425279ddff739d534332131e29864d5dc5985e58de2b47e2a02429ee4a",
+      "bytes": 2295,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/profile.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f75eb813207ed8ba0cc2cfc6c522830ca85f1938d1bcd377495828b052e4f989",
+      "bytes": 1920,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/qualification.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c91612dec51c98ff24b769d0dd95bd7784c6ed3ac47cd17de4f552cbb03ebc84",
+      "bytes": 5187,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/qualify-exports.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a025dc11341035554f4a7cb3d38710151261d2b7e4f7c3485495b8657473a2fa",
+      "bytes": 5019,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/reimport.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1b77ccf562f1ae5b648c65c1fbc7fad14d3cace517e9e2f6cc679579495c5c6",
+      "bytes": 2260,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/render-motion.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bb08218581f999c747a3ba76837c5d46bc3820a3129938d541a668fc46bf8c9c",
+      "bytes": 3081,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/render-profiles.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "181484f65eb57e7226b10cb93eb9b250f576d05da293416d5542be846c0e30d2",
+      "bytes": 3161,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/render-side-clearance.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "83b0cb00972dd0a04b055b0e012aa5af439ef41ec9661aba83d8130af78c2c11",
+      "bytes": 2962,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/render.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a5a2fad87bd83b40de6e38652a7f6a333d93624a74c2e2e835451c24d557cdcf",
+      "bytes": 6112,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-00-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9a52420bde855c09d579ce257611b4e8105ad5007d915ea88d35695469f967f0",
+      "bytes": 608968,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-00-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ac629e046c60e01af200aa0872daf9ca45f718433ddd64dc33f5b401ed87061f",
+      "bytes": 620088,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-09-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46938b7b868ed87299c863fecd313d8f981ffe3f38d0c8f7c1149c299e53bbbc",
+      "bytes": 613999,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-09-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e694b48a1ce0e5d63d22e4242eebb43a2e135c3c9d324cec0c557691110d358",
+      "bytes": 618911,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-18-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a0d845b99ef2c0e0f76c3c21fcc669d43962e9ae65d8f81a14f09763aa8b9a8",
+      "bytes": 618385,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-18-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad29edc1d97b2f39e14aef0da26af3cb339fabd7725427a79ae223217524273c",
+      "bytes": 619551,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-29-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bd317c5bfce2efd133a235eb2d410e78f247cd92319caff31053ac6626b92d02",
+      "bytes": 615889,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-29-head-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b0be62127168c3cff3c4e9d869cf93c6709c3bf20f817e526d4831bd8d58688",
+      "bytes": 656475,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/before-29-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6ae36f5fb1c3d84f40f3f4837d6722c0d5009cc4546560dab15127d9ebc369bd",
+      "bytes": 619209,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "937afd9b808513349ed152d9e471194e2defb804b92da2c0adb82ba449548a9e",
+      "bytes": 13907,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-00-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db64c9c74bf7cc0a667f3f6e0f35481a6aa24f3829697ee7b4de23a6d865887e",
+      "bytes": 604409,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-00-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c3875fbfe95fb193b931fbf590dbfa1c70ca229cfea69853fdfbcb3a3e76d855",
+      "bytes": 607531,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-09-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89935ed829f50ac88a4847336fe0b84fcdfe1c72fa03b752143331a9b74a6996",
+      "bytes": 608958,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-09-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "71654c90010f6b294a684d78207767d7432843aa07afc724ba47132579bd1fe9",
+      "bytes": 611408,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-18-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "05fd259808a3edd4f7a68bbe0b55b2b467effe0ca2b447bf87c1b282ecb82acb",
+      "bytes": 606472,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-18-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e094f4c30bf7f8ef511352a86d0b48d18e6d3f981df9b3281fbc0e7829c7d5bf",
+      "bytes": 614994,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-29-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa272c70b21208fe2d28b3bf94ae7f06b28d064f632d780f37c2fd99048b9c7a",
+      "bytes": 616049,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-29-head-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b56630d7ecc58adebeede178bfef9b2681adcb4405133d5432d5e3539f5fd03f",
+      "bytes": 710704,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-arms-29-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6da890a6207c55c9f6d0630b0a70376c6d79605a0c45bffc06fe5acbcb0abbec",
+      "bytes": 613722,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-00-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfbbe85e0795cf0cde9722d5a6ce3c796be76e88ff1e154f65b703a2d2d6fe2c",
+      "bytes": 607976,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-00-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7ee3195b3f1b0b1694a5964a7909b99cde96766d3bb0ed0974d77295a2b44c1",
+      "bytes": 619103,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-09-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f6a75984d53bc2e9b85a67c179e55f952c8bfe8684ebd9b47cecb7064444352",
+      "bytes": 612642,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-09-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e5c1d7a621604519b667ecef5de9083ee962597c298e416d4702452ae8a3144",
+      "bytes": 617857,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-18-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1749bef905470da11f86f97c5aeac5f76c909ad3e5db9e1b4f2ecf7b7374d069",
+      "bytes": 617641,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-18-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "44d78fd261b9ad1e5e2bd5f66eb53ba1d4747be7c87782a82efe2cd82092c153",
+      "bytes": 618926,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-29-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf228ab8b23472edb3f13ca10f31430afbdd3f19a2c483cf4b92ba7a9cfa3996",
+      "bytes": 614607,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-29-head-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "005e3755a3b6e2b1ce731de9d9df7a9bce5173a9fc5236bd7712174d4efbc6a3",
+      "bytes": 711343,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review/head-only-29-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea3d4c56d2d1ae03243c980f388d64a529c02f90c4b71723452942287cbc13e0",
+      "bytes": 617921,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-profile-corrected/before-29-head-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0ddd509c64a5d061a8139be6829448e3c092027381559125ec29e0e200aac5a",
+      "bytes": 864234,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-profile-corrected/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c9075bb113f03d35340f482b32b561501738ca61a8ac0fea13a24d52ab00edd0",
+      "bytes": 1923,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-profile-corrected/head-arms-29-head-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a10606cb9d5530f56d7b230d4f84375a02437f1df56575077941ec4c771f46d0",
+      "bytes": 855927,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-profile-corrected/head-only-29-head-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d80aa793ce0d466c0ed7c03510d1bd89159a6258ab41be3fa9b1d5a9d72ab501",
+      "bytes": 857038,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-side-clearance/captures.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a57b6a2c3f8f533a0127b1e4a1c9e2ed5a0c5dabc56b2a342e69ad574b90f016",
+      "bytes": 3433,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-side-clearance/head-arms-09-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7387d2eea0ec56eb4d3c268f437a4c0d1b47b349ca08944bf85a6c0126dfa74",
+      "bytes": 611575,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-side-clearance/head-arms-09-left-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2b104fe14ead0787f9d0b73dc3cb55fa9ab3e2fdcc260017f0c3b5c4b4fd29ba",
+      "bytes": 593166,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-side-clearance/head-arms-09-right-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b953159632b6d5c1f2ae41b5ccff7110a3ef1b3eaa15c6299a5e15e217c645ea",
+      "bytes": 585967,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-side-clearance/head-arms-18-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5da68c9a8e0318b7a790b86bc4b70f0eac8b140da5b4c4067e16215b7418e1d",
+      "bytes": 611185,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-side-clearance/head-arms-18-left-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae19681e1e016f3fc008e9fac7bee04f08ca450b6454e5d95fab0332efa41ac5",
+      "bytes": 636474,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/review-side-clearance/head-arms-18-right-profile.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b59fd2afca71944221bb113788d25dfc45c11b11e2ab588c2ed001f71b4c6b55",
+      "bytes": 620011,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/side-clearance.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e4749d89e49758ab40862815a605cad210cf3c5a3b3cbcc5532b10e816bb374",
+      "bytes": 2155,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/source-and-lower-body-initial.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c111cb54d995b8d6f7b41a86e85a7f4c12a38d777c04b90c251713db255b2c7",
+      "bytes": 1784,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/source-and-lower-body-initial.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2043934137f70fdd5bfe10bd87727cfbab12288d2e6f2d953f2ba500ee431caf",
+      "bytes": 4349,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/source-and-lower-body.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3099f9c522038665812c49c5879ae6d6e0d349e958891993d988806442ef00cb",
+      "bytes": 9773,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/source-and-lower-body.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f1a7bea2f1420cc4dc28f6f444411c5cc9472d9bc888e3067f15d3c0b6eaa63",
+      "bytes": 1021,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/source-and-lower-body.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28fb184d1739a2cb838d90bb0bac40c28f1d897b0c4fdc03784799a381189a69",
+      "bytes": 4380,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/yaw-roll.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f23446bba2775f938e3743266b631bcb2f37cca83c69695894292d0c7ce8843d",
+      "bytes": 869,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/inspect-native-motion-initial.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1bea373f11280ed539732aa1743a8923380b8f21c2a949d6ab66be999fa9b8f0",
+      "bytes": 6606,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/inspect-native-motion.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b57b7cd858c8e8c3f958eb1adf7aa80181512f47515f57dead4df08702bad4a8",
+      "bytes": 6686,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/inspect-source-lineage.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "efdfd43679135ce9ad424204c2a64cb7d4b19e173dbf0fd1dcd49db3e35478e0",
+      "bytes": 7118,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/native-motion-review-source-lineage.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "728aa259c912f897583b7a97303a6804232795f8089cd791b1f0055984d272fe",
+      "bytes": 1460978,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/native-motion-review.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d4a217aa4a2b1f00b2a4f73f27c4ff7e1b7e807e232885ab422af684da03e35",
+      "bytes": 1063845,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/run-initial.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7bf4937b7c426edae37e201681fb8b6f8d50a9de16dc055e795df09f313acc12",
+      "bytes": 1269,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/run.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "571e338bc7eeac36106c4ab384ba00a32e19e5fcbb3e723890f2abc01521aedc",
+      "bytes": 29050,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-visual-review01/source-lineage.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c8986f2c52e64b1f20b47410e0594b65cfc466508ba65ab1f19f262731416306",
+      "bytes": 41931,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce1988cda81807be3d24392b587b26c9f27adb8f282e2fdcb46323c173153849",
+      "bytes": 1328,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/day-walk-after.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0da29f6c1d2b233d86c3b2233551c5d19035a922cff655098d1c7fc80c8ba2d1",
+      "bytes": 144215,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/day-walk-quarter.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43d9b1c6dec031e00dddb80db06f564b97d452cf52d7fe4b6f015e4c4976411e",
+      "bytes": 143013,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/day-walk-quarter.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "baa751d5813d7a4b3935b1cb5519d1f6fc4d831ea4e6f68559e1f54c007c0ba2",
+      "bytes": 1411032,
+      "mediaType": "video/webm"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/decoded-frames/day-walk-quarter-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a513a69dbe3014767079ddb391674f81342653f880b1d869c37a7a28cf2ed0c1",
+      "bytes": 111253,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/decoded-frames/day-walk-quarter-060.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87b8267b12434a02b9555a31077817c889fc4547aa6d941c53cbae8aa3ae539a",
+      "bytes": 142965,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/decoded-frames/day-walk-quarter-120.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1205c005689b8dab009b4b8b8b66fb3c26cb3735c4be461de884734384eed27",
+      "bytes": 131577,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/decoded-frames/day-walk-quarter-180.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "10c6a3dd4a1110614c63efce6b1eafbd48b51d7edd7d34233c33d784b35eb842",
+      "bytes": 134162,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/decoded-frames/day-walk-quarter-239.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5cb20012d222ea55a436f0b281e41a209fd9b28f0bafda91f18922b9a4cd8b70",
+      "bytes": 132484,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/decoded-frames/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f48b5ae99c4f27a4effe20e2530909ca106b9bdaada4415e1d2e1bf54042753e",
+      "bytes": 1953,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/extract-review-frames.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f3228d8360cd7713b9724b5e024aeab116fbffa4495e4349a40be02b7adbff65",
+      "bytes": 1248,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/frame-decode.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b15dca578dc9c8c8c2ae2392e38a8e634e6605f8c12289cc3a6dc116d2ab4cc4",
+      "bytes": 1023,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/inspect-movie.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b69661016d7a440219700e757f92e730d4b16e3eec32bb3c00456ee7b30a2c36",
+      "bytes": 739,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/movie-metadata.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39efc01f6e0d63bc60f82c17a7ace80fb1be3c9e11939283e200cf585c76c96c",
+      "bytes": 459,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/recording.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93d25a0b0fd01013d997cfc7354e0df1d0b75a0d1ed28dcb1285c6b0a0f16860",
+      "bytes": 1021,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/walk-playback.ax.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82cfa16d6c74cc4c54ca06056d8f924acb9cfeabf961b21e5b80f02890f1063b",
+      "bytes": 499,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/motion-appeal-20261107/work/motion-appeal01/freeze.inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb6646b19b5a343f36fac2662350e634265c2d6bbff3e2933243d0bbdd6b4757",
+      "bytes": 32425,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/review/motion-appeal01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4368cbd80fef9dac9da6513db1dc2d6ad6f07df11d458dc1293590d460c082db",
+      "bytes": 5264,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/records/glb-source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "91298e0ab527350f2c9fdf35ca81a7de093fa609c6ae3da60d7ee83b8b1509e7",
+      "bytes": 5853,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/records/inspect-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "22cc8171a861ea0950670bb67f44b5293a2893f3f10b0ab2a777163e7ef81257",
+      "bytes": 1525,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/motion-appeal-20261107/records/native-files.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b567f10af35d89766eb10ec802189741f03d66496155f8b31d3cea2b1f0d3d59",
+      "bytes": 275,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/records/native-image-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16623725d1032c3dec1d789b1618c3d688bc884bdb1ba18886069bc00fa4750d",
+      "bytes": 5679,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b7d6268b1847d66b09e5fffaaa7868064144a28e58431b21ff1057cd74a216e7",
+      "bytes": 1945,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/motion-appeal-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d278ae566a9910229983da5a4782258b4bc6f239f08b5e2952ef38d98fb36792",
+      "bytes": 12828,
+      "mediaType": "application/json"
+    }
+  }
+}

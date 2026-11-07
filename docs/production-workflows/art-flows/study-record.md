@@ -40,11 +40,24 @@ Each consequential judgment the workflow made rather than copied: which view was
 
 ### Construction and sources
 
+For an adjustable person or reusable wearable, attach the [parts procedure](people.md) records: exact family/fit revisions, stated and inferred measurements, resolved controls, concept and part selections, separate initial-outfit recipe, mask and layer coverage, final-target motion checks, reuse on a different body, missed fits and corrections. Preserve approved assets through the release owner.
+
 Available sources, actual formats, exports, dimensions or height, triangle and texture counts, joints and clips, and assembly or playback information, with editing limits. For production, name the consumer and the applicable [package contract](production.md#1-define-the-package-before-finishing), linking the catalogs and manifests for exact inventory. For an AF07 handoff trial involving a fitted part or focused repair, add only missing parent/target body/rig references, attachment/fit assumptions, the changed dependency and preserved parts/materials/clips. Link existing reports/catalog facts instead of transcribing them. Additional [handoff/check detail](../../projects/art-workflow-tech-design.md#isolated-workflow-experiments) is an unqualified AF07 experiment; record only applicable missing or changed assumptions.
 
 For a UI kit with sliced raster parts, record fixed corners, repeated edges, joins, accents, text-safe regions and demonstrated states; record tiling or clean alpha only after checking the actual exported bytes. For native CSS or vector UI, record the tokens and components instead.
 
 Keep prompts and recipes, input revisions, the exact tool, model, mode and settings, and repeatable scripts. Separate observed metadata from inference. Proprietary or private source payloads and receipts stay in their permitted external locations; credentials never enter Git. A reconstructed layer is never described as an original layered source.
+
+For animation, record required, retained and new clips; the unchanged target model/rig revision;
+conversion/bone-map revision and settings; root/loop policy, contact corrections and timing review;
+retained-clip coverage and measured gait facts; and exact editable/final target references.
+Each hosted source job keeps one preserved `request.json` and `receipt.json` under the
+[source-record contract](../../projects/art-workflow-tech-design.md#112-input-output-and-record-contract).
+Link these for submitted provider/model settings, job recovery and the cost reservation; actual charges remain in the study’s cost record. Keep inspected source
+skeleton/format/units/axes/time basis and input/output rights with the shared source inventory;
+multiple target candidates reuse that source without copying its receipt or counting its charge
+twice. Link existing source/target qualification or identify the missing check. A successful
+provider job is not a qualified target export. See [Animation authoring](animation.md) for the procedure.
 
 ### Review and remaining gaps
 

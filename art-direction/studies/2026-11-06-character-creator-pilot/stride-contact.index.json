@@ -1,0 +1,517 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-stride-contact-20261107",
+    "revisionId": "sha256-51807bea56476ec7038744878909cfa30eb7f2d308c0253bf2d1cf50d75ba8d8",
+    "manifestSha256": "ec6ff73cabdc5a0f2e25bb6fc3e3fd6195c406319ee0ba28957f1ec8cbe843a4"
+  },
+  "files": {
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-after-pnpm-workspace.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3af76200cc87867ddff4bc3ff5d12a0c0ba892594daa3f2df2e9cc8c28e86a46",
+      "bytes": 220,
+      "mediaType": "text/yaml"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/licenses/PlayCanvas-MIT-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42fa51ddd556be151a29f381fb97ee975825dcc454e805ea3ea9c079cca04d34",
+      "bytes": 1064,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21e4727400220035fcf9d7a484c813a8f600265271450614dbf179d0eb745746",
+      "bytes": 4945,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93a859b1788e4762c714a0fdc4102fde3ee50d8332283e8b0c287f606876eea0",
+      "bytes": 6693,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact01/common.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e446a79fdbb502e91b47f2a10593ccdc5ff8901b174c294df169d4effac71d2e",
+      "bytes": 6182,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact01/endpoint-crossfades.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bfe7913e1096c2d0ab88b0b465e488faf4718c2a543a4a109e6d990fa3dcdb7e",
+      "bytes": 816514,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact01/endpoint-crossfades.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1583816c3b6e37869bfd8d27ab1b208554c6a07b2ff5ab7613043b3cc8a29abb",
+      "bytes": 1214,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact01/reference-barefoot-lattice.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "daa32c8c0c7569e3f41c728503254f73cadbf9e4e709cea08c0f2d257b2944d8",
+      "bytes": 12529183,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact01/shared-source-library.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a93861be75aa9ff453877132edf06bd25061555c9083a6834a4cd298ffa67d16",
+      "bytes": 4062278,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact01/source-lattice-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc2a7fddd806dae88cc79ac874bc06b8e61166bfedd9c323fc4a2170d6e33c18",
+      "bytes": 4037958,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact01/source-lattice.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "789aa28e94361f9c268bd82e692d91cb2188f7b4c6028517466ae036b31867fd",
+      "bytes": 2279,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/build-native.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e38cdbbe61037300c0d9d082282795f13ce2260bee609344c96c5c17ed9873e4",
+      "bytes": 673,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/common.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a5d24a03d9b3724f62270db07be06e87761ad04cfe1a113d7c02365aee9ea000",
+      "bytes": 6184,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/legal-character-motion.bundle.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5eae10a82985af0b9e44ac70c0b57a20613e80c66b90e3fdab374c6d896c5d0b",
+      "bytes": 5216337,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/legal-character-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e27a63cb424dfc69fa389267db7ec6ac08128ba8f47a6f6506ef8a4ccd3cce87",
+      "bytes": 157627,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/legal-character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "648cb68330e9f2d7d820ada748e76977a25d6672fe5f3cd6ca1beb351591fadf",
+      "bytes": 4437,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/qualify.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "310bef8e81bc9618174534f4c2b108e9619119dd73bcb1345a391f5d31858da0",
+      "bytes": 3093,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/reference-barefoot-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e66e63d6967503a9b6c19618b54e8c91a2aba6c04e6d5827d46b723a00b8554",
+      "bytes": 22803546,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/reference-barefoot-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a8b29537a3db7bfda6510194858c9946421b68875aa8391e398ae50094e7f5a8",
+      "bytes": 9472600,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/reference-shod-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ddd18c045fb2a4510ab737e814519eada4cf106c4869f61a9b1223316a905c11",
+      "bytes": 22803674,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/reference-shod-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "00bbd1c74da96179746ff356a59fb302c86ba3fdbbad78649f6ac6c018a26fe8",
+      "bytes": 10075012,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/shared-source-library.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6e10ea64a3142b19ae902a9daa1bf2adce1c6b3e14b21126814a3e7d6532b55",
+      "bytes": 4088215,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/shorter-shod-clips.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dd7f3cb8747f2ce5a2d88762b88b02b0b4b0aad342386b665ac3fb6e0683050b",
+      "bytes": 22779587,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/shorter-shod-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9da121b623106e7dca59e82f04b497a6f7a8dfe3d0f0939ac45e3493d8874478",
+      "bytes": 10077987,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact02/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "51205722f63763cf175fd40cfe47a386b30b6a5ae84729a6503ac52a1c048026",
+      "bytes": 28127,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b0b2ec516e29ec9369f9c189d5e1cc82d2f0db8cf75d0fe1b0e7ad4ce9f93617",
+      "bytes": 2954,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/build-mixed.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d762f41e77451de261d691fba5373ee3557fa0a4090c41bf27d6a5afe4ffcb1",
+      "bytes": 644,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/build-native-cpu-cost.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "531fe2cb712602fc74a6d893918eddda94c0c05106af9eb40c6d4014ad5ba9fe",
+      "bytes": 652,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/build-plane-details.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f166e334c4d15c2b65834644eccbd05966a1a86acac115b7fcf74b969dc722cc",
+      "bytes": 672,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7dd80f82fda1af4963a8f77825715d2cfced92713f922465d11d37097099bfc4",
+      "bytes": 644,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/feasibility-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d4ed874de2db7cc8504e41f3f74310bc0540f498baee479a2cbb5e5ed014ea4c",
+      "bytes": 660826,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/feasibility.bundle.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89705d1dca6ec3b535398ffa612393e8505ab3556a9f261825f52dc9ea42a937",
+      "bytes": 5237857,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/feasibility.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "38deea62ebd187388ba2179074983cbca749ddb4e1a04a9b11298099cf6eb401",
+      "bytes": 8167,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/freeze-source-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5c2fefa6c3385408316d84183f5d9ec8e8c11b28511e505efe4a9d95c317f94",
+      "bytes": 3731,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/inputs/diagnostic-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c30e23943af84e7f17e52328dc2590698f05da394445f7f469bb60ef66412de",
+      "bytes": 2781109,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/inputs/recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "288a03f02e8f4dfc735748a8d098ba1e4fbfe30eaabe4205c9cb7a6a3278aca4",
+      "bytes": 387,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/legal-mixed-plane-details.bundle.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d4d3c54c5b5e3dd74838b66249a6648ade4259b89552e26249b9c774a4eaa72",
+      "bytes": 5239394,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/legal-mixed-plane-details.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f96d9a32e80dfd508d6d39c118d2baea8f22210fcc8289b07306631a08013f5d",
+      "bytes": 2154630,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/legal-mixed-plane-details.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba08ecde8f5a04b08dd905fc59a3d7acdcea931fa3731a44344d5e8bb91c6598",
+      "bytes": 8410,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/legal-mixed-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c7540fe34bb9293f0bdfb5c4c832a2e6ce2b4717bda5badc0e34b88082b88b93",
+      "bytes": 1622918,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/legal-mixed.bundle.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "48b181f57ba4518faa53ae7f14c3eb97be17420366ee2b3ce3b6246832ac1c4b",
+      "bytes": 5238084,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/legal-mixed.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1f59e15bbedc740616e375377e6e456ab52c0402c8fb65d05223f466b866515c",
+      "bytes": 8361,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/native-cpu-cost.bundle.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80a69dbc748f756414e3ef399a5f2f32ccedaf66361a1223acaec143a65fbdc4",
+      "bytes": 5235646,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/native-cpu-cost.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5520e64c3cdcd031b22439b94d3d437ff5c4db5d547937b7a15504c57347e3ef",
+      "bytes": 3720,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/native-cpu-cost.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b121ea3f35efe559d9c5a175ddb64d1a289b896369f5419be00d47cd2ad0a342",
+      "bytes": 7657,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/person-motion-contact-details.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "df9f84a106d5a50d74aa5101fd4e48c8deda3715c037b0678506525ea169c15f",
+      "bytes": 44610,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/person-motion-contact-timing.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6312a1f0144489b683902f196a4b058d0aa6aaa52c3204b8e8b3b76a50bbfb33",
+      "bytes": 42345,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/person-motion-contact.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "806c281093591f8656d4a4074e9a55352d53222d57516afe1b5a1a94a2572d77",
+      "bytes": 43542,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/person-motion-original.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9834cd1ff9389d90e4df42829fbccf97611a66ffa114e0ef92871c49e65cf2fb",
+      "bytes": 40797,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/plane-summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f535a409d5e8caad57476064677d8650dd208c10fe368044f2b1caacbc7c0770",
+      "bytes": 1536,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/replay.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a7a06868d98f11aa07592aa23688aca473bddb5a8060d655951258083d4b610c",
+      "bytes": 1630,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35a31b2fadd8cf47b700e24a98d1a80f2038aaa49745703a5ca51b129706c1b2",
+      "bytes": 451,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/apps/client/package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0398c043aa1ca1a29cbd931d7bd99db631c092a143b2512978318f6e621ecdbd",
+      "bytes": 617,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/apps/client/src/characters/character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "891a57b5a8edbc89f574dc33edf5a128e34bae786a77534953b7ec0ac21444a6",
+      "bytes": 7847,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/apps/client/src/characters/gait.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ea1b2a68b39c28429d3a1971d387fb3a569f9bdf468e38bad58d326a704736c",
+      "bytes": 4465,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/apps/client/src/characters/person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6593cd5d23b433956d540c2f266acf7df56abef4013e5340209f1da86058ad2b",
+      "bytes": 72024,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9834cd1ff9389d90e4df42829fbccf97611a66ffa114e0ef92871c49e65cf2fb",
+      "bytes": 40797,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84dc3c4cdb08cf3957afeda11a5a1d71b1342b3a172dd56d7112c5afe20bf566",
+      "bytes": 3330,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/patches/playcanvas@2.22.2.patch": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3379a2bbed5e62b1c4e5f8e5835cd60591025d11baef4f0b4cecf465b0de06c4",
+      "bytes": 11994,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/pnpm-lock.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c4192366d3a73cd2cfc3f02b8afa8b36805e4cd228ad5b9985292e356a9847c",
+      "bytes": 88469,
+      "mediaType": "text/yaml"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/source-snapshots/tsconfig.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5843198c9127598ba58b045b127dba02caf59284d42e4bbf8185b9d3b978a79e",
+      "bytes": 1461,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact03/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "585a0716d97635af058ec5a870010ff0bf451848f30674eed39155b4d05213f5",
+      "bytes": 12283,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/work/stride-blend-contact-preservation01/index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b29eeb9165e8f62e92e819d38b3486263a3acd4f3f02c868359b0cd2ca2aa76",
+      "bytes": 12643,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "484424790136c7bd6194c0262e327cd21c2da4888d8a877811854919df056947",
+      "bytes": 1444,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/stride-contact-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d198840e482aefda57941be5317870f64830bb5a5760f90cd5be7d4b1e073f8",
+      "bytes": 3883,
+      "mediaType": "application/json"
+    }
+  }
+}

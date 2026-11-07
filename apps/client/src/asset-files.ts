@@ -1,7 +1,9 @@
 import {
   assetUrl as publicAssetUrl,
   sameAssetRevision,
+  sameArtifact,
   isRepositoryAssetPath,
+  type ArtifactReference,
   type AssetRevisionReference,
 } from '@open-legend/assets';
 import {
@@ -136,14 +138,24 @@ function scheduleAssetRead(
 
 /** Verify exact bytes before handing them to model, image or generated-data
  * decoders. Streaming admission stops an oversized response before allocation. */
-export async function readAssetBytes(url: string, signal?: AbortSignal): Promise<ArrayBuffer> {
-  const reference = referencesByUrl.get(url);
+export async function readAssetBytes(
+  url: string,
+  signal?: AbortSignal,
+  expected?: ArtifactReference,
+): Promise<ArrayBuffer> {
+  const installed = referencesByUrl.get(url);
   if (
-    !reference &&
+    !installed &&
     (!/^\/__assets\/[^?#]+\?release=[a-f0-9]{64}$/.test(url) ||
       !url.endsWith('?release=' + releaseSha256))
   )
     throw new Error('Asset URL is outside the selected release.');
+  if (installed && expected && !sameArtifact(installed, expected))
+    throw new Error('Asset does not match the selected appearance collection.');
+  // A permitted family can pin a scoped file without exposing the release's
+  // complete private index. Its exact reference narrows byte/hash admission;
+  // it never authorizes another URL or bypasses the server's current permission.
+  const reference = installed ?? expected;
   return scheduleAssetRead(signal, async (operation) => {
     let contents = new Uint8Array(0);
     let sha256 = '';
@@ -204,7 +216,11 @@ export async function readAssetBytes(url: string, signal?: AbortSignal): Promise
 }
 
 const decoder = new TextDecoder();
-export async function readAssetJson<T>(repositoryPath: string, signal?: AbortSignal): Promise<T> {
-  const contents = await readAssetBytes(assetUrl(repositoryPath), signal);
+export async function readAssetJson<T>(
+  repositoryPath: string,
+  signal?: AbortSignal,
+  expected?: ArtifactReference,
+): Promise<T> {
+  const contents = await readAssetBytes(assetUrl(repositoryPath), signal, expected);
   return JSON.parse(decoder.decode(contents)) as T;
 }

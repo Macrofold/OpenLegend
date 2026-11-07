@@ -19,6 +19,8 @@ import {
   type InitialWorldPreparation,
   type ConstructionPermission,
   type CampAssetPermission,
+  type AppearanceFamilyDefinition,
+  type WorldState,
 } from '@open-legend/domain';
 import type { AccountBinding } from './authority.js';
 import type { AppConfig } from './config.js';
@@ -35,6 +37,26 @@ export function initialWorldArtwork(reference: AssetRevisionReference) {
     presentationRelease: structuredClone(reference),
     presentationReleaseRevision: 1,
   };
+}
+
+/** Apply only the selected opening's transient trusted installation policy. The
+ * public descriptor and compiled file are already admitted by the asset owner;
+ * numerical correspondence remains the publication/renderer admission contract.
+ * docs/projects/people-from-parts-authoring-contract.md#external-family-package
+ */
+export async function prepareInitialAppearance(
+  initial: Pick<
+    InitialWorldPreparation,
+    'world' | 'useInstalledArtwork' | 'installAppearanceFamilies'
+  >,
+  appearanceFamilies?: () => Promise<readonly AppearanceFamilyDefinition[]>,
+): Promise<WorldState> {
+  const install = initial.useInstalledArtwork && initial.installAppearanceFamilies;
+  if (!install || !appearanceFamilies) return initial.world;
+  const families = await appearanceFamilies();
+  return families.length
+    ? updateWorld(initial.world, (world) => install(world, families))
+    : initial.world;
 }
 
 /** Shared deterministic startup preparation. Fresh observations are requested only by
@@ -87,14 +109,16 @@ export async function prepareCreatedWorld(
   config: AppConfig,
   candidate: WorldCreationCandidate,
   installedRelease: AssetRevisionReference,
+  appearanceFamilies?: () => Promise<readonly AppearanceFamilyDefinition[]>,
 ): Promise<CreationStartupPreparation> {
   const selected = selectedCreationProfileForCandidate(candidate);
   if (!binding.actorId || binding.actorId !== selected.profile.controlledActor(selected.candidate))
     throw new Error('The prepared account must control the selected starting person.');
   const authorityOwners = new Map([[binding.actorId, binding.accountId]]);
+  const world = await prepareInitialAppearance(initial, appearanceFamilies);
   const savedWorld = prepareWorldForStartup(
     {
-      world: initial.world,
+      world,
       speed: 1,
       manuallyPaused: true,
       ...(initial.useInstalledArtwork ? initialWorldArtwork(installedRelease) : {}),

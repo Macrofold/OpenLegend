@@ -1,0 +1,1364 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "character-creator-mechanism-evidence-20261107",
+    "revisionId": "sha256-6e6a141039998ca3f004019f86d07406f5f49d6ec3c852aaaeb7643f6651aaa9",
+    "manifestSha256": "09fb4c42ed306cf2a37e2968e31579b9199ef075213c6e5c17b4e01a37542c65"
+  },
+  "files": {
+    "character-creator-pilot/art-candidates01-43/licenses/MHR-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "bytes": 11358,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/licenses/sam-3d-body-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3a5a0e2d973ab80e6610ccf1cffc40756050d0ace3cd4fec879b3ec290b2e9b",
+      "bytes": 8204,
+      "mediaType": "text/plain"
+    },
+    "character-creator-pilot/art-candidates01-43/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427bfb47167819d3007340157a81405abc144241b59d5494cc2d089b5781411",
+      "bytes": 1545,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates45-101/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d43857928998ad079e1dd5f69a03e30967539369a0b2e7365e3eaf019cdfdfb1",
+      "bytes": 1470,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2fb6c1c628d14fb8eef4a7efb1a4faac64724f0c3883116245aa21e896e55ec7",
+      "bytes": 1663,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/covered-review148/tool-sources/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/records/rights-and-review.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8ae897cb9ff9ebda28210ff47fcc3f1c71414829dab45b1c77f694506261a6f7",
+      "bytes": 1298,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/art-candidates103-148/work/sole-probe-integration-01/qualified-fixed-wearer-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3600c5b48d39065a92c0b9fb08b11f5ef2db62ab89134a6979abf29d1bbbb1b4",
+      "bytes": 2773192,
+      "mediaType": "application/json"
+    },
+    "character-creator-pilot/walk-shoulder-source-evidence/work/shoulder-source-path159/corrected-compiled-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0551f578a65797ee542a6b79e7279b67cf53b089db582fff7f887ed3a461669f",
+      "bytes": 1061589,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/SUMMARY.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff84b689634c6018823d6518e2739ffa5d329b38c6a2af61c7fbcae831c8a1b3",
+      "bytes": 8048,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-export/reference-barefoot.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9be5c7c494033f352c1fae2c475b14c825b3221e2f0543bb19f38c5876960762",
+      "bytes": 1057712,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-export/reference-shod.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7faccdd8794bd572ba5d53b59883d3f23abfa0abd07d490939c8c66158b83c7f",
+      "bytes": 1063008,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-export/report-raw-rest-interpretation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "91c9dc8327a7e126670b54b881c528898ce8df97f00ac0c74ec6d269d4eb9cbd",
+      "bytes": 10733,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-export/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "053f1dc4a19e4dbfb83eb3f1b587f7e16ab88e811776b7b0cd69a2730e0237cf",
+      "bytes": 13335,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-export/shorter-barefoot.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "50c6a0d9b578f436fc0b114739e4c15a86748abb6fa155f104d81d3c696f8c06",
+      "bytes": 1057924,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-export/shorter-shod.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a5d56f63c4d40bef18bae053fb773ffbf63b134f1786ce34f472c556060e43c",
+      "bytes": 1063176,
+      "mediaType": "model/gltf-binary"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-rest-check.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "596c737404c89d618863550f2d2a92f8ac4d59075c33664101412616f4ef2df7",
+      "bytes": 1992,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/actual-rest-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2d5701a4a8bd3cd51ae4328d0d32eadb458a5d5ecc08d7a03ab249341b9e8c5",
+      "bytes": 2412,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/boolean-package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2f0cb54f9007ffabe34a184c20878bebee4b784290126416a4354e16177cb87",
+      "bytes": 653,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/boolean.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5522ac7be0be68007799fdc8b646b345e9a75ba7c5912b38ffe823a2c0e247fc",
+      "bytes": 2781111,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/negative-package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9bbadf04a30bc15c4a7bd87ff644825b0e9ba6f08b962ab84aa9ca945bde6855",
+      "bytes": 654,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/negative.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1740a250c22a3d0e3fd0adff6b8c819bae79ef080a0e6baad9178c1b32de57ac",
+      "bytes": 2781110,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/profile.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "bytes": 3,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c55064421999e66189004aa5b137c4979e035f9291a2701b8b703dfcb391da5b",
+      "bytes": 577,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/source-marker.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "53fe8b1831be0b50658aacd07d247d075aec9a0e9eebd91c27871de369535162",
+      "bytes": 73,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-family-before-render-fix.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c9aec9fa1acb5901f0095adf83487879a768a8be28baeea61b33b8641108a3d",
+      "bytes": 2781450,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f097cbd1beca19bf912dda9a208afe5cb45476a415bb6be0731f6ad31abd226",
+      "bytes": 2781436,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-fit-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28400dac4a9f38681555af4400ae79a58e79cb07e6e0449aed03f43decff57d7",
+      "bytes": 286,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-secondary-package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff4aecdb8ec297ef9b2501c221eb7bccf2269b854b16d6add0a32905e3a8fb1d",
+      "bytes": 661,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-secondary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ac671d684b4e2f49a276d9901e30b8f85c63ae3cd6daa173c90de7803d45d970",
+      "bytes": 2781587,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-typescript-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e17abd88ce695bf92436c919653971a7c4aa28d5b1a423a281850aa9a74abce3",
+      "bytes": 120,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-valid-package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3a6645eb0286ac7fd2bc505a814b04bcdb734c7ec6557bb08ba7047e0c3534ae",
+      "bytes": 657,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/split-valid.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9c9aec9fa1acb5901f0095adf83487879a768a8be28baeea61b33b8641108a3d",
+      "bytes": 2781450,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/valid-package.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3054672bf36aefa2f5166c545f4c80fda8bc0eac7d2513aa14fd67fcce7f046f",
+      "bytes": 651,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits/valid.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c30e23943af84e7f17e52328dc2590698f05da394445f7f469bb60ef66412de",
+      "bytes": 2781109,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/admission-and-splits.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "130fc5b5a5d561a972b02842f24feeab88845cfe450c940ab01baf5cad7b4c3d",
+      "bytes": 3700,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/before-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "965f3b340df587b0e11b41fe5603a091cd821a351b1dcd8602d157f9d69167fc",
+      "bytes": 37233,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/diagnostic-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c30e23943af84e7f17e52328dc2590698f05da394445f7f469bb60ef66412de",
+      "bytes": 2781109,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/export-and-sample.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "feccb7b7a94d4eba5f59d86f25fae6283e82998101c631e0c9a1b5b63d27fc03",
+      "bytes": 7944,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/helper-preservation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6da8a2bb94aba606d916990f3f5350546468539bf60ef95775384b6cc4a701d3",
+      "bytes": 746,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/knee-and-plant-check.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e8881e4c58f3462c8c40405259fd49e08ca3ff75f07306c5661fdf45a81378c5",
+      "bytes": 2723,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/knee-and-plant-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "899577228c7769a104177a1afcc5d202a11c7b31bc4bdc7b677599f39945dba4",
+      "bytes": 1907,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/measure-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4bee381d9d4e8c7ae99f7225b3f472294d8135a0e77f2e466e6551c632032d25",
+      "bytes": 4050,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/measure-typescript.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c2bc63701032040bc8b46f4e44feef384db2c043c49f3e41b609b54669259dd2",
+      "bytes": 2281,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/native-cost-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b54f685e0654b956fa10f293279a5c4a4ff115c3493ab3c3360de1899afe1b14",
+      "bytes": 11198,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/native-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bba5f96a14d5c6188a2cfd70d9f3dd871ede3f2b9838cddfa22b1ae297786483",
+      "bytes": 808,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/prepare-and-fit.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7fa2a72abfec0c2e063f67cc9d654c3091e87b7a34c08f5ea95082f89ef70155",
+      "bytes": 5580,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "288a03f02e8f4dfc735748a8d098ba1e4fbfe30eaabe4205c9cb7a6a3278aca4",
+      "bytes": 387,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/reference-barefoot-evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe77e6640674e20c14015a2eb06f9e4274a28181591281dbd554404447d4b20d",
+      "bytes": 1233728,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/reference-barefoot-native.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "adb5b671c8b8cf5ceaa8e9950b6c6918fab0791a2fe401f3ac6dc2e0b5cd7f4c",
+      "bytes": 2162420,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/reference-barefoot-typescript.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01354e44d0b780e4e252fc3564f2735bd1b0b505883e3cac9f80dc0dda458476",
+      "bytes": 2145666,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/reference-shod-evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc06e5160babedf3a284617a5a91c2c7248b57e67bea393362ac81978128952e",
+      "bytes": 1241075,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/reference-shod-native.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "392744542c9262039e1f8f1a5d119f2bce541199c91216959c713c792ac33cdb",
+      "bytes": 2162421,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/reference-shod-typescript.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a829680d6e69119f4db3aadf6f8f9885d69f18f91d7aed92a77e1c37a4138fd6",
+      "bytes": 2145698,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/shorter-barefoot-evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "45dcf48b84178bb0d0244d56bf7d19d37b84d20075e9c51d3bf425301e329c62",
+      "bytes": 1235764,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/shorter-barefoot-native.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f882555acd380eeb78ff1be5c70db941294df836c03db992b3ab7ef800aaa9ac",
+      "bytes": 2156708,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/shorter-barefoot-typescript.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bccd89492a6120cb18ec6d21031d10aa501f3d91aebe79fa6c03c9a66305dc04",
+      "bytes": 2143377,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/shorter-shod-evaluated.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "562f3f2c4b91516fa2dbd0ff30352ef52ac96220b8320ca080d23aa649a1915e",
+      "bytes": 1243104,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/shorter-shod-native.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "10b4bb05c7a1759aa188d124965020a24e429fb25b35103d4b9a2d8ed16888d9",
+      "bytes": 2156787,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/shorter-shod-typescript.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "11983166df1df8f07d4197215c5ce639cdc3c6bede68019f7e9f61fa0fa2b856",
+      "bytes": 2143479,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-before/people.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b1af310a0f9f663dc6f39e3194006c4e4a9b448167c768edaecc5c09c1ac192e",
+      "bytes": 80556,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-before/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9833c59c43d79beb8f1a816bd103ffb421c42b19f00a883cae06ad2cd359b11e",
+      "bytes": 37160,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-contact-before-array-sharing.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "569665912ff9e19d6bfa9a571fa7df6b4de49ab993efa87117c14d3c8aa503e9",
+      "bytes": 86202,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-final/apps/client/src/characters/person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6593cd5d23b433956d540c2f266acf7df56abef4013e5340209f1da86058ad2b",
+      "bytes": 72024,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-final/apps/client/src/characters/person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9834cd1ff9389d90e4df42829fbccf97611a66ffa114e0ef92871c49e65cf2fb",
+      "bytes": 40797,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-final/scripts/art/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8d76979a0f6df1ed2c97016cf4a0e09765bcdc23453ec5ddb5ea0d43700d123",
+      "bytes": 96024,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-final/scripts/art/people.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "051e5b3ad210f97a1c5a0c7e29156fb5209cc411b73376c58298b2558277ab3f",
+      "bytes": 86678,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/source-final/scripts/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/split-fit-check.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95b37f56002d6c6f57ef9863f6397b600e19233df08127598d2a203cc63d1de0",
+      "bytes": 1423,
+      "mediaType": "text/x-python"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/split-typescript-check.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "207ebc512fad62b4ae74ba991db0905482ee81a11ec4d43054ca48447a4ecc27",
+      "bytes": 1085,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/typescript-check.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f0a67d8d43c3ec30383ed7b1e594c03a8c89ec58e13f9e5979046eb7457889d2",
+      "bytes": 3534,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/typescript-cost-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "233d8fcc12afefe033babfa03a46621d8f58c52fa212f275ab0ec1e6049e6f8a",
+      "bytes": 12197,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/typescript-report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "862ae5642c40dae3481fe6ae3b923a094b169eb1e0e5c1a504ab60abac5aeaa2",
+      "bytes": 2167,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/pilot/work/footwear-contact-01/index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63afae1af2650cffef2325fa74ee0a69580447dfd175767f1f8d6a5487309c2b",
+      "bytes": 10972,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/01-ordinary-main-world.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5ef908d6e5bacd6a8112d5c3af8f17ad58c2c6bfb92148c13add4c3ba9c559a5",
+      "bytes": 147646,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/02-no-family-creation-draft.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d6cc76f3a8336e24e7ad8ef5faaadf789d8b622438a546e062352cd663045c48",
+      "bytes": 131177,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/03-created-ordinary-person.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7f5715bc9ff9792a7a4adecc1d9a69f3d74990fd6e33282fa7a28e352da2ee7",
+      "bytes": 154512,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/04-no-family-person-editor.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8630ee83d0276a875f390899b8c4db502f95c70ee1b0293864f0292cccbadd82",
+      "bytes": 101374,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/05-unsaved-identity-guard.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d4302779889ab0cb44f672f4dc72a2dbdbdae65dee6146acc0138317d7bb2fa7",
+      "bytes": 119676,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/06-save-reset-section-before.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca99e2c0c552c3e99567cd0d3649f62fc20f8ea74130d56fb6511b9c05b32e3d",
+      "bytes": 101352,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/07-save-retains-identity-after.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72bb66ff2da0de9cdaa393bf5809305a758597e83209e59f13cdd94c85ad37df",
+      "bytes": 110364,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/08-controlled-reread-failure-before.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14ff4d322be40f6883bbb3f86544405c7388921104f86c852b2a52769b1788bc",
+      "bytes": 30319,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/09-controlled-reread-failure-after.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e3aba1fa8486d2cf8a5b947525a3fa2541d2876680131d9d5f83acc053e9e08",
+      "bytes": 55339,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/10-save-retains-focus-final.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7abf2872ea37303fa70edfcc0c220a5c5927c774478979fc5c46b50d696ee197",
+      "bytes": 110342,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/11-ordinary-world-reopened-final.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce827204f315d6166f5dd8a84c6771f1e63b0db2677dda093459750dd475324d",
+      "bytes": 154246,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/actual-dirty-close-final.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19e16a9c1f7636a2a14cd24e06e3765cd83ac406f50e8f4f7e39fd8befe61b1d",
+      "bytes": 148,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-delayed-refetch.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "563b4831c8bae24f19a6a1bcf9a343b3c206a74cbeb4fa60661354408123a059",
+      "bytes": 261,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-events-recovery.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "60ced49f8872d76e0cd6bbc47b99360bc2875a983e075c7c877aec1ff59efdd9",
+      "bytes": 393,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-refetch-result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a88f360711fb6db0213fe01c29ac08e10ee7360f8b931f0f4e102e87b39d37d6",
+      "bytes": 491,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-refresh-before.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "24379a8a57273efea017e60c50ee61496f6fa9b7ce3e6ba40d12f4e90aa6e4a0",
+      "bytes": 1621,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-reread-after.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e716315368c8ee6173928cb1d218535fcb5149ea4e537cc4f5d5eb224a7c01d",
+      "bytes": 2320,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-reread-before.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afa890955fe7eed9bf88056110153b68801ea2b241dd273ed3f5546df3ca9702",
+      "bytes": 1093,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-save-close-before.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ecf725f41909d53413dabd34e7e771f049e76baa3b83306b3b8362cb681658b",
+      "bytes": 1093,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/controlled-save-close.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fd6f329b7efac23a69c9a86f60c43659188ca83666755cd81c1dc51c82f5c2df",
+      "bytes": 241,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/save-layout-after.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "487d8343682ced0fd07715ab890f63043fd68b62e1d2993ca9d96ea97a9450eb",
+      "bytes": 360,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/review/game-readiness/save-layout-focus-final.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cd0fff7f24a29a34de887c39d1c7da807137240ee4027ae63fbd8e8369424467",
+      "bytes": 248,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "97a5c8197818e7f4d9d4e13cf9109d73fcbfd5f8ba46cb0fe7bca55f6d603a56",
+      "bytes": 2198,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/after-editor.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "478cfb6e79e18e1af291e8e7f0d86c2cf3af4411156fb793dda00de9ad3d8b6d",
+      "bytes": 13880,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/after-god-tools.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7703cb6448bde0c32f4dd7d7a3f4514a6d9801b9feaa5ecea3a5117563479465",
+      "bytes": 59663,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/after-source-pins.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "09d96e260f9069d2507b49f4c04a47efdf27513e942a33d058094dfa035c30cf",
+      "bytes": 292,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/before-editor.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a686ab69b39b549ae3f0b69042e6bf0c006b6600625fa390344c88e50974df4",
+      "bytes": 12741,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/before-god-tools.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a21836285b1da171c6b76b0211c7125f5aa9b1b1a57871d87941074282d91d0",
+      "bytes": 59366,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/before-source-pins.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "50e971b420734d1c7547c299d48d20658f8443a81cc2f21b0694ff8bb5af443f",
+      "bytes": 409,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8a232ec441b36b030e99bcea2de8e194ae8b4c5d7b22f1fc2dae8840eb6f43c",
+      "bytes": 1522,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/game-readiness-runner.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5fbd8af90016d4b484684f4624a675a2e6a68b69e5fb692b7de700a74a476fbe",
+      "bytes": 2574,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/normalized-after-editor.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dd354aa0b9ab554c502df5f92c5893809b937a6e48820d4f07b58b77fb5bcbc9",
+      "bytes": 14174,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/normalized-after-god-tools.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "50b37e78feab06f02efbc6191b3f6b8b3b232a84b69463298c3d7d078691bd36",
+      "bytes": 60246,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/normalized-before-editor.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "99470f3c5d7068bf06e42a9029c9f2c631b29e7f8b3ffa2773da093f7ee9ce2a",
+      "bytes": 13035,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/normalized-before-god-tools.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ad5f8625ba6e69cbb74fae835249f3fcf4fe24a35816009d64d2da6ce49e00a",
+      "bytes": 59950,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/probe.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a069c5145c9d4ca5eb68f9730fc969e5a429ffd66674bfd27b9c5e3f2ee85aef",
+      "bytes": 3617,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a3515337eee5b96765003bd62a9a2ba37a212895af793352c0ff1f0efd0f87b",
+      "bytes": 6494,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d722063b00dbad7dd075a1dfc9646cd4481b44011ec746d80e67fec9a36999b",
+      "bytes": 746,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/editor-save-recovery/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "22e9a1d254125bee3b588e662d453993ff30bd718de04f320c2541ce3e78b8e8",
+      "bytes": 7142,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad492cf16fdc60b16f03cdd1204efbe1c4794939466a5169e12e5bdae2c3b54a",
+      "bytes": 2014,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/after-actor-before-camera-fix.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "093aeb645ed30e6ec6eb43c16575f44460396aa58e65ebcdff0ca3430377e6d0",
+      "bytes": 56542,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/after-preview-final.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "465448253994ba5ce96a269a6d759d957a973e81b1f55fff9d0c7cdc481da4ea",
+      "bytes": 25090,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/before-actor-and-camera-failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3bd72889e5523ac781baf56adc50ac574b9d1287ced0b57244e653e53e171876",
+      "bytes": 71260,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/before-person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "919181b77a3a62ea8865aff5994bfc7de79a57cb6e164cc217602522ffb29b8a",
+      "bytes": 28745,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/before-person-actor.ts.original": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c1e5bc135a121ec01fca35b0a68e522bd07985998f672c0378892552af118fca",
+      "bytes": 28093,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/before-person-preview.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4f862e7ecd4929b59cf814156de1ecdf3ea85cd051b33271b81649e5e8061e2b",
+      "bytes": 9840,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/before-person-preview.ts.original": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "78a3854f72ccd4a4926ea27953e7a4b983736c267a20e93eaf9a44dc22af11cf",
+      "bytes": 9526,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a842142e7e1c1b96043d9b396c581db6c6a1083e77d3f768723120641e83f66e",
+      "bytes": 1449,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/diagnostic-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c30e23943af84e7f17e52328dc2590698f05da394445f7f469bb60ef66412de",
+      "bytes": 2781109,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "76d396783d9288ddf7fe783c32587d663bb535edcbbf953c99ecf5dad8118d99",
+      "bytes": 12491,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/projection-parity.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "38fc088425c0f809985b662c5d155fb35e89195acb10eac6770cdff6a13e6e93",
+      "bytes": 2006,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/projection-parity.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "534d158f31e8272bd9c54a9d8b48767d339aabb2728ce1e27bbdcb488d12f8ba",
+      "bytes": 1994,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "288a03f02e8f4dfc735748a8d098ba1e4fbfe30eaabe4205c9cb7a6a3278aca4",
+      "bytes": 387,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "456bc1ed06e5ade08c6220501fed049727398ba0271830009d7e6225f6eeacf7",
+      "bytes": 30929,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/scene-projection.diff": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c4f2a23878d4f20b311cbdce96f3f190268703e2d5dd0984cd081f35476f44d",
+      "bytes": 1467,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f285c330934105b01a75ab4e0807d6dfd093c259153e6b24c8cd9968d35c407",
+      "bytes": 1723,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-before-camera-fix-person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70fae812f1b022ba657e7968cad02d750eb3c2e37799d6149b31470b1c997e27",
+      "bytes": 28531,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-before-camera-fix-person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6593cd5d23b433956d540c2f266acf7df56abef4013e5340209f1da86058ad2b",
+      "bytes": 72024,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-before-camera-fix-person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9834cd1ff9389d90e4df42829fbccf97611a66ffa114e0ef92871c49e65cf2fb",
+      "bytes": 40797,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-before-camera-fix-person-preview.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "427b622a31c9c85a27ce5a5e315442edb9f053f08c68aac0f24961c24fc417bb",
+      "bytes": 9695,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-final-camera-projection.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "67f20bb8d4312409caaa3b04a48a2a16a4962acf51f7458784daa8ee8d004147",
+      "bytes": 313,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-final-person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70fae812f1b022ba657e7968cad02d750eb3c2e37799d6149b31470b1c997e27",
+      "bytes": 28531,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-final-person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-final-person-family.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6593cd5d23b433956d540c2f266acf7df56abef4013e5340209f1da86058ad2b",
+      "bytes": 72024,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-final-person-materials.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a97968cf2d4b98d762ecc020df01bf0c50ff60176d326329550c6665a993e82",
+      "bytes": 17611,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-final-person-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9834cd1ff9389d90e4df42829fbccf97611a66ffa114e0ef92871c49e65cf2fb",
+      "bytes": 40797,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/source-final-person-preview.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6778aa86022b2fdebc77f289098ffd2dab1508478ef2a09fadf05a65c1054d6d",
+      "bytes": 9870,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/footwear-actor-browser/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "51c3871fdd93e1a38d847e7a036ead9037a17e75b865e8d7e25eb8ec4ab6a3cf",
+      "bytes": 4611,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/after-development-complete.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f1fa9e26843a5fc23054ebfbd291b38a4f7dfb2059c37119234e8544b3bb738",
+      "bytes": 260176,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/after-production-complete.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b99a2f8f20d632489d0de078d6c8be6ebce034a6f7f7c40cd3906818f7779c4",
+      "bytes": 260175,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/after-production-cua.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0cd45c3adb18dcf4b26329eb242442fca730825469b2065106fb9fedd50434d",
+      "bytes": 58484,
+      "mediaType": "image/png"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/after-production-phase.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bab573a33f5f61572ab3d91f33ba78e7035c849490d59bf6a37539de7eb795f6",
+      "bytes": 259483,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/before-actual-actor.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2cf03137166d55e672afefcd8e2acb5d3ed3caa808daf8fd17e70d3ddcbe9cfd",
+      "bytes": 137385,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/before-cua.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f58772cd92aa035fe8d85113dda34068b3304b7faf6c2096c7e55931324bdd90",
+      "bytes": 70044,
+      "mediaType": "image/jpeg"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/before-summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "03483b14342916e1c6b1d96ac70ef41d3243c4b4b19b19891e5752ac64a2aeca",
+      "bytes": 1781,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa769adeb120ca1afa636faa002e3eee15c5baaa0715eca8e3ccdaa533099801",
+      "bytes": 1447,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/diagnostic-family.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c30e23943af84e7f17e52328dc2590698f05da394445f7f469bb60ef66412de",
+      "bytes": 2781109,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/experiment-auto-update-and-forced-clock.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f46dd4405748e7e2bdbbe44e8ed258fe03bd23afa32b369b7832af3b0bc5273",
+      "bytes": 258764,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/final-build.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1276a1c9d02c18382101613c0e8ed14ad1131f9865da23a73d73940b9b6da499",
+      "bytes": 1921,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/final-probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5d6162365deb72a9a3ca2e9c0ec0a74121449f77332aa325c85ac024cb3ebd17",
+      "bytes": 17330,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/final-server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c3cc49c1f3dedbd5f09124c0168f92a52c465b00dc41222cb825f58558fb836d",
+      "bytes": 2057,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/final-timing-before-character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "456e4fc95140936e45e380e082a28e751ae8d09ac57f2c6f8ab025a4ea0033d4",
+      "bytes": 6235,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/final-timing-before-person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27bd59bf8d84200aff57985082e9bb07bd2c1bdb783875be95f6e352a23d71a5",
+      "bytes": 29154,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/paired-setup-complete.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7dffd3b7a129059e81c50b5a92c1d10b804c0f60fef6042d05cdf39c7f35180a",
+      "bytes": 15179,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/paired-setup-timing.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "522a8c4674284c53545ef424fafa61762d4869567008ffece59bd5a619c03f9f",
+      "bytes": 13406,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-after-character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "891a57b5a8edbc89f574dc33edf5a128e34bae786a77534953b7ec0ac21444a6",
+      "bytes": 7847,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-after-person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "07e73fd346f93047338bfe6a1f5a15de01e94f5f6a7779716c5c232c026cabd1",
+      "bytes": 28592,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-after-playcanvas@2.22.2.patch": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb2cded347c8e869520c9146dba877d6340bf804356d43712d3779b44b8e0f5c",
+      "bytes": 2779,
+      "mediaType": "text/plain"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-after-pnpm-lock.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "91a39ea62561b255f502082b6a7c51377dc304de16aa19b928bbc3023e380d90",
+      "bytes": 88469,
+      "mediaType": "text/yaml"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-after-pnpm-workspace.yaml": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3af76200cc87867ddff4bc3ff5d12a0c0ba892594daa3f2df2e9cc8c28e86a46",
+      "bytes": 220,
+      "mediaType": "text/yaml"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-before-character-motion.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d16c47faaf3a6ae8d6d23388ca984d66c44dcdb7ace23e50eec3c5e847d6668",
+      "bytes": 6165,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-before-gait.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ea1b2a68b39c28429d3a1971d387fb3a569f9bdf468e38bad58d326a704736c",
+      "bytes": 4465,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-before-person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70fae812f1b022ba657e7968cad02d750eb3c2e37799d6149b31470b1c997e27",
+      "bytes": 28531,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/phase-before-person-animation.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "18cab6551bef326bd1761998bd869109e39671fd05918407ee294223ea99967e",
+      "bytes": 2090,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/playcanvas-anim-controller.js": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3f738624ef831567eb64e987423a9a170f8dbb37cfbd8f5ee97980d525e5c75",
+      "bytes": 16562,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/playcanvas-anim-evaluator.js": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "448e9fcd19eef729f1714a82eb02ec7834b9068646c8ee5fc1f61e0a9ee5c941",
+      "bytes": 5550,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/playcanvas.dbg-anim-controller.js": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e19331991b54f6ef93023cfc20476a967fff1e3552f18d2ed6a90e967c92f467",
+      "bytes": 21400,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/playcanvas.dbg-anim-evaluator.js": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "17d45f2adac6a155a5ed437f254dfe66aa8a9d397cd583f08c819a3ea4f5dfd6",
+      "bytes": 7432,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/probe.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b59ad81cee6f50c87611055266aad39929df69f0952d5eb512aa2826b0c7de1f",
+      "bytes": 14093,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "288a03f02e8f4dfc735748a8d098ba1e4fbfe30eaabe4205c9cb7a6a3278aca4",
+      "bytes": 387,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39d88a4e26e412af10c189f261a873f826db0b40bef878c4b0e9cafb6408b382",
+      "bytes": 5612,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/server.mjs": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f2420dc39e83417148427a83c9ce471a8eeda089d21fa230cd68d83eff3f51a9",
+      "bytes": 1772,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/sync-before-controller.js": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b3f738624ef831567eb64e987423a9a170f8dbb37cfbd8f5ee97980d525e5c75",
+      "bytes": 16562,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/sync-experiment-controller.js": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "33651e17f54c837ef63a92fbf3357d5e3a66ef0c34552c4f0da27d951d5986c5",
+      "bytes": 16802,
+      "mediaType": "text/javascript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/sync-speed-trial-complete.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6a04f9eaff164d195ca2506af16e799cb217b4f061f707c1bf6b7cbb0176fe71",
+      "bytes": 239836,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/sync-speed-trial.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "761ff887aaf2fcb75b782a6bab40464ccb4bf26a0479d8c98726b755ba177510",
+      "bytes": 239144,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/outfit-motion-phase/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1a61175142866dbbcb4626b3df9287cf80a87c118f6671be7e48e3d00b041e71",
+      "bytes": 6160,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "51e3730e18425e3d9689811e6f4e5b860c55c22963f5eb8b9be4a044fa71d8f0",
+      "bytes": 2252,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/initial-failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "79d07f42d785ee647a711c9179ac7bd1c75fcbd759a23fb9d539014710c532c7",
+      "bytes": 253,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/inspect-esm.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e4a62f6e39800b907ffcf194c333f7fa7d2d19f3d049d0e214412ff430db46a5",
+      "bytes": 4395,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/inspect.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "436af06ab0bc615fdae951cca0e3e3bc5a85590d5aaef56c175286291ca580c4",
+      "bytes": 4312,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/intermediate-source-trial01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "495eae1df4a342c91e26589b30a692a10767c2d08a60209ac8837380a355c4bb",
+      "bytes": 158341,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/intermediate-source-trial01.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64e80ee836edc8ad646cbe55b9dadeea3e11940745fa064fbdbbc036f35fb85a",
+      "bytes": 5663,
+      "mediaType": "text/typescript"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "035e843f2212cbcd5bcf9e4efc472cce405c53820af69be51a9729f780c71806",
+      "bytes": 124897,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/work/blend-contact-diagnosis01/files.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ead227dde6f0f2c1862da5352b11d89f2c7e460efcf2fcc8bd6912626cc329f9",
+      "bytes": 1241,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/licenses/PlayCanvas-MIT-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "42fa51ddd556be151a29f381fb97ee975825dcc454e805ea3ea9c079cca04d34",
+      "bytes": 1064,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/records/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc427c6e6b7ef60ad6214180243c0af4c7034253c78dc4ae2fed0337d61b75d3",
+      "bytes": 3288,
+      "mediaType": "text/markdown"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/records/rights-and-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21e4727400220035fcf9d7a484c813a8f600265271450614dbf179d0eb745746",
+      "bytes": 4945,
+      "mediaType": "application/json"
+    },
+    "character-creator-finish/mechanism-evidence-20261107/records/source-closure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93a859b1788e4762c714a0fdc4102fde3ee50d8332283e8b0c287f606876eea0",
+      "bytes": 6693,
+      "mediaType": "application/json"
+    }
+  }
+}

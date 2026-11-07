@@ -1,6 +1,41 @@
-import type { EntityView, GameView, SurfacePoint, ConstructionShape } from '@open-legend/protocol';
+import type {
+  EntityView,
+  GameView,
+  SurfacePoint,
+  ConstructionShape,
+  AppearanceRecipe,
+} from '@open-legend/protocol';
 import type { CameraCommand, CameraState } from './world-camera';
 export type ShadowQuality = 'detailed' | 'economy';
+export type PersonPreviewView = 'front' | 'profile' | 'quarter' | 'face';
+export interface PersonPreviewHandle {
+  control: string;
+  x: number;
+  y: number;
+  /** Full control travel measured against the displayed anatomical height. */
+  travelPixels: number;
+  axis: 'horizontal' | 'vertical';
+  direction: 1 | -1;
+}
+export interface PersonPreviewState {
+  recipe?: AppearanceRecipe;
+  parts?: readonly string[];
+  view?: PersonPreviewView;
+  status: 'loading' | 'ready' | 'failed';
+  preparing: boolean;
+  error?: string;
+  handle?: PersonPreviewHandle;
+  motions: readonly string[];
+}
+/** Plain intentions and projected geometry only; React never owns a scene node. */
+export interface PersonPreview {
+  setAppearance(recipe: AppearanceRecipe, parts: readonly string[], editing: boolean): void;
+  setView(view: PersonPreviewView): void;
+  selectControl(id: string | undefined): void;
+  rotate(radians: number): void;
+  setMotion(name: string | undefined, playing: boolean): boolean;
+  destroy(): void;
+}
 export interface ScreenPoint {
   x: number;
   y: number;

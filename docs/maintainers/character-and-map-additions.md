@@ -38,6 +38,8 @@ CMA03–CMA06 are paused and outside this UI assignment. The accepted targets re
 
 ## CMA03 — Equipment slots, first wearables and Armour
 
+The [people pilot](../projects/people-from-parts-tech-design.md#authorized-pilot-and-current-progress) installs its torso-clothing and paired-ear choices through world-owned definitions and existing lot transitions. Native removal/transfer preserves identity and condition; finished rendered interchange remains open. This does not complete the broader slot interface, Armour or injury work below.
+
 - [ ] Add the ten human ports with presentation icons and the figure-with-slots Character view.
 - [ ] Add item armour and stat modifiers, armour in the incoming-injury path, and the six first wearables.
 
