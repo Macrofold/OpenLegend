@@ -79,6 +79,8 @@ Visible activity and look-closer text call blocked and settling animals **Alert*
 escaping animals are **Fleeing**. Actual active work and territorial behavior keep
 their own more specific descriptions. No private danger identity is disclosed.
 
+**Proposed, not installed:** [BK29-E](../../projects/bookkeeping-simplification-tech-design.md#bk29-e--publish-outward-response-transitions-not-controller-route-legs) carries that outward meaning through actual received body details and announces entry into escape instead of repeating the generic notice for every uninterrupted route leg. The current visual acquisition omits this response meaning, so announcement removal requires the complete player/NPC/recall conversion. Routes, randomness, native response timing and attended movement remain unchanged; fewer repetitive narrative notices and cue renewals are the deliberate tradeoff.
+
 At the normal base-world **60 game seconds per real second**, 240 game seconds is four real seconds. Pause freezes the interval. Faster simulation changes its real duration normally. A wall-clock timeout, number of rendering frames or number of Decision API completions must not determine when an animal calms.
 
 Crossing inside the 15-metre clear boundary resets `clearSince`, including during the final fraction of the four-second interval. Returning inside 12 metres additionally makes the route urgent to review. The gap provides hysteresis for route changes, while the continuous-clearance requirement remains strict. A danger moving between 12 and 15 metres can postpone settling without causing a new destination every frame.
