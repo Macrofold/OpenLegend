@@ -2,7 +2,7 @@
 
 [Topic map](README.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Record requirements](progress.md) · [Structural source/goal review](source-and-goal-map.md).
 
-The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. The October 18 Sea of Stars records contribute to COMBAT, PRESENT and EXPLORE; the October 25 Elden Ring records contribute to COMBAT and EXPLORE. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
+The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. The October 18 Sea of Stars records contribute to COMBAT, PRESENT and EXPLORE; the October 25 Elden Ring records contribute to COMBAT and EXPLORE. The November 7 Chrono Trigger / Expedition 33 comparison adds four focused STORY/PACING assessments. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
 
 ## Record structure for authorized work
 
@@ -191,7 +191,6 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 
 **Evidence limits:** The dated announcement does not prove a present account's settings, universal auto-retaliation behavior or a particular grace period. Broader OSRS combat details were context and were not independently rechecked as new current facts. The inference is limited to input design.
 
-
 ## Sea of Stars focused incorporation — October 18, 2026
 
 **Evidence basis:** G178 [game dossier](../dossiers/sea-of-stars.md) and [illustrated art study](../../../../art-direction/research/sea-of-stars/README.md), source revision `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. Assessment dated October 18, 2026 (ChatGPT). The dossier distinguishes launch and later rules, critic/player testimony and creator accounts. No firsthand gameplay, motion verification or player study is claimed.
@@ -241,3 +240,43 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 **Evidence limits:** Authored route and quest examples do not establish procedural exploration quality, very large persistent-map behavior, multiplayer discovery races or autonomous settlement change. Named reactions identify experiences rather than their prevalence. The comparison does not prove OpenLegend's uncoached enjoyment or balance, or complete CF05's ordinary encounter with independent opposition and willing assistance. No new design identity or implementation project follows from this scoped incorporation.
 
 **Review:** Both guide diffs were inspected against these source scopes; source-to-lesson links and added assessment anchors were checked. Existing lesson IDs and unrelated source/topic cells are preserved. Design ownership, delivered behavior and player-experience evidence remain separate.
+
+## Chrono Trigger and Expedition 33 focused incorporation — November 7, 2026
+
+**Reviewer and authorization:** ChatGPT, with independent component and integration review, carrying out Mike’s full two-game dossier request. This section records four source-to-topic contributions, not a whole-library or runtime audit.
+
+**Exact inspected source revisions:** [Chrono Trigger](../dossiers/chrono-trigger.md), G187 / `chrono-trigger`, completed at `0b9c396e43d83db3a617da74663eaad34c20fc5f`, dossier blob `7f21825e3ff761f0d1e907a5de638fcd96a59a3f`; [Clair Obscur: Expedition 33](../dossiers/clair-obscur-expedition-33.md), G77 / `clair-obscur-expedition-33`, completed at `bef8fc5ab852f2026978777a9fbc5884fc2a29c5`, dossier blob `34a3f02a524aec0e4ef627b95ad7929bfb7ed37e`. Both are on `docs/chrono-trigger-expedition-33-research` in `Macrofold/OpenLegend`; the first dossier is branch-only relative to the inspected main baseline. Later citation-separator formatting preserves the assessed factual content. The G77 source retains its September body and adds the November investigation; these are different dated layers, not independent duplicates of the same review.
+
+**Guide publication:** the focused [STORY](quests-narrative-and-consequences.md) and [PACING](pacing-difficulty-and-replay-variety.md) comparisons were published together at `bef8fc5ab852f2026978777a9fbc5884fc2a29c5`. This record does not invent the hash of its own later reconciliation commit.
+
+### STORY--chrono-trigger
+
+**Scope and evidence type:** read the full new dossier, especially the trial, character arcs, optional interventions, ending structure and attributed reception. Contemporary rules, creator accounts, later critical interpretation and constructed research applications remain distinct. The original adventure is the narrative baseline; later editions and sequel-related material keep their boundaries.
+
+**Contribution:** the trial demonstrates recognition along a converging route; Frog’s resolution connects personal meaning with a useful object; Lucca’s optional intervention and Magus’s history distinguish failure, revelation and changed interpretation. These cases support [STORY-L001](quests-narrative-and-consequences.md#story-l001), [L002](quests-narrative-and-consequences.md#story-l002), [L003](quests-narrative-and-consequences.md#story-l003) and [L004](quests-narrative-and-consequences.md#story-l004). They qualify the assumption that meaningful consequence requires a large branch tree. They do not establish autonomous NPC cognition or shared-world consistency.
+
+**Counterevidence and confidence:** authored recognition has limits, and surprise input demands can make a consequential failure feel arbitrary. Confidence is stronger in the documented distinctions than in their transfer to Open Legend. The guide’s flood-crossing situation is explicitly constructed. Reviewed source labels, destination anchors, original owner sections and the actual guide diff.
+
+### PACING--chrono-trigger
+
+**Scope and evidence type:** read the guided-to-optional structure, original/DS content boundaries, recovery/replay rules and the complete criticism/player section. Nintendo Life, RPGFan, RPGamer, Nintendo World Report and GamesRadar provide full independent DS-review bodies; the Steam sample supplies separate PC and preference context. Their selected views do not estimate audience prevalence.
+
+**Contribution:** guided familiarity before wider choice supports [PACING-L001](pacing-difficulty-and-replay-variety.md#pacing-l001). Criticism of repeated Lost Sanctum errands qualifies reuse and supports [L002](pacing-difficulty-and-replay-variety.md#pacing-l002). Disagreement over easy combat and interrupted momentum supports [L003](pacing-difficulty-and-replay-variety.md#pacing-l003); satisfied completion, retained-power replay and ending collection support [L004](pacing-difficulty-and-replay-variety.md#pacing-l004).
+
+**Counterevidence and confidence:** repetition can be wanted familiarity; lower difficulty can preserve one person’s flow and weaken another’s interest. Campaign replay does not determine how a shared persistent world should handle attendance or durable homes. Reviewed that the guide retains these tradeoffs, distinguishes chosen stopping from abandonment, and creates no new implementation acceptance.
+
+### STORY--clair-obscur-expedition-33
+
+**Scope and evidence type:** read the preserved dossier and full new story/presentation and reception sections. ERO sources distinguish events, counterparts, incomplete world knowledge and authorial intent. ERV03 and ERV05 contribute contrasting post-completion interpretations; they are not alternative canon or votes in a representative survey. The separately documented mechanics establish bounded participation, not an unrestricted branching simulation.
+
+**Contribution:** the late change in explanatory frame tests whether earlier care retains meaning. This qualifies [STORY-L003](quests-narrative-and-consequences.md#story-l003) and the distinction among understanding, attachment and approval. The conflicting interests around closure extend [L004](quests-narrative-and-consequences.md#story-l004); the presence of a final choice does not establish route-wide agency, qualifying [L001](quests-narrative-and-consequences.md#story-l001). The source supports the guide’s later-discovery variation of the crossing example.
+
+**Counterevidence and confidence:** a player can understand an ending and reject its values, while another finds the same dilemma compelling. Neither authorial intention nor aggregate praise settles that disagreement. Indexed community lore, inaccessible source routes and the absence of a new playthrough remain explicit. Independent review checked the counterpart/cause distinctions and separated sourced facts from the guide’s constructed application.
+
+### PACING--clair-obscur-expedition-33
+
+**Scope and evidence type:** read mechanics, patches, fourteen combined worked interactions, later criticism and helpful positive/negative Steam accounts. Source ERV05 supplies a valued optional accomplishment and a deliberate stopping boundary; ERV06 supplies continuation despite reported discomfort. Neither is telemetry or a typical completion time. The patch record owns present feature claims; older criticism retains its date.
+
+**Contribution:** optional challenge needs a legible purpose, supporting [PACING-L001](pacing-difficulty-and-replay-variety.md#pacing-l001). Preparation and recovery costs qualify [L002](pacing-difficulty-and-replay-variety.md#pacing-l002). Separating recognition, response, execution and sustained effort deepens [L003](pacing-difficulty-and-replay-variety.md#pacing-l003). Stopping, resuming, intending replay and completing another run remain distinct under [L004](pacing-difficulty-and-replay-variety.md#pacing-l004).
+
+**Counterevidence and confidence:** high hours can coexist with dissatisfaction; comfort cannot be inferred from persistence. A challenge can be worthwhile for one player and a reasonable endpoint for another. The guide proposes an observed outing/return comparison rather than prescribing one ideal session length or difficulty. Independent review checked source-specific claims, date boundaries, lowercase lesson anchors and retained ownership.

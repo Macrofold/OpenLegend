@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Chrono Trigger and Expedition 33 — November 2026 research
+
+[Chrono Trigger — G187](chrono-trigger.md) and [Clair Obscur: Expedition 33 — G77](clair-obscur-expedition-33.md) examine how authored adventures connect distinctive companions, useful growth, changing understanding, presentation and finite resolution. Their mechanics, audience disagreements, production, economics and creation tools remain separate cases. The [scoped record](../research-progress-chrono-trigger-expedition-33-2026-11-06.md) records both full dossiers as complete on November 6–7, 2026. Their cross-game lessons are incorporated in the existing [STORY](../synthesis/quests-narrative-and-consequences.md) and [PACING](../synthesis/pacing-difficulty-and-replay-variety.md) guides, with broader topic coverage still open.
+
 ## Crimson Desert — October 2026 addition
 
 [Crimson Desert — G185](crimson-desert.md) covers the released game and Enhanced, major mechanics and lore, broad reception, development/marketing/commercial evidence and the community modding ecosystem. Start with its question-based reading routes; [Open Legend applications](crimson-desert/05-openlegend-lessons.md) connect research proposals to existing owners. The [scoped record](../research-progress-crimson-desert-2026-10-26.md) preserves completion and evidence limits.
@@ -14,11 +18,11 @@ Each dossier owns its mechanics, worked interactions, source annotations, editio
 
 The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records the separately authorized Sea of Thieves and ATLAS passes and their completion commits. The earlier ARK research retains its own edition boundaries and audit history.
 
-| Dossier | Useful starting question |
-| --- | --- |
-| [Sea of Thieves — G179](sea-of-thieves.md) | How do a shared ship, carried treasure, partial information and temporary expedition risk create cooperation, stories and reasons to return? How do protected play and native Custom Seas change that bargain? |
-| [ARK: Survival Evolved — G133](ark-survival-evolved.md) | How do creature roles, taming, breeding, construction and persistent possessions turn preparation into a larger survival project? |
-| [ATLAS — G180](atlas.md) | How do built vessels, material variety, NPC crew, territorial ownership and upkeep make a voyage part of a persistent organization? What do external creators and private hosts inherit? |
+| Dossier                                                 | Useful starting question                                                                                                                                                                                       |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Sea of Thieves — G179](sea-of-thieves.md)              | How do a shared ship, carried treasure, partial information and temporary expedition risk create cooperation, stories and reasons to return? How do protected play and native Custom Seas change that bargain? |
+| [ARK: Survival Evolved — G133](ark-survival-evolved.md) | How do creature roles, taming, breeding, construction and persistent possessions turn preparation into a larger survival project?                                                                              |
+| [ATLAS — G180](atlas.md)                                | How do built vessels, material variety, NPC crew, territorial ownership and upkeep make a voyage part of a persistent organization? What do external creators and private hosts inherit?                       |
 
 ## Dungeons & Dragons expansion — 2026-09-27
 
@@ -33,28 +37,28 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 
 ## Read in roster order
 
-| ID  | Dossier                                                                              | Useful starting question                                                                                              |
-| --- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| G61 | [Fire Emblem: Path of Radiance](fire-emblem-path-of-radiance.md)                     | How do base conversations, supports, bonus experience, skills and laguz interact with tactical commitments?           |
-| G62 | [Fire Emblem Awakening](fire-emblem-awakening.md)                                    | How do Pair Up, relationships, children and class changes connect attachment to party construction?                   |
-| G63 | [Fire Emblem Fates](fire-emblem-fates.md)                                            | How do route structure, revised pair systems, My Castle and map objectives change the same tactical vocabulary?       |
-| G64 | [Fire Emblem: Three Houses](fire-emblem-three-houses.md)                             | How do a calendar, tutoring, battalions and branching routes make preparation part of the campaign?                   |
-| G65 | [Fire Emblem Heroes](fire-emblem-heroes.md)                                          | How do inheritance, merges, summoning and live-service modes differ from a self-contained tactical campaign?          |
-| G66 | [Disco Elysium](disco-elysium.md)                                                    | How can internal voices, checks, thoughts and time turn conversation into consequential play?                         |
-| G67 | [Grand Theft Auto V](grand-theft-auto-v.md)                                          | Which activities and economies belong to the three-protagonist story, and which belong to GTA Online?                 |
-| G68 | [Cyberpunk 2077](cyberpunk-2077.md)                                                  | How do builds, cyberware, quests and relationships differ between launch and the post-2.0/Phantom Liberty game?       |
-| G69 | [Red Dead Redemption](red-dead-redemption.md)                                        | How do honor, Dead Eye, travel and encounters support an authored frontier journey?                                   |
-| G70 | [Red Dead Redemption 2](red-dead-redemption-2.md)                                    | How do camp, bodily needs, horse bonds, hunting and social reactions create continuity between missions?              |
-| G71 | [The Elder Scrolls V: Skyrim](the-elder-scrolls-v-skyrim.md)                         | How do skills, crafting, factions, followers and crime support a self-directed character?                             |
-| G72 | [The Witcher 3: Wild Hunt](the-witcher-3-wild-hunt.md)                               | How do investigation, contracts, preparation, relationships and choices reinforce a defined protagonist?              |
-| G73 | [The Legend of Zelda: Breath of the Wild](the-legend-of-zelda-breath-of-the-wild.md) | How do weather, surfaces, movement, durability, cooking and runes combine into alternative solutions?                 |
-| G74 | [Fallout 4](fallout-4.md)                                                            | How do crafting, settlements, companions, factions and Survival change the value of ordinary objects?                 |
-| G75 | [Elden Ring](elden-ring.md)                                                          | How do combat, exploration, lore, loot and social systems reinforce one another—and where do players resist them? See the [deep chapters](elden-ring.md#read-by-question).                   |
-| G76 | [Black Myth: Wukong](black-myth-wukong.md)                                           | How do stances, spells, Spirits, transformations and healing configurations create distinct combat choices?           |
-| G77 | [Clair Obscur: Expedition 33](clair-obscur-expedition-33.md)                         | How do character-specific resources, Pictos/Lumina and timed defense reinforce—or compete with—turn-based planning?   |
-| G78 | [Final Fantasy I](final-fantasy.md)                                                  | How do initial class commitments, spell budgets, equipment and world-access chains produce expedition decisions?      |
-| G79 | [Final Fantasy II](final-fantasy-ii.md)                                              | How do use-based growth, equipment compatibility, learned keywords and temporary companions change character freedom? |
-| G80 | [Final Fantasy III](final-fantasy-iii.md)                                            | How do job switching, proficiency, situational commands and complementary vehicles turn preparation into progression? |
+| ID  | Dossier                                                                              | Useful starting question                                                                                                                                                   |
+| --- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G61 | [Fire Emblem: Path of Radiance](fire-emblem-path-of-radiance.md)                     | How do base conversations, supports, bonus experience, skills and laguz interact with tactical commitments?                                                                |
+| G62 | [Fire Emblem Awakening](fire-emblem-awakening.md)                                    | How do Pair Up, relationships, children and class changes connect attachment to party construction?                                                                        |
+| G63 | [Fire Emblem Fates](fire-emblem-fates.md)                                            | How do route structure, revised pair systems, My Castle and map objectives change the same tactical vocabulary?                                                            |
+| G64 | [Fire Emblem: Three Houses](fire-emblem-three-houses.md)                             | How do a calendar, tutoring, battalions and branching routes make preparation part of the campaign?                                                                        |
+| G65 | [Fire Emblem Heroes](fire-emblem-heroes.md)                                          | How do inheritance, merges, summoning and live-service modes differ from a self-contained tactical campaign?                                                               |
+| G66 | [Disco Elysium](disco-elysium.md)                                                    | How can internal voices, checks, thoughts and time turn conversation into consequential play?                                                                              |
+| G67 | [Grand Theft Auto V](grand-theft-auto-v.md)                                          | Which activities and economies belong to the three-protagonist story, and which belong to GTA Online?                                                                      |
+| G68 | [Cyberpunk 2077](cyberpunk-2077.md)                                                  | How do builds, cyberware, quests and relationships differ between launch and the post-2.0/Phantom Liberty game?                                                            |
+| G69 | [Red Dead Redemption](red-dead-redemption.md)                                        | How do honor, Dead Eye, travel and encounters support an authored frontier journey?                                                                                        |
+| G70 | [Red Dead Redemption 2](red-dead-redemption-2.md)                                    | How do camp, bodily needs, horse bonds, hunting and social reactions create continuity between missions?                                                                   |
+| G71 | [The Elder Scrolls V: Skyrim](the-elder-scrolls-v-skyrim.md)                         | How do skills, crafting, factions, followers and crime support a self-directed character?                                                                                  |
+| G72 | [The Witcher 3: Wild Hunt](the-witcher-3-wild-hunt.md)                               | How do investigation, contracts, preparation, relationships and choices reinforce a defined protagonist?                                                                   |
+| G73 | [The Legend of Zelda: Breath of the Wild](the-legend-of-zelda-breath-of-the-wild.md) | How do weather, surfaces, movement, durability, cooking and runes combine into alternative solutions?                                                                      |
+| G74 | [Fallout 4](fallout-4.md)                                                            | How do crafting, settlements, companions, factions and Survival change the value of ordinary objects?                                                                      |
+| G75 | [Elden Ring](elden-ring.md)                                                          | How do combat, exploration, lore, loot and social systems reinforce one another—and where do players resist them? See the [deep chapters](elden-ring.md#read-by-question). |
+| G76 | [Black Myth: Wukong](black-myth-wukong.md)                                           | How do stances, spells, Spirits, transformations and healing configurations create distinct combat choices?                                                                |
+| G77 | [Clair Obscur: Expedition 33](clair-obscur-expedition-33.md)                         | How do character-specific resources, Pictos/Lumina and timed defense reinforce—or compete with—turn-based planning?                                                        |
+| G78 | [Final Fantasy I](final-fantasy.md)                                                  | How do initial class commitments, spell budgets, equipment and world-access chains produce expedition decisions?                                                           |
+| G79 | [Final Fantasy II](final-fantasy-ii.md)                                              | How do use-based growth, equipment compatibility, learned keywords and temporary companions change character freedom?                                                      |
+| G80 | [Final Fantasy III](final-fantasy-iii.md)                                            | How do job switching, proficiency, situational commands and complementary vehicles turn preparation into progression?                                                      |
 
 ## Short comparison routes
 
