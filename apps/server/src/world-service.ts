@@ -1463,7 +1463,8 @@ export class WorldService {
   }
   /** Persist an operational change, then publish its hold and notice at one writer boundary.
    * Entering or leaving the hold drops pending simulation debt (no catch-up) and rotates the
-   * world generation, so no job or result admitted before a boundary applies after it. */
+   * world generation so unfinished work cannot apply after the boundary. Accepted command
+   * outcomes remain recoverable, including receipts still awaiting their scheduled save. */
   async changeMaintenance(
     held: boolean,
     notice: MaintenanceWindowView | null,
@@ -1476,7 +1477,6 @@ export class WorldService {
       if (this.maintenanceHeld !== held) {
         this.maintenanceHeld = held;
         this.generation = randomUUID();
-        this.recentCommandResults.clear();
         this.scheduleRetention();
       }
       await this.syncPause();
