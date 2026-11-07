@@ -16,4 +16,6 @@
 
 **Remaining:** substantive chapter writing; primary-source and edition checks; five-review minimum and Steam sampling; commercial model boundaries; R15 applicability and research; Open Legend owner crosswalk; source/requirements map; complete affected-diff review and link checks; final commit.
 
+A substantive [Open Legend applications chapter](dossiers/outward/04-openlegend-lessons.md) now maps candidate lessons to existing owners and preserves the selected recovery, shared-world and engine/world boundaries; source integration and final review remain open.
+
 **Next boundary:** commit substantive research chapters and their evidence before certifying completion. All results must distinguish sourced rules, attributed testimony, researcher interpretation and untested Open Legend proposals.

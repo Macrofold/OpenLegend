@@ -17,3 +17,7 @@ The research will test two linked hypotheses: that connected preparations make a
 The full pass will cover R01–R14 and screen R15: complete mechanics and named interactions; progression, economy, failure and replay; story and lore; people and cooperative state; art/audio/interface; production and marketing; commercial evidence and modeled limits; at least five substantive reviews plus contrasting Steam/player testimony; sustained modding if supported; and applications through existing Open Legend design owners.
 
 Detailed research and source review are underway. No completion is claimed at this checkpoint.
+
+## Applications under review
+
+The [Open Legend applications](outward/04-openlegend-lessons.md) connect expedition payoff, knowledge, recovery, cooperation and continuing play to existing owners. They remain research hypotheses while the supporting source chapters and complete evidence review are finished.
