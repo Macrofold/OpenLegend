@@ -1,5 +1,7 @@
 # Native and full-server profiling
 
+For complete hierarchical accounting, start with the [profiling procedure](../performance/hierarchical-profiling.md) and select from the [simulation inventory](../performance/simulation-inventory.md). [PC07–PC10](profiling-controls.md#hierarchical-server-measurements) track the missing recorder/fixture integration and campaign. Commands below remain the installed tools; they do not yet execute the new full matrix or provide every per-unit whole-run percentile.
+
 The native-only profiler runs disposable deterministic scenarios without a database or provider. The full-server profiler below explicitly selects a disposable database. Neither changes a live save, enables gameplay mechanics or permits paid dispatch. These are performance experiments, not automated correctness tests. [Performance tracker](performance.md) owns remaining work; [Verification](../verification.md) owns measured evidence.
 
 Before running a profile, select the [standard worker](../../.agents/rules/verification-workers.md#standard-speed-test-worker) under [Verification](../../.agents/rules/verification.md#choose-the-execution-location), including Mike's explicit exception rule. Run the commands below in that instance's source workspace; loopback URLs and `/tmp` paths refer to the instance. [VW01–VW04](verification-workers.md) track the designed reusable pool and setup-timing workflow, separately from these existing profilers and game-performance acceptance.

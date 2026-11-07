@@ -8,6 +8,8 @@ Canonical record commits, independent read/write lanes and SQL-first memory retr
 
 ## Optional measurement
 
+For a thorough campaign, use [hierarchical profiling](hierarchical-profiling.md): direct parent/child timings, per-unit distributions, three repetitions, overhead qualification, hardware comparisons and local artifacts. The maintained [simulation inventory](simulation-inventory.md) maps current server/world components and positive workloads; select its IDs or supply another explicit inventory. Its new tooling is a target tracked by PC07–PC10, not a capability supplied by existing timing rings or CPU samples.
+
 The complete-server harness, `scripts/profile-server.ts`, keeps its historical crowded comparison by default. Set `OPENLEGEND_PROFILE_STANDARD=1` to measure the authored opening without diagnostic additions; the report identifies that fixture explicitly. It cannot be combined with the expanded fixture. Compare like workloads and retain both ordinary-play and capacity results.
 
 A disabled recorder must skip its preparation: optional clock reads, argument scans, peak statistics, arrays, timers and listeners. Keep the actual byte limits, deadlines and other facts needed for gameplay or safe resource use. Optional observation must preserve the operation’s execution and result; decoding a request for a report must not prevent the original request from reaching its authoritative validator.

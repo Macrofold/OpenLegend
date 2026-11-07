@@ -1,8 +1,8 @@
 # Optional performance profiling — feature specification
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Code and focused checks are complete; the two full-game observations had unequal activity and cannot qualify overhead. | 2026-10-18   |
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Default-off controls are installed; hierarchical server profiling is designed, with tooling and measurements open. | 2026-11-07   |
 
 **Specification reviewed and synchronized — October 18, 2026, 00:02 EDT.** The selected feature behavior is unchanged. Current implementation departures and the remaining verification limits are recorded in the linked tracker and technical design.
 
@@ -74,9 +74,19 @@ Acceptance requires both behavior preservation and evidence that disabled collec
 
 The default-off choice trades continuous performance history for lower routine work. A slowdown that happened before collection was enabled cannot be reconstructed from missing timings. Operational failures remain recorded. Server restart is the selected way to change its mode; live server toggling is outside this project, not an unfinished requirement.
 
+## Hierarchical server campaigns
+
+**Design agreed November 7, 2026.** A developer can select the whole [simulation inventory](../performance/simulation-inventory.md), a subset of its stable IDs, or an unrelated explicitly defined inventory and obtain direct measurements of parent operations and their children. Results describe what one actor/request/query does and the actual aggregate workload, with mean, median, p95 and p99, sample counts and limitations. Three complete repetitions preserve individual results, average run statistics and separately pooled distributions.
+
+Parents and detailed children can run in separate passes to limit observer overhead. Shared preparation, CPU, waits, allocations, writes and retained storage remain distinct. Missing, skipped, censored or unexercised operations never appear as zero-cost measurements. Expensive source work without a named measurement is a visible coverage gap. Defaults and privacy/knowledge semantics remain unchanged; fixtures exercise real native effects and server callers.
+
+The [reusable procedure](../performance/hierarchical-profiling.md) owns implementation and execution details; the inventory owns current component boundaries, scenarios and the first campaign selection. That campaign pins source `2a17fa7c42f777c5eefd3fba67c652ef2c5f54ec`, covers server/world simulation without rendering or external AI/embedding calls, compares the standard machine with larger and higher-frequency machines, and has Mike's task-specific $100 ceiling. Local reports and raw artifacts use an explicit private campaign directory whose actual path is required in the handoff. Cloud authorization is not permission to launch during this design task.
+
+Acceptance requires source/workload identity, positive coverage for each selected component, three qualified runs per selected configuration, explicit overhead/rare-tail uncertainty, correctly separated timings, complete local artifacts and owned cleanup. Performance results are required measurements, not an invented capacity pass. The capability is not installed yet; [PC07–PC10](../maintainers/profiling-controls.md#hierarchical-server-measurements) own implementation and execution. No new telemetry service, production database, UI or game feature is proposed.
+
 ## Maintained records
 
-- Implementation and acceptance: [PC01–PC06](../maintainers/profiling-controls.md), a focused part of [PF06](../maintainers/performance.md#pf06--optional-diagnostics-and-bounded-buffers).
+- Implementation and acceptance: [PC01–PC10](../maintainers/profiling-controls.md), a focused part of [PF06](../maintainers/performance.md#pf06--optional-diagnostics-and-bounded-buffers).
 - Mechanism and implementation order: [technical design](profiling-controls-tech-design.md).
-- Existing and proposed constraints: [LA209](../limits/observability.md#la209), [LA210](../limits/observability.md#la210), [OB01](../limits/observability.md#ob01--explicit-browser-performance-capture), [OB02](../limits/observability.md#ob02--optional-profiling-controls).
+- Existing and proposed constraints: [LA209](../limits/observability.md#la209), [LA210](../limits/observability.md#la210), [OB01](../limits/observability.md#ob01--explicit-browser-performance-capture), [OB02](../limits/observability.md#ob02--optional-profiling-controls), [OB03](../limits/observability.md#ob03--hierarchical-campaign-measurement).
 - Current usage and reproduction: [profiling guide](../maintainers/performance-profiling.md). It documents the implemented switches and commands.

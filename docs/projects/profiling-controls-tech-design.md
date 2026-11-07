@@ -1,8 +1,8 @@
 # Optional performance profiling — technical design
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Code and focused checks are complete; the two full-game observations had unequal activity and cannot qualify overhead. | 2026-10-18   |
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Default-off controls are installed; hierarchical server profiling is designed, with tooling and measurements open. | 2026-11-07   |
 
 **Technical design used for review — October 18, 2026, 00:02 EDT.** Architecture and its dated implementation reconciliations remain the design reference; the current review preserves their authority and world boundaries.
 
@@ -127,9 +127,17 @@ The guide files own concrete edits and scenario definitions. [PC01–PC06](../ma
 
 There are no unresolved product choices blocking this proposal. Expected speedup, disabled-wrapper cost and enabled collection overhead remain empirical questions, with the required comparison defined in the verification guide. This design does not promise 3× qualification or change the main performance project's remaining acceptance.
 
+## Hierarchical server campaigns
+
+The [hierarchical profiling procedure](../performance/hierarchical-profiling.md) is the technical owner for PC07–PC10. It extends this capture owner with startup-selected scopes, whole-window histograms and bounded numeric operation tokens; preserves default-off behavior and capture lifetimes; and reuses current server, scenario, PostgreSQL and managed-worker tools. The [simulation inventory](../performance/simulation-inventory.md) owns the source-bound hierarchy and first campaign, not the collector. Neither document reports new runtime delivery or measurements.
+
+The existing 64-category/256-value snapshot is still a recent diagnostic view. Campaign-only aggregates must not relabel it as a whole-run distribution. Direct parent, child, CPU, SQL and allocation passes remain independent. Generator resumes, shared ray batches, database queues and asynchronous completions require the explicit units and overlap handling in the procedure. New measurement clocks stay in host tooling; domain callbacks cannot affect native choices or state. No persistence schema, world rule, external provider or rendering change is needed.
+
+The maintained worker currently pins one instance type. Selected larger/higher-frequency comparisons require its machine selection, pricing and supervisor-limit extension before dispatch; creating another worker system is outside this design. Required deterministic correctness, disabled equivalence, instrument overhead, complete coverage and the finite three-repetition AWS matrix are tracked in [PC07–PC10](../maintainers/profiling-controls.md#hierarchical-server-measurements). Technical design source use: November 7, 2026; pinned runtime and runner revisions are recorded once in the inventory.
+
 ## Maintained records
 
 - Behavior: [feature specification](profiling-controls-feature-spec.md).
-- Implementation: [PC01–PC06](../maintainers/profiling-controls.md).
-- Constraints: [OB02](../limits/observability.md#ob02--optional-profiling-controls), alongside existing [LA209](../limits/observability.md#la209), [LA210](../limits/observability.md#la210) and [OB01](../limits/observability.md#ob01--explicit-browser-performance-capture).
+- Implementation: [PC01–PC10](../maintainers/profiling-controls.md).
+- Constraints: [OB02](../limits/observability.md#ob02--optional-profiling-controls), [OB03](../limits/observability.md#ob03--hierarchical-campaign-measurement), alongside existing [LA209](../limits/observability.md#la209), [LA210](../limits/observability.md#la210) and [OB01](../limits/observability.md#ob01--explicit-browser-performance-capture).
 - Existing runtime contracts: [performance](../performance.md), [architecture](../architecture.md#performance-critical-path), [engine/world boundaries](../engine-and-world-boundaries.md#design-principles-for-every-feature).
