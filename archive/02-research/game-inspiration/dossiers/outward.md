@@ -1,6 +1,6 @@
 # Outward — full-game research dossier
 
-**Subject:** G187. **Evidence date:** November 7, 2026. **Status:** Final research integration in progress; the [scoped record](../research-progress-outward-2026-11-07.md) owns completion.
+**Subject:** G187. **Evidence date:** November 7, 2026. **Status:** Complete full-dossier pass against R01–R14 and applicable R15; the [scoped record](../research-progress-outward-2026-11-07.md) records evidence, review and remaining limits.
 
 **Central assessment:** Outward makes an expedition feel consequential by connecting preparation, carrying capacity, geography, vulnerability, acquired knowledge and lasting choices. That connection can make an ordinary meal, a better backpack or getting home feel like an achievement. It also creates substantial opportunities for repetitive travel, opaque commitments, cumbersome recovery and technical faults to destroy the payoff. The useful reference is the entire experience and its disagreements, not a list of demanding mechanics to copy.
 
@@ -120,7 +120,7 @@ These do not add an expedition framework, mandatory skill trees, extra survival 
 
 ## Coverage and limits
 
-The final scoped record will certify the following requirement map after integration and review.
+The [completed scoped record](../research-progress-outward-2026-11-07.md) maps each requirement to substantive sections and records the verification. The core dossier contains eight independent review accounts, five complete Steam reviews plus one indexed excerpt, sixteen constructed interaction examples, and a full modding study.
 
 | Requirement                                                            | Coverage owner                                         |
 | ---------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -134,7 +134,7 @@ The final scoped record will certify the following requirement map after integra
 | R08 — lore, institutions, history and consequences                     | Systems                                                |
 | R09 — origins, team, iteration, tooling and production                 | Production                                             |
 | R10 — positioning, distribution, campaigns and community               | Production                                             |
-| R11 — commercial evidence, economic scenarios and unknowns             | Production                                             |
+| R11 — reported commercial results, estimates and unknowns              | Production                                             |
 | R12 — independent reviews, Steam/player testimony and engagement       | Reception                                              |
 | R13 — Open Legend hypotheses, counterarguments and existing owners     | Applications                                           |
 | R14 — sources, scope, navigation and evidence limits                   | Each chapter's sources; this map; scoped record        |
