@@ -26,6 +26,7 @@ import {
 import { historyEventRow, historyPerspectiveRow } from './history-append.js';
 import { receivedCurrentOwnerTables } from './received-record-references.js';
 import { receivedRowOwner } from './received-value-ownership.js';
+import { sqlRecordBatchesWithCount } from './sql-rows.js';
 import { LexicalPreparationError } from './lexical-projection.js';
 import {
   MEMORY_SOURCE_ELIGIBILITY,
@@ -80,7 +81,11 @@ interface PendingTable {
   keys: readonly string[];
   rows: Map<string, Record<string, unknown>>;
   removed: Map<string, Record<string, unknown>>;
-  removedScopes: Record<string, unknown>[];
+  removedScopes: RemovalScope[];
+}
+interface RemovalScope {
+  columns: readonly string[];
+  values: Record<string, unknown>;
 }
 const rowKey = (keys: readonly string[], row: Record<string, unknown>) =>
   JSON.stringify(keys.map((key) => row[key]));
@@ -135,6 +140,51 @@ const keyColumns: Record<string, readonly string[]> = {
   history_perspectives: ['world_id', 'event_id', 'actor_id'],
   mind_source_versions: ['world_id', 'actor_id', 'source_kind', 'source_id', 'revision'],
 };
+const scopeColumns: Record<string, readonly (readonly string[])[]> = {
+  mind_source_dependencies: [['world_id', 'actor_id', 'derived_kind', 'derived_id']],
+  recall_place_capsules: [
+    ['world_id', 'actor_id', 'owner_kind', 'owner_id'],
+    ['world_id', 'support_record_id'],
+  ],
+  mind_impression_spans: [['world_id', 'actor_id', 'owner_kind', 'owner_id']],
+  history_perspectives: [['world_id', 'event_id']],
+  received_value_uses: [['world_id', 'owner_kind', 'owner_id']],
+};
+function removalColumns(name: string, scope: Record<string, unknown>): readonly string[] {
+  const size = Object.keys(scope).length;
+  const columns = scopeColumns[name]?.find(
+    (keys) => keys.length === size && keys.every((key) => typeof scope[key] === 'string'),
+  );
+  if (!columns) throw new Error('Unsupported live-read removal scope.');
+  return columns;
+}
+/** Decode each exact scope shape once, rather than interpreting its fields for
+ * every durable row. All chunks belong to this one consumer query: splitting
+ * the read would expose rows removed by a different chunk.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#e4--compile-pending-scope-removals-once */
+function compileScopeRemovals(name: string, scopes: readonly RemovalScope[]) {
+  const groups = new Map<readonly string[], Map<string, Record<string, unknown>>>();
+  for (const { columns, values } of scopes) {
+    let rows = groups.get(columns);
+    if (!rows) groups.set(columns, (rows = new Map()));
+    rows.set(rowKey(columns, values), values);
+  }
+  const ctes: string[] = [], params: unknown[] = [], predicates: string[] = [];
+  for (const [columns, rows] of groups) {
+    const relation = `__live_${name}_scope_${ctes.length}`;
+    const chunks: string[] = [];
+    for (const batch of sqlRecordBatchesWithCount(
+      columns,
+      [...rows.values()].map((row) => columns.map((column) => row[column])),
+    )) {
+      params.push(batch.payload);
+      chunks.push(`SELECT * FROM jsonb_to_recordset(?::jsonb) removed(${columns.map((column) => `${column} TEXT`).join(',')})`);
+    }
+    ctes.push(`${relation} AS MATERIALIZED (${chunks.join(' UNION ALL ')})`);
+    predicates.push(` AND NOT EXISTS (SELECT 1 FROM ${relation} removed WHERE ${columns.map((column) => `base.${column}=removed.${column}`).join(' AND ')})`);
+  }
+  return { ctes, params, exclusion: predicates.join('') };
+}
 const referenceMatchers = new Map<string, RegExp>();
 const references = (sql: string, table: string) => {
   let pattern = referenceMatchers.get(table);
@@ -246,10 +296,11 @@ export class LiveReadOverlay {
   private removeScope(name: string, scope: Record<string, unknown>): void {
     if (this.actor && scope['actor_id'] !== undefined && scope['actor_id'] !== this.actor.actorId)
       return;
+    const columns = removalColumns(name, scope);
     const table = this.table(name);
-    table.removedScopes.push(scope);
+    table.removedScopes.push({ columns, values: scope });
     for (const [key, row] of table.rows)
-      if (Object.entries(scope).every(([field, value]) => row[field] === value))
+      if (columns.every((field) => row[field] === scope[field]))
         table.rows.delete(key);
   }
   private canonicalChanges(cut: LiveReadCut, table: string): RecordChanges {
@@ -667,17 +718,17 @@ export class LiveReadOverlay {
         ctes.push(`${input} AS MATERIALIZED (SELECT body FROM jsonb_array_elements(?::jsonb) incoming(body)),
           ${removedRows} AS MATERIALIZED (SELECT body FROM jsonb_array_elements(?::jsonb) incoming(body))`);
         let exclusion = '';
+        if (data.removedScopes.length) {
+          const scopes = compileScopeRemovals(name, data.removedScopes);
+          ctes.push(...scopes.ctes);
+          values.push(...scopes.params);
+          exclusion += scopes.exclusion;
+        }
         if (ancestors.length) {
           values.push(this.cut.worldId, ancestors);
           const id = name === 'recall_sources' ? 'record_id' : 'id';
           exclusion += ` AND NOT (base.world_id=? AND EXISTS (SELECT 1 FROM unnest(?::text[]) removed(id)
             WHERE base.${id}=removed.id OR starts_with(base.${id},left(removed.id,length(removed.id)-1)||',')))`;
-        }
-        if (data.removedScopes.length) {
-          values.push(JSON.stringify(data.removedScopes));
-          exclusion += ` AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements(?::jsonb) removed(body)
-            WHERE NOT EXISTS (SELECT 1 FROM jsonb_each_text(removed.body) field
-              WHERE to_jsonb(base)->>field.key IS DISTINCT FROM field.value))`;
         }
         let additional = '';
         ctes.push(`${raw} AS NOT MATERIALIZED (
