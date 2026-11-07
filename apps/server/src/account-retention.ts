@@ -284,11 +284,7 @@ export async function prepareAccountRetention(
             let replacement: MemoryRecord | undefined;
             if (canRecall && entry.source === 'memory' && entry.value.impression)
               replacement = weakenImpression(entry.value, now);
-            else if (
-              canRecall &&
-              entry.value.retention?.afterRelease === 'impression' &&
-              entry.value.retention.receipt
-            ) {
+            else if (canRecall && entry.value.retention?.receipt) {
               const locator = entry.value.retention.receipt;
               const record =
                 entry.source === 'awareness'
