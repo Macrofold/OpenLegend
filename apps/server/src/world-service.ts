@@ -1815,6 +1815,7 @@ export class WorldService {
       );
       this.persistedRevision = revision;
       allocation.commit();
+      if (receipt) this.installCommandReceipt(receipt, true);
       this.updateHistoryRevision(
         historyBefore?.events ?? this.persistedEvents,
         historyWorld.events,
@@ -1960,6 +1961,26 @@ export class WorldService {
   // A cold receipt miss may precede concurrent acceptance. Keep its eventual
   // accepted result resident until every preparing duplicate reaches admission.
   private readonly commandReceiptReaders = new Map<string, number>();
+
+  /** Both acceptance paths publish the same retry result before releasing their
+   * mutation turn. Pending outcomes stay charged to the existing save buffer. */
+  private installCommandReceipt(receipt: GameplayReceipt, durable = false): void {
+    this.recentCommandResults.set(receipt.id, receipt);
+    if (durable) this.pruneCommandReceipts();
+  }
+
+  private pruneCommandReceipts(): void {
+    if (this.recentCommandResults.size <= 1024) return;
+    for (const id of this.recentCommandResults.keys()) {
+      if (this.recentCommandResults.size <= 1024) break;
+      if (
+        !this.pendingSave?.receipts.has(id) &&
+        !this.inFlightSave?.receipts.has(id) &&
+        !this.commandReceiptReaders.has(id)
+      )
+        this.recentCommandResults.delete(id);
+    }
+  }
 
   private liveReadCacheKey?: unknown[];
   private readonly liveReadCache = new Map<string, import('./live-read-overlay.js').LiveReadCuts>();
@@ -2313,19 +2334,15 @@ export class WorldService {
           }
         }).catch((error) => this.failProgressSave(error));
 
-        // Keep a bounded hot retry window across the save completion race. Pending
-        // outcomes are additionally charged to the finite save buffer.
-        for (const id of this.recentCommandResults.keys()) {
-          if (this.recentCommandResults.size <= 1024) break;
-          if (!this.pendingSave?.receipts.has(id) && !this.commandReceiptReaders.has(id))
-            this.recentCommandResults.delete(id);
-        }
       } catch (error) {
         this.failProgressSave(error, false);
       } finally {
         this.backgroundSave = undefined;
         // On failure retain accepted work in RAM; no native replay or silent rollback.
-        if (!this.storageError) this.inFlightSave = undefined;
+        if (!this.storageError) {
+          this.inFlightSave = undefined;
+          this.pruneCommandReceipts();
+        }
         this.notify(false);
         if (!this.storageError) this.scheduleSave();
       }
@@ -2440,7 +2457,7 @@ export class WorldService {
       this.store.history?.accepted(changes);
       this.snapshotSequence = sequence;
       countMetric('persistence.acceptedPublications');
-      if (receipt) this.recentCommandResults.set(receipt.id, receipt);
+      if (receipt) this.installCommandReceipt(receipt);
       this.updateHistoryRevision(
         this.saved.world.events,
         prepared.historyWorld.events,
@@ -7040,7 +7057,17 @@ export class WorldService {
     } finally {
       const remaining = (this.commandReceiptReaders.get(id) ?? 1) - 1;
       if (remaining) this.commandReceiptReaders.set(id, remaining);
-      else this.commandReceiptReaders.delete(id);
+      else {
+        this.commandReceiptReaders.delete(id);
+        // Pending-only growth cannot be pruned. Only a newly unpinned durable
+        // cached result makes this release a useful pruning opportunity.
+        if (
+          this.recentCommandResults.has(id) &&
+          !this.pendingSave?.receipts.has(id) &&
+          !this.inFlightSave?.receipts.has(id)
+        )
+          this.pruneCommandReceipts();
+      }
     }
   }
 
