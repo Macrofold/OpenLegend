@@ -270,17 +270,16 @@ The safest long-tail conclusion is qualitative: extensions provide additional wa
 
 ### 7.11 Open Legend transfer hypotheses and boundaries
 
-The strongest candidate lessons are operational rather than feature copying:
+The positive opportunity is expressive variation: the documented alternate openings, rule overhauls and region tools let creators pursue different experiences with shared foundations. For Open Legend, the useful comparison is whether a creator can make one meaningful change, understand its consequences and reach ordinary play that honors it. The building-template repair illustrates why retaining a declared value is insufficient when the running game ignores it. The [existing world-creation and invention-reuse journeys](../../../../../docs/projects/world-creation-feature-spec.md#151-the-first-complete-round-trip) own the corresponding design; the [applications map](04-openlegend-lessons.md#10-use-existing-owners-and-observations) identifies its current task routes.
 
-- **Version the extension contract.** Creators need a dependable way to know which game and framework releases their content targets.
-- **Make dependency failures legible.** Missing or incompatible content should produce useful diagnostics rather than unexplained behavior where feasible.
-- **Design save ownership and removal early.** Persistent references to optional content are harder to recover from than a purely visual change.
-- **Separate bounded content authoring from unrestricted runtime code.** Different extension surfaces can offer different capabilities and trust requirements.
-- **Support small complete examples.** An example that covers entry, interaction, persistence and exit teaches more than an impressive scene with undefined recovery.
-- **Treat co-op as a compatibility dimension.** Declare and test installation and state requirements instead of assuming solo success transfers.
-- **Measure adoption appropriately.** Unique active use, successful installations and retained creators answer different questions from raw downloads.
+These examples also raise four practical questions within those owners:
 
-These are proposed evaluation criteria. No recommendation is made to adopt BepInEx, SideLoader, Unity or Construction Kit as Open Legend's technical stack. The current project architecture, intended creator audience and acceptable support burden would determine whether any corresponding feature belongs in the product. [Open Legend's root policies](../../../../../AGENTS.md) retain authority over compatibility, engine/world separation and generated-content boundaries.
+- **Supported contribution and dependencies:** can the creator understand what the chosen world can run, including a useful explanation of missing or incompatible content? Current-format definitions and admission retain their existing authority. Published-version continuity and removal promises belong to the selected sharing product; this research introduces no legacy support during development.
+- **Authoring capability and trust:** bounded content authoring and unrestricted runtime code offer different powers and risks. A general mod loader is not a prerequisite for useful authored variation.
+- **Complete use:** can a small example cover entry, interaction, persistence and exit? Multiplayer installation and state requirements need their own evidence; solo success does not establish them.
+- **Actual adoption:** successful installation, useful play and retained creators answer different questions from raw downloads. These are interpretation distinctions, not a new instrumentation requirement.
+
+These are research hypotheses, not a stack recommendation or additional delivery gate. Existing architecture, creator audience and support burden determine product scope. [Open Legend's root policies](../../../../../AGENTS.md) retain authority over compatibility, engine/world separation and generated-content boundaries.
 
 ### 7.12 Explicit unverified areas
 

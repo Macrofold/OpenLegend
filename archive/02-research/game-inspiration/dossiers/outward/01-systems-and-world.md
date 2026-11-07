@@ -4,7 +4,7 @@ Evidence date: 7 November 2026. Part of the [Outward dossier](../outward.md). **
 
 ## 1. Evidence and edition discipline
 
-The strongest sources here are the developer/publisher storefronts and release notices, developer interviews, and reproduced game dialogue. Most detailed rule documentation comes from the community-maintained Outward Wiki. Its wiki.gg pages were frequently blocked on direct opening; substantial indexed bodies were retrieved and inspected instead. A wiki's current crawl date is not a patch date. This chapter therefore distinguish a documented current wiki rule from a verified official change. Directly blocked pages are not presented as personally played or independently tested facts. Video metadata and embedded trailers were identified in the research, but their audiovisual contents were not watched and are not treated as evidence.
+The strongest sources here are the developer/publisher storefronts and release notices, developer interviews, and reproduced game dialogue. Most detailed rule documentation comes from the community-maintained Outward Wiki. Its wiki.gg pages were frequently blocked on direct opening; substantial indexed bodies were retrieved and inspected instead. A wiki's current crawl date is not a patch date. This chapter therefore distinguishes a documented current wiki rule from a verified official change. Directly blocked pages are not presented as personally played or independently tested facts. Video metadata and embedded trailers were identified in the research, but their audiovisual contents were not watched and are not treated as evidence.
 
 ### Edition and platform matrix
 
@@ -55,7 +55,7 @@ Teachers are geographically distributed, so learning creates travel goals. The b
 
 Silver is connected to ordinary survival and longer-term specialization. The exact best money route is version-sensitive and is not asserted here. Training competes with equipment, consumables and larger projects; later New Sirocco construction converts money into non-withdrawable civic funds. This creates several scales of purchase: immediate recovery, next-expedition efficiency, build identity, and settlement capability. [Skills](https://outward.wiki.gg/wiki/Skills); [Building](https://outward.wiki.gg/wiki/Building).
 
-An economic analysis should distinguish **earning by useful activity**, **repeatable optimization**, and **exploits**. This chapter do not verify an auction house, player-driven market, trading simulation, automated production empire or merchant reputation ladder. The dossier should not imply such systems merely because selling loot and buying training are important. Likewise, conventional XP grinding should not be used as shorthand for every repetition: a player may repeat a route for money, ingredients, knowledge or equipment instead.
+An economic analysis should distinguish **earning by useful activity**, **repeatable optimization**, and **exploits**. This chapter does not verify an auction house, player-driven market, trading simulation, automated production empire or merchant reputation ladder. The dossier should not imply such systems merely because selling loot and buying training are important. Likewise, conventional XP grinding should not be used as shorthand for every repetition: a player may repeat a route for money, ingredients, knowledge or equipment instead.
 
 ### Legacy is inheritance with a journey attached
 
@@ -75,7 +75,7 @@ Blocking also consumes stamina in relation to incoming impact. Repeatedly absorb
 
 ### Perception, light and avoiding a fight
 
-Lit lanterns and torches make the character more visible to enemies, and their fuel can be conserved by extinguishing them. Mineral gathering likewise requires a Mining Pick rather than merely finding an ore node. [New Player Guide](https://outward.wiki.gg/wiki/New_Player_Guide). **Interpretation:** deciding whether to illuminate oneself can change a route or approach before combat starts. Documented encounter perception is evidence for stealth decisions, not a fully simulated daily life for every NPC. The research does not establish autonomous schedules, an unrestricted dialogue-to-stealth system or a universal pacifist completion path.
+Lit lanterns and torches make the character more visible to enemies, and their fuel can be conserved by extinguishing them. [New Player Guide](https://outward.wiki.gg/wiki/New_Player_Guide). **Interpretation:** deciding whether to illuminate oneself can change a route or approach before combat starts. Documented encounter perception is evidence for stealth decisions, not a fully simulated daily life for every NPC. The research does not establish autonomous schedules, an unrestricted dialogue-to-stealth system or a universal pacifist completion path.
 
 ### Immediate resources and burnt maximums
 
@@ -144,7 +144,7 @@ The player does not automatically begin with mana. The leyline interaction at Co
 
 ### Rune magic is a small compositional language
 
-Rune Sage training in Berg grants four runes. Their sequences produce protection, a blade, a lantern or a trap; advanced syntax turns existing effects into further actions such as healing, a stronger blade, lightning or trap detonation. A lexicon normally occupies the off hand, although a skill choice or a particular conjured weapon can change that condition. The indexed rune-pair diagrams did not expose every symbol reliably, so this chapter do not invent the exact input sequence. [Rune Magic](https://outward.wiki.gg/wiki/Rune_Magic).
+Rune Sage training in Berg grants four runes. Their sequences produce protection, a blade, a lantern or a trap; advanced syntax turns existing effects into further actions such as healing, a stronger blade, lightning or trap detonation. A lexicon normally occupies the off hand, although a skill choice or a particular conjured weapon can change that condition. The indexed rune-pair diagrams did not expose every symbol reliably, so this chapter does not invent the exact input sequence. [Rune Magic](https://outward.wiki.gg/wiki/Rune_Magic).
 
 Lexicons have their own equipment identity and occupy a hand; the documented basic item is light and does not wear out. Its interesting cost is therefore not simply durability or mass but what the occupied hand prevents the player from carrying simultaneously. [Lexicons](https://outward.wiki.gg/wiki/Lexicons).
 
@@ -254,6 +254,8 @@ Crafting permits either selecting a known recipe or manually trying a combinatio
 **Constructed example — experimentation has an explicit price.** **Intention:** discover a useful supply recipe. **Conditions:** the player has ingredients and access to the appropriate station. **Actions:** attempt an unrecorded combination. **Result:** success both produces an item and adds knowledge; failure may cost ingredients depending on the station. **Next decision:** repeat, seek a recipe, or preserve scarce ingredients. **Counterexample:** one cannot assume that every manual attempt is free merely because the survival-crafting interface often protects ingredients. [Crafting](https://outward.wiki.gg/wiki/Crafting).
 
 ### Gathering is an activity with tools and wear
+
+Mineral gathering requires a Mining Pick rather than merely finding an ore node. [New Player Guide](https://outward.wiki.gg/wiki/New_Player_Guide).
 
 Fishing spots are recognizable by bubbles and visible fish, occur at fixed locations and refresh after 24 in-game hours. The action needs a Fishing Harpoon or a documented equivalent, such as a Gold Harpoon, and consumes tool durability. The catch includes at least one fish with possible additional items. [Fishing](https://outward.wiki.gg/wiki/Fishing). In Caldera, Unidentified Samples extend gathering into searching changing node rotations; roots and ore require a Mining Pick, while Molepig dens require a harpoon. Rotation changes and resource replenishment use different clocks. [Unidentified Samples](https://outward.wiki.gg/wiki/Unidentified_Samples). **Interpretation:** a tool can justify carrying space through repeated usefulness, while a rare-sample search becomes a distinct late-game resource loop.
 
@@ -441,7 +443,7 @@ The Living Thought article describes ascension through extreme will and a tremen
 
 Liches sustain immortality through a phylactery; destruction of a body is not necessarily final while that anchor survives. The lore article associates separation from the soul and prolonged magical existence with unusual perspectives and isolation. Named examples include the Light Mender, Plague Doctor, Forge Master, Scarlet Lady and Whispering Bones. The Garden Lich is encountered through a dead remnant and the landscape rather than as another living boss. This immortality mechanism is distinct from the account of Living Thought and should not be merged with it. [Liches](https://outward.wiki.gg/wiki/Liches).
 
-The Light Mender is associated with lightning, resides at the Spire of Light and is responsible for nearby Gold-Lich creations. The article leaves his larger undertaking mysterious. These are useful boundaries: recognizable material and enemy families can imply a maker's influence without revealing the whole project. [Light Mender](https://outward.wiki.gg/wiki/Light_Mender). The elemental icons in the retrieved stat table were not textually labeled, so this chapter do not reconstruct its complete resistance spread.
+The Light Mender is associated with lightning, resides at the Spire of Light and is responsible for nearby Gold-Lich creations. The article leaves his larger undertaking mysterious. These are useful boundaries: recognizable material and enemy families can imply a maker's influence without revealing the whole project. [Light Mender](https://outward.wiki.gg/wiki/Light_Mender). The elemental icons in the retrieved stat table were not textually labeled, so this chapter does not reconstruct its complete resistance spread.
 
 ### Immaculates complicate the monster category
 
@@ -480,7 +482,7 @@ The interesting transition is from **fragility** to **prepared competence**. Tha
 
 ## 13. Explicit absences, exceptions and unresolved rules
 
-The dossier should state boundaries with the same care as features. This chapter do not claim that every absent feature has been exhaustively disproven; they separate positive evidence from research gaps.
+The boundaries below distinguish documented absences from research gaps; they do not claim that every absent feature has been exhaustively disproven.
 
 | Claim under review                                                                                 | Evidence-based treatment                                                                                                                        |
 | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -503,7 +505,7 @@ Remaining optional precision includes every equipment coefficient, animation, fu
 
 ## 14. Source register and provenance notes
 
-All sources in this chapter were accessed during this research on 7 November 2026. Date labels such as “crawled last month” are search-index descriptions, not verified revision dates. Adjacent citations above identify the specific rule or argument; this register identifies access quality and their access quality for future follow-up.
+All sources in this chapter were accessed during this research on 7 November 2026. Date labels such as “crawled last month” are search-index descriptions, not verified revision dates. Adjacent citations above identify the specific rule or argument; this register identifies access quality for future follow-up.
 
 ### Primary official sources, substantive bodies inspected
 
@@ -522,7 +524,7 @@ Rule clusters: Skills; The player; Mana; Rune Magic; Lexicons; Sigils; Inventory
 
 World clusters: The Blue Chamber Collective; The Heroic Kingdom of Levant; The Holy Mission of Elatt; Sorobor Academy building; Alda; Ruins of Old Levant; Timeline; Elatt; Living Thought; Liches; Light Mender; Wendigo; Truth and Purpose; Doubts and Secrets; Lore. The Scourge and Immaculate were retrieved as shorter explanatory indexed passages, so their use is correspondingly narrow.
 
-Reproduced primary game text: Lore Letters Transcripts, Truth and Purpose/Stone Tablet Transcript, Rissa Aberdeen/Dialogue and Soroborean Caravanner/Dialogue. The wiki labels these as verbatim Nine Dots game text. This chapter paraphrase rather than reproduce their dialogue. Attributed writer explanations on faction/Elatt pages are separate from unattributed wiki synthesis.
+Reproduced primary game text: Lore Letters Transcripts, Truth and Purpose/Stone Tablet Transcript, Rissa Aberdeen/Dialogue and Soroborean Caravanner/Dialogue. The wiki labels these as verbatim Nine Dots game text. This chapter paraphrases their dialogue rather than reproducing it. Attributed writer explanations on faction/Elatt pages are separate from unattributed wiki synthesis.
 
 Final focused gap checks: Locations (including area reset and a reproduced writer qualification about Ash Giant origins), Chersonese, Antique Plateau, Hallowed Marsh, Mechanics, Soroborean Caravanner, Characters/NPCs, Mouths to Feed, A Knife in the Back and Unknown Arena. All were substantively inspected through indexed results. The current wiki's general Locations page also includes announced Outward 2 geography; only its first-game section is used here. New Player Guide contains older storage wording conflicting with the explicit DE distinction in Locations, so the latter governs the edition-sensitive storage statement.
 

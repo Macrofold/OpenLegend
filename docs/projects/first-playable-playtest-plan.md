@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-10-29   |
+| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-11-07   |
 
 **Design origin:** [DG03 / ND26](../maintainers/needs-design.md#dg03--a-useful-demo-and-early-audience-learning). **Work owner:** [FPV01–FPV09](../maintainers/first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required game, [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection, and this plan owns how to learn from a named build. Applicable authorization, [verification/spending rules](../../.agents/rules/verification.md) and service requirements govern execution.
 
@@ -92,7 +92,7 @@ Keep survival-adventure play distinct from authoring/developer demonstrations an
 
 ## Step 7 — review, correct and retest
 
-For each consequential finding record the observation and build, likely cause and a competing explanation, effect on play, existing owner, next correction/test and commitment limit. Distinguish a missing capability from poor explanation, unreliable execution, excessive effort or weak payoff.
+For each consequential finding record the observation and build, likely cause and a competing explanation, effect on play, existing owner, next correction/test and commitment limit. Distinguish a missing capability, an understood rule the player dislikes, poor explanation, unreliable execution, excessive effort and weak payoff. For a comprehension question, ask what the person would try next before explaining the rule.
 
 Retest changed comprehension with fresh people where practical and continuing value with suitable return sessions. A promising idea may justify a bounded prototype without prior proof of fun. More geography, population or administration should not substitute for fixing a tedious opening or unrewarding camp.
 

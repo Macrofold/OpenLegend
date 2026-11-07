@@ -182,7 +182,7 @@ Helpfulness favors visibility and engagement; older reviews have had more time t
 
 ## 5. Researcher synthesis: what these accounts suggest
 
-The following sections are **interpretations and design hypotheses**. They explain how the observed tensions might work and propose what Open Legend should investigate. They are not new verified facts about Outward, player prevalence, or the developer's intentions. The source cards above contain the attributable testimony; the synthesis intentionally avoids repeating extended source summaries.
+The following sections are **interpretations and design hypotheses** about the tensions in these accounts. They are not new verified facts about Outward, player prevalence or developer intentions. The source cards above own attributable testimony; [the applications chapter](04-openlegend-lessons.md#10-use-existing-owners-and-observations) routes the useful comparisons into Open Legend's existing designs and tasks.
 
 ### 5.1 An expedition gives ordinary decisions a reason to matter
 
@@ -190,15 +190,11 @@ An expedition can be modeled as preparation, departure, uncertain encounter, ret
 
 This suggests a stronger design question than “Should the game have hunger?” Ask whether a resource creates an interesting plan, whether the plan can change after contact with the world, and whether the outcome teaches something usable. A meter that always demands the same action is maintenance. A constraint that makes the player choose between speed, protection, supplies, and carrying capacity can create an expedition identity.
 
-The test for Open Legend would be behavioral: can players explain why they packed differently for two destinations? Did a changed plan produce a memorable decision, or merely a longer checklist? A successful preparation loop should create variation in intention, not only variation in the number of consumables used.
-
 ### 5.2 Difficulty needs an intelligible contract
 
 A consequence can be severe while still feeling understandable. The player needs some basis for connecting warning, decision, action, and result. If that connection is weak, increasing punishment may amplify confusion rather than deepen mastery. A useful distinction is between knowing that the world is dangerous and understanding why this particular attempt failed.
 
-Three different interventions follow. An unclear rule calls for a cue or a safer learning encounter. A disliked but understood rule calls for a deliberate audience decision or an option. A malfunction calls for a fix. Treating all three as “hardcore design” hides the actual cause of friction and makes discussion unproductive.
-
-For Open Legend, observation should distinguish execution failure, preparation failure, information failure, and technical failure. Ask the player to predict what would improve the next attempt before offering an explanation. If predictions remain unrelated to the actual rule, merely reducing damage may conceal the problem rather than solve it.
+Three different interventions follow. An unclear rule calls for a cue or a safer learning encounter. An understood but disliked rule calls for reconsidering its benefit, burden and audience fit; further explanation alone may not help. A malfunction calls for a fix. Treating all three as “hardcore design” hides the actual cause of friction and makes discussion unproductive.
 
 ### 5.3 Recovery can preserve the story while consuming the evening
 
@@ -206,15 +202,11 @@ Continuing after defeat avoids the clean reset of a conventional reload. That ca
 
 A design evaluation should measure both. Did the player discover a new situation? Did they make a new choice? How much time passed before they resumed a goal they cared about? “You did not lose the story” does not answer “Did you lose the rest of the evening?” This is particularly relevant for co-op groups coordinating limited shared time.
 
-Possible experiments include separating initial surprise from repeated penalties, making recovery routes offer a meaningful alternative, or allowing players to understand the scope of their loss promptly. These are hypotheses to test, not prescriptions to remove all consequences. Eliminating every setback could also eliminate part of the expedition's significance.
-
 ### 5.4 Travel has changing value as knowledge accumulates
 
-An unfamiliar route asks for navigation and judgment. A familiar route may become a sequence of already-solved actions. Its emotional value can therefore decline while its duration remains constant. The design issue is not simply whether movement is slow or fast; it is how much new decision-making survives repetition.
+An unfamiliar route asks for navigation and judgment. A familiar route may become a sequence of already-solved actions. Its emotional value can therefore decline while its duration remains constant. The design issue is whether travel still offers decisions, atmosphere, company or anticipation that the player values; familiarity need not diminish its pleasure.
 
 Useful analysis separates first traversal, purposeful preparation travel, emergency recovery, and routine backtracking. Their acceptable durations may differ. A world can preserve meaningful distance while providing a later answer to journeys whose uncertainty has been exhausted. Whether that answer is a shortcut, conditional transport, route change, or new encounter is an implementation question.
-
-For research, log the player's stated purpose and familiarity with a journey, then ask whether something changed the plan. A long trip that produces a meaningful event and a long trip that repeats an empty route should not be treated as the same experience because their stopwatch times match.
 
 ### 5.5 Knowledge can be progression, but information has to exist somewhere
 
@@ -222,15 +214,13 @@ When understanding a system makes the same character more capable, learning itse
 
 The risk is shifting essential instruction outside the game. Community help can be enjoyable social discovery; dependence on it can also make the opening feel arbitrary. These possibilities coexist. A wiki visit should not automatically be coded as either success or failure without knowing why the player left the game and what they expected to find.
 
-Open Legend could distinguish optional optimization from necessary comprehension. Players should be able to form a workable basic plan from in-game evidence even if the community later discovers extraordinary combinations. A useful test is whether a player can explain the first viable strategy in their own words without being told the final answer.
-
 ### 5.6 Irreversible builds create identity and anxiety
 
 Limited commitments can make a character feel authored. A build becomes a history of choices rather than a temporary menu setting. The same commitment creates anxiety when a player lacks the vocabulary to evaluate options. The key variable is not only whether a choice can be reversed, but whether the player understands its category and consequences when choosing.
 
 Possible research separates regret that produces an interesting alternative character from regret that makes the current one feel invalid. Those are different outcomes. An expert's enthusiasm for rerolling should not be assumed to describe a novice who has invested several evenings and only now understands the cost.
 
-Interface experiments could improve previews, explain mutually exclusive paths, or allow limited early experimentation. These should be evaluated for whether they preserve identity while reducing uninformed commitment. There is no basis in this source set to claim a particular respec policy maximizes retention.
+This source set cannot establish which combination of previews, early experimentation or reversibility best preserves identity while reducing uninformed commitment, or which respec policy would maximize retention.
 
 ### 5.7 Co-op adds both emotional support and an expectation of fairness
 
@@ -238,7 +228,7 @@ A companion changes more than combat capacity. Shared planning distributes cogni
 
 This creates separate questions about shared experience, portable character growth, quest state, exclusive rewards, and session continuity. Describing a game simply as “co-op” leaves those expectations unresolved. Research should ask who hosts, whether partners alternate, what happens when one plays alone, and whether each player understands the consequences before investing time.
 
-For a game using portable guests and host-owned worlds, a useful explanation would state what travels with a guest and what belongs to the host's world. Communication cannot by itself fix an unsatisfying progression policy, but it can prevent an avoidable mismatch. The policy itself should be tested with established pairs, not only ad hoc playtest groups who do not expect to resume separate saves.
+For a game using portable guests and host-owned worlds, a useful explanation would state what travels with a guest and what belongs to the host's world. Communication cannot by itself fix an unsatisfying progression policy, but it can prevent an avoidable mismatch. A one-off session cannot reveal how that policy feels to a pair trying to continue across separate saves.
 
 ### 5.8 Atmosphere and lore can make mechanics meaningful later
 
@@ -246,15 +236,11 @@ The first impression of a sparse world may change when the player starts connect
 
 That possibility should not excuse a weak opening indefinitely. Research needs to identify when a player encounters the first element that makes the setting worth caring about, and whether reaching it depends on persistence the game has not yet earned. A late conversion is valuable testimony, but the invisible population that never reaches the same discovery remains unknown.
 
-Possible tests include tracing which detail a player remembers unprompted, which mystery they voluntarily pursue, and whether knowledge changes a decision. Simply counting lore entries or dialogue words would miss the distinction between stored information and meaningful curiosity.
-
 ### 5.9 Technical quality can be part of mechanical fairness
 
 When a game asks the player to scout, react, read a cue, or judge distance, presentation carries actionable information. A missing enemy, unreadable prompt, or inconsistent timing can therefore undermine the rule system rather than merely reduce aesthetic quality. The more costly failure becomes, the more important this information channel is.
 
 This implies that performance targets should be evaluated against required decisions. Can the player see a threat before preparation becomes impossible? Can they distinguish an attack state at the distance where a response is required? Does the interface communicate an inventory action while danger continues? A feature checklist alone cannot answer these questions.
-
-For Open Legend, accessibility and technical verification should be integrated with encounter testing. A challenge is only meaningfully chosen when the information required to engage with it is available to the player under the conditions the game supports.
 
 ## 6. Audience fit and counterexamples
 
@@ -281,8 +267,6 @@ Finite completion should be distinguished from abandonment, and both from irregu
 
 The [business chapter](03-production-business-and-modding.md) records the historical developer-reported playtime and campaign-completion figures. Their dated scope does not establish current retention, and a completion proportion cannot be converted into churn or dissatisfaction.
 
-For a future Open Legend study, distinguish first-session comprehension, return after the first major setback, attainment of the first self-chosen goal, co-op pair continuity, campaign completion, satisfied stopping, and voluntary new-character creation. These are suggested research measures, not existing Outward telemetry.
-
 ## 8. Access ledger and exclusions
 
 **Read:** C01–C08 general review bodies; A01's limited historical accessibility account; P01/P02 post bodies and accessible comment subsets; P03/P04 publicly indexed forum bodies; the five individual Steam review bodies and one indexed positive excerpt in section 4; the dated store aggregates. Each card gives its source, platform/version where known, date where verified and scope of access.
@@ -296,7 +280,7 @@ For a future Open Legend study, distinguish first-session comprehension, return 
 
 The Steam review JSON route was also unavailable through the retrieval tool. The successful public-index and individual-page method in section 4 supplies the actual sample; access failures are not a claim that no Steam reviews could be read. No account settings were changed.
 
-Publication dates come from visible article metadata where available. Unstable sale periods and search crawl labels are not substituted for historical publication dates. Accessible comments are selected visible branches, not an assertion that every reply was expanded. The source-derived cards are compact; the longer synthesis is explicitly interpretation and proposed research questions.
+Publication dates come from visible article metadata where available. Unstable sale periods and search crawl labels are not substituted for historical publication dates. Accessible comments are selected visible branches, not an assertion that every reply was expanded. The source-derived cards are compact; the longer synthesis is explicitly interpretation.
 
 ## 9. How to use this evidence
 
