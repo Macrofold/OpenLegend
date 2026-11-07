@@ -17,6 +17,8 @@ export interface RetainedActorSourceChanges {
   invalidated: boolean;
   accounts: ReadonlySet<string>;
   dependentAccounts: ReadonlySet<string>;
+  /** Complete changed ownership aliases only for an explicitly scoped support watch. */
+  supportAliases?: ReadonlySet<string>;
   temporalPages: ReadonlySet<string>;
 }
 export type RetainedSourceChanges = ReadonlyMap<string, RetainedActorSourceChanges>;

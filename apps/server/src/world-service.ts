@@ -2188,7 +2188,11 @@ export class WorldService {
               deletes: new Map(),
               rows: 0,
             });
-            const sources = memorySources.captureRetentionSourceWatch(captured.world.id, actors);
+            const sources = memorySources.captureRetentionSourceWatch(
+              captured.world.id,
+              actors,
+              kind,
+            );
             try {
               const prepare =
                 kind === 'accounts'

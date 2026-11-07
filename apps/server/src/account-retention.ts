@@ -765,7 +765,8 @@ export function applyAccountRetentionPlan(
       selected.add(personalAccountRecordId(actorId, entry.source, entryId(entry)));
     const sourceChanges = changesSinceCapture.get(actorId);
     const supportAliases =
-      actorPlan.supportRevision !== undefined && sourceChanges?.accounts.size
+      actorPlan.supportRevision !== undefined &&
+      (sourceChanges?.accounts.size || sourceChanges?.supportAliases?.size)
         ? new Set(
             actorPlan.supports.flatMap((change) =>
               change.before ? temporalSupportAliases(change.before, state.world) : [],
@@ -775,12 +776,15 @@ export function applyAccountRetentionPlan(
     const changed =
       !sourceChanges ||
       sourceChanges.invalidated ||
-      (supportAliases !== undefined &&
-        [...sourceChanges.accounts].some((id) =>
-          supportAliases.has((JSON.parse(id) as string[]).at(-1)!),
-        )) ||
-      [...sourceChanges.dependentAccounts].some((id) => !selected.has(id)) ||
-      [...sourceChanges.accounts].some((id) => selected.has(id));
+      (actorPlan.supportRevision !== undefined
+        ? !sourceChanges.supportAliases ||
+          (supportAliases !== undefined &&
+            ([...sourceChanges.supportAliases].some((id) => supportAliases.has(id)) ||
+              [...sourceChanges.accounts].some((id) =>
+                supportAliases.has((JSON.parse(id) as string[]).at(-1)!),
+              )))
+        : [...sourceChanges.dependentAccounts].some((id) => !selected.has(id)) ||
+          [...sourceChanges.accounts].some((id) => selected.has(id)));
     if (
       !actor ||
       actor.epoch !== actorPlan.epoch ||

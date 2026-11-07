@@ -138,21 +138,31 @@ const preparedMetadata = new WeakMap<RowChange, RetentionRow>();
 
 type MembershipKind = 'account-alias' | 'individual';
 type Memberships = Map<MembershipKind, Map<string, number>>;
+function accountOwnershipAliases(columns: RetentionRow['columns']): string[] {
+  return columns['kind'] === 'impression'
+    ? []
+    : [
+        String(columns['source_id']),
+        ...(columns['event_id'] ? [String(columns['event_id'])] : []),
+        ...(columns['retention_metadata'] as AccountRetentionMetadata).aliases,
+      ];
+}
+
+/** Ownership aliases include copied originals and direct event links; they are
+ * broader than source-version dependencies and must not request archival work. */
+export function accountWriteSupportAliases(
+  table: (typeof accountTables)[number],
+  row: RowChange,
+): string[] {
+  return accountOwnershipAliases(metadata(table, row).columns);
+}
 function rowMembership(row: RetentionRow): Array<[MembershipKind, Iterable<string>]> {
   // Physical block membership is only a candidate index. An expired sibling's
   // aliases cannot prove personal retention for a still-live boundary block.
   if (row.table === 'mind_temporal_pages') return [];
   if (!accountTables.includes(row.table as (typeof accountTables)[number])) return [];
-  const aliases =
-    row.columns['kind'] === 'impression'
-      ? []
-      : [
-          String(row.columns['source_id']),
-          ...(row.columns['event_id'] ? [String(row.columns['event_id'])] : []),
-          ...(row.columns['retention_metadata'] as AccountRetentionMetadata).aliases,
-        ];
   return [
-    ['account-alias', new Set(aliases)],
+    ['account-alias', new Set(accountOwnershipAliases(row.columns))],
     ['individual', row.columns['individual_ids'] as string[]],
   ];
 }

@@ -25,6 +25,7 @@ import { retireRecentHistory } from './recent-retention.js';
 import { accountObservationInputs, type RetainedSourceWatch } from './retention-record-metadata.js';
 import {
   accountWriteHasRetentionDependencies,
+  accountWriteSupportAliases,
   type RetentionMetadataView,
 } from './retention-metadata.js';
 import { cleanupRetiredIndividuals } from './retention-cleanup.js';
@@ -635,6 +636,7 @@ interface CanonicalSourceWatch {
   retention?: {
     accounts: Set<string>;
     dependentAccounts: Set<string>;
+    supportAliases?: Set<string>;
     temporalPages: Set<string>;
     budget: { rows: number; bytes: number; exceeded: boolean };
   };
@@ -916,7 +918,11 @@ export class MemoryRepository {
    * acceptance and durable publication feed this same finite watch, so settling
    * a save or evicting a resident value cannot erase an intervening source edit.
    * docs/projects/bookkeeping-simplification-reception-design.md#7-candidate-first-retention-and-sparse-source-versions */
-  captureRetentionSourceWatch(worldId: string, actorIds: readonly string[]): RetainedSourceWatch {
+  captureRetentionSourceWatch(
+    worldId: string,
+    actorIds: readonly string[],
+    kind: 'accounts' | 'support',
+  ): RetainedSourceWatch {
     const budget = { rows: 0, bytes: 0, exceeded: false };
     const watches = [...new Set(actorIds)].map(
       (actorId): CanonicalSourceWatch => ({
@@ -928,6 +934,7 @@ export class MemoryRepository {
         retention: {
           accounts: new Set(),
           dependentAccounts: new Set(),
+          ...(kind === 'support' ? { supportAliases: new Set<string>() } : {}),
           temporalPages: new Set(),
           budget,
         },
@@ -943,6 +950,9 @@ export class MemoryRepository {
               invalidated: !watch.valid || budget.exceeded || this.sourceEditPending(watch),
               accounts: watch.retention!.accounts,
               dependentAccounts: watch.retention!.dependentAccounts,
+              ...(watch.retention!.supportAliases
+                ? { supportAliases: watch.retention!.supportAliases }
+                : {}),
               temporalPages: watch.retention!.temporalPages,
             },
           ]),
@@ -953,6 +963,7 @@ export class MemoryRepository {
           this.canonicalSourceFences.delete(watch);
           watch.retention!.accounts.clear();
           watch.retention!.dependentAccounts.clear();
+          watch.retention!.supportAliases?.clear();
           watch.retention!.temporalPages.clear();
         }
       },
@@ -981,12 +992,12 @@ export class MemoryRepository {
     };
     const remember = (
       watch: CanonicalSourceWatch,
-      kind: 'accounts' | 'dependentAccounts' | 'temporalPages',
+      kind: 'accounts' | 'dependentAccounts' | 'supportAliases' | 'temporalPages',
       id: string,
     ) => {
       const state = watch.retention!,
         selected = state[kind];
-      if (selected.has(id) || state.budget.exceeded) return;
+      if (!selected || selected.has(id) || state.budget.exceeded) return;
       const bytes = Buffer.byteLength(id) + 64;
       if (state.budget.rows >= RETRIEVAL_ROWS || state.budget.bytes + bytes > RETRIEVAL_BYTES) {
         state.budget.exceeded = true;
@@ -1011,9 +1022,13 @@ export class MemoryRepository {
             table as (typeof sourceTables)[SourceKind],
             row,
           );
+          const supportAliases = selected.some((watch) => watch.retention!.supportAliases)
+            ? accountWriteSupportAliases(table as (typeof sourceTables)[SourceKind], row)
+            : [];
           for (const watch of selected) {
             remember(watch, 'accounts', row.id);
             if (dependent) remember(watch, 'dependentAccounts', row.id);
+            for (const alias of supportAliases) remember(watch, 'supportAliases', alias);
           }
         }
       }
