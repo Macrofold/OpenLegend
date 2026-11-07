@@ -43,47 +43,7 @@ The AA-Music-Instrumental v1.1 and AA-Music-Vocal v1.1 boards use blind comparis
 | Lyria 3 Pro       |            1,080 | 1,059–1,101           |          1,048 | 1,030–1,066           |
 | Eleven Music v2.5 |            1,001 | 980–1,022             |          1,016 | 998–1,034             |
 
-Sources: [instrumental board][aa-instrumental] and [vocal board][aa-vocal]. Higher Elo means more frequent preference within that board; these are not percentages or scores on a universal quality scale. The full boards contain other models.
-
-Suno leads both categories, and Lyria 3 Pro places above Eleven v2.5 in both. Lyria and Eleven's vocal intervals overlap, so their displayed order should not be described as a decisive gap. These results do not establish a winner for acoustic fantasy music, hopeful melancholy, long play sessions or isolated fidelity. They evaluate models, not OpenArt's interface or a complete production pipeline.
-
-### Suno versus Eleven: Song Tested
-
-[Song Tested's October 17 review][song-tested] used eight shared briefs, with 16 Suno v6 outputs and 14 Eleven v2.5 outputs. One listener reported scoring the audio blind: Suno averaged 4.56/5, Eleven 3.82/5. Suno led on seven prompt averages and tied on one.
-
-The reviewer favored Suno's tighter songs and cleaner mixes. Eleven earned praise for piano tone and convincing left/right guitar detail, but criticism for long, repetitive introductions, static passages and uneven mixes. The guitar observation describes the audible impression; it does not prove that real instruments were double-tracked.
-
-**Limits:** one listener, unequal take counts, scoring nearly two weeks apart, small lyric-format/duration differences and affiliate support. Treat the scores as that reviewer's results, not a calibrated population ranking.
-
-A [DataCamp review][datacamp] indexed at retrieval described Eleven as close to Suno for complete songs, while preferring Suno's vocal naturalness. Only the indexed excerpt was accessible; the full-page fetch failed. This is a lower-weight example of disagreement over the size of the gap.
-
-### Cue fit and mastering: TakeBench
-
-[TakeBench's October 27 test, published/updated October 28][takebench], used three prompts and 12 outputs from Suno v6 and Eleven v2.5: an instrumental bed under speech, a short pop song and a game loop.
-
-Eleven matched all six requested durations exactly. Suno's mastering levels were more consistent. One Eleven loop had the closest start/end level continuity, while both Suno loops faded out.
-
-**Limits:** the loop measurement mainly compares levels around the join; it does not establish rhythmic, harmonic or phrase continuity. The authors reported no perfect loop. This was a small, single-day test, explicitly did not rank musical taste, and disclosed an ElevenLabs affiliate relationship. It supports precise cue fit more directly than superior musical quality.
-
-### Community reports: Suno v6
-
-[MusicRadar's September 17 coverage][musicradar] documents complaints about muffled mixes, buried vocals, lost high-frequency detail and generic or less expressive music. Those complaints chiefly compare v6 with earlier Suno versions; they do not demonstrate that Eleven or Lyria wins.
-
-A [Suno community discussion][suno-community] also contains the opposite experience: praise for strong melodies, clearer sound and fewer choir artifacts, alongside users sharing examples and preferring older models. The disagreement is evidence of varied experiences, not a representative survey or a measured rate of successful generations.
-
-### Community reports: Lyria 3 Pro
-
-A [firsthand Lyria discussion][lyria-community] praises fidelity, mixing and vocal realism, while describing some aggressive styles as overly safe. Replies include appreciation for instrumental backgrounds and criticism of generic or sterile results.
-
-The author's comparison explicitly used **Suno v5.5**, not v6. It is useful as a description of individual listening impressions, not proof of a current head-to-head winner. Cross-posts of the same account are one anecdote. Direct independent evidence about OpenArt's music product was substantially thinner than evidence about Lyria itself; no strong direct three-way OpenArt–Suno–Eleven listening study was identified.
-
-### Vendor evidence
-
-ElevenLabs reports a 47,885-pair blind comparison favoring v2.5 over its own earlier model, particularly in vocal-led and acoustic-heavy genres. **That comparison is against Eleven v2, not Suno or Lyria.** Its claims about more natural instruments and richer arrangements are vendor-reported evidence, not an independent three-way ranking. [Release announcement][eleven-v25].
-
-## Relevance to Open Legend
-
-For the instrumental, hopeful-but-melancholy exploration direction discussed with Mike, the useful comparison is broader than convincing singing. The research recommendation favors Suno as the starting point for musical appeal and Lyria Pro as a serious challenger for sound character; Eleven remains relevant when exact cue structure or timing matters. None has been established as best for that specific emotional target.
+Sources: [instrumental board][aa-instrumental] and [vocal board][aa-vocal]. Higher Elo means more frequent …1133 tokens truncated…dation favors Suno as the starting point for musical appeal and Lyria Pro as a serious challenger for sound character; Eleven remains relevant when exact cue structure or timing matters. None has been established as best for that specific emotional target.
 
 Useful listening criteria are:
 

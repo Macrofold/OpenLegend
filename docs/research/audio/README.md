@@ -1,6 +1,6 @@
 # Music and sound research
 
-**Sourcing synthesis: November 4, 2026; output-quality comparison: November 7, 2026.** Research and recommendations are complete for this sourcing investigation. No audio was acquired or qualified through listening or in-game tests, and no provider or collaborator was selected. Exact provider terms and prices should be checked again when an asset is acquired.
+**Sourcing synthesis: November 4, 2026; output-quality comparisons: November 7, 2026.** Research and recommendations are complete for this sourcing investigation. No audio was acquired or qualified through listening or in-game tests, and no provider or collaborator was selected. Exact provider terms and prices should be checked again when an asset is acquired.
 
 ## Recommendation for Open Legend
 
@@ -10,33 +10,34 @@ The [Open Legend music and sound direction](openlegend-direction.md) is the main
 
 ## Choose the appropriate route
 
-| Route                                | Best use here                                                           | Decision                                                                                                                                                                   |
-| ------------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Commission a composer/producer       | Identity themes, related arrangements, controlled revisions             | Preferred starting investment: a small paid pilot, then a compact score if it succeeds                                                                                     |
-| AI music generation                  | Rapid musical exploration; potentially finished or producer-edited cues | Serious candidate; shortlist Suno for its preference evidence and editing tools, and Stable Audio for its instrumental/SFX workflow and documented hosted commercial terms |
-| Direct artist license                | An exceptional existing piece with a fitting identity                   | Good alternative when the artist can grant the needed composition/master, editing and release rights                                                                       |
-| Stock/production music               | Temporary coverage and specific secondary uses                          | Can be musically excellent; less control of identity and revision makes it a weaker foundation for this brief                                                              |
-| Free/CC/public-domain music          | Selective reference, temporary or deliberate production use             | Price does not establish quality or unrestricted permission; examine each composition and recording                                                                        |
-| Paid/free SFX recordings             | Movement, materials, weather, animals and practical actions             | Recommended broad foundation, curated around real playable events                                                                                                          |
-| Foley, field recording and synthesis | Tactile details and memorable exceptional sounds                        | Add selectively where ownership, specificity or sound character justifies the work                                                                                         |
-| Offline AI SFX                       | Difficult-to-source effects and creative variants                       | Optional source route; accept by listening, editability and actual rights                                                                                                  |
-| Self-hosted audio models             | Repeated production that demonstrably needs local control               | Defer deployment work until a hosted comparison proves the output is worthwhile; weights and code can carry different licenses                                             |
+| Route                                | Best use here                                                           | Decision                                                                                                                                                       |
+| ------------------------------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Commission a composer/producer       | Identity themes, related arrangements, controlled revisions             | Preferred starting investment: a small paid pilot, then a compact score if it succeeds                                                                         |
+| AI music generation                  | Rapid musical exploration; potentially finished or producer-edited cues | Serious candidate; use the quality and eligibility evidence to choose a bounded audition for the actual brief, then judge accepted results and revision effort |
+| Direct artist license                | An exceptional existing piece with a fitting identity                   | Good alternative when the artist can grant the needed composition/master, editing and release rights                                                           |
+| Stock/production music               | Temporary coverage and specific secondary uses                          | Can be musically excellent; less control of identity and revision makes it a weaker foundation for this brief                                                  |
+| Free/CC/public-domain music          | Selective reference, temporary or deliberate production use             | Price does not establish quality or unrestricted permission; examine each composition and recording                                                            |
+| Paid/free SFX recordings             | Movement, materials, weather, animals and practical actions             | Recommended broad foundation, curated around real playable events                                                                                              |
+| Foley, field recording and synthesis | Tactile details and memorable exceptional sounds                        | Add selectively where ownership, specificity or sound character justifies the work                                                                             |
+| Offline AI SFX                       | Difficult-to-source effects and creative variants                       | Optional source route; accept by listening, editability and actual rights                                                                                      |
+| Self-hosted audio models             | Repeated production that demonstrably needs local control               | Defer deployment work until a hosted comparison proves the output is worthwhile; weights and code can carry different licenses                                 |
 
 ## Evidence records
 
-| Question                                                                                           | Record                                                                                     |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| Can Suno music ship in a sold game? What are current AI quality, export and license options?       | [AI music and sound generation](archive/2026/2026-11-04-ai-audio.md)                       |
-| How do indie, established RPG and AAA teams create distinctive music? How do we hire and budget?   | [Original music production and commissioning](archive/2026/2026-11-04-music-production.md) |
-| Which free/paid libraries and recording routes fit games, browser delivery and creators?           | [Stock, free and bespoke sound sourcing](archive/2026/2026-11-04-sound-sourcing.md)        |
-| What rights and deliverables do we need, and how do they fit a browser game with open-source code? | [Rights, release scope and delivery](archive/2026/2026-11-04-rights-and-delivery.md)       |
-| How do Suno, Eleven Music and OpenArt compare in musical quality, fidelity and cue fit?            | [AI music output-quality comparison](archive/2026/2026-11-07-ai-music-output-quality.md)   |
+| Question                                                                                           | Record                                                                                             |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Can Suno music ship in a sold game? What are current AI quality, export and license options?       | [AI music and sound generation](archive/2026/2026-11-04-ai-audio.md)                               |
+| How do indie, established RPG and AAA teams create distinctive music? How do we hire and budget?   | [Original music production and commissioning](archive/2026/2026-11-04-music-production.md)         |
+| Which free/paid libraries and recording routes fit games, browser delivery and creators?           | [Stock, free and bespoke sound sourcing](archive/2026/2026-11-04-sound-sourcing.md)                |
+| What rights and deliverables do we need, and how do they fit a browser game with open-source code? | [Rights, release scope and delivery](archive/2026/2026-11-04-rights-and-delivery.md)               |
+| How do Suno, Eleven Music and OpenArt compare in musical quality, fidelity and cue fit?            | [AI music output-quality comparison](archive/2026/2026-11-07-ai-music-output-quality.md)           |
+| How do ElevenLabs, OpenArt and Suno compare for standalone effects and usable game sound assets?   | [Sound-effects output-quality comparison](archive/2026/2026-11-07-sound-effects-output-quality.md) |
 
 The Suno answer is affirmative for eligible commercial output, with an authorized-download requirement and important free-origin/remix distinctions. The AI record preserves the current official pages' inconsistencies and gives a practical acquisition rule. A commercial license remains distinct from copyright protection, exclusivity and unrestricted downstream redistribution.
 
 Evidence includes provider contracts/help, official platform and copyright guidance, a professional survey, firsthand creator accounts and an external blind preference benchmark. Reports identify their dates and limits. Vendor capability claims and successful-game anecdotes are not our own audio-quality tests. Budget scenarios are explicitly estimated allocations, not supplier quotes.
 
-For a focused comparison of Suno, Eleven Music and OpenArt, see the [November 7 output-quality research](archive/2026/2026-11-07-ai-music-output-quality.md). It distinguishes OpenArt's Lyria models from the platform, compares dated blind-listening results and firsthand reports, and separates musical appeal, fidelity and cue fit. Its audition recommendation is provisional and does not select a provider or change the broader sourcing direction.
+The quality comparisons identify audition candidates without selecting a provider or changing the broader sourcing direction. Musical appeal, fidelity and cue fit are separate judgments; music rankings do not transfer to sound effects. Read each result against its model version, access route and evidence limits.
 
 ## Existing owners and proposed follow-through
 

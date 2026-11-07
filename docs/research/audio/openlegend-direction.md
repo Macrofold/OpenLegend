@@ -58,7 +58,7 @@ The existing [bard direction](../../narrative/authored-worlds-and-personal-disco
 
 ## Where AI should fit
 
-Use AI where it demonstrably improves the result or the production cost. The [current provider comparison](archive/2026/2026-11-04-ai-audio.md) owns eligibility and export limitations; tool labels and prices do not establish musical quality.
+Use AI where it demonstrably improves the result or the production cost. The [provider comparison](archive/2026/2026-11-04-ai-audio.md) owns eligibility and export limitations; the [dated music-quality comparison](archive/2026/2026-11-07-ai-music-output-quality.md) identifies candidates to audition. Tool labels, prices and general preference results do not establish musical quality for Open Legend.
 
 There are three valid outcomes:
 
@@ -91,7 +91,7 @@ Start with movement over the actual supported materials; clothing/equipment; han
 
 Original recording or synthesis should concentrate on memorable exposed sounds: the way a meaningful object resonates, a distinctive creature's physicality, an unusual material or a particular divine presence. Broader examples remain options until those things exist in the selected world. Editing, timing, variation and mix can make common source recordings feel specific to our game.
 
-Offline generated SFX may help with an unusual source or fast variations. Ordinary sample selection, layering and restrained pitch/level changes can already reduce repetition. Neither route requires per-action paid AI generation or new procedural acoustics.
+Offline generated SFX may help with an unusual source or fast variations; the [dated SFX comparison](archive/2026/2026-11-07-sound-effects-output-quality.md) identifies audition candidates. Favor separable event assets when gameplay must time each contact or stop each source independently. Ordinary sample selection, layering and restrained pitch/level changes can already reduce repetition. Neither route requires per-action paid AI generation or new procedural acoustics.
 
 Ambience needs truthful use. A generic forest bed should not introduce intelligible speech, nearby chopping or an identifiable animal threat that the game has not authorized the player to hear. Separate nonspecific environmental texture from meaningful event sounds; review bird/insect detail against the selected ecology and the player's likely inference. Mechanical hearing continues to be owned by the actual world sound model.
 
