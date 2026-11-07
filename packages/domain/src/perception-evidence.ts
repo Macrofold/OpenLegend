@@ -4652,13 +4652,10 @@ export function reconcileVisualEvidence(
     );
     // Reception/loss is a contact/group decision. Stable contacts never expand
     // every independent field merely to rediscover the same support revision.
-    const measuredContacts = measuredSubjects
-      ? [...measuredSubjects].flatMap((id) => {
-          const contact = currentContactGet(state, id);
-          return contact ? [[id, contact] as const] : [];
-        })
-      : currentContactEntries(state);
-    for (const [id, contact] of measuredContacts.sort((a, b) => a[1].order - b[1].order)) {
+    for (const [id, contact] of currentContactEntries(state).sort(
+      (a, b) => a[1].order - b[1].order,
+    )) {
+      if (measuredSubjects && !measuredSubjects.has(id)) continue;
       const body = currentContactNativeFacet(contact, 'body', { channel: phaseChannel });
       const completed = body && effectiveCurrentCheck(state, body.grant, body.metadata, true, body);
       const inputRevision = completed?.inputRevision ?? -1;

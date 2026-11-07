@@ -320,12 +320,7 @@ import {
   profilingEnabled,
 } from './performance.js';
 import { retainHotEvents } from './hot-events.js';
-import {
-  COMMAND_RETRY_MS,
-  CommandReceiptAbsence,
-  type CommandEpoch,
-  type GameplayReceipt,
-} from './command-receipts.js';
+import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
 import { createPersonMemoryPager, formatMemoryEntry } from './person-memory-page.js';
 import {
   controlledEntityId,
@@ -588,9 +583,6 @@ export class WorldService {
     };
     await this.store.putIntegration(`command-epoch:${this.world.id}`, next);
     this.epoch = next;
-    this.commandReceiptAbsence = this.store.commands
-      ? new CommandReceiptAbsence(next.token)
-      : undefined;
     await this.store.commands?.prune(this.world.id, next.generation, this.now());
     this.notify(false);
   }
@@ -1975,12 +1967,10 @@ export class WorldService {
   // A cold receipt miss may precede concurrent acceptance. Keep its eventual
   // accepted result resident until every preparing duplicate reaches admission.
   private readonly commandReceiptReaders = new Map<string, number>();
-  private commandReceiptAbsence?: CommandReceiptAbsence;
 
   /** Both acceptance paths publish the same retry result before releasing their
    * mutation turn. Pending outcomes stay charged to the existing save buffer. */
   private installCommandReceipt(receipt: GameplayReceipt, durable = false): void {
-    this.commandReceiptAbsence?.accepted(receipt.id);
     this.recentCommandResults.set(receipt.id, receipt);
     if (durable) this.pruneCommandReceipts();
   }
@@ -3788,9 +3778,6 @@ export class WorldService {
           throw new Error(this.storageError ?? 'Load failed.');
         this.storageGeneration = (await this.store.records?.head())?.generation ?? '';
         this.epoch = epoch;
-        this.commandReceiptAbsence = this.store.commands
-          ? new CommandReceiptAbsence(epoch.token)
-          : undefined;
         this.timelineId = timeline;
         this.generation = randomUUID();
         this.recentCommandResults.clear();
@@ -7017,14 +7004,7 @@ export class WorldService {
       let prior: GameplayReceipt | undefined;
       if (epoch !== undefined && this.store.commands) {
         prior = this.recentCommandResults.get(id);
-        if (!prior) {
-          if (this.commandReceiptAbsence?.mayContain(id) === false)
-            countMetric('command.receiptAbsenceHits');
-          else {
-            countMetric('command.receiptAbsenceFallbacks');
-            prior = await this.store.commands.get(this.world.id, id);
-          }
-        }
+        if (!prior) prior = await this.store.commands.get(this.world.id, id);
       }
       const replay = (outcome: GameplayReceipt): ApiResult => {
         if (this.now() >= outcome.expiresAt)
