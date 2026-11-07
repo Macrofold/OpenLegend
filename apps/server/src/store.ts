@@ -14,7 +14,11 @@ import { RECORD_NODES } from './world-record-schema.js';
 import { selectActorLiveReadCuts, selectActorRecordChanges } from './actor-record-selection.js';
 import type { LiveReadCuts, LiveReadCutsProvider, MetadataBaseline } from './live-read-overlay.js';
 import { receivedCurrentOwnerTables } from './received-record-references.js';
-import { retentionDueActors, recentRetentionDue } from './temporal-storage.js';
+import {
+  retentionDueActors,
+  recentRetentionDue,
+  mergeRetirementPredecessors,
+} from './temporal-storage.js';
 import type { PreparedDiagnosticRecord } from './diagnostic-capture.js';
 import {
   readDecisionState,
@@ -548,7 +552,6 @@ export class SqlGameRepository implements GameRepository {
           planned.state,
           complete,
           changes,
-          this.acceptedState?.world,
           metadata,
         );
         for (const [table, ids] of retained.rows)
@@ -558,11 +561,7 @@ export class SqlGameRepository implements GameRepository {
           for (const [id, value] of values) target.set(id, value);
           positions.set(table, target);
         }
-        for (const [table, records] of retained.previous ?? []) {
-          const target = previous.get(table) ?? new Map();
-          for (const [id, value] of records) if (!target.has(id)) target.set(id, value);
-          previous.set(table, target);
-        }
+        mergeRetirementPredecessors(previous, retained.previous);
         state = retained.state;
         if (!sourceVersionPreparationNeeded(planned.state.world, state.world)) {
           if (complete) this.records.stageRetirements(state, rows, positions, previous);

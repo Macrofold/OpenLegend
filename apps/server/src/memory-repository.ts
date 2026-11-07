@@ -47,6 +47,7 @@ import {
   type TemporalHistoryWindow,
   type TemporalHistoryQuery,
   type PreparedMemoryRetention,
+  mergeRetirementPredecessors,
 } from './temporal-storage.js';
 import { insertRows, sqlRecordBatches, sqlRowBatches, SqlWriteBatch } from './sql-rows.js';
 import { LexicalProjection } from './lexical-projection.js';
@@ -1573,7 +1574,6 @@ export class MemoryRepository {
     state: SavedWorld,
     complete = false,
     pending?: RecordChanges,
-    previous?: WorldState,
     metadata?: RetentionMetadataView,
   ): Promise<PreparedMemoryRetention> {
     metadata ??= await this.prepareRetentionMetadata?.(state, pending, complete);
@@ -1612,11 +1612,13 @@ export class MemoryRepository {
         for (const [id, position] of ordinals) combined.set(id, position);
         positions.set(table, combined);
       }
+      const previous = accounts.previous ?? new Map<string, Map<string, unknown>>();
+      mergeRetirementPredecessors(previous, recent.previous);
       return {
         state: cleaned,
         rows,
         ...(positions.size ? { positions } : {}),
-        ...(recent.previous ? { previous: recent.previous } : {}),
+        ...(previous.size ? { previous } : {}),
       };
     })();
   }

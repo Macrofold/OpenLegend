@@ -68,9 +68,22 @@ export interface PreparedMemoryRetention {
   state: SavedWorld;
   rows: Map<string, string[]>;
   positions?: Map<string, Map<string, number>>;
-  /** Exact SQL-loaded predecessors for editing segmented owners absent from the hot baseline. */
+  /** Selected canonical predecessors for exact archival and cold-owner diffs. */
   previous?: Map<string, Map<string, unknown>>;
   versions?: SourceVersionPlan;
+}
+/** Several retention stages may edit one account. Preserve its first selected
+ * body, not an intermediate replacement, for the captured pre-change revision.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#e2--a-read-context-is-not-a-write-set */
+export function mergeRetirementPredecessors(
+  target: NonNullable<PreparedMemoryRetention['previous']>,
+  source: PreparedMemoryRetention['previous'],
+): void {
+  for (const [table, records] of source ?? []) {
+    let originals = target.get(table);
+    if (!originals) target.set(table, (originals = new Map()));
+    for (const [id, value] of records) if (!originals.has(id)) originals.set(id, value);
+  }
 }
 export interface TemporalHistoryPage extends TemporalHistorySelection {
   hasMore: boolean;
