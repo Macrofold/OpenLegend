@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The installed engine passes a code-only API probe; source/export, licensing and actual-browser gates remain open. | 2026-11-07   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Native geometry exports survive Blender intake; source quality, portable materials, reduced rigs and browser qualification remain open. | 2026-11-07   |
 
 ## 1. Experiment and dependency boundary
 

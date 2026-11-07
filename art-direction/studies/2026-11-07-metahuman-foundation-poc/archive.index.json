@@ -1,0 +1,356 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-smoke-20261107",
+    "revisionId": "native-smoke02",
+    "manifestSha256": "f10b6485f627eb9986fd8c09b1301d47ad6dbfdc7907aea9eb1094cff12b6f9a"
+  },
+  "files": {
+    "evidence/README.md": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ef9c046261f46c328459cdcbca6f89180dcb72a73bb67c3de19df1ca03a8625",
+      "bytes": 2582,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/capability-preflight.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c223992b993c7f5d108911c41c5572196b9b094b0b850ed4ba641a61f9fb099c",
+      "bytes": 3989,
+      "mediaType": "application/json"
+    },
+    "evidence/checkpoint-local-inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9a858af3096231e6b62b1d048a8e64ee975cdcd986404fe68eaad79a406ff20",
+      "bytes": 2994,
+      "mediaType": "application/json"
+    },
+    "evidence/execution-state-20261107.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ba322be064ab45e2cf404a59134b7fe89209bdcb5c8335426ce304860b49a98",
+      "bytes": 944,
+      "mediaType": "application/json"
+    },
+    "evidence/fixed-controls01/appearance.after.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c2363f33b9ddc6bdb33bca5f15e115e1db0dcb91787df5d73e7155826a2a081",
+      "bytes": 12484,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/fixed-controls01/appearance.before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a1db12b6152ca5e3e525fb64f345e55ccafd2871444ea31b10df35158008f862",
+      "bytes": 12403,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/fixed-controls01/appearance.diff": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cbd98b63826aae100390282ced6ec8f7c3771737ecde5193033ab0c82fdab48d",
+      "bytes": 3603,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/fixed-controls01/environment-note.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2bfd36ae1635011369dd0bae73714418d2a39dd57b756d86c4d6ab34ba504687",
+      "bytes": 383,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/fixed-controls01/manual-native.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f0beb2e0e7b57b1184645920e6f2d6a5d75f62141ed3e713925dc3ec9721134a",
+      "bytes": 1176,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/fixed-controls01/manual-scenario.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1bb47de9df5f6c3eb5dcaf6d50aa2a6f8c3e8575674eb7e08a9dee1b85f1a45f",
+      "bytes": 2456,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/fixed-controls01/native-command.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "93c9025e95c6f3cadc8826a7e2568d817abfaedd526b6d4d3beb8926b0920501",
+      "bytes": 177,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/fixed-controls01/native-resolutions.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e32641fda289944a77d4c0e874b4aa16c4323769f9ae0b8a8a8268ef8e80377",
+      "bytes": 4171,
+      "mediaType": "application/json"
+    },
+    "evidence/fixed-controls01/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec592f935ada2d67a79866024b595f4dfe3474b62804223b6a7afe1a9581c786",
+      "bytes": 2983,
+      "mediaType": "application/json"
+    },
+    "evidence/fixed-controls01/scenario.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "606dbe062a6c44abc0ef73ea4cd8ecadf141b4b6ddbf3643aa44a4051950f5b3",
+      "bytes": 6919,
+      "mediaType": "application/json"
+    },
+    "evidence/fixed-controls01/source-before.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a799fa98817647b16914a401ba35094fb70b2fcf78cf7eec21d2ff1b6548e9fb",
+      "bytes": 345,
+      "mediaType": "application/json"
+    },
+    "evidence/fixed-controls01/ts-after.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d571a29961483b2aa376fe43c41ecdb91930bc17a67516fc8048433c9bc050c4",
+      "bytes": 4997,
+      "mediaType": "application/json"
+    },
+    "evidence/fixed-controls01/ts-before.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "916540dd5df53768f5f719ec5adfc035c1cf08d1bcae2170a092f153fa9bf9bb",
+      "bytes": 5559,
+      "mediaType": "application/json"
+    },
+    "evidence/gate0-local-inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "15133530ecbbf635848748de16f22428257c7b53ba3856f49db6cc87517633b2",
+      "bytes": 1660,
+      "mediaType": "application/json"
+    },
+    "evidence/private-preservation-preflight01/access-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86ddb61c0a593d1756c6aef134f6cb6a4e55e334725cbd4c27050409f0df4968",
+      "bytes": 5174,
+      "mediaType": "application/json"
+    },
+    "evidence/private-preservation-preflight01/check-access.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "14938eb70cd6b93bdfb741d26c4b63a1838b2422ed0e9022e42cd82e33bfa82e",
+      "bytes": 4079,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/private-preservation-preflight01/check-recovery-authority.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "94e8c091e4032b708f37cf27c668413cdbe77ff4024ac45aeaaed0a759333cbc",
+      "bytes": 2093,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/private-preservation-preflight01/recovery-read-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ea86472e64cd1dc898a6d84a94799a2c4d71bbc797c015fce8ba1faa154865fe",
+      "bytes": 889,
+      "mediaType": "application/json"
+    },
+    "evidence/reference-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "80d372a821a9a4c57a3be023f5fcfba6a6d0b9eeac696b9484d2cc06e4f73c97",
+      "bytes": 19337,
+      "mediaType": "application/json"
+    },
+    "evidence/startup-sample.stdout": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c09379cdd741fe8aaec62c99cd26518ee98db2d9a7b95c74c41cb5f8954907ae",
+      "bytes": 289,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/startup-sample.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8cee4a8a151867f1f4b7bc9de0263bd05e3811b286bf685b55314d192d7304ff",
+      "bytes": 361676,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/toolchain-probe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ffde96addeba106175300cff09a13983ea5db5bfeae80c75466cb6c0228ff985",
+      "bytes": 436,
+      "mediaType": "application/json"
+    },
+    "evidence/toolchain-probe.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74649f4b738ffaefc4285262a71256b7d2452f391bc2eba26d6ed87592ebb8d9",
+      "bytes": 257518,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/toolchain-probe.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cbd8c161af58ac07118f839f1baa1b58309087fc9ca8fe6526c3af3d61658885",
+      "bytes": 709,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "evidence/toolchain-probe.stdout": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d47f8e7fb5adec17ed79473ea4e16274396ff842b57cc0ae03f8adb53b5e5b43",
+      "bytes": 259010,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "preservation-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8313e7c8597bf2efd6e2e1b1ea05a0a35af8ea762d099e85a7fd2a772d54dfdc",
+      "bytes": 16570,
+      "mediaType": "application/json"
+    },
+    "references/day-quarter.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2920e27c4cca14061ca4273e21357d2a6b287a03b91b9a3d7f169b210789b33",
+      "bytes": 111527,
+      "mediaType": "image/jpeg"
+    },
+    "references/v19-female-head-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e7df7d67aeedb5c444c686e284eff84bdeb0349297901b9de9bf2c6de9890641",
+      "bytes": 6495772,
+      "mediaType": "image/png"
+    },
+    "renders/engine-project-browser.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "179cb0f1129ac12cc1208cd6611fe01b9d290941041b5c58c1cf5a5240c68030",
+      "bytes": 118988,
+      "mediaType": "image/png"
+    },
+    "samples/smoke01/export-neutral.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5d00772768db876a3a1f42503de4b20363e198e4975a07518c4128b1a5f654d4",
+      "bytes": 4383,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "samples/smoke01/failure-diagnosis.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d4b620182c283734a29409962f78e9cb4d7675c4e45a4f98e18ca0c4dbcd8ee",
+      "bytes": 578,
+      "mediaType": "application/json"
+    },
+    "samples/smoke01/intent.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3acaf5432bff0f43f6afb62a4400c28ad45e058df8ba87889104e1f2fcdb418",
+      "bytes": 645,
+      "mediaType": "application/json"
+    },
+    "samples/smoke01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b21a161c4f3e8d54bbf542391cce2a682965c4eba37d9f67b21c8ccb07d202f9",
+      "bytes": 6584,
+      "mediaType": "application/json"
+    },
+    "samples/smoke01/unreal.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40b99389df20b4cddf17f0dc710a411bc779fa899c0c812162fc2f89edf06997",
+      "bytes": 259278,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "samples/smoke01/unreal.stdout": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad42e9defe93d9ac828b635f668df36a9cdd3b901228eb3100bfc7767d7e960d",
+      "bytes": 261379,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "samples/smoke02-editor/body-lod0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "83f6f529b3f41bcef9145165c9c841a88a5cb819a0f523651419df0b74867c2f",
+      "bytes": 2977152,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/smoke02-editor/export-neutral.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f607ad851d2e973110c3406640f0e8b7c52ed0ce535418fbceff8932ee50c431",
+      "bytes": 4471,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "samples/smoke02-editor/fullbody-lod0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f639db0aa643dfd805afbc7787d38f5afcda3b43f3262c3b9eeafcda1e2259c8",
+      "bytes": 3834176,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/smoke02-editor/head-lod0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af68a40d603fd043735a98dda3da20b949599d79cf1b479bcdf8fbbfa0b26d06",
+      "bytes": 4530400,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/smoke02-editor/intent.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b41a27c7374ec5962a1b8c4d5e738c1bad5933f5766d4d66788abf43c9175e3",
+      "bytes": 758,
+      "mediaType": "application/json"
+    },
+    "samples/smoke02-editor/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "250c7da668b136e3a5a19e3acd0fd72b28c4e469cdd3ef1a77399f403ddf4555",
+      "bytes": 8335,
+      "mediaType": "application/json"
+    },
+    "samples/smoke02-editor/unreal.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aeab8bb0af17ec2230e55c07133ddeb93b956e9534be91fdf232bbb6ddff59b2",
+      "bytes": 354375,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "samples/smoke02-editor/unreal.stdout": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b73a283f7546d2bbfdc6da665c7d9374ab32dcd17c3d0581f2e59ec7bd64778d",
+      "bytes": 355867,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source/Unreal/OpenLegendMetaHumanProof/Content/MetaHumanProof/MHP_MasculineNeutral.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aafef9a635476c0ffe37a6a6af042dd978b78fc3ac5b475897b5756adba31421",
+      "bytes": 9437403,
+      "mediaType": "application/octet-stream"
+    },
+    "source/Unreal/OpenLegendMetaHumanProof/OpenLegendMetaHumanProof.uproject": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "da4a4c56692aaf29f75355743afb0a9a186088257d057e58b8265a20084cb91d",
+      "bytes": 418,
+      "mediaType": "application/json"
+    }
+  }
+}

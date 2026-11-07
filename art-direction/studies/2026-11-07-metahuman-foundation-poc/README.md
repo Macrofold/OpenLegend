@@ -1,6 +1,6 @@
 # MetaHuman foundation proof
 
-**State:** private execution authorized; engine/Python capability checks pass. No source person, export, finished browser character or independent kit is qualified. Preflight files are local-only and not yet archived. No production integration or normal-workflow adoption.
+**State:** private execution authorized; native geometry exports and private smoke restoration pass. Source anatomy, portable materials, rig reduction and browser quality remain under evaluation. No finished character, independent kit, production integration or normal-workflow adoption is qualified.
 
 ## Brief and decisions
 
@@ -10,8 +10,10 @@ The retained Wayfarer, H01/H02 and fit-physique images are visual references. Pr
 
 ## Construction, checks and resume
 
-The [execution evidence](../../../docs/verification/metahuman-foundation-poc.md) owns exact tool/build/machine facts, inspected references, code-only results, exporter candidates, costs and limitations. UE 5.8.4 and its installed authoring/export APIs work in the isolated blank project; that is not proof of source geometry, conversion, materials or graphics quality.
+The [execution evidence](../../../docs/verification/metahuman-foundation-poc.md) owns exact tool/build/machine facts, inspected references, export results, costs and limitations. UE 5.8.4 saves and exports supplied complete source geometry through its full editor. Geometry-only exports deliberately have clay materials; the combined body export does not retain the separate head's facial rig. The native head/body LOD route, portable materials and reduced rig still need actual browser qualification.
 
-Working files are under `/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/`, with the project in `source/Unreal/OpenLegendMetaHumanProof/` and preflight records in `evidence/`. No permanent source index exists yet. Browser control is disabled, AWS sign-in is expired and the licensee/assigned-seat fact is pending. Resolve those exact prerequisites through existing access owners; do not change cloud permissions or substitute public hosting.
+Working files are under `/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/`, with the isolated project in `source/Unreal/OpenLegendMetaHumanProof/`. Browser control, authenticated local inspection and current private asset access work. The owner attests the applicable indie exception for private evaluation; public/runtime customization-kit rights remain an adoption question.
 
-The next source boundary is opening/saving one supplied preset, then one real geometry/DCC/material smoke export. No source adapter or kit should claim qualification before that output exists. MHP01–MHP06 remain open, with no success/failure conclusion about independent character creation. Current new paid provider/software spend is $0 against this proof’s $10 task ceiling; historical pilot costs are separate. This record and its links are local-only until an explicitly authorized publication/push.
+The [private smoke index](archive.index.json) pins 49 files / 29,760,094 bytes, including meaningful export failure/success evidence, saved source, inspected reference lineage and the fixed-control comparison. Its exact manifest is `f10b6485f627eb9986fd8c09b1301d47ad6dbfdc7907aea9eb1094cff12b6f9a`, revision `collection/art-studies / metahuman-foundation-poc-smoke-20261107 / native-smoke02`, in `art-library/curated-private`. Fresh authenticated restoration and every file hash pass. The [recovery locator](smoke-recovery.json) identifies the independently read/hash-verified receipt for all 50 exact object versions including the manifest. This is a supplementary source preservation batch, not a full catalogue checkpoint or independent-kit restore. No public asset URL or normal release selection is created.
+
+MHP01 is complete; MHP02–MHP06 remain open. Dominic's stocky/heavier source misses the fit/H02 target and is retained as a diagnostic. A source-shaped Orlando candidate precedes any body/head approval or wardrobe/sample expansion. Current new paid provider/software spend is $0 against this proof's $10 ceiling; existing AWS charges are not separately measured. Historical pilot costs remain separate.
