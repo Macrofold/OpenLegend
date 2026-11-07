@@ -1,6 +1,6 @@
 # Pacing, difficulty and replay variety
 
-**Status: Not started — shell only. Topic: PACING.** No game has been assessed or incorporated into this guide.
+**Status: Focused Chrono Trigger / Clair Obscur: Expedition 33 comparison, November 7, 2026. Topic: PACING.** G187 and G77 inform the lessons below; broader topic coverage remains open. These are research hypotheses, not approved behavior. The linked dossiers own source dates, editions and access limits.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -22,25 +22,57 @@ Owns challenge and temporal structure. Motivations/compulsion belong to FUN, res
 
 ## Desired experiences and contrasting approaches
 
-<!-- Identify the participants, the worthwhile activity, and materially different approaches, including simpler or deliberately omitted systems. -->
+A newcomer needs attainable reasons to continue; an experienced player may want demanding decisions, familiar pleasure or a clean ending. Compare directed introductions, optional challenges, renewed objectives and deliberate rest. One sequence need not satisfy every audience, and a continuing world need not impose continuous escalation.
 
 ## Cross-game evidence and counterexamples
 
+This focused pass compares Chrono Trigger’s campaign and DS additions with Expedition 33’s contrasting player accounts; it does not establish a universal progression model. Chrono Trigger’s late optional paths follow earlier familiarity. DS reviewers criticize the Lost Sanctum’s repeated errands, while sampled players disagree about easy combat and replay value. Satisfied completion, collecting endings and losing direction after a break are distinct outcomes. See [G187’s structure](../dossiers/chrono-trigger.md#guided-familiarity-before-late-freedom) and [reception](../dossiers/chrono-trigger.md#finishing-replaying-leaving-and-returning) (CTN06; CTR03–CTR04, CTR08–CTR09).
+
+In G77, Holland prizes defeating Simon yet declines its harder variant; Nerfed Gamer continues despite discomfort. See [Expedition 33’s reception](../dossiers/clair-obscur-expedition-33.md#e33-nov-reception) (ERV05–ERV06). These cases challenge two assumptions: that choosing to stop means failure, and that continuing means the demands are comfortable. Neither account establishes typical session length or a completion rate.
+
 ## Consolidated lessons and tradeoffs
+
+<a id="pacing-l001"></a>
+
+### PACING-L001 — Open possibilities as understanding grows
+
+**Hypothesis:** a bounded introduction can make later freedom easier to use. **Counterpoint:** experienced players may find mandatory explanation obstructive. Preserve recognizable routes back to context without forcing everyone through the same lesson. Optional challenge also needs an intelligible purpose; merely moving a difficulty spike off the main path is insufficient. State what the optional route asks the player to learn and what they can obtain elsewhere. When progression introduces a new demand, test whether earlier practice actually prepares people for it.
+
+<a id="pacing-l002"></a>
+
+### PACING-L002 — Judge the whole return trip
+
+**Hypothesis:** returning becomes worthwhile when its changed purpose justifies travel, preparation and recovery. **Counterpoint:** repetition can itself provide relaxation or skilled execution. Compare the player's wanted result and actual decisions, not novelty counts; omit an errand when it adds neither chosen pleasure nor useful consequence. Include the time to reconstruct a plan, regain context and reach another informative attempt. A short encounter can still have an expensive return path.
+
+<a id="pacing-l003"></a>
+
+### PACING-L003 — Separate challenge from interference
+
+**Hypothesis:** reducing interface and resumption costs can preserve strategic demands. **Counterpoint:** a convenience may also remove deliberate preparation or uncertainty. Identify which decision disappears before calling a change an improvement. A player seeking tactical pressure and one seeking an uninterrupted story can reasonably prefer different arrangements. Distinguish recognizing a cue, selecting a response, executing it and sustaining that effort. Improving one step need not resolve another. In testing, separate learning progress from comfort and willingness to repeat the activity.
+
+<a id="pacing-l004"></a>
+
+### PACING-L004 — Give completion and replay different jobs
+
+**Hypothesis:** a finished goal can remain achieved while another run offers a different question. **Counterpoint:** additional endings or retained power need not justify repeating familiar passages. Let replay be chosen, distinguish knowledge from carried resources, and evaluate the first worthwhile new decision. LOSS owns what resets; FUN owns why returning is wanted. Keep intended replay, a resumed save and a completed repeat distinct. Ask whether the player leaves satisfied and what, if anything, they want next; do not prescribe another run as the measure of success.
 
 ## Current OpenLegend baseline and existing design owners
 
-Use the [source and goal map](source-and-goal-map.md#topic-pacing) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
+Use the [source and goal map](source-and-goal-map.md#topic-pacing) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit. [Current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return) already distinguish continuing value, meaningful alternatives and the whole activity’s time cost. These lessons add evidence; runtime delivery remains unassessed.
 
 ## Complete situations and cross-topic consequences
 
-<!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
+**Constructed OpenLegend situation, not delivered behavior:** a player finishes a shelter and wants to explore a nearby ruin. They know the entrance, available supplies and a companion's willingness. They can prepare, attempt a shorter reconnaissance, invite help, or remain home. Weather and opposition supply resistance; travel consumes time. Discovering another entrance may improve the next attempt without destroying the shelter. A returning friend can join a new purpose without repeating the original construction. End the expedition at a recognizable result; offer context for resuming. TRAVEL owns the journey, BUILD the shelter, and MULTI participation.
+
+For a comparative test, offer a more demanding inner route after reconnaissance and make its expected commitment visible. One participant may practice it repeatedly; another may stop after mapping the entrance. A later return should preserve what each learned without assuming they remember every cue or menu setting. Observe preparation, route choice, attempt length, recovery and the reason for stopping. These observations would distinguish a welcome challenge from friction without assigning a universal ideal session length.
 
 ## Possible OpenLegend applications and limits
 
+Compare a repeatable outing, a deliberately finite project and an optional harder route within an existing selected activity. Test whether mastery leaves useful choices or only repeated administration. Campaign replay does not establish how shared calendars, durable homes or participants with different attendance patterns should work.
+
 ## Open questions and missing evidence
 
-<!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
+The sampled accounts reveal possibilities, not completion rates or an ideal session length. Track where actual players choose to stop, what they remember on return, and which difficulty they seek. Broader evidence on adaptive pacing, procedural variety and asynchronous shared-world pressure remains open. G77’s public accounts are selected contrasts, not a controlled study. Its dated interface complaints must be read with the dossier’s current patch record before being used to claim present feature absences.
 
 ## OpenLegend-specific research subtopics
 
@@ -62,3 +94,4 @@ None registered yet. These research questions are not implementation tasks. Use 
 
 | Subtopic ID | Intended experience and scope | Research lesson / evidence | Design register entry | Feature specification | Technical design |
 | ----------- | ----------------------------- | -------------------------- | --------------------- | --------------------- | ---------------- |
+
