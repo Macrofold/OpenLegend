@@ -47,7 +47,7 @@ This loop is inferred across [Inventory](https://outward.wiki.gg/wiki/Inventory)
 
 Skills come from teachers and other rewards. Basic training is broadly available, while three breakthrough points restrict deeper investment. Passing a school's breakthrough opens later skills; some advanced choices exclude one another. An initially promising school can therefore become an opportunity cost when the player discovers another interaction. [Skills](https://outward.wiki.gg/wiki/Skills), substantive indexed body, crawled approximately one month before research.
 
-The documented trainer network itself gives geography economic importance. Base-game schools include Cabal Hermit, Kazite Spellblade, Mercenary, Philosopher, Rogue Engineer, Rune Sage, Warrior Monk and Wild Hunter. The DLC adds Hex Mage, Speedster and Primal Ritualist; New Sirocco also supports Weapon Master and Specialist training. These names identify different packages of actions and passives, not separate mandatory character classes. Use individual school pages for exact skill coefficients; the general Skills source should not be stretched into an unsourced build guide. [Skills](https://outward.wiki.gg/wiki/Skills).
+Teachers are geographically distributed, so learning creates travel goals. The base game has eight breakthrough schools; the DLC adds three. New Sirocco's Weapon Master and Specialist training is a different layer, rather than two more breakthrough classes. The magic section below explains the schools' distinct contributions. [Skills](https://outward.wiki.gg/wiki/Skills).
 
 **Interpretation:** the important progression currency is partly knowledge. Knowing where a trainer lives, what a spell combination requires, which enemy resists an element, or which item can inherit a transformation may change performance without any increase in a character level. That supports a form of replay in which the player is more competent from the beginning. The counterpoint is irreversible planning under incomplete information: surprise can feel like discovery or like a hidden build tax. This is a design tradeoff inferred from the documented commitment structure, not proof of universal player sentiment.
 
@@ -72,6 +72,10 @@ Combat is not reducible to a damage-per-second comparison. Impact attacks the op
 Blocking also consumes stamina in relation to incoming impact. Repeatedly absorbing attacks therefore spends both immediate stamina and the opportunity to recover it. This is one reason treating a shield as unconditional safety is misleading. The new-player guide emphasizes impact skills such as Push Kick and Mana Push and points out that walking conserves resources compared with repeated evasive actions. [Blocking](https://outward.wiki.gg/wiki/Blocking); [New Player Guide](https://outward.wiki.gg/wiki/New_Player_Guide).
 
 **Constructed example — create an opening.** **Intention:** damage a threatening melee enemy without trading every hit. **Conditions:** the player can read an approach, has stamina available and carries an impact tool. **Actions:** avoid the initial commitment, use an impact action, then attack while the opponent is staggered. **Result:** an opening comes from state change rather than simply a faster weapon. **Next decision:** continue the sequence or disengage before stamina is exhausted. **Counterexample:** an opponent's higher impact resistance or a mistimed action can prevent the assumed stagger; a remembered sequence is not a guarantee. [Impact](https://outward.wiki.gg/wiki/Impact); [Stability](https://outward.wiki.gg/wiki/Stability).
+
+### Perception, light and avoiding a fight
+
+Lit lanterns and torches make the character more visible to enemies, and their fuel can be conserved by extinguishing them. Mineral gathering likewise requires a Mining Pick rather than merely finding an ore node. [New Player Guide](https://outward.wiki.gg/wiki/New_Player_Guide). **Interpretation:** deciding whether to illuminate oneself can change a route or approach before combat starts. Documented encounter perception is evidence for stealth decisions, not a fully simulated daily life for every NPC. The research does not establish autonomous schedules, an unrestricted dialogue-to-stealth system or a universal pacifist completion path.
 
 ### Immediate resources and burnt maximums
 
@@ -148,7 +152,7 @@ Lexicons have their own equipment identity and occupy a hand; the documented bas
 
 ### Sigils make position and preparation matter
 
-Fire, ice, wind and blood sigils establish areas that do nothing useful by themselves until combined with compatible actions. For example, Spark inside a Fire Sigil becomes a fireball. Different sigils can overlap; a co-op partner can use a placed sigil; duplicating the same kind is not the same as stacking different effects. This is a useful distinction between creating a condition and activating it. [Sigils](https://outward.wiki.gg/wiki/Sigils).
+Fire, ice, wind and blood sigils establish areas whose spell effects require compatible follow-up actions. Some also alter nearby temperature: Fire/Blood Sigils warm the player and Ice Sigil cools them. [Temperature](https://outward.wiki.gg/wiki/Temperature). For example, Spark inside a Fire Sigil becomes a fireball. Different sigils can overlap; a co-op partner can use a placed sigil; duplicating the same kind is not the same as stacking different effects. This is a useful distinction between creating a condition and activating it. [Sigils](https://outward.wiki.gg/wiki/Sigils).
 
 **Constructed example — a shared preparation.** **Intention:** answer an approaching threat with fire magic. **Conditions:** a Fire Sigil is placed and a player knows Spark. **Actions:** remain within the relevant area and trigger Spark. **Result:** the combination produces an effect that Spark alone would not. **Next decision:** defend the favorable position or abandon it as the fight moves. **Counterexample:** placing a sigil without a compatible action, or fighting outside the necessary area, does not deliver the expected attack. A second player can contribute to the activation, so the preparer and beneficiary need not be identical. [Sigils](https://outward.wiki.gg/wiki/Sigils).
 
@@ -249,6 +253,10 @@ Crafting permits either selecting a known recipe or manually trying a combinatio
 
 **Constructed example — experimentation has an explicit price.** **Intention:** discover a useful supply recipe. **Conditions:** the player has ingredients and access to the appropriate station. **Actions:** attempt an unrecorded combination. **Result:** success both produces an item and adds knowledge; failure may cost ingredients depending on the station. **Next decision:** repeat, seek a recipe, or preserve scarce ingredients. **Counterexample:** one cannot assume that every manual attempt is free merely because the survival-crafting interface often protects ingredients. [Crafting](https://outward.wiki.gg/wiki/Crafting).
 
+### Gathering is an activity with tools and wear
+
+Fishing spots are recognizable by bubbles and visible fish, occur at fixed locations and refresh after 24 in-game hours. The action needs a Fishing Harpoon or a documented equivalent, such as a Gold Harpoon, and consumes tool durability. The catch includes at least one fish with possible additional items. [Fishing](https://outward.wiki.gg/wiki/Fishing). In Caldera, Unidentified Samples extend gathering into searching changing node rotations; roots and ore require a Mining Pick, while Molepig dens require a harpoon. Rotation changes and resource replenishment use different clocks. [Unidentified Samples](https://outward.wiki.gg/wiki/Unidentified_Samples). **Interpretation:** a tool can justify carrying space through repeated usefulness, while a rare-sample search becomes a distinct late-game resource loop.
+
 ### Named objects: a resource becomes a decision
 
 These examples cover acquisition, transformation, use, storage, exchange and loss without reproducing an item database. Recipes are from substantive indexed community documentation; Fandom and wiki.gg are mirrors of the same documentation, not independent confirmation. Values below are documented rules, not measured play results.
@@ -284,6 +292,8 @@ Enchanting adds a spatial ritual. A compatible item sits on a pedestal; pillars 
 ## 8. Defeat, recovery and co-op
 
 ### Defeat advances a situation
+
+The intended native flow uses automatic saves and continuing consequences instead of a conventional player-chosen quicksave/reload cycle. This is a design statement, not a claim that debug tools, external save restoration or modifications cannot bypass it. [Outward overview](https://outward.wiki.gg/wiki/Outward); the native-flow account is also corroborated by the [firsthand preview](https://www.gamingonpc.com/previews/outward-preview/).
 
 Outward's normal defeat system chooses among authored outcomes based on location and circumstances. A player can wake after rescue, capture or another displacement, with elapsed time and possible loss of valuables. Human captors may take silver, gold and gems. The backpack is ordinarily recoverable: it can be nearby, in a relevant room or in a special chest, and its compass marker depends on being on the same map. The recovery problem is consequently often spatial and logistical. Hardcore mode adds a documented 20% chance of permanent death on defeat; that is a distinct mode, not the baseline game's universal rule. [Defeat Scenarios](https://outward.wiki.gg/wiki/Defeat_Scenarios); [Hardcore Mode](https://outward.wiki.gg/wiki/Hardcore_Mode).
 

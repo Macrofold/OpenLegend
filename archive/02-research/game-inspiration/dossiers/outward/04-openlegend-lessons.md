@@ -100,7 +100,7 @@ Possible future value includes becoming better at a familiar craft, choosing a d
 
 ## 9. Commercial lessons: a clear promise needs a complete delivered experience
 
-The [business chapter](03-production-business-and-modding.md) separates documented sales, player reach, modeled spending and unknown profit. Its strongest transferable commercial question is whether a small team can explain and deliver a distinctive experience clearly enough for the intended audience to recognize it.
+The [business chapter](03-production-business-and-modding.md) separates documented sales, player reach, an attributed Steam spending model and unknown profit. Its strongest transferable commercial question is whether a small team can explain and deliver a distinctive experience clearly enough for the intended audience to recognize it.
 
 For Open Legend, AI is a production and interaction capability, not by itself the player's goal. A demonstration can show a wanted undertaking, a meaningful choice, an unexpected but grounded consequence and a result that matters later. The existing [showcasing guide](../../../../06-marketing/showcasing-the-game.md) and [ND26](../../../../../docs/maintainers/needs-design.md#nd26--a-bounded-commercial-test-and-repeatable-product-demonstration) already own that work.
 
