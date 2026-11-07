@@ -1,14 +1,14 @@
 # Saving and retention without repeated database investigation
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK28 source conversion is installed; connected checks, experiment adoption and broader operating qualification remain open. | 2026-11-07   |
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK28 implementation and comparisons are complete; reliable progress, CPU headroom and wider qualification remain open. | 2026-11-07   |
 
 Technical companion to the [feature specification](bookkeeping-simplification-feature-spec.md) and [installed architecture](bookkeeping-simplification-tech-design.md). **Design baseline inspected November 1, 2026, 23:21 UTC:** Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `a2967555f6ae977d8bfe0ad880710815b9116681`. This is the current implementation contract; connected semantic/storage checks pass; the [November 4 standard gate](../verification/performance/2026-10/bookkeeping-simplification.md#completed-standard-gate) completes without runtime/storage failure or pause but fails normal-speed acceptance. BK11/BK15 source conversion passes; BK12/BK16 retain sustainable cleanup and operating acceptance. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns implementation; BK07/SR11/RU11 retain their operating gates. Earlier BK/RU/PP08 work remains the starting implementation, not work to repeat.
 
 ## 1. Intended play and evidence
 
-[Sections 12–14](#12-command-receipt-admission-and-operational-reads) specify the BK28 source conversion, implemented November 7, 2026; connected checks and conditional adoption remain open in BK28.
+[Sections 12–14](#12-command-receipt-admission-and-operational-reads) specify the BK28 source conversion, implemented November 7, 2026; connected checks and adoption decisions are complete; operating qualification remains open in BK28.
 
 [Section 11](#11-history-intent-and-metadata-read-repairs) specifies the installed repairs exposed by the [reviewed-runtime investigation](../verification/performance/bookkeeping/2026/2026-11-06-reviewed-runtime-isolation.md), plus the unadopted conditional batching of real edits. Its requirements extend the owners below; [current connected evidence](../verification/performance/bookkeeping/2026/2026-11-06-shared-confirmation.md) qualifies the asynchronous save/read cases independently of earlier passes.
 
@@ -357,7 +357,7 @@ Use existing SQL batch row/parameter/byte limits and the current transaction con
 
 ## 12. Command receipt admission and operational reads
 
-**Source implemented November 7, 2026, 13:08 UTC, `d03b5c18e`; verification and conditional filter adoption remain open.** [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) and [the latest trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) own delivery and evidence. Ordinary commands first use resident accepted outcomes, then exact cold lookup unless the conditional current-epoch absence proof applies. Operational reads share the existing bounded lane; retention preparation removes unrelated work rather than hiding it behind another connection. Retry protection remains exact.
+**Source implemented November 7, 2026, 15:33 UTC, `d435c054b`; focused checks pass; the optional filter is not adopted.** [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) and [the latest trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) own delivery and evidence. Ordinary commands first use resident accepted outcomes, then exact cold lookup. Operational reads share the existing bounded lane; retention preparation removes unrelated work rather than hiding it behind another connection. Retry protection remains exact.
 
 ### One accepted-receipt owner
 
@@ -368,6 +368,8 @@ The same owner bounds durable-result caching to 1,024 entries across protected o
 Protected acceptance installs its resident result before releasing mutation ownership, so overlapping cold misses replay rather than reaching the unique receipt key again. Database uniqueness remains a separate durable safeguard. Asynchronous preparation results, refusals and non-authority failures rejoin the existing mutation owner: recheck current authority and generation, then replay a newly accepted matching outcome before returning the refusal or rethrowing the failure. Explicit authority failures remain immediate refusals. This closes the overlap where the first accepted action makes the duplicate’s preparation stale. Require a controlled overlapping-retry scenario through both acceptance paths, including a refused outcome, changed fingerprint, pending save, failed protected transaction and cached-result eviction.
 
 ### Conditional current-epoch absence proof
+
+**Evaluated and removed.** The complete-caller benefit was not established outside the confounded control/physical-work variation. The runtime retains exact lookup without the bit array, reset hooks or filter metrics. [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) owns the disposition. The following alternative is not current behavior.
 
 Only adopt this experiment if removing the cold miss demonstrates a useful complete-command improvement. Use one small private filter in the existing service, not a new request protocol or persistent store:
 
@@ -388,7 +390,7 @@ At `PostgresDatabase.read`, preserve capture-at-enqueue for an explicit cut, any
 
 ## 13. Separate retention work by its actual cause
 
-**Source implemented November 7, 2026, 13:08 UTC, `d03b5c18e`; verification and conditional query adoption remain open.** Design baseline `934190d80`; [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed). The [read-operation trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) attributes 213.644 seconds of read-lane occupancy to 398 account-retention preparations. This is wall time, including Node callback delays, not database CPU. The source identifies unnecessary multipliers: recognition housekeeping wakes full cold-account preparation, pending read context is treated as new source-version write intent, and the shared pending-data overlay interprets JSON deletion predicates for every durable-row/group pair. Postmeasurement backend plans confirm the last multiplication, independently of Node callback delays. Remove these before adding readers, increasing delays or tuning caches.
+**Source implemented November 7, 2026, 15:33 UTC, `d435c054b`; focused checks pass; typed request cardinality is adopted.** Design baseline `934190d80`; [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed). The [read-operation trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) attributes 213.644 seconds of read-lane occupancy to 398 account-retention preparations. This is wall time, including Node callback delays, not database CPU. The source identifies unnecessary multipliers: recognition housekeeping wakes full cold-account preparation, pending read context is treated as new source-version write intent, and the shared pending-data overlay interprets JSON deletion predicates for every durable-row/group pair. Postmeasurement backend plans confirm the last multiplication, independently of Node callback delays. Remove these before adding readers, increasing delays or tuning caches.
 
 ### E1 — Distinguish account aging, knowledge expiry and released support
 
@@ -454,6 +456,8 @@ The pre-BK28 dependency query took 950.668 ms in PostgreSQL for no returned rows
 
 ### E5 — Expose bounded request cardinality (conditional)
 
+**Adopted.** [Backend plans and bounded-call checks](../verification/performance/bookkeeping/2026/2026-11-07-bk28-implementation.md#historical-structural-comparisons) establish the removed request-estimation/JIT work; no independent whole-game CPU gain is claimed. The following describes the selected experiment and its preserved acceptance.
+
 The separate scoped-memory query takes 687.216 ms, returns 89 rows, estimates 71,610, scans the 1,672-row memory table three times and generates 47 JIT functions. Its deadline branch already uses the due index. No disk or temporary blocks are read, but `TIMING OFF` leaves compilation/operator time unquantified. These facts justify an experiment, **not** attributing all elapsed time to compilation or forcing another index.
 
 After E1–E4, if this query remains material, compare its current single `jsonb_to_recordset` request relation with a bounded typed `VALUES` relation built from the same already-selected requests. Its tuple is `(actor_id::text, at::double precision, due::boolean, pressured::text[], overridden::text[], changed::text[])`; bind empty arrays with those explicit types. Feed all six actual bindings per request, plus fixed world bindings, into `sqlRowBatches` in `sql-rows.ts`, rather than keeping the current one-binding `[request]` wrapper. An actor request is indivisible: splitting its exclusion arrays would change eligibility. Preserve the existing oversized-single-request behavior/guard, never truncate. Keep per-criterion lookahead, deduplication, deadlines and the one 64-account/4 MiB selection allowance. Keep one query per bounded batch and skip empty batches. This exposes the actual small actor count to the planner without issuing one query per actor. The four due/pressure/change/deadline branches and current indexes retain their semantics.
@@ -478,7 +482,7 @@ No performance gain is promised before these isolated checks. The filter in Sect
 
 ## 14. Routine exact results need not become lasting impressions
 
-**Implemented world-policy experiment, November 7, 2026; semantic and record-removal qualification remain open.** The [pre-BK28 checkpoint census](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) finds 1,524 impressions and 152 exact episodes, all about the controlled person's ordinary movement. Initial own result admission remains required. Useful-only release prevents eligible routine accounts from being converted individually into lasting impressions. `createRememberedImpression` copies the existing summary into a claim; it is not sequence consolidation or an importance judgment. Pressure at the existing required-pool maintenance target (384 of 512 records) can initiate conversion before the preferred one-day aftermath ends.
+**Implemented and retained November 7, 2026; semantic/storage checks pass, with broader operating qualification open.** The [pre-BK28 checkpoint census](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) finds 1,524 impressions and 152 exact episodes, all about the controlled person's ordinary movement. Initial own result admission remains required. Useful-only release prevents eligible routine accounts from being converted individually into lasting impressions. `createRememberedImpression` copies the existing summary into a claim; it is not sequence consolidation or an importance judgment. Pressure at the existing required-pool maintenance target (384 of 512 records) can initiate conversion before the preferred one-day aftermath ends.
 
 The [accepted memory behavior](bookkeeping-simplification-feature-spec.md#2-behavior-to-preserve) permits trivial sequences to disappear. Fix the promotion distinction through the selected world's existing recording policy:
 

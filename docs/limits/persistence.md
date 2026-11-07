@@ -100,7 +100,7 @@ Scoped gameplay commands have a 24-hour retry window. The service durably advanc
 
 [Receipt retention](../../apps/server/src/command-receipts.ts) · [Command admission](../../apps/server/src/world-service.ts).
 
-**BK28 source experiment; adoption pending:** a fixed 1 MiB current-epoch membership filter can skip only provably new command lookups; possible matches and unknown coverage retain exact SQL. Saturation increases false-positive reads without rejecting valid commands or changing the 24-hour window. This operational bound is an engineering choice, not a player limit; [mechanics and adoption](../projects/bookkeeping-simplification-runtime-design.md#conditional-current-epoch-absence-proof) require a useful complete-command result after the retention root repair.
+**BK28 disposition:** the 1 MiB current-epoch absence-filter experiment was evaluated and removed because complete-command benefit was not established outside control/workload variation. Exact lookup and the unchanged retry window remain; no filter storage is retained. [Mechanics and evidence](../projects/bookkeeping-simplification-runtime-design.md#conditional-current-epoch-absence-proof).
 
 Original recommendation: **Review**.
 

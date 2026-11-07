@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | BK28 source conversion is installed; connected checks, experiment adoption and broader operating qualification remain open. | 2026-11-07   |
+| Status      | Current progress                                                                                                       | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK28 implementation and comparisons are complete; reliable progress, CPU headroom and wider qualification remain open. | 2026-11-07   |
 
 **Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. Architecture used and implementation reconciled 2026-10-31 10:59 UTC on `codex/bookkeeping-runtime-01`, based on `39aa9775a5cf48e4318227410d0ab5625f92db9d`. [BK](../maintainers/production-data.md#bookkeeping-simplification) owns remaining qualification; concurrent unrelated work is outside this project. The [integration contract](attention-and-scenes-runtime-design.md#14-integration-contract-for-the-completed-bk-ru-and-vw-branches) coordinates BK with RU consumers and VW tooling without duplicating this implementation.
 
@@ -1141,11 +1141,11 @@ The stages are implemented/evaluated; no product decision is outstanding. Wider 
 
 ## 20. Receiving preparation and command-wait removal
 
-**Source implemented November 7, 2026, 13:08 UTC, `d03b5c18e`; verification and conditional adoption remain open in BK28.** Architecture used at 12:14 UTC; reviewed at 12:08 UTC on Macrofold/OpenLegend `934190d80a6ef5703a712370d04dfaeeca7df98b`, local `codex/stealth-runtime-01-evidence`. The [latest AWS evidence](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) separates a full-feature baseline, sampled attribution and deliberately incomplete diagnostic cuts. [Feature behavior](bookkeeping-simplification-feature-spec.md#17-proposed-receiving-preparation-and-command-admission) and [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) own intended outcome and delivery. These stages extend the existing encounter, reception, temporal, view and command owners; they do not introduce another simulation, history store or model loop.
+**Source implemented November 7, 2026, 15:33 UTC, `d435c054b`; functional checks and comparisons are complete; operating qualification remains open in BK28.** Architecture used at 12:14 UTC; reviewed at 12:08 UTC on Macrofold/OpenLegend `934190d80a6ef5703a712370d04dfaeeca7df98b`, local `codex/stealth-runtime-01-evidence`. The [latest AWS evidence](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) separates a full-feature baseline, sampled attribution and deliberately incomplete diagnostic cuts. [Feature behavior](bookkeeping-simplification-feature-spec.md#17-proposed-receiving-preparation-and-command-admission) and [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) own intended outcome and delivery. These stages extend the existing encounter, reception, temporal, view and command owners; they do not introduce another simulation, history store or model loop.
 
 ### A — Use the completed sensory result
 
-**Conditional, after the retention/command work.** The diagnostic removal of the whole loss/unchecked loop eliminates roughly 200,000 contact visits but produces no convincing complete-game gain against matched controls. A1 is a small direct-subset experiment; the larger A2 delta/repair conversion below is **not selected for implementation** without new evidence of material receiving work after the root fixes. Its design is retained to make the preservation requirements concrete, not as a mandatory conversion.
+**A1 evaluated and removed; A2 remains unselected.** The diagnostic removal of the whole loss/unchecked loop eliminates roughly 200,000 contact visits but produces no convincing complete-game gain against matched controls. A1’s direct-subset trial did not establish a useful complete-caller gain; the larger A2 delta/repair conversion below is **not selected for implementation** without new evidence of material receiving work after the root fixes. Its design is retained to make the preservation requirements concrete, not as a mandatory conversion.
 
 `reconcileVisualEvidence` currently enumerates/merges and sorts all contacts before filtering a narrow `measuredSubjects` set. It then rediscovers ended/unchecked groups and repeatedly resolves fields for sources the physical encounter owner has already compared. Attention bounds selected detail, not this preceding work.
 
@@ -1171,7 +1171,7 @@ Any such experiment must preserve immediate per-part old-history closure → ins
 
 ### C — Prepare a permitted player view once
 
-**Conditional experiment, after root retention/command changes.** Removing all repeated publication worsens the diagnostic run and doubles sensory reconciliation calls; that cut changes offered work and cannot establish this narrower builder's gain. Require a fixed-cut complete-view comparison before proceeding to a full-server trial. Keep the current path if sharing the existing reader produces no useful reduction.
+**Adopted after isolated whole-view comparison; no whole-game CPU gain is established.** Removing all repeated publication worsens the diagnostic run and doubles sensory reconciliation calls; that cut changes offered work and cannot establish this narrower builder's gain. Require a fixed-cut complete-view comparison before proceeding to a full-server trial. Keep the current path if sharing the existing reader produces no useful reduction.
 
 `projectView` currently resolves visible membership, captures each body's grant, awaits practice hydration and then prepares many of the same bodies for display. After `profileFor` resolves, capture the immutable world/scope and prepare synchronous inventory/equipment/coaching/trade/attention inputs. Use **one existing A3 read scope** to build visible membership, exact grant witnesses and lazy entity presentation. Include the grant witness of a self member omitted only from rendering. Entity presentation does not consume practice, so move that hydration after this finite synchronous builder and discard the reader before any await.
 
@@ -1181,7 +1181,7 @@ This stage changes **within-call preparation only**. Do not silently narrow the 
 
 ### D — Remove avoidable command read dependencies
 
-The [runtime companion](bookkeeping-simplification-runtime-design.md#12-command-receipt-admission-and-operational-reads) owns the two-path receipt installation repair and conditional fresh-ID proof. Preserve idempotency, pending/durable acceptance, authority, retry retention and exact cold recovery. A command need not join the historical read queue merely to prove that its newly issued identity has never run. This concerns operational command identity, not a world's physical rules or a new gameplay action.
+The [runtime companion](bookkeeping-simplification-runtime-design.md#12-command-receipt-admission-and-operational-reads) owns two-path receipt installation and exact lookup. The fresh-ID proof was evaluated and removed; it is not installed. Preserve idempotency, pending/durable acceptance, authority, retry retention and exact cold recovery. Current cold receipt lookup still joins the existing reader lane; only its unused personal-history cut preparation is removed. This concerns operational command identity, not a world's physical rules or a new gameplay action.
 
 ### E — Stop unrelated retention work before it reaches the read lane
 
@@ -1219,7 +1219,7 @@ Finish each selected stage across its actual callers before isolated correctness
 
 For the combined adopted change, daughter/cliff/multiple pursuers uses the existing generic acquired-body/terrain/relation consumers, not a special handler. Keep independently stale details, anonymous body/voice, correction or forgetting during a pending thought/save, actual received timing and full current-format cold continuation. No earlier unattended path is acquired. Measure affected dense first-exposure and cold/invalidated paths as well as warm walking; none may hide its cost in a new cache or fallback. Reuse valid unchanged semantic evidence; each isolated stage needs its affected checks, not a replay of every unrelated scenario.
 
-Every selected performance mechanism is an **experiment**, not a promised speedup; receipt installation, fair-selection correctness and unchanged world-policy ownership are required independently of timing. The final full-feature 60/360 opening, late-tail trace and checkpoint/cold validation retain the existing 0.98 clock, responsiveness, cleanup and population gates. There is no unresolved product choice; implementation and performance adoption remain open.
+Every selected performance mechanism is an **experiment**, not a promised speedup; receipt installation, fair-selection correctness and unchanged world-policy ownership are required independently of timing. The final full-feature 60/360 opening, late-tail trace and checkpoint/cold validation retain the existing 0.98 clock, responsiveness, cleanup and population gates. There is no unresolved product choice; implementation and adoption decisions are complete, with operating qualification remaining open.
 
 ### Experiment execution and adoption
 
