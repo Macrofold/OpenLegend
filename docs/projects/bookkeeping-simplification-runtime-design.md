@@ -1,14 +1,14 @@
 # Saving and retention without repeated database investigation
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Prior repairs are installed; BK28 analysis/design is complete, with proposed implementation and broader operating qualification open. | 2026-11-07   |
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK28 source conversion is installed; connected checks, experiment adoption and broader operating qualification remain open. | 2026-11-07   |
 
 Technical companion to the [feature specification](bookkeeping-simplification-feature-spec.md) and [installed architecture](bookkeeping-simplification-tech-design.md). **Design baseline inspected November 1, 2026, 23:21 UTC:** Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `a2967555f6ae977d8bfe0ad880710815b9116681`. This is the current implementation contract; connected semantic/storage checks pass; the [November 4 standard gate](../verification/performance/2026-10/bookkeeping-simplification.md#completed-standard-gate) completes without runtime/storage failure or pause but fails normal-speed acceptance. BK11/BK15 source conversion passes; BK12/BK16 retain sustainable cleanup and operating acceptance. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns implementation; BK07/SR11/RU11 retain their operating gates. Earlier BK/RU/PP08 work remains the starting implementation, not work to repeat.
 
 ## 1. Intended play and evidence
 
-[Sections 12–14](#12-command-receipt-admission-and-operational-reads) specify proposed BK28 command, retention and useful-memory work removal; they are not installed behavior.
+[Sections 12–14](#12-command-receipt-admission-and-operational-reads) specify the BK28 source conversion, implemented November 7, 2026; connected checks and conditional adoption remain open in BK28.
 
 [Section 11](#11-history-intent-and-metadata-read-repairs) specifies the installed repairs exposed by the [reviewed-runtime investigation](../verification/performance/bookkeeping/2026/2026-11-06-reviewed-runtime-isolation.md), plus the unadopted conditional batching of real edits. Its requirements extend the owners below; [current connected evidence](../verification/performance/bookkeeping/2026/2026-11-06-shared-confirmation.md) qualifies the asynchronous save/read cases independently of earlier passes.
 
@@ -357,7 +357,7 @@ Use existing SQL batch row/parameter/byte limits and the current transaction con
 
 ## 12. Command receipt admission and operational reads
 
-**Proposed, not implemented.** [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) and [the latest trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) own delivery and evidence. Source inspected November 7, 2026, `934190d80`. Ordinary commands currently await a cold receipt miss before entering mutation ownership. The read shares a lane with account retention; removing that dependency must not weaken retry protection. Fix the costly retention preparation separately rather than hiding its remaining CPU/IO behind another connection.
+**Source implemented November 7, 2026, `8b71f07e3`; verification and conditional filter adoption remain open.** [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed) and [the latest trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) own delivery and evidence. Source inspected November 7, 2026, `934190d80`. Ordinary commands currently await a cold receipt miss before entering mutation ownership. The read shares a lane with account retention; removing that dependency must not weaken retry protection. Fix the costly retention preparation separately rather than hiding its remaining CPU/IO behind another connection.
 
 ### One accepted-receipt owner
 
@@ -388,7 +388,7 @@ At `PostgresDatabase.read`, preserve capture-at-enqueue for an explicit cut, any
 
 ## 13. Separate retention work by its actual cause
 
-**Proposed, not implemented.** Source `934190d80`; [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed). The [read-operation trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) attributes 213.644 seconds of read-lane occupancy to 398 account-retention preparations. This is wall time, including Node callback delays, not database CPU. The source identifies unnecessary multipliers: recognition housekeeping wakes full cold-account preparation, pending read context is treated as new source-version write intent, and the shared pending-data overlay interprets JSON deletion predicates for every durable-row/group pair. Postmeasurement backend plans confirm the last multiplication, independently of Node callback delays. Remove these before adding readers, increasing delays or tuning caches.
+**Source implemented November 7, 2026, `8b71f07e3`; verification and conditional query adoption remain open.** Design baseline `934190d80`; [BK28](../maintainers/production-data.md#bk28--receiving-preparation-and-command-wait-removal-proposed). The [read-operation trace](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) attributes 213.644 seconds of read-lane occupancy to 398 account-retention preparations. This is wall time, including Node callback delays, not database CPU. The source identifies unnecessary multipliers: recognition housekeeping wakes full cold-account preparation, pending read context is treated as new source-version write intent, and the shared pending-data overlay interprets JSON deletion predicates for every durable-row/group pair. Postmeasurement backend plans confirm the last multiplication, independently of Node callback delays. Remove these before adding readers, increasing delays or tuning caches.
 
 ### E1 — Distinguish account aging, knowledge expiry and released support
 
@@ -478,7 +478,7 @@ No performance gain is promised before these isolated checks. The filter in Sect
 
 ## 14. Routine exact results need not become lasting impressions
 
-**Proposed world-policy experiment, not implemented.** The [latest checkpoint census](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) finds 1,524 impressions and 152 exact episodes, all about the controlled person's ordinary movement. Every internal/action result becomes an own consequence, the base policy requires those accounts, and account retention converts receipt-supported accounts individually into impressions. `createRememberedImpression` copies the existing summary into a claim; it is not sequence consolidation or an importance judgment. Pressure at the existing required-pool maintenance target (384 of 512 records) can initiate conversion before the preferred one-day aftermath ends.
+**Implemented world-policy experiment, November 7, 2026; semantic and record-removal qualification remain open.** The [latest checkpoint census](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) finds 1,524 impressions and 152 exact episodes, all about the controlled person's ordinary movement. Every internal/action result becomes an own consequence, the base policy requires those accounts, and account retention converts receipt-supported accounts individually into impressions. `createRememberedImpression` copies the existing summary into a claim; it is not sequence consolidation or an importance judgment. Pressure at the existing required-pool maintenance target (384 of 512 records) can initiate conversion before the preferred one-day aftermath ends.
 
 The [accepted memory behavior](bookkeeping-simplification-feature-spec.md#2-behavior-to-preserve) permits trivial sequences to disappear. Fix the promotion distinction through the selected world's existing recording policy:
 

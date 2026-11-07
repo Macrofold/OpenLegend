@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                                                      | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Prior repairs are installed; BK28 analysis/design is complete, with proposed implementation and broader operating qualification open. | 2026-11-07   |
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK28 source conversion is installed; connected checks, experiment adoption and broader operating qualification remain open. | 2026-11-07   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
@@ -10,7 +10,7 @@
 
 ## 1. Outcome
 
-The next proposed follow-through is [Section 17](#17-proposed-receiving-preparation-and-command-admission): remove unnecessary receiving and retention work and the command dependencies it obstructs. [Section 16](#16-save-intent-and-shared-confirmation) retains installed repairs and completed experiment dispositions; neither establishes wider operating acceptance.
+The current source conversion and conditional experiments are in [Section 17](#17-proposed-receiving-preparation-and-command-admission): remove unnecessary receiving and retention work and the command dependencies it obstructs. [Section 16](#16-save-intent-and-shared-confirmation) retains installed repairs and completed experiment dispositions; neither establishes wider operating acceptance.
 
 People should move, cooperate, pursue animals, build things and talk without the server repeatedly reorganizing their memories merely to save their next action. A witness can remember a meaningful sequence and later disagree with another witness because they received different evidence. An ordinary walk need not become a permanent diary. A remembered person, useful place or promise must survive without preserving every coordinate that preceded it.
 
@@ -263,7 +263,7 @@ No product question blocks this design. [Current evidence](../verification/perfo
 
 ## 17. Proposed receiving preparation and command admission
 
-**Proposed, not implemented; design reviewed November 7, 2026, 12:08 UTC against `934190d80`.** The [latest standard AWS opening](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) maintains 99.891% normal clock while consuming 96.64% of one main CPU core and returning commands at 1,029 ms p95. Its actual checkpoint restores cold. This establishes neither responsive controls nor population capacity; diagnostic feature removals are separate evidence.
+**Source implemented November 7, 2026, `8b71f07e3`; verification and conditional adoption remain open in BK28.** Design reviewed at 12:08 UTC against `934190d80`. The [latest standard AWS opening](../verification/performance/bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) maintains 99.891% normal clock while consuming 96.64% of one main CPU core and returning commands at 1,029 ms p95. Its actual checkpoint restores cold. This establishes neither responsive controls nor population capacity; diagnostic feature removals are separate evidence.
 
 The primary proposed outcome is the same world with less memory-maintenance work and less waiting before commands can act. Smaller conditional experiments let a narrow detailed look visit selected people and a player view prepare each permitted body once; the larger sensory-delta conversion is deferred because its removed-loop diagnostic showed no convincing complete-game gain. Meaningful witness accounts, independent stale detail, unknown identities, relationship/terrain context and pending-thought correction remain intact. Broadly visible people do not disappear because detailed attention is full, and attention entry grants no earlier unattended route.
 
@@ -273,7 +273,7 @@ Movement should not wait behind memory maintenance merely to ask whether a newly
 
 The latest checkpoint contains 1,676 player memories entirely about ordinary movement, including 1,524 separate impressions. These impressions copy individual accounts; they do not consolidate the route or assess its importance. The [world-owned release experiment](bookkeeping-simplification-runtime-design.md#14-routine-exact-results-need-not-become-lasting-impressions) applies the existing intent that trivial sequences may disappear: retain exact recent/action support as today, then discard clearly routine locomotion accounts when that support is eligible for release, instead of automatically creating lasting impressions. Meaningful effects, supported goals/agreements, learned places/names, deliberate memories and warranted interpretations retain their own records. This is an explicit change to the broad current promotion heuristic, with no loss of the recent path and no new AI call; classify and measure it independently.
 
-The [technical stages](bookkeeping-simplification-tech-design.md#20-receiving-preparation-and-command-wait-removal) and [command/storage mechanics](bookkeeping-simplification-runtime-design.md#12-command-receipt-admission-and-operational-reads) specify owners, removal targets and connected checks. All performance mechanisms remain experiments requiring isolated correctness and complete-caller comparison. A source-demonstrated missing receipt-installation path is a correctness repair; database uniqueness already prevents duplicate durable effects, but overlapping protected retries can currently fail instead of replaying.
+The [technical stages](bookkeeping-simplification-tech-design.md#20-receiving-preparation-and-command-wait-removal) and [command/storage mechanics](bookkeeping-simplification-runtime-design.md#12-command-receipt-admission-and-operational-reads) specify owners, removal targets and connected checks. All performance mechanisms remain experiments requiring isolated correctness and complete-caller comparison. The shared accepted-receipt owner repairs the missing protected installation path; database uniqueness still prevents duplicate durable effects, and overlapping retries must replay through that owner.
 
 [Experimental adoption](bookkeeping-simplification-tech-design.md#experiment-execution-and-adoption) completes one owner before measuring it, records added preparation as well as eliminated work, and removes unsuccessful optional machinery. Correctness repairs stay independent of that choice. A stalled world or missing required account invalidates a comparison; fewer rows or faster refusal replies cannot qualify it. Initial result-account elimination remains unselected, and the broken removal experiment does not establish its isolated cost or exact stall cause.
 
