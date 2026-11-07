@@ -8,7 +8,7 @@ Each dossier owns its mechanics, worked interactions, source annotations, editio
 
 ## Chrono Trigger and Expedition 33 — November 2026 research
 
-[Chrono Trigger — G187](chrono-trigger.md) and [Clair Obscur: Expedition 33 — G77](clair-obscur-expedition-33.md) examine how authored adventures connect distinctive companions, useful growth, changing understanding, presentation and finite resolution. Their mechanics, audience disagreements, production, economics and creation tools remain separate cases. The [scoped record](../research-progress-chrono-trigger-expedition-33-2026-11-06.md) owns this pass and its actual completion.
+[Chrono Trigger — G187](chrono-trigger.md) and [Clair Obscur: Expedition 33 — G77](clair-obscur-expedition-33.md) examine how authored adventures connect distinctive companions, useful growth, changing understanding, presentation and finite resolution. Their mechanics, audience disagreements, production, economics and creation tools remain separate cases. The [scoped record](../research-progress-chrono-trigger-expedition-33-2026-11-06.md) records both full dossiers as complete on November 6–7, 2026. Their cross-game lessons are incorporated in the existing [STORY](../synthesis/quests-narrative-and-consequences.md) and [PACING](../synthesis/pacing-difficulty-and-replay-variety.md) guides, with broader topic coverage still open.
 
 ## Crimson Desert — October 2026 addition
 
