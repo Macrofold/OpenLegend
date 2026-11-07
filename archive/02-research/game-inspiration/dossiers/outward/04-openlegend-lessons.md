@@ -106,6 +106,8 @@ For Open Legend, AI is a production and interaction capability, not by itself th
 
 Do not derive an Open Legend subscription price, acquisition budget or lifetime-value forecast from Outward's premium sales. Different operating costs, multiplayer expectations, content generation, customer support and ownership promises require their own evidence. Marketing placements and enthusiastic creators do not establish channel conversion or a profitable acquisition cost.
 
+The [cancelled 2015 crowdfunding attempt](https://indie.rpgwatch.com/news/outward--kickstarter-canceled-31751.html), considered alongside later commercial results, makes a useful further distinction: an early campaign tests the particular offer, audience reached, trust and presentation at that time. A weak campaign is evidence worth understanding, but it is not a timeless verdict on an eventual finished game. This does not justify dismissing unfavorable feedback. The Open Legend question remains what changed in the experience or evidence enough to justify the next commitment; persistence alone supplies no answer.
+
 Outward also gives a useful caution about scope: an unusually small core team can still involve years of work, external contributors, publishing, porting and support. An [accelerator's production-funding announcement](https://www.executionlabs.com/nine-dots-studio-kitfox-games-receive-cmf-investments/) also makes support beyond core staffing visible. Recreating the visible feature list is not a small task merely because the core developer count is small. AI-assisted assets or dialogue do not remove integration, testing, coherent authorship or the need for good ordinary play.
 
 ## 10. Use existing owners and observations
