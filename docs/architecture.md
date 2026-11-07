@@ -4,6 +4,8 @@
 
 This is the maintained system map. The former [implementation snapshot](../archive/05-project/implementation-status.md) is dated history, not a second current-status register. Supported behavior is described by [feature owners](features/README.md) and [technical contracts](technical/README.md); unfinished acceptance belongs to [maintainers](maintainers/README.md).
 
+The [native simulation core design](projects/native-simulation-core-tech-design.md) selects a staged Rust proof and conditional resident-state/parallel conversion. It is not installed behavior; the current owners below remain authoritative until their complete caller conversion and qualification under [NSC](maintainers/native-simulation-core.md).
+
 The selected Main opening and its useful content are owned by [first-playable world rules](worlds/base/playable-openings.md) and [FPW](maintainers/first-playable-world.md). Independent combat/character, complete performance and human qualification remain with CTR/FPW/FPV rather than being implied by a historical feature summary. [The provider contract](ai-providers.md) owns current native judgment/chat routing and recovery; historical Macrofold snapshots are not current deployment instructions. Established world creation, memory, speech, agency, identity, saving and inventory owners below retain their current claims and evidence.
 
 ## Asset storage and delivery

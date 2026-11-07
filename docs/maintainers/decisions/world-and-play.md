@@ -40,7 +40,7 @@ Scope/dependencies: Before starting-world authoring; design follow-ups and playt
 
 ### D22 — Sector density and cross-border behavior
 
-Exact travel, compatible powers, interaction envelopes and congestion handling remain open; seamless geography is secondary rather than required
+The [native-core design](../../projects/native-simulation-core-feature-spec.md) selects continuous same-world geography across operational cell/machine boundaries, flexible cell grouping and conditional adaptive placement; no loading screen or gameplay wall is required by that partition. This resolves the execution-boundary direction, not a mandate for one global geography across authored worlds. Exact larger distributed-family envelopes, qualified density and product congestion handling remain open under [NSC05–NSC07](../native-simulation-core.md), R06/R12 and PS05–PS07; cross-world compatible powers/travel retain their existing owners.
 
 Scope/dependencies: Before the affected regional/federation release; R06/R12, PS05–PS07; [coordination choices](#product-scalability-integration-choices). Original decision status: **residual choice**.
 
@@ -89,6 +89,8 @@ Scope/dependencies: ACT09, before a process-authoring UI is approved; preserve c
 ## D61 — Shared-world scale and crowd behavior
 
 Selected shared-world populations and regional priorities retain their [capacity owner](../../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product). Remaining choices are supported cross-boundary mechanics and permitted clock skew before separate writers ship. Queued-away participants are not successful capacity evidence; no global per-action barrier is implied.
+
+[NSC](../native-simulation-core.md) specifies an initial same-clock compute-distribution experiment with exact coupled boundaries and the existing writer. It does not introduce independently committing regional storage or close the broader clock/capacity qualification.
 
 ## Product scalability integration choices
 

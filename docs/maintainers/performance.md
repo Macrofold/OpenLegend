@@ -1118,6 +1118,8 @@ Exit: cost follows active changes and relevant neighbors in sparse worlds; dense
 
 Dependencies: PF03/PF05; measured residual event-loop CPU or unavoidable confirmation RTT.
 
+[NSC00–NSC05](native-simulation-core.md) now supplies the selected design for a resident native owner and bounded parallel jobs, with a complete Rust pipeline proof before wider adoption. It preserves this item's full-path/copy/failure gate; current geometry/navigation/checkpoint workers are reused. The independent [hierarchical profiling campaign](profiling-controls.md#hierarchical-server-measurements) retains its own tooling, runs and evidence.
+
 - [ ] If necessary, give a worker long-lived simulation ownership or offload a measured bounded path/serialization task. Send versioned compact messages, not full snapshots every frame. Revalidate results and define crash/recovery and ownership fencing.
 - [ ] Implement local movement prediction/reconciliation only through the real-time design's existing version/permission/receipt contract. Never use prediction to authorize reach, inventory or damage. Benchmark browser frame work and correction frequency.
 

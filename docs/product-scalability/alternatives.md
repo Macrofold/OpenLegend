@@ -8,6 +8,8 @@ The discussion explored several models before converging. Preserve useful option
 
 ## 2. Secondary models
 
+The [native-core target](../projects/native-simulation-core-feature-spec.md) selects seamless execution across cell/machine boundaries **within one world**. The alternative below concerns making every authored world part of one global geography; that broader product choice remains secondary. Adaptive machine placement moves computation, not settlements or players.
+
 | Model                                       | Potential value                                                                   | Why it is not the primary answer                                                                                       | Revisit when                                                                                      |
 | ------------------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | Independent named home worlds               | Simple initial continuity and strong creator autonomy                             | Social fragmentation and unattended cost remain; naming timelines is not an economic solution                          | Early community tests favor self-contained groups, or compatible federation is not yet needed     |

@@ -48,6 +48,8 @@ Selected [Cognition Lab](projects/cognition-lab-feature-spec.md), October 24: [C
 
 ## Feature inventories
 
+The [native simulation core](projects/native-simulation-core-feature-spec.md) has proposed [NSC-L01–NSC-L09](limits/native-simulation-core.md) for proof/adoption scope, compute/capture capacity, cell overlap, border hysteresis and conditional distributed placement. These are unimplemented experimental constraints; current sensing, memory, saving and multiplayer limits retain their owners. [NSC](maintainers/native-simulation-core.md) tracks qualification.
+
 Designed, runtime pending: [Custom model deployments](projects/custom-models-feature-spec.md) have [MX-L01–MX-L08](limits/custom-models.md) for production purpose selection, optional revision pins, capability-aware output and existing cost/authority bounds. [MX01–MX08](maintainers/custom-models.md) separates production delivery from optional studies; boot identity and experiment completion do not gate normal use.
 
 Accepted design, runtime pending: [Shared NPC speech streaming](projects/npc-speech-streaming-feature-spec.md) has [NST-L01–NST-L09](limits/npc-speech-streaming.md) for fixed occurrence/audience, aggregate record bounds, 250 ms durable continuation coalescing, stable partial evidence, terminal readiness, active-reference growth and reused delivery/display limits. [NST01–NST10](maintainers/npc-speech-streaming.md) owns implementation. Ten/twenty/fifty listeners are qualification workloads, not a new audience cap or measured capacity.

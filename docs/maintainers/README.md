@@ -28,6 +28,8 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Current engine research
 
+[Native simulation core (NSC00–NSC08)](native-simulation-core.md) owns the designed Rust pipeline proof, conditional supported-game conversion, flexible work pooling and later adaptive cell placement. [Feature](../projects/native-simulation-core-feature-spec.md) and [technical design](../projects/native-simulation-core-tech-design.md) distinguish architecture targets from isolated experiments; no runtime migration or scale benefit is established. PF/BK and production distributed-delivery gates retain their existing owners.
+
 [Simpler saving and evidence lifetimes (BK)](production-data.md#bookkeeping-simplification) owns installed direct saving, grouped personal evidence, shared values, independent retained support and background cleanup. The [received-batch and lifetime conversion](../projects/bookkeeping-simplification-batch-design.md) is installed with connected correctness checks; BK23 retains failed AWS operating qualification. BK12/BK16 retain failed normal-speed and unmet sustainable-cleanup acceptance. Current save/privacy/accounting protections remain required throughout conversion.
 
 [Using engine research to improve OpenLegend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
