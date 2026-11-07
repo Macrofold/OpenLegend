@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Execution design and research only. No MetaHuman source, converter or runtime result has been qualified. | 2026-11-07   |
+| Status      | Current progress                                                                                                  | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The installed engine passes a code-only API probe; source/export, licensing and actual-browser gates remain open. | 2026-11-07   |
 
 ## 1. Experiment and dependency boundary
 
@@ -10,7 +10,7 @@
 
 Use MetaHuman to supply the difficult anatomical foundation. Use Blender and the existing character-family machinery to prepare and evaluate a bounded set of shapes. Do not reconstruct MetaHuman's full identity solver or embed its editor, DNA evaluator or cloud services in the game. Exported assets retain their licenses even when the software is no longer required at runtime.
 
-This is design-only scope until implementation is authorized. On implementation startup follow current repository instructions and coordinate the checkout with the main pilot; do not reset, stop or commit its work. Use an isolated external Unreal project and art workspace. No game database reset, ordinary starting-world replacement, production release selection, provider generation or art-skill edit is required for the POC.
+Implementation is authorized as a standalone private proof. The dedicated branch starts from the integrated local main; preserve the existing pilot and do not reset, stop or commit another task’s work. Use an isolated external Unreal project and art workspace. No game database reset, ordinary starting-world replacement, production release selection, provider generation or art-skill edit is required for the POC.
 
 The [feature specification](metahuman-foundation-poc-feature-spec.md) owns the replacement recommendation and user-visible scope. Current [people authoring](people-from-parts-authoring-contract.md), [world appearance](../worlds/base/people-appearance.md), [art direction](../../art-direction/decisions.md#current-direction-at-a-glance) and [storage](../asset-workflow.md) remain authoritative outside this experiment.
 
@@ -36,7 +36,7 @@ Add only the missing seams, with these proposed responsibilities:
 
 A source adapter may contain MetaHuman bone/material names and export conventions. Engine consumers receive ordinary family data and part definitions. The study's physique ranges, names and recipes are authored study content; future base-world installation would place selections in the existing world owner. Geometry sliders do not change gameplay strength, cognition, identity or permissions in this POC.
 
-One small shared-contract change is necessary for the proposed single-frame families: support fixed controls consistently, as specified in §6. Current numerical family admission already allows equal bounds, but the public family validator rejects them and fraction conversion divides by zero. Fix that inconsistency through the existing owner, not a study-only bypass. This is planned implementation, not a change made by this document.
+The shared appearance owner now supports fixed controls consistently, as specified in §6: equal-bound validation, fraction zero, zero-width percentage consistency and fixed-axis envelope feasibility. The bounded TypeScript/native resolver comparison passes; actual prepared-family assembly and browser parity remain unqualified. [Execution evidence](../verification/metahuman-foundation-poc.md#fixed-controls--resolver-comparison). This reuses the existing owner, with no study-only bypass or new schema.
 
 ## 3. Inputs, deliverables and reproducibility
 
@@ -300,5 +300,6 @@ The robust general pattern is a good neutral model plus curated shape targets, d
 
 - Product scope and acceptance: [Feature specification](metahuman-foundation-poc-feature-spec.md).
 - Implementation: [MHP tasks](../maintainers/art/metahuman-poc.md).
+- Measured execution and open gates: [MHP evidence](../verification/metahuman-foundation-poc.md).
 - Limits and constraints: [MHP inventory](../limits/metahuman-poc.md), [shared character limits](../limits/3d-pixel-art.md).
 - Existing runtime/authoring contract: [People from parts](people-from-parts-authoring-contract.md), [technical design](people-from-parts-tech-design.md).

@@ -80,7 +80,8 @@ export function sameAppearanceFamily(a: AssetRevisionReference, b: AssetRevision
 }
 
 export function appearanceControlFraction(control: AppearanceControlDefinition, value: number) {
-  return (value - control.minimum) / (control.maximum - control.minimum);
+  const span = control.maximum - control.minimum;
+  return span === 0 ? 0 : (value - control.minimum) / span;
 }
 
 /** Intersect one drag axis with the admitted linear envelope while the other
@@ -92,6 +93,7 @@ export function appearanceControlRange(
 ): { minimum: number; maximum: number } | undefined {
   const selected = family.controls.find((control) => control.id === controlId);
   if (!selected || !sameAppearanceFamily(family.reference, recipe.family)) return;
+  const span = selected.maximum - selected.minimum;
   let low = 0,
     high = 1;
   const definitions = new Map(family.controls.map((control) => [control.id, control]));
@@ -99,7 +101,7 @@ export function appearanceControlRange(
     let coefficient = 0,
       remainder = 0;
     for (const term of constraint.terms) {
-      if (term.control === controlId) coefficient += term.coefficient;
+      if (term.control === controlId && span !== 0) coefficient += term.coefficient;
       else {
         const control = definitions.get(term.control),
           value = recipe.controls[term.control];
@@ -112,7 +114,6 @@ export function appearanceControlRange(
     else if (remainder > constraint.maximum + 1e-12) return;
   }
   if (low > high) return;
-  const span = selected.maximum - selected.minimum;
   return { minimum: selected.minimum + low * span, maximum: selected.minimum + high * span };
 }
 
@@ -132,18 +133,18 @@ export function resolveAppearanceRecipe(
         return { ok: false, code: 'control', message: 'This appearance control is unavailable.' };
   const controls: Record<string, number> = {};
   for (const control of family.controls) {
+    const span = control.maximum - control.minimum;
     const supplied = input.controls?.[control.id];
     const percentage = input.percentages?.[control.id];
     const converted =
-      percentage === undefined
-        ? undefined
-        : control.minimum + (percentage / 100) * (control.maximum - control.minimum);
+      percentage === undefined ? undefined : control.minimum + (percentage / 100) * span;
     if (
       (percentage !== undefined &&
         (!Number.isFinite(percentage) || percentage < 0 || percentage > 100)) ||
       (supplied !== undefined &&
         converted !== undefined &&
-        Math.abs(supplied - converted) / (control.maximum - control.minimum) > 1e-6)
+        (span === 0 ? Math.abs(supplied - converted) : Math.abs(supplied - converted) / span) >
+          1e-6)
     )
       return { ok: false, code: 'control', message: `Check the value for ${control.label}.` };
     const value = supplied ?? converted ?? control.defaultValue;
@@ -250,7 +251,7 @@ export function validateAppearanceFamily(family: AppearanceFamilyDefinition): vo
       !groups.has(control.group) ||
       !['bipolar', 'frame', 'stature', 'age', 'styleLength'].includes(control.kind) ||
       ![control.minimum, control.maximum, control.defaultValue].every(Number.isFinite) ||
-      control.minimum >= control.maximum ||
+      control.minimum > control.maximum ||
       control.defaultValue < control.minimum ||
       control.defaultValue > control.maximum
     )

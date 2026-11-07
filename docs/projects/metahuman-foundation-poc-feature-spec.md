@@ -1,14 +1,14 @@
 # MetaHuman foundation proof — feature specification
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Design prepared. Source export, visual quality, independent character creation and performance remain unverified. | 2026-11-07   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Engine/Python capability checks pass; source export, licensing, visual quality and independent kit qualification remain open. | 2026-11-07   |
 
 ## Purpose
 
 Determine whether MetaHuman can supply attractive, anatomically believable **complete heads and bodies** for OpenLegend, and whether a small exported kit can create further characters without running MetaHuman. Quality in OpenLegend's browser presentation is the deciding result. An attractive Unreal screenshot, a moving mannequin or a functioning slider alone is insufficient.
 
-This is a standalone experiment, not adoption of MetaHuman into the art workflow. Implementation requires a subsequent go-ahead. The normal art workflow, selected game assets, world definitions and ongoing character pilot remain unchanged by this design.
+This is an authorized standalone private experiment, not adoption of MetaHuman into the art workflow. The normal art workflow, selected game assets, world definitions and existing character pilot retain their own selections and unfinished obligations. [Execution evidence](../verification/metahuman-foundation-poc.md) distinguishes capability checks from actual source/export qualification.
 
 ## Product decisions and relationship to the existing pilot
 
