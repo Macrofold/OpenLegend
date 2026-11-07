@@ -36,7 +36,7 @@ The shared [production process](../production-workflows/production-process.md) a
 - [ ] Inventory actual event/context producers and map only supported facts for the selected scene. Physical SFX requires permitted acoustic reception; missing emitters remain separately qualified ACS prerequisites. Reuse [ACS](acoustic-stealth.md), hearing and presentation; do not create a parallel sound-evidence path.
 - [ ] Implement world-owned bindings/exact-release selection, server-permitted projection, renderer-independent client audio, music/effects/ambience controls and source-stop/reconnect behavior.
 - [ ] Run isolated projection, controller and selector experiments under the linked adoption gate; verify unchanged native/cognition inputs and actual resource/latency costs before combined acceptance.
-- [ ] Qualify hit/miss/material outcomes, two perspectives, changing context without rapid switching, activation/suspension, loading/permission failure, resource/overlap measurements and audio-off use.
+- [ ] Qualify hit/miss/material outcomes, two perspectives, changing context without rapid switching, activation/suspension, loading/permission failure, resource/overlap measurements including oversized non-music refusal, and audio-off use.
 - **Dependencies:** runtime implementation authorization, selected assets/rights and actual producer capabilities. AUD03 preparation can proceed independently. Missing acoustic emitters remain prerequisites, not facts inferred from animation or captions.
 - **Completion:** implementation, required static/manual checks and in-play evidence pass. No synchronized stems, hidden-trait selector, per-event paid classifier or musician progression is required.
 
@@ -45,7 +45,7 @@ The shared [production process](../production-workflows/production-process.md) a
 - [ ] Implement the [command/module plan](../projects/audio-production-tech-design.md#4-minimal-command-contract): external records, exact sources/groups, provider operations, receipt recovery, cost admission and local inspection/finishing/export.
 - [ ] Add a discoverable audio skill only after it distinguishes available operations from targets; route to the shared process/procedure/tools/assets without copying their bodies.
 - **Dependencies:** AUD01 evidence for operations actually automated. Provider-independent records and narrow audition helpers can proceed before selection. Production defaults require AUD01’s explicit owner decision. Support different providers as actual uses arise without a generalized provider framework, adapter matrix or universal workflow engine.
-- **Completion evidence:** new candidates, focused/group edits, six children from A/B, partial failure, manual-provider import, exact-revision decisions/time-range feedback, preserved-study resume, uncertain-submission recovery without duplicate generation, and retained unknown cost commitments. The isolated helper/record experiment must pass. No gameplay database or legacy adapter.
+- **Completion evidence:** new candidates, focused/group edits, six children from A/B, partial failure, manual-provider import, exact-revision/time-range feedback, scoped review reuse after tag/export changes, preserved-study resume, uncertain-submission recovery without duplicate generation and retained unknown cost commitments. Interrupt intake/terminal-state/active-set writes and recover without lost outputs or duplicate candidates. The isolated helper/record experiment must pass. No gameplay database or legacy adapter.
 
 ## AUD06 — Deliver metadata, tag review and library retrieval
 

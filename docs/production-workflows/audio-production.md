@@ -34,7 +34,7 @@ Translate ordinary language into a short brief. Most requests need only the want
 Defaults are reversible convenience choices, not artistic laws or per-provider guarantees:
 
 - New music exploration: **three candidates**, normally **60 seconds** each when duration is absent. A requested complete song defaults to **120 seconds** only if no other context supplies its form. State that extending a short candidate may change the composition; generate a complete piece upfront when its structure is the decision.
-- A focused edit/finish: **one child per selected source**. “Three variations of A and B” means six children. “All” means the explicitly resolved current group, not the entire library.
+- A focused edit/finish: **one result per selected source**. Changed audio creates a child; metadata or encoding-only updates retain the candidate alias with an exact new asset revision. “Three variations of A and B” means six children. “All” means the explicitly resolved current group, not the entire library.
 - A new one-shot effect family: **five related takes**, with duration inferred from the event and enough natural tail. If duration cannot be inferred, start at **three seconds**; do not stretch a short impact to fill the request.
 - Source-loop/ambience exploration: **three candidates**, normally **20 seconds** each, with loop intent stated. Musical accents use their actual brief, with **five seconds** as an absent-duration starting point.
 - Use the [required Suno/Eleven Music comparison](audio-tools.md#qualify-the-operation-before-scaling) before selecting an initial music default; ask Mike after presenting results. Keep the default unresolved until his explicit answer. Outside that audition, normally use one approved route per batch unless a comparison or another operation is useful. A default does not make the workflow exclusive to that provider.
@@ -90,7 +90,7 @@ Record feedback against the exact target. A useful feedback record includes the 
 | “These hits need more variety” | Additional coherent takes or restrained editing of the same event family                                     | Material/action remains recognizable and perceived level is compatible       |
 | “Add melancholy”               | Metadata correction                                                                                          | Approved vocabulary/use meaning; no generation                               |
 
-Each revision is a child, never an overwrite of the only favorite. Batch operations list their exact targets and partial outcomes. After returning a finite batch, wait for further feedback; there is no automatic aesthetic retry loop or fixed maximum number of user-directed rounds.
+Preserve the original and apply the [candidate/revision rules](../projects/audio-production-tech-design.md#record-contract). Batch operations list their exact targets and partial outcomes. Wait when the next creative decision belongs to Mike; otherwise continue delegated selection or already-authorized finishing/publication within the stated scope. There is no automatic aesthetic retry loop or fixed maximum number of user-directed rounds.
 
 ## 7. Finish the selected recording
 

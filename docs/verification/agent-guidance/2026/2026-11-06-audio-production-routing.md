@@ -40,3 +40,18 @@ A separate source-size comparison against `40bf43295` collapses whitespace and c
 | Execution/resume | 76,754 bytes / 10,782 words | 80,799 bytes / 11,118 words |
 
 Execution source context is 5.27% larger. Native read volume, caching, outputs and elapsed time vary; one pair per case supplies no variance estimate or causal performance conclusion. In particular, fewer tokens or a faster run does not cancel the increased returned text or establish better fidelity. The JSONL evidence does not expose complete startup injection, and non-Git snapshots do not qualify Git-root discovery or other installed vendors. No speed, cost, cognition-safety or universal compliance claim is accepted. Keep broader native qualification open; runtime audio changes retain their separate isolated adoption gates.
+
+## Candidate identity and delegated continuation
+
+Four further read-only probes used the same installed runtime/configuration and restrictions above, with baseline `c2d23bdcf074649c261de1f8b3d293082284332d`. One variant changed only the procedure's candidate-versus-revision wording; another changed only the stopping rule in the procedure and feature spec; the combined variant included both. All other documents stayed fixed. These are isolated guidance comparisons, not execution of the proposed intake/recovery or browser-resource contracts.
+
+The identical prompt asked how to handle an approved tag-only edit, an encoding-only export, a happier-harmony edit, and an explicitly delegated choice/finish/private-publication continuation with rights/budget/scope already resolved. No actual assets or production were requested. All four runs exited 0, performed only reads, kept alias A for tags/encoding, created a new alias for changed harmony, continued the delegated scope without another approval and stopped after verified private publication/handoff. None selected a provider or expanded to more drafts, public distribution or integration. The baseline already recovered the intended behavior from the technical/shared owners despite contradictory procedure wording; the observations establish no newly gained capability.
+
+| Variant                      | Elapsed seconds | Noncached input tokens | Read commands | Returned tool bytes |
+| ---------------------------- | --------------- | ---------------------- | ------------- | ------------------- |
+| Baseline                     | 30.15           | 26,513                 | 5             | 114,821             |
+| Candidate identity only      | 31.75           | 18,947                 | 5             | 51,232              |
+| Authorized continuation only | 27.05           | 23,092                 | 6             | 76,860              |
+| Combined                     | 28.93           | 21,336                 | 5             | 75,344              |
+
+These single observations retain the measurement limits above; they show no correctness regression in these cases, not a statistically established performance effect or perfect compliance. Raw prompts, snapshots, traces and answers remain local-only at `/tmp/openlegend-audio-guidance-review2-20261106-6388/`. Broader CG05 qualification and executable audio adoption remain open; no audio-provider or in-game AI call occurred.
