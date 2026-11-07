@@ -19,6 +19,48 @@ export interface CommandEpoch {
   token: string;
 }
 
+/** Optional current-epoch absence proof. False positives use exact SQL; a clear
+ * bit can only describe an ID never admitted by the service's receipt owner.
+ * Reset exclusively with a newly durable epoch, never with hot-cache eviction.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#conditional-current-epoch-absence-proof
+ */
+export class CommandReceiptAbsence {
+  private readonly bits = new Uint32Array(262144);
+  constructor(private readonly epoch: string) {}
+
+  private digest(id: string): string | undefined {
+    const offset = id.length - 64;
+    if (
+      offset < 0 ||
+      !id.startsWith('gameplay:') ||
+      !id.slice(0, offset).endsWith(`:${this.epoch}:`)
+    )
+      return undefined;
+    const digest = id.slice(offset);
+    return /^[0-9a-f]{64}$/.test(digest) ? digest : undefined;
+  }
+
+  mayContain(id: string): boolean {
+    const digest = this.digest(id);
+    if (!digest) return true;
+    for (let offset = 0; offset < 32; offset += 8) {
+      const bit = Number.parseInt(digest.slice(offset, offset + 8), 16) & 8388607;
+      if (!(this.bits[bit >>> 5]! & (1 << (bit & 31)))) return false;
+    }
+    return true;
+  }
+
+  accepted(id: string): void {
+    const digest = this.digest(id);
+    if (!digest) return;
+    for (let offset = 0; offset < 32; offset += 8) {
+      const bit = Number.parseInt(digest.slice(offset, offset + 8), 16) & 8388607;
+      // The mask bounds every word index to this fixed array.
+      this.bits[bit >>> 5] = this.bits[bit >>> 5]! | (1 << (bit & 31));
+    }
+  }
+}
+
 const receiptSchema = z
   .object({
     id: z.string().min(1),
