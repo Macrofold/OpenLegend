@@ -4,8 +4,8 @@
 
 - **Subject:** G188, Outward: original release, The Soroboreans, The Three Brothers and Definitive Edition. Outward 2 appears only as separately dated, unreleased sequel context.
 - **Requested:** full research across major systems, player praise/criticism, reviews, production, marketing/commercials, business outcomes, lore, community creation and Open Legend lessons; includes [Mike's supplied Reddit thread](https://www.reddit.com/r/outwardgame/comments/1sez96v/36_hours_in_and_im_absolutely_hooked/).
-- **Repository and instructions:** Macrofold/OpenLegend; root AGENTS.md read from published `main`, commit `e1df4d4d5866190b580aedc34dff2d6a1c67f089`. Documentation ownership, the research requirements/amendment and the applicable review workflow were read.
-- **Work branch:** `research/outward-dossier-20261107`.
+- **Repository and instructions:** Macrofold/OpenLegend. Initial research used published `main` at `e1df4d4d5866190b580aedc34dff2d6a1c67f089`; the design-use review read the full root AGENTS.md and applicable documentation/review/design guidance against `main` at `00b96687b853ed7a2c5e9fc9b11542e10147ea0f`.
+- **Work branch:** `research/outward-review-20261107`. The original `research/outward-dossier-20261107` remains at `f9501edd3d6f9d181509c2604a8bdb86fa780e64`. Its nine commits were replayed onto the review baseline without rewriting that branch. Current-main Chrono Trigger retains G187; Outward uses G188, with both studies preserved in the indexes.
 - **Authority:** research and its documentation. This study makes no accepted runtime, world-rule, architecture, pricing or spending decision.
 - **Prior-material check:** the baseline recursive tree contained no Outward dossier; the connector's Outward code search returned no matches. This is a new subject, not a replacement of an earlier chapter. Earlier source-packet provenance, historical research and unrelated queued subjects remain in place.
 
@@ -19,9 +19,9 @@
 4. [Production, business, marketing and community creation](dossiers/outward/03-production-business-and-modding.md).
 5. [Applications through existing Open Legend owners](dossiers/outward/04-openlegend-lessons.md).
 
-The substantive integrated chapters were committed in [67a48e7](https://github.com/Macrofold/OpenLegend/commit/67a48e75092ef9ea63068bea59e2c64c165a9682). The reviewed evidence corrections, Steam revenue model, additional mod cases and mechanical clarifications are committed in [340b145](https://github.com/Macrofold/OpenLegend/commit/340b145e5163330a2b5c6039ce62d40741ca575c). The subsequent completion commit updates this record and the entry status.
+The substantive integrated chapters were committed in [67a48e7](https://github.com/Macrofold/OpenLegend/commit/67a48e75092ef9ea63068bea59e2c64c165a9682). The reviewed evidence corrections, Steam revenue model, additional mod cases and mechanical clarifications are committed in [340b145](https://github.com/Macrofold/OpenLegend/commit/340b145e5163330a2b5c6039ce62d40741ca575c). The original pass was completed in [f9501ed](https://github.com/Macrofold/OpenLegend/commit/f9501edd3d6f9d181509c2604a8bdb86fa780e64). The subsequent [design-use review](https://github.com/Macrofold/OpenLegend/commit/4a98f88729ed2216751ee34610efd7b455b1389f) sharpens positive applications, exact task routing and evidence interpretation.
 
-Navigation is updated in the [roster](research-roster.md), [research entry](README.md), [dossier index](dossiers/README.md) and [interaction lookup](mechanics/interaction-lookup.md). The [existing playtest plan](../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) gains a reference to the applications chapter within its existing observation paragraph.
+Navigation is updated in the [roster](research-roster.md), [research entry](README.md), [dossier index](dossiers/README.md) and [interaction lookup](mechanics/interaction-lookup.md). The [existing playtest plan](../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) references the applications and distinguishes a disliked understood rule from a comprehension or execution problem. The [survival specification](../../../docs/projects/first-playable-survival-feature-spec.md#research-basis-and-limits) links back to the comparison; the applications chapter routes findings to exact existing tasks.
 
 ## Requirement-to-evidence map
 
@@ -47,11 +47,13 @@ Section numbers refer to the linked chapter; adjacent citations there own the de
 
 ## Review and verification
 
-- Read and integrated the substantive research, then reviewed all new dossier content and the complete changes to the five existing navigation/playtest files against the baseline. The branch's scope is eleven Markdown files; it contains no implementation changes.
+- The initial pass reviewed all new dossier content and five existing navigation/playtest changes. The follow-up compared the complete dossier with current design/task owners, then reviewed the actual fixes for preserved meaning, useful positive opportunities and unnecessary scope. The combined branch contains twelve changed Markdown files and no implementation changes.
 - Cross-checked editions and material disagreements. Corrections include cumulative versus quarterly sales wording, DE-specific Protection/impact behavior, the distinction between a menu and the pause command, personal DE stash access, sigils' temperature effects, timer reset versus addition, and documented mod compatibility limits.
-- Independent content reviews checked reception against systems and business. The final systems/combat/reception integration review found no remaining actionable blocker; specific save/perception/sigil omissions from the systems review were corrected.
-- Validated introduced repository-relative paths and referenced heading anchors. Reviewed external-source access limits instead of treating blocked direct wiki pages or unwatched videos as fully inspected media.
-- Formatted the six new Markdown documents using the repository's pinned Prettier 3.6.2 and checked their formatting. No runtime tests were warranted for this documentation-only change.
+- Independent reviews covered systems/reception, business/creation and design integration. The focused second review of the actual applications, survival-reference and playtest fixes found no actionable issue. Earlier corrected save/perception/sigil omissions and their evidence remain preserved.
+- Validated introduced repository-relative paths and referenced heading anchors: the review's 21 new references pass, with the prior pass's 86 checks reused for unchanged links. Reconciliation preserved current-main research and all unrelated files. External-source access limits remain explicit; blocked direct wiki pages and unwatched videos are not presented as fully inspected media.
+- The six new documents were formatted with the repository's pinned Prettier 3.6.2; the review rechecked its four changed chapters and this record. Runtime tests were not warranted for prose-only changes.
+
+**Conversation preservation and design disposition:** the useful handoff points are represented in the evidence and applications: wanted undertakings, practical knowledge and composition, rule preference versus comprehension/reliability, encounterable history, quiet enjoyment, satisfied stopping, commercial uncertainty, representative demonstrations and creator work reaching real play. The review adds concrete existing-game examples and creator routes, while consolidating duplicated prescriptions. Existing specs and tasks already own the work; no new design pair, needs-design entry, runtime task or acceptance gate is justified by this research.
 
 ## Evidence limits and open information
 
@@ -63,4 +65,4 @@ Completion means the requested research categories were substantively investigat
 - **Hands-on scope:** no gameplay, performance benchmarking, mod installation, creator workflow, package security or license-compliance audit was performed. Linked video descriptions and music credits do not imply watched footage or auditioned audio.
 - **Scope:** this pass does not reproduce every item coefficient, animation or quest branch. It does not certify previous dossiers or close earlier packet-wide preservation/integration gates.
 
-**Remaining work in this session:** none for the authorized Outward dossier after the completion commit. Future player testing, private commercial analysis or adoption of a design hypothesis would be separate work.
+**Remaining work in this session:** none for the authorized dossier and design-use review. Required game qualification remains open in its existing task owners; research completion does not satisfy it.
