@@ -7046,16 +7046,27 @@ export class WorldService {
             throw new AuthorityError('stale-scope');
           return replay(prior);
         });
-      await this.prepareNativeKnownPlaces();
-      const resolved = await prepare();
+      let preparation: { resolved: Awaited<ReturnType<typeof prepare>> } | { error: unknown };
+      try {
+        await this.prepareNativeKnownPlaces();
+        preparation = { resolved: await prepare() };
+      } catch (error) {
+        // Revoked authority must never recover a result. Other preparation can
+        // become stale after an overlapping request already accepted this ID.
+        // docs/projects/bookkeeping-simplification-runtime-design.md#one-accepted-receipt-owner
+        if (error instanceof AuthorityError) throw error;
+        preparation = { error };
+      }
       if (scope) this.assertScope(scope, 'play', true);
-      if (!('type' in resolved)) return resolved;
       return await this.mutate(async () => {
         this.assertLiveAdmission(false);
         if (generation !== this.generation || timeline !== this.timelineId)
           throw new AuthorityError('stale-scope');
         const outcome = this.recentCommandResults.get(id) ?? prior;
         if (outcome) return replay(outcome);
+        if ('error' in preparation) throw preparation.error;
+        const resolved = preparation.resolved;
+        if (!('type' in resolved)) return resolved;
         this.assertLiveAdmission();
         if (epoch !== undefined && epoch !== this.commandEpoch)
           return {
