@@ -429,12 +429,20 @@ export class RetentionMetadata {
           changed: [...(changed.get(actorId) ?? [])],
         };
       });
-      for (const batch of sqlRowBatches(requests.map((request) => [request]))) {
+      const worldBindings = [worldId, worldId, worldId, worldId];
+      const requestRows = requests.map((request) => [
+        request.actor_id,
+        request.at,
+        request.due,
+        request.pressured,
+        request.overridden,
+        request.changed,
+      ]);
+      for (const batch of sqlRowBatches(requestRows, worldBindings)) {
         const selected = await db
           .prepare(
-            `WITH requested AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,at DOUBLE PRECISION,due BOOLEAN,
-            pressured TEXT[],overridden TEXT[],changed TEXT[])
+            `WITH requested(actor_id,at,due,pressured,overridden,changed) AS MATERIALIZED (
+          VALUES ${batch.map(() => '(?::text,?::double precision,?::boolean,?::text[],?::text[],?::text[])').join(',')}
         ), scoped AS (
           ${projection(table)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
             SELECT t.* FROM ${table} t WHERE q.due AND t.world_id=? AND t.actor_id=q.actor_id
@@ -462,13 +470,7 @@ export class RetentionMetadata {
           ) next
         ) SELECT * FROM scoped`,
           )
-          .all(
-            JSON.stringify(batch.map(([request]) => request)),
-            worldId,
-            worldId,
-            worldId,
-            worldId,
-          );
+          .all(...batch.flat(), ...worldBindings);
         const dueCounts = new Map<string, number>();
         for (const row of selected) {
           const actorId = String(row['actor_id']);

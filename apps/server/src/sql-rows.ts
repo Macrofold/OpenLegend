@@ -90,17 +90,21 @@ export class SqlWriteBatch {
 /** Trusted repository identifiers only. Bound both bind count and encoded batch size
  * for predictable PostgreSQL transaction/network work.
  */
-export function* sqlRowBatches(rows: Iterable<unknown[]>): Generator<unknown[][]> {
+export function* sqlRowBatches(
+  rows: Iterable<unknown[]>,
+  fixedBindings: readonly unknown[] = [],
+): Generator<unknown[][]> {
+  const fixedBytes = fixedBindings.length ? Buffer.byteLength(JSON.stringify(fixedBindings)) : 0;
   let batch: unknown[][] = [],
-    parameters = 0,
-    bytes = 0;
+    parameters = fixedBindings.length,
+    bytes = fixedBytes;
   for (const row of rows) {
     const size = Buffer.byteLength(JSON.stringify(row));
     if (batch.length && (parameters + row.length > parameterBatchLimit || bytes + size > 262144)) {
       yield batch;
       batch = [];
-      parameters = 0;
-      bytes = 0;
+      parameters = fixedBindings.length;
+      bytes = fixedBytes;
     }
     batch.push(row);
     parameters += row.length;
