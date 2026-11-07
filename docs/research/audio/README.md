@@ -1,6 +1,6 @@
 # Music and sound research
 
-**Sourcing investigation: November 4, 2026; selected direction reconciled November 6.** Research evidence is retained below. No audio was acquired or qualified through listening or in-game tests by these documentation tasks. Check the actual product, operation and acquisition terms before use.
+**Sourcing investigation: November 4, 2026; selected direction reconciled November 6; output-quality comparison: November 7.** Research evidence is retained below. No audio was acquired or qualified through listening or in-game tests by these documentation tasks. Check the actual product, operation and acquisition terms before use.
 
 ## Selected direction for Open Legend
 
@@ -27,10 +27,13 @@ The [current direction](openlegend-direction.md) routes to the canonical world p
 | How do indie, established RPG and AAA teams create distinctive music? How do we hire and budget?   | [Original music production and commissioning](archive/2026/2026-11-04-music-production.md) |
 | Which free/paid libraries and recording routes fit games, browser delivery and creators?           | [Stock, free and bespoke sound sourcing](archive/2026/2026-11-04-sound-sourcing.md)        |
 | What rights and deliverables do we need, and how do they fit a browser game with open-source code? | [Rights, release scope and delivery](archive/2026/2026-11-04-rights-and-delivery.md)       |
+| How do Suno, Eleven Music and OpenArt compare in musical quality, fidelity and cue fit?            | [AI music output-quality comparison](archive/2026/2026-11-07-ai-music-output-quality.md)   |
 
 The Suno answer is affirmative for eligible commercial output, with an authorized-download requirement and important free-origin/remix distinctions. The AI record preserves the current official pages' inconsistencies and gives a practical acquisition rule. A commercial license remains distinct from copyright protection, exclusivity and unrestricted downstream redistribution.
 
 Evidence includes provider contracts/help, official platform and copyright guidance, a professional survey, firsthand creator accounts and an external blind preference benchmark. Reports identify their dates and limits. Vendor capability claims and successful-game anecdotes are not our own audio-quality tests. Budget scenarios are explicitly estimated allocations, not supplier quotes.
+
+For a focused comparison of Suno, Eleven Music and OpenArt, see the [November 7 output-quality research](archive/2026/2026-11-07-ai-music-output-quality.md). It distinguishes OpenArt's Lyria models from the platform, compares dated blind-listening results and firsthand reports, and separates musical appeal, fidelity and cue fit. Its audition recommendation is provisional and does not select a provider or change the broader sourcing direction.
 
 ## Current owners and follow-through
 
