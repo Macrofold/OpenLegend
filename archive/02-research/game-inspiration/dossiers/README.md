@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Outward — November 2026 addition
+
+[Outward — G188](outward.md) follows the complete preparation, expedition and return experience: systems and lore; player praise, criticism and abandonment; production, marketing and commercial evidence; and community modding. The [Open Legend applications](outward/04-openlegend-lessons.md) connect the findings to existing owners. Original, DLC, Definitive Edition and platform differences remain explicit; the [scoped record](../research-progress-outward-2026-11-07.md) owns completion and evidence limits.
+
 ## Chrono Trigger and Expedition 33 — November 2026 research
 
 [Chrono Trigger — G187](chrono-trigger.md) and [Clair Obscur: Expedition 33 — G77](clair-obscur-expedition-33.md) examine how authored adventures connect distinctive companions, useful growth, changing understanding, presentation and finite resolution. Their mechanics, audience disagreements, production, economics and creation tools remain separate cases. The [scoped record](../research-progress-chrono-trigger-expedition-33-2026-11-06.md) records both full dossiers as complete on November 6–7, 2026. Their cross-game lessons are incorporated in the existing [STORY](../synthesis/quests-narrative-and-consequences.md) and [PACING](../synthesis/pacing-difficulty-and-replay-variety.md) guides, with broader topic coverage still open.
