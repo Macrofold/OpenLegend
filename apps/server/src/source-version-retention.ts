@@ -40,6 +40,13 @@ export interface SourceVersionChange extends VersionKey {
 export interface SourceVersionPlan {
   changes: SourceVersionChange[];
 }
+export interface SourceVersionPreparation {
+  /** Exact current headers immediately before these mutations, including pending rows. */
+  before: RetentionMetadataView;
+  actorIds?: readonly string[];
+  /** Selected original bodies already hydrated by account retirement. */
+  previous?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
+}
 export const sourceVersionKey = (value: VersionKey) =>
   JSON.stringify([value.actorId, value.kind, value.id, value.revision]);
 /** Pending cuts compose old expected state through to latest desired state. */
@@ -181,10 +188,9 @@ export async function prepareSourceVersions(
   db: SqlDatabase,
   state: SavedWorld,
   changes: RecordChanges,
-  metadata: RetentionMetadataView,
-  actorIds?: readonly string[],
+  preparation: SourceVersionPreparation,
 ): Promise<{ state: SavedWorld; plan: SourceVersionPlan }> {
-  const selected = actorIds && new Set(actorIds);
+  const selected = preparation.actorIds && new Set(preparation.actorIds);
   type Changed = {
     actorId: string;
     kind: keyof typeof tables;
@@ -208,10 +214,10 @@ export async function prepareSourceVersions(
         actorId = path[kind === 'memory' ? 2 : 3]!;
       if (selected && !selected.has(actorId)) continue;
       const row = writes.get(recordId);
-      let prior = metadata.prior(table, recordId);
+      let prior = preparation.before.get(table, recordId);
       if (!row?.create && !prior) {
-        // A previously accepted but unsaved account is absent from the durable
-        // metadata baseline. Select its exact prior metadata through the live cut.
+        // A selected cold predecessor can be absent from the finite catalogue.
+        // Resolve it through the same captured live-before cut, never today's head.
         const old = await db
           .prepare(
             `SELECT id,parent_id,position,source_id,account_revision,retention_metadata,
@@ -419,17 +425,25 @@ export async function prepareSourceVersions(
     string,
     { actorId: string; kind: keyof typeof tables; items: Changed[] }
   >();
+  const archivedBodies = new Map<string, string>();
   for (const value of keys) {
     const id = key(value),
       owner = oldOwners.get(id);
     if (!future.has(id) || archives.has(id) || currentRevisions.has(id) || !owner) continue;
+    const previous = preparation.previous?.get(tables[owner.kind])?.get(owner.recordId);
+    if (previous !== undefined) {
+      const payload = JSON.stringify(previous);
+      if (personalAccountRevision(payload) !== value.revision)
+        throw new Error('Selected exact source changed before retention.');
+      archivedBodies.set(id, payload);
+      continue;
+    }
     const groupKey = JSON.stringify([value.actorId, owner.kind]);
     let group = bodyGroups.get(groupKey);
     if (!group)
       bodyGroups.set(groupKey, (group = { actorId: value.actorId, kind: owner.kind, items: [] }));
     group.items.push(owner);
   }
-  const archivedBodies = new Map<string, string>();
   for (const group of bodyGroups.values())
     for (let offset = 0; offset < group.items.length; ) {
       const batch: Changed[] = [];

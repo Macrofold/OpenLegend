@@ -676,12 +676,9 @@ export class MemoryRepository {
   async prepareSourceVersionRetention(
     state: SavedWorld,
     changes: RecordChanges,
-    metadata?: RetentionMetadataView,
-    actorIds?: readonly string[],
+    preparation: import('./source-version-retention.js').SourceVersionPreparation,
   ) {
-    metadata ??= await this.prepareRetentionMetadata?.(state, changes, false);
-    if (!metadata) throw new Error('Complete personal retention metadata is unavailable.');
-    return prepareSourceVersions(this.db, state, changes, metadata, actorIds);
+    return prepareSourceVersions(this.db, state, changes, preparation);
   }
   private derivedAllowance?: DerivedMemoryAllowance;
   private derivedPolicyDirty = false;

@@ -767,6 +767,11 @@ export class RetentionMetadataView {
   prior(table: Table, id: string): RetentionRow | undefined {
     return this.owner.get(table, id);
   }
+  /** Reuse this captured catalogue with a different accepted/change prefix.
+   * Before-state evidence is separate from the edits being prepared. */
+  withChanges(changes?: RecordChanges): RetentionMetadataView {
+    return new RetentionMetadataView(this.owner, changes);
+  }
   excluding(removed: ReadonlyMap<string, readonly string[]>): RetentionMetadataView {
     const combined = new Map(this.removed);
     for (const [table, ids] of removed)

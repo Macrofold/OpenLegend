@@ -497,7 +497,14 @@ export class SqlGameRepository implements GameRepository {
   ): Promise<import('./temporal-storage.js').PreparedMemoryRetention> {
     const changes = this.records.prepare(before, state, retainedSourceTables);
     const metadata = await this.retentionView(state, changes, false);
-    const planned = await this.memories.prepareSourceVersionRetention(state, changes, metadata);
+    const beforeChanges = this.records.prepare(
+      this.acceptedState ?? undefined,
+      before,
+      retainedSourceTables,
+    );
+    const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
+      before: metadata.withChanges(beforeChanges),
+    });
     return { state: planned.state, rows: new Map(), versions: planned.plan };
   }
   async prepareRetainedSourceClosure(
@@ -521,7 +528,10 @@ export class SqlGameRepository implements GameRepository {
         ? this.records.captureMetadataRecords(state, retainedSourceTables)
         : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables);
       const metadata = await this.retentionView(state, changes, complete);
-      const planned = await this.memories.prepareSourceVersionRetention(state, changes, metadata);
+      const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
+        before: metadata.withChanges(),
+        previous,
+      });
       preparedVersions = planned.plan;
       const retained = await this.memories.prepareRetention(
         planned.state,
@@ -636,26 +646,29 @@ export class SqlGameRepository implements GameRepository {
           previous: baseline?.world,
         }),
       );
+      const beforeMetadata = metadata.view(state.world.id, selectedPending);
       return prepareAccountRetentionPlan(
         this.db,
         state,
-        metadata.view(state.world.id, selectedPending),
+        beforeMetadata,
         actors,
         selectedPending.deletes,
         async (prepared) => {
-          this.records.stageRetirements(prepared.state, prepared.rows, prepared.positions);
-          // Pending rows already carry their exact encoded changes. Prepare only
-          // this slice's retirement/impression effects, not every unsaved account
-          // again against the older durable world.
-          const changes = mergeRecordChanges(
-            selectedPending,
-            this.records.prepare(state, prepared.state, new Set(accountTables)),
+          this.records.stageRetirements(
+            prepared.state,
+            prepared.rows,
+            prepared.positions,
+            prepared.previous,
           );
+          // The pending prefix is read context, not another mutation. Version
+          // closure receives only this retirement's actual replacements/deletions.
+          const changes = this.records.prepare(state, prepared.state, new Set(accountTables));
+          if (!changes.writes.size && !changes.deletes.size)
+            return { state: prepared.state, plan: { changes: [] } };
           return this.memories.prepareSourceVersionRetention(
             prepared.state,
             changes,
-            metadata.view(state.world.id, changes),
-            actors,
+            { before: beforeMetadata, actorIds: actors, previous: prepared.previous },
           );
         },
       );

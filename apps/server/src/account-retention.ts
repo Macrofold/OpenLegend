@@ -93,7 +93,8 @@ export async function prepareAccountRetention(
   const policy = selectedTemporalPolicy(state.world),
     now = state.world.simTime;
   const rows = new Map<string, string[]>(),
-    positions = new Map<string, Map<string, number>>();
+    positions = new Map<string, Map<string, number>>(),
+    previous = new Map<string, Map<string, unknown>>();
   let world = state.world;
   const bodyReads: Array<{ actorId: string; candidate: Candidate }> = [];
   const applications: Array<{ actorId: string; apply: () => Promise<void> }> = [];
@@ -283,7 +284,11 @@ export async function prepareAccountRetention(
             let replacement: MemoryRecord | undefined;
             if (canRecall && entry.source === 'memory' && entry.value.impression)
               replacement = weakenImpression(entry.value, now);
-            else if (canRecall && entry.value.retention?.receipt) {
+            else if (
+              canRecall &&
+              entry.value.retention?.afterRelease === 'impression' &&
+              entry.value.retention.receipt
+            ) {
               const locator = entry.value.retention.receipt;
               const record =
                 entry.source === 'awareness'
@@ -395,6 +400,9 @@ export async function prepareAccountRetention(
             }
             expired.push(entry);
             const table = tables[entry.source];
+            let originals = previous.get(table);
+            if (!originals) previous.set(table, (originals = new Map()));
+            originals.set(candidate.recordId, entry.value);
             let retired = rows.get(table);
             if (!retired) rows.set(table, (retired = []));
             retired.push(candidate.recordId);
@@ -528,7 +536,7 @@ export async function prepareAccountRetention(
           JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'supports', id]),
         );
   if (removedSupports.size) rows.set('mind_temporal_supports', [...removedSupports]);
-  return { state: world === state.world ? state : { ...state, world }, rows, positions };
+  return { state: world === state.world ? state : { ...state, world }, rows, positions, previous };
 }
 
 export { nextAccountRetentionAt } from './retention-deadlines.js';
