@@ -9,9 +9,9 @@ Base: `Macrofold/OpenLegend`, published `main` at `e1df4d4d5866190b580aedc34dff2
 | Subject | State | Evidence and remaining work |
 | --- | --- | --- |
 | G187 — [Chrono Trigger](dossiers/chrono-trigger.md) | Complete full dossier | R01–R14 and applicable R15 covered; 104 annotated source labels, five full independent written reviews plus contrasting player testimony, twelve worked mechanics/exploration situations, edition boundaries and explicit financial/access limits. Reviewed and committed before beginning G77 expansion. |
-| G77 — [Clair Obscur: Expedition 33](dossiers/clair-obscur-expedition-33.md) | Queued for expansion | Preserve the September 26–27 dossier and November 4 music research. Reassess every requirement, current release evidence, lore, reception disagreements, economics and creator tools after Chrono Trigger is committed complete. |
+| G77 — [Clair Obscur: Expedition 33](dossiers/clair-obscur-expedition-33.md) | Expansion in progress | September 26–27 dossier preserved; November 7 checkpoints add updated patch/service evidence, fuller mechanics, production and creator workflows, later accessibility and ending criticism, and art/writer interviews. Full story/music, additional cases and consolidated review remain in progress. |
 
-Next boundary: begin Expedition 33 after the Chrono Trigger completion commit, then reconcile the two completed dossiers into the existing STORY and PACING synthesis owners. CT-only synthesis drafts are prepared; their matrix incorporation is not claimed until publication. Root owns integration and GitHub commits. All investigators share the same task authorization and spending ceiling.
+Chrono Trigger completion commit: `0b9c396e43d83db3a617da74663eaad34c20fc5f`. Expedition 33 research began after that boundary. Next boundary: complete the Expedition 33 expansion, then reconcile the two completed dossiers into the existing STORY and PACING synthesis owners. CT-only synthesis drafts are prepared; their matrix incorporation is not claimed until publication. Root owns integration and GitHub commits. All investigators share the same task authorization and spending ceiling.
 
 ## Completion evidence
 

@@ -1,4 +1,12 @@
-# G77 — Clair Obscur: Expedition 33
+# Clair Obscur: Expedition 33 — full game dossier
+
+**Substantive research checkpoint — expansion in progress, November 7, 2026.** G77. The September 26–27 research is preserved below with its original dates, source labels and section anchors. The November expansion audits current evidence and adds deep story, mechanics, production, commercial analysis, reception and creator-tool research. **Major story and ending spoilers appear in the expansion.** Research informs OpenLegend decisions; it does not approve features or add runtime tasks.
+
+The older website-news cutoff is superseded by the dated Steam patch audit below. Launch Game Pass availability is historical; the new platform announcement records its October 2026 departure. No new playthrough, executed community tool, viewed trailer or listened soundtrack is claimed.
+
+## Preserved September research and evidence
+
+The following body is retained as a dated research record. Read current-version corrections and the fuller investigation in the November sections that follow.
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
@@ -302,3 +310,295 @@ Original-pass sources were accessed September 26, 2026; C30 and C34 were re-chec
 - **C33 —** [Game8: Gestral Beach Locations and 100% Guide](https://game8.co/games/Clair-Obscur-Expedition-33/archives/517704), updated May 14, 2025, with its linked Gestral Games guide. Secondary written guide used narrowly to establish the five bounded Gestral side-game/minigame types and their reward role; not primary implementation evidence or a claim that every later patch leaves them unchanged.
 
 - **C34 —** [Clair Obscur: Expedition 33 on Steam](https://store.steampowered.com/app/1903340/Clair_Obscur_Expedition_33/), Valve store/review surface, audited September 27, 2026. Current dated aggregate plus visible Most Helpful/recent review bodies were read through the public store index. Used for the current English/recent sentiment snapshot and direct positive/negative testimony; counts/hours are mutable store metadata, not sales or representative polling.
+
+## November expansion
+
+## Story, world, art and music expansion — November 7, 2026
+
+**Research in progress. Major story and ending spoilers will appear in the completed expansion.** The preserved September dossier covers the premise and several relationship systems. This pass adds the full narrative structure, the distinction between the world's history and the player's changing understanding, the protagonists' conflicting commitments, and the contribution of visual and musical authorship.
+
+### Authorial intent is evidence about a question, not a mandatory interpretation
+
+In GamesRadar's original GDC 2026 interview, lead writer Jennifer Svedberg-Yen says the two endings were developed together. Her account treats them as complementary perspectives that ask whose happiness is being pursued and what that pursuit costs other people. It does not designate a universally correct ending. That intention is useful evidence when interpreting the finale, but it cannot settle whether every player finds the preceding journey or either resolution convincing. The reception expansion preserves disagreement on precisely that point. [ERO01]
+
+**Open Legend hypothesis.** A consequential ending needs intelligible commitments on both sides: who wants an outcome, who bears its cost, what each person knows, and which consequences the player could reasonably anticipate. Ambiguity can support reflection when those commitments are clear; withholding all causal information would create a different experience. This is an interpretation for comparison, not a new approved feature.
+
+### A consistent art language is also a production system
+
+Adobe's interview with lead character artist Alan Reynaud and lead environment artist Carla Dévèze describes a focused set of reusable materials, including obsidian, black marble and gold. Character and environment texturing shared Substance tools, while the character pipeline also used sculpting, garment, modeling and rigging applications. The practical lesson is that a recognizable palette and material vocabulary can support consistency across thousands of authored assets. The vendor's description of a small principal art team should not be confused with the entire credited production workforce. [ERO02]
+
+## Mechanics expansion and current-state audit — November 7, 2026
+
+### Preservation and scope
+
+The September 26–27 dossier already provides substantial coverage of the six characters, weapon scaling and upgrade tiers, Pictos versus Lumina, Tints, companion bonds, Nevron requests, Gestral minigames, and six cross-system situations. This supplement preserves that work. It concentrates on missing mechanical distinctions, deeper concrete interactions, and changes that a launch review or the older website-index check cannot establish. No hands-on play, internal source-code inspection, or video viewing is claimed.
+
+### Material update to the dated patch boundary
+
+The official website news index still presents the April 24, 2026 anniversary post as its newest game-news entry. That is evidence about the index, not the entire patch history. The official Steam announcements additionally expose **Patch 1.5.6, dated June 30, 2026**. It adds Arabic text and fixes interactions involving Burn applied during stun, Cleim, Martenon, and the Sireso weapon's interaction with Powerful at battle start. Missing audio cues for a Chromatic Lampmaster jump attack and Sirene's second charm attack were also corrected. Consequently, a launch report about a specific cue or build interaction must be dated; neither a 2025 complaint nor the website's shorter news list establishes the present behavior. [ESM01][ESM02]
+
+The same announcement reports a known PC crash involving the Reacher/Manor on some configurations and suggests temporarily reducing Global Illumination below Epic. This is a dated publisher notice, not independent confirmation that a configuration still crashes on November 7. No claim of complete console/PC build parity follows from reading it. [ESM02]
+
+### Combat framework: decisions versus execution
+
+The developer's PlayStation account distinguishes unlimited decision time during the player's command selection from reaction time during enemy attacks. The visible turn-order column supports planning. Dodging has a more forgiving timing window than parrying; a fully parried enemy combo can generate a counterattack. Free aim can target a specific encounter mechanism: Goblu's flowers confer buffs, and shooting them changes the boss's tactical state. These are authored battle interactions rather than free positional combat. [ESM03]
+
+**Interpretation.** A meaningful inventory must separately identify what the player chooses, what resources the choice spends, and what execution can change afterward. AP is not merely a spell-point pool; successful defense can alter the next turn's options. A boss-specific object can also make an inexpensive aimed shot more useful than spending the whole budget on direct damage. This is why “turn-based with parrying” is an insufficient mechanical description.
+
+### Completion focus for this checkpoint
+
+The next consolidation completes explicit Gradient resources and counters; Break and status rules; free aim and battle initiative; growth and build constraints; failure, retry and New Game Plus; current interface/accessibility changes; and additional worked cases. Existing exploration and social coverage will be summarized only where a newly verified rule changes its meaning.
+
+### Concrete additions already verified
+
+**Retry and readability were shipped changes, not recommendations.** Patch 1.4.0 (July 29, 2025) added a defeat-screen Battle Retry prompt, visible Lumina costs, dialogue autoplay, separate exploration/combat volume controls, and icons for Lune's Stains. It also fixed the Thermal Transfer extra-turn condition and the Second Chance/Healing Boon/Protecting Death immortality interaction. A build guide relying on either bug describes a superseded rule. The icon change matters because color ceases to be the only cue for distinguishing Stains. [ESM04]
+
+**New Game Plus resets relationships and quest state.** The inspected Push Square guide describes completing the story, continuing from the save before the final boss, and choosing New Game Plus at a Rest Point. Character progression and inventory persist broadly, but optional-quest progress, associated quest items, and relationship levels reset. Stronger opponents and improved rewards distinguish the replay. This supports a clear separation between retained combat investment and repeated authored progression, without asserting that every collectible flag or platform-specific save behavior follows an undocumented universal rule. [ESM05]
+
+**Gradient is a separate shared resource.** The indexed Stalact tutorial describes AP spent on skills filling the Gradient gauge, up to three charges. Those charges fund a character's separate Gradient attacks. The defensive Gradient Counter is a response to a special enemy attack, not simply another name for spending that offensive meter. The defensive guide identifies the greyscale cue and a dedicated timed input. Dodge, parry, jump and Gradient Counter are therefore four different responses, not interchangeable ways to negate every attack. [ESM06][ESM07]
+
+**Status can change the legal action, not only damage.** Inverted turns healing into harm; Exhausted blocks AP gain; Silence prevents skills; Bound prevents dodging; Curse can kill when its duration expires. Shield absorbs hits, whereas Shell reduces incoming damage. Rush/Slow affect speed and Powerful/Powerless affect outgoing damage; Defenceless increases received damage. A status-aware build therefore needs answers to lost actions and resource denial as well as larger HP. Exact coefficients from this secondary list are not adopted where unnecessary or where its text is ambiguous. [ESM08]
+
+### Additional build and control distinctions
+
+**Post-launch interface changes.** The December12,2025 1.5.0 notes add saved Lumina Sets (up to50), controller remapping, HUD scale80–120%, extra Picto/Lumina filters, and an Abandon Battle option. These directly change the cost of trying a build and controlling a fight. The official Steam permalink rendered only a shell in this pass; the publisher's notes are preserved in the inspected GOGDB release-note mirror and independently indexed at Expedition33.gg. Verso's Drafts is accessible from ActIII with Esquie's underwater ability; it is not a new mandatory campaign chapter. [ESM09]
+
+**Difficulty has mechanical changes beyond HP.** The official 1.3.0 announcement increases Story-mode parry/dodge windows by40%, enables Simon rematches, and adds ActIII flag modifiers for player damage caps and enemy-HP multipliers. Story, Expeditioner and Expert should therefore be discussed separately from optional challenge modifiers. The main point is adjustable execution and challenge, not a claim that every player's motor-access needs are solved by lowering difficulty. [ESM10]
+
+**Free Aim is an AP decision within a turn.** Xbox Wire's first-hand release guide specifies one AP per shot without ending the current turn. Outside battle, shooting a Nevron can stun it long enough to approach and initiate First Strike. Resting refills restorative items and repopulates ordinary enemies; repeated attempts therefore spend player time rather than permanently consuming every restorative charge. [ESM11]
+
+**Break has a threshold and a trigger.** Filling the golden Break bar does not by itself spend the opportunity. An action marked Can Break must trigger the stun; a qualifying attack can both finish filling the bar and break the target. The result denies the next enemy turn and increases damage during the opening. Damage-to-HP, contribution-to-Break, and permission-to-trigger-Break are three different properties. [ESM13]
+
+**Learning, equipping and improving a Picto remain separate.** Only an actively fighting character advances mastery of an equipped Picto. A physical Picto can occupy one character at a time; the mastered Lumina can be activated by several characters within their individual budgets. Higher-level copies improve the Picto's statistics, not its passive's strength, and Pictos do not use the weapon-catalyst upgrade service. Distinct versions such as Energizing Start I–IV can stack, which is different from activating one identical effect twice. Colour allocations are not refunded by Recoats. The guide's claim that all Colours are finite conflicts with its reader corrections and is not adopted here. [ESM17]
+
+**Respec has two separate costs.** Ordinary level-ups supply three attribute points and one skill point, but only six skills can be equipped. One Recoat refunds attributes or purchased skills; resetting both uses two. Starting skills remain available. That makes a new weapon's scaling a reason to reconsider allocation without confusing an equipment swap with a free complete character reset. [ESM18]
+
+**Damage caps are part of progression.** Painted Power permits damage above9,999 and costs five points when equipped as Lumina. Obtaining it after the ActII climax is different from activating it on a particular character. A late-game damage build can be constrained by that activation even when its weapon and attributes look sufficient. [ESM19]
+
+**An alternative to parry-funded AP exists.** Energising Pain removes AP gain from parries and gives one AP when hit. Its ten-point Lumina cost and the need to survive those hits create a different resource plan. It is evidence that an equipment choice can change the value of a mistake; it is not evidence of immunity or universally superior play. [ESM20]
+
+## Expedition 33 — production, discovery, economics and creator ecosystem expansion
+
+Research date: 2026-11-07 (work began late November 6 UTC). First sourced checkpoint; additive to the preserved September dossier. Evidence types and dates remain separate. No hands-on play, mod execution, video viewing or paid market-data access is claimed.
+
+## Production evidence added to the existing C9 account
+
+Tom Guillermin's March 2026 development account describes a progression from Broche's personal prototypes to a twelve-person vertical-slice team at GDC 2022, where Kepler support enabled the alpha and further hiring. Limited programming capacity shaped the workflow: keep Unreal close to its standard form, use selected external plugins, and provide Blueprint building blocks that designers combine. Skill presentation joins movement, effects, camera, focal length and timing. The world map, built late, reused interaction systems and art from other levels. This is first-person process evidence, not proof that engineering or content creation was cheap. The transfer hypothesis is to invest scarce technical work in tools that let content specialists iterate independently, while testing integration and runtime cost. [EPR01]
+
+The CNC interview with Sandfall's Benjamin Dimanche places early experimentation in 2019 and identifies the prototype name *We Lost*. Broche, Tom Guillermin and François Meurisse formed the founding collaboration. Montpellier housed the core team and Paris the cinematics division; the approximately thirty-person description refers to the main team, while external partners also contributed. Dimanche emphasizes people working across disciplines. Do not relabel that figure as the complete credited workforce, or calculate total labor by multiplying it by the entire development duration. [EPR02]
+
+## Dated commercial evidence and current-context audit
+
+The preserved dossier's official **eight million copies sold by April 24, 2026** remains the latest directly inspected publisher milestone pending fresh verification. The current official news index still leads with the April anniversary post; this is an index observation, not an exhaustive proof that no later patch or announcement exists elsewhere. [C7][EPR03]
+
+Publisher-distributed May 2025 material states **one million copies in the first three days** and **3.3 million in the first 33 days**, explicitly excluding additional Xbox/PC Game Pass downloads. Its October 8 release states **over five million sold** and lists PC availability including GOG, Steam and Epic. These are reported paid-copy milestones, not player totals or audited receipts. [EPR04][EPR05]
+
+A fresh October 23, 2026 secondary report relays Alinea estimates of **8.7 million copies** and approximately **$366 million revenue**, but the article also contains a conflicting $336 million sentence. This is a research lead requiring the original analyst definition and method, not an accepted financial result. It also reports the title leaving Game Pass and estimated subscription players; those claims require primary platform verification before changing the dossier's present-tense distribution wording. [EPR06]
+
+## R15 gate and initial tool evidence
+
+The gate is provisionally yes: documented community tools and shipped modifications go beyond isolated cosmetic swaps. ClairObscurFix is an ASI plugin addressing frame-rate/presentation/configuration behavior; its GitHub README explicitly states that active development migrated to Codeberg and the GitHub repository was archived in August 2025. Do not treat the frozen mirror as current support. [EPR07]
+
+The community Vortex extension documents distinct package classes: Unreal Paks, Blueprint LogicMods, UE4SS scripts/DLLs, resource folders, config and saves. It also distinguishes Win64 from the Xbox PC WinGDK layout and requires staging on the game's drive rather than symlink deployment. This is evidence of ecosystem complexity, not publisher certification or a guarantee that arbitrary mods combine safely. [EPR08]
+
+**Online Expedition: a material current-version correction.** The primary creator description now shows v0.14.0, updated October 30, 2026. Earlier indexed text described ghosts and solo battles, but v0.11 added shared exploration, battles and story progress, rooms of up to five, a bundled UE4SS build, settings and diagnostic logs; v0.12 added Epic and Xbox PC editions. Changelogs require matching mod versions and describe repairs for party/progression state, desynchronized fights and shared loot. The current author permissions restrict redistribution, modification and reuse of contributed assets. This is an unofficial beta modification, not native multiplayer or a verified promise that every encounter works. The documented progression repairs make independent save backups especially important. [EPR09]
+
+## Additional verified checkpoint: current access, marketing and technical production
+
+**Game Pass status correction.** Microsoft’s October 7, 2026 service announcement lists Expedition 33 for removal on **October 15, 2026** across cloud, console and PC. The launch subscription availability is therefore historical; it should not remain an unqualified current offer. This independently confirms the dated distribution change, without validating any analyst claim about cannibalization or sales after departure. [EPR10]
+
+**Creator campaign evidence.** Guillotine’s own case study says Kepler commissioned a campaign spanning previews, events and launch. It attributes the February preview beat to 87 creators producing 125 pieces, 1.7 million combined views and 174,000 livestream watch-hours. It reports 1,200 confirmed launch creators and claims 71% of global organic creator viewing from the early embargo through launch week. These are the agency’s self-reported attribution figures, with no independent methodology or sales-conversion audit provided. The page’s headline cards and narrative use different periods/metrics and should not be summed. The evidence supports planned creator outreach alongside organic uptake; it does not establish unpaid distribution, no marketing budget, or incremental purchases. [EPR11]
+
+**Creator application channel.** The official site links a named Lurkit creator program and application route. The rendered application page provides no readable compensation, eligibility or commercial-rights terms. Do not infer that a content-creator program is a mod marketplace or that every participant is paid. [EPR12]
+
+## Further production and creator evidence — substantive checkpoint
+
+**Concrete engine use.** Guillermin’s March 2025 Unreal interview describes shared Blueprint work and daily Unreal Game Sync use. An early internal boss demo, passed between teammates after defeats, helped evaluate reactive defense; this is a remembered qualitative test, not an external sample. Skills were authored as small Sequencer cinematics with dynamically bound actors and exposed movement properties. The overworld used World Partition/HLOD tuning and a separate Esquie navigation mesh plus custom collision generation. The audio pipeline used a Blueprint Music Manager, MetaSounds presets and transition markers. These specific mechanisms explain what the purchased engine supplied and what the team still had to build; they do not prove zero engineering cost. [EPR13]
+
+**Post-success scope discipline.** In the July 29, 2026 AUTOMATON interview, Broche describes approximately26 current staff and four programmers, with designers and technical artists implementing logic through Blueprints. He argues for preserving constraints rather than expanding reflexively after success. A possible Switch2 port is described as an interest and technical challenge, not an announcement. Treat current staffing, launch core staff and all credited contributors as different measures. The creative lesson is selective scope and short communication paths; the counterpoint is that constrained staffing also limits simultaneous platforms and maintenance capacity. [EPR14]
+
+**E33-Randomizer: configuration-to-package creation.** The current upstream README requires .NET10 and supplies Windows/Linux routes. Users configure encounters, generate output, then install the matching `.pak`, `.utoc` and `.ucas` set in `Sandfall/Content/Paks/~mods`. The maintainer identifies overridden encounter tables and optional enemy-table changes, making conflict analysis concrete. Building depends on repak, retoc, uesave and UAssetAPI, with their separate licenses; dependency updates record versions and checksums. An older fork still documents .NET9, so this dossier follows upstream rather than combining incompatible instructions. Release-page retrieval failed; no exact release tag is claimed. The upstream MIT license covers that project’s code, not every bundled dependency or game asset. [EPR15]
+
+**SiresoFix: a narrow authored rules repair.** Reagent0’s MIT-licensed script addresses the Sireso level4 passive being overwritten by Powerful. Its README pins a specific UE4SS experimental build, installs the script under the framework’s Mods folder, enables it in `mods.txt`, and checks the framework log for the loaded message. This is a documented route from a specific gameplay problem to a script distributed with installation and verification guidance. It is not evidence that the original defect remains in the current official patch, or that the old loader build is universally appropriate today. [EPR16]
+
+**UE4SS: authoring/debugging infrastructure.** The framework offers Lua/C++ APIs, Blueprint loading, a live property viewer/editor, header generation and mapping dumps. Its maintainers explicitly reject a promise of automatic compatibility with every Unreal game. Documentation distinguishes ordinary installation from a development build and provides compatibility guidance and support channels. The general framework capability is not proof that every API or dumper works with every Expedition33 update. [EPR17]
+
+**A creator explains the asset-editing route.** FrenchiestOfFries64’s High Cost Lumina’s Buff support thread describes extracting IoStore assets with retoc, locating the passive-effects data table, editing values with UAssetGUI, and repacking the edited files into the three-file container set for UE5.4. The discussion exposes missing mappings and unused/scrapped entries as concrete traps. The page labels version1.1, updated December14,2025 for game1.5.0; later comments include a resolved wrong-install-path problem and a July2026 appreciation post. These self-selected posts establish actual use/support, not popularity or current universal compatibility. Keep original extracted source files and edit only verified entries; a parser warning is not automatically harmless just because one creator tolerated it. [EPR18]
+
+## Reception expansion — November 7, 2026
+
+**Substantive research checkpoint; expansion in progress.** Preserve the September 26–27 review summaries and access history in the existing dossier. This addition examines later play experiences and disagreements; it does not replace launch criticism with an undated consensus. Story-ending discussion will be explicitly marked. No personal gameplay, hardware testing or video viewing is claimed.
+
+### What remains established, and what this pass must add
+
+The existing register explicitly records complete written-review bodies for PC Gamer, GamesRadar, RPGFan, Push Square and TechRadar, with additional GameSpot criticism. Those independent original reviews satisfy the five-review minimum at their recorded historical scope. Washington Post's retained summary remains qualified by the failed later retrieval. This pass does not count another excerpt, staff sidebar or rehost as an additional independent review. [Existing C1–C5, C11–C12]
+
+The preserved disagreement is already useful: tactical planning and demanding defensive execution can appeal to different people; beautiful environments can still frustrate navigation; central dramatic scenes can feel more compelling than the camp relationship ladder. The expansion tests what those distinctions conceal. Does changing the camera make an attack easier to see? Can a player enjoy the narrative while rejecting its final perspective? Does completing the campaign mean the same thing as wanting another playthrough? None of these questions is answered by an aggregate recommendation percentage.
+
+A new Steam retrieval failure does not invalidate the September 27 sample. Conversely, that old readable surface does not become a November sample merely because this dossier is being updated. The current attempt has encountered both inaccessible community routes and a store age-check page; further indexed public evidence is being investigated. The eventual result must identify actual review dates, edition context and the selection route.
+
+### Later accessibility criticism: an experience, not a checklist
+
+**Mike Matlock, Can I Play That?, December 4, 2025; PC.** The reviewer likes the game and describes learning a satisfying combat rhythm, while reporting substantial navigation time lost without dungeon maps. Automatic offensive inputs do not solve every defensive demand. Story difficulty, helpful Pictos and retries can reduce burden, yet valuable assistance may itself require defeating difficult enemies. Camera stabilization impresses him, although its wider view can hide useful choreography; redesigned Stain icons and separate combat/exploration audio controls improve legibility. He judges visual cues usable without sound, a conclusion to compare with other players' experiences rather than universalize. His own account alternates between lower difficulty making mastery unnecessary and later fights making missed timing costly. This is evidence of a tension between options and encountered demands, not a demonstrated guarantee for every impairment, build or boss. [ERV01]
+
+**Interpretation to develop:** accessibility has at least three distinct costs here: obtaining usable information, performing an input, and recovering from a failed attempt. A change in one can leave the others intact. Evaluate the complete sequence from recognizing an attack to choosing a response to getting another attempt. A successful clear does not establish comfort, and enthusiasm for a game does not make a barrier imaginary.
+
+**Michaela Criscione, DearGamers, May 15, 2025 launch-period account; console.** After nearly 100 hours and a platinum trophy, Criscione still ranks the game among her favorites. That attachment coexists with specific obstacles: white subtitles disappear against snowy scenery, including dialogue she cannot recover through ordinary speech; small stance/mask icons interfere with distinguishing character systems; the distant Gestral volleyball camera makes targets hard to discern. She successfully tests some merchant parries with eyes closed, but finds audio timing cues inconsistent across enemies. She also hesitates to experiment with builds because rebuilding a previous setup requires extensive menu work and memory. These observations support requests for readable text backgrounds, adjustable cues and saved loadouts; they do not establish which requests the November 2026 build still lacks. The article's platforming and recollection concerns also show why accessibility extends beyond combat. [ERV02]
+
+The contrast with ERV01 should guide an evaluation protocol, not a winner between reviewers. Ask which enemy, camera configuration, sensory channel and moment in progression each observation concerns. A successful demonstration against one attack cannot certify the full campaign. Equally, a particular player's failure cannot establish that everybody must use the same channel. The Open Legend hypothesis is to test representative demanding cases with the people who need each option, including information-heavy menus and a return after time away. This is a proposed validation method, not a claim that Expedition 33 has passed or failed such a study.
+
+### Later story reception — major ending spoilers
+
+**JC, The Essential Malady, February 8, 2026; completed PC playthrough.** The reviewer enters skeptical and ends broadly impressed by combat, visual direction, performance and music. Experimenting with Luminas breaks their usual habit of retaining one successful RPG setup. Their major rejection is narrative: discovering the painted world's relationship to the Dessendre family makes the earlier struggle feel devalued, and both endings feel unsatisfying. They would prefer a resolution that saves the expedition's world through victory over its threat. That is the reviewer's interpretation and preferred dramatic contract, not proof that the painted inhabitants lack personhood or that the antagonist is objectively correct. Irritating platforming and early crashes also qualify the praise; lowering visual settings helped, while the proposed Xbox-app cause remains speculation. This is a qualified positive with a profound ending objection, not an across-the-board dismissal. [ERV03]
+
+This disagreement deserves preservation even if the researcher's own reading favors the ending. A late change in perspective asks the player to reassess what counts as a successful outcome. Someone can understand that request and still dislike the bargain. Conversely, the premise that a created being's life is automatically meaningless would itself need defending; a reviewer's disappointment cannot settle that philosophical question. Open Legend should decide which commitments an ending fulfills, complicates or deliberately breaks, and test whether earlier play gives the audience grounds for that shift. Merely being surprising is an insufficient success criterion.
+
+### Remaining work for this checkpoint
+
+Retrieve additional contrasting firsthand criticism, especially post-completion story/endings reactions and recent return/quit accounts; inspect accessible helpful positive and negative Steam evidence; distinguish launch accessibility claims from later accounts and the separately verified patch chronology. The final synthesis will separate attraction, frustration, continuation, satisfied stopping and replay, with concrete examples and counterpoints rather than a universal retention story.
+
+## November annotated source register
+
+### Story, world and presentation
+
+- **ERO01 — Kaan Serin, GamesRadar, original GDC 2026 writer interview.** https://www.gamesradar.com/games/rpg/clair-obscur-expedition-33-writer-says-picking-an-ending-is-like-choosing-my-favorite-child-but-ultimately-the-finales-are-two-sides-of-the-same-coin/ — Substantive written body read November 7, 2026; paired-ending intention, not a ruling on player interpretation.
+- **ERO02 — Pierre Bosset, Adobe, October 16, 2025.** https://blog.adobe.com/en/publish/2025/10/16/how-substance-3d-powered-art-clair-obscur-expedition-33 — Direct artist testimony, read November 7, 2026; vendor case-study context and workforce boundary retained.
+
+### Mechanics and versions
+
+Accessed November 7, 2026 unless otherwise stated. This checkpoint is a working research artifact; the final supplement will remove this marker and consolidate all citations here.
+
+- **ESM01 — Official news index.** https://www.expedition33.com/latest-news — Live website index; newest displayed game-news article April 24, 2026. Index coverage does not exhaust Steam patch history.
+- **ESM02 — Official Steam announcements.** https://steamcommunity.com/app/1903340/announcements/ — Publisher's Patch 1.5.6 announcement, June 30, 2026, and earlier dated notices. Individual announcement permalink will replace this index citation where retrievable.
+- **ESM03 — Guillaume Broche, PlayStation Blog.** https://blog.playstation.com/2024/08/28/new-clair-obscur-expedition-33-gameplay-fighting-and-exploring-the-flying-waters-region/ — August 28, 2024. First-party prerelease mechanics explanation; written body only, not footage inspection.
+
+- **ESM04 — Official Patch 1.4.0 notes.** https://www.expedition33.com/post/patch-1-4-0-is-now-live — July 29, 2025, updated July 30. First-party shipped quality-of-life, accessibility and combat corrections.
+- **ESM05 — Liam Croft, Push Square NG+ guide.** https://www.pushsquare.com/guides/clair-obscur-expedition-33-new-gameplus-how-to-start-new-gameplus-and-what-carries-over — June 30, 2025. Body read; progression and quest/relationship resets, not exhaustive implementation documentation.
+- **ESM06 — Neoseeker, Stalact walkthrough.** https://www.neoseeker.com/clair-obscur-expedition-33/Stalact — Undated community guide. Indexed Gradient tutorial read; direct open returned403, so use is limited to the exposed rules.
+- **ESM07 — Carlos Zotomayor, AUTOMATON WEST, defensive actions.** https://automaton-media.com/en/tips/clair-obscur-expedition-33-how-to-get-the-hang-of-dodges-parries-jumps-and-gradient-counters/ — April30,2025. Written account of dodge, parry, jump and Gradient Counter; no footage inspection.
+- **ESM08 — Abhishek Mallick, Backdash, status effects.** https://thebackdash.com/gaming/all-status-effects-buffs-and-debuffs-in-clair-obscur-expedition-33/ — May6,2025. Secondary rules inventory; an ambiguous regeneration number is deliberately excluded.
+
+- **ESM09 — Patch1.5.0 notes, publisher text via mirrors.** Official permalink https://store.steampowered.com/news/app/1903340/view/491585297311596633 ; inspected mirror https://www.gogdb.org/product/2125022825/releasenotes ; indexed corroboration https://expedition33.gg/version-1-5-0-patch-notes-thank-you-update/ — December12,2025. Official page rendered a shell; GOGDB is independent, not GOG itself. Mirror copies count as one underlying source.
+- **ESM10 — Official Patch1.3.0 notes.** https://www.expedition33.com/post/patch-1-3-0-is-now-live — Website post June12,2025. Story timing, Simon rematches and challenge modifiers.
+- **ESM11 — Jeff Rubenstein, Xbox Wire, eight tips.** https://news.xbox.com/en-us/2025/04/23/tips-to-get-started-clair-obscur-expedition-33/ — April23,2025. Firsthand review-build guide on a platform-holder site; no independent implementation verification.
+- **ESM12 — Mike Matlock, Can I Play That? accessibility review.** https://caniplaythat.com/2025/12/04/clair-obscur-expedition-33-accessibility-review/ — December4,2025; PC observations predate1.5.0.
+- **ESM13 — Matt Villei, Gameranx, Break guide.** https://gameranx.com/features/id/536314/article/clair-obscur-expedition-33-how-to-break-enemies/ — April26,2025. Threshold/trigger distinction and stun outcome.
+- **ESM14 — Carlos Zotomayor, AUTOMATON WEST, Mimes.** https://automaton-media.com/en/tips/clair-obscur-expedition-33-how-to-defeat-mimes/ — April30,2025. Encounter rules and cosmetic rewards.
+- **ESM15 — Clair Obscur Wiki, Skills.** https://clair-obscur.fandom.com/wiki/Skills — Undated community reference; indexed text confirms Monoco's active-party learning requirement and foot icon. Direct Wiki access restricted.
+- **ESM16 — Gamer Guides, merchant database.** https://www.gamerguides.com/clair-obscur-expedition-33/database/npcs/merchants — Undated database; stock, Chroma exchange, duel gates.
+- **ESM17 — Gamer Guides, Colours of Lumina.** https://www.gamerguides.com/clair-obscur-expedition-33/guide/getting-started/gameplay/using-and-allocating-colours-of-lumina/ — Undated guide; mastery/equipment and allocation rules. Its finite-supply assertion is disputed in-page and excluded.
+- **ESM18 — Gamer Guides, Recoats.** https://www.gamerguides.com/clair-obscur-expedition-33/guide/getting-started/gameplay/using-and-farming-recoats/ — Undated guide; six-skill limit and separate resets.
+- **ESM19 — Gamer Guides, Painted Power.** https://www.gamerguides.com/clair-obscur-expedition-33/database/pictos/offensive/painted-power — Undated item reference; effect/cost only, not full copied stat table.
+- **ESM20 — Gamer Guides, Energising Pain.** https://www.gamerguides.com/clair-obscur-expedition-33/database/pictos/support/energising-pain — Undated item reference; resource substitution and cost.
+
+### Production, economics and creation
+
+All newly accessed sources: 2026-11-06/07 UTC. Existing C-series source owners remain in the preserved dossier.
+
+- **EPR01 — Tom Guillermin, PlayStation Blog, March 11, 2026.** https://blog.playstation.com/2026/03/11/how-the-clair-obscur-expedition-33-dev-process-powered-creative-design-freedom/ — First-person development account, read.
+- **EPR02 — CNC interview, July 4, 2025.** https://www.cnc.fr/web/en/news/the-story-behind-clair-obscur-expedition-33-the-breakout-video-game-from-french-studio-sandfall-interactive_2419300 — Interview with Sandfall marketing/publishing producer, read; team claims attributed.
+- **EPR03 — Official news index.** https://www.expedition33.com/latest-news — Current index read; navigation observation only, same source as existing C30.
+- **EPR04 — Publisher release, May 27, 2025.** https://www.gamespress.com/CLAIR-OBSCUR-EXPEDITION-33-ACHIEVES-33-MILLION-UNITS-SOLD-IN-FIRST-33- — Publisher-distributed release, full body read.
+- **EPR05 — Publisher release, October 8, 2025.** https://www.gamespress.com/en-US/CLAIR-OBSCUR-EXPEDITION-33-HAS-SOLD-OVER-5-MILLION-COPIES-WORLDWIDE — Publisher-distributed release, full body read.
+- **EPR06 — GamesRadar via Yahoo, October 23, 2026.** https://tech.yahoo.com/gaming/articles/clair-obscur-expedition-33-sold-105807276.html — Secondary model report; conflicting revenue wording, not accepted as actual accounts.
+- **EPR07 — Lyall, ClairObscurFix README.** https://github.com/Lyall/ClairObscurFix/blob/main/README.md — Maintainer documentation; archived mirror and migration noted.
+- **EPR08 — Vortex extension maintainer page.** https://www.nexusmods.com/site/mods/1279 — Indexed maintainer text; direct fetch returned403, so current metadata remains unverified.
+- **EPR09 — Online Expedition creator listing.** https://www.nexusmods.com/clairobscurexpedition33/mods/820 — Initial base-page fetch403 and stale indexed description; current description/changelog subsequently read at https://www.nexusmods.com/clairobscurexpedition33/mods/820?tab=description .
+
+- **EPR10 — Xbox Wire, October 7, 2026.** https://news.xbox.com/en-us/2026/10/07/xbox-game-pass-october-2026-wave-1/ — Primary service-departure schedule, read.
+- **EPR11 — Guillotine campaign case study.** https://www.guillotine.agency/case-studies/clair-obscur — Agency-authored campaign report, read; self-interested attribution, not audited conversion evidence.
+- **EPR12 — Official creator program.** https://creators.expedition33.com/ — Public landing page read; linked Lurkit application shell supplied no substantive terms.
+
+- **EPR13 — Unreal Engine developer interview, March27,2025.** https://www.unrealengine.com/developer-interviews/inside-the-development-journey-of-clair-obscur-expedition-33 — First-person technical account, read; engine-vendor context.
+- **EPR14 — AUTOMATON original interview, July29,2026.** https://automaton-media.com/en/interviews/clair-obscur-expedition-33-director-eliminating-limitations-is-a-big-mistake-we-talk-to-sandfall-interactive-about-staying-small-japanese-influences/ — Developers’ testimony, read; current intentions are not shipped features.
+- **EPR15 — IhorChornyi314, E33-Randomizer.** https://github.com/IhorChornyi314/E33-Randomizer — Current upstream README read; releases route failed. Older fork inspected only to distinguish stale instructions.
+- **EPR16 — Reagent0, SiresoFixMod.** https://github.com/Reagent0/SiresoFixMod — Maintainer installation/diagnostic documentation read; no execution.
+- **EPR17 — UE4SS maintainers.** https://github.com/UE4SS-RE/RE-UE4SS — Direct framework documentation, read; generic capabilities need game-specific verification.
+- **EPR18 — FrenchiestOfFries64, High Cost Lumina’s Buff support discussion.** https://www.nexusmods.com/clairobscurexpedition33/mods/354?tab=posts — Indexed creator tutorial/support replies read; direct rendering intermittent.
+
+### Reception and player experience
+
+All new sources accessed November 7, 2026. Existing C-numbered sources remain owned by the preserved dossier register.
+
+- **ERV01 — Mike Matlock, Can I Play That?, “Clair Obscur: Expedition 33 accessibility review,” December 4, 2025.** https://caniplaythat.com/2025/12/04/clair-obscur-expedition-33-accessibility-review/ — Complete substantive body read; PC review includes firsthand experiences and recommendations. Its simplified mechanical/lore explanations are not imported as authoritative rules.
+
+- **ERV02 — Michaela Criscione, DearGamers, “Clair Obscur: Expedition 33’s Biggest Area to Improve: Accessibility,” May 15 (2025 launch-period context).** https://www.deargamers.net/reviews/clair-obscur-expedition-33s-biggest-area-to-improve-accessibility — Complete substantive body read. Page omits year beside date; launch/trophy account identifies historical scope, not current-build certification.
+- **ERV03 — JC, The Essential Malady, “Clair Obscur: Expedition 33 Review,” February 8, 2026.** https://www.essentialmalady.com/2026/02/08/clair-obscur-expedition-33-review/ — Complete body read; personal post-completion review with major spoilers. Causal hardware speculation and judgments about indie eligibility are not treated as verified facts.
+
+[C1]: https://www.pcgamer.com/games/rpg/clair-obscur-expedition-33-review/
+[C10]: https://news.xbox.com/en-us/2025/03/03/clair-obscur-expedition-33-preview/
+[C11]: https://www.techradar.com/gaming/clair-obscur-expedition-33-review
+[C12]: https://www.gamespot.com/reviews/clair-obscur-expedition-33-review-light-and-shadow/1900-6418358/
+[C13]: https://www.expedition33.com/post/out-now
+[C14]: https://news.xbox.com/en-us/2025/12/03/clair-obscur-expedition-33-game-pass-biggest-launch/
+[C15]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/getting-started/gameplay/best-attributes-and-breakpoints
+[C16]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/weapons/overview/weapon-properties-and-upgrading-weapons
+[C17]: https://gamefaqs.gamespot.com/ps5/469495-clair-obscur-expedition-33/faqs/81883/tint-shards-and-upgrades
+[C18]: https://www.destructoid.com/clair-obscur-expedition-33-pictos-and-lumina-explained/
+[C19]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/playable/gustave-guide-best-skills-and-weapons
+[C2]: https://www.gamesradar.com/games/rpg/clair-obscur-expedition-33-review/
+[C20]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/playable/lune-guide-best-skills-and-weapons
+[C21]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/playable/maelle-guide-best-skills-and-weapons
+[C22]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/playable/sciel-guide-best-skills-and-weapons
+[C23]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/playable/verso-guide-best-skills-and-weapons
+[C24]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/playable/monoco-guide-best-skills-and-weapons
+[C25]: https://www.gamerguides.com/clair-obscur-expedition-33/database/weapons/monoco/nusaro
+[C26]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/characters/relationships/relationship-guide-all-ranks-and-rewards
+[C27]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/side-quests/nevrons/all-nevron-quests-and-rewards
+[C28]: https://www.gamepressure.com/clair-obscur-expedition-33/are-there-any-romances/z51196d
+[C29]: https://www.grouvee.com/status/91568/
+[C3]: https://www.rpgfan.com/review/clair-obscur-expedition-33/
+[C30]: https://www.expedition33.com/latest-news
+[C31]: https://www.gamerguides.com/clair-obscur-expedition-33/database/items/tints-1/recoat
+[C32]: https://game8.co/games/Clair-Obscur-Expedition-33/archives/515747
+[C33]: https://game8.co/games/Clair-Obscur-Expedition-33/archives/517704
+[C34]: https://store.steampowered.com/app/1903340/Clair_Obscur_Expedition_33/
+[C4]: https://www.pushsquare.com/reviews/ps5/clair-obscur-expedition-33
+[C5]: https://www.washingtonpost.com/entertainment/video-games/2025/04/23/clair-obscur-expedition-33-review/
+[C6]: https://www.expedition33.com/post/thank-you-update-available-now-thank-you-for-an-amazing-year
+[C7]: https://www.expedition33.com/post/1st-anniversary-of-clair-obscur-expedition-33
+[C8]: https://www.expedition33.com/post/expedition-33-dev-blog-photo-mode
+[C9]: https://news.xbox.com/en-us/podcast/deep-dive-into-expedition-33-official-xbox-podcast/
+[EPR01]: https://blog.playstation.com/2026/03/11/how-the-clair-obscur-expedition-33-dev-process-powered-creative-design-freedom/
+[EPR02]: https://www.cnc.fr/web/en/news/the-story-behind-clair-obscur-expedition-33-the-breakout-video-game-from-french-studio-sandfall-interactive_2419300
+[EPR03]: https://www.expedition33.com/latest-news
+[EPR04]: https://www.gamespress.com/CLAIR-OBSCUR-EXPEDITION-33-ACHIEVES-33-MILLION-UNITS-SOLD-IN-FIRST-33-
+[EPR05]: https://www.gamespress.com/en-US/CLAIR-OBSCUR-EXPEDITION-33-HAS-SOLD-OVER-5-MILLION-COPIES-WORLDWIDE
+[EPR06]: https://tech.yahoo.com/gaming/articles/clair-obscur-expedition-33-sold-105807276.html
+[EPR07]: https://github.com/Lyall/ClairObscurFix/blob/main/README.md
+[EPR08]: https://www.nexusmods.com/site/mods/1279
+[EPR09]: https://www.nexusmods.com/clairobscurexpedition33/mods/820
+[EPR10]: https://news.xbox.com/en-us/2026/10/07/xbox-game-pass-october-2026-wave-1/
+[EPR11]: https://www.guillotine.agency/case-studies/clair-obscur
+[EPR12]: https://creators.expedition33.com/
+[EPR13]: https://www.unrealengine.com/developer-interviews/inside-the-development-journey-of-clair-obscur-expedition-33
+[EPR14]: https://automaton-media.com/en/interviews/clair-obscur-expedition-33-director-eliminating-limitations-is-a-big-mistake-we-talk-to-sandfall-interactive-about-staying-small-japanese-influences/
+[EPR15]: https://github.com/IhorChornyi314/E33-Randomizer
+[EPR16]: https://github.com/Reagent0/SiresoFixMod
+[EPR17]: https://github.com/UE4SS-RE/RE-UE4SS
+[EPR18]: https://www.nexusmods.com/clairobscurexpedition33/mods/354?tab=posts
+[ERO01]: https://www.gamesradar.com/games/rpg/clair-obscur-expedition-33-writer-says-picking-an-ending-is-like-choosing-my-favorite-child-but-ultimately-the-finales-are-two-sides-of-the-same-coin/
+[ERO02]: https://blog.adobe.com/en/publish/2025/10/16/how-substance-3d-powered-art-clair-obscur-expedition-33
+[ERV01]: https://caniplaythat.com/2025/12/04/clair-obscur-expedition-33-accessibility-review/
+[ERV02]: https://www.deargamers.net/reviews/clair-obscur-expedition-33s-biggest-area-to-improve-accessibility
+[ERV03]: https://www.essentialmalady.com/2026/02/08/clair-obscur-expedition-33-review/
+[ESM01]: https://www.expedition33.com/latest-news
+[ESM02]: https://steamcommunity.com/app/1903340/announcements/
+[ESM03]: https://blog.playstation.com/2024/08/28/new-clair-obscur-expedition-33-gameplay-fighting-and-exploring-the-flying-waters-region/
+[ESM04]: https://www.expedition33.com/post/patch-1-4-0-is-now-live
+[ESM05]: https://www.pushsquare.com/guides/clair-obscur-expedition-33-new-gameplus-how-to-start-new-gameplus-and-what-carries-over
+[ESM06]: https://www.neoseeker.com/clair-obscur-expedition-33/Stalact
+[ESM07]: https://automaton-media.com/en/tips/clair-obscur-expedition-33-how-to-get-the-hang-of-dodges-parries-jumps-and-gradient-counters/
+[ESM08]: https://thebackdash.com/gaming/all-status-effects-buffs-and-debuffs-in-clair-obscur-expedition-33/
+[ESM09]: https://store.steampowered.com/news/app/1903340/view/491585297311596633
+[ESM10]: https://www.expedition33.com/post/patch-1-3-0-is-now-live
+[ESM11]: https://news.xbox.com/en-us/2025/04/23/tips-to-get-started-clair-obscur-expedition-33/
+[ESM12]: https://caniplaythat.com/2025/12/04/clair-obscur-expedition-33-accessibility-review/
+[ESM13]: https://gameranx.com/features/id/536314/article/clair-obscur-expedition-33-how-to-break-enemies/
+[ESM14]: https://automaton-media.com/en/tips/clair-obscur-expedition-33-how-to-defeat-mimes/
+[ESM15]: https://clair-obscur.fandom.com/wiki/Skills
+[ESM16]: https://www.gamerguides.com/clair-obscur-expedition-33/database/npcs/merchants
+[ESM17]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/getting-started/gameplay/using-and-allocating-colours-of-lumina/
+[ESM18]: https://www.gamerguides.com/clair-obscur-expedition-33/guide/getting-started/gameplay/using-and-farming-recoats/
+[ESM19]: https://www.gamerguides.com/clair-obscur-expedition-33/database/pictos/offensive/painted-power
+[ESM20]: https://www.gamerguides.com/clair-obscur-expedition-33/database/pictos/support/energising-pain
