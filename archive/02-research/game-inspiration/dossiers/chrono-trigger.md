@@ -64,7 +64,7 @@ Examples include Aura Whirl, which joins Crono's Cyclone with Marle's Aura for p
 
 Magus is an exception to ordinary combination breadth: his database lists two accessory-enabled triples, DarkEternal with Marle and Lucca and Omega Flare with Lucca and Robo, with no ordinary double techniques. His individual spell list spans several elements despite his Shadow association. [CTM23]
 
-**Design interpretation.** The system converts friendship into a visible combat verb. It also creates an opportunity cost: synchronizing two gauges can postpone a useful independent action, and spending a partner's MP can weaken the next recovery turn. A larger animation is therefore not automatically the best decision. Its value depends on target coverage, recovery need, readiness alignment, and the actions displaced.
+**Design interpretation.** The system makes cooperation an action the player can choose. It also creates an opportunity cost: synchronizing two gauges can postpone a useful independent action, and spending a partner's MP can weaken the next recovery turn. A larger animation is therefore not automatically the best decision. Its value depends on target coverage, recovery need, readiness alignment, and the actions displaced.
 
 ### Equipment, items, money, and protection
 
@@ -150,7 +150,7 @@ The official **March 10, 2022 Steam update** specifies up to 21:9 display, twent
 
 The six principal dates are 65,000,000 BC, 12,000 BC, 600 AD, 1000 AD, 1999 AD and 2300 AD, with the End of Time connecting travel and party support. These are selected authored destinations, not an arbitrary calendar. The End of Time provides saving, recovery and access to waiting companions. Its late-game role becomes important in situation 3 below. [CTE05] **1999 AD leads to the Lavos confrontation; normal play does not provide explorable towns or a full civilization there.** The guide’s discussion of inaccessible map data is not evidence of delivered exploration. [CTE14]
 
-The gate-pair network is documented in the mechanics section. Vehicles alter access: prehistoric Dactyls provide regional flight; the Epoch later separates changing eras from finding a Gate, and its subsequent wing upgrade adds overworld flight. Temporal reach and geographical reach are distinct unlocks. [CTE04], [CTE06]
+Vehicles alter access: prehistoric Dactyls provide regional flight; the Epoch later separates changing eras from finding a Gate, and its subsequent wing upgrade adds overworld flight. Temporal reach and geographical reach are distinct unlocks. [CTE04], [CTE06]
 
 Two DS additions also differ in timing. **Lost Sanctum** opens after recovering the flight-capable Epoch and the Black Omen's emergence; Reptite villagers offer linked quests across Prehistory and the Middle Ages. It is not exclusively postgame content. [CTE10] **Dimensional Vortex** opens after a first completion, with entrances in Antiquity, Present and Future; a sequence of selected rooms leads toward a checkpoint and a more specific concluding area. Its added ending and dungeons also appear on mobile/PC; an older wiki's DS-exclusive wording is superseded by the platform evidence above. [CTE11], [CTE02]
 
@@ -265,7 +265,7 @@ For a selected OpenLegend scene, a practical hypothesis is to give a place or pe
 
 ## Production, distribution, economics and creation
 
-Research date: 2026-11-06. Completed research component for the Open Legend dossier. These are reference findings and hypotheses, not accepted Open Legend features. No game, mod, ROM, editor or installer was executed; workflows were reconstructed from maintainer documentation. Edition dates and commercial observations below retain their stated geographic and temporal scope.
+Research date: November 6, 2026. Edition dates and commercial observations retain their stated geographic and temporal scope.
 
 ### Production: collaboration, constraints and iteration
 
@@ -299,11 +299,7 @@ Contemporary reporting of the 2025 anniversary announcement states **more than f
 
 #### Audit of available third-party estimates
 
-An **excluded calculator** illustrates the evidence problem. SteamRev's **October 21, 2025** snapshot claims approximately **415.9 thousand Steam owners**, **US$6.23 million list-price gross** and **US$2.25 million modeled net**. It uses approximately 11.9 thousand reviews ×35 ×US$14.99, then sequential assumptions for regional prices (15%), discounts (25%), refunds (5%), platform fees (30%) and taxes (15%). The site states that model version, input observation dates and confidence were not recorded. Its production metadata also includes an uncorroborated purported 2022 HD-2D remaster. The arithmetic is recorded here for the rejection audit, not accepted as an estimate of this game's finances. Its current-price starting point, unsupported multiplier, unverified deductions and suspect metadata do not establish consumer spending, publisher receipts or profit. [CTP15]
-
-A SteamDB search result displayed owner estimates of approximately **197.2 thousand from Video Game Insights versus 709.4 thousand from Gamalytic**, a roughly 3.6-fold spread. This was search-level evidence rather than a reconciled provider dataset, so it is an uncertainty diagnostic, not a verified sales interval or statistical confidence band. Provider models, observation dates and owner-versus-purchase definitions can differ. [CTP16]
-
-Gamalytic's own methodology combines sales-rank, concurrency, review-based inference and disclosed results. It distinguishes owners from direct Steam purchasers and warns that external revenue, bundles and estimation errors can affect results. That methodological disclosure helps explain why a modeled owner count should not silently become paid-unit revenue. It does not validate the particular estimates above. [CTP17]
+Public Steam models were inspected, but none supplied a defensible financial range. SteamRev relies on an unvalidated review-to-owner multiplier and assumed prices/deductions, lacks dated model provenance, and contains unreliable product metadata; its outputs are excluded. [CTP15] SteamDB surfaced differing provider owner estimates without a reconciled method or observation date, so those values do not form a sales interval. [CTP16] Gamalytic's methodology distinguishes estimated owners from direct Steam purchases and identifies bundle/external-revenue limits; it does not validate converting those estimates into publisher receipts. [CTP17] The publisher unit milestones above remain the stronger commercial evidence.
 
 #### Financial-search record and decision
 
@@ -553,9 +549,9 @@ Readable expression, recognizable musical identity and a scene worth revisiting 
 
 ### Learn from the production system without inventing its economics
 
-Use the production and commercial evidence below to separate a famous team's identity from the work and distribution that delivered the game, and sales from undisclosed profit. The modding case can reveal what people choose to build and maintain after a campaign ends. Neither a classic's long life nor a large mod catalog proves that the same development budget, tool architecture or revenue model will work for OpenLegend.
+Use the production and commercial evidence above to separate a famous team's identity from the work and distribution that delivered the game, and sales from undisclosed profit. The modding case can reveal what people choose to build and maintain after a campaign ends. Neither a classic's long life nor a large mod catalog proves that the same development budget, tool architecture or revenue model will work for OpenLegend.
 
-**Existing owners:** [Production and validation research](../synthesis/production-iteration-and-validation.md), [creator tools](../synthesis/creator-tools-and-content.md) and the existing [root authority boundaries](../../../../AGENTS.md#boundaries). No runtime tasks are created by this dossier.
+**Existing owners:** [Production workflows](../../../../docs/production-workflows/README.md), [creator tools](../synthesis/creator-tools-and-content.md) and the existing [root authority boundaries](../../../../AGENTS.md#boundaries). No runtime tasks are created by this dossier.
 
 ## Coverage, evidence boundaries and reading routes
 
@@ -694,7 +690,7 @@ All sources accessed **2026-11-06**. Raw URLs are retained for rechecking. Prima
 - **CTP12 — Shmuplations, 1995 interview collection.** https://shmuplations.com/chronotrigger2/ — Translated participant testimony; approximate staffing and timelines.
 - **CTP13 — Square Enix, October 2, 2008 Japanese announcement.** https://www.jp.square-enix.com/company/ja/news/2008/download/20081002_146.pdf — Primary regional release and price statement, read.
 - **CTP14 — Shared source alias only:** official Steam archive, owned by CTE03/CTR15; no separate factual summary. https://store.steampowered.com/oldnews/?appgroupname=Chrono+Trigger+Limited+Edition&appids=613830&feed=steam_community_announcements&headlines=0
-- **CTP15 — SteamRev title model.** https://steamrev.com/games/chrono-trigger — Read and rejected as financial evidence: missing provenance, unverified assumptions and suspect metadata. Its reported arithmetic is preserved only in the rejection audit.
+- **CTP15 — SteamRev title model.** https://steamrev.com/games/chrono-trigger — Read and excluded: unvalidated inputs/deductions, missing provenance and unreliable product metadata; no financial output adopted.
 - **CTP16 — SteamDB title charts.** https://steamdb.info/app/613830/charts/ — Search-result figures only; provider estimates not reconciled or promoted to verified sales.
 - **CTP17 — Gamalytic methodology.** https://gamalytic.com/about — Direct model documentation, read; provider explanations are not an independent accuracy audit.
 - **CTP18 — Financial-search exclusions.** https://gameselo.com/game/613830/chrono-trigger failed to open; https://steam-revenue-calculator.com/app/613830/chrono-trigger%28r%29 surfaced a review-based estimate; https://bosnan.vercel.app/games/chrono-trigger surfaced an unattributed budget. These were excluded from factual financial conclusions.

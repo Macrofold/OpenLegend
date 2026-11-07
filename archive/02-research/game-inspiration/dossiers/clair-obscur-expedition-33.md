@@ -262,7 +262,7 @@ The audit does not claim every item coefficient, version-specific edge case, or 
 
 ## Production, discovery, economics and creation
 
-Research date: **November 7, 2026**, with work beginning late November 6 UTC. This supplement extends the preserved September dossier. Historical launch claims, current product state, creator documentation, estimates and analysis remain separate. No hands-on play, mod execution, full video viewing or paid market-data access is claimed.
+Research date: **November 7, 2026**. This supplement extends the preserved September dossier; dated launch claims and current product state remain distinct.
 
 ### Production: a small core supported by tools, specialists and funding
 
@@ -339,7 +339,7 @@ The Game Awards’ own 2025 winners archive lists nine wins, including Game of t
 
 In the January Senate hearing, Meurisse described early, limited generative-AI experiments and said one texture remained in the released game before removal two days later. He stated the studio's choice not to use generative AI for creative work. This is developer testimony, not an independently verified asset history or proof that no earlier production experiment occurred. [EPR25]
 
-The transferable process lesson is asset provenance: temporary material needs an owner, status, replacement decision and release audit. Award submissions and public claims must describe the actual relevant production history. Removing an asset can repair a shipped presentation problem while leaving a separate eligibility or disclosure question. This is a governance lesson from the sequence, not a general verdict about all AI-assisted production. [Analysis]
+The useful production lesson is to track experimental material through the existing [asset workflow](../../../../docs/asset-workflow.md) and make public claims match the relevant production history. A later replacement can change the shipped work without changing an organizer's eligibility decision. This case does not select Open Legend's tools or create a new review gate. [Analysis]
 
 ### R15 gate: yes — a documented external creator ecosystem
 
@@ -498,7 +498,7 @@ These are research hypotheses and comparison criteria. They do not approve a com
 | Keep history stable while understanding changes | A new perspective can make a known object, person or place worth revisiting. | A revelation can make earlier care feel irrelevant even when the chronology remains logically consistent. | [Authored history and discovery](../../../../docs/narrative/authored-worlds-and-personal-discovery.md#author-a-history-let-people-discover-and-change-the-world) |
 | Let nonhuman people have concerns of their own | Different lifespans, customs and memories can produce specific relationships and dilemmas. | A charming companion may still be only a service provider if its own interests never affect a situation. | [A future as well as a past](../../../../docs/narrative/authored-worlds-and-personal-discovery.md#let-a-lost-soul-have-a-future-as-well-as-a-past) |
 | Author music with the people and places | Early audio involvement can connect a motif to a relationship before the scene is finalized. | A memorable score can mask dialogue or compete with actionable cues; integration and mixing require their own judgment. | [Audio and feedback](../../../../docs/production-workflows/audio-and-feedback.md) |
-| Build production tools around real content decisions | A specialist can iterate more independently when exposed controls match the work they actually perform. | A convenient authoring surface can conceal fragile dependencies, performance costs and difficult maintenance. | [Production, iteration and validation](../synthesis/production-iteration-and-validation.md) |
+| Build production tools around real content decisions | A specialist can iterate more independently when exposed controls match the work they actually perform. | A convenient authoring surface can conceal fragile dependencies, performance costs and difficult maintenance. | [Production workflows](../../../../docs/production-workflows/README.md) |
 | Treat discovery as several channels | A game may be encountered through a reveal, creator demonstration, criticism, music, a museum or a friend. | Reach, acclaim and purchases are different measures; successful publicity cannot supply a causal conversion rate. | [Marketing and discovery](../synthesis/audience-discovery-and-sharing.md) |
 | Support worthwhile stopping | A finished campaign, a chosen optional challenge and continued listening can each be satisfying outcomes. | A long optional route can still withhold personally important material; “optional” alone does not make its cost acceptable. | [Pacing and replay](../synthesis/pacing-difficulty-and-replay-variety.md) |
 | Study creation through delivery and support | A real mod exposes packaging, version matching, diagnostics, rights and incentives in addition to editing. | Community ingenuity does not prove publisher permission or make a beta modification a reliable native feature. | [Creator tools and content](../synthesis/creator-tools-and-content.md) |
