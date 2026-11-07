@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Outward — November 2026 addition
+
+[Outward — G187](outward.md) follows the complete preparation, expedition and return experience: systems and lore; player praise, criticism and abandonment; production, marketing and commercial evidence; and community modding. The [Open Legend applications](outward/04-openlegend-lessons.md) connect the findings to existing owners. Original, DLC, Definitive Edition and platform differences remain explicit; the [scoped record](../research-progress-outward-2026-11-07.md) owns completion and evidence limits.
+
 ## Crimson Desert — October 2026 addition
 
 [Crimson Desert — G185](crimson-desert.md) covers the released game and Enhanced, major mechanics and lore, broad reception, development/marketing/commercial evidence and the community modding ecosystem. Start with its question-based reading routes; [Open Legend applications](crimson-desert/05-openlegend-lessons.md) connect research proposals to existing owners. The [scoped record](../research-progress-crimson-desert-2026-10-26.md) preserves completion and evidence limits.

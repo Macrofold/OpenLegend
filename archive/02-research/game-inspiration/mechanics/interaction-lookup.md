@@ -4,6 +4,17 @@
 
 Use the concrete example to find a study, then read its limitations and counterexamples. Prefer comparing two different solutions to the same design problem over copying the most spectacular isolated feature.
 
+## Preparing, undertaking and recovering from an expedition
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| When do ordinary supplies and carrying limits make a trip meaningful? | Outward's food, weather, backpack, rest and loot choices | [Systems and complete situations](../dossiers/outward/01-systems-and-world.md) |
+| Can a learned combination change the use of familiar tools? | Rune sequences, sigils, impact, traps, boons and equipment | [Abilities and composition](../dossiers/outward/01-systems-and-world.md) |
+| When does failure create a continuation, and when does recovery consume the session? | Contextual defeat, displacement, time loss and subsequent choices | [Contrasting reception](../dossiers/outward/02-reception.md) and [Open Legend recovery boundary](../dossiers/outward/04-openlegend-lessons.md#4-failure-should-leave-a-future-the-player-can-understand) |
+| How can lore alter an otherwise familiar journey? | Faction obligations, Elatt, the Scourge and named places or creatures | [World and narrative](../dossiers/outward/01-systems-and-world.md) |
+| Does playing together give each person an equal continuation? | Personal character progress, host world state and native versus modded participation | [Social and multiplayer rules](../dossiers/outward/01-systems-and-world.md), [mods and their limits](../dossiers/outward/03-production-business-and-modding.md) |
+| What separates a rewarding first journey from a repetitive errand? | Early discovery, learned navigation, atmosphere, repeated travel and preparation | [Praise and criticism](../dossiers/outward/02-reception.md) and [existing playtest observations](../dossiers/outward/04-openlegend-lessons.md#11-focused-observations-within-the-existing-playtest-plan) |
+
 ## Shared vessels, vulnerable treasure and repeated expeditions
 
 | Question | Named reference or interaction | Read |
