@@ -6,7 +6,7 @@
 
 Outward's most useful comparison is the complete undertaking: want something, prepare, leave relative safety, adapt to conditions, obtain or fail to obtain the result, and decide what to do with the changed situation. The object of desire can be a skill, an unusual place, equipment, a faction outcome or a shared adventure. Different systems become understandable because they participate in that undertaking.
 
-This interpretation follows the developer's ordinary-adventurer premise and emphasis on learning composite actions, alongside the contrasting player experiences in the reception chapter. It is not a measured explanation of sales or retention. The February 2019 [developer interview](https://www.gaisciochmagazine.com/articles/outward_an_extraordinary_adventure_set_in_ordinary_lives.html) supplies intent; whether the preparation is enjoyable remains a player question.
+This interpretation follows the developer's ordinary-adventurer premise and emphasis on learning composite actions, alongside the contrasting player experiences in the [reception chapter](02-reception.md). It is not a measured explanation of sales or retention. The February 2019 [developer interview](https://www.gaisciochmagazine.com/articles/outward_an_extraordinary_adventure_set_in_ordinary_lives.html) supplies intent; whether the preparation is enjoyable remains a player question.
 
 Open Legend already has an unusually close foundation in [the selected first-playable target](../../../../../docs/worlds/base/playable-openings.md#first-playable-game-target): obtain food and tools, make a useful camp, choose company, undertake journeys and return with consequences. The relevant work is to make that connection visible and enjoyable. A large new expedition subsystem is not implied.
 
@@ -70,7 +70,7 @@ Questions about payer absence, independent human participation and travel betwee
 
 ## 6. Lore becomes valuable when the player encounters its consequences
 
-The supplied Reddit case is especially useful because its author describes a changed understanding of the world, alongside enthusiasm for a character build. The systems chapter follows the named places, factions, religious claims and creatures rather than treating lore as a decorative appendix.
+The supplied Reddit case is especially useful because its author describes a changed understanding of the world, alongside enthusiasm for a character build. The [systems chapter](01-systems-and-world.md) follows the named places, factions, religious claims and creatures rather than treating lore as a decorative appendix. The developer describes starting with [competing ideas and geography](https://gamesbeat.com/outward-interview-unlearn-what-you-have-learned-about-role-playing-games/2/).
 
 For Open Legend, the promising adaptation is discoverable history with consequences in present activity. A ruin can alter a travel decision, an institution can shape what someone considers fair, and two people can interpret the same event differently. Their knowledge must follow perception, testimony or authored background. A large quantity of generated backstory does not establish any of this.
 
@@ -100,13 +100,13 @@ Possible future value includes becoming better at a familiar craft, choosing a d
 
 ## 9. Commercial lessons: a clear promise needs a complete delivered experience
 
-The business chapter separates documented sales, player reach, modeled spending and unknown profit. Its strongest transferable commercial question is whether a small team can explain and deliver a distinctive experience clearly enough for the intended audience to recognize it.
+The [business chapter](03-production-business-and-modding.md) separates documented sales, player reach, modeled spending and unknown profit. Its strongest transferable commercial question is whether a small team can explain and deliver a distinctive experience clearly enough for the intended audience to recognize it.
 
 For Open Legend, AI is a production and interaction capability, not by itself the player's goal. A demonstration can show a wanted undertaking, a meaningful choice, an unexpected but grounded consequence and a result that matters later. The existing [showcasing guide](../../../../06-marketing/showcasing-the-game.md) and [ND26](../../../../../docs/maintainers/needs-design.md#nd26--a-bounded-commercial-test-and-repeatable-product-demonstration) already own that work.
 
 Do not derive an Open Legend subscription price, acquisition budget or lifetime-value forecast from Outward's premium sales. Different operating costs, multiplayer expectations, content generation, customer support and ownership promises require their own evidence. Marketing placements and enthusiastic creators do not establish channel conversion or a profitable acquisition cost.
 
-Outward also gives a useful caution about scope: an unusually small core team can still involve years of work, external contributors, publishing, porting and support. Recreating the visible feature list is not a small task merely because the core developer count is small. AI-assisted assets or dialogue do not remove integration, testing, coherent authorship or the need for good ordinary play.
+Outward also gives a useful caution about scope: an unusually small core team can still involve years of work, external contributors, publishing, porting and support. An [accelerator's production-funding announcement](https://www.executionlabs.com/nine-dots-studio-kitfox-games-receive-cmf-investments/) also makes support beyond core staffing visible. Recreating the visible feature list is not a small task merely because the core developer count is small. AI-assisted assets or dialogue do not remove integration, testing, coherent authorship or the need for good ordinary play.
 
 ## 10. Use existing owners and observations
 

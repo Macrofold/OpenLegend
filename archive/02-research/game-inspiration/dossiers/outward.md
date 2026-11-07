@@ -92,7 +92,7 @@ The [business chapter](outward/03-production-business-and-modding.md) reconstruc
 
 Keep these distinctions when reusing its findings:
 
-- **Copies sold, people reached and active players are different measurements.** The documented million-copy milestone and later three-million-player announcement cannot be combined into a verified unit or revenue total.
+- **Copies sold, people reached and active players are different measurements.** The business chapter distinguishes the million-copy milestone, the three-million-player campaign and the CEO's separate statement that three million copies were sold. They describe overlapping history, not totals to add or a revenue disclosure.
 - **Consumer spending, receipts and profit are different amounts.** Scenario arithmetic is explicitly modeled; publisher terms, discount mix, refunds, tax, costs and recoupment are not publicly established.
 - **A visible marketing channel is not measured acquisition attribution.** A trailer, creator video, press interview or community discussion can demonstrate positioning and exposure without revealing conversion.
 - **A small core team is not the entire production effort.** Years of work, outside contributors, publishing, ports and continuing support matter.
