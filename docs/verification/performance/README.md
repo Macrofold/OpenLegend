@@ -6,6 +6,8 @@ This established collection contains mixed historical campaigns and current summ
 
 The [November 5 matched AWS investigation](bookkeeping/2026/2026-11-05-runtime-ablation.md) compares the historical and current source on one host and isolates perception, recording and attention costs through disposable subsystem removals. It distinguishes failed operating acceptance from proposed structural replacement. The [expanded subsystem ranking](bookkeeping/2026/2026-11-05-subsystem-ranking.md) measures additional native, presentation, storage and scheduling costs on the standard worker.
 
+The [November 7 latest-source investigation](bookkeeping/2026/2026-11-07-latest-runtime-isolation.md) profiles reviewed source `934190d80` on the standard 16 GiB worker, traces command waiting to account maintenance, and distinguishes diagnostic removals from proposed BK28 fixes.
+
 For the integrated attention branch, start with the [October 30 complete-game diagnosis](2026-10/attention-runtime.md): standard and crowded failures, literal processing steps, exact reader obstruction and proposed root corrections. The earlier whole-game campaigns start with [Why OpenLegend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
 
 The [October 31 runtime-unification qualification](2026-10/runtime-unification.md) records the isolated cleanup branch, current-format correctness, failed normal/substantial operating checks and remaining evidence.
