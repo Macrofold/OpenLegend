@@ -8,12 +8,12 @@ This is research and interpretation, not an accepted Open Legend specification. 
 
 ## Read by question
 
-| What do you want to understand? | Primary chapter |
-| --- | --- |
-| What do players actually do, and how do the systems combine? | [Systems, objects, progression and world](outward/01-systems-and-world.md) |
-| Why do some players love it while others quit? | [Criticism and player reception](outward/02-reception.md) |
-| How was it made, presented, distributed and sustained? | [Production, business and modding](outward/03-production-business-and-modding.md) |
-| What should Open Legend learn, and what should it avoid assuming? | [Applications through existing owners](outward/04-openlegend-lessons.md) |
+| What do you want to understand?                                       | Primary chapter                                                                                                              |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| What do players actually do, and how do the systems combine?          | [Systems, objects, progression and world](outward/01-systems-and-world.md)                                                   |
+| Why do some players love it while others quit?                        | [Criticism and player reception](outward/02-reception.md)                                                                    |
+| How was it made, presented, distributed and sustained?                | [Production, business and modding](outward/03-production-business-and-modding.md)                                            |
+| What should Open Legend learn, and what should it avoid assuming?     | [Applications through existing owners](outward/04-openlegend-lessons.md)                                                     |
 | Which requirements are covered and what evidence remains unavailable? | [Coverage and limits](#coverage-and-limits), then the [scoped completion record](../research-progress-outward-2026-11-07.md) |
 
 Each evidence chapter includes adjacent source links and an annotated register. Those chapters own detailed claims, dates, edition qualifications and limitations; this entry is the synthesis and reading route.
@@ -72,17 +72,17 @@ Successful cooperation is not established merely by allowing two characters into
 
 These are synthesis questions developed from the detailed [reception evidence](outward/02-reception.md), not prevalence estimates.
 
-| Design choice | Why it can be loved | Why it can be disliked | What to investigate |
-| --- | --- | --- | --- |
-| Vulnerable opening | Small successes feel earned; the world seems larger than the character | Early confusion, repeated defeat or weak feedback prevents the appeal from becoming visible | Can a newcomer discover a worthwhile, achievable next intention? |
-| Preparation and survival | Ordinary supplies acquire meaning; planning affects results | Repeated maintenance consumes attention without changing the plan | What decision does each burden create after the player understands it? |
-| Limited carrying | Objects have opportunity costs; returning with a find feels consequential | Inventory handling and repeated trips can dominate play | Does the handling effort serve the choice? |
-| Navigation and travel | Attention to geography creates familiarity, discovery and anticipation | Solved routes become long errands; slow recovery can consume a session | Separate first discovery, familiar pleasure and unwanted repetition |
-| Composite magic and builds | Experimentation and knowledge create a distinctive identity | Hidden dependencies and permanent choices can produce regret | Can the player understand and try enough before committing? |
-| Consequential failure | Defeat can create a personal story and a new plan | Displacement, lost time or equipment problems can erase momentum | Is there an attractive continuation under the actual loss rules? |
-| Cooperative adventure | Shared preparation, danger and recovery produce stories | Ownership differences, technical issues and mismatched risk preferences strain participation | What does each person retain and want to do next? |
-| Deliberate, demanding combat | Position, preparation and timing matter | Sluggish input, weak readability or bugs can feel arbitrary | Distinguish meaningful commitment from a problem in execution |
-| Distinctive atmosphere | Music, landscapes and returning home create attachment | Empty stretches, uneven presentation or inaccessible UI weaken the journey | What is enjoyable during ordinary movement and interaction? |
+| Design choice                | Why it can be loved                                                       | Why it can be disliked                                                                       | What to investigate                                                    |
+| ---------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Vulnerable opening           | Small successes feel earned; the world seems larger than the character    | Early confusion, repeated defeat or weak feedback prevents the appeal from becoming visible  | Can a newcomer discover a worthwhile, achievable next intention?       |
+| Preparation and survival     | Ordinary supplies acquire meaning; planning affects results               | Repeated maintenance consumes attention without changing the plan                            | What decision does each burden create after the player understands it? |
+| Limited carrying             | Objects have opportunity costs; returning with a find feels consequential | Inventory handling and repeated trips can dominate play                                      | Does the handling effort serve the choice?                             |
+| Navigation and travel        | Attention to geography creates familiarity, discovery and anticipation    | Solved routes become long errands; slow recovery can consume a session                       | Separate first discovery, familiar pleasure and unwanted repetition    |
+| Composite magic and builds   | Experimentation and knowledge create a distinctive identity               | Hidden dependencies and permanent choices can produce regret                                 | Can the player understand and try enough before committing?            |
+| Consequential failure        | Defeat can create a personal story and a new plan                         | Displacement, lost time or equipment problems can erase momentum                             | Is there an attractive continuation under the actual loss rules?       |
+| Cooperative adventure        | Shared preparation, danger and recovery produce stories                   | Ownership differences, technical issues and mismatched risk preferences strain participation | What does each person retain and want to do next?                      |
+| Deliberate, demanding combat | Position, preparation and timing matter                                   | Sluggish input, weak readability or bugs can feel arbitrary                                  | Distinguish meaningful commitment from a problem in execution          |
+| Distinctive atmosphere       | Music, landscapes and returning home create attachment                    | Empty stretches, uneven presentation or inaccessible UI weaken the journey                   | What is enjoyable during ordinary movement and interaction?            |
 
 Neither universal convenience nor universal hardship follows from this comparison. A coherent audience promise can exclude some preferences deliberately. Bugs, misleading information and unusable controls still need to be judged as delivered experience.
 
@@ -122,23 +122,23 @@ These do not add an expedition framework, mandatory skill trees, extra survival 
 
 The final scoped record will certify the following requirement map after integration and review.
 
-| Requirement | Coverage owner |
-| --- | --- |
-| R01 — identity, editions, promise and opening versus mature play | This entry; systems; production timeline |
-| R02 — major mechanics and explicit absences | Systems |
-| R03 — named objects, acquisition, composition, use and loss | Systems |
-| R04 — progression, economy, time, replay and later play | Systems; reception |
-| R05 — complete interactions with results and next decisions | Systems' worked cases; reception's attributed accounts |
-| R06 — NPCs, factions, relationships, AI and personal/shared state | Systems |
-| R07 — presentation, audio, UI, feel and accessibility | Systems; reception; production |
-| R08 — lore, institutions, history and consequences | Systems |
-| R09 — origins, team, iteration, tooling and production | Production |
-| R10 — positioning, distribution, campaigns and community | Production |
-| R11 — commercial evidence, economic scenarios and unknowns | Production |
-| R12 — independent reviews, Steam/player testimony and engagement | Reception |
-| R13 — Open Legend hypotheses, counterarguments and existing owners | Applications |
-| R14 — sources, scope, navigation and evidence limits | Each chapter's sources; this map; scoped record |
-| R15 — modding applicability, tools, creations, workflow and boundaries | Production's community-creation study |
+| Requirement                                                            | Coverage owner                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------------ |
+| R01 — identity, editions, promise and opening versus mature play       | This entry; systems; production timeline               |
+| R02 — major mechanics and explicit absences                            | Systems                                                |
+| R03 — named objects, acquisition, composition, use and loss            | Systems                                                |
+| R04 — progression, economy, time, replay and later play                | Systems; reception                                     |
+| R05 — complete interactions with results and next decisions            | Systems' worked cases; reception's attributed accounts |
+| R06 — NPCs, factions, relationships, AI and personal/shared state      | Systems                                                |
+| R07 — presentation, audio, UI, feel and accessibility                  | Systems; reception; production                         |
+| R08 — lore, institutions, history and consequences                     | Systems                                                |
+| R09 — origins, team, iteration, tooling and production                 | Production                                             |
+| R10 — positioning, distribution, campaigns and community               | Production                                             |
+| R11 — commercial evidence, economic scenarios and unknowns             | Production                                             |
+| R12 — independent reviews, Steam/player testimony and engagement       | Reception                                              |
+| R13 — Open Legend hypotheses, counterarguments and existing owners     | Applications                                           |
+| R14 — sources, scope, navigation and evidence limits                   | Each chapter's sources; this map; scoped record        |
+| R15 — modding applicability, tools, creations, workflow and boundaries | Production's community-creation study                  |
 
 This is a broad, source-backed dossier, not an item-by-item wiki or a claim that every player's experience has been observed. The work uses published documents, reviews, storefronts, creator/project documentation and accessible community accounts. It does not include firsthand gameplay testing, controlled performance benchmarking, mod installation, private sales accounts or a representative player survey. Historical reviews retain their version and platform context. Store and community figures are dated snapshots. Videos that were only discoverable as metadata are labeled accordingly; written descriptions are not presented as watched footage.
 
