@@ -5,10 +5,11 @@ import {
 } from './source-version-retention.js';
 import {
   prepareAccountRetentionPlan,
+  prepareSupportRetentionPlan,
   nextAccountRetentionAt,
   type AccountRetentionPlan,
 } from './account-retention.js';
-import { RetentionActorSelection } from './retention-deadlines.js';
+import { RetentionActorSelection, type RetentionWorkKind } from './retention-deadlines.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { selectActorLiveReadCuts, selectActorRecordChanges } from './actor-record-selection.js';
 import type { LiveReadCuts, LiveReadCutsProvider, MetadataBaseline } from './live-read-overlay.js';
@@ -179,7 +180,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '56';
+export const DATABASE_SCHEMA = '57';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(
@@ -372,23 +373,24 @@ export interface WorldStore {
   close(): Promise<void>;
 }
 
-export interface RetentionActors {
-  recent: readonly string[];
-  accounts: readonly string[];
-}
-
 export interface GameRepository extends WorldStore {
   /** Current health of the exclusively owned durable writer session. */
   assertWriteAdmission(): void;
   readonly ready: Promise<void>;
   setRetainedValueLookup?(provider: (worldId: string) => Readonly<Record<string, unknown>>): void;
   setLiveReadCuts?(provider: LiveReadCutsProvider): void;
-  captureRetentionActors?(state: SavedWorld): RetentionActors;
+  captureRetentionActors?(state: SavedWorld, kind: RetentionWorkKind): string[];
   prepareAccountRetention?(
     state: SavedWorld,
     pending: RecordChanges,
     cut?: LiveReadCuts,
     actorIds?: readonly string[],
+  ): Promise<AccountRetentionPlan>;
+  prepareSupportRetention?(
+    state: SavedWorld,
+    pending: RecordChanges,
+    cut: LiveReadCuts | undefined,
+    actorIds: readonly string[],
   ): Promise<AccountRetentionPlan>;
   eraseReceivedValues?(worldId: string, ids: readonly string[]): Promise<void>;
   prepareSourceEdit?(
@@ -489,76 +491,86 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqlGameRepository implements GameRepository {
+  private readSourceClosure<T>(operation: () => Promise<T>): Promise<T> {
+    const cut = this.liveReadCuts?.();
+    const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+    const read = () => snapshot(operation);
+    return cut && this.db.readAtCut ? this.db.readAtCut(cut, read) : read();
+  }
   /** Explicit corrections only prepare exact archived support; ordinary pool
    * eviction belongs to the due/pressure scheduler, not this privacy barrier. */
   async prepareSourceEdit(
     state: SavedWorld,
     before: SavedWorld,
   ): Promise<import('./temporal-storage.js').PreparedMemoryRetention> {
-    const changes = this.records.prepare(before, state, retainedSourceTables);
-    const metadata = await this.retentionView(state, changes, false);
-    const beforeChanges = this.records.prepare(
-      this.acceptedState ?? undefined,
-      before,
-      retainedSourceTables,
-    );
-    const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
-      before: metadata.withChanges(beforeChanges),
+    return this.readSourceClosure(async () => {
+      const changes = this.records.prepare(before, state, retainedSourceTables);
+      const beforeChanges = this.records.prepare(
+        this.acceptedState ?? undefined,
+        before,
+        retainedSourceTables,
+      );
+      const metadata = await this.retentionView(state, changes, false);
+      const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
+        before: metadata.withChanges(beforeChanges),
+      });
+      return { state: planned.state, rows: new Map(), versions: planned.plan };
     });
-    return { state: planned.state, rows: new Map(), versions: planned.plan };
   }
   async prepareRetainedSourceClosure(
     initial: SavedWorld,
     complete = false,
   ): Promise<import('./temporal-storage.js').PreparedMemoryRetention> {
-    let state = initial;
-    const rows = new Map<string, string[]>(),
-      positions = new Map<string, Map<string, number>>(),
-      previous = new Map<string, Map<string, unknown>>();
-    let preparedVersions: SourceVersionPlan | undefined;
-    for (let round = 0; round < 4; round++) {
-      if (preparedVersions) {
-        const world = resetPreparedSourceVersionAccounting(state.world, preparedVersions);
-        if (world !== state.world) state = { ...state, world };
+    return this.readSourceClosure(async () => {
+      let state = initial;
+      const rows = new Map<string, string[]>(),
+        positions = new Map<string, Map<string, number>>(),
+        previous = new Map<string, Map<string, unknown>>();
+      let preparedVersions: SourceVersionPlan | undefined;
+      for (let round = 0; round < 4; round++) {
+        if (preparedVersions) {
+          const world = resetPreparedSourceVersionAccounting(state.world, preparedVersions);
+          if (world !== state.world) state = { ...state, world };
+        }
+        if (!complete) this.records.stageRetirements(state, rows, positions, previous);
+        // Retention joins only personal source changes. Preparing unrelated physical
+        // and current-perception records again in each closure round repeats the save.
+        const changes = complete
+          ? this.records.captureMetadataRecords(state, retainedSourceTables)
+          : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables);
+        const metadata = await this.retentionView(state, changes, complete);
+        const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
+          before: metadata.withChanges(),
+          previous,
+        });
+        preparedVersions = planned.plan;
+        const retained = await this.memories.prepareRetention(
+          planned.state,
+          complete,
+          changes,
+          this.acceptedState?.world,
+          metadata,
+        );
+        for (const [table, ids] of retained.rows)
+          rows.set(table, [...new Set([...(rows.get(table) ?? []), ...ids])]);
+        for (const [table, values] of retained.positions ?? []) {
+          const target = positions.get(table) ?? new Map();
+          for (const [id, value] of values) target.set(id, value);
+          positions.set(table, target);
+        }
+        for (const [table, records] of retained.previous ?? []) {
+          const target = previous.get(table) ?? new Map();
+          for (const [id, value] of records) if (!target.has(id)) target.set(id, value);
+          previous.set(table, target);
+        }
+        state = retained.state;
+        if (!sourceVersionPreparationNeeded(planned.state.world, state.world)) {
+          if (complete) this.records.stageRetirements(state, rows, positions, previous);
+          return { state, rows, positions, previous, versions: planned.plan };
+        }
       }
-      if (!complete) this.records.stageRetirements(state, rows, positions, previous);
-      // Retention joins only personal source changes. Preparing unrelated physical
-      // and current-perception records again in each closure round repeats the save.
-      const changes = complete
-        ? this.records.captureMetadataRecords(state, retainedSourceTables)
-        : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables);
-      const metadata = await this.retentionView(state, changes, complete);
-      const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
-        before: metadata.withChanges(),
-        previous,
-      });
-      preparedVersions = planned.plan;
-      const retained = await this.memories.prepareRetention(
-        planned.state,
-        complete,
-        changes,
-        this.acceptedState?.world,
-        metadata,
-      );
-      for (const [table, ids] of retained.rows)
-        rows.set(table, [...new Set([...(rows.get(table) ?? []), ...ids])]);
-      for (const [table, values] of retained.positions ?? []) {
-        const target = positions.get(table) ?? new Map();
-        for (const [id, value] of values) target.set(id, value);
-        positions.set(table, target);
-      }
-      for (const [table, records] of retained.previous ?? []) {
-        const target = previous.get(table) ?? new Map();
-        for (const [id, value] of records) if (!target.has(id)) target.set(id, value);
-        previous.set(table, target);
-      }
-      state = retained.state;
-      if (!sourceVersionPreparationNeeded(planned.state.world, state.world)) {
-        if (complete) this.records.stageRetirements(state, rows, positions, previous);
-        return { state, rows, positions, previous, versions: planned.plan };
-      }
-    }
-    throw new Error('Exact source closure cannot fit its complete retained account allowance.');
+      throw new Error('Exact source closure cannot fit its complete retained account allowance.');
+    });
   }
   private readonly projectionListeners = new Set<(changed?: boolean) => void>();
   onProjection(listener: (changed?: boolean) => void): () => void {
@@ -619,11 +631,8 @@ export class SqlGameRepository implements GameRepository {
   }
   /** Capture fair cohorts before asynchronous preparation so one finite source
    * watch covers exactly the actors whose maintenance will consume its proof. */
-  captureRetentionActors(state: SavedWorld): RetentionActors {
-    return {
-      recent: this.retentionActors.select(state.world, 'recent'),
-      accounts: this.retentionActors.select(state.world, 'accounts'),
-    };
+  captureRetentionActors(state: SavedWorld, kind: RetentionWorkKind): string[] {
+    return this.retentionActors.select(state.world, kind);
   }
   async prepareAccountRetention(
     state: SavedWorld,
@@ -665,11 +674,11 @@ export class SqlGameRepository implements GameRepository {
           const changes = this.records.prepare(state, prepared.state, new Set(accountTables));
           if (!changes.writes.size && !changes.deletes.size)
             return { state: prepared.state, plan: { changes: [] } };
-          return this.memories.prepareSourceVersionRetention(
-            prepared.state,
-            changes,
-            { before: beforeMetadata, actorIds: actors, previous: prepared.previous },
-          );
+          return this.memories.prepareSourceVersionRetention(prepared.state, changes, {
+            before: beforeMetadata,
+            actorIds: actors,
+            previous: prepared.previous,
+          });
         },
       );
     };
@@ -686,6 +695,44 @@ export class SqlGameRepository implements GameRepository {
   }
   async eraseReceivedValues(worldId: string, ids: readonly string[]): Promise<void> {
     await this.receivedOwnership.erase(worldId, ids);
+  }
+  async prepareSupportRetention(
+    state: SavedWorld,
+    pending: RecordChanges,
+    cut: LiveReadCuts | undefined,
+    actorIds: readonly string[],
+  ): Promise<AccountRetentionPlan> {
+    return prepareSupportRetentionPlan(state, actorIds, async (requests) => {
+      // Local/required/place ownership was checked before invoking this callback.
+      // A support-only pass needs no due/pressure account catalogue or bodies.
+      const selectedPending = selectActorRecordChanges(pending, actorIds);
+      const operation = async () => {
+        const metadata = new RetentionMetadata();
+        const read = (baseline: MetadataBaseline) => {
+          metadata.initializePartial(state.world, baseline);
+          return metadata
+            .view(state.world.id, selectedPending)
+            .survivingMembershipBatch(this.db, state.world.id, requests, state.world);
+        };
+        if (this.db.readMetadataBaseline) return this.db.readMetadataBaseline(actorIds, read);
+        const head = await this.db
+          .prepare('SELECT world_id,revision FROM world_head WHERE id=1')
+          .get();
+        return read({ worldId: String(head?.['world_id']), revision: Number(head?.['revision']) });
+      };
+      const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+      const prepare = () => snapshot(operation);
+      return cut && this.db.readAtCut
+        ? this.db.readAtCut(
+            selectActorLiveReadCuts(
+              cut,
+              actorIds,
+              this.memories.captureSources.bind(this.memories),
+            ),
+            prepare,
+          )
+        : prepare();
+    });
   }
   private async retentionView(
     state: SavedWorld,

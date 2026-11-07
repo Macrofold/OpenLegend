@@ -49,6 +49,23 @@ import {
 } from './world-composition.js';
 
 export type RecordingReason = 'required' | 'optional' | 'none';
+export type AccountAfterRelease = 'discard' | 'impression';
+/** Native event-time values only; private action objects never travel with witnesses. */
+export interface ActivityRecordingContext {
+  commandType: string;
+  status: 'running' | 'completed' | 'blocked' | 'cancelled';
+  bound: boolean;
+  effects: boolean;
+  outputs: boolean;
+  spending: boolean;
+  outcome?: { ok: boolean; code: string };
+}
+export interface AccountRecordingInput {
+  source: RecordingInput['source'];
+  own: boolean;
+  eventType?: string;
+  activity?: ActivityRecordingContext;
+}
 export interface FamiliarityRoot {
   key: string;
   sourceKey: string;

@@ -294,6 +294,9 @@ export async function projectView(
     world.sensory,
     capabilityBlocked(world, player, 'perception'),
   ];
+  // One synchronous permission/body read covers membership, grant witnesses and
+  // presentation. It is released before practice or any other asynchronous read.
+  let bodyReads = prepareCurrentBodyReadScope(world, scope.actorId);
   const observation = {
     inventory: memo(
       'ownedItems',
@@ -301,7 +304,7 @@ export async function projectView(
       () => inventoryFor(world, scope.actorId),
     ),
     visibleEntities: memo('visibleEntities', currentBodyInputs, () =>
-      currentObservedBodyIds(world, scope.actorId).flatMap((id) => {
+      (bodyReads ? currentObservedBodyIds(world, scope.actorId, bodyReads) : []).flatMap((id) => {
         const entity = entityGet(world.entities, id);
         return entity ? [entity] : [];
       }),
@@ -368,53 +371,12 @@ export async function projectView(
   const observerParticipating = activelyParticipates(player);
   // Capture only body roles this view exposes. Exact grant continuity permits
   // ordinary movement while an async reader waits, but never a lost/replaced body.
-  const bodyGrants = (() => {
-    const reads = prepareCurrentBodyReadScope(world, scope.actorId);
-    return observation.visibleEntities.map((entity) => ({
-      id: entity.id,
-      grant: currentBodyGrant(world, scope.actorId, entity.id, reads)!,
-    }));
-  })();
+  const bodyGrants = observation.visibleEntities.map((entity) => ({
+    id: entity.id,
+    grant: currentBodyGrant(world, scope.actorId, entity.id, bodyReads)!,
+  }));
   const generation = service.generation;
   const historyEpoch = service.historyEpoch;
-  const practice = await memo<Promise<PracticeView[]>>(
-    'practice',
-    [actor.practice, world.moduleManifest, generation, historyEpoch],
-    async () => {
-      const progress = ownPractice(world, player);
-      const missing = progress.flatMap((p) =>
-        p.evidence
-          .filter((e) => !occurrenceFor(world, player.id, e.occurrenceId))
-          .map((e) => e.occurrenceId),
-      );
-      const recorded = new Map<string, ActivityOccurrence>();
-      if (service.store.records)
-        for (let offset = 0; offset < missing.length; offset += 128) {
-          const rows = await service.store.records.activityPage(
-            world.id,
-            player.id,
-            -1,
-            missing.slice(offset, offset + 128),
-            128,
-          );
-          for (const row of rows) if (!row.entry.revoked) recorded.set(row.entry.id, row.entry);
-        }
-      return progress.map((p) => ({
-        ...p,
-        evidence: p.evidence.map((e) => ({
-          ...e,
-          description: recorded.has(e.occurrenceId)
-            ? renderActivity(recorded.get(e.occurrenceId)!.view, 'What happened')
-            : e.description,
-        })),
-      }));
-    },
-  );
-  // A correction can revoke retained evidence while SQL inspection is pending.
-  // Recheck even a cached promise before publishing pre-correction private text.
-  if (generation !== service.generation || historyEpoch !== service.historyEpoch)
-    throw new ViewChangedError();
-  service.assertScope(scope);
   const quantity = (definitionId: string) => quantityOf(world, player.id, definitionId);
   const active =
     actor.participation?.phase !== 'inactive' &&
@@ -650,7 +612,6 @@ export async function projectView(
       ]),
   );
   const entities: EntityView[] = (() => {
-    const bodyReads = prepareCurrentBodyReadScope(world, player.id);
     return observation.visibleEntities
       .filter((entity) => entity.id !== scope.actorId)
       .map((entity) => {
@@ -925,6 +886,46 @@ export async function projectView(
         };
       });
   })();
+  // Borrowed readers cannot cross an await, even though this world is immutable.
+  bodyReads = undefined;
+  const practice = await memo<Promise<PracticeView[]>>(
+    'practice',
+    [actor.practice, world.moduleManifest, generation, historyEpoch],
+    async () => {
+      const progress = ownPractice(world, player);
+      const missing = progress.flatMap((p) =>
+        p.evidence
+          .filter((e) => !occurrenceFor(world, player.id, e.occurrenceId))
+          .map((e) => e.occurrenceId),
+      );
+      const recorded = new Map<string, ActivityOccurrence>();
+      if (service.store.records)
+        for (let offset = 0; offset < missing.length; offset += 128) {
+          const rows = await service.store.records.activityPage(
+            world.id,
+            player.id,
+            -1,
+            missing.slice(offset, offset + 128),
+            128,
+          );
+          for (const row of rows) if (!row.entry.revoked) recorded.set(row.entry.id, row.entry);
+        }
+      return progress.map((p) => ({
+        ...p,
+        evidence: p.evidence.map((e) => ({
+          ...e,
+          description: recorded.has(e.occurrenceId)
+            ? renderActivity(recorded.get(e.occurrenceId)!.view, 'What happened')
+            : e.description,
+        })),
+      }));
+    },
+  );
+  // A correction can revoke retained evidence while SQL inspection is pending.
+  // Recheck even a cached promise before publishing pre-correction private text.
+  if (generation !== service.generation || historyEpoch !== service.historyEpoch)
+    throw new ViewChangedError();
+  service.assertScope(scope);
   const eventEvidenceOwners = (snapshot: WorldState) => [
     entityGet(snapshot.entities, scope.actorId)?.actor?.physicalLife ?? 0,
     snapshot.experience?.awareness[scope.actorId],

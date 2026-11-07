@@ -165,6 +165,41 @@ export interface ActivityOccurrence {
   noLearningControl?: boolean;
 }
 
+/** Snapshot only the facts used by selected recording policy before an event batch
+ * can finish or replace the activity. No live occurrence escapes into a memory. */
+export function activityRecordingContext(
+  entry: ActivityOccurrence,
+): import('./attention.js').ActivityRecordingContext {
+  const result = entry.outcome;
+  return {
+    commandType: entry.command.type,
+    status: entry.status,
+    bound: !!(
+      entry.parentId ||
+      entry.methodId ||
+      entry.cooperation ||
+      entry.command.cooperation ||
+      entry.command.chosenPurpose ||
+      entry.command.combatHelpId ||
+      entry.connections.length ||
+      entry.incomplete ||
+      entry.revoked ||
+      result?.goalId ||
+      result?.planId
+    ),
+    effects: !!entry.effects?.length,
+    outputs: !!(
+      entry.outputs.length ||
+      result?.outputs?.length ||
+      result?.itemId ||
+      result?.entityId ||
+      result?.recipeId
+    ),
+    spending: result?.spent !== undefined && result.spent !== 0,
+    ...(result ? { outcome: { ok: result.ok, code: result.code } } : {}),
+  };
+}
+
 export type ActivityPredicate =
   | { test: 'registered'; definition: import('./world-modules.js').DefinitionPin; role: string }
   | { test: 'alive' | 'available' | 'equipped' | 'lit'; role: string }
@@ -889,22 +924,27 @@ export function endActivity(
   // Forgetting a running attempt revokes its personal evidence, not its already
   // admitted physical work. Completion must not recreate the forgotten episode.
   if (!entry.revoked && !world.experience?.forgotten[actorId]?.includes(entry.id)) {
-    entry.resultMemoryId ??= appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: world.cognitionPolicy.recording.actionResultImportance,
-      activityId: entry.id,
-      // Retain the completed speech in personal history without making a speaker
-      // answer their own output after the original decision's saved watermark.
-      ...(entry.command.type === 'say' ? { eventType: 'speech-result', speakerId: actorId } : {}),
-      summary: {
-        parts: [
-          person(actorId, 'possessive'),
-          ` action ${entry.status} at simulation time ${world.simTime}: ${activityRecordText(entry.view)}`,
-        ],
+    entry.resultMemoryId ??= appendMemory(
+      world,
+      actorId,
+      {
+        kind: 'episode',
+        source: 'internal',
+        importance: world.cognitionPolicy.recording.actionResultImportance,
+        activityId: entry.id,
+        // Retain the completed speech in personal history without making a speaker
+        // answer their own output after the original decision's saved watermark.
+        ...(entry.command.type === 'say' ? { eventType: 'speech-result', speakerId: actorId } : {}),
+        summary: {
+          parts: [
+            person(actorId, 'possessive'),
+            ` action ${entry.status} at simulation time ${world.simTime}: ${activityRecordText(entry.view)}`,
+          ],
+        },
+        entityIds: [actorId],
       },
-      entityIds: [actorId],
-    });
+      activityRecordingContext(entry),
+    );
   }
   entityGet(world.entities, actorId)!.actor!.agency.lastResultMemoryId = entry.resultMemoryId;
   const cursor = world.actionExperience.learning[actorId]!;

@@ -14,6 +14,7 @@ import {
   retainTemporalSupport,
   releaseTemporalSupport,
   temporalReceiptId,
+  markTemporalSupportDirty,
 } from './temporal-evidence.js';
 import { selectedTemporalPolicy } from './world-composition.js';
 import { touchNativeEvidence, updateWorld, cloneValue } from './draft.js';
@@ -354,6 +355,10 @@ export function editKnowledge(
       'Personal knowledge is full; the previous document was retained.',
     );
   documents[knowledgeKey(edit.subjectId)] = next;
+  if (current?.evidenceIds.some((id) => !next.evidenceIds.includes(id)))
+    // Explicit note edits can carry plain historical IDs. Reconsider existing
+    // support conservatively rather than guessing those IDs' source grammar.
+    markTemporalSupportDirty(world, actorId);
   advanceKnowledgeRevision(world, actorId);
   return outcome(true, 'knowledge-edited', 'Knowledge updated.');
 }

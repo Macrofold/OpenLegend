@@ -22,7 +22,7 @@ import {
 } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { countDomainWork } from './diagnostic-counters.js';
-import { activeActivity } from './action-experience.js';
+import { activeActivity, activityRecordingContext } from './action-experience.js';
 import { chargeWork } from './work-budget.js';
 import { externalAudience } from './event-audience.js';
 import { worldPosition } from './spatial-state.js';
@@ -53,6 +53,8 @@ import {
   selectedEventDisclosure,
   selectedSightingNarration,
   selectedRecordingReason,
+  selectedAccountAfterRelease,
+  selectedEventSalience,
 } from './world-composition.js';
 import { activelyParticipates } from './participation-state.js';
 import { acquireCombatObservation } from './combat-encounters.js';
@@ -89,6 +91,7 @@ export function appendMemory(
   world: WorldState,
   actorId: string,
   memory: Omit<MemoryRecord, 'id' | 'actorId' | 'at' | 'summary'> & { summary: string | Narration },
+  activity?: import('./attention.js').ActivityRecordingContext,
 ): string | undefined {
   if (!hasMemory(entityGet(world.entities, actorId))) return;
   const summary = personalText(world, actorId, memory.summary);
@@ -110,7 +113,12 @@ export function appendMemory(
     entityIds: [...memory.entityIds],
     importance: Math.max(0, Math.min(10, memory.importance)),
   };
-  const admission = admitAutomaticExperience(world, actorId, { source: 'memory', value: record });
+  const admission = admitAutomaticExperience(
+    world,
+    actorId,
+    { source: 'memory', value: record },
+    activity,
+  );
   if (admission === null) throw new Error('Personal experience could not be recorded.');
   return admission.retainedIds.includes(record.id) ? record.id : undefined;
 }
@@ -362,31 +370,9 @@ function recordEvent(
     typeof value === 'number' && Number.isFinite(value)
       ? Math.max(0, Math.min(10, value))
       : fallback;
-  const importance = boundedMetric(
-    data?.['importance'],
-    data?.['significant'] === true || ['death', 'taught', 'incapacitated'].includes(type)
-      ? 9
-      : type === 'speech'
-        ? 7
-        : data?.['semanticTrigger'] === true ||
-            [
-              'crafted',
-              'declaration-admitted',
-              'shot-released',
-              'projectile-contact',
-              'struck',
-              'fire-out',
-              'fire-lit',
-              'fire-extinguished',
-              'rested',
-            ].includes(type)
-          ? 6
-          : 3,
-  );
-  const urgency = boundedMetric(
-    data?.['urgency'],
-    ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
-  );
+  const salience = selectedEventSalience(world, type, data);
+  const importance = boundedMetric(data?.['importance'], salience.importance);
+  const urgency = boundedMetric(data?.['urgency'], salience.urgency);
   const event: WorldEvent = {
     ...(exposure ? { exposure: cloneValue(exposure) } : {}),
     ...(origin
@@ -419,6 +405,37 @@ function recordEvent(
     importancePolicy: 'native-v1',
     importanceReason: data?.['significant'] ? 'significant' : type,
   };
+  // Resolve this already admitted occurrence once, before receiver callbacks or
+  // a deferred awareness batch can finish/replace it. Its private eligibility is
+  // used only by the actor's own account, never by public event data or witnesses.
+  const tracksActivity = [
+    'action-started',
+    'speech',
+    'ate',
+    'equipped',
+    'gathered',
+    'prepared',
+    'crafted',
+    'harvested',
+    'cooked',
+    'fire-lit',
+    'fire-fueled',
+    'fire-extinguished',
+    'struck',
+    'guarded',
+    'shot-released',
+    'shot-ended',
+    'body-effect',
+    'moved',
+    'action-stopped',
+  ].includes(type);
+  const cause = tracksActivity
+    ? (data?.['actionId'] ??
+      data?.['effectId'] ??
+      (source && world.actionExperience.current[source.id]))
+    : undefined;
+  const experience = typeof cause === 'string' ? activeActivity(world, cause) : undefined;
+  const activityContext = experience && activityRecordingContext(experience);
   const feltTargetId = selectedEventDisclosure(world).feltTarget(event);
   const feltTarget = feltTargetId && entityGet(world.entities, feltTargetId);
   if (
@@ -623,6 +640,20 @@ function recordEvent(
         ...(perceived.sourceId ? { sourceId: perceived.sourceId } : {}),
         ...(perceived.targetId ? { targetId: perceived.targetId } : {}),
         triggerKind,
+        ...(recording !== 'none'
+          ? {
+              retention: {
+                reason: event.exposure ? ('deliberate' as const) : ('consequence' as const),
+                afterRelease: selectedAccountAfterRelease(world, {
+                  source: 'awareness',
+                  own: prepared.sourceId === actorId || triggerKind === 'self_event',
+                  eventType: prepared.eventType,
+                  ...(experience?.actorId === actorId ? { activity: activityContext } : {}),
+                }),
+                ...(recording === 'required' ? { required: true } : {}),
+              },
+            }
+          : {}),
         content:
           typeof perceived.eventData['text'] === 'string'
             ? perceived.eventData['text']
@@ -640,34 +671,7 @@ function recordEvent(
   chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
   countDomainWork('eventsRecorded');
   events.push(event);
-  if (
-    [
-      'action-started',
-      'speech',
-      'ate',
-      'equipped',
-      'gathered',
-      'prepared',
-      'crafted',
-      'harvested',
-      'cooked',
-      'fire-lit',
-      'fire-fueled',
-      'fire-extinguished',
-      'struck',
-      'guarded',
-      'shot-released',
-      'shot-ended',
-      'body-effect',
-      'moved',
-      'action-stopped',
-    ].includes(type)
-  ) {
-    const cause =
-      data?.['actionId'] ??
-      data?.['effectId'] ??
-      (source && world.actionExperience.current[source.id]);
-    const experience = typeof cause === 'string' ? activeActivity(world, cause) : undefined;
+  if (tracksActivity) {
     if (
       experience &&
       audience.includes(experience.actorId) &&

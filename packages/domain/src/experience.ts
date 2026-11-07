@@ -84,6 +84,7 @@ import { personalText, nativeText } from './narration.js';
 import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
 import {
   selectedRecordingReason,
+  selectedAccountAfterRelease,
   selectedTemporalPolicy,
   selectedRetainRecognitionEvidence,
 } from './world-composition.js';
@@ -102,6 +103,7 @@ import {
   temporalReceiptAliases,
   temporalAccountAliasClosure,
   temporalSupportAliases,
+  markTemporalSupportDirty,
   hasRetainedTemporalSource,
   splitTemporalValue,
   type TemporalReceipt,
@@ -486,6 +488,22 @@ function containsExperienceKey(world: WorldState, actorId: string, key: string):
   if (source === 'summary') return containsEntryId(world.experience?.summaries[actorId], id, 'id');
   return false;
 }
+/** Account retirement can release sparse evidence independently of its cold row.
+ * Use the typed receipts already owned by selected records, never scan all proof
+ * on ordinary admission. Explicit edits without a receipt use conservative dirtying. */
+function experienceSupportIds(entry: ExperienceEntry): string[] {
+  const value = entry.value,
+    manifest = 'manifest' in value ? value.manifest : undefined;
+  return [
+    ...new Set(
+      [
+        ...(value.retention?.receipt ? [value.retention.receipt] : []),
+        ...('sourceReceipt' in value && value.sourceReceipt ? [value.sourceReceipt] : []),
+        ...(manifest?.receipts ?? []),
+      ].map(temporalReceiptId),
+    ),
+  ];
+}
 function experienceAdditionBudget(
   world: WorldState,
   actorId: string,
@@ -728,6 +746,7 @@ export function admitAutomaticExperience(
   world: WorldState,
   actorId: string,
   input: ExperienceEntry | readonly ExperienceEntry[],
+  activity?: import('./attention.js').ActivityRecordingContext,
 ): { retainedIds: string[]; invalidated: string[] } | null {
   if (!world.experience) migrateCognition(world);
   if (!hasMemory(entityGet(world.entities, actorId))) return null;
@@ -791,6 +810,17 @@ export function admitAutomaticExperience(
           : entry;
     if (reason !== 'none' && !(awareness?.speech || awareness?.sound)) {
       const retention: import('./remembered-impressions.js').ExperienceRetention = {
+        afterRelease:
+          awareness?.retention?.afterRelease ??
+          selectedAccountAfterRelease(world, {
+            source: entry.source,
+            own:
+              !!memory ||
+              awareness?.sourceId === actorId ||
+              awareness?.triggerKind === 'self_event',
+            eventType: awareness?.eventType ?? memory?.eventType,
+            activity,
+          }),
         reason: awareness?.exposure
           ? 'deliberate'
           : entry.source === 'summary' ||
@@ -1063,6 +1093,20 @@ function applyExperienceMutation(
     state.consolidatedAt[actorId] = world.simTime;
     if (placesChanged) invalidateKnownPlaceEvidence(world, actorId);
     reconcileExperienceAccounting(world, actorId, accounting);
+    markTemporalSupportDirty(
+      world,
+      actorId,
+      [...accounting.values()]
+        .filter((entry) =>
+          used.has(
+            experienceSourceKey({
+              kind: entry.source,
+              id: entry.source === 'awareness' ? entry.value.eventId : entry.value.id,
+            }),
+          ),
+        )
+        .flatMap(experienceSupportIds),
+    );
     return mutation.retiredSources.map((source) => source.id);
   }
   if (!Array.isArray(mutation) && mutation.operation === 'correct') {
@@ -1282,6 +1326,14 @@ function applyExperienceMutation(
     for (const { previous } of resolved) {
       const replacement = previous && updatedValues.get(previous.value);
       if (!previous || !replacement) continue;
+      const nextSupport = new Set(
+        experienceSupportIds({ source: previous.source, value: replacement } as ExperienceEntry),
+      );
+      markTemporalSupportDirty(
+        world,
+        actorId,
+        experienceSupportIds(previous).filter((id) => !nextSupport.has(id)),
+      );
       adjustExperienceAccounting(world, actorId, previous, -1);
       adjustExperienceAccounting(
         world,
@@ -1708,7 +1760,19 @@ export function acceptConsolidation(
               entry.value.retention ? [entry.value.retention] : [],
             );
             const retention = reasons.find((reason) => reason.required) ?? reasons[0];
-            return retention ? { retention: cloneValue(retention) } : {};
+            return retention
+              ? {
+                  retention: {
+                    ...cloneValue(retention),
+                    // This newly authored account owns its later retention choice,
+                    // even when every cited source was ordinary travel.
+                    afterRelease: selectedAccountAfterRelease(input, {
+                      source: 'summary',
+                      own: true,
+                    }),
+                  },
+                }
+              : {};
           })(),
           entityIds: [...new Set(entries.flatMap((entry) => entry.value.entityIds))],
           importance: Math.max(...readings.map((source) => source.importance)),
@@ -1920,7 +1984,10 @@ export function rememberInterpretation(
       at: through,
       entityIds: [],
       importance: 5,
-      retention: { reason: 'deliberate' },
+      retention: {
+        reason: 'deliberate',
+        afterRelease: selectedAccountAfterRelease(world, { source: 'summary', own: true }),
+      },
     },
     provenance,
     world.simTime,
@@ -2017,6 +2084,7 @@ export function expireExperience(
   )
     return false;
   ensureExperienceAccounting(world, actorId);
+  markTemporalSupportDirty(world, actorId, entries.flatMap(experienceSupportIds));
   for (const entry of entries) adjustExperienceAccounting(world, actorId, entry, -1);
   const state = world.experience;
   state.awareness[actorId] = (state.awareness[actorId] ?? []).filter(
@@ -2059,6 +2127,7 @@ export function invalidateExperience(
   if (sourceIds.length)
     (state.privacyRevisions ??= {})[actorId] = (state.privacyRevisions?.[actorId] ?? 0) + 1;
   ensureExperienceAccounting(world, actorId);
+  if (sourceIds.length) markTemporalSupportDirty(world, actorId);
   const accounting = experienceEntries(world, actorId);
   const nativeOwner = world.perceptionEvidence?.[actorId];
   const nativeObservations = nativeOwner ? receivedPerceptionObservations(nativeOwner) : [];

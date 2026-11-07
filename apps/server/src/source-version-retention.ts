@@ -2,6 +2,7 @@ import { sqlRowBatches } from './sql-rows.js';
 import {
   accountClass,
   ensureExperienceAccounting,
+  experienceMaintenanceTarget,
   updateWorld,
   appendedRecordCount,
   type WorldState,
@@ -229,11 +230,13 @@ export async function prepareSourceVersions(
         recordId,
         prior: preparation.before.get(table, recordId),
         ...(row ? { row } : {}),
-        ...(next ? {
-          next,
-          nextMetadata: accountRetentionMetadata(next),
-          nextRevision: personalAccountRevision(row!.payload),
-        } : {}),
+        ...(next
+          ? {
+              next,
+              nextMetadata: accountRetentionMetadata(next),
+              nextRevision: personalAccountRevision(row!.payload),
+            }
+          : {}),
       };
       changed.push(item);
       if (!row?.create && !item.prior) missing.set(recordId, item);
@@ -244,12 +247,14 @@ export async function prepareSourceVersions(
       [...missing.values()].map((item) => [item.actorId, item.recordId]),
     )) {
       const requests = batch.map(([actor_id, id]) => ({ actor_id, id }));
-      for (const old of await db.prepare(
-        `SELECT t.id,t.parent_id,t.position,t.actor_id,t.source_id,t.account_revision,
+      for (const old of await db
+        .prepare(
+          `SELECT t.id,t.parent_id,t.position,t.actor_id,t.source_id,t.account_revision,
           t.retention_metadata,t.retention_class,t.logical_bytes,octet_length(t.payload) AS encoded_bytes
          FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,id TEXT)
          JOIN ${table} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=q.id`,
-      ).all(JSON.stringify(requests), state.world.id)) {
+        )
+        .all(JSON.stringify(requests), state.world.id)) {
         const item = missing.get(String(old['id']))!;
         item.prior = {
           table,
@@ -279,17 +284,18 @@ export async function prepareSourceVersions(
         id: String(prior.columns['source_id']),
         revision: String(prior.columns['account_revision']),
       });
-      for (const source of (prior.columns['retention_metadata'] as AccountRetentionMetadata).versions)
+      for (const source of (prior.columns['retention_metadata'] as AccountRetentionMetadata)
+        .versions)
         include(actorId, source);
     }
-    if (nextMetadata)
-      for (const source of nextMetadata.versions) include(actorId, source);
+    if (nextMetadata) for (const source of nextMetadata.versions) include(actorId, source);
     const id = next
-      ? next.source === 'awareness' ? next.value.eventId : next.value.id
+      ? next.source === 'awareness'
+        ? next.value.eventId
+        : next.value.id
       : prior && String(prior.columns['source_id']);
     const revision = item.nextRevision ?? prior?.columns['account_revision'];
-    if (id && revision)
-      changedRevisions.set(sourceKey(actorId, item.kind, id), String(revision));
+    if (id && revision) changedRevisions.set(sourceKey(actorId, item.kind, id), String(revision));
     for (const source of [
       ...(prior ? (prior.columns['retention_metadata'] as AccountRetentionMetadata).learning : []),
       ...(nextMetadata?.learning ?? []),
@@ -303,10 +309,12 @@ export async function prepareSourceVersions(
   }
   const unresolved = new Map<keyof typeof tables, Array<{ actorId: string; id: string }>>();
   for (const [id, source] of learning) {
-    const revision = changedRevisions.get(id) ?? preparation.before.get(
-      tables[source.kind],
-      personalAccountRecordId(source.actorId, source.kind, source.id),
-    )?.columns['account_revision'];
+    const revision =
+      changedRevisions.get(id) ??
+      preparation.before.get(
+        tables[source.kind],
+        personalAccountRecordId(source.actorId, source.kind, source.id),
+      )?.columns['account_revision'];
     if (revision) {
       include(source.actorId, { kind: source.kind, id: source.id, revision: String(revision) });
       continue;
@@ -321,12 +329,17 @@ export async function prepareSourceVersions(
     for (const batch of sqlRowBatches(sources.map((source) => [source.actorId, source.id]))) {
       const requests = batch.map(([actor_id, source_id]) => ({ actor_id, source_id }));
       const found = new Map<string, string>();
-      for (const row of await db.prepare(
-        `SELECT t.actor_id,t.source_id,t.account_revision
+      for (const row of await db
+        .prepare(
+          `SELECT t.actor_id,t.source_id,t.account_revision
          FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,source_id TEXT)
          JOIN ${tables[kind]} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
-      ).all(JSON.stringify(requests), state.world.id))
-        found.set(sourceKey(String(row['actor_id']), kind, String(row['source_id'])), String(row['account_revision']));
+        )
+        .all(JSON.stringify(requests), state.world.id))
+        found.set(
+          sourceKey(String(row['actor_id']), kind, String(row['source_id'])),
+          String(row['account_revision']),
+        );
       for (const [actorId, id] of batch) {
         const revision = found.get(sourceKey(String(actorId), kind, String(id)));
         if (!revision) throw new Error('Exact learned-identity source is unavailable.');
@@ -440,7 +453,8 @@ export async function prepareSourceVersions(
         category = accountClass(item.next);
       for (const source of meta.versions) needed({ actorId: item.actorId, ...source }, category);
       for (const source of meta.learning)
-        for (const value of versionsBySource.get(sourceKey(item.actorId, source.kind, source.id)) ?? [])
+        for (const value of versionsBySource.get(sourceKey(item.actorId, source.kind, source.id)) ??
+          [])
           needed(value, category);
     }
   const oldOwners = new Map(
@@ -571,6 +585,7 @@ export function applySourceVersionAccounting(
   return updateWorld(
     world,
     (draft) => {
+      const pressure = new Map<string, Set<Category>>();
       for (const change of plan.changes) {
         ensureExperienceAccounting(draft, change.actorId);
         const accounts = draft.experience!.temporal!.actors[change.actorId]!.accounts!;
@@ -587,7 +602,30 @@ export function applySourceVersionAccounting(
                 throw new Error('Exact archived support accounting underflow.');
             }
           }
-        accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
+        if (
+          change.desired &&
+          (!change.expectedPrior ||
+            change.desired.category !== change.expectedPrior.category ||
+            change.desired.bytes > change.expectedPrior.bytes)
+        ) {
+          let pools = pressure.get(change.actorId);
+          if (!pools) pressure.set(change.actorId, (pools = new Set()));
+          pools.add(change.desired.category);
+        }
+      }
+      // Reclaiming an archive does not age a current account. Only actual
+      // additions/reclassification above the existing pool target need a wake.
+      for (const [actorId, pools] of pressure) {
+        const accounts = draft.experience!.temporal!.actors[actorId]!.accounts!;
+        if (
+          [...pools].some((pool) => {
+            const target = experienceMaintenanceTarget(draft, pool);
+            return (
+              accounts[pool].bytes > target.maxBytes || accounts[pool].count > target.maxRecords
+            );
+          })
+        )
+          accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
       }
     },
     { retainNativeValues: true },

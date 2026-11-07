@@ -16,7 +16,7 @@ it('preserves original experience age when native conversion runs late', () => {
     eventType: 'fall',
     entityIds: [],
     importance: 4,
-    retention: { reason: 'consequence' },
+    retention: { reason: 'consequence', afterRelease: 'impression' },
   };
   const provenance = [
     {

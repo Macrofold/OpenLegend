@@ -95,6 +95,8 @@ import {
   selectedPruneObserverIndividuals,
   selectedTemporalPolicy,
   selectedAttentionPolicy,
+  selectedRecognitionMaintenanceDue,
+  selectedExpireRecognitionSeeds,
 } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -323,6 +325,11 @@ export interface TemporalActorHistory {
   supports?: Record<string, TemporalSupportCapsule>;
   accounts?: {
     nextDue: number | null;
+    /** Native recognition expiry is independent of cold account aging. */
+    knowledgeDue: number | null;
+    /** Scalar generations coalesce released support without retaining another index. */
+    supportDirtyRevision: number;
+    supportSettledRevision: number;
     optional: { bytes: number; count: number };
     required: { bytes: number; count: number };
     speech: { bytes: number; count: number };
@@ -720,6 +727,50 @@ export function temporalActorHistory(
   actorId: string,
 ): TemporalActorHistory | undefined {
   return actorHistory(world, actorId)?.actor;
+}
+
+/** Mark actual dropped ownership, without scanning every capsule on a sighting.
+ * Unknown editor changes may conservatively omit IDs; native writers supply their
+ * already selected receipt IDs. docs/projects/bookkeeping-simplification-runtime-design.md#e1--distinguish-account-aging-knowledge-expiry-and-released-support */
+export function markTemporalSupportDirty(
+  world: WorldState,
+  actorId: string,
+  sourceIds?: readonly string[],
+): boolean {
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (!actor?.accounts || !actor.supports) return false;
+  const selected = sourceIds
+    ? sourceIds.some((id) => actor.supports![id] !== undefined)
+    : Object.keys(actor.supports).length > 0;
+  if (!selected) return false;
+  touchNativeEvidence(world, 'temporal', actorId);
+  actor.accounts.supportDirtyRevision++;
+  return true;
+}
+
+/** A completed whole-set proof can settle only the generation it captured. */
+export function settleTemporalSupportCleanup(
+  world: WorldState,
+  actorId: string,
+  revision: number,
+): boolean {
+  const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
+  if (!accounts || accounts.supportDirtyRevision !== revision) return false;
+  if (accounts.supportSettledRevision === revision) return false;
+  touchNativeEvidence(world, 'temporal', actorId);
+  accounts.supportSettledRevision = revision;
+  return true;
+}
+
+/** Runs inside the ordinary native mutation; it never prepares account SQL. */
+export function maintainRecognitionKnowledge(world: WorldState, actorId: string): boolean {
+  const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
+  if (!accounts || accounts.knowledgeDue === null || accounts.knowledgeDue > world.simTime)
+    return false;
+  touchNativeEvidence(world, 'temporal', actorId);
+  selectedExpireRecognitionSeeds(world, actorId);
+  accounts.knowledgeDue = selectedRecognitionMaintenanceDue(world, actorId);
+  return true;
 }
 function receivedIdentity(world: WorldState, family: string): number {
   const id = world.nextId;

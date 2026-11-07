@@ -1,5 +1,5 @@
 import type { SourceVersionPlan } from './source-version-retention.js';
-import { personalAccountRevision } from './personal-accounts.js';
+import { personalAccountRevision, personalAccountRecordId } from './personal-accounts.js';
 import {
   accountClass,
   encodedExperienceBytes,
@@ -18,8 +18,11 @@ import {
   hasMemory,
   entityGet,
   observationDependencies,
-  selectedRecognitionMaintenanceDue,
   selectedExpireRecognitionSeeds,
+  maintainRecognitionKnowledge,
+  releaseTemporalSupport,
+  settleTemporalSupportCleanup,
+  temporalSupportAliases,
   invalidateKnownPlaceEvidence,
   knownPlaceEvidenceRevision,
   type ImpressionDependency,
@@ -31,7 +34,14 @@ import {
 import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions } from './history-residency.js';
 import { MemoryRetentionError, type PreparedMemoryRetention } from './temporal-storage.js';
-import { releaseUnusedTemporalSupports } from './retention-cleanup.js';
+import {
+  releaseUnusedTemporalSupports,
+  unusedSupportCandidates,
+  unreferencedSupports,
+  locallyHeldSupportAliases,
+  supportLocallyRequired,
+  type ReadSupportMembership,
+} from './retention-cleanup.js';
 import type { RetentionMetadataView } from './retention-metadata.js';
 import type { RetainedSourceChanges } from './retention-record-metadata.js';
 import { sqlRowBatches } from './sql-rows.js';
@@ -58,12 +68,6 @@ interface Candidate {
 }
 const entryId = (entry: ExperienceEntry) =>
   entry.source === 'awareness' ? entry.value.eventId : entry.value.id;
-const recordId = (actorId: string, kind: Kind, id: string) =>
-  JSON.stringify(
-    kind === 'memory'
-      ? ['world', 'memories', actorId, id]
-      : ['world', 'experience', kind === 'awareness' ? 'awareness' : 'summaries', actorId, id],
-  );
 const sourceEntries = (world: WorldState, actorId: string): ExperienceEntry[] => [
   ...(world.experience?.awareness[actorId] ?? [])
     .filter((value) => value.retentionClass !== 'sensory')
@@ -99,26 +103,22 @@ export async function prepareAccountRetention(
   const bodyReads: Array<{ actorId: string; candidate: Candidate }> = [];
   const applications: Array<{ actorId: string; apply: () => Promise<void> }> = [];
   const priorSupports = new Map(
-    actorIds.map((actorId) => [
+    (complete ? actorIds : []).map((actorId) => [
       actorId,
       Object.keys(world.experience?.temporal?.actors[actorId]?.supports ?? {}),
     ]),
   );
-  world = updateWorld(
-    world,
-    (draft) => {
-      for (const actorId of actorIds) selectedExpireRecognitionSeeds(draft, actorId);
-    },
-    { retainNativeValues: true },
-  );
-  const released = await releaseUnusedTemporalSupports(
-    { ...state, world },
-    actorIds,
-    retainedMetadata,
-    db,
-  );
-  world = released.state.world;
-  if (released.ids.length) rows.set('mind_temporal_supports', released.ids);
+  if (complete)
+    world = updateWorld(
+      world,
+      (draft) => {
+        for (const actorId of actorIds)
+          if (draft.experience?.temporal?.actors[actorId]?.accounts)
+            maintainRecognitionKnowledge(draft, actorId);
+          else selectedExpireRecognitionSeeds(draft, actorId);
+      },
+      { retainNativeValues: true },
+    );
   const prepareActor = async (actorId: string) => {
     let accounts = world.experience!.temporal!.actors[actorId]!.accounts;
     if (!accounts) {
@@ -193,7 +193,7 @@ export async function prepareAccountRetention(
       candidates.set(key, {
         kind,
         id,
-        recordId: recordId(actorId, kind, id),
+        recordId: personalAccountRecordId(actorId, kind, id),
         at:
           kind === 'summary'
             ? (entry as Extract<ExperienceEntry, { source: 'summary' }>).value.to
@@ -216,7 +216,7 @@ export async function prepareAccountRetention(
         (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : 0) ||
         (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
     );
-    let nextDue: number | null = selectedRecognitionMaintenanceDue(world, actorId);
+    let nextDue: number | null = null;
     const savedDeadline = retainedMetadata.accountDeadline(actorId);
     if (savedDeadline !== null) nextDue = Math.min(nextDue ?? Infinity, savedDeadline);
     let moreCandidates = false,
@@ -284,7 +284,11 @@ export async function prepareAccountRetention(
             let replacement: MemoryRecord | undefined;
             if (canRecall && entry.source === 'memory' && entry.value.impression)
               replacement = weakenImpression(entry.value, now);
-            else if (canRecall && entry.value.retention?.receipt) {
+            else if (
+              canRecall &&
+              entry.value.retention?.afterRelease === 'impression' &&
+              entry.value.retention.receipt
+            ) {
               const locator = entry.value.retention.receipt;
               const record =
                 entry.source === 'awareness'
@@ -513,13 +517,15 @@ export async function prepareAccountRetention(
   for (const application of applications)
     if (db.readForActor) await db.readForActor(world.id, application.actorId, application.apply);
     else await application.apply();
-  const finalSupports = await releaseUnusedTemporalSupports(
-    { ...state, world },
-    actorIds,
-    retainedMetadata,
-    db,
-    Object.values(tables).flatMap((table) => rows.get(table) ?? []),
-  );
+  const finalSupports = complete
+    ? await releaseUnusedTemporalSupports(
+        { ...state, world },
+        actorIds,
+        retainedMetadata,
+        db,
+        Object.values(tables).flatMap((table) => rows.get(table) ?? []),
+      )
+    : { state: { ...state, world }, ids: [] };
   world = finalSupports.state.world;
   const removedSupports = new Set([
     ...(rows.get('mind_temporal_supports') ?? []),
@@ -559,6 +565,8 @@ interface AccountActorPlan {
   accountsBefore?: Accounts;
   accountsAfter: Accounts;
   knownPlacesChanged: boolean;
+  /** A whole support-set proof; this plan does not age or rewrite accounts. */
+  supportRevision?: number;
 }
 export interface AccountRetentionPlan {
   worldId: string;
@@ -575,6 +583,58 @@ function changedOwnedEntries<T>(
   return [...ids].flatMap((id) =>
     before?.[id] === after?.[id] ? [] : [{ id, before: before?.[id], after: after?.[id] }],
   );
+}
+
+/** Support ownership is a separate dirty reason from account aging. The read
+ * callback owns a captured database cut, and is never opened for an empty set. */
+export async function prepareSupportRetentionPlan(
+  state: SavedWorld,
+  actorIds: readonly string[],
+  readMembership: ReadSupportMembership,
+): Promise<AccountRetentionPlan> {
+  const captured = actorIds.flatMap((actorId) => {
+    const actor = state.world.experience?.temporal?.actors[actorId],
+      accounts = actor?.accounts;
+    return actor && accounts && accounts.supportDirtyRevision !== accounts.supportSettledRevision
+      ? [{ actorId, actor, accounts }]
+      : [];
+  });
+  const groups = await unreferencedSupports(
+    unusedSupportCandidates(
+      state.world,
+      captured.map(({ actorId }) => actorId),
+    ),
+    readMembership,
+  );
+  const selected = new Map(groups.map((group) => [group.actorId, group.candidates]));
+  const actors: AccountActorPlan[] = [];
+  for (const { actorId, actor, accounts } of captured) {
+    actors.push({
+      actorId,
+      epoch: actor.epoch,
+      life: actor.physicalLife,
+      privacy: state.world.experience?.privacyRevisions?.[actorId] ?? 0,
+      writes: [],
+      deletes: new Map(),
+      identities: [],
+      supports: (selected.get(actorId) ?? []).map(({ capsule }) => ({
+        id: capsule.receipt.id,
+        before: capsule,
+        after: undefined,
+      })),
+      delta: {
+        optional: { bytes: 0, count: 0 },
+        required: { bytes: 0, count: 0 },
+        speech: { bytes: 0, count: 0 },
+      },
+      nextDue: accounts.nextDue,
+      accountsBefore: accounts,
+      accountsAfter: accounts,
+      knownPlacesChanged: false,
+      supportRevision: accounts.supportDirtyRevision,
+    });
+  }
+  return { worldId: state.world.id, actors, rows: new Map() };
 }
 
 /** Existing account retirement prepares its exact effects outside mutation. The
@@ -698,15 +758,27 @@ export function applyAccountRetentionPlan(
       actor = state.world.experience?.temporal?.actors[actorId];
     const selected = new Set(
       [...actorPlan.deletes].flatMap(([kind, ids]) =>
-        [...ids].map((id) => recordId(actorId, kind, id)),
+        [...ids].map((id) => personalAccountRecordId(actorId, kind, id)),
       ),
     );
     for (const entry of actorPlan.writes)
-      selected.add(recordId(actorId, entry.source, entryId(entry)));
+      selected.add(personalAccountRecordId(actorId, entry.source, entryId(entry)));
     const sourceChanges = changesSinceCapture.get(actorId);
+    const supportAliases =
+      actorPlan.supportRevision !== undefined && sourceChanges?.accounts.size
+        ? new Set(
+            actorPlan.supports.flatMap((change) =>
+              change.before ? temporalSupportAliases(change.before, state.world) : [],
+            ),
+          )
+        : undefined;
     const changed =
       !sourceChanges ||
       sourceChanges.invalidated ||
+      (supportAliases !== undefined &&
+        [...sourceChanges.accounts].some((id) =>
+          supportAliases.has((JSON.parse(id) as string[]).at(-1)!),
+        )) ||
       [...sourceChanges.dependentAccounts].some((id) => !selected.has(id)) ||
       [...sourceChanges.accounts].some((id) => selected.has(id));
     if (
@@ -726,26 +798,31 @@ export function applyAccountRetentionPlan(
       stale = true;
       continue;
     }
-    if (actor.accounts?.required !== actorPlan.accountsBefore?.required)
+    if (
+      actorPlan.supportRevision === undefined &&
+      actor.accounts?.required !== actorPlan.accountsBefore?.required
+    )
       changedRequiredAccounts.add(actorId);
     ready.push(actorPlan);
   }
   if (!ready.length) return { state, rows, stale };
   const placements = new Map(
-    ready.flatMap(({ actorId }) =>
-      (Object.keys(tables) as Kind[]).map((kind) => {
-        const values =
-          kind === 'memory'
-            ? state.world.memories[actorId]
-            : kind === 'awareness'
-              ? state.world.experience?.awareness[actorId]
-              : state.world.experience?.summaries[actorId];
-        return [
-          JSON.stringify([actorId, kind]),
-          values ? historyPositions.get(values) : undefined,
-        ] as const;
-      }),
-    ),
+    ready
+      .filter((actor) => actor.supportRevision === undefined)
+      .flatMap(({ actorId }) =>
+        (Object.keys(tables) as Kind[]).map((kind) => {
+          const values =
+            kind === 'memory'
+              ? state.world.memories[actorId]
+              : kind === 'awareness'
+                ? state.world.experience?.awareness[actorId]
+                : state.world.experience?.summaries[actorId];
+          return [
+            JSON.stringify([actorId, kind]),
+            values ? historyPositions.get(values) : undefined,
+          ] as const;
+        }),
+      ),
   );
   const world = updateWorld(
     state.world,
@@ -753,6 +830,34 @@ export function applyAccountRetentionPlan(
       for (const actorPlan of ready) {
         const { actorId } = actorPlan,
           actor = draft.experience!.temporal!.actors[actorId]!;
+        if (actorPlan.supportRevision !== undefined) {
+          const held = actorPlan.supports.length
+            ? locallyHeldSupportAliases(draft, actorId)
+            : new Set<string>();
+          for (const change of actorPlan.supports) {
+            const capsule = actor.supports?.[change.id];
+            if (
+              !capsule ||
+              supportLocallyRequired(capsule, temporalSupportAliases(capsule, draft), held)
+            )
+              continue;
+            releaseTemporalSupport(draft, actorId, change.id);
+            const id = JSON.stringify([
+              'world',
+              'experience',
+              'temporal',
+              'actors',
+              actorId,
+              'supports',
+              change.id,
+            ]);
+            let removed = rows.get('mind_temporal_supports');
+            if (!removed) rows.set('mind_temporal_supports', (removed = []));
+            removed.push(id);
+          }
+          settleTemporalSupportCleanup(draft, actorId, actorPlan.supportRevision);
+          continue;
+        }
         for (const kind of Object.keys(tables) as Kind[]) {
           const current =
             kind === 'memory'
@@ -817,6 +922,10 @@ export function applyAccountRetentionPlan(
                 'Account retention counters changed before installation.',
               );
           }
+        if (actorPlan.accountsBefore)
+          actor.accounts!.supportDirtyRevision +=
+            actorPlan.accountsAfter.supportDirtyRevision -
+            actorPlan.accountsBefore.supportDirtyRevision;
         let nextDue = actorPlan.nextDue;
         for (const entry of sourceEntries(draft, actorId)) {
           const due = experienceRetentionDue(draft, entry);

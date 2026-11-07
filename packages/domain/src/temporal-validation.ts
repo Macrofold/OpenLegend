@@ -491,6 +491,17 @@ export function validateTemporalEvidenceState(
       !record(actor.recent.individuals)
     )
       throw new Error('Invalid received actor history.');
+    const accounts = actor.accounts;
+    if (
+      accounts !== undefined &&
+      (!record(accounts) ||
+        (accounts.nextDue !== null && !finite(accounts.nextDue)) ||
+        (accounts.knowledgeDue !== null && !finite(accounts.knowledgeDue)) ||
+        !ordinal(accounts.supportDirtyRevision) ||
+        !ordinal(accounts.supportSettledRevision) ||
+        accounts.supportSettledRevision > accounts.supportDirtyRevision)
+    )
+      throw new Error('Invalid personal maintenance state.');
     for (const page of actor.pages) validateTemporalPage(world, page, actorId);
     // Restore validates the one saved scalar against its actual existing owners.
     // Ordinary receiving maintains it incrementally; no sensing pass scans marks.

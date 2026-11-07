@@ -185,7 +185,8 @@ export class PostgresDatabase implements SqlDatabase {
     const queuedAt = beginTiming();
     const explicitCut = this.explicitReadCut.getStore();
     const actor = this.actorReadScope.getStore();
-    const liveCuts = explicitCut ?? ((snapshot || liveTables) ? this.liveReadCuts?.(actor) : undefined);
+    const liveCuts =
+      explicitCut ?? (snapshot || liveTables ? this.liveReadCuts?.(actor) : undefined);
     return this.readLane.run(async () => {
       endTiming('postgres.readWait', queuedAt);
       this.readReady ??= this.ready.then(async () => {

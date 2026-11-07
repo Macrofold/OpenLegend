@@ -39,6 +39,7 @@ import {
   hasTemporalRecentIndividual,
   receivedDirectoryContains,
   releaseTemporalSupport,
+  markTemporalSupportDirty,
   temporalReceiptForSource,
   temporalReceiptSource,
   temporalReceiptId,
@@ -99,6 +100,21 @@ export function adjustObserverIdentityAccounting(
 ): boolean {
   return adjustRetainedKnowledgeAccounting(world, actorId, before, after, options);
 }
+function identitySupportKeys(identity: ObserverIdentity | undefined): string[] {
+  return identity
+    ? [
+        ...(identity.nameEvidenceIds ?? []),
+        ...(identity.familiarity?.roots.flatMap((root) => [root.sourceKey, ...root.support]) ?? []),
+        ...(['voice', 'sight'] as const).flatMap(
+          (modality) =>
+            identity[modality]?.samples.flatMap((sample) => [
+              sample.sourceKey,
+              ...sample.support,
+            ]) ?? [],
+        ),
+      ]
+    : [];
+}
 /** Only correspondence changes need old/new cohort capture. Familiarity credit is
  * score input for the next opportunity, never another competition now. */
 export function prepareObserverIdentityReplacement(
@@ -107,6 +123,12 @@ export function prepareObserverIdentityReplacement(
   previous: ObserverIdentity | undefined,
   next: ObserverIdentity | undefined,
 ): () => void {
+  const keptSupport = previous ? new Set(identitySupportKeys(next)) : undefined;
+  const droppedSources = previous
+    ? recognitionSupportSources(
+        identitySupportKeys(previous).filter((key) => !keptSupport!.has(key)),
+      ).map((source) => source.id)
+    : [];
   const removesSamples = (modality: 'sight' | 'voice') => {
     const after = new Set(next?.[modality]?.samples.map((sample) => sample.key));
     return previous?.[modality]?.samples.some((sample) => !after.has(sample.key)) ?? false;
@@ -122,6 +144,7 @@ export function prepareObserverIdentityReplacement(
       removesSamples('voice'));
   const finish = correspondence ? prepareReceivedIdentityChange(world, actorId) : undefined;
   return () => {
+    if (droppedSources.length) markTemporalSupportDirty(world, actorId, droppedSources);
     invalidatePerceptionMeasurements(world, actorId);
     if (finish) finish();
     else
@@ -153,20 +176,8 @@ export function commitObserverIdentity(
   finishIdentity();
   const due = recognitionSeedDeadline(world, next),
     accounts = world.experience?.temporal?.actors[actorId]?.accounts;
-  if (due !== null && accounts) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, due);
-  if (previous && accounts) {
-    const nextRoots = new Set(next.familiarity?.roots.map((root) => root.key));
-    const dropped =
-      (previous.familiarity?.roots.some((root) => !nextRoots.has(root.key)) ?? false) ||
-      (previous.nameEvidenceIds?.some((id) => !next.nameEvidenceIds?.includes(id)) ?? false) ||
-      (['voice', 'sight'] as const).some((modality) => {
-        const retained = new Set(next[modality]?.samples.map((sample) => sample.key));
-        return previous[modality]?.samples.some((sample) => !retained.has(sample.key));
-      });
-    // The common retention owner checks the complete name/note/place/work closure;
-    // one identity alone cannot safely delete a capsule another owner still needs.
-    if (dropped) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, world.simTime);
-  }
+  if (due !== null && accounts)
+    accounts.knowledgeDue = Math.min(accounts.knowledgeDue ?? Infinity, due);
   return true;
 }
 function nameEvidenceIndices(
@@ -532,7 +543,7 @@ export function pruneObserverIndividuals(
   const held = new Set(retainedIdentityEvidenceKeys(world, actorId, input.candidates, notePins));
   const actor = world.experience?.temporal?.actors[actorId];
   const cutoff = world.simTime - BASE_ATTENTION_POLICY.retention.recent.maxAgeSeconds;
-  let faded = false;
+  const droppedSupport: string[] = [];
   for (const key of input.candidates ?? Object.keys(identities)) {
     const identity = identities[key];
     const roots = identity?.familiarity?.roots;
@@ -550,15 +561,20 @@ export function pruneObserverIndividuals(
     if (next.retained && !adjustObserverIdentityAccounting(world, actorId, identity, next))
       throw new Error('Faded familiarity did not fit its previous allocation.');
     identities[key] = next;
-    faded = true;
+    const retained = new Set(remaining);
+    for (const root of roots)
+      if (!retained.has(root)) droppedSupport.push(root.sourceKey, ...root.support);
   }
-  if (faded) {
+  if (droppedSupport.length) {
     // Routine familiarity changes native preference, not a deliberate name/note
     // or new semantic knowledge. Retention is not a new thinking opportunity.
     // The raw frontier can retire a contact without a database account slice.
-    // Wake the existing account owner once to release any now-unowned capsule.
-    if (actor?.accounts)
-      actor.accounts.nextDue = Math.min(actor.accounts.nextDue ?? Infinity, world.simTime);
+    // Only actual dropped capsule ownership requests the independent support proof.
+    markTemporalSupportDirty(
+      world,
+      actorId,
+      recognitionSupportSources(droppedSupport).map((source) => source.id),
+    );
   }
   if (input.releasedSourceIds.length)
     revokeRecognitionEvidence(world, actorId, new Set(input.releasedSourceIds));

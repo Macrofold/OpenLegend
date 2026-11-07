@@ -1,4 +1,10 @@
-import type { AttentionPolicy, RecordingInput, RecordingReason } from '../../attention.js';
+import type {
+  AccountAfterRelease,
+  AccountRecordingInput,
+  AttentionPolicy,
+  RecordingInput,
+  RecordingReason,
+} from '../../attention.js';
 import type { ExperienceEntry } from '../../types.js';
 import type { Entity, WorldState } from '../../types.js';
 import { readAttribute } from '../../world-modules.js';
@@ -131,6 +137,39 @@ export function baseRecordingReason(world: WorldState, input: RecordingInput): R
     return 'optional';
   if (input.source === 'summary' || (input.source === 'memory' && input.own)) return 'optional';
   return input.consequence ? 'optional' : 'none';
+}
+
+/** Exact own results remain admitted; routine travel alone need not become autobiography.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#14-routine-exact-results-need-not-become-lasting-impressions */
+export function baseAccountAfterRelease(input: AccountRecordingInput): AccountAfterRelease {
+  const activity = input.activity;
+  if (
+    !input.own ||
+    !activity ||
+    activity.commandType !== 'move' ||
+    activity.bound ||
+    activity.effects ||
+    activity.outputs ||
+    activity.spending
+  )
+    return 'impression';
+  if (
+    input.source === 'awareness' &&
+    (input.eventType === 'action-started' || input.eventType === 'moved') &&
+    activity.status === 'running'
+  )
+    return 'discard';
+  if (
+    input.source === 'memory' &&
+    ((activity.status === 'completed' &&
+      activity.outcome?.ok === true &&
+      activity.outcome.code === 'completed') ||
+      (activity.status === 'cancelled' &&
+        activity.outcome?.ok === false &&
+        activity.outcome.code === 'cancelled'))
+  )
+    return 'discard';
+  return 'impression';
 }
 
 /** Retention preference belongs to this world's memory policy. Lower ranks leave first. */

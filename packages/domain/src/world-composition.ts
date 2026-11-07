@@ -28,7 +28,7 @@ import { BASE_COMMAND_DESCRIPTIONS } from './worlds/base/action-descriptions.js'
 import { baseTypedRequestVocabulary } from './worlds/base/typed-requests.js';
 import { STOCK_ACTIVITY_HOST } from './stock-activity.js';
 import type { WorldCreationCandidate, WorldCreationProfile } from './world-creation.js';
-import type { Entity, WorldState } from './types.js';
+import type { Entity, WorldEvent, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
@@ -75,9 +75,11 @@ import {
   baseAttributeAffectsObservation,
   baseRecordingReason,
   baseAccountRetentionSelection,
+  baseAccountAfterRelease,
 } from './worlds/base/attention.js';
-import type { RecordingInput } from './attention.js';
+import type { AccountRecordingInput, RecordingInput } from './attention.js';
 import { sightingNarration } from './worlds/base/event-presentation.js';
+import { baseEventSalience } from './worlds/base/cognition.js';
 import type { ObserverSubject } from './knowledge.js';
 import {
   subjectFamiliarity,
@@ -102,6 +104,14 @@ export function selectedAccountRetentionSelection(
 export function selectedRecordingReason(world: WorldState, input: RecordingInput) {
   selectedCreationProfileForWorld(world);
   return baseRecordingReason(world, input);
+}
+export function selectedAccountAfterRelease(world: WorldState, input: AccountRecordingInput) {
+  selectedCreationProfileForWorld(world);
+  return baseAccountAfterRelease(input);
+}
+export function selectedEventSalience(world: WorldState, type: string, data: WorldEvent['data']) {
+  selectedCreationProfileForWorld(world);
+  return baseEventSalience(type, data);
 }
 export function selectedSightingNarration(
   world: WorldState,

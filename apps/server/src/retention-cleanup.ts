@@ -8,9 +8,121 @@ import {
   temporalSupportAliases,
   updateWorld,
   type ExperienceEntry,
+  type TemporalActorHistory,
+  type WorldState,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { RetentionMetadataView } from './retention-metadata.js';
+import { maximumTemporalPreparationRows } from './temporal-storage.js';
+
+type Support = NonNullable<TemporalActorHistory['supports']>[string];
+export interface SupportCleanupGroup {
+  actorId: string;
+  candidates: Array<{ capsule: Support; aliases: string[] }>;
+}
+export type ReadSupportMembership = (
+  requests: readonly {
+    actorId: string;
+    aliases: readonly string[];
+    individualIds: readonly string[];
+    includeRecent: false;
+  }[],
+) => Promise<Array<{ aliases: Set<string>; individuals: Set<string> }>>;
+
+/** These native owners can change while a cold membership read is pending. */
+export function locallyHeldSupportAliases(world: WorldState, actorId: string): Set<string> {
+  const keys = [...selectedRetainedIndividualEvidenceKeys(world, actorId)];
+  for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
+    keys.push(...document.evidenceIds);
+  for (const record of world.knowledge[actorId] ?? []) {
+    keys.push(record.evidenceId);
+    if (record.sourceReceipt) keys.push(temporalReceiptId(record.sourceReceipt));
+  }
+  return new Set([...keys, ...selectedRecognitionSupportSourceIds(world, keys)]);
+}
+
+export function supportLocallyRequired(
+  capsule: Support,
+  aliases: readonly string[],
+  held: ReadonlySet<string>,
+): boolean {
+  return (
+    capsule.required ||
+    capsule.values.some(
+      (value) => value.kind === 'encounter-exposure' && value.exposure.kind === 'place',
+    ) ||
+    aliases.some((id) => held.has(id))
+  );
+}
+
+/** One whole quota-bounded native selection, independent of the cold account plan. */
+export function unusedSupportCandidates(
+  world: WorldState,
+  actorIds: readonly string[],
+): SupportCleanupGroup[] {
+  return actorIds.flatMap((actorId) => {
+    const supports = world.experience?.temporal?.actors[actorId]?.supports;
+    const capsules = Object.values(supports ?? {});
+    if (!capsules.length) return [];
+    const held = locallyHeldSupportAliases(world, actorId);
+    const candidates = capsules
+      .map((capsule) => ({ capsule, aliases: temporalSupportAliases(capsule, world) }))
+      .filter(({ capsule, aliases }) => !supportLocallyRequired(capsule, aliases, held));
+    return candidates.length ? [{ actorId, candidates }] : [];
+  });
+}
+
+/** Split a large actor's membership question and union all answers before deciding
+ * absence. No fixed prefix can repeatedly hide a later releasable capsule. */
+export async function unreferencedSupports(
+  groups: readonly SupportCleanupGroup[],
+  read: ReadSupportMembership,
+): Promise<SupportCleanupGroup[]> {
+  const requests: Parameters<ReadSupportMembership>[0][number][] = [];
+  for (const { actorId, candidates } of groups) {
+    const aliases = [...new Set(candidates.flatMap((candidate) => candidate.aliases))];
+    const request = () => ({
+      actorId,
+      aliases: [] as string[],
+      individualIds: [] as string[],
+      includeRecent: false as const,
+    });
+    let pending = request();
+    const overhead = Buffer.byteLength(JSON.stringify(pending));
+    let bytes = overhead;
+    for (const alias of aliases) {
+      const size = Buffer.byteLength(JSON.stringify(alias));
+      if (overhead + size + 3 > 4 * 1024 * 1024)
+        throw new Error('One personal support alias exceeds bounded preparation.');
+      if (
+        pending.aliases.length === maximumTemporalPreparationRows ||
+        bytes + size + 3 > 4 * 1024 * 1024
+      ) {
+        requests.push(pending);
+        pending = request();
+        bytes = overhead;
+      }
+      bytes += size + Number(pending.aliases.length > 0);
+      pending.aliases.push(alias);
+    }
+    if (pending.aliases.length) requests.push(pending);
+  }
+  const retained = new Map<string, Set<string>>();
+  // The metadata owner packs actual expanded SQL requests inside one captured
+  // transaction. Separate callback invocations would reopen the durable cut.
+  const results = requests.length ? await read(requests) : [];
+  for (const [index, request] of requests.entries()) {
+    let aliases = retained.get(request.actorId);
+    if (!aliases) retained.set(request.actorId, (aliases = new Set()));
+    for (const id of results[index]!.aliases) aliases.add(id);
+  }
+  return groups.map(({ actorId, candidates }) => ({
+    actorId,
+    candidates: candidates.filter(
+      (candidate) => !candidate.aliases.some((id) => retained.get(actorId)?.has(id)),
+    ),
+  }));
+}
 
 /** Proof is owned by an actual retained name/profile/note/place or mechanical
  * grant. Dropping a profile cannot leave its old sparse proof charged forever. */
@@ -21,48 +133,19 @@ export async function releaseUnusedTemporalSupports(
   db: SqlDatabase,
   removedAccounts: readonly string[] = [],
 ): Promise<{ state: SavedWorld; ids: string[] }> {
-  const groups = actorIds.flatMap((actorId) => {
-    const supports = state.world.experience?.temporal?.actors[actorId]?.supports;
-    if (!supports || !Object.keys(supports).length) return [];
-    const keys = [...selectedRetainedIndividualEvidenceKeys(state.world, actorId)];
-    for (const document of Object.values(state.world.actorKnowledge?.[actorId] ?? {}))
-      keys.push(...document.evidenceIds);
-    for (const record of state.world.knowledge[actorId] ?? []) {
-      keys.push(record.evidenceId);
-      if (record.sourceReceipt) keys.push(temporalReceiptId(record.sourceReceipt));
-    }
-    const held = new Set([...keys, ...selectedRecognitionSupportSourceIds(state.world, keys)]);
-    const candidates = Object.values(supports)
-      .map((capsule) => ({ capsule, aliases: temporalSupportAliases(capsule, state.world) }))
-      .filter(
-        ({ capsule, aliases }) =>
-          !capsule.required &&
-          !capsule.values.some(
-            (value) => value.kind === 'encounter-exposure' && value.exposure.kind === 'place',
-          ) &&
-          !aliases.some((id) => held.has(id)),
-      );
-    return candidates.length ? [{ actorId, candidates }] : [];
-  });
+  const groups = unusedSupportCandidates(state.world, actorIds);
   if (!groups.length) return { state, ids: [] };
   const removed = new Map(
     ['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => [table, removedAccounts]),
   );
-  const surviving = await metadata.excluding(removed).survivingMembershipBatch(
-    db,
-    state.world.id,
-    groups.map(({ actorId, candidates }) => ({
-      actorId,
-      aliases: [...new Set(candidates.flatMap((candidate) => candidate.aliases))],
-      individualIds: [],
-      includeRecent: false,
-    })),
-    state.world,
+  const unreferenced = await unreferencedSupports(groups, (requests) =>
+    metadata.excluding(removed).survivingMembershipBatch(db, state.world.id, requests, state.world),
   );
-  const releases = groups.flatMap((group, index) =>
-    group.candidates
-      .filter((candidate) => !candidate.aliases.some((id) => surviving[index]!.aliases.has(id)))
-      .map((candidate) => ({ actorId: group.actorId, id: candidate.capsule.receipt.id })),
+  const releases = unreferenced.flatMap((group) =>
+    group.candidates.map((candidate) => ({
+      actorId: group.actorId,
+      id: candidate.capsule.receipt.id,
+    })),
   );
   if (!releases.length) return { state, ids: [] };
   const world = updateWorld(
@@ -109,7 +192,7 @@ export async function cleanupRetiredIndividuals(
     const ids = new Set(rows.get(table) ?? []);
     if (!ids.size) continue;
     for (const id of ids) {
-      const row = metadata.prior(table, id);
+      const row = metadata.get(table, id);
       if (!row) continue;
       const value = actor(row.actorId);
       value.sources.add(String(row.columns['source_id']));
@@ -181,7 +264,7 @@ export async function cleanupRetiredIndividuals(
       }
   if (retiredChunks.size) {
     for (const pageId of retiredChunks) {
-      const row = metadata.prior('mind_temporal_pages', pageId);
+      const row = metadata.get('mind_temporal_pages', pageId);
       if (!row) continue;
       const value = actor(row.actorId);
       for (const id of row.columns['source_ids'] as string[]) value.sources.add(id);

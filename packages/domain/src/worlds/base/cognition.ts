@@ -1,6 +1,33 @@
 import type { CognitionPolicy } from '../../cognition-policy.js';
 import { definitionPin } from '../../world-modules.js';
 import { BASE_THREAT_RESPONSE_PROFILE } from './threat-response-profile.js';
+import type { WorldEvent } from '../../types.js';
+
+/** Authored fallback salience; explicit producer metrics are normalized by the event owner. */
+export function baseEventSalience(type: string, data: WorldEvent['data']) {
+  return {
+    importance:
+      data?.['significant'] === true || ['death', 'taught', 'incapacitated'].includes(type)
+        ? 9
+        : type === 'speech'
+          ? 7
+          : data?.['semanticTrigger'] === true ||
+              [
+                'crafted',
+                'declaration-admitted',
+                'shot-released',
+                'projectile-contact',
+                'struck',
+                'fire-out',
+                'fire-lit',
+                'fire-extinguished',
+                'rested',
+              ].includes(type)
+            ? 6
+            : 3,
+    urgency: ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
+  };
+}
 
 /** Construct after linked world definitions initialize; exact pins use the shared
  * identity owner, rather than a second hand-maintained digest in authored data. */

@@ -10,12 +10,15 @@ import {
 
 type Policy = ReturnType<typeof selectedTemporalPolicy>;
 type DeadlineIndex = ObjectIndexNode<number> | undefined;
+export type RetentionWorkKind = 'recent' | 'accounts' | 'knowledge' | 'support';
 const emptyActors: Record<string, TemporalActorHistory> = Object.freeze({});
 const byPolicy = new WeakMap<
   Policy,
   {
     recent: DerivedOwnerIndex<TemporalActorHistory, number, DeadlineIndex>;
     accounts: DerivedOwnerIndex<TemporalActorHistory, number, DeadlineIndex>;
+    knowledge: DerivedOwnerIndex<TemporalActorHistory, number, DeadlineIndex>;
+    support: DerivedOwnerIndex<TemporalActorHistory, number, DeadlineIndex>;
   }
 >();
 function indexes(world: WorldState) {
@@ -53,6 +56,13 @@ function indexes(world: WorldState) {
           ? 0
           : (actor.accounts.nextDue ?? Infinity),
       ),
+      knowledge: make((actor) => actor.accounts?.knowledgeDue ?? Infinity),
+      support: make((actor) =>
+        actor.accounts &&
+        actor.accounts.supportDirtyRevision !== actor.accounts.supportSettledRevision
+          ? 0
+          : Infinity,
+      ),
     };
     byPolicy.set(policy, indexes);
   }
@@ -70,14 +80,22 @@ export function nextAccountRetentionAt(world: WorldState): number | null {
   const tree = indexes(world).accounts.read(actors(world));
   return tree ? -tree.maximum : null;
 }
+export function nextKnowledgeRetentionAt(world: WorldState): number | null {
+  const tree = indexes(world).knowledge.read(actors(world));
+  return tree ? -tree.maximum : null;
+}
+export function nextSupportRetentionAt(world: WorldState): number | null {
+  const tree = indexes(world).support.read(actors(world));
+  return tree ? -tree.maximum : null;
+}
 /** Fair bounded preparation over the same native deadline index. Cursors select
  * service order only; they retain neither a world snapshot nor personal content,
  * and need no persistence. A failed/still-due slice cannot starve later actors. */
 export class RetentionActorSelection {
   private static readonly maximumActors = 32;
   private worldId?: string;
-  private after: Partial<Record<'recent' | 'accounts', string>> = {};
-  select(world: WorldState, kind: 'recent' | 'accounts'): string[] {
+  private after: Partial<Record<RetentionWorkKind, string>> = {};
+  select(world: WorldState, kind: RetentionWorkKind): string[] {
     if (this.worldId !== world.id) {
       this.worldId = world.id;
       this.after = {};

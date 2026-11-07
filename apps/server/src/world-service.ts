@@ -1,4 +1,9 @@
-import { nextRecentRetentionAt, nextAccountRetentionAt } from './retention-deadlines.js';
+import {
+  nextRecentRetentionAt,
+  nextAccountRetentionAt,
+  nextKnowledgeRetentionAt,
+  nextSupportRetentionAt,
+} from './retention-deadlines.js';
 import { selectActorLiveReadCuts } from './actor-record-selection.js';
 import {
   captureTemporalStorageContext,
@@ -341,6 +346,7 @@ import {
   createBaseStartingWorld,
   baseWorldInitialConstructionSeeds,
   updateWorld,
+  maintainRecognitionKnowledge,
   appendedEventCount,
   freezeWorld,
   forgetExperience,
@@ -2104,6 +2110,8 @@ export class WorldService {
     const deadlines = [
       nextRecentRetentionAt(this.world),
       nextAccountRetentionAt(this.world),
+      nextKnowledgeRetentionAt(this.world),
+      nextSupportRetentionAt(this.world),
     ].filter((at): at is number => at !== null);
     const at = deadlines.length ? Math.min(...deadlines) : undefined;
     if (at === undefined || this.retentionTask || this.closed || this.paused) {
@@ -2137,54 +2145,67 @@ export class WorldService {
           // still owns the world. Wait outside mutation before capturing that cut.
           await this.ready;
           if (this.closed || this.paused || this.storageError) return;
-          // Settle native recent eligibility before optional account I/O. This
-          // transition consults resident charge headers and creates no SQL plan.
-          await this.mutate(async () => {
-            if (!this.pendingAdmissionOpen()) return;
-            const ids = this.store.captureRetentionActors?.(this.saved).recent ?? [];
-            if (!ids.length) return;
-            const recent = retireRecentHistory(this.saved, ids);
-            if (recent.state !== this.saved)
-              await this.acceptProgress(recent.state, undefined, recent);
-          }, true);
-          const captured = this.saved,
-            generation = this.generation;
-          const cut = this.captureLiveReadCuts();
-          const pending = cut.cuts.reduce((all, cut) => mergeRecordChanges(all, cut.changes), {
-            writes: new Map(),
-            deletes: new Map(),
-            rows: 0,
-          });
           if (!this.store.captureRetentionActors || !this.store.memories)
             throw new Error(
               'Background retention requires selected actor and retained-source owners.',
             );
-          const actors = this.store.captureRetentionActors(captured);
-          if (!actors.accounts.length) return;
-          const sources = this.store.memories.captureRetentionSourceWatch(
-            captured.world.id,
-            actors.accounts,
-          );
-          try {
-            const accounts = await this.store.prepareAccountRetention?.(
-              captured,
-              pending,
-              cut,
-              actors.accounts,
-            );
-            await this.mutate(async () => {
-              if (this.generation !== generation || !this.pendingAdmissionOpen()) return;
-              const changed = sources.changes();
-              const retained = accounts
-                ? applyAccountRetentionPlan(this.saved, accounts, changed)
-                : undefined;
-              if (!retained) return;
-              if (retained.stale) countMetric('retention.stalePreparations');
-              if (retained.state !== this.saved)
-                await this.acceptProgress(retained.state, undefined, retained);
-            }, true);
-          } finally {
-            sources.release();
+          const selectActors = this.store.captureRetentionActors.bind(this.store);
+          const memorySources = this.store.memories;
+          // Native eligibility/recognition expiry does not require a cold account
+          // snapshot. Each fair selector advances only for the work consumed.
+          await this.mutate(async () => {
+            if (!this.pendingAdmissionOpen()) return;
+            const recentIds = selectActors(this.saved, 'recent');
+            const knowledgeIds = selectActors(this.saved, 'knowledge');
+            let recent: PreparedMemoryRetention = recentIds.length
+              ? retireRecentHistory(this.saved, recentIds)
+              : { state: this.saved, rows: new Map() };
+            if (knowledgeIds.length) {
+              const world = updateWorld(
+                recent.state.world,
+                (draft) => {
+                  for (const id of knowledgeIds) maintainRecognitionKnowledge(draft, id);
+                },
+                { retainNativeValues: true },
+              );
+              if (world !== recent.state.world)
+                recent = { ...recent, state: { ...recent.state, world } };
+            }
+            if (recent.state !== this.saved)
+              await this.acceptProgress(recent.state, undefined, recent);
+          }, true);
+          // Prepare/apply one actual reason at a time. The second cohort sees the
+          // first accepted result, while new dirty generations remain scheduled.
+          for (const kind of ['accounts', 'support'] as const) {
+            if (this.closed || this.paused || this.storageError) return;
+            const captured = this.saved,
+              generation = this.generation;
+            const actors = selectActors(captured, kind);
+            if (!actors.length) continue;
+            const cut = this.captureLiveReadCuts();
+            const pending = cut.cuts.reduce((all, cut) => mergeRecordChanges(all, cut.changes), {
+              writes: new Map(),
+              deletes: new Map(),
+              rows: 0,
+            });
+            const sources = memorySources.captureRetentionSourceWatch(captured.world.id, actors);
+            try {
+              const prepare =
+                kind === 'accounts'
+                  ? this.store.prepareAccountRetention
+                  : this.store.prepareSupportRetention;
+              if (!prepare) throw new Error('Selected retention preparation is unavailable.');
+              const plan = await prepare.call(this.store, captured, pending, cut, actors);
+              await this.mutate(async () => {
+                if (this.generation !== generation || !this.pendingAdmissionOpen()) return;
+                const retained = applyAccountRetentionPlan(this.saved, plan, sources.changes());
+                if (retained.stale) countMetric('retention.stalePreparations');
+                if (retained.state !== this.saved)
+                  await this.acceptProgress(retained.state, undefined, retained);
+              }, true);
+            } finally {
+              sources.release();
+            }
           }
         })()
           .catch((error) => {
@@ -2343,7 +2364,6 @@ export class WorldService {
             if (released !== this.saved) this.installWorld(released, this.saved.world, undefined);
           }
         }).catch((error) => this.failProgressSave(error));
-
       } catch (error) {
         this.failProgressSave(error, false);
       } finally {

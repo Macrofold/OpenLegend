@@ -539,6 +539,15 @@ export class RetentionMetadata {
     this.worldId = world.id;
     this.world = world;
   }
+  /** Support cleanup needs a captured cold remainder, not a claim that every
+   * account is resident. No account-candidate query is required to establish it. */
+  initializePartial(world: WorldState, baseline: MetadataBaseline): void {
+    if (baseline.worldId !== world.id)
+      throw new Error('Personal retention metadata belongs to another world.');
+    this.initializeEmpty(world);
+    this.revision = baseline.revision;
+    this.partial = true;
+  }
   /** A restore's copied arrays have no residency certificate. Their independent
    * saved counters must prove every world-owned source is present; a boolean
    * from a caller cannot turn a resident tail into a complete catalogue. Exact
@@ -895,7 +904,7 @@ export class RetentionMetadataView {
       const { actorId, includeRecent } = request,
         result = results[key]!;
       const aliases = [...new Set(request.aliases.filter((id) => !result.aliases.has(id)))];
-      const recentAliases = aliases;
+      const recentAliases = includeRecent ? aliases : [];
       const individuals = [
         ...new Set(request.individualIds.filter((id) => !result.individuals.has(id))),
       ];
@@ -953,47 +962,65 @@ export class RetentionMetadataView {
           excluded_awareness: excluded('mind_awareness'),
           excluded_memories: excluded('mind_memories'),
           excluded_summaries: excluded('mind_summaries'),
-          excluded_segments: excluded('mind_temporal_pages'),
-          buckets: [
-            ...new Set([
-              ...recentAliases.map((id) => receiptLookupBucket('sourceIds', id)),
-              ...individuals.map((id) => receiptLookupBucket('individualIds', id)),
-            ]),
-          ],
-          age_floor: world
-            ? Math.max(
-                world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
-                world.experience?.temporal?.actors[actorId]?.frontier?.expiredThroughTime ??
-                  -Infinity,
-              )
+          excluded_segments: recent ? excluded('mind_temporal_pages') : [],
+          buckets: recent
+            ? [
+                ...new Set([
+                  ...recentAliases.map((id) => receiptLookupBucket('sourceIds', id)),
+                  ...individuals.map((id) => receiptLookupBucket('individualIds', id)),
+                ]),
+              ]
+            : [],
+          age_floor:
+            recent && world
+              ? Math.max(
+                  world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
+                  world.experience?.temporal?.actors[actorId]?.frontier?.expiredThroughTime ??
+                    -Infinity,
+                )
+              : null,
+          pressure_batch: recent
+            ? (world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+                .batchOrder ?? null)
             : null,
-          pressure_batch:
-            world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
-              .batchOrder ?? null,
-          pressure_entry:
-            world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
-              .entryIndex ?? null,
-          pressure_member:
-            world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
-              .memberIndex ?? null,
+          pressure_entry: recent
+            ? (world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+                .entryIndex ?? null)
+            : null,
+          pressure_member: recent
+            ? (world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+                .memberIndex ?? null)
+            : null,
         },
       ];
     });
     // Keep each statement finite, while preserving a single query snapshot for
     // each bounded actor-tagged group. The complete save checks its head once.
-    for (let start = 0; start < inputs.length; start += 32) {
-      const batch = inputs.slice(start, start + 32);
-      const encoded = JSON.stringify(batch);
-      if (
-        Buffer.byteLength(encoded) > 4 * 1024 * 1024 ||
-        batch.reduce((sum, value) => sum + value.aliases.length + value.individuals.length, 0) >
-          maximumTemporalPreparationRows
-      )
-        throw new Error('Personal retention membership exceeds bounded preparation.');
-      countMetric(
-        'retention.survivalCandidates',
-        batch.reduce((sum, value) => sum + value.aliases.length + value.individuals.length, 0),
-      );
+    for (let start = 0; start < inputs.length; ) {
+      const batch: typeof inputs = [];
+      const encodedInputs: string[] = [];
+      let bytes = 2,
+        keys = 0;
+      while (start < inputs.length && batch.length < 32) {
+        const input = inputs[start]!;
+        const encodedInput = JSON.stringify(input);
+        const size = Buffer.byteLength(encodedInput);
+        const count = input.aliases.length + input.individuals.length;
+        if (size + 2 > 4 * 1024 * 1024 || count > maximumTemporalPreparationRows)
+          throw new Error('Personal retention membership exceeds bounded preparation.');
+        if (
+          batch.length &&
+          (bytes + size + 1 > 4 * 1024 * 1024 || keys + count > maximumTemporalPreparationRows)
+        )
+          break;
+        bytes += size + Number(batch.length > 0);
+        keys += count;
+        batch.push(input);
+        encodedInputs.push(encodedInput);
+        start++;
+      }
+      const encoded = `[${encodedInputs.join(',')}]`;
+      countMetric('retention.survivalCandidates', keys);
       const accountQueries = accountTables.map((table) => {
         const suffix =
           table === 'mind_awareness'

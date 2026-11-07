@@ -169,7 +169,9 @@ function compileScopeRemovals(name: string, scopes: readonly RemovalScope[]) {
     if (!rows) groups.set(columns, (rows = new Map()));
     rows.set(rowKey(columns, values), values);
   }
-  const ctes: string[] = [], params: unknown[] = [], predicates: string[] = [];
+  const ctes: string[] = [],
+    params: unknown[] = [],
+    predicates: string[] = [];
   for (const [columns, rows] of groups) {
     const relation = `__live_${name}_scope_${ctes.length}`;
     const chunks: string[] = [];
@@ -178,10 +180,14 @@ function compileScopeRemovals(name: string, scopes: readonly RemovalScope[]) {
       [...rows.values()].map((row) => columns.map((column) => row[column])),
     )) {
       params.push(batch.payload);
-      chunks.push(`SELECT * FROM jsonb_to_recordset(?::jsonb) removed(${columns.map((column) => `${column} TEXT`).join(',')})`);
+      chunks.push(
+        `SELECT * FROM jsonb_to_recordset(?::jsonb) removed(${columns.map((column) => `${column} TEXT`).join(',')})`,
+      );
     }
     ctes.push(`${relation} AS MATERIALIZED (${chunks.join(' UNION ALL ')})`);
-    predicates.push(` AND NOT EXISTS (SELECT 1 FROM ${relation} removed WHERE ${columns.map((column) => `base.${column}=removed.${column}`).join(' AND ')})`);
+    predicates.push(
+      ` AND NOT EXISTS (SELECT 1 FROM ${relation} removed WHERE ${columns.map((column) => `base.${column}=removed.${column}`).join(' AND ')})`,
+    );
   }
   return { ctes, params, exclusion: predicates.join('') };
 }
@@ -300,8 +306,7 @@ export class LiveReadOverlay {
     const table = this.table(name);
     table.removedScopes.push({ columns, values: scope });
     for (const [key, row] of table.rows)
-      if (columns.every((field) => row[field] === scope[field]))
-        table.rows.delete(key);
+      if (columns.every((field) => row[field] === scope[field])) table.rows.delete(key);
   }
   private canonicalChanges(cut: LiveReadCut, table: string): RecordChanges {
     if (table !== 'mind_temporal_pages' || !cut.changes.temporal?.size) return cut.changes;

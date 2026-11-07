@@ -5,7 +5,7 @@ import { validateEvidenceSource } from './perception-values.js';
 import type { ManifestEvidenceDependency } from './experience-manifest.js';
 import { isSafeRecordId } from './records.js';
 import type { ExperienceEntry, MemoryRecord, WorldState } from './types.js';
-import { selectedTemporalPolicy } from './world-composition.js';
+import { selectedRecognitionMaintenanceDue, selectedTemporalPolicy } from './world-composition.js';
 import { temporalActorHistory } from './temporal-evidence.js';
 
 /** Only typed received local subjects are indexed; physical routing IDs are not
@@ -112,6 +112,9 @@ export function ensureExperienceAccounting(world: WorldState, actorId: string): 
   if (!actor || actor.accounts) return;
   actor.accounts = {
     nextDue: null,
+    knowledgeDue: selectedRecognitionMaintenanceDue(world, actorId),
+    supportDirtyRevision: 0,
+    supportSettledRevision: 0,
     optional: { bytes: 0, count: 0 },
     required: { bytes: 0, count: 0 },
     speech: { bytes: 0, count: 0 },
@@ -228,6 +231,7 @@ export function experienceRetentionDue(world: WorldState, entry: ExperienceEntry
 
 export interface ExperienceRetention {
   reason: 'consequence' | 'learning' | 'deliberate' | 'interpretation';
+  afterRelease: import('./attention.js').AccountAfterRelease;
   required?: boolean;
   receipt?: import('./temporal-evidence.js').TemporalReceiptLocator;
 }
@@ -240,8 +244,9 @@ export function validateExperienceRetention(
     throw new Error('Invalid personal retention reason.');
   const retention = value as ExperienceRetention;
   if (
-    !fields(retention, ['reason', 'required', 'receipt']) ||
+    !fields(retention, ['reason', 'afterRelease', 'required', 'receipt']) ||
     !['consequence', 'learning', 'deliberate', 'interpretation'].includes(retention.reason) ||
+    !['discard', 'impression'].includes(retention.afterRelease) ||
     (retention.required !== undefined && typeof retention.required !== 'boolean')
   )
     throw new Error('Invalid personal retention reason.');
@@ -314,7 +319,7 @@ export function createRememberedImpression(
   dependencies: ImpressionDependency[],
 ): MemoryRecord | undefined {
   if (
-    !record.retention ||
+    record.retention?.afterRelease !== 'impression' ||
     !provenance.length ||
     record.kind === 'commitment' ||
     record.kind === 'impression'
