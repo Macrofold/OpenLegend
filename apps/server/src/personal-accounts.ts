@@ -13,6 +13,7 @@ import {
   type TemporalValue,
   type TemporalPage,
   type ReceivedBatch,
+  type ExperienceEntry,
 } from '@open-legend/domain';
 import type { StorySource } from './history.js';
 import { receivedValueSql } from './temporal-page-storage.js';
@@ -22,6 +23,16 @@ import { sqlRowBatches } from './sql-rows.js';
 
 export const personalAccountRevision = (payload: string) =>
   createHash('sha256').update(payload).digest('hex');
+export const personalAccountRecordId = (
+  actorId: string,
+  kind: ExperienceEntry['source'],
+  id: string,
+) =>
+  JSON.stringify(
+    kind === 'memory'
+      ? ['world', 'memories', actorId, id]
+      : ['world', 'experience', kind === 'awareness' ? 'awareness' : 'summaries', actorId, id],
+  );
 
 /** Story evidence is an indivisible received occurrence, never a carried seed
  * or an inferred member of a broad sample. Physical block placement is irrelevant. */

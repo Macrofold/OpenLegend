@@ -12,9 +12,9 @@ import {
   accountRetentionMetadata,
   type AccountRetentionMetadata,
 } from './retention-record-metadata.js';
-import { personalAccountRevision } from './personal-accounts.js';
+import { personalAccountRecordId, personalAccountRevision } from './personal-accounts.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
-import type { RecordChanges } from './world-records.js';
+import type { RecordChanges, RowChange } from './world-records.js';
 import { type RetentionMetadataView } from './retention-metadata.js';
 
 type Category = 'optional' | 'required' | 'speech';
@@ -149,6 +149,8 @@ const tables = {
 } as const;
 const key = (value: VersionKey) =>
   JSON.stringify([value.actorId, value.kind, value.id, value.revision]);
+const sourceKey = (actorId: string, kind: string, id: string) =>
+  JSON.stringify([actorId, kind, id]);
 const zero = () => ({
   optional: { bytes: 0, count: 0 },
   required: { bytes: 0, count: 0 },
@@ -195,8 +197,11 @@ export async function prepareSourceVersions(
     actorId: string;
     kind: keyof typeof tables;
     recordId: string;
-    prior: ReturnType<RetentionMetadataView['prior']>;
+    prior: ReturnType<RetentionMetadataView['get']>;
+    row?: RowChange;
     next?: ExperienceEntry;
+    nextMetadata?: AccountRetentionMetadata;
+    nextRevision?: string;
   };
   const changed: Changed[] = [];
   const affected = new Map<string, VersionKey>();
@@ -209,93 +214,125 @@ export async function prepareSourceVersions(
     [keyof typeof tables, (typeof tables)[keyof typeof tables]]
   >) {
     const writes = new Map((changes.writes.get(table) ?? []).map((row) => [row.id, row]));
+    const missing = new Map<string, Changed>();
     for (const recordId of new Set([...(changes.deletes.get(table) ?? []), ...writes.keys()])) {
       const path = JSON.parse(recordId) as string[],
         actorId = path[kind === 'memory' ? 2 : 3]!;
       if (selected && !selected.has(actorId)) continue;
       const row = writes.get(recordId);
-      let prior = preparation.before.get(table, recordId);
-      if (!row?.create && !prior) {
-        // A selected cold predecessor can be absent from the finite catalogue.
-        // Resolve it through the same captured live-before cut, never today's head.
-        const old = await db
-          .prepare(
-            `SELECT id,parent_id,position,source_id,account_revision,retention_metadata,
-          retention_class,logical_bytes,octet_length(payload) AS encoded_bytes FROM ${table}
-          WHERE world_id=? AND actor_id=? AND id=?`,
-          )
-          .get(state.world.id, actorId, recordId);
-        if (old)
-          prior = {
-            table,
-            id: recordId,
-            parent: String(old['parent_id']),
-            position: Number(old['position']),
-            actorId,
-            columns: old,
-            encodedBytes: Number(old['encoded_bytes']),
-          };
-        else if (row)
-          row.create = true; // Exact captured absence proves this new account, including nonempty manifests.
-        else if (!changes.expired?.get(table)?.includes(recordId))
-          throw new Error('Changed account requires its exact previous metadata.');
-      }
       const next = row
         ? ({ source: kind, value: JSON.parse(row.payload) } as ExperienceEntry)
         : undefined;
-      changed.push({ actorId, kind, recordId, prior, ...(next ? { next } : {}) });
-      if (prior) {
-        include(actorId, {
-          kind,
-          id: String(prior.columns['source_id']),
-          revision: String(prior.columns['account_revision']),
-        });
-        for (const source of (prior.columns['retention_metadata'] as AccountRetentionMetadata)
-          .versions)
-          include(actorId, source);
-      }
-      if (next)
-        for (const source of accountRetentionMetadata(next).versions) include(actorId, source);
+      const item: Changed = {
+        actorId,
+        kind,
+        recordId,
+        prior: preparation.before.get(table, recordId),
+        ...(row ? { row } : {}),
+        ...(next ? {
+          next,
+          nextMetadata: accountRetentionMetadata(next),
+          nextRevision: personalAccountRevision(row!.payload),
+        } : {}),
+      };
+      changed.push(item);
+      if (!row?.create && !item.prior) missing.set(recordId, item);
     }
+    // The finite catalogue can omit selected cold predecessors. Resolve only
+    // those exact keys, once per bounded table batch in the same live-before cut.
+    for (const batch of sqlRowBatches(
+      [...missing.values()].map((item) => [item.actorId, item.recordId]),
+    )) {
+      const requests = batch.map(([actor_id, id]) => ({ actor_id, id }));
+      for (const old of await db.prepare(
+        `SELECT t.id,t.parent_id,t.position,t.actor_id,t.source_id,t.account_revision,
+          t.retention_metadata,t.retention_class,t.logical_bytes,octet_length(t.payload) AS encoded_bytes
+         FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,id TEXT)
+         JOIN ${table} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=q.id`,
+      ).all(JSON.stringify(requests), state.world.id)) {
+        const item = missing.get(String(old['id']))!;
+        item.prior = {
+          table,
+          id: item.recordId,
+          parent: String(old['parent_id']),
+          position: Number(old['position']),
+          actorId: item.actorId,
+          columns: old,
+          encodedBytes: Number(old['encoded_bytes']),
+        };
+      }
+    }
+    for (const item of missing.values())
+      if (!item.prior) {
+        if (item.row) item.row.create = true;
+        else if (!changes.expired?.get(table)?.includes(item.recordId))
+          throw new Error('Changed account requires its exact previous metadata.');
+      }
   }
-  // Learning aliases acquire their exact revision from this captured current cut.
-  // Existing flattened reverse links already contain exact revisions for cold owners.
+  const changedRevisions = new Map<string, string>();
+  const learning = new Map<string, { actorId: string; kind: keyof typeof tables; id: string }>();
   for (const item of changed) {
-    const inputs = [
-      ...(item.prior
-        ? (item.prior.columns['retention_metadata'] as AccountRetentionMetadata).learning
-        : []),
-      ...(item.next ? accountRetentionMetadata(item.next).learning : []),
-    ];
-    for (const source of inputs) {
-      const replacement = changed.find(
-        (other) =>
-          other.actorId === item.actorId &&
-          other.kind === source.kind &&
-          (other.next
-            ? other.next.source === 'awareness'
-              ? other.next.value.eventId
-              : other.next.value.id
-            : other.prior?.columns['source_id']) === source.id,
-      );
-      const revision = replacement?.next
-        ? personalAccountRevision(JSON.stringify(replacement.next.value))
-        : replacement?.prior?.columns['account_revision'];
-      if (revision) {
-        include(item.actorId, { ...source, revision: String(revision) });
-        continue;
-      }
-      const table = tables[source.kind as keyof typeof tables];
-      if (!table) continue;
-      const found = await db
-        .prepare(
-          `SELECT account_revision FROM ${table} WHERE world_id=? AND actor_id=? AND source_id=?`,
-        )
-        .get(state.world.id, item.actorId, source.id);
-      if (!found) throw new Error('Exact learned-identity source is unavailable.');
-      include(item.actorId, { ...source, revision: String(found['account_revision']) });
+    const { actorId, prior, next, nextMetadata } = item;
+    if (prior) {
+      include(actorId, {
+        kind: item.kind,
+        id: String(prior.columns['source_id']),
+        revision: String(prior.columns['account_revision']),
+      });
+      for (const source of (prior.columns['retention_metadata'] as AccountRetentionMetadata).versions)
+        include(actorId, source);
     }
+    if (nextMetadata)
+      for (const source of nextMetadata.versions) include(actorId, source);
+    const id = next
+      ? next.source === 'awareness' ? next.value.eventId : next.value.id
+      : prior && String(prior.columns['source_id']);
+    const revision = item.nextRevision ?? prior?.columns['account_revision'];
+    if (id && revision)
+      changedRevisions.set(sourceKey(actorId, item.kind, id), String(revision));
+    for (const source of [
+      ...(prior ? (prior.columns['retention_metadata'] as AccountRetentionMetadata).learning : []),
+      ...(nextMetadata?.learning ?? []),
+    ])
+      if (Object.hasOwn(tables, source.kind))
+        learning.set(sourceKey(actorId, source.kind, source.id), {
+          actorId,
+          kind: source.kind as keyof typeof tables,
+          id: source.id,
+        });
   }
+  const unresolved = new Map<keyof typeof tables, Array<{ actorId: string; id: string }>>();
+  for (const [id, source] of learning) {
+    const revision = changedRevisions.get(id) ?? preparation.before.get(
+      tables[source.kind],
+      personalAccountRecordId(source.actorId, source.kind, source.id),
+    )?.columns['account_revision'];
+    if (revision) {
+      include(source.actorId, { kind: source.kind, id: source.id, revision: String(revision) });
+      continue;
+    }
+    let group = unresolved.get(source.kind);
+    if (!group) unresolved.set(source.kind, (group = []));
+    group.push(source);
+  }
+  // Learning aliases bind to exact revisions. Multiple changed owners can share
+  // one alias; resolve it once, with no per-reference SQL or changed.find walk.
+  for (const [kind, sources] of unresolved)
+    for (const batch of sqlRowBatches(sources.map((source) => [source.actorId, source.id]))) {
+      const requests = batch.map(([actor_id, source_id]) => ({ actor_id, source_id }));
+      const found = new Map<string, string>();
+      for (const row of await db.prepare(
+        `SELECT t.actor_id,t.source_id,t.account_revision
+         FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,source_id TEXT)
+         JOIN ${tables[kind]} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
+      ).all(JSON.stringify(requests), state.world.id))
+        found.set(sourceKey(String(row['actor_id']), kind, String(row['source_id'])), String(row['account_revision']));
+      for (const [actorId, id] of batch) {
+        const revision = found.get(sourceKey(String(actorId), kind, String(id)));
+        if (!revision) throw new Error('Exact learned-identity source is unavailable.');
+        include(String(actorId), { kind, id: String(id), revision });
+      }
+    }
   const future = new Map<string, Category>();
   const needed = (value: VersionKey, category: Category) => {
     if (state.world.experience?.forgotten[value.actorId]?.includes(value.id)) return;
@@ -304,6 +341,13 @@ export async function prepareSourceVersions(
     if (old === undefined || priority(category) > priority(old)) future.set(id, category);
   };
   const keys = [...affected.values()];
+  const versionsBySource = new Map<string, VersionKey[]>();
+  for (const value of keys) {
+    const id = sourceKey(value.actorId, value.kind, value.id);
+    let versions = versionsBySource.get(id);
+    if (!versions) versionsBySource.set(id, (versions = []));
+    versions.push(value);
+  }
   const changedOwners = changed.map((item) => ({
     actor_id: item.actorId,
     kind: item.kind,
@@ -323,7 +367,7 @@ export async function prepareSourceVersions(
               actorId: item.actorId,
               kind: item.kind,
               id: item.next.source === 'awareness' ? item.next.value.eventId : item.next.value.id,
-              revision: personalAccountRevision(JSON.stringify(item.next.value)),
+              revision: item.nextRevision!,
             }),
           ]
         : [],
@@ -392,17 +436,12 @@ export async function prepareSourceVersions(
   }
   for (const item of changed)
     if (item.next) {
-      const meta = accountRetentionMetadata(item.next),
+      const meta = item.nextMetadata!,
         category = accountClass(item.next);
       for (const source of meta.versions) needed({ actorId: item.actorId, ...source }, category);
       for (const source of meta.learning)
-        for (const value of keys)
-          if (
-            value.actorId === item.actorId &&
-            value.kind === source.kind &&
-            value.id === source.id
-          )
-            needed(value, category);
+        for (const value of versionsBySource.get(sourceKey(item.actorId, source.kind, source.id)) ?? [])
+          needed(value, category);
     }
   const oldOwners = new Map(
     changed.flatMap((item) =>
