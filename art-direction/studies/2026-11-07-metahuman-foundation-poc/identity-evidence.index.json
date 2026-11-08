@@ -1,0 +1,387 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-native-20261107",
+    "revisionId": "native05-identity-portable-sources",
+    "manifestSha256": "e5d1896552386b6544e075b15816eba4db72552869ff4c1ac6f021ce9d6ea68f"
+  },
+  "files": {
+    "evidence/body-lod-comparison01/assessment.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4d05a6508ac13ba7941b931678128db6f27fbf7046ffacd02d57e678b71d094b",
+      "bytes": 6353,
+      "mediaType": "application/json"
+    },
+    "evidence/groom-budget01/run01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "579d63aa3ac398c513c3fab3655ca48a8cb19738c9eed7a331e5a8d44756310d",
+      "bytes": 205392,
+      "mediaType": "application/json"
+    },
+    "evidence/orlando-family-input01/neutral-extraction01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5046cdaa79299f0d500dfcf5cc8699c80bd593e22d983ec2d599a784d054f2ea",
+      "bytes": 2991089,
+      "mediaType": "application/json"
+    },
+    "evidence/vivian-facial-export01/run01/head-arkit52.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b361c4fc02f8bc185ce77e5e7550533bf5377fb3a2aa9dace25a6955f23eedd8",
+      "bytes": 23191436,
+      "mediaType": "model/gltf-binary"
+    },
+    "native05-source-manifest.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e5d1896552386b6544e075b15816eba4db72552869ff4c1ac6f021ce9d6ea68f",
+      "bytes": 83633,
+      "mediaType": "application/json"
+    },
+    "preservation-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "953612b513ca0ba944b9c3cd4f4d79852acd624cb1f69d19225bb6e5d95972ae",
+      "bytes": 192022,
+      "mediaType": "application/json"
+    },
+    "renders/browser-vivian01/body-front-overcast.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36d8a83501148e9bc8a125eb576dd7e36bdd90a0c1bf2c8c78ed509ffb304967",
+      "bytes": 113229,
+      "mediaType": "image/png"
+    },
+    "renders/browser-vivian01/head-quarter-overcast.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "158507590c85ccfc3f380f9a47f94e30f737e3fc3db400f5ef07f74a3ddcb3e6",
+      "bytes": 114526,
+      "mediaType": "image/png"
+    },
+    "renders/vivian-linen-refinement01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "deeb40846ea7abad753c6d61e94890e52e817cb4a73555fb39f44288a4c65052",
+      "bytes": 1034,
+      "mediaType": "application/json"
+    },
+    "renders/vivian-portable02/native-feminine-covered-static.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f82e23a7ac83cc2b0cb648cf32759e89639817af066f052b29c12b807c0dd02f",
+      "bytes": 8928136,
+      "mediaType": "model/gltf-binary"
+    },
+    "renders/vivian-portable02/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f7392121e27956b66ac1f8d2ef4e1d9a45abb929706a9b2ffba7b43c5a615ee7",
+      "bytes": 30613,
+      "mediaType": "application/json"
+    },
+    "samples/orlando-identity01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cb3b58470a57e96132f1056b52f91c546c983586668161e81665b27888eea946",
+      "bytes": 204503,
+      "mediaType": "application/json"
+    },
+    "samples/vivian-groom01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46a17e700ef69d52612aef97640062c1456a0281f6a22e382fea9773af979da7",
+      "bytes": 11838,
+      "mediaType": "application/json"
+    },
+    "samples/vivian-groom02/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe17556f282016ccdffa8491e1041a1082dcc39b2734df326d37caa3c46f0c3b",
+      "bytes": 12660,
+      "mediaType": "application/json"
+    },
+    "samples/vivian-groom03/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d63b7ebcfa1adcba0a4fee4dbdfb9a6c3877dcf5bc0f143abea97a5b42cee85",
+      "bytes": 142310,
+      "mediaType": "application/json"
+    },
+    "samples/vivian-identity01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f5ff90b23660950274e6bedddc82096239fee68ba4d40e398fdcea20c791e14",
+      "bytes": 171561,
+      "mediaType": "application/json"
+    },
+    "samples/vivian-rigged-geometry01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43dbb58157bd62c9d1e7933eaedd7949c9ddaf01fadcf3f14757c3e3680f841b",
+      "bytes": 24822,
+      "mediaType": "application/json"
+    },
+    "source/first-party-code/LICENSE": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d8a6cc31abc16b6748c7a21f21611f5a1ec33f67d22ca23d7da1c19b95496bee",
+      "bytes": 34020,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source/first-party-code/scripts/art/art-tool.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b8d76979a0f6df1ed2c97016cf4a0e09765bcdc23453ec5ddb5ea0d43700d123",
+      "bytes": 96024,
+      "mediaType": "text/x-python"
+    },
+    "source/first-party-code/scripts/art/metahuman-study-export.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3dfaf69d537156b91e177f3697635e7088f486cb2a72d17fe5931d938e780479",
+      "bytes": 16014,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source/first-party-code/scripts/art/metahuman-study.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc3b79a651372da4eeef596211e0c38e2cd86e8ff8083ff378207a36b2ec76ec",
+      "bytes": 47816,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source/first-party-code/scripts/art/people.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "716cc381c1390e8d3fcf142137bde52ff27a769b7af3bbe71414b37b3ed58f68",
+      "bytes": 90504,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source/first-party-code/scripts/asset_workspace.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "259c71f6ff8f6a20e5c114b4b6ac703689a813d6341f310c4f407a29a21508d7",
+      "bytes": 2005,
+      "mediaType": "text/x-python"
+    },
+    "source/identity/orlando/jaw_narrow.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1410860671a050522f72c6547f57c903019043f4000eb2e7896c8fe36d33985e",
+      "bytes": 9166812,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/orlando/jaw_wide.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35a46c33f67e53f2285aa52b6f09c3ffc53dc57ddaf7823fff6ec140fefafbda",
+      "bytes": 9167839,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/orlando/muscle_high.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2ac2ec6dccfb73ecaf07992fa4c4c42c14bfc82711a9f0ce14f131a859259ec",
+      "bytes": 9165371,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/orlando/muscle_low.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "91d4c23bd93d6f2107f32f67d92b13148a249328d42832d176e98bdab20b39b5",
+      "bytes": 9179874,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/orlando/neutral.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "129b279c14b2f5f48513fc72fa6e5666555ed15fc397bd06bc2bf7a896048574",
+      "bytes": 9166995,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/orlando/nose_narrow.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35e252677cecd570b72435e2d586ecc55378d09c28c2a5deb17dad02e28568fa",
+      "bytes": 9165833,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/orlando/nose_wide.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "24cca65401a8eca94c41047baec12b82116e3939f2f50cc538ab994ab2b0cda4",
+      "bytes": 9167024,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/vivian/jaw_narrow.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "29b1b32670cbd1992c1fef5fe702d206a7e76d252c54395b1341a1a3e9c7fb31",
+      "bytes": 9099587,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/vivian/jaw_wide.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3f2c8f4174a27c0eed430d4573cf1db9441201ef026696ef8feb77a4d7b4c64a",
+      "bytes": 9100643,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/vivian/muscle_high.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ba0150920877fec1444123cde8f001f9eb8a7e1c4547e295b7809fa4073558bf",
+      "bytes": 9107200,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/vivian/muscle_low.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "55da2fd9426eb199060b54d36731a04af41f8e4f2207d410f9e368716501a7f5",
+      "bytes": 9092797,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/vivian/neutral.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af79e04b9949335dfd5414dd2f7dc9ae6f27e09b903642bc2c95e662832c6f6a",
+      "bytes": 9094469,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/vivian/nose_narrow.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7f6827fff964ebd92e01075ff1098d9d2b21f19f645a007c046d4ccba5dd94d3",
+      "bytes": 9106161,
+      "mediaType": "application/octet-stream"
+    },
+    "source/identity/vivian/nose_wide.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc90a34c3634472222a060cfaea750fadfb6fb2e3dea242dd0ab30c4fada58cf",
+      "bytes": 9105100,
+      "mediaType": "application/octet-stream"
+    },
+    "source/restored-OL-ID/Config/DefaultEngine.ini": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c679eec959097d6673954ca2a24b06019281d7e75d3e63527a77b683bb4f6a8",
+      "bytes": 142,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source/restored-OL-ID/Content/MetaHumanProof/MHP_OrlandoFit02.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "972c4599e885696a233d15181a134ca51633cfd0ee8d297fe945953e466952e9",
+      "bytes": 9167082,
+      "mediaType": "application/octet-stream"
+    },
+    "source/restored-OL-ID/MetaHumanProof.uproject": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "da4a4c56692aaf29f75355743afb0a9a186088257d057e58b8265a20084cb91d",
+      "bytes": 418,
+      "mediaType": "application/json"
+    },
+    "source/vivian-acquired/F.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a47ee4a16cfd76f7b5ae75e30833bd7dcbbaca6016ba20b4f5edb8539cb32df4",
+      "bytes": 123242539,
+      "mediaType": "application/zip"
+    },
+    "source/vivian-acquired/N.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a37fc6dbc57c45ff4540f59acccd89d7787b012150d73943519641bc90cb2bde",
+      "bytes": 137257754,
+      "mediaType": "application/octet-stream"
+    },
+    "source/vivian-acquired/P.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e7e477faf0ebfe5d9881ccb9e5e6ec093e5d795f7a84b26fc7931bea71f8df79",
+      "bytes": 137258543,
+      "mediaType": "application/octet-stream"
+    },
+    "source/vivian-selected-cards/Eyebrows_M_SlightArch_CardsMesh_Group0_LOD3.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b0bdebbf408166b4a84d0971e0b0eb5d2fc613299b6a3b75c8170e53e717a55",
+      "bytes": 105199,
+      "mediaType": "application/octet-stream"
+    },
+    "source/vivian-selected-cards/Eyebrows_M_SlightArch_CardsMesh_Group0_LOD4.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c32f9d090fca009f3bb512027a740eb41e53c30433b47e5eb49f3f1db7b4eaf5",
+      "bytes": 81100,
+      "mediaType": "application/octet-stream"
+    },
+    "source/vivian-selected-cards/Hair_S_BobLayered_CardsMesh_Group0_LOD3.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "279595d56756dd312ae1c3680e15e803ec1bb8063da99608b5158b3c285e2840",
+      "bytes": 359845,
+      "mediaType": "application/octet-stream"
+    },
+    "source/vivian-selected-cards/Hair_S_BobLayered_CardsMesh_Group0_LOD4.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46afd39b22d114b6062b9685363c0f256b7b39d377bc44a7cbcc47b571ab1923",
+      "bytes": 247338,
+      "mediaType": "application/octet-stream"
+    }
+  },
+  "preservation": {
+    "scope": "Selected reproducible source/evidence entry points; exact full339file map is in the pinned source manifest. Allselected bytes andmanifest were independentlyrecovered; no media payload in this index.",
+    "logicalArchivedFiles": 339,
+    "selectedIndexEntriesIncludingManifest": 47,
+    "fullManifestPath": "native05-source-manifest.json",
+    "restoreFullCurrentFormatIndex": "After a standard current-permission workspace pull of the pinned manifest, its files map plus this same release forms the complete339-entry assets index for the existing workspace command. No catalog sweep or conversion of old models is required.",
+    "directDependency": {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-native-20261107",
+      "revisionId": "native04-clean-fit-browser-source",
+      "manifestSha256": "4edde23ce8d65929cc31ec180f91bd6e6bc1a19a780ff22238dfd29b48479da4"
+    },
+    "transitiveDependencies": [
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-native-20261107",
+        "revisionId": "native03-pbr-hair-facial-vivian",
+        "manifestSha256": "48f9c98ebc404847a47ade3734328b6c59f52184a47c7596e66266b1bdcb6a9f"
+      },
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-native-20261107",
+        "revisionId": "native02-dcc31",
+        "manifestSha256": "03358167534490126210a8e5f732f920d79a0ad992e8acbf39052a1bb02c1eda"
+      },
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-smoke-20261107",
+        "revisionId": "native-smoke02",
+        "manifestSha256": "f10b6485f627eb9986fd8c09b1301d47ad6dbfdc7907aea9eb1094cff12b6f9a"
+      }
+    ]
+  }
+}
