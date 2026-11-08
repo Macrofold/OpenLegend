@@ -1,3 +1,5 @@
+import { entityGet } from '../../entity-collection.js';
+import { hasCommitmentCompletion } from '../../commitments.js';
 import type {
   AccountAfterRelease,
   AccountRecordingInput,
@@ -170,6 +172,48 @@ export function baseAccountAfterRelease(input: AccountRecordingInput): AccountAf
   )
     return 'discard';
   return 'impression';
+}
+
+/** Routine travel is classified only from facts already supplied by its owner.
+ * Departures cannot predict the result of the later walk. */
+export function baseRoutineMovement(
+  world: WorldState,
+  actorId: string,
+  activity: import('../../attention.js').ActivityRecordingContext | undefined,
+  phase: 'departure' | 'arrival' | 'result',
+): boolean {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  const encounters = actor?.encounters;
+  if (
+    (encounters &&
+      encounters.life === (actor?.physicalLife ?? 0) &&
+      (Object.keys(encounters.pairs).length ||
+        Object.values(encounters.unknown).some((entry) => entry.until > world.simTime))) ||
+    hasCommitmentCompletion(world, actorId, ['action-started', 'moved', 'action-stopped'])
+  )
+    return false;
+  if (
+    !activity ||
+    activity.commandType !== 'move' ||
+    activity.bound ||
+    activity.effects ||
+    activity.outputs ||
+    activity.spending
+  )
+    return false;
+  if (phase === 'departure') return activity.status === 'running';
+  if (
+    activity.status === 'completed' &&
+    activity.outcome?.ok === true &&
+    activity.outcome.code === 'completed'
+  )
+    return true;
+  return (
+    phase === 'result' &&
+    activity.status === 'cancelled' &&
+    activity.outcome?.ok === false &&
+    activity.outcome.code === 'cancelled'
+  );
 }
 
 /** Retention preference belongs to this world's memory policy. Lower ranks leave first. */

@@ -76,6 +76,7 @@ import {
   baseRecordingReason,
   baseAccountRetentionSelection,
   baseAccountAfterRelease,
+  baseRoutineMovement,
 } from './worlds/base/attention.js';
 import type { AccountRecordingInput, RecordingInput } from './attention.js';
 import { sightingNarration } from './worlds/base/event-presentation.js';
@@ -109,6 +110,16 @@ export function selectedAccountAfterRelease(world: WorldState, input: AccountRec
   selectedCreationProfileForWorld(world);
   return baseAccountAfterRelease(input);
 }
+export function selectedRoutineMovement(
+  world: WorldState,
+  actorId: string,
+  activity: import('./attention.js').ActivityRecordingContext | undefined,
+  phase: 'departure' | 'arrival' | 'result',
+): boolean {
+  selectedCreationProfileForWorld(world);
+  return baseRoutineMovement(world, actorId, activity, phase);
+}
+
 export function selectedEventSalience(world: WorldState, type: string, data: WorldEvent['data']) {
   selectedCreationProfileForWorld(world);
   return baseEventSalience(type, data);

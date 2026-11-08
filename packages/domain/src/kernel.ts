@@ -253,10 +253,11 @@ import {
   endActivity,
   bindActivityAction,
   occurrenceFor,
+  activityRecordingContext,
   activityCompletionProblem,
   type ActivityOutput,
 } from './action-experience.js';
-import { nativeActivityView } from './world-composition.js';
+import { nativeActivityView, selectedRoutineMovement } from './world-composition.js';
 import {
   validateInstalledRecipe,
   recipeVisibleDependencies,
@@ -4534,7 +4535,15 @@ function executeCommandNative(
         },
       ];
     component.planGeneration++;
-    if (!action.nativeLocomotion)
+    if (
+      !action.nativeLocomotion &&
+      !selectedRoutineMovement(
+        world,
+        actor.id,
+        experience && activityRecordingContext(experience),
+        'departure',
+      )
+    )
       emit(
         world,
         events,
@@ -4795,7 +4804,16 @@ function completeAction(
         failAction(world, actor, events, 'the destination was not reached.');
         return;
       }
-      if (!action.nativeLocomotion)
+      const movementRecord = occurrenceFor(world, actor.id, action.id);
+      const receivedOutcome = movementRecord && {
+        ...activityRecordingContext(movementRecord),
+        status: 'completed' as const,
+        outcome: { ok: true, code: 'completed' },
+      };
+      if (
+        !action.nativeLocomotion &&
+        !selectedRoutineMovement(world, actor.id, receivedOutcome, 'arrival')
+      )
         emit(
           world,
           events,
