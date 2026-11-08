@@ -7,6 +7,7 @@ import { openingSemanticInterval, finishSemanticWork } from './semantic-opportun
 import { attackSubject, validAimPointSubject } from './combat-execution.js';
 import { isMaterialInputRole } from './native-inputs.js';
 import { recordSemanticChange } from './dependencies.js';
+import { selectedOutwardBodyActivity } from './world-composition.js';
 import type { NativeExecutionPermissions } from './construction-permissions.js';
 import { validGateUseIntent } from './gate-operations.js';
 import { validBoundaryImpactIntent } from './boundary-impacts.js';
@@ -560,7 +561,8 @@ export function stopOwnedOffense(
   targetLife: number,
   owned: { invocationId: string; planId?: string },
 ): void {
-  const actor = entityGet(world.entities, actorId)!.actor!,
+  const entity = entityGet(world.entities, actorId)!,
+    actor = entity.actor!,
     agency = actor.agency;
   const matches = (command: PlannedCommand | Command) =>
     ['strike', 'hunt', 'aim', 'shoot-once'].includes(command.type) &&
@@ -573,10 +575,20 @@ export function stopOwnedOffense(
   );
   const stopAction = () => {
     if (!actor.action || actor.action.strikePhase === 'recovery') return;
+    const outward = selectedOutwardBodyActivity(world, entity);
     const memoryId = endActivity(world, actorId, actor.action.id, stopped);
     releaseInvocationResources(world, actor.action.id);
     actor.action = null;
     actor.planGeneration++;
+    // Actual attack preparation ended even when its private controller emits no
+    // narrative event. Every cancellation caller shares this mutation owner.
+    // docs/projects/bookkeeping-simplification-tech-design.md#bk29-e--remove-generic-animal-announcements-and-private-invalidation
+    recordSemanticChange(world, {
+      kind: 'state',
+      entityId: actorId,
+      field: 'behavior',
+      outwardChange: outward !== selectedOutwardBodyActivity(world, entity),
+    });
     return memoryId;
   };
   for (const plan of [agency.plan, agency.suspended]) {

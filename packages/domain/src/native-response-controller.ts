@@ -47,6 +47,7 @@ import {
 import { attackPreparation } from './combat-encounters.js';
 import { seesEntity } from './perception.js';
 import { recordSemanticChange } from './dependencies.js';
+import { selectedOutwardBodyActivity } from './world-composition.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { readEntityAttribute } from './status-effects.js';
@@ -69,7 +70,7 @@ import {
   advanceFlight,
 } from './flight.js';
 
-function changed(world: WorldState, animal: Entity): void {
+function changed(world: WorldState, animal: Entity, outwardChange = false): void {
   recordAnimalClockWrite(world, animal.id);
   // The controller's private alarm/proposal is not received activity. Actual
   // locomotion, body and participation writers publish their own sensory changes.
@@ -77,7 +78,7 @@ function changed(world: WorldState, animal: Entity): void {
     kind: 'state',
     entityId: animal.id,
     field: 'behavior',
-    outwardChange: false,
+    outwardChange,
   });
 }
 
@@ -108,6 +109,7 @@ export function reconcileNativeControl(world: WorldState, entity: Entity): void 
     state.physicalLife === (actor.physicalLife ?? 0)
   )
     return;
+  const outward = selectedOutwardBodyActivity(world, entity);
   retireNativeFlight(world, entity);
   delete state.episode;
   if (state.foraging) {
@@ -125,7 +127,7 @@ export function reconcileNativeControl(world: WorldState, entity: Entity): void 
     actor.planGeneration++;
   }
   reconcileAnimalWander(world, entity);
-  changed(world, entity);
+  changed(world, entity, outward !== selectedOutwardBodyActivity(world, entity));
 }
 
 /** A native receiver needs the actual received occurrence independently of
