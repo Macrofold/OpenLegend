@@ -76,6 +76,8 @@ mod places;
 pub(crate) use places::KnownPlaceMutation;
 pub use places::{KnownPlaceCapsule, PlaceProvenance, PreparedKnownPlaceEvidence};
 mod owners;
+mod sensory;
+pub(crate) use sensory::{expire_sensory_awareness, next_sensory_expiry};
 mod retained_size;
 pub use owners::PersonalOwnerMap;
 pub(crate) use owners::{MemoryOwner, MemoryOwners};
@@ -993,6 +995,11 @@ impl PersonalSourceRecord {
     ) -> Result<Self, ExperienceError> {
         let body = header_input::header_input(&row.payload)?;
         let header = header(object(&body)?, kind, actor_id, &row.payload, meaning)?;
+        if header.class == AccountClass::Sensory
+            && header.expires_at.is_none_or(|at| !at.is_finite())
+        {
+            return Err(ExperienceError::InvalidBody("sensory expiry"));
+        }
         let expected_parent = collection_owner(kind, actor_id)?;
         let mut expected_path: Vec<String> =
             serde_json::from_str(&expected_parent).map_err(|_| ExperienceError::ForeignOwner)?;
@@ -1285,6 +1292,7 @@ pub struct ExperienceState {
     actors: IndexMap<String, PersonalHistory>,
     owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
     known_places: IndexMap<String, places::KnownPlacePreparation>,
+    sensory: sensory::SensoryDeadlines,
 }
 
 impl ExperienceState {
@@ -1294,6 +1302,7 @@ impl ExperienceState {
         header_payload: String,
         actors: IndexMap<String, PersonalHistory>,
         owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ExperienceError> {
         if serde_json::from_str::<ExperienceHeader>(&header_payload)
             .ok()
@@ -1336,6 +1345,7 @@ impl ExperienceState {
                 return Err(ExperienceError::ForeignOwner);
             }
         }
+        let sensory = sensory::SensoryDeadlines::install(&actors, budget)?;
         Ok(Self {
             generation,
             header,
@@ -1343,6 +1353,7 @@ impl ExperienceState {
             actors,
             owner_maps,
             known_places: IndexMap::new(),
+            sensory,
         })
     }
 

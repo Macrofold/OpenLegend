@@ -7,12 +7,15 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::simulation::PhysicalState;
 use std::mem::size_of;
 
-pub(crate) fn next_remains_deadline(state: &PhysicalState, ids: &[String]) -> f64 {
+pub(crate) fn next_remains_deadline<I: AsRef<str>>(
+    state: &PhysicalState,
+    ids: impl IntoIterator<Item = I>,
+) -> f64 {
     let mut deadline = f64::INFINITY;
     for id in ids {
         let Some(remains) = state
             .entities
-            .get(id)
+            .get(id.as_ref())
             .and_then(|entity| entity.remains.as_ref())
             .filter(|r| r.phase != "removed")
         else {

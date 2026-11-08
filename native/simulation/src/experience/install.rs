@@ -141,6 +141,7 @@ pub(crate) struct PersonalInstallation {
 }
 
 pub(crate) struct PersonalInstallContext<'a> {
+    pub budget: &'a crate::host::ByteBudget,
     pub presence: PersonalRootPresence,
     pub through: f64,
     pub archived_event_count: Option<u64>,
@@ -262,6 +263,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         experience_row.payload,
         histories,
         owner_maps,
+        context.budget,
     )?;
     let events = take_collection(
         import,

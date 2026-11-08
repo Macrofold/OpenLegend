@@ -38,6 +38,7 @@ pub mod speech;
 pub mod state;
 pub mod status;
 pub mod text;
+pub(crate) mod time;
 pub mod values;
 pub mod work;
 pub mod worlds;

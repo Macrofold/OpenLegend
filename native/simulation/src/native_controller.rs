@@ -292,7 +292,7 @@ pub(crate) fn reconcile_exposure(
     Ok(())
 }
 
-fn selected_profile<'a>(
+pub(crate) fn selected_profile<'a>(
     installed: &'a InstalledWorld,
     state: &NativeResponseState,
 ) -> Result<&'a NativeResponseProfile, ExecutionError> {

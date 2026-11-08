@@ -725,7 +725,7 @@ impl NativeDanger {
         }
     }
 
-    fn uncertainty_from(&self) -> f64 {
+    pub(crate) fn uncertainty_from(&self) -> f64 {
         match self {
             Self::Body {
                 lost_at,

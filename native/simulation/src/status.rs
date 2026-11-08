@@ -15,6 +15,11 @@ pub(crate) use integration::{
 };
 mod rates;
 pub(crate) use rates::*;
+mod forecast;
+pub(crate) use forecast::{
+    AttributeRates, StatusDeadline, attribute_boundary, current_status_deadline, status_deadline,
+    until_threshold,
+};
 mod projection;
 pub(crate) use projection::*;
 mod roster;

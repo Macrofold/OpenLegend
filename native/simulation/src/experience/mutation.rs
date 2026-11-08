@@ -153,6 +153,7 @@ impl ExperienceJournal {
                         None,
                         before.header.completion_event_type.as_deref(),
                     )?;
+                    state.sensory.exchange(None, Some(&before));
                     continue;
                 }
                 ExperienceUndo::Replace {
@@ -175,6 +176,7 @@ impl ExperienceJournal {
                         return Err(ExperienceError::InvalidOrdinal);
                     }
                     let current_event = current.header.completion_event_type.clone();
+                    state.sensory.exchange(Some(current), Some(&before));
                     replace_completion(
                         actor,
                         current_event.as_deref(),
@@ -245,6 +247,7 @@ impl ExperienceJournal {
                 .by_ordinal
                 .remove(&undo.position)
                 .ok_or(ExperienceError::InvalidOrdinal)?;
+            state.sensory.exchange(Some(&record), None);
             if let Some(event_type) = &record.header.completion_event_type {
                 let count = actor
                     .completion_events
@@ -259,10 +262,17 @@ impl ExperienceJournal {
             }
             source.coverage.next_ordinal = undo.next_ordinal;
         }
+        if self.undo.is_empty() {
+            state.sensory.settle()?;
+        }
         Ok(())
     }
-    pub(crate) fn discard_undo(&mut self) -> Result<(), ExperienceError> {
+    pub(crate) fn discard_undo(
+        &mut self,
+        state: &mut ExperienceState,
+    ) -> Result<(), ExperienceError> {
         self.undo.clear();
+        state.sensory.settle()?;
         self.reservation
             .resize(size_of::<Self>() + self.undo.capacity() * size_of::<ExperienceUndo>())
             .map_err(|_| ExperienceError::Capacity)
@@ -476,6 +486,9 @@ impl ExperienceJournal {
             position: record.position,
             next_ordinal: source.coverage.next_ordinal,
         };
+        let record = Arc::new(record);
+        state.sensory.prepare_exchange(None, Some(&record))?;
+        let header = &record.header;
         let actor = state
             .actors
             .get_mut(&undo.actor_id)
@@ -495,7 +508,8 @@ impl ExperienceJournal {
             .ok_or(ExperienceError::UnknownCoverage)?;
         source.coverage.next_ordinal = next;
         source.lookup.insert(undo.id.clone(), undo.position);
-        source.by_ordinal.insert(undo.position, Arc::new(record));
+        state.sensory.exchange(None, Some(&record));
+        source.by_ordinal.insert(undo.position, record);
         self.undo.push(ExperienceUndo::Append(undo));
         Ok(())
     }
@@ -566,6 +580,11 @@ impl ExperienceJournal {
             before: Arc::clone(before),
         };
         let old_event = before.header.completion_event_type.clone();
+        let before = Arc::clone(before);
+        let record = Arc::new(record);
+        state
+            .sensory
+            .prepare_exchange(Some(&before), Some(&record))?;
         let actor = state
             .actors
             .get_mut(&record.header.actor_id)
@@ -575,12 +594,13 @@ impl ExperienceJournal {
             old_event.as_deref(),
             record.header.completion_event_type.as_deref(),
         )?;
+        state.sensory.exchange(Some(&before), Some(&record));
         actor
             .sources
             .get_mut(&expected.kind)
             .ok_or(ExperienceError::UnknownCoverage)?
             .by_ordinal
-            .insert(record.position, Arc::new(record));
+            .insert(record.position, record);
         self.undo.push(undo);
         Ok(())
     }
@@ -642,6 +662,7 @@ impl ExperienceJournal {
             return Err(ExperienceError::InvalidOrdinal);
         }
         replace_completion(actor, before.header.completion_event_type.as_deref(), None)?;
+        state.sensory.exchange(Some(&before), None);
         self.undo.push(undo);
         Ok(true)
     }

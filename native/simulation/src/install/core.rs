@@ -313,6 +313,7 @@ pub(crate) fn assemble_core(
         &mut import,
         originals,
         PersonalInstallContext {
+            budget,
             presence: personal,
             through: physical.header.sim_time,
             archived_event_count,
