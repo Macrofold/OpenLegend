@@ -201,9 +201,14 @@ requested actions, including transitions or interruption behavior only where the
 Use the look's current production notes for pose timing; do not infer a low sample rate from a
 pixelated presentation.
 
-The current game report expects `Idle` and `Run`. The study viewer also needs both before it plays
-any motion; its Motion menu offers Idle, Walk, Run, Sprint, Attack, Punch, Dodge and Wave. Inspect
-narrow study-only exports and other actions in Blender's viewport and report that viewer limitation. Preserve coverage and any remaining source/rig/version qualification gaps in the
+The current `character` report and prepared actor loader expect `Idle` and `Run`; the `creature`
+report still lacks that check, so compare its exported coverage manually. The study viewer plays
+arbitrary imported clip names without requiring those locomotion clips. Its shared Motion menu
+includes names from all displayed subjects; confirm the target actually plays the requested track,
+without an Idle fallback. Current study states loop. Inspect one-shot endpoints on the exported
+target in Blender and completion through its supported game consumer; independent local-model
+play/replay/loop controls remain [AF15 work](../../projects/art-workflow-tech-design.md#117-inspect-any-named-clip-without-expanding-gameplay).
+Study playback does not bind a new game action. Preserve coverage and remaining source/rig/version qualification gaps in the
 [study record](study-record.md#construction-and-sources). Finish under the
 [production animation checks](production.md#animation-clips) when that quality was requested.
 

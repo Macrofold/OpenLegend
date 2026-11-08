@@ -160,12 +160,12 @@ The script is a tool, so verification is a disposable run, not a new test suite:
 
 ## 5. Local model preview in the study viewer
 
-**Problem.** The [study viewer](../../apps/client/src/art-study.ts) shows only published catalog assets, so judging a fresh candidate in the game's own look requires publishing it first. Because the current look is applied by the renderer, a Blender viewport cannot show what Mike will see.
+**Delivered behavior.** The [study viewer](../../apps/client/src/art-study.ts) can compare a local candidate with published catalog assets before publishing it. Because the current look is applied by the renderer, a Blender viewport cannot show what Mike will see.
 
-**Change.**
+**Current contract.**
 
-- **Control.** Add a **Compare a local model…** control (file picker and drag-and-drop) to the study page. The chosen GLB joins the current comparison (for example the cast) as one more subject, through the same preparation path as catalog assets: material treatment, small-subject density and `installLocomotion` when it has `Idle` and `Run` clips.
-- **Loader.** [`BundledModels`](../../apps/client/src/bundled-models.ts) gains `loadBytes(name, filename, bytes)`, sharing the existing parse path instead of `readAssetBytes`, so ownership, cancellation and teardown stay as they are.
+- **Control.** **Compare a local model…** accepts a file picker or drag-and-drop. The chosen GLB joins the current comparison (for example the cast) through the same material treatment and small-subject preparation as catalog assets. `installStudyAnimations` exposes actual imported clip names without requiring `Idle` or `Run`; a zero-track model remains static. The shared Motion menu includes the displayed models' names. Confirm the selected subject actually plays the requested clip: another subject's clip or an Idle fallback is not evidence of coverage.
+- **Loader.** [`BundledModels`](../../apps/client/src/bundled-models.ts) uses `loadBytes(name, filename, bytes)`, sharing the existing parse path instead of `readAssetBytes`, so ownership, cancellation and teardown stay as they are.
 - **Bounds.** These come from the loaded meshes, since a local file has no catalog entry: world bounds for rigid meshes, and the bind pose for skinned ones, because a skin's inverse bind matrices already cancel the providers' 0.01-scaled armature node.
 - **Card.** Like a catalog subject's card, showing the file name, height, triangles, texture sizes and clip names, with a note when `Idle` or `Run` is missing; there is no download link, since the file is already local.
 
@@ -176,6 +176,7 @@ The script is a tool, so verification is a disposable run, not a new test suite:
 - Replacing or removing the local model releases its resources like any other comparison.
 - It is a developer study tool, not a game feature.
 - It works on the hosted public viewer and the local study server alike.
+- Imported study states currently loop. Independent local-model play/pause, replay, loop selection and one-shot completion remain [AF15 work](#117-inspect-any-named-clip-without-expanding-gameplay). Arbitrary-name preview does not implement gameplay dispatch or change the prepared actor's `Idle`/`Run` contract.
 
 **Verification:**
 
@@ -492,12 +493,12 @@ Pause/resume, starting, stopping and cancellation must not produce a visual succ
 
 ### 11.7 Inspect any named clip without expanding gameplay
 
-The current `installLocomotion` requires Idle/Run and marks every imported action looping. The local viewer's fixed choices do not cover arbitrary work/gesture names. AF15 adds a **study-only** installer/control path while preserving `installLocomotion`'s runtime contract:
+The current study viewer already uses `installStudyAnimations`, accepts arbitrary imported clip names and adds them to its shared Motion menu. Those states loop; the shared control does not establish independent one-shot completion, replay or loop selection for a local subject. AF15 reuses that delivered installer and adds the remaining **study-only controls** below. The game's separate `installLocomotion` still requires Idle/Run; its runtime contract remains unchanged.
 
-1. Reuse track collection and resource disposal; do not change native character-motion selection. A selected local preview model exposes its actual valid track names. Choose Idle if present, otherwise the first imported track. A zero-track model still displays as a static model.
+1. Retain the delivered track collection, safe internal state names and resource disposal; do not change native character-motion selection. Expose the selected local preview model's own valid track names. Choose Idle if present, otherwise the first imported track. A zero-track model still displays as a static model.
 2. The local model's clip control lists its own tracks by literal text, never a provider-supplied HTML label. Use the page’s existing native labeled select, buttons and loop checkbox, with keyboard operation and visible focus. Changing clips must not rebuild the focused control. For a static or absent local model, hide the motion controls and show a short inline status. Selecting a name plays that track on that model. The existing cast comparison can remain on its existing controls; do not invent a shared fallback that disguises a missing clip in another model.
 3. Provide play/pause, replay and a loop toggle for that local preview. Default known locomotion/idle review to looping and other actions to one-shot; these are review settings, not engine semantics. A one-shot stops on its final pose; Replay starts at zero. Switching clips resets review time without changing game state.
-4. Store the local component and its clip/play/loop state separately from the comparison cast’s `animations` array: the existing global-pose loop calls `play()` on every member each frame. Advance the local component exactly once from the existing update callback under the same visibility/reduced-motion gates; keep engine auto-play disabled. Local controls never change the global cast pose, and the global control never resets the local one-shot. Do not add another animation-frame loop. On successful model replacement, rebuild the local choices and release the previous tracks/entity/resources through existing cleanup; a failed load preserves the displayed model and its controls. Leaving the page or clearing preview releases them as usual.
+4. Store the local component and its clip/play/loop state separately from the comparison cast’s `animations` array: the current shared-pose update selects a state for every displayed animated subject and falls back to Idle where available. It calls `play()` when the selected state changes, rather than on every frame. Advance the local component exactly once from the existing update callback under the same visibility/reduced-motion gates; keep engine auto-play disabled. Local controls never change the global cast pose, and the global control never resets the local one-shot. Do not add another animation-frame loop. On successful model replacement, rebuild the local choices and release the previous tracks/entity/resources through existing cleanup; a failed load preserves the displayed model and its controls. Leaving the page or clearing preview releases them as usual.
 5. Reuse the existing intake bound and asset checks. No inference model weights, inference worker or network account enters the viewer. Optional motion notes are shown by the study record; no new runtime asset metadata schema is required.
 
 Disposable verification uses a full skinned target GLB containing only an unfamiliar one-shot, a normal Idle/Walk/Run target and a static prop. Check one-shot completion/replay, loop toggle, pause/resume, replacement and cleanup in the local study page. Then confirm the game's ordinary Idle/Run and phase-paced strikes are unchanged. This is a small authoring improvement, not a new emote menu or gameplay action selector.
@@ -532,7 +533,7 @@ Follow the dependency order below; rows 2–7 may complete for the mercenary fir
 | 1 / AF15                            | Read this section, existing `clips`/maps, consumer requirements and current target source records. Fetch the exact mercenary target; select one MPFB study body/outfit from its source record for the second pass; list the clips each actually needs. Prepare an original or appropriately licensed diagnostic BVH and simple own-authored poses. | Source and targets available; rights and required names recorded. Evaluation-only fixtures stay clearly separated from production exports. No provider account is required for these local checks.                                                                                                       |
 | 2 / AF15                            | Extend source import/FPS/axes, enable the bundled BVH importer after resets, add explicit roles/root selection and `--blend`; keep root policy in the study. Validate the source before retargeting.                                                                                                                                               | Original diagnostic poses import upright/facing correctly at 30 Hz, with the right span/scale; missing required joint or invalid frame time fails clearly.                                                                                                                                               |
 | 3 / AF15                            | Inspect the current target hierarchy, make its map, bake a full target intermediate, correct one motion and assemble retained clips through the same-rig copy path.                                                                                                                                                                                | Target appearance/rest/skin unchanged; requested limbs move correctly; retained names, translation/scale channels, timing and stride facts survive; full target reimports correctly and consumer reports distinguish intermediate from final.                                                            |
-| 4 / AF15                            | Add the bounded single-provider helper and study-only arbitrary-clip preview.                                                                                                                                                                                                                                                                      | Validate a prepared request without submitting; exercise receipt recovery against saved representative responses and local failures; preview a local one-shot without fake Idle/Run. Do not add a new general mock/test framework.                                                                       |
+| 4 / AF15                            | Add the bounded single-provider helper and remaining independent local one-shot/replay/loop controls, reusing delivered arbitrary-name preview.                                                                                                                                                                                                    | Validate a prepared request without submitting; exercise receipt recovery against saved representative responses and local failures; preview a local one-shot without fake Idle/Run. Do not add a new general mock/test framework.                                                                       |
 | 5 / AF16, with AF15 fixes if needed | Use the preserved source proof first; inspect its actual BVH hierarchy/rest convention and metadata. Verify account/rate/deadline only when a genuinely new audition needs generation.                                                                                                                                                             | Either confirm the expected profile and continue, or stop, record the mismatch and adjust the narrow source adapter before another paid request. Source changes use the retained candidate; do not regenerate to debug import. This explicit feedback loop prevents AF15 and AF16 waiting on each other. |
 | 6 / AF16                            | Complete the representative audition below, on the same retained generation wherever possible. Preserve raw/edited/export/review artifacts and actual costs.                                                                                                                                                                                       | Qualify only the exact route/map combinations that pass; record failures and a concrete reuse/manual fallback. Stop when the requested coverage is answered; do not search many seeds for a favorable claim.                                                                                             |
 | 7 / AF16                            | Update the operational route's status and exact evidence links; compare result/correction effort with the existing library; get Mike's art review for production acceptance.                                                                                                                                                                       | A fresh thread can recover every needed source and follow the route without a hidden setup step. Pending artistic acceptance is still pending.                                                                                                                                                           |
@@ -671,10 +672,15 @@ Implementation order:
 1. Preserve the report's existing output fields and current single-file processing path. Add
    facts to the same report rather than creating a new package registry. This preserves active
    callers as part of the change, not legacy formats or a compatibility reader.
-2. For final GLB/glTF inputs, inspect encoded data as well as the Blender import. Report actual
-   external buffer/image references versus embedded data, required extensions and primitive/material
-   assignments. Count source images distinctly and distinguish exported declarations from inferred
-   Blender settings. FBX/OBJ remain source reports; they cannot establish final GLB readiness.
+2. Add the planned `--final-glb` expectation for the existing prepared-GLB consumer. Without it,
+   `report` remains descriptive source inspection, including supported FBX/OBJ inputs. With it,
+   require an actual glTF 2.0 binary and the current prepared asset's embedded-resource, required
+   extension and intake rules. It is not a general consumer registry or a claim of complete game
+   acceptance. For encoded GLB/glTF inputs in either mode, inspect encoded data as well as the
+   Blender import: actual external buffer/image references versus embedded data, required
+   extensions and primitive/material assignments. Count source images distinctly and distinguish
+   exported declarations from inferred Blender settings. A source-format report cannot establish
+   final GLB readiness.
 3. Add a compact node/anchor view: hierarchy path, exported node index within this exact file,
    local transform and skin association. The node index is a diagnostic locator, not a new stable
    asset ID. Report ambiguities affecting a required attachment; do not forbid every harmless
@@ -687,20 +693,31 @@ Implementation order:
    dispatch or correct physics from channels existing. Rest bounds remain explicitly rest bounds;
    dynamic bounds require the PR3 consumer check.
 6. Add planned repeatable `--require-clip NAME` arguments to `report`. They add exact expected
-   names to the selected profile's existing required set; deduplicate expectations and report
-   missing names. Update the prepared-creature export callers to pass `Idle` and `Run`, and
-   any catalog-declared required clips, through that same check. Keep the current `character`
-   profile default; use explicit expectations for another named consumer. `--strict` returns 2
-   for those missing requirements as it does for current failures. No action alias, automatic clip
-   renaming, silent substitute or globally required creature action is introduced.
-7. Final-package checks must fail for an unavailable required dependency, unsupported required
-   extension or wrong final format. Resolve relative source resources only inside the selected
-   external workspace; report remote URIs without fetching them or executing content. Reuse current
-   format and intake restrictions, not a new extension allowlist inferred from latest vendor docs.
+   names to the selected profile's existing required set; deduplicate expectations. For encoded
+   inputs, a required name must resolve to an exported animation with resolvable sampler/accessor
+   and target data. A Blender Action retained in the source but omitted from the export does not
+   satisfy it; a missing or unusable required track is a failure. Source-only formats may report
+   action coverage, clearly labeled as source evidence. Reuse importer/loader validation and the
+   encoded inventory instead of writing a full glTF validator. Playback still establishes meaningful
+   motion, contact and acting. Update prepared-asset export callers to use `--final-glb`; prepared
+   creatures also pass `--require-clip Idle --require-clip Run` and any catalog-declared required
+   names. Keep the current `character` profile default; use explicit expectations for another named
+   consumer. No action alias, automatic renaming, silent substitute or universal creature action is
+   introduced.
+7. Record final-expectation failures in the same report. With `--strict`, return 2 for wrong final
+   format, unavailable required data/dependencies, unsupported required extensions, missing or
+   unusable required clips, and the existing budget failures. Without `--strict`, a written report
+   is still descriptive output, not acceptance. Resolve relative source resources only inside the
+   selected external workspace; report remote URIs without fetching them or executing content.
+   Reuse current format and intake restrictions, not a new extension allowlist inferred from latest
+   vendor docs. Final prepared GLBs must embed their required resources even if an external source
+   resource happens to be reachable locally.
 8. Update the working command examples after delivery. Until then, operators manually compare
-   exported clip/dependency inventories against the brief; the proposed flag is not copyable
-   current functionality. Review a static prop, a prepared creature missing `Run`, and an export
-   missing a required texture. A static prop must not acquire actor clip requirements.
+   exported clip/dependency inventories against the brief; both proposed flags are future work,
+   not copyable current functionality. Review a valid static GLB, a source FBX both without and
+   with the final expectation, a prepared creature missing `Run`, a required source action omitted
+   from export or exported with unresolved channels, and an export missing a required texture.
+   A static prop must not acquire actor clip requirements.
 
 Keep encoded inspection in a small pure helper inside the existing art tooling if useful; no new
 package dependency is needed for GLB JSON/chunk inspection. Share the one parsed representation
@@ -826,7 +843,7 @@ The installed source remains authoritative for OpenLegend behavior: the lockfile
 Official documentation informs format constraints, not an automatic dependency upgrade:
 
 - [Khronos glTF 2.0](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units): metres/right-handed Y-up coordinates; its [animations](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#animations) and [GLB structure](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#glb-file-format-specification) distinguish exported channels and resource references from authoring behavior. Core visual data does not implement OpenLegend physical rules.
-- [Blender glTF export](https://docs.blender.org/manual/en/3.6/addons/import_export/scene_gltf2.html#animations): object/bone/shape animation export differs from source physics/material animation. This is supporting format evidence, not the command reference for the installed Blender version; use and verify the pinned recipe.
+- [Blender 5.2 glTF export](https://docs.blender.org/manual/sl/5.2/addons/scene_gltf2.html#animations): the ordinary export route carries object transforms, pose-bone motion and shape-key values. Source physics/material animation does not automatically survive; bake the needed result to supported channels or use an explicitly supported runtime mechanism. This is format evidence, not permission to enable experimental extensions; use and verify the pinned recipe.
 - [PlayCanvas supported formats](https://developer.playcanvas.com/user-manual/assets/supported-formats/): direct engine loading and Editor conversion differ. The application loader/decoder configuration still determines usable runtime inputs.
 - [PlayCanvas transparency](https://developer.playcanvas.com/user-manual/graphics/transparency/): blended surfaces depend on mesh-instance ordering; cutouts have different depth/sorting behavior. Inspect actual overlapping foliage/hair and camera motion rather than treating alpha as a checkbox.
 

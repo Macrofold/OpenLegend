@@ -94,6 +94,10 @@ A simple static prop with a proven recipe can combine this with its normal expor
 4. Open the exact export in the existing model/person/scene study consumer, as appropriate.
    Inspect the failure-prone case from ordinary play views. The study's arbitrary-clip preview
    can inspect a clip that is not yet used in play; it cannot prove that play drives it correctly.
+   Its shared Motion menu can include another subject's clips: confirm this subject actually plays
+   the requested motion, without an Idle fallback. Current study states loop. Check one-shot
+   endpoints in the exported target in Blender and completion in its supported game consumer;
+   independent local replay/loop controls remain [AF15 work](../../projects/art-workflow-tech-design.md#117-inspect-any-named-clip-without-expanding-gameplay).
 5. Correct the source/consumer mismatch now. If the current viewer cannot exercise a required
    feature, use the existing authorized game consumer when integration is in scope, or record
    that precise rehearsal dependency under AF20. Do not substitute a beauty render as a pass.

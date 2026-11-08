@@ -26,6 +26,8 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
 
+[Common asset readiness](../production-workflows/art-flows/runtime-preparation.md) is designed across creatures, wearables, structures, mechanisms and decoration. [AF19–AF20](art-direction.md#art-flow-follow-through) own the remaining report and consumer-rehearsal support; existing production/family trackers retain asset qualification and acceptance.
+
 The [focused game-reference map](../../archive/02-research/game-inspiration/README.md#player-stories-authored-worlds-and-personal-meaning) routes narrative, collectible, art and marketing learnings to their existing design and production owners. Its concrete follow-up lives in ND01, ND04, ND30, ND38 and DG29/DG33/DG34 in [Future work needing design](needs-design.md); it is not another implementation queue.
 
 ## Current engine research

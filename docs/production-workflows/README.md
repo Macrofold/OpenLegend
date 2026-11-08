@@ -91,6 +91,11 @@ It defines source finishing, final exports, technical inspection and the reusabl
 the chapters here retain creative development and game integration. Reuse already completed
 steps when their source/export evidence remains valid.
 
+For a finished 3D asset, follow [common runtime preparation](art-flows/runtime-preparation.md)
+for physical and attachment references, the actual motion method, a rough consumer rehearsal,
+export inspection and optimisation in the intended assembly. Its conditional checks apply across
+creatures, wearables, structures, mechanisms and decoration; asset-specific detail stays in the brief.
+
 Each stage delivers enough for the next contributor to act without guessing. The output may be a concept sheet, editable scene, material graph, rig, animation clip, component, world-content change or reviewed runtime asset. It should identify:
 
 - The input revision and intended meaning it preserves.
