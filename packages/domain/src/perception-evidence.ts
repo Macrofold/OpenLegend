@@ -1527,9 +1527,10 @@ interface ReceivedPhaseDelta {
   descriptors: Map<string, readonly ReceivedTrackDescriptor[]>;
   sampleToken?: number;
   frameRef?: import('./received-values.js').ReceivedValueReference;
-  receiverFrameRecorded?: boolean;
   receiverFrameChanged?: boolean;
   frameChecked?: ReadonlySet<string>;
+  recordedFrames?: Map<string, ObservationFrame>;
+  onCurrentCaptured?: (track: string, frame: ObservationFrame | undefined) => void;
   measured: Set<string>;
   checked: Set<string>;
   ended: Set<string>;
@@ -1547,6 +1548,74 @@ interface ReceivedPhaseDelta {
   reconciled?: boolean;
 }
 const receivedPhaseDeltas = new WeakMap<PerceptionEvidenceOwner, ReceivedPhaseDelta>();
+function currentCaptureFrameRecorder(state: PerceptionEvidenceOwner) {
+  const phase = receivedPhaseDeltas.get(state);
+  // Once sight establishes an unchanged frame, no contextual header is needed.
+  // Earlier captures under an unknown frame still need their exact success proof.
+  if (!phase || (phase.frameRef && !phase.receiverFrameChanged)) return;
+  return (phase.onCurrentCaptured ??= (track, frame) => {
+    if (frame && !sameObservationFrame(phase.recordedFrames?.get(track), frame))
+      (phase.recordedFrames ??= new Map()).set(track, cloneValue(frame));
+  });
+}
+
+/** Finalize only context not already supplied by an admitted sample. Another
+ * track's movement, loss or selection cannot erase this track's checked frame. */
+function recordReceivedPhaseFrame(
+  world: WorldState,
+  observerId: string,
+  state: PerceptionEvidenceOwner,
+  phase: ReceivedPhaseDelta,
+): void {
+  if (!phase.receiverFrameChanged || !phase.frameRef) return;
+  const frame = receivedObservationFrame(world, phase.frameRef);
+  const entries = new Map(
+    [...phase.entryEntries, ...currentDetailedAttention(world, observerId)].map((entry) => [
+      entry.exposure.track,
+      entry,
+    ]),
+  );
+  const tracks = [...entries].flatMap(([track, entry]) => {
+    if (
+      (!phase.checked.has(entry.sourceId) &&
+        !phase.measured.has(entry.sourceId) &&
+        !phase.frameChecked?.has(entry.sourceId)) ||
+      sameObservationFrame(phase.recordedFrames?.get(track), frame)
+    )
+      return [];
+    const contact = currentContactGet(state, entry.sourceId);
+    return contact?.content.groups.some(
+      (group) =>
+        group.received.grant.modality === 'sight' &&
+        receivedTrackKey(group.received.grant.exposure, group.received.grant.channel) === track &&
+        group.metadata.some((partition) => {
+          const effective = effectiveCurrentPartition(state, group, partition);
+          return (
+            !effective.availability &&
+            currentGroupTimes(group, effective).confirmedThrough === world.simTime &&
+            effective.frameRef !== undefined &&
+            sameObservationFrame(receivedObservationFrame(world, effective.frameRef), frame)
+          );
+        }),
+    )
+      ? [track]
+      : [];
+  });
+  if (!tracks.length) return;
+  appendTemporalReceipt(
+    world,
+    observerId,
+    {
+      subject: tracks[0]!,
+      ...(tracks.length > 1 ? { contextSubjects: tracks.slice(1) } : {}),
+      spatialContext: true,
+      change: 'receiver-frame',
+      receiverFrame: frame,
+      facets: [],
+    },
+    selectedTemporalPolicy(world).recent,
+  );
+}
 /** Resolve prior correspondence before a real change needs it. Fresh confirmations
  * do not require a reconstruction of unchanged selected subjects and field masks. */
 function ensureReceivedPhaseTracks(world: WorldState, state: PerceptionEvidenceOwner): void {
@@ -1821,6 +1890,7 @@ export function receiveCurrentChange(
                       : [];
                   }),
                   selectedTemporalPolicy(world).recent,
+                  currentCaptureFrameRecorder(state),
                 );
               return;
             }
@@ -2315,9 +2385,8 @@ export function beginCurrentReception(
           [],
           [...new Set([...delta.measured, ...delta.ended])],
           false,
-          [],
-          { checked: { broad: delta.checked, detailed: new Set() } },
         );
+      recordReceivedPhaseFrame(world, observerId, state, delta);
       flushTemporalAcquisition(world, observerId);
       active.finish();
     } finally {
@@ -4371,7 +4440,13 @@ function recordCurrentReception(
         });
     }
   }
-  captureTemporalCurrent(world, actorId, inputs, selectedTemporalPolicy(world).recent);
+  captureTemporalCurrent(
+    world,
+    actorId,
+    inputs,
+    selectedTemporalPolicy(world).recent,
+    currentCaptureFrameRecorder(state),
+  );
 }
 
 export function currentObservedFacets(
@@ -5344,6 +5419,7 @@ export function reconcileVisualEvidence(
       observer.id,
       recordingRepairs,
       selectedTemporalPolicy(world).recent,
+      currentCaptureFrameRecorder(state),
     );
     if (options?.phase !== 'detail' && !measuredSubjects && hasMemory(observer)) {
       const beforeSelection = currentDetailedAttention(world, observer.id);
@@ -5385,8 +5461,6 @@ export function reconcileVisualEvidence(
       [...attentionChanges],
       true,
       newGeometry,
-      frameChanged,
-      { broad: checkedSources, detailed: detailedSources },
       [...geometryChanges],
     );
   });
@@ -5426,8 +5500,6 @@ function reconcileReceivedAttention(
   attentionChanges: readonly string[],
   creditContacts: boolean,
   newGeometry: readonly ObservationContribution[],
-  receiverFrameChanged?: boolean,
-  checked?: { broad: ReadonlySet<string>; detailed: ReadonlySet<string> },
   geometrySourceIds = attentionChanges,
 ): void {
   reconcileAttendedTemporalEvidence(
@@ -5438,7 +5510,7 @@ function reconcileReceivedAttention(
     attentionChanges,
     creditContacts,
     newGeometry,
-    { receiverFrameChanged, checked, geometrySourceIds },
+    { geometrySourceIds },
   );
   evaluateAttentionRelations(world, observerId);
 }
@@ -5494,10 +5566,7 @@ export function reconcileAttendedTemporalEvidence(
   changedSourceIds?: readonly string[],
   creditContacts = true,
   newGeometry: readonly ObservationContribution[] = [],
-  cues: Pick<AttentionUpdate, 'urgency' | 'proofs' | 'geometrySourceIds'> & {
-    receiverFrameChanged?: boolean;
-    checked?: { broad: ReadonlySet<string>; detailed: ReadonlySet<string> };
-  } = {},
+  cues: Pick<AttentionUpdate, 'urgency' | 'proofs' | 'geometrySourceIds'> = {},
 ): ReadonlySet<string> | undefined {
   touchNativeEvidence(world, 'perception', observerId);
   const observer = entityGet(world.entities, observerId);
@@ -5507,12 +5576,11 @@ export function reconcileAttendedTemporalEvidence(
   const priorEntries = (phase?.entryEntries ?? currentDetailedAttention(world, observerId)).filter(
     (entry) => before.has(entry.sourceId),
   );
-  const { receiverFrameChanged = phase?.receiverFrameChanged, checked, ...attentionCues } = cues;
   // Optional selection is owned by the native receiving opportunity. A distinct
   // required occurrence may supply new direct cues, but recording never reranks.
   const result =
-    directSubjects.length || attentionCues.proofs || attentionCues.urgency
-      ? updateAttention(world, observerId, { directSubjects, changedSourceIds, ...attentionCues })
+    directSubjects.length || cues.proofs || cues.urgency
+      ? updateAttention(world, observerId, { directSubjects, changedSourceIds, ...cues })
       : {
           after: new Set(
             currentDetailedAttention(world, observerId).map((entry) => entry.sourceId),
@@ -5523,57 +5591,6 @@ export function reconcileAttendedTemporalEvidence(
     afterEntries = currentDetailedAttention(world, observerId);
   const changedCohort =
     selectionChanged(priorEntries, afterEntries) || phase?.correspondenceChanged === true;
-  if (
-    receiverFrameChanged &&
-    phase?.frameRef &&
-    !phase.receiverFrameRecorded &&
-    !phase.measured.size &&
-    !phase.ended.size &&
-    !changedCohort
-  ) {
-    // Observer motion is not movement of every held subject. One contextual
-    // frame records the changed viewpoint without repeating unchanged fields.
-    // Changed samples/baselines already carry their actual receiving frame.
-    const tracks = afterEntries.flatMap((entry) => {
-      if (
-        !checked?.broad.has(entry.sourceId) &&
-        !checked?.detailed.has(entry.sourceId) &&
-        !phase.frameChecked?.has(entry.sourceId)
-      )
-        return [];
-      const contact = currentContactGet(state, entry.sourceId);
-      return contact?.content.groups.some(
-        (group) =>
-          group.received.grant.modality === 'sight' &&
-          receivedTrackKey(group.received.grant.exposure, group.received.grant.channel) ===
-            entry.exposure.track &&
-          group.metadata.some(
-            (partition) =>
-              !partition.availability &&
-              currentGroupTimes(group, effectiveCurrentPartition(state, group, partition))
-                .confirmedThrough === world.simTime,
-          ),
-      )
-        ? [entry.exposure.track]
-        : [];
-    });
-    if (tracks.length) {
-      phase.receiverFrameRecorded = true;
-      appendTemporalReceipt(
-        world,
-        observerId,
-        {
-          subject: tracks[0]!,
-          ...(tracks.length > 1 ? { contextSubjects: tracks.slice(1) } : {}),
-          spatialContext: true,
-          change: 'receiver-frame',
-          receiverFrame: receivedObservationFrame(world, phase.frameRef),
-          facets: [],
-        },
-        selectedTemporalPolicy(world).recent,
-      );
-    }
-  }
   const contactCreditDue =
     creditContacts &&
     afterEntries.some(
@@ -5629,6 +5646,7 @@ export function reconcileAttendedTemporalEvidence(
     observerId,
     selectedCurrentGroups(state, selectedExposures, entryTracks, finalTracks),
     selectedTemporalPolicy(world).recent,
+    currentCaptureFrameRecorder(state),
   );
   for (const [id, subject] of contacts) {
     const body = currentVisualFacetGet(state, `${id}:body`);

@@ -1,4 +1,4 @@
-import { currentContactEntries, currentContactGet } from '@open-legend/domain';
+import { currentContactEntries, currentContactGet, entityGet } from '@open-legend/domain';
 import {
   receiptLookupBuckets,
   decodeTemporalPageRow,
@@ -118,17 +118,21 @@ export interface TemporalHistoryQuery {
 export interface TemporalHistoryWindow {
   capture(subjects: ReadonlySet<string>): TemporalHistoryReadContext;
   contains(locator: TemporalReceiptLocator, memberIndex: number): boolean;
+  /** Current observer body, independently of each historical receipt's life. */
+  readonly physicalLife: number | undefined;
   readonly at: number;
   readonly maxAgeSeconds: number;
   readonly frontier?: ReceivedFrontier;
 }
 export function temporalHistoryWindow(world: WorldState, actorId: string): TemporalHistoryWindow {
-  const actor = world.experience?.temporal?.actors[actorId];
+  const actor = world.experience?.temporal?.actors[actorId],
+    observer = entityGet(world.entities, actorId)?.actor;
   return {
     contains: (locator, memberIndex) =>
       !!actor && receivedDirectoryContains(actor.recent, locator, memberIndex),
     capture: (subjects) =>
       captureTemporalHistoryReadContext(world, actorId, { subjects: [...subjects] }),
+    physicalLife: observer ? (observer.physicalLife ?? 0) : undefined,
     at: world.simTime,
     maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
     frontier: world.experience?.temporal?.actors[actorId]?.frontier,

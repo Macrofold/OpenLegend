@@ -1,6 +1,5 @@
 import {
   recentResultEligible,
-  captureActivityResults,
   resultEvidenceId,
   resultEvidenceMatchesReceipt,
   selectCapturedTemporalHistory,
@@ -3487,13 +3486,8 @@ export class WorldService {
       retentionBlocked ||
       proposedAssessments.length > ACTIVITY_LIMITS.assessed ||
       Buffer.byteLength(JSON.stringify(proposedAssessments)) > ACTIVITY_LIMITS.assessmentBytes;
-    const capturedResults = captureActivityResults(
-      original.world,
-      actorId,
-      discovered.candidates,
-      entries,
-    );
-    return { ...discovered, rows, through, generation, actorId, capacityBlocked, capturedResults };
+    const physicalLife = entityGet(original.world.entities, actorId)?.actor?.physicalLife ?? 0;
+    return { ...discovered, rows, through, generation, actorId, capacityBlocked, physicalLife };
   }
 
   async publishActivityLearning(
@@ -3510,7 +3504,7 @@ export class WorldService {
       this.generation === batch.generation &&
       !!entityGet(this.world.entities, batch.actorId)?.actor?.alive &&
       (entityGet(this.world.entities, batch.actorId)?.actor?.physicalLife ?? 0) ===
-        batch.capturedResults.physicalLife;
+        batch.physicalLife;
     if (!eligible()) return false;
     const original = this.world;
     const generation = this.generation;
@@ -3610,7 +3604,7 @@ export class WorldService {
                   !entry.evidenceIds.some((source) => denied.has(source))
                 );
               });
-              if (!valid || !retainActivity(draft, batch.actorId, candidate, batch.capturedResults))
+              if (!valid || !retainActivity(draft, batch.actorId, candidate))
                 throw new Error(
                   'Learning could not be retained; no partial publication was committed.',
                 );
@@ -8643,6 +8637,19 @@ export class WorldService {
       throw new Error('Memory sources changed during publication preparation.');
   }
 
+  private capturedExperienceSource(world: WorldState, actorId: string, sourceId: string) {
+    const actor = entityGet(world.entities, actorId)?.actor;
+    if (!actor) return;
+    const physicalLife = actor.physicalLife ?? 0;
+    if (
+      this.store.memories?.hasCapturedTemporalSource(
+        { worldId: world.id, actorId, generation: this.storageGeneration, physicalLife },
+        sourceId,
+      )
+    )
+      return { actorId, physicalLife, sourceId };
+  }
+
   async correctMemory(
     actorId: string,
     sourceId: string,
@@ -8659,7 +8666,13 @@ export class WorldService {
         ],
       },
       (world) => ({
-        transition: correctExperience(world, actorId, sourceId, correctionEventId),
+        transition: correctExperience(
+          world,
+          actorId,
+          sourceId,
+          correctionEventId,
+          this.capturedExperienceSource(world, actorId, sourceId),
+        ),
         eventMode: 'unchanged',
       }),
       { actorId, scope },
@@ -8683,15 +8696,7 @@ export class WorldService {
         if (
           !recordedAction &&
           !retainedExperienceSource(world, actorId, sourceId) &&
-          !this.store.memories?.hasCapturedTemporalSource(
-            {
-              worldId: world.id,
-              actorId,
-              generation: this.storageGeneration,
-              physicalLife: entityGet(world.entities, actorId)!.actor!.physicalLife ?? 0,
-            },
-            sourceId,
-          )
+          !this.capturedExperienceSource(world, actorId, sourceId)
         )
           return {
             ok: false,

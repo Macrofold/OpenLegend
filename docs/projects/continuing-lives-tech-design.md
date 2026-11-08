@@ -112,7 +112,7 @@ When interpretation changes, use existing supported evidence relations and revis
 
 ### 5.2 Retrieve for a concrete choice; do not force a sentiment
 
-`prepareDecision` supplies current goal/plan status and exact required recent outcomes through `requiredOutcomeMemoryIds`; `RecallService` adds actor-scoped relevant older evidence through current indexes and budgets. A current commitment/correction remains required through its existing owner. A personally important older encounter is not automatically pinned forever or loaded into every decision.
+`prepareDecision` supplies current goal/plan status and exact required outcomes through `requiredOutcomeEvidence`, resolving each permitted personal account or actor-owned recent receipt; `RecallService` adds actor-scoped relevant older evidence through current indexes and budgets. A current commitment/correction remains required through its existing owner. A personally important older encounter is not automatically pinned forever or loaded into every decision.
 
 For a demonstrated omission, trace source identity through recording, retention, indexing, attention and final context. Repair that existing step rather than copying text into biography. Select IDs before hydrating bodies, batch exact source reads in a consistent scope, and keep the existing complete required-set admission. Oversize required evidence defers preparation; optional retrieval failure does not erase required facts. Explicit inspection remains paged.
 

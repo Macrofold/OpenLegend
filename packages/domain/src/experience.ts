@@ -2717,9 +2717,19 @@ export function correctExperience(
   actorId: string,
   sourceId: string,
   correctionEventId: string,
+  admittedSource?: { actorId: string; physicalLife: number; sourceId: string },
 ): Transition {
   const aware = input.experience?.awareness[actorId]?.find((a) => a.eventId === correctionEventId);
-  const retainedSource = retainedExperienceSource(input, actorId, sourceId);
+  // The host may admit an exact source still held by a finite private request.
+  // It permits withdrawal, not source recall or rebinding to another body life.
+  // docs/memory-architecture.md#retention-corrections-and-protected-commitments
+  const actor = entityGet(input.entities, actorId)?.actor;
+  const retainedSource =
+    retainedExperienceSource(input, actorId, sourceId) ||
+    (!!actor &&
+      admittedSource?.actorId === actorId &&
+      admittedSource.sourceId === sourceId &&
+      admittedSource.physicalLife === (actor.physicalLife ?? 0));
   // Native receipts and their personal event are aliases of the same acquired account,
   // not independent correcting evidence merely because their IDs differ.
   const sameAccount =

@@ -1864,6 +1864,7 @@ export function captureTemporalCurrent(
   actorId: string,
   inputs: readonly TemporalCurrentGroupInput[],
   policy: TemporalRetentionPolicy,
+  onCaptured?: (track: string, frame: ObservationFrame | undefined) => void,
 ): void {
   const owner = world.perceptionEvidence?.[actorId];
   if (!owner || !inputs.length) return;
@@ -1977,6 +1978,10 @@ export function captureTemporalCurrent(
       },
       policy,
     );
+    // Report actual admission, not changed input or a recording intention. A
+    // refused sample cannot stand in for independently retained frame context.
+    if (locator)
+      onCaptured?.(subject, acquisitionBatches.get(world)?.get(actorId)?.prepared?.frame);
     const source: NativeEvidenceSource = {
       family: 'native-exposure',
       id: field.id,

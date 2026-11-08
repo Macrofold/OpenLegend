@@ -13,6 +13,8 @@ type Selection = TemporalHistorySelection['entries'][number];
  * are not revocation: the request already owns its exact permitted copies.
  * docs/projects/bookkeeping-simplification-tech-design.md#meaningful-knowledge-identity-and-delayed-interpretation */
 export interface TemporalSourceWatch {
+  /** Life of the request owner, independent of each receipt's historical life. */
+  observerPhysicalLife?: number;
   aliases: Set<string>;
   selections: Map<string, { selection: Selection; bytes: number }>;
   bytes: number;

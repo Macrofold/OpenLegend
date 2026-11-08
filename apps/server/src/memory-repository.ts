@@ -1097,12 +1097,28 @@ export class MemoryRepository {
       validate: async (selections, currentWindow) => {
         while (pending) await pending;
         if (!fence.valid || this.sourceEditPending(scope)) return false;
+        const physicalLife = currentWindow().physicalLife;
+        if (
+          physicalLife === undefined ||
+          (temporal.observerPhysicalLife !== undefined &&
+            temporal.observerPhysicalLife !== physicalLife)
+        ) {
+          fence.valid = false;
+          return false;
+        }
+        // Bind the current request owner once; old receipts keep their own life.
+        // Never let a cached validation or SQL wait rebind this private input.
+        temporal.observerPhysicalLife ??= physicalLife;
         const input = digest(selections);
         if (input === validatedInput) return true;
         const work = this.validateTemporalSelections(scope, selections, currentWindow, temporal);
         pending = work;
         try {
-          const valid = (await work) && fence.valid && !this.sourceEditPending(scope);
+          const valid =
+            (await work) &&
+            fence.valid &&
+            !this.sourceEditPending(scope) &&
+            currentWindow().physicalLife === temporal.observerPhysicalLife;
           if (!valid) fence.valid = false;
           else validatedInput = input;
           return valid;
@@ -1125,16 +1141,16 @@ export class MemoryRepository {
         fence.worldId !== scope.worldId ||
         fence.actorId !== scope.actorId ||
         fence.temporalGeneration !== scope.generation ||
+        fence.temporal?.observerPhysicalLife !== scope.physicalLife ||
         !fence.temporal?.aliases.has(sourceId)
       )
         continue;
       for (const { selection } of fence.temporal.selections.values())
         if (
-          selection.receipt.physicalLife === scope.physicalLife &&
-          (temporalReceiptAliases(selection.receipt, {}, undefined).includes(sourceId) ||
-            selection.values.some((value) =>
-              temporalValueDependencyAliases(value, undefined).includes(sourceId),
-            ))
+          temporalReceiptAliases(selection.receipt, {}, undefined).includes(sourceId) ||
+          selection.values.some((value) =>
+            temporalValueDependencyAliases(value, undefined).includes(sourceId),
+          )
         )
           return true;
     }
