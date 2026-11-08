@@ -1,6 +1,6 @@
 //! Indexed SQL values retain JavaScript text too. Payload codecs remain the
 //! record owners; these finite values only travel to the existing SQL binder.
-use crate::host::retained_size::{HeapBytes, map_storage};
+use crate::host::retained_size::HeapBytes;
 use crate::text::JsText;
 use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -197,31 +197,8 @@ impl HeapBytes for SqlCell {
         match self {
             Self::Text(value) => value.heap_bytes(),
             Self::Array(values) => values.heap_bytes(),
-            Self::Object(values) => values.iter().try_fold(
-                map_storage::<String, Self>(values.len())?,
-                |sum, (key, value)| {
-                    sum.checked_add(key.capacity())?
-                        .checked_add(value.heap_bytes()?)
-                },
-            ),
+            Self::Object(values) => values.heap_bytes(),
             _ => Some(0),
         }
-    }
-}
-/// Imported maps may have spare buckets from decoding; retain only actual
-/// current cells when a semantic row owns its detached immutable SQL output.
-pub(super) fn normalize(value: &mut SqlCell) {
-    match value {
-        SqlCell::Array(values) => values.iter_mut().for_each(normalize),
-        SqlCell::Object(values) => {
-            let old = std::mem::take(values);
-            let mut fresh = IndexMap::with_capacity(old.len());
-            for (key, mut value) in old {
-                normalize(&mut value);
-                fresh.insert(key, value);
-            }
-            *values = fresh;
-        }
-        _ => {}
     }
 }

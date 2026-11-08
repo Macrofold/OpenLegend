@@ -247,6 +247,7 @@ pub(crate) fn assemble_core(
         capabilities: meanings.capabilities,
         status_policy_canonical: meanings.status_policy_canonical,
         status_work: meanings.status_work,
+        population_work: meanings.population_work,
         status_rosters: crate::status::StatusRosters::new(),
         geometry,
         work_policy: meanings.work_policy,

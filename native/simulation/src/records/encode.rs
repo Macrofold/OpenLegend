@@ -94,13 +94,13 @@ impl<'a> RowEncoder<'a> {
             },
         )?;
         // One full pinned B-tree node per table entry and twice each vector
-        // slot covers growth before insertion. Fresh normalized cell maps may
-        // coexist with their clone's old bucket array during normalization.
+        // slot covers growth before insertion. Indexed cells use their actual
+        // allocated map/list capacities; encoding never rebuilds those maps.
         let node =
             11 * (size_of::<String>() + size_of::<Vec<ChangedRow>>()) + 16 * size_of::<usize>();
         heap_sum([
             payload_bytes,
-            cells.checked_mul(3).ok_or_else(error)?,
+            cells,
             4 * size_of::<ChangedRow>(),
             2 * node,
             table.len(),
@@ -122,10 +122,7 @@ impl<'a> RowEncoder<'a> {
         create: bool,
         effects: RowEffects<'_>,
     ) -> Result<(), RecordEncodingError> {
-        let mut cells = extra.to_vec();
-        for cell in &mut cells {
-            super::save::normalize_cell(cell);
-        }
+        let cells = extra.to_vec();
         let mut row = self
             .schema
             .encoded(table, placement, payload, cells, create)?;

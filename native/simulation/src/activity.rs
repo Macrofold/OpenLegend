@@ -581,7 +581,12 @@ fn project_view(
                         text.push_text(&prose(&scalar_text(value)?));
                         details.push(text);
                     } else if fact.critical {
-                        extra.insert(fact.name.clone(), &fact.value);
+                        // Source's fallback is an ordinary {}. Assigning this
+                        // inherited setter changes its prototype, not an own
+                        // JSON member; the retained original fact is untouched.
+                        if fact.name != "__proto__" {
+                            extra.insert(fact.name.clone(), &fact.value);
+                        }
                         self.fallback.push(key.clone());
                     } else {
                         self.omitted = true;

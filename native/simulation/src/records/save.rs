@@ -6,7 +6,7 @@ use super::SqlCell;
 use super::merge::merge_changes;
 use super::{ChangedRows, RecordEncodingError, RecordSchema, SaveRows};
 use crate::host::retained_size::tree_node_bound;
-use crate::host::{ByteBudget, ByteReservation};
+use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use crate::identity::MAX_SAFE_INTEGER;
 use std::{collections::BTreeMap, mem::size_of, sync::Arc};
 
@@ -15,6 +15,7 @@ pub(crate) enum SaveError {
     Binding,
     Revision,
     NoChanges,
+    Preparing,
     Capacity,
     Encoding(RecordEncodingError),
 }
@@ -59,7 +60,26 @@ pub(crate) struct TemporalSaveCut<'a> {
     pub temporal: &'a crate::received::TemporalState,
 }
 
+/// A fixed-size capability for the private incoming suffix. The real rows and
+/// their complete merge allowance remain in their owning save journal.
+pub(crate) struct PreparedSaveAppend {
+    owner: Arc<()>,
+    candidate: CandidateKey,
+    serial: u64,
+}
+struct PendingAppend {
+    candidate: CandidateKey,
+    serial: u64,
+    through_cut: u64,
+    identity_through: u64,
+    changes: ChangedRows,
+    schema: Arc<RecordSchema>,
+    reservation: ByteReservation,
+}
 pub(crate) struct SaveJournal {
+    owner: Arc<()>,
+    next_admission: u64,
+    pending_append: Option<PendingAppend>,
     world_id: String,
     generation: String,
     durable_revision: u64,
@@ -72,6 +92,7 @@ pub(crate) struct SaveJournal {
     in_flight: Option<Arc<SavePrefix>>,
     last_acknowledged: Option<AcknowledgedPrefix>,
     budget: ByteBudget,
+    _reservation: ByteReservation,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -100,8 +121,21 @@ impl SaveJournal {
         {
             return Err(SaveError::Binding);
         }
+        let reservation = budget
+            .reserve(
+                size_of::<Self>()
+                    .checked_add(world_id.capacity())
+                    .and_then(|n| n.checked_add(generation.capacity()))
+                    .and_then(|n| n.checked_add(2 * size_of::<usize>()))
+                    .ok_or(SaveError::Capacity)?,
+            )
+            .map_err(|_| SaveError::Capacity)?;
         let suffix_reservation = budget.reserve(0).map_err(|_| SaveError::Capacity)?;
         Ok(Self {
+            _reservation: reservation,
+            owner: Arc::new(()),
+            next_admission: 0,
+            pending_append: None,
             world_id,
             generation,
             durable_revision,
@@ -117,17 +151,25 @@ impl SaveJournal {
         })
     }
 
-    /// Called only after actual native acceptance. The candidate already owns
-    /// its temporary encoded products; this reserves retained/merge capacities
-    /// before taking them into the asynchronous save owner.
-    pub(crate) fn append(
+    /// Fund and validate all accumulating-save work before Ready/accept. The
+    /// accepted suffix stays unchanged on refusal; only this private incoming
+    /// product is held until the exact candidate settles. SQL may acknowledge
+    /// an older in-flight prefix while this admission is outstanding.
+    pub(crate) fn prepare_append(
         &mut self,
-        through_cut: u64,
+        candidate: CandidateKey,
         identity_through: u64,
         mut changes: ChangedRows,
-        schema: &RecordSchema,
-    ) -> Result<(), SaveError> {
-        if through_cut <= self.through_cut
+        schema: &Arc<RecordSchema>,
+    ) -> Result<PreparedSaveAppend, SaveError> {
+        let through_cut = candidate
+            .base_cut
+            .checked_add(1)
+            .ok_or(SaveError::Binding)?;
+        if self.pending_append.is_some() {
+            return Err(SaveError::Preparing);
+        }
+        if candidate.base_cut != self.through_cut
             || through_cut > MAX_SAFE_INTEGER
             || identity_through < self.identity_through
             || identity_through > MAX_SAFE_INTEGER
@@ -135,18 +177,8 @@ impl SaveJournal {
             return Err(SaveError::Binding);
         }
         schema.validate_changes(&changes)?;
-        if changes.writes.is_empty() && changes.deletes.is_empty() {
+        if changes.writes.is_empty() && changes.deletes.is_empty() && changes.expired.is_empty() {
             return Err(SaveError::NoChanges);
-        }
-        // Rebuild hidden JSON object allocations once at the output boundary.
-        // Their fresh known-length maps can then be conservatively accounted;
-        // an arbitrary previously-cleared Value map cannot use this bound.
-        for rows in changes.writes.values_mut() {
-            for row in rows {
-                for cell in &mut row.extra {
-                    normalize_cell(cell);
-                }
-            }
         }
         if let Some(prefix) = &self.in_flight {
             // A certified insert already in flight will be present before this
@@ -174,14 +206,65 @@ impl SaveJournal {
             .checked_add(new)
             .and_then(|n| n.checked_mul(6))
             .ok_or(SaveError::Capacity)?;
-        self.suffix_reservation
-            .resize(peak)
-            .map_err(|_| SaveError::Capacity)?;
+        let reservation = self.budget.reserve(peak).map_err(|_| SaveError::Capacity)?;
+        let serial = self
+            .next_admission
+            .checked_add(1)
+            .ok_or(SaveError::Binding)?;
+        self.next_admission = serial;
+        self.pending_append = Some(PendingAppend {
+            candidate,
+            serial,
+            through_cut,
+            identity_through,
+            changes,
+            schema: Arc::clone(schema),
+            reservation,
+        });
+        Ok(PreparedSaveAppend {
+            owner: Arc::clone(&self.owner),
+            candidate,
+            serial,
+        })
+    }
+    pub(crate) fn validate_prepared(&self, prepared: &PreparedSaveAppend) -> Result<(), SaveError> {
+        let pending = self.pending_append.as_ref().ok_or(SaveError::Binding)?;
+        if !Arc::ptr_eq(&prepared.owner, &self.owner)
+            || prepared.candidate != pending.candidate
+            || prepared.serial != pending.serial
+            || prepared.candidate.base_cut != self.through_cut
+        {
+            return Err(SaveError::Binding);
+        }
+        Ok(())
+    }
+    pub(crate) fn reject_append(&mut self, prepared: PreparedSaveAppend) -> Result<(), SaveError> {
+        self.validate_prepared(&prepared)?;
+        self.pending_append = None;
+        Ok(())
+    }
+    /// The caller validates this fixed-size token immediately before the fence
+    /// flips. All row validation and fallible capacity work is already done;
+    /// the accepted merge has no new capacity admission or gameplay callback.
+    pub(crate) fn accept_append(
+        &mut self,
+        prepared: PreparedSaveAppend,
+        accepted: &AcceptedCandidate,
+    ) -> Result<(), SaveError> {
+        self.validate_prepared(&prepared)?;
+        if accepted.key() != prepared.candidate {
+            return Err(SaveError::Binding);
+        }
+        let pending = self
+            .pending_append
+            .take()
+            .expect("validated pending append");
+        let peak = pending.reservation.bytes();
+        let previous_guard = std::mem::replace(&mut self.suffix_reservation, pending.reservation);
         let previous = std::mem::take(&mut self.suffix);
-        // Both inputs have just passed the same immutable schema. No fallible
-        // semantic work remains after moving the previous accepted output.
-        self.suffix = merge_changes(previous, changes, schema)
+        self.suffix = merge_changes(previous, pending.changes, &pending.schema)
             .expect("validated immutable canonical row merge");
+        drop(previous_guard);
         let actual = changes_heap(&self.suffix).expect("merged output bounded by admitted inputs");
         assert!(
             actual <= peak,
@@ -190,8 +273,8 @@ impl SaveJournal {
         self.suffix_reservation
             .resize(actual)
             .expect("shrinking an admitted reservation");
-        self.through_cut = through_cut;
-        self.identity_through = identity_through;
+        self.through_cut = pending.through_cut;
+        self.identity_through = pending.identity_through;
         Ok(())
     }
 
@@ -209,6 +292,12 @@ impl SaveJournal {
         }
         if let Some(prefix) = &self.in_flight {
             return Ok(Arc::clone(prefix));
+        }
+        // An already detached prefix above remains retryable. A new capture
+        // would move the suffix whose merge allowance is currently admitted.
+        // Defer that capture until settlement, without a SQL durability barrier.
+        if self.pending_append.is_some() {
+            return Err(SaveError::Preparing);
         }
         if cut.through_cut != self.through_cut || cut.identity_through != self.identity_through {
             return Err(SaveError::Binding);
@@ -240,7 +329,10 @@ impl SaveJournal {
                 .resize(changes_heap(&self.suffix).ok_or(SaveError::Capacity)?)
                 .expect("shrinking an admitted save reservation");
         }
-        if self.suffix.writes.is_empty() && self.suffix.deletes.is_empty() {
+        if self.suffix.writes.is_empty()
+            && self.suffix.deletes.is_empty()
+            && self.suffix.expired.is_empty()
+        {
             return Err(SaveError::NoChanges);
         }
         if self.next_prefix > MAX_SAFE_INTEGER {
@@ -369,9 +461,6 @@ fn prefix_index_bound(changes: &ChangedRows) -> Option<usize> {
     Some(bytes)
 }
 
-pub(crate) fn normalize_cell(value: &mut SqlCell) {
-    super::cells::normalize(value)
-}
 pub(crate) fn cell_heap(value: &SqlCell) -> Option<usize> {
     crate::host::retained_size::HeapBytes::heap_bytes(value)
 }

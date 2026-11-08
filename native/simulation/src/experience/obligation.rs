@@ -101,7 +101,7 @@ pub(crate) fn prepare_obligation_replacement(
     let projected = body.projection()?;
     let law = state.installed.account_law();
     let header = memory::source_header(&projected, actor_id, &payload, &law)?;
-    let mut extra: Vec<crate::records::SqlCell> = memory::memory_columns(
+    let extra: Vec<crate::records::SqlCell> = memory::memory_columns(
         &projected,
         &header,
         &payload,
@@ -112,9 +112,6 @@ pub(crate) fn prepare_obligation_replacement(
     .into_iter()
     .map(Into::into)
     .collect();
-    for cell in &mut extra {
-        crate::records::save::normalize_cell(cell);
-    }
     let after = PersonalSourceRecord::install(
         PersonalSourceKind::Memory,
         actor_id,

@@ -38,7 +38,7 @@ pub(crate) use geometry::install_geometry;
 mod core;
 mod scope;
 pub(crate) use core::{CoreInstallError, CoreInstallInput, CoreInstallation, assemble_core};
-pub(crate) use scope::finish_record_ownership;
+pub(crate) use scope::{SelectedInstallation, finish_selected_installation};
 
 mod physical;
 pub(crate) mod rows;
@@ -316,7 +316,12 @@ impl RowImport {
             for rows in owners.values_mut() {
                 rows.sort_by_key(|row| row.position)
             }
-            tables.insert(table, owners);
+            // An empty transport bucket supplies no rows to consume. It never
+            // proves a collection empty/complete: every explicit coverage row
+            // and decoded parent marker still has its own mandatory owner.
+            if !owners.is_empty() {
+                tables.insert(table, owners);
+            }
         }
         Ok(Self {
             world_id: input.world_id,

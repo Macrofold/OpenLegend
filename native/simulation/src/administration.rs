@@ -85,10 +85,45 @@ pub(crate) fn read_host_settings(
     {
         return Err(InstallError::RowPlacement);
     }
-    let settings: InstalledHostSettings =
+    let mut settings: InstalledHostSettings =
         serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
-    if !settings.speed.is_finite() {
+    if !settings.speed.is_finite()
+        || settings
+            .actor_milestones
+            .as_ref()
+            .is_some_and(|values| !values.is_empty())
+    {
         return Err(InstallError::CurrentFormat);
+    }
+    let milestones = take_collection(
+        import,
+        "actor_milestones",
+        "[]",
+        settings.actor_milestones.is_some(),
+        true,
+    )?;
+    for row in milestones.rows {
+        validate_map_row(
+            &row,
+            "[]",
+            "actorMilestones",
+            &row.slot,
+            milestones.coverage.next_ordinal,
+        )?;
+        if !row.extra.is_empty() {
+            return Err(InstallError::CurrentFormat);
+        }
+        let values: IndexMap<String, bool> =
+            serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        if settings
+            .actor_milestones
+            .as_mut()
+            .ok_or(InstallError::ParentPresence)?
+            .insert(row.slot, values)
+            .is_some()
+        {
+            return Err(InstallError::DuplicateRow);
+        }
     }
     Ok(settings)
 }

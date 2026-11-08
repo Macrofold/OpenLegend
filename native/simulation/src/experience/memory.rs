@@ -405,14 +405,11 @@ pub(crate) fn acquire_memory(
         .coverage
         .next_ordinal;
     let parent = collection_owner(PersonalSourceKind::Memory, &pending.actor_id)?;
-    let mut extra: Vec<crate::records::SqlCell> =
+    let extra: Vec<crate::records::SqlCell> =
         memory_columns(&projected, &header, &payload, &law, policy, schema)?
             .into_iter()
             .map(Into::into)
             .collect();
-    for cell in &mut extra {
-        crate::records::save::normalize_cell(cell);
-    }
     let record = PersonalSourceRecord::install(
         PersonalSourceKind::Memory,
         &pending.actor_id,

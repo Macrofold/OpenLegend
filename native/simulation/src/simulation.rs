@@ -19,6 +19,8 @@ use crate::values::NativeValueWindow;
 use crate::work::{InstalledWorkPolicy, WorkBook};
 use indexmap::IndexMap;
 use std::sync::Arc;
+mod read;
+pub(crate) use read::{AcceptedActorRead, ActorReadError};
 mod save;
 pub(crate) use save::encode_root_changes;
 
@@ -40,6 +42,7 @@ pub(crate) struct InstalledWorld {
     pub capabilities: StatusCapabilities,
     pub status_policy_canonical: Arc<str>,
     pub status_work: IndexMap<String, crate::status::CompiledStatusWork>,
+    pub population_work: crate::status::StatusInstallationWork,
     pub status_rosters: crate::status::StatusRosters,
     pub geometry: Arc<GeometryMap>,
     pub work_policy: Arc<InstalledWorkPolicy>,
@@ -135,6 +138,24 @@ pub(crate) struct SimulationState {
     pub inventory: crate::install::ClosedInventory,
     pub learned_capabilities: crate::install::LearnedCapabilities,
     pub appraisals: crate::appraisals::AppraisalState,
+}
+
+impl SimulationState {
+    /// The same live and installed commitments admitted by HostWork, without
+    /// rebuilding a world or visiting every unchanged actor at acceptance.
+    pub(crate) fn work_allocation(
+        &self,
+    ) -> Result<crate::values::WorkVector, crate::work::WorkError> {
+        crate::work::add_work(
+            crate::work::add_work(
+                self.physical.work.allocations(),
+                self.inventory.work_allocation(),
+            )?,
+            self.installed
+                .population_work
+                .live_allocation(self.physical.bodies.root_count())?,
+        )
+    }
 }
 
 /// The application owns its serialized admission lane. The fence is separate

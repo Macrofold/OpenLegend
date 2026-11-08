@@ -18,7 +18,12 @@ export class HostWork {
   private readonly key = Symbol('native-world');
   constructor(private readonly owner: object) {}
   reserve(world: WorldState): { commit(): void; rollback(): void } {
-    const wanted = addWork(workAllocations(world), installedWorkAllocation(world));
+    return this.reserveAllocation(addWork(workAllocations(world), installedWorkAllocation(world)));
+  }
+  /** Native candidates provide the same complete world allocation from their
+   * semantic work owners. No TypeScript world is reconstructed for admission. */
+  reserveAllocation(allocation: WorkVector): { commit(): void; rollback(): void } {
+    const wanted = workVector(allocation);
     const prior = accounts.get(this.key);
     // Retain both old live obligations and new candidate capacity through SQL awaits.
     const pending = workVector(

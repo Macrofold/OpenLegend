@@ -105,6 +105,23 @@ pub(crate) struct StatusInstallationWork {
     combined: WorkVector,
 }
 impl StatusInstallationWork {
+    /// Source installedWorkAllocation retains interface bytes once and one
+    /// subscription per physical root, including an inactive rooted person.
+    pub(crate) fn live_allocation(&self, roots: u64) -> Result<WorkVector, crate::work::WorkError> {
+        let subscriptions = multiply_work(
+            WorkVector {
+                subscriptions: self.combined.subscriptions,
+                ..WorkVector::default()
+            },
+            roots,
+        )?
+        .subscriptions;
+        Ok(WorkVector {
+            retained_bytes: self.combined.retained_bytes,
+            subscriptions,
+            ..WorkVector::default()
+        })
+    }
     pub(crate) fn require_population(
         &self,
         entities: &crate::state::EntityStore,

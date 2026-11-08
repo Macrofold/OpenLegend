@@ -20,6 +20,11 @@ pub(crate) struct InventoryProjection<'a> {
     pub pile: &'a [ObservedPileItem],
 }
 impl ClosedInventory {
+    /// Complete installation consumed and rejected every positive reservation.
+    /// Selected physical/command writers have no resource-claim creation path.
+    pub(crate) fn work_allocation(&self) -> crate::values::WorkVector {
+        crate::values::WorkVector::default()
+    }
     pub(crate) fn project<'a>(&'a self, membership: &ObjectMembership) -> InventoryProjection<'a> {
         InventoryProjection {
             revision: membership.revision,

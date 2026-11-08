@@ -528,16 +528,13 @@ pub(crate) fn acquire_awareness_accounts(
             &body.event_id,
         ])
         .map_err(|_| AwarenessAcquisitionError::Encoding)?;
-        let mut extra: Vec<crate::records::SqlCell> = super::columns::awareness_columns(
+        let extra: Vec<crate::records::SqlCell> = super::columns::awareness_columns(
             &body, &header, &payload, &law, policy, schema, budget,
         )
         .map_err(|_| AwarenessAcquisitionError::Encoding)?
         .into_iter()
         .map(Into::into)
         .collect();
-        for cell in &mut extra {
-            crate::records::save::normalize_cell(cell);
-        }
         let record = PersonalSourceRecord::install(
             PersonalSourceKind::Awareness,
             &admission.actor_id,

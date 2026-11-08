@@ -4,9 +4,16 @@
 use super::rows::take_collection;
 use super::{CoreInstallation, InstallError, RowImport, WorldChildren};
 
-pub(crate) fn finish_record_ownership(
+pub(crate) struct SelectedInstallation {
+    pub state: crate::simulation::SimulationState,
+    pub host_settings: crate::administration::InstalledHostSettings,
+}
+/// Consume every actual selected current-format owner. This constructor proves
+/// row/family admission; the host still owes the complete executable lifecycle
+/// before exposing a simulation handle or minting an operation's Ready token.
+pub(crate) fn finish_selected_installation(
     mut installation: CoreInstallation,
-) -> Result<CoreInstallation, InstallError> {
+) -> Result<SelectedInstallation, InstallError> {
     for (field, table, empty_map) in [
         ("finiteRain", "sim_finite_rain", false),
         ("exitExposures", "sim_exit_exposures", true),
@@ -26,19 +33,30 @@ pub(crate) fn finish_record_ownership(
             empty_map,
         )?;
     }
-    // Consumption alone is deliberately not a runtime acceptance token. The
-    // caller still owns definition/caller closure and real operation/capture,
-    // save and lifecycle integration before it can expose this state.
-    if installation
-        .remaining_children
-        .remaining_fields()
-        .next()
-        .is_some()
+    let CoreInstallation {
+        state,
+        host_settings,
+        remaining_rows,
+        remaining_children,
+        archived_event_count,
+        assembly_geometry_revision: _,
+        story_policy_revision: _,
+    } = installation;
+    remaining_children.finish()?;
+    let cut = remaining_rows.finish()?;
+    if cut.world_id != state.physical.header.id
+        || cut.generation != state.generation
+        || cut.durable_revision != state.durable_revision
+        || state.occurrences.archived_count() != archived_event_count
     {
-        return Err(InstallError::UnclaimedCoverage);
+        return Err(InstallError::CurrentFormat);
     }
-    Ok(installation)
+    Ok(SelectedInstallation {
+        state,
+        host_settings,
+    })
 }
+
 fn inactive(
     import: &mut RowImport,
     children: &mut WorldChildren,

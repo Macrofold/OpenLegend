@@ -34,6 +34,9 @@ struct BodyPoint {
 /// Disposable foot bins derived from canonical membership/placement/body. The
 /// physical writer refreshes only changed IDs, including after private rollback.
 pub(crate) struct BodyIndex {
+    // Physical root membership also includes inactive participants. It is a
+    // separate count from collidable/observable bodies for host work admission.
+    roots: BTreeSet<String>,
     points: BTreeMap<String, BodyPoint>,
     cells: BTreeMap<(i64, i64, i64), BTreeSet<String>>,
     extents: BTreeMap<u64, usize>,
@@ -56,6 +59,7 @@ impl BodyIndex {
     }
     pub(crate) fn install(entities: &EntityStore) -> Self {
         let mut value = Self {
+            roots: BTreeSet::new(),
             points: BTreeMap::new(),
             cells: BTreeMap::new(),
             extents: BTreeMap::new(),
@@ -66,6 +70,13 @@ impl BodyIndex {
         value
     }
     pub(crate) fn refresh(&mut self, entities: &EntityStore, id: &str) {
+        if entities.get(id).is_some_and(Entity::physical_root) {
+            if !self.roots.contains(id) {
+                self.roots.insert(id.to_owned());
+            }
+        } else {
+            self.roots.remove(id);
+        }
         if let (Some(old), Some(entity)) = (self.points.get(id), entities.get(id)) {
             let body = entity.body_profile();
             let extent = (body.height + body.radius).max(2.0 * body.radius);
@@ -125,6 +136,9 @@ impl BodyIndex {
                 order: order.to_owned(),
             },
         );
+    }
+    pub(crate) fn root_count(&self) -> u64 {
+        self.roots.len() as u64
     }
     pub(crate) fn maximum_extent(&self) -> f64 {
         self.extents

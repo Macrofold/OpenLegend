@@ -56,21 +56,22 @@ fn index(key: &JsText) -> Option<u32> {
 }
 fn ordered<'a, T: 'a>(
     entries: impl Iterator<Item = (&'a JsText, &'a T)> + Clone,
-) -> Vec<(&'a JsText, &'a T)> {
-    let mut values: Vec<_> = entries.collect();
-    values.sort_by(|(a, _), (b, _)| match (index(a), index(b)) {
-        (Some(a), Some(b)) => a.cmp(&b),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        _ => std::cmp::Ordering::Equal,
-    });
-    values
+) -> impl Iterator<Item = (&'a JsText, &'a T)> {
+    let mut indexed: Vec<_> = entries
+        .clone()
+        .filter_map(|(key, value)| index(key).map(|index| (index, key, value)))
+        .collect();
+    indexed.sort_unstable_by_key(|(index, _, _)| *index);
+    indexed
+        .into_iter()
+        .map(|(_, key, value)| (key, value))
+        .chain(entries.filter(|(key, _)| index(key).is_none()))
 }
 pub(super) fn encode<'a, T: Serialize + 'a>(
     entries: impl Iterator<Item = (&'a JsText, &'a T)> + Clone,
 ) -> Result<String, serde_json::Error> {
     let mut output = String::from("{");
-    for (index, (key, value)) in ordered(entries).into_iter().enumerate() {
+    for (index, (key, value)) in ordered(entries).enumerate() {
         if index > 0 {
             output.push(',')
         }
