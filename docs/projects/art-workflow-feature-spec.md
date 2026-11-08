@@ -239,8 +239,9 @@ consumer gap for that asset, resolved before dependent production. This does not
 human body foundation or turn the [MetaHuman evaluation](../maintainers/art/metahuman-poc.md)
 into the normal route. Existing source decisions and PPL/V3D qualification remain controlling.
 
-**Design decisions are complete for this common scope.** AF19–AF20 own inspectable package and
-rehearsal support; AF07 and the existing family owners retain production proof. Later briefs
+**Design decisions are complete for this common scope.** AF19 owns the report extension; AF20
+establishes the required inspection route and adds a control only for a demonstrated gap. It can
+complete without viewer code and shares AF07/family proof evidence. Later briefs
 choose their asset-specific actions, fit range, native definitions and representative workload.
 No new provider, gameplay feature, universal numerical budget or compatibility layer needs a
 decision here. The proposed changes add offline preparation and targeted inspection, not recurring

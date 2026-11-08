@@ -98,9 +98,11 @@ A simple static prop with a proven recipe can combine this with its normal expor
    the requested motion, without an Idle fallback. Current study states loop. Check one-shot
    endpoints in the exported target in Blender and completion in its supported game consumer;
    independent local replay/loop controls remain [AF15 work](../../projects/art-workflow-tech-design.md#117-inspect-any-named-clip-without-expanding-gameplay).
-5. Correct the source/consumer mismatch now. If the current viewer cannot exercise a required
-   feature, use the existing authorized game consumer when integration is in scope, or record
-   that precise rehearsal dependency under AF20. Do not substitute a beauty render as a pass.
+5. Correct the source/consumer mismatch now. The scene study replays supported recorded/staged
+   scenes; native clearance, travel and use require the ordinary game when integration is in scope.
+   Use the [existing inspection routes](../../projects/art-workflow-tech-design.md#pr3--rehearse-through-existing-consumers)
+   before recording a missing operation under AF20. A manual rehearsal can satisfy it without new
+   viewer code; a beauty render cannot substitute for the required check.
 
 | Subject                   | Smallest useful rehearsal                                                                                                                  |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
