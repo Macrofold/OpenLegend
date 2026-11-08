@@ -688,10 +688,11 @@ Implementation order:
 1. **Inspect encoded inputs before importing.** Read actual format, GLB version/chunks and declared
    resources. Extract the small JSON/BIN reader already embedded in
    [`people.py`'s `compile_motion`](../../scripts/art/people.py) into a shared offline helper used
-   by both callers. Keep that family's dense-float accessor and rig restrictions in its own
-   consumer; they are not universal glTF rules. The final expectation requires a glTF 2.0 binary,
-   embedded buffers/images and the current intake rules. Inventory all used/required extensions;
-   reject the recipe's prohibited Draco, meshopt and KTX2 inputs. There is no installed project-wide
+   by both callers, returning JSON and an optional BIN chunk. Keep that family's BIN-required,
+   dense-float accessor and rig restrictions in its own consumer. The final expectation requires
+   a glTF 2.0 binary, embedded buffers/images and the current intake rules. Inventory all
+   used/required extensions; only final mode rejects the recipe's prohibited Draco, meshopt and
+   KTX2 inputs. Source mode retains its current importer behavior. There is no installed project-wide
    extension validator to reuse: other declared required capabilities still need the exact consumer
    load. Do not mirror PlayCanvas's entire extension surface in Python. The new encoded reader
    inventories source URIs without opening external resources or fetching network URLs; final GLBs
@@ -726,13 +727,17 @@ Implementation order:
 4. **Use one blocking-findings helper in actual callers.** Combine inspection issues with the
    existing budget, missing-clip and mesh/bone-name failures, handling unavailable measurements
    without dereferencing them. Update current callers together; no legacy reader is needed.
+   An operation needing unavailable measurements stops with a useful input diagnostic; it cannot
+   dereference null groups or invent measurements. Readable but incomplete authoring candidates
+   retain their existing descriptive behavior.
 
-   | Caller                                        | Required behavior                                                                                                                                                                                                                                                               |
-   | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `report` CLI                                  | Write each available diagnostic; return 2 with `--strict` if any requested input has blocking findings. Without strict, a written report is descriptive, never game acceptance                                                                                                  |
-   | `people.py` final covered/dressed exports     | Pass final expectations and the selected output's required clips directly to `measure`; consume common findings alongside its existing zero-area and exported-motion checks before its success receipt. Do not spawn another Blender process or reimport merely to call the CLI |
-   | `normalize`, `clips`, `head` authoring stages | Keep descriptive intermediate reports and current export behavior; an unfinished authoring stage does not become a strict final-asset gate                                                                                                                                      |
-   | Active final-export instructions              | Apply clip requirements to the actual animated consumer file. The [animal recipe](../../scripts/prepare-game-animals.ts) also writes a static companion; only its `animatedFile` needs actor clips. Do not retrofit every historical study recipe                               |
+   | Caller                                        | Required behavior                                                                                                                                                                                                                                                                      |
+   | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `report` CLI                                  | Write each available diagnostic; return 2 with `--strict` if any requested input has blocking findings. Without strict, a written report is descriptive, never game acceptance                                                                                                         |
+   | `people.py` final covered/dressed exports     | Pass final expectations and the selected output's required clips directly to `measure`; reject common findings and existing zero-area failures before the expensive exported-motion check and success receipt. Do not spawn another Blender process or reimport merely to call the CLI |
+   | `normalize`, `clips`, `head` authoring stages | Keep descriptive intermediate reports and current export behavior; an unfinished authoring stage does not become a strict final-asset gate                                                                                                                                             |
+   | `sheet models`                                | Consume available measurements for labels; stop with the input diagnostic when required groups are unavailable. Preserve ordinary sheet behavior                                                                                                                                       |
+   | Active final-export instructions              | Apply clip requirements to the actual animated consumer file. The [animal recipe](../../scripts/prepare-game-animals.ts) also writes a static companion; only its `animatedFile` needs actor clips. Do not retrofit every historical study recipe                                      |
 
 5. **Check the actual boundaries.** Use disposable local cases: a valid static GLB; an FBX source
    with and without the final expectation; an animated creature missing `Run`; a required source
