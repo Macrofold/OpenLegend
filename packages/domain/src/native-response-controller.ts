@@ -47,8 +47,7 @@ import {
 import { attackPreparation } from './combat-encounters.js';
 import { seesEntity } from './perception.js';
 import { recordSemanticChange, recordSensoryChange } from './dependencies.js';
-import { canonicalJson, contentLabel, emit } from './events.js';
-import { subjectNarration } from './narration.js';
+import { canonicalJson, contentLabel } from './events.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { readEntityAttribute } from './status-effects.js';
 import { nextRandom } from './data.js';
@@ -309,14 +308,6 @@ function beginNativeAlarm(
     energy > wake.above
   )
     interruptStatusEffects(world, animal, events, wake.reason);
-  if (fresh)
-    emit(
-      world,
-      events,
-      'animal-response',
-      subjectNarration(animal, profile.presentation.alarmed),
-      animal,
-    );
   changed(world, animal);
   return episode;
 }
@@ -719,26 +710,12 @@ export function nativeResponseDecision(
     if (episode.clearSince === undefined) {
       episode.clearSince = world.simTime;
       episode.mode = 'settling';
-      emit(
-        world,
-        events,
-        'animal-response',
-        subjectNarration(animal, profile.presentation.settling),
-        animal,
-      );
     }
     delete episode.proposal;
     delete episode.blocked;
     if (world.simTime >= episode.clearSince + profile.settlingSeconds) {
       finishNativeFlightResponse(animal);
       delete state.episode;
-      emit(
-        world,
-        events,
-        'animal-response',
-        subjectNarration(animal, profile.presentation.routine),
-        animal,
-      );
       advanceFlight(world, animal, 0, events);
       changed(world, animal);
       return { status: 'none' };
@@ -966,13 +943,6 @@ export function admitNativeFlightChoices(
   delete episode.proposal;
   delete episode.blocked;
   delete episode.clearSince;
-  emit(
-    world,
-    events,
-    'animal-response',
-    subjectNarration(animal, frame.profile.presentation.escaping),
-    animal,
-  );
   reconcileAnimalWander(world, animal);
   changed(world, animal);
   advanceFlight(world, animal, 0, events);

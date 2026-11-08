@@ -3054,13 +3054,6 @@ function nativeMovementTransition(
     delete active.proposal;
     delete active.blocked;
     delete active.clearSince;
-    emit(
-      world,
-      transition.events,
-      'animal-response',
-      subjectNarration(current, profile.presentation.escaping),
-      current,
-    );
   }
   reconcileAnimalWander(world, current);
   recordAnimalClockWrite(world, actorId);

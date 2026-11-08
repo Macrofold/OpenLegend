@@ -1,3 +1,4 @@
+import { supportsCommitmentCompletion } from './commitments.js';
 import { invalidateAttentionPreparation } from './attention.js';
 import { currentFacetGet, currentFacetGrant, receivedTrackKey } from './perception-current.js';
 import { validateCartography } from './cartography.js';
@@ -1394,6 +1395,11 @@ export function validateWorldModules(world: WorldState): void {
       if (memory.retention) validateExperienceRetention(memory.retention, actorId);
       if (memory.sourceReceipt) validatePersonalReceiptLocator(memory.sourceReceipt, actorId);
       if (memory.actorId !== actorId) throw new Error('Foreign personal memory owner.');
+      if (
+        memory.obligation?.completion &&
+        !supportsCommitmentCompletion(world, memory.obligation.completion.eventType)
+      )
+        throw new Error('Unsupported commitment completion event.');
       if (
         !['episode', 'belief', 'commitment', 'reflection', 'impression'].includes(memory.kind) ||
         (memory.kind === 'impression') !== (memory.impression !== undefined)

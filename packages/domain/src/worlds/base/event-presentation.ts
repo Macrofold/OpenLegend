@@ -124,8 +124,6 @@ register(
   ],
   true,
 );
-// Finite alarm changes are meaningful outcomes; routine travel remains below.
-register('observations', 'ui.inview', ['animal-response'], true);
 register('observations', 'ui.inview', ['encounter', 'weather-cue', 'activity-observed']);
 // Retain routine evidence, but never turn a new event family into player-facing noise by default.
 register('observations', 'ui.inview', ['takeoff', 'landed', 'departed', 'returned', 'respawn']);

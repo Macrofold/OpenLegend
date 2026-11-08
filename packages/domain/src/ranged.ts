@@ -1342,7 +1342,7 @@ export function advanceProjectiles(
           world,
           events,
           'projectile-passage',
-          subjectNarration(actual, profile.presentation.alarmed),
+          subjectNarration(actual, profile.presentation.projectilePassage),
           [actual.id],
           actual,
           actual.id,

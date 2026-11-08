@@ -1,8 +1,8 @@
 # Recommended removal of routine simulation work
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Source review is complete; the recommendations below are proposed changes, not installed behavior or performance-qualified improvements. | 2026-11-08   |
+| Status      | Current progress                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
+| In progress | R1–R9 are approved; coherent implementation and isolated qualification are underway in BK29. | 2026-11-07   |
 
 ## 1. Recommendation and evidence boundary
 

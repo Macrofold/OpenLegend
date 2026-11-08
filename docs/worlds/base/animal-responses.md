@@ -75,12 +75,7 @@ An alarm has three physical situations, all owned by one episode:
 | Settling  | Stop ordinary roaming, remain visibly alert and continue local danger checks.                                               | Remain continuously clear for **240 game seconds**, with no fresh attack evidence; then end the episode.    |
 | Blocked   | Stay in a physically legal position or take an admitted improving route; retain alarm and show the actual blocked response. | A meaningful change permits a usable route or establishes the current supported position as a clear refuge. |
 
-Visible activity and look-closer text call blocked and settling animals **Alert**;
-escaping animals are **Fleeing**. Actual active work and territorial behavior keep
-their own more specific descriptions. No private danger identity is disclosed.
-
-**Proposed, not installed:** [BK29-E](../../projects/bookkeeping-simplification-tech-design.md#bk29-e--publish-outward-response-transitions-not-controller-route-legs) carries that outward meaning through actual received body details and announces entry into escape instead of repeating the generic notice for every uninterrupted route leg. The current visual acquisition omits this response meaning, so announcement removal requires the complete player/NPC/recall conversion. Routes, randomness, native response timing and attended movement remain unchanged; fewer repetitive narrative notices and cue renewals are the deliberate tradeoff.
-
+Generic alarm, escape, settling and routine announcements are removed under [R1](../../projects/runtime-work-removal-recommendations.md#r1--remove-generic-animal-response-announcements-entirely). No received fleeing/alert label or inference replaces them. Observers receive actual movement, physical interactions and genuine sensory cues through their existing owners; an onset between samples can be missed. Private response state and danger identities do not become personal knowledge.
 At the normal base-world **60 game seconds per real second**, 240 game seconds is four real seconds. Pause freezes the interval. Faster simulation changes its real duration normally. A wall-clock timeout, number of rendering frames or number of Decision API completions must not determine when an animal calms.
 
 Crossing inside the 15-metre clear boundary resets `clearSince`, including during the final fraction of the four-second interval. Returning inside 12 metres additionally makes the route urgent to review. The gap provides hysteresis for route changes, while the continuous-clearance requirement remains strict. A danger moving between 12 and 15 metres can postpone settling without causing a new destination every frame.

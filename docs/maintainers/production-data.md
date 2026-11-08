@@ -207,6 +207,16 @@ B's installed-field forwarding remains unselected: sampled discovery cost is neg
 
 ## BK29 — Pressure and preparation work removal (proposed)
 
+**R1–R9 implementation in progress.** [Accepted scope and caller decisions](../projects/runtime-work-removal-recommendations.md) supersede obsolete BK29-E1 label/announcement requirements. Removal checklist, each with complete caller conversion before its AWS comparison:
+
+- [ ] R1: generic animal event producers/vocabulary/obligation admission; retain physical cues and automatic flight.
+- [ ] R2/R3: world-owned routine walking classification; one personal result source through agency, cognition, learning, correction, persistence and restore.
+- [ ] R4: private-clock and preparation notification audit.
+- [ ] R5/R6: changed receiver inventory and direct selected-contact access.
+- [ ] R7/R8: changed-group history preparation and qualified attention continuation reuse.
+- [ ] R9: qualify residual account-pressure batching; reject failed tuning.
+- [ ] Integrated actual gameplay, current-format persistence/restore, AWS CPU/latency/memory/SQL/debt evidence, complete review and local commits. No unit suite or new automated tests. Native resident-state conversion remains NSC-owned.
+
 **Design reviewed; clean/CPU profiling complete; additional isolation blocked; no runtime implementation.** Exact source `330da6405` includes the BK28 retention/retry review fixes. [Current AWS investigation](../verification/performance/bookkeeping/2026/2026-11-07-bk29-profile.md) owns measurement provenance, failures, actual work, limitations and resource accounting. [Feature scope](../projects/bookkeeping-simplification-feature-spec.md#18-proposed-pressure-and-preparation-work-removal), [native architecture/stages](../projects/bookkeeping-simplification-tech-design.md#21-proposed-pressure-and-preparation-work-removal) and [retention mechanics](../projects/bookkeeping-simplification-runtime-design.md#15-proposed-batched-pressure-and-routine-result-evidence) distinguish proposals from installed behavior. Existing BK12/BK16/BK23/SL08 and population/mature-history acceptance remain open.
 
 - [x] Complete latest-source clean/CPU profiling, actual retained-state census and reviewed structural design. The clean standard AWS opening tracks 100.006% normal clock at 95.95% of one main core; command p95/max is 180/483 ms. One-second delay is not reproduced. Animal-response events include 1,575 generic escape announcements and produce 5,983 received values/entries. No candidate gain or scale acceptance is claimed.

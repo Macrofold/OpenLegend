@@ -86,13 +86,7 @@ export const BASE_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {
   movementFactors: { scars: true },
   wander: { distance: 0.4, minimumWaitSeconds: 120, waitChoices: 120 },
   wake: { attributeId: 'wilderness:energy', above: 0, reason: 'perceived-danger' },
-  presentation: {
-    alarmed: 'became alert to danger.',
-    escaping: 'is moving away from perceived danger.',
-    settling: 'stopped and remains alert.',
-    blocked: 'remains alert but has no usable escape route.',
-    routine: 'settled and resumed its ordinary activity.',
-  },
+  presentation: { projectilePassage: 'had a projectile pass close by.' },
 };
 
 const STEADIER_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {

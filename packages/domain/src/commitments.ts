@@ -1,4 +1,4 @@
-import { selectedSpokenPromise } from './world-composition.js';
+import { selectedSpokenPromise, selectedEventPresentation } from './world-composition.js';
 import { entityGet } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { mutateExperience } from './experience.js';
@@ -69,6 +69,20 @@ export function retainsCommitmentSchedule(
     )
   );
 }
+/** Event suppression consults the same completion index as fulfillment. A
+ * matching live promise requires the original occurrence; silence cannot fulfill it. */
+export function hasCommitmentCompletion(
+  world: WorldState,
+  actorId: string,
+  eventTypes: readonly string[],
+): boolean {
+  const index = commitmentIndex(world.memories);
+  return eventTypes.some((type) =>
+    index.completions
+      .get(JSON.stringify([actorId, type]))
+      ?.some(({ record }) => record.obligation?.status === 'active'),
+  );
+}
 /** Reuse the obligation owner's existing sorted deadline index. */
 export function nextCommitmentDeadline(world: WorldState): number {
   return (
@@ -130,6 +144,14 @@ export function recordSpokenPromise(world: WorldState, event: WorldEvent): void 
     },
   });
 }
+/** Completion kinds must name a current installed event, not an impossible
+ * condition accepted only by the event presentation fallback. */
+export function supportsCommitmentCompletion(world: WorldState, eventType: string): boolean {
+  return (
+    /^[a-z-]{1,64}$/.test(eventType) &&
+    Object.hasOwn(selectedEventPresentation(world).types, eventType)
+  );
+}
 export function amendCommitment(
   input: WorldState,
   actorId: string,
@@ -151,7 +173,7 @@ export function amendCommitment(
     (change.dueAt !== undefined &&
       (!Number.isFinite(change.dueAt) || change.dueAt < input.simTime)) ||
     (change.completion &&
-      (!/^[a-z-]{1,64}$/.test(change.completion.eventType) ||
+      (!supportsCommitmentCompletion(input, change.completion.eventType) ||
         (change.completion.targetId && !record.entityIds.includes(change.completion.targetId)) ||
         (change.completion.definitionId && !input.itemDefinitions[change.completion.definitionId])))
   )
