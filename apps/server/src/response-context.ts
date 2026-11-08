@@ -203,6 +203,11 @@ export function readableDecisionContext(
       ? [`## Activities I chose to inspect\n${list(context['inspectedMethods'])}`]
       : []),
     `## Recent memories\nThese are earlier personal experiences, not a current scene. Each source keeps its own time, place and participant; its recorded location does not establish my present location. A remembered location, activity, identity association or object state does not establish present conditions; describe it as remembered unless current received evidence supports the present claim. A remembered conditional rule does not establish its condition now.\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}\nComplete structured personal history:\n${JSON.stringify(context['experience'] ?? [])}\nThese records preserve who experienced each event, acquisition, exact heard fragments and participant roles. Quoted words remain the speaker's words. Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
+    ...(context['recentWorkResults']
+      ? [
+          `## Recent work results\n${JSON.stringify(context['recentWorkResults'])}\nThese are outcomes I personally received at the recorded times; they do not establish present conditions.`,
+        ]
+      : []),
     ...(context['receivedSituation']
       ? [
           `## Received situation\n${JSON.stringify(context['receivedSituation'])}\nUse this packet for current received surroundings and its explicitly timed retained changes. These are personally received measurements, not access to other people's intentions, knowledge or attention. Original times and gaps matter. Unexpanded or missing detail does not prove absence; an empty list applies only to its supplied subject and received scope, not other people or omitted facts. Use only the supplied references for optional situation queries, further attention or a fallible remembered interpretation.`,

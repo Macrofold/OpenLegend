@@ -602,7 +602,7 @@ export async function prepareDecision(
           selectedResults,
           capturedSituation.frame,
         )
-      : [];
+      : undefined;
     const validateSituation = validateCapturedSituation.bind(
       undefined,
       service,
@@ -723,7 +723,7 @@ export async function prepareDecision(
     const requiredContext: Record<string, unknown> = {
       situationQueries: mode !== 'native-only',
       receivedSituation: capturedSituation.packet,
-      recentWorkResults,
+      ...(recentWorkResults ? { recentWorkResults } : {}),
       ...requiredActivity,
       ...(supplyOpportunities.length ? { supplyOpportunities } : {}),
       capabilities: {
@@ -1117,7 +1117,7 @@ export async function prepareDecision(
     const context: Record<string, unknown> = {
       situationQueries: mode !== 'native-only',
       receivedSituation: capturedSituation.packet,
-      recentWorkResults,
+      ...(recentWorkResults ? { recentWorkResults } : {}),
       ...currentActivity,
       ...(currentSupplyOpportunities.length
         ? { supplyOpportunities: currentSupplyOpportunities }

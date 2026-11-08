@@ -17,7 +17,7 @@ import { recognitionSupportSources } from './worlds/base/recognition.js';
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { revokePracticeSupport } from './practical-competence.js';
 import { revokeCombatEvidence } from './combat-encounters.js';
-import { revokeActivityEvidence } from './activity-learning.js';
+import { retainedActivityEvidence, revokeActivityEvidence } from './activity-learning.js';
 import { revokeInventoryInspection } from './inventory-inspection.js';
 import {
   invalidateAppraisals,
@@ -1550,6 +1550,7 @@ export function retainedExperienceSource(
   )
     return true;
   if (hasRetainedTemporalSource(world, actorId, sourceId)) return true;
+  if (retainedActivityEvidence(world, actorId, sourceId)) return true;
   const retained = experiences(world, actorId, true);
   if (retained.some((entry) => experienceDependsOn(entry, affected))) return true;
   // Memory projections carry original coverage. Read immediate typed summary sources

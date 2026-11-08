@@ -1,4 +1,4 @@
-import { recentResultEligible } from './result-evidence.js';
+import { recentResultEligible, resultEvidenceId } from './result-evidence.js';
 import { isNativeInputField } from './native-inputs.js';
 import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
@@ -664,7 +664,10 @@ export function retainActivity(
       occurrenceIds: [...candidate.occurrenceIds],
       evidenceIds: [
         ...new Set([
-          ...sources.flatMap((entry) => entry!.evidenceIds),
+          ...sources.flatMap((entry) => [
+            ...entry!.evidenceIds,
+            ...(entry!.resultEvidence ? [resultEvidenceId(entry!.resultEvidence)!] : []),
+          ]),
           ...(candidate.otherEvidence ?? []),
           ...entries
             .filter((entry) => candidate.otherEvidence?.includes(entry.id))
@@ -681,6 +684,26 @@ export function retainActivity(
   owned[method.id] = acquisition;
   return method.id;
 }
+/** An independently retained method keeps its causal edit address, not personal
+ * replay of expired raw results. Cold edit preparation supplies linked occurrences. */
+export function retainedActivityEvidence(
+  world: WorldState,
+  actorId: string,
+  sourceId: string,
+): boolean {
+  const occurrenceId =
+    world.actionExperience.occurrences[actorId]?.find(
+      (entry) => resultEvidenceId(entry.resultEvidence) === sourceId,
+    )?.id ?? sourceId;
+  return Object.values(world.actionExperience.acquisitions[actorId] ?? {}).some((acquisition) =>
+    acquisition.supports.some(
+      (support) =>
+        !support.revoked &&
+        (support.occurrenceIds.includes(occurrenceId) || support.evidenceIds.includes(sourceId)),
+    ),
+  );
+}
+
 export function revokeActivityEvidence(world: WorldState, actorId: string, ids: string[]): void {
   const selected = new Set(ids);
   for (const entry of world.actionExperience.occurrences[actorId] ?? [])
