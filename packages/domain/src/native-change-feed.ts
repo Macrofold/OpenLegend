@@ -24,15 +24,23 @@ export function nativeChangesComplete(world: WorldState): boolean {
 export function recordNativeChange(world: WorldState, change: SemanticChange): void {
   queueSightChange(world, change);
   if (
+    change.kind === 'geometry' ||
+    change.kind === 'membership' ||
+    (change.kind === 'spatial' && change.discontinuity) ||
+    (change.kind === 'state' && ['body', 'participation', 'contribution'].includes(change.field))
+  ) {
+    // A held contact can outlive its actual sight grant. A teleport, changed
+    // geometry or capability/life transition invalidates witnesses as well as
+    // the changed body; rebuilding waits until their next real operation.
+    invalidatePerceptionMeasurements(world);
+    invalidateAttentionPreparation(world);
+  } else if (
     change.kind === 'state' &&
     !(change.field === 'behavior' && change.outwardChange === false) &&
     ['body', 'behavior', 'participation', 'contribution'].includes(change.field)
   ) {
     invalidatePerceptionMeasurements(world, change.entityId);
     invalidateAttentionPreparation(world, change.entityId);
-  } else if (change.kind === 'geometry' || change.kind === 'membership') {
-    invalidatePerceptionMeasurements(world);
-    invalidateAttentionPreparation(world);
   }
   const feed = feeds.get(world);
   if (!feed?.complete) return;

@@ -802,14 +802,53 @@ interface WorkingAttention {
   familiarity: Set<string | undefined>;
 }
 const workingAttention = new WeakMap<WorldState, Map<string, WorkingAttention>>();
-/** One private native mutation lease; never inherit candidates from a publication.
- * See BK26 D3a: unknown writers discard preparation, not canonical attention. */
-export function beginAttentionPreparation(world: WorldState): () => void {
-  const entries = new Map<string, WorkingAttention>();
+/** Opaque derived ownership, never saved state or a permission certificate. */
+export interface AttentionPreparationContinuation {
+  readonly kind: 'attention-preparation';
+}
+const continuedAttention = new WeakMap<
+  AttentionPreparationContinuation,
+  Map<string, WorkingAttention>
+>();
+/** Transfer the existing owned maps once. Residency aliases share this token;
+ * its first consumer owns the payload and another immutable fork rebuilds cold. */
+export function retainAttentionPreparation(
+  world: WorldState,
+): AttentionPreparationContinuation | undefined {
+  const entries = workingAttention.get(world);
+  if (!entries?.size) return;
+  workingAttention.delete(world);
+  const token = { kind: 'attention-preparation' } as const;
+  continuedAttention.set(token, entries);
+  return token;
+}
+/** Only the exact native-successor owner supplies a continuation. Ordinary
+ * commands, unknown builders and cold restoration retain the normal cold path. */
+export function beginAttentionPreparation(
+  world: WorldState,
+  continuation?: AttentionPreparationContinuation,
+): () => void {
+  const retained = continuation && continuedAttention.get(continuation);
+  if (continuation) continuedAttention.delete(continuation);
+  const entries = retained ?? new Map<string, WorkingAttention>();
+  if (retained) countDomainWork('attentionPreparationContinuationsReused');
   workingAttention.set(world, entries);
   return () => {
     if (workingAttention.get(world) === entries) workingAttention.delete(world);
   };
+}
+/** Candidate construction owns these fresh objects. Discard annotation proof and
+ * anchor branches unused by selection; detach the two small identity values now,
+ * rather than copying a whole candidate map or retaining draft children later. */
+function detachPreparedCandidates(candidates: Record<string, AttentionCandidate>): void {
+  for (const key in candidates) {
+    const candidate = candidates[key]!;
+    delete candidate.anchor;
+    delete candidate.urgencySource;
+    delete candidate.directSource;
+    candidate.exposure = cloneValue(candidate.exposure);
+    if (candidate.subject) candidate.subject = cloneValue(candidate.subject);
+  }
 }
 export function invalidateAttentionPreparation(world: WorldState, observerId?: string): void {
   const entries = workingAttention.get(world);
@@ -1127,6 +1166,7 @@ export function updateAttention(
         candidateView,
         parts,
       );
+      detachPreparedCandidates(refreshed);
       for (const key of candidateKeys.get(sourceId) ?? []) delete candidateView[key];
       Object.assign(candidateView, refreshed);
       candidateKeys.set(sourceId, Object.keys(refreshed));
@@ -1134,6 +1174,7 @@ export function updateAttention(
   } else {
     countDomainWork('attentionWorkingPreparations');
     candidateView = attentionCandidates(world, observerId, undefined, bodyReads);
+    if (working) detachPreparedCandidates(candidateView);
     for (const [key, candidate] of Object.entries(candidateView)) {
       let keys = candidateKeys.get(candidate.sourceId);
       if (!keys) candidateKeys.set(candidate.sourceId, (keys = []));

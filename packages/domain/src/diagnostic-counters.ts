@@ -242,6 +242,7 @@ export const DOMAIN_COUNTERS = [
   'attentionCandidatesUnchanged',
   'attentionSelectionsRanked',
   'attentionSelectionsReused',
+  'attentionPreparationContinuationsReused',
   'receivedValueIndexBuilds',
   'receivedValueValuesIndexed',
   'receivedValueAppends',
