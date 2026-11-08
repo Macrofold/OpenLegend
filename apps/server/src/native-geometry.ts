@@ -12,6 +12,7 @@ import {
   queryPhysicalFeatures,
   sightSweep,
   soundTransmission,
+  standingSurfaceAt,
   validateSpatialMap,
   walkSurfaceLine,
   type NavigationRequest,
@@ -67,6 +68,20 @@ export class NativeGeometryProviders {
         resolveSupport(this.map, point, surfaceId),
       );
       const standing = queries.standing.map(({ point, body }) => canStand(this.map, point, body));
+      const standingColumns = queries.standingColumns.map((query) => {
+        for (let index = 0; index < query.columns.length; index++) {
+          const column = query.columns[index]!;
+          const point = standingSurfaceAt(
+            this.map,
+            column.x,
+            column.z,
+            query.referenceY,
+            query.body,
+          );
+          if (point) return { index, point };
+        }
+        return null;
+      });
       const surfaceLines = queries.surfaceLines.map(({ from, x, z, body }) => {
         const path = walkSurfaceLine(this.map, from, x, z, body);
         return path === null ? null : { path };
@@ -141,6 +156,7 @@ export class NativeGeometryProviders {
         featureIds,
         convexViews,
         bodySweeps,
+        standingColumns,
       };
     } finally {
       this.active = false;

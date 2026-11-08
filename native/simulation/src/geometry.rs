@@ -347,6 +347,29 @@ pub struct BodySweepAnswer {
     pub tested: u64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StandingColumn {
+    pub x: f64,
+    pub z: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct StandingColumnsQuery {
+    pub columns: Vec<StandingColumn>,
+    pub reference_y: f64,
+    pub body: BodyProfile,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StandingSelection {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub index: u64,
+    pub point: SurfacePoint,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(
     tag = "kind",
@@ -445,6 +468,7 @@ pub struct GeometryQueries {
     pub feature_ids: Vec<String>,
     pub convex_views: Vec<ConvexViewQuery>,
     pub body_sweeps: Vec<BodySweepGroup>,
+    pub standing_columns: Vec<StandingColumnsQuery>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -464,6 +488,7 @@ pub struct GeometryAnswers {
     pub feature_ids: Vec<Option<PhysicalFeature>>,
     pub convex_views: Vec<ConvexViewAnswer>,
     pub body_sweeps: Vec<BodySweepAnswer>,
+    pub standing_columns: Vec<Option<StandingSelection>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -551,6 +576,7 @@ impl GeometryQueries {
             feature_ids: Vec::new(),
             convex_views: Vec::new(),
             body_sweeps: Vec::new(),
+            standing_columns: Vec::new(),
         }
     }
 
@@ -574,6 +600,7 @@ impl GeometryQueries {
             || self.feature_ids.len() != answer.feature_ids.len()
             || self.convex_views.len() != answer.convex_views.len()
             || self.body_sweeps.len() != answer.body_sweeps.len()
+            || self.standing_columns.len() != answer.standing_columns.len()
         {
             return Err(GeometryAnswerError::Incomplete);
         }
@@ -631,6 +658,25 @@ impl GeometryQueries {
                                 }
                             }
                         }
+                })
+            || self
+                .standing_columns
+                .iter()
+                .zip(&answer.standing_columns)
+                .any(|(query, result)| {
+                    result.as_ref().is_some_and(|result| {
+                        match usize::try_from(result.index)
+                            .ok()
+                            .and_then(|index| query.columns.get(index))
+                        {
+                            Some(column) => {
+                                result.point.x != column.x
+                                    || result.point.z != column.z
+                                    || !point(&result.point)
+                            }
+                            None => true,
+                        }
+                    })
                 })
         {
             return Err(GeometryAnswerError::Invalid);

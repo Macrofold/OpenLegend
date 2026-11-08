@@ -24,6 +24,28 @@ mod awareness;
 pub use awareness::*;
 mod evidence;
 pub use evidence::*;
+mod install;
+pub use install::*;
+
+/// Completion proof from actual personally acquired result evidence. There is
+/// no constructor while the result/account acquisition owner remains unjoined.
+#[derive(Debug)]
+pub struct AcquiredActivityResult {
+    actor_id: String,
+    occurrence_id: String,
+    evidence: Option<crate::activity::ResultEvidence>,
+}
+impl AcquiredActivityResult {
+    pub fn actor_id(&self) -> &str {
+        &self.actor_id
+    }
+    pub fn occurrence_id(&self) -> &str {
+        &self.occurrence_id
+    }
+    pub fn evidence(&self) -> Option<&crate::activity::ResultEvidence> {
+        self.evidence.as_ref()
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

@@ -37,9 +37,12 @@ export function nativeRecordChanges(changes: NativeChangedRows): RecordChanges {
  * never acknowledged by completing this save. */
 export function nativeSaveCut(save: NativeSaveRows) {
   return {
+    worldId: save.worldId,
+    generation: save.generation,
     prefix: save.prefix,
     baseRevision: save.baseRevision,
     throughCut: save.throughCut,
+    identityThrough: save.identityThrough,
     changes: nativeRecordChanges(save.changes),
   };
 }

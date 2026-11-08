@@ -418,7 +418,7 @@ pub struct ActorAgency {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub last_result_memory_id: Option<String>,
+    pub last_result_evidence: Option<crate::activity::ResultEvidence>,
     pub attempts: Vec<UnconvertedField>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
@@ -965,7 +965,7 @@ pub struct ActorState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub natural_strike_ids: Option<UnconvertedField>,
+    pub natural_strike_ids: Option<Vec<String>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

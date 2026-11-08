@@ -14,6 +14,8 @@ use crate::reception::{EvidenceFamily, EvidenceSource, SourceRevision};
 use crate::values::{deserialize_nullable, deserialize_present_option, deserialize_safe_integer};
 
 mod metadata;
+mod result;
+pub use result::*;
 mod page;
 mod state;
 pub use state::*;
@@ -25,10 +27,14 @@ pub use metadata::*;
 pub mod values;
 pub use record::*;
 mod checkpoint;
+mod support;
+pub use support::{TemporalSupportCapsule, TemporalSupportCollection, TemporalSupportRecord};
+mod install;
 pub use checkpoint::{CurrentMemberPart, TemporalCurrentContent, TemporalCurrentGroupCheckpoint};
+pub(crate) use install::install_temporal;
 pub use values::{
     ReceivedValueFragment, ReceivedValueRecord, ReceivedValueReference, ReceivedValues,
-    ReceivedValuesCheckpoint,
+    ReceivedValuesCheckpoint, RetainedValue, retain_received_value,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]

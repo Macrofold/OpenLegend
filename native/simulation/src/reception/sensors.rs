@@ -71,6 +71,56 @@ pub(crate) fn hearing_floor(installed: &InstalledWorld, observer: &Entity) -> Op
     })
 }
 
+#[derive(Debug)]
+pub(crate) struct RoutineSightPolicy {
+    pub key: String,
+    pub mode: super::SightTiming,
+    pub seconds: Option<f64>,
+    pub detail_seconds: Option<f64>,
+}
+
+pub(crate) fn routine_sight_policy(
+    installed: &InstalledWorld,
+    observer: &Entity,
+) -> Option<RoutineSightPolicy> {
+    let bindings = observer
+        .actor
+        .as_ref()
+        .and_then(|actor| actor.senses.as_deref())
+        .unwrap_or(&installed.default_senses);
+    let mut selected = installed
+        .senses
+        .values()
+        .filter(|definition| bindings.iter().any(|id| id == definition.value().id()))
+        .filter(|definition| matches!(definition.value(), SenseDefinition::VisionGeometry { .. }));
+    let first = selected.next()?;
+    let SenseDefinition::VisionGeometry {
+        routine_timing,
+        sample_seconds,
+        detail_sample_seconds,
+        ..
+    } = first.value()
+    else {
+        unreachable!("Selected vision family")
+    };
+    // Each immutable definition already retains its exact source canonicalJson
+    // body. Array composition preserves manifest order without another object
+    // collation implementation or a body/signature approximation.
+    let canonical = format!(
+        "[{}]",
+        std::iter::once(first.canonical())
+            .chain(selected.map(|definition| definition.canonical()))
+            .collect::<Vec<_>>()
+            .join(",")
+    );
+    Some(RoutineSightPolicy {
+        key: crate::encoding::content_label(&canonical),
+        mode: *routine_timing,
+        seconds: *sample_seconds,
+        detail_seconds: *detail_sample_seconds,
+    })
+}
+
 pub fn horizontal_cone(origin: Point, heading: f64, radians: f64, point: Point) -> bool {
     if radians >= 2.0 * std::f64::consts::PI {
         return true;

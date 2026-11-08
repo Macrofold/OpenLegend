@@ -4,7 +4,7 @@
 
 use super::*;
 use crate::attention::AttentionState;
-use crate::received::{ReceivedValueReference, ReceivedValues};
+use crate::received::{ReceivedValueReference, ReceivedValues, TemporalCurrentGroupCheckpoint};
 use crate::values::{
     deserialize_nullable_safe_integer, deserialize_present_option, deserialize_safe_integer,
 };
@@ -196,6 +196,7 @@ pub struct MapMarker {
 /// public capture or a generic mutable bridge input; the installer supplies its
 /// validated typed owners and the current cold-coverage metadata separately.
 pub struct ReceptionState {
+    pub sensory: Option<SensoryContinuation>,
     pub perception_evidence: Option<IndexMap<String, PerceptionEvidenceOwner>>,
     pub received_values: Option<ReceivedValues>,
     pub observer_identities:
@@ -207,4 +208,37 @@ pub struct ReceptionState {
     pub visible_people: Option<IndexMap<String, Vec<String>>>,
     pub visible_places: Option<IndexMap<String, IndexMap<String, u64>>>,
     pub map_markers: Option<IndexMap<String, IndexMap<String, MapMarker>>>,
+}
+
+impl ReceptionState {
+    /// Existing unfinished current-body and terrain recordings share the same
+    /// temporal terminal reservation owner. Borrow them without a shadow list.
+    pub(crate) fn recordings(
+        &self,
+        actor_id: &str,
+    ) -> impl Iterator<Item = &TemporalCurrentGroupCheckpoint> {
+        let owner = self
+            .perception_evidence
+            .as_ref()
+            .and_then(|owners| owners.get(actor_id));
+        owner
+            .into_iter()
+            .flat_map(|owner| owner.current.values())
+            .flat_map(|contact| contact.content.groups.iter())
+            .flat_map(|group| group.recordings.iter().flatten())
+            .chain(
+                owner
+                    .into_iter()
+                    .flat_map(|owner| owner.geometry.iter())
+                    .flat_map(|geometry| geometry.fragments.iter())
+                    .filter_map(|fragment| fragment.recording.as_ref()),
+            )
+            .chain(
+                owner
+                    .into_iter()
+                    .flat_map(|owner| owner.geometry.iter())
+                    .flat_map(|geometry| geometry.boundaries.iter())
+                    .filter_map(|boundary| boundary.recording.as_ref()),
+            )
+    }
 }

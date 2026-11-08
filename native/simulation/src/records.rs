@@ -8,6 +8,13 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
+mod layout;
+pub use layout::{ChildShape, RecordChild, RecordCodec, RecordLayout};
+mod merge;
+mod output;
+pub(crate) mod save;
+pub use output::{RecordEncodingError, RecordPlacement, RecordSchema};
+
 /// A complete SQL row at an imported fixed cut. `payload` is already encoded by
 /// its owning codec and must not be decoded/re-encoded by the Node writer.
 #[derive(Debug, Deserialize)]
@@ -79,8 +86,24 @@ pub struct CurrentRecords {
     #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub durable_revision: u64,
     pub generation: String,
+    pub entity_ordering: EntityOrdering,
     pub tables: BTreeMap<String, Vec<InstalledRow>>,
     pub coverage: Vec<OwnerCoverage>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EntityOrdering {
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
+    pub next_insertion: u64,
+    pub entries: Vec<EntityOrderingEntry>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct EntityOrderingEntry {
+    pub id: String,
+    pub key: String,
 }
 
 /// The native acknowledgement releases exactly this immutable save prefix;
@@ -88,8 +111,13 @@ pub struct CurrentRecords {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SaveRows {
+    pub world_id: String,
+    pub generation: String,
     pub prefix: u64,
     pub base_revision: u64,
     pub through_cut: u64,
+    /// Exclusive issued-identity high-water copied from IdentityState.next_id at
+    /// this exact cut. This is not an independently incremented save allocator.
+    pub identity_through: u64,
     pub changes: ChangedRows,
 }

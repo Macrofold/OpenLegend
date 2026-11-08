@@ -3,35 +3,17 @@
 //! immutable source retention. JSON byte quotas are a separate gameplay cost.
 
 use super::*;
+pub(crate) use crate::host::retained_size::{HeapBytes, heap_record, heap_sum, map_storage};
 use crate::received::values::{
     BodyFragment, BodyPoseFragment, FrameFragment, HeaderFragment, LocationFragment,
 };
 use crate::received::{ReceivedValueFragment, ReceivedValueRecord, ReceivedValueReference};
 use crate::state::{Point, SurfacePoint};
 use crate::values::{AttributeValue, DefinitionPin};
-use indexmap::IndexMap;
-use std::hash::Hash;
-use std::mem::size_of;
 
-pub(crate) trait HeapBytes {
-    fn heap_bytes(&self) -> Option<usize>;
-}
-pub(crate) fn heap_sum<const N: usize>(values: [usize; N]) -> Option<usize> {
-    values.into_iter().try_fold(0_usize, usize::checked_add)
-}
-macro_rules! heap_record { ($ty:ty { $($field:ident),* $(,)? }) => {
- impl HeapBytes for $ty { fn heap_bytes(&self)->Option<usize>{heap_sum([$ (self.$field.heap_bytes()?),*])} }
-}; }
-pub(crate) use heap_record;
 macro_rules! fixed { ($($ty:ty),* $(,)?)=>{$(impl HeapBytes for $ty { fn heap_bytes(&self)->Option<usize>{Some(0)} })*}; }
-fixed!((), FacetRole);
 fixed!(
-    f64,
-    u64,
-    u32,
-    u8,
-    usize,
-    bool,
+    FacetRole,
     Point,
     crate::worlds::base_recognition::RecognitionInterval
 );
@@ -72,67 +54,6 @@ fixed!(
     crate::received::values::HeaderKind,
     crate::received::values::FrameKind
 );
-impl HeapBytes for String {
-    fn heap_bytes(&self) -> Option<usize> {
-        Some(self.capacity())
-    }
-}
-impl<T: HeapBytes> HeapBytes for Option<T> {
-    fn heap_bytes(&self) -> Option<usize> {
-        self.as_ref().map_or(Some(0), HeapBytes::heap_bytes)
-    }
-}
-impl<T: HeapBytes> HeapBytes for Box<T> {
-    fn heap_bytes(&self) -> Option<usize> {
-        size_of::<T>().checked_add((**self).heap_bytes()?)
-    }
-}
-impl<T: HeapBytes> HeapBytes for Vec<T> {
-    fn heap_bytes(&self) -> Option<usize> {
-        self.iter().try_fold(
-            self.capacity().checked_mul(size_of::<T>())?,
-            |sum, value| sum.checked_add(value.heap_bytes()?),
-        )
-    }
-}
-impl<T: HeapBytes, const N: usize> HeapBytes for [T; N] {
-    fn heap_bytes(&self) -> Option<usize> {
-        self.iter()
-            .try_fold(0_usize, |sum, value| sum.checked_add(value.heap_bytes()?))
-    }
-}
-impl<A: HeapBytes, B: HeapBytes> HeapBytes for (A, B) {
-    fn heap_bytes(&self) -> Option<usize> {
-        heap_sum([self.0.heap_bytes()?, self.1.heap_bytes()?])
-    }
-}
-// IndexMap exposes one common capacity rather than its two allocator layouts.
-// Retain a conservative two-times power-of-two bound for the dense buckets and
-// hash-index/control arrays. Payload fields use their actual owned capacities.
-pub(crate) fn map_storage<K, V>(capacity: usize) -> Option<usize> {
-    if capacity == 0 {
-        return Some(0);
-    }
-    let buckets = capacity
-        .checked_add(1)?
-        .checked_next_power_of_two()?
-        .checked_mul(2)?;
-    buckets
-        .checked_mul(
-            size_of::<(usize, K, V)>()
-                .checked_add(size_of::<usize>())?
-                .checked_add(1)?,
-        )?
-        .checked_add(16)
-}
-impl<K: HeapBytes + Eq + Hash, V: HeapBytes> HeapBytes for IndexMap<K, V> {
-    fn heap_bytes(&self) -> Option<usize> {
-        self.iter().try_fold(
-            map_storage::<K, V>(self.capacity())?,
-            |sum, (key, value)| heap_sum([sum, key.heap_bytes()?, value.heap_bytes()?]),
-        )
-    }
-}
 heap_record!(SurfacePoint { surface_id });
 heap_record!(Named {
     name,
@@ -760,7 +681,7 @@ impl HeapBytes for ReceivedValueFragment {
             Self::Header(value) => value.heap_bytes(),
             Self::Frame(value) => value.heap_bytes(),
             // Personal accounts never appear in a sensory original's selected closure.
-            Self::PersonalAccount(_) => None,
+            Self::PersonalAccount(_) | Self::ActionResult(_) => None,
         }
     }
 }

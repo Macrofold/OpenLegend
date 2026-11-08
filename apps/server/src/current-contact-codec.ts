@@ -42,6 +42,11 @@ export function sameCurrentContactContent(a: CurrentContact, b: CurrentContact):
     currentContactContentIdentity(a) === currentContactContentIdentity(b)
   );
 }
+/** Record-schema entry point, shared with native installation's exact codec binding. */
+export function serializeCurrentContact(value: unknown): string {
+  return currentContactPayload(value as CurrentContact);
+}
+
 export function currentContactPayload(contact: CurrentContact, previous?: CurrentContact): string {
   const cached = contents.get(contact);
   if (cached !== undefined) return cached;

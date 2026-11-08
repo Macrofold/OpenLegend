@@ -62,6 +62,27 @@ export function interpolate(a: WorldPoint, b: WorldPoint, t: number): WorldPoint
 export function surfaceHeight(surface: WalkableSurface, x: number, z: number): number {
   return surface.y + (x - surface.minX) * surface.slopeX + (z - surface.minZ) * surface.slopeZ;
 }
+/** First physically usable support in this column, ordered around the supplied
+ * elevation. This selects no route, destination preference or personal fact. */
+export function standingSurfaceAt(
+  map: SpatialMap,
+  x: number,
+  z: number,
+  referenceY: number,
+  body: BodyProfile,
+): SurfacePoint | undefined {
+  return surfacesInBounds(map, {
+    min: { x, y: -Infinity, z },
+    max: { x, y: Infinity, z },
+  })
+    .map((surface) => ({ x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id }))
+    .sort(
+      (a, b) =>
+        Math.abs(a.y - referenceY) - Math.abs(b.y - referenceY) ||
+        a.surfaceId.localeCompare(b.surfaceId),
+    )
+    .find((point) => canStand(map, point, body));
+}
 export function surfaceContains(
   surface: WalkableSurface,
   point: Pick<WorldPoint, 'x' | 'z'>,

@@ -38,9 +38,12 @@ pub struct NativeChangedRows {
 
 #[napi(object, object_from_js = false)]
 pub struct NativeSaveRows {
+    pub world_id: String,
+    pub generation: String,
     pub prefix: f64,
     pub base_revision: f64,
     pub through_cut: f64,
+    pub identity_through: f64,
     pub changes: NativeChangedRows,
 }
 
@@ -96,9 +99,12 @@ impl TryFrom<SaveRows> for NativeSaveRows {
 
     fn try_from(save: SaveRows) -> Result<Self> {
         Ok(Self {
+            world_id: save.world_id,
+            generation: save.generation,
             prefix: safe_number(save.prefix)?,
             base_revision: safe_number(save.base_revision)?,
             through_cut: safe_number(save.through_cut)?,
+            identity_through: safe_number(save.identity_through)?,
             changes: save.changes.try_into()?,
         })
     }

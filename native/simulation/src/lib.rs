@@ -4,7 +4,9 @@
 //! closure and actual consumers are converted. A host handle is not a second
 //! implementation of a world or permission to run an unsupported family.
 
+pub mod activity;
 pub mod attention;
+pub mod commands;
 pub mod encoding;
 pub mod events;
 pub mod execution;
@@ -16,6 +18,7 @@ pub mod install;
 pub mod movement;
 pub mod narration;
 pub mod native_controller;
+pub mod native_danger;
 pub mod native_refuge;
 pub mod native_response;
 pub mod received;

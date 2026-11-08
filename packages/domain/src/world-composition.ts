@@ -7,7 +7,10 @@ import {
 import { BASE_WORK_ACTIVITY_HOST } from './worlds/base/work-activity.js';
 import { BASE_MEAL_ACTIVITY_HOST } from './worlds/base/meal-activity.js';
 import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
-import { BASE_EVENT_DISCLOSURE } from './worlds/base/event-disclosure.js';
+import {
+  BASE_EVENT_DISCLOSURE,
+  BASE_EVENT_DISCLOSURE_DATA,
+} from './worlds/base/event-disclosure.js';
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
 import { baseAnimalActivity } from './worlds/base/animal-response-profile.js';
 import { baseAssemblyPresentation } from './worlds/base/presentation.js';
@@ -411,10 +414,21 @@ export function selectedCreationProfileForCandidate(value: unknown): {
     throw new Error('Incompatible selected creation profile.');
   return { profile, candidate: profile.validate(value) };
 }
-export function selectedCreationProfileForWorld(world: WorldState): WorldCreationProfile {
+export function selectedCreationProfileForWorld(
+  world: Pick<WorldState, 'profile'>,
+): WorldCreationProfile {
   if (world.profile.id !== 'grounded-wilderness' || world.profile.version !== 1)
     throw new Error('This world has no supported initial creation profile.');
   return BASE_CREATION_PROFILE;
+}
+
+/** Finite authored definitions for the resident implementation. The selected
+ * world remains their one source; native installation carries data and pins,
+ * never executable TypeScript policy functions or a reconstructed world.
+ */
+export function selectedNativeLawDefinitions(profile: WorldState['profile']) {
+  selectedCreationProfileForWorld({ profile });
+  return { attention: BASE_ATTENTION_POLICY, eventDisclosure: BASE_EVENT_DISCLOSURE_DATA };
 }
 export function selectedSocialDefaults(world: WorldState) {
   selectedCreationProfileForWorld(world);

@@ -10,6 +10,7 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::activity::ActivityDisplayLimits;
 use crate::encoding::json_record;
 use crate::identity::IdentityState;
 use crate::reception::{
@@ -18,7 +19,7 @@ use crate::reception::{
 };
 use crate::values::{deserialize_present_option, deserialize_safe_integer, is_safe_record_id};
 
-use super::ReceivedError;
+use super::{ActionResultValue, ReceivedError};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -143,6 +144,7 @@ pub enum ReceivedValueFragment {
     Location(LocationFragment),
     BodyPose(BodyPoseFragment),
     PersonalAccount(PersonalAccountFragment),
+    ActionResult(ActionResultValue),
     Header(HeaderFragment),
     Frame(FrameFragment),
 }
@@ -155,12 +157,17 @@ impl ReceivedValueFragment {
             Self::Location(_) => "location",
             Self::BodyPose(_) => "body-pose",
             Self::PersonalAccount(_) => "personal-account",
+            Self::ActionResult(_) => "action-result",
             Self::Header(_) => "observation-header",
             Self::Frame(_) => "observation-frame",
         }
     }
 
-    pub fn validate(&self, through: f64) -> Result<(), ReceivedError> {
+    pub fn validate(
+        &self,
+        through: f64,
+        activity_limits: &ActivityDisplayLimits,
+    ) -> Result<(), ReceivedError> {
         // These three sensory shapes are split by the actual receiving owner
         // before storage. Accepting them here would lose independent pose/detail
         // clocks or permit an observation-frame shortcut during restoration.
@@ -177,6 +184,7 @@ impl ReceivedValueFragment {
             Self::BodyPose(value) => value.pose.validate(),
             Self::Frame(value) => value.frame.validate(),
             Self::PersonalAccount(value) => !value.id.is_empty(),
+            Self::ActionResult(value) => value.validate(activity_limits),
             Self::Header(value) => {
                 let header = &value.header;
                 is_safe_record_id(&header.observer.actor_id)
@@ -237,12 +245,13 @@ enum ReceivedValuesUndo {
     },
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct ReceivedValues {
     sources: IndexMap<String, SharedReceivedValue>,
     phase_at: Option<f64>,
     phase_values: BTreeMap<Arc<str>, String>,
     undo: Vec<ReceivedValuesUndo>,
+    activity_limits: Arc<ActivityDisplayLimits>,
 }
 
 #[derive(Debug)]
@@ -250,7 +259,90 @@ struct SharedReceivedValue {
     record: Arc<ReceivedValueRecord>,
     /// Immutable fragment encoding is charged by every owning logical block.
     /// Derive once with the source; repeated metadata reads do not serialize it.
-    value_bytes: u64,
+    encoding: Arc<str>,
+}
+
+enum RetentionPlan {
+    Resolved(RetainedValue),
+    Shared {
+        value: ReceivedValueFragment,
+        encoded: String,
+    },
+}
+
+fn retention_plan(
+    values: Option<&ReceivedValues>,
+    value: ReceivedValueFragment,
+    preferred: Option<&ReceivedValueReference>,
+    at: f64,
+    limits: &ActivityDisplayLimits,
+) -> Result<RetentionPlan, ReceivedError> {
+    value.validate(at, limits)?;
+    let encoded =
+        json_record(&value).map_err(|_| ReceivedError("Received value encoding failed."))?;
+    let value_bytes = encoded.len() as u64;
+    if let Some(preferred) = preferred {
+        let equal = match preferred {
+            ReceivedValueReference::Shared(id) => values
+                .and_then(|values| values.sources.get(id))
+                .is_some_and(|owned| owned.encoding.as_ref() == encoded),
+            ReceivedValueReference::Inline(held) => {
+                json_record(held).map_err(|_| ReceivedError("Received value encoding failed."))?
+                    == encoded
+            }
+        };
+        if equal {
+            return Ok(RetentionPlan::Resolved(RetainedValue {
+                reference: preferred.clone(),
+                added_bytes: 0,
+                value_bytes,
+            }));
+        }
+    }
+    if matches!(
+        value.kind(),
+        "body-pose" | "location" | "observation-frame" | "observation-header"
+    ) || (value.kind() != "body" && value_bytes <= 192)
+    {
+        return Ok(RetentionPlan::Resolved(RetainedValue {
+            reference: ReceivedValueReference::Inline(Box::new(value)),
+            added_bytes: 0,
+            value_bytes,
+        }));
+    }
+    Ok(RetentionPlan::Shared { value, encoded })
+}
+
+/// Root presence follows actual retention: an inline value cannot create an
+/// empty received-value store. The existing owner still makes every sharing and
+/// identity decision, including exact preferred content and phase deduplication.
+pub fn retain_received_value(
+    values: &mut Option<ReceivedValues>,
+    value: ReceivedValueFragment,
+    preferred: Option<&ReceivedValueReference>,
+    at: f64,
+    sequence: u64,
+    identity: &mut IdentityState,
+    limits: &Arc<ActivityDisplayLimits>,
+) -> Result<RetainedValue, ReceivedError> {
+    if let Some(values) = values {
+        return values.retain(value, preferred, at, sequence, identity);
+    }
+    match retention_plan(None, value, preferred, at, limits)? {
+        RetentionPlan::Resolved(retained) => Ok(retained),
+        RetentionPlan::Shared { value, encoded } => {
+            let mut owner = ReceivedValues {
+                sources: IndexMap::new(),
+                phase_at: None,
+                phase_values: BTreeMap::new(),
+                undo: Vec::new(),
+                activity_limits: Arc::clone(limits),
+            };
+            let retained = owner.retain_shared(value, encoded, at, sequence, identity)?;
+            *values = Some(owner);
+            Ok(retained)
+        }
+    }
 }
 
 impl ReceivedValues {
@@ -258,10 +350,11 @@ impl ReceivedValues {
         records: Vec<ReceivedValueRecord>,
         through: f64,
         sequence: u64,
+        activity_limits: Arc<ActivityDisplayLimits>,
     ) -> Result<Self, ReceivedError> {
         let mut sources = IndexMap::new();
         for record in records {
-            record.value.validate(through)?;
+            record.value.validate(through, &activity_limits)?;
             if !is_safe_record_id(&record.id)
                 || !record.at.is_finite()
                 || record.at < 0.0
@@ -280,14 +373,15 @@ impl ReceivedValues {
                     "Received value bytes disagree with its current body.",
                 ));
             }
-            let value_bytes = json_record(&record.value)
-                .map_err(|_| ReceivedError("Received value encoding failed."))?
-                .len() as u64;
+            let encoding: Arc<str> = Arc::from(
+                json_record(&record.value)
+                    .map_err(|_| ReceivedError("Received value encoding failed."))?,
+            );
             sources.insert(
                 record.id.clone(),
                 SharedReceivedValue {
                     record: Arc::new(record),
-                    value_bytes,
+                    encoding,
                 },
             );
         }
@@ -296,7 +390,12 @@ impl ReceivedValues {
             phase_at: None,
             phase_values: BTreeMap::new(),
             undo: Vec::new(),
+            activity_limits,
         })
+    }
+
+    pub fn activity_limits(&self) -> &ActivityDisplayLimits {
+        &self.activity_limits
     }
 
     pub fn value_at<'a>(
@@ -316,7 +415,9 @@ impl ReceivedValues {
     }
 
     pub fn shared_value_bytes(&self, id: &str) -> Option<u64> {
-        self.sources.get(id).map(|owned| owned.value_bytes)
+        self.sources
+            .get(id)
+            .map(|owned| owned.encoding.len() as u64)
     }
 
     pub fn shared_record(&self, id: &str) -> Option<&Arc<ReceivedValueRecord>> {
@@ -342,32 +443,23 @@ impl ReceivedValues {
         sequence: u64,
         identity: &mut IdentityState,
     ) -> Result<RetainedValue, ReceivedError> {
-        value.validate(at)?;
-        let encoded =
-            json_record(&value).map_err(|_| ReceivedError("Received value encoding failed."))?;
+        match retention_plan(Some(self), value, preferred, at, &self.activity_limits)? {
+            RetentionPlan::Resolved(retained) => Ok(retained),
+            RetentionPlan::Shared { value, encoded } => {
+                self.retain_shared(value, encoded, at, sequence, identity)
+            }
+        }
+    }
+
+    fn retain_shared(
+        &mut self,
+        value: ReceivedValueFragment,
+        encoded: String,
+        at: f64,
+        sequence: u64,
+        identity: &mut IdentityState,
+    ) -> Result<RetainedValue, ReceivedError> {
         let value_bytes = encoded.len() as u64;
-        if let Some(preferred) = preferred
-            && let Some(held) = self.value_at(preferred)
-            && json_record(held).map_err(|_| ReceivedError("Received value encoding failed."))?
-                == encoded
-        {
-            return Ok(RetainedValue {
-                reference: preferred.clone(),
-                added_bytes: 0,
-                value_bytes,
-            });
-        }
-        if matches!(
-            value.kind(),
-            "body-pose" | "location" | "observation-frame" | "observation-header"
-        ) || (value.kind() != "body" && value_bytes <= 192)
-        {
-            return Ok(RetainedValue {
-                reference: ReceivedValueReference::Inline(Box::new(value)),
-                added_bytes: 0,
-                value_bytes,
-            });
-        }
         if self.phase_at != Some(at) {
             self.undo.push(ReceivedValuesUndo::PhaseReplace {
                 at: self.phase_at,
@@ -406,14 +498,14 @@ impl ReceivedValues {
         let id = record.id.clone();
         let added_bytes = record.bytes;
         self.undo.push(ReceivedValuesUndo::SourceInsert(id.clone()));
+        let key: Arc<str> = Arc::from(encoded);
         self.sources.insert(
             id.clone(),
             SharedReceivedValue {
                 record: Arc::new(record),
-                value_bytes,
+                encoding: Arc::clone(&key),
             },
         );
-        let key: Arc<str> = Arc::from(encoded);
         let previous = self.phase_values.insert(Arc::clone(&key), id.clone());
         self.undo
             .push(ReceivedValuesUndo::PhaseInsert { key, previous });

@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./execution-input": "./src/execution-input.ts",
+    "./native-install": "./src/native-install.ts",
     "./native-proof": "./src/worlds/base/native-proof.ts"
   },
   "types": "./src/index.ts",

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                  | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native and PostgreSQL foundations are in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-07   |
+| In progress | Native and PostgreSQL foundations are in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-08   |
 
 ## 1. Purpose and selected direction
 
@@ -43,7 +43,7 @@ No performance gain is guaranteed, including from the accepted foundation. Owner
 The redesign preserves existing defaults. It does not choose slower sight, fewer animals, fewer attention allocations, a different world clock, coarser collision, weaker evidence, or new memory expiry to make a comparison pass. Independent behavior changes belong to their existing owners and must be applied equally to comparison arms.
 
 - Movement and native reactions follow installed laws and actual elapsed game time. Work placement does not move bodies, repeat an action, draw randomness or restart a timer. Computed work is private until current input/authority checks accept it; work rejected for expired input leaves no movement, randomness, history or progress behind.
-- A sustained activity can contain many physical execution steps. Its public transitions and personally received trajectory remain distinct. [BK29-E](../maintainers/production-data.md#bk29--pressure-and-preparation-work-removal-proposed) owns the escape-leg/outward-activity correction; this project consumes its accepted result rather than inventing a second event system.
+- A sustained activity can contain many physical execution steps. Its world-selected public transitions and personally received trajectory remain distinct. The common runtime removes generic animal-response announcements and eligible routine walking notices through the [BK29](../maintainers/production-data.md#bk29--pressure-and-preparation-work-removal-proposed) owners; native execution preserves those removals without a replacement announcement system.
 - Broad perception remains wider than detailed attention. An attended subject needs no special follow/watch action to have its received changes recorded. Attention controls detailed work; required evidence retains its separate contract. Nearby copies held for server computation grant no personal knowledge.
 - Unknown people stay unknown. Location updates cannot refresh stale clothing/name/detail, and receiving a new name cannot rewrite earlier recognition. Attention entry cannot reconstruct an unobserved route from objective state.
 - The daughter/cliff/pursuers scenario retains broad bodies, personally received terrain/context and selected chronology under the existing [attention and scenes contract](attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory). A cliff is not required to win a subject slot. No native handler for a daughter, cliff, kitchen or anvil is introduced.

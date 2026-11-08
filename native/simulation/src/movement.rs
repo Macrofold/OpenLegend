@@ -117,7 +117,12 @@ impl BodyIndex {
             .last_key_value()
             .map_or(0.0, |(bits, _)| f64::from_bits(*bits))
     }
-    pub(crate) fn candidates(&self, origin: Point, radius: f64) -> Vec<(&str, EntityHandle)> {
+    fn visit_candidates<'a>(
+        &'a self,
+        origin: Point,
+        radius: f64,
+        mut visit: impl FnMut(&'a str, &'a BodyPoint),
+    ) {
         let low = cell(Point {
             x: origin.x - radius,
             y: origin.y - radius,
@@ -131,11 +136,10 @@ impl BodyIndex {
         let volume = (high.0 as f64 - low.0 as f64 + 1.0)
             * (high.1 as f64 - low.1 as f64 + 1.0)
             * (high.2 as f64 - low.2 as f64 + 1.0);
-        let mut found = Vec::new();
         let mut include = |ids: &BTreeSet<String>| {
             for id in ids {
                 if let Some((key, point)) = self.points.get_key_value(id) {
-                    found.push((key.as_str(), point));
+                    visit(key.as_str(), point);
                 }
             }
         };
@@ -162,6 +166,21 @@ impl BodyIndex {
                 }
             }
         }
+    }
+    /// Exact selected envelope size and bytes needed to copy its IDs, without
+    /// allocating a candidate vector or visiting unrelated bodies.
+    pub(crate) fn candidate_capacity(&self, origin: Point, radius: f64) -> (usize, usize) {
+        let mut count = 0;
+        let mut bytes = 0;
+        self.visit_candidates(origin, radius, |id, _| {
+            count += 1;
+            bytes += id.len();
+        });
+        (count, bytes)
+    }
+    pub(crate) fn candidates(&self, origin: Point, radius: f64) -> Vec<(&str, EntityHandle)> {
+        let mut found = Vec::new();
+        self.visit_candidates(origin, radius, |id, point| found.push((id, point)));
         found.sort_by(|(_, a), (_, b)| a.order.cmp(&b.order));
         found
             .into_iter()
@@ -270,7 +289,7 @@ impl OccupiedSweep {
     }
 }
 
-pub(crate) use crate::spatial::{distance, interpolate};
+use crate::spatial::{distance, interpolate};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum MotionQuestion {

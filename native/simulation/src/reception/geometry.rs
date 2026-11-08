@@ -19,8 +19,9 @@ fn true_flag<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct BoundsQueryCursor {
-    pub pending: Vec<Vec<u64>>,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
+    #[serde(deserialize_with = "cursor_paths")]
+    pub pending: Vec<Vec<i64>>,
+    #[serde(deserialize_with = "cursor_offset")]
     pub offset: u64,
     #[serde(
         default,
@@ -34,6 +35,62 @@ pub struct BoundsQueryCursor {
         skip_serializing_if = "Option::is_none"
     )]
     pub truncated: Option<bool>,
+}
+
+fn cursor_paths<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Vec<Vec<i64>>, D::Error> {
+    // JS stores ordinary branches as 0/1 and a prioritized leaf's last entry as
+    // -at-1. Floating JSON1.0 is still the integer1 in the current JS format.
+    let input = Vec::<Vec<f64>>::deserialize(deserializer)?;
+    if input.len() > 64
+        || input.iter().any(|path| {
+            path.len() > 64
+                || path.iter().enumerate().any(|(index, part)| {
+                    *part != 0.0
+                        && *part != 1.0
+                        && !(index + 1 == path.len()
+                            && part.is_finite()
+                            && part.fract() == 0.0
+                            && (-4.0..=-1.0).contains(part))
+                })
+        })
+    {
+        return Err(serde::de::Error::custom(
+            "Invalid received feature continuation.",
+        ));
+    }
+    Ok(input
+        .into_iter()
+        .map(|path| path.into_iter().map(|part| part as i64).collect())
+        .collect())
+}
+
+fn cursor_offset<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<u64, D::Error> {
+    let offset = deserialize_safe_integer(deserializer)?;
+    if offset <= 4 {
+        Ok(offset)
+    } else {
+        Err(serde::de::Error::custom(
+            "Invalid received feature continuation offset.",
+        ))
+    }
+}
+
+impl BoundsQueryCursor {
+    pub fn validate(&self) -> bool {
+        self.pending.len() <= 64
+            && self.pending.iter().all(|path| {
+                path.len() <= 64
+                    && path.iter().enumerate().all(|(index, part)| {
+                        *part == 0
+                            || *part == 1
+                            || (index + 1 == path.len() && (-4..=-1).contains(part))
+                    })
+            })
+            && self.offset <= 4
+            && self.truncated != Some(false)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

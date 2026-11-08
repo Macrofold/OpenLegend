@@ -11,6 +11,12 @@ use serde_json::Value;
 use std::fmt::Write as _;
 use std::io;
 
+/// Source `<`/`>` string ordering compares UTF-16 code units, including keys
+/// containing supplementary characters. It is distinct from localeCompare.
+pub fn js_string_cmp(left: &str, right: &str) -> std::cmp::Ordering {
+    left.encode_utf16().cmp(right.encode_utf16())
+}
+
 /// ECMAScript whitespace differs from Rust's Unicode White_Space property.
 /// Validation reads the trimmed slice; it never rewrites authored content.
 pub fn js_trim(value: &str) -> &str {

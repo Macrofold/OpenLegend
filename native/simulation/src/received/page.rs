@@ -279,7 +279,10 @@ impl TemporalPageRecord {
                 {
                     return Err(ReceivedError("Invalid sparse received change."));
                 }
-                if entry.receipt.facets.is_empty() && entry.kind != ReceivedEntryKind::Boundary {
+                if entry.receipt.facets.is_empty()
+                    && entry.kind != ReceivedEntryKind::Boundary
+                    && entry.receipt.header.change != super::TemporalChange::ReceiverFrame
+                {
                     return Err(ReceivedError("Received change has no admitted content."));
                 }
                 let receipt = materialize_received_receipt(&batch, entry, None)?;

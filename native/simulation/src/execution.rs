@@ -8,6 +8,7 @@ use crate::events::{
 use crate::host::{ByteBudget, ByteReservation, CapacityError};
 use crate::identity::{IdentityExhausted, IdentityState, IssuedIdentity, MAX_SAFE_INTEGER};
 use crate::received::{ReceivedValuesCheckpoint, TemporalCheckpoint};
+use crate::reception::{OriginalCheckpoint, OriginalJournal, SensoryCheckpoint, SensoryJournal};
 use crate::simulation::{PhysicalState, SimulationState};
 use crate::state::{Action, EntityHandle, NativeInterval, Placement, Point};
 use crate::status::AttributeDefinition;
@@ -19,6 +20,8 @@ use crate::work::{InvocationEdit, WorkDemand, WorkError, WorkPlan, WorkRequest, 
 use indexmap::IndexMap;
 use std::collections::BTreeSet;
 use std::mem::size_of;
+
+mod semantic;
 
 #[derive(Debug)]
 pub(crate) enum ExecutionError {
@@ -35,6 +38,7 @@ pub(crate) enum ExecutionError {
     Invariant,
     Values(ValueError),
     Work(WorkError),
+    Received(crate::received::ReceivedError),
     OwnerRollback,
 }
 
@@ -70,6 +74,9 @@ struct CandidateFrame {
     received: Option<ReceivedValuesCheckpoint>,
     occurrences: OccurrenceCheckpoint,
     temporal: TemporalCheckpoint,
+    originals: OriginalCheckpoint,
+    sensory: SensoryCheckpoint,
+    sensory_cursor: PhysicalChangeCursor,
     // This is only the finite synchronous emitter call stack, not event bodies,
     // physical state or accumulated history. Saved work limits bound its depth.
     pending: Vec<PendingOccurrence>,
@@ -84,9 +91,14 @@ pub(crate) struct CandidateCheckpoint {
 pub(crate) struct CandidateJournal {
     pub physical: PhysicalJournal,
     pub meters: crate::work::WorkMeters,
+    pub originals: OriginalJournal,
+    pub sensory: SensoryJournal,
     root_received: Option<ReceivedValuesCheckpoint>,
     root_occurrences: OccurrenceCheckpoint,
     root_temporal: TemporalCheckpoint,
+    root_originals: OriginalCheckpoint,
+    root_sensory: SensoryCheckpoint,
+    sensory_cursor: PhysicalChangeCursor,
     frames: Vec<CandidateFrame>,
     pending: Vec<PendingOccurrence>,
     next_occurrence: u64,
@@ -99,9 +111,16 @@ impl CandidateJournal {
         let group = state.installed.work_policy.policy().group;
         let mut physical = PhysicalJournal::begin(&state.physical, budget)?;
         physical.reserve(size_of::<Self>() + crate::work::WorkMeters::heap_bound(group)?)?;
+        let originals = OriginalJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
+        let root_originals = originals.checkpoint();
+        let sensory = SensoryJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
+        let root_sensory = sensory.checkpoint(&state.reception);
+        let sensory_cursor = physical.change_cursor();
         Ok(Self {
             physical,
             meters: crate::work::WorkMeters::new(group)?,
+            originals,
+            sensory,
             root_received: state
                 .reception
                 .received_values
@@ -109,6 +128,9 @@ impl CandidateJournal {
                 .map(|v| v.checkpoint()),
             root_occurrences: state.occurrences.checkpoint(),
             root_temporal: state.temporal.checkpoint(),
+            root_originals,
+            root_sensory,
+            sensory_cursor,
             frames: Vec::new(),
             pending: Vec::new(),
             next_occurrence: 0,
@@ -142,6 +164,9 @@ impl CandidateJournal {
                 .map(|v| v.checkpoint()),
             occurrences: state.occurrences.checkpoint(),
             temporal: state.temporal.checkpoint(),
+            originals: self.originals.checkpoint(),
+            sensory: self.sensory.checkpoint(&state.reception),
+            sensory_cursor: self.sensory_cursor,
             pending: self.pending.clone(),
         });
         Ok(token)
@@ -170,11 +195,20 @@ impl CandidateJournal {
             .temporal
             .rollback_to(frame.temporal)
             .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.originals
+            .rollback_to(&mut state.reception, frame.originals)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory
+            .rollback_to(&mut state.reception, frame.sensory)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory_cursor = frame.sensory_cursor;
         match (frame.received, state.reception.received_values.as_mut()) {
             (Some(checkpoint), Some(values)) => values
                 .rollback_to(checkpoint)
                 .map_err(|_| ExecutionError::OwnerRollback)?,
-            (None, None) => {}
+            (None, _) => {
+                state.reception.received_values = None;
+            }
             _ => return Err(ExecutionError::OwnerRollback),
         }
         self.pending = frame.pending;
@@ -193,11 +227,20 @@ impl CandidateJournal {
             .temporal
             .rollback_to(self.root_temporal)
             .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.originals
+            .rollback_to(&mut state.reception, self.root_originals)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory
+            .rollback_to(&mut state.reception, self.root_sensory)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.sensory_cursor = PhysicalChangeCursor { at: 0 };
         match (self.root_received, state.reception.received_values.as_mut()) {
             (Some(checkpoint), Some(values)) => values
                 .rollback_to(checkpoint)
                 .map_err(|_| ExecutionError::OwnerRollback)?,
-            (None, None) => {}
+            (None, _) => {
+                state.reception.received_values = None;
+            }
             _ => return Err(ExecutionError::OwnerRollback),
         }
         self.frames.clear();
@@ -216,6 +259,26 @@ impl CoreMutation<'_> {
             state: &mut self.state.physical,
             journal: &mut self.journal.physical,
         }
+    }
+    pub(crate) fn sync_sensory_changes(&mut self) -> Result<(), ExecutionError> {
+        let through = self.journal.physical.change_cursor();
+        for change in self
+            .journal
+            .physical
+            .changes_since(self.journal.sensory_cursor)?
+        {
+            self.journal
+                .sensory
+                .queue_physical_change(
+                    &mut self.state.reception,
+                    self.state.physical.header.sim_time,
+                    change,
+                    self.state.installed.maximum_change_scopes,
+                )
+                .map_err(ExecutionError::Received)?;
+        }
+        self.journal.sensory_cursor = through;
+        Ok(())
     }
     /// Allocate in source order before any receiver can allocate its own source
     /// IDs. Only an already acquired parent's native reactions may nest events.
@@ -357,6 +420,7 @@ pub(crate) enum PhysicalChange {
     },
     Behavior {
         entity_id: String,
+        outward_change: bool,
     },
     Attribute {
         entity_id: String,
@@ -365,6 +429,10 @@ pub(crate) enum PhysicalChange {
     AnimalClock {
         entity_id: String,
     },
+}
+#[derive(Clone, Copy)]
+pub(crate) struct PhysicalChangeCursor {
+    at: usize,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -378,6 +446,15 @@ pub(crate) struct MovementWrite {
     pub heading: Option<f64>,
     pub continuity: Continuity,
 }
+#[derive(Clone, Copy)]
+pub(crate) enum PlanGenerationWrite {
+    Preserve,
+    Advance,
+}
+pub(crate) struct ActionWrite {
+    pub generation: PlanGenerationWrite,
+    pub behavior: Option<bool>,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum UndoKey {
@@ -389,6 +466,8 @@ enum UndoKey {
     AnimalWander(usize, u64),
     AnimalPhysicalLife(usize, u64),
     AcousticPattern(usize, u64, String),
+    SemanticMeta(usize, u64),
+    SemanticResolved(usize, u64),
     Episode(String),
     Invocation(String),
 }
@@ -479,6 +558,17 @@ enum Undo {
         entity: EntityHandle,
         key: String,
         before: Option<(usize, crate::native_response::AcousticPattern)>,
+    },
+    SemanticMeta {
+        entity: EntityHandle,
+        interval: u64,
+        discovery: String,
+        reservation: Option<String>,
+        occupied_purpose: Option<String>,
+    },
+    SemanticResolved {
+        entity: EntityHandle,
+        before: IndexMap<String, crate::state::ResolvedSemanticCause>,
     },
     Episode(EpisodeUndo),
     Work(WorkUndo),
@@ -687,6 +777,33 @@ impl PhysicalJournal {
                         patterns.shift_insert(index, key, value);
                     }
                 }
+                Undo::SemanticMeta {
+                    entity,
+                    interval,
+                    discovery,
+                    reservation,
+                    occupied_purpose,
+                } => {
+                    let semantic = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .and_then(|a| a.agency.semantic.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    semantic.interval = interval;
+                    semantic.discovery = discovery;
+                    semantic.reservation = reservation;
+                    semantic.occupied_purpose = occupied_purpose;
+                }
+                Undo::SemanticResolved { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .and_then(|a| a.agency.semantic.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .resolved = before;
+                }
                 Undo::Episode(undo) => restore_episode(state, undo)?,
                 Undo::Work(undo) => state.work.rollback(undo)?,
             }
@@ -727,6 +844,19 @@ impl PhysicalJournal {
     }
     pub(crate) fn changes(&self) -> &[PhysicalChange] {
         &self.changes
+    }
+    pub(crate) fn change_cursor(&self) -> PhysicalChangeCursor {
+        PhysicalChangeCursor {
+            at: self.changes.len(),
+        }
+    }
+    pub(crate) fn changes_since(
+        &self,
+        cursor: PhysicalChangeCursor,
+    ) -> Result<&[PhysicalChange], ExecutionError> {
+        self.changes
+            .get(cursor.at..)
+            .ok_or(ExecutionError::InvalidCheckpoint)
     }
     pub(crate) fn scratch_bytes(&self) -> usize {
         self.reservation.bytes()
@@ -920,11 +1050,16 @@ impl PhysicalMutation<'_> {
         }
         Ok(())
     }
-    pub(crate) fn behavior_changed(&mut self, id: &str) -> Result<(), ExecutionError> {
+    pub(crate) fn behavior_changed(
+        &mut self,
+        id: &str,
+        outward_change: bool,
+    ) -> Result<(), ExecutionError> {
         self.journal
             .reserve(size_of::<PhysicalChange>() * 2 + id.len() * 2)?;
         self.journal.change(PhysicalChange::Behavior {
             entity_id: id.to_owned(),
+            outward_change,
         })
     }
     pub(crate) fn animal_clock_changed(&mut self, id: &str) -> Result<(), ExecutionError> {
@@ -1113,6 +1248,7 @@ impl PhysicalMutation<'_> {
         &mut self,
         id: &str,
         action: Option<Action>,
+        write: ActionWrite,
     ) -> Result<(), ExecutionError> {
         let handle = self
             .state
@@ -1125,11 +1261,14 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        let next = actor
-            .plan_generation
-            .checked_add(1)
-            .filter(|n| *n <= MAX_SAFE_INTEGER)
-            .ok_or(ExecutionError::Invariant)?;
+        let next = match write.generation {
+            PlanGenerationWrite::Preserve => actor.plan_generation,
+            PlanGenerationWrite::Advance => actor
+                .plan_generation
+                .checked_add(1)
+                .filter(|n| *n <= MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Invariant)?,
+        };
         let first = self
             .journal
             .first(&UndoKey::Action(handle.slot, handle.generation))?;
@@ -1139,9 +1278,12 @@ impl PhysicalMutation<'_> {
             .undo
             .try_reserve(1)
             .map_err(|_| ExecutionError::Capacity)?;
-        self.journal.change(PhysicalChange::Behavior {
-            entity_id: id.to_owned(),
-        })?;
+        if let Some(outward_change) = write.behavior {
+            self.journal.change(PhysicalChange::Behavior {
+                entity_id: id.to_owned(),
+                outward_change,
+            })?;
+        }
         let actor = self
             .state
             .entities

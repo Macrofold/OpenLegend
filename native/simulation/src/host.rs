@@ -2,6 +2,7 @@
 //! must never acquire the writer lock held by native calculation.
 
 mod budget;
+pub(crate) mod retained_size;
 pub use budget::{ByteBudget, ByteReservation, CapacityError};
 
 use std::sync::Mutex;

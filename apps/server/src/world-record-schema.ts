@@ -1,7 +1,7 @@
 import { resultEvidenceId, type ResultEvidence } from '@open-legend/domain';
 import { encodeAttentionStorage, decodeAttentionStorage } from './attention-storage.js';
 import {
-  currentContactPayload,
+  serializeCurrentContact,
   currentContactMetadata,
   decodeCurrentContactRow,
 } from './current-contact-codec.js';
@@ -251,8 +251,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           mode: 'indexed-map',
           node: {
             table: 'mind_perception_current',
-            serialize: (value) =>
-              currentContactPayload(value as import('@open-legend/domain').CurrentContact),
+            serialize: serializeCurrentContact,
             decodeRow: decodeCurrentContactRow,
           },
           unordered: true,

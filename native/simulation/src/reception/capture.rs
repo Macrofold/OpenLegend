@@ -87,6 +87,11 @@ impl CapturedReceivedOriginals {
             source.origin.heap_bytes().ok_or_else(capacity)?,
             source.context.heap_bytes().ok_or_else(capacity)?,
             header.heap_bytes().ok_or_else(capacity)?,
+            if header.channel.is_none() {
+                source.channel.heap_bytes().ok_or_else(capacity)?
+            } else {
+                0
+            },
             source
                 .facets
                 .len()

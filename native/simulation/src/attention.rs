@@ -7,6 +7,15 @@ use crate::values::{deserialize_present_option, deserialize_safe_integer};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod policy;
+pub use policy::*;
+mod storage;
+pub use storage::*;
+mod validation;
+pub use validation::attention_subject_key;
+
+pub const SELF_RELATION_KEY: &str = "@self";
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum AttentionBasis {
@@ -202,8 +211,8 @@ pub struct AttentionState {
     pub next_relation_at: f64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub relation_cursor: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub discovery_cursor: u64,
+    #[serde(deserialize_with = "discovery_cursor")]
+    pub discovery_cursor: i64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub relation_revision: u64,
     #[serde(
@@ -213,4 +222,19 @@ pub struct AttentionState {
     pub relation_dirty: IndexMap<String, u64>,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub relation_scans: IndexMap<String, AttentionRelationScan>,
+}
+
+fn discovery_cursor<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<i64, D::Error> {
+    let value = f64::deserialize(deserializer)?;
+    if value.is_finite()
+        && value.fract() == 0.0
+        && value >= -1.0
+        && value <= crate::identity::MAX_SAFE_INTEGER as f64
+    {
+        Ok(value as i64)
+    } else {
+        Err(serde::de::Error::custom(
+            "Invalid attention discovery cursor.",
+        ))
+    }
 }

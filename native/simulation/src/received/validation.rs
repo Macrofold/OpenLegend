@@ -101,6 +101,7 @@ impl MaterializedTemporalValue<'_> {
                 value.validate().is_ok() && value.validate_participant_observers(observer).is_ok()
             }
             Self::Other(ReceivedValueFragment::PersonalAccount(value)) => !value.id.is_empty(),
+            Self::Other(ReceivedValueFragment::ActionResult(_)) => true,
             _ => false,
         }
     }
@@ -170,7 +171,14 @@ impl TemporalReceipt {
                     || gap.from > gap.through
                     || gap.through > self.at
             })
-            || (self.facets.is_empty() && !terminal)
+            || (self.facets.is_empty()
+                && !terminal
+                && header.change != TemporalChange::ReceiverFrame)
+            || (header.change == TemporalChange::ReceiverFrame
+                && self
+                    .receiver_frame
+                    .as_ref()
+                    .is_none_or(|frame| !frame.validate()))
         {
             return Err(ReceivedError("Invalid received receipt."));
         }
@@ -220,7 +228,7 @@ impl TemporalReceipt {
                 None => values.value_at(&field.value_ref),
             }
             .ok_or(ReceivedError("Received member has no retained value."))?;
-            fragment.validate(through)?;
+            fragment.validate(through, values.activity_limits())?;
             let sources = [
                 field.original.as_ref().map(|key| &key.source),
                 field.received_from.as_ref(),

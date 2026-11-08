@@ -4,13 +4,291 @@
 use crate::execution::{ExecutionError, PhysicalMutation};
 use crate::experience::Awareness;
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, SurfaceLineQuery};
-use crate::native_refuge::{RefugeRoute, RefugeScore};
+use crate::native_danger::DangerAssessment;
+use crate::native_refuge::RefugeRoute;
 use crate::native_response::*;
 use crate::reception::SoundAcquisition;
 use crate::simulation::InstalledWorld;
 use crate::state::EntityHandle;
-use crate::work::{WorkDemand, WorkMeters};
+use crate::work::{WorkMeters, WorkUnit};
 use indexmap::IndexMap;
+
+mod ground;
+pub(crate) use ground::{GroundTurn, ground_turn, proposal_current};
+
+/// The ordinary animal turn alone creates this saved search. Geometry resumes
+/// may fill its current candidate but never redraw its bearing, distance or side.
+pub(crate) fn begin_ground_proposal(
+    mutation: &mut PhysicalMutation<'_>,
+    installed: &InstalledWorld,
+    actor_id: &str,
+    frame: &DangerAssessment,
+    epsilon: f64,
+) -> Result<(), ExecutionError> {
+    frame.require_current(mutation.state, actor_id)?;
+    if !frame.complete {
+        return Err(ExecutionError::Invariant);
+    }
+    let animal = mutation
+        .state
+        .entities
+        .get(actor_id)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let support_bytes = match animal.placement.as_ref() {
+        Some(crate::state::Placement::World {
+            support_surface_id, ..
+        }) => support_surface_id.as_ref().map_or(0, String::capacity),
+        _ => 0,
+    };
+    let action_bytes = animal
+        .actor
+        .as_ref()
+        .and_then(|actor| actor.action.as_ref())
+        .map_or(0, |action| action.id.capacity());
+    mutation.reserve_response_growth(
+        frame
+            .records
+            .len()
+            .saturating_mul(64)
+            .saturating_add(512)
+            .saturating_add(support_bytes)
+            .saturating_add(action_bytes),
+    )?;
+    let draw = mutation.draw();
+    let animal = mutation
+        .state
+        .entities
+        .get(actor_id)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let state = animal.animal.as_ref().ok_or(ExecutionError::Invariant)?;
+    let episode = state.episode.as_ref().ok_or(ExecutionError::Invariant)?;
+    if episode.proposal.is_some() || animal.spatial.flight.is_some() || state.foraging.is_some() {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let profile = selected_profile(installed, state)?;
+    let dangers: Vec<&NativeDanger> = frame
+        .records
+        .iter()
+        .map(|key| episode.dangers.get(key).ok_or(ExecutionError::Invariant))
+        .collect::<Result<_, _>>()?;
+    let origin = animal
+        .supported_position()
+        .ok_or(ExecutionError::InvalidPosition)?;
+    let bearing = crate::native_refuge::escape_bearing(origin.point(), &dangers, draw, epsilon);
+    let generation = episode
+        .proposal_generation
+        .checked_add(1)
+        .filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER)
+        .ok_or(ExecutionError::Identity)?;
+    let body = animal.body_profile();
+    let navigation_body = NavigationBody {
+        radius: body.radius,
+        height: body.height,
+        max_slope: body.max_slope,
+    };
+    let movement_id = animal
+        .actor
+        .as_ref()
+        .and_then(|actor| actor.action.as_ref())
+        .map(|action| action.id.clone());
+    let minimum = profile.candidates.distance.minimum;
+    let span = profile.candidates.distance.maximum - minimum;
+    let wait = profile.candidates.navigation_wait;
+    let distance = minimum + mutation.draw() * span;
+    let side = if mutation.draw() < 0.5 { -1.0 } else { 1.0 };
+    let proposal = NativeRefugeProposal {
+        generation,
+        geometry_revision: installed.geometry.spatial.revision,
+        at: mutation.state.header.sim_time,
+        origin,
+        movement_id,
+        wait: Some(wait),
+        search: Some(RefugeSearch {
+            distance,
+            bearing,
+            side,
+            attempted: 0,
+            best: None,
+        }),
+        body: navigation_body,
+        candidates: Vec::new(),
+    };
+    let episode = mutation
+        .snapshot_episode(actor_id)?
+        .as_mut()
+        .ok_or(ExecutionError::Invariant)?;
+    episode.proposal_generation = generation;
+    episode.proposal = Some(proposal);
+    Ok(())
+}
+
+/// Apply only the response consequences of the completed exposure read. New
+/// estimates already belong to the episode; this step changes its review clock
+/// only when the observed danger or actual movement makes that meaningful.
+pub(crate) fn reconcile_exposure(
+    mutation: &mut PhysicalMutation<'_>,
+    installed: &InstalledWorld,
+    meters: &mut WorkMeters,
+    actor_id: &str,
+    frame: &DangerAssessment,
+    epsilon: f64,
+) -> Result<(), ExecutionError> {
+    frame.require_current(mutation.state, actor_id)?;
+    mutation.reserve_response_growth(frame.records.len() * std::mem::size_of::<(&str, bool)>())?;
+    let animal = mutation
+        .state
+        .entities
+        .get(actor_id)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let actor = animal.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+    if !actor.alive || actor.controller != "native" {
+        return Ok(());
+    }
+    let state = animal.animal.as_ref().ok_or(ExecutionError::Invariant)?;
+    let profile = selected_profile(installed, state)?;
+    let episode = state.episode.as_ref().ok_or(ExecutionError::Invariant)?;
+    let at = mutation.state.header.sim_time;
+    let position = animal
+        .world_position()
+        .ok_or(ExecutionError::InvalidPosition)?;
+    let body = animal.body_profile();
+    let extent = crate::spatial::Extent {
+        radius: body.radius,
+        height: body.height,
+    };
+    let mut reconsider = false;
+    let mut meaningful = false;
+    let mut clear_since_removed = false;
+    let mut bands = Vec::with_capacity(frame.records.len());
+    if !frame.complete {
+        meaningful = episode.clear_since.is_some();
+        clear_since_removed = true;
+        reconsider = episode.mode != ResponseMode::Blocked;
+    } else {
+        let clear = profile.avoidance_distance + profile.clearance_margin;
+        let mut nearest = f64::INFINITY;
+        for key in &frame.records {
+            let danger = episode.dangers.get(key).ok_or(ExecutionError::Invariant)?;
+            let separation =
+                crate::native_refuge::danger_separation(position, extent, danger, profile, at);
+            nearest = nearest.min(separation);
+            let inside = separation < profile.avoidance_distance - epsilon;
+            let prior = match danger {
+                NativeDanger::Body {
+                    inside_avoidance, ..
+                }
+                | NativeDanger::Region {
+                    inside_avoidance, ..
+                } => *inside_avoidance,
+            };
+            if prior == Some(false) && inside {
+                reconsider = true;
+            }
+            if prior != Some(inside) {
+                bands.push((key.as_str(), inside));
+            }
+        }
+        if nearest < clear - epsilon && episode.clear_since.is_some() {
+            clear_since_removed = true;
+            meaningful = true;
+            reconsider = true;
+        }
+        if nearest < profile.avoidance_distance && episode.mode == ResponseMode::Settling {
+            reconsider = true;
+        }
+        if !frame.newly_visible.is_empty() {
+            for key in &frame.records {
+                if !frame.newly_visible.contains(key) {
+                    continue;
+                }
+                let danger = episode.dangers.get(key).ok_or(ExecutionError::Invariant)?;
+                if crate::native_refuge::danger_separation(position, extent, danger, profile, at)
+                    < clear
+                {
+                    reconsider = true;
+                    break;
+                }
+                if let Some(action) = actor
+                    .action
+                    .as_ref()
+                    .filter(|action| !action.path.is_empty())
+                {
+                    if let Some(from) = animal.supported_position() {
+                        let separation = crate::native_refuge::route_danger_separation(
+                            from.point(),
+                            &action.path,
+                            extent,
+                            danger,
+                            profile,
+                            at,
+                            epsilon,
+                            meters,
+                        )?;
+                        if separation < profile.avoidance_distance {
+                            reconsider = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if episode.movement.as_ref().is_some_and(|movement| {
+            movement.kind == MovementKind::Action
+                && actor
+                    .action
+                    .as_ref()
+                    .is_none_or(|action| action.id != movement.id)
+        }) {
+            reconsider = true;
+        }
+        if actor.action.is_none()
+            && episode.mode == ResponseMode::Blocked
+            && nearest >= clear
+            && !installed
+                .capabilities
+                .capability_blocked(Some(animal), "actions")?
+            && !installed
+                .capabilities
+                .capability_blocked(Some(animal), "locomotion")?
+        {
+            reconsider = true;
+        }
+    }
+    let review = reconsider && episode.review_at > at;
+    meaningful |= review;
+    if !bands.is_empty() || clear_since_removed || review {
+        let episode = mutation
+            .snapshot_episode(actor_id)?
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?;
+        for (key, inside) in bands {
+            match episode
+                .dangers
+                .get_mut(key)
+                .ok_or(ExecutionError::Invariant)?
+            {
+                NativeDanger::Body {
+                    inside_avoidance, ..
+                }
+                | NativeDanger::Region {
+                    inside_avoidance, ..
+                } => *inside_avoidance = Some(inside),
+            }
+        }
+        if clear_since_removed {
+            episode.clear_since = None;
+        }
+        if review {
+            episode.review_at = at;
+            episode.mode = ResponseMode::Blocked;
+            episode.proposal = None;
+        }
+    }
+    if meaningful {
+        mutation.behavior_changed(actor_id, false)?;
+    }
+    Ok(())
+}
 
 fn selected_profile<'a>(
     installed: &'a InstalledWorld,
@@ -83,7 +361,7 @@ fn complete_sound(
     if !completion.moving {
         episode.refuge = None;
     }
-    mutation.behavior_changed(&completion.actor_id)
+    mutation.behavior_changed(&completion.actor_id, false)
 }
 
 /// Consume one newly acquired sound in the actual event reaction phase. Alarm
@@ -158,11 +436,10 @@ pub(crate) fn acquire_sound(
         .ok_or(ExecutionError::Invariant)?;
     let prior = state.acoustic_patterns.contains_key(&key);
     let bytes = crate::encoding::json_record_len(&cue).map_err(|_| ExecutionError::Invariant)?;
-    meters.charge(WorkDemand {
-        effects: Some(1),
-        output_bytes: Some(bytes as u64),
-        ..WorkDemand::default()
-    })?;
+    meters.charge(&[
+        (WorkUnit::Effects, 1),
+        (WorkUnit::OutputBytes, bytes as u64),
+    ])?;
     mutation.set_acoustic_pattern(
         &awareness.actor_id,
         &key,
@@ -266,7 +543,7 @@ pub(crate) fn acquire_sound(
         episode.blocked = None;
     }
     if !repeated {
-        mutation.behavior_changed(&awareness.actor_id)?;
+        mutation.behavior_changed(&awareness.actor_id, false)?;
     }
     complete_sound(mutation, completion)?;
     Ok(())
@@ -530,18 +807,16 @@ impl WanderContinuation {
             previous = next.point();
         }
         Ok(Some(RefugeRoute {
-            score: RefugeScore {
-                candidate: RefugeCandidate {
-                    id: "routine".to_owned(),
-                    point,
-                    retained: None,
-                    preferred: None,
-                },
-                worsening: 0.0,
-                arrival_margin: 0.0,
+            candidate: RefugeCandidate {
+                id: "routine".to_owned(),
+                point,
+                retained: None,
+                preferred: None,
             },
             path,
             length,
+            worsening: 0.0,
+            arrival_margin: 0.0,
         }))
     }
 }

@@ -137,6 +137,7 @@ export interface NativeGeometryAnswers {
   featureIds: Array<NativePhysicalFeature | undefined | null>;
   convexViews: Array<NativeConvexViewAnswer>;
   bodySweeps: Array<NativeBodySweepAnswer>;
+  standingColumns: Array<NativeStandingSelection | undefined | null>;
 }
 
 export interface NativeGeometryBinding {
@@ -162,6 +163,7 @@ export interface NativeGeometryQueries {
   featureIds: Array<string>;
   convexViews: Array<NativeConvexViewQuery>;
   bodySweeps: Array<NativeBodySweepGroup>;
+  standingColumns: Array<NativeStandingColumnsQuery>;
 }
 
 export declare function nativeHostStatus(): HostStatus | null;
@@ -230,9 +232,12 @@ export interface NativeRouteQuery {
 }
 
 export interface NativeSaveRows {
+  worldId: string;
+  generation: string;
   prefix: number;
   baseRevision: number;
   throughCut: number;
+  identityThrough: number;
   changes: NativeChangedRows;
 }
 
@@ -252,9 +257,25 @@ export interface NativeSightSweepQuery {
   pointTo: NativePoint;
 }
 
+export interface NativeStandingColumn {
+  x: number;
+  z: number;
+}
+
+export interface NativeStandingColumnsQuery {
+  columns: Array<NativeStandingColumn>;
+  referenceY: number;
+  body: NativeBodyProfile;
+}
+
 export interface NativeStandingQuery {
   point: NativeSurfacePoint;
   body: NativeBodyProfile;
+}
+
+export interface NativeStandingSelection {
+  index: number;
+  point: NativeSurfacePoint;
 }
 
 export interface NativeSupportQuery {

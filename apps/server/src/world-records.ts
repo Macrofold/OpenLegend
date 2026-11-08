@@ -585,6 +585,124 @@ export class WorldRecords {
   ): RecordChanges {
     return this.prepareRecords(before, after, selectedTables, false);
   }
+  /** Initial creation only, before residency eviction or any accepted successor.
+   * The same schema walk that prepares the first SQL write computes its actual
+   * ordinals. Cold restoration instead reads coverage and rows from PostgreSQL;
+   * a resident tail cannot stand in for a complete creation capture.
+   */
+  captureCreation(
+    after: SavedWorld,
+    cut: { databaseSchema: string; generation: string; durableRevision: number },
+  ) {
+    if (this.needsHotPrune || !completeObjectHistory(after.world.entities))
+      throw new Error('Native creation requires an unevicted initial world.');
+    const changes = materializeTemporalChanges(
+      this.prepareRecords(undefined, after, undefined, true),
+      after.world,
+      undefined,
+    );
+    const tables = Object.fromEntries(
+      [...changes.writes].map(([table, rows]) => [
+        table,
+        rows.map(({ id, parent, slot, position, payload, extra }) => ({
+          id,
+          parent,
+          slot,
+          position,
+          payload,
+          extra,
+        })),
+      ]),
+    );
+    const rowOwners = new Map<string, Map<string, number>>();
+    for (const [table, rows] of Object.entries(tables)) {
+      const owners = new Map<string, number>();
+      for (const row of rows)
+        owners.set(row.parent, Math.max(owners.get(row.parent) ?? 0, row.position + 1));
+      rowOwners.set(table, owners);
+    }
+    const coverage: Array<{
+      table: string;
+      owner: string;
+      complete: boolean;
+      nextOrdinal: number;
+      parentPresent: boolean;
+    }> = [];
+    const visit = (node: RecordNode, value: unknown, path: string[]): void => {
+      const owner = recordId(path);
+      for (const [field, child] of Object.entries(node.children ?? {})) {
+        const current = field === '$' ? value : own(value, field);
+        const present = current !== undefined && current !== null;
+        const listPlacement = Array.isArray(current) ? historyPositions.get(current) : undefined;
+        const mapPlacement =
+          current && typeof current === 'object' ? historyMapPositions.get(current) : undefined;
+        if (
+          listPlacement?.complete === false ||
+          mapPlacement?.complete === false ||
+          (child.node.table === 'mind_appraisals' &&
+            !completeAppraisalHistory(current as Record<string, Appraisal> | undefined)) ||
+          (child.node.table === 'sim_status_effects' &&
+            !completeContributionHistory(current as Entity['statusEffects']))
+        )
+          throw new Error(`Native creation requires complete ${child.node.table} ownership.`);
+        coverage.push({
+          table: child.node.table,
+          owner,
+          complete: true,
+          nextOrdinal: child.orderKey
+            ? after.world.nextId
+            : (listPlacement?.next ??
+              mapPlacement?.next ??
+              (child.node.table === 'sim_entities' && present
+                ? entityPositions.get(current as object)?.next
+                : undefined) ??
+              rowOwners.get(child.node.table)?.get(owner) ??
+              0),
+          parentPresent: present,
+        });
+        if (!present) continue;
+        const childPath = field === '$' ? path : [...path, field];
+        if (child.mode === 'one') visit(child.node, current, childPath);
+        else if (child.mode === 'list') {
+          if (!Array.isArray(current)) throw new Error('Invalid native creation list.');
+          current.forEach((entry, index) =>
+            visit(child.node, entry, [
+              ...childPath,
+              child.key ? String(own(entry, child.key) ?? index) : String(index),
+            ]),
+          );
+        } else {
+          const entries =
+            child.mode === 'entity-map'
+              ? entityEntries(current as SavedWorld['world']['entities'])
+              : child.mode === 'indexed-map'
+                ? orderedRecordEntries(current as OrderedRecord<unknown>)
+                : members(current);
+          for (const [key, entry] of entries) visit(child.node, entry, [...childPath, key]);
+        }
+      }
+    };
+    visit(WORLD_RECORD_SCHEMA, after, []);
+    return {
+      records: {
+        worldId: after.world.id,
+        ...cut,
+        entityOrdering: {
+          nextInsertion: after.world.entities.nextInsertion,
+          entries: entityKeys(after.world.entities).map((id) => ({
+            id,
+            key: entityOrdering(after.world.entities, id)!.key,
+          })),
+        },
+        tables,
+        coverage,
+      },
+      originals: after.world.events.map((event) => ({
+        eventId: event.id,
+        payload: jsonText(event),
+      })),
+    };
+  }
   /** A resident tail cannot prove a proposed key is new. Before dependency
    * preparation, resolve only those exact IDs against the accepted read cut;
    * final compare-and-swap still owns whether this candidate can commit. */

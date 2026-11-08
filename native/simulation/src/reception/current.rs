@@ -480,9 +480,11 @@ pub struct CurrentContactContent {
     pub groups: Vec<CurrentReceivedGroup>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CurrentContact {
+    #[serde(skip)]
+    pub(crate) encoded_payload: Option<Arc<str>>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub order: u64,
     pub content: CurrentContactContent,
@@ -492,4 +494,17 @@ pub struct CurrentContact {
         skip_serializing_if = "Option::is_none"
     )]
     pub sight: Option<CurrentSightCheck>,
+}
+
+impl PartialEq for CurrentContact {
+    fn eq(&self, other: &Self) -> bool {
+        self.order == other.order && self.content == other.content && self.sight == other.sight
+    }
+}
+impl CurrentContact {
+    /// The acquired-content writer calls this before changing order/content.
+    /// Check clocks and recording continuations keep their original body bytes.
+    pub(crate) fn invalidate_encoded_content(&mut self) {
+        self.encoded_payload = None;
+    }
 }

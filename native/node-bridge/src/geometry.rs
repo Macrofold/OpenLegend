@@ -173,6 +173,25 @@ pub struct NativeBodySweepAnswer {
     pub tested: f64,
 }
 
+#[napi(object, object_from_js = false)]
+pub struct NativeStandingColumn {
+    pub x: f64,
+    pub z: f64,
+}
+
+#[napi(object, object_from_js = false)]
+pub struct NativeStandingColumnsQuery {
+    pub columns: Vec<NativeStandingColumn>,
+    pub reference_y: f64,
+    pub body: NativeBodyProfile,
+}
+
+#[napi(object)]
+pub struct NativeStandingSelection {
+    pub index: f64,
+    pub point: NativeSurfacePoint,
+}
+
 #[napi(object)]
 pub struct NativeGeometryBinding {
     pub candidate_id: f64,
@@ -198,6 +217,7 @@ pub struct NativeGeometryQueries {
     pub feature_ids: Vec<String>,
     pub convex_views: Vec<NativeConvexViewQuery>,
     pub body_sweeps: Vec<NativeBodySweepGroup>,
+    pub standing_columns: Vec<NativeStandingColumnsQuery>,
 }
 
 #[napi(object)]
@@ -236,6 +256,7 @@ pub struct NativeGeometryAnswers {
     pub feature_ids: Vec<Option<NativePhysicalFeature>>,
     pub convex_views: Vec<NativeConvexViewAnswer>,
     pub body_sweeps: Vec<NativeBodySweepAnswer>,
+    pub standing_columns: Vec<Option<NativeStandingSelection>>,
 }
 
 impl From<state::Point> for NativePoint {
@@ -495,6 +516,22 @@ impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
                     .to_owned(),
                 })
                 .collect(),
+            standing_columns: value
+                .standing_columns
+                .into_iter()
+                .map(|value| NativeStandingColumnsQuery {
+                    columns: value
+                        .columns
+                        .into_iter()
+                        .map(|value| NativeStandingColumn {
+                            x: value.x,
+                            z: value.z,
+                        })
+                        .collect(),
+                    reference_y: value.reference_y,
+                    body: value.body.into(),
+                })
+                .collect(),
             convex_views: value
                 .convex_views
                 .into_iter()
@@ -566,6 +603,20 @@ impl TryFrom<NativeGeometryAnswers> for core::GeometryAnswers {
                     })
                 })
                 .collect::<Result<_>>()?,
+            standing_columns: value
+                .standing_columns
+                .into_iter()
+                .map(|value| {
+                    value
+                        .map(|value| {
+                            Ok(core::StandingSelection {
+                                index: safe_integer(value.index)?,
+                                point: value.point.into(),
+                            })
+                        })
+                        .transpose()
+                })
+                .collect::<Result<_>>()?,
             convex_views: value
                 .convex_views
                 .into_iter()
@@ -591,7 +642,11 @@ impl TryFrom<BoundsQueryCursor> for NativeBoundsQueryCursor {
             pending: value
                 .pending
                 .into_iter()
-                .map(|path| path.into_iter().map(safe_number).collect::<Result<_>>())
+                .map(|path| {
+                    path.into_iter()
+                        .map(safe_cursor_number)
+                        .collect::<Result<_>>()
+                })
                 .collect::<Result<_>>()?,
             offset: safe_number(value.offset)?,
             leaf: value.leaf,
@@ -606,16 +661,24 @@ impl TryFrom<NativeBoundsQueryCursor> for BoundsQueryCursor {
         if value.truncated == Some(false) {
             return Err(invalid("Invalid native physical cursor coverage flag."));
         }
-        Ok(Self {
+        let cursor = Self {
             pending: value
                 .pending
                 .into_iter()
-                .map(|path| path.into_iter().map(safe_integer).collect::<Result<_>>())
+                .map(|path| {
+                    path.into_iter()
+                        .map(safe_cursor_integer)
+                        .collect::<Result<_>>()
+                })
                 .collect::<Result<_>>()?,
             offset: safe_integer(value.offset)?,
             leaf: value.leaf,
             truncated: value.truncated,
-        })
+        };
+        if !cursor.validate() {
+            return Err(invalid("Invalid native physical cursor."));
+        }
+        Ok(cursor)
     }
 }
 
@@ -768,6 +831,22 @@ fn safe_integer(value: f64) -> Result<u64> {
         Err(invalid("Invalid native geometry binding."))
     } else {
         Ok(value as u64)
+    }
+}
+fn safe_cursor_number(value: i64) -> Result<f64> {
+    if value.unsigned_abs() > MAX_SAFE_INTEGER {
+        Err(invalid(
+            "Native physical cursor exceeds the bridge integer range.",
+        ))
+    } else {
+        Ok(value as f64)
+    }
+}
+fn safe_cursor_integer(value: f64) -> Result<i64> {
+    if !value.is_finite() || value.abs() > MAX_SAFE_INTEGER as f64 || value.fract() != 0.0 {
+        Err(invalid("Invalid native physical cursor path."))
+    } else {
+        Ok(value as i64)
     }
 }
 fn invalid(message: &str) -> Error {

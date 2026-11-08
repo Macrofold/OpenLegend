@@ -3,6 +3,29 @@
 //! can leave ordinal gaps and never become invented observations.
 
 use super::{TemporalActorHeader, TemporalState, TemporalUndo};
+use crate::work::{WorkError, WorkMeters, WorkUnit};
+
+#[derive(Debug)]
+pub enum TemporalAppendError {
+    Received(ReceivedError),
+    Work(WorkError),
+}
+impl From<ReceivedError> for TemporalAppendError {
+    fn from(error: ReceivedError) -> Self {
+        Self::Received(error)
+    }
+}
+impl From<WorkError> for TemporalAppendError {
+    fn from(error: WorkError) -> Self {
+        Self::Work(error)
+    }
+}
+impl std::fmt::Display for TemporalAppendError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+impl std::error::Error for TemporalAppendError {}
 use crate::encoding::json_record;
 use crate::identity::{IdentityState, MAX_SAFE_INTEGER};
 use crate::received::{
@@ -68,6 +91,7 @@ pub struct PendingTemporalPage {
     metadata: TemporalPageMetadata,
     from_at: f64,
     through_at: f64,
+    batch_encoded_bytes: u64,
 }
 
 impl PendingTemporalPage {
@@ -85,6 +109,9 @@ impl PendingTemporalPage {
     }
     pub fn through_at(&self) -> f64 {
         self.through_at
+    }
+    pub fn batch_encoded_bytes(&self) -> u64 {
+        self.batch_encoded_bytes
     }
     pub fn receipt(
         &self,
@@ -278,9 +305,9 @@ impl TemporalState {
         values: &ReceivedValues,
         identity: &mut IdentityState,
         meaning: &dyn TemporalValueMeaning,
-    ) -> Result<(), ReceivedError> {
+    ) -> Result<Option<u64>, ReceivedError> {
         if batch.entries.is_empty() {
-            return Ok(());
+            return Ok(None);
         }
         let id = identity
             .allocate("temporal-page")
@@ -297,6 +324,19 @@ impl TemporalState {
             values,
             Some(meaning),
         )?;
+        let mut rich_bytes = 0;
+        for reference in &metadata.references {
+            rich_bytes = add_count(
+                rich_bytes,
+                values
+                    .shared_value_bytes(reference)
+                    .ok_or(ReceivedError("Temporal block value is unavailable."))?,
+            )?;
+        }
+        let batch_encoded_bytes = metadata
+            .entry_bytes
+            .checked_sub(rich_bytes)
+            .ok_or(ReceivedError("Temporal block encoded charge underflow."))?;
         let actor = self
             .actors
             .get(&batch.actor_id)
@@ -337,9 +377,10 @@ impl TemporalState {
             metadata,
             from_at,
             through_at,
+            batch_encoded_bytes,
         }));
         self.undo.push(TemporalUndo::PendingAppend { actor_id });
-        Ok(())
+        Ok(Some(batch_encoded_bytes))
     }
 }
 
@@ -368,7 +409,8 @@ impl TemporalAcquisition {
         values: &ReceivedValues,
         identity: &mut IdentityState,
         meaning: &dyn TemporalValueMeaning,
-    ) -> Result<(), ReceivedError> {
+        meters: &mut WorkMeters,
+    ) -> Result<(), TemporalAppendError> {
         let next = ReceivedBatch {
             actor_id: self.batch.actor_id.clone(),
             physical_life: self.batch.physical_life,
@@ -376,13 +418,17 @@ impl TemporalAcquisition {
             batch_order: 0,
             entries: Vec::new(),
         };
-        state.flush_batch(
+        if let Some(bytes) = state.flush_batch(
             std::mem::replace(&mut self.batch, next),
             &self.policy,
             values,
             identity,
             meaning,
-        )?;
+        )? {
+            // Source charges the actual compact native append immediately,
+            // including before allocating the next entry after a block split.
+            meters.charge(&[(WorkUnit::Effects, 1), (WorkUnit::OutputBytes, bytes)])?;
+        }
         self.next_entry = 0;
         self.bytes = 0;
         self.count = 0;
@@ -392,33 +438,37 @@ impl TemporalAcquisition {
         self.terminals.clear();
         Ok(())
     }
-    pub fn finish(
+    pub(crate) fn finish(
         mut self,
         state: &mut TemporalState,
         values: &ReceivedValues,
         identity: &mut IdentityState,
         meaning: &dyn TemporalValueMeaning,
-    ) -> Result<(), ReceivedError> {
-        self.flush(state, values, identity, meaning)
+        meters: &mut WorkMeters,
+    ) -> Result<(), TemporalAppendError> {
+        self.flush(state, values, identity, meaning, meters)
     }
 
-    pub fn append(
+    pub(crate) fn append(
         &mut self,
         state: &mut TemporalState,
         values: &mut ReceivedValues,
         identity: &mut IdentityState,
         transition: &mut ReceivedTransition,
         meaning: &dyn TemporalValueMeaning,
+        meters: &mut WorkMeters,
         now: f64,
         sequence: u64,
         mut input: TemporalCaptureInput,
-    ) -> Result<Option<TemporalReceiptLocator>, ReceivedError> {
+    ) -> Result<Option<TemporalReceiptLocator>, TemporalAppendError> {
+        let error = |message| TemporalAppendError::Received(ReceivedError(message));
         if input.change == TemporalChange::RetainedState {
-            return Err(ReceivedError(
-                "A retained-state read is not a new acquisition.",
-            ));
+            return Err(error("A retained-state read is not a new acquisition."));
         }
-        if input.facets.is_empty() && !terminal_change(input.change) {
+        if input.facets.is_empty()
+            && !terminal_change(input.change)
+            && input.change != TemporalChange::ReceiverFrame
+        {
             return Ok(None);
         }
         let terminal_key = if input.terminal_reservation_bytes.is_some() {
@@ -472,7 +522,7 @@ impl TemporalAcquisition {
             )?;
             entry.charge.bytes = adjust_count(entry.charge.bytes, added)?;
             if entry.charge.bytes > prior.reserved_bytes {
-                return Err(ReceivedError(
+                return Err(error(
                     "Recording terminal exceeds its admitted reservation.",
                 ));
             }
@@ -568,9 +618,7 @@ impl TemporalAcquisition {
         let slots = (receipt.facets.len() as u64).max(1);
         if bytes > INDIVISIBLE_RECEIPT_BYTES {
             if receipt.required {
-                return Err(ReceivedError(
-                    "Required received record exceeds bounded admission.",
-                ));
+                return Err(error("Required received record exceeds bounded admission."));
             }
             state.recording_gap(&self.batch.actor_id, now, false)?;
             return Ok(None);
@@ -579,7 +627,7 @@ impl TemporalAcquisition {
             && (self.native_bytes + bytes > NATIVE_PAGE_BYTES
                 || self.slots + slots > NATIVE_PAGE_SLOTS)
         {
-            self.flush(state, values, identity, meaning)?;
+            self.flush(state, values, identity, meaning, meters)?;
             (entry_index, _) = self.next_coordinates(identity, transition)?;
             receipt.locator = self.batch.locator(entry_index);
             receipt.id = receipt.locator.id();
@@ -611,7 +659,7 @@ impl TemporalAcquisition {
                     .terminal_reservation_bytes
                     .expect("Terminal reservation checked")
         {
-            return Err(ReceivedError(
+            return Err(error(
                 "Recording terminal exceeds its admitted reservation.",
             ));
         }

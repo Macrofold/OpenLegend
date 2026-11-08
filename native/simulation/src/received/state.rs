@@ -19,8 +19,8 @@ use std::{collections::BTreeMap, sync::Arc};
 
 mod append;
 pub use append::{
-    PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalCaptureFacet,
-    TemporalCaptureInput,
+    PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalAppendError,
+    TemporalCaptureFacet, TemporalCaptureInput,
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -128,9 +128,10 @@ pub struct TemporalActorHistory {
     payload: Arc<str>,
     pages: BTreeMap<u64, Arc<TemporalPageRecord>>,
     complete_pages: bool,
-    next_page_ordinal: u64,
+    page_order_upper_bound: u64,
     recent: ReceivedRecentDirectory,
     pending_pages: Vec<Arc<PendingTemporalPage>>,
+    supports: Option<super::TemporalSupportCollection>,
 }
 
 fn finite_optional(value: Option<f64>) -> bool {
@@ -278,9 +279,10 @@ impl TemporalActorHistory {
             payload: Arc::from(row.payload),
             pages: installed,
             complete_pages: coverage.complete,
-            next_page_ordinal: coverage.next_ordinal,
+            page_order_upper_bound: coverage.next_ordinal,
             recent,
             pending_pages: Vec::new(),
+            supports: None,
         })
     }
     pub fn actor_id(&self) -> &str {
@@ -301,11 +303,28 @@ impl TemporalActorHistory {
     pub fn complete_pages(&self) -> bool {
         self.complete_pages
     }
-    pub fn next_page_ordinal(&self) -> u64 {
-        self.next_page_ordinal
+    pub fn page_order_upper_bound(&self) -> u64 {
+        self.page_order_upper_bound
     }
     pub fn recent(&self) -> &ReceivedRecentDirectory {
         &self.recent
+    }
+    pub fn supports(&self) -> Option<&super::TemporalSupportCollection> {
+        self.supports.as_ref()
+    }
+    pub(crate) fn install_supports(
+        &mut self,
+        supports: super::TemporalSupportCollection,
+    ) -> Result<(), ReceivedError> {
+        if self.supports.is_some()
+            || supports.coverage().parent_present != self.header.supports.is_some()
+        {
+            return Err(ReceivedError(
+                "Retained support presence disagrees with temporal owner.",
+            ));
+        }
+        self.supports = Some(supports);
+        Ok(())
     }
     pub fn receipt(
         &self,

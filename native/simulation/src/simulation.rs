@@ -34,6 +34,8 @@ pub(crate) struct InstalledWorld {
     pub geometry: Arc<GeometryMap>,
     pub work_policy: Arc<InstalledWorkPolicy>,
     pub event_disclosure: VerifiedDefinition<crate::worlds::InstalledEventDisclosure>,
+    pub attention: VerifiedDefinition<crate::attention::AttentionPolicy>,
+    pub maximum_change_scopes: usize,
 }
 impl InstalledWorld {
     pub(crate) fn status_read<'a>(

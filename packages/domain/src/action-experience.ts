@@ -80,6 +80,9 @@ export const ACTIVITY_LIMITS = {
   retainedRecords: 100000,
 } as const;
 
+/** Ordinary bounded activity projection, also used by received-result validation. */
+export const ACTIVITY_DISPLAY_BYTES = 16000;
+
 export interface ActivityOutput {
   port: string;
   itemId: string;
@@ -442,7 +445,7 @@ export function activityRecordText(view: ActivityView): string {
 export function projectActivity(
   view: ActivityView,
   header?: 'Can do' | 'Doing now' | 'What happened' | 'Remaining',
-  byteLimit = 16000,
+  byteLimit = ACTIVITY_DISPLAY_BYTES,
   detailDepth = ACTIVITY_LIMITS.depth as number,
 ) {
   if (!Number.isInteger(detailDepth) || detailDepth < 0 || detailDepth > ACTIVITY_LIMITS.depth)

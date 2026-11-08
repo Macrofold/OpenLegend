@@ -14,8 +14,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::encoding::{content_label, json_record};
 use crate::identity::MAX_SAFE_INTEGER;
-use crate::records::{CurrentRecords, InstalledRow, OwnerCoverage};
+use crate::records::{CurrentRecords, EntityOrdering, InstalledRow, OwnerCoverage};
 use crate::values::{DefinitionPin, is_safe_record_id};
+
+mod content;
+pub(crate) use content::{InstalledContent, TimePolicy, WorldProfile};
+
+mod physical;
+pub(crate) mod rows;
+pub(crate) use physical::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum InstallError {
@@ -29,6 +36,7 @@ pub enum InstallError {
     ParentPresence,
     UnclaimedRows(Vec<String>),
     UnclaimedCoverage,
+    UnclaimedOrdering,
     DefinitionPin,
     DefinitionBody,
     DefinitionCollision,
@@ -51,7 +59,7 @@ impl fmt::Display for InstallError {
             Self::CurrentFormat => {
                 f.write_str("Native installation requires the current record format.")
             }
-            Self::MissingCoverage | Self::UnclaimedCoverage => {
+            Self::MissingCoverage | Self::UnclaimedCoverage | Self::UnclaimedOrdering => {
                 f.write_str("Native installation has incomplete record ownership coverage.")
             }
             Self::ParentPresence => {
@@ -133,7 +141,10 @@ impl DefinitionInput {
         Ok(VerifiedDefinition {
             pin: self.pin,
             canonical: Arc::from(self.canonical),
-            value: decoded,
+            // canonicalJson sorts record keys for identity. The actual source
+            // record retains its own declared enumeration order; validating its
+            // canonical content must not replace that order with sorted keys.
+            value: expected,
         })
     }
 }
@@ -187,6 +198,7 @@ pub struct RowImport {
     row_count: usize,
     tables: IndexMap<String, IndexMap<String, Vec<InstalledRow>>>,
     coverage: IndexMap<(String, String), OwnerCoverage>,
+    entity_ordering: Option<EntityOrdering>,
     failed: bool,
 }
 
@@ -270,6 +282,7 @@ impl RowImport {
             row_count,
             tables,
             coverage,
+            entity_ordering: Some(input.entity_ordering),
             failed: false,
         })
     }
@@ -282,6 +295,13 @@ impl RowImport {
     }
     pub fn durable_revision(&self) -> u64 {
         self.durable_revision
+    }
+    /// Entity ordering has one compiled owner. SQL placement positions do not
+    /// reconstruct the collection's insertion counter or relabeled keys.
+    pub fn take_entity_ordering(&mut self) -> Result<EntityOrdering, InstallError> {
+        self.entity_ordering
+            .take()
+            .ok_or(InstallError::UnclaimedOrdering)
     }
 
     /// Collections require explicit current coverage, including genuine empty
@@ -341,6 +361,9 @@ impl RowImport {
         }
         if !self.coverage.is_empty() {
             return Err(InstallError::UnclaimedCoverage);
+        }
+        if self.entity_ordering.is_some() {
+            return Err(InstallError::UnclaimedOrdering);
         }
         Ok(ImportedCut {
             world_id: self.world_id,

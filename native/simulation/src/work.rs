@@ -918,34 +918,41 @@ impl WorkMeters {
         self.resume(token)?;
         Ok(self.active.pop().ok_or(WorkError::InvalidLineage)?.used)
     }
-    pub(crate) fn charge(&mut self, demand: WorkDemand) -> Result<(), WorkError> {
+    pub(crate) fn charge(&mut self, demand: &[(WorkUnit, u64)]) -> Result<(), WorkError> {
         // Fresh seed installation has no meter, as in the existing source.
         if self.active.is_empty() {
             return Ok(());
         }
+        // A source WorkDemand object has at most one entry per unit. The typed
+        // slice retains its caller's key order without letting duplicate entries
+        // evade a preflight against the old counter and overrun the envelope.
+        let mut seen = 0_u16;
+        for (unit, _) in demand {
+            let bit = 1_u16 << (*unit as u8);
+            if seen & bit != 0 {
+                return Err(WorkError::InvalidBound);
+            }
+            seen |= bit;
+        }
         for meter in self.active.iter().rev() {
-            for unit in WorkUnit::ALL {
-                if let Some(amount) = demand.read(unit) {
-                    count(amount)?;
-                    // The operational meter adds depth like every other unit;
-                    // saved invocation addWork separately uses maximum depth.
-                    let next = count(
-                        unit.read(&meter.used)
-                            .checked_add(amount)
-                            .ok_or(WorkError::InvalidBound)?,
-                    )?;
-                    if next > unit.read(&meter.limit) {
-                        return Err(WorkError::Contract(unit));
-                    }
+            for &(unit, amount) in demand {
+                count(amount)?;
+                // The operational meter adds depth like every other unit;
+                // saved invocation addWork separately uses maximum depth.
+                let next = count(
+                    unit.read(&meter.used)
+                        .checked_add(amount)
+                        .ok_or(WorkError::InvalidBound)?,
+                )?;
+                if next > unit.read(&meter.limit) {
+                    return Err(WorkError::Contract(unit));
                 }
             }
         }
         for meter in self.active.iter_mut().rev() {
-            for unit in WorkUnit::ALL {
-                if let Some(amount) = demand.read(unit) {
-                    let next = unit.read(&meter.used) + amount;
-                    unit.write(&mut meter.used, next);
-                }
+            for &(unit, amount) in demand {
+                let next = unit.read(&meter.used) + amount;
+                unit.write(&mut meter.used, next);
             }
         }
         Ok(())

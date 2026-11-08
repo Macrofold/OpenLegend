@@ -189,6 +189,56 @@ fn association_unrevoked(
         && personal_fact_alias(original_id, ordinal).is_ok_and(|alias| unrevoked(privacy, &alias))
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AssociationEvidenceStatus {
+    Retained,
+    Disputed,
+    Forgotten,
+}
+
+/// Source-faithful associationEvidenceStatus: forgotten aliases take precedence
+/// over corrected aliases, including selected-world recognition source aliases
+/// and the original fact's independent logical ordinal.
+pub fn association_evidence_status(
+    experience: &ExperienceState,
+    observer_id: &str,
+    value: &SensoryFacet,
+    original: Option<(&str, u64)>,
+    meaning: &dyn TemporalValueMeaning,
+) -> Result<AssociationEvidenceStatus, ExperienceError> {
+    let SensoryFacet::Association {
+        learning_support, ..
+    } = value
+    else {
+        return Err(ExperienceError::InvalidBody("association"));
+    };
+    let keys = learning_support.as_deref().unwrap_or(&[]);
+    let sources = meaning
+        .recognition_support_source_ids(keys)
+        .map_err(|_| ExperienceError::InvalidBody("association support"))?;
+    let original_alias = original
+        .map(|(id, ordinal)| personal_fact_alias(id, ordinal))
+        .transpose()?;
+    let privacy = experience.actor(observer_id).map(|actor| &actor.privacy);
+    let mut disputed = false;
+    for alias in keys
+        .iter()
+        .chain(&sources)
+        .map(String::as_str)
+        .chain(original_alias.as_deref())
+    {
+        if privacy.is_some_and(|privacy| privacy.forgotten_index.contains(alias)) {
+            return Ok(AssociationEvidenceStatus::Forgotten);
+        }
+        disputed |= privacy.is_some_and(|privacy| privacy.corrections.contains_key(alias));
+    }
+    Ok(if disputed {
+        AssociationEvidenceStatus::Disputed
+    } else {
+        AssociationEvidenceStatus::Retained
+    })
+}
+
 pub fn evidence_cut_eligible(
     experience: &ExperienceState,
     entities: &EntityStore,

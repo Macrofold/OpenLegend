@@ -1,5 +1,4 @@
 import {
-  canStand,
   walkSurfaceLine,
   distance3D,
   findSurfaceRoute,
@@ -7,8 +6,7 @@ import {
   quadraticRoots,
   sightSweep,
   SPATIAL_LIMITS,
-  surfaceHeight,
-  surfacesInBounds,
+  standingSurfaceAt,
   traceSupportLine,
   type RoutePlan,
   type SurfacePoint,
@@ -141,16 +139,7 @@ export function nativeRefugeCandidate(
   ) {
     const x = from.x + Math.cos(angle) * distance,
       z = from.z + Math.sin(angle) * distance;
-    const points = surfacesInBounds(map, {
-      min: { x, y: -Infinity, z },
-      max: { x, y: Infinity, z },
-    })
-      .map((surface) => ({ x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id }))
-      .sort(
-        (a, b) =>
-          Math.abs(a.y - from.y) - Math.abs(b.y - from.y) || a.surfaceId.localeCompare(b.surfaceId),
-      );
-    const point = points.find((point) => canStand(map, point, body));
+    const point = standingSurfaceAt(map, x, z, from.y, body);
     if (point) return { id: String(search.attempted), point };
   }
   return undefined;

@@ -220,7 +220,11 @@ pub fn materialize_observation(
         acquired_at: header.acquired_at,
         received_order: header.received_order,
         modality: header.modality,
-        channel: header.channel.clone(),
+        channel: header
+            .channel
+            .as_ref()
+            .or(original.channel.as_ref())
+            .cloned(),
         detector: header.detector.clone(),
         context: original.context.clone(),
         facets,
