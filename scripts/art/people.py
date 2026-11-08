@@ -270,6 +270,67 @@ def triangle_basis(source, triangles):
     return ex, np.cross(ez, ex), ez
 
 
+def bind_surface(source, support_id, positions):
+    """Author a surface fit once, using eligible canonical support triangles.
+
+    This nearest-surface lookup is for clothing/hair authoring, never source
+    vertex correspondence or runtime fitting. Region/side selection belongs to
+    the caller; eligible subsets retain canonical vertex IDs and the full
+    support topology pin.
+    """
+    from mathutils import Vector, interpolate
+    from mathutils.bvhtree import BVHTree
+    support = points(source['positions']).astype(float)
+    queries = np.asarray(positions, dtype=float).reshape(-1, 3)
+    triangles = np.asarray(source['triangles'], dtype=np.int64).reshape(-1, 3)
+    if (not len(triangles) or not np.isfinite(support).all() or not np.isfinite(queries).all()
+            or np.any(triangles < 0) or np.any(triangles >= len(support))):
+        raise PeopleError('part-fit', support_id, 'Binding requires finite points and valid support triangles.')
+    tree = BVHTree.FromPolygons(support.tolist(), triangles.tolist(), all_triangles=True)
+    faces, locations = [], []
+    for query in queries:
+        location, _, face, _ = tree.find_nearest(Vector(query))
+        if face is None:
+            raise PeopleError('part-fit', support_id, 'No eligible support surface was found.')
+        faces.append(face); locations.append(location)
+    selected = triangles[np.asarray(faces, dtype=np.int64)]
+    basis = triangle_basis(support, selected)
+    barycentric = []
+    for vertices, location in zip(selected, locations):
+        shares = np.maximum(interpolate.poly_3d_calc([Vector(support[i]) for i in vertices], location), 0)
+        total = float(np.sum(shares))
+        if not math.isfinite(total) or total <= 0:
+            raise PeopleError('part-fit', support_id, 'Support triangle could not produce finite barycentric weights.')
+        # Closest-point roundoff must not create negative skin influences. The
+        # complete residual below retains the authored point after this clamp.
+        barycentric.append(shares / total)
+    barycentric = flat(barycentric)
+    origin = points(surface_points(support, selected, barycentric, np.zeros_like(queries))).astype(float)
+    residual = queries - origin
+    offsets = np.column_stack([np.sum(residual * axis, axis=1) for axis in basis])
+    return {'kind': 'surface', 'support': support_id, 'topology': source['topology'],
+            'triangles': selected.reshape(-1).tolist(), 'barycentric': barycentric.tolist(),
+            'offsets': flat(offsets).tolist()}
+
+
+def surface_skin_weights(binding, source_vertex_weights):
+    """Interpolate named weights in canonical order; compiler owns cap/normalization."""
+    triangles = np.asarray(binding['triangles'], dtype=np.int64).reshape(-1, 3)
+    barycentric = points(binding['barycentric'])
+    if len(triangles) != len(barycentric):
+        raise PeopleError('part-fit', binding['support'], 'Binding triangle and weight counts differ.')
+    output = []
+    for vertices, shares in zip(triangles, barycentric):
+        weights = {}
+        for vertex, share in zip(vertices, shares):
+            if share == 0:
+                continue
+            for joint, weight in source_vertex_weights[int(vertex)].items():
+                weights[joint] = weights.get(joint, 0) + float(share) * weight
+        output.append(weights)
+    return output
+
+
 def fit_parts(family, evaluated, parts=(), variants=None):
     """Fit declared parts in dependency order; matching masks only affect drawing."""
     selected = set(parts)
