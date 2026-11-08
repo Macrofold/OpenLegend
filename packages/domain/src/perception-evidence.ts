@@ -69,6 +69,7 @@ import {
   createReceivedSample,
   captureTemporalCurrent,
   appendTemporalReceipt,
+  currentGroupRecordingComplete,
   captureTemporalObservation,
   closeTemporalCurrentGroup,
   retainTemporalCurrentSupport,
@@ -1521,6 +1522,8 @@ export type ReceivedCurrentChange =
     };
 interface ReceivedPhaseDelta {
   entryEntries: readonly AttentionEntry[];
+  entrySourceIds: ReadonlySet<string>;
+  tracksPrepared: boolean;
   descriptors: Map<string, readonly ReceivedTrackDescriptor[]>;
   sampleToken?: number;
   frameRef?: import('./received-values.js').ReceivedValueReference;
@@ -1544,6 +1547,38 @@ interface ReceivedPhaseDelta {
   reconciled?: boolean;
 }
 const receivedPhaseDeltas = new WeakMap<PerceptionEvidenceOwner, ReceivedPhaseDelta>();
+/** Resolve prior correspondence before a real change needs it. Fresh confirmations
+ * do not require a reconstruction of unchanged selected subjects and field masks. */
+function ensureReceivedPhaseTracks(world: WorldState, state: PerceptionEvidenceOwner): void {
+  const phase = receivedPhaseDeltas.get(state);
+  if (!phase || phase.tracksPrepared) return;
+  phase.tracksPrepared = true;
+  countDomainWork('receivedRecordingCohortsPrepared');
+  const descriptors = receivedDescriptors(
+      world,
+      state,
+      new Set(phase.entryEntries.map((entry) => entry.sourceId)),
+    ),
+    tracks = descriptorSelectionTracks(phase.entryEntries, descriptors),
+    subjects = descriptorSelectionSubjects(phase.entryEntries, descriptors);
+  for (const source of descriptors) {
+    let bucket = phase.descriptors.get(source.sourceId);
+    if (!bucket) phase.descriptors.set(source.sourceId, (bucket = []));
+    // The descriptor's value snapshot belongs to this phase, not a draft body.
+    phase.descriptors.set(source.sourceId, [...bucket, source]);
+  }
+  phase.selected = new Map(tracks);
+  phase.entry = tracks;
+  phase.active = new Map(tracks);
+  phase.activeSubjects = subjects;
+  phase.entrySubjects = subjects;
+  phase.subjects = subjects;
+  phase.resolvedSubjects = new Map(
+    descriptors.flatMap((source) =>
+      source.subject ? [[source.track, source.subject] as const] : [],
+    ),
+  );
+}
 /** Capability/binding cannot change inside a native received phase; queued edits
  * invalidate the native prefix before another phase. Validate each actual pin once. */
 function phaseChannelEligible(
@@ -1670,7 +1705,6 @@ export function receiveCurrentChange(
               return;
             }
             case 'confirm': {
-              enrollReceivedCorrespondence(world, state, change.subjectId);
               if (!phaseChannelEligible(world, observer, change.channel)) return;
               const stamp = change.sight && {
                 through: change.sight.through,
@@ -1731,12 +1765,30 @@ export function receiveCurrentChange(
                     : {}),
                 });
               delta.checked.add(change.subjectId);
+              if (
+                checked.some(
+                  ({ group }) =>
+                    (delta.entrySourceIds.has(change.subjectId) || group.recordings?.length) &&
+                    !currentGroupRecordingComplete(
+                      group,
+                      world.experience?.temporal?.actors[observer.id]?.epoch,
+                    ),
+                )
+              )
+                enrollReceivedCorrespondence(world, state, change.subjectId);
               const tracks = delta.active.get(change.subjectId);
               if (tracks)
                 captureTemporalCurrent(
                   world,
                   observer.id,
                   checked.flatMap(({ group, partition }) => {
+                    if (
+                      currentGroupRecordingComplete(
+                        group,
+                        world.experience?.temporal?.actors[observer.id]?.epoch,
+                      )
+                    )
+                      return [];
                     const grant = group.received.grant;
                     const marks = currentGroupRecordings(group, partition.members);
                     const epoch = world.experience?.temporal?.actors[observer.id]?.epoch;
@@ -2040,6 +2092,7 @@ function enrollReceivedCorrespondence(
   state: PerceptionEvidenceOwner,
   sourceId: string,
 ): void {
+  ensureReceivedPhaseTracks(world, state);
   const phase = receivedPhaseDeltas.get(state);
   if (
     !phase ||
@@ -2136,6 +2189,7 @@ function prepareAttentionCohort(
   complete: boolean,
 ): { tracks: SelectedReceivedTracks; subjects: ReadonlyMap<string, ObserverSubject> } {
   const phase = receivedPhaseDeltas.get(state);
+  if (complete) ensureReceivedPhaseTracks(world, state);
   if (phase && !complete)
     return { tracks: phase.active, subjects: phase.resolvedSubjects ?? new Map() };
   const ids = complete
@@ -2204,7 +2258,7 @@ function noteReceivedAttention(
   resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
 ): void {
   const phase = receivedPhaseDeltas.get(state);
-  if (!phase) return;
+  if (!phase || !phase.tracksPrepared) return;
   phase.resolvedSubjects = resolvedSubjects;
   const descriptors = entries.flatMap((entry) => phase.descriptors.get(entry.sourceId) ?? []);
   phase.activeSubjects = descriptorSelectionSubjects(entries, descriptors);
@@ -2253,7 +2307,11 @@ export function beginCurrentReception(
         reconcileAttendedTemporalEvidence(
           world,
           observerId,
-          new Set(delta.selected.keys()),
+          new Set(
+            delta.tracksPrepared
+              ? delta.selected.keys()
+              : delta.entryEntries.map((entry) => entry.sourceId),
+          ),
           [],
           [...new Set([...delta.measured, ...delta.ended])],
           false,
@@ -2291,36 +2349,20 @@ export function beginCurrentReception(
       lifetime.ensureTemporal();
       prefix = beginCurrentContactBatch(state);
       const entryEntries = currentDetailedAttention(world, observerId);
-      const descriptors = receivedDescriptors(
-        world,
-        state,
-        new Set(entryEntries.map((entry) => entry.sourceId)),
-      );
-      const entrySubjects = new Map(
-        descriptors.flatMap((source) =>
-          source.subject ? [[source.track, source.subject] as const] : [],
-        ),
-      );
-      const entryTracks = descriptorSelectionTracks(entryEntries, descriptors);
-      const selectedSubjects = descriptorSelectionSubjects(entryEntries, descriptors);
       receivedPhaseDeltas.set(state, {
+        tracksPrepared: false,
         measured: new Set(),
         checked: new Set(),
         ended: new Set(),
         entryEntries,
-        descriptors: new Map(
-          [...new Set(descriptors.map((source) => source.sourceId))].map((id) => [
-            id,
-            descriptors.filter((source) => source.sourceId === id),
-          ]),
-        ),
-        selected: new Map(entryTracks),
-        entry: entryTracks,
-        active: new Map(entryTracks),
-        activeSubjects: selectedSubjects,
-        entrySubjects: selectedSubjects,
-        subjects: selectedSubjects,
-        resolvedSubjects: entrySubjects,
+        entrySourceIds: new Set(entryEntries.map((entry) => entry.sourceId)),
+        descriptors: new Map(),
+        selected: new Map(),
+        entry: new Map(),
+        active: new Map(),
+        activeSubjects: new Set(),
+        entrySubjects: new Set(),
+        subjects: new Set(),
         validChannels: new Set(),
         channelPins: new Map(),
       });
@@ -4309,6 +4351,8 @@ function recordCurrentReception(
   if (!tracks || !contact) return;
   const inputs: TemporalCurrentGroupInput[] = [];
   for (const group of contact.content.groups) {
+    if (currentGroupRecordingComplete(group, world.experience?.temporal?.actors[actorId]?.epoch))
+      continue;
     const grant = group.received.grant;
     if (!tracks.has(receivedTrackKey(grant.exposure, grant.channel))) continue;
     for (const partition of group.metadata) {
@@ -5239,11 +5283,31 @@ export function reconcileVisualEvidence(
     // A completed broad cut renews freshness without touching contacts. Only
     // selected tracks with unadmitted/refused content need recording work.
     const recordingRepairs: TemporalCurrentGroupInput[] = [];
+    const phase = receivedPhaseDeltas.get(state)!;
+    for (const id of checkedSources)
+      if (
+        currentContactGet(state, id)?.content.groups.some(
+          (group) =>
+            (phase.entrySourceIds.has(id) || group.recordings?.length) &&
+            !currentGroupRecordingComplete(
+              group,
+              world.experience?.temporal?.actors[observer.id]?.epoch,
+            ),
+        )
+      )
+        enrollReceivedCorrespondence(world, state, id);
     for (const [id, tracks] of receivedPhaseDeltas.get(state)!.active) {
       if (!checkedSources.has(id)) continue;
       const contact = currentContactGet(state, id);
       if (!contact) continue;
       for (const group of contact.content.groups) {
+        if (
+          currentGroupRecordingComplete(
+            group,
+            world.experience?.temporal?.actors[observer.id]?.epoch,
+          )
+        )
+          continue;
         if (
           !tracks.has(receivedTrackKey(group.received.grant.exposure, group.received.grant.channel))
         )
@@ -5510,6 +5574,18 @@ export function reconcileAttendedTemporalEvidence(
       );
     }
   }
+  const contactCreditDue =
+    creditContacts &&
+    afterEntries.some(
+      (entry) =>
+        entry.subject &&
+        selectedAttentionContactDue(world, observerId, entry.subject, world.simTime),
+    );
+  if (phase && !phase.tracksPrepared && !changedCohort && !contactCreditDue) {
+    countDomainWork('receivedRecordingCohortsSkipped');
+    return capturedReceivedFeatureHistory(world, observerId, newGeometry);
+  }
+  ensureReceivedPhaseTracks(world, state);
   const cohort = prepareAttentionCohort(world, state, afterEntries, changedCohort);
   const finalTracks = cohort.tracks;
   const entryTracks =

@@ -62,6 +62,8 @@ export const DOMAIN_COUNTERS = [
   'sightGeometryOpportunities',
   'sightDetailTargetsRequested',
   'receivedHistoryBuilders',
+  'receivedRecordingCohortsPrepared',
+  'receivedRecordingCohortsSkipped',
   'receivedReceiverFrameHeaders',
   'receivedReceiverFrameHeaderBytes',
   'currentReceivingPrefixes',

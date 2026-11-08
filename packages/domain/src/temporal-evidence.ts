@@ -18,6 +18,7 @@ import {
   effectiveCurrentPartition,
   effectiveCurrentCheck,
   currentGroupRecordings,
+  currentFieldParts,
   type CurrentPartPartition,
   type CurrentFacetTimes,
   type CurrentMemberPart,
@@ -90,7 +91,13 @@ import {
   temporalKnownPlaceCapsules,
 } from './known-place-evidence.js';
 import { personalFactAlias, parsePersonalFactAlias } from './experience-source.js';
-import { immutableDataSnapshot, jsonEncoding, jsonText, jsonByteLength } from './records.js';
+import {
+  immutableDataSnapshot,
+  isImmutableData,
+  jsonEncoding,
+  jsonText,
+  jsonByteLength,
+} from './records.js';
 import {
   selectedRecognitionSupportSourceIds,
   selectedPruneObserverIndividuals,
@@ -1806,6 +1813,52 @@ function sameRecordedContent(
     ),
   );
 }
+const recordedCurrentContent = new WeakMap<
+  object,
+  {
+    recordings: CurrentReceivedGroup['recordings'];
+    epoch: string | undefined;
+    complete: boolean;
+  }
+>();
+/** Confirmation changes clocks, not received content or recording membership.
+ * Only immutable inputs admit reuse; mutable receiving prefixes retain the exact
+ * member check. A gap or new epoch always leaves repair eligible. */
+export function currentGroupRecordingComplete(
+  group: CurrentReceivedGroup,
+  epoch: string | undefined,
+): boolean {
+  const received = readOnlyDraftView(group.received),
+    recordings = group.recordings && readOnlyDraftView(group.recordings),
+    cached = recordedCurrentContent.get(received);
+  if (!recordings?.length || epoch === undefined) return false;
+  if (cached && cached.recordings === recordings && cached.epoch === epoch) return cached.complete;
+  const complete =
+    epoch !== undefined &&
+    Object.entries(readOnlyDraftView(received.fields)).every(([kind, field]) =>
+      currentFieldParts(field).every((part) => {
+        const value =
+          part === 'pose' && field.value.reception?.kind === 'body'
+            ? field.value.reception.poseRef
+            : field.value.reference;
+        return recordings?.some(
+          (mark) =>
+            mark.epoch === epoch &&
+            !mark.gap &&
+            mark.members.some((member) => member.kind === kind && member.part === part) &&
+            mark.content.some(
+              (old) =>
+                old.kind === kind &&
+                old.part === part &&
+                sameReceivedValueReference(old.value, value),
+            ),
+        );
+      }),
+    );
+  if (isImmutableData(received) && (!recordings || isImmutableData(recordings)))
+    recordedCurrentContent.set(received, { recordings, epoch, complete });
+  return complete;
+}
 export function captureTemporalCurrent(
   world: WorldState,
   actorId: string,
@@ -1819,6 +1872,11 @@ export function captureTemporalCurrent(
   // Preserve each disjoint prior admission instead of manufacturing a baseline.
   const admissions = inputs.flatMap((input) => {
     if (input.exiting || input.partition.availability) return [input];
+    if (
+      !input.entering &&
+      currentGroupRecordingComplete(input.group, world.experience?.temporal?.actors[actorId]?.epoch)
+    )
+      return [];
     const remaining = new Set(input.partition.members.map((member) => JSON.stringify(member)));
     const selected: TemporalCurrentGroupInput[] = [];
     for (const mark of currentGroupRecordings(input.group, input.partition.members)) {
