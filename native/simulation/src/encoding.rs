@@ -56,6 +56,30 @@ pub fn json_value(value: &Value) -> Result<String, serde_json::Error> {
     json_record(&JsValue(value))
 }
 
+/// Count the actual emitted UTF-8 bytes without retaining a second encoded
+/// payload when a work/quota consumer needs only its size.
+pub fn json_record_len<T: Serialize + ?Sized>(record: &T) -> Result<usize, serde_json::Error> {
+    struct Count(usize);
+    impl io::Write for Count {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            self.0 = self
+                .0
+                .checked_add(bytes.len())
+                .ok_or_else(|| io::Error::other("Native JSON byte count exceeds its range."))?;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut count = Count(0);
+    record.serialize(&mut serde_json::Serializer::with_formatter(
+        &mut count,
+        JsFormatter::default(),
+    ))?;
+    Ok(count.0)
+}
+
 pub fn serialize_js_value<S: Serializer>(value: &Value, serializer: S) -> Result<S::Ok, S::Error> {
     JsValue(value).serialize(serializer)
 }

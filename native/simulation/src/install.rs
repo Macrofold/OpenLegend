@@ -242,10 +242,10 @@ impl RowImport {
                     }
                 } else {
                     let parent = canonical_path(&row.parent)?;
-                    if parent.len() >= path.len()
-                        || !path.starts_with(&parent)
-                        || path.last().map(String::as_str) != Some(row.slot.as_str())
-                    {
+                    // Keyed lists identify the semantic member in `id`, while
+                    // `slot` is its storage-list position. Only the compiled
+                    // schema owner can bind those two current-format meanings.
+                    if parent.len() >= path.len() || !path.starts_with(&parent) {
                         return Err(InstallError::RowPlacement);
                     }
                 }

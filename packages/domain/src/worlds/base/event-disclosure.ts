@@ -1,4 +1,4 @@
-import { subjectNarration } from '../../narration.js';
+import { nativeText, subjectNarration } from '../../narration.js';
 import type { EventDisclosurePolicy } from '../../event-observation.js';
 
 /** Wilderness observation policy. Unknown payload fields are not public facts; a new
@@ -82,15 +82,49 @@ const physicalReferences = [
 ];
 const shared = ['responseId', 'conversationRelevant', 'semanticTrigger'];
 const contactMetrics = ['rawInjury', 'preventedInjury', 'healthBefore', 'healthAfter', 'damage'];
+/** One authored descriptor is shared with the selected native family. Native
+ * installation verifies its complete canonical body before using the law. */
+export const BASE_EVENT_DISCLOSURE_DATA = {
+  id: 'base:event-disclosure',
+  version: 1,
+  fields,
+  activity,
+  physicalReferences,
+  shared,
+  contactMetrics,
+  feltEvents: ['struck', 'projectile-contact'],
+  contactField: 'contactInjury',
+  offerField: 'offerId',
+  gateEvents: ['gate-operated', 'gate-checked'],
+  gateCheckedEvent: 'gate-checked',
+  operationField: 'operation',
+  closeOperation: 'close',
+  barFields: ['beforeBarred', 'barred'],
+  privateBodyEvent: 'body-effect',
+  privateBodyMetrics: ['healthDelta', 'wetnessDelta', 'burningDelta'],
+  attributeEvent: 'attribute-changed',
+  causeField: 'causeLabel',
+  partialType: 'activity-observed',
+  text: {
+    unseenImpact: 'felt a physical impact from an unseen source.',
+    defaultActivity: 'was active.',
+    targetActivity: 'was involved in activity.',
+    unknownActivity: 'Activity was observed.',
+    causePrefix: ' from ',
+  },
+} as const;
+const disclosure = BASE_EVENT_DISCLOSURE_DATA;
 export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
+  partialType: disclosure.partialType,
   feltTarget: (event) =>
-    ['struck', 'projectile-contact'].includes(event.type) && event.data?.['contactInjury'] === true
+    (disclosure.feltEvents as readonly string[]).includes(event.type) &&
+    event.data?.[disclosure.contactField] === true
       ? event.targetId
       : undefined,
   // Seeing two people does not disclose their carried lot's exact terms. Native
   // handover explicitly grants the parties that knowledge; witnesses get the act.
   permitsDetails: (event, observerId) =>
-    typeof event.data?.['offerId'] !== 'string' ||
+    typeof event.data?.[disclosure.offerField] !== 'string' ||
     observerId === event.actorId ||
     observerId === event.targetId,
   references: (event) =>
@@ -98,20 +132,29 @@ export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
       typeof event.data?.[key] === 'string' ? [event.data[key] as string] : [],
     ),
   partial: (event, sourceId, targetId) =>
-    !sourceId && targetId && event.data?.['contactInjury'] === true
-      ? subjectNarration(targetId, 'felt a physical impact from an unseen source.')
+    !sourceId && targetId && event.data?.[disclosure.contactField] === true
+      ? subjectNarration(targetId, disclosure.text.unseenImpact)
       : sourceId
-        ? subjectNarration(sourceId, activity[event.type] ?? 'was active.')
+        ? subjectNarration(sourceId, activity[event.type] ?? disclosure.text.defaultActivity)
         : targetId
-          ? subjectNarration(targetId, 'was involved in activity.')
-          : 'Activity was observed.',
+          ? subjectNarration(targetId, disclosure.text.targetActivity)
+          : disclosure.text.unknownActivity,
+  completeText: (event, data, text) => {
+    // A visible meter change does not expose a private bodily cause. The
+    // disclosure grant must admit the cause before this world narrates it.
+    const cause = data[disclosure.causeField];
+    return event.type === disclosure.attributeEvent && typeof cause === 'string'
+      ? `${nativeText(text).replace(/[.!?]$/, '')}${disclosure.text.causePrefix}${cause.toLowerCase()}.`
+      : text;
+  },
   data: (event, observerId, detailed) => {
     if (!detailed) {
       // An impact grants one's bodily result, not the unseen weapon/definition,
       // performer, execution identity or position referenced by the raw occurrence.
-      if (event.targetId !== observerId || event.data?.['contactInjury'] !== true) return {};
+      if (event.targetId !== observerId || event.data?.[disclosure.contactField] !== true)
+        return {};
       return Object.fromEntries(
-        ['contactInjury', ...contactMetrics].flatMap((key) =>
+        [disclosure.contactField, ...contactMetrics].flatMap((key) =>
           event.data?.[key] !== undefined ? [[key, event.data[key]]] : [],
         ),
       );
@@ -119,23 +162,22 @@ export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
     const owned = event.scope === 'private' || event.actorId === observerId;
     // Gate grant revisions and visibility controls serve native publication,
     // not perception. Finding a leaf already closed also proves no unseen bar state.
-    const keys =
-      event.type === 'gate-operated' || event.type === 'gate-checked'
-        ? fields[event.type]!.filter(
-            (key) =>
-              event.type !== 'gate-checked' ||
-              event.data?.['operation'] !== 'close' ||
-              (key !== 'beforeBarred' && key !== 'barred'),
-          )
-        : owned
-          ? Object.keys(event.data ?? {})
-          : [...shared, ...(fields[event.type] ?? [])];
+    const keys = (disclosure.gateEvents as readonly string[]).includes(event.type)
+      ? fields[event.type]!.filter(
+          (key) =>
+            event.type !== disclosure.gateCheckedEvent ||
+            event.data?.[disclosure.operationField] !== disclosure.closeOperation ||
+            !(disclosure.barFields as readonly string[]).includes(key),
+        )
+      : owned
+        ? Object.keys(event.data ?? {})
+        : [...shared, ...(fields[event.type] ?? [])];
     // Feeling a contact does not reveal another person's exact bodily meters, even to
     // the attacker. Preserve this policy at acquisition instead of filtering on every read.
     const privateMetrics =
-      event.type === 'body-effect'
-        ? ['healthDelta', 'wetnessDelta', 'burningDelta']
-        : event.data?.['contactInjury'] === true
+      event.type === disclosure.privateBodyEvent
+        ? [...disclosure.privateBodyMetrics]
+        : event.data?.[disclosure.contactField] === true
           ? contactMetrics
           : [];
     if (observerId === event.targetId) keys.push(...privateMetrics);

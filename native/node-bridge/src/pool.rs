@@ -1,10 +1,11 @@
 //! One bounded compute pool per native host. Waiting for SQL, providers, capture
 //! consumption or candidate settlement never occupies a compute job.
 
+pub use openlegend_simulation::host::{ByteBudget, ByteReservation, CapacityError};
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
@@ -52,101 +53,9 @@ impl fmt::Display for HostError {
 
 impl std::error::Error for HostError {}
 
-/// Capacity follows actual ownership. Cancellation does not release a still-live
-/// buffer, and moving this reservation to a detached output does not double-count
-/// or silently free it.
-#[derive(Clone)]
-pub struct ByteBudget {
-    inner: Arc<ByteBudgetState>,
-}
-
-struct ByteBudgetState {
-    limit: usize,
-    used: AtomicUsize,
-    peak: AtomicUsize,
-}
-
-pub struct ByteReservation {
-    owner: Arc<ByteBudgetState>,
-    bytes: usize,
-}
-
-impl ByteBudget {
-    pub fn new(limit: usize) -> Self {
-        Self {
-            inner: Arc::new(ByteBudgetState {
-                limit,
-                used: AtomicUsize::new(0),
-                peak: AtomicUsize::new(0),
-            }),
-        }
-    }
-
-    pub fn reserve(&self, bytes: usize) -> Result<ByteReservation, HostError> {
-        let previous = self
-            .inner
-            .used
-            .try_update(Ordering::AcqRel, Ordering::Acquire, |used| {
-                used.checked_add(bytes)
-                    .filter(|total| *total <= self.inner.limit)
-            })
-            .map_err(|_| HostError::Capacity)?;
-        self.inner
-            .peak
-            .fetch_max(previous + bytes, Ordering::Relaxed);
-        Ok(ByteReservation {
-            owner: Arc::clone(&self.inner),
-            bytes,
-        })
-    }
-
-    pub fn used(&self) -> usize {
-        self.inner.used.load(Ordering::Acquire)
-    }
-
-    pub fn peak(&self) -> usize {
-        self.inner.peak.load(Ordering::Relaxed)
-    }
-
-    pub fn limit(&self) -> usize {
-        self.inner.limit
-    }
-}
-
-impl ByteReservation {
-    pub fn bytes(&self) -> usize {
-        self.bytes
-    }
-
-    /// Reserve growth before allocation; shrink only after the owner has freed
-    /// the corresponding storage, including its allocation capacity.
-    pub fn resize(&mut self, bytes: usize) -> Result<(), HostError> {
-        if bytes > self.bytes {
-            let additional = bytes - self.bytes;
-            let previous = self
-                .owner
-                .used
-                .try_update(Ordering::AcqRel, Ordering::Acquire, |used| {
-                    used.checked_add(additional)
-                        .filter(|total| *total <= self.owner.limit)
-                })
-                .map_err(|_| HostError::Capacity)?;
-            self.owner
-                .peak
-                .fetch_max(previous + additional, Ordering::Relaxed);
-        } else {
-            self.owner
-                .used
-                .fetch_sub(self.bytes - bytes, Ordering::AcqRel);
-        }
-        self.bytes = bytes;
-        Ok(())
-    }
-}
-
-impl Drop for ByteReservation {
-    fn drop(&mut self) {
-        self.owner.used.fetch_sub(self.bytes, Ordering::AcqRel);
+impl From<CapacityError> for HostError {
+    fn from(_: CapacityError) -> Self {
+        Self::Capacity
     }
 }
 

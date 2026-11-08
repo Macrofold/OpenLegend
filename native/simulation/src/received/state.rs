@@ -4,8 +4,7 @@
 
 use super::{
     CoverageGap, ReceivedChargeDirectory, ReceivedError, ReceivedFrontier, ReceivedRecentDirectory,
-    ReceivedValues, TemporalCurrentGroupCheckpoint, TemporalPageRecord, TemporalReceipt,
-    TemporalReceiptLocator,
+    TemporalCurrentGroupCheckpoint, TemporalPageRecord, TemporalReceipt, TemporalReceiptLocator,
 };
 use crate::encoding::json_record;
 use crate::experience::EmptyChildOwner;
@@ -17,6 +16,12 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::BTreeMap, sync::Arc};
+
+mod append;
+pub use append::{
+    PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalCaptureFacet,
+    TemporalCaptureInput,
+};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -125,6 +130,7 @@ pub struct TemporalActorHistory {
     complete_pages: bool,
     next_page_ordinal: u64,
     recent: ReceivedRecentDirectory,
+    pending_pages: Vec<Arc<PendingTemporalPage>>,
 }
 
 fn finite_optional(value: Option<f64>) -> bool {
@@ -211,7 +217,11 @@ impl TemporalActorHistory {
             Value::from(header.bytes),
             Value::from(header.count),
         ];
-        if expected != row.extra {
+        if json_record(&expected)
+            .map_err(|_| ReceivedError("Temporal actor projection encoding failed."))?
+            != json_record(&row.extra)
+                .map_err(|_| ReceivedError("Temporal actor projection encoding failed."))?
+        {
             return Err(ReceivedError(
                 "Temporal actor columns disagree with its payload.",
             ));
@@ -270,6 +280,7 @@ impl TemporalActorHistory {
             complete_pages: coverage.complete,
             next_page_ordinal: coverage.next_ordinal,
             recent,
+            pending_pages: Vec::new(),
         })
     }
     pub fn actor_id(&self) -> &str {
@@ -283,6 +294,9 @@ impl TemporalActorHistory {
     }
     pub fn pages(&self) -> impl Iterator<Item = &Arc<TemporalPageRecord>> {
         self.pages.values()
+    }
+    pub fn pending_pages(&self) -> &[Arc<PendingTemporalPage>] {
+        &self.pending_pages
     }
     pub fn complete_pages(&self) -> bool {
         self.complete_pages
@@ -306,6 +320,11 @@ impl TemporalActorHistory {
                 return Ok(Some(receipt));
             }
         }
+        for page in &self.pending_pages {
+            if let Some(receipt) = page.receipt(locator, members)? {
+                return Ok(Some(receipt));
+            }
+        }
         if self.complete_pages {
             Ok(None)
         } else {
@@ -321,6 +340,24 @@ pub struct TemporalState {
     generation: String,
     header: TemporalStateHeader,
     actors: IndexMap<String, TemporalActorHistory>,
+    undo: Vec<TemporalUndo>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct TemporalCheckpoint {
+    operations: usize,
+}
+
+#[derive(Debug)]
+enum TemporalUndo {
+    Header {
+        actor_id: String,
+        before: TemporalActorHeader,
+        payload: Arc<str>,
+    },
+    PendingAppend {
+        actor_id: String,
+    },
 }
 
 impl TemporalState {
@@ -341,6 +378,7 @@ impl TemporalState {
             generation,
             header,
             actors,
+            undo: Vec::new(),
         })
     }
     pub fn generation(&self) -> &str {
@@ -351,5 +389,48 @@ impl TemporalState {
     }
     pub fn actor(&self, id: &str) -> Option<&TemporalActorHistory> {
         self.actors.get(id)
+    }
+    pub fn checkpoint(&self) -> TemporalCheckpoint {
+        TemporalCheckpoint {
+            operations: self.undo.len(),
+        }
+    }
+    pub fn rollback_to(&mut self, checkpoint: TemporalCheckpoint) -> Result<(), ReceivedError> {
+        if checkpoint.operations > self.undo.len() {
+            return Err(ReceivedError("Stale temporal rollback cursor."));
+        }
+        while self.undo.len() > checkpoint.operations {
+            match self.undo.pop().expect("Journal length checked") {
+                TemporalUndo::Header {
+                    actor_id,
+                    before,
+                    payload,
+                } => {
+                    let actor = self
+                        .actors
+                        .get_mut(&actor_id)
+                        .ok_or(ReceivedError("Temporal rollback actor is absent."))?;
+                    actor.header = before;
+                    actor.payload = payload;
+                }
+                TemporalUndo::PendingAppend { actor_id } => {
+                    let actor = self
+                        .actors
+                        .get_mut(&actor_id)
+                        .ok_or(ReceivedError("Temporal rollback actor is absent."))?;
+                    let page = actor
+                        .pending_pages
+                        .pop()
+                        .ok_or(ReceivedError("Temporal rollback page is absent."))?;
+                    actor
+                        .recent
+                        .rollback_append(&page.metadata().charge_directory)?;
+                }
+            }
+        }
+        Ok(())
+    }
+    pub fn discard_undo(&mut self) {
+        self.undo.clear();
     }
 }

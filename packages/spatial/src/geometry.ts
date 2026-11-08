@@ -18,6 +18,14 @@ const EPS = SPATIAL_LIMITS.epsilon;
 const EMPTY_IDS: ReadonlySet<string> = new Set();
 export const distance3D = (a: WorldPoint, b: WorldPoint): number =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+/** Euclidean distance to the closed extent, including a zero interior distance. */
+export function distanceBounds(bounds: Bounds3, point: WorldPoint): number {
+  return Math.hypot(
+    Math.max(bounds.min.x - point.x, point.x - bounds.max.x, 0),
+    Math.max(bounds.min.y - point.y, point.y - bounds.max.y, 0),
+    Math.max(bounds.min.z - point.z, point.z - bounds.max.z, 0),
+  );
+}
 export const horizontalDistance = (
   a: Pick<WorldPoint, 'x' | 'z'>,
   b: Pick<WorldPoint, 'x' | 'z'>,

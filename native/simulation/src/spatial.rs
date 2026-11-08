@@ -4,6 +4,36 @@
 
 use crate::state::{BodyProfile, Point};
 
+/// Current JavaScript Math.hypot(dx,dy,dz) evaluation order, including its
+/// scaled compensated sum. Squared sums or nested hypot alter real route cuts.
+pub(crate) fn distance(from: Point, to: Point) -> f64 {
+    let dx = (from.x - to.x).abs();
+    let dy = (from.y - to.y).abs();
+    let dz = (from.z - to.z).abs();
+    let maximum = dx.max(dy).max(dz);
+    if maximum == 0.0 {
+        return 0.0;
+    }
+    let mut sum = 0.0;
+    let mut compensation = 0.0;
+    for value in [dx, dy, dz] {
+        let normalized = value / maximum;
+        let term = normalized * normalized - compensation;
+        let next = sum + term;
+        compensation = (next - sum) - term;
+        sum = next;
+    }
+    maximum * sum.sqrt()
+}
+
+pub(crate) fn interpolate(from: Point, to: Point, fraction: f64) -> Point {
+    Point {
+        x: from.x + (to.x - from.x) * fraction,
+        y: from.y + (to.y - from.y) * fraction,
+        z: from.z + (to.z - from.z) * fraction,
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Extent {
     pub radius: f64,

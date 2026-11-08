@@ -554,6 +554,53 @@ pub struct StatusEffectPolicy {
     pub definitions: Vec<StatusDefinition>,
 }
 
+/// Rebuildable membership compiled once from the immutable installed policy.
+/// Activity is always read from the current canonical status instances.
+pub struct StatusCapabilities {
+    restrictions: IndexMap<String, Vec<String>>,
+}
+impl StatusCapabilities {
+    pub fn compile(policy: &StatusEffectPolicy) -> Self {
+        let mut restrictions: IndexMap<String, Vec<String>> = IndexMap::new();
+        for definition in &policy.definitions {
+            for operation in &definition.while_active {
+                if let StatusOperation::Restrict {
+                    restrict_capabilities,
+                } = operation
+                {
+                    for capability in &restrict_capabilities.capabilities {
+                        let ids = restrictions.entry(capability.clone()).or_default();
+                        if !ids.contains(&definition.id) {
+                            ids.push(definition.id.clone());
+                        }
+                    }
+                }
+            }
+        }
+        Self { restrictions }
+    }
+
+    pub fn capability_blocked(
+        &self,
+        entity: Option<&Entity>,
+        capability: &str,
+    ) -> Result<bool, ValueError> {
+        let Some(states) = entity.and_then(|e| e.status_effects.as_ref()) else {
+            return Ok(false);
+        };
+        // The selected ordinary-status closure cannot interpret an independent
+        // contribution's lifetime/source. Installation must refuse it until its
+        // actual owner is ported, rather than silently granting perception.
+        if states.values().any(|state| state.contribution.is_some()) {
+            return Err(ValueError::InvalidMeaning);
+        }
+        Ok(self.restrictions.get(capability).is_some_and(|ids| {
+            ids.iter()
+                .any(|id| states.get(id).is_some_and(|state| state.active))
+        }))
+    }
+}
+
 /// Pure current attribute read through the exact installed storage family.
 pub fn read_attribute(
     entity: &Entity,
@@ -752,7 +799,7 @@ pub fn status_work(definition: &StatusDefinition) -> NativeValueDemand {
 /// endpoint after earning this interval.
 pub fn compile_arithmetic_meaning(
     definition: &StatusDefinition,
-    attributes: &IndexMap<String, AttributeDefinition>,
+    attributes: &dyn AttributeDefinitions,
 ) -> Result<ArithmeticMeaning, ValueError> {
     let mut meaning = ArithmeticMeaning {
         linear: true,
@@ -822,9 +869,25 @@ pub fn compile_arithmetic_meaning(
 
 /// One synchronous read of canonical current state. No mutable borrow, provider,
 /// host clock or whole-world copy participates in predicate evaluation.
+pub trait AttributeDefinitions {
+    fn get(&self, id: &str) -> Option<&AttributeDefinition>;
+}
+impl AttributeDefinitions for IndexMap<String, AttributeDefinition> {
+    fn get(&self, id: &str) -> Option<&AttributeDefinition> {
+        IndexMap::get(self, id)
+    }
+}
+impl AttributeDefinitions
+    for IndexMap<String, crate::install::VerifiedDefinition<AttributeDefinition>>
+{
+    fn get(&self, id: &str) -> Option<&AttributeDefinition> {
+        IndexMap::get(self, id).map(|definition| definition.value())
+    }
+}
+
 pub struct StatusRead<'a> {
     pub entities: &'a crate::state::EntityStore,
-    pub attributes: &'a IndexMap<String, AttributeDefinition>,
+    pub attributes: &'a dyn AttributeDefinitions,
     pub window: Option<&'a NativeValueWindow>,
     pub policy: &'a StatusEffectPolicy,
     pub sim_time: f64,

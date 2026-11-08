@@ -28,6 +28,7 @@ mod checkpoint;
 pub use checkpoint::{CurrentMemberPart, TemporalCurrentContent, TemporalCurrentGroupCheckpoint};
 pub use values::{
     ReceivedValueFragment, ReceivedValueRecord, ReceivedValueReference, ReceivedValues,
+    ReceivedValuesCheckpoint,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -369,6 +370,54 @@ impl ReceivedRecentDirectory {
         }
         self.bytes = bytes;
         self.count = count;
+        Ok(())
+    }
+
+    /// Only the temporal mutation journal removes an unaccepted appended block.
+    /// Accepted age/pressure retirement has its separate chronological owner.
+    fn rollback_append(
+        &mut self,
+        directory: &ReceivedChargeDirectory,
+    ) -> Result<(), ReceivedError> {
+        for header in directory.entries.iter().rev() {
+            let key = block_key(
+                directory.physical_life,
+                &directory.epoch,
+                header.batch_order,
+            );
+            let expected = ReceivedChargeDirectory {
+                actor_id: directory.actor_id.clone(),
+                physical_life: directory.physical_life,
+                epoch: directory.epoch.clone(),
+                entries: vec![header.clone()],
+            };
+            if self.blocks.get(&key) != Some(&expected) {
+                return Err(ReceivedError(
+                    "Temporal rollback directory differs from its appended source.",
+                ));
+            }
+            self.blocks.remove(&key);
+            self.bytes = self
+                .bytes
+                .checked_sub(header.bytes)
+                .ok_or(ReceivedError("Temporal rollback bytes underflow."))?;
+            self.count = self
+                .count
+                .checked_sub(header.count)
+                .ok_or(ReceivedError("Temporal rollback count underflow."))?;
+            for id in &header.individual_ids {
+                let count = self
+                    .individuals
+                    .get(id)
+                    .copied()
+                    .ok_or(ReceivedError("Temporal rollback individual is absent."))?;
+                if count == 1 {
+                    self.individuals.remove(id);
+                } else {
+                    self.individuals.insert(id.clone(), count - 1);
+                }
+            }
+        }
         Ok(())
     }
 

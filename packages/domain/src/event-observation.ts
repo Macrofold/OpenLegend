@@ -1,12 +1,13 @@
 import { entityGet } from './entity-collection.js';
 import { objectAncestors } from './objects.js';
 import { seesEntity } from './perception.js';
-import { renderNarration, nativeText, type Narration, type NativeText } from './narration.js';
+import { renderNarration, type Narration, type NativeText } from './narration.js';
 import { selectedEventDisclosure } from './world-composition.js';
 import { namePhrase } from '@open-legend/language';
 import type { WorldEvent, WorldState } from './types.js';
 
 export interface EventDisclosurePolicy {
+  partialType: string;
   /** Native physical consequences can be felt without seeing their performer.
    * This grants the contacted person an account, never the hidden source. */
   feltTarget(event: Pick<WorldEvent, 'type' | 'targetId' | 'data'>): string | undefined;
@@ -15,6 +16,11 @@ export interface EventDisclosurePolicy {
   permitsDetails(event: WorldEvent, observerId: string): boolean;
   partial(event: WorldEvent, sourceId?: string, targetId?: string): Narration | string;
   data(event: WorldEvent, observerId: string, detailed: boolean): NonNullable<WorldEvent['data']>;
+  completeText(
+    event: WorldEvent,
+    data: NonNullable<WorldEvent['data']>,
+    text: NativeText,
+  ): NativeText;
 }
 
 /** Prepare permitted event-time participants before names, prose or account data.
@@ -83,10 +89,7 @@ export function prepareEventObservation(
       : typeof event.text !== 'string'
         ? { ...event.text, selfId: observerId, person: 'first' }
         : event.text;
-    // A visible meter change does not expose a private bodily cause. The installed
-    // disclosure policy must separately admit the recorded cause before it is narrated.
-    if (event.type === 'attribute-changed' && typeof eventData['causeLabel'] === 'string')
-      text = `${nativeText(text).replace(/[.!?]$/, '')} from ${eventData['causeLabel'].toLowerCase()}.`;
+    text = policy.completeText(event, eventData, text);
     return {
       sourceId: event.actorId,
       targetId: event.targetId,
@@ -165,7 +168,7 @@ export function prepareEventObservation(
   return {
     sourceId,
     targetId,
-    eventType: felt ? event.type : 'activity-observed',
+    eventType: felt ? event.type : policy.partialType,
     references: [
       ...(sourceId ? [{ id: sourceId, role: 'actor' as const }] : []),
       ...(targetId ? [{ id: targetId, role: 'target' as const }] : []),
@@ -177,7 +180,7 @@ export function prepareEventObservation(
         targetId,
         text:
           typeof narration === 'string' ? narration : renderNarration(world, narration, observerId),
-        eventType: felt ? event.type : 'activity-observed',
+        eventType: felt ? event.type : policy.partialType,
         eventData: policy.data(event, observerId, false),
         references: names(sourceId, targetId),
       };

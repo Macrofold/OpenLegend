@@ -20,6 +20,11 @@ use crate::reception::EvidenceSource;
 use crate::records::{InstalledRow, OwnerCoverage};
 use crate::values::{deserialize_present_option, deserialize_safe_integer, is_safe_record_id};
 
+mod awareness;
+pub use awareness::*;
+mod evidence;
+pub use evidence::*;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum PersonalSourceKind {
@@ -681,7 +686,6 @@ impl PersonalSourceRecord {
         expected_path.push(header.reference.id.clone());
         if row.parent != expected_parent
             || row.id != json_record(&expected_path).map_err(|_| ExperienceError::ForeignOwner)?
-            || row.slot != header.reference.id
         {
             return Err(ExperienceError::ForeignOwner);
         }
@@ -988,6 +992,10 @@ impl ExperienceState {
 
     pub fn header(&self) -> &ExperienceHeader {
         &self.header
+    }
+
+    pub fn generation(&self) -> &str {
+        &self.generation
     }
 
     pub fn actor(&self, actor_id: &str) -> Option<&PersonalHistory> {

@@ -105,7 +105,7 @@ pub struct NativeAcousticCue {
     pub sound: PerceivedSound,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NativeResponseEpisode {
     #[serde(
@@ -178,6 +178,184 @@ pub struct NativeResponseEpisode {
         skip_serializing_if = "Option::is_none"
     )]
     pub blocked: Option<BlockedResponse>,
+}
+
+// A retained undo record clones only this bounded response subtree. Rebuild its
+// maps at current length so obsolete raw-table capacity cannot hide behind an
+// encoded-size estimate or multiply across nested checkpoints.
+fn clone_map<V: Clone>(values: &IndexMap<String, V>) -> IndexMap<String, V> {
+    let mut copy = IndexMap::with_capacity(values.len());
+    for (key, value) in values {
+        copy.insert(key.clone(), value.clone());
+    }
+    copy
+}
+
+impl Clone for NativeResponseEpisode {
+    fn clone(&self) -> Self {
+        Self {
+            acoustic_cue: self.acoustic_cue.clone(),
+            acoustic_leg_required: self.acoustic_leg_required,
+            id: self.id.clone(),
+            started_at: self.started_at,
+            latest_cause: self.latest_cause.clone(),
+            preparations: self.preparations.as_ref().map(clone_map),
+            preferred_refuge: self.preferred_refuge.clone(),
+            aerial_route_id: self.aerial_route_id.clone(),
+            profile_pin: self.profile_pin.clone(),
+            locomotion: self.locomotion.clone(),
+            mode: self.mode,
+            dangers: clone_map(&self.dangers),
+            review_at: self.review_at,
+            clear_since: self.clear_since,
+            proposal_generation: self.proposal_generation,
+            proposal: self.proposal.clone(),
+            refuge: self.refuge.clone(),
+            movement: self.movement.clone(),
+            blocked: self.blocked.clone(),
+        }
+    }
+}
+
+fn string_clone_bytes(value: &String) -> usize {
+    value.capacity().saturating_add(64)
+}
+fn optional_string_bytes(value: &Option<String>) -> usize {
+    value.as_ref().map_or(0, string_clone_bytes)
+}
+fn surface_clone_bytes(point: &SurfacePoint) -> usize {
+    string_clone_bytes(&point.surface_id)
+}
+fn vector_clone_bytes<T>(values: &Vec<T>) -> usize {
+    if values.is_empty() {
+        0
+    } else {
+        values
+            .capacity()
+            .saturating_mul(std::mem::size_of::<T>())
+            .saturating_add(64)
+    }
+}
+fn map_clone_bytes<V>(values: &IndexMap<String, V>) -> usize {
+    if values.is_empty() {
+        return 0;
+    }
+    let buckets = values
+        .len()
+        .checked_mul(2)
+        .and_then(usize::checked_next_power_of_two)
+        .unwrap_or(usize::MAX)
+        .max(4);
+    values
+        .len()
+        .saturating_mul(std::mem::size_of::<(usize, String, V)>().saturating_add(16))
+        .saturating_add(buckets.saturating_mul(std::mem::size_of::<usize>() + 1))
+        .saturating_add(192)
+}
+
+fn sound_clone_bytes(sound: &PerceivedSound) -> usize {
+    sound.visible_source.as_ref().map_or(0, |source| {
+        string_clone_bytes(&source.entity_id)
+            .saturating_add(optional_string_bytes(&source.episode_id))
+            .saturating_add(string_clone_bytes(&source.description.name))
+            .saturating_add(optional_string_bytes(&source.description.name_form))
+            .saturating_add(optional_string_bytes(
+                &source.description.indefinite_article,
+            ))
+    })
+}
+
+fn cue_clone_bytes(cue: &NativeAcousticCue) -> usize {
+    string_clone_bytes(&cue.event_id).saturating_add(sound_clone_bytes(&cue.sound))
+}
+
+pub(crate) fn new_cue_clone_bytes(event_id: &String, sound: &PerceivedSound) -> usize {
+    std::mem::size_of::<NativeAcousticCue>()
+        .saturating_add(string_clone_bytes(event_id))
+        .saturating_add(sound_clone_bytes(sound))
+}
+
+pub(crate) fn acoustic_pattern_clone_bytes(value: Option<&AcousticPattern>) -> usize {
+    value.map_or(0, |pattern| {
+        std::mem::size_of::<AcousticPattern>().saturating_add(cue_clone_bytes(&pattern.cue))
+    })
+}
+
+/// Conservative typed clone reservation, including container storage and a
+/// fixed allocation/alignment allowance per allocation. Runtime RSS still owns
+/// allocator/OS cost evidence; JSON encoding is not a resident-byte measure.
+pub(crate) fn episode_clone_bytes(value: &Option<NativeResponseEpisode>) -> usize {
+    let Some(value) = value else {
+        return std::mem::size_of::<Option<NativeResponseEpisode>>();
+    };
+    let mut bytes = std::mem::size_of::<NativeResponseEpisode>()
+        .saturating_add(string_clone_bytes(&value.id))
+        .saturating_add(string_clone_bytes(&value.latest_cause.id))
+        .saturating_add(string_clone_bytes(&value.profile_pin.id))
+        .saturating_add(string_clone_bytes(&value.profile_pin.digest))
+        .saturating_add(string_clone_bytes(&value.locomotion))
+        .saturating_add(optional_string_bytes(&value.aerial_route_id))
+        .saturating_add(value.acoustic_cue.as_ref().map_or(0, cue_clone_bytes))
+        .saturating_add(
+            value
+                .preferred_refuge
+                .as_ref()
+                .map_or(0, surface_clone_bytes),
+        )
+        .saturating_add(map_clone_bytes(&value.dangers));
+    if let Some(preparations) = &value.preparations {
+        bytes = bytes.saturating_add(map_clone_bytes(preparations));
+        for (key, value) in preparations {
+            bytes = bytes
+                .saturating_add(string_clone_bytes(key))
+                .saturating_add(string_clone_bytes(value));
+        }
+    }
+    for (key, danger) in &value.dangers {
+        bytes = bytes
+            .saturating_add(string_clone_bytes(key))
+            .saturating_add(match danger {
+                NativeDanger::Body { source_id, .. } => string_clone_bytes(source_id),
+                NativeDanger::Region { source, .. } => string_clone_bytes(&source.id),
+            });
+    }
+    if let Some(proposal) = &value.proposal {
+        bytes = bytes
+            .saturating_add(surface_clone_bytes(&proposal.origin))
+            .saturating_add(optional_string_bytes(&proposal.movement_id))
+            .saturating_add(vector_clone_bytes(&proposal.candidates));
+        for candidate in &proposal.candidates {
+            bytes = bytes
+                .saturating_add(string_clone_bytes(&candidate.id))
+                .saturating_add(surface_clone_bytes(&candidate.point));
+        }
+        if let Some(best) = proposal
+            .search
+            .as_ref()
+            .and_then(|search| search.best.as_ref())
+        {
+            bytes = bytes
+                .saturating_add(surface_clone_bytes(&best.point))
+                .saturating_add(vector_clone_bytes(&best.path));
+            for point in &best.path {
+                bytes = bytes.saturating_add(surface_clone_bytes(point));
+            }
+        }
+    }
+    if let Some(refuge) = &value.refuge {
+        bytes = bytes
+            .saturating_add(surface_clone_bytes(&refuge.point))
+            .saturating_add(optional_string_bytes(&refuge.flight_route_id));
+    }
+    if let Some(movement) = &value.movement {
+        bytes = bytes.saturating_add(string_clone_bytes(&movement.id));
+    }
+    if let Some(blocked) = &value.blocked {
+        bytes = bytes
+            .saturating_add(string_clone_bytes(&blocked.reason))
+            .saturating_add(string_clone_bytes(&blocked.basis));
+    }
+    bytes
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -528,11 +706,7 @@ pub enum WakeReason {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ResponsePresentation {
-    pub alarmed: String,
-    pub escaping: String,
-    pub settling: String,
-    pub blocked: String,
-    pub routine: String,
+    pub projectile_passage: String,
 }
 
 impl NativeDanger {
@@ -699,15 +873,7 @@ impl NativeResponseProfile {
                 .wake
                 .as_ref()
                 .is_none_or(|wake| is_safe_record_id(&wake.attribute_id) && wake.above.is_finite())
-            && [
-                &self.presentation.alarmed,
-                &self.presentation.escaping,
-                &self.presentation.settling,
-                &self.presentation.blocked,
-                &self.presentation.routine,
-            ]
-            .into_iter()
-            .all(|text| !crate::encoding::js_trim(text).is_empty());
+            && !crate::encoding::js_trim(&self.presentation.projectile_passage).is_empty();
         if valid {
             Ok(())
         } else {

@@ -3,6 +3,7 @@ import {
   BoundsIndex,
   horizontalCone,
   distance3D,
+  distanceBounds,
   movingBodiesMinimumSeparation,
   queryPhysicalFeatures,
   physicalFeatureById,
@@ -303,13 +304,6 @@ function splitExtent(
     { ...value, v1: middle },
     { ...value, v0: middle },
   ];
-}
-function distanceBounds(bounds: Bounds3, point: Position) {
-  return Math.hypot(
-    Math.max(bounds.min.x - point.x, point.x - bounds.max.x, 0),
-    Math.max(bounds.min.y - point.y, point.y - bounds.max.y, 0),
-    Math.max(bounds.min.z - point.z, point.z - bounds.max.z, 0),
-  );
 }
 function inputFor(
   input: NonNullable<ReturnType<typeof receptor>>,

@@ -279,6 +279,63 @@ pub struct CurrentBodyPoseSupport {
     pub pose_acquired_at: f64,
 }
 
+/// Immutable evidence-consumer value selected from a personal current grant.
+/// Routing identity and physical continuity counters are intentionally absent;
+/// they cannot become a participant identity or a permitted trajectory.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CapturedCurrentFacet {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub availability: Option<CurrentAvailability>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub pose_support: Option<CurrentBodyPoseSupport>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub description_support: Option<CurrentDescriptionSupport>,
+    pub id: String,
+    pub observer: ObserverLife,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub body_lease_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub local_subject: Option<ObserverSubject>,
+    pub exposure: ObservationExposure,
+    pub original: ObservationFactKey,
+    pub role: FacetRole,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub original_aliases: Option<Vec<String>>,
+    pub modality: Modality,
+    pub value: SensoryFacet,
+    pub confirmation: EvidenceSource,
+    pub value_measured_from: f64,
+    pub value_measured_through: f64,
+    pub value_acquired_at: f64,
+    pub confirmed_from: f64,
+    pub confirmed_through: f64,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CurrentStoredField {

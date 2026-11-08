@@ -1,6 +1,9 @@
 //! A candidate's visibility fence is separate from its mutable records. Settlement
 //! must never acquire the writer lock held by native calculation.
 
+mod budget;
+pub use budget::{ByteBudget, ByteReservation, CapacityError};
+
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 

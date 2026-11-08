@@ -1,6 +1,7 @@
 //! The bridge owns operational threads and buffers. Gameplay is added through
 //! concrete simulation owners; this foundation exposes no generic world write.
 
+pub mod geometry;
 pub mod pool;
 pub mod records;
 
@@ -120,6 +121,13 @@ impl HostRuntime {
                 }));
                 match result {
                     Ok(Ok(())) => {
+                        if retained.bytes.used() != 0 {
+                            // Detached outputs/captures can outlive computation.
+                            // Joining workers does not release their actual memory
+                            // or permit a fresh host to borrow that allowance.
+                            retained.phase.store(SHUTDOWN_PENDING, Ordering::Release);
+                            return;
+                        }
                         retained.phase.store(CLOSED, Ordering::Release);
                         if let Ok(mut registry) = registry().lock()
                             && registry

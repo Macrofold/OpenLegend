@@ -192,12 +192,10 @@ pub fn received_batch_charge_directory(
         .map_err(|_| ReceivedError("Received batch encoding failed."))?
         .len() as u64;
     for reference in references {
-        let value = values.shared_value(reference).ok_or(ReceivedError(
+        let value_bytes = values.shared_value_bytes(reference).ok_or(ReceivedError(
             "Received block has an unavailable owned value.",
         ))?;
-        bytes += crate::encoding::json_record(value)
-            .map_err(|_| ReceivedError("Received value encoding failed."))?
-            .len() as u64;
+        bytes += value_bytes;
     }
     let entries = match (batch.entries.first(), batch.entries.last()) {
         (Some(first), Some(last)) => vec![ReceivedChargeEntry {

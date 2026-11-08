@@ -40,6 +40,41 @@ export interface HostStatus {
   error?: string;
 }
 
+export interface NativeBodyProfile {
+  id: string;
+  radius: number;
+  height: number;
+  eyeHeight: number;
+  earHeight: number;
+  interactionHeight: number;
+  maxSlope: number;
+}
+
+export interface NativeBodySweepAnswer {
+  fraction?: number;
+  tested: number;
+}
+
+export interface NativeBodySweepGroup {
+  bounds: Array<NativeBounds>;
+  from: NativePoint;
+  to: NativePoint;
+  body: NativeBodyProfile;
+  mode: string;
+}
+
+export interface NativeBounds {
+  min: NativePoint;
+  max: NativePoint;
+}
+
+export interface NativeBoundsQueryCursor {
+  pending: Array<Array<number>>;
+  offset: number;
+  leaf?: boolean;
+  truncated?: boolean;
+}
+
 export declare function nativeBuildInfo(): NativeBuildInfo;
 
 export interface NativeBuildInfo {
@@ -74,11 +109,179 @@ export interface NativeChangedRows {
   expired?: Record<string, Array<string>>;
 }
 
+export interface NativeConvexViewAnswer {
+  visited: number;
+  complete: boolean;
+  clear: boolean;
+  blockingVertices?: Array<NativePoint>;
+}
+
+export interface NativeConvexViewQuery {
+  from: NativePoint;
+  target: Array<NativePoint>;
+  allowance: number;
+}
+
+export interface NativeGeometryAnswers {
+  binding: NativeGeometryBinding;
+  sight: Array<boolean>;
+  walking: Array<boolean>;
+  support: Array<NativeSurfacePoint | undefined | null>;
+  standing: Array<boolean>;
+  surfaceLines: Array<NativeSurfaceLine | undefined | null>;
+  sightSweeps: Array<NativeSightSweep>;
+  sound: Array<number>;
+  navigation: Array<NativeNavigationResult>;
+  routes: Array<NativeRoutePlan>;
+  features: Array<NativePhysicalFeatureAnswer>;
+  featureIds: Array<NativePhysicalFeature | undefined | null>;
+  convexViews: Array<NativeConvexViewAnswer>;
+  bodySweeps: Array<NativeBodySweepAnswer>;
+}
+
+export interface NativeGeometryBinding {
+  candidateId: number;
+  baseCut: number;
+  generation: number;
+  geometryRevision: number;
+  serial: number;
+}
+
+export interface NativeGeometryQueries {
+  binding: NativeGeometryBinding;
+  sight: Array<NativeSightRay>;
+  walking: Array<NativeWalkingSegment>;
+  support: Array<NativeSupportQuery>;
+  standing: Array<NativeStandingQuery>;
+  surfaceLines: Array<NativeSurfaceLineQuery>;
+  sightSweeps: Array<NativeSightSweepQuery>;
+  sound: Array<NativeSightRay>;
+  navigation: Array<NativeNavigationRequest>;
+  routes: Array<NativeRouteQuery>;
+  features: Array<NativePhysicalFeatureQuery>;
+  featureIds: Array<string>;
+  convexViews: Array<NativeConvexViewQuery>;
+  bodySweeps: Array<NativeBodySweepGroup>;
+}
+
 export declare function nativeHostStatus(): HostStatus | null;
+
+export interface NativeNavigationRequest {
+  wait?: string;
+  from: NativeSurfacePoint;
+  destinations: Array<NativeSurfacePoint>;
+  outsideBounds?: NativeBounds;
+  body: NativeBodyProfile;
+  geometryRevision: number;
+}
+
+export interface NativeNavigationResult {
+  status: string;
+  path: Array<NativeSurfacePoint>;
+  length?: number;
+  reason?: string;
+}
+
+export interface NativePhysicalFeature {
+  id: string;
+  sourceId: string;
+  kind: string;
+  vertices: Array<NativePoint>;
+  normal: NativePoint;
+  bounds: NativeBounds;
+}
+
+export interface NativePhysicalFeatureAnswer {
+  values: Array<NativePhysicalFeature>;
+  visited: number;
+  status: string;
+  cursor?: NativeBoundsQueryCursor;
+}
+
+export interface NativePhysicalFeatureQuery {
+  bounds: NativeBounds;
+  allowance: number;
+  cursor?: NativeBoundsQueryCursor;
+  radialOrigin: NativePoint;
+  radialRadius: number;
+  priorityAnchors: Array<NativePoint>;
+}
+
+export interface NativePoint {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface NativeRoutePlan {
+  status: string;
+  path: Array<NativeSurfacePoint>;
+  length?: number;
+  request?: NativeNavigationRequest;
+  expanded: number;
+}
+
+export interface NativeRouteQuery {
+  kind: string;
+  from: NativeSurfacePoint;
+  to?: NativeSurfacePoint;
+  bounds?: NativeBounds;
+  body: NativeBodyProfile;
+}
 
 export interface NativeSaveRows {
   prefix: number;
   baseRevision: number;
   throughCut: number;
   changes: NativeChangedRows;
+}
+
+export interface NativeSightRay {
+  from: NativePoint;
+  to: NativePoint;
+}
+
+export interface NativeSightSweep {
+  fractions: Array<number>;
+}
+
+export interface NativeSightSweepQuery {
+  eyeFrom: NativePoint;
+  eyeTo: NativePoint;
+  pointFrom: NativePoint;
+  pointTo: NativePoint;
+}
+
+export interface NativeStandingQuery {
+  point: NativeSurfacePoint;
+  body: NativeBodyProfile;
+}
+
+export interface NativeSupportQuery {
+  point: NativePoint;
+  surfaceId?: string;
+}
+
+export interface NativeSurfaceLine {
+  path: Array<NativeSurfacePoint>;
+}
+
+export interface NativeSurfaceLineQuery {
+  from: NativeSurfacePoint;
+  x: number;
+  z: number;
+  body: NativeBodyProfile;
+}
+
+export interface NativeSurfacePoint {
+  x: number;
+  y: number;
+  z: number;
+  surfaceId: string;
+}
+
+export interface NativeWalkingSegment {
+  from: NativeSurfacePoint;
+  to: NativeSurfacePoint;
+  body: NativeBodyProfile;
 }

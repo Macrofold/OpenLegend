@@ -22,6 +22,17 @@ mod support;
 pub use support::*;
 mod state;
 pub use state::*;
+mod materialize;
+pub use materialize::*;
+mod sensors;
+pub use sensors::*;
+mod sound;
+pub use sound::*;
+mod event;
+pub(crate) use event::*;
+mod capture;
+pub(crate) mod retained_size;
+pub use capture::*;
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

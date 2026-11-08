@@ -217,11 +217,40 @@ pub struct RetainedValue {
     pub value_bytes: u64,
 }
 
+/// Candidate-local cursor. The single mutation owner binds it to its world and
+/// generation; accepting an outer candidate discards the inverse journal.
+#[derive(Clone, Copy, Debug)]
+pub struct ReceivedValuesCheckpoint {
+    operations: usize,
+}
+
+#[derive(Debug)]
+enum ReceivedValuesUndo {
+    SourceInsert(String),
+    PhaseReplace {
+        at: Option<f64>,
+        values: BTreeMap<Arc<str>, String>,
+    },
+    PhaseInsert {
+        key: Arc<str>,
+        previous: Option<String>,
+    },
+}
+
 #[derive(Debug, Default)]
 pub struct ReceivedValues {
-    sources: IndexMap<String, Arc<ReceivedValueRecord>>,
+    sources: IndexMap<String, SharedReceivedValue>,
     phase_at: Option<f64>,
-    phase_values: BTreeMap<String, String>,
+    phase_values: BTreeMap<Arc<str>, String>,
+    undo: Vec<ReceivedValuesUndo>,
+}
+
+#[derive(Debug)]
+struct SharedReceivedValue {
+    record: Arc<ReceivedValueRecord>,
+    /// Immutable fragment encoding is charged by every owning logical block.
+    /// Derive once with the source; repeated metadata reads do not serialize it.
+    value_bytes: u64,
 }
 
 impl ReceivedValues {
@@ -251,12 +280,22 @@ impl ReceivedValues {
                     "Received value bytes disagree with its current body.",
                 ));
             }
-            sources.insert(record.id.clone(), Arc::new(record));
+            let value_bytes = json_record(&record.value)
+                .map_err(|_| ReceivedError("Received value encoding failed."))?
+                .len() as u64;
+            sources.insert(
+                record.id.clone(),
+                SharedReceivedValue {
+                    record: Arc::new(record),
+                    value_bytes,
+                },
+            );
         }
         Ok(Self {
             sources,
             phase_at: None,
             phase_values: BTreeMap::new(),
+            undo: Vec::new(),
         })
     }
 
@@ -265,13 +304,23 @@ impl ReceivedValues {
         reference: &'a ReceivedValueReference,
     ) -> Option<&'a ReceivedValueFragment> {
         match reference {
-            ReceivedValueReference::Shared(id) => self.sources.get(id).map(|record| &record.value),
+            ReceivedValueReference::Shared(id) => {
+                self.sources.get(id).map(|owned| &owned.record.value)
+            }
             ReceivedValueReference::Inline(value) => Some(value),
         }
     }
 
     pub fn shared_value(&self, id: &str) -> Option<&ReceivedValueFragment> {
-        self.sources.get(id).map(|record| &record.value)
+        self.sources.get(id).map(|owned| &owned.record.value)
+    }
+
+    pub fn shared_value_bytes(&self, id: &str) -> Option<u64> {
+        self.sources.get(id).map(|owned| owned.value_bytes)
+    }
+
+    pub fn shared_record(&self, id: &str) -> Option<&Arc<ReceivedValueRecord>> {
+        self.sources.get(id).map(|owned| &owned.record)
     }
 
     pub fn capture(&self, ids: &[String]) -> Result<Vec<Arc<ReceivedValueRecord>>, ReceivedError> {
@@ -279,7 +328,7 @@ impl ReceivedValues {
             .map(|id| {
                 self.sources
                     .get(id)
-                    .cloned()
+                    .map(|owned| Arc::clone(&owned.record))
                     .ok_or(ReceivedError("Selected received value is unavailable."))
             })
             .collect()
@@ -320,10 +369,13 @@ impl ReceivedValues {
             });
         }
         if self.phase_at != Some(at) {
+            self.undo.push(ReceivedValuesUndo::PhaseReplace {
+                at: self.phase_at,
+                values: std::mem::take(&mut self.phase_values),
+            });
             self.phase_at = Some(at);
-            self.phase_values.clear();
         }
-        if let Some(id) = self.phase_values.get(&encoded)
+        if let Some(id) = self.phase_values.get(encoded.as_str())
             && self.sources.contains_key(id)
         {
             return Ok(RetainedValue {
@@ -353,8 +405,18 @@ impl ReceivedValues {
         }
         let id = record.id.clone();
         let added_bytes = record.bytes;
-        self.sources.insert(id.clone(), Arc::new(record));
-        self.phase_values.insert(encoded, id.clone());
+        self.undo.push(ReceivedValuesUndo::SourceInsert(id.clone()));
+        self.sources.insert(
+            id.clone(),
+            SharedReceivedValue {
+                record: Arc::new(record),
+                value_bytes,
+            },
+        );
+        let key: Arc<str> = Arc::from(encoded);
+        let previous = self.phase_values.insert(Arc::clone(&key), id.clone());
+        self.undo
+            .push(ReceivedValuesUndo::PhaseInsert { key, previous });
         Ok(RetainedValue {
             reference: ReceivedValueReference::Shared(id),
             added_bytes,
@@ -362,17 +424,49 @@ impl ReceivedValues {
         })
     }
 
-    /// Called by the shared received-value release owner after its exact current
-    /// contact/history/support/pending-capture reference check.
-    pub(crate) fn release_unreferenced(
+    pub fn checkpoint(&self) -> ReceivedValuesCheckpoint {
+        ReceivedValuesCheckpoint {
+            operations: self.undo.len(),
+        }
+    }
+
+    /// Inverses restore phase sharing as well as source residency: clearing the
+    /// dedup cache would issue different IDs on the next attempt at the same time.
+    /// The enclosing owner separately rolls back the shared identity sequence.
+    pub fn rollback_to(
         &mut self,
-        ids: &[String],
-        referenced: &BTreeMap<String, u64>,
-    ) {
-        for id in ids {
-            if referenced.get(id).copied().unwrap_or(0) == 0 {
-                self.sources.shift_remove(id);
+        checkpoint: ReceivedValuesCheckpoint,
+    ) -> Result<(), ReceivedError> {
+        if checkpoint.operations > self.undo.len() {
+            return Err(ReceivedError("Stale received-value rollback cursor."));
+        }
+        while self.undo.len() > checkpoint.operations {
+            match self.undo.pop().expect("Journal length checked") {
+                ReceivedValuesUndo::SourceInsert(id) => {
+                    if self.sources.shift_remove(&id).is_none() {
+                        return Err(ReceivedError("Received-value rollback source is absent."));
+                    }
+                }
+                ReceivedValuesUndo::PhaseReplace { at, values } => {
+                    self.phase_at = at;
+                    self.phase_values = values;
+                }
+                ReceivedValuesUndo::PhaseInsert { key, previous } => match previous {
+                    Some(id) => {
+                        self.phase_values.insert(key, id);
+                    }
+                    None => {
+                        self.phase_values.remove(&key);
+                    }
+                },
             }
         }
+        Ok(())
+    }
+
+    /// Called once the outer candidate is accepted, after all nested event
+    /// checkpoints have finished. No durable-save acknowledgement is implied.
+    pub fn discard_undo(&mut self) {
+        self.undo.clear();
     }
 }

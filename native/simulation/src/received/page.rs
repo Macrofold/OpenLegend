@@ -315,7 +315,13 @@ impl TemporalPageRecord {
             &page.epoch,
             row.payload.len(),
         )?;
-        if expected != row.extra {
+        // SQL numeric values and JSON numbers share JavaScript's number domain:
+        // typed 0.0 and transported 0 must compare as the existing writer does.
+        if json_record(&expected)
+            .map_err(|_| ReceivedError("Temporal projection encoding failed."))?
+            != json_record(&row.extra)
+                .map_err(|_| ReceivedError("Temporal projection encoding failed."))?
+        {
             return Err(ReceivedError(
                 "Temporal column projection disagrees with its payload.",
             ));

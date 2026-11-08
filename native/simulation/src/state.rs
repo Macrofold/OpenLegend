@@ -805,6 +805,103 @@ pub struct Action {
     pub consumed: Vec<Yield>,
 }
 
+impl Action {
+    // Same minimal owned record as kernel.ts's temporary action. Installation
+    // never calls this constructor to fill missing fields in an imported action.
+    fn native_action(id: String, kind: &str, stage: &str) -> Self {
+        Self {
+            feeding: None,
+            gathering: None,
+            attack_observers: None,
+            cooperation: None,
+            combat_help_id: None,
+            evasion: None,
+            ranged: None,
+            attack_execution: None,
+            competence_pin: None,
+            ranged_policy_pin: None,
+            coaching_episode_id: None,
+            assembly_phase: None,
+            assembly_exit_pending: None,
+            gate_work: None,
+            boundary_impact: None,
+            hearth_work: None,
+            assembly_corner: None,
+            construction_grant: None,
+            material_permission: None,
+            material_origin_ids: None,
+            material_contribution_ids: None,
+            requires_lethal_review: None,
+            lethal_permission: None,
+            scar_id: None,
+            recipe_pin: None,
+            manufacture_tools: None,
+            food_preparation: None,
+            fishing: None,
+            strike_phase: None,
+            strike_motion: None,
+            strike_outcome: None,
+            guard: None,
+            follow: None,
+            transferred: None,
+            quantity: None,
+            recipe_id: None,
+            item_id: None,
+            weapon_item_id: None,
+            ammo_item_id: None,
+            heat_id: None,
+            fire_operation: None,
+            fire_guard: None,
+            native_locomotion: None,
+            target_life: None,
+            id: id,
+            kind: kind.to_owned(),
+            stage: stage.to_owned(),
+            target_id: None,
+            destination: None,
+            path: Vec::new(),
+            motion_sample_remaining_metres: None,
+            navigation: None,
+            replans: None,
+            remaining_seconds: 0.0,
+            total_seconds: 0.0,
+            attribute_id: None,
+            definition_id: None,
+            definition_version: None,
+            resource_definition: None,
+            consumed: Vec::new(),
+        }
+    }
+    pub(crate) fn status_effect(episode: String, definition_id: String) -> Self {
+        let mut action = Self::native_action(episode, "status-effect", "working");
+        action.definition_id = Some(definition_id);
+        action
+    }
+    pub(crate) fn movement(
+        id: String,
+        destination: SurfacePoint,
+        path: Vec<SurfacePoint>,
+        approaching: bool,
+        navigation: Option<NavigationPending>,
+        native_locomotion: Option<crate::native_response::NativeLocomotion>,
+    ) -> Self {
+        let mut action = Self::native_action(
+            id,
+            "move",
+            if approaching {
+                "approaching"
+            } else {
+                "working"
+            },
+        );
+        action.destination = Some(destination);
+        action.path = path;
+        action.navigation = navigation;
+        action.native_locomotion = native_locomotion;
+        action
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReleaseSupport {

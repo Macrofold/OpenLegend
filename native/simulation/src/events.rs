@@ -13,6 +13,9 @@ use crate::values::{
     deserialize_present_option, deserialize_present_safe_integer, deserialize_safe_integer,
 };
 
+mod history;
+pub use history::*;
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum EmissionText {
@@ -96,6 +99,7 @@ pub struct WorldEvent {
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
+        serialize_with = "crate::encoding::serialize_optional_js_map",
         skip_serializing_if = "Option::is_none"
     )]
     pub data: Option<IndexMap<String, EventScalar>>,
@@ -108,7 +112,7 @@ pub struct WorldEvent {
 pub struct EventEmissionIntent {
     pub event_type: String,
     pub text: EmissionText,
-    pub audience: Vec<String>,
+    pub audience: AudienceSelection,
     pub source_id: Option<String>,
     pub target_id: Option<String>,
     pub data: Option<IndexMap<String, EventScalar>>,
@@ -119,6 +123,15 @@ pub struct EventEmissionIntent {
     pub exposure: Option<EncounterExposure>,
 }
 
+/// Physical occurrences prove their actual recipients through the receiver
+/// owner. A private or already witnessed producer can name its exact recipients;
+/// an empty explicit list never stands in for unfinished physical reception.
+#[derive(Clone, Debug)]
+pub enum AudienceSelection {
+    Physical,
+    Explicit(Vec<String>),
+}
+
 /// Only the actual event emitter may construct completion after its original
 /// receiving/history/reaction duties. Identity equality alone is insufficient.
 #[derive(Debug)]
@@ -126,6 +139,28 @@ pub struct CompletedOccurrence {
     event_id: String,
     order: u64,
     sequence: u64,
+}
+
+/// The original event and each receiver's admitted source are placed before a
+/// reaction may emit a nested occurrence. The actual acquisition owner creates
+/// this token; the public transport cannot synthesize completion from IDs.
+#[derive(Debug)]
+pub struct AcquiredOccurrence {
+    event_id: String,
+    order: u64,
+    sequence: u64,
+}
+
+impl AcquiredOccurrence {
+    pub fn event_id(&self) -> &str {
+        &self.event_id
+    }
+    pub fn order(&self) -> u64 {
+        self.order
+    }
+    pub fn sequence(&self) -> u64 {
+        self.sequence
+    }
 }
 
 impl CompletedOccurrence {
