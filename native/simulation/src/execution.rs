@@ -190,19 +190,82 @@ impl CandidateJournal {
     pub(crate) fn byte_budget(&self) -> &ByteBudget {
         &self.budget
     }
-    pub(crate) fn encode_sensory_changes(
+    /// The receiver's semantic owners select their own rows. The final SQL
+    /// prefix later removes redundant cascade deletes; private ledger metadata
+    /// still retains every exact child tombstone until acceptance.
+    pub(crate) fn encode_reception_changes(
         &self,
         state: &SimulationState,
         output: &mut crate::records::RowEncoder<'_>,
         budget: &ByteBudget,
     ) -> Result<(), crate::records::RecordEncodingError> {
-        self.sensory.encode_changes(
-            &state.reception,
-            self.root_sensory,
-            &state.records,
+        let reception = &state.reception;
+        let schema = &state.installed.schema;
+        let records = &state.records;
+        crate::reception::encode_perception_owner_changes(
+            reception,
+            schema,
+            records,
+            &self.originals,
+            self.root_originals,
+            &self.current,
+            self.root_current,
             output,
             budget,
-        )
+        )?;
+        self.current.encode_contact_changes(
+            reception,
+            self.root_current,
+            records,
+            output,
+            budget,
+        )?;
+        self.current.encode_scene_changes(
+            reception,
+            self.root_current,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.current.encode_motion_changes(
+            reception,
+            self.root_current,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.current.encode_visibility_changes(
+            reception,
+            self.root_current,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.episodes.encode_changes(
+            reception,
+            self.root_episodes,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.recognition.encode_changes(
+            reception,
+            self.root_recognition,
+            schema,
+            records,
+            output,
+            budget,
+        )?;
+        self.sensory
+            .encode_changes(reception, self.root_sensory, records, output, budget)?;
+        if let Some(values) = &reception.received_values {
+            crate::received::encode_received_value_changes(values, records, output, budget)?;
+        }
+        Ok(())
     }
     /// Disposable provider binding freshness, independent of gameplay identity
     /// and retained across nested rollback to fence every late answer.

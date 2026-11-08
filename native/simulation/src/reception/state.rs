@@ -135,8 +135,8 @@ pub struct PerceptionEvidenceOwner {
         serialize_with = "crate::encoding::serialize_js_map"
     )]
     pub receipts: IndexMap<String, u64>,
-    // SQL installation supplies original contact order; the TS balanced tree is
-    // replaced rather than retained as a second representation/authority.
+    // Kept in JavaScript exact-key order, matching the Source balanced tree.
+    // SQL's unordered row positions do not establish this runtime iteration.
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub current: IndexMap<String, CurrentContact>,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]

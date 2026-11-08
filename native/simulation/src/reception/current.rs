@@ -403,17 +403,8 @@ pub enum CurrentCheck {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CurrentPartPartition {
-    pub members: Vec<(String, CurrentReceivedPart)>,
-    pub times: CurrentGroupTimes,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub revision: u64,
-    pub check: CurrentCheck,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub availability: Option<CurrentAvailability>,
+    // Source creates partitions by spreading the reception stamp first. The
+    // metadata TEXT codec retains that exact current-format field order.
     pub received_at: f64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub received_order: u64,
@@ -425,6 +416,17 @@ pub struct CurrentPartPartition {
         skip_serializing_if = "Option::is_none"
     )]
     pub frame_ref: Option<ReceivedValueReference>,
+    pub members: Vec<(String, CurrentReceivedPart)>,
+    pub times: CurrentGroupTimes,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    pub check: CurrentCheck,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub availability: Option<CurrentAvailability>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

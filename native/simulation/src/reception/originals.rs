@@ -2,6 +2,8 @@
 //! this journal together with values, identity, temporal and physical owners.
 //! This leaf does not install current grants or finalize attention/history.
 
+mod save;
+
 use super::retained_size::{HeapBytes, heap_sum, map_storage};
 use super::*;
 use crate::activity::ActivityDisplayLimits;

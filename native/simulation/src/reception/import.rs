@@ -292,7 +292,7 @@ pub(crate) fn read_reception_rows(
             if !current {
                 return Err(invalid());
             }
-            let current = map_rows(
+            let mut current = map_rows(
                 import,
                 "mind_perception_current",
                 &row.id,
@@ -328,6 +328,13 @@ pub(crate) fn read_reception_rows(
                     Ok(contact)
                 },
             )?;
+            // Source's ordered-record tree iterates exact keys in JavaScript
+            // string order. Unordered SQL ordinals cannot provide that order.
+            if let Some(current) = &mut current {
+                current.sort_unstable_by(|left, _, right, _| {
+                    crate::encoding::js_string_cmp(left, right)
+                });
+            }
             // Split contacts must retain their immutable content cache. Serializing
             // through a temporary parent would discard that exact acquired body.
             body.insert(

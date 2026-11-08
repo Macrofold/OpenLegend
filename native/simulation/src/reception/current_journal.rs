@@ -11,6 +11,7 @@ use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
 mod metadata;
+mod save;
 
 fn invalid() -> ReceivedError {
     ReceivedError("Invalid current receiving mutation or rollback.")
@@ -765,7 +766,24 @@ impl CurrentJournal {
         let current = owner_mut(state, observer)?;
         match after {
             Some(after) => {
-                current.current.insert(subject.to_owned(), after);
+                if let Some(prior) = current.current.get_mut(subject) {
+                    *prior = after;
+                } else {
+                    // Match Source ordered-record iteration without rebuilding
+                    // or sorting the whole scene after each acquisition.
+                    let mut low = 0;
+                    let mut high = current.current.len();
+                    while low < high {
+                        let middle = low + (high - low) / 2;
+                        let (key, _) = current.current.get_index(middle).ok_or_else(invalid)?;
+                        if crate::encoding::js_string_cmp(key, subject).is_lt() {
+                            low = middle + 1;
+                        } else {
+                            high = middle;
+                        }
+                    }
+                    current.current.shift_insert(low, subject.to_owned(), after);
+                }
             }
             None => {
                 current.current.shift_remove(subject);

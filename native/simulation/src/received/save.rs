@@ -41,7 +41,7 @@ pub(crate) fn encode_received_value_changes(
             &placement,
             "{\"sources\":{}}",
             &[],
-            true,
+            false,
             RowEffects::default(),
         )?;
         output.observe_owner(&OwnerCoverage {
@@ -91,7 +91,9 @@ pub(crate) fn encode_received_value_changes(
             &placement,
             record.as_ref(),
             &columns,
-            true,
+            // The Source pooled dictionary is partial after creation; ordinary
+            // changed saves use its upsert, independently of native custody.
+            false,
             RowEffects::default(),
         )?;
     }

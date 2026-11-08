@@ -1,5 +1,7 @@
 //! Persist the actual pending detector work, selected from this owner's sparse
 //! journal. Both keyed children are unordered in the current Source schema.
+//! Those partial dictionaries use ordinary upserts; complete native placement
+//! custody does not change the Source writer's insert-only policy.
 use super::*;
 use crate::records::{
     OwnerCoverage, RecordEncodingError, RecordLedger, RowEffects, RowEncoder, SelectedPlacement,
@@ -38,7 +40,7 @@ impl SensoryJournal {
                     address.value(),
                     current,
                     &[],
-                    address.create(),
+                    false,
                     RowEffects::default(),
                 )?;
             } else {
@@ -173,7 +175,7 @@ fn write_member<T: Serialize + PartialEq>(
             address.value(),
             value,
             &[],
-            address.create(),
+            false,
             RowEffects::default(),
         )?;
     } else {

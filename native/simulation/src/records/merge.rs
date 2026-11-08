@@ -106,9 +106,32 @@ pub(crate) fn merge_changes(
     for (table, rows) in next.writes {
         let columns = &schema.layout(&table)?.columns;
         let target = writes.entry(table.clone()).or_default();
-        for row in rows {
-            if let Some(deleted) = deletes.get_mut(&table) {
-                deleted.shift_remove(&row.id);
+        for mut row in rows {
+            if deletes
+                .get_mut(&table)
+                .is_some_and(|deleted| deleted.shift_remove(&row.id))
+            {
+                // This logical owner disappeared and returned before the same
+                // SQL prefix was written. Its durable predecessor may still
+                // exist; retain explicit child removals, upsert the replacement
+                // and replace its complete reference closure.
+                row.create = false;
+                row.write_columns = None;
+                if schema
+                    .layout(&table)?
+                    .columns
+                    .iter()
+                    .any(|column| column == "value_refs")
+                {
+                    if row.received_uses_changed == Some(false) {
+                        row.received_uses_changed = Some(true);
+                    }
+                    row.received_value_additions = None;
+                    row.received_value_removals = None;
+                }
+                if table == "mind_temporal_pages" {
+                    row.logical_removal = Some(true);
+                }
             }
             // Map.set preserves an existing key's first insertion position.
             // Mutating its slot also avoids shifting every later row.

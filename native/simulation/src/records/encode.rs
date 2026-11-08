@@ -6,7 +6,9 @@ use super::{
     ChangedRow, ChangedRows, OwnerCoverage, RecordEncodingError, RecordPlacement, RecordSchema,
 };
 use crate::host::retained_size::heap_sum;
+use crate::host::retained_size::map_storage;
 use crate::host::{ByteBudget, ByteReservation};
+use indexmap::IndexMap;
 use serde::Serialize;
 use std::mem::size_of;
 
@@ -36,10 +38,16 @@ impl EncodedRows {
         (self.changes, self.owners, self.reservation)
     }
 }
+#[derive(Clone, Copy)]
+struct CoverageFields {
+    complete: bool,
+    next_ordinal: u64,
+    parent_present: bool,
+}
 pub(crate) struct RowEncoder<'a> {
     schema: &'a RecordSchema,
     changes: ChangedRows,
-    owners: Vec<OwnerCoverage>,
+    owners: IndexMap<String, IndexMap<String, CoverageFields>>,
     reservation: ByteReservation,
 }
 fn error() -> RecordEncodingError {
@@ -59,7 +67,7 @@ impl<'a> RowEncoder<'a> {
         Ok(Self {
             schema,
             changes: ChangedRows::default(),
-            owners: Vec::new(),
+            owners: IndexMap::new(),
             reservation: budget.reserve(size_of::<Self>()).map_err(|_| error())?,
         })
     }
@@ -212,33 +220,100 @@ impl<'a> RowEncoder<'a> {
         if owner.next_ordinal > crate::identity::MAX_SAFE_INTEGER {
             return Err(error());
         }
-        self.reserve(
-            owner
-                .table
-                .len()
-                .checked_add(owner.owner.len())
-                .and_then(|bytes| {
-                    bytes.checked_add((self.owners.len() + 1) * 2 * size_of::<OwnerCoverage>())
-                })
-                .ok_or_else(error)?,
-        )?;
+        let fields = CoverageFields {
+            complete: owner.complete,
+            next_ordinal: owner.next_ordinal,
+            parent_present: owner.parent_present,
+        };
         if let Some(prior) = self
             .owners
-            .iter_mut()
-            .find(|prior| prior.table == owner.table && prior.owner == owner.owner)
+            .get_mut(&owner.table)
+            .and_then(|owners| owners.get_mut(&owner.owner))
         {
-            *prior = owner.clone();
-        } else {
-            self.owners.try_reserve_exact(1).map_err(|_| error())?;
-            self.owners.push(owner.clone());
+            // Repeated subjects may refresh one collection's coverage. This
+            // changes no allocation and must not accrue fictitious byte debt.
+            *prior = fields;
+            return Ok(());
         }
+        let records = self.owners.get(&owner.table);
+        let new_table = records.is_none();
+        let outer_growth = if new_table && self.owners.len() == self.owners.capacity() {
+            map_storage::<String, IndexMap<String, CoverageFields>>(
+                self.owners
+                    .len()
+                    .checked_add(1)
+                    .and_then(|count| count.checked_mul(2))
+                    .ok_or_else(error)?,
+            )
+            .ok_or_else(error)?
+        } else {
+            0
+        };
+        let inner_growth = if records.is_none_or(|records| records.len() == records.capacity()) {
+            map_storage::<String, CoverageFields>(
+                records
+                    .map_or(0, IndexMap::len)
+                    .checked_add(1)
+                    .and_then(|count| count.checked_mul(2))
+                    .ok_or_else(error)?,
+            )
+            .ok_or_else(error)?
+        } else {
+            0
+        };
+        self.reserve(
+            heap_sum([
+                outer_growth,
+                inner_growth,
+                owner.owner.len(),
+                if new_table { owner.table.len() } else { 0 },
+            ])
+            .ok_or_else(error)?,
+        )?;
+        if new_table {
+            self.owners.try_reserve(1).map_err(|_| error())?;
+            self.owners.insert(owner.table.clone(), IndexMap::new());
+        }
+        let records = self.owners.get_mut(&owner.table).ok_or_else(error)?;
+        records.try_reserve(1).map_err(|_| error())?;
+        records.insert(owner.owner.clone(), fields);
         Ok(())
     }
-    pub(crate) fn finish(self) -> Result<EncodedRows, RecordEncodingError> {
+    pub(crate) fn finish(mut self) -> Result<EncodedRows, RecordEncodingError> {
         self.schema.validate_changes(&self.changes)?;
+        let count = self
+            .owners
+            .values()
+            .try_fold(0usize, |count, owners| count.checked_add(owners.len()))
+            .ok_or_else(error)?;
+        let names = self
+            .owners
+            .iter()
+            .try_fold(0usize, |bytes, (table, owners)| {
+                bytes.checked_add(table.len().checked_mul(owners.len())?)
+            })
+            .ok_or_else(error)?;
+        self.reserve(
+            count
+                .checked_mul(size_of::<OwnerCoverage>())
+                .and_then(|bytes| bytes.checked_add(names))
+                .ok_or_else(error)?,
+        )?;
+        let mut owners = Vec::with_capacity(count);
+        for (table, records) in self.owners {
+            for (owner, fields) in records {
+                owners.push(OwnerCoverage {
+                    table: table.clone(),
+                    owner,
+                    complete: fields.complete,
+                    next_ordinal: fields.next_ordinal,
+                    parent_present: fields.parent_present,
+                });
+            }
+        }
         Ok(EncodedRows {
             changes: self.changes,
-            owners: self.owners,
+            owners,
             reservation: self.reservation,
         })
     }

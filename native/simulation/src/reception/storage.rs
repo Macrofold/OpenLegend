@@ -71,6 +71,32 @@ impl Serialize for MetadataGroups<'_> {
     }
 }
 
+/// Counts encoded storage without retaining a second body. The save owner
+/// reserves codecs and reference products before allocating either of them.
+pub(crate) fn current_contact_storage_bytes(
+    contact: &CurrentContact,
+) -> Result<usize, ReceivedError> {
+    let payload = if let Some(encoded) = &contact.encoded_payload {
+        encoded.len()
+    } else {
+        crate::encoding::json_record_len(&Payload {
+            order: contact.order,
+            content: PayloadContent {
+                field_order: &contact.content.field_order,
+                originals: &contact.content.originals,
+                groups: PayloadGroups(&contact.content.groups),
+            },
+        })
+        .map_err(|_| invalid())?
+    };
+    let metadata = crate::encoding::json_record_len(&Metadata {
+        sight: contact.sight.as_ref(),
+        groups: MetadataGroups(&contact.content.groups),
+    })
+    .map_err(|_| invalid())?;
+    payload.checked_add(metadata).ok_or_else(invalid)
+}
+
 pub fn encode_current_contact_payload(contact: &CurrentContact) -> Result<String, ReceivedError> {
     if let Some(encoded) = &contact.encoded_payload {
         return Ok(encoded.to_string());
@@ -214,8 +240,14 @@ pub fn received_contact_value_references(contact: &CurrentContact) -> Vec<&str> 
     sorted_unique(references)
 }
 pub fn received_owner_value_references(owner: &super::PerceptionEvidenceOwner) -> Vec<&str> {
+    received_header_value_references(owner.visual_confirmation.as_ref(), &owner.received)
+}
+pub(crate) fn received_header_value_references<'a>(
+    visual_confirmation: Option<&'a super::VisualConfirmation>,
+    received: &'a [Arc<ReceivedObservation>],
+) -> Vec<&'a str> {
     let mut references = Vec::new();
-    if let Some(phase) = &owner.visual_confirmation {
+    if let Some(phase) = visual_confirmation {
         references.extend(shared(&phase.frame_ref));
         references.extend(
             phase
@@ -224,7 +256,7 @@ pub fn received_owner_value_references(owner: &super::PerceptionEvidenceOwner) -
                 .and_then(|stamp| shared(&stamp.frame_ref)),
         );
     }
-    for source in &owner.received {
+    for source in received {
         references.extend(super::received_observation_value_references(source));
     }
     sorted_unique(references)

@@ -101,6 +101,8 @@ mod validation;
 pub(crate) use validation::*;
 mod import;
 pub(crate) use import::{ReceptionRoots, read_reception_rows};
+mod save;
+pub(crate) use save::encode_perception_owner_changes;
 mod storage;
 pub use storage::*;
 mod current_scope;

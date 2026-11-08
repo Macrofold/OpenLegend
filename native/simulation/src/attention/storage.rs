@@ -27,7 +27,7 @@ pub struct StoredAttention {
     relation_scans: IndexMap<String, AttentionRelationScan>,
 }
 
-pub struct AttentionStorage<'a>(&'a AttentionState);
+pub struct AttentionStorage<'a>(&'a AttentionState, bool);
 
 #[derive(Serialize)]
 #[serde(transparent)]
@@ -41,21 +41,45 @@ impl Serialize for AttentionStorage<'_> {
         let mut record = serializer.serialize_struct("StoredAttention", 11)?;
         record.serialize_field("policy", &state.policy)?;
         record.serialize_field("nextOrder", &state.next_order)?;
-        record.serialize_field("annotations", &JsMap(&state.annotations))?;
+        if self.1 {
+            record.serialize_field(
+                "annotations",
+                &std::collections::BTreeMap::<&str, ()>::new(),
+            )?;
+        } else {
+            record.serialize_field("annotations", &JsMap(&state.annotations))?;
+        }
         record.serialize_field("entries", &state.entries)?;
         record.serialize_field("explicit", &state.explicit)?;
-        record.serialize_field("latches", &JsMap(&state.latches))?;
+        if self.1 {
+            record.serialize_field("latches", &std::collections::BTreeMap::<&str, ()>::new())?;
+        } else {
+            record.serialize_field("latches", &JsMap(&state.latches))?;
+        }
         record.serialize_field("nextRelationAt", &state.next_relation_at)?;
         record.serialize_field("relationCursor", &state.relation_cursor)?;
         record.serialize_field("discoveryCursor", &state.discovery_cursor)?;
         record.serialize_field("relationRevision", &state.relation_revision)?;
-        record.serialize_field("relationScans", &JsMap(&state.relation_scans))?;
+        if self.1 {
+            record.serialize_field(
+                "relationScans",
+                &std::collections::BTreeMap::<&str, ()>::new(),
+            )?;
+        } else {
+            record.serialize_field("relationScans", &JsMap(&state.relation_scans))?;
+        }
         record.end()
     }
 }
 
 pub fn encode_attention_storage(state: &AttentionState) -> AttentionStorage<'_> {
-    AttentionStorage(state)
+    AttentionStorage(state, false)
+}
+
+/// Canonical SQL parent projection. Scheduling is omitted by the same codec;
+/// child records remain with the complete map owner.
+pub(crate) fn encode_attention_header(state: &AttentionState) -> AttentionStorage<'_> {
+    AttentionStorage(state, true)
 }
 
 /// Rebuilding this derived queue acquires no fact, creates no ID and changes no

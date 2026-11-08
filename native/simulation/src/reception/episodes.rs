@@ -2,6 +2,7 @@
 //! binding; neither retirement nor rollback acquires an observation.
 
 use super::*;
+mod save;
 use crate::host::retained_size::{HeapBytes, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::ReceivedError;
