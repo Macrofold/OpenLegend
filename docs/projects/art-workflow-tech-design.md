@@ -1,14 +1,14 @@
 # Art workflow — technical design
 
-| Status      | Current progress                                                                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Tools and preview are delivered; repair, prompt and people contracts are specified, and Kimodo source import is demonstrated. Family, target-rig and production qualification remain open. | 2026-11-06   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Common production readiness and its implementation modules are designed; report/rehearsal support and production qualification remain open. | 2026-11-08   |
 
 This design describes how the [art workflow](art-workflow-feature-spec.md) is built: which page owns what, the seam to the art direction, the naming and storage conventions, the helper tool, the local model preview, the consumer contract the 3D route relies on, and the delivery tasks. The workflow is an agent-operated procedure; almost all of it runs on tools that already exist (the Higgsfield CLI, the OpenAI Images API, Blender 5.2.2 and the `pnpm assets` CLI). The new code is deliberately small.
 
 ## Maintained records
 
-- **Implementation:** [AF04–AF18](../maintainers/art-direction.md#art-flow-follow-through) own workflow and motion delivery; [AP01–AP03](../maintainers/art/prompting-and-library.md) own prompt guidance and source coverage; [PPL01–PPL06](../maintainers/art/people.md) own the accepted people design and unfinished family, creator and wardrobe implementation. The tracker owns current progress.
+- **Implementation:** [AF04–AF20](../maintainers/art-direction.md#art-flow-follow-through) own workflow and motion delivery, including common preparation/report and rehearsal support in §12; [AP01–AP03](../maintainers/art/prompting-and-library.md) own prompt guidance and source coverage; [PPL01–PPL06](../maintainers/art/people.md) own the accepted people design and unfinished family, creator and wardrobe implementation. The tracker owns current progress.
 - **Limits and constraints:** no new game/runtime limits; §11 owns upstream motion constraints and offline authoring defaults ([feature specification](art-workflow-feature-spec.md#maintained-records)). The helpers read the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) values from one table, and the preview applies [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload).
 - **Related:** [feature specification](art-workflow-feature-spec.md); [asset workflow](../asset-workflow.md); [PlayCanvas guidance](../../.agents/skills/openlegend-playcanvas/SKILL.md); [world presentation](../world-presentation.md); [V3D tracker](../maintainers/3d-pixel-art.md).
 
@@ -26,6 +26,7 @@ The designed [people specification](people-from-parts-feature-spec.md) and [tech
 | [3D models](../production-workflows/art-flows/3d-models.md)                                     | Concept or sheet → prop, character or creature GLB, step by step, on either path; consumer contract and budgets                                  | 3D props, characters, creatures                                           |
 | [Animation](../production-workflows/art-flows/animation.md)                                     | Conditional motion work, reuse, source selection, target-preserving preparation, clip review and qualification                                   | Only a request/consumer requiring animation                               |
 | [Production packages](../production-workflows/art-flows/production.md)                          | Package contract; the finalize path; 2D, sprite, 2D rig, animation, material, environment, VFX and audio recipes                                 | Production of non-3D assets, package rules and the finalize path          |
+| [Runtime preparation](../production-workflows/art-flows/runtime-preparation.md)                 | Conditional physical references, motion routing, rough consumer rehearsal, complete assembly and readiness checks                                | Finished game assets and the applicable prototype/integration scope       |
 | [Study record](../production-workflows/art-flows/study-record.md)                               | The record outline and final message                                                                                                             | Writing or resuming a study                                               |
 | [Prompt direction](../production-workflows/art-flows/prompting.md)                              | Turning the existing brief into supported inputs; source locks, defect diagnosis and operation-specific examples                                 | Drafting or revising a generation/edit prompt; only the matching sections |
 | [Current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance) | The look's entry point and its production notes                                                                                                  | Every brief                                                               |
@@ -187,11 +188,11 @@ The script is a tool, so verification is a disposable run, not a new test suite:
 
 ## 6. Consumer contract used by the 3D route
 
-The [3D page's consumer contract](../production-workflows/art-flows/3d-models.md#consumer-contract-and-budgets) owns the current format, axes, size, clip, naming, compression and budget requirements, each linked to its owner. The helpers read the same facts: `report` checks the required clips and the mesh/bone name rule, and its budget dictionary mirrors A3D04–A3D06. The general intake rules for arbitrary assets remain the proposed [3D pipeline design](3d-pixel-art-asset-pipeline.md#6-quarantine-conversion-and-validation); a manually prepared trusted asset uses the existing delivery path.
+The [3D page's consumer contract](../production-workflows/art-flows/3d-models.md#consumer-contract-and-budgets) owns the current format, axes, size, clip, naming, compression and budget requirements, each linked to its owner. The helpers read the same facts with the current limitations below: `report` checks its profile clip list, reports mesh/bone name conflicts, and its budget dictionary mirrors A3D04–A3D06. The current `creature` profile has no automatic required-clip list although the prepared actor loader requires `Idle` and `Run`; compare those manually until PR2 supplies explicit consumer checks. The general intake rules for arbitrary assets remain the proposed [3D pipeline design](3d-pixel-art-asset-pipeline.md#6-quarantine-conversion-and-validation); a manually prepared trusted asset uses the existing delivery path.
 
 ### Source, part and revision handoff
 
-Use the existing study record and storage references. Resolve the selected source, consumer, requested change and stopping point. Link existing reports/catalogs/source data for unchanged facts; record only missing facts, changed assumptions and affected checks. Do not transcribe a second bone, clip, material or revision inventory. Added handoff work and narrower rechecks are an **unqualified experiment**, not a new routine form; qualify them below before changing the existing [package procedure](../production-workflows/art-flows/production.md#1-define-the-package-before-finishing).
+Use the existing study record and storage references. Resolve the selected source, consumer, requested change and stopping point. Link existing reports/catalogs/source data for unchanged facts; record only missing facts, changed assumptions and affected checks. Do not transcribe a second bone, clip, material or revision inventory. The selected [production-readiness contract](#12-production-readiness) makes applicable dependency facts and consumer checks ordinary package requirements. Uncertain production techniques and claimed effort/performance improvements retain the isolated experiments below; they are not prerequisites for requiring a usable handoff.
 
 | Boundary                                  | Additional dependency facts                                                                                                             | Failure and owner                                                                                                                                                              |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -216,12 +217,12 @@ Required semantic parts remain editable even if a permitted export combines thei
 
 ### Isolated workflow experiments
 
-AF07 owns these **unqualified experiments**; AF08 promotes only the scope supported by their results. Keep each comparison in its existing study record. Correct source/tool restrictions remain mandatory; an experiment cannot waive them or a required consumer check. Routine art edits need no benchmark campaign.
+AF07 owns these **unqualified method/efficiency experiments**; AF08 promotes only the scope supported by their results. Keep each comparison in its existing study record. Correct source/tool restrictions and common readiness checks remain mandatory. Compare additional automation, check-selection optimisations or uncertain techniques when actually selected, not the basic obligation to deliver required dependencies. Routine art edits need no benchmark campaign.
 
-| Change under test                                  | Actual before/after                                                                                                                                    | Required correctness evidence                                                                                                                                                                                                                                               |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Added handoff or dependency-check procedure        | The prior package/repair procedure versus the same job with only the proposed handoff detail or check selection changed; test those changes separately | The next operator can locate the exact source and complete the requested repair. Required identity, dimensions, parts and motion survive. Detect an intentionally omitted dependency relevant to this change: for example a retained clip, source reference, part or state. |
-| One newly selected repair, fit or export technique | The established route versus one named technique on the same source and requested defect; separate UV, topology, rig, head/garment and clip changes    | The repair passes its affected rows in the [repair map](../production-workflows/assets-and-animation.md#repair-map-and-downstream-effects), final consumer checks and the same play-distance review.                                                                        |
+| Change under test                                                    | Actual before/after                                                                                                                                                     | Required correctness evidence                                                                                                                                                                                                                                               |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Optional handoff automation or a claimed check-selection improvement | The current complete package/repair procedure versus the same job with only the proposed automation or check-selection technique changed; test those changes separately | The next operator can locate the exact source and complete the requested repair. Required identity, dimensions, parts and motion survive. Detect an intentionally omitted dependency relevant to this change: for example a retained clip, source reference, part or state. |
+| One newly selected repair, fit or export technique                   | The established route versus one named technique on the same source and requested defect; separate UV, topology, rig, head/garment and clip changes                     | The repair passes its affected rows in the [repair map](../production-workflows/assets-and-animation.md#repair-map-and-downstream-effects), final consumer checks and the same play-distance review.                                                                        |
 
 1. **Freeze the comparison.** Record exact input bytes, the previous recipe's commit/path, one changed step, requested quality/coverage, tool versions and consumer. Hold style, dimensions, required clips and resource budgets constant. Use separate working copies. If both routes already do the same work, record no treatment difference; do not invent a whole-model rebuild as the baseline.
 2. **Execute both routes.** Measure hands-on work, provider/tool wait and run time, total elapsed time, repair passes and paid cost separately. Include documentation, recovery and rework. Do not sum overlapping waits as labour or substitute reading-time estimates. Keep task-specific scripts disposable unless repeated real use warrants a helper.
@@ -573,3 +574,261 @@ For each case record source version/hash, target/map, source/profile facts, gene
 **Performance:** this is per-request offline work. One request helper handles one candidate/job; no task queue, per-NPC calls or model fan-out. Import/bake work scales with source frames × mapped bones, bounded by the selected short clip and target family. Process source batches sequentially, discard disposable source objects/actions after baking, and reuse the generated source across compatible targets instead of paying per character. Viewer work uses the existing asset bounds, animation update/culling and cleanup. Runtime receives ordinary target GLB clips and existing small stride metadata, so there is no model download, inference latency or new network dependency during play. Additional clips still have ordinary payload/memory cost; retain only the relevant runtime set and keep unused auditions in study storage.
 
 **Open facts, assigned rather than blocking the design:** AF16 establishes actual account access, billable bounds, hosted rest convention, generated quality and total correction effort. AF15's inspected target maps settle exact spine/neck correspondence. AF17 establishes the optional human pose-buffer bake and whether it beats ordinary keying. None requires Mike to choose a new architecture now. Other non-motion decisions, AF07/AF12/AF13 art acceptance and V3D family qualification retain their current status with their owners. This design does not claim any provider execution, accepted generated asset, renderer improvement or resolved gameplay timing issue.
+
+## 12. Production readiness
+
+This section implements the selected [feature decision](art-workflow-feature-spec.md#310-common-production-readiness).
+The [operator procedure](../production-workflows/art-flows/runtime-preparation.md) owns the ordered
+steps and conditional checklist; this section owns mechanisms, work boundaries and acceptance.
+The design is complete. Tool additions below are planned under AF19–AF20, not available commands.
+Existing supported manual preparation can proceed without waiting for those conveniences.
+
+### 12.1 Owners and data flow
+
+| Concern                                    | Existing owner and integration point                                                                     | Responsibility retained                                                                                         |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Intended use and required visible states   | Selected world's definitions; existing brief and study record                                            | Decide what exists, can act, changes state and is disclosed; no filename/species inference                      |
+| Visual source, rig, material and export    | Existing 3D/people/animation recipes; `scripts/art/art-tool.py`                                          | Prepare assets offline; no provider calls or publication from inspection                                        |
+| Exact artifact inventory and delivery      | Existing catalogs, `packages/assets`, `scripts/assets.ts`, [asset workflow](../asset-workflow.md)        | IDs/references, dependency files, rights, visibility and selected releases; no new manifest                     |
+| Body, support, reach and physical geometry | [Spatial contract](../spatial-world.md#authored-terrain-and-bodies) and installed world definitions      | Admit actual numeric bodies/structures, physical effects and navigation; imported geometry is not authoritative |
+| Actor pose                                 | `apps/client/src/model-animation.ts`, `characters/character-motion.ts`, existing person-family consumers | Load supported clips, pace locomotion and display permitted native action progress                              |
+| Props, scenery and secondary motion        | Existing scene/prop owners, [wind](../world-presentation.md#wind), supported garment consumers           | Apply their established transforms, materials, culling and lifecycle; no generic physics inference              |
+| Inspection                                 | Existing `art-study.ts`, `scene-study.ts` and person study/preview surfaces                              | Rehearse the selected supported assembly; a study adds no gameplay dispatch                                     |
+
+The flow is **brief + selected definitions → source assembly → exported artifacts → inspection →
+existing catalog/publication → authorized integration**. The final step is conditional on the
+request. Requirements and diagnostic reports are read-only inputs to the operator; they never
+write domain state. Only the ordinary integration path installs a selected appearance or changes
+an admitted definition. Permitted projections continue to determine what any player or NPC sees;
+visual state cannot disclose a private inventory, identity, wound or history by reading raw state.
+
+Use the existing [boundary decision procedure](../engine-and-world-boundaries.md#5-a-repeatable-boundary-decision):
+worlds can differ in anatomy, style, action families and physical law; the common procedure merely
+checks supported representations and references. No new runtime computation is needed to record
+those relationships. A genuinely missing mechanic stays with its existing feature owner.
+
+### 12.2 Handoff contract without another schema
+
+The existing study record's Brief, Construction and sources, Review and Resume sections hold
+only missing facts and links. Catalogs retain exact asset inventories; world definitions retain
+physical values. The table below defines the information the next operator must be able to resolve,
+not a new persisted runtime type, versioned manifest or JSON validation framework.
+
+| Information         | Required representation and resolution                                                                                                                            |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source and consumer | Exact source/export references, selected consumer/code revision and any relevant installed family/recipe revision; distinguish existing versus proposed consumer  |
+| Required coverage   | Requested part/state/action → actual file/node/clip → existing binding → checked result; use the current catalog mapping instead of transcribing it               |
+| Assembly frame      | Source/export units and conversion, root anchor, parent and local join/grip/hinge frame; preserve the target family's rest/bind convention                        |
+| Physical references | Current body's/structure's definition or admitted profile, support and interaction/contact owner as applicable; authored proposals remain labelled until admitted |
+| Motion contract     | Method, target rig, exact action names, loop/one-shot and root policy, native phase binding, retained clips and relevant gait facts                               |
+| Resources           | Actual report plus intended outfit/kit/repetition context and existing budget references; runtime measurements include their device, camera and workload          |
+| Completion          | Applicable checks and failures, exact checked references and separate exported/checked/archived/selected/integrated facts                                         |
+
+A static decoration may resolve motion/physical/interaction rows with one explicit not-needed
+statement. An asset advertised for use cannot leave its required coverage as “TODO”; if the
+consumer is not implemented, the package is for that design, not a checked running-game asset.
+A single clip or material can be finished independently when that is the named deliverable.
+
+**Transforms:** express exported rigid joins in the selected consumer's local frame (currently
+metres, right-handed, Y-up), and record source conversion separately. For a rigid child whose mount
+must coincide with a parent anchor, use the existing transform helpers to compose
+`parentWorld × parentAnchorLocal × inverse(childMountLocal)`. A node's location is not a second
+saved world position. Required exported anchors must be unambiguous in their actual hierarchy;
+record the parent path, not just a repeated name. Skin/bind transforms and deformable garment fit
+follow their existing family owners rather than applying rigid attachment arithmetic blindly.
+Whole-model ground centring remains appropriate only for the selected freestanding consumer.
+
+**Physical alignment:** inspect visuals against the admitted body/structure and relevant anchors.
+Selection geometry, blocking/support geometry, combat contact and decorative simulation constraints
+remain separate. A doorway's outer bound is not its solid geometry. Native shapes/queries—not a
+visual convex hull or material name—determine clearance, reach and navigation. An artist can retain
+proposed proxies/helpers externally; they become authoritative only through the normal world
+integration boundary. Merely inspecting a proxy proves alignment, not successful traversal.
+
+### 12.3 Implementation modules
+
+| Module                         | Owner                            | Deliverable and dependency                                                                                      | Exit                                                                                                                                           |
+| ------------------------------ | -------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR1 — Common package procedure | AF19 design subitem              | Existing seven-stage routes, package procedure and study record call runtime preparation; no code required      | A producer can resolve each conditional requirement and the next operator can locate its single owner                                          |
+| PR2 — Missing export facts     | AF19 implementation              | Extend the existing `art-tool.py report`; retain current reporting and explicit consumer expectations below     | Actual export dependencies/channels/anchors can be inspected; required failures remain failures without forcing animation onto static art      |
+| PR3 — Consumer rehearsal       | AF20                             | Reuse existing model/person/scene consumers and only add a missing inspection hook for the selected cases below | Difficult rough assemblies and final exports are inspectable through the correct consumer, with honest missing-capability outcomes and cleanup |
+| PR4 — Production qualification | AF07 and existing PPL/V3D owners | Apply PR1 now; use PR2/PR3 where delivered; reuse selected assets and existing proof campaigns                  | Required package/use cases pass, actual production effort is recorded, and family/artistic evidence remains correctly scoped                   |
+
+These are workflow/tooling modules, not four new services or packages. PR2 and PR3 can proceed
+independently on established inputs; a valid manual check is not blocked by unfinished reporting.
+A person still depends on its selected family; an independent prop or existing animal does not.
+Do not generate a new specimen merely because a module needs evidence.
+
+#### PR2 — Extend the existing report, then its callers
+
+Current `report` imports a file and reports size, rest bounds, geometry, materials/images, rig,
+clips and profile budgets. It does not measure actual draw calls, physical usability or dynamic
+bounds. Its current `creature` profile has no required clips even though `installLocomotion`
+requires `Idle` and `Run`; this is a concrete source of false confidence, not a new animal policy.
+
+Implementation order:
+
+1. Preserve the report's existing output fields and current single-file processing path. Add
+   facts to the same report rather than creating a new package registry. This preserves active
+   callers as part of the change, not legacy formats or a compatibility reader.
+2. For final GLB/glTF inputs, inspect encoded data as well as the Blender import. Report actual
+   external buffer/image references versus embedded data, required extensions and primitive/material
+   assignments. Count source images distinctly and distinguish exported declarations from inferred
+   Blender settings. FBX/OBJ remain source reports; they cannot establish final GLB readiness.
+3. Add a compact node/anchor view: hierarchy path, exported node index within this exact file,
+   local transform and skin association. The node index is a diagnostic locator, not a new stable
+   asset ID. Report ambiguities affecting a required attachment; do not forbid every harmless
+   duplicate visual name. Keep known mesh/bone binding conflicts visible.
+4. Extend material/geometry facts with primitive counts, material alpha mode/cutoff/double-sided
+   flags, used texture slots/channels and unique image dimensions. These are structural facts,
+   never a claim of a fixed runtime draw count or GPU residency.
+5. Report each encoded animation's duration and transform/rotation/scale/weight target paths,
+   identifying missing or unresolved data. Do not infer foot contact, sensible acting, state-machine
+   dispatch or correct physics from channels existing. Rest bounds remain explicitly rest bounds;
+   dynamic bounds require the PR3 consumer check.
+6. Add planned repeatable `--require-clip NAME` arguments to `report`. They add exact expected
+   names to the selected profile's existing required set; deduplicate expectations and report
+   missing names. Update the prepared-creature export callers to pass `Idle` and `Run`, and
+   any catalog-declared required clips, through that same check. Keep the current `character`
+   profile default; use explicit expectations for another named consumer. `--strict` returns 2
+   for those missing requirements as it does for current failures. No action alias, automatic clip
+   renaming, silent substitute or globally required creature action is introduced.
+7. Final-package checks must fail for an unavailable required dependency, unsupported required
+   extension or wrong final format. Resolve relative source resources only inside the selected
+   external workspace; report remote URIs without fetching them or executing content. Reuse current
+   format and intake restrictions, not a new extension allowlist inferred from latest vendor docs.
+8. Update the working command examples after delivery. Until then, operators manually compare
+   exported clip/dependency inventories against the brief; the proposed flag is not copyable
+   current functionality. Review a static prop, a prepared creature missing `Run`, and an export
+   missing a required texture. A static prop must not acquire actor clip requirements.
+
+Keep encoded inspection in a small pure helper inside the existing art tooling if useful; no new
+package dependency is needed for GLB JSON/chunk inspection. Share the one parsed representation
+across report sections; process files sequentially and release imported scenes before the next
+file. Read only the explicit package/dependency set, never scan the whole library. Respect the
+existing intake/output guards. Do not add schema versions or migration code.
+
+#### PR3 — Rehearse through existing consumers
+
+Start by selecting the actual path from this table. A generic engine feature list is not evidence
+that its OpenLegend caller installs the necessary material, node binding or animation.
+
+| Selected representation                    | Existing inspection route                                                                | Additional proof for integration                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Prepared rigid or animated GLB             | Local model comparison and named study clips in `art-study.ts` / `model-animation.ts`    | The actual prop/actor selection, placement and motion driver uses the files                                     |
+| Adjustable body or fitted wearable         | Existing person preview/study and PPL family evaluation                                  | Current item/equipment state, removal and restored coverage; no new wardrobe dispatcher                         |
+| Foliage or a populated kit                 | Existing scene study through the real scenery/material/wind path                         | Same grouping, shadow, picking and bounds behavior as ordinary placement                                        |
+| Door, modular structure or usable interior | Existing structure/scene assembly and ordinary native placement/movement when authorized | Openings, support, body clearance, permitted camera/cutaway and changing geometry agree                         |
+| Unsupported effect/morph/secondary motion  | Existing matching recipe/consumer only when actually supported                           | Otherwise record the missing owning capability; do not add a universal mechanism to make the demonstration pass |
+
+For each selected rehearsal:
+
+1. Resolve exact input references and their current consumer/family. Reuse current local loading,
+   trust bounds and permissions; do not automatically upload a local candidate or mutate a release.
+2. Instantiate only the required parts and already-supported state/motion binding. Use ordinary
+   parent transforms and existing family assembly. Keep the preview's diagnostic poses separate
+   from game action dispatch and from the running world's saved state.
+3. Use the existing camera, named clip/state selection, game-travel inspection and scene fixture
+   controls where available. Add a narrowly scoped hook to an existing surface only if the selected
+   case cannot otherwise be inspected. The first delivery needs no new page, generalized physics
+   overlay, asset editor, scene database or universal simulation runner.
+4. Observe required poses/end states, contact and bounds at the normal camera and diagnostic views.
+   For foliage use the actual shared wind/material path, not a private shader copy. For an outfit
+   include the declared layers and body; for a module include its neighbouring structure pieces.
+5. Capture existing diagnostics/resources and state what they measure. A repeated group or outfit
+   uses the scenario from the brief; do not turn the largest exploratory count into a capacity
+   promise. If a proposed art budget is exceeded, resolve it with its owner; an installed hard
+   intake limit or loader refusal cannot be waived by a prose exception.
+6. Replace/remove the candidate and leave the preview. Existing load generations and ownership
+   must reject late results, release owned buffers/materials/animations/listeners and preserve
+   borrowed shared resources. Reuse existing caches and per-visible-pose updates. No per-frame
+   file validation, asset-library scans or renderer objects in domain state.
+
+A required consumer feature absent from the current runtime is an explicit integration dependency,
+not an invitation to simulate it in the viewer. Files-only work records its binding/defect and
+owner; changes to runtime bounds, definitions or action dispatch require authorized integration.
+Do not block unrelated asset preparation on that missing feature.
+
+### 12.4 Performance, persistence and change propagation
+
+Preparation runs on request, offline. Work scales with selected files, exported primitives/images
+and required motion samples; it does not add per-NPC generation, server ticks or a new network
+service. Reuse parsed data and compatible shared materials/geometry. The expected-use check
+inspects the dressed actor/structure/group, so individually modest files cannot hide an excessive
+assembly. Sampling demanding poses is inspection evidence, not a mathematical swept-volume proof.
+
+The [repair map](../production-workflows/assets-and-animation.md#repair-map-and-downstream-effects)
+remains the one invalidation guide. A changed attachment frame reopens assembly/contact checks;
+a changed material/alpha route reopens surface/overlap/shadow checks; changed rig/topology/clip
+reopens relevant deformation, contact and bounds checks. Reuse unaffected source and evidence.
+
+No save schema changes. The current asset catalogs, exact publication and world-selected appearance
+owners continue to manage references. Art-only replacement leaves admitted physical definitions,
+mechanical state, action timing and knowledge unchanged. A separately authorized physical change
+uses the ordinary owner and its native dependency invalidation/restoration checks, not a model-load
+callback. The [development policy](../../AGENTS.md#development-save-policy) controls incompatible
+development state; this workflow adds no compatibility adapter, migration or historical reader.
+
+### 12.5 Acceptance and evidence
+
+Use existing selected specimens and campaigns rather than commissioning a new asset collection.
+The following cases define obligations for the modules they exercise; they are not a mandate to
+implement an unsupported creature action or mechanism during an art-tooling task.
+
+| Case                                 | Required pass                                                                                                                      | Evidence boundary                                                                                          |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Static decoration                    | Final shape/material/placement and dependencies work; motion/physical rows explicitly unnecessary                                  | No skeleton, clips, collision, LOD chain or invented interaction                                           |
+| Prepared stag/wolf                   | Correct target anatomy/scale, loader clips and declared gait/actions, contact/attachments and relevant bounds                      | Missing `Run` is caught even for the creature report; a preview-only bite does not qualify native dispatch |
+| Cape/armour on a body                | Required fit, layers, attachment/removal/coverage and exported motion work on the declared assembly                                | PPL/V3D retain broader family/fit-envelope qualification; no universal cloth conclusion                    |
+| Moving gate or usable tavern section | Required pivots/end states, openings, joins and materials survive export; native clearance/support when integration is in scope    | Missing mechanism support remains a dependency, not a passed visual proxy                                  |
+| Well or articulated tool             | Opening/grip/use frame aligns and any requested moving part survives                                                               | Water transfer, container contents and successful work remain native outcomes                              |
+| Foliage group                        | Cutouts, shared wind anchoring, shadows and bounds hold in intended repetition                                                     | Record actual renderer metrics; primitive/material counts alone do not prove frame cost                    |
+| Broken package and replacement       | Missing required texture/clip/part or unsupported required capability is reported; late preview load cannot replace a newer choice | Inspect only relevant failure paths; no parallel validation suite or rare-case campaign                    |
+
+**Required pass:** requested package completeness, ordinary consumer use and the affected
+correctness/lifecycle checks. A missing required dependency blocks that claimed use. For files-only
+work, do not require unauthorized gameplay changes; name the later native checks explicitly.
+
+**Required measurement:** AF07 records actual hands-on and elapsed production effort, corrections
+and paid cost for its existing proof. For an affected repeated assembly, record the actual existing
+resource/performance observations and their workload. Failed or unavailable measurements remain
+results/gaps, not invented passes or automatic permission to redesign the renderer.
+
+**Exploration:** extra LOD/atlas/batching/secondary-motion techniques only when the selected use
+shows a need or a comparison is requested. Optional optimisation never expands core delivery by
+itself. **Human acceptance:** Mike's art selection and an independent artist/developer's ability
+to follow the procedure remain distinct from a script pass; record observed execution when a
+production proof includes it, never infer it from detailed prose.
+
+For this design-only change, content/diff review, affected-link checks and changed-file formatting
+are sufficient; no game run, paid generation or automated suite is implied. Implementation selects
+its actual static/manual checks under the [verification policy](../../.agents/rules/verification.md).
+
+### 12.6 Decisions, tradeoffs and open questions
+
+- **Selected:** one conditional common procedure, early difficult-dependency rehearsal, a complete
+  package through existing records and optimisation for intended use. This is ordinary correctness
+  work; uncertain new techniques still need their own evidence under §6.
+- **Selected:** references and alignment rather than art-owned physics; motion follows the actual
+  consumer; source parts may remain editable while compatible exported draw sections combine.
+- **Not added:** another asset database, readiness service, universal skeleton/cloth/mechanism
+  solver, automatic provider fan-out, live paid generation, mandatory per-prop LODs or legacy support.
+  Each would add delivery cost without resolving the common handoff gap.
+- **No blocking common-design question.** AF19/AF20 implementation, AF07/PPL/V3D qualification and
+  existing source acceptance retain their concrete owners. A later asset brief resolves its exact
+  action list, body/fit range, geometry and workload. Unsupported consumers receive scoped work at
+  that boundary rather than a speculative universal implementation now.
+
+### 12.7 Source notes
+
+The installed source remains authoritative for OpenLegend behavior: the lockfile pins PlayCanvas
+2.22.2 with the repository patch; the operational Blender recipe is in [tools](../production-workflows/art-flows/tools.md#blender).
+Official documentation informs format constraints, not an automatic dependency upgrade:
+
+- [Khronos glTF 2.0](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#coordinate-system-and-units): metres/right-handed Y-up coordinates; its [animations](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#animations) and [GLB structure](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#glb-file-format-specification) distinguish exported channels and resource references from authoring behavior. Core visual data does not implement OpenLegend physical rules.
+- [Blender glTF export](https://docs.blender.org/manual/en/3.6/addons/import_export/scene_gltf2.html#animations): object/bone/shape animation export differs from source physics/material animation. This is supporting format evidence, not the command reference for the installed Blender version; use and verify the pinned recipe.
+- [PlayCanvas supported formats](https://developer.playcanvas.com/user-manual/assets/supported-formats/): direct engine loading and Editor conversion differ. The application loader/decoder configuration still determines usable runtime inputs.
+- [PlayCanvas transparency](https://developer.playcanvas.com/user-manual/graphics/transparency/): blended surfaces depend on mesh-instance ordering; cutouts have different depth/sorting behavior. Inspect actual overlapping foliage/hair and camera motion rather than treating alpha as a checkbox.
+
+Sources checked November 8, 2026. Vendor capability is not evidence that a source-specific rig,
+material, simulation or action binding works in the current application.

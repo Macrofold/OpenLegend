@@ -1,8 +1,8 @@
 # Art workflow — feature specification
 
-| Status      | Current progress                                                                                                                                                                    | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The procedure, tools and people design are delivered; Kimodo source import is demonstrated. Family, motion-target and production qualification and artistic acceptance remain open. | 2026-11-06   |
+| Status      | Current progress                                                                                                                         | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Common production readiness is designed; report/rehearsal support, family and motion qualification, and artistic acceptance remain open. | 2026-11-08   |
 
 This project redesigns how OpenLegend makes art: one procedure that turns a request such as "turn this character sheet into a rigged model for the game" into finished, reviewed, preserved files, with explicit tool defaults, explicit artistic latitude and no built-in look. Mike asks; an agent, or a junior artist following the pages, does the work. The normal full path has three review points; unresolved consequential choices are resolved before dependent work, and the prototype path needs no candidate-selection round.
 
@@ -10,7 +10,7 @@ The procedure itself lives in the [art workflow pages](../production-workflows/a
 
 ## Maintained records
 
-- **Implementation:** [AF04–AF18](../maintainers/art-direction.md#art-flow-follow-through) own workflow delivery, production and NVIDIA motion qualification; [AP01–AP03](../maintainers/art/prompting-and-library.md) own prompt guidance and source coverage; [PPL01–PPL06](../maintainers/art/people.md) own the accepted body, face, hair, clothing and creator design and its unfinished implementation. The trackers own current progress.
+- **Implementation:** [AF04–AF20](../maintainers/art-direction.md#art-flow-follow-through) own workflow delivery, production and NVIDIA motion qualification, including AF19–AF20 for common package preparation and consumer rehearsal; [AP01–AP03](../maintainers/art/prompting-and-library.md) own prompt guidance and source coverage; [PPL01–PPL06](../maintainers/art/people.md) own the accepted body, face, hair, clothing and creator design and its unfinished implementation. The trackers own current progress.
 - **Limits and constraints:** no new game/runtime limits. Upstream motion-format limits and offline authoring defaults are documented in technical §11. Model budgets are the existing [A3D04–A3D06](../limits/3d-pixel-art.md#a3d04--mesh-complexity) profile, the local preview applies the existing [A3D02](../limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload) intake bound, and storage follows [AST](../limits/game-asset-storage.md). Spending follows the repository [spending policy](../../.agents/rules/verification.md#spending).
 - **Related contracts and designs:** [technical design](art-workflow-tech-design.md); the workflow pages ([README](../production-workflows/art-flows/README.md), [tools](../production-workflows/art-flows/tools.md), [profiles](../production-workflows/art-flows/profiles.md), [3D models](../production-workflows/art-flows/3d-models.md), [production](../production-workflows/art-flows/production.md), [study record](../production-workflows/art-flows/study-record.md)); the art direction's [current direction at a glance](../../art-direction/decisions.md#current-direction-at-a-glance); the [runtime invention art contract](../invention-art-pipeline.md) and the proposed [generation and publication design](3d-pixel-art-asset-pipeline.md); rig families under [V3D05–V3D06](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family).
 
@@ -132,7 +132,7 @@ Most requests want either a quick usable look or finished art, and neither Mike 
 
 The [character-production research](../../art-direction/research/3d-pixel-worlds/character-production-2026-10-31.md) supports selective part generation, directly useful meshes, rough motion before polish and checking the exported result. These refine the existing procedure; they add no required provider comparison, retopology, high-poly sculpt, cloth simulation or inverse-kinematics pass.
 
-**Experiment status:** selective repair and reuse already existed in the handbook. The additional handoff/recheck detail and any newly selected production technique are unqualified experiments where their workload, correctness or runtime effects are uncertain. The [isolated comparison](art-workflow-tech-design.md#isolated-workflow-experiments) must run before adopting extra routine process or claiming an efficiency improvement; documentation review is not that evidence.
+**Required preparation and experimental techniques:** the selected [common readiness contract](#310-common-production-readiness) makes applicable source, assembly, physical-reference and consumer checks part of ordinary production. It needs no separate experiment to decide whether a required dependency must be delivered. Uncertain repair/fit/export techniques and claims of reduced effort or faster runtime still use the [isolated comparison](art-workflow-tech-design.md#isolated-workflow-experiments); specifying the workflow does not qualify those methods. Preserve useful evidence and repeat only checks invalidated by the actual change.
 
 - **Part control has two meanings.** A separate generation job can repair a head or accessory without remaking successful work. Separately, the selected world can require a part to remain removable or adjustable. Future people have that requirement under [PPL](../maintainers/art/people.md); it cannot be waived by choosing prototype quality. A rigid prop without exchangeable parts does not acquire it merely because it was generated in pieces.
 - **Use what already works.** Refine a direct mesh if its form, requested deformation, material mapping and export meet the brief. Rebuild topology or bake detailed geometry only to solve a demonstrated problem. Simple utility-map baking for a chosen material method is a separate decision.
@@ -193,6 +193,59 @@ Source/reference selection still follows the current world art direction. Neithe
 - **Cheap recovery:** use the existing study record and provider job ID; recover a known job rather than resubmitting. Keep credentials out of artifacts. A timeout with unknown submission status is unresolved spend, not a free retry. Preserve the original output and editable correction so a revision does not require regeneration.
 - **Qualification is narrow:** a specific host/deployment, source format/rest convention and target rig/map pass a small real study before use becomes operational. Qualification of the mercenary does not qualify MPFB, another anatomy, every garment, all model versions or crowds. Existing V3D family and owner art acceptance stay separate.
 
+### 3.10 Common production readiness
+
+**Selected design:** finished art must include the common preparation for its intended game use,
+even when an individual asset's exact actions, appearance or construction remain to be briefed.
+The missing work is connecting existing craft stages to their consumer consistently. Modeling,
+texture finishing, rigging and animation remain in their established owners; no replacement art
+system, additional provider layer or universal asset schema is introduced.
+
+[Runtime preparation](../production-workflows/art-flows/runtime-preparation.md) is the ordered
+artist/developer procedure. [Technical §12](art-workflow-tech-design.md#12-production-readiness)
+owns the data flow, inspectable facts, implementation modules and acceptance cases.
+
+| Common requirement              | Behavior the workflow guarantees                                                                                                              | Conditional scope                                                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Intended use before polish      | Identify the real consumer, states/actions, dimensions, assembly partners and finish/integration boundary                                     | A decorative object can finish without mechanics; a traversable tavern includes its openings and usable space                |
+| Physical and attachment handoff | Prepare or reference applicable shapes, support, grips, hinges, mounts and interaction points; check alignment                                | Picking, physical blocking/support and combat contact remain distinct; existing world/spatial owners retain authority        |
+| Exportable motion               | Choose skeletal, rigid-part, shared deformation, skinned/baked secondary motion, supported simulation or no motion before detailed production | Anatomy and selected consumer determine the route; human clips and cloth simulation are never universal requirements         |
+| Early rehearsal                 | Try a rough export through the actual consumer before polishing an uncertain dependency                                                       | Required for relevant difficult motion/material/assembly/traversal; reuse prior evidence for unchanged proven routes         |
+| Complete finished package       | Deliver final visuals/materials, required motion/states, assembly information, physical references and existing registration together         | Reuse the existing study record/catalog; do not copy an inventory or create another readiness database                       |
+| Optimisation in production      | Check the complete intended outfit, structure or repeated group as well as its files                                                          | Draw submissions, materials, overdraw, shadows, bounds and resource sharing matter where used; no mandatory LOD/atlas system |
+| Scoped acceptance               | Verify exported files and the promised use; report installation and artistic acceptance separately                                            | Files-only production does not authorize integration; an integrated request includes the native actions it promises          |
+
+This prioritises recognizable people, readable action and consequence, practical invention and
+usable places. Reusable joins/materials and legible supported state changes let a small kit serve
+many authored situations. Beauty and expression are valid purposes too; an attractive decoration
+does not need a harvesting, destruction or combat system to justify its production.
+
+**The completed unit is the intended assembly.** A cape passes on its declared body/outfit range,
+a doorway in its wall/floor assembly, and foliage in its intended placement/deformation route.
+Individual parts fitting file budgets does not establish the combination. Optimisation is a
+stage of making the files game-ready, not a separate request to redesign graphics. These costs
+occur during rendering: ten similarly costly pieces generally add about ten pieces' work;
+shared resources and actual passes determine the result, not an assumption of superlinear cost.
+
+**Keep technical truth local.** A GLB can contain motion that this game's selected consumer does
+not dispatch. A visual proxy can illustrate a collision proposal without installing it. A damaged
+mesh cannot create damage, an attachment cannot grant an action, and a recognition silhouette
+cannot disclose private identity. Required motion/state mappings refer to the existing permitted
+world facts. Preserve the current [engine/world boundary](../engine-and-world-boundaries.md#5-a-repeatable-boundary-decision).
+
+**No universal asset promise:** the reusable procedure is complete for selecting and delivering
+the applicable fundamentals. Unsupported anatomy, deformation or mechanics remains a named
+consumer gap for that asset, resolved before dependent production. This does not select a new
+human body foundation or turn the [MetaHuman evaluation](../maintainers/art/metahuman-poc.md)
+into the normal route. Existing source decisions and PPL/V3D qualification remain controlling.
+
+**Design decisions are complete for this common scope.** AF19–AF20 own inspectable package and
+rehearsal support; AF07 and the existing family owners retain production proof. Later briefs
+choose their asset-specific actions, fit range, native definitions and representative workload.
+No new provider, gameplay feature, universal numerical budget or compatibility layer needs a
+decision here. The proposed changes add offline preparation and targeted inspection, not recurring
+server work, automatic generation during play or legacy-data preservation.
+
 ## 4. Scenarios
 
 Each scenario names its trigger, what Mike sees, the decision points and a meaningful failure. New-person scenarios use the accepted [PPL body/parts design](../maintainers/art/people.md), with routine production gated by family qualification; retained study exceptions are not a general production method.
@@ -208,7 +261,7 @@ Each scenario names its trigger, what Mike sees, the decision points and a meani
 4. **Tool override.** _"Concepts with Nano Banana Pro, 3D with Rodin."_ Nano Banana Pro runs through Higgsfield, already connected. Rodin is offered through fal.ai, which needs an account and key that are not configured, so the agent reports the requirement and asks, while preparing everything else. (Tripo, by contrast, is already reachable through Higgsfield.)
 5. **Resume.** A new thread receives `2026-11-02-mara-reed-3d/m02`. It reads the record's Resume section, recovers any outstanding job, fetches the archived files and continues at Stage 5 without regenerating.
 6. **Comparison.** _"Use both flows for a character appearance study."_ Shared inputs are frozen once; Standard and Higgsfield run independently with distinct IDs; one index compares coverage, quality, cost and Mike's involvement.
-7. **Creature.** _"A wolf for the game."_ A library or specialist source fitted to a nonhuman rig, with stalking, bite wind-up and recovery clips authored before idles; the threat check reads the bite from three sides.
+7. **Creature.** _"A finished wolf for the selected roaming and bite actions."_ Reuse a suitable anatomical source and nonhuman rig, resolve the actual action consumer, and rehearse a rough gait/contact pose before polish. Deliver its required locomotion and bite preparation/contact/recovery; the threat check reads the bite from three sides. Unsupported action dispatch stays explicit instead of being inferred from a clip name.
 
    **Focused creature-motion revision.** _"Finish the bite motion on this approved wolf so its preparation is readable."_ Keep the selected body and compatible rig, read the action's native timing and adapt a suitable clip before authoring missing motion. Show preparation, contact and recovery coherently; inspect the actual clip with the existing threat check. _Failure:_ a still looks threatening but motion hides the preparation or slides the support feet. Repair the motion or contact, not the creature's accepted anatomy. A clip review does not prove the encounter is fun or integrated correctly; integration stays a separate requested scope.
 
@@ -228,6 +281,11 @@ Each scenario names its trigger, what Mike sees, the decision points and a meani
 14. **Missing human action.** _"Give this existing rig a rough, hesitant offer of the basket."_ The agent checks whether a compatible clip exists, identifies the grip and target, and generates one missing clip through the qualified Kimodo route. It preserves the target body, retargets and corrects the grip, and shows the actual character at game scale. The clip is a study until an action consumer supports it. _Failure:_ the model gives a wave or the basket passes through the hand; correct a useful source or stop with the cause, not a paid retry loop or a successful-transfer claim.
 15. **Pose transition.** _"Smooth the rise from this supported resting pose."_ The target action and safe source poses are supplied. The artist tries ordinary keying or explicitly selects MotionBricks, bakes the transition and checks contacts and interruption. _Failure:_ only restricted demo poses are available; retain the setup and author safe poses, never ship a derivative of the demo.
 16. **No access or uncertain paid job.** The selected Kimodo host lacks authorized credentials, or a submitted job's response is lost. The agent completes the brief, maps and existing-clip reuse it can do, records the exact access or unknown-job state, and recovers through the provider. It does not create an account, invent a price or send a duplicate prediction.
+17. **Traversable tavern.** Rehearse one real doorway, adjacent wall/floor and required stair or ramp before detailed interiors. Deliver modular joins, supported moving doors, material assignments and physical/support references. _Failure:_ the art's doorway is open but its physical box blocks entry; correct the owning geometry/integration instead of treating a turntable as acceptance. An explicitly exterior-only tavern remains a valid smaller scope.
+18. **Cape or armour.** Select the declared body/outfit and rigid, skinned, baked or supported simulation method. Inspect the complete dressed result, attachment, coverage/removal and required poses. _Failure:_ a Blender cloth simulation exports as a frozen cape; resolve the export/consumer method before further polish, retaining accepted source art.
+19. **Well or mechanism.** A static well includes its usable opening and interaction alignment; add moving bucket/rope only when requested. A crank/door identifies its axis and supported state driver. _Failure:_ importing a moving mesh creates no water transfer or blocking-state change; those continue through existing mechanics.
+20. **Foliage.** Prepare cutout materials and the existing wind route, then check an anchored plant, its shadows/bounds and a representative group. _Failure:_ overlapping leaves sort incorrectly or the moving crown disappears at the screen edge; fix material/consumer bounds rather than only reducing triangles.
+21. **Plain decoration.** Finish a rigid ornament with sound materials, placement and the applicable export checks. Explicitly omit motion, interactions and collision when its intended use needs none. Completion does not require extra LODs, a skeleton or a new gameplay reason for beauty.
 
 ## 5. Behaviour
 
@@ -238,6 +296,7 @@ The workflow pages own the procedure; in summary:
 - **Stages** ([README §4](../production-workflows/art-flows/README.md#4-the-seven-stages)): Brief, Explore, Prepare, Make, Finish, Check, Preserve, with decision points after Explore, Make and Check.
 - **Tools** ([tools](../production-workflows/art-flows/tools.md)): a dated default roster per stage, presets, overrides, how to estimate cost, and how to recover jobs.
 - **3D** ([3D models](../production-workflows/art-flows/3d-models.md)): build-route choice (library, family fit, image-to-3D, hybrid, hand-modelled), view rules, candidate checks, cleanup, rig routes, clips, consumer contract, budgets and in-game review.
+- **Common preparation** ([runtime preparation](../production-workflows/art-flows/runtime-preparation.md)): conditional physical/attachment references, motion route, early rehearsal, final assembly/resource checks and the complete consumer-ready handoff within the same seven stages.
 - **Motion** ([animation](../production-workflows/art-flows/animation.md)): conditional activation, reuse, Kimodo/MotionBricks source selection, source intake, target-preserving retargeting, timing/contacts, preview, preservation and qualification. Static requests skip this owner.
 - **Play checks** ([profiles](../production-workflows/art-flows/profiles.md#play-checks)): name, same thing, state, threat, construction and scale.
 - **Prompt direction** ([guide](../production-workflows/art-flows/prompting.md#start-with-the-current-brief)): purpose, exact source and locks, defect diagnosis, a supported operation and the existing check/stop. Load only the relevant operation; the research is optional.
@@ -281,6 +340,9 @@ In scope: every offline art request, from concepts to production packages and th
 10. Static requests make no motion-provider calls; animation-only requests preserve the supplied character and adequate clips; a missing compatible human motion selects Kimodo only through a qualified route. Named overrides and actual fallback choices appear in the record.
 11. Generated motion becomes editable target-rig clips with correct units, timing and root policy. Review covers contact, loop/one-shot meaning, ordinary game-scale readability and relevant interruption, without changing gameplay semantics.
 12. Qualification records actual source/deployment/rig versions, correction effort, total spend including failures, exact retained artifacts and remaining limits. No source code, documentation or vendor claim alone marks a route working; MotionBricks remains optional.
+13. A junior can identify the applicable requirements and follow the common procedure for a creature, wearable, moving part, usable structure and foliage without inventing a missing foundational stage. The [contrasting acceptance cases](art-workflow-tech-design.md#125-acceptance-and-evidence) define how implementation establishes this; documentation completion alone is not an independent-operator result.
+14. The delivered package resolves required parts, states, motion, material dependencies, attachment frames and physical-definition references. Inapplicable requirements are explicit; omitted requirements for the promised use are failures. Material quality checks remain alongside numerical limits.
+15. Early rehearsal exposes an unsupported motion/material/assembly dependency before expensive finishing. Final checks inspect the exported assembly and its relevant repeated use. Files-only completion, game integration and artistic selection remain separately recorded facts.
 
 ## 9. Delivery stages
 
@@ -292,6 +354,7 @@ In scope: every offline art request, from concepts to production packages and th
 6. **Proposed:** kit-character batches (AF11).
 7. **Simple and full paths (November 1):** the quality setting's two paths, the step options and what supplied material skips, reconciled with the prototype and finalize paths.
 8. **NVIDIA motion authoring (design November 4):** AF18 records the design; AF15 adds the bounded offline intake/retarget/preview support; AF16 qualifies the selected Kimodo route; AF17 covers an optional justified MotionBricks transition. See the [step-by-step technical plan](art-workflow-tech-design.md#11-nvidia-motion-authoring).
+9. **Common production readiness:** the selected guidance and conditional checklist are designed; AF19 implements missing report support, AF20 connects the scoped rehearsals, and AF07/PPL/V3D retain their actual production/family acceptance. [Technical §12](art-workflow-tech-design.md#12-production-readiness) orders these modules without blocking a supported manual asset on optional tooling.
 
 ## 10. Open decisions and questions
 

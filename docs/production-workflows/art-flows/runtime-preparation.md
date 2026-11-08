@@ -34,14 +34,14 @@ body source, adopt the separate MetaHuman evaluation, or authorize runtime imple
    recorded. One sentence such as “static decoration; no physical body or motion” can settle
    several inapplicable rows. Do not produce another manifest or copy entire inventories.
 
-| Requirement | Resolve now | Completion evidence |
-| --- | --- | --- |
-| Shape and material | Real dimensions, visual identity, selected look, required maps and alpha treatment | Final export at game scale and under the look's lighting |
-| Assembly and attachment | Parent/family, separately removable or moving parts, origin, named join/grip/hinge and its frame | Actual exported parts assembled without offset or unwanted penetration |
-| Physical relationship | Applicable blocking/support, interaction and combat owners; visual picking separately | Alignment check against those owners; no invented physical meaning |
-| Motion and states | Method from §2, exact required actions/states, clock/root policy, transitions and return/rest state | Exported playback and state coverage through the selected consumer |
-| Intended workload | One object, a complete outfit, a populated kit or a repeated stand; existing budgets | File report and the relevant assembled-use check in §7 |
-| Delivery | Existing asset IDs, exact dependencies, sources, recipe, rights and selection/publication state | Reopened package and retrievable references through the asset workflow |
+| Requirement             | Resolve now                                                                                         | Completion evidence                                                    |
+| ----------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Shape and material      | Real dimensions, visual identity, selected look, required maps and alpha treatment                  | Final export at game scale and under the look's lighting               |
+| Assembly and attachment | Parent/family, separately removable or moving parts, origin, named join/grip/hinge and its frame    | Actual exported parts assembled without offset or unwanted penetration |
+| Physical relationship   | Applicable blocking/support, interaction and combat owners; visual picking separately               | Alignment check against those owners; no invented physical meaning     |
+| Motion and states       | Method from §2, exact required actions/states, clock/root policy, transitions and return/rest state | Exported playback and state coverage through the selected consumer     |
+| Intended workload       | One object, a complete outfit, a populated kit or a repeated stand; existing budgets                | File report and the relevant assembled-use check in §7                 |
+| Delivery                | Existing asset IDs, exact dependencies, sources, recipe, rights and selection/publication state     | Reopened package and retrievable references through the asset workflow |
 
 **Stop the dependent step** if a missing consumer, required body family, mechanical state or
 source decision would invalidate the representation. Record the exact missing capability and
@@ -54,16 +54,16 @@ Choose a method per independently moving part before topology, rigging or expens
 Combine methods only where the asset needs them. The method is a production choice; the
 consumer's supported channels and state driver decide whether it will work.
 
-| Need | Production method and output | Check before committing to it |
-| --- | --- | --- |
-| Unmoving object or decoration | Rigid mesh/materials; no skeleton or clips | Its placement/origin and material route work |
-| Carried rigid item or armour plate | Separate mesh attached to the existing body/part anchor | Real grip/fit, handedness and rest/working poses; an item is not permanently fused to its wearer |
-| Door, lid, wheel or crank | Separate rigid node/part at its real hinge/axis; supported node animation or existing state-driven transform | The actual mechanism consumer drives that transform; a glTF channel alone supplies no interaction |
-| Articulated person or creature | Suitable skeleton, skin weights and clips on the exported target | Correct rest/bind pose, joints, contact and required action set; do not force nonhuman anatomy through the human motion route |
-| Foliage or a decorative flexible flag | Existing shared deformation when it fits the shape; otherwise a supported baked/bone route | Material/deformation selection, anchored base, shadow deformation and moving bounds work in the selected consumer |
-| Soft garment, cape, braid or tail | Skinning/additional bones first where adequate; baked secondary motion or an explicitly supported runtime simulation where needed | Fit on the declared body/outfit and motions; a Blender cloth cache does not travel automatically into GLB |
-| Adjustable shape or transformation | Existing family controls, supported morph channels, or explicit state exports | The actual consumer applies them and the supported combinations fit; no arbitrary morph support is assumed |
-| Particles, fire, liquid surface or other effect | Existing effect/material consumer and its supported inputs | Trigger, attachment, pause/stop, bounds and cleanup under the [effect recipe](production.md#visual-effects) |
+| Need                                            | Production method and output                                                                                                      | Check before committing to it                                                                                                 |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Unmoving object or decoration                   | Rigid mesh/materials; no skeleton or clips                                                                                        | Its placement/origin and material route work                                                                                  |
+| Carried rigid item or armour plate              | Separate mesh attached to the existing body/part anchor                                                                           | Real grip/fit, handedness and rest/working poses; an item is not permanently fused to its wearer                              |
+| Door, lid, wheel or crank                       | Separate rigid node/part at its real hinge/axis; supported node animation or existing state-driven transform                      | The actual mechanism consumer drives that transform; a glTF channel alone supplies no interaction                             |
+| Articulated person or creature                  | Suitable skeleton, skin weights and clips on the exported target                                                                  | Correct rest/bind pose, joints, contact and required action set; do not force nonhuman anatomy through the human motion route |
+| Foliage or a decorative flexible flag           | Existing shared deformation when it fits the shape; otherwise a supported baked/bone route                                        | Material/deformation selection, anchored base, shadow deformation and moving bounds work in the selected consumer             |
+| Soft garment, cape, braid or tail               | Skinning/additional bones first where adequate; baked secondary motion or an explicitly supported runtime simulation where needed | Fit on the declared body/outfit and motions; a Blender cloth cache does not travel automatically into GLB                     |
+| Adjustable shape or transformation              | Existing family controls, supported morph channels, or explicit state exports                                                     | The actual consumer applies them and the supported combinations fit; no arbitrary morph support is assumed                    |
+| Particles, fire, liquid surface or other effect | Existing effect/material consumer and its supported inputs                                                                        | Trigger, attachment, pause/stop, bounds and cleanup under the [effect recipe](production.md#visual-effects)                   |
 
 Blender constraints, drivers, procedural graphs and physics are authoring tools. Bake evaluated
 results into supported transform/bone/shape channels or supported textures when needed. Reopen
@@ -98,13 +98,13 @@ A simple static prop with a proven recipe can combine this with its normal expor
    feature, use the existing authorized game consumer when integration is in scope, or record
    that precise rehearsal dependency under AF20. Do not substitute a beauty render as a pass.
 
-| Subject | Smallest useful rehearsal |
-| --- | --- |
-| Stag or wolf | One grounded gait, turning/rest and a demanding limb/neck pose on its real rig; antlers, jaw and tail stay attached |
-| Cape or layered clothing | The intended dressed body in rest, stride and a demanding reach/bend; attachments, coverage and separation are visible |
-| Tavern or modular shelter | A doorway, wall/floor/roof join and any required stair/ramp; check real actor clearance and camera access through the relevant consumer |
-| Well or moving prop | Correct standing/use position, opening and grip/hinge; rehearse the bucket/rope only if part of its use |
-| Tree, bush or flag | Shared deformation with anchored base, overlapping cutouts, shadows and screen-edge movement; include a small repeated group when intended |
+| Subject                   | Smallest useful rehearsal                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Stag or wolf              | One grounded gait, turning/rest and a demanding limb/neck pose on its real rig; antlers, jaw and tail stay attached                        |
+| Cape or layered clothing  | The intended dressed body in rest, stride and a demanding reach/bend; attachments, coverage and separation are visible                     |
+| Tavern or modular shelter | A doorway, wall/floor/roof join and any required stair/ramp; check real actor clearance and camera access through the relevant consumer    |
+| Well or moving prop       | Correct standing/use position, opening and grip/hinge; rehearse the bucket/rope only if part of its use                                    |
+| Tree, bush or flag        | Shared deformation with anchored base, overlapping cutouts, shadows and screen-edge movement; include a small repeated group when intended |
 
 These are contrasting checks of the common workflow, not a compulsory new asset batch. Prefer
 already selected assets and the smallest scene that exposes the dependency.
@@ -116,13 +116,13 @@ and [physical-interaction checks](../../spatial-world.md#physical-interaction-de
 authoritative shapes. Artists prepare alignment and missing source geometry; developers use
 the existing admitted definitions. An imported helper mesh or node never grants gameplay authority.
 
-| Role | Artist supplies or references | Developer checks through the existing owner |
-| --- | --- | --- |
-| Selection/picking | Visible extent or the consumer's supported pick shape | Clicking identifies the intended object; decorative motion/cutaway does not grant hidden information |
-| Blocking and support | Existing body/structure definition and source alignment; proposed simple proxies only where useful | Real body clearance, open doorway, wall thickness, support and headroom; the visual bounding box must not fill an opening |
-| Interaction | Stable visual anchor/contact surface and its parent frame | An ordinary admitted approach/reach/use can reach it without crossing a solid; no action is inferred from an anchor's name |
-| Combat contact | Applicable existing body/contact definition and visible preparation/contact/recovery | Native reach, timing and outcomes govern; bone hit regions, ragdolls and per-triangle damage are not universal requirements |
-| Attachment | Grip, hinge, mount or body-family join; parent and local transform/axis, separately removable parts | Parent-child composition, handedness, clearance and permitted contact; no second saved world position |
+| Role                 | Artist supplies or references                                                                       | Developer checks through the existing owner                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Selection/picking    | Visible extent or the consumer's supported pick shape                                               | Clicking identifies the intended object; decorative motion/cutaway does not grant hidden information                        |
+| Blocking and support | Existing body/structure definition and source alignment; proposed simple proxies only where useful  | Real body clearance, open doorway, wall thickness, support and headroom; the visual bounding box must not fill an opening   |
+| Interaction          | Stable visual anchor/contact surface and its parent frame                                           | An ordinary admitted approach/reach/use can reach it without crossing a solid; no action is inferred from an anchor's name  |
+| Combat contact       | Applicable existing body/contact definition and visible preparation/contact/recovery                | Native reach, timing and outcomes govern; bone hit regions, ragdolls and per-triangle damage are not universal requirements |
+| Attachment           | Grip, hinge, mount or body-family join; parent and local transform/axis, separately removable parts | Parent-child composition, handedness, clearance and permitted contact; no second saved world position                       |
 
 Practical sequence:
 
@@ -135,8 +135,10 @@ Practical sequence:
    path and local frame**, with units. Reuse a family/socket convention when one exists. Put
    supported helper nodes in the export only when its consumer expects them; otherwise retain
    them in the editable source and link the existing assembly data.
-4. Have the integrating developer map those anchors through the existing family/structure
-   definitions. Keep decorative cloth/body-skin constraints separate from authoritative bodies.
+4. Record how the integrating developer will bind those anchors through the existing
+   family/structure definitions. Perform that binding when integration is authorized; files-only
+   work delivers its exact references and alignment. Keep decorative cloth/body-skin constraints
+   separate from authoritative bodies.
 5. For physical integration, exercise ordinary placement, approach, movement or use at the
    supported posture and scale. Include the relevant failed condition, such as a blocked doorway
    or obstructed reach. Rendering a body-shaped proxy is an alignment check, not navigation proof.
@@ -190,6 +192,10 @@ mapping in the study record, linking an existing catalog when it already supplie
    `character` or `prop` as appropriate. Compare required coverage against the report. A report
    written successfully is not acceptance. `--strict` checks its implemented budgets/clip rules;
    it does not check physical fit, art quality, every channel or gameplay behavior.
+   In particular, the current `creature` report has no required-clip list: manually confirm
+   `Idle` and `Run` for the prepared actor loader, plus the brief's other required clips, until
+   [PR2](../../projects/art-workflow-tech-design.md#pr2--extend-the-existing-report-then-its-callers)
+   supplies explicit consumer checking. An empty `missingRequired` list does not settle this.
 3. Check the actual runtime input format and dependencies. A GLB may still refer to external
    resources; this project's ordinary prepared-GLB route requires embedded textures. Reject a
    missing dependency or unsupported required extension. Do not add a compression decoder,
@@ -207,14 +213,14 @@ mapping in the study record, linking an existing catalog when it already supplie
 This is asset finishing, alongside modeling and texturing. It is about the work the delivered
 files cause **while the game draws frames**, not the price of generating the files.
 
-| Concern | Plain meaning and production response |
-| --- | --- |
-| Draw calls | Separate groups of geometry require rendering submissions. Inspect mesh/material sections; merge compatible purely visual sections when it preserves required parts and consumer behavior. |
-| Material sharing | Reuse the same appropriate material/maps across compatible pieces instead of creating needless copies. Shared bytes and shared rendering work are different savings. |
-| Transparency overdraw | Overlapping leaves, hair or cloth can make the renderer process the same pixels repeatedly. Reduce unnecessary layers and use the supported cutout/blend treatment for the intended surface. |
-| Shadow cost | A caster can be drawn again for shadow passes. Inspect the assembled caster set and existing shadow policy; do not create duplicate shadow geometry or disable required readable shadows to pass. |
-| Animated bounds | Visibility decisions use enclosing shapes. Test moving wings, cloth and wind near the view edge; correct the responsible consumer's bounds if the source cannot express them. |
-| Repetition | Compatible copies can reuse geometry/materials and existing instancing. Check a representative cluster; one cheap tree does not qualify a woodland. |
+| Concern               | Plain meaning and production response                                                                                                                                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Draw calls            | Separate groups of geometry require rendering submissions. Inspect mesh/material sections; merge compatible purely visual sections when it preserves required parts and consumer behavior.                                                        |
+| Material sharing      | Reuse the same appropriate material/maps across compatible pieces instead of creating needless copies. Shared bytes and shared rendering work are different savings.                                                                              |
+| Transparency overdraw | Overlapping leaves, hair or cloth can make the renderer process the same pixels repeatedly. Reduce unnecessary layers and use the supported cutout/blend treatment for the intended surface.                                                      |
+| Shadow cost           | A caster can be drawn again for shadow passes. Inspect the assembled caster set and existing shadow policy; do not create duplicate shadow geometry or disable required readable shadows to pass.                                                 |
+| Animated bounds       | Visibility decisions use enclosing shapes. Test moving wings, cloth and wind near the view edge. Correct source bounds where supported; record a consumer defect for files-only work, and fix it through its owner during authorized integration. |
+| Repetition            | Compatible copies can reuse geometry/materials and existing instancing. Check a representative cluster; one cheap tree does not qualify a woodland.                                                                                               |
 
 Measure exported geometry, distinct material sections, actual texture dependencies, skin/joint
 work and payload/resident resources where the consumer can report them. Then inspect the **complete
@@ -230,6 +236,10 @@ draw count. Keep performance facts distinct from estimates.
 Use the [existing budgets](3d-models.md#consumer-contract-and-budgets) with their current/proposed
 status. Optimise only the actual problem: share materials, remove invisible geometry where removal
 cannot reveal holes, simplify distant detail if the consumer needs it, or reuse existing batching.
+An agreed exception to a proposed art target does not bypass an installed hard limit, missing
+dependency, unsupported format or loader refusal. The current local preview enforces 16 MiB;
+reduce the package, use an already compatible selected consumer, or track an authorized consumer
+change. Do not mark a refused export checked by recording an exception.
 No universal LOD chain, atlas, mesh merge, cloth simulation or benchmark campaign is required.
 Retain semantic/removable source parts even when a supported static export combines draw sections.
 
@@ -243,14 +253,14 @@ Do not copy asset bytes into Git or publish private sources as an incidental rea
 
 Before reporting completion, resolve each applicable row:
 
-| Gate | Pass means |
-| --- | --- |
-| Scope and coverage | Every required member/state/action has a real output and consumer binding, or is explicitly outside the agreed package; no hidden TODO required for its stated use |
-| Source and assembly | The next operator can open the exact sources/exports and reproduce the requested assembly; required origins, grips, joins and family references are present |
-| Geometry and motion | Required physical alignment and moving/attached parts pass their scoped checks; exported motion survives and follows the consumer's clock/root convention |
-| Surface and workload | Material quality holds in the named view; the relevant assembled/repeated use meets its selected budget or has an explicitly resolved budget decision |
-| Delivery | Exact package/dependencies are preserved and retrievable through the existing asset workflow, with rights and selection state recorded |
-| Game integration, if requested | The installed release and world selection use those exact files; ordinary spawn/move/use/equip/fight/state change as applicable works through native owners |
+| Gate                           | Pass means                                                                                                                                                         |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Scope and coverage             | Every required member/state/action has a real output and consumer binding, or is explicitly outside the agreed package; no hidden TODO required for its stated use |
+| Source and assembly            | The next operator can open the exact sources/exports and reproduce the requested assembly; required origins, grips, joins and family references are present        |
+| Geometry and motion            | Required physical alignment and moving/attached parts pass their scoped checks; exported motion survives and follows the consumer's clock/root convention          |
+| Surface and workload           | Material quality holds in the named view; the relevant assembled/repeated use meets its selected budget or has an explicitly resolved budget decision              |
+| Delivery                       | Exact package/dependencies are preserved and retrievable through the existing asset workflow, with rights and selection state recorded                             |
+| Game integration, if requested | The installed release and world selection use those exact files; ordinary spawn/move/use/equip/fight/state change as applicable works through native owners        |
 
 For **files-only production**, finish the package and report its named consumer and the specific
 later installation/native checks. Do not require unauthorized game changes to complete that scope.
@@ -267,14 +277,14 @@ No new readiness score or runtime state machine is introduced.
 
 ## Worked scope examples
 
-| Request | Complete common package | What remains asset-specific |
-| --- | --- | --- |
-| Stag or wolf | Suitable rig/skins, finished materials, requested gait/action clips, bounds, physical-body references and contact/scale checks | Which attacks or behaviors exist, their native timing, anatomy-specific acting and acceptance |
-| Traversable tavern | Modular/assembled geometry with real openings, separate moving doors where needed, support/blocker references, joins, interior materials and camera/cutaway checks | Layout, supported doors/stairs/furnishings and the actual game interactions; an exterior-only brief needs none of the interior work |
-| Cape or armour | Editable separate item, declared body/fit range, attachments, material/coverage data and its selected rigid/skinned/baked/simulated motion | Exact cut, layers, supported bodies/outfits and family qualification |
-| Water well | Rigid structure, real opening and accessible use anchor, materials, physical/interaction references; moving bucket/rope only if required | Water/container semantics and whether the intended well actually exposes that mechanism |
-| Foliage or flag | Appropriate cutout/material setup, fixed base, supported deformation, bounds/shadows and representative repeated-use check | Species/form, density and whether it is decorative, harvestable or a physical obstacle |
-| Invented tool or ordinary decoration | Required source parts/materials and assembled export, grip/placement frame where needed, existing registration | The admitted invention's actual function; a static decoration can stop without a rig, clips, collision or LODs |
+| Request                              | Complete common package                                                                                                                                            | What remains asset-specific                                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Stag or wolf                         | Suitable rig/skins, finished materials, requested gait/action clips, bounds, physical-body references and contact/scale checks                                     | Which attacks or behaviors exist, their native timing, anatomy-specific acting and acceptance                                       |
+| Traversable tavern                   | Modular/assembled geometry with real openings, separate moving doors where needed, support/blocker references, joins, interior materials and camera/cutaway checks | Layout, supported doors/stairs/furnishings and the actual game interactions; an exterior-only brief needs none of the interior work |
+| Cape or armour                       | Editable separate item, declared body/fit range, attachments, material/coverage data and its selected rigid/skinned/baked/simulated motion                         | Exact cut, layers, supported bodies/outfits and family qualification                                                                |
+| Water well                           | Rigid structure, real opening and accessible use anchor, materials, physical/interaction references; moving bucket/rope only if required                           | Water/container semantics and whether the intended well actually exposes that mechanism                                             |
+| Foliage or flag                      | Appropriate cutout/material setup, fixed base, supported deformation, bounds/shadows and representative repeated-use check                                         | Species/form, density and whether it is decorative, harvestable or a physical obstacle                                              |
+| Invented tool or ordinary decoration | Required source parts/materials and assembled export, grip/placement frame where needed, existing registration                                                     | The admitted invention's actual function; a static decoration can stop without a rig, clips, collision or LODs                      |
 
 ## Maintained records
 

@@ -5,7 +5,9 @@ requires new or changed assets, except model and animation prototypes, which use
 [short prototype path](README.md#prototype-path). Read the common steps and only the matching
 asset recipes for the requested scope. A study alone still stops at the
 [study boundary](README.md#2-request-settings). Props, characters and creatures follow
-[3D models](3d-models.md), which applies these package rules.
+[3D models](3d-models.md), which applies these package rules. For finished 3D/game assemblies, use
+[runtime preparation](runtime-preparation.md) for the common motion, physical-reference, attachment,
+early rehearsal and completion requirements; read only its applicable rows.
 
 The result is a usable package for a named consumer, with retained sources and a repeatable
 export route where finishing is needed. Confirm current importer support before promising
@@ -62,6 +64,8 @@ settled requirements instead of copying them. Resolve only missing applicable fi
 | Identity and rights         | Existing asset IDs, source revisions, required attribution, permitted uses and visibility; distinguish usable sources from reference-only art. |
 | Inspection                  | Which delivered files and representative conditions will prove the requested coverage, and what requires later game integration.               |
 
+For models and assemblies, resolve the [physical/attachment roles and motion method](runtime-preparation.md#1-settle-the-intended-use-before-detailed-work) alongside these package facts. Link existing game-owned definitions; an art export does not install collision, support, interaction or combat behavior.
+
 Choose routine export settings from the existing consumer and record them. Do not impose
 one resolution, polygon count, frame rate, codec, rig or filename schema on all art.
 If there is no established naming convention, use stable descriptive filenames containing
@@ -99,7 +103,9 @@ clips. A provider's “layers,” “transparent” or “game-ready” label is
 Take one representative asset through source cleanup, final export and inspection before a
 large batch. Choose a sample that exercises the difficult construction, deformation, resize
 or playback requirement. Reuse a valid earlier proof when its dependencies are unchanged.
-Fix the recipe at its source, then apply it to the requested set. Additional creative
+For an uncertain motion, material, attachment or usable-space dependency, first run the
+[rough consumer rehearsal](runtime-preparation.md#3-build-a-rough-assembly-and-rehearse-its-difficult-dependency)
+before detailed finishing; this applies beyond characters. Fix the recipe at its source, then apply it to the requested set. Additional creative
 variants are needed only when requested or necessary to resolve a real design question.
 
 ## 3. Finish the relevant asset types
@@ -309,6 +315,10 @@ the source viewport. Use an existing importer, viewer, component specimen or pla
 with compatible settings. Reuse current tooling; create only a disposable preview if needed,
 not a new maintained validation service.
 
+For a 3D assembly, use the [consumer-ready completion checklist](runtime-preparation.md#8-finish-the-package-and-when-requested-integrate),
+including applicable physical alignment, moving bounds and intended-use resources. Material
+quality still needs the qualitative recipe checks even when numeric budgets pass.
+
 Check inventory coverage and dependency resolution, then the recipe's visual/technical
 conditions. Inspect applicable dimensions, units, alpha, channels, clips, bounds, file sizes
 and resource budgets from the actual files. Check each export for completeness and use
@@ -338,7 +348,8 @@ A complete package contains, as applicable:
 - **Sources:** available original inputs, working sources for delivered assets and required
   licensed dependencies; label reconstructed sources and unavailable upstream files.
 - **Consumer exports:** every requested member with its exact dependencies and required
-  assembly/playback metadata. No missing texture, font, rig or clip is hidden behind a preview.
+  assembly/playback metadata, plus references to applicable physical definitions, support and
+  interaction anchors. No missing texture, font, rig, clip or required part is hidden behind a preview.
 - **Export instructions:** retained input-to-export mapping and, for transformations performed,
   relevant tool versions, settings/presets and commands or authoring steps. Reusing an unchanged
   asset requires its exact source reference, not a new recipe or identical regeneration.
