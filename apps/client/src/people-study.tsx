@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { validateAppearanceFamily } from '@open-legend/domain/appearance';
 import { resolveAppearanceRecipe, type AppearanceFamilyDefinition } from '@open-legend/protocol';
@@ -25,10 +25,12 @@ interface StudyWearer {
   draft: PersonAppearanceDraft;
 }
 
-// Definitions and optional outfit IDs are study inputs. Every file still goes
-// through the selected asset release and its current permission/hash checks.
+// Four explicit family/preset pairs choose the review wearers. Repeated family
+// paths share one definition read; the same scene can compare baked references
+// without introducing a separate actor. Exact release/permission reads still own access.
 const parameters = new URLSearchParams(location.search);
 const familyPaths = parameters.getAll('family');
+const presetIds = parameters.getAll('preset');
 const outfitParts = parameters.getAll('part');
 
 function appearance(wearer: StudyWearer, dressed: boolean) {
@@ -55,6 +57,7 @@ function Comparison({
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<PersonStudyScene | undefined>(undefined);
   const [status, setStatus] = useState('Preparing comparison…');
+  const [canMove, setCanMove] = useState(false);
   const [movement, setMovement] = useState<PersonStudyMovement>('idle');
   const [paused, setPaused] = useState(true);
   const [view, setView] = useState<PersonStudyView>('front');
@@ -63,18 +66,35 @@ function Comparison({
   const snapshot = useSyncExternalStore(wearer.draft.subscribe, wearer.draft.getSnapshot);
   useEffect(() => {
     if (!canvas.current) return;
+    setCanMove(false);
+    setStatus('Preparing comparison…');
     const scene = new PersonStudyScene(
       canvas.current,
       wearers.map((entry) => appearance(entry, dressed)),
       () => {
         const states = scene.diagnostics().wearers;
         const error = states.find((state) => state.error)?.error;
+        const ready = states.filter(
+          (state) => state.state === 'ready' && !state.preparing && !state.error,
+        ).length;
+        const motionReady =
+          ready === states.length &&
+          states.every(
+            (state) =>
+              !!state.motion &&
+              ['Idle', 'Walk', 'Run'].every((clip) => state.availableMotions.includes(clip)),
+          );
+        setCanMove(motionReady);
         setStatus(
           error ??
-            `${states.filter((state) => state.state === 'ready' && !state.preparing).length} of ${states.length} characters ready`,
+            `${ready} of ${states.length} characters ready${ready === states.length && !motionReady ? ' · Usable Idle, Walk and Run clips are required for movement.' : ''}`,
         );
       },
     );
+    // A one/four-wearer replacement preserves the visible control choices.
+    scene.setView(view);
+    scene.setMovement(movement);
+    scene.setPaused(paused);
     renderer.current = scene;
     return () => {
       renderer.current = undefined;
@@ -116,6 +136,7 @@ function Comparison({
         />
         <SelectField
           label="Movement"
+          disabled={!canMove}
           value={movement}
           options={[
             { id: 'idle', label: 'Idle' },
@@ -132,6 +153,7 @@ function Comparison({
         <Button
           variant="quiet"
           aria-pressed={!paused}
+          disabled={!canMove && paused}
           onPress={() => {
             renderer.current?.setPaused(!paused);
             setPaused(!paused);
@@ -142,10 +164,14 @@ function Comparison({
       </div>
       <canvas
         ref={canvas}
+        id="people-study-comparison"
         className="people-study-comparison"
-        aria-label="Four characters at the same scale. Use the view and movement controls to inspect their fit."
+        aria-label={`${wearers.length === 1 ? 'Selected character' : 'Four characters at the same scale'}. Use the view and movement controls to inspect their fit.`}
       />
-      <div className="people-study-labels">
+      <div
+        className="people-study-labels"
+        style={{ gridTemplateColumns: `repeat(${wearers.length}, minmax(0, 1fr))` }}
+      >
         {wearers.map((entry, index) => (
           <span key={index}>
             {entry.label}
@@ -154,6 +180,10 @@ function Comparison({
         ))}
       </div>
       <p role="status">{status}</p>
+      <p className="ol-caption">
+        The height marker is 1.80 m. Movement plays in place; hair can extend above anatomical
+        height.
+      </p>
       <PersonAppearanceControls
         family={wearer.family}
         draft={wearer.draft}
@@ -171,7 +201,11 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
   const [selected, setSelected] = useState(0);
   const [mode, setMode] = useState('editor');
   const [dressed, setDressed] = useState(true);
+  const [count, setCount] = useState('four');
   const wearer = wearers[selected]!;
+  // This identity owns the scene lifetime. Selecting a different wearer in the
+  // four-person view must not replace the other three actors.
+  const shown = useMemo(() => (count === 'one' ? [wearer] : wearers), [count, wearer, wearers]);
   return (
     <main className="people-study">
       <header>
@@ -198,6 +232,17 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           ]}
           onChange={setMode}
         />
+        {mode === 'comparison' && (
+          <SelectField
+            label="Characters shown"
+            value={count}
+            options={[
+              { id: 'one', label: 'Selected character' },
+              { id: 'four', label: 'All four characters' },
+            ]}
+            onChange={setCount}
+          />
+        )}
         {mode === 'comparison' && !!outfitParts.length && (
           <Button variant="quiet" aria-pressed={dressed} onPress={() => setDressed(!dressed)}>
             {dressed ? 'Show base clothing' : 'Show outfit'}
@@ -216,7 +261,7 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           onPreview={() => {}}
         />
       ) : (
-        <Comparison wearers={wearers} selected={selected} dressed={dressed} />
+        <Comparison wearers={shown} selected={count === 'one' ? 0 : selected} dressed={dressed} />
       )}
     </main>
   );
@@ -228,39 +273,42 @@ function LoadStudy() {
   useEffect(() => {
     const request = new AbortController();
     void (async () => {
-      if (familyPaths.length !== 2 || outfitParts.length > 8)
+      if (familyPaths.length !== 4 || presetIds.length !== 4 || outfitParts.length > 8)
         throw new Error(
-          'Open this study with its two selected family paths and optional outfit parts.',
+          'Open this study with four selected family/preset pairs and optional outfit parts.',
         );
-      const families = await Promise.all(
-        familyPaths.map((path) => readAssetJson<AppearanceFamilyDefinition>(path, request.signal)),
+      const families = new Map<string, AppearanceFamilyDefinition>();
+      await Promise.all(
+        [...new Set(familyPaths)].map(async (path) => {
+          const family = await readAssetJson<AppearanceFamilyDefinition>(path, request.signal);
+          validateAppearanceFamily(family);
+          if (!family.compiled || !family.compiledPath)
+            throw new Error('The selected collection is missing its compiled kit.');
+          families.set(path, family);
+        }),
       );
-      const next: StudyWearer[] = [];
-      for (const [index, family] of families.entries()) {
-        validateAppearanceFamily(family);
-        if (!family.compiled || !family.compiledPath)
-          throw new Error('The selected collection is missing its compiled kit.');
-        const presets = family.presets.slice(0, index === 0 ? 3 : 1);
-        if (presets.length !== (index === 0 ? 3 : 1))
-          throw new Error('The selected collection is missing its review presets.');
-        for (const preset of presets) {
-          const result = resolveAppearanceRecipe(family, {
-            family: family.reference,
-            controls: preset.controls,
-            selections: preset.selections,
-          });
-          if (!result.ok) throw new Error(result.message);
-          next.push({
-            label: preset.label,
-            family,
-            draft: createPersonAppearanceDraft(family, result.recipe),
-          });
-        }
-      }
+      const next = familyPaths.map((path, index): StudyWearer => {
+        const family = families.get(path);
+        if (!family) throw new Error('The selected character collection did not open.');
+        const preset = family.presets.find((entry) => entry.id === presetIds[index]);
+        if (!preset) throw new Error('The selected collection is missing its review preset.');
+        const result = resolveAppearanceRecipe(family, {
+          family: family.reference,
+          controls: preset.controls,
+          selections: preset.selections,
+        });
+        if (!result.ok) throw new Error(result.message);
+        return {
+          label: preset.label,
+          family,
+          draft: createPersonAppearanceDraft(family, result.recipe),
+        };
+      });
       if (!request.signal.aborted) setWearers(next);
     })().catch((problem: unknown) => {
-      if (!request.signal.aborted)
-        setError(problem instanceof Error ? problem.message : 'The character kit could not open.');
+      if (request.signal.aborted) return;
+      request.abort();
+      setError(problem instanceof Error ? problem.message : 'The character kit could not open.');
     });
     return () => request.abort();
   }, []);
