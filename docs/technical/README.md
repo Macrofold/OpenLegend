@@ -14,4 +14,6 @@ Use the [architecture map](../architecture.md) to locate an implemented owner; r
 | Rendering, controls and asset delivery    | [UI/UX](../ui-ux/README.md), [asset workflow](../asset-workflow.md)                                |
 | Documentation and development guidance    | [Documentation system](../documentation-system.md), [agent guidance](../../.agents/README.md)      |
 
+[Cognition walkthrough](cognition-walkthrough.md) explains the installed sensing, attention, decision, memory and saving cycles in plain language, including query limits and measured CPU costs.
+
 [Current features](../features/README.md) · [Unfinished work](../maintainers/README.md)
