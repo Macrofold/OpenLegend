@@ -2,7 +2,7 @@
 
 Part of the [performance contract](../performance.md). Read for the matching mechanism; historical results qualify only their recorded workload and revision. [Verification](../../.agents/rules/verification.md) selects checks.
 
-Separate finishing the available candidate pass from proving complete source coverage. An unchanged incomplete source waits for relevant evidence or an existing required deadline; it must not repeatedly rescan the same known rows merely because unknown information remains unknown.
+Separate finishing the available candidate pass from proving complete source coverage. Completeness belongs to the requested scope: a sibling’s change or attempted write does not prove successful capture, and filtered readers still need their required shared context. An unchanged incomplete source waits for relevant evidence or an existing required deadline; it must not repeatedly rescan the same known rows merely because unknown information remains unknown.
 
 ## Growing command-result collections
 
