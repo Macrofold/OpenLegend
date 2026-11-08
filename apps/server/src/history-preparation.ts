@@ -7,12 +7,17 @@ import {
   selectedTemporalPolicy,
   temporalRecentAt,
   receivedDirectoryContains,
+  defaultStoryPolicy,
+  personalText,
+  type StoryPolicy,
+  type StorySubject,
   type WorldState,
   type Awareness,
   type WorldEvent,
 } from '@open-legend/domain';
 import { timedSync } from './performance.js';
 import { receivedEventAccounts, type ReceivedEventAccount } from './received-event-accounts.js';
+import { personalEventEvidence as eventEvidence } from './personal-accounts.js';
 
 /** Derived indexes for one exact immutable candidate, not another history store.
  * Prepare before acquiring the database when readiness is already committed.
@@ -162,6 +167,156 @@ export function captureHistoryRead(input: PreparedHistory, actorId?: string): Pr
     accounts.set(event.id, selected);
   }
   return { changed, removed: [...input.removed], accounts, forgotten };
+}
+
+/** Exact immutable inputs to the history writer. Native producers supply these
+ * selected facts directly; SQL never needs a live or reconstructed world. */
+export interface HistoryProjection {
+  readonly worldId: string;
+  readonly initial: boolean;
+  readonly restore: boolean;
+  readonly policy: StoryPolicy;
+  readonly policyRevision: number;
+  readonly policyChanged: boolean;
+  readonly principals: readonly { actorId: string; ownerId: string }[];
+  readonly fastAppend: boolean;
+  readonly changed: readonly WorldEvent[];
+  readonly removed: readonly string[];
+  readonly newEventIds: ReadonlySet<string>;
+  readonly accounts: ReadonlyMap<string, ReadonlyMap<string, ReceivedEventAccount>>;
+  readonly accountCuts: ReadonlyMap<string, HistoryAccountCut>;
+  readonly personalText: ReadonlyMap<string, ReadonlyMap<string, string>>;
+  readonly subjects: ReadonlyMap<string, StorySubject>;
+  readonly forgotten: ReadonlyMap<string, ReadonlySet<string>>;
+  readonly forgottenChanges: ReadonlyMap<string, readonly string[]>;
+  readonly awarenessChanges: ReadonlyMap<string, readonly Awareness[]>;
+  readonly correctedEvents: ReadonlyMap<string, readonly string[]>;
+}
+
+export function captureHistoryProjection(
+  previous: WorldState | undefined,
+  world: WorldState,
+  input: PreparedHistory,
+  restore: boolean,
+  changes?: RecordChanges,
+): HistoryProjection {
+  const appendSources =
+    !!changes &&
+    !restore &&
+    !changes.deletes.has('experience_state') &&
+    !changes.deletes.has('mind_awareness_owners') &&
+    !changes.deletes.has('mind_awareness') &&
+    !(changes.writes.get('mind_awareness') ?? []).some((row) => !row.create) &&
+    [
+      'mind_forgotten',
+      'mind_corrections',
+      'mind_forgotten_owners',
+      'mind_corrections_owners',
+    ].every((table) => !changes.writes.has(table) && !changes.deletes.has(table));
+  const read = captureHistoryRead(input);
+  const accountCuts = new Map<string, HistoryAccountCut>();
+  const texts = new Map<string, Map<string, string>>();
+  const subjects = new Map<string, StorySubject>();
+  const policy = world.storyPolicy ?? defaultStoryPolicy();
+  const newEventIds = new Set<string>();
+  for (const event of input.changed) {
+    if (previous && !input.previousIds?.has(event.id)) newEventIds.add(event.id);
+    const eventTexts = new Map<string, string>();
+    for (const actorId of event.audience) {
+      if (!accountCuts.has(actorId))
+        accountCuts.set(actorId, captureHistoryAccountCut(world, actorId));
+      if (!input.fastAppend && event.type !== 'speech')
+        eventTexts.set(actorId, personalText(world, actorId, event.narration ?? event.text));
+    }
+    texts.set(event.id, eventTexts);
+    const evidence = [...(read.accounts.get(event.id)?.values() ?? [])].map(
+      (account) => account.evidence,
+    );
+    for (const id of [
+      event.actorId,
+      event.targetId,
+      ...evidence.flatMap((entry) => [entry.sourceId, entry.targetId]),
+    ]) {
+      if (!id || subjects.has(id)) continue;
+      const entity = entityGet(world.entities, id);
+      if (entity)
+        subjects.set(id, {
+          id,
+          ...(entity.mechanismFields?.[policy.id]
+            ? { mechanismFields: { [policy.id]: entity.mechanismFields[policy.id]! } }
+            : {}),
+          ...(entity.actor ? { actor: {} } : {}),
+          ...(entity.animal ? { animal: {} } : {}),
+        });
+    }
+  }
+  const forgottenChanges = new Map<string, readonly string[]>();
+  for (const [actorId, ids] of appendSources
+    ? []
+    : Object.entries(world.experience?.forgotten ?? {})) {
+    if (!restore && ids === previous?.experience?.forgotten[actorId]) continue;
+    const prior = new Set(restore ? [] : previous?.experience?.forgotten[actorId]);
+    forgottenChanges.set(
+      actorId,
+      ids.filter((id) => !prior.has(id)),
+    );
+  }
+  const awarenessChanges = new Map<string, readonly Awareness[]>();
+  if (previous && !appendSources)
+    for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
+      const before = previous.experience?.awareness[actorId] ?? [];
+      if (entries === before || appendedRecordCount(before, entries) !== undefined) continue;
+      let prefix = 0;
+      while (prefix < before.length && entries[prefix] === before[prefix]) prefix++;
+      const old = new Map(before.slice(prefix).map((entry) => [entry.eventId, entry]));
+      awarenessChanges.set(
+        actorId,
+        entries.slice(prefix).filter((entry) => {
+          const prior = old.get(entry.eventId);
+          return (
+            !!prior &&
+            prior !== entry &&
+            JSON.stringify(eventEvidence(prior)) !== JSON.stringify(eventEvidence(entry))
+          );
+        }),
+      );
+    }
+  const correctedEvents = new Map<string, readonly string[]>();
+  for (const [actorId, corrections] of Object.entries(world.experience?.corrections ?? {})) {
+    if (corrections === previous?.experience?.corrections?.[actorId]) continue;
+    correctedEvents.set(
+      actorId,
+      Object.entries(corrections).flatMap(([id, evidence]) =>
+        previous?.experience?.corrections?.[actorId]?.[id] === evidence
+          ? []
+          : [world.memories[actorId]?.find((memory) => memory.id === id)?.eventId ?? id],
+      ),
+    );
+  }
+  return {
+    worldId: world.id,
+    initial: !previous,
+    restore,
+    policy,
+    policyRevision: world.storyPolicyRevision ?? 0,
+    policyChanged: !!previous && previous.storyPolicyRevision !== world.storyPolicyRevision,
+    principals: Object.entries(world.authorship.playerAccountIds).map(([actorId, ownerId]) => ({
+      actorId,
+      ownerId,
+    })),
+    fastAppend: input.fastAppend,
+    changed: read.changed,
+    removed: read.removed,
+    newEventIds,
+    accounts: read.accounts,
+    accountCuts,
+    personalText: texts,
+    subjects,
+    forgotten: read.forgotten,
+    forgottenChanges,
+    awarenessChanges,
+    correctedEvents,
+  };
 }
 
 const retiredHistoryInputs = new WeakMap<RecordChanges, Map<string, ReadonlySet<string>>>();

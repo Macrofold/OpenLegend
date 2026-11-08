@@ -60,7 +60,7 @@ import {
   compactAppraisalHistory,
   compactContributionHistory,
 } from './history-residency.js';
-import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
+import { MemoryRepository } from './memory-repository.js';
 import {
   materializeTemporalChanges,
   WorldRecords,
@@ -88,14 +88,15 @@ import { CreationTargetRepository } from './creation-target.js';
 import { GameSaves, type RestoreSave } from './game-saves.js';
 import { timed, timedSync, countMetric, recordBackgroundFailure } from './performance.js';
 import { HistoryRepository } from './history.js';
-import { prepareHistory } from './history-preparation.js';
+import { prepareHistory, captureHistoryProjection } from './history-preparation.js';
+import type { CommitInputs } from './commit-inputs.js';
 import { insertRows, SqlWriteBatch } from './sql-rows.js';
 import { IntegrationValues } from './integration-values.js';
 import {
   privacyLedgerKey,
   readPrivacyLedger,
   worldPrivacy,
-  assertPrivacyPreserved,
+  assertPrivacyContinuation,
 } from './privacy-ledger.js';
 import { ReceivedValueOwnership } from './received-value-ownership.js';
 import { evidenceEncodedBytesSql } from './temporal-page-storage.js';
@@ -329,12 +330,7 @@ interface TableWrite {
   before: SavedWorld | null;
   state: SavedWorld;
   revision: number;
-  changes: ReturnType<WorldRecords['prepare']>;
-  historyBefore?: WorldState;
-  historyAfter: WorldState;
-  preparedHistory: ReturnType<typeof prepareHistory>;
-  preparedSources?: PreparedMemorySources;
-  restore: boolean;
+  inputs: CommitInputs;
 }
 
 /** Replaceable persistence boundary for committed world state. */
@@ -808,6 +804,7 @@ export class SqlGameRepository implements GameRepository {
   private readonly integrationValues: IntegrationValues;
   private acceptedRevision = -1;
   private acceptedState: SavedWorld | null = null;
+  private capturedOwner?: { worldId: string; generation: string; through: number };
   /** Set when a commit rolled back after replacing the baseline. The live world may have
    * released history since, so reloading a complete baseline and diffing against it could
    * delete evicted rows; only an explicit load (restart) may continue. */
@@ -1187,6 +1184,10 @@ export class SqlGameRepository implements GameRepository {
     return full;
   }
   async load(active = false): Promise<{ revision: number; state: SavedWorld } | null> {
+    if (this.capturedOwner)
+      throw new Error(
+        'A resident native world requires direct record capture, not a TypeScript world load.',
+      );
     await this.ready;
     const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
     const captured = await snapshot(async () => {
@@ -1235,6 +1236,97 @@ export class SqlGameRepository implements GameRepository {
   }
 
   private readonly readyHistoryWorlds = new Set<string>();
+  /** Called only after the host installs the validated native authority. Failed
+   * installation leaves the loaded predecessor and its writer baseline intact. */
+  releaseLoadedWorld(
+    worldId: string,
+    revision: number,
+    generation: string,
+    providers: {
+      liveReadCuts: LiveReadCutsProvider;
+      retainedValues: (worldId: string) => Readonly<Record<string, unknown>>;
+      backgroundSearchAdmission: () => boolean;
+    },
+  ): void {
+    if (
+      this.capturedOwner ||
+      this.acceptedRevision !== revision ||
+      this.acceptedState?.world.id !== worldId ||
+      !generation
+    )
+      throw new Error('Loaded world no longer matches the installed native authority.');
+    this.setLiveReadCuts(providers.liveReadCuts);
+    this.setRetainedValueLookup(providers.retainedValues);
+    this.memories.setBackgroundSearchAdmission(providers.backgroundSearchAdmission);
+    this.capturedOwner = { worldId, generation, through: this.acceptedState.world.sequence };
+    this.acceptedState = null;
+  }
+
+  /** Apply one complete immutable native save cut through the same ordered SQL
+   * owner. The host owns admission, prepared pre-effect facts and save capacity. */
+  async commitCaptured(
+    expectedRevision: number,
+    inputs: CommitInputs,
+    cut: {
+      generation: string;
+      through: number;
+      authority?: AuthorityFence;
+      receipt?: GameplayReceipt;
+      receipts?: readonly GameplayReceipt[];
+      operationalChange?: () => Promise<void>;
+    },
+  ): Promise<{ revision: number; generation: string; through: number }> {
+    await this.ready;
+    this.assertWriteAdmission();
+    const owner = this.capturedOwner;
+    if (
+      !owner ||
+      owner.worldId !== inputs.worldId ||
+      owner.generation !== cut.generation ||
+      this.acceptedRevision !== expectedRevision ||
+      this.baselineLost ||
+      !Number.isSafeInteger(cut.through) ||
+      cut.through < owner.through
+    )
+      throw new Error('Captured save no longer matches its installed world and durable prefix.');
+    if (
+      inputs.history.worldId !== inputs.worldId ||
+      inputs.sources.worldId !== inputs.worldId ||
+      inputs.sources.changes !== inputs.changes ||
+      inputs.history.restore !== inputs.restore
+    )
+      throw new Error('Captured save products belong to different cuts.');
+    if (inputs.restore)
+      throw new Error('Native checkpoint installation requires its protected restore transition.');
+    let publicationDeferred = false;
+    const publish = () => this.publishCommitInputs(inputs);
+    const revision = await timed('persistence.transaction', () =>
+      this.db.transaction(async () => {
+        if (cut.authority) await this.authority.assertFence(cut.authority);
+        await cut.operationalChange?.();
+        const revision = await this.records.advance(inputs.worldId, expectedRevision);
+        if (cut.receipt) await this.commands.save(inputs.worldId, cut.receipt);
+        if (cut.receipts?.length) await this.commands.saveBatch(inputs.worldId, cut.receipts);
+        await this.applyCommitPrivacy(inputs);
+        await this.applyCommitInputs(inputs, revision);
+        this.db.afterRollback?.(() => {
+          this.acceptedRevision = -1;
+          this.baselineLost = true;
+          this.readyHistoryWorlds.clear();
+        });
+        this.acceptedRevision = revision;
+        this.capturedOwner = { ...owner, through: cut.through };
+        if (this.db.afterCommit) {
+          this.db.afterCommit(publish);
+          publicationDeferred = true;
+        }
+        return revision;
+      }),
+    );
+    if (!publicationDeferred) publish();
+    return { revision, generation: cut.generation, through: cut.through };
+  }
+
   async commit(
     expectedRevision: number,
     state: SavedWorld,
@@ -1266,6 +1358,8 @@ export class SqlGameRepository implements GameRepository {
       operationalChange?: () => Promise<void>;
     },
   ): Promise<number> {
+    if (this.capturedOwner)
+      throw new Error('Resident native state must be saved through its captured record cut.');
     await this.ready;
     if (this.acceptedRevision !== expectedRevision) {
       if (this.baselineLost)
@@ -1365,15 +1459,25 @@ export class SqlGameRepository implements GameRepository {
       changes.savedTemporalActors = replacement.savedTemporalActors ?? [];
     }
     let committedRevision = expectedRevision;
+    const historyKey = `history-schema:${state.world.id}`;
+    const historyReady =
+      this.readyHistoryWorlds.has(state.world.id) ||
+      !!(await this.integrationValues.get(historyKey));
+    const inputs = this.captureCommitInputs(
+      this.acceptedState,
+      state,
+      changes,
+      preparedHistory,
+      historyReady ? (historyProjection?.before ?? this.acceptedState?.world) : undefined,
+      historyAfter,
+      !!historyProjection?.restore,
+      invalidatedMemoryIds,
+    );
     const write: TableWrite = {
       before: this.acceptedState,
       state,
       revision: expectedRevision + 1,
-      changes,
-      historyBefore: historyProjection?.before,
-      historyAfter,
-      preparedHistory,
-      restore: !!historyProjection?.restore,
+      inputs,
     };
     const publish = () => this.publishWorldTables(write);
     let publicationDeferred = false;
@@ -1442,37 +1546,8 @@ export class SqlGameRepository implements GameRepository {
           await this.commands.save(state.world.id, historyProjection.receipt);
         if (historyProjection?.receipts?.length)
           await this.commands.saveBatch(state.world.id, historyProjection.receipts);
-        const ledgerKey = privacyLedgerKey(state.world.id);
-        const privacyChanged =
-          this.acceptedRevision !== expectedRevision ||
-          this.acceptedState?.world.experience?.forgotten !== state.world.experience?.forgotten ||
-          this.acceptedState?.world.experience?.corrections !== state.world.experience?.corrections;
-        if (privacyChanged || historyProjection?.restore) {
-          const ledger = readPrivacyLedger(await this.getIntegration(ledgerKey));
-          if (ledger) assertPrivacyPreserved(state.world, ledger);
-          if (privacyChanged) await this.putIntegration(ledgerKey, worldPrivacy(state.world));
-        }
-        const invalidations: Record<string, string[]> = structuredClone(invalidatedMemoryIds ?? {});
-        for (const [actorId, records] of Object.entries(state.world.memories)) {
-          const prior = this.acceptedState?.world.memories[actorId];
-          if (!prior || appendedRecordCount(prior, records) !== undefined) continue;
-          const current = new Map(records.map((m) => [m.id, m]));
-          const ids = prior
-            .filter(
-              (m) =>
-                !current.has(m.id) ||
-                (current.get(m.id) !== m &&
-                  JSON.stringify(current.get(m.id)) !== JSON.stringify(m)),
-            )
-            .map((m) => m.id);
-          if (ids.length)
-            invalidations[actorId] = [...new Set([...(invalidations[actorId] ?? []), ...ids])];
-        }
-        for (const [actorId, ids] of Object.entries(invalidations)) {
-          await this.vectors?.invalidate(`vectors:${state.world.id}:${actorId}`, ids);
-          await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
-        }
-        await this.applyWorldTables(write);
+        await this.applyCommitPrivacy(inputs);
+        await this.applyCommitInputs(inputs, revision);
         // Nested importer/restore transactions may still roll back after this call.
         // Keep their tentative baseline, but publish only after the outer COMMIT.
         this.db.afterRollback?.(() => {
@@ -1502,112 +1577,163 @@ export class SqlGameRepository implements GameRepository {
     return revision;
   }
 
-  private publishWorldTables(write: TableWrite, remoteSources?: PreparedMemorySources): void {
-    recordSavedTemporalPages(
-      write.state.world,
-      write.restore ? undefined : write.before?.world,
-      write.changes.savedTemporalPages ?? [],
-      write.changes.deletes.get('mind_temporal_pages') ?? [],
-      write.changes.savedTemporalActors ?? [],
-      write.changes.temporalEdits ?? [],
-    );
-    const worldId = write.state.world.id;
-    // Recent expiry no longer deletes individual rows. Its durable boundary is
-    // still a productive reason to wake the existing bounded storage collector.
-    const recentFrontierAdvanced = write.changes.writes.get('mind_temporal_actors')?.some((row) => {
+  private captureCommitInputs(
+    before: SavedWorld | null,
+    state: SavedWorld,
+    changes: RecordChanges,
+    preparedHistory: ReturnType<typeof prepareHistory>,
+    historyBefore: WorldState | undefined,
+    historyAfter: WorldState,
+    restore: boolean,
+    invalidatedMemoryIds?: Record<string, string[]>,
+  ): CommitInputs {
+    const world = state.world;
+    const outcomes = new Map<string, CommitInputs['outcomes'][number]['outcome']>();
+    for (const [id, receipt] of Object.entries(world.responseReceipts ?? {}))
+      if (receipt !== before?.world.responseReceipts?.[id] && receipt.outcome)
+        outcomes.set(id, receipt.outcome);
+    for (const [id, receipt] of Object.entries(world.declarationReceipts))
+      if (receipt !== before?.world.declarationReceipts[id])
+        outcomes.set(id, {
+          ok: true,
+          code: 'admitted',
+          message: 'Definition admitted.',
+          recipeId: receipt.recipeId,
+        });
+    for (const [actorId, inner] of Object.entries(world.innerWorlds ?? {}))
+      if (
+        inner.publicationJobId &&
+        inner.publicationJobId !== before?.world.innerWorlds?.[actorId]?.publicationJobId
+      )
+        outcomes.set(inner.publicationJobId, {
+          ok: true,
+          code: 'snapshot-published',
+          message: 'Inner world published.',
+        });
+    const invalidations: Record<string, string[]> = structuredClone(invalidatedMemoryIds ?? {});
+    for (const [actorId, records] of Object.entries(world.memories)) {
+      const prior = before?.world.memories[actorId];
+      if (!prior || appendedRecordCount(prior, records) !== undefined) continue;
+      const current = new Map(records.map((memory) => [memory.id, memory]));
+      const ids = prior
+        .filter(
+          (memory) =>
+            !current.has(memory.id) ||
+            (current.get(memory.id) !== memory &&
+              JSON.stringify(current.get(memory.id)) !== JSON.stringify(memory)),
+        )
+        .map((memory) => memory.id);
+      if (ids.length)
+        invalidations[actorId] = [...new Set([...(invalidations[actorId] ?? []), ...ids])];
+    }
+    const temporalFrontierAdvanced = changes.writes.get('mind_temporal_actors')?.some((row) => {
       const actorId = (JSON.parse(row.id) as string[])[4]!;
-      const before = write.before?.world.experience?.temporal?.actors[actorId]?.frontier;
-      const after = write.state.world.experience?.temporal?.actors[actorId]?.frontier;
+      const previous = before?.world.experience?.temporal?.actors[actorId]?.frontier;
+      const next = world.experience?.temporal?.actors[actorId]?.frontier;
       return (
-        after &&
-        (after.expiredThroughTime !== before?.expiredThroughTime ||
-          after.pressureThrough?.address.batchOrder !==
-            before?.pressureThrough?.address.batchOrder ||
-          after.pressureThrough?.address.entryIndex !==
-            before?.pressureThrough?.address.entryIndex ||
-          after.pressureThrough?.address.memberIndex !==
-            before?.pressureThrough?.address.memberIndex)
+        !!next &&
+        (next.expiredThroughTime !== previous?.expiredThroughTime ||
+          next.pressureThrough?.address.batchOrder !==
+            previous?.pressureThrough?.address.batchOrder ||
+          next.pressureThrough?.address.entryIndex !==
+            previous?.pressureThrough?.address.entryIndex ||
+          next.pressureThrough?.address.memberIndex !==
+            previous?.pressureThrough?.address.memberIndex)
       );
     });
-    // Wake only for new payloads or actual potential releases, not each save.
-    if (
-      write.restore ||
-      !write.before ||
-      write.changes.writes.get('mind_perception_values')?.length ||
-      write.changes.deletes.get('mind_temporal_pages')?.length ||
-      recentFrontierAdvanced ||
-      receivedCurrentOwnerTables.some(
-        (table) =>
-          write.changes.deletes.get(table)?.length ||
-          write.changes.writes
-            .get(table)
-            ?.some((row) => !row.create && row.receivedUsesChanged !== false),
-      )
-    )
-      this.scheduleValueCleanup(worldId);
+    this.memories.configureWorld(world);
+    return {
+      worldId: world.id,
+      initial: !before,
+      restore,
+      changes,
+      history: captureHistoryProjection(
+        historyBefore,
+        historyAfter,
+        preparedHistory,
+        restore,
+        changes,
+      ),
+      sources: this.memories.prepareSources(
+        world.id,
+        changes,
+        this.memories.captureAllowance(world.id),
+        this.memories.sourceVersionPlan(world),
+      ),
+      outcomes: [...outcomes].map(([id, outcome]) => ({ id, outcome })),
+      privacy: worldPrivacy(world),
+      privacyChanged:
+        before?.world.experience?.forgotten !== world.experience?.forgotten ||
+        before?.world.experience?.corrections !== world.experience?.corrections,
+      invalidations,
+      hotEventIds: this.records.needsHotPrune
+        ? world.events.map((event) => JSON.stringify(['world', 'events', event.id]))
+        : [],
+      collectReceivedValues: !!(
+        restore ||
+        !before ||
+        changes.writes.get('mind_perception_values')?.length ||
+        changes.deletes.get('mind_temporal_pages')?.length ||
+        temporalFrontierAdvanced ||
+        receivedCurrentOwnerTables.some(
+          (table) =>
+            changes.deletes.get(table)?.length ||
+            changes.writes
+              .get(table)
+              ?.some((row) => !row.create && row.receivedUsesChanged !== false),
+        )
+      ),
+    };
+  }
+
+  private async applyCommitPrivacy(inputs: CommitInputs): Promise<void> {
+    if (inputs.privacyChanged || inputs.restore) {
+      const key = privacyLedgerKey(inputs.worldId);
+      const ledger = readPrivacyLedger(await this.getIntegration(key));
+      if (ledger) assertPrivacyContinuation(inputs.privacy, ledger);
+      if (inputs.privacyChanged) await this.putIntegration(key, inputs.privacy);
+    }
+    for (const [actorId, ids] of Object.entries(inputs.invalidations)) {
+      await this.vectors?.invalidate(`vectors:${inputs.worldId}:${actorId}`, [...ids]);
+      await this.putIntegration(`vectors:${inputs.worldId}:${actorId}`, null);
+    }
+  }
+
+  private publishWorldTables(write: TableWrite): void {
+    const { inputs } = write;
+    recordSavedTemporalPages(
+      write.state.world,
+      inputs.restore ? undefined : write.before?.world,
+      inputs.changes.savedTemporalPages ?? [],
+      inputs.changes.deletes.get('mind_temporal_pages') ?? [],
+      inputs.changes.savedTemporalActors ?? [],
+      inputs.changes.temporalEdits ?? [],
+    );
+    this.publishCommitInputs(inputs);
+  }
+
+  private publishCommitInputs(inputs: CommitInputs): void {
+    const { worldId, changes, restore } = inputs;
+    if (inputs.collectReceivedValues) this.scheduleValueCleanup(worldId);
     this.readyHistoryWorlds.add(worldId);
     this.records.needsHotPrune = false;
     const memoryRevision = this.memories.publicationRevision;
-    this.history.committed(write.changes);
-    this.memories.committed(write.state.world.id, write.changes, write.restore);
-    this.memories.lexicalCommitted(remoteSources);
+    this.history.committed(changes);
+    this.memories.committed(worldId, changes, restore);
+    this.memories.lexicalCommitted();
     for (const listener of this.projectionListeners)
       listener(memoryRevision !== this.memories.publicationRevision);
   }
 
-  private async applyWorldTables(write: TableWrite): Promise<void> {
-    const {
-      before,
-      state,
-      revision,
-      changes,
-      historyBefore,
-      historyAfter,
-      preparedHistory,
-      restore,
-    } = write;
-    const historyKey = `history-schema:${state.world.id}`;
-    const historyReady =
-      this.readyHistoryWorlds.has(state.world.id) || (await this.integrationValues.get(historyKey));
+  private async applyCommitInputs(inputs: CommitInputs, revision: number): Promise<void> {
+    const { worldId, changes, restore } = inputs;
     const sharedWrites = new SqlWriteBatch(this.db);
     await timed('history.project', () =>
-      this.history.project(
-        historyReady ? (historyBefore ?? before?.world) : undefined,
-        historyAfter,
-        preparedHistory,
-        !!restore,
-        sharedWrites,
-        changes,
-      ),
+      this.history.project(inputs.history, sharedWrites, changes),
     );
-    if (!historyReady) await this.integrationValues.put(historyKey, 1);
+    if (inputs.history.initial) await this.integrationValues.put(`history-schema:${worldId}`, 1);
     {
-      const outcomes = new Map<
-        string,
-        { ok: boolean; message: string; code: string; recipeId?: string }
-      >();
-      for (const [id, receipt] of Object.entries(state.world.responseReceipts ?? {}))
-        if (receipt !== before?.world.responseReceipts?.[id] && receipt.outcome)
-          outcomes.set(id, receipt.outcome);
-      for (const [id, receipt] of Object.entries(state.world.declarationReceipts))
-        if (receipt !== before?.world.declarationReceipts[id])
-          outcomes.set(id, {
-            ok: true,
-            code: 'admitted',
-            message: 'Definition admitted.',
-            recipeId: receipt.recipeId,
-          });
-      for (const [actorId, inner] of Object.entries(state.world.innerWorlds ?? {}))
-        if (
-          inner.publicationJobId &&
-          inner.publicationJobId !== before?.world.innerWorlds?.[actorId]?.publicationJobId
-        )
-          outcomes.set(inner.publicationJobId, {
-            ok: true,
-            code: 'snapshot-published',
-            message: 'Inner world published.',
-          });
-      for (const [id, result] of restore ? [] : outcomes) {
+      for (const { id, outcome: result } of restore ? [] : inputs.outcomes) {
         const status = result.ok ? 'completed' : 'failed';
         // Merge only completion fields within the world transaction, preserving the
         // current diagnostic metadata without a separate read round trip. Decision roots
@@ -1640,25 +1766,25 @@ export class SqlGameRepository implements GameRepository {
           throw new Error('A request ID cannot be reused with different input.');
       }
     }
-    this.memories.configureWorld(state.world);
-    const sources = this.memories.prepareSources(state.world.id, changes, state.world);
-    write.preparedSources = sources;
+    const sources = inputs.sources;
+    this.memories.configureAllowance(sources.allowance);
     const affected = await this.memories.project(
-      state.world.id,
+      worldId,
       changes,
       !restore,
       sharedWrites,
       sources.versions,
     );
     if (sources.versions)
-      await this.memories.applySourceVersionPlan(state.world.id, revision, sources.versions);
-    await this.records.write(state.world.id, revision, changes, sharedWrites);
-    await this.history.revokeTemporalAccounts(state.world.id, changes);
-    await this.memories.writeSources(state.world.id, changes, affected, sources);
-    if (this.records.needsHotPrune) await this.records.pruneActiveEvents(state);
-    await this.memories.reconcile(state.world.id, affected);
-    await this.receivedOwnership.project(state.world.id, revision, changes, !!restore);
-    if (restore || !before) await this.memories.reuseVectors(state.world.id);
+      await this.memories.applySourceVersionPlan(worldId, revision, sources.versions);
+    await this.records.write(worldId, revision, changes, sharedWrites);
+    await this.history.revokeTemporalAccounts(worldId, changes);
+    await this.memories.writeSources(worldId, changes, affected, sources);
+    if (this.records.needsHotPrune)
+      await this.records.pruneActiveEvents(worldId, inputs.hotEventIds);
+    await this.memories.reconcile(worldId, affected);
+    await this.receivedOwnership.project(worldId, revision, changes, !!restore);
+    if (restore || inputs.initial) await this.memories.reuseVectors(worldId);
     else {
       const revisedSources = new Map<string, Set<string>>();
       for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries'])
@@ -1671,7 +1797,7 @@ export class SqlGameRepository implements GameRepository {
           ids.add(String(source[table === 'mind_awareness' ? 'eventId' : 'id']));
           revisedSources.set(actor, ids);
         }
-      if (revisedSources.size) await this.memories.reuseVectors(state.world.id, revisedSources);
+      if (revisedSources.size) await this.memories.reuseVectors(worldId, revisedSources);
     }
   }
 

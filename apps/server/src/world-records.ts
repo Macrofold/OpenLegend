@@ -1754,14 +1754,11 @@ export class WorldRecords {
           throw new Error('Retained personal counters disagree with their canonical records.');
       }
   }
-  async pruneActiveEvents(state: SavedWorld): Promise<void> {
+  async pruneActiveEvents(worldId: string, eventIds: readonly string[]): Promise<void> {
     const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
     await this.db
       .prepare(`DELETE FROM world_hot_events WHERE world_id=? AND id NOT IN (${selector})`)
-      .run(
-        state.world.id,
-        JSON.stringify(state.world.events.map((event) => recordId(['world', 'events', event.id]))),
-      );
+      .run(worldId, JSON.stringify(eventIds));
   }
   /** Explicit dependency materialization for maintenance/edit/save, never a tick read. */
   async activityPage(

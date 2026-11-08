@@ -28,16 +28,24 @@ export const worldPrivacy = (world: WorldState): ExperiencePrivacy => ({
 /** A source may acquire a newer correction or become forgotten, but a save may
  * not silently restore its eligibility. Native owners still own its actual edits. */
 export function assertPrivacyPreserved(world: WorldState, privacy: ExperiencePrivacy): void {
+  assertPrivacyContinuation(worldPrivacy(world), privacy);
+}
+
+/** The writer checks the captured cut's privacy facts, without loading a world. */
+export function assertPrivacyContinuation(
+  current: ExperiencePrivacy,
+  privacy: ExperiencePrivacy,
+): void {
   for (const [actorId, ids] of Object.entries(privacy.forgotten)) {
-    const forgotten = new Set(world.experience?.forgotten[actorId] ?? []);
+    const forgotten = new Set(current.forgotten[actorId] ?? []);
     if (ids.some((id) => !forgotten.has(id)))
       throw new Error('Restore would resurrect forgotten evidence; reapply current privacy first.');
   }
   for (const [actorId, corrections] of Object.entries(privacy.corrections)) {
-    const forgotten = new Set(world.experience?.forgotten[actorId] ?? []);
+    const forgotten = new Set(current.forgotten[actorId] ?? []);
     if (
       Object.keys(corrections).some(
-        (id) => !forgotten.has(id) && !world.experience?.corrections?.[actorId]?.[id],
+        (id) => !forgotten.has(id) && !current.corrections[actorId]?.[id],
       )
     )
       throw new Error('Restore would resurrect corrected evidence; reapply current privacy first.');

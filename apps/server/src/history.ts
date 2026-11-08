@@ -22,10 +22,8 @@ import {
   type EventPresentationPolicy,
 } from '@open-legend/domain';
 import {
-  appendedRecordCount,
   defaultStoryPolicy,
   selectStory,
-  personalText,
   type StorySelection,
   currentPlaceObservation,
   canAccessContainer,
@@ -35,11 +33,10 @@ import { createHash } from 'node:crypto';
 import type { WorldState, WorldEvent, Awareness, TemporalReceipt } from '@open-legend/domain';
 import { beginTiming, endTiming } from './performance.js';
 import {
-  captureHistoryAccountCut,
   historyAccountAtCapturedCut,
   temporalHistoryAccountAvailable,
   type HistoryAccountCut,
-  type PreparedHistory,
+  type HistoryProjection,
 } from './history-preparation.js';
 import { HistoryAppendWriter, perspectiveColumns } from './history-append.js';
 import type { SqlWriteBatch } from './sql-rows.js';
@@ -376,7 +373,7 @@ export class HistoryRepository {
   }
 
   private storySelection(
-    world: WorldState,
+    subjects: HistoryProjection['subjects'],
     event: WorldEvent,
     actorId: string,
     source: Pick<StorySource, 'evidence' | 'text'>,
@@ -399,8 +396,8 @@ export class HistoryRepository {
                 get sourceText() {
                   return nativeText(source.text);
                 },
-                source: entityGet(world.entities, perceived.actorId ?? ''),
-                target: entityGet(world.entities, perceived.targetId ?? ''),
+                source: subjects.get(perceived.actorId ?? ''),
+                target: subjects.get(perceived.targetId ?? ''),
               },
               policy,
             ),
@@ -582,54 +579,36 @@ export class HistoryRepository {
   }
   /** Runs inside the authoritative commit transaction. No paid work and no imagined legacy sources. */
   async project(
-    previous: WorldState | undefined,
-    world: WorldState,
-    inputs: PreparedHistory,
-    reapplyForgetting = false,
+    inputs: HistoryProjection,
     sharedWrites?: SqlWriteBatch,
     sourceChanges?: RecordChanges,
   ) {
     // A save can replace rows without passing through saveStory/revokeStories.
-    if (!previous || reapplyForgetting) this.bannerChanged();
+    if (inputs.initial || inputs.restore) this.bannerChanged();
     // Stored history perspectives follow explicit account attribution. Current access is checked separately at the request boundary.
     if (this.bindLocalPrincipal) {
-      this.principals = Object.entries(world.authorship.playerAccountIds).map(
-        ([actorId, ownerId]) => ({ actorId, ownerId }),
-      );
+      this.principals = inputs.principals.map((principal) => ({ ...principal }));
     }
-    if (previous && previous.storyPolicyRevision !== world.storyPolicyRevision) {
+    if (inputs.policyChanged) {
       for (const row of await this.db
         .prepare(
           "SELECT payload FROM story_jobs WHERE world_id=? AND state IN ('queued','running')",
         )
-        .all(world.id)) {
+        .all(inputs.worldId)) {
         const job = JSON.parse(String(row['payload'])) as StoryJob;
         job.state = 'cancelled';
         job.reason = 'Story policy changed.';
-        await this.saveStory(world.id, job);
+        await this.saveStory(inputs.worldId, job);
       }
     }
-    // Store.commit validated this exact captured intent. `previous` is the
-    // durable privacy baseline, which can differ from the first live predecessor.
-    // Re-diffing its resident feed here would turn eviction into deletion.
-    const { fastAppend, changed, removed, previousIds, forgotten, perspective } = inputs;
-    // Exact canonical changes, rather than event append status, prove that no old
-    // personal account/privacy relationship needs the edit/revocation path below.
-    const appendSources =
-      !!sourceChanges &&
-      !reapplyForgetting &&
-      !sourceChanges.deletes.has('experience_state') &&
-      !sourceChanges.deletes.has('mind_awareness_owners') &&
-      !sourceChanges.deletes.has('mind_awareness') &&
-      !(sourceChanges.writes.get('mind_awareness') ?? []).some((row) => !row.create) &&
-      [
-        'mind_forgotten',
-        'mind_corrections',
-        'mind_forgotten_owners',
-        'mind_corrections_owners',
-      ].every((table) => !sourceChanges.writes.has(table) && !sourceChanges.deletes.has(table));
+    // The mutation owner captured exact effects against the durable privacy
+    // baseline. Re-diffing a resident feed here would turn eviction into deletion.
+    const { fastAppend, changed, removed } = inputs;
+    const forgotten = (actorId: string) => inputs.forgotten.get(actorId) ?? new Set<string>();
+    const perspective = (actorId: string, eventId: string) =>
+      inputs.accounts.get(eventId)?.get(actorId);
     let removedEvents = 0;
-    for (const id of removed) removedEvents += await this.removeEvent(world.id, id);
+    for (const id of removed) removedEvents += await this.removeEvent(inputs.worldId, id);
     const candidates: {
       event: WorldEvent;
       position: number;
@@ -637,11 +616,10 @@ export class HistoryRepository {
       selection: Extract<StorySelection, { kind: 'candidate' }>;
       source: StorySource;
     }[] = [];
-    const policy = world.storyPolicy ?? defaultStoryPolicy();
-    const batch = new HistoryAppendWriter(this.db, world.id);
+    const policy = inputs.policy;
+    const batch = new HistoryAppendWriter(this.db, inputs.worldId);
     const rewrittenSources = new Map<string, Map<string, StorySource>>();
     const buildStarted = beginTiming();
-    const accountCuts = new Map<string, HistoryAccountCut>();
     for (const event of changed) {
       const encoded = jsonText(event);
       const eventRevision = revisionOf(encoded);
@@ -650,14 +628,14 @@ export class HistoryRepository {
       if (!fastAppend) {
         const retained = await this.db
           .prepare('SELECT payload FROM history_events WHERE world_id=? AND id=?')
-          .get(world.id, event.id);
+          .get(inputs.worldId, event.id);
         if (retained?.['payload'] === encoded) continue;
         if (retained)
           for (const row of await this.db
             .prepare(
               `SELECT p.actor_id,p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=?`,
             )
-            .all(world.id, event.id)) {
+            .all(inputs.worldId, event.id)) {
             const actorId = String(row['actor_id']),
               payload = String(row['payload']);
             retainedPerspectives.set(actorId, storySourceRow(row));
@@ -666,7 +644,7 @@ export class HistoryRepository {
           }
         // A missing canonical predecessor needs no story/perspective cleanup.
         // Resident absence alone is insufficient; this SQL read proved absence.
-        if (retained) removedEvents += await this.removeEvent(world.id, event.id);
+        if (retained) removedEvents += await this.removeEvent(inputs.worldId, event.id);
       }
       const perspectives = new Map<string, StorySource>();
       const { position, pending: eventFlush } = batch.event(event, encoded);
@@ -674,9 +652,8 @@ export class HistoryRepository {
       for (const actorId of new Set(event.audience)) {
         if (forgotten(actorId).has(event.id)) continue;
         const capturedAccount = perspective(actorId, event.id);
-        let accountCut = accountCuts.get(actorId);
-        if (!accountCut)
-          accountCuts.set(actorId, (accountCut = captureHistoryAccountCut(world, actorId)));
+        const accountCut = inputs.accountCuts.get(actorId);
+        if (!accountCut) throw new Error('Captured history account eligibility is unavailable.');
         const account = historyAccountAtCapturedCut(
           accountCut,
           sourceChanges,
@@ -690,15 +667,18 @@ export class HistoryRepository {
         if (!evidence && retained) {
           // Consolidation removes hot recall, not durable authorization. Reuse that perspective;
           // the domain forbids speech rewrites, so this path only rephrases non-speech edits.
-          evidence =
-            event.type === 'speech' || retained.evidence.eventType === 'activity-observed'
-              ? retained.evidence
-              : {
-                  ...retained.evidence,
-                  text: personalText(world, actorId, event.narration ?? event.text),
-                  content:
-                    typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
-                };
+          if (event.type === 'speech' || retained.evidence.eventType === 'activity-observed')
+            evidence = retained.evidence;
+          else {
+            const text = inputs.personalText.get(event.id)?.get(actorId);
+            if (text === undefined)
+              throw new Error('Captured personal event wording is unavailable.');
+            evidence = {
+              ...retained.evidence,
+              text,
+              content: typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
+            };
+          }
         }
         // Physical reception does not force a permanent autobiographical account.
         // A missing retained personal source grants no historical perspective.
@@ -721,13 +701,13 @@ export class HistoryRepository {
         if (perspectiveFlush) await perspectiveFlush;
       }
       // Only newly committed evidence can trigger a story; startup never replays history.
-      if (previous && !previousIds?.has(event.id))
+      if (inputs.newEventIds.has(event.id))
         for (const principal of this.principals) {
           if (forgotten(principal.actorId).has(event.id)) continue;
           const source = perspectives.get(principal.actorId);
           if (!source) continue;
           const { event: perceived, selection } = this.storySelection(
-            world,
+            inputs.subjects,
             event,
             principal.actorId,
             source,
@@ -738,13 +718,13 @@ export class HistoryRepository {
         }
     }
     // Persist sources before scheduling; selection follows docs/narration-and-conversations.md#replaceable-story-selection.
-    if (!previous)
+    if (inputs.initial)
       await this.db
         .prepare(
           'INSERT INTO history_totals(world_id,event_count) VALUES (?,0) ON CONFLICT DO NOTHING',
         )
-        .run(world.id);
-    await batch.flush({ worldId: world.id, removedEvents }, sharedWrites);
+        .run(inputs.worldId);
+    await batch.flush({ worldId: inputs.worldId, removedEvents }, sharedWrites);
     endTiming('history.sourceBuild', buildStarted, batch.writeMilliseconds);
     candidates.sort(
       (a, b) =>
@@ -762,123 +742,99 @@ export class HistoryRepository {
           .prepare(
             'SELECT event_id FROM story_milestones WHERE world_id=? AND owner_id=? AND milestone=?',
           )
-          .get(world.id, principal.ownerId, selection.milestoneKey))
+          .get(inputs.worldId, principal.ownerId, selection.milestoneKey))
       )
         continue;
-      if (await this.schedule(world, event, principal, selection, source)) {
+      if (await this.schedule(inputs, event, principal, selection, source)) {
         if (selection.milestoneKey)
           await this.db
             .prepare('INSERT INTO story_milestones VALUES (?,?,?,?) ON CONFLICT DO NOTHING')
-            .run(world.id, principal.ownerId, selection.milestoneKey, event.id);
+            .run(inputs.worldId, principal.ownerId, selection.milestoneKey, event.id);
       }
     }
-    for (const [actorId, ids] of appendSources
-      ? []
-      : Object.entries(world.experience?.forgotten ?? {})) {
-      // Installing a save also replaces historical permissions. Even an unchanged
-      // present-day ledger must revoke access restored by that older snapshot.
-      // docs/save-and-load.md#external-work-privacy-and-shared-authority
-      if (!reapplyForgetting && ids === previous?.experience?.forgotten[actorId]) continue;
-      const old = new Set(reapplyForgetting ? [] : previous?.experience?.forgotten[actorId]);
-      for (const id of ids)
-        if (!old.has(id)) {
-          await sharedWrites?.flush();
-          await this.db
-            .prepare(
-              'DELETE FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
-            )
-            .run(world.id, id, actorId);
-          for (const principal of this.principals.filter((p) => p.actorId === actorId))
-            await this.revokeStories(world.id, id, principal.ownerId);
-        }
-    }
-    // Editing awareness changes this actor's source capsule; consolidation alone does not revoke historical access.
-    if (previous && !appendSources)
-      for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
-        if (entries === previous.experience?.awareness[actorId]) continue;
-        const before = previous.experience?.awareness[actorId] ?? [];
-        if (appendedRecordCount(before, entries) !== undefined) continue;
-        let prefix = 0;
-        while (prefix < before.length && entries[prefix] === before[prefix]) prefix++;
-        if (prefix === before.length) continue; // Unchanged or append-only, no edited old sources.
-        const old = new Map(before.slice(prefix).map((entry) => [entry.eventId, entry]));
-        for (const entry of entries.slice(prefix)) {
-          const prior = old.get(entry.eventId);
-          if (
-            !prior ||
-            prior === entry ||
-            JSON.stringify(eventEvidence(prior)) === JSON.stringify(eventEvidence(entry))
+    for (const [actorId, ids] of inputs.forgottenChanges)
+      for (const id of ids) {
+        await sharedWrites?.flush();
+        await this.db
+          .prepare(
+            'DELETE FROM history_perspectives WHERE world_id=? AND event_id=? AND actor_id=?',
           )
-            continue;
-          await sharedWrites?.flush();
-          // A global-event edit can already have replaced this perspective in the
-          // current transaction, before its new canonical awareness body is written.
-          // Retain that exact owned preparation instead of reading its future reference.
-          let source = rewrittenSources.get(actorId)?.get(entry.eventId);
-          if (!source) {
-            const row = await this.db
-              .prepare(
-                `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=? AND p.actor_id=?`,
-              )
-              .get(world.id, entry.eventId, actorId);
-            if (!row) continue;
-            source = storySourceRow(row);
-          }
-          source.text = entry.text;
-          source.evidence = eventEvidence(entry);
-          if (entry.content !== undefined) source.content = entry.content;
-          else delete source.content;
-          source.revision = revisionOf(JSON.stringify(entry));
-          const account = encodeStoryAccount(source, entry);
-          await this.db
-            .prepare(
-              'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_life=NULL,temporal_epoch=NULL,temporal_batch_order=NULL,temporal_entry_index=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
-            )
-            .run(account.payload, ...perspectiveColumns(source), world.id, entry.eventId, actorId);
-          for (const principal of this.principals.filter((p) => p.actorId === actorId))
-            await this.revokeStories(world.id, entry.eventId, principal.ownerId);
-        }
+          .run(inputs.worldId, id, actorId);
+        for (const principal of this.principals.filter((p) => p.actorId === actorId))
+          await this.revokeStories(inputs.worldId, id, principal.ownerId);
       }
-    for (const [actorId, corrections] of Object.entries(world.experience?.corrections ?? {})) {
-      if (corrections === previous?.experience?.corrections?.[actorId]) continue;
-      for (const [id, evidence] of Object.entries(corrections)) {
-        if (previous?.experience?.corrections?.[actorId]?.[id] === evidence) continue;
-        const eventId = world.memories[actorId]?.find((m) => m.id === id)?.eventId ?? id;
+    // Editing awareness changes this actor's source capsule; consolidation alone does not revoke historical access.
+    for (const [actorId, entries] of inputs.awarenessChanges)
+      for (const entry of entries) {
+        await sharedWrites?.flush();
+        // A global-event edit can already have replaced this perspective in the
+        // current transaction, before its new canonical awareness body is written.
+        // Retain that exact owned preparation instead of reading its future reference.
+        let source = rewrittenSources.get(actorId)?.get(entry.eventId);
+        if (!source) {
+          const row = await this.db
+            .prepare(
+              `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.event_id=? AND p.actor_id=?`,
+            )
+            .get(inputs.worldId, entry.eventId, actorId);
+          if (!row) continue;
+          source = storySourceRow(row);
+        }
+        source.text = entry.text;
+        source.evidence = eventEvidence(entry);
+        if (entry.content !== undefined) source.content = entry.content;
+        else delete source.content;
+        source.revision = revisionOf(JSON.stringify(entry));
+        const account = encodeStoryAccount(source, entry);
+        await this.db
+          .prepare(
+            'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_life=NULL,temporal_epoch=NULL,temporal_batch_order=NULL,temporal_entry_index=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
+          )
+          .run(
+            account.payload,
+            ...perspectiveColumns(source),
+            inputs.worldId,
+            entry.eventId,
+            actorId,
+          );
+        for (const principal of this.principals.filter((p) => p.actorId === actorId))
+          await this.revokeStories(inputs.worldId, entry.eventId, principal.ownerId);
+      }
+    for (const [actorId, eventIds] of inputs.correctedEvents)
+      for (const eventId of eventIds)
         for (const principal of this.principals.filter((p) => p.actorId === actorId)) {
           await sharedWrites?.flush();
-          await this.revokeStories(world.id, eventId, principal.ownerId);
+          await this.revokeStories(inputs.worldId, eventId, principal.ownerId);
         }
-      }
-    }
   }
   private async schedule(
-    world: WorldState,
+    inputs: Pick<HistoryProjection, 'worldId' | 'policy' | 'policyRevision'>,
     event: WorldEvent,
     { ownerId, actorId }: { ownerId: string; actorId: string },
     selection: Extract<StorySelection, { kind: 'candidate' }>,
     source: StorySource,
   ) {
-    const policy = world.storyPolicy ?? defaultStoryPolicy();
+    const policy = inputs.policy;
     // Narration keeps its own principal/source grouping, independent of speaking.
     const base = `story:${ownerId}:${selection.groupKey}`;
     const priorRow = await this.db
       .prepare('SELECT payload FROM story_jobs WHERE world_id=? AND id=? AND owner_id=?')
-      .get(world.id, base, ownerId);
+      .get(inputs.worldId, base, ownerId);
     const prior = priorRow ? (JSON.parse(String(priorRow['payload'])) as StoryJob) : undefined;
     const combine =
       prior?.state === 'queued' &&
       prior.sources.length < policy.delivery.maximumSources &&
-      prior.selection?.policyRevision === (world.storyPolicyRevision ?? 0);
+      prior.selection?.policyRevision === inputs.policyRevision;
     if (prior && (!combine || prior.sources.some((source) => source.id === event.id))) return false;
     if (!combine) {
       const delivery = await this.db
         .prepare('SELECT game_time FROM story_delivery WHERE world_id=? AND owner_id=?')
-        .get(world.id, ownerId);
+        .get(inputs.worldId, ownerId);
       const waiting = await this.db
         .prepare(
           "SELECT id FROM story_jobs WHERE world_id=? AND owner_id=? AND state IN ('queued','running') LIMIT 1",
         )
-        .get(world.id, ownerId);
+        .get(inputs.worldId, ownerId);
       if (
         waiting ||
         (delivery && event.at - Number(delivery['game_time']) < policy.delivery.minimumInterval)
@@ -933,21 +889,21 @@ export class HistoryRepository {
       selection: {
         mechanism: policy.id,
         version: policy.version,
-        policyRevision: world.storyPolicyRevision ?? 0,
+        policyRevision: inputs.policyRevision,
         policyDigest: revisionOf(JSON.stringify(policy)),
       },
     };
-    await this.saveStory(world.id, job);
+    await this.saveStory(inputs.worldId, job);
     if (!combine)
       await this.db
         .prepare(
           'INSERT INTO story_delivery VALUES (?,?,?) ON CONFLICT(world_id,owner_id) DO UPDATE SET game_time=excluded.game_time',
         )
-        .run(world.id, ownerId, event.at);
+        .run(inputs.worldId, ownerId, event.at);
     for (const source of sources)
       await this.db
         .prepare('INSERT INTO story_event_sources VALUES (?,?,?,?) ON CONFLICT DO NOTHING')
-        .run(world.id, id, ownerId, source.id);
+        .run(inputs.worldId, id, ownerId, source.id);
     return true;
   }
   private async saveStory(worldId: string, job: StoryJob) {

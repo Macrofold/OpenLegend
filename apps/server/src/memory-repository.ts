@@ -2014,16 +2014,17 @@ export class MemoryRepository {
   prepareSources(
     worldId: string,
     changes: RecordChanges,
-    world: WorldState,
+    allowance: DerivedMemoryAllowance,
+    versions?: SourceVersionPlan,
     actorId?: string,
   ): PreparedMemorySources {
-    return this.prepareSourceChanges(
-      worldId,
-      changes,
-      this.derivedAllowance,
-      this.versionPlans.get(world),
-      actorId,
-    );
+    return this.prepareSourceChanges(worldId, changes, allowance, versions, actorId);
+  }
+  captureAllowance(worldId: string): DerivedMemoryAllowance {
+    const allowance = this.derivedAllowance;
+    if (!allowance || allowance.worldId !== worldId)
+      throw new Error('Selected memory retention policy is unavailable.');
+    return allowance;
   }
   private prepareSourceChanges(
     worldId: string,
