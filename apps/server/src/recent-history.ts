@@ -49,7 +49,8 @@ function receivedText(
   }
   const parts: string[] = [];
   for (const value of values) {
-    if (value.kind === 'personal-account') parts.push(historicalAccountText(value.text));
+    if (value.kind === 'personal-account' || value.kind === 'action-result')
+      parts.push(historicalAccountText(value.text));
     else if (value.kind === 'description') parts.push(value.text);
     else if (value.kind === 'speech') parts.push(speechDescription(value.speech));
     else if (value.kind === 'sound') parts.push(soundDescription(value.sound));

@@ -1,3 +1,4 @@
+import { renderActivity } from './action-experience.js';
 import { compactReceivedReceipt } from './received-record.js';
 import { canonicalJson } from './events.js';
 import { validReceivedTrackKey, validateObservationOrigin } from './perception-values.js';
@@ -116,7 +117,31 @@ export function validateTemporalValue(
     throw new Error('Invalid temporal value.');
   if (value['kind'] === 'observation-header' || value['kind'] === 'observation-frame')
     throw new Error('Personal metadata is not a temporal fact.');
-  if (value['kind'] === 'personal-account') {
+  if (value['kind'] === 'action-result') {
+    if (
+      !hasRecordFields(value, ['kind', 'id', 'text', 'status', 'outcome', 'facts']) ||
+      !isSafeRecordId(value['id']) ||
+      typeof value['text'] !== 'string' ||
+      !['completed', 'cancelled'].includes(String(value['status'])) ||
+      !hasRecordFields(value['outcome'], ['ok', 'code']) ||
+      typeof value['outcome'].ok !== 'boolean' ||
+      typeof value['outcome'].code !== 'string' ||
+      (value['status'] === 'completed') !== value['outcome'].ok ||
+      !Array.isArray(value['facts']) ||
+      value['facts'].some(
+        (fact: unknown) =>
+          !hasRecordFields(fact, ['name', 'value', 'critical'], ['sentence']) ||
+          typeof fact.name !== 'string' ||
+          typeof fact.critical !== 'boolean' ||
+          (fact.sentence !== undefined && typeof fact.sentence !== 'string'),
+      )
+    )
+      throw new Error('Invalid received action result.');
+    renderActivity({
+      name: 'result validation',
+      facts: value['facts'] as import('./action-experience.js').ActivityFact[],
+    });
+  } else if (value['kind'] === 'personal-account') {
     if (
       !['awareness', 'memory'].includes(String(value['source'])) ||
       typeof value['id'] !== 'string' ||
@@ -129,7 +154,7 @@ export function validateTemporalValue(
       throw new Error('Invalid temporal personal account.');
   } else
     validateSensoryFacet(
-      value as unknown as Exclude<TemporalValue, { kind: 'personal-account' }>,
+      value as unknown as Exclude<TemporalValue, { kind: 'personal-account' | 'action-result' }>,
       originals,
     );
 }
@@ -196,7 +221,8 @@ function validateStoredValue(
   const value = materializeTemporalValue(reference, fragment, sources);
   if (!value) throw new Error('Temporal fragment has no matching personal reception.');
   validateTemporalValue(value, originals);
-  if (value.kind !== 'personal-account') validateReceivedParticipantObservers(value, observer);
+  if (value.kind !== 'personal-account' && value.kind !== 'action-result')
+    validateReceivedParticipantObservers(value, observer);
   return value;
 }
 

@@ -1,3 +1,4 @@
+export * from './result-evidence.js';
 export {
   allocatedIdentityBetween,
   releaseIdentityAllocationProof,

@@ -1,3 +1,4 @@
+import { resultEvidenceId } from './result-evidence.js';
 import { receivedValueAt } from './received-values.js';
 import { currentFacetEntries } from './perception-current.js';
 import { DerivedOwnerIndex } from './derived-owner-index.js';
@@ -2206,8 +2207,8 @@ export function invalidateExperience(
       }
     }
     for (const occurrence of world.actionExperience.occurrences[actorId] ?? []) {
-      if (affected.has(occurrence.id)) include(occurrence.resultMemoryId);
-      if (occurrence.resultMemoryId && affected.has(occurrence.resultMemoryId))
+      if (affected.has(occurrence.id)) include(resultEvidenceId(occurrence.resultEvidence));
+      if (occurrence.resultEvidence && affected.has(resultEvidenceId(occurrence.resultEvidence)!))
         include(occurrence.id);
     }
     for (const [source, correction] of Object.entries(state.corrections?.[actorId] ?? {}))

@@ -1,4 +1,15 @@
 import {
+  recentResultEligible,
+  resultEvidenceId,
+  resultEvidenceMatchesReceipt,
+  selectCapturedTemporalHistory,
+  PERSONAL_EVIDENCE_PREPARATION,
+  type TemporalHistorySelection,
+  type ActionResultValue,
+} from '@open-legend/domain';
+import { captureTemporalHistoryReadContext, temporalHistoryWindow } from './temporal-storage.js';
+import { historicalAccountText } from './entity-references.js';
+import {
   nextRecentRetentionAt,
   nextAccountRetentionAt,
   nextKnowledgeRetentionAt,
@@ -3263,6 +3274,59 @@ export class WorldService {
           .slice(0, 16);
     if (generation !== this.generation)
       throw new Error('The world changed during action inspection.');
+    const recentResultSources = rows.flatMap(({ entry }) =>
+      entry.resultEvidence?.kind === 'recent' ? [entry.resultEvidence] : [],
+    );
+    const resultSubjects = recentResultSources.map((source) => source.subject);
+    const resultContext = resultSubjects.length
+      ? captureTemporalHistoryReadContext(this.world, actorId, { subjects: resultSubjects })
+      : undefined;
+    const resultHead = resultContext && (await this.store.records?.head());
+    if (generation !== this.generation)
+      throw new Error('The world changed during action inspection.');
+    const resultScope = resultHead
+      ? { worldId: this.world.id, actorId, generation: resultHead.generation }
+      : undefined;
+    const resultFence =
+      resultContext && resultScope && this.store.memories?.captureTemporalSourceFence(resultScope);
+    let recentResults: TemporalHistorySelection = { entries: [], incomplete: false };
+    try {
+      if (resultContext) {
+        const query = {
+          receipts: recentResultSources.map((source) => source.receipt),
+          subjects: resultSubjects,
+          kinds: ['action-result'] as const,
+          limit: 16,
+          bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
+          cut: resultContext.cut,
+        };
+        recentResults =
+          this.store.memories && resultScope
+            ? await this.store.memories.temporalHistory(resultScope, query, resultContext)
+            : selectCapturedTemporalHistory(resultContext, query);
+        if (
+          resultFence &&
+          !(await resultFence.validate(recentResults.entries, () =>
+            temporalHistoryWindow(this.world, actorId),
+          ))
+        )
+          throw new Error('Personal action evidence changed during inspection.');
+      }
+      if (generation !== this.generation)
+        throw new Error('The world changed during action inspection.');
+    } finally {
+      resultFence?.release();
+    }
+    const recentValues = new Map<string, ActionResultValue>();
+    for (const source of recentResultSources)
+      for (const { receipt, values } of recentResults.entries) {
+        if (!resultEvidenceMatchesReceipt(source, receipt)) continue;
+        const value = values.find(
+          (value): value is ActionResultValue =>
+            value.kind === 'action-result' && value.id === source.subject,
+        );
+        if (value) recentValues.set(resultEvidenceId(source)!, value);
+      }
     const denied = new Set(this.world.experience?.forgotten[actorId] ?? []);
     const entries: import('@open-legend/protocol').ActivityHistoryPage['entries'] = [];
     let bytes = 0,
@@ -3271,29 +3335,38 @@ export class WorldService {
     for (const row of rows) {
       if (
         row.entry.revoked ||
+        (row.entry.resultEvidence?.kind === 'recent' &&
+          (!recentResultEligible(this.world, actorId, row.entry.resultEvidence) ||
+            !recentValues.has(resultEvidenceId(row.entry.resultEvidence)!))) ||
         denied.has(row.entry.id) ||
         row.entry.evidenceIds.some((id) => denied.has(id))
       ) {
         through = row.position;
         continue;
       }
-      const text = renderActivity(
-        row.entry.parentName && row.entry.parentName !== row.entry.view.name
-          ? {
-              name: row.entry.parentName,
-              facts: [
-                {
-                  name: 'recorded part',
-                  value:
-                    'This is one performed part of the chosen activity, not a claim that all of it finished',
-                  critical: true,
-                },
-              ],
-              children: [row.entry.view],
-            }
-          : row.entry.view,
-        'What happened',
-      );
+      const recentValue =
+        row.entry.resultEvidence?.kind === 'recent'
+          ? recentValues.get(resultEvidenceId(row.entry.resultEvidence)!)
+          : undefined;
+      const text = recentValue
+        ? historicalAccountText(recentValue.text)
+        : renderActivity(
+            row.entry.parentName && row.entry.parentName !== row.entry.view.name
+              ? {
+                  name: row.entry.parentName,
+                  facts: [
+                    {
+                      name: 'recorded part',
+                      value:
+                        'This is one performed part of the chosen activity, not a claim that all of it finished',
+                      critical: true,
+                    },
+                  ],
+                  children: [row.entry.view],
+                }
+              : row.entry.view,
+            'What happened',
+          );
       if ((bytes += Buffer.byteLength(text)) > 16384) {
         remaining = true;
         break;

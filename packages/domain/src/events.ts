@@ -23,6 +23,7 @@ import {
 import { namePhrase } from '@open-legend/language';
 import { countDomainWork } from './diagnostic-counters.js';
 import { activeActivity, activityRecordingContext } from './action-experience.js';
+import { accountResultEvidence } from './result-evidence.js';
 import { chargeWork } from './work-budget.js';
 import { externalAudience } from './event-audience.js';
 import { worldPosition } from './spatial-state.js';
@@ -682,7 +683,7 @@ function recordEvent(
     // Speech already has a complete listener-specific account, including exact words.
     // Reuse it as the speaker's result rather than narrating the utterance twice.
     if (experience && type === 'speech' && speechAwareness.has(experience.actorId))
-      experience.resultMemoryId = event.id;
+      experience.resultEvidence = accountResultEvidence(event.id, 'awareness');
   }
   // Native callbacks consumed the same compact acquisition above. Retention is a
   // later placement decision, never another observation or an ordering clock.

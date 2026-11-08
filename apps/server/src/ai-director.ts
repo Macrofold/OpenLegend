@@ -1,3 +1,4 @@
+import { resultEvidenceId } from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
 import { readableDecisionContext } from './response-context.js';
 import { entityHandle } from './entity-references.js';
@@ -4266,7 +4267,9 @@ export class AiDirector {
         // priority. A later incidental sighting cannot replace an actual blow
         // as the cause sentence. Other coalesced evidence keeps its own order.
         const urgentId = interruptions.at(-1)?.eventId;
-        const resultId = preparedResult ? actor.agency.lastResultMemoryId : undefined;
+        const resultId = preparedResult
+          ? resultEvidenceId(actor.agency.lastResultEvidence)
+          : undefined;
         const priority = unseen.find((memory) => {
           const id = memory.eventId ?? memory.id;
           return id === urgentId || id === resultId;

@@ -1676,7 +1676,7 @@ export class MemoryRepository {
           facet.detailSupport?.proof.confirmation,
         ])
           if (source) semanticSources.push(source);
-        if (value.kind !== 'personal-account')
+        if (value.kind !== 'personal-account' && value.kind !== 'action-result')
           for (const dependency of sensoryFacetDependencies(value))
             semanticSources.push(dependency.source);
         if (!temporalFacetEligible(context.disclosure, scope.actorId, facet, value)) return false;

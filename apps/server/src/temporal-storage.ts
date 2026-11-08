@@ -91,6 +91,7 @@ export interface TemporalHistoryPage extends TemporalHistorySelection {
   nextBefore?: NonNullable<TemporalHistoryQuery['before']>;
 }
 export interface TemporalHistoryQuery {
+  receipts?: readonly TemporalReceiptLocator[];
   from?: number;
   through?: number;
   before?: {
@@ -327,6 +328,25 @@ export async function readTemporalHistory(
   const subjects = query.subjects ?? [];
   if (subjects.length > context.maximumSubjects)
     throw new MemoryRetentionError('Temporal history selection exceeds its subject allowance.');
+  const receipts = query.receipts ?? [];
+  if (
+    receipts.length > context.maximumSubjects ||
+    receipts.some((value) => value.actorId !== scope.actorId)
+  )
+    throw new MemoryRetentionError('Foreign or oversized exact receipt selection.');
+  const receiptKeys = receipts.length
+    ? new Set(
+        receipts.map((value) =>
+          JSON.stringify([
+            value.actorId,
+            value.physicalLife,
+            value.epoch,
+            value.batchOrder,
+            value.entryIndex,
+          ]),
+        ),
+      )
+    : undefined;
   const limit = Math.max(1, Math.min(128, query.limit ?? 128));
   const maxBytes = Math.max(1, Math.min(maximumPreparation, query.bytes ?? 8192));
   const metadata = await db
@@ -335,6 +355,7 @@ export async function readTemporalHistory(
         encoded_bytes FROM mind_temporal_pages c
       WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
       ${subjects.length ? `AND ((c.lookup_buckets && ?::smallint[] AND c.subject_keys && ?::text[])${query.includeGeometry ? ' OR c.spatial_context=1' : ''})` : ''}
+      ${receipts.length ? `AND EXISTS (SELECT 1 FROM jsonb_to_recordset(?::jsonb) AS selected(life bigint,epoch text,batch bigint,entry bigint) WHERE selected.life=c.physical_life AND selected.epoch=c.receipt_epoch AND (c.first_batch_order,c.first_entry)<=(selected.batch,selected.entry) AND (c.last_batch_order,c.last_entry)>=(selected.batch,selected.entry))` : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
       ${cut ? 'AND (first_batch_order,first_entry)<=(?,?)' : ''}
@@ -347,6 +368,18 @@ export async function readTemporalHistory(
       from,
       through,
       ...(subjects.length ? [receiptLookupBuckets('subjects', subjects), subjects] : []),
+      ...(receipts.length
+        ? [
+            JSON.stringify(
+              receipts.map((value) => ({
+                life: value.physicalLife,
+                epoch: value.epoch,
+                batch: value.batchOrder,
+                entry: value.entryIndex,
+              })),
+            ),
+          ]
+        : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
       ...(query.epoch === undefined ? [] : [query.epoch]),
       ...(cut ? [cut.throughBatchOrder, cut.throughEntryIndex] : []),
@@ -421,13 +454,31 @@ export async function readTemporalHistory(
       }
   const trimmedPages = new Map<string, readonly ReceivedEntrySelection[]>();
   for (const [id, page] of pages) {
-    if (context.pages.includes(page)) continue;
+    const nativePage = context.pages.includes(page);
+    if (nativePage && !receiptKeys) continue;
     let changed = false;
     const selections = page.batches.flatMap((batch) =>
       batch.entries.flatMap((entry) => {
-        const replaced = nativeMembers.get(
-          JSON.stringify([page.physicalLife, page.epoch, batch.batchOrder, entry.entryIndex]),
-        );
+        if (
+          receiptKeys &&
+          !receiptKeys.has(
+            JSON.stringify([
+              page.actorId,
+              page.physicalLife,
+              page.epoch,
+              batch.batchOrder,
+              entry.entryIndex,
+            ]),
+          )
+        ) {
+          changed = true;
+          return [];
+        }
+        const replaced =
+          !nativePage &&
+          nativeMembers.get(
+            JSON.stringify([page.physicalLife, page.epoch, batch.batchOrder, entry.entryIndex]),
+          );
         if (!replaced) return [{ batchOrder: batch.batchOrder, entryIndex: entry.entryIndex }];
         const all = [...(entry.receipt?.facets.map((facet) => facet.memberIndex) ?? [])];
         const kept = new Set(all.filter((member) => !replaced.has(member)));

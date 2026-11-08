@@ -1,3 +1,4 @@
+import { resultEvidenceId, type ResultEvidence } from '@open-legend/domain';
 import { encodeAttentionStorage, decodeAttentionStorage } from './attention-storage.js';
 import {
   currentContactPayload,
@@ -851,14 +852,18 @@ columns(
     at: numberColumn('at'),
     status: textColumn('status'),
     purpose_id: textColumn('parentId'),
-    result_memory_id: textColumn('resultMemoryId'),
+    result_evidence_id: {
+      sql: 'TEXT',
+      value: (value) =>
+        resultEvidenceId(value['resultEvidence'] as ResultEvidence | undefined) ?? null,
+    },
   },
   [
     ['actor_id', 'position'],
     ['actor_id', 'source_id'],
     ['actor_id', 'status'],
     ['actor_id', 'purpose_id'],
-    ['actor_id', 'result_memory_id'],
+    ['actor_id', 'result_evidence_id'],
   ],
 );
 columns(

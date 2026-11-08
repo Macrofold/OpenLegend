@@ -1,3 +1,4 @@
+import type { ActionResultValue } from './result-evidence.js';
 import { orderedRecordGet, orderedRecordSet, orderedRecordEntries } from './ordered-record.js';
 import {
   receivedTrackKey,
@@ -154,6 +155,7 @@ export interface TemporalValueReference {
 }
 export type TemporalValue =
   | SensoryFacet
+  | ActionResultValue
   | {
       kind: 'personal-account';
       source: 'awareness' | 'memory';
@@ -2199,6 +2201,7 @@ export interface TemporalHistorySelection {
   hasMore?: boolean;
 }
 export interface TemporalHistoryQuery {
+  receipts?: readonly TemporalReceiptLocator[];
   from?: number;
   through?: number;
   subject?: string;
@@ -2309,6 +2312,19 @@ export function selectCapturedTemporalHistory(
         context.recordingGap.from <= through &&
         context.recordingGap.through >= from),
   };
+  const requestedReceipts = query.receipts?.length
+    ? new Set(
+        query.receipts.map((value) =>
+          JSON.stringify([
+            value.actorId,
+            value.physicalLife,
+            value.epoch,
+            value.batchOrder,
+            value.entryIndex,
+          ]),
+        ),
+      )
+    : undefined;
   const pending: Array<{ batch: ReceivedBatch; entry: ReceivedEntry }> = [];
   for (const page of [...context.pages].reverse()) {
     if (pending.length >= maxCandidates) {
@@ -2330,6 +2346,19 @@ export function selectCapturedTemporalHistory(
           result.hasMore = true;
           break;
         }
+        if (
+          requestedReceipts &&
+          !requestedReceipts.has(
+            JSON.stringify([
+              page.actorId,
+              page.physicalLife,
+              page.epoch,
+              batch.batchOrder,
+              entry.entryIndex,
+            ]),
+          )
+        )
+          continue;
         pending.push({ batch, entry });
       }
   }
@@ -2971,7 +3000,7 @@ export function temporalFacetEligible(
     return false;
   if (value.kind === 'association')
     return temporalRecognitionSupportSourceIds(world, value.learningSupport ?? []).every(allowed);
-  if (value.kind !== 'personal-account')
+  if (value.kind !== 'personal-account' && value.kind !== 'action-result')
     return sensoryFacetDependencies(value).every(
       (dependency) =>
         dependency.source.observer.actorId === actorId &&

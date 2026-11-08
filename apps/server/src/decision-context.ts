@@ -1,3 +1,9 @@
+import {
+  resultEvidenceId,
+  resultEvidenceMatchesReceipt,
+  type ResultEvidence,
+  type TemporalHistorySelection,
+} from '@open-legend/domain';
 import { acceptedMindText } from '@open-legend/domain';
 import { currentBodyGrant } from '@open-legend/domain';
 import {
@@ -9,7 +15,11 @@ import {
   selectTemporalHistory,
   selectCapturedTemporalHistory,
 } from '@open-legend/domain';
-import { captureSituation, completeSituationHistory } from './situation-context.js';
+import {
+  captureSituation,
+  completeSituationHistory,
+  temporalHistoryForModel,
+} from './situation-context.js';
 import {
   prepareSupplyOpportunityContext,
   renderSupplyOpportunityContext,
@@ -27,7 +37,7 @@ import { remainingActivityText, learnedActivityCandidates } from './activity-con
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
 import {
-  requiredOutcomeMemoryIds,
+  requiredOutcomeEvidence,
   narrationTemplate,
   renderNarration,
   acquiredActivities,
@@ -152,7 +162,7 @@ async function validateCapturedDecision(
     rememberedAttribution
   )
     throw new Error('A remembered participant changed identity; discard stale context.');
-  if (outcomeBinding !== JSON.stringify(requiredOutcomeMemoryIds(service.world, actorId)))
+  if (outcomeBinding !== JSON.stringify(requiredOutcomeEvidence(service.world, actorId)))
     throw new Error(
       'Action outcomes changed during the decision; reconsider with current memories.',
     );
@@ -476,6 +486,14 @@ export async function prepareDecision(
       requiredIds.some((id) => service.worldEvent(id)?.type === 'speech');
     const initialWorldId = readWorld().id;
     const receiptPrefix = captureTemporalReceiptPrefix(readWorld(), actorId);
+    const outcomeEvidence = requiredOutcomeEvidence(readWorld(), actorId);
+    const recentResults = outcomeEvidence.filter(
+      (source): source is Extract<ResultEvidence, { kind: 'recent' }> => source.kind === 'recent',
+    );
+    const resultSubjects = [...new Set(recentResults.map((source) => source.subject))];
+    const initialResultHistory = resultSubjects.length
+      ? captureTemporalHistoryReadContext(readWorld(), actorId, { subjects: resultSubjects })
+      : undefined;
     const historyPolicy = selectedAttentionPolicy(readWorld()).scene;
     const historySubjects = currentDetailedAttention(readWorld(), actorId).map(
       (entry) => entry.exposure.track,
@@ -489,7 +507,10 @@ export async function prepareDecision(
     });
     const head = await service.store.records?.head();
     // The singular trigger can sit outside the coalesced list; keep its source binding.
-    const outcomeIds = requiredOutcomeMemoryIds(readWorld(), actorId);
+    const outcomeIds = outcomeEvidence.map((source) => resultEvidenceId(source)!);
+    const accountOutcomeIds = outcomeEvidence.flatMap((source) =>
+      source.kind === 'account' ? [source.id] : [],
+    );
     const evidenceIds = [
       ...new Set([...requiredIds, ...(triggerEvidenceId ? [triggerEvidenceId] : [])]),
     ];
@@ -526,6 +547,32 @@ export async function prepareDecision(
             bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
             limit: historyPolicy.historyReceipts,
           });
+    let selectedResults: TemporalHistorySelection = { entries: [], incomplete: false };
+    if (initialResultHistory) {
+      const resultQuery = {
+        receipts: recentResults.map((source) => source.receipt),
+        subjects: resultSubjects,
+        kinds: ['action-result'] as const,
+        cut: receiptPrefix,
+        through: initialResultHistory.at,
+        bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
+        limit: recentResults.length,
+      };
+      const resultHistory =
+        service.store.memories && evidenceScope
+          ? await service.store.memories.temporalHistory(
+              evidenceScope,
+              resultQuery,
+              initialResultHistory,
+            )
+          : selectCapturedTemporalHistory(initialResultHistory, resultQuery);
+      selectedResults = {
+        ...resultHistory,
+        entries: resultHistory.entries.filter(({ receipt }) =>
+          recentResults.some((source) => resultEvidenceMatchesReceipt(source, receipt)),
+        ),
+      };
+    }
     // Size the same received measurements that this decision will actually use,
     // before optional paid selection. Later waits cannot replace them with a new
     // scene or make older retained changes newly observed.
@@ -545,6 +592,17 @@ export async function prepareDecision(
         representedObservations,
       ]),
     );
+    capturedSituation.bindHistory(selectedResults);
+    const recentWorkResults = selectedResults.entries.length
+      ? temporalHistoryForModel(
+          captureExperienceContext(readWorld(), actorId, capturedSituation.frame, [
+            selectedResults,
+          ]),
+          actorId,
+          selectedResults,
+          capturedSituation.frame,
+        )
+      : [];
     const validateSituation = validateCapturedSituation.bind(
       undefined,
       service,
@@ -659,12 +717,13 @@ export async function prepareDecision(
       preparation?.conversation.sources.map((source) => source.id),
     );
     // Work results and current causes remain required independently of optional dialogue.
-    const recallIds = [...new Set([...evidenceIds, ...outcomeIds])];
+    const recallIds = [...new Set([...evidenceIds, ...accountOutcomeIds])];
     const snapshotActor = observed.actor.actor!;
     const requiredActivity = activityDecisionFacts(readWorld(), actorId, observed);
     const requiredContext: Record<string, unknown> = {
       situationQueries: mode !== 'native-only',
       receivedSituation: capturedSituation.packet,
+      recentWorkResults,
       ...requiredActivity,
       ...(supplyOpportunities.length ? { supplyOpportunities } : {}),
       capabilities: {
@@ -829,6 +888,7 @@ export async function prepareDecision(
       requiredChoices ? 'native-only' : mode,
     );
     const availableMemoryIds = new Set([
+      ...selectedResults.entries.map(({ receipt }) => receipt.id),
       ...candidates.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]),
     ]);
     const missingOutcomes = outcomeIds.filter((id) => !availableMemoryIds.has(id)).length;
@@ -982,7 +1042,7 @@ export async function prepareDecision(
       ...recall.selectedSources(candidates, selection.selected),
       ...(retainedEvidence ?? []).map(memorySourceProof),
     ];
-    const outcomeBinding = JSON.stringify(outcomeIds);
+    const outcomeBinding = JSON.stringify(outcomeEvidence);
     const rememberedSubjects = new Set(
       selection.selected
         .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
@@ -1057,6 +1117,7 @@ export async function prepareDecision(
     const context: Record<string, unknown> = {
       situationQueries: mode !== 'native-only',
       receivedSituation: capturedSituation.packet,
+      recentWorkResults,
       ...currentActivity,
       ...(currentSupplyOpportunities.length
         ? { supplyOpportunities: currentSupplyOpportunities }

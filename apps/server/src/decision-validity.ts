@@ -7,7 +7,7 @@ import {
   attributeDefinition,
   bodyEligibilityRevision,
   projectAttributes,
-  requiredOutcomeMemoryIds,
+  requiredOutcomeEvidence,
   scopedAppraisals,
   type AppraisalScope,
   type WorldState,
@@ -130,7 +130,7 @@ export function decisionValidity(world: WorldState, actorId: string): string {
     mind: world.innerWorlds?.[actorId]?.revision ?? world.minds?.[actorId]?.revision,
     forgotten: world.experience?.forgotten[actorId],
     corrections: world.experience?.corrections?.[actorId],
-    outcomes: requiredOutcomeMemoryIds(world, actorId),
+    outcomes: requiredOutcomeEvidence(world, actorId),
   });
 }
 

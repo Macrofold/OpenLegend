@@ -322,6 +322,14 @@ function temporalValueForModel(
   frame: ModelSpatialFrame,
   indexedFrame: ReturnType<typeof modelFrameTable>['indexed'],
 ): unknown {
+  if (value.kind === 'action-result')
+    return {
+      kind: value.kind,
+      text: historicalAccountText(value.text),
+      status: value.status,
+      outcome: value.outcome,
+      facts: value.facts,
+    };
   if (value.kind === 'personal-account')
     return {
       kind: value.kind,

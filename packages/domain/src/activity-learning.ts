@@ -1,3 +1,4 @@
+import { recentResultEligible } from './result-evidence.js';
 import { isNativeInputField } from './native-inputs.js';
 import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
@@ -207,6 +208,8 @@ export function normalizeActivity(
       (entry) =>
         entry.actorId !== actorId ||
         entry.revoked ||
+        (entry.resultEvidence !== undefined &&
+          !recentResultEligible(world, actorId, entry.resultEvidence)) ||
         entry.noLearningControl ||
         !supportedStockOccurrence(entry) ||
         (entry.command.type === 'tend-fire' && entry.command.onlyWhenLow === true) ||

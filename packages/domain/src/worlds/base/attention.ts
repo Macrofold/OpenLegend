@@ -182,6 +182,15 @@ export function baseRoutineMovement(
   activity: import('../../attention.js').ActivityRecordingContext | undefined,
   phase: 'departure' | 'arrival' | 'result',
 ): boolean {
+  if (
+    !activity ||
+    activity.commandType !== 'move' ||
+    activity.bound ||
+    activity.effects ||
+    activity.outputs ||
+    activity.spending
+  )
+    return false;
   const actor = entityGet(world.entities, actorId)?.actor;
   const encounters = actor?.encounters;
   if (
@@ -190,15 +199,6 @@ export function baseRoutineMovement(
       (Object.keys(encounters.pairs).length ||
         Object.values(encounters.unknown).some((entry) => entry.until > world.simTime))) ||
     hasCommitmentCompletion(world, actorId, ['action-started', 'moved', 'action-stopped'])
-  )
-    return false;
-  if (
-    !activity ||
-    activity.commandType !== 'move' ||
-    activity.bound ||
-    activity.effects ||
-    activity.outputs ||
-    activity.spending
   )
     return false;
   if (phase === 'departure') return activity.status === 'running';

@@ -1,3 +1,4 @@
+import { accountResultEvidence } from './result-evidence.js';
 import type { NativeExecutionPermissions } from './construction-permissions.js';
 import {
   movementOutingSnapshot,
@@ -724,7 +725,8 @@ function notice(
   );
   // Ordinary required personal evidence and event intake own reconsideration.
   const plan = actor.actor.agency.plan;
-  if (plan && plan.id === trip.plans?.[actorId]) linkPlanResult(world, actorId, plan, event.id);
+  if (plan && plan.id === trip.plans?.[actorId])
+    linkPlanResult(world, actorId, plan, accountResultEvidence(event.id, 'awareness'));
 }
 function closeOuting(
   world: WorldState,

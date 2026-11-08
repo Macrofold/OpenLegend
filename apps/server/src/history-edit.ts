@@ -164,8 +164,8 @@ export async function prepareHistoryEdit(
       SELECT a.actor_id,d.id FROM affected a CROSS JOIN LATERAL (
         SELECT id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND event_id=a.source_id
         UNION SELECT event_id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND id=a.source_id AND source_kind='memory' AND event_id IS NOT NULL
-        UNION SELECT result_memory_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_memory_id IS NOT NULL
-        UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_memory_id=a.source_id
+        UNION SELECT result_evidence_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_evidence_id IS NOT NULL
+        UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_evidence_id=a.source_id
         UNION SELECT payload::jsonb->>'activityId' FROM mind_memories WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND payload::jsonb->>'activityId' IS NOT NULL
         UNION SELECT derived_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND (source_id=a.source_id OR alias_id=a.source_id)
         UNION SELECT source_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND derived_id=a.source_id AND support_key=?

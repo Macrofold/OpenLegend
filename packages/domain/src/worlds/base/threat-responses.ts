@@ -1,3 +1,4 @@
+import { resultEvidenceId, sameResultEvidence } from '../../result-evidence.js';
 import { distance3D, type SurfacePoint } from '@open-legend/spatial';
 import { entityGet } from '../../entity-collection.js';
 import { definitionPin } from '../../world-modules.js';
@@ -68,17 +69,19 @@ export function basePreparedThreatResult(
   causeIds: readonly string[],
 ): boolean {
   const agency = entityGet(world.entities, actorId)?.actor?.agency;
-  const resultId = agency?.lastResultMemoryId;
+  const resultSource = agency?.lastResultEvidence;
+  const resultId = resultEvidenceId(resultSource);
   if (!resultId || !causeIds.includes(resultId)) return false;
-  const entry = world.actionExperience.occurrences[actorId]?.find(
-    (record) => record.resultMemoryId === resultId,
+  const entry = world.actionExperience.occurrences[actorId]?.find((record) =>
+    sameResultEvidence(record.resultEvidence, resultSource),
   );
   if (entry?.command.type === 'say') return false;
   const forgotten = world.experience?.forgotten[actorId] ?? [];
   if (forgotten.includes(resultId)) return false;
   const plan = agency?.plan;
   if (
-    plan?.resultMemoryId === resultId &&
+    plan &&
+    sameResultEvidence(plan.resultEvidence, resultSource) &&
     plan.activity?.request?.chosenPurpose &&
     sameDefinitionPin(plan.activity.request.chosenPurpose.definition, definitionPin(profile)) &&
     world.memories[actorId]?.some(

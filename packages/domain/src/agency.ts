@@ -1,3 +1,8 @@
+import {
+  accountResultEvidence,
+  validResultEvidence,
+  type ResultEvidence,
+} from './result-evidence.js';
 import { openingSemanticInterval, finishSemanticWork } from './semantic-opportunities.js';
 import { attackSubject, validAimPointSubject } from './combat-execution.js';
 import { isMaterialInputRole } from './native-inputs.js';
@@ -144,10 +149,10 @@ export interface PlanStep {
   status: 'queued' | 'running' | 'completed' | 'blocked' | 'cancelled';
   actionId?: string;
   outcome?: Outcome;
-  resultMemoryId?: string;
+  resultEvidence?: ResultEvidence;
 }
 export interface ActorPlan {
-  resultMemoryId?: string;
+  resultEvidence?: ResultEvidence;
   activity?: ActivityExecution;
   id: string;
   revision: number;
@@ -157,7 +162,7 @@ export interface ActorPlan {
 }
 export interface ActorAgency {
   semantic?: import('./semantic-opportunities.js').SemanticContinuation;
-  lastResultMemoryId?: string;
+  lastResultEvidence?: ResultEvidence;
   attempts: {
     id: string;
     description: string;
@@ -188,21 +193,17 @@ export interface ActorAgency {
 }
 /** Existing plan/history bounds limit these actor-local references. Retrieval applies
  * correction, forgetting and retention; execution receipts cannot recreate lost evidence. */
-export function requiredOutcomeMemoryIds(world: WorldState, actorId: string): string[] {
+export function requiredOutcomeEvidence(world: WorldState, actorId: string): ResultEvidence[] {
   const agency = entityGet(world.entities, actorId)?.actor?.agency;
   if (!agency) return [];
-  const plans = [agency.plan, agency.suspended];
-  return [
-    ...new Set(
-      [
-        agency.lastResultMemoryId,
-        ...plans.flatMap((plan) =>
-          plan ? [plan.resultMemoryId, ...plan.steps.map((step) => step.resultMemoryId)] : [],
-        ),
-        ...agency.history.map((step) => step.resultMemoryId),
-      ].filter((id): id is string => !!id),
+  const evidence = [
+    agency.lastResultEvidence,
+    ...[agency.plan, agency.suspended].flatMap((plan) =>
+      plan ? [plan.resultEvidence, ...plan.steps.map((step) => step.resultEvidence)] : [],
     ),
-  ];
+    ...agency.history.map((step) => step.resultEvidence),
+  ].filter((value): value is ResultEvidence => !!value);
+  return [...new Map(evidence.map((value) => [JSON.stringify(value), value])).values()];
 }
 
 export function seedAgency(objectives: string[] = []): ActorAgency {
@@ -595,9 +596,9 @@ export function stopOwnedOffense(
         actor.action.id === step.actionId &&
         attackSubject(actor.action)?.life === targetLife
       )
-        step.resultMemoryId = stopAction();
+        step.resultEvidence = stopAction();
       else if (step.actionId)
-        step.resultMemoryId = endActivity(world, actorId, step.actionId, stopped);
+        step.resultEvidence = endActivity(world, actorId, step.actionId, stopped);
       step.status = 'cancelled';
       step.outcome = { ...stopped };
     }
@@ -714,7 +715,7 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
   const restartId = step && `${step.id}:r${plan.revision}`;
   if (actor.action) {
     if (step)
-      step.resultMemoryId = endActivity(
+      step.resultEvidence = endActivity(
         world,
         actorId,
         actor.action.id,
@@ -733,7 +734,7 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
     const {
       actionId: _action,
       outcome: _outcome,
-      resultMemoryId: _memory,
+      resultEvidence: _memory,
       ...rest
     } = cloneValue(step);
     plan.steps[running] = {
@@ -882,13 +883,15 @@ export function recordPlanResult(
     world,
     actorId,
     plan,
-    appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: 6,
-      entityIds: [actorId],
-      summary,
-    }),
+    accountResultEvidence(
+      appendMemory(world, actorId, {
+        kind: 'episode',
+        source: 'internal',
+        importance: 6,
+        entityIds: [actorId],
+        summary,
+      }),
+    ),
   );
 }
 /** Retain existing personal evidence without writing a second account of the occurrence. */
@@ -896,10 +899,10 @@ export function linkPlanResult(
   world: WorldState,
   actorId: string,
   plan: ActorPlan,
-  evidenceId: string | undefined,
+  evidenceId: ResultEvidence | undefined,
 ): void {
-  plan.resultMemoryId = evidenceId;
-  entityGet(world.entities, actorId)!.actor!.agency.lastResultMemoryId = evidenceId;
+  plan.resultEvidence = evidenceId;
+  entityGet(world.entities, actorId)!.actor!.agency.lastResultEvidence = evidenceId;
 }
 
 /** Cancellation and suspended-work discard share one terminal report. The marker
@@ -976,7 +979,7 @@ export function cancelPlan(
         actor.planGeneration++;
       }
       if (step.actionId)
-        step.resultMemoryId = endActivity(
+        step.resultEvidence = endActivity(
           world,
           step.command.actorId,
           step.actionId,
@@ -1002,7 +1005,7 @@ export function finishPlanAction(
   // tolerance before a forecast deadline. Refresh its action/rate inputs even
   // without a plan or outward event; unrelated participants keep their forecasts.
   recordSemanticChange(world, { kind: 'state', entityId: actorId, field: 'behavior' });
-  const resultMemoryId = endActivity(world, actorId, actionId, result);
+  const resultEvidence = endActivity(world, actorId, actionId, result);
   releaseInvocationResources(world, actionId);
   const actor = entityGet(world.entities, actorId)!.actor!;
   const plan = actor.agency.plan;
@@ -1029,16 +1032,20 @@ export function finishPlanAction(
       throw new Error('Counted activity completion violated its trusted spending contract.');
     if (result.ok) plan!.activity.spent = (plan!.activity.spent ?? 0) + result.spent!;
   }
-  step.resultMemoryId =
-    resultMemoryId ??
-    appendMemory(world, actorId, {
-      kind: 'episode',
-      source: 'internal',
-      importance: 5,
-      entityIds: [actorId],
-      summary: `The requested action (${step.command.purpose ?? step.command.type}) ${result.ok ? 'reported completion' : 'was refused'}: ${result.message} Result code: ${result.code}.`,
-    });
-  actor.agency.lastResultMemoryId = step.resultMemoryId;
+  step.resultEvidence =
+    resultEvidence ??
+    (!occurrenceFor(world, actorId, actionId)
+      ? accountResultEvidence(
+          appendMemory(world, actorId, {
+            kind: 'episode',
+            source: 'internal',
+            importance: 5,
+            entityIds: [actorId],
+            summary: `The requested action (${step.command.purpose ?? step.command.type}) ${result.ok ? 'reported completion' : 'was refused'}: ${result.message} Result code: ${result.code}.`,
+          }),
+        )
+      : undefined);
+  actor.agency.lastResultEvidence = step.resultEvidence;
   step.outcome = result;
   const quantity = plan!.activity?.request?.quantity;
   if (
@@ -1173,7 +1180,8 @@ export function validateAgency(world: WorldState): void {
       throw new Error('Invalid saved remembered places.');
     if (
       !agency ||
-      (agency.lastResultMemoryId !== undefined && !isSafeRecordId(agency.lastResultMemoryId)) ||
+      (agency.lastResultEvidence !== undefined &&
+        !validResultEvidence(agency.lastResultEvidence, entity.id)) ||
       !Array.isArray(agency.attempts) ||
       agency.attempts.length > 4 ||
       !Number.isSafeInteger(agency.revision) ||
@@ -1268,7 +1276,8 @@ export function validateAgency(world: WorldState): void {
       if (
         plan &&
         (!isSafeRecordId(plan.id) ||
-          (plan.resultMemoryId !== undefined && !isSafeRecordId(plan.resultMemoryId)) ||
+          (plan.resultEvidence !== undefined &&
+            !validResultEvidence(plan.resultEvidence, entity.id)) ||
           !Number.isSafeInteger(plan.revision) ||
           plan.revision < 1 ||
           !['active', 'blocked', 'completed', 'cancelled'].includes(plan.status) ||
@@ -1309,7 +1318,8 @@ export function validateAgency(world: WorldState): void {
       ...agency.history,
     ]) {
       if (
-        (step.resultMemoryId !== undefined && !isSafeRecordId(step.resultMemoryId)) ||
+        (step.resultEvidence !== undefined &&
+          !validResultEvidence(step.resultEvidence, entity.id)) ||
         (step.targetEpisodes !== undefined && !validActionTargets(step.targetEpisodes)) ||
         !isSafeRecordId(step.id) ||
         !isPlannedCommand(step.command) ||
@@ -1932,7 +1942,7 @@ export function stopCooperativeWork(
     'This agreed purpose ended. Committed physical effects continue; no further cooperative step is promised.',
   );
   const current = actor.action;
-  let resultMemoryId: string | undefined;
+  let resultEvidence: ResultEvidence | undefined;
   if (current && matches(current)) {
     const aimed = attackSubject(current);
     // Refusing to pause an attack does not commit its future blow. Cancel only
@@ -1945,10 +1955,10 @@ export function stopCooperativeWork(
       stopOwnedOffense(world, actorId, aimed.id, aimed.life, {
         invocationId: current.id,
       });
-      resultMemoryId = endActivity(world, actorId, current.id, reason);
+      resultEvidence = endActivity(world, actorId, current.id, reason);
     } else if (pauseRefusal(current)) delete current.cooperation;
     else {
-      resultMemoryId = endActivity(world, actorId, current.id, reason);
+      resultEvidence = endActivity(world, actorId, current.id, reason);
       releaseInvocationResources(world, current.id);
       actor.action = null;
       actor.planGeneration++;
@@ -1966,9 +1976,9 @@ export function stopCooperativeWork(
     for (const step of steps) {
       step.status = 'cancelled';
       step.outcome = { ...reason };
-      if (step.actionId === current?.id && resultMemoryId) step.resultMemoryId = resultMemoryId;
+      if (step.actionId === current?.id && resultEvidence) step.resultEvidence = resultEvidence;
       else if (step.actionId && step.actionId !== actor.action?.id)
-        step.resultMemoryId = endActivity(world, actorId, step.actionId, reason);
+        step.resultEvidence = endActivity(world, actorId, step.actionId, reason);
     }
     if (
       !plan.steps.some((step) => ['queued', 'running', 'blocked'].includes(step.status)) &&
