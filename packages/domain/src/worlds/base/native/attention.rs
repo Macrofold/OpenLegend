@@ -37,6 +37,7 @@ pub struct AccountRules {
     pub priority: AccountPriority,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub fallback_priority: u64,
+    pub focus_attribute: String,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -69,6 +70,94 @@ pub(crate) enum MovementRecordingPhase {
     Result,
 }
 impl<'a> AccountLaw<'a> {
+    pub(crate) fn attention_familiarity(
+        &self,
+        reception: &crate::reception::ReceptionState,
+        observer: &str,
+        subject: Option<&crate::reception::ObserverSubject>,
+    ) -> f64 {
+        self.attention_identity(reception, observer, subject)
+            .filter(|(_, identity)| identity.seed_only != Some(true))
+            .map_or(0.0, |(_, identity)| {
+                crate::worlds::base_recognition::individual_familiarity(identity)
+            })
+    }
+    pub(crate) fn attention_identity<'b>(
+        &self,
+        reception: &'b crate::reception::ReceptionState,
+        observer: &str,
+        subject: Option<&crate::reception::ObserverSubject>,
+    ) -> Option<(&'b str, &'b crate::worlds::InstalledObserverIdentity)> {
+        let records = reception.observer_identities.as_ref()?.get(observer)?;
+        match subject? {
+            crate::reception::ObserverSubject::Individual { individual_id } => records
+                .get_key_value(individual_id)
+                .map(|(key, identity)| (key.as_str(), identity)),
+            crate::reception::ObserverSubject::Entity { entity_id } => {
+                let mut first: Option<(&str, &crate::worlds::InstalledObserverIdentity)> = None;
+                for (key, identity) in records {
+                    if identity.seed_only == Some(true)
+                        || identity.canonical_id.as_ref() != Some(entity_id)
+                    {
+                        continue;
+                    }
+                    if first.is_none_or(|(prior, _)| {
+                        crate::encoding::js_property_cmp(key, prior).is_lt()
+                    }) {
+                        first = Some((key, identity));
+                    }
+                }
+                first
+            }
+        }
+    }
+    pub(crate) fn attention_capacity(
+        &self,
+        physical: &PhysicalState,
+        installed: &crate::simulation::InstalledWorld,
+        observer: &crate::state::Entity,
+    ) -> Result<f64, ReceivedError> {
+        if let Some(capacity) = observer
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.attention_capacity)
+        {
+            return Ok(capacity as f64);
+        }
+        let value = match installed.attributes.get(&self.rules.focus_attribute) {
+            Some(definition) => crate::status::read_attribute(
+                observer,
+                definition.value(),
+                physical.pending_values.as_ref(),
+            )
+            .map_err(|_| ReceivedError("Selected attention ability is unavailable."))?,
+            None => None,
+        };
+        let value = match value {
+            None => 50.0,
+            Some(crate::values::AttributeValue::Number(value))
+                if value.is_finite() && (0.0..=100.0).contains(&value) =>
+            {
+                value
+            }
+            _ => return Err(ReceivedError("Selected attention ability is unavailable.")),
+        };
+        Ok((5.0 + value / 10.0).round())
+    }
+    pub(crate) fn affects_observation(
+        &self,
+        observer: &crate::state::Entity,
+        attribute_id: &str,
+    ) -> bool {
+        observer.has_memory()
+            && observer.actor.as_ref().is_some_and(|actor| {
+                (actor.attention_capacity.is_none() && attribute_id == self.rules.focus_attribute)
+                    || actor
+                        .individual_recognition
+                        .as_ref()
+                        .is_some_and(|recognition| recognition.attribute_id == attribute_id)
+            })
+    }
     pub(crate) fn new(rules: &'a AccountRules, cognition: &'a CognitionPolicy) -> Self {
         Self { rules, cognition }
     }

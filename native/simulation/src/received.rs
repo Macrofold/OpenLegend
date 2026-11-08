@@ -13,8 +13,18 @@ use crate::identity::MAX_SAFE_INTEGER;
 use crate::reception::{EvidenceFamily, EvidenceSource, SourceRevision};
 use crate::values::{deserialize_nullable, deserialize_present_option, deserialize_safe_integer};
 
+mod current;
 mod metadata;
 mod result;
+pub(crate) use current::{
+    CurrentRecordingContext, CurrentRecordingUpdates, TemporalCurrentGroupInput,
+    current_group_recording_complete,
+};
+mod selection;
+pub(crate) use selection::{
+    CapturedTemporalReceipt, observation_receipt_member_indices, select_temporal_receipt_facets,
+    temporal_receipt_aliases,
+};
 mod retained_size;
 pub use result::*;
 mod page;

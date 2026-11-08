@@ -1,7 +1,7 @@
 //! Shared owned-allocation accounting for actual receiver and storage captures.
 //! Payload capacities remain separate from encoded gameplay byte quotas.
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use std::hash::Hash;
 use std::mem::size_of;
 
@@ -94,5 +94,13 @@ impl<K: HeapBytes + Eq + Hash, V: HeapBytes> HeapBytes for IndexMap<K, V> {
             map_storage::<K, V>(self.capacity())?,
             |sum, (key, value)| heap_sum([sum, key.heap_bytes()?, value.heap_bytes()?]),
         )
+    }
+}
+impl<T: HeapBytes + Eq + Hash> HeapBytes for IndexSet<T> {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.iter()
+            .try_fold(map_storage::<T, ()>(self.capacity())?, |sum, value| {
+                sum.checked_add(value.heap_bytes()?)
+            })
     }
 }

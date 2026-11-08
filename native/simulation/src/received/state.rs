@@ -21,11 +21,12 @@ mod accounts;
 mod append;
 mod support;
 pub(crate) use accounts::{AccountAdditionBudget, KnowledgeAccountChange};
-pub(crate) use append::TemporalAcquisitionCheckpoint;
+pub(crate) use append::{ObservationCaptureOptions, TemporalAcquisitionCheckpoint};
 pub use append::{
     PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalAppendError,
     TemporalCaptureFacet, TemporalCaptureInput,
 };
+pub(crate) use support::SupportRetentionContext;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -298,7 +299,7 @@ impl TemporalActorHistory {
     pub fn payload(&self) -> &str {
         &self.payload
     }
-    pub fn pages(&self) -> impl Iterator<Item = &Arc<TemporalPageRecord>> {
+    pub fn pages(&self) -> impl DoubleEndedIterator<Item = &Arc<TemporalPageRecord>> {
         self.pages.values()
     }
     pub fn pending_pages(&self) -> &[Arc<PendingTemporalPage>] {

@@ -3,7 +3,7 @@
 
 use super::journal::property_order;
 use super::*;
-use crate::encoding::json_record;
+use crate::encoding::{json_record, json_record_len};
 use crate::events::WorldEvent;
 use crate::experience::{ExperienceState, FeatureFamily};
 use crate::geometry::GeometryBinding;
@@ -103,12 +103,11 @@ impl VoiceReceptionPreparation {
         if !clarity_margin_db.is_finite() {
             return Err(invalid());
         }
-        let observer_life = ObserverLife {
-            actor_id: observer_id.to_owned(),
-            physical_life: actor.physical_life.unwrap_or(0),
-        };
         let body = if let Some(sight) = visible {
-            if sight.binding() != binding || sight.observer() != &observer_life {
+            if sight.binding() != binding
+                || sight.observer().actor_id != observer_id
+                || sight.observer().physical_life != actor.physical_life.unwrap_or(0)
+            {
                 return Err(invalid());
             }
             if sight.seen(source_id) == Some(true) {
@@ -136,17 +135,75 @@ impl VoiceReceptionPreparation {
         let heap = records
             .map_or(Some(0), HeapBytes::heap_bytes)
             .ok_or_else(capacity)?;
+        let contact_storage = records
+            .into_iter()
+            .flat_map(IndexMap::values)
+            .flat_map(|identity| identity.voice.iter().flat_map(|voice| &voice.samples))
+            .try_fold(0usize, |bytes, sample| {
+                heap_sum([
+                    bytes,
+                    size_of::<String>(),
+                    json_record_len(&("contact", &sample.source_key, sample.at)).ok()?,
+                ])
+            })
+            .ok_or_else(capacity)?;
+        let policy = installed.recognition.value();
+        let definition = installed
+            .attributes
+            .get(
+                &actor
+                    .individual_recognition
+                    .as_ref()
+                    .ok_or_else(invalid)?
+                    .attribute_id,
+            )
+            .ok_or_else(invalid)?;
+        let policy_bytes = json_record_len(&(&policy.id, policy.version, definition.pin()))
+            .map_err(|_| invalid())?;
+        let proof_bytes = body
+            .as_ref()
+            .map(|body| json_record_len(&body.facet().original))
+            .transpose()
+            .map_err(|_| invalid())?
+            .unwrap_or(0);
+        let sample_strings = heap_sum([
+            json_record_len(&("voice", &event.id)).map_err(|_| invalid())?,
+            "awareness:".len() + event.id.len(),
+            "utterance:".len() + event.id.len(),
+            body.as_ref()
+                .and_then(|_| {
+                    reception
+                        .perception_episodes
+                        .as_ref()
+                        .and_then(|root| root.get(observer_id))
+                        .and_then(|episodes| episodes.get(source_id))
+                })
+                .map_or(0, String::len),
+            policy_bytes,
+            proof_bytes,
+            map_storage::<String, RecognitionInterval>(4).ok_or_else(capacity)?,
+            "pitchRange".len() + "resonance".len() + "texture".len() + "rhythm".len(),
+            2 * size_of::<String>(),
+        ])
+        .ok_or_else(capacity)?;
         // Matching borrows every prior exemplar. Reserve the actual prior field
         // bound for changed identity copies and finite scratch before any clone.
         let allowance = heap_sum([
             size_of::<Self>() + size_of::<VoiceReception>(),
-            heap.checked_mul(4).ok_or_else(capacity)?,
-            map_storage::<String, RecognitionInterval>(4).ok_or_else(capacity)?,
-            event.id.len().checked_mul(24).ok_or_else(capacity)?,
+            // Six overlapping owned records bound the source's candidate,
+            // sample-retention and familiarity replacement stages. Dictionary
+            // bodies are otherwise borrowed; scratch is finite before cloning.
+            heap.checked_mul(6).ok_or_else(capacity)?,
+            sample_strings.checked_mul(6).ok_or_else(capacity)?,
+            contact_storage,
+            event.id.len(),
             observer_id.len(),
             source_id.len(),
             event.target_id.as_ref().map_or(0, String::len),
-            2048,
+            policy.voice_feature_family.id.len(),
+            size_of::<VoiceEvent>()
+                + size_of::<RecognitionSample>() * 6
+                + size_of::<ObserverIdentity>() * 2,
             records
                 .map_or(0, IndexMap::len)
                 .checked_mul(size_of::<Match>() * 4 + size_of::<Exemplar<'_>>() * 4)
@@ -154,33 +211,39 @@ impl VoiceReceptionPreparation {
         ])
         .ok_or_else(capacity)?;
         let reservation = budget.reserve(allowance).map_err(|_| capacity())?;
+        let observer_life = ObserverLife {
+            actor_id: observer_id.to_owned(),
+            physical_life: actor.physical_life.unwrap_or(0),
+        };
         let sample_key = json_record(&("voice", &event.id)).map_err(|_| invalid())?;
         let source_key = format!("awareness:{}", event.id);
         let contact_key =
             json_record(&("contact", &source_key, event.at)).map_err(|_| invalid())?;
+        let prior_contacts: Vec<String> = records
+            .into_iter()
+            .flat_map(IndexMap::values)
+            .flat_map(|identity| identity.voice.iter().flat_map(|voice| &voice.samples))
+            .map(|sample| {
+                json_record(&("contact", &sample.source_key, sample.at)).map_err(|_| invalid())
+            })
+            .collect::<Result<_, _>>()?;
         let keys = records
             .into_iter()
             .flat_map(|records| records.iter())
             .flat_map(|(key, identity)| {
                 std::iter::once(identity.individual_id.as_deref().unwrap_or(key))
-                    .chain(
-                        identity
-                            .voice
+                    .chain(identity.voice.iter().flat_map(|voice| {
+                        voice
+                            .samples
                             .iter()
-                            .chain(&identity.sight)
-                            .flat_map(|voice| {
+                            .map(|sample| sample.key.as_str())
+                            .chain(
                                 voice
-                                    .samples
+                                    .authored
                                     .iter()
-                                    .map(|sample| sample.key.as_str())
-                                    .chain(
-                                        voice
-                                            .authored
-                                            .iter()
-                                            .map(|authored| authored.source.as_str()),
-                                    )
-                            }),
-                    )
+                                    .map(|authored| authored.source.as_str()),
+                            )
+                    }))
                     .chain(
                         identity
                             .familiarity
@@ -188,7 +251,8 @@ impl VoiceReceptionPreparation {
                             .flat_map(|state| state.roots.iter().map(|root| root.key.as_str())),
                     )
             })
-            .chain([sample_key.as_str(), contact_key.as_str()]);
+            .chain([sample_key.as_str(), contact_key.as_str()])
+            .chain(prior_contacts.iter().map(String::as_str));
         let comparisons = collation(CollationRequest::prepare(binding, keys, budget))?;
         Ok(Some(Self {
             observer: observer_life,
@@ -242,6 +306,12 @@ impl VoiceReceptionPreparation {
             &ranks,
         )?;
         let family = installed.recognition.value().voice_feature_family.clone();
+        // Free operation-local names and retained body before returning their
+        // scratch allowance. The detached result keeps its own actual fields.
+        drop(self.observer);
+        drop(self.event);
+        drop(self.visible_source);
+        drop(self.body);
         let mut reservation = self.reservation;
         reservation
             .resize(
@@ -275,22 +345,6 @@ pub(crate) fn individual_familiarity(identity: &ObserverIdentity) -> f64 {
             .max(credited),
     )
 }
-fn usable(
-    features: &IndexMap<String, RecognitionInterval>,
-) -> impl Iterator<Item = (&String, &RecognitionInterval)> {
-    features
-        .iter()
-        .filter(|(_, interval)| interval.max - interval.min <= 400.0)
-}
-fn resolution(features: &IndexMap<String, RecognitionInterval>) -> f64 {
-    let (sum, count) = usable(features).fold((0.0, 0usize), |(sum, count), (_, interval)| {
-        (
-            sum + 1.0 - (interval.max - interval.min) / 1000.0,
-            count + 1,
-        )
-    });
-    if count == 0 { 0.0 } else { sum / count as f64 }
-}
 fn initial_quality(perception: f64) -> f64 {
     0.55_f64.max(0.7 - 0.2 * perception / 100.0 - 0.15 * (2.0 / 6.0))
 }
@@ -299,7 +353,7 @@ struct Exemplar<'a> {
     features: &'a IndexMap<String, RecognitionInterval>,
     quality: f64,
     at: f64,
-    order: u64,
+    order: f64,
     key: &'a str,
     source_key: &'a str,
     authored: bool,
@@ -352,7 +406,7 @@ fn exemplars<'a>(
                 .then_with(|| usable(b.features).count().cmp(&usable(a.features).count()))
                 .then_with(|| a.at.total_cmp(&b.at))
                 .then_with(|| b.authored.cmp(&a.authored))
-                .then_with(|| a.order.cmp(&b.order))
+                .then_with(|| a.order.total_cmp(&b.order))
                 .then_with(|| a.rank.cmp(&b.rank))
         });
         let sample = pool.remove(0);
@@ -498,7 +552,7 @@ fn add_credit(
                     .cmp(&usable(&a.features).count())
             })
             .then_with(|| a.at.total_cmp(&b.at))
-            .then_with(|| a.order.cmp(&b.order))
+            .then_with(|| a.order.total_cmp(&b.order))
             .then_with(|| ar.cmp(br))
     });
     let mut selected = Vec::new();
@@ -634,7 +688,7 @@ fn perceive_voice(
         key: json_record(&("voice", &event.id)).map_err(|_| invalid())?,
         source_key: format!("awareness:{}", event.id),
         at: event.at,
-        order: event.order,
+        order: event.order as f64,
         encounter: episode
             .clone()
             .unwrap_or_else(|| format!("utterance:{}", event.id)),
@@ -934,6 +988,10 @@ fn credit_contact(
         || !sample.at.is_finite()
         || sample.at < 0.0
         || sample.at > now
+        || !sample.order.is_finite()
+        || sample.order < 0.0
+        || sample.order.fract() != 0.0
+        || sample.order > crate::identity::MAX_SAFE_INTEGER as f64
     {
         return Err(invalid());
     }
@@ -957,7 +1015,7 @@ fn credit_contact(
         key: contact_key,
         source_key: sample.source_key.clone(),
         at: sample.at,
-        order: sample.order,
+        order: sample.order as u64,
         support: vec![sample.source_key.clone()],
         required: false,
         credited: true,

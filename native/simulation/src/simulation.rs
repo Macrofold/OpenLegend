@@ -24,6 +24,9 @@ use std::sync::Arc;
 /// with their typed meanings; a digest is never used as content equality.
 /// Additional selected-law owners must join this composition before install.
 pub(crate) struct InstalledWorld {
+    pub manifest: crate::install::AuthoredManifest,
+    pub retained: crate::install::RetainedDefinitions,
+    pub schema: Arc<crate::records::RecordSchema>,
     pub content: crate::install::InstalledContent,
     pub attributes: IndexMap<String, VerifiedDefinition<AttributeDefinition>>,
     pub senses: IndexMap<String, VerifiedDefinition<SenseDefinition>>,
@@ -39,10 +42,13 @@ pub(crate) struct InstalledWorld {
     pub event_disclosure: VerifiedDefinition<crate::worlds::InstalledEventDisclosure>,
     pub attention: VerifiedDefinition<crate::attention::AttentionPolicy>,
     pub cognition: Arc<crate::experience::CognitionPolicy>,
+    pub prepared_responses: VerifiedDefinition<crate::experience::PreparedResponseProfile>,
     pub name_rules: VerifiedDefinition<crate::worlds::InstalledPersonalNameRules>,
     pub recognition: VerifiedDefinition<crate::worlds::InstalledRecognitionPolicy>,
     pub social: crate::install::SocialSettings,
     pub speech_action: VerifiedDefinition<crate::worlds::InstalledSpeechAction>,
+    pub ordinary_actions: VerifiedDefinition<crate::worlds::InstalledOrdinaryActionRules>,
+    pub promises: VerifiedDefinition<crate::worlds::InstalledPromiseRules>,
     pub account_rules: VerifiedDefinition<crate::worlds::InstalledAccountRules>,
     pub occurrence_rules: VerifiedDefinition<crate::worlds::InstalledOccurrenceRules>,
     pub detection_support: VerifiedDefinition<crate::reception::DetectionSupportPolicy>,
@@ -54,6 +60,7 @@ pub(crate) struct InstalledWorld {
     pub time_epsilon: f64,
     pub response_settings: crate::install::ResponseSettings,
     pub personal_evidence_preparation: crate::install::PersonalEvidencePreparationSettings,
+    pub mind_limits: crate::cognition::MindLimits,
 }
 impl InstalledWorld {
     pub(crate) fn movement_speed(
@@ -112,6 +119,8 @@ pub(crate) struct SimulationState {
     pub occurrences: OccurrenceHistory,
     pub activity: ActivityState,
     pub commands: crate::commands::CommandState,
+    pub minds: crate::cognition::MindState,
+    pub administration: crate::administration::AdministrationState,
 }
 
 /// The application owns its serialized admission lane. The fence is separate

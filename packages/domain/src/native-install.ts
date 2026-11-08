@@ -15,6 +15,7 @@ import {
 } from './world-modules.js';
 import type { WorldState } from './types.js';
 import { PERSONAL_EVIDENCE_PREPARATION } from './experience-source.js';
+import { MIND_LIMITS } from './mind.js';
 
 export { selectedNativeLawDefinitions } from './world-composition.js';
 export { navigationResultProblem } from './navigation-result.js';
@@ -64,4 +65,5 @@ export const nativeSetupSettings = immutableDataSnapshot({
   activityDisplayBytes: ACTIVITY_DISPLAY_BYTES,
   nativeResponse: NATIVE_RESPONSE_LIMITS,
   personalEvidencePreparation: PERSONAL_EVIDENCE_PREPARATION,
+  mind: MIND_LIMITS,
 });

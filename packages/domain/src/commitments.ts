@@ -129,12 +129,15 @@ export function recordSpokenPromise(world: WorldState, event: WorldEvent): void 
   appendMemory(world, actorId, {
     kind: 'commitment',
     source: 'observed',
-    summary: subjectNarration(actorId, ['said: ', String(event.data?.['text'] ?? '')]),
+    summary: subjectNarration(actorId, [
+      recognized.summaryPrefix,
+      String(event.data?.['text'] ?? ''),
+    ]),
     eventId: event.id,
-    eventType: 'speech',
+    eventType: recognized.speechEvent,
     speakerId: actorId,
     entityIds: [actorId, ...(event.targetId ? [event.targetId] : [])],
-    importance: 10,
+    importance: recognized.importance,
     resolved: false,
     obligation: {
       revision: 1,

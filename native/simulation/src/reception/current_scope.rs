@@ -87,6 +87,20 @@ impl<'a> CurrentBodyReadScope<'a> {
     pub(crate) fn state(&self) -> &'a PerceptionEvidenceOwner {
         self.owner
     }
+    pub(super) fn received_values(&self) -> Option<&'a crate::received::ReceivedValues> {
+        self.values
+    }
+    pub(super) fn value(
+        &self,
+        reference: &'a crate::received::ReceivedValueReference,
+    ) -> Option<&'a crate::received::ReceivedValueFragment> {
+        match reference {
+            crate::received::ReceivedValueReference::Shared(id) => {
+                self.values.and_then(|values| values.shared_value(id))
+            }
+            crate::received::ReceivedValueReference::Inline(value) => Some(value),
+        }
+    }
     fn lookup(&self) -> &Option<&'a crate::received::ReceivedValues> {
         &self.values
     }
@@ -111,6 +125,13 @@ impl<'a> CurrentBodyReadScope<'a> {
         selector: CurrentFacetSelector<'_>,
     ) -> Result<Option<CurrentNativeFacet<'a>>, ReceivedError> {
         current_native_facet_at(Some(self.owner), id, kind, selector)
+    }
+    pub(crate) fn attention_source(
+        &self,
+        id: &str,
+        lease: &str,
+    ) -> Result<Option<CurrentNativeFacet<'a>>, ReceivedError> {
+        received_attention_source(self.owner, id, lease)
     }
     pub(crate) fn native_body(
         &self,
@@ -305,13 +326,23 @@ impl<'a> CurrentBodyReadScope<'a> {
         else {
             return Ok(None);
         };
+        self.received_association(body, input)
+    }
+    /// Correspondence uses the actual acquired body and association even while
+    /// its physical freshness is unchecked. A live-body reader still performs
+    /// its independent physical eligibility check before calling this helper.
+    pub(super) fn received_association(
+        &self,
+        body: CurrentNativeFacet<'a>,
+        input: CurrentNativeFacet<'a>,
+    ) -> Result<Option<&'a ObserverSubject>, ReceivedError> {
         let Some(ReceivedValueFragment::Sensory(
             value @ SensoryFacet::Association {
                 strength: AssociationStrength::Supported,
                 subject,
                 ..
             },
-        )) = self.lookup().value_at(&input.field.value.reference)
+        )) = self.value(&input.field.value.reference)
         else {
             return Ok(None);
         };

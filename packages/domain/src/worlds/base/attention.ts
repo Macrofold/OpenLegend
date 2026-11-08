@@ -49,6 +49,7 @@ export const BASE_ACCOUNT_RULES = {
   resultEvents: { say: 'speech-result' } as Readonly<Record<string, string>>,
   priority: { deliberate: 2, consequence: 1, learning: 1, interpretation: 0 },
   fallbackPriority: 0,
+  focusAttribute: FOCUS.id,
 } as const;
 export function baseActivityResultEventType(commandType: string): string | undefined {
   return BASE_ACCOUNT_RULES.resultEvents[commandType];
@@ -134,7 +135,9 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
 
 export function baseAttentionCapacity(world: WorldState, observer: Entity): number {
   if (observer.actor?.attentionCapacity !== undefined) return observer.actor.attentionCapacity;
-  const focus = world.moduleManifest.definitions.find((definition) => definition.id === FOCUS.id);
+  const focus = world.moduleManifest.definitions.find(
+    (definition) => definition.id === BASE_ACCOUNT_RULES.focusAttribute,
+  );
   const value = (focus ? readAttribute(world, observer, focus) : undefined) ?? 50;
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100)
     throw new Error('Installed Focus must be in 0–100.');
@@ -144,7 +147,8 @@ export function baseAttentionCapacity(world: WorldState, observer: Entity): numb
 export function baseAttributeAffectsObservation(observer: Entity, attributeId: string): boolean {
   return (
     !!observer.actor &&
-    ((observer.actor.attentionCapacity === undefined && attributeId === FOCUS.id) ||
+    ((observer.actor.attentionCapacity === undefined &&
+      attributeId === BASE_ACCOUNT_RULES.focusAttribute) ||
       observer.actor.individualRecognition?.attributeId === attributeId)
   );
 }

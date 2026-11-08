@@ -1,4 +1,5 @@
 import { nativeForagingActive, nativeForagingState } from './native-foraging.js';
+import { selectedOrdinaryActionRules } from './world-composition.js';
 import { endCurrentEvidence } from './perception-evidence.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { countDomainWork, domainCountersEnabled } from './diagnostic-counters.js';
@@ -556,13 +557,15 @@ export function canActivateStatusEffect(
   );
 }
 export function statusEffectChoiceOutcome(
+  world: WorldState,
   definition: StatusEffectDefinition,
   operation: 'activate' | 'deactivate',
 ) {
+  const wording = selectedOrdinaryActionRules(world);
   return outcome(
     true,
-    'status-effect',
-    `${definition.label}: ${operation === 'activate' ? 'activated' : 'deactivated'}.`,
+    wording.statusOutcomeCode,
+    `${definition.label}: ${operation === 'activate' ? wording.activated : wording.deactivated}.`,
   );
 }
 export function statusTransitionEvent(

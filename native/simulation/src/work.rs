@@ -866,6 +866,9 @@ pub(crate) struct WorkMeters {
     next_id: u64,
 }
 impl WorkMeters {
+    pub(crate) fn is_idle(&self) -> bool {
+        self.active.is_empty()
+    }
     pub(crate) fn heap_bound(group: WorkDemand) -> Result<usize, WorkError> {
         let depth = usize::try_from(group.depth.ok_or(WorkError::InvalidPolicy)?)
             .map_err(|_| WorkError::InvalidBound)?;

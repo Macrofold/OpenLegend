@@ -1084,6 +1084,9 @@ export const BASE_PERSONAL_NAME_RULES = {
   humanSpecies: 'human',
   personNoun: 'person',
   unidentified: { name: 'unidentified subject', nameForm: 'count' },
+  unidentifiedVoice: 'unidentified voice',
+  givenNameCharacters: 120,
+  nicknameCharacters: NICKNAME_CHARACTERS,
 } as const;
 
 /** Snapshot the selected world's outward category only when the body is measured.
@@ -1382,8 +1385,8 @@ export function validateObserverIdentities(world: WorldState): void {
         (identity.nickname !== undefined &&
           (typeof identity.nickname !== 'string' ||
             !identity.nickname.trim() ||
-            characterCount(identity.nickname) > NICKNAME_CHARACTERS)) ||
-        characterCount(identity.givenName) > 120 ||
+            characterCount(identity.nickname) > BASE_PERSONAL_NAME_RULES.nicknameCharacters)) ||
+        characterCount(identity.givenName) > BASE_PERSONAL_NAME_RULES.givenNameCharacters ||
         !Number.isSafeInteger(identity.revision) ||
         identity.revision < 0 ||
         typeof identity.authored !== 'boolean' ||

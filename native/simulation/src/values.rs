@@ -14,7 +14,27 @@ use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
+use crate::host::retained_size::heap_record;
 use crate::identity::MAX_SAFE_INTEGER;
+
+heap_record!(AttributeState { value });
+heap_record!(NativeValueAttribute { rates });
+heap_record!(NativeValueBinding {
+    entity_id,
+    status_id,
+    episode,
+    attributes
+});
+heap_record!(RetainedBinding {
+    entity_id,
+    status_id,
+    episode,
+    attributes
+});
+heap_record!(NativeValueWindow {
+    bindings,
+    by_entity
+});
 
 // JavaScript's number representation admits `1.0` as the integer 1. Preserve
 // that current-format meaning while refusing fractions, negatives and overflow.

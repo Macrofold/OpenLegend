@@ -452,6 +452,36 @@ pub fn native_text(text: &NativeText) -> String {
     }
 }
 
+/// Allocation bound for the actual English renderer, including its temporary
+/// phrases and String growth. Unicode case mapping has at most three scalars
+/// of four UTF-8 bytes each; grammatical additions are bounded by this module.
+/// Lookup supplies only a permitted/captured name length, never another read.
+pub(crate) fn narration_render_bound(
+    narration: &Narration,
+    name_bytes: impl Fn(&str) -> Option<usize>,
+) -> Option<usize> {
+    let bytes = narration.parts.iter().try_fold(0usize, |bytes, part| {
+        bytes.checked_add(match part {
+            NarrationPart::Literal(text) => text.len(),
+            NarrationPart::Participant { entity_id, .. } => name_bytes(entity_id)
+                .unwrap_or("someone".len())
+                .checked_mul(12)?
+                .checked_add(128)?,
+            NarrationPart::Verb { verb, .. } => verb.len().checked_mul(12)?.checked_add(128)?,
+        })
+    })?;
+    bytes.checked_mul(4)
+}
+
+pub(crate) fn native_text_bound(text: &NativeText) -> Option<usize> {
+    match text {
+        NativeText::Literal(text) => Some(text.len()),
+        NativeText::Captured(captured) => narration_render_bound(&captured.narration, |id| {
+            captured.names.get(id).map(|name| name.name.len())
+        }),
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Intelligibility {
     Clear,

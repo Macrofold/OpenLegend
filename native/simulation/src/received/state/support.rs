@@ -18,6 +18,9 @@ use crate::reception::{
 use crate::work::{WorkMeters, WorkUnit};
 use std::collections::BTreeSet;
 
+mod receipt;
+pub(crate) use receipt::SupportRetentionContext;
+
 fn invalid() -> ReceivedError {
     ReceivedError("Invalid sparse temporal support ownership or counters.")
 }
@@ -115,7 +118,7 @@ impl TemporalState {
             capsule,
         }))
     }
-    fn admit_support(
+    pub(super) fn admit_support(
         &mut self,
         actor_id: &str,
         mut capsule: TemporalSupportCapsule,
@@ -124,6 +127,7 @@ impl TemporalState {
         now: f64,
         policy: &AttentionRetentionPolicy,
         meters: &mut WorkMeters,
+        mut places: Option<crate::experience::KnownPlaceMutation<'_>>,
     ) -> Result<Option<Arc<TemporalSupportRecord>>, TemporalAppendError> {
         for _ in 0..4 {
             let bytes = capsule.logical_bytes(values)?;
@@ -135,13 +139,14 @@ impl TemporalState {
         let actor = self.actors.get(actor_id).ok_or_else(invalid)?;
         let supports = actor.supports.as_ref().ok_or_else(invalid)?;
         let prior = supports.get(&capsule.receipt.id)?.cloned();
-        if known_place(&capsule)
+        if (known_place(&capsule)
             || prior
                 .as_ref()
-                .is_some_and(|prior| known_place(prior.capsule()))
+                .is_some_and(|prior| known_place(prior.capsule())))
+            && places.is_none()
         {
             return Err(ReceivedError(
-                "Sparse place support requires its native known-place index mutation.",
+                "Sparse place support requires its native known-place mutation owner.",
             )
             .into());
         }
@@ -217,6 +222,15 @@ impl TemporalState {
             self.replace_header(actor_id, header)?;
         }
         self.change_support(actor_id, &id, Some(Arc::clone(&record)))?;
+        if let Some(places) = places.as_mut() {
+            places
+                .support_changed(
+                    actor_id,
+                    prior.as_ref().map(|prior| prior.capsule()),
+                    Some(record.capsule()),
+                )
+                .map_err(|_| ReceivedError("Sparse place evidence preparation failed."))?;
+        }
         meters.charge(&[
             (WorkUnit::Effects, 1),
             (WorkUnit::OutputBytes, bytes.saturating_sub(old_bytes)),
@@ -229,6 +243,7 @@ impl TemporalState {
         id: &str,
         now: f64,
         policy: &AttentionRetentionPolicy,
+        mut places: Option<crate::experience::KnownPlaceMutation<'_>>,
     ) -> Result<(), ReceivedError> {
         let Some(actor) = self.actors.get(actor_id) else {
             return Ok(());
@@ -239,9 +254,9 @@ impl TemporalState {
         let Some(prior) = supports.get(id)?.cloned() else {
             return Ok(());
         };
-        if known_place(prior.capsule()) {
+        if known_place(prior.capsule()) && places.is_none() {
             return Err(ReceivedError(
-                "Sparse place support requires its native known-place index mutation.",
+                "Sparse place support requires its native known-place mutation owner.",
             ));
         }
         self.adjust_account(
@@ -257,7 +272,13 @@ impl TemporalState {
             now,
             policy,
         )?;
-        self.change_support(actor_id, id, None)
+        self.change_support(actor_id, id, None)?;
+        if let Some(places) = places.as_mut() {
+            places
+                .support_changed(actor_id, Some(prior.capsule()), None)
+                .map_err(|_| ReceivedError("Sparse place evidence preparation failed."))?;
+        }
+        Ok(())
     }
     pub(crate) fn set_support_required(
         &mut self,
@@ -496,11 +517,12 @@ impl TemporalState {
             now,
             policy,
             meters,
+            None,
         )?;
         Ok(record.map(|_| locator))
     }
 }
-fn split(
+pub(super) fn split(
     value: &SensoryFacet,
 ) -> Result<(ReceivedValueFragment, Option<TemporalReception>), ReceivedError> {
     use crate::received::values::{BodyFragment, BodyKind, LocationFragment, LocationKind};

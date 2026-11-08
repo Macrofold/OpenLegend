@@ -26,7 +26,9 @@ impl std::fmt::Display for TemporalAppendError {
     }
 }
 impl std::error::Error for TemporalAppendError {}
-use crate::encoding::json_record;
+use crate::encoding::{json_record, json_record_len};
+use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+use crate::host::{ByteBudget, ByteReservation};
 use crate::identity::{IdentityState, MAX_SAFE_INTEGER};
 use crate::received::{
     CoverageGap, ReceivedBatch, ReceivedCharge, ReceivedEntry, ReceivedEntryKind, ReceivedError,
@@ -43,11 +45,14 @@ use crate::reception::{
 use indexmap::{IndexMap, IndexSet};
 use std::{collections::BTreeSet, sync::Arc};
 
+mod observation;
+pub(crate) use observation::ObservationCaptureOptions;
+
 const NATIVE_PAGE_BYTES: u64 = 64 * 1024;
 const NATIVE_PAGE_SLOTS: u64 = 256;
 const INDIVISIBLE_RECEIPT_BYTES: u64 = 1024 * 1024;
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct TemporalCaptureFacet {
     pub value: ReceivedValueFragment,
     pub preferred: Option<ReceivedValueReference>,
@@ -62,7 +67,7 @@ pub struct TemporalCaptureFacet {
     pub received_from: Option<EvidenceSource>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize)]
 pub struct TemporalCaptureInput {
     pub spatial_context: bool,
     pub availability_at: Option<f64>,
@@ -142,8 +147,9 @@ struct Terminal {
 
 /// Operation-local scope, reusable by nested receiving calls. It is flushed by
 /// its actual owner before a snapshot/yield; beginning it allocates no IDs.
-#[derive(Clone, Debug)]
 pub struct TemporalAcquisition {
+    budget: ByteBudget,
+    reservation: ByteReservation,
     batch: ReceivedBatch,
     frame: Option<ObservationFrame>,
     next_entry: u64,
@@ -193,8 +199,8 @@ impl ReceivedTransition {
 }
 
 fn encoded_bytes<T: serde::Serialize>(value: &T) -> Result<u64, ReceivedError> {
-    json_record(value)
-        .map(|body| body.len() as u64)
+    json_record_len(value)
+        .map(|bytes| bytes as u64)
         .map_err(|_| ReceivedError("Temporal encoding failed."))
 }
 fn issued(identity: &mut IdentityState, family: &str) -> Result<u64, ReceivedError> {
@@ -235,6 +241,7 @@ impl TemporalState {
         frame: Option<ObservationFrame>,
         policy: TemporalRetentionPolicy,
         maintenance_headroom: f64,
+        budget: &ByteBudget,
     ) -> Result<Option<TemporalAcquisition>, ReceivedError> {
         let Some(actor) = self.actors.get(actor_id) else {
             return Ok(None);
@@ -244,7 +251,21 @@ impl TemporalState {
                 "Receiving life requires its original temporal retirement.",
             ));
         }
+        let bytes = heap_sum([
+            std::mem::size_of::<TemporalAcquisition>(),
+            actor_id.len(),
+            actor.header.epoch.len(),
+            frame
+                .heap_bytes()
+                .ok_or(ReceivedError("Temporal frame allocation overflow."))?,
+        ])
+        .ok_or(ReceivedError("Temporal acquisition allocation overflow."))?;
+        let reservation = budget
+            .reserve(bytes)
+            .map_err(|_| ReceivedError("Temporal acquisition capacity exhausted."))?;
         Ok(Some(TemporalAcquisition {
+            budget: budget.clone(),
+            reservation,
             batch: ReceivedBatch {
                 actor_id: actor_id.to_owned(),
                 physical_life,
@@ -396,6 +417,12 @@ impl TemporalState {
 }
 
 impl TemporalAcquisition {
+    pub(crate) fn pending_charge(&self) -> (u64, u64) {
+        (self.bytes, self.count)
+    }
+    pub(crate) fn has_pending_entries(&self) -> bool {
+        !self.batch.entries.is_empty()
+    }
     pub(crate) fn actor_id(&self) -> &str {
         &self.batch.actor_id
     }
@@ -428,6 +455,14 @@ impl TemporalAcquisition {
         meaning: &dyn TemporalValueMeaning,
         meters: &mut WorkMeters,
     ) -> Result<(), TemporalAppendError> {
+        let scratch = self
+            .current_heap_bytes()?
+            .checked_mul(3)
+            .and_then(|bytes| bytes.checked_add((self.native_bytes as usize).checked_mul(2)?))
+            .ok_or(ReceivedError("Temporal flush allocation overflow."))?;
+        self.reservation
+            .resize(self.reservation.bytes().max(scratch))
+            .map_err(|_| ReceivedError("Temporal flush capacity exhausted."))?;
         let next = ReceivedBatch {
             actor_id: self.batch.actor_id.clone(),
             physical_life: self.batch.physical_life,
@@ -453,6 +488,7 @@ impl TemporalAcquisition {
         self.native_bytes = 0;
         self.values.clear();
         self.terminals.clear();
+        self.decisions.clear();
         Ok(())
     }
     pub(crate) fn finish(
@@ -466,7 +502,7 @@ impl TemporalAcquisition {
         self.flush(state, values, identity, meaning, meters)
     }
 
-    pub(crate) fn append(
+    fn append_inner(
         &mut self,
         state: &mut TemporalState,
         values: &mut ReceivedValues,
@@ -747,71 +783,159 @@ impl TemporalAcquisition {
 /// actor history and the shared value pool retain their own sparse undo cursors.
 pub(crate) struct TemporalAcquisitionCheckpoint {
     before: TemporalAcquisition,
-    _reservation: crate::host::ByteReservation,
+}
+impl TemporalAcquisitionCheckpoint {
+    pub(crate) fn into_acquisition(self) -> TemporalAcquisition {
+        self.before
+    }
+}
+impl std::fmt::Debug for TemporalAcquisition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TemporalAcquisition")
+            .field("actor_id", &self.batch.actor_id)
+            .field("physical_life", &self.batch.physical_life)
+            .field("entries", &self.batch.entries.len())
+            .finish()
+    }
 }
 impl TemporalAcquisition {
-    pub(crate) fn checkpoint(
-        &self,
-        budget: &crate::host::ByteBudget,
-    ) -> Result<TemporalAcquisitionCheckpoint, ReceivedError> {
-        use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+    pub(crate) fn current_heap_bytes(&self) -> Result<usize, ReceivedError> {
+        let allocation_error = || ReceivedError("Temporal builder allocation overflow.");
         let mut terminals =
             map_storage::<String, IndexMap<String, Terminal>>(self.terminals.capacity())
-                .ok_or(ReceivedError("Temporal terminal allocation overflow."))?;
+                .ok_or_else(allocation_error)?;
         for (subject, parts) in &self.terminals {
             terminals = heap_sum([
                 terminals,
-                subject
-                    .heap_bytes()
-                    .ok_or(ReceivedError("Temporal terminal allocation overflow."))?,
-                map_storage::<String, Terminal>(parts.capacity())
-                    .ok_or(ReceivedError("Temporal terminal allocation overflow."))?,
+                subject.heap_bytes().ok_or_else(allocation_error)?,
+                map_storage::<String, Terminal>(parts.capacity()).ok_or_else(allocation_error)?,
             ])
-            .ok_or(ReceivedError("Temporal terminal allocation overflow."))?;
+            .ok_or_else(allocation_error)?;
             for key in parts.keys() {
                 terminals = terminals
-                    .checked_add(
-                        key.heap_bytes()
-                            .ok_or(ReceivedError("Temporal terminal allocation overflow."))?,
-                    )
-                    .ok_or(ReceivedError("Temporal terminal allocation overflow."))?;
+                    .checked_add(key.heap_bytes().ok_or_else(allocation_error)?)
+                    .ok_or_else(allocation_error)?;
             }
         }
-        let mut values = map_storage::<String, ()>(self.values.capacity())
-            .ok_or(ReceivedError("Temporal values allocation overflow."))?;
+        let mut values =
+            map_storage::<String, ()>(self.values.capacity()).ok_or_else(allocation_error)?;
         for value in &self.values {
             values = values
-                .checked_add(
-                    value
-                        .heap_bytes()
-                        .ok_or(ReceivedError("Temporal values allocation overflow."))?,
-                )
-                .ok_or(ReceivedError("Temporal values allocation overflow."))?;
+                .checked_add(value.heap_bytes().ok_or_else(allocation_error)?)
+                .ok_or_else(allocation_error)?;
         }
-        let bytes = heap_sum([
-            std::mem::size_of::<TemporalAcquisitionCheckpoint>(),
-            self.batch
-                .heap_bytes()
-                .ok_or(ReceivedError("Temporal builder allocation overflow."))?,
-            self.frame
-                .heap_bytes()
-                .ok_or(ReceivedError("Temporal frame allocation overflow."))?,
+        heap_sum([
+            std::mem::size_of::<TemporalAcquisition>(),
+            self.batch.heap_bytes().ok_or_else(allocation_error)?,
+            self.frame.heap_bytes().ok_or_else(allocation_error)?,
             terminals,
             values,
-            self.decisions
-                .heap_bytes()
-                .ok_or(ReceivedError("Temporal decision allocation overflow."))?,
+            self.decisions.heap_bytes().ok_or_else(allocation_error)?,
         ])
-        .ok_or(ReceivedError("Temporal checkpoint allocation overflow."))?;
-        let reservation = budget
-            .reserve(bytes)
+        .ok_or_else(allocation_error)
+    }
+    pub(crate) fn checkpoint(
+        &self,
+        _budget: &ByteBudget,
+    ) -> Result<TemporalAcquisitionCheckpoint, ReceivedError> {
+        // The builder owns its shared allowance; a caller cannot redirect a
+        // nested before-image to a fresh counter with a different allowance.
+        let reservation = self
+            .budget
+            .reserve(self.current_heap_bytes()?)
             .map_err(|_| ReceivedError("Temporal checkpoint capacity exhausted."))?;
         Ok(TemporalAcquisitionCheckpoint {
-            before: self.clone(),
-            _reservation: reservation,
+            before: Self {
+                budget: self.budget.clone(),
+                reservation,
+                batch: self.batch.clone(),
+                frame: self.frame.clone(),
+                next_entry: self.next_entry,
+                policy: self.policy.clone(),
+                headroom: self.headroom,
+                bytes: self.bytes,
+                count: self.count,
+                slots: self.slots,
+                native_bytes: self.native_bytes,
+                values: self.values.clone(),
+                terminals: self.terminals.clone(),
+                decisions: self.decisions.clone(),
+            },
         })
     }
     pub(crate) fn restore(&mut self, checkpoint: TemporalAcquisitionCheckpoint) {
         *self = checkpoint.before;
+    }
+    fn reserve_append(&mut self, input: &TemporalCaptureInput) -> Result<(), ReceivedError> {
+        let input_heap = std::mem::size_of::<TemporalCaptureInput>()
+            .checked_add(
+                input
+                    .heap_bytes()
+                    .ok_or(ReceivedError("Temporal capture allocation overflow."))?,
+            )
+            .ok_or(ReceivedError("Temporal capture allocation overflow."))?;
+        let current = self.current_heap_bytes()?;
+        // Counting may need dictionary-key sorting scratch. Its existing typed
+        // map/field storage is reserved before walking the input. No encoded
+        // payload is allocated merely to determine this envelope.
+        let initial = current
+            .checked_add(
+                input_heap
+                    .checked_mul(2)
+                    .ok_or(ReceivedError("Temporal capture allocation overflow."))?,
+            )
+            .ok_or(ReceivedError("Temporal capture allocation overflow."))?;
+        self.reservation
+            .resize(initial)
+            .map_err(|_| ReceivedError("Temporal capture capacity exhausted."))?;
+        let encoded = json_record_len(input)
+            .map_err(|_| ReceivedError("Temporal capture encoding failed."))?;
+        // The append can simultaneously own the full input/receipt, compact
+        // field copy, growing index/vector storage and the split's encoded
+        // batch/metadata scratch. The actual final capacities replace this
+        // conservative envelope as soon as those temporary owners are gone.
+        let copies = heap_sum([
+            current,
+            input_heap,
+            self.batch.actor_id.len(),
+            self.batch.epoch.len(),
+            std::mem::size_of::<TemporalReceipt>(),
+        ])
+        .and_then(|n| n.checked_mul(3))
+        .ok_or(ReceivedError("Temporal append allocation overflow."))?;
+        let encoding = encoded
+            .checked_add(self.native_bytes as usize)
+            .and_then(|n| n.checked_mul(2))
+            .ok_or(ReceivedError(
+                "Temporal append encoding allocation overflow.",
+            ))?;
+        self.reservation
+            .resize(
+                copies
+                    .checked_add(encoding)
+                    .ok_or(ReceivedError("Temporal append allocation overflow."))?,
+            )
+            .map_err(|_| ReceivedError("Temporal append capacity exhausted."))
+    }
+    pub(crate) fn append(
+        &mut self,
+        state: &mut TemporalState,
+        values: &mut ReceivedValues,
+        identity: &mut IdentityState,
+        transition: &mut ReceivedTransition,
+        meaning: &dyn TemporalValueMeaning,
+        meters: &mut WorkMeters,
+        now: f64,
+        sequence: u64,
+        input: TemporalCaptureInput,
+    ) -> Result<Option<TemporalReceiptLocator>, TemporalAppendError> {
+        self.reserve_append(&input)?;
+        let result = self.append_inner(
+            state, values, identity, transition, meaning, meters, now, sequence, input,
+        );
+        self.reservation
+            .resize(self.current_heap_bytes()?)
+            .map_err(|_| ReceivedError("Temporal builder capacity exhausted."))?;
+        result
     }
 }

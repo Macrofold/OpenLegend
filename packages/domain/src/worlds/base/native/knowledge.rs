@@ -100,6 +100,11 @@ pub struct PersonalNameRules {
     pub human_species: String,
     pub person_noun: String,
     pub unidentified: Named,
+    pub unidentified_voice: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub given_name_characters: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub nickname_characters: u64,
 }
 impl crate::install::DefinitionIdentity for PersonalNameRules {
     fn definition_id(&self) -> &str {
@@ -266,7 +271,10 @@ impl<'a> PersonalNameReader<'a> {
         }
         preferred.or(first).map(|(_, identity)| identity)
     }
-    fn individual(&self, subject: &ObserverSubject) -> Option<&'a ObserverIdentity> {
+    pub(crate) fn observer_individual(
+        &self,
+        subject: &ObserverSubject,
+    ) -> Option<&'a ObserverIdentity> {
         match subject {
             ObserverSubject::Individual { individual_id } => self
                 .identities()
@@ -298,12 +306,12 @@ impl<'a> PersonalNameReader<'a> {
     ) -> Result<Option<&'a ObserverIdentity>, ReceivedError> {
         let local = self
             .current_body_local_subject(id)?
-            .and_then(|subject| self.individual(subject));
+            .and_then(|subject| self.observer_individual(subject));
         if local.is_some_and(named) {
             return Ok(local);
         }
         if let Some(association) = self.current_body_association(id)? {
-            return Ok(self.individual(association));
+            return Ok(self.observer_individual(association));
         }
         if local.is_some() {
             return Ok(local);
@@ -348,7 +356,7 @@ impl<'a> PersonalNameReader<'a> {
         let local = self.current_body_local_subject(id)?;
         let association = self.current_body_association(id)?;
         if let Some(local) = local {
-            let annotated = self.individual(local).is_some_and(named)
+            let annotated = self.observer_individual(local).is_some_and(named)
                 || self
                     .reception
                     .actor_knowledge

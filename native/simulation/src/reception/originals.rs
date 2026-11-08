@@ -47,6 +47,11 @@ pub(crate) struct OriginalCheckpoint {
 }
 
 enum OriginalUndo {
+    Complete {
+        observer: String,
+        position: usize,
+        prior: Arc<ReceivedObservation>,
+    },
     OwnerInsert {
         observer: String,
         root_was_absent: bool,
@@ -121,6 +126,23 @@ impl OriginalJournal {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
+                OriginalUndo::Complete {
+                    observer,
+                    position,
+                    prior,
+                } => {
+                    let received = &mut state
+                        .perception_evidence
+                        .as_mut()
+                        .and_then(|owners| owners.get_mut(&observer))
+                        .ok_or_else(invalid)?
+                        .received;
+                    let current = received.get_mut(position).ok_or_else(invalid)?;
+                    if current.id != prior.id || current.revision != prior.revision {
+                        return Err(invalid());
+                    }
+                    *current = prior;
+                }
                 OriginalUndo::Append {
                     observer,
                     key,
@@ -183,7 +205,7 @@ impl OriginalJournal {
             .map_err(|_| capacity())
     }
 
-    fn ensure_owner(
+    pub(crate) fn ensure_owner(
         &mut self,
         state: &mut ReceptionState,
         observer: &Entity,
@@ -443,6 +465,67 @@ impl OriginalJournal {
         owner.receipts.insert(key, position as u64);
         owner.received.push(Arc::clone(&source));
         Ok(source)
+    }
+    /// Final routing context is sealed before personal/history consumers see
+    /// the original. Its measured facts, causal coordinates and revision stay
+    /// identical; current original references update through CurrentJournal.
+    pub(super) fn complete_attendance(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        source: &Arc<ReceivedObservation>,
+    ) -> Result<Arc<ReceivedObservation>, ReceivedError> {
+        let owner = state
+            .perception_evidence
+            .as_ref()
+            .and_then(|owners| owners.get(observer))
+            .ok_or_else(invalid)?;
+        let Some(context) = source.context.as_ref().filter(|context| !context.attended) else {
+            return Ok(Arc::clone(source));
+        };
+        if !owner.attention.as_ref().is_some_and(|attention| {
+            attention.entries.iter().any(|entry| {
+                context
+                    .subjects
+                    .iter()
+                    .any(|subject| subject.track == entry.exposure.track)
+            })
+        }) {
+            return Ok(Arc::clone(source));
+        }
+        let position = owner
+            .received
+            .iter()
+            .position(|held| held.id == source.id && held.revision == source.revision)
+            .ok_or_else(invalid)?;
+        self.slot(
+            heap_sum([
+                observer.len(),
+                size_of::<ReceivedObservation>(),
+                2 * size_of::<usize>(),
+                source.heap_bytes().ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let mut after = source.as_ref().clone();
+        after.context.as_mut().ok_or_else(invalid)?.attended = true;
+        let after = Arc::new(after);
+        let received = &mut state
+            .perception_evidence
+            .as_mut()
+            .and_then(|owners| owners.get_mut(observer))
+            .ok_or_else(invalid)?
+            .received;
+        let prior = std::mem::replace(
+            received.get_mut(position).ok_or_else(invalid)?,
+            Arc::clone(&after),
+        );
+        self.undo.push(OriginalUndo::Complete {
+            observer: observer.to_owned(),
+            position,
+            prior,
+        });
+        Ok(after)
     }
 }
 

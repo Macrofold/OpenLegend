@@ -19,7 +19,9 @@ use std::mem::size_of;
 
 pub(crate) struct PreparedSpeechAwareness {
     pub awareness: Awareness,
-    _reservation: ByteReservation,
+    pub(super) reservation: ByteReservation,
+    pub(super) voice_reservation: Option<ByteReservation>,
+    pub(super) segments_reservation: Option<ByteReservation>,
 }
 
 pub(crate) fn prepare_sound_awareness(
@@ -262,6 +264,8 @@ pub(crate) fn prepare_sound_awareness(
     reservation.resize(actual)?;
     Ok(Some(PreparedSpeechAwareness {
         awareness,
-        _reservation: reservation,
+        reservation,
+        voice_reservation: None,
+        segments_reservation: None,
     }))
 }

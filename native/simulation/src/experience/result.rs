@@ -8,6 +8,8 @@ use crate::attention::{
     RecordingReason, RecordingSource,
 };
 use crate::execution::CoreMutation;
+use crate::host::retained_size::HeapBytes;
+use crate::host::{ByteBudget, ByteReservation};
 use crate::narration::{
     GrammaticalPerson, Narration, NarrationPart, PersonRole, render_narration_parts,
 };
@@ -31,6 +33,12 @@ pub(crate) enum ResultAcquisitionError {
     Received(ReceivedError),
     Append(TemporalAppendError),
     Encoding,
+    Memory(MemoryAcquisitionError),
+}
+impl From<MemoryAcquisitionError> for ResultAcquisitionError {
+    fn from(error: MemoryAcquisitionError) -> Self {
+        Self::Memory(error)
+    }
 }
 impl From<ActivityError> for ResultAcquisitionError {
     fn from(e: ActivityError) -> Self {
@@ -63,7 +71,7 @@ impl ActivityResultAcquisition {
         match self {
             Self::Complete(_) => None,
             Self::Recent(pending) => Some((&pending.actor_id, pending.physical_life)),
-            Self::Memory(pending) => Some((&pending.body.actor_id, pending.physical_life)),
+            Self::Memory(pending) => pending.admission.scope_owner(),
         }
     }
 }
@@ -72,16 +80,16 @@ pub(crate) struct PendingRecentResult {
     occurrence_id: String,
     physical_life: u64,
     value: ActionResultValue,
+    _reservation: ByteReservation,
 }
 pub(crate) struct PendingResultMemory {
+    actor_id: String,
     occurrence_id: String,
-    physical_life: u64,
-    body: ResultMemory,
+    admission: MemoryAdmission,
 }
-
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ResultMemory {
+struct ResultMemoryDraft {
     kind: &'static str,
     source: &'static str,
     importance: f64,
@@ -92,13 +100,6 @@ struct ResultMemory {
     speaker_id: Option<String>,
     summary: String,
     entity_ids: Vec<String>,
-    id: String,
-    actor_id: String,
-    at: f64,
-    sequence: u64,
-    retention: ExperienceRetention,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    source_receipt: Option<TemporalReceiptLocator>,
 }
 
 fn completed(
@@ -119,6 +120,7 @@ fn completed(
 pub(crate) fn prepare_activity_result(
     core: &mut CoreMutation<'_>,
     pending: &PendingActivityResult,
+    budget: &ByteBudget,
 ) -> Result<ActivityResultAcquisition, ResultAcquisitionError> {
     let entry = pending.occurrence(&core.state.activity)?;
     let actor_id = pending.actor_id();
@@ -171,6 +173,24 @@ pub(crate) fn prepare_activity_result(
         _ => return Err(ActivityError::InvalidStructure.into()),
     };
     let now = core.state.physical.header.sim_time;
+    let text_bound = crate::activity::activity_record_text_bound(&entry.view)
+        .map_err(|_| ResultAcquisitionError::Encoding)?;
+    let fact_heap = entry
+        .view
+        .facts
+        .heap_bytes()
+        .ok_or(ExperienceError::Capacity)?;
+    let producer_bound = text_bound
+        .checked_add(fact_heap)
+        .and_then(|n| n.checked_add(actor_id.len().checked_mul(8)?))
+        .and_then(|n| n.checked_add(actor.name.len().checked_mul(4)?))
+        .and_then(|n| n.checked_add(outcome.code.len()))
+        .and_then(|n| n.checked_add(1024))
+        .and_then(|n| n.checked_mul(8))
+        .ok_or(ExperienceError::Capacity)?;
+    let reservation = budget
+        .reserve(producer_bound)
+        .map_err(|_| ExperienceError::Capacity)?;
     let exact = crate::activity::activity_record_text(&entry.view)
         .map_err(|_| ResultAcquisitionError::Encoding)?;
     let time = json_record(&now).map_err(|_| ResultAcquisitionError::Encoding)?;
@@ -221,49 +241,13 @@ pub(crate) fn prepare_activity_result(
                 },
                 facts: entry.view.facts.clone(),
             },
+            _reservation: reservation,
         }));
     }
     let event_type = law
         .result_event_type(context.command_type)
         .map(str::to_owned);
-    let reason = law.recording_reason(RecordingInput {
-        source: RecordingSource::Memory,
-        event_type: event_type.as_deref(),
-        modality: Some("internal"),
-        trigger_kind: None,
-        own: true,
-        has_exposure: false,
-        exposure_kind: None,
-        consequence: true,
-    });
-    // appendMemory issues its actual identity even when the world's later
-    // optional recording decision declines the resulting autobiography.
-    let id = core
-        .state
-        .physical
-        .identity
-        .allocate("memory")
-        .map_err(|_| ReceivedError("Personal memory identity is exhausted."))?
-        .id;
-    if reason == RecordingReason::None {
-        return Ok(ActivityResultAcquisition::Complete(completed(
-            actor_id,
-            occurrence_id,
-            None,
-        )));
-    }
-    let retention = ExperienceRetention {
-        reason: RetentionReason::Consequence,
-        after_release: law.account_after_release(AccountRecordingInput {
-            source: RecordingSource::Memory,
-            own: true,
-            event_type: event_type.as_deref(),
-            activity: Some(context),
-        }),
-        required: (reason == RecordingReason::Required).then_some(true),
-        receipt: None,
-    };
-    let memory = ResultMemory {
+    let draft = ResultMemoryDraft {
         kind: "episode",
         source: "internal",
         importance: core
@@ -277,36 +261,40 @@ pub(crate) fn prepare_activity_result(
         event_type,
         summary: text,
         entity_ids: vec![actor_id.to_owned()],
-        id,
-        actor_id: actor_id.to_owned(),
-        at: now,
-        sequence: core.state.physical.identity.next_id(),
-        retention,
-        source_receipt: None,
     };
-    let payload = json_record(&memory).map_err(|_| ResultAcquisitionError::Encoding)?;
-    let header = source_header(&memory, &payload, &law)?;
-    ensure_new_source(&core.state.experience, &header)?;
-    let policy = &core.state.installed.attention.value().retention;
-    let mut budget = core.state.temporal.account_addition_budget(actor_id)?;
-    if !budget.reserve(header.class, payload.len() as u64, policy)? {
-        if header.class != AccountClass::Optional {
-            return Err(
-                ReceivedError("Required personal experience could not be recorded.").into(),
-            );
-        }
-        core.state.temporal.account_recording_gap(actor_id, now)?;
-        return Ok(ActivityResultAcquisition::Complete(completed(
+    let draft = json_record(&draft).map_err(|_| ResultAcquisitionError::Encoding)?;
+    // Retain only the finite immutable recording facts while the common memory
+    // owner mutates this candidate; never clone the action/history collection.
+    let command_type = context.command_type.to_owned();
+    let code = context.outcome.map(|(_, code)| code.to_owned());
+    let recording = ActivityRecordingContext {
+        command_type: &command_type,
+        status: context.status,
+        bound: context.bound,
+        effects: context.effects,
+        outputs: context.outputs,
+        spending: context.spending,
+        outcome: context
+            .outcome
+            .map(|(ok, _)| (ok, code.as_deref().expect("captured outcome code"))),
+    };
+    let admission = prepare_memory_admission(core, actor_id, draft, Some(recording), budget)?;
+    drop(reservation);
+    match admission {
+        MemoryAdmission::Complete(id) => Ok(ActivityResultAcquisition::Complete(completed(
             actor_id,
             occurrence_id,
-            None,
-        )));
+            id.map(|id| ResultEvidence::Account {
+                source: ResultAccountSource::Memory,
+                id,
+            }),
+        ))),
+        admission => Ok(ActivityResultAcquisition::Memory(PendingResultMemory {
+            actor_id: actor_id.to_owned(),
+            occurrence_id: occurrence_id.to_owned(),
+            admission,
+        })),
     }
-    Ok(ActivityResultAcquisition::Memory(PendingResultMemory {
-        occurrence_id: occurrence_id.to_owned(),
-        physical_life,
-        body: memory,
-    }))
 }
 
 /// This phase uses the caller's actual existing/lazily opened acquisition. Its
@@ -363,149 +351,23 @@ pub(crate) fn acquire_activity_result(
                 }),
             ))
         }
-        ActivityResultAcquisition::Memory(mut pending) => {
-            let values = core
-                .state
-                .reception
-                .received_values
-                .as_mut()
-                .ok_or(ReceivedError(
-                    "Actual received value ownership is unavailable.",
-                ))?;
-            let actor_id = &pending.body.actor_id;
-            require_scope(scope, actor_id, pending.physical_life)?;
-            let locator = scope.append(
-                &mut core.state.temporal,
-                values,
-                &mut core.state.physical.identity,
-                transition,
-                &law,
-                &mut core.journal.meters,
-                now,
-                sequence,
-                input(
-                    &pending.body.id,
-                    pending.body.retention.required == Some(true),
-                    pending.body.at,
-                    ReceivedValueFragment::PersonalAccount(PersonalAccountFragment {
-                        kind: PersonalAccountKind::PersonalAccount,
-                        source: PersonalAccountSource::Memory,
-                        id: pending.body.id.clone(),
-                        text: pending.body.summary.clone(),
-                        event_type: pending.body.event_type.clone(),
-                        content: None,
-                        data: None,
-                    }),
-                ),
-            )?;
-            if let Some(locator) = locator {
-                pending.body.source_receipt = Some(locator.clone());
-                pending.body.retention.receipt = Some(locator);
-            }
-            let payload =
-                json_record(&pending.body).map_err(|_| ResultAcquisitionError::Encoding)?;
-            let header = source_header(&pending.body, &payload, &law)?;
-            ensure_new_source(&core.state.experience, &header)?;
-            let policy = &core.state.installed.attention.value().retention;
-            let mut budget = core.state.temporal.account_addition_budget(actor_id)?;
-            if !budget.reserve(header.class, payload.len() as u64, policy)? {
-                if header.class != AccountClass::Optional {
-                    return Err(ReceivedError(
-                        "Required personal experience could not be recorded.",
-                    )
-                    .into());
-                }
-                core.state.temporal.account_recording_gap(actor_id, now)?;
-                return Ok(completed(actor_id, &pending.occurrence_id, None));
-            }
-            let collection = core
-                .state
-                .experience
-                .actor(actor_id)
-                .ok_or(ExperienceError::ForeignOwner)?
-                .collection(PersonalSourceKind::Memory)?;
-            let parent = collection_owner(PersonalSourceKind::Memory, actor_id)?;
-            let row_id = json_record(&["world", "memories", actor_id, &pending.body.id])
-                .map_err(|_| ResultAcquisitionError::Encoding)?;
-            let mut extra = columns(
-                &pending.body,
-                &header,
-                &payload,
-                law.account_priority(&header),
-                policy,
-                schema,
-            )?;
-            for cell in &mut extra {
-                crate::records::save::normalize_cell(cell);
-            }
-            let record = PersonalSourceRecord::install(
-                PersonalSourceKind::Memory,
-                actor_id,
-                InstalledRow {
-                    id: row_id,
-                    parent,
-                    slot: collection.coverage.next_ordinal.to_string(),
-                    position: collection.coverage.next_ordinal,
-                    payload,
-                    extra,
-                },
-                &law,
-            )?;
-            core.state.temporal.adjust_account(
-                actor_id,
-                header.class,
-                record.payload.len() as i128,
-                1,
-                experience_retention_due(&header, policy),
-                now,
-                policy,
-            )?;
-            core.journal
-                .experience
-                .append(&mut core.state.experience, record)?;
+        ActivityResultAcquisition::Memory(pending) => {
+            let evidence =
+                acquire_memory(core, pending.admission, Some((scope, transition)), schema)?.map(
+                    |id| ResultEvidence::Account {
+                        source: ResultAccountSource::Memory,
+                        id,
+                    },
+                );
             Ok(completed(
-                actor_id,
+                &pending.actor_id,
                 &pending.occurrence_id,
-                Some(ResultEvidence::Account {
-                    source: ResultAccountSource::Memory,
-                    id: pending.body.id,
-                }),
+                evidence,
             ))
         }
     }
 }
 
-fn source_header(
-    memory: &ResultMemory,
-    payload: &str,
-    law: &impl AccountRecordingLaw,
-) -> Result<PersonalSourceHeader, ExperienceError> {
-    let body: Value = serde_json::from_str(payload)
-        .map_err(|_| ExperienceError::InvalidBody("new result memory"))?;
-    header(
-        object(&body)?,
-        PersonalSourceKind::Memory,
-        &memory.actor_id,
-        payload,
-        law,
-    )
-}
-fn ensure_new_source(
-    state: &ExperienceState,
-    header: &PersonalSourceHeader,
-) -> Result<(), ExperienceError> {
-    let actor = state
-        .actor(&header.actor_id)
-        .ok_or(ExperienceError::ForeignOwner)?;
-    if actor.privacy.forgotten_index.contains(&header.reference.id) {
-        return Err(ExperienceError::Revoked);
-    }
-    let source = actor.collection(PersonalSourceKind::Memory)?;
-    if source.lookup.contains_key(&header.reference.id) {
-        return Err(ExperienceError::DuplicateIdentity);
-    }
-    Ok(())
-}
 fn require_scope(scope: &TemporalAcquisition, actor: &str, life: u64) -> Result<(), ReceivedError> {
     if scope.actor_id() != actor || scope.physical_life() != life {
         return Err(ReceivedError(
@@ -559,51 +421,4 @@ fn input(
             received_from: None,
         }],
     }
-}
-fn columns(
-    memory: &ResultMemory,
-    header: &PersonalSourceHeader,
-    payload: &str,
-    priority: u64,
-    policy: &crate::attention::AttentionRetentionPolicy,
-    schema: &RecordSchema,
-) -> Result<Vec<Value>, ResultAcquisitionError> {
-    schema
-        .layout("mind_memories")
-        .map_err(|_| ResultAcquisitionError::Encoding)?
-        .columns
-        .iter()
-        .map(|column| {
-            Ok(match column.as_str() {
-                "actor_id" => Value::from(memory.actor_id.clone()),
-                "source_id" => Value::from(memory.id.clone()),
-                "at" => Value::from(memory.at),
-                "importance" => Value::from(memory.importance),
-                "event_id" => Value::Null,
-                "kind" => Value::from(memory.kind),
-                "sequence" => Value::from(memory.sequence),
-                "individual_ids" => Value::Array(vec![]),
-                "retention_metadata" => {
-                    serde_json::json!({"aliases":[],"versions":[],"learning":[]})
-                }
-                "account_revision" => Value::from(header.reference.revision.clone()),
-                "logical_bytes" => Value::from(payload.len() as u64),
-                "retention_class" => serde_json::to_value(header.class)
-                    .map_err(|_| ResultAcquisitionError::Encoding)?,
-                "policy_priority" => Value::from(priority),
-                "active_or_protected" => Value::from(u64::from(header.protected)),
-                "next_due_at" => {
-                    experience_retention_due(header, policy).map_or(Value::Null, Value::from)
-                }
-                "retention_reason" => serde_json::to_value(memory.retention.reason)
-                    .map_err(|_| ResultAcquisitionError::Encoding)?,
-                "retention_required" => {
-                    Value::from(u64::from(memory.retention.required == Some(true)))
-                }
-                "unresolved" => Value::from(0),
-                "expires_at" | "weaken_at" => Value::Null,
-                _ => return Err(ResultAcquisitionError::Encoding),
-            })
-        })
-        .collect()
 }

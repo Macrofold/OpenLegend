@@ -17,8 +17,12 @@ struct AppendUndo {
     position: u64,
     next_ordinal: u64,
 }
-enum ExperienceUndo {
+pub(super) enum ExperienceUndo {
     Append(AppendUndo),
+    KnownPlaces {
+        actor_id: String,
+        before: Option<super::places::KnownPlacePreparation>,
+    },
     Collection {
         actor_id: String,
         kind: PersonalSourceKind,
@@ -27,8 +31,8 @@ enum ExperienceUndo {
     },
 }
 pub(crate) struct ExperienceJournal {
-    undo: Vec<ExperienceUndo>,
-    reservation: ByteReservation,
+    pub(super) undo: Vec<ExperienceUndo>,
+    pub(super) reservation: ByteReservation,
 }
 impl ExperienceJournal {
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ExperienceError> {
@@ -56,6 +60,14 @@ impl ExperienceJournal {
             let operation = self.undo.pop().expect("journal cursor checked");
             let undo = match operation {
                 ExperienceUndo::Append(undo) => undo,
+                ExperienceUndo::KnownPlaces { actor_id, before } => {
+                    if let Some(before) = before {
+                        state.known_places.insert(actor_id, before);
+                    } else {
+                        state.known_places.shift_remove(&actor_id);
+                    }
+                    continue;
+                }
                 ExperienceUndo::Collection {
                     actor_id,
                     kind,

@@ -3,16 +3,20 @@ import { prepareSpeechWords } from '@open-legend/domain';
 /** ICU word boundaries are prepared once per utterance by the existing language
  * owner. No listener, identity, evidence or world state participates here.
  */
-export function nativeSpeechWords(text: string): Array<{ start: number; end: number }> {
+export function nativeUtterance(text: string): {
+  words: Array<{ start: number; end: number }>;
+  lowercase: string;
+} {
   let previous = 0;
   let bytes = 0;
-  return prepareSpeechWords(text).map(({ index, segment }) => {
+  const words = prepareSpeechWords(text).map(({ index, segment }) => {
     bytes += Buffer.byteLength(text.slice(previous, index));
     const start = bytes;
     bytes += Buffer.byteLength(segment);
     previous = index + segment.length;
     return { start, end: bytes };
   });
+  return { words, lowercase: text.toLowerCase() };
 }
 
 /** Recognition uses the source runtime's default ICU collation. Only the

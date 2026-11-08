@@ -660,6 +660,40 @@ heap_record!(LocationFragment { kind, location });
 heap_record!(BodyPoseFragment { kind, pose });
 heap_record!(HeaderFragment { kind, header });
 heap_record!(FrameFragment { kind, frame });
+heap_record!(CurrentFacetGrant {
+    subject_id,
+    original,
+    exposure,
+    channel
+});
+heap_record!(CurrentStoredField {
+    id,
+    body_lease_id,
+    local_subject,
+    value
+});
+heap_record!(CurrentPartPartition {
+    members,
+    availability,
+    frame_ref
+});
+heap_record!(CurrentReceivedContent { grant, fields });
+impl HeapBytes for std::sync::Arc<CurrentReceivedContent> {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            std::mem::size_of::<CurrentReceivedContent>(),
+            self.as_ref().heap_bytes()?,
+            2 * std::mem::size_of::<usize>() + std::mem::align_of::<CurrentReceivedContent>() - 1,
+        ])
+    }
+}
+heap_record!(CurrentReceivedGroup {
+    recordings,
+    received,
+    metadata
+});
+heap_record!(CurrentSightStamp { frame_ref });
+heap_record!(CurrentSightCheck { frame_ref, detail });
 heap_record!(ReceivedValueRecord {
     id,
     at,

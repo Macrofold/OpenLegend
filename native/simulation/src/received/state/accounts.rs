@@ -314,3 +314,24 @@ impl TemporalState {
         self.replace_header(actor_id, header)
     }
 }
+
+impl TemporalState {
+    pub(crate) fn release_terminal_reservation(
+        &mut self,
+        actor_id: &str,
+        bytes: u64,
+    ) -> Result<(), ReceivedError> {
+        let Some(actor) = self.actors.get(actor_id) else {
+            return Ok(());
+        };
+        if bytes > actor.header.terminal_reserved_bytes {
+            return Err(ReceivedError("Received terminal reservation underflow."));
+        }
+        if bytes == 0 {
+            return Ok(());
+        }
+        let mut header = actor.header.clone();
+        header.terminal_reserved_bytes -= bytes;
+        self.replace_header(actor_id, header)
+    }
+}

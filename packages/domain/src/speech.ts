@@ -25,7 +25,11 @@ import {
   validateIndividualRecognition,
 } from './worlds/base/recognition.js';
 import { hasMemory, understandsSpeech } from './living.js';
-import { selectedOccurrenceRules, selectedVoiceReception } from './world-composition.js';
+import {
+  selectedOccurrenceRules,
+  selectedPersonalNameRules,
+  selectedVoiceReception,
+} from './world-composition.js';
 import { currentBodyGrant, currentBodyLocalSubject } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
@@ -181,17 +185,18 @@ export function perceiveSpeech(
     localBodySubject && observerIndividual(world, observer.id, localBodySubject);
   const preferredBodyName = localBodyIdentity?.nickname || localBodyIdentity?.givenName;
   const individualName = individual?.nickname || individual?.givenName;
+  const unidentifiedVoice = selectedPersonalNameRules(world).unidentifiedVoice;
   const speaker =
     voice?.recognized && individual
       ? {
-          name: preferredBodyName || individualName || 'unidentified voice',
+          name: preferredBodyName || individualName || unidentifiedVoice,
           nameForm: preferredBodyName || individualName ? ('proper' as const) : ('count' as const),
         }
       : visible
         ? observerName(world, observer.id, source.id)
         : individual
           ? {
-              name: individualName || 'unidentified voice',
+              name: individualName || unidentifiedVoice,
               nameForm: individualName ? ('proper' as const) : ('count' as const),
             }
           : undefined;
@@ -217,7 +222,7 @@ export function perceiveSpeech(
       actorId: observer.id,
       at: event.at,
       sequence: event.order ?? event.sequence,
-      eventType: 'sound',
+      eventType: selectedOccurrenceRules(world).soundEvent,
       sound,
       text: soundDescription(sound),
       modality: 'heard',

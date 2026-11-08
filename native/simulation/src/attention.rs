@@ -1,8 +1,7 @@
 //! Personally received selection/continuation records. These refer to acquired
 //! exposures and exact facts; private entity identity does not grant familiarity.
 
-use crate::reception::{ObservationExposure, ObservationFactKey, ObserverSubject};
-use crate::state::Point;
+use crate::reception::{ObservationExposure, ObservationFactKey, ObservedPoint, ObserverSubject};
 use crate::values::{deserialize_present_option, deserialize_safe_integer};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
@@ -15,6 +14,7 @@ mod validation;
 pub use validation::attention_subject_key;
 mod recording;
 pub(crate) use recording::*;
+mod retained_size;
 
 pub const SELF_RELATION_KEY: &str = "@self";
 
@@ -31,7 +31,7 @@ pub enum AttentionBasis {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AttentionPoint {
-    pub point: Point,
+    pub point: ObservedPoint,
     pub error_radius: f64,
     pub at: f64,
 }
@@ -198,7 +198,7 @@ pub struct AttentionRelationScan {
     pub clear_supported: bool,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AttentionState {
     pub policy: String,

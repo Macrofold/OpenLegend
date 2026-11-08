@@ -13,6 +13,8 @@ mod contact;
 pub(crate) use contact::*;
 mod awareness;
 pub(crate) use awareness::*;
+mod receiver;
+pub(crate) use receiver::*;
 
 #[derive(Clone, Copy, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -31,6 +33,7 @@ pub(crate) enum SpeechError {
 
 pub(crate) struct SpeechWords {
     text: Arc<str>,
+    lowercase: String,
     words: Vec<SpeechWord>,
     _reservation: ByteReservation,
 }
@@ -41,9 +44,26 @@ pub(crate) struct HeardSegments {
 }
 
 impl SpeechWords {
+    pub(crate) fn clear(&self, budget: &ByteBudget) -> Result<HeardSegments, SpeechError> {
+        let reservation = budget
+            .reserve(size_of::<HeardSegments>() + size_of::<SpeechSegment>() + self.text.len())
+            .map_err(|_| SpeechError::Capacity)?;
+        let mut segments = Vec::new();
+        segments
+            .try_reserve_exact(1)
+            .map_err(|_| SpeechError::Capacity)?;
+        segments.push(SpeechSegment::Heard {
+            text: self.text.to_string(),
+        });
+        Ok(HeardSegments {
+            segments,
+            reservation,
+        })
+    }
     pub(crate) fn prepare(
         text: &str,
         words: &[SpeechWord],
+        lowercase: &str,
         budget: &ByteBudget,
     ) -> Result<Self, SpeechError> {
         let mut previous = 0;
@@ -64,6 +84,7 @@ impl SpeechWords {
             .len()
             .checked_mul(size_of::<SpeechWord>())
             .and_then(|bytes| bytes.checked_add(text.len()))
+            .and_then(|bytes| bytes.checked_add(lowercase.len()))
             .and_then(|bytes| bytes.checked_add(size_of::<Self>() + 2 * size_of::<usize>()))
             .ok_or(SpeechError::Capacity)?;
         let reservation = budget.reserve(bytes).map_err(|_| SpeechError::Capacity)?;
@@ -74,6 +95,7 @@ impl SpeechWords {
         owned.extend_from_slice(words);
         Ok(Self {
             text: Arc::from(text),
+            lowercase: lowercase.to_owned(),
             words: owned,
             _reservation: reservation,
         })
@@ -81,6 +103,9 @@ impl SpeechWords {
 
     pub(crate) fn text(&self) -> &str {
         &self.text
+    }
+    pub(crate) fn lowercase(&self) -> &str {
+        &self.lowercase
     }
 
     pub(crate) fn partial(

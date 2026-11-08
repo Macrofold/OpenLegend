@@ -717,6 +717,36 @@ impl ActivityJournal {
             });
         Ok(id.clone())
     }
+    pub(crate) fn begin_approach(
+        &mut self,
+        state: &mut ActivityState,
+        actor: &str,
+        id: &str,
+        name: &str,
+        facts: &[String],
+    ) -> Result<(), ActivityError> {
+        let entry = &state
+            .collections
+            .get(actor)
+            .ok_or(ActivityError::InvalidStructure)?
+            .get(id)?
+            .ok_or(ActivityError::InvalidStructure)?
+            .occurrence;
+        self.reserve(
+            approach_view_bytes(&entry.view, name, facts).ok_or(ActivityError::Capacity)?,
+        )?;
+        self.record_before(state, actor, id)?;
+        let entry = &mut state
+            .collections
+            .get_mut(actor)
+            .ok_or(ActivityError::InvalidStructure)?
+            .records
+            .get_mut(id)
+            .ok_or(ActivityError::InvalidStructure)?
+            .occurrence;
+        prepare_approach_view(&mut entry.view, name, facts);
+        Ok(())
+    }
     pub(crate) fn bind_action(
         &mut self,
         state: &mut ActivityState,

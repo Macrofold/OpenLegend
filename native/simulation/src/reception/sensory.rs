@@ -367,6 +367,22 @@ impl SensoryJournal {
         scope_limit: usize,
     ) -> Result<(), ReceivedError> {
         let (id, before, after, invalidates) = match change {
+            PhysicalChange::ObservationParameters {
+                entity_id,
+                request_detail,
+            } => {
+                return if *request_detail {
+                    self.request_sight_work(
+                        state,
+                        now,
+                        entity_id,
+                        CurrentCheck::Detail,
+                        scope_limit,
+                    )
+                } else {
+                    Ok(())
+                };
+            }
             PhysicalChange::AnimalClock { .. }
             | PhysicalChange::Behavior {
                 outward_change: false,

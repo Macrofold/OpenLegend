@@ -12,8 +12,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GeometryMap {
-    pub width: u32,
-    pub height: u32,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub width: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub height: u64,
     pub tiles: Vec<Vec<String>>,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub terrain: IndexMap<String, TerrainDefinition>,
@@ -81,7 +83,8 @@ pub enum TerrainStyle {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SpatialLayout {
-    pub version: u32,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub version: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub disclosure: SpatialDisclosure,

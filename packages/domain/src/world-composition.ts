@@ -2,7 +2,8 @@ import { baseOutwardActivity, changedOutwardNotice } from './worlds/base/senses.
 import {
   recognizePromise,
   allowsCommitmentCompletion,
-  COMMITMENT_ADMISSION_LIMIT,
+  BASE_PROMISE_RULES,
+  nativePromiseDefinitions,
 } from './worlds/base/promises.js';
 import { BASE_WORK_ACTIVITY_HOST } from './worlds/base/work-activity.js';
 import { BASE_MEAL_ACTIVITY_HOST } from './worlds/base/meal-activity.js';
@@ -13,6 +14,7 @@ import {
 } from './worlds/base/event-disclosure.js';
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
 import { BASE_ACTION_DEFAULTS, BASE_SPEECH_ACTION } from './worlds/base/actions.js';
+import { BASE_ORDINARY_ACTION_RULES } from './worlds/base/ordinary-action-rules.js';
 import { baseAnimalActivity } from './worlds/base/animal-response-profile.js';
 import { baseAssemblyPresentation } from './worlds/base/presentation.js';
 import type { AssemblyFamily } from './assembly-types.js';
@@ -294,6 +296,11 @@ export function selectedExpireRecognitionSeeds(world: WorldState, actorId: strin
   return expireRecognitionSeeds(world, actorId);
 }
 
+/** Personal naming vocabulary stays with the selected world. */
+export function selectedPersonalNameRules(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_PERSONAL_NAME_RULES;
+}
 /** Current direct-path voice interpretation is selected world behavior. Future
  * acoustic producers supply their own admitted received feature evidence. */
 export function selectedVoiceReception(
@@ -451,7 +458,9 @@ export function selectedCreationProfileForWorld(
  * world remains their one source; native installation carries data and pins,
  * never executable TypeScript policy functions or a reconstructed world.
  */
-export function selectedNativeLawDefinitions(world: Pick<WorldState, 'profile' | 'timePolicy'>) {
+export function selectedNativeLawDefinitions(
+  world: Pick<WorldState, 'profile' | 'timePolicy' | 'itemDefinitions'>,
+) {
   selectedCreationProfileForWorld(world);
   return {
     attention: BASE_ATTENTION_POLICY,
@@ -461,6 +470,8 @@ export function selectedNativeLawDefinitions(world: Pick<WorldState, 'profile' |
     occurrenceRules: BASE_OCCURRENCE_RULES,
     socialDefaults: BASE_SOCIAL_POLICY,
     speechAction: BASE_SPEECH_ACTION,
+    ordinaryActions: BASE_ORDINARY_ACTION_RULES,
+    promises: { ...BASE_PROMISE_RULES, definitions: nativePromiseDefinitions(world) },
     eventDisclosure: BASE_EVENT_DISCLOSURE_DATA,
     detectionSupport: selectedDetectionSupportPolicy(world),
     preparedResponses: BASE_THREAT_RESPONSE_PROFILE,
@@ -477,6 +488,10 @@ export function selectedSocialDefaults(world: WorldState) {
 export function selectedSpeechAction(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_SPEECH_ACTION;
+}
+export function selectedOrdinaryActionRules(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_ORDINARY_ACTION_RULES;
 }
 export function selectedTypedRequestVocabulary(world: WorldState) {
   selectedCreationProfileForWorld(world);
@@ -526,7 +541,15 @@ export function selectedContextActions(world: WorldState, actorId: string, targe
 export function selectedSpokenPromise(world: WorldState, event: import('./types.js').WorldEvent) {
   selectedCreationProfileForWorld(world);
   const promise = recognizePromise(world, event);
-  return promise && { ...promise, limit: COMMITMENT_ADMISSION_LIMIT };
+  return (
+    promise && {
+      ...promise,
+      limit: BASE_PROMISE_RULES.limit,
+      importance: BASE_PROMISE_RULES.importance,
+      summaryPrefix: BASE_PROMISE_RULES.summaryPrefix,
+      speechEvent: BASE_PROMISE_RULES.speechEvent,
+    }
+  );
 }
 
 export function selectedCommitmentCompletionAllowed(world: WorldState, eventType: string): boolean {
@@ -541,7 +564,7 @@ export function selectedOutwardBodyActivity(world: WorldState, entity: Entity) {
 
 export function selectedCommitmentLimit(world: WorldState): number {
   selectedCreationProfileForWorld(world);
-  return COMMITMENT_ADMISSION_LIMIT;
+  return BASE_PROMISE_RULES.limit;
 }
 
 /** Meaningful notices use the same selected reality as acquired activity details. */

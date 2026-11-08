@@ -18,6 +18,8 @@ use crate::records::{CurrentRecords, EntityOrdering, InstalledRow, OwnerCoverage
 use crate::values::{DefinitionPin, is_safe_record_id};
 
 mod content;
+mod retained;
+pub(crate) use retained::{RetainedDefinitionInputs, RetainedDefinitions, install_retained};
 mod social;
 pub(crate) use social::{SocialSettings, install_social};
 mod definitions;
@@ -25,6 +27,10 @@ pub(crate) use content::{InstalledContent, TimePolicy, WorldProfile};
 pub(crate) use definitions::{
     AuthoredManifest, PhysicalDefinitionInputs, PhysicalMeanings, install_physical_meanings,
 };
+mod geometry;
+pub(crate) use geometry::install_geometry;
+mod core;
+pub(crate) use core::{CoreInstallError, CoreInstallInput, CoreInstallation, assemble_core};
 
 mod physical;
 pub(crate) mod rows;

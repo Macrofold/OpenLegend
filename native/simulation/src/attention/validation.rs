@@ -58,9 +58,9 @@ impl AttentionState {
         }
         for (key, candidate) in &self.annotations {
             let anchor = candidate.anchor.as_ref().is_none_or(|anchor| {
-                anchor.point.x.is_finite()
-                    && anchor.point.y.is_finite()
-                    && anchor.point.z.is_finite()
+                anchor.point.position().x.is_finite()
+                    && anchor.point.position().y.is_finite()
+                    && anchor.point.position().z.is_finite()
                     && nonnegative(anchor.error_radius)
                     && nonnegative(anchor.at)
             });

@@ -110,7 +110,7 @@ struct StoredContent {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct StoredGroup {
-    received: CurrentReceivedContent,
+    received: Arc<CurrentReceivedContent>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]

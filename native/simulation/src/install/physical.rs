@@ -32,7 +32,6 @@ pub(crate) struct PhysicalDefinitions<'a> {
     pub maximum_path_points: usize,
     pub epsilon: f64,
     pub population_work: &'a crate::status::StatusInstallationWork,
-    pub presentation: Option<&'a CanonicalInput>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -72,6 +71,7 @@ impl CanonicalInput {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NativeDefinitionInputs {
     pub manifest: CanonicalInput,
+    pub retained: super::RetainedDefinitionInputs,
     pub attributes: Vec<DefinitionInput>,
     pub senses: Vec<DefinitionInput>,
     pub acoustics: DefinitionInput,
@@ -88,6 +88,8 @@ pub(crate) struct NativeDefinitionInputs {
     pub recognition: DefinitionInput,
     pub occurrence_rules: DefinitionInput,
     pub speech_action: DefinitionInput,
+    pub ordinary_actions: DefinitionInput,
+    pub promises: DefinitionInput,
     pub social_defaults: CanonicalInput,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub presentation: Option<CanonicalInput>,
@@ -152,6 +154,7 @@ pub(crate) struct NativeSetupSettings {
     pub activity_display_bytes: u64,
     pub native_response: ResponseSettings,
     pub personal_evidence_preparation: PersonalEvidencePreparationSettings,
+    pub mind: crate::cognition::MindLimits,
 }
 
 /// Presence is consumed only during installation by the actual child owners.
@@ -161,6 +164,9 @@ pub(crate) struct WorldChildren {
     fields: IndexMap<String, Option<bool>>,
 }
 impl WorldChildren {
+    pub(crate) fn remaining_fields(&self) -> impl Iterator<Item = &str> {
+        self.fields.keys().map(String::as_str)
+    }
     pub(crate) fn take(&mut self, field: &str) -> Result<Option<bool>, InstallError> {
         self.fields
             .shift_remove(field)
@@ -176,6 +182,16 @@ impl WorldChildren {
 }
 pub(crate) struct PhysicalInstallation {
     pub state: PhysicalState,
+    pub content: InstalledContent,
+    pub personal: PersonalRootPresence,
+    pub archived_event_count: Option<u64>,
+    pub assembly_geometry_revision: Option<u64>,
+    pub story_policy_revision: Option<u64>,
+    pub children: WorldChildren,
+}
+pub(crate) struct PhysicalRoot {
+    pub header: WorldHeader,
+    pub identity: IdentityState,
     pub content: InstalledContent,
     pub personal: PersonalRootPresence,
     pub archived_event_count: Option<u64>,
@@ -280,10 +296,10 @@ fn empty_marker(value: &Value, array: bool) -> bool {
     }
 }
 
-pub(crate) fn install_physical(
+pub(crate) fn read_physical_root(
     import: &mut RowImport,
-    installed: &PhysicalDefinitions<'_>,
-) -> Result<PhysicalInstallation, InstallError> {
+    presentation_input: Option<&CanonicalInput>,
+) -> Result<PhysicalRoot, InstallError> {
     let (row, mut root) =
         super::rows::take_one::<Map<String, Value>>(import, "world_settings", "[]", "world", true)?
             .ok_or(InstallError::CurrentFormat)?;
@@ -298,17 +314,10 @@ pub(crate) fn install_physical(
     )
     .map_err(|_| InstallError::Identity)?;
     let presentation: Option<Value> = remove_optional(&mut root, "presentation")?;
-    match (presentation.as_ref(), installed.presentation) {
+    match (presentation.as_ref(), presentation_input) {
         (None, None) => {}
         (Some(value), Some(input)) => {
-            if crate::encoding::sha256_hex(input.canonical.as_bytes()) != input.sha256 {
-                return Err(InstallError::DefinitionPin);
-            }
-            let expected: Value =
-                serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
-            if !same_json_value(value, &expected) {
-                return Err(InstallError::DefinitionBody);
-            }
+            input.verify_json(value)?;
         }
         _ => return Err(InstallError::DefinitionBody),
     }
@@ -353,20 +362,62 @@ pub(crate) fn install_physical(
     {
         return Err(InstallError::CurrentFormat);
     }
-    let present = |name: &str| fields.get(name).copied().flatten() == Some(true);
-    let personal = PersonalRootPresence {
-        experience: present("experience"),
-        memories: present("memories"),
-        received_values: present("receivedValues"),
-        events: present("events"),
+    let present = |name: &str, required: bool| match fields.get(name).copied().flatten() {
+        Some(true) => Ok(true),
+        None if !required => Ok(false),
+        _ => Err(InstallError::ParentPresence),
     };
-    let entities = install_entities(import, present("entities"), installed, header.sim_time)?;
+    let personal = PersonalRootPresence {
+        experience: present("experience", false)?,
+        memories: present("memories", true)?,
+        received_values: present("receivedValues", false)?,
+        events: present("events", true)?,
+    };
+    Ok(PhysicalRoot {
+        header,
+        identity,
+        content,
+        personal,
+        archived_event_count,
+        assembly_geometry_revision,
+        story_policy_revision,
+        children: WorldChildren { fields },
+    })
+}
+
+pub(crate) fn install_physical(
+    import: &mut RowImport,
+    root: PhysicalRoot,
+    installed: &PhysicalDefinitions<'_>,
+) -> Result<PhysicalInstallation, InstallError> {
+    let PhysicalRoot {
+        header,
+        identity,
+        content,
+        personal,
+        archived_event_count,
+        assembly_geometry_revision,
+        story_policy_revision,
+        mut children,
+    } = root;
+    if children.take("entities")? != Some(true) {
+        return Err(InstallError::ParentPresence);
+    }
+    let entities = install_entities(import, true, installed, header.sim_time)?;
     installed
         .population_work
         .require_population(&entities, &installed.work_policy)
         .map_err(|_| InstallError::CurrentFormat)?;
-    let pending_values = take_window(import, present("pendingNativeIntegration"))?;
-    let work_state = take_work(import, present("workState"))?;
+    let optional = |presence: Option<bool>| match presence {
+        None => Ok(false),
+        Some(true) => Ok(true),
+        Some(false) => Err(InstallError::ParentPresence),
+    };
+    let pending_values = take_window(
+        import,
+        optional(children.take("pendingNativeIntegration")?)?,
+    )?;
+    let work_state = take_work(import, optional(children.take("workState")?)?)?;
     let work = WorkBook::install(
         work_state,
         installed.work_policy.clone(),
@@ -403,9 +454,6 @@ pub(crate) fn install_physical(
         .map_err(|_| InstallError::CurrentFormat)?;
     }
     let bodies = crate::movement::BodyIndex::install(&entities);
-    fields.shift_remove("entities");
-    fields.shift_remove("pendingNativeIntegration");
-    fields.shift_remove("workState");
     Ok(PhysicalInstallation {
         state: PhysicalState {
             header,
@@ -420,7 +468,7 @@ pub(crate) fn install_physical(
         archived_event_count,
         assembly_geometry_revision,
         story_policy_revision,
-        children: WorldChildren { fields },
+        children,
     })
 }
 

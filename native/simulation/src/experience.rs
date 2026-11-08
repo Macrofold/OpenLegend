@@ -20,6 +20,11 @@ use crate::reception::EvidenceSource;
 use crate::records::{InstalledRow, OwnerCoverage};
 use crate::values::{deserialize_present_option, deserialize_safe_integer, is_safe_record_id};
 
+mod admission;
+pub(crate) use admission::{
+    AwarenessAcquisitionError, AwarenessAdmission, PlacedAwarenessAccounts,
+    acquire_awareness_accounts, prepare_awareness_admission,
+};
 mod awareness;
 pub use awareness::*;
 mod evidence;
@@ -28,6 +33,12 @@ mod install;
 pub use install::*;
 mod policy;
 pub use policy::*;
+mod obligation;
+pub(crate) use obligation::{PreparedObligationReplacement, prepare_obligation_replacement};
+mod memory;
+pub(crate) use memory::{
+    MemoryAcquisitionError, MemoryAdmission, acquire_memory, prepare_memory_admission,
+};
 mod mutation;
 pub(crate) use mutation::{ExperienceCheckpoint, ExperienceJournal};
 mod result;
@@ -36,6 +47,9 @@ pub(crate) use result::{
     prepare_activity_result,
 };
 mod columns;
+mod places;
+pub(crate) use places::KnownPlaceMutation;
+pub use places::{KnownPlaceCapsule, PlaceProvenance, PreparedKnownPlaceEvidence};
 mod owners;
 mod retained_size;
 pub use owners::PersonalOwnerMap;
@@ -132,8 +146,8 @@ pub enum AccountAfterRelease {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ExperienceRetention {
-    pub reason: RetentionReason,
     pub after_release: AccountAfterRelease,
+    pub reason: RetentionReason,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -242,6 +256,9 @@ pub struct PersonalSourceHeader {
     /// Original unresolved obligation completion, including overdue promises.
     /// Event suppression and fulfillment consult this same source projection.
     pub completion_event_type: Option<String>,
+    /// Every unresolved commitment counts, including forgotten records and a
+    /// commitment that has no native obligation. This is not protection.
+    pub unresolved_commitment: bool,
     /// Owned originals are aliases only after this actual account is revoked.
     pub owned_observations: Vec<String>,
     /// Only the source's real dependency closure can revoke its descendants.
@@ -769,6 +786,12 @@ fn header(
     } else {
         None
     };
+    let unresolved_commitment = kind == PersonalSourceKind::Memory
+        && record_kind.as_deref() == Some("commitment")
+        && !body
+            .get("resolved")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
     Ok(PersonalSourceHeader {
         reference: PersonalSourceRef {
             kind,
@@ -788,6 +811,7 @@ fn header(
         expires_at: optional_number(body, "expiresAt")?,
         retention,
         impression,
+        unresolved_commitment,
         completion_event_type,
         owned_observations: own_observations(body)?,
         dependencies: source_dependencies(body, kind, meaning)?,
@@ -809,9 +833,16 @@ impl PersonalSourceRecord {
     pub(crate) fn validate_originals(
         &self,
         registry: &mut crate::reception::OriginalRevisionRegistry,
+        through: f64,
     ) -> Result<(), crate::received::ReceivedError> {
         #[derive(Deserialize)]
         struct Inputs {
+            #[serde(
+                default,
+                rename = "actorId",
+                deserialize_with = "deserialize_present_option"
+            )]
+            actor_id: Option<String>,
             #[serde(default, deserialize_with = "deserialize_present_option")]
             observation: Option<Arc<crate::reception::ObservationContribution>>,
             #[serde(default, deserialize_with = "deserialize_present_option")]
@@ -833,17 +864,38 @@ impl PersonalSourceRecord {
         let body: Body = serde_json::from_str(&self.payload).map_err(|_| {
             crate::received::ReceivedError("Invalid personal source original evidence.")
         })?;
+        if body.evidence.as_ref().is_some_and(|evidence| {
+            evidence.actor_id.as_deref() != Some(self.header.actor_id.as_str())
+        }) {
+            return Err(crate::received::ReceivedError(
+                "Foreign personal evidence owner.",
+            ));
+        }
         for input in std::iter::once(&body.own).chain(body.evidence.iter()) {
             for observation in input
                 .observation
                 .iter()
                 .chain(input.observations.iter().flatten())
             {
+                if observation.observer.actor_id != self.header.actor_id
+                    || observation.acquired_at > through
+                {
+                    return Err(crate::received::ReceivedError(
+                        "Foreign or future personal original.",
+                    ));
+                }
                 registry.validate(observation)?;
             }
         }
         if let Some(manifest) = &body.manifest {
             for observation in &manifest.observations {
+                if observation.observer.actor_id != self.header.actor_id
+                    || observation.acquired_at > through
+                {
+                    return Err(crate::received::ReceivedError(
+                        "Foreign or future remembered original.",
+                    ));
+                }
                 registry.validate(observation)?;
             }
         }
@@ -1149,6 +1201,7 @@ pub struct ExperienceState {
     header: ExperienceHeader,
     actors: IndexMap<String, PersonalHistory>,
     owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
+    known_places: IndexMap<String, places::KnownPlacePreparation>,
 }
 
 impl ExperienceState {
@@ -1200,6 +1253,7 @@ impl ExperienceState {
             header,
             actors,
             owner_maps,
+            known_places: IndexMap::new(),
         })
     }
 

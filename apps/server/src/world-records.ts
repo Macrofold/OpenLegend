@@ -795,7 +795,7 @@ export class WorldRecords {
         if (node.table === 'mind_perception_values') return;
         if (node.table === 'mind_temporal_pages' && !retirement?.previous.get(node.table)?.has(id))
           return;
-        if (node.table === 'mind_temporal_pages' && old !== undefined && !readOnlyMetadata) {
+        if (node.table === 'mind_temporal_pages' && old !== undefined) {
           const page = old as import('@open-legend/domain').TemporalPage;
           (changes.temporal ??= new Map()).set(temporalPageIntentKey(page), {
             before: page,
@@ -811,7 +811,9 @@ export class WorldRecords {
         changes.deletes.set(node.table, ids);
         return;
       }
-      if (node.table === 'mind_temporal_pages' && !readOnlyMetadata) {
+      // Read-only position bookkeeping must still use actual physical packing;
+      // a logical append page is not a current SQL row for creation or restore.
+      if (node.table === 'mind_temporal_pages') {
         const page = next as import('@open-legend/domain').TemporalPage;
         if (!page.batches.length) {
           if (temporalPageMutation(page) !== 'edit') return;

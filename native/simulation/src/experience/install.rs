@@ -232,7 +232,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
     for (actor_id, source) in actors {
         for collection in &source.collections {
             for record in collection.records() {
-                record.validate_originals(context.original_revisions)?;
+                record.validate_originals(context.original_revisions, context.through)?;
             }
         }
         let privacy = ActorPrivacy::install(

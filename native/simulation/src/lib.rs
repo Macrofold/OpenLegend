@@ -5,8 +5,10 @@
 //! implementation of a world or permission to run an unsupported family.
 
 pub mod activity;
+pub mod administration;
 pub mod attention;
 pub mod body;
+pub mod cognition;
 pub mod commands;
 pub mod encoding;
 pub mod events;

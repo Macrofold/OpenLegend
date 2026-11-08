@@ -11,9 +11,6 @@ fn invalid() -> ReceivedError {
 fn time(at: f64, now: f64) -> bool {
     at.is_finite() && at >= 0.0 && at <= now
 }
-fn field_identity(kind: &str, pin: &DefinitionPin) -> Result<String, ReceivedError> {
-    crate::encoding::json_record(&(kind, &pin.id, pin.version, &pin.digest)).map_err(|_| invalid())
-}
 fn original_key(source: &ReceivedObservation) -> Result<String, ReceivedError> {
     crate::encoding::json_record(&(&source.id, source.revision)).map_err(|_| invalid())
 }
@@ -69,6 +66,7 @@ impl ReceptionState {
         originals: &mut OriginalRevisionRegistry,
     ) -> Result<(), ReceivedError> {
         let now = physical.header.sim_time;
+        crate::worlds::validate_selected_identities(physical, self, installed)?;
         let input_revision = self.sensory.as_ref().map_or(0, |pending| pending.revision);
         let values = &self.received_values.as_ref();
         if let Some(pending) = &self.sensory {
@@ -232,7 +230,7 @@ impl ReceptionState {
                     }
                     used.insert(grant.original.as_str());
                     for (kind, field) in &group.received.fields {
-                        if !kinds.insert(field_identity(kind, &grant.channel)?)
+                        if !kinds.insert(current_field_identity(kind, &grant.channel)?)
                             || field.semantic_revision < 1
                             || kind != &field.value.kind
                             || current_field_parts(field)

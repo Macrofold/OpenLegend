@@ -87,6 +87,43 @@ pub struct ActivityView {
     pub result: Option<String>,
 }
 
+pub(crate) fn approach_view_bytes(
+    view: &ActivityView,
+    name: &str,
+    facts: &[String],
+) -> Option<usize> {
+    use crate::host::retained_size::HeapBytes;
+    view.facts
+        .iter()
+        .filter(|fact| facts.iter().any(|name| name == &fact.name))
+        .try_fold(
+            std::mem::size_of::<ActivityView>().checked_add(name.len())?,
+            |bytes, fact| {
+                bytes
+                    .checked_add(std::mem::size_of::<ActivityFact>())?
+                    .checked_add(fact.heap_bytes()?)
+            },
+        )
+}
+pub(crate) fn prepare_approach_view(view: &mut ActivityView, name: &str, facts: &[String]) {
+    let selected = || {
+        view.facts
+            .iter()
+            .filter(|fact| facts.iter().any(|name| name == &fact.name))
+    };
+    let mut held = Vec::with_capacity(selected().count());
+    held.extend(selected().cloned());
+    view.children = Some(vec![ActivityView {
+        name: name.to_owned(),
+        actor: None,
+        target: None,
+        tool: None,
+        facts: held,
+        children: None,
+        result: None,
+    }]);
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ResultAccountSource {
@@ -223,33 +260,95 @@ pub struct ActivityProjection {
 
 /// Complete event-time facts for personal evidence. Display omission and prompt
 /// budgets never replace the original occurrence's precise retained facts.
-pub fn activity_record_text(view: &ActivityView) -> Result<String, serde_json::Error> {
-    let mut parts = vec![view.name.clone()];
+fn activity_text_sum(left: usize, right: usize) -> Result<usize, serde_json::Error> {
+    left.checked_add(right).ok_or_else(|| {
+        <serde_json::Error as serde::ser::Error>::custom("Activity text allocation overflow.")
+    })
+}
+fn activity_record_text_sizes(view: &ActivityView) -> Result<(usize, usize), serde_json::Error> {
+    let mut bytes = view.name.len();
+    let mut temporary = 0;
     for (label, value) in [
         ("actor", view.actor.as_deref()),
         ("target", view.target.as_deref()),
         ("tool", view.tool.as_deref()),
     ] {
         if let Some(value) = value.filter(|value| !value.is_empty()) {
-            parts.push(format!("{label}: {value}"));
+            bytes = activity_text_sum(bytes, activity_text_sum(4 + label.len(), value.len())?)?;
         }
     }
     for fact in &view.facts {
-        let value = match &fact.value {
-            ActivityDetail::Scalar(ActivityScalar::String(value)) => value.clone(),
-            value => crate::encoding::json_record(value)?,
+        let (length, scratch) = match &fact.value {
+            ActivityDetail::Scalar(ActivityScalar::String(value)) => (value.len(), 0),
+            value => {
+                let length = crate::encoding::json_record_len(value)?;
+                (length, length)
+            }
         };
-        parts.push(format!("{}: {value}", fact.name));
+        bytes = activity_text_sum(bytes, activity_text_sum(4 + fact.name.len(), length)?)?;
+        temporary = temporary.max(scratch);
     }
     if let Some(children) = &view.children {
         for child in children {
-            parts.push(activity_record_text(child)?);
+            let (length, scratch) = activity_record_text_sizes(child)?;
+            bytes = activity_text_sum(bytes, activity_text_sum(2, length)?)?;
+            temporary = temporary.max(scratch);
         }
     }
     if let Some(result) = view.result.as_deref().filter(|value| !value.is_empty()) {
-        parts.push(format!("Result: {result}"));
+        bytes = activity_text_sum(bytes, activity_text_sum(10, result.len())?)?;
     }
-    Ok(parts.join("; "))
+    Ok((bytes, temporary))
+}
+pub(crate) fn activity_record_text_bound(view: &ActivityView) -> Result<usize, serde_json::Error> {
+    let (bytes, temporary) = activity_record_text_sizes(view)?;
+    activity_text_sum(
+        activity_text_sum(bytes, temporary)?,
+        std::mem::size_of::<String>(),
+    )
+}
+/// Stream the exact complete Source sequence into one output. Its caller can
+/// reserve output plus the largest single encoded fact before rendering; child
+/// text and a vector of every intermediate fragment are unnecessary.
+pub fn activity_record_text(view: &ActivityView) -> Result<String, serde_json::Error> {
+    fn append(view: &ActivityView, text: &mut String) -> Result<(), serde_json::Error> {
+        text.push_str(&view.name);
+        for (label, value) in [
+            ("actor", view.actor.as_deref()),
+            ("target", view.target.as_deref()),
+            ("tool", view.tool.as_deref()),
+        ] {
+            if let Some(value) = value.filter(|value| !value.is_empty()) {
+                text.push_str("; ");
+                text.push_str(label);
+                text.push_str(": ");
+                text.push_str(value);
+            }
+        }
+        for fact in &view.facts {
+            text.push_str("; ");
+            text.push_str(&fact.name);
+            text.push_str(": ");
+            match &fact.value {
+                ActivityDetail::Scalar(ActivityScalar::String(value)) => text.push_str(value),
+                value => text.push_str(&crate::encoding::json_record(value)?),
+            }
+        }
+        if let Some(children) = &view.children {
+            for child in children {
+                text.push_str("; ");
+                append(child, text)?;
+            }
+        }
+        if let Some(result) = view.result.as_deref().filter(|value| !value.is_empty()) {
+            text.push_str("; Result: ");
+            text.push_str(result);
+        }
+        Ok(())
+    }
+    let mut text = String::with_capacity(activity_record_text_sizes(view)?.0);
+    append(view, &mut text)?;
+    Ok(text)
 }
 
 fn prose(value: &str) -> String {

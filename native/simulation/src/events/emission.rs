@@ -80,47 +80,24 @@ fn participant_id(part: &NarrationPart) -> Option<&str> {
 }
 fn narration_bound(narration: &Narration, entities: &EntityStore) -> Option<usize> {
     let mut bytes = map_storage::<String, Named>(narration.parts.len().checked_mul(2)?)?;
+    bytes = bytes.checked_add(crate::narration::narration_render_bound(narration, |id| {
+        entities.get(id).map(|entity| entity.name.len())
+    })?)?;
     for part in &narration.parts {
-        bytes = bytes.checked_add(match part {
-            NarrationPart::Literal(text) => text.len(),
-            NarrationPart::Participant { entity_id, .. } => {
-                let name = entities.get(entity_id);
-                // Unicode full case mapping yields at most three scalars, each
-                // at most four UTF-8 bytes. The extra English grammar is fixed
-                // by narration.rs; source labels never become grammar tokens.
-                let render = name
-                    .map_or(64, |e| e.name.len())
-                    .checked_mul(12)?
-                    .checked_add(128)?;
-                let copy = name.map_or(Some(0), |e| {
-                    heap_sum([
-                        e.name.len(),
-                        e.name_form.as_ref().map_or(0, String::len),
-                        e.indefinite_article.as_ref().map_or(0, String::len),
-                    ])
-                })?;
-                heap_sum([render, copy, entity_id.len()])?
-            }
-            NarrationPart::Verb { subject_id, verb } => {
-                let name = entities.get(subject_id);
-                let copy = name.map_or(Some(0), |e| {
-                    heap_sum([
-                        e.name.len(),
-                        e.name_form.as_ref().map_or(0, String::len),
-                        e.indefinite_article.as_ref().map_or(0, String::len),
-                    ])
-                })?;
+        if let Some(id) = participant_id(part) {
+            let copy = entities.get(id).map_or(Some(0), |entity| {
                 heap_sum([
-                    verb.len().checked_mul(12)?.checked_add(128)?,
-                    copy,
-                    subject_id.len(),
-                ])?
-            }
-        })?;
+                    entity.name.len(),
+                    entity.name_form.as_ref().map_or(0, String::len),
+                    entity.indefinite_article.as_ref().map_or(0, String::len),
+                ])
+            })?;
+            bytes = heap_sum([bytes, id.len(), copy])?;
+        }
     }
-    // String's geometric growth may retain almost twice its final contents.
-    bytes.checked_mul(2)
+    Some(bytes)
 }
+
 fn truthy(value: Option<&EventScalar>) -> bool {
     match value {
         None | Some(EventScalar::Null(())) | Some(EventScalar::Boolean(false)) => false,

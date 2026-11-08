@@ -35,6 +35,23 @@ pub(crate) use event::*;
 mod capture;
 pub(crate) mod retained_size;
 pub use capture::*;
+mod acquisition;
+pub(crate) use acquisition::*;
+mod attention_control;
+mod current_journal;
+pub(crate) use attention_control::{AttentionSelection, AttentionUpdate, update_attention};
+mod cohort;
+pub(crate) use cohort::{CurrentCohort, reconcile_current_cohort};
+mod current_write;
+pub(crate) use current_journal::{CurrentCheckpoint, CurrentJournal};
+use current_write::{
+    CurrentFacetAddress, CurrentFacetInput, current_facet_set, materialize_current_checks,
+};
+pub(crate) use current_write::{
+    CurrentGroupCoverage, CurrentGroupIdentity, CurrentGroupRecordingUpdate, CurrentGroupSelection,
+    CurrentReceptionStamp, current_confirm_groups, current_facet_membership,
+    current_groups_set_recording, current_set_unchecked,
+};
 mod originals;
 pub(crate) use originals::*;
 mod current_read;
@@ -278,15 +295,17 @@ pub struct AttributeComparison {
     pub rounding: ComparisonRounding,
 }
 
+/// Field order follows `world-modules.ts::projectAttributeInput` and its owner
+/// additions: the exact JSON participates in received sharing and novelty.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AttributeView {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub body_health: Option<bool>,
+    pub id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub version: u64,
+    pub name: String,
+    pub display: AttributeDisplay,
+    pub presentation: AttributePresentation,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -298,22 +317,24 @@ pub struct AttributeView {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub meaning: Option<String>,
+    pub body_health: Option<bool>,
+    #[serde(deserialize_with = "deserialize_nullable")]
+    pub value: Option<AttributeValue>,
+    pub status: AttributeKnowledge,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub condition: Option<String>,
-    pub id: String,
+    pub critical: Option<bool>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub editor_critical: Option<bool>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub version: u64,
-    pub name: String,
-    pub display: AttributeDisplay,
-    pub presentation: AttributePresentation,
-    #[serde(deserialize_with = "deserialize_nullable")]
-    pub value: Option<AttributeValue>,
-    pub status: AttributeKnowledge,
+    pub revision: u64,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -337,27 +358,25 @@ pub struct AttributeView {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub concern: Option<String>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub critical: Option<bool>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub editor_critical: Option<bool>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub editor_critical_comparison: Option<AttributeComparison>,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub revision: u64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub meaning: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub condition: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub concern: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -558,6 +577,16 @@ pub enum ExperienceModality {
     Felt,
     Internal,
 }
+impl ExperienceModality {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Heard => "heard",
+            Self::Observed => "observed",
+            Self::Felt => "felt",
+            Self::Internal => "internal",
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -567,6 +596,17 @@ pub enum TriggerKind {
     SelfEvent,
     DirectedAction,
     ObservedEvent,
+}
+impl TriggerKind {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::AddressedSpeech => "addressed_speech",
+            Self::OverheardSpeech => "overheard_speech",
+            Self::SelfEvent => "self_event",
+            Self::DirectedAction => "directed_action",
+            Self::ObservedEvent => "observed_event",
+        }
+    }
 }
 
 /// Only scalar fields already admitted at acquisition are supported by the

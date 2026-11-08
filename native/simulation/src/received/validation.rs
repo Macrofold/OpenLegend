@@ -41,7 +41,7 @@ pub enum MaterializedTemporalValue<'a> {
 pub fn materialize_temporal_value<'a>(
     reference: &'a TemporalFacetReference,
     fragment: &'a ReceivedValueFragment,
-    values: &'a ReceivedValues,
+    values: &'a impl crate::reception::ReceivedValueLookup,
 ) -> Option<MaterializedTemporalValue<'a>> {
     match (fragment, reference.reception.as_ref()) {
         (ReceivedValueFragment::Body(value), Some(TemporalReception::Body { pose })) => {

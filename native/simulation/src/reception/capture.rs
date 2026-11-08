@@ -81,83 +81,92 @@ impl CapturedReceivedOriginals {
         budget: &ByteBudget,
     ) -> Result<OwnedObservation, ReceivedError> {
         let source = self.originals.get(index).ok_or_else(unavailable)?;
-        let header = received_observation_header(self, source)?;
-        let mut heap = heap_sum([
-            source.id.capacity(),
-            source.origin.heap_bytes().ok_or_else(capacity)?,
-            source.context.heap_bytes().ok_or_else(capacity)?,
-            header.heap_bytes().ok_or_else(capacity)?,
-            if header.channel.is_none() {
-                source.channel.heap_bytes().ok_or_else(capacity)?
-            } else {
-                0
-            },
-            source
-                .facets
-                .len()
-                .checked_mul(size_of::<ObservationFacet>())
-                .ok_or_else(capacity)?,
-        ])
-        .ok_or_else(capacity)?;
-        for facet in &source.facets {
-            heap = heap
-                .checked_add(facet.support.heap_bytes().ok_or_else(capacity)?)
-                .ok_or_else(capacity)?;
-            let descriptor = &facet.value;
-            let value = if descriptor.kind == "body" {
-                let (details, pose) =
-                    received_body_parts(self, descriptor).ok_or_else(unavailable)?;
-                heap_sum([
-                    details.heap_bytes().ok_or_else(capacity)?,
-                    pose.heap_bytes().ok_or_else(capacity)?,
-                ])
-                .ok_or_else(capacity)?
-            } else if descriptor.kind == "location" {
-                let Some(FacetReception::Location { frame_ref }) = &descriptor.reception else {
-                    return Err(unavailable());
-                };
-                let frame = received_observation_frame(self, frame_ref)?;
-                let location = match self.value_at(&descriptor.reference) {
-                    Some(ReceivedValueFragment::Location(value)) => {
-                        value.location.heap_bytes().ok_or_else(capacity)?
-                    }
-                    Some(ReceivedValueFragment::BodyPose(_)) => 0,
-                    _ => return Err(unavailable()),
-                };
-                heap_sum([location, frame.heap_bytes().ok_or_else(capacity)?])
-                    .ok_or_else(capacity)?
-            } else {
-                let Some(ReceivedValueFragment::Sensory(value)) =
-                    self.value_at(&descriptor.reference)
-                else {
-                    return Err(unavailable());
-                };
-                if value.kind() != descriptor.kind || descriptor.reception.is_some() {
-                    return Err(unavailable());
-                }
-                value.heap_bytes().ok_or_else(capacity)?
-            };
-            heap = heap.checked_add(value).ok_or_else(capacity)?;
-        }
-        let bytes = heap_sum([
-            size_of::<OwnedObservation>(),
-            size_of::<ObservationContribution>(),
-            heap,
-            2 * size_of::<usize>(),
-            align_of::<ObservationContribution>() - 1,
-        ])
-        .ok_or_else(capacity)?;
-        let mut reservation = budget.reserve(bytes).map_err(|_| capacity())?;
-        let value = materialize_observation(self, source)?;
-        let actual = size_of::<OwnedObservation>()
-            .checked_add(arc_bytes(&value).ok_or_else(capacity)?)
-            .ok_or_else(capacity)?;
-        reservation.resize(actual).map_err(|_| capacity())?;
-        Ok(OwnedObservation {
-            value: Arc::new(value),
-            reservation,
-        })
+        materialize_owned_observation(self, source, budget)
     }
+}
+
+/// The producing acquisition owner already proved this exact source. Reuse the
+/// same bounded materializer without retaining every other phase original.
+pub(crate) fn materialize_owned_observation(
+    values: &impl ReceivedValueLookup,
+    source: &ReceivedObservation,
+    budget: &ByteBudget,
+) -> Result<OwnedObservation, ReceivedError> {
+    let header = received_observation_header(values, source)?;
+    let mut heap = heap_sum([
+        source.id.capacity(),
+        source.origin.heap_bytes().ok_or_else(capacity)?,
+        source.context.heap_bytes().ok_or_else(capacity)?,
+        header.heap_bytes().ok_or_else(capacity)?,
+        if header.channel.is_none() {
+            source.channel.heap_bytes().ok_or_else(capacity)?
+        } else {
+            0
+        },
+        source
+            .facets
+            .len()
+            .checked_mul(size_of::<ObservationFacet>())
+            .ok_or_else(capacity)?,
+    ])
+    .ok_or_else(capacity)?;
+    for facet in &source.facets {
+        heap = heap
+            .checked_add(facet.support.heap_bytes().ok_or_else(capacity)?)
+            .ok_or_else(capacity)?;
+        let descriptor = &facet.value;
+        let value = if descriptor.kind == "body" {
+            let (details, pose) =
+                received_body_parts(values, descriptor).ok_or_else(unavailable)?;
+            heap_sum([
+                details.heap_bytes().ok_or_else(capacity)?,
+                pose.heap_bytes().ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?
+        } else if descriptor.kind == "location" {
+            let Some(FacetReception::Location { frame_ref }) = &descriptor.reception else {
+                return Err(unavailable());
+            };
+            let frame = received_observation_frame(values, frame_ref)?;
+            let location = match values.value_at(&descriptor.reference) {
+                Some(ReceivedValueFragment::Location(value)) => {
+                    value.location.heap_bytes().ok_or_else(capacity)?
+                }
+                Some(ReceivedValueFragment::BodyPose(_)) => 0,
+                _ => return Err(unavailable()),
+            };
+            heap_sum([location, frame.heap_bytes().ok_or_else(capacity)?]).ok_or_else(capacity)?
+        } else {
+            let Some(ReceivedValueFragment::Sensory(value)) =
+                values.value_at(&descriptor.reference)
+            else {
+                return Err(unavailable());
+            };
+            if value.kind() != descriptor.kind || descriptor.reception.is_some() {
+                return Err(unavailable());
+            }
+            value.heap_bytes().ok_or_else(capacity)?
+        };
+        heap = heap.checked_add(value).ok_or_else(capacity)?;
+    }
+    let bytes = heap_sum([
+        size_of::<OwnedObservation>(),
+        size_of::<ObservationContribution>(),
+        heap,
+        2 * size_of::<usize>(),
+        align_of::<ObservationContribution>() - 1,
+    ])
+    .ok_or_else(capacity)?;
+    let mut reservation = budget.reserve(bytes).map_err(|_| capacity())?;
+    let value = materialize_observation(values, source)?;
+    let actual = size_of::<OwnedObservation>()
+        .checked_add(arc_bytes(&value).ok_or_else(capacity)?)
+        .ok_or_else(capacity)?;
+    reservation.resize(actual).map_err(|_| capacity())?;
+    Ok(OwnedObservation {
+        value: Arc::new(value),
+        reservation,
+    })
 }
 
 impl ReceptionState {

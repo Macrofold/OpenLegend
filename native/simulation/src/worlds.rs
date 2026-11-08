@@ -1,6 +1,17 @@
 //! Selected trusted world-family composition for the explicitly scoped proof.
 //! Installation must verify the family's exact pin before using its law.
 
+/// Select the compiled world family; this is not a fallback for an unfamiliar
+/// world's laws. Family rules and words remain in their authored modules below.
+pub(crate) fn require_profile(
+    profile: &crate::install::WorldProfile,
+) -> Result<(), crate::install::InstallError> {
+    match (profile.id.as_str(), profile.version) {
+        ("grounded-wilderness", 1) => Ok(()),
+        _ => Err(crate::install::InstallError::DefinitionBody),
+    }
+}
+
 #[path = "../../../packages/domain/src/worlds/base/native/recognition.rs"]
 pub mod base_recognition;
 
@@ -24,6 +35,16 @@ pub(crate) use base_movement::InstalledMovementPolicy;
 pub(crate) mod base_speech;
 pub(crate) use base_speech::SpeechAction as InstalledSpeechAction;
 
+#[path = "../../../packages/domain/src/worlds/base/native/promises.rs"]
+pub(crate) mod base_promises;
+pub(crate) use base_promises::PromiseRules as InstalledPromiseRules;
+
+#[path = "../../../packages/domain/src/worlds/base/native/ordinary_actions.rs"]
+pub(crate) mod base_ordinary_actions;
+pub(crate) use base_ordinary_actions::{
+    ActionMessage as InstalledActionMessage, OrdinaryActionRules as InstalledOrdinaryActionRules,
+};
+
 #[path = "../../../packages/domain/src/worlds/base/native/retained_size.rs"]
 mod base_retained_size;
 
@@ -36,6 +57,12 @@ pub use base_recognition::IndividualRecognition as InstalledIndividualRecognitio
 pub use base_recognition::RecognitionPolicy as InstalledRecognitionPolicy;
 pub use base_recognition::VoiceFeatures as InstalledVoiceFeatures;
 pub use base_recognition::WildernessEvidenceMeaning as InstalledEvidenceMeaning;
+pub(crate) use base_recognition::validate_selected_identities;
+pub(crate) use base_recognition::{
+    RecognitionCheckpoint as InstalledRecognitionCheckpoint,
+    RecognitionJournal as InstalledRecognitionJournal, VoiceReception, VoiceReceptionParts,
+    VoiceReceptionPreparation,
+};
 pub type InstalledRecognitionFeatures =
     indexmap::IndexMap<String, base_recognition::RecognitionInterval>;
 

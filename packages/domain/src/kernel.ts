@@ -6,6 +6,7 @@ import {
   selectedCommitmentLimit,
   selectedOutwardBodyNotice,
   selectedSpeechAction,
+  selectedOrdinaryActionRules,
 } from './world-composition.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
@@ -917,6 +918,7 @@ function prepareApproach(
   action: Action,
   suppliedRoute?: SurfacePoint[],
 ): ApproachEffects | Outcome {
+  const ordinaryRules = selectedOrdinaryActionRules(world);
   if (!targetPosition(world, action))
     return outcome(false, 'missing-target', 'That target no longer exists.');
   if (suppliedRoute) {
@@ -949,9 +951,9 @@ function prepareApproach(
   if (actionInReach(world, actor, action)) return {};
   const path = approachPath(world, actor, action);
   if (!path)
-    return outcome(false, 'unreachable', 'No supported route to a reachable stance was found.');
+    return outcome(false, ordinaryRules.unreachable.code, ordinaryRules.unreachable.message);
   if (path.status !== 'reached' && path.status !== 'pending')
-    return outcome(false, path.status, 'No supported route was found.');
+    return outcome(false, path.status, ordinaryRules.noRoute.message);
   if (path.status === 'pending' && !territorialDetourAvailable(actor))
     return outcome(
       false,
@@ -1530,9 +1532,11 @@ function prepareReplenishment(
 
 /** Read-only lifecycle, body and perception admission shared by execution and queued choices. */
 function nativeActorProblem(world: WorldState, command: Command): Outcome | null {
+  const ordinaryRules = selectedOrdinaryActionRules(world);
   const reject = (code: string, message: string) => outcome(false, code, message);
   const source = entityOwn(world.entities, command.actorId);
-  if (!source?.actor) return reject('unknown-actor', 'That actor does not exist.');
+  if (!source?.actor)
+    return reject(ordinaryRules.unknownActor.code, ordinaryRules.unknownActor.message);
   if (command.type === 'encounter-preference') {
     if (!['speak', 'stop'].includes(command.operation) || !command.binding)
       return reject('invalid-command', 'Choose an exact encounter preference.');
@@ -1568,7 +1572,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
       : reject('respawn-unavailable', 'There is no lost life to continue.');
   }
   if (!activelyParticipates(source))
-    return reject('inactive', 'Return to the world before acting.');
+    return reject(ordinaryRules.inactive.code, ordinaryRules.inactive.message);
   const releaseSelf =
     command.type === 'status-effect' &&
     command.operation === 'deactivate' &&
@@ -1578,7 +1582,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     !releaseSelf &&
     !['cancel', 'recover'].includes(command.type)
   )
-    return reject('capability-restricted', 'This actor cannot act in its current state.');
+    return reject(ordinaryRules.actionsRestricted.code, ordinaryRules.actionsRestricted.message);
   if (
     localPoseBlocksWork(world, source) &&
     isActivityCommand(command) &&
@@ -1586,16 +1590,16 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   )
     return reject('posture-held', BASE_SKILLED_TEXT.postureHeld);
   if (command.type === 'say' && capabilityBlocked(world, source, 'speech'))
-    return reject('capability-restricted', 'Speech is unavailable.');
+    return reject(ordinaryRules.speechRestricted.code, ordinaryRules.speechRestricted.message);
   if (
     (command.type === 'move' || command.type === 'evade') &&
     capabilityBlocked(world, source, 'locomotion')
   )
-    return reject('capability-restricted', 'Movement is unavailable.');
+    return reject(ordinaryRules.movementRestricted.code, ordinaryRules.movementRestricted.message);
   if (world.paused && command.type !== 'cancel' && command.type !== 'inspect-inventory')
-    return reject('paused', 'The world is paused.');
+    return reject(ordinaryRules.paused.code, ordinaryRules.paused.message);
   if ((!source.actor.alive || source.actor.incapacitated) && command.type !== 'recover')
-    return reject('not-alive', 'This actor cannot act.');
+    return reject(ordinaryRules.notAlive.code, ordinaryRules.notAlive.message);
   if (
     ([
       'gather',
@@ -1631,8 +1635,8 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     );
   if (worldSupport(source) === null && !['say', 'teach', 'goal', 'cancel'].includes(command.type))
     return reject(
-      'unsupported-airborne-action',
-      'This native action requires a supported ground stance.',
+      ordinaryRules.unsupportedAirborne.code,
+      ordinaryRules.unsupportedAirborne.message,
     );
   // Scope comes before live resource/lifecycle diagnostics, including deferred plan dispatch.
   // docs/architecture.md#actor-agency-foundation
@@ -1670,10 +1674,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     hasMemory(source) &&
     world.actionExperience.admitted >= ACTIVITY_LIMITS.retainedRecords
   )
-    return reject(
-      'experience-capacity',
-      'The action-record allowance is full. Existing work and history are preserved; new recorded actions need more storage allowance.',
-    );
+    return reject(ordinaryRules.experienceCapacity.code, ordinaryRules.experienceCapacity.message);
   return null;
 }
 
@@ -2090,6 +2091,7 @@ function prepareNativeOperation(
     suppliedRoute?: SurfacePoint[];
   } = {},
 ): PreparedNativeOperation | Outcome {
+  const ordinaryRules = selectedOrdinaryActionRules(world);
   const grant = cooperationConstructionGrant(world, command);
   if (grant)
     options = {
@@ -2327,14 +2329,14 @@ function prepareNativeOperation(
           distance(worldPosition(actor), command.destination) > 1)
       )
         return reject(
-          'unsupported-navigation',
-          'Only a short direct probe is supported without vision.',
+          ordinaryRules.unsupportedNavigation.code,
+          ordinaryRules.unsupportedNavigation.message,
         );
       if (
         !validPosition(command.destination) ||
         !isWalkable(world, command.destination, command.destination.surfaceId, bodyProfile(actor))
       )
-        return reject('blocked', 'Choose walkable ground.');
+        return reject(ordinaryRules.blocked.code, ordinaryRules.blocked.message);
       action = temporary('move', 0);
       action.destination = { ...command.destination };
       break;
@@ -2889,14 +2891,14 @@ function prepareNativeOperation(
         !definition?.actions ||
         !['activate', 'deactivate'].includes(command.operation)
       )
-        return reject('invalid-effect', 'Choose an available status effect and target.');
+        return reject(ordinaryRules.invalidEffect.code, ordinaryRules.invalidEffect.message);
       if (
         command.facingHeading !== undefined &&
         (!Number.isFinite(command.facingHeading) ||
           definition.presentation?.pose !== 'horizontal' ||
           command.operation !== 'activate')
       )
-        return reject('invalid-pose', 'Choose a valid facing for an ordinary resting posture.');
+        return reject(ordinaryRules.invalidFacing.code, ordinaryRules.invalidFacing.message);
       if (command.restingPlaceId !== undefined || command.restingBay !== undefined) {
         if (
           !command.restingPlaceId ||
@@ -2905,7 +2907,10 @@ function prepareNativeOperation(
           definition.presentation?.pose !== 'horizontal' ||
           target.id !== actor.id
         )
-          return reject('invalid-pose', 'Choose an available resting place for this person.');
+          return reject(
+            ordinaryRules.invalidRestingPlace.code,
+            ordinaryRules.invalidRestingPlace.message,
+          );
         const fit = evaluateAssemblyRest(
           world,
           target.id,
@@ -2925,7 +2930,7 @@ function prepareNativeOperation(
           !visible(world, actor, target) ||
           !canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
       )
-        return reject('out-of-reach', 'The target must be permitted, visible and within reach.');
+        return reject(ordinaryRules.outOfReach.code, ordinaryRules.outOfReach.message);
       if (
         command.operation === 'activate' &&
         !canActivateStatusEffect(
@@ -2934,14 +2939,14 @@ function prepareNativeOperation(
           definition,
         )
       )
-        return reject('not-applicable', 'The status effect activation conditions are not met.');
+        return reject(ordinaryRules.notApplicable.code, ordinaryRules.notApplicable.message);
       if (
         command.operation === 'deactivate' &&
         !(definition.contribution
           ? activeContributionId(target, definition.id, actor.id)
           : target.statusEffects?.[definition.id]?.active)
       )
-        return reject('not-active', 'That status effect is not active.');
+        return reject(ordinaryRules.notActive.code, ordinaryRules.notActive.message);
       break;
     }
     default:
@@ -2984,10 +2989,7 @@ function prepareNativeOperation(
         .find((d) => d.id === component.action?.definitionId)
         ?.interruptOn.includes('new-action')
     )
-      return reject(
-        'cannot-interrupt',
-        'The current state must end before starting another activity.',
-      );
+      return reject(ordinaryRules.cannotInterrupt.code, ordinaryRules.cannotInterrupt.message);
   }
   return (
     (action ? { action, approachEffects } : undefined) ??
@@ -3159,6 +3161,7 @@ function executeCommandNative(
   },
   standalone: boolean,
 ): Transition {
+  const ordinaryRules = selectedOrdinaryActionRules(original);
   const reject = (code: string, message: string): Transition => ({
     world: original,
     events: [],
@@ -3173,7 +3176,7 @@ function executeCommandNative(
         !command.purpose.trim() ||
         command.purpose.length > 120))
   )
-    return reject('invalid-command', 'A command needs bounded actor and command IDs.');
+    return reject(ordinaryRules.invalidCommand.code, ordinaryRules.invalidCommand.message);
   const digest = canonicalJson(command);
   const receipt = options.nativeController
     ? undefined
@@ -3181,7 +3184,7 @@ function executeCommandNative(
   if (receipt)
     return receipt.digest === digest
       ? { world: original, events: [], outcome: { ...receipt.outcome, code: 'duplicate' } }
-      : reject('idempotency-conflict', 'This command ID was already used with another body.');
+      : reject(ordinaryRules.idempotencyConflict.code, ordinaryRules.idempotencyConflict.message);
   if (!nativeCommandSupported(original, command.type))
     return reject('unsupported-capability', 'This world does not install that action.');
   if (command.type === 'eat' && command.sourceId) {
@@ -3244,7 +3247,10 @@ function executeCommandNative(
         (binding.episodeId !== state.episode?.id ||
           binding.generation !== state.episode?.proposalGeneration))
     )
-      return reject('stale-native-movement', 'The selected native movement is no longer current.');
+      return reject(
+        ordinaryRules.staleNativeMovement.code,
+        ordinaryRules.staleNativeMovement.message,
+      );
     const from = supportedPosition(actor);
     if (!from) return reject('unsupported', 'Native movement requires actual support.');
     action.nativeLocomotion = { ...binding, profile: { ...binding.profile } };
@@ -3254,7 +3260,10 @@ function executeCommandNative(
     options.nativeController &&
     (source.actor?.controller !== 'native' || (!source.threat && !source.animal))
   )
-    return reject('unsupported-controller', 'This entity has no installed native controller.');
+    return reject(
+      ordinaryRules.unsupportedController.code,
+      ordinaryRules.unsupportedController.message,
+    );
   if (options.nativeController && source.animal && action?.navigation) {
     const wait = nativeResponseProfile(
       original,
@@ -3262,7 +3271,7 @@ function executeCommandNative(
     )?.candidates.navigationWait;
     if (wait) action.navigation.request = { ...action.navigation.request, wait };
   }
-  let result = outcome(true, 'accepted', 'Action started.');
+  let result = outcome(true, ordinaryRules.accepted.code, ordinaryRules.accepted.message);
   const statusDefinition =
     options.preview && command.type === 'status-effect'
       ? original.statusEffectPolicy.definitions.find((d) => d.id === command.definitionId)
@@ -3290,7 +3299,7 @@ function executeCommandNative(
       (command.operation === 'deactivate' ||
         statusWorkFits(original, entityGet(original.entities, command.targetId)!, statusDefinition))
     )
-      choiceOutcome = statusEffectChoiceOutcome(statusDefinition, command.operation);
+      choiceOutcome = statusEffectChoiceOutcome(original, statusDefinition, command.operation);
   }
   if (choiceOutcome || equipmentPreview) {
     const source = entityGet(original.entities, command.actorId)!;
@@ -4053,14 +4062,14 @@ function executeCommandNative(
           !definition?.actions ||
           !['activate', 'deactivate'].includes(command.operation)
         )
-          return reject('invalid-effect', 'Choose an available status effect and target.');
+          return reject(ordinaryRules.invalidEffect.code, ordinaryRules.invalidEffect.message);
         if (
           command.facingHeading !== undefined &&
           (!Number.isFinite(command.facingHeading) ||
             definition.presentation?.pose !== 'horizontal' ||
             command.operation !== 'activate')
         )
-          return reject('invalid-pose', 'Choose a valid facing for an ordinary resting posture.');
+          return reject(ordinaryRules.invalidFacing.code, ordinaryRules.invalidFacing.message);
         if (command.restingPlaceId !== undefined || command.restingBay !== undefined) {
           if (
             !command.restingPlaceId ||
@@ -4069,7 +4078,10 @@ function executeCommandNative(
             definition.presentation?.pose !== 'horizontal' ||
             target.id !== actor.id
           )
-            return reject('invalid-pose', 'Choose an available resting place for this person.');
+            return reject(
+              ordinaryRules.invalidRestingPlace.code,
+              ordinaryRules.invalidRestingPlace.message,
+            );
           const fit = evaluateAssemblyRest(
             world,
             target.id,
@@ -4089,7 +4101,7 @@ function executeCommandNative(
             !visible(world, actor, target) ||
             !canReachEntity(world, actor, target, SIMULATION_RULES.interactionRadius))
         )
-          return reject('out-of-reach', 'The target must be permitted, visible and within reach.');
+          return reject(ordinaryRules.outOfReach.code, ordinaryRules.outOfReach.message);
         const effectActive = () =>
           !!(definition.contribution
             ? activeContributionId(target, definition.id, actor.id)
@@ -4105,7 +4117,7 @@ function executeCommandNative(
               'voluntary',
             )
           )
-            return reject('not-applicable', 'The status effect activation conditions are not met.');
+            return reject(ordinaryRules.notApplicable.code, ordinaryRules.notApplicable.message);
           if (command.facingHeading !== undefined) {
             target.spatial.heading = command.facingHeading;
             recordSemanticChange(world, {
@@ -4121,10 +4133,10 @@ function executeCommandNative(
               ? activeContributionId(target, definition.id, actor.id)
               : target.statusEffects?.[definition.id]?.active)
           )
-            return reject('not-active', 'That status effect is not active.');
+            return reject(ordinaryRules.notActive.code, ordinaryRules.notActive.message);
           deactivateStatusEffect(world, target, definition, events, 'voluntary', actor.id);
         }
-        result = statusEffectChoiceOutcome(definition, command.operation);
+        result = statusEffectChoiceOutcome(world, definition, command.operation);
         recordActivityEffect(world, command.id, {
           subjectId: target.id,
           property: definition.label,
@@ -4184,16 +4196,20 @@ function executeCommandNative(
           command.expectedActionId !== undefined &&
           component.action?.id !== command.expectedActionId
         )
-          return reject('stale-action', 'That action has ended or been replaced.');
+          return reject(ordinaryRules.staleAction.code, ordinaryRules.staleAction.message);
         interruptStatusEffects(world, actor, events, 'voluntary');
         if (component.action?.type === 'status-effect')
-          return reject('cannot-interrupt', 'This state does not allow voluntary interruption.');
+          return reject(ordinaryRules.cannotCancel.code, ordinaryRules.cannotCancel.message);
         if (component.action) {
           endActivity(
             world,
             actor.id,
             component.action.id,
-            outcome(false, 'cancelled', 'Stopped by choice; already committed effects remain.'),
+            outcome(
+              false,
+              ordinaryRules.cancelledByChoice.code,
+              ordinaryRules.cancelledByChoice.message,
+            ),
           );
           releaseInvocationResources(world, component.action.id);
         }
@@ -4201,11 +4217,7 @@ function executeCommandNative(
         discardSuspended(world, component, actor.id);
         component.action = null;
         component.planGeneration++;
-        result = outcome(
-          true,
-          'cancelled',
-          'Stopped. Materials already used in work remain consumed.',
-        );
+        result = outcome(true, ordinaryRules.stopped.code, ordinaryRules.stopped.message);
         break;
       }
       case 'encounter-preference': {
@@ -4479,10 +4491,7 @@ function executeCommandNative(
     }
     interruptStatusEffects(world, actor, events, 'new-action');
     if (component.action?.type === 'status-effect')
-      return reject(
-        'cannot-interrupt',
-        'The current state must end before starting another activity.',
-      );
+      return reject(ordinaryRules.cannotInterrupt.code, ordinaryRules.cannotInterrupt.message);
     // Scheduled-work previews stop after identical admission, before action-start events/receipts.
     // docs/architecture.md#bundled-world-and-item-custody
     // Craft previews must also prove exact tool holds and completion-record capacity
@@ -4495,7 +4504,11 @@ function executeCommandNative(
         world,
         actor.id,
         component.action.id,
-        outcome(false, 'cancelled', 'Replaced by newly chosen work; committed effects remain.'),
+        outcome(
+          false,
+          ordinaryRules.cancelledReplaced.code,
+          ordinaryRules.cancelledReplaced.message,
+        ),
       );
     }
     component.action = action;
@@ -4541,9 +4554,9 @@ function executeCommandNative(
     if (experience && action.stage === 'approaching')
       experience.view.children = [
         {
-          name: 'Move into reach',
-          facts: experience.view.facts.filter(
-            (fact) => fact.name === 'distance' || fact.name === 'approach',
+          name: ordinaryRules.approachName,
+          facts: experience.view.facts.filter((fact) =>
+            ordinaryRules.approachFacts.some((name) => name === fact.name),
           ),
         },
       ];
@@ -4560,7 +4573,7 @@ function executeCommandNative(
       emit(
         world,
         events,
-        'action-started',
+        ordinaryRules.actionStartedEvent,
         action.gateWork || action.boundaryImpact
           ? subjectNarration(
               actor,
@@ -4574,7 +4587,9 @@ function executeCommandNative(
               action.destination
             ? subjectNarration(
                 actor,
-                `started moving to ${action.destination.x}, ${action.destination.z}.`,
+                ordinaryRules.movementDeparture
+                  .replaceAll('{x}', String(action.destination.x))
+                  .replaceAll('{z}', String(action.destination.z)),
               )
             : action.type === 'tend-fire'
               ? subjectNarration(
@@ -4617,12 +4632,15 @@ function executeCommandNative(
 }
 
 function startingActivityView(world: WorldState, command: Command, action?: Action) {
+  const ordinaryRules = selectedOrdinaryActionRules(world);
   const view = nativeActivityView(world, command);
   if (action?.stage === 'approaching' && !action.evasion)
     view.children = [
       {
-        name: 'Move into reach',
-        facts: view.facts.filter((fact) => fact.name === 'distance' || fact.name === 'approach'),
+        name: ordinaryRules.approachName,
+        facts: view.facts.filter((fact) =>
+          ordinaryRules.approachFacts.some((name) => name === fact.name),
+        ),
       },
     ];
   return view;

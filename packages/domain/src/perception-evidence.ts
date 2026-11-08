@@ -98,6 +98,7 @@ import {
 } from './records.js';
 import {
   selectedBodyIndividual,
+  selectedOccurrenceRules,
   selectedPruneObserverIndividuals,
   selectedOrdinaryWarning,
   selectedOutwardBodyName,
@@ -5958,7 +5959,7 @@ export function deferAwarenessObservation(
   awareness: Awareness,
 ): boolean {
   if (
-    event.type !== 'encounter' ||
+    event.type !== selectedOccurrenceRules(world).encounterEvent ||
     event.data?.['acquisition'] !== true ||
     event.exposure ||
     !awareness.targetId
@@ -6043,7 +6044,7 @@ function prepareAwarenessObservation(
   // An encounter is the existing story wrapper for this native sight input. It
   // retains the received original; recording its prose does not sample sight again.
   if (
-    event.type === 'encounter' &&
+    event.type === selectedOccurrenceRules(world).encounterEvent &&
     event.data?.['acquisition'] === true &&
     !event.exposure &&
     awareness.targetId
@@ -6056,7 +6057,7 @@ function prepareAwarenessObservation(
       );
   }
   const receivedContext = awarenessBodyContext(world, awareness);
-  if (event.type === 'contact') {
+  if (event.type === selectedOccurrenceRules(world).contactEvent) {
     const contactId = awareness.eventData?.['contactId'],
       senseId = awareness.eventData?.['senseId'],
       detail = awareness.eventData?.['detail'];

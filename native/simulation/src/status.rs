@@ -9,6 +9,8 @@ use crate::values::{
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+mod rates;
+pub(crate) use rates::*;
 
 mod work;
 pub(crate) use work::{
@@ -920,7 +922,7 @@ impl<'a> EffectBindings<'a> {
             },
         }
     }
-    fn target(self, reference: EntityReference) -> &'a str {
+    pub(crate) fn target(self, reference: EntityReference) -> &'a str {
         match reference {
             EntityReference::Subject => self.subject,
             EntityReference::Source => self.source,
@@ -1040,7 +1042,7 @@ impl StatusRead<'_> {
                     .is_some_and(|state| state.active)
         }))
     }
-    fn value(
+    pub(crate) fn value(
         &self,
         entity_id: &str,
         attribute_id: &str,

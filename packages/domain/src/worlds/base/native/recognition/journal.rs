@@ -3,7 +3,8 @@
 
 use super::*;
 use crate::attention::AttentionRetentionPolicy;
-use crate::encoding::{array_index, json_record_len};
+pub(crate) use crate::encoding::js_property_cmp as property_order;
+use crate::encoding::json_record_len;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::{KnowledgeAccountChange, ReceivedError, TemporalState};
@@ -11,12 +12,21 @@ use crate::reception::ReceptionState;
 use crate::worlds::base_knowledge::ObserverIdentity;
 use std::mem::size_of;
 
-type Identities = IndexMap<String, ObserverIdentity>;
 fn invalid() -> ReceivedError {
     ReceivedError("Invalid selected recognition mutation or rollback.")
 }
 fn capacity() -> ReceivedError {
     ReceivedError("Recognition mutation exceeds native byte allowance.")
+}
+fn map_growth<T>(
+    records: Option<&IndexMap<String, T>>,
+    inserting: bool,
+) -> Result<usize, ReceivedError> {
+    if !inserting || records.is_some_and(|records| records.len() < records.capacity()) {
+        return Ok(0);
+    }
+    map_storage::<String, T>(records.map_or(1, |records| 2 * (records.len() + 1)))
+        .ok_or_else(capacity)
 }
 
 #[derive(Clone, Copy)]
@@ -181,13 +191,7 @@ impl RecognitionJournal {
             heap_sum([
                 2 * observer.len(),
                 2 * size_of::<RecognitionUndo>(),
-                map_storage::<String, Identities>(
-                    state
-                        .observer_identities
-                        .as_ref()
-                        .map_or(1, |root| 2 * (root.len() + 1)),
-                )
-                .ok_or_else(capacity)?,
+                map_growth(state.observer_identities.as_ref(), true)?,
             ])
             .ok_or_else(capacity)?,
         )?;
@@ -219,11 +223,10 @@ impl RecognitionJournal {
         self.reserve(
             heap_sum([
                 2 * observer.len(),
-                key.len(),
+                2 * key.len(),
                 value.heap_bytes().ok_or_else(capacity)?,
                 2 * size_of::<RecognitionUndo>(),
-                map_storage::<String, ObserverIdentity>(2 * (records.len() + 1))
-                    .ok_or_else(capacity)?,
+                map_growth(Some(records), true)?,
             ])
             .ok_or_else(capacity)?,
         )?;
@@ -265,7 +268,6 @@ impl RecognitionJournal {
             .ok_or_else(invalid)?;
         let prior = records.get(key);
         ensure_correspondence_ready(state, observer, prior, Some(&next))?;
-        let dropped = dropped_sources(prior, Some(&next));
         let before_bytes = prior
             .filter(|prior| prior.retained == Some(true) && !prior.authored)
             .map(json_record_len)
@@ -280,18 +282,19 @@ impl RecognitionJournal {
         self.reserve(
             heap_sum([
                 3 * observer.len(),
-                key.len(),
+                2 * key.len(),
                 2 * size_of::<RecognitionUndo>() + 2 * size_of::<RecognitionEffect>(),
                 next.individual_id.as_ref().map_or(0, String::len),
                 next.heap_bytes().ok_or_else(capacity)?,
                 prior
                     .map_or(Some(0), HeapBytes::heap_bytes)
                     .ok_or_else(capacity)?,
-                map_storage::<String, ObserverIdentity>(2 * (records.len() + 1))
-                    .ok_or_else(capacity)?,
+                map_growth(Some(records), prior.is_none())?,
+                source_scratch(prior)?,
             ])
             .ok_or_else(capacity)?,
         )?;
+        let dropped = dropped_sources(prior, Some(&next));
         if !temporal.adjust_retained_knowledge(
             observer,
             KnowledgeAccountChange {
@@ -356,12 +359,23 @@ impl RecognitionJournal {
             return Ok(());
         };
         ensure_correspondence_ready(state, observer, Some(prior), None)?;
-        let dropped = dropped_sources(Some(prior), None);
         let bytes = if prior.retained == Some(true) && !prior.authored {
             Some(json_record_len(prior).map_err(|_| invalid())? as u64)
         } else {
             None
         };
+        self.reserve(
+            heap_sum([
+                3 * observer.len(),
+                key.len(),
+                prior.heap_bytes().ok_or_else(capacity)?,
+                2 * size_of::<RecognitionUndo>() + 2 * size_of::<RecognitionEffect>(),
+                prior.individual_id.as_ref().map_or(0, String::len),
+                source_scratch(Some(prior))?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let dropped = dropped_sources(Some(prior), None);
         let releases: Vec<String> =
             recognition_support_sources(prior.name_evidence_ids.as_deref().unwrap_or(&[]))
                 .into_iter()
@@ -374,16 +388,6 @@ impl RecognitionJournal {
                     _ => None,
                 })
                 .collect();
-        self.reserve(
-            heap_sum([
-                3 * observer.len(),
-                key.len(),
-                prior.heap_bytes().ok_or_else(capacity)?,
-                2 * size_of::<RecognitionUndo>() + 2 * size_of::<RecognitionEffect>(),
-                prior.individual_id.as_ref().map_or(0, String::len),
-            ])
-            .ok_or_else(capacity)?,
-        )?;
         if bytes.is_some()
             && !temporal.adjust_retained_knowledge(
                 observer,
@@ -420,7 +424,7 @@ impl RecognitionJournal {
             knowledge_changed: false,
         });
         for id in releases {
-            temporal.release_support(observer, &id, now, retention)?;
+            temporal.release_support(observer, &id, now, retention, None)?;
         }
         Ok(())
     }
@@ -443,13 +447,7 @@ impl RecognitionJournal {
             heap_sum([
                 3 * observer.len(),
                 2 * size_of::<RecognitionUndo>() + 2 * size_of::<RecognitionEffect>(),
-                map_storage::<String, u64>(
-                    state
-                        .knowledge_revisions
-                        .as_ref()
-                        .map_or(1, |root| 2 * (root.len() + 1)),
-                )
-                .ok_or_else(capacity)?,
+                map_growth(state.knowledge_revisions.as_ref(), prior.is_none())?,
             ])
             .ok_or_else(capacity)?,
         )?;
@@ -489,6 +487,22 @@ fn support_keys(identity: &ObserverIdentity) -> impl Iterator<Item = &String> {
                 .flat_map(|knowledge| knowledge.samples.iter())
                 .flat_map(|sample| std::iter::once(&sample.source_key).chain(&sample.support)),
         )
+}
+fn source_scratch(identity: Option<&ObserverIdentity>) -> Result<usize, ReceivedError> {
+    identity
+        .into_iter()
+        .flat_map(support_keys)
+        .try_fold(0usize, |bytes, key| {
+            // Closed source-key parsing overlaps a copied key, its parsed source,
+            // deduplication storage and the resulting source ID. Bound those actual
+            // fields before parsing; no source JSON graph remains in the world.
+            let strings = key.len().checked_mul(4)?;
+            let layout = size_of::<RecognitionSupportSource>()
+                + 4 * size_of::<String>()
+                + 6 * size_of::<serde_json::Value>();
+            heap_sum([bytes, strings, layout])
+        })
+        .ok_or_else(capacity)
 }
 fn dropped_sources(
     before: Option<&ObserverIdentity>,
@@ -558,15 +572,4 @@ pub(crate) fn recognition_seed_deadline(
                 .fold(f64::NEG_INFINITY, f64::max)
                 + policy.seed_seconds * time_scale
         })
-}
-
-/// Object.values visits canonical array indices first, followed by the source
-/// dictionary's insertion order. Sorting indices never moves/duplicates bodies.
-pub(crate) fn property_order(a: &str, b: &str) -> std::cmp::Ordering {
-    match (array_index(a), array_index(b)) {
-        (Some(a), Some(b)) => a.cmp(&b),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        (None, None) => std::cmp::Ordering::Equal,
-    }
 }

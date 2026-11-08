@@ -423,7 +423,7 @@ pub struct CurrentReceivedGroup {
         skip_serializing_if = "Option::is_none"
     )]
     pub recordings: Option<Vec<TemporalCurrentGroupCheckpoint>>,
-    pub received: CurrentReceivedContent,
+    pub received: Arc<CurrentReceivedContent>,
     pub metadata: Vec<CurrentPartPartition>,
 }
 

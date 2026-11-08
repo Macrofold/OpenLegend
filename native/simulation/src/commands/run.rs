@@ -66,6 +66,7 @@ enum Phase {
     StatusReach,
     StatusApply,
     StatusFacts,
+    Speech,
     ImmediateResult,
     Tail,
     Done,
@@ -198,8 +199,8 @@ impl CommandCursor {
         )?;
         Ok(())
     }
-    fn refuse(&mut self, code: &str, message: &str) {
-        self.outcome = Some(outcome(false, code, message));
+    fn refuse(&mut self, message: &crate::worlds::InstalledActionMessage) {
+        self.outcome = Some(message.outcome(false));
         self.phase = Phase::Done;
     }
     fn question(&mut self, phase: Phase) -> Result<&mut GeometryQueries, ExecutionError> {
@@ -262,6 +263,8 @@ impl CommandCursor {
         core: &mut CoreMutation<'_>,
         answer: Option<CommandAnswer>,
     ) -> Result<Progress, ExecutionError> {
+        let installed = core.state.installed.clone();
+        let ordinary = installed.ordinary_actions.value();
         if let Some(answer) = answer {
             match answer {
                 CommandAnswer::Occurrence(completed) => {
@@ -312,10 +315,7 @@ impl CommandCursor {
                             return Err(ExecutionError::Invariant);
                         };
                         if sight.seen(target_id) != Some(true) {
-                            self.refuse(
-                                "out-of-reach",
-                                "The target must be permitted, visible and within reach.",
-                            );
+                            self.refuse(&ordinary.out_of_reach);
                         } else {
                             self.phase = Phase::StatusReach;
                         }
@@ -331,7 +331,7 @@ impl CommandCursor {
                             let Some(point) =
                                 answer.support.pop().ok_or(ExecutionError::Invariant)?
                             else {
-                                self.refuse("blocked", "Choose walkable ground.");
+                                self.refuse(&ordinary.blocked);
                                 return self.drive(core, None);
                             };
                             self.resolved = Some(point);
@@ -340,7 +340,7 @@ impl CommandCursor {
                         }
                         Phase::Standing => {
                             if !answer.standing.pop().ok_or(ExecutionError::Invariant)? {
-                                self.refuse("blocked", "Choose walkable ground.");
+                                self.refuse(&ordinary.blocked);
                             } else {
                                 self.phase = Phase::Route;
                             }
@@ -361,15 +361,12 @@ impl CommandCursor {
                                         failure: None,
                                     });
                                 }
-                                RoutePlan::InvalidEndpoint { .. } => self.refuse(
-                                    "unreachable",
-                                    "No supported route to a reachable stance was found.",
-                                ),
-                                RoutePlan::NoRoute { .. } => {
-                                    self.refuse("no-route", "No supported route was found.")
+                                RoutePlan::InvalidEndpoint { .. } => {
+                                    self.refuse(&ordinary.unreachable)
                                 }
+                                RoutePlan::NoRoute { .. } => self.refuse(&ordinary.no_route),
                                 RoutePlan::BudgetExceeded { .. } => {
-                                    self.refuse("budget-exceeded", "No supported route was found.")
+                                    self.refuse(&ordinary.budget_exceeded)
                                 }
                             }
                             if !matches!(self.phase, Phase::Done) {
@@ -379,10 +376,7 @@ impl CommandCursor {
                         }
                         Phase::StatusReach => {
                             if !answer.sight.pop().ok_or(ExecutionError::Invariant)? {
-                                self.refuse(
-                                    "out-of-reach",
-                                    "The target must be permitted, visible and within reach.",
-                                );
+                                self.refuse(&ordinary.out_of_reach);
                             } else {
                                 self.phase = Phase::StatusApply;
                             }
@@ -390,10 +384,7 @@ impl CommandCursor {
                         }
                         Phase::Probe => {
                             if !answer.walking.pop().ok_or(ExecutionError::Invariant)? {
-                                self.refuse(
-                                    "unreachable",
-                                    "No supported route to a reachable stance was found.",
-                                );
+                                self.refuse(&ordinary.unreachable);
                             } else {
                                 let action =
                                     self.action.as_mut().ok_or(ExecutionError::Invariant)?;
@@ -422,6 +413,15 @@ impl CommandCursor {
             let actor_id = self.command.envelope().actor_id.clone();
             match self.phase {
                 Phase::Start => {
+                    // At most the current result and its immediate personal
+                    // completion copy coexist here. Other owners fund their
+                    // own history/receipt before-images before cloning them.
+                    self.reserve(
+                        ordinary
+                            .maximum_message_bytes()
+                            .and_then(|n| n.checked_mul(2))
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
                     let meter = core
                         .journal
                         .meters
@@ -451,10 +451,7 @@ impl CommandCursor {
                                 self.phase = Phase::Done;
                                 continue;
                             }
-                            self.refuse(
-                                "idempotency-conflict",
-                                "This command ID was already used with another body.",
-                            );
+                            self.refuse(&ordinary.idempotency_conflict);
                             continue;
                         }
                     }
@@ -471,7 +468,7 @@ impl CommandCursor {
                                 .iter()
                                 .all(|n| n.is_finite())
                             {
-                                self.refuse("blocked", "Choose walkable ground.");
+                                self.refuse(&ordinary.blocked);
                                 continue;
                             }
                             let actor = core
@@ -490,10 +487,7 @@ impl CommandCursor {
                                     destination.point(),
                                 ) > 1.0
                             {
-                                self.refuse(
-                                    "unsupported-navigation",
-                                    "Only a short direct probe is supported without vision.",
-                                );
+                                self.refuse(&ordinary.unsupported_navigation);
                                 continue;
                             }
                             let point = destination.point();
@@ -518,10 +512,7 @@ impl CommandCursor {
                                 .as_ref()
                                 .is_some_and(|expected| current.is_none_or(|a| &a.id != expected))
                             {
-                                self.refuse(
-                                    "stale-action",
-                                    "That action has ended or been replaced.",
-                                );
+                                self.refuse(&ordinary.stale_action);
                                 continue;
                             }
                             self.phase = Phase::Interrupt;
@@ -530,11 +521,11 @@ impl CommandCursor {
                             operation: StatusOperation::Deactivate,
                             ..
                         } => self.phase = Phase::Deactivate,
+                        NativeCommand::Say { .. } => self.phase = Phase::Speech,
                         NativeCommand::StatusEffect {
                             operation: StatusOperation::Activate,
                             ..
-                        }
-                        | NativeCommand::Say { .. } => {
+                        } => {
                             return Err(ExecutionError::UnsupportedFamily);
                         }
                     }
@@ -636,10 +627,7 @@ impl CommandCursor {
                                     })
                         })
                     {
-                        self.refuse(
-                            "cannot-interrupt",
-                            "The current state must end before starting another activity.",
-                        );
+                        self.refuse(&ordinary.cannot_interrupt);
                         continue;
                     }
                     if let Some(native) = &self.options.native_movement {
@@ -674,10 +662,7 @@ impl CommandCursor {
                                     || native.binding.generation != Some(e.proposal_generation)
                             })
                         {
-                            self.refuse(
-                                "stale-native-movement",
-                                "The selected native movement is no longer current.",
-                            );
+                            self.refuse(&ordinary.stale_native_movement);
                             continue;
                         }
                         self.action
@@ -688,7 +673,26 @@ impl CommandCursor {
                     core.physical().settle_entity(&actor_id)?;
                     self.materialized = true;
                     if !self.options.native_controller {
-                        let view = self.view.take().ok_or(ExecutionError::Invariant)?;
+                        let mut view = self.view.take().ok_or(ExecutionError::Invariant)?;
+                        if self
+                            .action
+                            .as_ref()
+                            .is_some_and(|action| action.stage == "approaching")
+                        {
+                            self.reserve(
+                                crate::activity::approach_view_bytes(
+                                    &view,
+                                    &ordinary.approach_name,
+                                    &ordinary.approach_facts,
+                                )
+                                .ok_or(ExecutionError::Capacity)?,
+                            )?;
+                            crate::activity::prepare_approach_view(
+                                &mut view,
+                                &ordinary.approach_name,
+                                &ordinary.approach_facts,
+                            );
+                        }
                         let id = core
                             .journal
                             .activity
@@ -747,14 +751,11 @@ impl CommandCursor {
                         .and_then(|a| a.action.as_ref())
                         .is_some_and(|a| a.kind == "status-effect")
                     {
-                        self.refuse(
-                            "cannot-interrupt",
-                            if reason == "voluntary" {
-                                "This state does not allow voluntary interruption."
-                            } else {
-                                "The current state must end before starting another activity."
-                            },
-                        );
+                        self.refuse(if reason == "voluntary" {
+                            &ordinary.cannot_cancel
+                        } else {
+                            &ordinary.cannot_interrupt
+                        });
                         continue;
                     }
                     self.phase = if matches!(self.command, NativeCommand::Cancel { .. }) {
@@ -777,15 +778,12 @@ impl CommandCursor {
                         if !cancelling {
                             core.physical().release_work(&old)?;
                         }
-                        let result = outcome(
-                            false,
-                            "cancelled",
-                            if cancelling {
-                                "Stopped by choice; already committed effects remain."
-                            } else {
-                                "Replaced by newly chosen work; committed effects remain."
-                            },
-                        );
+                        let result = if cancelling {
+                            &ordinary.cancelled_by_choice
+                        } else {
+                            &ordinary.cancelled_replaced
+                        }
+                        .outcome(false);
                         if let Some(pending) = core
                             .journal
                             .activity
@@ -825,9 +823,31 @@ impl CommandCursor {
                             behavior: Some(false),
                         },
                     )?;
-                    let mut result = outcome(true, "accepted", "Action started.");
+                    let mut result = ordinary.accepted.outcome(true);
                     result.action_id = Some(action_id);
                     self.outcome = Some(result);
+                    if let Some(id) = &self.activity_id {
+                        if core
+                            .state
+                            .physical
+                            .entities
+                            .get(&actor_id)
+                            .and_then(|entity| entity.actor.as_ref())
+                            .and_then(|actor| actor.action.as_ref())
+                            .is_some_and(|action| action.stage == "approaching")
+                        {
+                            core.journal
+                                .activity
+                                .begin_approach(
+                                    &mut core.state.activity,
+                                    &actor_id,
+                                    id,
+                                    &ordinary.approach_name,
+                                    &ordinary.approach_facts,
+                                )
+                                .map_err(ExecutionError::Activity)?;
+                        }
+                    }
                     let native = core
                         .state
                         .physical
@@ -867,10 +887,16 @@ impl CommandCursor {
                         let NativeCommand::Move { destination, .. } = &self.command else {
                             return Err(ExecutionError::Invariant);
                         };
-                        let x = crate::encoding::json_record(&destination.x)
-                            .map_err(|_| ExecutionError::Invariant)?;
-                        let z = crate::encoding::json_record(&destination.z)
-                            .map_err(|_| ExecutionError::Invariant)?;
+                        let point = destination.point();
+                        let bytes = ordinary
+                            .departure_heap_bound(point)
+                            .ok_or(ExecutionError::Capacity)?;
+                        self._reservation.resize(
+                            self._reservation
+                                .bytes()
+                                .checked_add(bytes)
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
                         let text = Narration {
                             parts: vec![
                                 NarrationPart::Participant {
@@ -879,7 +905,11 @@ impl CommandCursor {
                                     article: None,
                                 },
                                 NarrationPart::Literal(" ".to_owned()),
-                                NarrationPart::Literal(format!("started moving to {x}, {z}.")),
+                                NarrationPart::Literal(
+                                    ordinary
+                                        .departure(point)
+                                        .map_err(|_| ExecutionError::Invariant)?,
+                                ),
                             ],
                         };
                         let mut data = IndexMap::new();
@@ -888,7 +918,7 @@ impl CommandCursor {
                             crate::reception::EventScalar::Text("move".to_owned()),
                         );
                         let event = core.stage_event(EventEmissionIntent {
-                            event_type: "action-started".to_owned(),
+                            event_type: ordinary.action_started_event.clone(),
                             text: EmissionText::Narration(text),
                             audience: AudienceSelection::Physical,
                             source_id: Some(actor_id),
@@ -924,11 +954,7 @@ impl CommandCursor {
                             behavior: Some(false),
                         },
                     )?;
-                    self.outcome = Some(outcome(
-                        true,
-                        "cancelled",
-                        "Stopped. Materials already used in work remain consumed.",
-                    ));
+                    self.outcome = Some(ordinary.stopped.outcome(true));
                     self.phase = Phase::Tail;
                 }
                 Phase::Deactivate => {
@@ -950,46 +976,28 @@ impl CommandCursor {
                         .iter()
                         .find(|d| &d.id == definition_id)
                     else {
-                        self.refuse(
-                            "invalid-effect",
-                            "Choose an available status effect and target.",
-                        );
+                        self.refuse(&ordinary.invalid_effect);
                         continue;
                     };
                     let Some(target) = core.state.physical.entities.get(target_id) else {
-                        self.refuse(
-                            "invalid-effect",
-                            "Choose an available status effect and target.",
-                        );
+                        self.refuse(&ordinary.invalid_effect);
                         continue;
                     };
                     let Some(actions) = &definition.actions else {
-                        self.refuse(
-                            "invalid-effect",
-                            "Choose an available status effect and target.",
-                        );
+                        self.refuse(&ordinary.invalid_effect);
                         continue;
                     };
                     if facing_heading.is_some() {
-                        self.refuse(
-                            "invalid-pose",
-                            "Choose a valid facing for an ordinary resting posture.",
-                        );
+                        self.refuse(&ordinary.invalid_facing);
                         continue;
                     }
                     if resting_place_id.is_some() || resting_bay.is_some() {
-                        self.refuse(
-                            "invalid-pose",
-                            "Choose an available resting place for this person.",
-                        );
+                        self.refuse(&ordinary.invalid_resting_place);
                         continue;
                     }
                     if &actor_id != target_id {
                         if !actions.allow_other {
-                            self.refuse(
-                                "out-of-reach",
-                                "The target must be permitted, visible and within reach.",
-                            );
+                            self.refuse(&ordinary.out_of_reach);
                             continue;
                         }
                         self.binding.serial = self
@@ -1040,10 +1048,7 @@ impl CommandCursor {
                     if crate::spatial::distance(from, to)
                         > core.state.installed.movement.interaction_radius()
                     {
-                        self.refuse(
-                            "out-of-reach",
-                            "The target must be permitted, visible and within reach.",
-                        );
+                        self.refuse(&ordinary.out_of_reach);
                         continue;
                     }
                     self.question(Phase::StatusReach)?
@@ -1069,7 +1074,7 @@ impl CommandCursor {
                         .and_then(|states| states.get(definition_id))
                         .is_some_and(|state| state.active);
                     if !active {
-                        self.refuse("not-active", "That status effect is not active.");
+                        self.refuse(&ordinary.not_active);
                         continue;
                     }
                     self.status_was_active = active;
@@ -1174,12 +1179,92 @@ impl CommandCursor {
                             )
                             .map_err(ExecutionError::Activity)?;
                     }
+                    let bytes = definition
+                        .label
+                        .len()
+                        .checked_add(ordinary.deactivated.len())
+                        .and_then(|n| n.checked_add(ordinary.status_outcome_code.len()))
+                        .and_then(|n| n.checked_add(4))
+                        .ok_or(ExecutionError::Capacity)?;
+                    self._reservation.resize(
+                        self._reservation
+                            .bytes()
+                            .checked_add(bytes.checked_mul(2).ok_or(ExecutionError::Capacity)?)
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
                     self.outcome = Some(outcome(
                         true,
-                        "status-effect",
-                        &format!("{}: deactivated.", definition.label),
+                        &ordinary.status_outcome_code,
+                        &ordinary.status_message(&definition.label, false),
                     ));
                     self.phase = Phase::ImmediateResult;
+                }
+                Phase::Speech => {
+                    // The selected family borrows only immutable law/command
+                    // data. Its complete allocation is admitted before making
+                    // the actual activity and original event in source order.
+                    let installed = core.state.installed.clone();
+                    let speech = installed.speech_action.value();
+                    let plan = match speech.prepare(
+                        &self.command,
+                        &core.state.physical.entities,
+                        installed.acoustics.value(),
+                    ) {
+                        Ok(plan) => plan,
+                        Err(problem) => {
+                            let bytes = problem
+                                .code
+                                .len()
+                                .checked_add(problem.message.len())
+                                .ok_or(ExecutionError::Capacity)?;
+                            self._reservation.resize(
+                                self._reservation
+                                    .bytes()
+                                    .checked_add(bytes)
+                                    .ok_or(ExecutionError::Capacity)?,
+                            )?;
+                            self.outcome = Some(outcome(false, &problem.code, &problem.message));
+                            self.phase = Phase::Done;
+                            continue;
+                        }
+                    };
+                    let bytes = plan
+                        .heap_bound()
+                        .and_then(|n| n.checked_add(speech.success.code.len()))
+                        .and_then(|n| n.checked_add(speech.success.message.len()))
+                        .and_then(|n| n.checked_add(128))
+                        .ok_or(ExecutionError::Capacity)?;
+                    self._reservation.resize(
+                        self._reservation
+                            .bytes()
+                            .checked_add(bytes)
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    core.physical().settle_entity(&actor_id)?;
+                    self.materialized = true;
+                    if !self.options.native_controller {
+                        let view = self.view.take().ok_or(ExecutionError::Invariant)?;
+                        let id = core
+                            .journal
+                            .activity
+                            .begin(
+                                &mut core.state.activity,
+                                &core.state.physical.entities,
+                                &self.command,
+                                &self.command.envelope().id,
+                                view,
+                                core.state.physical.header.sim_time,
+                                None,
+                            )
+                            .map_err(ExecutionError::Activity)?;
+                        self.activity_id = Some(id);
+                    }
+                    let event = core.stage_event(plan.emission())?;
+                    self.event = Some(event.id.clone());
+                    self.after_event = Phase::ImmediateResult;
+                    self.outcome =
+                        Some(outcome(true, &speech.success.code, &speech.success.message));
+                    return Ok(Progress::Occurrence(event));
                 }
                 Phase::ImmediateResult => {
                     if self.activity_id.is_some() {
@@ -1236,24 +1321,17 @@ fn actor_problem(
     command: &NativeCommand,
     native: bool,
 ) -> Result<Option<Outcome>, ExecutionError> {
+    let ordinary = core.state.installed.ordinary_actions.value();
     let Some(entity) = core
         .state
         .physical
         .entities
         .get(&command.envelope().actor_id)
     else {
-        return Ok(Some(outcome(
-            false,
-            "unknown-actor",
-            "That actor does not exist.",
-        )));
+        return Ok(Some(ordinary.unknown_actor.outcome(false)));
     };
     let Some(actor) = &entity.actor else {
-        return Ok(Some(outcome(
-            false,
-            "unknown-actor",
-            "That actor does not exist.",
-        )));
+        return Ok(Some(ordinary.unknown_actor.outcome(false)));
     };
     if command.envelope().cooperation.is_some()
         || command.envelope().combat_help_id.is_some()
@@ -1263,11 +1341,7 @@ fn actor_problem(
         return Err(ExecutionError::UnsupportedFamily);
     }
     if !entity.actively_participates() {
-        return Ok(Some(outcome(
-            false,
-            "inactive",
-            "Return to the world before acting.",
-        )));
+        return Ok(Some(ordinary.inactive.outcome(false)));
     }
     let release_self = matches!(command,NativeCommand::StatusEffect{target_id,operation:StatusOperation::Deactivate,..}if target_id==&entity.id);
     if core
@@ -1278,11 +1352,16 @@ fn actor_problem(
         && !release_self
         && !matches!(command, NativeCommand::Cancel { .. })
     {
-        return Ok(Some(outcome(
-            false,
-            "capability-restricted",
-            "This actor cannot act in its current state.",
-        )));
+        return Ok(Some(ordinary.actions_restricted.outcome(false)));
+    }
+    if matches!(command, NativeCommand::Say { .. })
+        && core
+            .state
+            .installed
+            .capabilities
+            .capability_blocked(Some(entity), "speech")?
+    {
+        return Ok(Some(ordinary.speech_restricted.outcome(false)));
     }
     if matches!(command, NativeCommand::Move { .. })
         && core
@@ -1291,17 +1370,13 @@ fn actor_problem(
             .capabilities
             .capability_blocked(Some(entity), "locomotion")?
     {
-        return Ok(Some(outcome(
-            false,
-            "capability-restricted",
-            "Movement is unavailable.",
-        )));
+        return Ok(Some(ordinary.movement_restricted.outcome(false)));
     }
     if core.state.physical.header.paused && !matches!(command, NativeCommand::Cancel { .. }) {
-        return Ok(Some(outcome(false, "paused", "The world is paused.")));
+        return Ok(Some(ordinary.paused.outcome(false)));
     }
     if !actor.alive || actor.incapacitated {
-        return Ok(Some(outcome(false, "not-alive", "This actor cannot act.")));
+        return Ok(Some(ordinary.not_alive.outcome(false)));
     }
     if entity.supported_position().is_none()
         && !matches!(
@@ -1309,28 +1384,16 @@ fn actor_problem(
             NativeCommand::Say { .. } | NativeCommand::Cancel { .. }
         )
     {
-        return Ok(Some(outcome(
-            false,
-            "unsupported-airborne-action",
-            "This native action requires a supported ground stance.",
-        )));
+        return Ok(Some(ordinary.unsupported_airborne.outcome(false)));
     }
     if native && (actor.controller != "native" || entity.animal.is_none()) {
-        return Ok(Some(outcome(
-            false,
-            "unsupported-controller",
-            "This entity has no installed native controller.",
-        )));
+        return Ok(Some(ordinary.unsupported_controller.outcome(false)));
     }
     if !matches!(command, NativeCommand::Cancel { .. })
         && entity.has_memory()
         && core.state.activity.header.admitted >= core.state.activity.limits.retained_records
     {
-        return Ok(Some(outcome(
-            false,
-            "experience-capacity",
-            "The action-record allowance is full. Existing work and history are preserved; new recorded actions need more storage allowance.",
-        )));
+        return Ok(Some(ordinary.experience_capacity.outcome(false)));
     }
     Ok(None)
 }

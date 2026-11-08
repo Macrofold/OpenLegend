@@ -118,3 +118,63 @@ impl HeapBytes for values::PersonalAccountFragment {
         ])
     }
 }
+
+heap_record!(TemporalCaptureFacet {
+    value,
+    preferred,
+    reception,
+    track,
+    support,
+    detail_support,
+    pose_frame,
+    original,
+    received_from
+});
+heap_record!(TemporalCaptureInput {
+    coverage_gap,
+    ended_fields,
+    availability,
+    receiver_frame,
+    subject,
+    context_subjects,
+    subject_identity,
+    source_ids,
+    origin,
+    facets
+});
+impl HeapBytes for TemporalReception {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Body { pose } => pose.heap_bytes(),
+            Self::Location { frame } => frame.heap_bytes(),
+        }
+    }
+}
+heap_record!(TemporalDetailSupport { proof });
+
+heap_record!(TemporalFacetReference {
+    value_ref,
+    track,
+    original,
+    received_from,
+    support,
+    detail_support,
+    pose_frame,
+    reception
+});
+heap_record!(TemporalReceipt {
+    header,
+    locator,
+    id,
+    receiver_frame,
+    origin,
+    facets
+});
+heap_record!(CurrentMemberPart { kind });
+heap_record!(TemporalCurrentContent { kind, value });
+heap_record!(TemporalCurrentGroupCheckpoint {
+    epoch,
+    members,
+    content,
+    last_source
+});

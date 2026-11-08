@@ -16,6 +16,16 @@ use std::io;
 pub fn js_string_cmp(left: &str, right: &str) -> std::cmp::Ordering {
     left.encode_utf16().cmp(right.encode_utf16())
 }
+/// Object.keys orders array-index properties numerically and keeps every other
+/// key in insertion order. Use this comparator only with a stable sort.
+pub(crate) fn js_property_cmp(left: &str, right: &str) -> std::cmp::Ordering {
+    match (array_index(left), array_index(right)) {
+        (Some(a), Some(b)) => a.cmp(&b),
+        (Some(_), None) => std::cmp::Ordering::Less,
+        (None, Some(_)) => std::cmp::Ordering::Greater,
+        (None, None) => std::cmp::Ordering::Equal,
+    }
+}
 
 /// ECMAScript whitespace differs from Rust's Unicode White_Space property.
 /// Validation reads the trimmed slice; it never rewrites authored content.

@@ -27,6 +27,10 @@ pub fn received_track_key(
     crate::encoding::json_record(&(exposure, &channel.id, channel.version, &channel.digest))
         .map_err(|_| ReceivedError("Received track identity encoding failed."))
 }
+pub fn current_field_identity(kind: &str, pin: &DefinitionPin) -> Result<String, ReceivedError> {
+    crate::encoding::json_record(&(kind, &pin.id, pin.version, &pin.digest))
+        .map_err(|_| ReceivedError("Current field identity encoding failed."))
+}
 
 pub fn current_field_parts(field: &CurrentStoredField) -> &'static [CurrentReceivedPart] {
     if field.value.kind == "body" {
@@ -141,6 +145,56 @@ pub fn current_facet_exposure(
         episode_id: input.grant.exposure.clone(),
         track: received_track_key(&input.grant.exposure, &input.grant.channel)?,
     })
+}
+
+/// One candidate-bearing member represents each actual received channel. A
+/// location/detail field never creates an extra attention candidate by itself.
+pub(crate) fn received_attention_sources<'a>(
+    owner: &'a PerceptionEvidenceOwner,
+    source_id: &str,
+) -> Result<Vec<CurrentNativeFacet<'a>>, ReceivedError> {
+    let Some(contact) = owner.current.get(source_id) else {
+        return Ok(Vec::new());
+    };
+    let mut selected: Vec<(&DefinitionPin, &str, usize)> = Vec::new();
+    for group in &contact.content.groups {
+        let channel = &group.received.grant.channel;
+        for (rank, kind) in ["body", "contact", "detected"].into_iter().enumerate() {
+            if !group.received.fields.contains_key(kind) {
+                continue;
+            }
+            if let Some(held) = selected.iter_mut().find(|(pin, _, _)| *pin == channel) {
+                if rank < held.2 {
+                    *held = (channel, kind, rank);
+                }
+            } else {
+                selected.push((channel, kind, rank));
+            }
+        }
+    }
+    let mut result = Vec::with_capacity(selected.len());
+    for (channel, kind, _) in selected {
+        if let Some(source) = current_contact_native_facet(
+            contact,
+            kind,
+            CurrentFacetSelector {
+                channel: Some(channel),
+                ..Default::default()
+            },
+        )? {
+            result.push(source);
+        }
+    }
+    Ok(result)
+}
+pub(crate) fn received_attention_source<'a>(
+    owner: &'a PerceptionEvidenceOwner,
+    source_id: &str,
+    lease_id: &str,
+) -> Result<Option<CurrentNativeFacet<'a>>, ReceivedError> {
+    Ok(received_attention_sources(owner, source_id)?
+        .into_iter()
+        .find(|source| source.field.id == lease_id))
 }
 
 #[derive(Clone, Copy)]

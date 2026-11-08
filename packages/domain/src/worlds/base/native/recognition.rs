@@ -13,6 +13,9 @@ mod voice;
 pub(crate) use voice::{
     VoiceReception, VoiceReceptionParts, VoiceReceptionPreparation, individual_familiarity,
 };
+#[path = "recognition/validation.rs"]
+mod validation;
+pub(crate) use validation::validate_selected_identities;
 
 /// The actual selected world's descriptor is installed with its source pin.
 /// Its clocks are policy fields; the engine supplies the world's time scale.
@@ -77,6 +80,22 @@ pub fn valid_received_features(features: &IndexMap<String, RecognitionInterval>)
             && interval.max <= 1000.0
             && interval.min <= interval.max
     })
+}
+fn usable(
+    features: &IndexMap<String, RecognitionInterval>,
+) -> impl Iterator<Item = (&String, &RecognitionInterval)> {
+    features
+        .iter()
+        .filter(|(_, interval)| interval.max - interval.min <= 400.0)
+}
+fn resolution(features: &IndexMap<String, RecognitionInterval>) -> f64 {
+    let (sum, count) = usable(features).fold((0.0, 0usize), |(sum, count), (_, interval)| {
+        (
+            sum + 1.0 - (interval.max - interval.min) / 1000.0,
+            count + 1,
+        )
+    });
+    if count == 0 { 0.0 } else { sum / count as f64 }
 }
 
 /// Exact source-key grammar from the selected recognition family. Arbitrary
@@ -356,8 +375,7 @@ pub struct RecognitionSample {
     pub key: String,
     pub source_key: String,
     pub at: f64,
-    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
-    pub order: u64,
+    pub order: f64,
     pub encounter: String,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub features: IndexMap<String, RecognitionInterval>,
@@ -374,8 +392,7 @@ pub struct AuthoredExemplar {
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub features: IndexMap<String, RecognitionInterval>,
     pub quality: f64,
-    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
-    pub ordinal: u64,
+    pub ordinal: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -384,8 +401,7 @@ pub struct AuthoredRecognition {
     pub source: String,
     pub installed_at: f64,
     pub perception: f64,
-    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
-    pub order: u64,
+    pub order: f64,
     pub baseline: RecognitionBaseline,
     pub exemplars: Vec<AuthoredExemplar>,
 }

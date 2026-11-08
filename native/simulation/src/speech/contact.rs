@@ -169,7 +169,19 @@ impl SpeechContactBatch {
             .try_reserve_exact(ids.len())
             .map_err(|_| SensorError::Capacity)?;
         for id in ids {
-            let targets = [Some(source_id), target_id];
+            let understands = physical
+                .entities
+                .get(id)
+                .and_then(|observer| observer.actor.as_ref())
+                .and_then(|actor| actor.capabilities.as_ref())
+                .is_some_and(|capabilities| capabilities.language);
+            let targets = [
+                (id != source_id).then_some(source_id),
+                (id != source_id && understands)
+                    .then_some(target_id)
+                    .flatten()
+                    .filter(|target| *target != id),
+            ];
             let targets: Vec<_> = targets.into_iter().flatten().collect();
             let batch = SightBatch::prepare(physical, installed, id, &targets, binding, budget)?;
             let first = queries.sight.len();
