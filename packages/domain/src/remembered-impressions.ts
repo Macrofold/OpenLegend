@@ -87,21 +87,41 @@ export function encodedExperienceBytes(entry: ExperienceEntry): number {
 /** Mandatory native outcomes cannot overshoot their hard envelope. Retire
  * replaceable aftermath early enough to leave the world's maintenance share
  * available for the next admitted batch; active owners remain protected. */
-export function experienceMaintenanceTarget(world: WorldState, pool: ExperienceAccountClass) {
+export function experienceMaintenanceTarget(
+  world: WorldState,
+  pool: ExperienceAccountClass,
+  boundary: 'start' | 'stop',
+) {
   const policy = selectedTemporalPolicy(world),
     hard = policy[pool];
   return pool === 'required'
     ? {
-        maxBytes: Math.floor(hard.maxBytes * (1 - policy.maintenanceHeadroom)),
-        maxRecords: Math.floor(hard.maxRecords * (1 - policy.maintenanceHeadroom)),
+        maxBytes: Math.floor(
+          hard.maxBytes *
+            (boundary === 'start' ? policy.requiredPressureStart : 1 - policy.maintenanceHeadroom),
+        ),
+        maxRecords: Math.floor(
+          hard.maxRecords *
+            (boundary === 'start' ? policy.requiredPressureStart : 1 - policy.maintenanceHeadroom),
+        ),
       }
     : hard;
+}
+export function experienceMaintenancePressure(
+  world: WorldState,
+  pool: ExperienceAccountClass,
+  usage: { bytes: number; count: number },
+  boundary: 'start' | 'stop',
+): boolean {
+  const target = experienceMaintenanceTarget(world, pool, boundary);
+  return pool === 'required' && boundary === 'start'
+    ? usage.bytes >= target.maxBytes || usage.count >= target.maxRecords
+    : usage.bytes > target.maxBytes || usage.count > target.maxRecords;
 }
 export function markRequiredExperienceMaintenance(world: WorldState, actorId: string): void {
   const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
   if (!accounts) return;
-  const target = experienceMaintenanceTarget(world, 'required');
-  if (accounts.required.bytes > target.maxBytes || accounts.required.count > target.maxRecords)
+  if (experienceMaintenancePressure(world, 'required', accounts.required, 'start'))
     accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, world.simTime);
 }
 

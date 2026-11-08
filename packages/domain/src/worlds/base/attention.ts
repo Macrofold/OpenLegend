@@ -69,6 +69,7 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
   },
   retention: {
     maintenanceHeadroom: 0.25,
+    requiredPressureStart: 0.875,
     speechMaintenanceHeadroom: 0.25,
     derivedLowWater: 0.8,
     recent: {

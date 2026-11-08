@@ -95,6 +95,8 @@ export interface RecordingInput {
 export interface AttentionRetentionPolicy {
   /** Bounded temporary overshoot while optional maintenance runs. */
   maintenanceHeadroom: number;
+  /** Required-account pressure starts separately from the retirement low water. */
+  requiredPressureStart: number;
   speechMaintenanceHeadroom: number;
   derivedLowWater: number;
   recent: {

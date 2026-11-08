@@ -2,7 +2,7 @@ import { sqlRowBatches } from './sql-rows.js';
 import {
   accountClass,
   ensureExperienceAccounting,
-  experienceMaintenanceTarget,
+  experienceMaintenancePressure,
   updateWorld,
   appendedRecordCount,
   type WorldState,
@@ -618,12 +618,9 @@ export function applySourceVersionAccounting(
       for (const [actorId, pools] of pressure) {
         const accounts = draft.experience!.temporal!.actors[actorId]!.accounts!;
         if (
-          [...pools].some((pool) => {
-            const target = experienceMaintenanceTarget(draft, pool);
-            return (
-              accounts[pool].bytes > target.maxBytes || accounts[pool].count > target.maxRecords
-            );
-          })
+          [...pools].some((pool) =>
+            experienceMaintenancePressure(draft, pool, accounts[pool], 'start'),
+          )
         )
           accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
       }

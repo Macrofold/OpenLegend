@@ -1,5 +1,5 @@
 import {
-  experienceMaintenanceTarget,
+  experienceMaintenancePressure,
   temporalPageMetadata,
   installTemporalChargeDirectories,
   selectedTemporalPolicy,
@@ -391,10 +391,9 @@ export class RetentionMetadata {
         changedAccounts.has(id) ||
         !accounts ||
         (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime) ||
-        (['optional', 'required', 'speech'] as const).some((key) => {
-          const target = experienceMaintenanceTarget(selection.world, key);
-          return accounts[key].bytes > target.maxBytes || accounts[key].count > target.maxRecords;
-        })
+        (['optional', 'required', 'speech'] as const).some((key) =>
+          experienceMaintenancePressure(selection.world, key, accounts[key], 'start'),
+        )
       );
     });
     const accountNextDue = new Map<string, number | null>(),
@@ -427,14 +426,18 @@ export class RetentionMetadata {
           at: selection.world.simTime,
           due:
             !accounts || (accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime),
-          pressured: (['optional', 'required', 'speech'] as const).filter((pool) => {
-            const target = experienceMaintenanceTarget(selection.world, pool);
-            return (
+          pressured: (['optional', 'required', 'speech'] as const).filter(
+            (pool) =>
               !accounts ||
-              accounts[pool].bytes > target.maxBytes ||
-              accounts[pool].count > target.maxRecords
-            );
-          }),
+              experienceMaintenancePressure(
+                selection.world,
+                pool,
+                accounts[pool],
+                accounts.nextDue !== null && accounts.nextDue <= selection.world.simTime
+                  ? 'stop'
+                  : 'start',
+              ),
+          ),
           overridden: [...(overridden.get(actorId) ?? [])],
           changed: [...(changed.get(actorId) ?? [])],
         };

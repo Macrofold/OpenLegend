@@ -6,6 +6,7 @@ import {
   ensureExperienceAccounting,
   experienceRetentionDue,
   experienceMaintenanceTarget,
+  experienceMaintenancePressure,
   markRequiredExperienceMaintenance,
   createRememberedImpression,
   weakenImpression,
@@ -135,10 +136,9 @@ export async function prepareAccountRetention(
     }
     if (
       (accounts.nextDue === null || accounts.nextDue > now) &&
-      (['optional', 'required', 'speech'] as const).every((key) => {
-        const target = experienceMaintenanceTarget(world, key);
-        return accounts![key].bytes <= target.maxBytes && accounts![key].count <= target.maxRecords;
-      })
+      (['optional', 'required', 'speech'] as const).every(
+        (key) => !experienceMaintenancePressure(world, key, accounts![key], 'start'),
+      )
     )
       return;
     const metadata = complete
@@ -222,7 +222,7 @@ export async function prepareAccountRetention(
     let moreCandidates = false,
       selectedBytes = 0;
     for (const candidate of ordered) {
-      const budget = experienceMaintenanceTarget(world, candidate.category),
+      const budget = experienceMaintenanceTarget(world, candidate.category, 'stop'),
         pressure =
           projected[candidate.category].bytes > budget.maxBytes ||
           projected[candidate.category].count > budget.maxRecords;
@@ -256,8 +256,8 @@ export async function prepareAccountRetention(
       ((accounts.nextDue !== null && accounts.nextDue <= now) ||
         (['optional', 'required', 'speech'] as const).some(
           (pool) =>
-            projected[pool].bytes > experienceMaintenanceTarget(world, pool).maxBytes ||
-            projected[pool].count > experienceMaintenanceTarget(world, pool).maxRecords,
+            projected[pool].bytes > experienceMaintenanceTarget(world, pool, 'stop').maxBytes ||
+            projected[pool].count > experienceMaintenanceTarget(world, pool, 'stop').maxRecords,
         ))
     )
       moreCandidates = true;
