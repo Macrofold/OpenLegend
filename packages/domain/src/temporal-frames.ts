@@ -78,7 +78,7 @@ export function materializeReceivedEntry(
   const facets = members
     ? receipt.facets.filter((facet) => members.has(facet.memberIndex))
     : receipt.facets;
-  return facets.length || entry.kind === 'boundary'
+  return facets.length || entry.kind === 'boundary' || receipt.change === 'receiver-frame'
     ? materializeReceivedReceipt(batch, entry, members)
     : undefined;
 }
@@ -279,7 +279,8 @@ export function selectTemporalPageEntries(
       const members = selected.get(key);
       if (!members) return [entry];
       const facets = entry.receipt.facets.filter((facet) => members.has(facet.memberIndex));
-      if (!facets.length && entry.kind !== 'boundary') return [];
+      if (!facets.length && entry.kind !== 'boundary' && entry.receipt.change !== 'receiver-frame')
+        return [];
       const publicReceipt = materializeReceivedReceipt(batch, entry, members),
         receipt = compactReceivedReceipt(batch, publicReceipt);
       return [

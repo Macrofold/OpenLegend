@@ -318,7 +318,10 @@ function validateReceipt(
         receipt.coverageGap.through > receipt.at)) ||
     !Array.isArray(receipt.facets) ||
     (!receipt.facets.length &&
-      !['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(receipt.change)) ||
+      !['loss', 'unchecked', 'attention-exit', 'recording-gap', 'receiver-frame'].includes(
+        receipt.change,
+      )) ||
+    (receipt.change === 'receiver-frame' && !validObservationFrame(receipt.receiverFrame)) ||
     ![
       'baseline',
       'change',

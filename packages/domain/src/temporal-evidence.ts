@@ -1278,7 +1278,9 @@ export function appendTemporalReceipt(
 ): TemporalReceiptLocator | undefined {
   if (
     !input.facets.length &&
-    !['loss', 'unchecked', 'attention-exit', 'recording-gap'].includes(input.change)
+    !['loss', 'unchecked', 'attention-exit', 'recording-gap', 'receiver-frame'].includes(
+      input.change,
+    )
   )
     return;
   return withTemporalReceivedTransition(world, actorId, () => {
@@ -1481,6 +1483,10 @@ export function appendTemporalReceipt(
       ...target,
       receipt: compactReceivedReceipt(prepared.batch, receipt),
     };
+    if (receipt.change === 'receiver-frame') {
+      countDomainWork('receivedReceiverFrameHeaders');
+      countDomainWork('receivedReceiverFrameHeaderBytes', jsonByteLength(retained.receipt));
+    }
     (prepared.batch.entries as ReceivedEntry[]).push(retained);
     if (terminal) {
       let subjectTerminals = prepared.terminals.get(input.subject);
@@ -2422,7 +2428,8 @@ export function selectCapturedTemporalHistory(
       result.entries.push({ receipt: received, values: [] });
       bytes += size;
       work++;
-      result.incomplete ||= received.change !== 'occurrence';
+      result.incomplete ||=
+        received.change !== 'occurrence' && received.change !== 'receiver-frame';
       continue;
     }
     const facets: TemporalFacetReference[] = [],
