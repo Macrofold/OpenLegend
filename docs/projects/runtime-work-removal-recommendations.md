@@ -1,8 +1,8 @@
 # Recommended removal of routine simulation work
 
-| Status      | Current progress                                                                             | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------- | ------------ |
-| In progress | R1–R9 are approved; coherent implementation and isolated qualification are underway in BK29. | 2026-11-07   |
+| Status      | Current progress                                                                                                   | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | R1–R9 implementation and experiments are complete; normal clock passes but substantial CPU headroom remains unmet. | 2026-11-08   |
 
 ## 1. Recommendation and evidence boundary
 
