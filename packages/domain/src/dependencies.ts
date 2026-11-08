@@ -53,7 +53,7 @@ export type SemanticChange =
   | {
       kind: 'state';
       entityId: string;
-      /** A numeric owner may prove its changed fields have no outward sensory
+      /** A mutation owner may prove its changed fields have no outward sensory
        * projection. Other consumers still receive the actual semantic change. */
       outwardChange?: boolean;
       field:
@@ -79,6 +79,7 @@ const pending = new WeakMap<
     changes: Map<string, SemanticChange>;
     conservative: boolean;
     states: Map<StateField, number>;
+    outwardBehavior: number;
     stateSequence: number;
     stateAt: Map<string, number>;
   }
@@ -88,6 +89,12 @@ type StateField = Extract<SemanticChange, { kind: 'state' }>['field'];
  * This rebuildable token is not a persisted revision or permission to reuse across commands. */
 export function stateChangeRevision(world: WorldState, field: StateField): number {
   return pending.get(world)?.states.get(field) ?? 0;
+}
+/** Private controller preparation still changes mechanical/status inputs, but
+ * cannot invalidate another body's unchanged sensory danger assessment.
+ * docs/projects/bookkeeping-simplification-tech-design.md#bk29-e--remove-generic-animal-announcements-and-private-invalidation */
+export function outwardBehaviorRevision(world: WorldState): number {
+  return pending.get(world)?.outwardBehavior ?? 0;
 }
 /** A cursor covers this exact editable phase, including repeated writes to an already
  * coalesced entity/field. It certifies recorded state owners only, never direct writes,
@@ -216,12 +223,15 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
         changes: new Map(),
         conservative: false,
         states: new Map(),
+        outwardBehavior: 0,
         stateSequence: 0,
         stateAt: new Map(),
       }),
     );
   if (change.kind === 'state')
     set.states.set(change.field, (set.states.get(change.field) ?? 0) + 1);
+  if (change.kind === 'state' && change.field === 'behavior' && change.outwardChange !== false)
+    set.outwardBehavior++;
   const key =
     change.kind === 'spatial'
       ? `spatial:${change.entityId}`
@@ -260,6 +270,7 @@ export function inheritSemanticChanges(world: WorldState, base: WorldState): voi
       changes: new Map(recorded.changes),
       conservative: recorded.conservative,
       states: new Map(recorded.states),
+      outwardBehavior: recorded.outwardBehavior,
       stateSequence: recorded.stateSequence,
       stateAt: new Map(recorded.stateAt),
     });

@@ -27,6 +27,7 @@ import {
   nativeDangerSeparation,
   nativeRouteDangerSeparation,
   reconcileNativeDangers,
+  invalidateNativeDangerAssessment,
   type NativeDangerFrame,
 } from './native-response-danger.js';
 import {
@@ -244,6 +245,7 @@ export function acquireNativeResponseEvent(
         : {}),
     };
   }
+  invalidateNativeDangerAssessment(world, animal.id);
   changed(world, animal);
 }
 

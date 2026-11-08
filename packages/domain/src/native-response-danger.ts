@@ -14,7 +14,11 @@ import { activelyParticipates } from './participation-state.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { chargeWork } from './work-budget.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { sensoryInputRevision, stateChangeRevision } from './dependencies.js';
+import {
+  sensoryInputRevision,
+  stateChangeRevision,
+  outwardBehaviorRevision,
+} from './dependencies.js';
 import { isDraft } from 'immer';
 import {
   nativeResponseProfile,
@@ -217,6 +221,11 @@ const dangerAssessments = new WeakMap<
     }
   >
 >();
+/** An actual received impact can add another danger in this same physical cut;
+ * private planning changes do not invalidate unrelated observers' frames. */
+export function invalidateNativeDangerAssessment(world: WorldState, observerId: string): void {
+  dangerAssessments.get(world)?.delete(observerId);
+}
 export function reconcileNativeDangers(
   world: WorldState,
   observer: Entity,
@@ -229,7 +238,7 @@ export function reconcileNativeDangers(
       stateChangeRevision(world, 'body') +
       stateChangeRevision(world, 'contribution') +
       stateChangeRevision(world, 'participation') +
-      stateChangeRevision(world, 'behavior'),
+      outwardBehaviorRevision(world),
     manifest = world.moduleManifest.revision,
     geometry = world.assemblyGeometryRevision ?? 0,
     mapRevision = world.map.spatial.revision,
