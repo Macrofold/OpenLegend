@@ -8,6 +8,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "native:build": "node scripts/native-build.mjs",
+    "native:check-interface": "node scripts/native-build.mjs --check-interface",
     "dev": "pnpm config:generate && tsx watch --env-file-if-exists=.env apps/server/src/main.ts",
     "start": "pnpm config:generate && node --import tsx --env-file-if-exists=.env apps/server/src/main.ts --production",
     "build": "pnpm config:generate && tsc --noEmit -p tsconfig.build.json && vite build --config apps/client/vite.config.ts && pnpm assets:check --build",
@@ -33,16 +35,17 @@
     "tsx": "4.23.13"
   },
   "devDependencies": {
+    "@napi-rs/cli": "3.10.12",
     "@open-legend/assets": "workspace:*",
+    "@open-legend/network": "workspace:*",
     "@playwright/test": "1.58.2",
     "@types/node": "22.20.4",
+    "esbuild": "0.28.2",
     "prettier": "3.6.2",
     "typescript": "7.0.2",
     "vite": "8.3.0",
     "vitest": "5.0.1",
-    "yaml": "2.8.1",
-    "@open-legend/network": "workspace:*",
-    "esbuild": "0.28.2"
+    "yaml": "2.8.1"
   },
   "packageManager": "pnpm@10.33.0"
 }

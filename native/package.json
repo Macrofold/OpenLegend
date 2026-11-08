@@ -1,0 +1,22 @@
+{
+  "name": "@open-legend/native-simulation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "main": "./index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.mjs"
+    }
+  },
+  "napi": {
+    "binaryName": "openlegend-native",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-unknown-linux-gnu"
+    ]
+  }
+}

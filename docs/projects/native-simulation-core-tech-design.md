@@ -1,14 +1,16 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                              | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The staged design and experiment gates are specified; no native-core implementation or qualification has run. | 2026-11-07   |
+| Status      | Current progress                                                                                                 | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Native ownership and immutable writer foundations are in progress; complete pipeline qualification remains open. | 2026-11-07   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 
 ## 1. Evidence and decision basis
 
 Source inspected for this design: `244a487d0f8a55a631e7244f784edef310c0c744`, `Macrofold/OpenLegend`, `codex/stealth-runtime-01-evidence`. The main thread's BK work can advance independently; implementation must pin its actual integrated comparison base and reconcile that work before making changes.
+
+The authorized NSC01–NSC03 preparation uses the refreshed stealth-runtime tip `02a0588d8d3fed255957642ef9a2043c836f68ca`. Its [source coverage inventory](../maintainers/native-simulation-core-coverage.md) distinguishes inspected fields/callers from pending native conversion and acceptance. The [current delivery record](../maintainers/native-simulation-core.md#current-progress) owns the unavailable managed AWS comparison prerequisite; this is not an NSC03 reject or inconclusive measurement.
 
 The [BK28 report](../verification/performance/bookkeeping/2026/2026-11-07-bk28-implementation.md#exact-adopted-source-qualification) measures **`d435c054...`, not the inspected head**. Its clean six-minute standard opening advances 99.348% of offered normal time with 96.85% main-thread CPU and 111.96% whole Node process CPU, in units of one logical execution thread. Command p95/p99 are 208.8/312.2 ms; maximum 689.6 ms. The separate instrumented run is slower and differs in actual outcomes. Its 32.18% exclusive draft/immutable/record utility samples and 4.18% GC identify representation work; they are not additive savings against overlapping encounter/attention/command timings. Account-aging reader occupation is a separate latency source. Models are disabled; this CPU is not LLM inference. Earlier one-second latency reports and newer parent-thread results retain their own source/workload, rather than being combined into one baseline.
 

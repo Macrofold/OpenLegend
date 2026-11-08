@@ -1,0 +1,1410 @@
+//! Canonical physical records for the scoped native conversion.
+//!
+//! Installation is separate from deserialization: named unconverted fields are
+//! retained only while inspecting an input and must be explicitly refused when
+//! the selected installed closure would require their owner. No accepted world
+//! can silently replace such a field with an empty value.
+
+use crate::identity::MAX_SAFE_INTEGER;
+use crate::values::{
+    AttributeState, DefinitionPin, StatusInstance, WorkInvocation, deserialize_present_option,
+    deserialize_safe_integer,
+};
+use indexmap::IndexMap;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::borrow::Cow;
+use std::collections::BTreeMap;
+
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+/// Matches the current domain's Position = WorldPoint contract.
+pub type Position = Point;
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SurfacePoint {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub surface_id: String,
+}
+impl SurfacePoint {
+    pub fn point(&self) -> Point {
+        Point {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BodyProfile {
+    pub id: String,
+    pub radius: f64,
+    pub height: f64,
+    pub eye_height: f64,
+    pub ear_height: f64,
+    pub interaction_height: f64,
+    pub max_slope: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Bounds {
+    pub min: Point,
+    pub max: Point,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Named {
+    pub name: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub name_form: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub indefinite_article: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "mode", rename_all = "lowercase", deny_unknown_fields)]
+pub enum Placement {
+    World {
+        position: Point,
+        #[serde(
+            rename = "supportSurfaceId",
+            deserialize_with = "crate::values::deserialize_nullable"
+        )]
+        support_surface_id: Option<String>,
+        #[serde(deserialize_with = "deserialize_safe_integer")]
+        revision: u64,
+        #[serde(
+            rename = "motionContinuityRevision",
+            default,
+            deserialize_with = "crate::values::deserialize_present_safe_integer",
+            skip_serializing_if = "Option::is_none"
+        )]
+        motion_continuity_revision: Option<u64>,
+    },
+    Contained {
+        #[serde(rename = "parentEntityId")]
+        parent_entity_id: String,
+        #[serde(deserialize_with = "deserialize_safe_integer")]
+        revision: u64,
+    },
+    Attached {
+        #[serde(rename = "parentEntityId")]
+        parent_entity_id: String,
+        #[serde(rename = "portId")]
+        port_id: String,
+        #[serde(deserialize_with = "deserialize_safe_integer")]
+        revision: u64,
+        #[serde(
+            default,
+            deserialize_with = "deserialize_present_option",
+            skip_serializing_if = "Option::is_none"
+        )]
+        slot: Option<String>,
+        #[serde(
+            default,
+            deserialize_with = "deserialize_present_option",
+            skip_serializing_if = "Option::is_none"
+        )]
+        local: Option<Point>,
+    },
+}
+
+/// Unconverted input has no live execution/formatting API. Its presence is an
+/// installation obligation, not permission to keep opaque writable gameplay.
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(transparent)]
+pub struct UnconvertedField(pub(crate) Value);
+impl UnconvertedField {
+    pub fn is_null(&self) -> bool {
+        self.0.is_null()
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct NativeInterval {
+    pub remaining_seconds: f64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub ends_at: Option<f64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WorldHeader {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub schema_version: u64,
+    pub id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub seed: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub sequence: u64,
+    pub sim_time: f64,
+    pub paused: bool,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub native_interval: Option<NativeInterval>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SoftFootprint {
+    pub width: f64,
+    pub length: f64,
+    pub height: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LocalPose {
+    pub kind: String,
+    pub profile: DefinitionPin,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub physical_life: u64,
+    pub started_at: f64,
+    pub restore_at: f64,
+    pub phase: String,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EntitySpatial {
+    pub body: BodyProfile,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub inactive_body: Option<BodyProfile>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub soft_footprint: Option<SoftFootprint>,
+    pub heading: f64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub local_pose: Option<LocalPose>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub local_avoidance_ready_at: Option<f64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub flight: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub fall_velocity: Option<f64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EquipmentPort {
+    pub id: String,
+    pub label: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub icon: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BodyConditions {
+    pub wetness: f64,
+    pub burning: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Susceptibility {
+    pub injury: f64,
+    pub wetness: f64,
+    pub burning: f64,
+    pub healing: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Yield {
+    pub definition_id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub quantity: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LivingBody {
+    pub equipment_ports: Vec<EquipmentPort>,
+    pub plan: String,
+    pub max_health: f64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    pub conditions: BodyConditions,
+    pub susceptibility: Susceptibility,
+    pub harvest_yield: Vec<Yield>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Capabilities {
+    pub cognition: bool,
+    pub memory: bool,
+    pub inner_world: bool,
+    pub speech: bool,
+    pub language: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CharacterTrait {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct IndividualRecognition {
+    pub attribute_id: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ConditionEpisode {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub version: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub severity: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub notified: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    pub pending: bool,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub next_review_at: Option<f64>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Participation {
+    pub phase: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub exit_attempt_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub return_anchor: Option<SurfacePoint>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Goal {
+    pub id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    pub objective: String,
+    pub status: String,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub parent_id: Option<String>,
+    pub author: String,
+    pub source_id: String,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub completion: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ResolvedSemanticCause {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub interval: u64,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub purpose: Option<String>,
+    pub qualitative_revision: String,
+    pub severity: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SemanticContinuation {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub interval: u64,
+    pub discovery: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub reservation: Option<String>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub occupied_purpose: Option<String>,
+    pub resolved: IndexMap<String, ResolvedSemanticCause>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RememberedPlace {
+    pub subject_id: String,
+    pub label: String,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub episode: Option<String>,
+    pub point: SurfacePoint,
+    pub at: f64,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ActorAgency {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub semantic: Option<SemanticContinuation>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub last_result_memory_id: Option<String>,
+    pub attempts: Vec<UnconvertedField>,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    pub goals: Vec<Goal>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub plan: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub suspended: Option<UnconvertedField>,
+    pub history: Vec<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub places: Option<Vec<RememberedPlace>>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct NavigationRequest {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub wait: Option<String>,
+    pub from: SurfacePoint,
+    pub destinations: Vec<SurfacePoint>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub outside_bounds: Option<Bounds>,
+    pub body: BodyProfile,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub geometry_revision: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct NavigationPending {
+    pub request: NavigationRequest,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub failure: Option<String>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Action {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub feeding: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub gathering: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attack_observers: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cooperation: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub combat_help_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub evasion: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub ranged: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attack_execution: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub competence_pin: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub ranged_policy_pin: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub coaching_episode_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub assembly_phase: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub assembly_exit_pending: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub gate_work: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub boundary_impact: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub hearth_work: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub assembly_corner: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub construction_grant: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub material_permission: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub material_origin_ids: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub material_contribution_ids: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub requires_lethal_review: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub lethal_permission: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub scar_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub recipe_pin: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub manufacture_tools: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub food_preparation: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub fishing: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub strike_phase: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub strike_motion: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub strike_outcome: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub guard: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub follow: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub transferred: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub quantity: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub recipe_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub item_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub weapon_item_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub ammo_item_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub heat_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub fire_operation: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub fire_guard: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub native_locomotion: Option<crate::native_response::NativeLocomotion>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub target_life: Option<u64>,
+    pub id: String,
+    #[serde(rename = "type")]
+    pub kind: String,
+    pub stage: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub target_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub destination: Option<SurfacePoint>,
+    pub path: Vec<SurfacePoint>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub motion_sample_remaining_metres: Option<f64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub navigation: Option<NavigationPending>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub replans: Option<u64>,
+    pub remaining_seconds: f64,
+    pub total_seconds: f64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attribute_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub definition_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub definition_version: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub resource_definition: Option<DefinitionPin>,
+    pub consumed: Vec<Yield>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReleaseSupport {
+    pub occurrence_id: String,
+    pub event_id: String,
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct CoachingSupport {
+    pub event_id: String,
+    pub observed: ReleaseSupport,
+    pub coach_id: String,
+    pub coach_evidence_id: String,
+    pub learner_evidence_id: String,
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PracticeProgress {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub starting: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    pub releases: Vec<ReleaseSupport>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub coaching: Option<CoachingSupport>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ActorState {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attack_mode_notice: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub encounters: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub practice: Option<IndexMap<String, PracticeProgress>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub coaching_episode_id: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub natural_strike_ids: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub pending_death: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub inventory_inspection: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attention_capacity: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub physical_life: Option<u64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub scars: Option<IndexMap<String, f64>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub conditions: Option<IndexMap<String, ConditionEpisode>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub combat_ready_at: Option<f64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub evasion_ready_at: Option<f64>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub participation: Option<Participation>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub senses: Option<Vec<String>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub contacts: Option<IndexMap<String, crate::reception::ContactEpisode>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attributes: Option<IndexMap<String, AttributeState>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub traits: Option<Vec<CharacterTrait>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub voice_profile: Option<crate::reception::VoiceFeatures>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub individual_recognition: Option<IndividualRecognition>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub description: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub personality: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub backstory: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub initial_goals: Option<Vec<String>>,
+    pub agency: ActorAgency,
+    pub controller: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub species: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub body: Option<LivingBody>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub capabilities: Option<Capabilities>,
+    pub health: f64,
+    pub alive: bool,
+    pub incapacitated: bool,
+    pub born_at: f64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub birth_time_known: Option<bool>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub action: Option<Action>,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub plan_generation: u64,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Resource {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub cast: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revision: Option<u64>,
+    pub definition_id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub quantity: u64,
+    pub work_seconds: f64,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Remains {
+    pub died_at: f64,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub rot_at: Option<f64>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub remove_at: Option<f64>,
+    pub phase: String,
+    pub source_id: String,
+    pub yields: Vec<Yield>,
+    pub harvested: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Heat {
+    pub fuel_seconds: f64,
+    pub lit: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Replenisher {
+    pub attribute_id: String,
+    pub remaining: f64,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revision: Option<u64>,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Entity {
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub hearth: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub practice_target: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub threat: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub assembly: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub inventory_revision: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub item: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub container: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub declared_owner: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub retirement: Option<UnconvertedField>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub sensory_progress: Option<crate::reception::SensoryProgress>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub icon: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub description: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub status_effects: Option<IndexMap<String, StatusInstance>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attributes: Option<IndexMap<String, AttributeState>>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub mechanism_fields: Option<IndexMap<String, IndexMap<String, f64>>>,
+    pub id: String,
+    pub name: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub name_form: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub indefinite_article: Option<String>,
+    pub kind: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub placement: Option<Placement>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub appearance: Option<String>,
+    pub spatial: EntitySpatial,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub actor: Option<ActorState>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub animal: Option<crate::native_response::NativeResponseState>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub replenisher: Option<Replenisher>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub resource: Option<Resource>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub remains: Option<Remains>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub heat: Option<Heat>,
+}
+
+impl Entity {
+    pub fn world_position(&self) -> Option<Point> {
+        match &self.placement {
+            Some(Placement::World { position, .. }) => Some(*position),
+            _ => None,
+        }
+    }
+    pub fn supported_position(&self) -> Option<SurfacePoint> {
+        match &self.placement {
+            Some(Placement::World {
+                position,
+                support_surface_id: Some(surface),
+                ..
+            }) => Some(SurfacePoint {
+                x: position.x,
+                y: position.y,
+                z: position.z,
+                surface_id: surface.clone(),
+            }),
+            _ => None,
+        }
+    }
+    pub fn physical_life(&self) -> Option<u64> {
+        self.actor
+            .as_ref()
+            .map(|actor| actor.physical_life.unwrap_or(0))
+    }
+    pub fn stored_attributes(&self) -> Option<&IndexMap<String, AttributeState>> {
+        match &self.actor {
+            Some(actor) => actor.attributes.as_ref(),
+            None => self.attributes.as_ref(),
+        }
+    }
+    pub fn stored_attributes_mut(&mut self) -> Option<&mut IndexMap<String, AttributeState>> {
+        match &mut self.actor {
+            Some(actor) => actor.attributes.as_mut(),
+            None => self.attributes.as_mut(),
+        }
+    }
+    pub fn body_profile(&self) -> Cow<'_, BodyProfile> {
+        let ordinary = match &self.actor {
+            Some(actor) if !actor.alive => self
+                .spatial
+                .inactive_body
+                .as_ref()
+                .unwrap_or(&self.spatial.body),
+            _ => &self.spatial.body,
+        };
+        match &self.spatial.soft_footprint {
+            Some(form) => Cow::Owned(BodyProfile {
+                radius: form.width.max(form.length) / 2.0,
+                height: form.height,
+                eye_height: form.height,
+                ear_height: form.height,
+                interaction_height: form.height,
+                ..ordinary.clone()
+            }),
+            None => Cow::Borrowed(ordinary),
+        }
+    }
+    pub fn actively_participates(&self) -> bool {
+        self.retirement.is_none()
+            && self.actor.as_ref().is_none_or(|actor| {
+                actor.pending_death.is_none()
+                    && actor
+                        .participation
+                        .as_ref()
+                        .is_none_or(|p| p.phase != "inactive")
+            })
+            && self
+                .remains
+                .as_ref()
+                .is_none_or(|remains| remains.phase != "removed")
+            && matches!(self.placement, Some(Placement::World { .. }))
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EntityHandle {
+    pub slot: usize,
+    pub generation: u64,
+}
+struct EntitySlot {
+    generation: u64,
+    entity: Option<Entity>,
+    order: String,
+}
+/// Ordering labels are the source collection's actual labels. They are not
+/// identities and never change merely because jobs move between workers.
+pub struct EntityStore {
+    slots: Vec<EntitySlot>,
+    by_id: BTreeMap<String, EntityHandle>,
+    by_order: BTreeMap<String, String>,
+    pub next_insertion: u64,
+}
+impl EntityStore {
+    pub fn install(
+        entries: Vec<(String, Entity)>,
+        next_insertion: u64,
+    ) -> Result<Self, &'static str> {
+        if next_insertion > MAX_SAFE_INTEGER {
+            return Err("Invalid entity insertion counter.");
+        }
+        let mut value = Self {
+            slots: Vec::with_capacity(entries.len()),
+            by_id: BTreeMap::new(),
+            by_order: BTreeMap::new(),
+            next_insertion,
+        };
+        for (order, entity) in entries {
+            if !crate::values::is_safe_record_id(&entity.id)
+                || value.by_id.contains_key(&entity.id)
+                || value.by_order.contains_key(&order)
+            {
+                return Err("Invalid entity membership or ordering.");
+            }
+            let handle = EntityHandle {
+                slot: value.slots.len(),
+                generation: 0,
+            };
+            value.by_id.insert(entity.id.clone(), handle);
+            value.by_order.insert(order.clone(), entity.id.clone());
+            value.slots.push(EntitySlot {
+                generation: 0,
+                entity: Some(entity),
+                order,
+            });
+        }
+        Ok(value)
+    }
+    pub fn get(&self, id: &str) -> Option<&Entity> {
+        self.resolve(*self.by_id.get(id)?)
+    }
+    pub fn get_mut(&mut self, id: &str) -> Option<&mut Entity> {
+        let handle = *self.by_id.get(id)?;
+        self.resolve_mut(handle)
+    }
+    pub fn handle(&self, id: &str) -> Option<EntityHandle> {
+        self.by_id.get(id).copied()
+    }
+    pub fn resolve(&self, handle: EntityHandle) -> Option<&Entity> {
+        let slot = self.slots.get(handle.slot)?;
+        if slot.generation != handle.generation {
+            return None;
+        };
+        slot.entity.as_ref()
+    }
+    pub fn resolve_mut(&mut self, handle: EntityHandle) -> Option<&mut Entity> {
+        let slot = self.slots.get_mut(handle.slot)?;
+        if slot.generation != handle.generation {
+            return None;
+        };
+        slot.entity.as_mut()
+    }
+    pub fn ordered_ids(&self) -> impl Iterator<Item = &str> {
+        self.by_order.values().map(String::as_str)
+    }
+    pub fn ordering(&self, id: &str) -> Option<&str> {
+        let handle = self.handle(id)?;
+        Some(self.slots.get(handle.slot)?.order.as_str())
+    }
+    pub fn len(&self) -> usize {
+        self.by_id.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.by_id.is_empty()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WorkState {
+    pub policy_version: String,
+    pub invocations: IndexMap<String, WorkInvocation>,
+}

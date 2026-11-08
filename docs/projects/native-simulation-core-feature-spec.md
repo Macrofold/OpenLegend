@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Design is complete; the Rust proof, adoption decision and subsequent implementation remain unperformed. | 2026-11-07   |
+| Status      | Current progress                                                                                                  | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Native and PostgreSQL foundations are in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-07   |
 
 ## 1. Purpose and selected direction
 
@@ -11,6 +11,8 @@ Make the ordinary OpenLegend opening comfortably responsive, and make additional
 The selected direction is a resident simulation core with explicit state ownership, compact mutable working data, bounded immutable consumer captures and flexible parallel jobs. **Rust is the selected proof candidate, not an unconditional commitment to replace the entire implementation.** First deliver and compare a complete smaller gameplay pipeline; migrate the remaining core only after the proof's adoption gate passes. TypeScript remains appropriate for application services, provider execution and the existing browser client. This is not a rendering-engine replacement.
 
 Design authorization covers these documents. Runtime implementation, dependency installation, paid experiments and deployment require the ordinary task authorization. Later-stage entry conditions below remain controlling even after implementation is requested.
+
+NSC01–NSC03 implementation is now authorized on the stealth-runtime source line. The [delivery tracker](../maintainers/native-simulation-core.md#current-progress) owns the frozen base, pending conversion inventory and current managed-worker prerequisite; no native gameplay or performance result is established.
 
 ## 2. Player value
 

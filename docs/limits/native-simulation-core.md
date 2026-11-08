@@ -1,6 +1,6 @@
 # Native simulation core limits and experiment boundaries
 
-**Status: Proposed operating constraints for an accepted staged design; nothing here is installed.** [Feature](../projects/native-simulation-core-feature-spec.md), [technical design](../projects/native-simulation-core-tech-design.md) and [NSC tasks](../maintainers/native-simulation-core.md) own purpose, mechanics and delivery. Existing physical, attention, memory, admission, saving and provider limits retain their current owners.
+**Status: Staged implementation in progress; native gameplay/adoption remains unqualified.** The host foundation implements pool/job and byte-reservation primitives below; complete candidate/capture/save integration is still pending. [Feature](../projects/native-simulation-core-feature-spec.md), [technical design](../projects/native-simulation-core-tech-design.md) and [NSC tasks](../maintainers/native-simulation-core.md) own purpose, mechanics and delivery. Existing physical, attention, memory, admission, saving and provider limits retain their current owners.
 
 ## NSC-L01 — Proof and adoption scope
 
@@ -10,9 +10,13 @@
 
 **Proposed experiment; Safe.** One explicitly sized compute pool per native host; one-worker execution is the initial control. Compare useful thread counts within the authorized host's CPU quota while accounting for Node, PostgreSQL and existing worker demand. Do not infer physical cores from vCPU count. Initial dispatcher permits at most two ready compute jobs per configured compute worker **across the entire host**; additional admitted ranges stay as compact cursors, not allocated job/output objects. Blocking I/O holds no compute job. Batch size is selected from E2's actual cost, with tiny cohorts inline. This bounds scheduling overhead without truncating required work; coherent remaining work/debt survives. No fixed one-core-per-cell or one-thread-per-character policy.
 
+The host foundation enforces one process pool, positive configured worker count no greater than the operating system's available parallelism, and at most two queued/running outer jobs per worker. This is logical CPU admission, not a physical-core or capacity claim. Actual gameplay range cursors and phase scheduling remain unqualified.
+
 ## NSC-L03 — Requests, captures and pending data
 
 **Proposed experiment; Safe.** Reuse the existing host request admission/age limits and save-work ceiling rather than add an unbounded second bridge queue. Initially allow one private mutation candidate per world, with scoped parallel subjobs and read captures only at accepted boundaries. Enqueue is not acceptance; expired input rejects all of its tentative effects. Track native output/capture bytes as well as Node buffers. Use a provisional **64 MiB per native host** allowance shared by candidate scratch/undo, detached output and retained consumer/bridge capture buffers, independently of the existing pending-save allowance; shared immutable content is counted once plus actual references. A bounded record/page capture reserves capacity before materializing. Optional requests defer; required requests wait within the current deadline or return explicit busy before admission. Accepted required effects/history are never silently discarded. A legitimately larger atomic output fails the experiment unless supported through existing complete paging or a separately qualified larger allowance; this is not permission to hide evidence. E1/E3 must include retained/peak memory, slow consumers and actual release after cancel/failure; a timeout does not free still-running native capacity. No unbounded capture-generation chain.
+
+The host foundation enforces this 64 MiB reservation budget; native owners must still connect every candidate/capture allocation before claiming a complete memory bound. Its cooperative shutdown waits up to five seconds on a separate lifecycle thread before reporting pending cleanup. That operational bound prevents an unbounded control wait; it neither kills live work nor releases its reservations. A pending host retains ownership until actual joining succeeds. World-save shutdown barriers remain the host service's separate required integration.
 
 ## NSC-L04 — Cell size and overlapping reads
 
