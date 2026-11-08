@@ -1,4 +1,4 @@
-import { selectedSpokenPromise, selectedEventPresentation } from './world-composition.js';
+import { selectedSpokenPromise, selectedCommitmentCompletionAllowed } from './world-composition.js';
 import { entityGet } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { mutateExperience } from './experience.js';
@@ -144,13 +144,10 @@ export function recordSpokenPromise(world: WorldState, event: WorldEvent): void 
     },
   });
 }
-/** Completion kinds must name a current installed event, not an impossible
- * condition accepted only by the event presentation fallback. */
+/** Keep the open native event-name contract while refusing conditions the
+ * selected world has deliberately retired. Presentation is not that vocabulary. */
 export function supportsCommitmentCompletion(world: WorldState, eventType: string): boolean {
-  return (
-    /^[a-z-]{1,64}$/.test(eventType) &&
-    Object.hasOwn(selectedEventPresentation(world).types, eventType)
-  );
+  return /^[a-z-]{1,64}$/.test(eventType) && selectedCommitmentCompletionAllowed(world, eventType);
 }
 export function amendCommitment(
   input: WorldState,

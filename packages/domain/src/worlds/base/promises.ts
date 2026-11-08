@@ -1,6 +1,14 @@
 import type { WorldState, WorldEvent } from '../../types.js';
 
 export const COMMITMENT_ADMISSION_LIMIT = 16;
+
+/** Native occurrence names remain open; a removed world behavior cannot be
+ * promised as an automatic completion. Presentation is only a partial view.
+ * docs/projects/bookkeeping-simplification-tech-design.md#bk29-e--remove-generic-animal-announcements-and-private-invalidation */
+export function allowsCommitmentCompletion(eventType: string): boolean {
+  return eventType !== 'animal-response';
+}
+
 export function recognizePromise(
   world: WorldState,
   event: WorldEvent,

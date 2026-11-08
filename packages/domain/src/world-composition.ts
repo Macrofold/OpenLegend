@@ -1,5 +1,9 @@
 import { baseOutwardActivity, changedOutwardNotice } from './worlds/base/senses.js';
-import { recognizePromise, COMMITMENT_ADMISSION_LIMIT } from './worlds/base/promises.js';
+import {
+  recognizePromise,
+  allowsCommitmentCompletion,
+  COMMITMENT_ADMISSION_LIMIT,
+} from './worlds/base/promises.js';
 import { BASE_WORK_ACTIVITY_HOST } from './worlds/base/work-activity.js';
 import { BASE_MEAL_ACTIVITY_HOST } from './worlds/base/meal-activity.js';
 import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
@@ -465,6 +469,11 @@ export function selectedSpokenPromise(world: WorldState, event: import('./types.
   selectedCreationProfileForWorld(world);
   const promise = recognizePromise(world, event);
   return promise && { ...promise, limit: COMMITMENT_ADMISSION_LIMIT };
+}
+
+export function selectedCommitmentCompletionAllowed(world: WorldState, eventType: string): boolean {
+  selectedCreationProfileForWorld(world);
+  return allowsCommitmentCompletion(eventType);
 }
 
 export function selectedOutwardBodyActivity(world: WorldState, entity: Entity) {
