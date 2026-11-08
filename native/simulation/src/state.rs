@@ -66,7 +66,7 @@ pub struct Bounds {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Named {
-    pub name: String,
+    pub name: crate::text::JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1309,7 +1309,7 @@ pub struct Entity {
     )]
     pub mechanism_fields: Option<IndexMap<String, IndexMap<String, f64>>>,
     pub id: String,
-    pub name: String,
+    pub name: crate::text::JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1334,7 +1334,7 @@ pub struct Entity {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub appearance: Option<String>,
+    pub appearance: Option<crate::text::JsText>,
     pub spatial: EntitySpatial,
     #[serde(
         default,
@@ -1494,7 +1494,114 @@ pub struct EntityStore {
     by_order: BTreeMap<String, String>,
     pub next_insertion: u64,
 }
+/// A membership inverse owns only collection metadata. The newly constructed
+/// entity itself is moved into the canonical store, never copied into an undo.
+pub(crate) struct EntityInsertion {
+    pub handle: EntityHandle,
+    next_insertion: u64,
+    renumbered: Option<(BTreeMap<String, String>, Vec<(usize, String)>)>,
+}
+impl EntityInsertion {
+    pub(crate) fn renumbered(&self) -> bool {
+        self.renumbered.is_some()
+    }
+}
 impl EntityStore {
+    pub(crate) fn insertion_bound(&self, id: &str) -> Option<usize> {
+        use crate::host::retained_size::tree_node_bound;
+        let mut bytes = std::mem::size_of::<EntitySlot>()
+            .checked_mul(self.slots.capacity().checked_mul(2)?.max(4))?
+            .checked_add(id.len().checked_mul(3)?)?
+            .checked_add(18 * 2)?
+            .checked_add(tree_node_bound::<String, EntityHandle>()?)?
+            .checked_add(tree_node_bound::<String, String>()?)?;
+        if self.next_insertion == MAX_SAFE_INTEGER {
+            bytes = bytes.checked_add(self.len().checked_mul(
+                std::mem::size_of::<(usize, String)>() + tree_node_bound::<String, String>()? + 36,
+            )?)?;
+            for id in self.ordered_ids() {
+                bytes = bytes.checked_add(id.len())?;
+            }
+        }
+        Some(bytes)
+    }
+    pub(crate) fn insert_new(&mut self, entity: Entity) -> Result<EntityInsertion, &'static str> {
+        if self.by_id.contains_key(&entity.id) {
+            return Err("Existing entity membership.");
+        }
+        self.slots.try_reserve(1).map_err(|_| "Entity capacity.")?;
+        let previous = self.next_insertion;
+        let renumbered = if self.next_insertion == MAX_SAFE_INTEGER {
+            // Source relabels current string keys at precision exhaustion. This
+            // exceptional operation rebuilds ordering metadata, never entities.
+            let mut labels = Vec::new();
+            labels
+                .try_reserve_exact(self.len())
+                .map_err(|_| "Entity capacity.")?;
+            let mut next = 0u64;
+            let mut order = BTreeMap::new();
+            for id in self.by_order.values() {
+                let handle = *self.by_id.get(id).ok_or("Entity membership.")?;
+                let old = &self.slots[handle.slot].order;
+                let label = if old.starts_with("0/") {
+                    old.clone()
+                } else {
+                    let label = format!("1/{next:016}");
+                    next += 1;
+                    label
+                };
+                order.insert(label.clone(), id.clone());
+                labels.push((handle.slot, label));
+            }
+            let old_order = std::mem::replace(&mut self.by_order, order);
+            for (slot, label) in &mut labels {
+                std::mem::swap(&mut self.slots[*slot].order, label);
+            }
+            self.next_insertion = next;
+            Some((old_order, labels))
+        } else {
+            None
+        };
+        let order = format!("1/{:016}", self.next_insertion);
+        self.next_insertion += 1;
+        let handle = EntityHandle {
+            slot: self.slots.len(),
+            generation: 0,
+        };
+        self.by_id.insert(entity.id.clone(), handle);
+        self.by_order.insert(order.clone(), entity.id.clone());
+        self.slots.push(EntitySlot {
+            generation: 0,
+            entity: Some(entity),
+            order,
+        });
+        Ok(EntityInsertion {
+            handle,
+            next_insertion: previous,
+            renumbered,
+        })
+    }
+    pub(crate) fn undo_insertion(
+        &mut self,
+        before: EntityInsertion,
+    ) -> Result<(String, bool), &'static str> {
+        if before.handle.slot + 1 != self.slots.len() {
+            return Err("Entity insertion order.");
+        }
+        let slot = self.slots.pop().ok_or("Entity membership.")?;
+        let entity = slot.entity.ok_or("Entity membership.")?;
+        self.by_id.remove(&entity.id);
+        self.by_order.remove(&slot.order);
+        let renumbered = before.renumbered.is_some();
+        if let Some((order, labels)) = before.renumbered {
+            self.by_order = order;
+            for (slot, label) in labels {
+                self.slots[slot].order = label;
+            }
+        }
+        self.next_insertion = before.next_insertion;
+        Ok((entity.id, renumbered))
+    }
     pub fn install(
         entries: Vec<(String, Entity)>,
         next_insertion: u64,

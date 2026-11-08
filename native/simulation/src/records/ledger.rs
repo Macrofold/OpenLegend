@@ -207,6 +207,19 @@ impl RecordLedger {
     pub(crate) fn placement(&self, table: &str, id: &str) -> Option<&RecordPlacement> {
         self.rows.get(table).and_then(|rows| rows.get(id))
     }
+    /// Actual metadata under this canonical collection owner. Completeness is
+    /// separately established by coverage; missing residency never means empty.
+    pub(crate) fn placements<'a>(
+        &'a self,
+        table: &str,
+        parent: &'a str,
+    ) -> impl Iterator<Item = &'a RecordPlacement> {
+        self.rows
+            .get(table)
+            .into_iter()
+            .flat_map(|rows| rows.values())
+            .filter(move |row| row.parent == parent)
+    }
     pub(crate) fn coverage(&self, table: &str, owner: &str) -> Option<&OwnerCoverage> {
         self.owners.get(table).and_then(|owners| owners.get(owner))
     }

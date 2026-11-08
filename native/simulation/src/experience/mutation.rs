@@ -17,8 +17,23 @@ pub(super) struct AppendUndo {
     position: u64,
     next_ordinal: u64,
 }
+impl AppendUndo {
+    pub(super) fn source_key(&self) -> (&str, PersonalSourceKind, &str) {
+        (&self.actor_id, self.kind, &self.id)
+    }
+}
 pub(super) enum ExperienceUndo {
     Append(AppendUndo),
+    Remove {
+        actor_id: String,
+        kind: PersonalSourceKind,
+        before: Arc<PersonalSourceRecord>,
+    },
+    Header {
+        before: ExperienceHeader,
+        payload: Arc<str>,
+    },
+    Privacy(super::privacy_mutation::PrivacyUndo),
     Replace {
         actor_id: String,
         kind: PersonalSourceKind,
@@ -67,6 +82,46 @@ impl ExperienceJournal {
             let operation = self.undo.pop().expect("journal cursor checked");
             let undo = match operation {
                 ExperienceUndo::Append(undo) => undo,
+                ExperienceUndo::Header { before, payload } => {
+                    state.header = before;
+                    state.header_payload = payload;
+                    continue;
+                }
+                ExperienceUndo::Privacy(undo) => {
+                    undo.rollback(state)?;
+                    continue;
+                }
+                ExperienceUndo::Remove {
+                    actor_id,
+                    kind,
+                    before,
+                } => {
+                    let actor = state
+                        .actors
+                        .get_mut(&actor_id)
+                        .ok_or(ExperienceError::ForeignOwner)?;
+                    let source = actor
+                        .sources
+                        .get_mut(&kind)
+                        .ok_or(ExperienceError::UnknownCoverage)?;
+                    if source.by_ordinal.contains_key(&before.position)
+                        || source.lookup.contains_key(&before.header.reference.id)
+                    {
+                        return Err(ExperienceError::InvalidOrdinal);
+                    }
+                    source
+                        .lookup
+                        .insert(before.header.reference.id.clone(), before.position);
+                    source
+                        .by_ordinal
+                        .insert(before.position, Arc::clone(&before));
+                    replace_completion(
+                        actor,
+                        None,
+                        before.header.completion_event_type.as_deref(),
+                    )?;
+                    continue;
+                }
                 ExperienceUndo::Replace {
                     actor_id,
                     kind,
@@ -496,6 +551,164 @@ impl ExperienceJournal {
         self.undo.push(undo);
         Ok(())
     }
+    /// Remove one actual resident source without reindexing surviving history.
+    /// The caller owns privacy/retention policy and the same account charges.
+    pub(super) fn remove(
+        &mut self,
+        state: &mut ExperienceState,
+        actor_id: &str,
+        kind: PersonalSourceKind,
+        id: &str,
+    ) -> Result<bool, ExperienceError> {
+        let Some(source) = state.optional_collection(actor_id, kind)? else {
+            return Ok(false);
+        };
+        let Some(record) = source.get(id)? else {
+            return Ok(false);
+        };
+        let before = Arc::clone(record);
+        let bytes = actor_id
+            .len()
+            .checked_add(id.len())
+            .and_then(|bytes| {
+                bytes.checked_add(
+                    self.undo
+                        .capacity()
+                        .checked_add(1)?
+                        .checked_mul(2 * size_of::<ExperienceUndo>())?,
+                )
+            })
+            .and_then(|bytes| {
+                bytes
+                    .checked_add(
+                        crate::host::retained_size::tree_node_bound::<String, u64>()?
+                            .checked_mul(2)?,
+                    )?
+                    .checked_add(crate::host::retained_size::tree_node_bound::<
+                        u64,
+                        Arc<PersonalSourceRecord>,
+                    >()?)?
+                    .checked_add(
+                        before
+                            .header
+                            .completion_event_type
+                            .as_ref()
+                            .map_or(0, String::len),
+                    )
+            })
+            .ok_or(ExperienceError::Capacity)?;
+        self.reservation
+            .resize(
+                self.reservation
+                    .bytes()
+                    .checked_add(bytes)
+                    .ok_or(ExperienceError::Capacity)?,
+            )
+            .map_err(|_| ExperienceError::Capacity)?;
+        self.undo
+            .try_reserve(1)
+            .map_err(|_| ExperienceError::Capacity)?;
+        let undo = ExperienceUndo::Remove {
+            actor_id: actor_id.to_owned(),
+            kind,
+            before: Arc::clone(&before),
+        };
+        let actor = state
+            .actors
+            .get_mut(actor_id)
+            .ok_or(ExperienceError::ForeignOwner)?;
+        let source = actor
+            .sources
+            .get_mut(&kind)
+            .ok_or(ExperienceError::UnknownCoverage)?;
+        if source.lookup.remove(id) != Some(before.position)
+            || source.by_ordinal.remove(&before.position).is_none()
+        {
+            return Err(ExperienceError::InvalidOrdinal);
+        }
+        replace_completion(actor, before.header.completion_event_type.as_deref(), None)?;
+        self.undo.push(undo);
+        Ok(true)
+    }
+    pub(super) fn removed(&self) -> impl Iterator<Item = &Arc<PersonalSourceRecord>> {
+        self.undo.iter().filter_map(|operation| match operation {
+            ExperienceUndo::Remove { before, .. } => Some(before),
+            _ => None,
+        })
+    }
+    pub(super) fn header_changed(&self) -> bool {
+        self.undo
+            .iter()
+            .any(|operation| matches!(operation, ExperienceUndo::Header { .. }))
+    }
+    /// Add the actual optional child marker at its original Source insertion
+    /// position. Existing finite header bytes remain the sole canonical body.
+    pub(super) fn ensure_privacy_header(
+        &mut self,
+        state: &mut ExperienceState,
+        corrections: bool,
+    ) -> Result<(), ExperienceError> {
+        if if corrections {
+            state.header.corrections.is_some()
+        } else {
+            state.header.privacy_revisions.is_some()
+        } {
+            return Ok(());
+        }
+        let bytes = state
+            .header_payload
+            .len()
+            .checked_mul(24)
+            .and_then(|bytes| bytes.checked_add(2048))
+            .ok_or(ExperienceError::Capacity)?;
+        self.reservation
+            .resize(
+                self.reservation
+                    .bytes()
+                    .checked_add(bytes)
+                    .ok_or(ExperienceError::Capacity)?,
+            )
+            .map_err(|_| ExperienceError::Capacity)?;
+        self.undo
+            .try_reserve(1)
+            .map_err(|_| ExperienceError::Capacity)?;
+        let mut fields: IndexMap<String, Box<serde_json::value::RawValue>> =
+            serde_json::from_str(&state.header_payload)
+                .map_err(|_| ExperienceError::InvalidBody("experience header"))?;
+        fields.insert(
+            if corrections {
+                "corrections"
+            } else {
+                "privacyRevisions"
+            }
+            .to_owned(),
+            serde_json::value::RawValue::from_string("{}".to_owned())
+                .map_err(|_| ExperienceError::InvalidBody("experience marker"))?,
+        );
+        struct Header<'a>(&'a IndexMap<String, Box<serde_json::value::RawValue>>);
+        impl Serialize for Header<'_> {
+            fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                crate::encoding::serialize_js_map(self.0, s)
+            }
+        }
+        let payload = Arc::from(
+            json_record(&Header(&fields))
+                .map_err(|_| ExperienceError::InvalidBody("experience header encoding"))?,
+        );
+        let before = state.header.clone();
+        let old_payload = Arc::clone(&state.header_payload);
+        if corrections {
+            state.header.corrections = Some(EmptyChildOwner {});
+        } else {
+            state.header.privacy_revisions = Some(EmptyChildOwner {});
+        }
+        state.header_payload = payload;
+        self.undo.push(ExperienceUndo::Header {
+            before,
+            payload: old_payload,
+        });
+        Ok(())
+    }
     pub(crate) fn replaced<'a>(
         &'a self,
         state: &'a ExperienceState,
@@ -599,13 +812,20 @@ fn retained_bytes(record: &PersonalSourceRecord) -> Option<usize> {
         .checked_add(record.payload.len())?
         .checked_add(2 * size_of::<usize>())?;
     bytes = bytes
-        .checked_add(record.columns.len().checked_mul(size_of::<Value>())?)?
+        .checked_add(
+            record
+                .columns
+                .len()
+                .checked_mul(size_of::<crate::records::SqlCell>())?,
+        )?
         .checked_add(2 * size_of::<usize>())?;
     for cell in record.columns.iter() {
         bytes = bytes.checked_add(crate::records::save::cell_heap(cell)?)?;
     }
     for text in [
         &record.header.event_id,
+        &record.header.evidence_source_id,
+        &record.header.evidence_target_id,
         &record.header.activity_id,
         &record.header.record_kind,
         &record.header.source,
@@ -619,6 +839,7 @@ fn retained_bytes(record: &PersonalSourceRecord) -> Option<usize> {
     for values in [
         &record.header.owned_observations,
         &record.header.dependencies,
+        &record.header.privacy_dependencies,
     ] {
         bytes = bytes.checked_add(values.heap_bytes()?)?;
     }

@@ -16,6 +16,8 @@ import type {
   WorldEventSourceAcquisition,
   WorldEventSourceDetail,
   WorldEventSourceReference,
+  AiJobView,
+  GameView,
 } from '@open-legend/protocol';
 import { digest } from './content-digest.js';
 import type { SqlDatabase } from './store.js';
@@ -50,6 +52,40 @@ export function projectPerceivedSpeech(speech: NonNullable<ActorEvent['speech']>
         perception: speech.perception,
         addressing: speech.addressing === 'directed' ? 'directed' : 'ambient',
       };
+}
+
+/** Format one already permitted personal conversation account. Job telemetry
+ * is operational input; it neither supplies words nor grants a speaker role. */
+export function projectConversationEvent(
+  event: ActorEvent,
+  observerId: string,
+  reply?: Pick<AiJobView, 'id' | 'status' | 'message'>,
+): GameView['conversation'][number] {
+  return {
+    id: event.id,
+    kind: event.type === 'speech' ? 'speech' : 'action',
+    ...(event.data?.['mechanical'] === false ? { mechanical: false } : {}),
+    ...(reply?.status && reply.message
+      ? {
+          replyStatus: reply.status,
+          replyRequestId: reply.id,
+          retryable: reply.status === 'failed',
+          ...(['failed', 'cancelled', 'stale'].includes(reply.status)
+            ? { replyReason: reply.message }
+            : {}),
+        }
+      : {}),
+    ...(event.actorId === observerId ? { speakerId: observerId } : {}),
+    ...(event.speech ? { speech: projectPerceivedSpeech(event.speech) } : {}),
+    speaker: event.speech
+      ? (event.speech.speaker?.nameAtTime ?? 'Someone')
+      : (event.references?.find((reference) => reference.role === 'actor')?.label ?? 'Someone'),
+    text:
+      event.speech?.intelligibility === 'none'
+        ? nativeText(event.text)
+        : String(event.data?.['text'] ?? nativeText(event.text)),
+    time: event.at,
+  };
 }
 
 /** An event-time participant is a historical role, never a current action target. */

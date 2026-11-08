@@ -1,9 +1,10 @@
 //! Utterance-local partial hearing over the existing ICU provider's exact word
 //! boundaries. Its saved mask uses the source local stream, never world RNG.
 
-use crate::encoding::{content_hash, js_trim};
+use crate::encoding::content_hash;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::reception::SpeechSegment;
+use crate::text::JsText;
 use crate::values::deserialize_safe_integer;
 use serde::Deserialize;
 use std::mem::size_of;
@@ -32,8 +33,8 @@ pub(crate) enum SpeechError {
 }
 
 pub(crate) struct SpeechWords {
-    text: Arc<str>,
-    lowercase: String,
+    text: Arc<JsText>,
+    lowercase: JsText,
     words: Vec<SpeechWord>,
     _reservation: ByteReservation,
 }
@@ -46,14 +47,16 @@ pub(crate) struct HeardSegments {
 impl SpeechWords {
     pub(crate) fn clear(&self, budget: &ByteBudget) -> Result<HeardSegments, SpeechError> {
         let reservation = budget
-            .reserve(size_of::<HeardSegments>() + size_of::<SpeechSegment>() + self.text.len())
+            .reserve(
+                size_of::<HeardSegments>() + size_of::<SpeechSegment>() + self.text.storage_bytes(),
+            )
             .map_err(|_| SpeechError::Capacity)?;
         let mut segments = Vec::new();
         segments
             .try_reserve_exact(1)
             .map_err(|_| SpeechError::Capacity)?;
         segments.push(SpeechSegment::Heard {
-            text: self.text.to_string(),
+            text: self.text.as_ref().clone(),
         });
         Ok(HeardSegments {
             segments,
@@ -61,21 +64,16 @@ impl SpeechWords {
         })
     }
     pub(crate) fn prepare(
-        text: &str,
+        text: &JsText,
         words: &[SpeechWord],
-        lowercase: &str,
+        lowercase: &JsText,
         budget: &ByteBudget,
     ) -> Result<Self, SpeechError> {
         let mut previous = 0;
         for word in words {
             let start = usize::try_from(word.start).map_err(|_| SpeechError::InvalidWords)?;
             let end = usize::try_from(word.end).map_err(|_| SpeechError::InvalidWords)?;
-            if start < previous
-                || end <= start
-                || end > text.len()
-                || !text.is_char_boundary(start)
-                || !text.is_char_boundary(end)
-            {
+            if start < previous || end <= start || end > text.units_len() {
                 return Err(SpeechError::InvalidWords);
             }
             previous = end;
@@ -83,8 +81,8 @@ impl SpeechWords {
         let bytes = words
             .len()
             .checked_mul(size_of::<SpeechWord>())
-            .and_then(|bytes| bytes.checked_add(text.len()))
-            .and_then(|bytes| bytes.checked_add(lowercase.len()))
+            .and_then(|bytes| bytes.checked_add(text.storage_bytes()))
+            .and_then(|bytes| bytes.checked_add(lowercase.storage_bytes()))
             .and_then(|bytes| bytes.checked_add(size_of::<Self>() + 2 * size_of::<usize>()))
             .ok_or(SpeechError::Capacity)?;
         let reservation = budget.reserve(bytes).map_err(|_| SpeechError::Capacity)?;
@@ -94,17 +92,17 @@ impl SpeechWords {
             .map_err(|_| SpeechError::Capacity)?;
         owned.extend_from_slice(words);
         Ok(Self {
-            text: Arc::from(text),
-            lowercase: lowercase.to_owned(),
+            text: Arc::new(text.clone()),
+            lowercase: lowercase.clone(),
             words: owned,
             _reservation: reservation,
         })
     }
 
-    pub(crate) fn text(&self) -> &str {
+    pub(crate) fn text(&self) -> &JsText {
         &self.text
     }
-    pub(crate) fn lowercase(&self) -> &str {
+    pub(crate) fn lowercase(&self) -> &JsText {
         &self.lowercase
     }
 
@@ -121,7 +119,7 @@ impl SpeechWords {
             .and_then(|bytes| {
                 bytes.checked_add(count.max(1).checked_mul(size_of::<SpeechSegment>())?)
             })
-            .and_then(|bytes| bytes.checked_add(self.text.len()))
+            .and_then(|bytes| bytes.checked_add(self.text.storage_bytes()))
             .and_then(|bytes| bytes.checked_add(key.len()))
             .and_then(|bytes| bytes.checked_add(size_of::<HeardSegments>() + 15))
             .ok_or(SpeechError::Capacity)?;
@@ -175,12 +173,15 @@ impl SpeechWords {
             }
             if visible {
                 let end = if at == count {
-                    self.text.len()
+                    self.text.units_len()
                 } else {
                     self.words[at - 1].end as usize
                 };
                 segments.push(SpeechSegment::Heard {
-                    text: js_trim(&self.text[self.words[from].start as usize..end]).to_owned(),
+                    text: self
+                        .text
+                        .slice(self.words[from].start as usize..end)
+                        .trimmed(),
                 });
             } else {
                 segments.push(SpeechSegment::Unintelligible);
@@ -198,7 +199,7 @@ impl SpeechWords {
                     + segments
                         .iter()
                         .map(|segment| match segment {
-                            SpeechSegment::Heard { text } => text.capacity(),
+                            SpeechSegment::Heard { text } => text.storage_bytes(),
                             SpeechSegment::Unintelligible => 0,
                         })
                         .sum::<usize>(),

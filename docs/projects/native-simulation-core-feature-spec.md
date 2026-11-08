@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native and PostgreSQL foundations are in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-08   |
+| Status      | Current progress                                                                                        | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Native owner integration is in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-08   |
 
 ## 1. Purpose and selected direction
 

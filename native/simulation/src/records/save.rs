@@ -2,12 +2,12 @@
 //! output ownership only: semantic mutation and current-record encoding happen
 //! before admission here, and SQL still runs through the existing transaction.
 
+use super::SqlCell;
 use super::merge::merge_changes;
 use super::{ChangedRows, RecordEncodingError, RecordSchema, SaveRows};
 use crate::host::retained_size::tree_node_bound;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::identity::MAX_SAFE_INTEGER;
-use serde_json::Value;
 use std::{collections::BTreeMap, mem::size_of, sync::Arc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -369,42 +369,11 @@ fn prefix_index_bound(changes: &ChangedRows) -> Option<usize> {
     Some(bytes)
 }
 
-pub(crate) fn normalize_cell(value: &mut Value) {
-    match value {
-        Value::Array(values) => {
-            for value in values {
-                normalize_cell(value);
-            }
-        }
-        Value::Object(values) => {
-            let old = std::mem::take(values);
-            let mut fresh = serde_json::Map::with_capacity(old.len());
-            for (key, mut value) in old {
-                normalize_cell(&mut value);
-                fresh.insert(key, value);
-            }
-            *values = fresh;
-        }
-        _ => {}
-    }
+pub(crate) fn normalize_cell(value: &mut SqlCell) {
+    super::cells::normalize(value)
 }
-pub(crate) fn cell_heap(value: &Value) -> Option<usize> {
-    use crate::host::retained_size::map_storage;
-    match value {
-        Value::String(text) => Some(text.capacity()),
-        Value::Array(values) => values.iter().try_fold(
-            values.capacity().checked_mul(size_of::<Value>())?,
-            |sum, value| sum.checked_add(cell_heap(value)?),
-        ),
-        Value::Object(values) => values.iter().try_fold(
-            map_storage::<String, Value>(values.len())?,
-            |sum, (key, value)| {
-                sum.checked_add(key.capacity())?
-                    .checked_add(cell_heap(value)?)
-            },
-        ),
-        _ => Some(0),
-    }
+pub(crate) fn cell_heap(value: &SqlCell) -> Option<usize> {
+    crate::host::retained_size::HeapBytes::heap_bytes(value)
 }
 fn tree_heap<K, V>(
     map: &BTreeMap<K, V>,
@@ -437,7 +406,8 @@ fn changes_heap(changes: &ChangedRows) -> Option<usize> {
                 for text in [&row.id, &row.parent, &row.slot, &row.payload] {
                     bytes = bytes.checked_add(text.capacity())?;
                 }
-                bytes = bytes.checked_add(row.extra.capacity().checked_mul(size_of::<Value>())?)?;
+                bytes =
+                    bytes.checked_add(row.extra.capacity().checked_mul(size_of::<SqlCell>())?)?;
                 for cell in &row.extra {
                     bytes = bytes.checked_add(cell_heap(cell)?)?;
                 }

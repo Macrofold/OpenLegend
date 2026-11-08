@@ -115,24 +115,12 @@ heap_record!(ActionResultValue {
 });
 impl HeapBytes for values::PersonalAccountFragment {
     fn heap_bytes(&self) -> Option<usize> {
-        let data = self.data.as_ref().map_or(Some(0), |data| {
-            data.iter().try_fold(
-                map_storage::<String, Value>(data.len())?,
-                |bytes, (key, value)| {
-                    heap_sum([
-                        bytes,
-                        key.heap_bytes()?,
-                        crate::records::save::cell_heap(value)?,
-                    ])
-                },
-            )
-        })?;
         heap_sum([
             self.id.heap_bytes()?,
             self.text.heap_bytes()?,
             self.event_type.heap_bytes()?,
             self.content.heap_bytes()?,
-            data,
+            self.data.heap_bytes()?,
         ])
     }
 }

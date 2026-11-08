@@ -10,6 +10,8 @@ use indexmap::{IndexMap, IndexSet};
 use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
+mod metadata;
+
 fn invalid() -> ReceivedError {
     ReceivedError("Invalid current receiving mutation or rollback.")
 }
@@ -22,6 +24,30 @@ pub(crate) struct CurrentCheckpoint {
     retained: usize,
 }
 enum CurrentUndo {
+    VisualConfirmation {
+        observer: String,
+        prior: Option<VisualConfirmation>,
+    },
+    MotionMember {
+        observer: String,
+        subject: String,
+        prior: Option<(usize, CurrentMotionSample)>,
+        root_present: bool,
+    },
+    MotionExpiry {
+        observer: String,
+        prior: Option<f64>,
+    },
+    GapMember {
+        observer: String,
+        subject: String,
+        prior: Option<(usize, ReceptionGap)>,
+    },
+    DeadVisibility {
+        observer: String,
+        people: bool,
+        prior: Vec<String>,
+    },
     BatchStarted {
         observer: Arc<str>,
     },
@@ -84,6 +110,53 @@ pub(crate) struct CurrentJournal {
     reservation: ByteReservation,
 }
 impl CurrentJournal {
+    /// Death ends these two live outward lists only. Missing roots/observers
+    /// remain missing; retained identities and historical evidence are intact.
+    pub(crate) fn clear_dead_visibility(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+    ) -> Result<(), ReceivedError> {
+        for people in [true, false] {
+            let root = if people {
+                &state.visible_people
+            } else {
+                &state.visible_objects
+            };
+            let Some(prior) = root
+                .as_ref()
+                .and_then(|root| root.get(observer))
+                .filter(|prior| !prior.is_empty())
+            else {
+                continue;
+            };
+            self.reserve_growth(observer.len() + prior.heap_bytes().ok_or_else(capacity)?)?;
+            let root = if people {
+                &mut state.visible_people
+            } else {
+                &mut state.visible_objects
+            };
+            let prior = std::mem::take(
+                root.as_mut()
+                    .and_then(|root| root.get_mut(observer))
+                    .ok_or_else(invalid)?,
+            );
+            self.undo.push(CurrentUndo::DeadVisibility {
+                observer: observer.into(),
+                people,
+                prior,
+            });
+        }
+        Ok(())
+    }
+    pub(crate) fn dead_visibility_changes(&self) -> impl Iterator<Item = (&str, bool)> {
+        self.undo.iter().filter_map(|undo| match undo {
+            CurrentUndo::DeadVisibility {
+                observer, people, ..
+            } => Some((observer.as_str(), *people)),
+            _ => None,
+        })
+    }
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ReceivedError> {
         Ok(Self {
             undo: Vec::new(),
@@ -360,6 +433,61 @@ impl CurrentJournal {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
+                CurrentUndo::VisualConfirmation { observer, prior } => {
+                    owner_mut(state, &observer)?.visual_confirmation = prior
+                }
+                CurrentUndo::MotionMember {
+                    observer,
+                    subject,
+                    prior,
+                    root_present,
+                } => {
+                    let owner = owner_mut(state, &observer)?;
+                    let samples = owner.motion_samples.as_mut().ok_or_else(invalid)?;
+                    samples.shift_remove(&subject);
+                    if let Some((at, prior)) = prior {
+                        if at > samples.len() {
+                            return Err(invalid());
+                        }
+                        samples.shift_insert(at, subject, prior);
+                    }
+                    if !root_present {
+                        owner.motion_samples = None;
+                    }
+                }
+                CurrentUndo::MotionExpiry { observer, prior } => {
+                    owner_mut(state, &observer)?.motion_expires_at = prior
+                }
+                CurrentUndo::GapMember {
+                    observer,
+                    subject,
+                    prior,
+                } => {
+                    let gaps = &mut owner_mut(state, &observer)?.gaps;
+                    gaps.shift_remove(&subject);
+                    if let Some((at, prior)) = prior {
+                        if at > gaps.len() {
+                            return Err(invalid());
+                        }
+                        gaps.shift_insert(at, subject, prior);
+                    }
+                }
+
+                CurrentUndo::DeadVisibility {
+                    observer,
+                    people,
+                    prior,
+                } => {
+                    let root = if people {
+                        &mut state.visible_people
+                    } else {
+                        &mut state.visible_objects
+                    };
+                    *root
+                        .as_mut()
+                        .and_then(|root| root.get_mut(&observer))
+                        .ok_or_else(invalid)? = prior;
+                }
                 CurrentUndo::BatchStarted { observer } => {
                     self.batches
                         .shift_remove(observer.as_ref())

@@ -103,6 +103,7 @@ import {
   selectedOrdinaryWarning,
   selectedOutwardBodyName,
   selectedOutwardBodyActivity,
+  selectedObservationRules,
   selectedRecognitionSupportSourceIds,
   validReceivedRecognitionSupportKey,
   selectedRecordingReason,
@@ -1279,7 +1280,9 @@ function prepareVisualSourceValues(
         ...(subject.resource ? { quantity: subject.resource.quantity } : {}),
         ...(subject.heat ? { heatLit: subject.heat.lit } : {}),
         ...(subject.remains ? { remainsPhase: subject.remains.phase } : {}),
-        ...(subject.container || subject.kind === 'item-pile' || subject.remains
+        ...(subject.container ||
+        subject.kind === selectedObservationRules(world).pileKind ||
+        subject.remains
           ? { storage: { placementRevision: placement.revision } }
           : {}),
       };
@@ -1307,7 +1310,11 @@ function prepareVisualSourceValues(
       kind: 'description',
       text: (subject.actor?.description ?? subject.description)!,
     });
-  if (detailed && !prior && (subject.kind === 'item-pile' || subject.remains))
+  if (
+    detailed &&
+    !prior &&
+    (subject.kind === selectedObservationRules(world).pileKind || subject.remains)
+  )
     facets.push({
       kind: 'pile-contents',
       items: itemsForOwner(world, subject.id).flatMap((item) => {

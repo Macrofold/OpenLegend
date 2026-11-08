@@ -3,6 +3,7 @@
 //! The owner and original member ordinals survive packing and selection.
 
 mod codec;
+mod decode;
 mod types;
 pub use codec::*;
 pub use types::*;

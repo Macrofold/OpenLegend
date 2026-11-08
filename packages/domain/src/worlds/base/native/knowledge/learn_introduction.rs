@@ -24,16 +24,16 @@ fn reader<'a>(
 }
 fn clone_identity(
     prior: &ObserverIdentity,
-    name: &str,
+    name: &crate::text::JsText,
     budget: &ByteBudget,
 ) -> Result<(ObserverIdentity, ByteReservation), ExecutionError> {
     let bytes = prior
         .heap_bytes()
-        .and_then(|n| n.checked_add(name.len()))
+        .and_then(|n| n.checked_add(name.storage_bytes()))
         .ok_or(ExecutionError::Capacity)?;
     let reservation = budget.reserve(bytes)?;
     let mut candidate = prior.clone();
-    candidate.given_name = name.to_owned();
+    candidate.given_name = name.clone();
     Ok((candidate, reservation))
 }
 fn current_local(
@@ -107,14 +107,14 @@ fn assign_individual(
     observer: &str,
     subject: &ObserverSubject,
     event: &str,
-    name: &str,
+    name: &crate::text::JsText,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
     let names = reader(core, observer)?;
     let Some(prior) = names.observer_individual(subject) else {
         return Ok(());
     };
-    if !can_name(&names, subject, prior)? || prior.given_name == name {
+    if !can_name(&names, subject, prior)? || &prior.given_name == name {
         return Ok(());
     }
     let (mut candidate, _candidate_reservation) = clone_identity(prior, name, budget)?;
@@ -156,7 +156,7 @@ fn assign_entity(
     observer: &str,
     target: &str,
     event: &str,
-    name: &str,
+    name: &crate::text::JsText,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
     if observer == target
@@ -190,7 +190,7 @@ fn assign_entity(
         return Ok(());
     }
     let prior = names.identity_for_entity(target);
-    if prior.is_some_and(|identity| identity.given_name == name) {
+    if prior.is_some_and(|identity| &identity.given_name == name) {
         return Ok(());
     }
     let episode = names.episode(target);
@@ -203,7 +203,7 @@ fn assign_entity(
     let (mut candidate, _candidate_reservation) = if let Some(prior) = prior {
         clone_identity(prior, name, budget)?
     } else {
-        let reservation = budget.reserve(name.len())?;
+        let reservation = budget.reserve(name.storage_bytes())?;
         (
             ObserverIdentity {
                 retained: None,
@@ -214,7 +214,7 @@ fn assign_entity(
                 voice: None,
                 sight: None,
                 name_evidence_ids: None,
-                given_name: name.to_owned(),
+                given_name: name.clone(),
                 nickname: None,
                 revision: 0,
                 encounter_id: None,

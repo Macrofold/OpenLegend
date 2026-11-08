@@ -59,6 +59,7 @@ pub(crate) struct InstalledWorld {
     pub detection_support: VerifiedDefinition<crate::reception::DetectionSupportPolicy>,
     pub maximum_change_scopes: usize,
     pub movement: crate::worlds::InstalledMovementPolicy,
+    pub time_rules: crate::worlds::InstalledTimeRules,
     pub body_policy: Option<VerifiedDefinition<crate::body::BodyPolicy>>,
     pub spatial: crate::install::SpatialSettings,
     pub movement_settings: crate::install::MovementSettings,
@@ -127,6 +128,7 @@ pub(crate) struct SimulationState {
     pub commands: crate::commands::CommandState,
     pub minds: crate::cognition::MindState,
     pub administration: crate::administration::AdministrationState,
+    pub inventory: crate::install::ClosedInventory,
     pub learned_capabilities: crate::install::LearnedCapabilities,
     pub appraisals: crate::appraisals::AppraisalState,
 }

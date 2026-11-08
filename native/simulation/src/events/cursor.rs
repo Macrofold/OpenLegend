@@ -6,8 +6,8 @@ use super::*;
 use crate::activity::EventActivity;
 use crate::execution::{CoreMutation, ExecutionError, PhysicalMutation};
 use crate::experience::{
-    Awareness, AwarenessAcquisitionError, MemoryAcquisitionError, acquire_awareness_accounts,
-    prepare_awareness_admission,
+    Awareness, AwarenessAcquisitionError, AwarenessEncoding, AwarenessFactory, AwarenessInput,
+    MemoryAcquisitionError, acquire_awareness_accounts, prepare_awareness_admission,
 };
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -72,6 +72,12 @@ fn invalid() -> EventError {
 }
 fn data_text<'a>(event: &'a WorldEvent, key: &str) -> Option<&'a str> {
     match event.data.as_ref().and_then(|data| data.get(key)) {
+        Some(EventScalar::Text(value)) => value.as_unicode(),
+        _ => None,
+    }
+}
+fn event_text<'a>(event: &'a WorldEvent, key: &str) -> Option<&'a crate::text::JsText> {
+    match event.data.as_ref().and_then(|data| data.get(key)) {
         Some(EventScalar::Text(value)) => Some(value),
         _ => None,
     }
@@ -99,7 +105,7 @@ fn activity_cause<'a>(core: &'a CoreMutation<'_>, event: &'a WorldEvent) -> Opti
                 .filter(|v| !matches!(v, EventScalar::Null(())))
         });
     match value {
-        Some(EventScalar::Text(value)) => Some(value),
+        Some(EventScalar::Text(value)) => value.as_unicode(),
         Some(_) => None,
         None => event
             .actor_id
@@ -143,6 +149,24 @@ impl VisibilityBatch {
             .try_reserve_exact(receivers.len())
             .map_err(|_| ExecutionError::Capacity)?;
         for receiver in receivers {
+            let count = event
+                .narration
+                .as_ref()
+                .map_or(0, |narration| narration.parts.len())
+                .checked_add(event.data.as_ref().map_or(0, IndexMap::len))
+                .and_then(|n| n.checked_add(2))
+                .ok_or(ExecutionError::Capacity)?;
+            result.reservation.resize(
+                result
+                    .reservation
+                    .bytes()
+                    .checked_add(
+                        count
+                            .checked_mul(2 * size_of::<&str>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
             let targets = event_visibility_targets(
                 &core.state.physical.entities,
                 event,
@@ -227,7 +251,7 @@ pub(crate) enum EventAnswer {
     Utterance {
         binding: GeometryBinding,
         words: Vec<SpeechWord>,
-        lowercase: String,
+        lowercase: crate::text::JsText,
     },
     Collation(CollationAnswer),
     Words(WordsAnswer),
@@ -238,7 +262,7 @@ pub(crate) enum EventStep<'a> {
     Geometry(&'a GeometryQueries),
     Utterance {
         binding: GeometryBinding,
-        text: &'a str,
+        text: &'a crate::text::JsText,
     },
     Collation(&'a CollationRequest),
     Words(&'a WordsRequest),
@@ -269,7 +293,9 @@ pub(crate) struct EventCursor {
     receiver_next: usize,
     receiving: Option<ReceivingCursor>,
     current_awareness: Option<Awareness>,
+    current_encoding: Option<AwarenessEncoding>,
     acquired: Vec<Awareness>,
+    acquired_encoding: Vec<AwarenessEncoding>,
     reservation: ByteReservation,
 }
 impl EventCursor {
@@ -314,7 +340,9 @@ impl EventCursor {
             receiver_next: 0,
             receiving: None,
             current_awareness: None,
+            current_encoding: None,
             acquired: Vec::new(),
+            acquired_encoding: Vec::new(),
             reservation,
         })
     }
@@ -481,7 +509,10 @@ impl EventCursor {
                 bytes.checked_mul(3).ok_or(ExecutionError::Capacity)?,
                 count
                     .checked_mul(
-                        size_of::<Receiver>() + size_of::<Awareness>() + size_of::<String>(),
+                        size_of::<Receiver>()
+                            + size_of::<Awareness>()
+                            + size_of::<AwarenessEncoding>()
+                            + size_of::<String>(),
                     )
                     .ok_or(ExecutionError::Capacity)?,
             ])
@@ -493,6 +524,9 @@ impl EventCursor {
             .try_reserve_exact(count)
             .map_err(|_| ExecutionError::Capacity)?;
         self.acquired
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        self.acquired_encoding
             .try_reserve_exact(count)
             .map_err(|_| ExecutionError::Capacity)?;
         for id in &event.audience {
@@ -622,7 +656,7 @@ impl EventCursor {
             Phase::Utterance { binding } => {
                 return Ok(EventStep::Utterance {
                     binding: *binding,
-                    text: data_text(self.event()?, "text").unwrap_or(""),
+                    text: event_text(self.event()?, "text").ok_or_else(invalid)?,
                 });
             }
             Phase::Introduction(introduction) => {
@@ -692,7 +726,8 @@ impl EventCursor {
                             self.reserve(
                                 count
                                     .checked_mul(
-                                        size_of::<PreparedSpeechAwareness>() + size_of::<String>(),
+                                        size_of::<PreparedSpeechAwareness>()
+                                            + 4 * size_of::<String>(),
                                     )
                                     .and_then(|bytes| {
                                         bytes.checked_add(map_storage::<
@@ -700,6 +735,11 @@ impl EventCursor {
                                             PreparedSpeechAwareness,
                                         >(
                                             count.checked_mul(2)?
+                                        )?)
+                                    })
+                                    .and_then(|bytes| {
+                                        bytes.checked_add(map_storage::<String, ()>(
+                                            count.checked_mul(2)?,
                                         )?)
                                     })
                                     .ok_or(ExecutionError::Capacity)?,
@@ -736,7 +776,7 @@ impl EventCursor {
                     }
                     self.words = Some(
                         SpeechWords::prepare(
-                            data_text(self.event()?, "text").unwrap_or(""),
+                            event_text(self.event()?, "text").ok_or_else(invalid)?,
                             &words,
                             &lowercase,
                             budget,
@@ -897,8 +937,22 @@ impl EventCursor {
                         if let Some(guard) = segments {
                             self.reservation.merge(guard)?
                         }
+                        self.current_encoding = Some(AwarenessEncoding {
+                            factory: if let Some(sound) = &value.sound {
+                                AwarenessFactory::Sound {
+                                    voice_like: sound.kind.is_some(),
+                                }
+                            } else {
+                                AwarenessFactory::Speech
+                            },
+                            source_receipt_before_observation: false,
+                        });
                         Some(value)
                     } else {
+                        self.current_encoding = Some(AwarenessEncoding {
+                            factory: AwarenessFactory::Event,
+                            source_receipt_before_observation: false,
+                        });
                         let value = prepare_receiver_awareness(
                             core,
                             self.event()?,
@@ -971,38 +1025,35 @@ impl EventCursor {
                         .map_err(ExecutionError::Activity)?;
                 }
                 let schema = Arc::clone(&core.state.installed.schema);
-                let mut groups = IndexMap::<&str, Vec<Awareness>>::new();
-                self.reserve(
-                    self.acquired
-                        .heap_bytes()
-                        .ok_or(ExecutionError::Capacity)?
-                        .checked_add(
-                            self.acquired
-                                .len()
-                                .checked_mul(size_of::<Awareness>())
-                                .ok_or(ExecutionError::Capacity)?,
-                        )
-                        .ok_or(ExecutionError::Capacity)?,
-                )?;
-                for entry in &self.acquired {
-                    groups
-                        .entry(&entry.actor_id)
-                        .or_default()
-                        .push(entry.clone());
-                }
-                for (actor, input) in groups {
+                // Source places each acquired entry in original receiver order;
+                // there is no deferred awarenessBatch in this native emitter.
+                for (entry, encoding) in self.acquired.iter().zip(&self.acquired_encoding) {
+                    if entry.retention_class == crate::experience::AwarenessRetentionClass::Memory
+                        && !core
+                            .state
+                            .physical
+                            .entities
+                            .get(&entry.actor_id)
+                            .is_some_and(|actor| actor.has_memory())
+                    {
+                        continue;
+                    }
                     let admission = prepare_awareness_admission(
                         core,
-                        actor,
-                        &input,
-                        self.activity
-                            .as_ref()
-                            .filter(|a| a.actor_id() == actor)
-                            .map(EventActivity::context),
+                        &entry.actor_id,
+                        &[AwarenessInput {
+                            awareness: entry,
+                            encoding: *encoding,
+                        }],
+                        None,
                         budget,
                     )?;
                     let placed = acquire_awareness_accounts(core, admission, &schema, budget)?;
-                    for entry in placed.entries() {
+                    for entry in placed
+                        .entries()
+                        .iter()
+                        .filter(|entry| entry.speech.is_some())
+                    {
                         crate::worlds::retain_selected_recognition_evidence(core, entry, budget)?;
                     }
                 }
@@ -1106,6 +1157,8 @@ impl EventCursor {
     fn push_current_awareness(&mut self) -> Result<(), EventError> {
         self.acquired
             .push(self.current_awareness.take().ok_or_else(invalid)?);
+        self.acquired_encoding
+            .push(self.current_encoding.take().ok_or_else(invalid)?);
         self.receiving = None;
         self.receiver_next += 1;
         Ok(())
@@ -1118,6 +1171,15 @@ impl EventCursor {
     ) -> Result<(), EventError> {
         self.reservation.merge(value.reservation)?;
         let awareness = self.current_awareness.as_mut().ok_or_else(invalid)?;
+        // Source acquisition inserts this property before the caller assigns its
+        // observation, even when the initial locator is undefined. A later
+        // personal receipt fills that existing position in the immutable body.
+        if matches!(&value.receipt, AwarenessReceiptPlacement::Set(_)) {
+            self.current_encoding
+                .as_mut()
+                .ok_or_else(invalid)?
+                .source_receipt_before_observation = true;
+        }
         if let Some(observation) = value.observation {
             let (observation, reservation) = observation.into_parts();
             awareness.observation = Some(observation);

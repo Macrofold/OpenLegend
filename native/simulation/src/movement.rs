@@ -46,6 +46,14 @@ fn cell(point: Point) -> (i64, i64, i64) {
     )
 }
 impl BodyIndex {
+    pub(crate) fn refresh_ordering(&mut self, entities: &EntityStore) {
+        for (id, point) in &mut self.points {
+            if let Some(order) = entities.ordering(id) {
+                point.order.clear();
+                point.order.push_str(order);
+            }
+        }
+    }
     pub(crate) fn install(entities: &EntityStore) -> Self {
         let mut value = Self {
             points: BTreeMap::new(),

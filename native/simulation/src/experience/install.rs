@@ -116,11 +116,14 @@ pub(crate) fn install_received_values(
         )?;
         if row.extra.len() != 3
             || row.extra[0] != Value::from(record.id.clone())
-            || crate::encoding::json_value(&row.extra[1])
+            || crate::encoding::json_record(&row.extra[1])
                 .map_err(|_| InstallError::CurrentFormat)?
                 != json_record(&record.at).map_err(|_| InstallError::CurrentFormat)?
             || (!row.extra[2].is_null()
-                && serde_json::from_value::<Ordinal>(row.extra[2].clone()).is_err())
+                && crate::encoding::json_record(&row.extra[2])
+                    .ok()
+                    .and_then(|encoded| serde_json::from_str::<Ordinal>(&encoded).ok())
+                    .is_none())
         {
             return Err(InstallError::CurrentFormat.into());
         }
@@ -253,7 +256,13 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         context.cold_directories,
         meaning,
     )?;
-    let experience = ExperienceState::install(generation, header, histories, owner_maps)?;
+    let experience = ExperienceState::install(
+        generation,
+        header,
+        experience_row.payload,
+        histories,
+        owner_maps,
+    )?;
     let events = take_collection(
         import,
         "world_hot_events",

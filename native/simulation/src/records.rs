@@ -5,10 +5,11 @@
 //! record setter and does not infer a new row from an unloaded predecessor.
 
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::BTreeMap;
 
+mod cells;
 mod layout;
+pub use cells::SqlCell;
 pub use layout::{ChildShape, RecordChild, RecordCodec, RecordLayout};
 mod encode;
 mod merge;
@@ -32,7 +33,7 @@ pub struct InstalledRow {
     #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub position: u64,
     pub payload: String,
-    pub extra: Vec<Value>,
+    pub extra: Vec<SqlCell>,
 }
 
 #[derive(Debug, Serialize)]
@@ -43,7 +44,7 @@ pub struct ChangedRow {
     pub slot: String,
     pub position: u64,
     pub payload: String,
-    pub extra: Vec<Value>,
+    pub extra: Vec<SqlCell>,
     pub create: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub received_uses_changed: Option<bool>,

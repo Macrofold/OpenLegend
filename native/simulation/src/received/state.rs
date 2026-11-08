@@ -20,6 +20,8 @@ use std::{collections::BTreeMap, sync::Arc};
 mod accounts;
 mod append;
 mod save;
+mod versions;
+pub(crate) use versions::{SourceVersionPlan, apply_source_version_plan};
 mod support;
 pub(crate) use accounts::{AccountAdditionBudget, KnowledgeAccountChange};
 pub(crate) use append::{ObservationCaptureOptions, TemporalAcquisitionCheckpoint};
@@ -376,6 +378,7 @@ pub struct TemporalCheckpoint {
 
 #[derive(Debug)]
 enum TemporalUndo {
+    Reservation(crate::host::ByteReservation),
     Support {
         actor_id: String,
         id: String,
@@ -434,6 +437,7 @@ impl TemporalState {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().expect("Journal length checked") {
+                TemporalUndo::Reservation(_) => {}
                 TemporalUndo::Support {
                     actor_id,
                     id,

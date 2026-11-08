@@ -5,8 +5,10 @@ use napi::{Error, Result, Status};
 use napi_derive::napi;
 use openlegend_simulation::identity::MAX_SAFE_INTEGER;
 use openlegend_simulation::records::{ChangedRow, ChangedRows, SaveRows};
-use serde_json::Value;
 use std::collections::BTreeMap;
+
+mod cells;
+pub use cells::NativeSqlCell;
 
 #[napi(object, object_from_js = false)]
 pub struct NativeChangedRow {
@@ -15,11 +17,10 @@ pub struct NativeChangedRow {
     pub slot: String,
     pub position: f64,
     pub payload: String,
-    // serde_json's actual ToNapiValue conversion supplies JSON values. The
-    // conservative declaration matches SQL's unknown column inputs; this is not
-    // a declaration pretending to validate arbitrary incoming JavaScript.
+    // The actual conversion retains UTF-16 text units in these finite indexed
+    // values. Payload strings remain encoded by their semantic storage owner.
     #[napi(ts_type = "unknown[]")]
-    pub extra: Vec<Value>,
+    pub extra: Vec<NativeSqlCell>,
     pub create: bool,
     pub received_uses_changed: Option<bool>,
     pub write_columns: Option<Vec<String>>,
@@ -57,7 +58,7 @@ impl TryFrom<ChangedRow> for NativeChangedRow {
             slot: row.slot,
             position: safe_number(row.position)?,
             payload: row.payload,
-            extra: row.extra,
+            extra: row.extra.into_iter().map(NativeSqlCell).collect(),
             create: row.create,
             received_uses_changed: row.received_uses_changed,
             write_columns: row.write_columns,

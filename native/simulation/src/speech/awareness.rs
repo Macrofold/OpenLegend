@@ -104,7 +104,7 @@ pub(crate) fn prepare_sound_awareness(
         .and_then(|owners| owners.get(observer_id))
         .and_then(|episodes| episodes.get(source_id));
     let name_bytes = body_name.map_or(0, |name| {
-        name.name.len()
+        name.name.storage_bytes()
             + name.name_form.map_or(0, str::len)
             + name.indefinite_article.map_or(0, str::len)
     });
@@ -208,7 +208,7 @@ pub(crate) fn prepare_sound_awareness(
         Some(ReceivedReference {
             id: id.to_owned(),
             label: if self_body {
-                "me".to_owned()
+                "me".into()
             } else {
                 name_phrase(
                     &sound

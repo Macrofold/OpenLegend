@@ -75,12 +75,9 @@ pub(crate) fn prepare_obligation_replacement(
     let reservation = budget
         .reserve(bound)
         .map_err(|_| ExperienceError::Capacity)?;
-    let value: Value = serde_json::from_str(before.payload())
-        .map_err(|_| ExperienceError::InvalidBody("commitment memory"))?;
-    let Value::Object(mut body) = value else {
-        return Err(ExperienceError::InvalidBody("commitment memory").into());
-    };
-    let Some(obligation) = body.get("obligation").map(object).transpose()? else {
+    let mut body = memory::MemoryBody::decode(before.payload())?;
+    let projected = body.projection()?;
+    let Some(obligation) = projected.get("obligation").map(object).transpose()? else {
         return Ok(None);
     };
     if number(obligation, "revision")? != expected_revision {
@@ -98,19 +95,23 @@ pub(crate) fn prepare_obligation_replacement(
         text(proposed_obligation, "status")?,
         "fulfilled" | "cancelled"
     );
-    body.insert("obligation".to_owned(), replacement);
-    body.insert("resolved".to_owned(), Value::Bool(resolved));
-    let payload = memory::encoded(&body)?;
+    body.set_raw("obligation", proposed)?;
+    body.set("resolved", &resolved)?;
+    let payload = body.encoded()?;
+    let projected = body.projection()?;
     let law = state.installed.account_law();
-    let header = memory::source_header(&body, actor_id, &payload, &law)?;
-    let mut extra = memory::memory_columns(
-        &body,
+    let header = memory::source_header(&projected, actor_id, &payload, &law)?;
+    let mut extra: Vec<crate::records::SqlCell> = memory::memory_columns(
+        &projected,
         &header,
         &payload,
         &law,
         &state.installed.attention.value().retention,
         &state.installed.schema,
-    )?;
+    )?
+    .into_iter()
+    .map(Into::into)
+    .collect();
     for cell in &mut extra {
         crate::records::save::normalize_cell(cell);
     }

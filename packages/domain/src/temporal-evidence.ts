@@ -998,11 +998,22 @@ export function installTemporalChargeDirectories(
   actor: TemporalActorHistory,
   directories: readonly ReceivedChargeDirectory[],
 ): void {
-  actor.recent = { blocks: { size: 0 }, individuals: { size: 0 } };
-  actor.bytes = 0;
-  actor.count = 0;
-  for (const directory of eligibleReceivedChargeDirectories(directories, actor.frontier))
-    appendTemporalChargeDirectory(actor, directory);
+  const installed = buildReceivedRecentDirectory(directories, actor.frontier);
+  actor.recent = installed.recent;
+  actor.bytes = installed.bytes;
+  actor.count = installed.count;
+}
+/** Complete selected block metadata can rebuild a read cut without a world or
+ * an artificial actor. The same builder restores current SQL actor ownership. */
+export function buildReceivedRecentDirectory(
+  directories: readonly ReceivedChargeDirectory[],
+  frontier: ReceivedFrontier | undefined,
+): { recent: ReceivedRecentDirectory; bytes: number; count: number } {
+  const recent: ReceivedRecentDirectory = { blocks: { size: 0 }, individuals: { size: 0 } };
+  const index = { recent, bytes: 0, count: 0 };
+  for (const directory of eligibleReceivedChargeDirectories(directories, frontier))
+    appendTemporalChargeDirectory(index, directory);
+  return index;
 }
 export function receivedRecentDirectories(
   actor: TemporalActorHistory,
@@ -1010,33 +1021,33 @@ export function receivedRecentDirectories(
   return [...orderedRecordEntries(actor.recent.blocks)].map(([, directory]) => directory);
 }
 function updateRecentIndividuals(
-  actor: TemporalActorHistory,
+  recent: ReceivedRecentDirectory,
   ids: readonly string[],
   direction: 1 | -1,
 ): void {
   for (const id of ids) {
-    const count = (orderedRecordGet(actor.recent.individuals, id) ?? 0) + direction;
+    const count = (orderedRecordGet(recent.individuals, id) ?? 0) + direction;
     if (count < 0) throw new Error('Recent individual membership underflow.');
-    orderedRecordSet(actor.recent.individuals, id, count || undefined);
+    orderedRecordSet(recent.individuals, id, count || undefined);
   }
 }
 function appendTemporalChargeDirectory(
-  actor: TemporalActorHistory,
+  index: { recent: ReceivedRecentDirectory; bytes: number; count: number },
   directory: ReceivedChargeDirectory,
 ): void {
   for (const header of directory.entries) {
     const key = recentBlockKey(directory, header.batchOrder);
-    if (orderedRecordGet(actor.recent.blocks, key))
+    if (orderedRecordGet(index.recent.blocks, key))
       throw new Error('Recent block repeats its canonical address.');
-    orderedRecordSet(actor.recent.blocks, key, {
+    orderedRecordSet(index.recent.blocks, key, {
       actorId: directory.actorId,
       physicalLife: directory.physicalLife,
       epoch: directory.epoch,
       entries: [header],
     });
-    actor.bytes += header.bytes;
-    actor.count += header.count;
-    updateRecentIndividuals(actor, header.individualIds, 1);
+    index.bytes += header.bytes;
+    index.count += header.count;
+    updateRecentIndividuals(index.recent, header.individualIds, 1);
   }
 }
 export function hasTemporalRecentIndividual(
@@ -1132,7 +1143,7 @@ function releaseDirectory(
   for (const header of directory.entries) {
     actor.bytes -= header.bytes;
     actor.count -= header.count;
-    updateRecentIndividuals(actor, header.individualIds, -1);
+    updateRecentIndividuals(actor.recent, header.individualIds, -1);
     for (const id of header.individualIds) released.add(id);
   }
   orderedRecordSet(actor.recent.blocks, key, undefined);

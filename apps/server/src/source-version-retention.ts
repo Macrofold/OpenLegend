@@ -41,9 +41,13 @@ export interface SourceVersionChange extends VersionKey {
 export interface SourceVersionPlan {
   changes: SourceVersionChange[];
 }
+export interface SourceVersionContext {
+  readonly worldId: string;
+  readonly forgotten: ReadonlyMap<string, ReadonlySet<string>>;
+}
 export interface SourceVersionPreparation {
   /** Exact current headers immediately before these mutations, including pending rows. */
-  before: RetentionMetadataView;
+  before: Pick<RetentionMetadataView, 'get'>;
   actorIds?: readonly string[];
   /** Selected original bodies already hydrated by account retirement. */
   previous?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
@@ -187,12 +191,44 @@ export function sourceVersionPreparationNeeded(
   }
   return false;
 }
+/** Existing TypeScript ownership applies the same exact plan to its own
+ * account counters. Native callers capture the finite context and apply that
+ * plan through their sole temporal/accounting journal before acceptance. */
 export async function prepareSourceVersions(
   db: SqlDatabase,
   state: SavedWorld,
   changes: RecordChanges,
   preparation: SourceVersionPreparation,
 ): Promise<{ state: SavedWorld; plan: SourceVersionPlan }> {
+  const actors = new Set<string>();
+  for (const [kind, table] of Object.entries(tables))
+    for (const id of [
+      ...(changes.deletes.get(table) ?? []),
+      ...(changes.writes.get(table) ?? []).map((row) => row.id),
+    ])
+      actors.add((JSON.parse(id) as string[])[kind === 'memory' ? 2 : 3]!);
+  const forgotten = new Map(
+    [...actors].map((actor) => [actor, new Set(state.world.experience?.forgotten[actor])]),
+  );
+  const plan = await prepareSourceVersionPlan(
+    db,
+    { worldId: state.world.id, forgotten },
+    changes,
+    preparation,
+  );
+  const world = applySourceVersionAccounting(state.world, plan);
+  return { state: world === state.world ? state : { ...state, world }, plan };
+}
+
+/** Exact selected source/version planning reads encoded changed records and
+ * immutable actor privacy only. It retains the same bounded SQL predecessor,
+ * dependency and archive queries; no native caller supplies a world adapter. */
+export async function prepareSourceVersionPlan(
+  db: SqlDatabase,
+  context: SourceVersionContext,
+  changes: RecordChanges,
+  preparation: SourceVersionPreparation,
+): Promise<SourceVersionPlan> {
   const selected = preparation.actorIds && new Set(preparation.actorIds);
   type Changed = {
     actorId: string;
@@ -220,6 +256,8 @@ export async function prepareSourceVersions(
       const path = JSON.parse(recordId) as string[],
         actorId = path[kind === 'memory' ? 2 : 3]!;
       if (selected && !selected.has(actorId)) continue;
+      if (!context.forgotten.has(actorId))
+        throw new Error('Selected exact source privacy metadata is unavailable.');
       const row = writes.get(recordId);
       const next = row
         ? ({ source: kind, value: JSON.parse(row.payload) } as ExperienceEntry)
@@ -254,7 +292,7 @@ export async function prepareSourceVersions(
          FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,id TEXT)
          JOIN ${table} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=q.id`,
         )
-        .all(JSON.stringify(requests), state.world.id)) {
+        .all(JSON.stringify(requests), context.worldId)) {
         const item = missing.get(String(old['id']))!;
         item.prior = {
           table,
@@ -335,7 +373,7 @@ export async function prepareSourceVersions(
          FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,source_id TEXT)
          JOIN ${tables[kind]} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
         )
-        .all(JSON.stringify(requests), state.world.id))
+        .all(JSON.stringify(requests), context.worldId))
         found.set(
           sourceKey(String(row['actor_id']), kind, String(row['source_id'])),
           String(row['account_revision']),
@@ -348,7 +386,7 @@ export async function prepareSourceVersions(
     }
   const future = new Map<string, Category>();
   const needed = (value: VersionKey, category: Category) => {
-    if (state.world.experience?.forgotten[value.actorId]?.includes(value.id)) return;
+    if (context.forgotten.get(value.actorId)?.has(value.id)) return;
     const id = key(value),
       old = future.get(id);
     if (old === undefined || priority(category) > priority(old)) future.set(id, category);
@@ -415,8 +453,8 @@ export async function prepareSourceVersions(
       .all(
         JSON.stringify(batch),
         JSON.stringify(changedOwners),
-        ...Object.keys(tables).map(() => state.world.id),
-        state.world.id,
+        ...Object.keys(tables).map(() => context.worldId),
+        context.worldId,
       );
     for (const row of rows)
       needed(
@@ -434,7 +472,7 @@ export async function prepareSourceVersions(
       FROM mind_source_versions v JOIN jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text,revision text)
       ON v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision WHERE v.world_id=?`,
       )
-      .all(JSON.stringify(batch), state.world.id);
+      .all(JSON.stringify(batch), context.worldId);
     for (const row of old) {
       const value = {
         actorId: String(row['actor_id']),
@@ -517,7 +555,7 @@ export async function prepareSourceVersions(
           `SELECT id,source_id,account_revision,payload FROM ${tables[group.kind]}
       WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
         )
-        .all(state.world.id, group.actorId, [...wanted.keys()])) {
+        .all(context.worldId, group.actorId, [...wanted.keys()])) {
         const item = wanted.get(String(row['id']));
         if (!item || item.prior!.columns['account_revision'] !== row['account_revision'])
           throw new Error('Selected exact source changed before retention.');
@@ -572,8 +610,7 @@ export async function prepareSourceVersions(
       desired,
     });
   }
-  const world = applySourceVersionAccounting(state.world, plan);
-  return { state: world === state.world ? state : { ...state, world }, plan };
+  return plan;
 }
 
 /** Apply each exact archive delta once on native acceptance. Saving only persists it. */

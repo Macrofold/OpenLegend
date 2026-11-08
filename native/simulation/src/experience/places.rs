@@ -3,7 +3,7 @@
 //! that every other label is unknown. This cache grants no current geometry.
 
 use super::*;
-use crate::encoding::{js_trim, json_record_len};
+use crate::encoding::json_record_len;
 use crate::host::retained_size::{HeapBytes, heap_record, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::install::PersonalEvidencePreparationSettings;
@@ -11,6 +11,7 @@ use crate::reception::{
     EncounterExposure, EvidenceFamily, EvidenceSource, ObservationContribution, ObservationOrigin,
     ObservedLocation, SensoryFacet, SourceRevision,
 };
+use crate::text::JsText;
 use std::mem::size_of;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -24,7 +25,7 @@ pub enum PlaceProvenance {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct KnownPlaceCapsule {
     pub place_id: String,
-    pub label: String,
+    pub label: JsText,
     pub location: ObservedLocation,
     pub source: EvidenceSource,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -62,7 +63,7 @@ struct PlaceCapsuleOwner {
 }
 pub struct PreparedKnownPlaceEvidence {
     capsules: Vec<Arc<PlaceCapsuleOwner>>,
-    labels: IndexMap<String, Vec<usize>>,
+    labels: IndexMap<JsText, Vec<usize>>,
     bytes: u64,
     _reservation: ByteReservation,
 }
@@ -83,7 +84,7 @@ pub(super) struct KnownPlacePreparation {
 impl KnownPlaceCapsule {
     fn validate(&self) -> Result<(), ExperienceError> {
         if self.place_id.is_empty()
-            || js_trim(&self.label).is_empty()
+            || self.label.trim_is_empty()
             || self.facet_ordinal > MAX_SAFE_INTEGER
             || !self.observed_at.is_finite()
             || !self.acquired_at.is_finite()
@@ -107,7 +108,7 @@ impl PreparedKnownPlaceEvidence {
     pub fn capsules(&self) -> impl Iterator<Item = &KnownPlaceCapsule> {
         self.capsules.iter().map(|owner| &owner.value)
     }
-    pub fn matching(&self, label: &str) -> impl Iterator<Item = &KnownPlaceCapsule> {
+    pub fn matching(&self, label: &JsText) -> impl Iterator<Item = &KnownPlaceCapsule> {
         self.labels
             .get(label)
             .into_iter()
@@ -125,7 +126,7 @@ impl PreparedKnownPlaceEvidence {
         let key_bytes = capsules
             .iter()
             .try_fold(0usize, |bytes, capsule| {
-                bytes.checked_add(capsule.value.label.len())
+                bytes.checked_add(capsule.value.label.storage_bytes())
             })
             .ok_or(ExperienceError::Capacity)?;
         let upper = heap_sum([
@@ -134,7 +135,7 @@ impl PreparedKnownPlaceEvidence {
                 .capacity()
                 .checked_mul(size_of::<Arc<PlaceCapsuleOwner>>())
                 .ok_or(ExperienceError::Capacity)?,
-            map_storage::<String, Vec<usize>>(
+            map_storage::<JsText, Vec<usize>>(
                 capsules
                     .len()
                     .checked_mul(2)
@@ -151,7 +152,7 @@ impl PreparedKnownPlaceEvidence {
         let mut reservation = budget
             .reserve(upper)
             .map_err(|_| ExperienceError::Capacity)?;
-        let mut labels = IndexMap::<String, Vec<usize>>::new();
+        let mut labels = IndexMap::<JsText, Vec<usize>>::new();
         labels
             .try_reserve(capsules.len())
             .map_err(|_| ExperienceError::Capacity)?;
@@ -205,7 +206,7 @@ impl PreparedKnownPlaceEvidence {
         // Source preparation groups the final list by first label insertion,
         // preserving every duplicate place/label and each original row order.
         let metadata = heap_sum([
-            map_storage::<&str, Vec<&KnownPlaceCapsule>>(
+            map_storage::<&JsText, Vec<&KnownPlaceCapsule>>(
                 input
                     .len()
                     .checked_mul(2)
@@ -223,7 +224,7 @@ impl PreparedKnownPlaceEvidence {
         let _scratch = budget
             .reserve(metadata)
             .map_err(|_| ExperienceError::Capacity)?;
-        let mut grouped = IndexMap::<&str, Vec<&KnownPlaceCapsule>>::new();
+        let mut grouped = IndexMap::<&JsText, Vec<&KnownPlaceCapsule>>::new();
         grouped
             .try_reserve(input.len())
             .map_err(|_| ExperienceError::Capacity)?;
@@ -313,7 +314,7 @@ pub(super) fn place_capsule(
     };
     Ok(Some(KnownPlaceCapsule {
         place_id: id.clone(),
-        label: label.clone(),
+        label: label.clone().into(),
         location: position.clone(),
         source: EvidenceSource {
             family: EvidenceFamily::NativeExposure,
@@ -685,7 +686,7 @@ pub(crate) fn temporal_known_place_capsules(
         }
         values.push(KnownPlaceCapsule {
             place_id: id.clone(),
-            label: label.clone(),
+            label: label.clone().into(),
             location: location.location.clone(),
             source: original.source.clone(),
             facet_ordinal: original.ordinal,

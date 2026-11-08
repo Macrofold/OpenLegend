@@ -1,3 +1,4 @@
+import { selectedTimeRules } from './world-composition.js';
 import { beginPerceptionMeasurements } from './perception-timing.js';
 import { beginAttentionPreparation } from './attention.js';
 import { materializeNativeEntity } from './native-values.js';
@@ -621,7 +622,7 @@ import {
 
 export const SIMULATION_RULES = {
   version: 3,
-  maxAdvanceSeconds: 86400,
+  maxAdvanceSeconds: BASE_TIME_POLICY.maxAdvanceSeconds,
   ...BASE_ACTION_DEFAULTS,
 } as const;
 
@@ -7547,7 +7548,7 @@ function* advanceWorldNative(
         // Rebuild that global physical bound; only unrelated rule calculations are local.
         const travelFor = motionTravelBounds(
           world,
-          BASE_TIME_POLICY.idleHorizonSeconds,
+          selectedTimeRules(world).idleHorizonSeconds,
           participants.actors,
           participants.ambient,
         );
@@ -7616,13 +7617,13 @@ function* advanceWorldNative(
         const status = statusIds.flatMap(prepareParticipantStatus);
         const travelFor = motionTravelBounds(
           world,
-          BASE_TIME_POLICY.idleHorizonSeconds,
+          selectedTimeRules(world).idleHorizonSeconds,
           participants.actors,
           participants.ambient,
         );
         const interval = nativeInterval(
           world,
-          BASE_TIME_POLICY.idleHorizonSeconds,
+          selectedTimeRules(world).idleHorizonSeconds,
           participants.actors,
           participants.ambient,
           statusIds,

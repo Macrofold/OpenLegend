@@ -30,7 +30,7 @@ pub struct ActionResultOutcome {
 pub struct ActionResultValue {
     pub kind: ActionResultKind,
     pub id: String,
-    pub text: String,
+    pub text: crate::text::JsText,
     pub status: ActionResultStatus,
     pub outcome: ActionResultOutcome,
     pub facts: Vec<ActivityFact>,

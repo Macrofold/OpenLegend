@@ -83,7 +83,7 @@ impl Serialize for Participants<'_> {
 struct PromiseMemoryDraft<'a> {
     kind: &'static str,
     source: &'static str,
-    summary: &'a str,
+    summary: &'a crate::text::JsText,
     event_id: &'a str,
     event_type: &'a str,
     speaker_id: &'a str,
@@ -147,7 +147,7 @@ pub(crate) fn prepare_spoken_promise(
     let input_bytes = actor
         .len()
         .checked_add(rules.summary_prefix.len())
-        .and_then(|bytes| bytes.checked_add(text.len()))
+        .and_then(|bytes| bytes.checked_add(text.storage_bytes()))
         .and_then(|bytes| {
             bytes.checked_add(4 * size_of::<NarrationPart>() + size_of::<Narration>() + 1)
         })
@@ -164,8 +164,8 @@ pub(crate) fn prepare_spoken_promise(
         role: PersonRole::Subject,
         article: None,
     });
-    parts.push(NarrationPart::Literal(" ".to_owned()));
-    parts.push(NarrationPart::Literal(rules.summary_prefix.clone()));
+    parts.push(NarrationPart::Literal(" ".to_owned().into()));
+    parts.push(NarrationPart::Literal(rules.summary_prefix.clone().into()));
     parts.push(NarrationPart::Literal(text.clone()));
     let narration = Narration { parts };
     let render_bound =
@@ -208,7 +208,7 @@ pub(crate) fn prepare_spoken_promise(
     reservation
         .resize(
             input_bytes
-                .checked_add(summary.capacity())
+                .checked_add(summary.storage_bytes())
                 .and_then(|size| size.checked_add(bytes))
                 .ok_or(ExperienceError::Capacity)?,
         )
@@ -229,38 +229,61 @@ pub(crate) fn record_spoken_promise(
     crate::experience::acquire_memory(core, admission, &schema)
 }
 
-fn suffix<'a>(text: &'a str, phrase: &str) -> Option<&'a str> {
-    let prefix = text.get(..phrase.len())?;
-    prefix
-        .eq_ignore_ascii_case(phrase)
-        .then(|| &text[phrase.len()..])
+fn suffix<'a>(
+    text: crate::text::TextSlice<'a>,
+    phrase: &str,
+) -> Option<crate::text::TextSlice<'a>> {
+    let length = phrase.encode_utf16().count();
+    if length > text.units_len()
+        || !text
+            .units()
+            .take(length)
+            .zip(phrase.encode_utf16())
+            .all(|(left, right)| {
+                let lower = |unit: u16| {
+                    if (65..=90).contains(&unit) {
+                        unit + 32
+                    } else {
+                        unit
+                    }
+                };
+                lower(left) == lower(right)
+            })
+    {
+        return None;
+    }
+    text.slice(length..text.units_len())
 }
 
 impl PromiseRules {
     pub(crate) fn recognize<'a>(&'a self, words: &SpeechWords) -> Option<SpokenPromise<'a>> {
-        let after = suffix(words.text(), &self.admission_prefix)?;
-        let first = after.chars().next()?;
-        if !is_js_whitespace(first) || after.trim_start_matches(is_js_whitespace).is_empty() {
+        let after = suffix(words.text().borrowed(), &self.admission_prefix)?;
+        let first = after
+            .units()
+            .next()
+            .and_then(|unit| char::from_u32(u32::from(unit)))?;
+        if !is_js_whitespace(first) || after.trimmed().is_empty() {
             return None;
         }
-        let mut lower = js_trim(words.lowercase());
+        let mut lower = words.lowercase().borrowed().trimmed();
         if let Some(mark) = self
             .ignored_terminal_punctuation
             .iter()
-            .find(|mark| lower.ends_with(mark.as_str()))
+            .find(|mark| lower.ends_with_str(mark))
         {
-            lower = &lower[..lower.len() - mark.len()];
+            lower = lower.slice(0..lower.units_len() - mark.encode_utf16().count())?;
         }
         let completion = suffix(lower, &self.gather_prefix).and_then(|named| {
             if named.is_empty()
                 || named
-                    .chars()
-                    .any(|c| matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}'))
+                    .units()
+                    .any(|unit| matches!(unit, 10 | 13 | 0x2028 | 0x2029))
             {
                 return None;
             }
             let mut matches = self.definitions.iter().filter(|definition| {
-                definition.normalized_id == named || definition.normalized_name == named
+                named.equals_str(&definition.normalized_id)
+                    || named.equals_str(&definition.normalized_name)
             });
             let definition = matches.next()?;
             if matches.next().is_some() {

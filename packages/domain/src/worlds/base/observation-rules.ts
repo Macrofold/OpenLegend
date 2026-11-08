@@ -3,6 +3,36 @@
 export const BASE_OBSERVATION_RULES = {
   id: 'wilderness:observation-rules',
   version: 1,
+  pileKind: 'item-pile',
+  outwardActivity: {
+    actions: ['strike', 'hunt', 'aim', 'shoot-once'],
+    preparingPhase: 'preparing',
+  },
+  sighting: {
+    routine: { importance: 0, urgency: 0, semanticTrigger: false },
+    changedBeing: { importance: 6, urgency: 2, semanticTrigger: true },
+    episodeGraceSeconds: 0.5,
+  },
+  body: {
+    unavailableCode: 'actor-unavailable',
+    unavailableText: 'The body can no longer continue this work.',
+    incapacitatedEvent: 'incapacitated',
+    deathEvent: 'death',
+    playerDeathEvent: 'player-death',
+    rottingEvent: 'body-rotting',
+    removedEvent: 'body-removed',
+    healthEvent: 'attribute-changed',
+    damagedVerb: 'took',
+    recoveredVerb: 'recovered',
+    damageName: 'damage',
+  },
+  conditions: {
+    eventType: 'body-condition',
+    recoveryImportance: 3,
+    importance: 6,
+    criticalUrgency: 7,
+    urgency: 4,
+  },
   outward: {
     incapacitated: 'incapacitated',
     alive: 'alive',

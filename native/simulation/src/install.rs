@@ -18,6 +18,8 @@ use crate::records::{CurrentRecords, EntityOrdering, InstalledRow, OwnerCoverage
 use crate::values::{DefinitionPin, is_safe_record_id};
 
 mod content;
+mod inventory;
+pub(crate) use inventory::ClosedInventory;
 mod knowledge;
 mod retained;
 pub(crate) use knowledge::{LearnedCapabilities, install_learned_capabilities};
@@ -32,7 +34,9 @@ pub(crate) use definitions::{
 mod geometry;
 pub(crate) use geometry::install_geometry;
 mod core;
+mod scope;
 pub(crate) use core::{CoreInstallError, CoreInstallInput, CoreInstallation, assemble_core};
+pub(crate) use scope::finish_record_ownership;
 
 mod physical;
 pub(crate) mod rows;

@@ -975,18 +975,19 @@ impl CommandCursor {
                                     role: PersonRole::Subject,
                                     article: None,
                                 },
-                                NarrationPart::Literal(" ".to_owned()),
+                                NarrationPart::Literal(" ".into()),
                                 NarrationPart::Literal(
                                     ordinary
                                         .departure(point)
-                                        .map_err(|_| ExecutionError::Invariant)?,
+                                        .map_err(|_| ExecutionError::Invariant)?
+                                        .into(),
                                 ),
                             ],
                         };
                         let mut data = IndexMap::new();
                         data.insert(
                             "actionType".to_owned(),
-                            crate::reception::EventScalar::Text("move".to_owned()),
+                            crate::reception::EventScalar::Text(("move".to_owned()).into()),
                         );
                         let event = core.stage_event(EventEmissionIntent {
                             event_type: ordinary.action_started_event.clone(),
@@ -1266,7 +1267,7 @@ impl CommandCursor {
                         let name = reader
                             .observer_name(target_id)
                             .map_err(ExecutionError::Received)?;
-                        let bytes = name.name.len() * 3
+                        let bytes = name.name.storage_bytes() * 3
                             + target_id.len()
                             + 2 * std::mem::size_of::<NarrationPart>()
                             + 32;

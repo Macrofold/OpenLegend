@@ -20,12 +20,34 @@ mod save;
 pub(crate) use emission::{BegunOccurrence, EmissionError, begin_staged_occurrence};
 pub(crate) use save::encode_occurrence_changes;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum EmissionText {
-    Literal(String),
+    Literal(crate::text::JsText),
     Captured(CapturedNarration),
     Narration(Narration),
+}
+impl<'de> Deserialize<'de> for EmissionText {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(de)?;
+        if raw.get().starts_with('"') {
+            serde_json::from_str(raw.get())
+                .map(Self::Literal)
+                .map_err(serde::de::Error::custom)
+        } else {
+            let fields =
+                crate::encoding::RawFields::parse(raw.get()).map_err(serde::de::Error::custom)?;
+            if fields.contains("kind") {
+                serde_json::from_str(raw.get())
+                    .map(Self::Captured)
+                    .map_err(serde::de::Error::custom)
+            } else {
+                serde_json::from_str(raw.get())
+                    .map(Self::Narration)
+                    .map_err(serde::de::Error::custom)
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

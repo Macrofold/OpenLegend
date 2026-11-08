@@ -7,15 +7,10 @@ export function nativeUtterance(text: string): {
   words: Array<{ start: number; end: number }>;
   lowercase: string;
 } {
-  let previous = 0;
-  let bytes = 0;
-  const words = prepareSpeechWords(text).map(({ index, segment }) => {
-    bytes += Buffer.byteLength(text.slice(previous, index));
-    const start = bytes;
-    bytes += Buffer.byteLength(segment);
-    previous = index + segment.length;
-    return { start, end: bytes };
-  });
+  const words = prepareSpeechWords(text).map(({ index, segment }) => ({
+    start: index,
+    end: index + segment.length,
+  }));
   return { words, lowercase: text.toLowerCase() };
 }
 

@@ -4,11 +4,14 @@
 
 use crate::encoding::{is_js_whitespace, js_trim};
 use crate::state::Named;
+use crate::text::JsText;
 use crate::values::{deserialize_present_option, is_safe_record_id};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod numbers;
 mod retained_size;
+pub(crate) use numbers::display_number;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -36,10 +39,10 @@ pub enum GrammaticalPerson {
     Third,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged, deny_unknown_fields)]
 pub enum NarrationPart {
-    Literal(String),
+    Literal(JsText),
     Participant {
         #[serde(rename = "entityId")]
         entity_id: String,
@@ -86,50 +89,91 @@ pub struct CapturedNarration {
     pub person: GrammaticalPerson,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum NativeText {
-    Literal(String),
+    Literal(JsText),
     Captured(CapturedNarration),
+}
+
+impl<'de> Deserialize<'de> for NativeText {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(de)?;
+        if raw.get().starts_with('"') {
+            serde_json::from_str(raw.get())
+                .map(Self::Literal)
+                .map_err(serde::de::Error::custom)
+        } else {
+            serde_json::from_str(raw.get())
+                .map(Self::Captured)
+                .map_err(serde::de::Error::custom)
+        }
+    }
+}
+impl<'de> Deserialize<'de> for NarrationPart {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(de)?;
+        let parse = || -> Result<Self, String> {
+            if raw.get().starts_with('"') {
+                return serde_json::from_str(raw.get())
+                    .map(Self::Literal)
+                    .map_err(|error| error.to_string());
+            }
+            let mut fields = crate::encoding::RawFields::parse(raw.get())?;
+            let result = if fields.contains("entityId") {
+                Self::Participant {
+                    entity_id: fields.take("entityId")?,
+                    role: fields.take("role")?,
+                    article: fields.optional("article")?,
+                }
+            } else {
+                Self::Verb {
+                    subject_id: fields.take("subjectId")?,
+                    verb: fields.take("verb")?,
+                }
+            };
+            fields.finish()?;
+            Ok(result)
+        };
+        parse().map_err(serde::de::Error::custom)
+    }
 }
 
 fn ascii_word(character: char) -> bool {
     character.is_ascii_alphanumeric() || character == '_'
 }
-fn boundary_after(value: &str, prefix: &str) -> bool {
-    value.starts_with(prefix)
-        && value[prefix.len()..]
-            .chars()
-            .next()
-            .is_none_or(|next| !ascii_word(next))
+fn ascii_unit(unit: u16) -> bool {
+    unit <= 127 && (unit as u8).is_ascii_alphanumeric() || unit == 95
 }
-
-pub fn canonical_name(name: &str, form: Option<&str>) -> String {
-    let name = js_trim(name);
+fn boundary_after(value: &JsText, prefix: &str) -> bool {
+    value.starts_with_str(prefix)
+        && value
+            .unit_at(prefix.len())
+            .is_none_or(|next| !ascii_unit(next))
+}
+pub fn canonical_name(name: &JsText, form: Option<&str>) -> JsText {
+    let name = name.trimmed();
     if form == Some("proper") {
-        return name.to_owned();
+        return name;
     }
-    let lower = name.to_ascii_lowercase();
+    let lower = name.ascii_lowercase();
     for prefix in ["an", "a", "the"] {
-        if lower.starts_with(prefix) {
-            let rest = &name[prefix.len()..];
-            if rest.chars().next().is_some_and(is_js_whitespace) {
-                // The source pattern removes only the whitespace after the
-                // article. Trailing content has already had its outer trim.
-                return rest.trim_start_matches(is_js_whitespace).to_owned();
-            }
+        if lower.starts_with_str(prefix)
+            && name
+                .unit_at(prefix.len())
+                .is_some_and(|unit| char::from_u32(u32::from(unit)).is_some_and(is_js_whitespace))
+        {
+            return name.slice(prefix.len()..name.units_len()).trimmed();
         }
     }
-    name.to_owned()
+    name
 }
-
-pub fn valid_name_parts(name: &str, form: Option<&str>, article: Option<&str>) -> bool {
+pub fn valid_name_parts(name: &JsText, form: Option<&str>, article: Option<&str>) -> bool {
     !name.is_empty()
         && form.is_none_or(|form| matches!(form, "count" | "proper" | "plural" | "mass"))
         && article.is_none_or(|article| matches!(article, "a" | "an"))
-        && canonical_name(name, form) == name
+        && canonical_name(name, form) == *name
 }
-
 pub fn valid_name(named: &Named) -> bool {
     valid_name_parts(
         &named.name,
@@ -137,48 +181,55 @@ pub fn valid_name(named: &Named) -> bool {
         named.indefinite_article.as_deref(),
     )
 }
-
-fn indefinite_article(name: &str) -> &'static str {
-    let lower = name.to_ascii_lowercase();
+fn indefinite_article(name: &JsText) -> &'static str {
+    let lower = name.ascii_lowercase();
     if ["honest", "honor", "honour", "hour", "heir"]
         .iter()
-        .any(|prefix| lower.starts_with(prefix))
+        .any(|prefix| lower.starts_with_str(prefix))
         || boundary_after(&lower, "herb")
         || boundary_after(&lower, "x-ray")
     {
         return "an";
     }
-    let uni = lower.strip_prefix("uni").is_some_and(|rest| {
-        rest.chars()
-            .next()
-            .is_none_or(|next| !matches!(next, 'n' | 'm' | 'd'))
-    });
-    let u_pair = lower.as_bytes().get(0..3).is_some_and(|chars| {
-        chars[0] == b'u' && b"bcfhjkqrst".contains(&chars[1]) && b"aeiou".contains(&chars[2])
-    });
+    let uni = lower.starts_with_str("uni")
+        && lower
+            .unit_at(3)
+            .is_none_or(|unit| !matches!(unit, 110 | 109 | 100));
+    let u_pair = lower.unit_at(0) == Some(117)
+        && lower
+            .unit_at(1)
+            .is_some_and(|unit| unit <= 127 && b"bcfhjkqrst".contains(&(unit as u8)))
+        && lower
+            .unit_at(2)
+            .is_some_and(|unit| unit <= 127 && b"aeiou".contains(&(unit as u8)));
     if boundary_after(&lower, "one")
         || boundary_after(&lower, "once")
-        || lower.starts_with("ewe")
-        || lower.starts_with("eul")
-        || lower.starts_with("eur")
+        || ["ewe", "eul", "eur", "user", "usual"]
+            .iter()
+            .any(|prefix| lower.starts_with_str(prefix))
         || uni
         || u_pair
-        || lower.starts_with("user")
         || boundary_after(&lower, "use")
-        || lower.starts_with("usual")
     {
         return "a";
     }
-    let uppercase = name.bytes().take_while(u8::is_ascii_uppercase).count();
-    if uppercase > 0 {
-        let next = name[uppercase..].chars().next();
-        if next.is_none_or(|next| !ascii_word(next) || next == '-' || next.is_ascii_digit()) {
-            return if b"AEFHILMNORSX".contains(&name.as_bytes()[0]) {
-                "an"
-            } else {
-                "a"
-            };
-        }
+    let uppercase = name
+        .units()
+        .take_while(|unit| (65..=90).contains(unit))
+        .count();
+    if uppercase > 0
+        && name
+            .unit_at(uppercase)
+            .is_none_or(|next| !ascii_unit(next) || next == 45 || (48..=57).contains(&next))
+    {
+        return if name
+            .unit_at(0)
+            .is_some_and(|unit| b"AEFHILMNORSX".contains(&(unit as u8)))
+        {
+            "an"
+        } else {
+            "a"
+        };
     }
     if ["8", "11", "18"]
         .iter()
@@ -187,35 +238,18 @@ fn indefinite_article(name: &str) -> &'static str {
         return "an";
     }
     if lower
-        .as_bytes()
-        .first()
-        .is_some_and(|first| b"aeiou".contains(first))
+        .unit_at(0)
+        .is_some_and(|unit| unit <= 127 && b"aeiou".contains(&(unit as u8)))
     {
         "an"
     } else {
         "a"
     }
 }
-
-fn first_case(value: &str, upper: bool) -> String {
-    let Some(first) = value.chars().next() else {
-        return String::new();
-    };
-    // JavaScript cases value[0], a single UTF-16 code unit. A supplementary
-    // character begins with an unpaired high surrogate in that operation.
-    if first.len_utf16() == 2 {
-        return value.to_owned();
-    }
-    let mut result: String = if upper {
-        first.to_uppercase().collect()
-    } else {
-        first.to_lowercase().collect()
-    };
-    result.push_str(&value[first.len_utf8()..]);
-    result
+fn first_case(value: &JsText, upper: bool) -> JsText {
+    value.first_case(upper)
 }
-
-pub fn name_phrase(named: &Named, article: NameArticle, capitalize: bool) -> String {
+pub fn name_phrase(named: &Named, article: NameArticle, capitalize: bool) -> JsText {
     let name = canonical_name(&named.name, named.name_form.as_deref());
     if name.is_empty() {
         return name;
@@ -233,11 +267,12 @@ pub fn name_phrase(named: &Named, article: NameArticle, capitalize: bool) -> Str
     } else {
         ""
     };
-    let mut characters = name.chars();
-    let first = characters.next().expect("name is nonempty");
-    let second = characters.next();
-    let keep_initial = first.is_ascii_uppercase()
-        && second.is_none_or(|next| next.is_ascii_uppercase() || !ascii_word(next));
+    let keep_initial = name
+        .unit_at(0)
+        .is_some_and(|unit| (65..=90).contains(&unit))
+        && name
+            .unit_at(1)
+            .is_none_or(|next| (65..=90).contains(&next) || !ascii_unit(next));
     let noun = if article != NameArticle::None && form != "proper" && !keep_initial {
         first_case(&name, false)
     } else {
@@ -246,7 +281,10 @@ pub fn name_phrase(named: &Named, article: NameArticle, capitalize: bool) -> Str
     let phrase = if prefix.is_empty() {
         noun
     } else {
-        format!("{prefix} {noun}")
+        let mut text: JsText = prefix.into();
+        text.push_str(" ");
+        text.push_text(&noun);
+        text
     };
     if capitalize && form != "proper" {
         first_case(&phrase, true)
@@ -274,9 +312,9 @@ pub fn person_phrase(
     self_subject: bool,
     article: NameArticle,
     person: GrammaticalPerson,
-) -> String {
+) -> JsText {
     if self_subject && role != PersonRole::Name {
-        return personal_pronoun(role, person).to_owned();
+        return personal_pronoun(role, person).into();
     }
     if role == PersonRole::Reflexive {
         return if named.name_form.as_deref() == Some("plural") {
@@ -284,12 +322,12 @@ pub fn person_phrase(
         } else {
             "themself"
         }
-        .to_owned();
+        .into();
     }
     let mut phrase = name_phrase(named, article, false);
     if role == PersonRole::Possessive {
-        if named.name_form.as_deref() == Some("plural") && phrase.ends_with('s') {
-            phrase.push('’');
+        if named.name_form.as_deref() == Some("plural") && phrase.ends_with_str("s") {
+            phrase.push_str("’");
         } else {
             phrase.push_str("’s");
         }
@@ -386,9 +424,9 @@ pub fn render_narration_parts(
     names: &IndexMap<String, Named>,
     self_id: Option<&str>,
     person: GrammaticalPerson,
-) -> String {
+) -> JsText {
     let unknown = Named {
-        name: "unidentified individual".to_owned(),
+        name: "unidentified individual".into(),
         name_form: None,
         indefinite_article: None,
     };
@@ -399,10 +437,10 @@ pub fn render_narration_parts(
     } else {
         GrammaticalPerson::First
     };
-    let mut text = String::new();
+    let mut text = JsText::default();
     for part in &narration.parts {
         match part {
-            NarrationPart::Literal(literal) => text.push_str(literal),
+            NarrationPart::Literal(literal) => text.push_text(literal),
             NarrationPart::Verb { subject_id, verb } => text.push_str(&present_tense(
                 verb,
                 personal && self_id == Some(subject_id.as_str()),
@@ -426,13 +464,19 @@ pub fn render_narration_parts(
                 } else {
                     person_phrase(subject, *role, self_subject, article, grammatical)
                 };
-                if (text.is_empty() || js_trim(&text).ends_with(['.', '!', '?']))
+                if (text.is_empty()
+                    || text
+                        .borrowed()
+                        .trimmed()
+                        .units()
+                        .last()
+                        .is_some_and(|unit| matches!(unit, 46 | 33 | 63)))
                     && ((self_subject && *role != PersonRole::Name)
                         || subject.name_form.as_deref() != Some("proper"))
                 {
-                    text.push_str(&first_case(&value, true));
+                    text.push_text(&first_case(&value, true));
                 } else {
-                    text.push_str(&value);
+                    text.push_text(&value);
                 }
             }
         }
@@ -440,7 +484,7 @@ pub fn render_narration_parts(
     text
 }
 
-pub fn native_text(text: &NativeText) -> String {
+pub fn native_text(text: &NativeText) -> JsText {
     match text {
         NativeText::Literal(value) => value.clone(),
         NativeText::Captured(value) => render_narration_parts(
@@ -462,7 +506,7 @@ pub(crate) fn narration_render_bound(
 ) -> Option<usize> {
     let bytes = narration.parts.iter().try_fold(0usize, |bytes, part| {
         bytes.checked_add(match part {
-            NarrationPart::Literal(text) => text.len(),
+            NarrationPart::Literal(text) => text.storage_bytes(),
             NarrationPart::Participant { entity_id, .. } => name_bytes(entity_id)
                 .unwrap_or("someone".len())
                 .checked_mul(12)?
@@ -475,9 +519,9 @@ pub(crate) fn narration_render_bound(
 
 pub(crate) fn native_text_bound(text: &NativeText) -> Option<usize> {
     match text {
-        NativeText::Literal(text) => Some(text.len()),
+        NativeText::Literal(text) => Some(text.storage_bytes()),
         NativeText::Captured(captured) => narration_render_bound(&captured.narration, |id| {
-            captured.names.get(id).map(|name| name.name.len())
+            captured.names.get(id).map(|name| name.name.storage_bytes())
         }),
     }
 }
@@ -507,30 +551,35 @@ pub struct SpeechPresentationInput<'a> {
     pub seen: bool,
     pub intelligibility: Intelligibility,
     pub delivery: Option<SpeechDelivery>,
-    pub words: &'a str,
+    pub words: &'a JsText,
     pub second_person: bool,
 }
 
 pub struct SpeechPresentation {
-    pub attribution: String,
-    pub quotation: Option<String>,
-    pub detail: String,
-    pub description: String,
+    pub attribution: JsText,
+    pub quotation: Option<JsText>,
+    pub detail: JsText,
+    pub description: JsText,
 }
 
 /// A heard bearing is language over already acquired facts. It performs no
 /// source lookup and does not turn direction into a remembered location.
-pub fn sound_description(sound: &crate::reception::PerceivedSound) -> String {
+pub fn sound_description(sound: &crate::reception::PerceivedSound) -> JsText {
     use crate::reception::{Elevation, SoundAcquisition};
     let source = if sound.acquisition == SoundAcquisition::SelfBody {
-        Some("my own body".to_owned())
+        Some("my own body".into())
     } else {
         sound
             .visible_source
             .as_ref()
             .map(|source| name_phrase(&source.description, NameArticle::Indefinite, false))
     };
-    let direction = sound.direction.map(|direction| {
+    let mut text: JsText = "I heard a sound".into();
+    if let Some(source) = source {
+        text.push_str(" from ");
+        text.push_text(&source);
+    }
+    if let Some(direction) = sound.direction {
         let sector = [
             "east",
             "southeast",
@@ -541,50 +590,31 @@ pub fn sound_description(sound: &crate::reception::PerceivedSound) -> String {
             "north",
             "northeast",
         ][direction.sector as usize];
-        let elevation = match direction.elevation {
+        text.push_str(" to the ");
+        text.push_str(sector);
+        text.push_str(match direction.elevation {
             Elevation::Above => " and above",
             Elevation::Level => "",
             Elevation::Below => " and below",
-        };
-        (sector, elevation)
-    });
-    let mut text = String::with_capacity(
-        "I heard a sound.".len()
-            + source
-                .as_ref()
-                .map_or(0, |source| " from ".len() + source.len())
-            + direction.map_or(0, |(sector, elevation)| {
-                " to the ".len() + sector.len() + elevation.len()
-            }),
-    );
-    text.push_str("I heard a sound");
-    if let Some(source) = source {
-        text.push_str(" from ");
-        text.push_str(&source);
+        });
     }
-    if let Some((sector, elevation)) = direction {
-        text.push_str(" to the ");
-        text.push_str(sector);
-        text.push_str(elevation);
-    }
-    text.push('.');
+    text.push_str(".");
     text
 }
-
 pub fn speech_presentation(input: SpeechPresentationInput<'_>) -> SpeechPresentation {
     let first = !input.second_person;
-    let speaker = if input.self_speaker {
-        if first { "I" } else { "You" }.to_owned()
+    let speaker: JsText = if input.self_speaker {
+        if first { "I" } else { "You" }.into()
     } else if let Some(named) = input.speaker {
         name_phrase(named, NameArticle::Indefinite, true)
     } else {
-        "Someone nearby".to_owned()
+        "Someone nearby".into()
     };
     let plural = !input.self_speaker
         && input
             .speaker
             .is_some_and(|named| named.name_form.as_deref() == Some("plural"));
-    let recipient = if input.addressed {
+    let recipient: Option<JsText> = if input.addressed {
         Some(
             if input.self_speaker {
                 if first { "myself" } else { "yourself" }
@@ -593,7 +623,7 @@ pub fn speech_presentation(input: SpeechPresentationInput<'_>) -> SpeechPresenta
             } else {
                 "you"
             }
-            .to_owned(),
+            .into(),
         )
     } else if let Some(named) = input.addressee {
         Some(name_phrase(named, NameArticle::Indefinite, false))
@@ -604,32 +634,32 @@ pub fn speech_presentation(input: SpeechPresentationInput<'_>) -> SpeechPresenta
             } else {
                 "someone else"
             }
-            .to_owned(),
+            .into(),
         )
     } else {
         None
     };
-    let destination = if let Some(recipient) = recipient {
-        format!(" to {recipient}")
-    } else if input.directed {
-        String::new()
-    } else {
-        " aloud".to_owned()
-    };
+    let mut destination = JsText::default();
+    if let Some(recipient) = recipient {
+        destination.push_str(" to ");
+        destination.push_text(&recipient);
+    } else if !input.directed {
+        destination.push_str(" aloud");
+    }
+    let mut attribution = speaker;
     if input.seen {
-        let attribution = format!(
-            "{speaker} {} to be speaking",
-            if input.self_speaker || plural {
-                "appear"
-            } else {
-                "appears"
-            }
-        );
+        attribution.push_str(if input.self_speaker || plural {
+            " appear to be speaking"
+        } else {
+            " appears to be speaking"
+        });
+        let mut description = attribution.clone();
+        description.push_str(".");
         return SpeechPresentation {
-            description: format!("{attribution}."),
+            description,
             attribution,
             quotation: None,
-            detail: "No words were heard.".to_owned(),
+            detail: "No words were heard.".into(),
         };
     }
     if input.intelligibility == Intelligibility::None {
@@ -645,12 +675,18 @@ pub fn speech_presentation(input: SpeechPresentationInput<'_>) -> SpeechPresenta
         } else {
             "is"
         };
-        let attribution = format!("{speaker} {auxiliary} {verb}{destination}");
+        attribution.push_str(" ");
+        attribution.push_str(auxiliary);
+        attribution.push_str(" ");
+        attribution.push_str(verb);
+        attribution.push_text(&destination);
+        let mut description = attribution.clone();
+        description.push_str("; the words are unintelligible.");
         return SpeechPresentation {
-            description: format!("{attribution}; the words are unintelligible."),
+            description,
             attribution,
             quotation: None,
-            detail: "The words are unintelligible.".to_owned(),
+            detail: "The words are unintelligible.".into(),
         };
     }
     let verb = match input.delivery {
@@ -658,20 +694,21 @@ pub fn speech_presentation(input: SpeechPresentationInput<'_>) -> SpeechPresenta
         Some(SpeechDelivery::Shout) => "shouted",
         _ => "said",
     };
-    let attribution = format!("{speaker} {verb}{destination}");
+    attribution.push_str(" ");
+    attribution.push_str(verb);
+    attribution.push_text(&destination);
+    let mut description = attribution.clone();
+    description.push_str(": “");
+    description.push_text(input.words);
+    description.push_str("”");
+    if input.intelligibility == Intelligibility::Partial {
+        description.push_str(" (partly heard).");
+    }
     SpeechPresentation {
-        description: format!(
-            "{attribution}: “{}”{}",
-            input.words,
-            if input.intelligibility == Intelligibility::Partial {
-                " (partly heard)."
-            } else {
-                ""
-            }
-        ),
+        description,
         attribution,
-        quotation: Some(input.words.to_owned()),
-        detail: input.words.to_owned(),
+        quotation: Some(input.words.clone()),
+        detail: input.words.clone(),
     }
 }
 
@@ -749,10 +786,12 @@ pub fn narration_template(
             let Some(token) = parse_narration_token(&template[from + 1..at]) else {
                 continue;
             };
-            parts.push(NarrationPart::Literal(template[end..from].to_owned()));
+            parts.push(NarrationPart::Literal(
+                template[end..from].to_owned().into(),
+            ));
             let value = bindings.get(token.binding);
             let unknown = Named {
-                name: "unknown".to_owned(),
+                name: "unknown".into(),
                 name_form: None,
                 indefinite_article: None,
             };
@@ -768,12 +807,15 @@ pub fn narration_template(
                         verb: verb.to_owned(),
                     });
                 } else {
-                    parts.push(NarrationPart::Literal(present_tense(
-                        verb,
-                        false,
-                        named.name_form.as_deref() == Some("plural"),
-                        GrammaticalPerson::First,
-                    )));
+                    parts.push(NarrationPart::Literal(
+                        present_tense(
+                            verb,
+                            false,
+                            named.name_form.as_deref() == Some("plural"),
+                            GrammaticalPerson::First,
+                        )
+                        .into(),
+                    ));
                 }
             } else {
                 let role = token.role.expect("parsed role or verb");
@@ -785,7 +827,7 @@ pub fn narration_template(
                     });
                 } else {
                     parts.push(NarrationPart::Literal(if role == PersonRole::Name {
-                        name_phrase(named, token.article.unwrap_or(NameArticle::None), false)
+                        name_phrase(named, token.article.unwrap_or(NameArticle::None), false).into()
                     } else {
                         person_phrase(
                             named,
@@ -794,12 +836,13 @@ pub fn narration_template(
                             token.article.unwrap_or(NameArticle::None),
                             GrammaticalPerson::First,
                         )
+                        .into()
                     }));
                 }
             }
             end = at + 1;
         }
     }
-    parts.push(NarrationPart::Literal(template[end..].to_owned()));
+    parts.push(NarrationPart::Literal(template[end..].to_owned().into()));
     Narration { parts }
 }

@@ -1,10 +1,10 @@
 //! Canonical identities and finite compiled row layouts. Encoders borrow the
 //! actual semantic owner; this index retains neither a second body nor children.
 
+use super::SqlCell;
 use super::{ChangedRow, ChangedRows, InstalledRow, RecordLayout};
 use crate::identity::MAX_SAFE_INTEGER;
 use serde::Serialize;
-use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -74,7 +74,7 @@ impl RecordSchema {
         table: &str,
         placement: &RecordPlacement,
         value: &T,
-        extra: Vec<Value>,
+        extra: Vec<SqlCell>,
         create: bool,
     ) -> Result<ChangedRow, RecordEncodingError> {
         let payload = self.layout(table)?.project(value).map_err(|_| {
@@ -90,7 +90,7 @@ impl RecordSchema {
         table: &str,
         placement: &RecordPlacement,
         payload: String,
-        extra: Vec<Value>,
+        extra: Vec<SqlCell>,
         create: bool,
     ) -> Result<ChangedRow, RecordEncodingError> {
         if placement.position > MAX_SAFE_INTEGER || extra.len() != self.layout(table)?.columns.len()

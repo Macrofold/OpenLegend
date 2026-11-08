@@ -14,6 +14,10 @@ pub use crate::worlds::InstalledVoiceFeatures as VoiceFeatures;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod text_decode;
+
+mod source_encoding;
+pub(crate) use source_encoding::event_references_view;
 mod current;
 pub use current::*;
 mod geometry;
@@ -25,6 +29,7 @@ pub use state::*;
 mod materialize;
 pub use materialize::*;
 mod sensors;
+mod visual_source;
 pub use sensors::*;
 mod sound;
 pub use sound::*;
@@ -53,9 +58,13 @@ use current_admission::*;
 mod current_recording;
 use current_recording::*;
 mod retirement;
-pub(crate) use retirement::{EndedCurrentEvidence, end_current_evidence};
+pub(crate) use retirement::{
+    EndedCurrentEvidence, RetiredPerceptionLife, end_current_evidence, retire_perception_life,
+};
 mod warning;
 pub(crate) use warning::acquire_ordinary_warning;
+mod current_lifetime;
+use current_lifetime::CurrentReceptionLifetime;
 mod receiving;
 pub(crate) use current_journal::{CurrentCheckpoint, CurrentContactBatchLease, CurrentJournal};
 use current_write::{
@@ -177,7 +186,7 @@ pub struct ObservedBoundary {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SpeechParticipant {
-    pub name_at_time: String,
+    pub name_at_time: crate::text::JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -192,10 +201,10 @@ pub struct SpeechParticipant {
     pub indefinite_article: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 pub enum SpeechSegment {
-    Heard { text: String },
+    Heard { text: crate::text::JsText },
     Unintelligible,
 }
 
@@ -230,11 +239,11 @@ pub struct PerceivedSpeech {
     pub intelligibility: Intelligibility,
     pub segments: Vec<SpeechSegment>,
     #[serde(deserialize_with = "deserialize_nullable")]
-    pub speaker: Option<SpeechParticipant>,
-    #[serde(deserialize_with = "deserialize_nullable")]
     pub addressing: Option<SpeechAddressing>,
     #[serde(deserialize_with = "deserialize_nullable")]
     pub addressee: Option<SpeechParticipant>,
+    #[serde(deserialize_with = "deserialize_nullable")]
+    pub speaker: Option<SpeechParticipant>,
     #[serde(deserialize_with = "deserialize_nullable")]
     pub delivery: Option<crate::worlds::base_observed::SpeechVolume>,
     #[serde(deserialize_with = "deserialize_nullable")]
@@ -245,7 +254,7 @@ pub struct PerceivedSpeech {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub name_claim: Option<String>,
+    pub name_claim: Option<crate::text::JsText>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -385,13 +394,13 @@ pub struct AttributeView {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub condition: Option<String>,
+    pub condition: Option<crate::text::JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub concern: Option<String>,
+    pub concern: Option<crate::text::JsText>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -580,7 +589,7 @@ pub enum ReferenceRole {
 #[serde(deny_unknown_fields)]
 pub struct ReceivedReference {
     pub id: String,
-    pub label: String,
+    pub label: crate::text::JsText,
     pub role: ReferenceRole,
 }
 
@@ -626,11 +635,11 @@ impl TriggerKind {
 
 /// Only scalar fields already admitted at acquisition are supported by the
 /// current event facet. Nested raw world/event records cannot deserialize here.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum EventScalar {
     Null(()),
-    Text(String),
+    Text(crate::text::JsText),
     Boolean(bool),
     Number(f64),
 }
@@ -677,7 +686,7 @@ pub struct SupportAlias {
     pub id: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",
@@ -703,7 +712,7 @@ pub enum SensoryFacet {
         body: ObservedBody,
     },
     Description {
-        text: String,
+        text: crate::text::JsText,
     },
     Carried {
         items: Vec<CarriedItem>,
@@ -750,7 +759,7 @@ pub enum SensoryFacet {
     },
     Event {
         event_type: String,
-        text: String,
+        text: crate::text::JsText,
         modality: ExperienceModality,
         importance: f64,
         #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -786,7 +795,7 @@ pub enum SensoryFacet {
             deserialize_with = "deserialize_present_option",
             skip_serializing_if = "Option::is_none"
         )]
-        content: Option<String>,
+        content: Option<crate::text::JsText>,
         data: IndexMap<String, EventScalar>,
         references: Vec<ReceivedReference>,
         #[serde(
@@ -810,7 +819,7 @@ pub enum SensoryFacet {
         claim: crate::worlds::base_observed::ObservationClaim,
         strength: PossibleStrength,
         speaker: EvidenceParticipant,
-        words_as_heard: String,
+        words_as_heard: crate::text::JsText,
         support: Vec<ObservationFactKey>,
         #[serde(
             default,
@@ -992,7 +1001,7 @@ impl SensoryFacet {
                 ..
             } => {
                 claim.validate()
-                    && !crate::encoding::js_trim(words_as_heard).is_empty()
+                    && !words_as_heard.trim_is_empty()
                     && support.len() >= 2
                     && support
                         .iter()
@@ -1365,9 +1374,10 @@ impl PerceivedSpeech {
                 .direction
                 .is_some_and(|direction| direction.sector >= 8)
             || !finite_point(&self.listener_position)
-            || self.name_claim.as_ref().is_some_and(|name| {
-                crate::encoding::js_trim(name).is_empty() || name.chars().count() > 120
-            })
+            || self
+                .name_claim
+                .as_ref()
+                .is_some_and(|name| name.trim_is_empty() || name.character_count() > 120)
         {
             return Err(ReceptionError::Facet);
         }
@@ -1807,12 +1817,6 @@ pub enum SoundKind {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PerceivedSound {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub kind: Option<SoundKind>,
     pub acquisition: SoundAcquisition,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub physical_life: u64,
@@ -1825,6 +1829,12 @@ pub struct PerceivedSound {
     pub direction: Option<AcousticDirection>,
     #[serde(deserialize_with = "deserialize_nullable")]
     pub visible_source: Option<VisibleSoundSource>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub kind: Option<SoundKind>,
 }
 
 impl PerceivedSound {
@@ -1848,7 +1858,7 @@ impl PerceivedSound {
                     .episode_id
                     .as_ref()
                     .is_some_and(|id| !is_safe_record_id(id))
-                || crate::encoding::js_trim(&source.description.name).is_empty()
+                || source.description.name.trim_is_empty()
                 || !matches!(
                     source.description.name_form.as_deref(),
                     Some("count" | "mass" | "plural")
@@ -2070,7 +2080,7 @@ pub struct ObservedStorage {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ObservedBodyDetails {
     pub kind: String,
-    pub appearance: String,
+    pub appearance: crate::text::JsText,
     pub radius: f64,
     pub height: f64,
     pub outward: [String; 4],
@@ -2151,14 +2161,14 @@ pub struct ObservedBodyDetails {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub description: Option<String>,
+    pub description: Option<crate::text::JsText>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ObservedBody {
     pub kind: String,
-    pub appearance: String,
+    pub appearance: crate::text::JsText,
     pub radius: f64,
     pub height: f64,
     pub outward: [String; 4],
@@ -2239,7 +2249,7 @@ pub struct ObservedBody {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub description: Option<String>,
+    pub description: Option<crate::text::JsText>,
     pub position: Point,
     pub heading: f64,
     #[serde(deserialize_with = "deserialize_nullable")]

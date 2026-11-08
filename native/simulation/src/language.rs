@@ -22,7 +22,7 @@ pub(crate) enum CollationError {
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WordsRequest {
     binding: GeometryBinding,
-    strings: Vec<String>,
+    strings: Vec<crate::text::JsText>,
     #[serde(skip)]
     reservation: ByteReservation,
 }
@@ -30,14 +30,14 @@ pub(crate) struct WordsRequest {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct WordsAnswer {
     pub binding: GeometryBinding,
-    pub words: Vec<Vec<String>>,
+    pub words: Vec<Vec<crate::text::JsText>>,
 }
 pub(crate) struct WordFacts {
-    words: Vec<Vec<String>>,
+    words: Vec<Vec<crate::text::JsText>>,
     _reservation: ByteReservation,
 }
 impl WordFacts {
-    pub(crate) fn get(&self, index: usize) -> Option<&[String]> {
+    pub(crate) fn get(&self, index: usize) -> Option<&[crate::text::JsText]> {
         self.words.get(index).map(Vec::as_slice)
     }
 }
@@ -48,12 +48,15 @@ impl WordsRequest {
         budget: &ByteBudget,
     ) -> Result<Self, CollationError>
     where
-        I: Iterator<Item = &'a str> + Clone,
+        I: Iterator<Item = &'a crate::text::JsText> + Clone,
     {
         let (count, bytes) = strings
             .clone()
             .try_fold((0usize, 0usize), |(count, bytes), value| {
-                Some((count.checked_add(1)?, bytes.checked_add(value.len())?))
+                Some((
+                    count.checked_add(1)?,
+                    bytes.checked_add(value.storage_bytes())?,
+                ))
             })
             .ok_or(CollationError::Capacity)?;
         // Every word-like result owns a nonempty source slice. Fund the request
@@ -69,13 +72,13 @@ impl WordsRequest {
         let allowance = heap_sum([
             size_of::<Self>() + size_of::<WordFacts>(),
             count
-                .checked_mul(size_of::<String>())
+                .checked_mul(size_of::<crate::text::JsText>())
                 .ok_or(CollationError::Capacity)?,
             outer
-                .checked_mul(size_of::<Vec<String>>())
+                .checked_mul(size_of::<Vec<crate::text::JsText>>())
                 .ok_or(CollationError::Capacity)?,
             inner
-                .checked_mul(size_of::<String>())
+                .checked_mul(size_of::<crate::text::JsText>())
                 .ok_or(CollationError::Capacity)?,
             bytes.checked_mul(2).ok_or(CollationError::Capacity)?,
         ])
@@ -87,14 +90,14 @@ impl WordsRequest {
         owned
             .try_reserve_exact(count)
             .map_err(|_| CollationError::Capacity)?;
-        owned.extend(strings.map(str::to_owned));
+        owned.extend(strings.cloned());
         Ok(Self {
             binding,
             strings: owned,
             reservation,
         })
     }
-    pub(crate) fn strings(&self) -> &[String] {
+    pub(crate) fn strings(&self) -> &[crate::text::JsText] {
         &self.strings
     }
     pub(crate) fn binding(&self) -> GeometryBinding {
@@ -108,15 +111,15 @@ impl WordsRequest {
             return Err(CollationError::Permutation);
         }
         for (text, words) in self.strings.iter().zip(&answer.words) {
-            let mut remaining = text.as_str();
+            let mut from = 0;
             for word in words {
                 if word.is_empty() {
                     return Err(CollationError::MissingKey);
                 }
-                let Some(at) = remaining.find(word.as_str()) else {
+                let Some(at) = text.find_from(word, from) else {
                     return Err(CollationError::MissingKey);
                 };
-                remaining = &remaining[at + word.len()..];
+                from = at + word.units_len();
             }
         }
         let Self {

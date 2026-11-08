@@ -93,7 +93,7 @@ impl CurrentCohort {
         observer: &str,
         budget: &ByteBudget,
     ) -> Result<Option<Arc<Self>>, ReceivedError> {
-        let Some(entity) = physical
+        let Some(_entity) = physical
             .entities
             .get(observer)
             .filter(|entity| entity.has_memory())
@@ -107,10 +107,10 @@ impl CurrentCohort {
         else {
             return Ok(None);
         };
-        let life = entity.physical_life().ok_or_else(invalid)?;
-        if owner.life != life {
-            return Err(invalid());
-        }
+        // Correspondence belongs to this received owner, including the old
+        // owner while a body is being retired. Physical-life eligibility is a
+        // separate current-body read; it cannot replace the old history epoch.
+        let life = owner.life;
         let reservation = reserve(owner, observer, budget)?;
         let entries = owner
             .attention
@@ -443,18 +443,18 @@ impl ReceivingMutation<'_> {
         } = transition;
         let budget = self.budget;
         let observer = &before.observer.actor_id;
-        let entity = physical
+        physical
             .entities
             .get(observer)
             .ok_or(ExecutionError::MissingActor)?;
-        if entity.physical_life() != Some(before.observer.physical_life) {
-            return Err(ExecutionError::Invariant);
-        }
         let owner = reception
             .perception_evidence
             .as_ref()
             .and_then(|owners| owners.get(observer))
             .ok_or(ExecutionError::Invariant)?;
+        if owner.life != before.observer.physical_life {
+            return Err(ExecutionError::Invariant);
+        }
         let _scratch = reserve(owner, observer, budget).map_err(ExecutionError::Received)?;
         let entries = owner
             .attention
@@ -621,6 +621,22 @@ pub(crate) fn attended_event_participants(
         return Ok(false);
     }
     let _reservation = reserve(scope.state(), observer, budget)?;
+    let _ids_reservation = budget
+        .reserve(
+            heap_sum([
+                ids.iter()
+                    .try_fold(0usize, |sum, id| sum.checked_add(id.len()))
+                    .ok_or_else(capacity)?,
+                map_storage::<String, ()>(ids.len().checked_mul(2).ok_or_else(capacity)?)
+                    .ok_or_else(capacity)?,
+                ids.len()
+                    .checked_mul(size_of::<TrackDescriptor>())
+                    .ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )
+        .map_err(|_| capacity())?;
+
     let mut candidates = candidate_ids(scope.state(), entries);
     candidates.extend(ids.iter().map(|id| (*id).to_owned()));
     let descriptors = descriptors(

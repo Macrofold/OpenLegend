@@ -99,14 +99,28 @@ pub(super) fn close_current_sample_history(
     if !pending.needs_history_close() {
         return Ok(());
     }
-    let partitions = partitions(
+    close_current_member_history(
         core,
         observer,
         pending.subject_id(),
-        Some(pending.channel()),
         pending.kind(),
-        true,
-    )?;
+        pending.channel(),
+        TemporalChange::Change,
+        budget,
+    )
+}
+/// One source member may own several independent partitions/recordings. All
+/// replacement and physical-loss callers close those actual marks here.
+pub(super) fn close_current_member_history(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    subject: &str,
+    kind: &str,
+    channel: &DefinitionPin,
+    reason: TemporalChange,
+    budget: &ByteBudget,
+) -> Result<(), ExecutionError> {
+    let partitions = partitions(core, observer, subject, Some(channel), kind, true)?;
     for (group_index, partition) in partitions {
         let owner = core
             .state
@@ -117,7 +131,7 @@ pub(super) fn close_current_sample_history(
             .ok_or_else(invalid)?;
         let group = owner
             .current
-            .get(pending.subject_id())
+            .get(subject)
             .and_then(|contact| contact.content.groups.get(group_index))
             .ok_or_else(invalid)?;
         let policy = &core.state.installed.attention.value().retention;
@@ -141,9 +155,9 @@ pub(super) fn close_current_sample_history(
                 sequence: core.state.physical.header.sequence,
                 budget,
             },
-            pending.subject_id(),
+            subject,
             group,
-            TemporalChange::Change,
+            reason,
             Some(&partition),
         )?;
         current_groups_set_recording(

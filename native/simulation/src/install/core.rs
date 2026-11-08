@@ -117,6 +117,7 @@ pub(crate) fn assemble_core(
         detection_support,
         prepared_responses,
         movement_policy,
+        time_rules,
         account_rules,
         name_rules,
         recognition,
@@ -216,6 +217,7 @@ pub(crate) fn assemble_core(
             work_policy: meanings.work_policy.clone(),
             attributes: &meanings.attributes,
             status_policy: &meanings.status_policy,
+            body_policy: meanings.body_policy.as_ref().map(VerifiedDefinition::value),
             maximum_candidates,
             maximum_path_points,
             epsilon: spatial.epsilon,
@@ -223,6 +225,7 @@ pub(crate) fn assemble_core(
         },
     )?;
     let retained = install_retained(&mut import, &mut children, retained, &schema)?;
+    super::physical::validate_physical_item_references(&physical, &retained)?;
     let installed = Arc::new(InstalledWorld {
         manifest: meanings.manifest,
         retained,
@@ -258,6 +261,7 @@ pub(crate) fn assemble_core(
         maximum_change_scopes: usize::try_from(maximum_change_scopes)
             .map_err(|_| InstallError::CurrentFormat)?,
         movement: movement_law,
+        time_rules: crate::worlds::InstalledTimeRules::install(time_rules)?,
         body_policy: meanings.body_policy,
         spatial,
         movement_settings: movement,
@@ -337,6 +341,11 @@ pub(crate) fn assemble_core(
         child(&mut children, "objectState", true)?,
         &physical.entities,
     )?;
+    let inventory = super::inventory::install_closed_inventory(
+        &mut import,
+        child(&mut children, "resourceReservations", false)?,
+        &physical.entities,
+    )?;
     let learned_capabilities = install_learned_capabilities(
         &mut import,
         child(&mut children, "knowledge", true)?,
@@ -364,6 +373,7 @@ pub(crate) fn assemble_core(
         commands,
         minds,
         administration,
+        inventory,
         learned_capabilities,
         appraisals,
     };

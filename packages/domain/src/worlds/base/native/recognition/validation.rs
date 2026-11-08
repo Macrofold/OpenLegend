@@ -146,9 +146,9 @@ fn identity_valid(
             .name_evidence_ids
             .as_ref()
             .is_none_or(|keys| keys.iter().all(|key| !key.is_empty()))
-        && identity.given_name.chars().count() as u64 <= names.given_name_characters
+        && identity.given_name.character_count() as u64 <= names.given_name_characters
         && identity.nickname.as_ref().is_none_or(|name| {
-            !js_trim(name).is_empty() && name.chars().count() as u64 <= names.nickname_characters
+            !name.trim_is_empty() && name.character_count() as u64 <= names.nickname_characters
         })
         && identity
             .familiarity

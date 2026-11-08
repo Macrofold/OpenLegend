@@ -151,7 +151,7 @@ impl ActivityJournal {
         unit: Option<&str>,
         before: ActivityScalar,
         after: ActivityScalar,
-        label: &str,
+        label: &crate::text::JsText,
     ) -> Result<(), ActivityError> {
         let Some(reference) = state.active.get(cause) else {
             return Ok(());
@@ -177,14 +177,14 @@ impl ActivityJournal {
         let labels = old
             .iter()
             .map(|effect| {
-                effect.label.len()
+                effect.label.storage_bytes()
                     + effect.property.len()
                     + effect.unit.as_ref().map_or(0, String::len)
                     + effect.before.heap_bytes().unwrap_or(0)
                     + effect.after.heap_bytes().unwrap_or(0)
             })
             .sum::<usize>()
-            + label.len()
+            + label.storage_bytes()
             + property.len()
             + unit.map_or(0, str::len)
             + before.heap_bytes().ok_or(ActivityError::Capacity)?
@@ -238,12 +238,12 @@ impl ActivityJournal {
             );
             fields.insert(
                 "property".to_owned(),
-                ActivityDetail::Scalar(ActivityScalar::String(effect.property.clone())),
+                ActivityDetail::Scalar(ActivityScalar::String(effect.property.clone().into())),
             );
             if let Some(unit) = effect.unit.as_ref().filter(|unit| !unit.is_empty()) {
                 fields.insert(
                     "unit".to_owned(),
-                    ActivityDetail::Scalar(ActivityScalar::String(unit.clone())),
+                    ActivityDetail::Scalar(ActivityScalar::String(unit.clone().into())),
                 );
             }
             fields.insert(
@@ -255,12 +255,13 @@ impl ActivityJournal {
                 ActivityDetail::Scalar(effect.after.clone()),
             );
             values.push(ActivityDetail::Fields(fields));
-            let sentence = match (&effect.before, &effect.after) {
-                (ActivityScalar::Boolean(before), ActivityScalar::Boolean(after)) => format!(
-                    "{}: {} {}",
-                    effect.label,
-                    effect.property,
-                    if before == after {
+            let mut sentence = effect.label.clone();
+            sentence.push_str(": ");
+            sentence.push_str(&effect.property);
+            sentence.push_str(" ");
+            match (&effect.before, &effect.after) {
+                (ActivityScalar::Boolean(before), ActivityScalar::Boolean(after)) => sentence
+                    .push_str(if before == after {
                         if *after {
                             "remained active"
                         } else {
@@ -270,44 +271,33 @@ impl ActivityJournal {
                         "began"
                     } else {
                         "ended"
-                    }
-                ),
+                    }),
                 (before, after) => {
-                    let text = |v: &ActivityScalar| match v {
-                        ActivityScalar::String(value) => Ok(value.clone()),
-                        v => crate::encoding::json_record(v)
-                            .map_err(|_| ActivityError::InvalidStructure),
-                    };
-                    let change =
-                        if let (ActivityScalar::Number(before), ActivityScalar::Number(after)) =
-                            (before, after)
-                        {
-                            let n = after - before;
-                            format!(
-                                " ({}{})",
-                                if n >= 0.0 { "+" } else { "" },
-                                crate::encoding::json_record(&n)
-                                    .map_err(|_| ActivityError::InvalidStructure)?
-                            )
-                        } else {
-                            String::new()
-                        };
-                    format!(
-                        "{}: {} {} to {}{change}",
-                        effect.label,
-                        effect.property,
-                        text(before)?,
-                        text(after)?
-                    )
+                    let before_text = super::scalar_text(before)?;
+                    let after_text = super::scalar_text(after)?;
+                    sentence.push_text(&before_text);
+                    sentence.push_str(" to ");
+                    sentence.push_text(&after_text);
+                    if let (ActivityScalar::Number(before), ActivityScalar::Number(after)) =
+                        (before, after)
+                    {
+                        let change = after - before;
+                        sentence.push_str(&format!(
+                            " ({}{})",
+                            if change >= 0.0 { "+" } else { "" },
+                            crate::encoding::json_record(&change)
+                                .map_err(|_| ActivityError::InvalidStructure)?
+                        ));
+                    }
                 }
-            };
+            }
             sentences.push(sentence);
         }
         let fact = ActivityFact {
             name: "observed changes".to_owned(),
             critical: true,
             value: ActivityDetail::List(values),
-            sentence: Some(sentences.join("; ")),
+            sentence: Some(super::text_join(&sentences, "; ")),
         };
         if let Some(index) = entry.view.facts.iter().position(|f| f.name == fact.name) {
             entry.view.facts[index] = fact;
@@ -863,10 +853,14 @@ impl ActivityJournal {
             ActivityStatus::Blocked
         };
         entry.ended_at = Some(at);
-        entry.view.result = Some(result.message.clone());
+        entry.view.result = Some(result.message.clone().into());
         if let Some(last) = entry.view.children.as_mut().and_then(|v| v.last_mut()) {
-            if last.result.as_ref().is_none_or(String::is_empty) {
-                last.result = Some(result.message.clone());
+            if last
+                .result
+                .as_ref()
+                .is_none_or(crate::text::JsText::is_empty)
+            {
+                last.result = Some(result.message.clone().into());
             }
         }
         for fact in &mut entry.view.facts {

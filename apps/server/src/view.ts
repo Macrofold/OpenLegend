@@ -1,4 +1,4 @@
-import { nativeText, selectedTemporalPolicy } from '@open-legend/domain';
+import { nativeText, selectedTemporalPolicy, selectedObservedBodyKind } from '@open-legend/domain';
 import {
   canSpeak,
   equippedItems,
@@ -88,7 +88,8 @@ import {
   perceptionGuide,
   type ActorEvent,
 } from '@open-legend/domain';
-import { projectPerceivedSpeech, publicEvent } from './perceived-events.js';
+import { projectConversationEvent, publicEvent } from './perceived-events.js';
+import { projectObservedBody, projectObservedAppearance } from './observed-body-view.js';
 import { projectAttributes, attributeDefinition } from '@open-legend/domain';
 
 import type {
@@ -653,34 +654,15 @@ export async function projectView(
           ],
           () => {
             countDomainWork('viewAppearancePreparations');
-            const detail = parts.details;
-            const kind: EntityView['kind'] =
-              detail.kind === 'animal'
-                ? 'animal'
-                : detail.kind === 'npc' || detail.kind === 'player'
-                  ? 'actor'
-                  : detail.kind === 'remains'
-                    ? 'remains'
-                    : detail.kind === 'item-pile'
-                      ? 'item-pile'
-                      : detail.kind === 'resource'
-                        ? 'resource'
-                        : detail.kind === 'practice-target'
-                          ? 'practice-target'
-                          : 'station';
-            return {
-              kind,
-              detail: {
-                ...detail,
-                ...(description?.kind === 'description' &&
-                (descriptionInput?.originalSource.facets[descriptionInput.field.originalOrdinal]
-                  ?.role ?? 'direct') === 'direct'
-                  ? { description: description.text }
-                  : {}),
-              },
-              status: detail.outward.filter(Boolean).join(', '),
-              ...(entity.actor ? { portrait: portraitArt(world, detail.appearance) } : {}),
-            };
+            return projectObservedAppearance(
+              selectedObservedBodyKind(world, parts.details.kind),
+              parts.details,
+              description?.kind === 'description' ? description.text : undefined,
+              (descriptionInput?.originalSource.facets[descriptionInput.field.originalOrdinal]
+                ?.role ?? 'direct') === 'direct',
+              !!entity.actor,
+              entity.actor ? portraitArt(world, parts.details.appearance) : undefined,
+            );
           },
         );
         const facets = currentObservedFacetValues(
@@ -700,13 +682,6 @@ export async function projectView(
         const detailConfirmed =
           received.descriptionSupport?.confirmedThrough ?? received.confirmedThrough;
         const detailSource = received.descriptionSupport?.confirmation ?? received.source;
-        const pile = facets.find((facet) => facet.value.kind === 'pile-contents');
-        const carried = facets.find((facet) => facet.value.kind === 'carried');
-        const publicAttributes = facets.find((facet) => facet.value.kind === 'public-attributes');
-        const health =
-          publicAttributes?.value.kind === 'public-attributes'
-            ? publicAttributes.value.attributes.find((attribute) => attribute.bodyHealth)?.value
-            : undefined;
         const kind = appearance.kind;
         const rememberedAddressee = currentCommunicationSubject(
           world,
@@ -792,67 +767,33 @@ export async function projectView(
               sourceReference: evidenceSourceHandle(world, player.id, detailSource),
             }),
           ),
-          kind,
-          subtype: body.subtype ?? body.kind,
-          ...(body.icon ? { icon: body.icon } : {}),
-          ...(body.kind === 'resource' && body.subtype
-            ? { art: itemIllustration(world, body.subtype) }
-            : {}),
-          ...(body.bodyPlan ? { bodyPlan: body.bodyPlan } : {}),
-          statusEffects: body.effects ?? [],
-          observedMoving: hasCurrentObservedFacet(
-            world,
-            player.id,
-            entity.id,
-            'observed-motion',
-            bodyReads,
-          ),
-          position: body.position,
-          supportSurfaceId: body.supportSurfaceId,
-          heading: body.heading,
-          appearance: body.appearance,
-          ...(appearance.portrait ? { portrait: appearance.portrait } : {}),
-          radius: body.radius,
-          bodySize: entityMemo('bodySize', [body.radius, body.height], () => ({
-            width: body.radius * 2,
-            height: body.height,
-          })),
-          actionAnimation: body.animation
-            ? {
-                ...body.animation,
-                id: permittedSourceHandle(world, player.id, [
-                  'outward-action',
-                  received.id,
-                  body.animation.id,
-                ]),
-              }
-            : null,
-          status: appearance.status,
-          ...(body.description ? { description: body.description } : {}),
-          ...(publicAttributes?.value.kind === 'public-attributes'
-            ? {
-                attributes: publicAttributes.value.attributes,
-                ...(typeof health === 'number' ? { health } : {}),
-              }
-            : {}),
-          ...(body.quantity !== undefined ? { quantity: body.quantity } : {}),
-          ...(body.heatLit !== undefined ? { heat: { lit: body.heatLit } } : {}),
-          ...(body.remainsPhase === 'fresh' || body.remainsPhase === 'rotting'
-            ? {
-                bodyState: body.remainsPhase === 'fresh' ? ('dead' as const) : ('rotting' as const),
-              }
-            : {}),
-          ...(pile?.value.kind === 'pile-contents' ? { contents: pile.value.items } : {}),
-          storage: inventoryStorageHint(service, scope, entity.id, body, bodyReads),
-          ...(carried?.value.kind === 'carried'
-            ? {
-                observedCarried: {
-                  items: carried.value.items,
-                  measurementAt: detailTime(carried.valueMeasuredThrough),
-                  confirmedThrough: detailTime(carried.confirmedThrough),
-                },
-              }
-            : {}),
+          ...projectObservedBody({
+            body,
+            kind,
+            portrait: appearance.portrait,
+            status: appearance.status,
+            bodySize: entityMemo('bodySize', [body.radius, body.height], () => ({
+              width: body.radius * 2,
+              height: body.height,
+            })),
+            facets,
+            observedMoving: hasCurrentObservedFacet(
+              world,
+              player.id,
+              entity.id,
+              'observed-motion',
+              bodyReads,
+            ),
+            observationId: received.id,
+            observerId: player.id,
+            referenceScope: world,
+            sightConfirmedThrough,
+            resourceArt:
+              body.kind === 'resource' && body.subtype
+                ? itemIllustration(world, body.subtype)
+                : undefined,
+            storage: inventoryStorageHint(service, scope, entity.id, body, bodyReads),
+          }),
           ...(entity.actor
             ? {
                 canTalk: body.outward[0] === 'alive' && playerCanSpeak,
@@ -1687,46 +1628,9 @@ export async function projectView(
           });
       },
     ),
-    conversation: conversationEntries.map((event) => {
-      const reply = replies.get(event.id);
-      const legacyIdentityFailure =
-        reply?.message === 'Models cannot author identity or seed provenance.' ||
-        reply?.message ===
-          "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.";
-      // Only an actual failed job is a failed message. Cancellation and stale
-      // work end pending UI without relabeling an interaction as a technical failure.
-      // See docs/architecture.md#react-presentation-and-character-traits.
-      const terminalFailure = legacyIdentityFailure || reply?.status === 'failed';
-      const replyStatus = terminalFailure ? 'failed' : reply?.status;
-      const replyMessage = legacyIdentityFailure
-        ? "The response tried to change the character's fixed identity or treat generated material as part of their original history."
-        : reply?.message;
-      return {
-        id: event.id,
-        kind: event.type === 'speech' ? ('speech' as const) : ('action' as const),
-        ...(event.data?.['mechanical'] === false ? { mechanical: false } : {}),
-        ...(replyStatus && replyMessage
-          ? {
-              replyStatus,
-              replyRequestId: reply?.id,
-              retryable: reply?.status === 'failed',
-              ...(['failed', 'cancelled', 'stale'].includes(replyStatus)
-                ? { replyReason: replyMessage }
-                : {}),
-            }
-          : {}),
-        ...(event.actorId === scope.actorId ? { speakerId: scope.actorId } : {}),
-        ...(event.speech ? { speech: projectPerceivedSpeech(event.speech) } : {}),
-        speaker: event.speech
-          ? (event.speech.speaker?.nameAtTime ?? 'Someone')
-          : (event.references?.find((reference) => reference.role === 'actor')?.label ?? 'Someone'),
-        text:
-          event.speech?.intelligibility === 'none'
-            ? nativeText(event.text)
-            : String(event.data?.['text'] ?? nativeText(event.text)),
-        time: event.at,
-      };
-    }),
+    conversation: conversationEntries.map((event) =>
+      projectConversationEvent(event, scope.actorId, replies.get(event.id)),
+    ),
     ai: {
       mode: aiMode,
       jevConfigured,

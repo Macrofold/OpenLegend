@@ -154,8 +154,14 @@ export function subjectHandle(
 /** Presentation freshness for one permitted body, without exposing its life count.
  * Unlike body revision, this stays stable through ordinary injury and healing. */
 export function entityBodyReference(scope: string, entity: Entity): string {
+  return bodyReferenceFor(scope, entity.id, entity.actor?.physicalLife ?? 0);
+}
+
+/** The native capture supplies only the selected body's identity and life;
+ * producing a token does not grant that body or any additional facts. */
+export function bodyReferenceFor(scope: string, id: string, life: number): string {
   return createHmac('sha256', bodyReferenceKey)
-    .update(JSON.stringify([scope, entity.id, entity.actor?.physicalLife ?? 0]))
+    .update(JSON.stringify([scope, id, life]))
     .digest('hex');
 }
 
@@ -166,17 +172,25 @@ export function entityHandle(world: WorldState, observerId: string, id: string):
   // Bind only identities actually selected by the caller. Enumerating the world
   // here made one permitted reference prepare handles for every hidden being.
   // The structured tuple also keeps authored IDs containing separators distinct.
+  return personalEntityHandle(
+    world,
+    observerId,
+    id,
+    currentBodyGrant(world, observerId, id)?.leaseId ??
+      (recognizesSubject(world, observerId, id) ? 'known' : world.sequence),
+  );
+}
+
+/** Reference wording follows an already selected acquisition/recognition cut.
+ * The private binding remains with the request owner for later execution. */
+export function personalEntityHandle(
+  scope: PersonalReferenceScope,
+  observerId: string,
+  id: string,
+  attribution: string | number,
+): string {
   return createHmac('sha256', bodyReferenceKey)
-    .update(
-      JSON.stringify([
-        'personal-reference',
-        world.id,
-        observerId,
-        id,
-        currentBodyGrant(world, observerId, id)?.leaseId ??
-          (recognizesSubject(world, observerId, id) ? 'known' : world.sequence),
-      ]),
-    )
+    .update(JSON.stringify(['personal-reference', scope.id, observerId, id, attribution]))
     .digest('hex');
 }
 

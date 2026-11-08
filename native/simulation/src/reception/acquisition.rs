@@ -557,7 +557,7 @@ fn prepare_awareness_observation(
             .as_ref()
             .and_then(|data| data.get(field))
         {
-            Some(EventScalar::Text(text)) => Some(text.as_str()),
+            Some(EventScalar::Text(text)) => text.as_unicode(),
             _ => None,
         };
         let (Some(contact), Some(sense), Some(detail)) =

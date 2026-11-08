@@ -901,12 +901,12 @@ pub(crate) fn advance_next_appraisal(
                 role: PersonRole::Subject,
                 article: None,
             },
-            NarrationPart::Literal(" ".to_owned()),
+            NarrationPart::Literal(" ".to_owned().into()),
             NarrationPart::Verb {
                 subject_id: actor.clone(),
                 verb: "feel".to_owned(),
             },
-            NarrationPart::Literal(format!(" {}.", definition.value.label)),
+            NarrationPart::Literal(format!(" {}.", definition.value.label).into()),
         ]
     } else {
         vec![
@@ -915,11 +915,11 @@ pub(crate) fn advance_next_appraisal(
                 role: PersonRole::Possessive,
                 article: None,
             },
-            NarrationPart::Literal(format!(" {} has ended.", definition.value.label)),
+            NarrationPart::Literal(format!(" {} has ended.", definition.value.label).into()),
         ]
     };
     let mut data = IndexMap::new();
-    data.insert("appraisalId".to_owned(), EventScalar::Text(id));
+    data.insert("appraisalId".to_owned(), EventScalar::Text(id.into()));
     data.insert("revision".to_owned(), EventScalar::Number(revision as f64));
     data.insert("semanticTrigger".to_owned(), EventScalar::Boolean(true));
     data.insert("importance".to_owned(), EventScalar::Number(5.0));

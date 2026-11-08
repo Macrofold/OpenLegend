@@ -109,7 +109,7 @@ impl ReceivedClockDifference {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",
@@ -125,7 +125,7 @@ pub enum TemporalReception {
     },
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged, deny_unknown_fields)]
 pub enum BodyReception {
     Pose {
@@ -421,7 +421,7 @@ pub struct ReceivedDetail {
     pub acquired_at: Option<f64>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",

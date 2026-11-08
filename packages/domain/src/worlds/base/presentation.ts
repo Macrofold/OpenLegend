@@ -5,6 +5,23 @@ import { prepareManufactureChoices } from '../../manufacture.js';
 import type { AssemblyFamily } from '../../assembly-types.js';
 import type { ItemArt } from '../../presentation-art.js';
 
+/** The bundled world's observed forms choose their public presentation kind. */
+export function baseObservedBodyKind(kind: string) {
+  return kind === 'animal'
+    ? 'animal'
+    : kind === 'npc' || kind === 'player'
+      ? 'actor'
+      : kind === 'remains'
+        ? 'remains'
+        : kind === 'item-pile'
+          ? 'item-pile'
+          : kind === 'resource'
+            ? 'resource'
+            : kind === 'practice-target'
+              ? 'practice-target'
+              : 'station';
+}
+
 const itemArt = (file: string): ItemArt => ({
   path: `apps/client/src/design-system/gildmoss/art/world/base/items/${file}.png`,
 });

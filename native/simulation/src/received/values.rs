@@ -21,11 +21,25 @@ use crate::values::{deserialize_present_option, deserialize_safe_integer, is_saf
 
 use super::{ActionResultValue, ReceivedError};
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum ReceivedValueReference {
     Shared(String),
     Inline(Box<ReceivedValueFragment>),
+}
+impl<'de> Deserialize<'de> for ReceivedValueReference {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(de)?;
+        if raw.get().trim_start().starts_with('"') {
+            serde_json::from_str(raw.get())
+                .map(Self::Shared)
+                .map_err(serde::de::Error::custom)
+        } else {
+            serde_json::from_str(raw.get())
+                .map(Self::Inline)
+                .map_err(serde::de::Error::custom)
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -112,7 +126,7 @@ pub struct PersonalAccountFragment {
     pub kind: PersonalAccountKind,
     pub source: PersonalAccountSource,
     pub id: String,
-    pub text: String,
+    pub text: crate::text::JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -124,19 +138,55 @@ pub struct PersonalAccountFragment {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub content: Option<String>,
+    pub content: Option<crate::text::JsText>,
     /// Current event data is an immutable open data payload, never executable
     /// code or a mutable world/component store.
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
-        serialize_with = "crate::encoding::serialize_optional_js_object",
         skip_serializing_if = "Option::is_none"
     )]
-    pub data: Option<serde_json::Map<String, Value>>,
+    pub data: Option<PersonalAccountData>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// Immutable event data already encoded by its actual permitted producer. Raw
+/// JSON retains quoted UTF-16 units; this object grants no executable behavior.
+#[derive(Clone, Debug, Serialize)]
+#[serde(transparent)]
+pub struct PersonalAccountData(Box<serde_json::value::RawValue>);
+impl PartialEq for PersonalAccountData {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.get() == other.0.get()
+    }
+}
+impl<'de> Deserialize<'de> for PersonalAccountData {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(de)?;
+        if !raw.get().trim_start().starts_with('{') {
+            return Err(serde::de::Error::custom(
+                "Personal event data must be an object.",
+            ));
+        }
+        Ok(Self(raw))
+    }
+}
+impl PersonalAccountData {
+    pub(crate) fn from_encoded(encoded: String) -> Result<Self, ReceivedError> {
+        let raw = serde_json::value::RawValue::from_string(encoded)
+            .map_err(|_| ReceivedError("Personal event data encoding failed."))?;
+        if !raw.get().trim_start().starts_with('{') {
+            return Err(ReceivedError("Personal event data must be an object."));
+        }
+        Ok(Self(raw))
+    }
+}
+impl crate::host::retained_size::HeapBytes for PersonalAccountData {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(self.0.get().len())
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum ReceivedValueFragment {
     Sensory(SensoryFacet),
@@ -147,6 +197,33 @@ pub enum ReceivedValueFragment {
     ActionResult(ActionResultValue),
     Header(HeaderFragment),
     Frame(FrameFragment),
+}
+impl<'de> Deserialize<'de> for ReceivedValueFragment {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(de)?;
+        #[derive(Deserialize)]
+        struct Kind {
+            kind: String,
+        }
+        let kind: Kind = serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
+        macro_rules! value {
+            ($kind:ident) => {
+                serde_json::from_str(raw.get())
+                    .map(Self::$kind)
+                    .map_err(serde::de::Error::custom)
+            };
+        }
+        match kind.kind.as_str() {
+            "body" => value!(Body),
+            "location" => value!(Location),
+            "body-pose" => value!(BodyPose),
+            "personal-account" => value!(PersonalAccount),
+            "action-result" => value!(ActionResult),
+            "observation-header" => value!(Header),
+            "observation-frame" => value!(Frame),
+            _ => value!(Sensory),
+        }
+    }
 }
 
 impl ReceivedValueFragment {

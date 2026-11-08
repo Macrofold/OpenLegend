@@ -81,13 +81,13 @@ fn participant_id(part: &NarrationPart) -> Option<&str> {
 fn narration_bound(narration: &Narration, entities: &EntityStore) -> Option<usize> {
     let mut bytes = map_storage::<String, Named>(narration.parts.len().checked_mul(2)?)?;
     bytes = bytes.checked_add(crate::narration::narration_render_bound(narration, |id| {
-        entities.get(id).map(|entity| entity.name.len())
+        entities.get(id).map(|entity| entity.name.storage_bytes())
     })?)?;
     for part in &narration.parts {
         if let Some(id) = participant_id(part) {
             let copy = entities.get(id).map_or(Some(0), |entity| {
                 heap_sum([
-                    entity.name.len(),
+                    entity.name.storage_bytes(),
                     entity.name_form.as_ref().map_or(0, String::len),
                     entity.indefinite_article.as_ref().map_or(0, String::len),
                 ])
@@ -250,8 +250,14 @@ pub(crate) fn begin_staged_occurrence(
         ),
     };
     let mut data = intent.data.unwrap_or_default();
-    data.insert("importancePolicy".to_owned(), EventScalar::Text(policy));
-    data.insert("importanceReason".to_owned(), EventScalar::Text(reason));
+    data.insert(
+        "importancePolicy".to_owned(),
+        EventScalar::Text(policy.into()),
+    );
+    data.insert(
+        "importanceReason".to_owned(),
+        EventScalar::Text(reason.into()),
+    );
     let (audience, physical_audience) = match intent.audience {
         AudienceSelection::Physical => (Vec::new(), true),
         // Keep one original vector. Physical/current receiver facts, not this

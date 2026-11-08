@@ -5,7 +5,7 @@ use crate::attention::AttentionRelationFamily;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
-use crate::received::{CoverageGap, CurrentRecordingContext, TemporalCaptureInput, TemporalChange};
+use crate::received::{CoverageGap, TemporalCaptureInput, TemporalChange};
 use indexmap::IndexSet;
 use std::{mem::size_of, sync::Arc};
 pub(crate) struct EndedCurrentEvidence {
@@ -173,102 +173,26 @@ fn end_geometry(
     )?;
     finish_received(core, transition)
 }
-fn close_member(
-    core: &mut CoreMutation<'_>,
-    observer: &str,
-    address: &Address,
-    budget: &ByteBudget,
-) -> Result<(), ExecutionError> {
-    // Source closes each field in source fieldOrder, and each of its groups in
-    // existing group order. Detach/check materialization precedes this call.
-    loop {
-        let owner = core
-            .state
-            .reception
-            .perception_evidence
-            .as_ref()
-            .and_then(|owners| owners.get(observer))
-            .ok_or_else(invalid)?;
-        let Some(group) = owner.current.get(&address.subject).and_then(|contact| {
-            contact.content.groups.iter().find(|group| {
-                group.received.grant.channel == address.channel
-                    && group.received.fields.contains_key(&address.kind)
-                    && group.recordings.iter().flatten().any(|mark| {
-                        mark.members
-                            .iter()
-                            .any(|member| member.kind == address.kind)
-                    })
-            })
-        }) else {
-            return Ok(());
-        };
-        let partition = group
-            .metadata
-            .iter()
-            .find(|partition| {
-                partition
-                    .members
-                    .iter()
-                    .any(|(kind, _)| kind == &address.kind)
-                    && group.recordings.iter().flatten().any(|mark| {
-                        mark.members.iter().any(|member| {
-                            partition.members.iter().any(|(kind, part)| {
-                                kind == &member.kind
-                                    && part == &member.part
-                                    && kind == &address.kind
-                            })
-                        })
-                    })
-            })
-            .ok_or_else(invalid)?;
-        core.journal.current.reserve_growth(
-            heap_sum([
-                size_of::<CurrentPartPartition>(),
-                partition.heap_bytes().ok_or(ExecutionError::Capacity)?,
-            ])
-            .ok_or(ExecutionError::Capacity)?,
-        )?;
-        let mut partition = partition.clone();
-        partition.members.retain(|(kind, _)| kind == &address.kind);
-        let policy = &core.state.installed.attention.value().retention;
-        let updates = core.state.temporal.close_current_group(
-            &mut CurrentRecordingContext {
-                actor_id: observer,
-                owner,
-                values: core
-                    .state
-                    .reception
-                    .received_values
-                    .as_mut()
-                    .ok_or_else(invalid)?,
-                identity: &mut core.state.physical.identity,
-                scopes: &mut core.journal.acquisitions,
-                recent_policy: &policy.recent,
-                maintenance_headroom: policy.maintenance_headroom,
-                meaning: &crate::worlds::InstalledEvidenceMeaning,
-                meters: &mut core.journal.meters,
-                now: core.state.physical.header.sim_time,
-                sequence: core.state.physical.header.sequence,
-                budget,
-            },
-            &address.subject,
-            group,
-            TemporalChange::Loss,
-            Some(&partition),
-        )?;
-        current_groups_set_recording(
-            &mut core.journal.current,
-            &mut core.state.reception,
-            observer,
-            updates.updates(),
-        )?;
-    }
-}
 /// Full ordinary end (zero episode grace), used by perception-restricting
 /// statuses. Targeted/modality-specific loss remains the detector's operation.
 pub(crate) fn end_current_evidence(
     core: &mut CoreMutation<'_>,
     observer: &str,
+    budget: &ByteBudget,
+) -> Result<EndedCurrentEvidence, ExecutionError> {
+    let life = core
+        .state
+        .physical
+        .entities
+        .get(observer)
+        .and_then(|entity| entity.physical_life())
+        .ok_or(ExecutionError::MissingActor)?;
+    end_current_for_life(core, observer, life, budget)
+}
+fn end_current_for_life(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    life: u64,
     budget: &ByteBudget,
 ) -> Result<EndedCurrentEvidence, ExecutionError> {
     let entity = core
@@ -277,7 +201,6 @@ pub(crate) fn end_current_evidence(
         .entities
         .get(observer)
         .ok_or(ExecutionError::MissingActor)?;
-    let life = entity.physical_life().ok_or(ExecutionError::MissingActor)?;
     let at = core.state.physical.header.sim_time;
     let proof_reservation = budget.reserve(
         size_of::<EndedCurrentEvidence>()
@@ -449,7 +372,15 @@ pub(crate) fn end_current_evidence(
         &addresses_ref,
     )?;
     for address in &addresses {
-        close_member(core, observer, address, budget)?;
+        super::current_recording::close_current_member_history(
+            core,
+            observer,
+            &address.subject,
+            &address.kind,
+            &address.channel,
+            TemporalChange::Loss,
+            budget,
+        )?;
         current_facet_set(
             &mut core.journal.current,
             &mut core.state.reception,
@@ -532,5 +463,57 @@ pub(crate) fn end_current_evidence(
         physical_life: life,
         at,
         _reservation: proof_reservation,
+    })
+}
+
+/// A completed old receiving life is distinct from an ordinary current loss.
+/// Physical replacement may already have advanced; all terminals above remain
+/// bound to the actual old received owner and its existing temporal epoch.
+pub(crate) struct RetiredPerceptionLife {
+    observer_id: String,
+    physical_life: u64,
+    at: f64,
+    _reservation: ByteReservation,
+}
+impl RetiredPerceptionLife {
+    pub(crate) fn observer_id(&self) -> &str {
+        &self.observer_id
+    }
+    pub(crate) fn physical_life(&self) -> u64 {
+        self.physical_life
+    }
+    pub(crate) fn at(&self) -> f64 {
+        self.at
+    }
+}
+pub(crate) fn retire_perception_life(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    old_life: u64,
+    budget: &ByteBudget,
+) -> Result<RetiredPerceptionLife, ExecutionError> {
+    if owner(core, observer).is_some_and(|owner| owner.life != old_life)
+        || core
+            .state
+            .temporal
+            .actor(observer)
+            .is_some_and(|actor| actor.header().physical_life != old_life)
+    {
+        return Err(invalid());
+    }
+    let mut ended = end_current_for_life(core, observer, old_life, budget)?;
+    core.state
+        .temporal
+        .clear_recording_reservations(observer, old_life)?;
+    ended._reservation.resize(
+        size_of::<RetiredPerceptionLife>()
+            .checked_add(ended.observer_id.capacity())
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    Ok(RetiredPerceptionLife {
+        observer_id: ended.observer_id,
+        physical_life: ended.physical_life,
+        at: ended.at,
+        _reservation: ended._reservation,
     })
 }

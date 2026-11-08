@@ -6,11 +6,11 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub(super) struct BodyMeaning<'a> {
     kind: &'a str,
-    appearance: &'a str,
+    appearance: &'a crate::text::JsText,
     #[serde(skip_serializing_if = "Option::is_none")]
     label: Option<&'a Named>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    description: Option<&'a str>,
+    description: Option<&'a crate::text::JsText>,
     radius: f64,
     height: f64,
     outward: &'a [String; 4],
@@ -39,10 +39,10 @@ macro_rules! meaning {
 }
 pub(super) fn body_details_meaning<'a>(
     body: &'a ObservedBodyDetails,
-    description: Option<&'a str>,
+    description: Option<&'a crate::text::JsText>,
 ) -> BodyMeaning<'a> {
     meaning!(body, description)
 }
 pub(super) fn body_meaning_equal(a: &ObservedBody, b: &ObservedBody) -> bool {
-    meaning!(a, a.description.as_deref()) == meaning!(b, b.description.as_deref())
+    meaning!(a, a.description.as_ref()) == meaning!(b, b.description.as_ref())
 }

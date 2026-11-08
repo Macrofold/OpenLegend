@@ -445,6 +445,7 @@ export {
   receivedDirectoryContains,
   restoreReceivedRecentDirectory,
   installTemporalChargeDirectories,
+  buildReceivedRecentDirectory,
   eligibleReceivedChargeDirectories,
   receivedRecentDirectories,
   captureTemporalReceiptPrefix,

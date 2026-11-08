@@ -42,6 +42,13 @@ fn capacity<T>(value: Result<T, SpeechError>) -> Result<T, ExecutionError> {
 }
 fn data_text<'a>(event: &'a WorldEvent, field: &str) -> Option<&'a str> {
     match event.data.as_ref().and_then(|data| data.get(field)) {
+        Some(EventScalar::Text(text)) => text.as_unicode(),
+        _ => None,
+    }
+}
+
+fn event_text<'a>(event: &'a WorldEvent, field: &str) -> Option<&'a crate::text::JsText> {
+    match event.data.as_ref().and_then(|data| data.get(field)) {
         Some(EventScalar::Text(text)) => Some(text),
         _ => None,
     }
@@ -134,7 +141,7 @@ impl SpeechReceiverCursor {
             .require_current(&core.state.physical)
             .map_err(|_| ExecutionError::Invariant)?;
         if self.event_id != event.id
-            || data_text(event, "text").unwrap_or("") != words.text()
+            || event_text(event, "text") != Some(words.text())
             || core
                 .state
                 .physical
@@ -189,35 +196,37 @@ fn participant(name: &Named) -> SpeechParticipant {
         indefinite_article: name.indefinite_article.clone(),
     }
 }
-fn named_identity(identity: &crate::worlds::InstalledObserverIdentity) -> Option<&str> {
+fn named_identity(
+    identity: &crate::worlds::InstalledObserverIdentity,
+) -> Option<&crate::text::JsText> {
     identity
         .nickname
-        .as_deref()
+        .as_ref()
         .filter(|name| !name.is_empty())
-        .or_else(|| (!identity.given_name.is_empty()).then_some(identity.given_name.as_str()))
+        .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
 }
 fn transcript_size(segments: &[SpeechSegment]) -> Option<usize> {
     segments
         .iter()
         .try_fold(segments.len().saturating_sub(1), |bytes, segment| {
             bytes.checked_add(match segment {
-                SpeechSegment::Heard { text } => text.len(),
+                SpeechSegment::Heard { text } => text.storage_bytes(),
                 SpeechSegment::Unintelligible => "[…]".len(),
             })
         })
 }
-fn transcript(segments: &[SpeechSegment], bytes: usize) -> String {
-    let mut text = String::with_capacity(bytes);
+fn transcript(segments: &[SpeechSegment], _bytes: usize) -> crate::text::JsText {
+    let mut result = crate::text::JsText::default();
     for (index, segment) in segments.iter().enumerate() {
         if index > 0 {
-            text.push(' ');
+            result.push_str(" ");
         }
-        text.push_str(match segment {
-            SpeechSegment::Heard { text } => text,
-            SpeechSegment::Unintelligible => "[…]",
-        });
+        match segment {
+            SpeechSegment::Heard { text } => result.push_text(text),
+            SpeechSegment::Unintelligible => result.push_str("[…]"),
+        }
     }
-    text
+    result
 }
 
 fn assemble(
@@ -405,7 +414,11 @@ fn assemble(
     {
         let name = preferred_name.or(individual_name);
         Some(crate::worlds::base_knowledge::PersonalName {
-            name: name.unwrap_or(&core.state.installed.name_rules.value().unidentified_voice),
+            name: name
+                .map(crate::text::TextRef::Text)
+                .unwrap_or(crate::text::TextRef::Unicode(
+                    &core.state.installed.name_rules.value().unidentified_voice,
+                )),
             name_form: Some(if name.is_some() { "proper" } else { "count" }),
             indefinite_article: None,
         })
@@ -417,8 +430,11 @@ fn assemble(
         )
     } else if individual.is_some() {
         Some(crate::worlds::base_knowledge::PersonalName {
-            name: individual_name
-                .unwrap_or(&core.state.installed.name_rules.value().unidentified_voice),
+            name: individual_name.map(crate::text::TextRef::Text).unwrap_or(
+                crate::text::TextRef::Unicode(
+                    &core.state.installed.name_rules.value().unidentified_voice,
+                ),
+            ),
             name_form: Some(if individual_name.is_some() {
                 "proper"
             } else {
@@ -518,7 +534,7 @@ fn assemble(
     };
     let word_bytes = transcript_size(&segments.segments).ok_or(ExecutionError::Capacity)?;
     let name_bytes = |name: crate::worlds::base_knowledge::PersonalName<'_>| {
-        name.name.len()
+        name.name.storage_bytes()
             + name.name_form.map_or(0, str::len)
             + name.indefinite_article.map_or(0, str::len)
     };
@@ -573,7 +589,7 @@ fn assemble(
         episode_bytes,
         2 * size_of::<String>(),
         map_storage::<String, String>(2).ok_or(ExecutionError::Capacity)?,
-        data_text(event, "selfIntroduction").map_or(0, str::len),
+        event_text(event, "selfIntroduction").map_or(0, crate::text::JsText::storage_bytes),
     ])
     .ok_or(ExecutionError::Capacity)?;
     let reservation = budget.reserve(own_bytes)?;
@@ -603,17 +619,23 @@ fn assemble(
         listener_position: listener,
         name_claim: None,
     };
-    if let Some(introduction) = data_text(event, "selfIntroduction") {
-        let name = crate::encoding::js_trim(introduction);
+    if let Some(introduction) = event_text(event, "selfIntroduction") {
+        let name = introduction.trimmed();
         if speech
             .segments
             .iter()
-            .any(|segment| matches!(segment,SpeechSegment::Heard{text} if text.contains(name)))
+            .any(|segment| matches!(segment,SpeechSegment::Heard{text} if text.contains(&name)))
         {
-            speech.name_claim = Some(name.to_owned());
+            speech.name_claim = Some(name);
         }
     }
-    if !speech.segments.iter().any(|segment| matches!(segment,SpeechSegment::Heard{text} if !crate::encoding::js_trim(text).is_empty())) { speech.intelligibility=Intelligibility::None; }
+    if !speech
+        .segments
+        .iter()
+        .any(|segment| matches!(segment,SpeechSegment::Heard{text} if !text.trim_is_empty()))
+    {
+        speech.intelligibility = Intelligibility::None;
+    }
     let target_id = if own {
         target
     } else {

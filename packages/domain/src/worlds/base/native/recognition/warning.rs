@@ -1,25 +1,25 @@
 //! A partially understood utterance cannot drop a negation and become a claim.
 use super::*;
-use crate::encoding::js_trim;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::ReceivedError;
 use crate::reception::SpeechSegment;
+use crate::text::{JsText, TextSlice};
 use std::mem::size_of;
 pub(crate) struct WarningInterpretation {
-    pub label: String,
+    pub label: JsText,
     pub duration: f64,
     _reservation: ByteReservation,
 }
-fn prefix_end(text: &str, literal: &str) -> Option<usize> {
-    let mut chars = text.char_indices();
+fn prefix_end(text: TextSlice<'_>, literal: &str) -> Option<usize> {
+    let mut units = text.units();
     let mut end = 0;
     for wanted in literal.chars() {
-        let (at, actual) = chars.next()?;
+        let actual = char::from_u32(u32::from(units.next()?))?;
         let mut lower = actual.to_lowercase();
         if lower.next() != Some(wanted) || lower.next().is_some() {
             return None;
         }
-        end = at + actual.len_utf8();
+        end += 1;
     }
     Some(end)
 }
@@ -39,7 +39,7 @@ pub(crate) fn ordinary_warning(
     let bytes = segments
         .iter()
         .try_fold(segments.len(), |bytes, segment| match segment {
-            SpeechSegment::Heard { text } => bytes.checked_add(text.len()),
+            SpeechSegment::Heard { text } => bytes.checked_add(text.storage_bytes()),
             _ => Some(bytes),
         })
         .ok_or(ReceivedError(
@@ -55,25 +55,44 @@ pub(crate) fn ordinary_warning(
                 ))?,
         )
         .map_err(|_| ReceivedError("Warning interpretation exceeds native byte allowance."))?;
-    let text = segments
-        .iter()
-        .filter_map(|segment| match segment {
-            SpeechSegment::Heard { text } => Some(text.as_str()),
+    let text = JsText::join(
+        segments.iter().filter_map(|segment| match segment {
+            SpeechSegment::Heard { text } => Some(text),
             _ => None,
-        })
-        .collect::<Vec<_>>()
-        .join(" ");
-    let mut clauses = text
-        .split(|c| policy.warning.delimiters.contains(c))
-        .map(js_trim)
-        .filter(|s| !s.is_empty());
-    let Some(clause) = clauses.next() else {
+        }),
+        " ",
+    );
+    let full = text.borrowed();
+    let mut start = 0;
+    let mut clause = None;
+    for end in (0..=text.units_len()).filter(|at| {
+        *at == text.units_len()
+            || text.unit_at(*at).is_some_and(|unit| {
+                policy
+                    .warning
+                    .delimiters
+                    .encode_utf16()
+                    .any(|delimiter| delimiter == unit)
+            })
+    }) {
+        let candidate = full
+            .slice(start..end)
+            .expect("bounded warning clause")
+            .trimmed();
+        start = end + 1;
+        if candidate.is_empty() {
+            continue;
+        }
+        if clause.replace(candidate).is_some() {
+            return Ok(None);
+        }
+    }
+    let Some(clause) = clause else {
         return Ok(None);
     };
-    if clauses.next().is_some()
-        || clause
-            .chars()
-            .any(|c| matches!(c, '\n' | '\r' | '\u{2028}' | '\u{2029}'))
+    if clause
+        .units()
+        .any(|unit| matches!(unit, 10 | 13 | 0x2028 | 0x2029))
     {
         return Ok(None);
     }
@@ -81,22 +100,29 @@ pub(crate) fn ordinary_warning(
         let Some(end) = prefix_end(clause, prefix) else {
             continue;
         };
-        let after = &clause[end..];
+        let after = clause
+            .slice(end..clause.units_len())
+            .expect("matched prefix");
         let Some(end) = prefix_end(after, &policy.warning.join) else {
             continue;
         };
-        let remainder = &after[end..];
-        // Source's fixed suffix is matched case-insensitively. Compare its
-        // finite characters from the end so the captured place keeps its text.
-        let count = policy.warning.suffix.chars().count();
-        let Some((start, _)) = remainder.char_indices().rev().nth(count.saturating_sub(1)) else {
+        let remainder = after
+            .slice(end..after.units_len())
+            .expect("matched warning join");
+        let count = policy.warning.suffix.encode_utf16().count();
+        let Some(start) = remainder.units_len().checked_sub(count) else {
             continue;
         };
-        if prefix_end(&remainder[start..], &policy.warning.suffix) != Some(remainder.len() - start)
-        {
+        let suffix = remainder
+            .slice(start..remainder.units_len())
+            .expect("bounded warning suffix");
+        if prefix_end(suffix, &policy.warning.suffix) != Some(count) {
             continue;
         }
-        let label = js_trim(&remainder[..start]);
+        let label = remainder
+            .slice(0..start)
+            .expect("bounded warning label")
+            .trimmed();
         if !label.is_empty() {
             return Ok(Some(WarningInterpretation {
                 label: label.to_owned(),

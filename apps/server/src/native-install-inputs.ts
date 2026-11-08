@@ -114,6 +114,7 @@ export function nativeDefinitionInputs(
     detectionSupport: definition(world.detectionSupport, definitionPin(world.detectionSupport)),
     preparedResponses: definition(world.preparedResponses, definitionPin(world.preparedResponses)),
     movementPolicy: policy(world.movement),
+    timeRules: policy(world.timeRules),
     statusPolicy: policy(selected.statusEffectPolicy),
     workPolicy: policy(nativeSetupSettings.work),
     manifest: policy(manifest),

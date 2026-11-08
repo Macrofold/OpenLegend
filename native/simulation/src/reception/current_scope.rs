@@ -11,6 +11,8 @@ use crate::state::{Entity, EntityStore};
 use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
+mod motion;
+
 fn unavailable() -> ReceivedError {
     ReceivedError("Selected current received value is unavailable or incompatible.")
 }
@@ -412,6 +414,15 @@ impl<'a> CurrentBodyReadScope<'a> {
         let Some(input) = self.observed(id, kind)? else {
             return Ok(None);
         };
+        self.capture_input(input, kind, budget).map(Some)
+    }
+    fn capture_input(
+        &self,
+        input: CurrentNativeFacet<'a>,
+        kind: &str,
+        budget: &ByteBudget,
+    ) -> Result<OwnedCurrentFacet, ReceivedError> {
+        let id = &input.grant.subject_id;
         let pose = if kind == "body" {
             self.native(
                 id,
@@ -543,10 +554,10 @@ impl<'a> CurrentBodyReadScope<'a> {
         ])
         .ok_or_else(capacity)?;
         reservation.resize(actual).map_err(|_| capacity())?;
-        Ok(Some(OwnedCurrentFacet {
+        Ok(OwnedCurrentFacet {
             value: Arc::new(captured),
             reservation,
-        }))
+        })
     }
     fn effective_times(
         &self,

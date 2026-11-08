@@ -27,8 +27,16 @@ pub(crate) use admission::{
 };
 mod awareness;
 pub use awareness::*;
+mod awareness_encoding;
+pub(crate) use awareness_encoding::{AwarenessEncoding, AwarenessFactory, AwarenessInput};
 mod evidence;
 pub use evidence::*;
+mod history;
+pub(crate) use history::{
+    CapturedHistoryCuts, CapturedHistoryInput, HistorySettings, capture_history_cuts,
+    capture_history_input,
+};
+mod header_input;
 mod install;
 pub use install::*;
 mod policy;
@@ -46,8 +54,11 @@ pub(crate) use memory::{
     prepare_memory_admission,
 };
 mod save;
-pub(crate) use save::encode_personal_changes;
+pub(crate) use save::{
+    PersonalPredecessors, capture_personal_predecessors, encode_personal_changes,
+};
 mod mutation;
+mod privacy_mutation;
 pub(crate) use mutation::{ExperienceCheckpoint, ExperienceJournal};
 mod result;
 pub(crate) use result::{
@@ -253,6 +264,8 @@ pub struct PersonalSourceHeader {
     pub at: f64,
     pub sequence: Option<u64>,
     pub event_id: Option<String>,
+    pub evidence_source_id: Option<String>,
+    pub evidence_target_id: Option<String>,
     pub activity_id: Option<String>,
     pub source_receipt: Option<TemporalReceiptLocator>,
     pub record_kind: Option<String>,
@@ -274,6 +287,9 @@ pub struct PersonalSourceHeader {
     pub owned_observations: Vec<String>,
     /// Only the source's real dependency closure can revoke its descendants.
     pub dependencies: Vec<String>,
+    /// Whole-account propagation uses experienceDependsOn, excluding the
+    /// action/result alias phase and independently revoked facet provenance.
+    pub privacy_dependencies: Vec<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -541,9 +557,13 @@ fn source_dependencies(
     body: &Map<String, Value>,
     kind: PersonalSourceKind,
     meaning: &impl PersonalEvidenceMeaning,
+    include_activity: bool,
 ) -> Result<Vec<String>, ExperienceError> {
     let mut ids = IndexSet::new();
     for key in ["eventId", "activityId"] {
+        if key == "activityId" && !include_activity {
+            continue;
+        }
         if let Some(id) = optional_text(body, key)? {
             ids.insert(id);
         }
@@ -832,6 +852,16 @@ fn header(
         at,
         sequence,
         event_id: optional_text(body, "eventId")?,
+        evidence_source_id: if kind == PersonalSourceKind::Awareness {
+            optional_text(body, "sourceId")?
+        } else {
+            None
+        },
+        evidence_target_id: if kind == PersonalSourceKind::Awareness {
+            optional_text(body, "targetId")?
+        } else {
+            None
+        },
         activity_id: optional_text(body, "activityId")?,
         source_receipt,
         record_kind,
@@ -846,7 +876,8 @@ fn header(
         obligation_due_at,
         completion_event_type,
         owned_observations: own_observations(body)?,
-        dependencies: source_dependencies(body, kind, meaning)?,
+        dependencies: source_dependencies(body, kind, meaning, true)?,
+        privacy_dependencies: source_dependencies(body, kind, meaning, false)?,
     })
 }
 
@@ -857,7 +888,7 @@ pub struct PersonalSourceRecord {
     slot: String,
     position: u64,
     payload: Arc<str>,
-    columns: Arc<[Value]>,
+    columns: Arc<[crate::records::SqlCell]>,
     header: PersonalSourceHeader,
 }
 
@@ -940,8 +971,7 @@ impl PersonalSourceRecord {
         row: InstalledRow,
         meaning: &impl PersonalEvidenceMeaning,
     ) -> Result<Self, ExperienceError> {
-        let body: Value = serde_json::from_str(&row.payload)
-            .map_err(|_| ExperienceError::InvalidBody("source JSON"))?;
+        let body = header_input::header_input(&row.payload)?;
         let header = header(object(&body)?, kind, actor_id, &row.payload, meaning)?;
         let expected_parent = collection_owner(kind, actor_id)?;
         let mut expected_path: Vec<String> =
@@ -984,7 +1014,7 @@ impl PersonalSourceRecord {
     pub fn slot(&self) -> &str {
         &self.slot
     }
-    pub fn columns(&self) -> &[Value] {
+    pub fn columns(&self) -> &[crate::records::SqlCell] {
         &self.columns
     }
 }
@@ -1231,6 +1261,7 @@ pub struct ExperienceHeader {
 pub struct ExperienceState {
     generation: String,
     header: ExperienceHeader,
+    header_payload: Arc<str>,
     actors: IndexMap<String, PersonalHistory>,
     owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
     known_places: IndexMap<String, places::KnownPlacePreparation>,
@@ -1240,10 +1271,15 @@ impl ExperienceState {
     pub fn install(
         generation: String,
         header: ExperienceHeader,
+        header_payload: String,
         actors: IndexMap<String, PersonalHistory>,
         owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
     ) -> Result<Self, ExperienceError> {
-        if header.version != 1
+        if serde_json::from_str::<ExperienceHeader>(&header_payload)
+            .ok()
+            .as_ref()
+            != Some(&header)
+            || header.version != 1
             || header
                 .perspective_version
                 .is_some_and(|version| version != 1)
@@ -1283,6 +1319,7 @@ impl ExperienceState {
         Ok(Self {
             generation,
             header,
+            header_payload: Arc::from(header_payload),
             actors,
             owner_maps,
             known_places: IndexMap::new(),
@@ -1291,6 +1328,9 @@ impl ExperienceState {
 
     pub fn header(&self) -> &ExperienceHeader {
         &self.header
+    }
+    pub fn header_payload(&self) -> &str {
+        &self.header_payload
     }
 
     pub fn generation(&self) -> &str {

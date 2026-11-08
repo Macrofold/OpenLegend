@@ -27,6 +27,7 @@ import { canonicalJson, emit, finish, outcome } from './events.js';
 import { attributeRange, projectAttributes, readAttribute } from './world-modules.js';
 import { canNoticeInternalChange } from './conditions.js';
 import { BASE_GUARD_TEXT } from './worlds/base/shield-defense.js';
+import { selectedObservationRules } from './world-composition.js';
 import { baseCombatInjuryInterruption } from './worlds/base/body-policy.js';
 
 export interface LivingBody {
@@ -74,6 +75,7 @@ export function reconcileBody(
 ): void {
   const actor = entity.actor!;
   const body = actor.body!;
+  const notices = selectedObservationRules(world).body;
   // Every body writer shares this revision. Refuse exhaustion before publishing
   // a body that current-format validation could no longer accept.
   if (!Number.isSafeInteger(body.revision + 1)) throw new Error('Body revision exhausted.');
@@ -87,7 +89,7 @@ export function reconcileBody(
         world,
         entity.id,
         actor.action.id,
-        outcome(false, 'actor-unavailable', 'The body can no longer continue this work.'),
+        outcome(false, notices.unavailableCode, notices.unavailableText),
       );
     actor.action = null;
     if (worldSupport(entity) === null) {
@@ -138,7 +140,7 @@ export function reconcileBody(
     emit(
       world,
       events,
-      actor.incapacitated ? 'incapacitated' : 'death',
+      actor.incapacitated ? notices.incapacitatedEvent : notices.deathEvent,
       actor.incapacitated
         ? bodyNarration(lifecycle.incapacitateNarration, entity)
         : bodyNarration(lifecycle.deathNarration, entity),
@@ -168,6 +170,7 @@ export function recordHealthChange(
   causeMeaning?: string,
 ): void {
   const actor = entity.actor!;
+  const notices = selectedObservationRules(world).body;
   const definition = world.moduleManifest.definitions.find(
     (d) => d.implementation === 'native-health-v1',
   );
@@ -187,11 +190,11 @@ export function recordHealthChange(
   emit(
     world,
     events,
-    'attribute-changed',
+    notices.healthEvent,
     {
       parts: [
         person(entity, 'subject'),
-        ` ${after < beforeValue ? 'took' : 'recovered'} ${formatDisplayNumber(Math.abs(after - beforeValue), { integer: definition.nativeHealth?.precision === 'whole-points' })} ${after < beforeValue ? 'damage' : definition.name.toLowerCase()}.`,
+        ` ${after < beforeValue ? notices.damagedVerb : notices.recoveredVerb} ${formatDisplayNumber(Math.abs(after - beforeValue), { integer: definition.nativeHealth?.precision === 'whole-points' })} ${after < beforeValue ? notices.damageName : definition.name.toLowerCase()}.`,
       ],
     },
     entity,

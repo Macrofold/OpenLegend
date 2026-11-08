@@ -260,7 +260,7 @@ fn sound_clone_bytes(sound: &PerceivedSound) -> usize {
     sound.visible_source.as_ref().map_or(0, |source| {
         string_clone_bytes(&source.entity_id)
             .saturating_add(optional_string_bytes(&source.episode_id))
-            .saturating_add(string_clone_bytes(&source.description.name))
+            .saturating_add(source.description.name.storage_bytes().saturating_add(64))
             .saturating_add(optional_string_bytes(&source.description.name_form))
             .saturating_add(optional_string_bytes(
                 &source.description.indefinite_article,

@@ -265,7 +265,7 @@ impl CoreMutation<'_> {
             .iter()
             .filter_map(|(_, id)| self.state.physical.entities.get(id))
             .map(|e| {
-                e.name.len()
+                e.name.storage_bytes()
                     + e.name_form.as_ref().map_or(0, String::len)
                     + e.indefinite_article.as_ref().map_or(0, String::len)
             })
@@ -335,10 +335,13 @@ impl CoreMutation<'_> {
         let mut data = IndexMap::new();
         data.insert(
             "definitionId".to_owned(),
-            EventScalar::Text(definition.id.clone()),
+            EventScalar::Text((definition.id.clone()).into()),
         );
         data.insert("active".to_owned(), EventScalar::Boolean(active));
-        data.insert("reason".to_owned(), EventScalar::Text(reason.to_owned()));
+        data.insert(
+            "reason".to_owned(),
+            EventScalar::Text((reason.to_owned()).into()),
+        );
         data.insert(
             "conversationRelevant".to_owned(),
             EventScalar::Boolean(true),

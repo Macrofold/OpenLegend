@@ -52,7 +52,7 @@ pub(crate) fn encode_temporal_changes(
                     .entry((actor_id.as_str(), id.as_str()))
                     .or_insert(before.is_some());
             }
-            TemporalUndo::PendingAppend { .. } => {}
+            TemporalUndo::PendingAppend { .. } | TemporalUndo::Reservation(_) => {}
         }
     }
     for actor_id in actors {
@@ -92,7 +92,8 @@ pub(crate) fn encode_temporal_changes(
             Value::from(pressure.map(|pressure| pressure.order)),
             Value::from(header.bytes),
             Value::from(header.count),
-        ];
+        ]
+        .map(Into::into);
         output.write_encoded(
             "mind_temporal_actors",
             placement,
@@ -152,7 +153,8 @@ pub(crate) fn encode_temporal_changes(
                 Value::from(locator.epoch.clone()),
                 Value::from(locator.batch_order),
                 Value::from(locator.entry_index),
-            ];
+            ]
+            .map(Into::into);
             output.write_encoded(
                 "mind_temporal_supports",
                 &placement,

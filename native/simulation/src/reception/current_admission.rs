@@ -2,6 +2,7 @@
 //! old recording is closed; the setter proves that close actually occurred.
 use super::*;
 use crate::execution::{CoreMutation, ExecutionError};
+use crate::host::ByteBudget;
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::received::{ReceivedError, ReceivedValueFragment, ReceivedValueReference};
 use crate::work::WorkUnit;
@@ -262,6 +263,7 @@ pub(super) fn prepare_current_sample(
     observer: &str,
     mut input: CurrentFacetInput,
     mode: CurrentValueMode,
+    budget: &ByteBudget,
 ) -> Result<Option<PendingCurrentSample>, ExecutionError> {
     let state = &core.state.reception;
     let current_owner = owner(state, observer)?;
@@ -358,6 +360,22 @@ pub(super) fn prepare_current_sample(
                 .charge(&[(WorkUnit::OutputBytes, added)])?;
         }
         input.field.value = retained;
+    }
+    if input.field.value.kind == "body" && input.grant.modality == Modality::Sight {
+        let ensured = crate::worlds::base_knowledge::ensure_body_individual(
+            core,
+            observer,
+            &input.grant.subject_id,
+            &input.grant,
+            budget,
+        )?;
+        let subject = ensured.as_ref().map(|ensured| ensured.subject());
+        core.journal.current.reserve_growth(
+            subject
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or_else(capacity)?,
+        )?;
+        input.field.local_subject = subject.cloned();
     }
     let state = &core.state.reception;
     let current_owner = owner(state, observer)?;

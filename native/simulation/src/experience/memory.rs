@@ -19,7 +19,9 @@ use crate::received::{
 use crate::records::RecordSchema;
 use std::mem::size_of;
 
+mod body;
 mod columns;
+pub(super) use body::MemoryBody;
 pub(super) use columns::memory_columns;
 
 #[derive(Debug)]
@@ -58,20 +60,11 @@ pub(crate) enum MemoryAdmission {
 pub(crate) struct PreparedMemory {
     actor_id: String,
     physical_life: u64,
-    body: Map<String, Value>,
+    body: MemoryBody,
     budget: ByteBudget,
     _reservation: ByteReservation,
 }
 
-struct BodyView<'a>(&'a Map<String, Value>);
-impl Serialize for BodyView<'_> {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        crate::encoding::serialize_js_object(self.0, serializer)
-    }
-}
-pub(super) fn encoded(body: &Map<String, Value>) -> Result<String, MemoryAcquisitionError> {
-    json_record(&BodyView(body)).map_err(|_| MemoryAcquisitionError::Encoding)
-}
 fn serialize<T: Serialize>(value: &T) -> Result<Value, MemoryAcquisitionError> {
     serde_json::from_str(&json_record(value).map_err(|_| MemoryAcquisitionError::Encoding)?)
         .map_err(|_| MemoryAcquisitionError::Encoding)
@@ -167,24 +160,23 @@ pub(crate) fn prepare_memory_admission(
     let reservation = budget
         .reserve(bound)
         .map_err(|_| ExperienceError::Capacity)?;
-    let value: Value =
-        serde_json::from_str(&draft).map_err(|_| ExperienceError::InvalidBody("memory draft"))?;
-    let Value::Object(mut body) = value else {
-        return Err(ExperienceError::InvalidBody("memory draft").into());
-    };
+    let mut body = MemoryBody::decode(&draft)?;
     for field in ["id", "actorId", "at", "sequence"] {
-        if body.contains_key(field) {
+        if body.contains(field) {
             return Err(ExperienceError::InvalidBody("memory identity is owner-assigned").into());
         }
     }
-    let summary = text(&body, "summary")?;
-    if crate::encoding::js_trim(summary).is_empty() {
+    let summary = body
+        .get::<crate::text::JsText>("summary")?
+        .ok_or(ExperienceError::InvalidBody("summary"))?;
+    if summary.trim_is_empty() {
         return Ok(MemoryAdmission::Complete(None));
     }
-    let kind = text(&body, "kind")?.to_owned();
-    let source = text(&body, "source")?.to_owned();
-    let importance = number(&body, "importance")?.clamp(0.0, 10.0);
-    if !body
+    let projected = body.projection()?;
+    let kind = text(&projected, "kind")?.to_owned();
+    let source = text(&projected, "source")?.to_owned();
+    let importance = number(&projected, "importance")?.clamp(0.0, 10.0);
+    if !projected
         .get("entityIds")
         .and_then(Value::as_array)
         .is_some_and(|ids| ids.iter().all(Value::is_string))
@@ -202,7 +194,7 @@ pub(crate) fn prepare_memory_admission(
         .actor(actor_id)
         .ok_or(ExperienceError::ForeignOwner)?
         .collection(PersonalSourceKind::Memory)?;
-    if let Some(event) = optional_text(&body, "eventId")?.filter(|event| !event.is_empty()) {
+    if let Some(event) = optional_text(&projected, "eventId")?.filter(|event| !event.is_empty()) {
         // A cold resident tail cannot prove that an earlier matching memory is
         // absent, nor that a later resident duplicate is the first source.
         if !collection.coverage.complete {
@@ -224,31 +216,25 @@ pub(crate) fn prepare_memory_admission(
         .allocate("memory")
         .map_err(|_| ReceivedError("Personal memory identity is exhausted."))?
         .id;
-    body.insert("id".to_owned(), Value::from(id));
-    body.insert("actorId".to_owned(), Value::from(actor_id));
-    body.insert(
-        "at".to_owned(),
-        Value::from(core.state.physical.header.sim_time),
-    );
-    body.insert(
-        "sequence".to_owned(),
-        Value::from(core.state.physical.identity.next_id()),
-    );
-    body.insert("importance".to_owned(), Value::from(importance));
+    body.set("id", &id)?;
+    body.set("actorId", &actor_id)?;
+    body.set("at", &core.state.physical.header.sim_time)?;
+    body.set("sequence", &core.state.physical.identity.next_id())?;
+    body.set("importance", &importance)?;
     let law = core.state.installed.account_law();
     let reason = law.recording_reason(RecordingInput {
         source: RecordingSource::Memory,
-        event_type: body.get("eventType").and_then(Value::as_str),
+        event_type: projected.get("eventType").and_then(Value::as_str),
         modality: Some(&source),
         trigger_kind: None,
         own: true,
         has_exposure: false,
         exposure_kind: None,
-        consequence: body
+        consequence: projected
             .get("activityId")
             .and_then(Value::as_str)
             .is_some_and(|id| !id.is_empty())
-            || body.contains_key("obligation")
+            || body.contains("obligation")
             || matches!(source.as_str(), "felt" | "internal"),
     });
     // The source issues its ID even when the selected world's recording law
@@ -265,15 +251,16 @@ pub(crate) fn prepare_memory_admission(
         after_release: law.account_after_release(AccountRecordingInput {
             source: RecordingSource::Memory,
             own: true,
-            event_type: body.get("eventType").and_then(Value::as_str),
+            event_type: projected.get("eventType").and_then(Value::as_str),
             activity,
         }),
         required: (reason == RecordingReason::Required).then_some(true),
         receipt: None,
     };
-    body.insert("retention".to_owned(), serialize(&retention)?);
-    let payload = encoded(&body)?;
-    let header = source_header(&body, actor_id, &payload, &law)?;
+    body.set("retention", &retention)?;
+    let payload = body.encoded()?;
+    let projected = body.projection()?;
+    let header = source_header(&projected, actor_id, &payload, &law)?;
     let policy = &core.state.installed.attention.value().retention;
     let mut quota = core.state.temporal.account_addition_budget(actor_id)?;
     if !quota.reserve(header.class, payload.len() as u64, policy)? {
@@ -312,14 +299,14 @@ pub(crate) fn acquire_memory(
     let installed = Arc::clone(&core.state.installed);
     let law = installed.account_law();
     let policy = &installed.attention.value().retention;
-    let id = text(&pending.body, "id")?.to_owned();
-    let at = number(&pending.body, "at")?;
-    let context_subjects = columns::context_subjects(&pending.body)?;
+    let projected = pending.body.projection()?;
+    let id = text(&projected, "id")?.to_owned();
+    let at = number(&projected, "at")?;
+    let context_subjects = columns::context_subjects(&projected)?;
     let source_ids = std::iter::once(id.clone())
-        .chain(optional_text(&pending.body, "eventId")?)
+        .chain(optional_text(&projected, "eventId")?)
         .collect();
-    let required = pending
-        .body
+    let required = projected
         .get("retention")
         .and_then(Value::as_object)
         .and_then(|value| value.get("required"))
@@ -352,8 +339,11 @@ pub(crate) fn acquire_memory(
                     kind: PersonalAccountKind::PersonalAccount,
                     source: PersonalAccountSource::Memory,
                     id: id.clone(),
-                    text: text(&pending.body, "summary")?.to_owned(),
-                    event_type: optional_text(&pending.body, "eventType")?
+                    text: pending
+                        .body
+                        .get("summary")?
+                        .ok_or(ExperienceError::InvalidBody("summary"))?,
+                    event_type: optional_text(&projected, "eventType")?
                         .filter(|kind| !kind.is_empty()),
                     content: None,
                     data: None,
@@ -379,19 +369,17 @@ pub(crate) fn acquire_memory(
         },
     )?;
     if let Some(locator) = locator {
-        let value = serialize(&locator)?;
-        pending
+        pending.body.set("sourceReceipt", &locator)?;
+        let mut retention: ExperienceRetention = pending
             .body
-            .insert("sourceReceipt".to_owned(), value.clone());
-        pending
-            .body
-            .get_mut("retention")
-            .and_then(Value::as_object_mut)
-            .ok_or(ExperienceError::InvalidBody("retention"))?
-            .insert("receipt".to_owned(), value);
+            .get("retention")?
+            .ok_or(ExperienceError::InvalidBody("retention"))?;
+        retention.receipt = Some(locator);
+        pending.body.set("retention", &retention)?;
     }
-    let payload = encoded(&pending.body)?;
-    let header = source_header(&pending.body, &pending.actor_id, &payload, &law)?;
+    let payload = pending.body.encoded()?;
+    let projected = pending.body.projection()?;
+    let header = source_header(&projected, &pending.actor_id, &payload, &law)?;
     let mut quota = core
         .state
         .temporal
@@ -417,7 +405,11 @@ pub(crate) fn acquire_memory(
         .coverage
         .next_ordinal;
     let parent = collection_owner(PersonalSourceKind::Memory, &pending.actor_id)?;
-    let mut extra = memory_columns(&pending.body, &header, &payload, &law, policy, schema)?;
+    let mut extra: Vec<crate::records::SqlCell> =
+        memory_columns(&projected, &header, &payload, &law, policy, schema)?
+            .into_iter()
+            .map(Into::into)
+            .collect();
     for cell in &mut extra {
         crate::records::save::normalize_cell(cell);
     }
@@ -435,7 +427,12 @@ pub(crate) fn acquire_memory(
         },
         &law,
     )?;
-    let capsules = columns::known_place_capsules(&pending.body, &pending.actor_id, now)?;
+    let capsules = columns::known_place_capsules(
+        &projected,
+        pending.body.originals()?,
+        &pending.actor_id,
+        now,
+    )?;
     core.state.temporal.adjust_account(
         &pending.actor_id,
         header.class,

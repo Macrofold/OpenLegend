@@ -473,7 +473,7 @@ pub struct SeedCorrelation {
     pub individual_id: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct IndividualRecognition {
     pub recognized: bool,
@@ -528,4 +528,57 @@ pub struct IndividualRecognition {
         skip_serializing_if = "Option::is_none"
     )]
     pub familiarity: Option<f64>,
+    // This is an actual producer fact, not saved state: Source inserts its
+    // initial body proof before matching and later overwrites it in place.
+    // Immutable imported account bytes retain their own canonical identity.
+    #[serde(skip)]
+    body_support_before_matching: bool,
+}
+
+impl Serialize for IndividualRecognition {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let mut fields = serializer.serialize_map(None)?;
+        fields.serialize_entry("recognized", &self.recognized)?;
+        fields.serialize_entry("candidates", &self.candidates)?;
+        fields.serialize_entry("moreCandidates", &self.more_candidates)?;
+        fields.serialize_entry("quality", &self.quality)?;
+        if let Some(value) = self.perception {
+            fields.serialize_entry("perception", &value)?;
+        }
+        if let Some(value) = &self.policy {
+            fields.serialize_entry("policy", value)?;
+        }
+        if self.body_support_before_matching {
+            if let Some(value) = &self.learning_support {
+                fields.serialize_entry("learningSupport", value)?;
+            }
+        }
+        if let Some(value) = &self.subject {
+            fields.serialize_entry("subject", value)?;
+        }
+        if let Some(value) = &self.prior_exemplar_key {
+            fields.serialize_entry("priorExemplarKey", value)?;
+        }
+        if let Some(value) = self.familiarity {
+            fields.serialize_entry("familiarity", &value)?;
+        }
+        if !self.body_support_before_matching && self.subject.is_some() {
+            if let Some(value) = &self.learning_support {
+                fields.serialize_entry("learningSupport", value)?;
+            }
+        }
+        if let Some(value) = &self.seed_correlation {
+            fields.serialize_entry("seedCorrelation", value)?;
+        }
+        if !self.body_support_before_matching && self.subject.is_none() {
+            if let Some(value) = &self.learning_support {
+                fields.serialize_entry("learningSupport", value)?;
+            }
+        }
+        if let Some(value) = &self.learned_subject {
+            fields.serialize_entry("learnedSubject", value)?;
+        }
+        fields.end()
+    }
 }

@@ -272,7 +272,7 @@ impl EventObservationSelection<'_> {
     ) -> Result<usize, SensorError> {
         use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
         use std::mem::size_of;
-        let lookup = |id: &str| names.get(id).map(|name| name.name.len());
+        let lookup = |id: &str| names.get(id).map(|name| name.name.storage_bytes());
         let text = self
             .policy
             .text_allocation_bound(self.event, self.source_id, self.target_id, lookup)
@@ -345,7 +345,7 @@ impl EventObservationSelection<'_> {
                 .render_narration(narration, GrammaticalPerson::First)
                 .map_err(|_| SensorError::Capability)
         };
-        let label = |id: &str, captured: bool| -> Result<String, SensorError> {
+        let label = |id: &str, captured: bool| -> Result<crate::text::JsText, SensorError> {
             if captured
                 && let NativeText::Captured(text) = &self.event.text
                 && let Some(named) = text.names.get(id)

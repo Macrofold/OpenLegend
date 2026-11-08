@@ -316,6 +316,27 @@ impl TemporalState {
 }
 
 impl TemporalState {
+    /// Life retirement clears admission held by that old receiver. It does not
+    /// start a new temporal epoch or remove the saved received history.
+    pub(crate) fn clear_recording_reservations(
+        &mut self,
+        actor_id: &str,
+        physical_life: u64,
+    ) -> Result<(), ReceivedError> {
+        let Some(actor) = self.actors.get(actor_id) else {
+            return Ok(());
+        };
+        if actor.header.physical_life != physical_life {
+            return Err(ReceivedError("Received recording life changed."));
+        }
+        if actor.header.terminal_reserved_bytes == 0 {
+            return Ok(());
+        }
+        let mut header = actor.header.clone();
+        header.terminal_reserved_bytes = 0;
+        self.replace_header(actor_id, header)
+    }
+
     pub(crate) fn release_terminal_reservation(
         &mut self,
         actor_id: &str,

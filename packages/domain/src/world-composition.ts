@@ -1,3 +1,4 @@
+import { BASE_SIMULATION_TIME_RULES } from './worlds/base/time.js';
 import { baseOutwardActivity, changedOutwardNotice } from './worlds/base/senses.js';
 import {
   recognizePromise,
@@ -18,7 +19,7 @@ import { BASE_ORDINARY_ACTION_RULES } from './worlds/base/ordinary-action-rules.
 import { BASE_OBSERVATION_RULES } from './worlds/base/observation-rules.js';
 import { BASE_EVENT_APPRAISAL_RULES } from './worlds/base/appraisals.js';
 import { baseAnimalActivity } from './worlds/base/animal-response-profile.js';
-import { baseAssemblyPresentation } from './worlds/base/presentation.js';
+import { baseAssemblyPresentation, baseObservedBodyKind } from './worlds/base/presentation.js';
 import type { AssemblyFamily } from './assembly-types.js';
 import { baseContextActions } from './worlds/base/context-actions.js';
 import {
@@ -480,7 +481,12 @@ export function selectedNativeLawDefinitions(
     detectionSupport: selectedDetectionSupportPolicy(world),
     preparedResponses: BASE_THREAT_RESPONSE_PROFILE,
     movement: selectedMovementRules(world),
+    timeRules: selectedTimeRules(world),
   };
+}
+export function selectedTimeRules(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_SIMULATION_TIME_RULES;
 }
 export function selectedMovementRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
@@ -501,6 +507,10 @@ export function selectedSpeechAction(world: Pick<WorldState, 'profile'>) {
 export function selectedObservationRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_OBSERVATION_RULES;
+}
+export function selectedObservedBodyKind(world: Pick<WorldState, 'profile'>, kind: string) {
+  selectedCreationProfileForWorld(world);
+  return baseObservedBodyKind(kind);
 }
 export function selectedOrdinaryActionRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);

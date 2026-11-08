@@ -699,6 +699,11 @@ impl HeapBytes for CurrentReceivedGroup {
         ])
     }
 }
+heap_record!(VisualConfirmation {
+    channel,
+    complete,
+    frame_ref
+});
 heap_record!(CurrentSightStamp { frame_ref });
 heap_record!(CurrentSightCheck { frame_ref, detail });
 heap_record!(BoundsQueryCursor { pending });

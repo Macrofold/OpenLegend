@@ -754,7 +754,7 @@ impl MoveAdvanceCursor {
             article: None,
         });
         parts.push(NarrationPart::Literal(" ".into()));
-        parts.push(NarrationPart::Literal(text));
+        parts.push(NarrationPart::Literal(text.into()));
         let event = core.stage_event(EventEmissionIntent {
             event_type: event_type.into(),
             text: EmissionText::Narration(Narration { parts }),

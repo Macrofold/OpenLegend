@@ -12,7 +12,7 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { prepareAttributeForecast, readAttribute } from './world-modules.js';
 import { hasMemory } from './living.js';
-import { BASE_TIME_POLICY } from './worlds/base/time.js';
+import { selectedTimeRules } from './world-composition.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { nextCommitmentDeadline } from './commitments.js';
 import { nextAppraisalDeadline, nextAppraisalProcessDeadline } from './appraisal-index.js';
@@ -105,7 +105,7 @@ export function nativeInterval(
     recordCause(world.simTime + seconds, reason);
     bound = Math.min(bound, seconds);
   };
-  let bound = Math.min(requested, BASE_TIME_POLICY.idleHorizonSeconds);
+  let bound = Math.min(requested, selectedTimeRules(world).idleHorizonSeconds);
   // Owners compare the clock with stored absolute deadlines. Landing on that exact value,
   // not on a sum of slices, lets them fire at the boundary instead of 1e-6 s or more later.
   let deadline = Infinity;
@@ -386,7 +386,7 @@ export function refineNativeInterval(
     return undefined;
   const interval = nativeInterval(
     world,
-    BASE_TIME_POLICY.idleHorizonSeconds,
+    selectedTimeRules(world).idleHorizonSeconds,
     participants.actors.filter((id) => changed.has(id)),
     participants.ambient.filter((id) => changed.has(id)),
     statusIds,

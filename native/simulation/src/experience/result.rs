@@ -89,7 +89,7 @@ struct ResultMemoryDraft {
     event_type: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     speaker_id: Option<String>,
-    summary: String,
+    summary: crate::text::JsText,
     entity_ids: Vec<String>,
 }
 
@@ -175,7 +175,7 @@ pub(crate) fn prepare_activity_result(
     let producer_bound = text_bound
         .checked_add(fact_heap)
         .and_then(|n| n.checked_add(actor_id.len().checked_mul(8)?))
-        .and_then(|n| n.checked_add(actor.name.len().checked_mul(4)?))
+        .and_then(|n| n.checked_add(actor.name.storage_bytes().checked_mul(4)?))
         .and_then(|n| n.checked_add(outcome.code.len()))
         .and_then(|n| n.checked_add(1024))
         .and_then(|n| n.checked_mul(8))
@@ -195,6 +195,9 @@ pub(crate) fn prepare_activity_result(
             indefinite_article: actor.indefinite_article.clone(),
         },
     );
+    let mut description =
+        crate::text::JsText::from(format!(" action {status} at simulation time {time}: "));
+    description.push_text(&exact);
     let text = render_narration_parts(
         &Narration {
             parts: vec![
@@ -203,9 +206,7 @@ pub(crate) fn prepare_activity_result(
                     role: PersonRole::Possessive,
                     article: None,
                 },
-                NarrationPart::Literal(format!(
-                    " action {status} at simulation time {time}: {exact}"
-                )),
+                NarrationPart::Literal(description),
             ],
         },
         &names,

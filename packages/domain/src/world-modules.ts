@@ -1193,10 +1193,35 @@ export function projectAttributes(
 }
 export function bodyContext(world: WorldState, entity: Entity): string {
   const actor = entity.actor!;
+  return formatBodyContext(
+    projectAttributes(world, entity, 'owner'),
+    activeStatusEffects(world, entity)
+      .filter((definition) => definition.actions)
+      .map((definition) =>
+        renderNarration(
+          world,
+          subjectNarration(entity, [
+            presentVerb(entity, 'be'),
+            ` ${definition.label.toLowerCase()}.`,
+          ]),
+          entity.id,
+        ),
+      ),
+    actor.action?.type,
+  );
+}
+
+/** Measurements and already rendered owner statuses form one finite context.
+ * This formatter cannot read private state from any other physical body. */
+export function formatBodyContext(
+  attributes: readonly ReturnType<typeof projectAttributes>[number][],
+  actionStatuses: readonly string[],
+  activityType: string | undefined,
+): string {
   return [
     // Qualitative concerns supplement measurements; they must not replace them.
     // docs/memory-architecture.md#3-one-compact-model-facing-context
-    ...projectAttributes(world, entity, 'owner').flatMap((v) => {
+    ...attributes.flatMap((v) => {
       const name = v.name;
       const measurement =
         v.status === 'unknown'
@@ -1206,16 +1231,8 @@ export function bodyContext(world: WorldState, entity: Entity): string {
             : `${name}: ${v.value}.`;
       return [measurement, v.condition ?? v.concern, v.meaning].filter(Boolean);
     }),
-    ...activeStatusEffects(world, entity)
-      .filter((d) => d.actions)
-      .map((d) =>
-        renderNarration(
-          world,
-          subjectNarration(entity, [presentVerb(entity, 'be'), ` ${d.label.toLowerCase()}.`]),
-          entity.id,
-        ),
-      ),
-    `Current activity: ${actor.action?.type ?? 'idle'}.`,
+    ...actionStatuses,
+    `Current activity: ${activityType ?? 'idle'}.`,
   ].join(' ');
 }
 export function advanceReservoirs(
@@ -1690,9 +1707,10 @@ export function validateWorldModules(world: WorldState): void {
         e.actor.alive ||
         (remains.sourceId !== e.id &&
           !(
-            e.kind === 'remains' &&
+            e.kind === world.moduleManifest.bodyPolicy?.reincarnation?.corpseKind &&
             entityGet(world.entities, remains.sourceId)?.actor?.controller === 'player' &&
-            entityGet(world.entities, remains.sourceId)?.kind !== 'remains' &&
+            entityGet(world.entities, remains.sourceId)?.kind !==
+              world.moduleManifest.bodyPolicy?.reincarnation?.corpseKind &&
             !entityGet(world.entities, remains.sourceId)?.remains
           )) ||
         !Number.isFinite(remains.diedAt) ||

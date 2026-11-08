@@ -378,9 +378,10 @@ fn safe_add(a: u64, b: u64) -> Result<u64, ValueError> {
 
 /// The current JSON key contract, including Object.prototype names that are
 /// refused at the TypeScript boundary. Native dictionaries never have a prototype.
+pub const MAX_RECORD_ID_UNITS: usize = 180;
 pub fn is_safe_record_id(value: &str) -> bool {
     !crate::encoding::js_trim(value).is_empty()
-        && value.encode_utf16().count() <= 180
+        && value.encode_utf16().count() <= MAX_RECORD_ID_UNITS
         && !matches!(
             value,
             "prototype"

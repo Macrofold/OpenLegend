@@ -50,10 +50,10 @@ impl DefinitionIdentity for SpeechAction {
 pub(crate) struct SpeechPlan<'a> {
     rule: &'a SpeechAction,
     source_id: &'a str,
-    text: &'a str,
+    text: crate::text::TextSlice<'a>,
     target_id: Option<&'a str>,
     target_role: Option<SpeechTargetRole>,
-    self_introduction: Option<&'a str>,
+    self_introduction: Option<&'a crate::text::JsText>,
     utterance_id: &'a str,
     volume: SpeechVolume,
     acoustics: &'a AcousticPolicy,
@@ -91,8 +91,8 @@ impl SpeechAction {
         }) {
             return Err(&self.no_speech);
         }
-        let trimmed = crate::encoding::js_trim(text);
-        if trimmed.is_empty() || text.encode_utf16().count() as u64 > self.maximum_characters {
+        let trimmed = text.borrowed().trimmed();
+        if trimmed.is_empty() || text.units_len() as u64 > self.maximum_characters {
             return Err(&self.invalid_speech);
         }
         let volume = match volume.as_deref().unwrap_or("normal") {
@@ -118,7 +118,7 @@ impl SpeechAction {
             target_role: target_id
                 .as_ref()
                 .map(|_| target_role.unwrap_or(SpeechTargetRole::Body)),
-            self_introduction: self_introduction.as_deref().filter(|name| !name.is_empty()),
+            self_introduction: self_introduction.as_ref().filter(|name| !name.is_empty()),
             utterance_id: &envelope.id,
             volume,
             acoustics,
@@ -127,7 +127,7 @@ impl SpeechAction {
 }
 
 impl SpeechPlan<'_> {
-    pub(crate) fn text(&self) -> &str {
+    pub(crate) fn text(&self) -> crate::text::TextSlice<'_> {
         self.text
     }
     pub(crate) fn volume(&self) -> SpeechVolume {
@@ -140,8 +140,8 @@ impl SpeechPlan<'_> {
             size_of::<EventEmissionIntent>(), 3 * size_of::<NarrationPart>(),
             map_storage::<String, EventScalar>(8)?,
             self.rule.event_type.len(), self.source_id.len().checked_mul(2)?,
-            self.text.len().checked_mul(2)?, ": ".len(), self.target_id.map_or(0, str::len),
-            self.self_introduction.map_or(0, str::len), self.utterance_id.len(),
+            self.text.storage_bound()?.checked_mul(2)?, ": ".len(), self.target_id.map_or(0, str::len),
+            self.self_introduction.map_or(0, crate::text::JsText::storage_bytes), self.utterance_id.len(),
             self.acoustics.id.len(), "remembered".len(), "whisper".len(),
             "texttargetRoleselfIntroductionutteranceIdvolumeacousticPolicyIdacousticPolicyVersionsourceLevelDbSplAt1m".len(),
         ])
@@ -153,7 +153,10 @@ impl SpeechPlan<'_> {
             SpeechVolume::Shout => "shout",
         };
         let mut data = IndexMap::with_capacity(8);
-        data.insert("text".to_owned(), EventScalar::Text(self.text.to_owned()));
+        data.insert(
+            "text".to_owned(),
+            EventScalar::Text(self.text.to_owned().into()),
+        );
         if let Some(role) = self.target_role {
             data.insert(
                 "targetRole".to_owned(),
@@ -162,24 +165,28 @@ impl SpeechPlan<'_> {
                         SpeechTargetRole::Body => "body",
                         SpeechTargetRole::Remembered => "remembered",
                     }
-                    .to_owned(),
+                    .to_owned()
+                    .into(),
                 ),
             );
         }
         if let Some(name) = self.self_introduction {
             data.insert(
                 "selfIntroduction".to_owned(),
-                EventScalar::Text(name.to_owned()),
+                EventScalar::Text(name.to_owned().into()),
             );
         }
         data.insert(
             "utteranceId".to_owned(),
-            EventScalar::Text(self.utterance_id.to_owned()),
+            EventScalar::Text(self.utterance_id.to_owned().into()),
         );
-        data.insert("volume".to_owned(), EventScalar::Text(volume.to_owned()));
+        data.insert(
+            "volume".to_owned(),
+            EventScalar::Text(volume.to_owned().into()),
+        );
         data.insert(
             "acousticPolicyId".to_owned(),
-            EventScalar::Text(self.acoustics.id.clone()),
+            EventScalar::Text(self.acoustics.id.clone().into()),
         );
         data.insert(
             "acousticPolicyVersion".to_owned(),
@@ -198,8 +205,8 @@ impl SpeechPlan<'_> {
                         role: PersonRole::Subject,
                         article: None,
                     },
-                    NarrationPart::Literal(": ".to_owned()),
-                    NarrationPart::Literal(self.text.to_owned()),
+                    NarrationPart::Literal(": ".to_owned().into()),
+                    NarrationPart::Literal(self.text.to_owned().into()),
                 ],
             }),
             audience: AudienceSelection::Physical,

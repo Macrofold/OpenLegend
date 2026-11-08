@@ -50,7 +50,7 @@ pub struct ObservationFacet {
     pub value: SensoryFacet,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ObservationContribution {
     pub id: String,
@@ -78,7 +78,7 @@ pub struct ObservationContribution {
     pub facets: Vec<ObservationFacet>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",
@@ -88,6 +88,27 @@ pub struct ObservationContribution {
 pub enum FacetReception {
     Body { pose_ref: ReceivedValueReference },
     Location { frame_ref: ReceivedValueReference },
+}
+impl<'de> Deserialize<'de> for FacetReception {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(de)?;
+        let parse = || -> Result<Self, String> {
+            let mut fields = crate::encoding::RawFields::parse(raw.get())?;
+            let kind: String = fields.take("kind")?;
+            let result = match kind.as_str() {
+                "body" => Self::Body {
+                    pose_ref: fields.take("poseRef")?,
+                },
+                "location" => Self::Location {
+                    frame_ref: fields.take("frameRef")?,
+                },
+                _ => return Err("Unknown current facet reception kind.".into()),
+            };
+            fields.finish()?;
+            Ok(result)
+        };
+        parse().map_err(serde::de::Error::custom)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

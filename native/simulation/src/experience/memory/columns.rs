@@ -265,6 +265,7 @@ pub(super) fn context_subjects(body: &Map<String, Value>) -> Result<Vec<String>,
 }
 pub(super) fn known_place_capsules(
     body: &Map<String, Value>,
+    inputs: Vec<ObservationContribution>,
     actor_id: &str,
     through: f64,
 ) -> Result<Vec<KnownPlaceCapsule>, MemoryAcquisitionError> {
@@ -273,18 +274,9 @@ pub(super) fn known_place_capsules(
     {
         return Err(ExperienceError::ForeignOwner.into());
     }
-    let mut inputs = Vec::new();
-    if let Some(manifest) = child(body, "manifest")? {
-        inputs.extend(array(manifest, "observations")?)
-    }
-    add_originals(&mut inputs, body)?;
-    if let Some(evidence) = child(body, "evidence")? {
-        add_originals(&mut inputs, evidence)?
-    }
     let mut places = IndexMap::new();
     for input in inputs {
-        let original: ObservationContribution = serde_json::from_value(input.clone())
-            .map_err(|_| ExperienceError::InvalidBody("personal place original"))?;
+        let original = input;
         if original.observer.actor_id != actor_id || original.acquired_at > through {
             return Err(ExperienceError::ForeignOwner.into());
         }

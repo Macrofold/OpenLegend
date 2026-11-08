@@ -141,7 +141,7 @@ struct CheckpointRow<'a> {
     world_id: &'a str,
     placement: &'a RecordPlacement,
     payload: &'a str,
-    columns: &'a [Value],
+    columns: &'a [crate::records::SqlCell],
 }
 impl Serialize for CheckpointRow<'_> {
     fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {

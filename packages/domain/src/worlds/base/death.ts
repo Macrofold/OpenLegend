@@ -28,6 +28,7 @@ export const BASE_DEATH_SCARS: DeathScar[] = [
 export const BASE_REINCARNATION_POLICY: ReincarnationPolicy = {
   implementation: 'rest-replacement',
   qualifyingController: 'player',
+  corpseKind: 'remains',
   retainedTypeFraction: 0.5,
   restKind: 'campfire',
   radius: 396,

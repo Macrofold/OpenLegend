@@ -2,7 +2,6 @@
 //! segments. ICU supplies word boundaries; this world owns naming permission.
 
 use super::PersonalNameRules;
-use crate::encoding::js_trim;
 use crate::events::WorldEvent;
 use crate::execution::ExecutionError;
 use crate::experience::Awareness;
@@ -10,6 +9,7 @@ use crate::geometry::GeometryBinding;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::language::{WordFacts, WordsAnswer, WordsRequest};
 use crate::reception::{EventScalar, SpeechPerception, SpeechSegment};
+use crate::text::JsText;
 use std::{mem::size_of, ops::Range};
 
 struct ListenerWords {
@@ -18,7 +18,7 @@ struct ListenerWords {
 }
 pub(crate) struct IntroductionWords {
     event_id: String,
-    name: String,
+    name: JsText,
     listeners: Vec<ListenerWords>,
     request: WordsRequest,
     reservation: ByteReservation,
@@ -28,18 +28,18 @@ pub(crate) struct IntroductionWords {
 /// retain its exact proof before changing any observer's preferred label.
 pub(crate) struct HeardIntroductions {
     pub(super) event_id: String,
-    pub(super) name: String,
+    pub(super) name: JsText,
     listeners: Vec<ListenerWords>,
     facts: WordFacts,
     _reservation: ByteReservation,
 }
-fn heard<'a>(entry: &'a Awareness) -> impl Iterator<Item = &'a str> {
+fn heard<'a>(entry: &'a Awareness) -> impl Iterator<Item = &'a JsText> {
     entry
         .speech
         .iter()
         .flat_map(|speech| &speech.segments)
         .filter_map(|segment| match segment {
-            SpeechSegment::Heard { text } => Some(text.as_str()),
+            SpeechSegment::Heard { text } => Some(text),
             SpeechSegment::Unintelligible => None,
         })
 }
@@ -65,9 +65,9 @@ impl IntroductionWords {
         };
         let valid = match proposed {
             EventScalar::Text(name) => {
-                !js_trim(name).is_empty()
-                    && name.chars().count() as u64 <= rules.given_name_characters
-                    && matches!(event.data.as_ref().and_then(|data|data.get("text")),Some(EventScalar::Text(text)) if text.contains(js_trim(name)))
+                !name.trim_is_empty()
+                    && name.character_count() as u64 <= rules.given_name_characters
+                    && matches!(event.data.as_ref().and_then(|data|data.get("text")),Some(EventScalar::Text(text)) if text.borrowed().contains(name.borrowed().trimmed()))
             }
             _ => false,
         };
@@ -82,7 +82,7 @@ impl IntroductionWords {
         let EventScalar::Text(proposed) = proposed else {
             return Err(ExecutionError::Invariant);
         };
-        let name = js_trim(proposed);
+        let name = proposed.borrowed().trimmed();
         let mut count = 0usize;
         let mut parts = 1usize;
         for observer in &event.audience {
@@ -109,9 +109,9 @@ impl IntroductionWords {
         }
         let bytes = count
             .checked_mul(size_of::<ListenerWords>())
-            .and_then(|bytes| bytes.checked_add(parts.checked_mul(size_of::<&str>())?))
+            .and_then(|bytes| bytes.checked_add(parts.checked_mul(size_of::<&JsText>())?))
             .and_then(|bytes| bytes.checked_add(event.id.len()))
-            .and_then(|bytes| bytes.checked_add(name.len().checked_mul(2)?))
+            .and_then(|bytes| bytes.checked_add(name.storage_bound()?.checked_mul(2)?))
             .and_then(|bytes| {
                 bytes.checked_add(size_of::<Self>() + size_of::<HeardIntroductions>())
             })
@@ -136,7 +136,7 @@ impl IntroductionWords {
         strings
             .try_reserve_exact(parts)
             .map_err(|_| ExecutionError::Capacity)?;
-        strings.push(name.as_str());
+        strings.push(&name);
         for observer in &event.audience {
             if event.actor_id.as_ref() == Some(observer) {
                 continue;
@@ -200,7 +200,7 @@ impl IntroductionWords {
     }
 }
 impl HeardIntroductions {
-    pub(crate) fn name(&self) -> &str {
+    pub(crate) fn name(&self) -> &JsText {
         &self.name
     }
     pub(crate) fn event_id(&self) -> &str {

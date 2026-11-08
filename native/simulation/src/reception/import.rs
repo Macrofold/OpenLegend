@@ -5,9 +5,10 @@ use super::*;
 use crate::install::rows::{take_collection, take_one, validate_row};
 use crate::install::{InstallError, RowImport};
 use crate::received::ReceivedValues;
-use crate::records::{ChildShape, RecordSchema};
+use crate::records::{ChildShape, RecordSchema, SqlCell};
 use serde::de::DeserializeOwned;
-use serde_json::{Map, Value};
+use serde_json::value::RawValue;
+type RawMap = IndexMap<String, Box<RawValue>>;
 
 /// Each bit comes from the actual parent's current-format child marker. Root
 /// presence must never be inferred from resident rows or an empty collection.
@@ -30,22 +31,25 @@ fn invalid() -> InstallError {
 fn path(parts: &[&str]) -> Result<String, InstallError> {
     crate::encoding::json_record(parts).map_err(|_| InstallError::RowIdentity)
 }
-fn object(value: Value) -> Result<Map<String, Value>, InstallError> {
-    match value {
-        Value::Object(object) => Ok(object),
-        _ => Err(invalid()),
-    }
+fn object(value: Box<RawValue>) -> Result<RawMap, InstallError> {
+    parse(value.get())
 }
-fn marker(body: &Map<String, Value>, field: &str, shape: ChildShape) -> Result<bool, InstallError> {
-    match body.get(field) {
-        None => Ok(false),
-        Some(Value::Object(map)) if shape == ChildShape::Object && map.is_empty() => Ok(true),
-        Some(Value::Array(values)) if shape == ChildShape::Array && values.is_empty() => Ok(true),
-        _ => Err(invalid()),
-    }
+fn marker(body: &RawMap, field: &str, shape: ChildShape) -> Result<bool, InstallError> {
+    let Some(value) = body.get(field) else {
+        return Ok(false);
+    };
+    let empty = match shape {
+        ChildShape::Object => parse::<RawMap>(value.get())?.is_empty(),
+        ChildShape::Array => parse::<Vec<Box<RawValue>>>(value.get())?.is_empty(),
+    };
+    if empty { Ok(true) } else { Err(invalid()) }
 }
-fn decode<T: DeserializeOwned>(value: Value) -> Result<T, InstallError> {
-    serde_json::from_value(value).map_err(|_| invalid())
+fn decode<T: DeserializeOwned>(value: impl Serialize) -> Result<T, InstallError> {
+    // This is a consuming installation join. Keep unpaired code units in raw
+    // child JSON until their typed text owner decodes them; no JSON world is
+    // retained after installation.
+    let value = serde_json::value::to_raw_value(&value).map_err(|_| invalid())?;
+    parse(value.get())
 }
 fn parse<T: DeserializeOwned>(value: &str) -> Result<T, InstallError> {
     serde_json::from_str(value).map_err(|_| invalid())
@@ -151,13 +155,9 @@ fn list_rows<T: DeserializeOwned>(
     }
     let mut result = Vec::new();
     for row in collection.rows {
-        let value: Value = parse(&row.payload)?;
         let identity = if let Some(key) = key {
-            value
-                .get(key)
-                .and_then(Value::as_str)
-                .ok_or_else(invalid)?
-                .to_owned()
+            let value: RawMap = parse(&row.payload)?;
+            parse::<String>(value.get(key).ok_or_else(invalid)?.get())?
         } else {
             result.len().to_string()
         };
@@ -177,19 +177,15 @@ fn list_rows<T: DeserializeOwned>(
         if row.position != result.len() as u64 {
             return Err(InstallError::RowPlacement);
         }
-        result.push(decode(value)?);
+        result.push(parse(&row.payload)?);
     }
     Ok(Some(result))
 }
-fn put<T: Serialize>(
-    body: &mut Map<String, Value>,
-    field: &str,
-    value: Option<T>,
-) -> Result<(), InstallError> {
+fn put<T: Serialize>(body: &mut RawMap, field: &str, value: Option<T>) -> Result<(), InstallError> {
     if let Some(value) = value {
         body.insert(
             field.to_owned(),
-            serde_json::to_value(value).map_err(|_| invalid())?,
+            serde_json::value::to_raw_value(&value).map_err(|_| invalid())?,
         );
     }
     Ok(())
@@ -242,7 +238,7 @@ pub(crate) fn read_reception_rows(
     schema: &RecordSchema,
 ) -> Result<ReceptionState, InstallError> {
     let world = path(&["world"])?;
-    let sensory = take_one::<Value>(
+    let sensory = take_one::<Box<RawValue>>(
         import,
         "sim_sensory_continuation",
         &world,
@@ -278,7 +274,7 @@ pub(crate) fn read_reception_rows(
                 processed,
             )?,
         )?;
-        decode(Value::Object(body))
+        decode(body)
     })
     .transpose()?;
     let perception_evidence = map_rows(
@@ -317,7 +313,7 @@ pub(crate) fn read_reception_rows(
                     let metadata = current
                         .extra
                         .get(at)
-                        .and_then(Value::as_str)
+                        .and_then(SqlCell::as_str)
                         .ok_or_else(invalid)?;
                     let contact = decode_current_contact_storage(&current.payload, metadata)
                         .map_err(|_| invalid())?;
@@ -334,7 +330,10 @@ pub(crate) fn read_reception_rows(
             )?;
             // Split contacts must retain their immutable content cache. Serializing
             // through a temporary parent would discard that exact acquired body.
-            body.insert("current".into(), Value::Object(Map::new()));
+            body.insert(
+                "current".into(),
+                RawValue::from_string("{}".into()).map_err(|_| invalid())?,
+            );
             put(
                 &mut body,
                 "motionSamples",
@@ -362,7 +361,7 @@ pub(crate) fn read_reception_rows(
                     },
                 )?,
             )?;
-            let attention = take_one::<Value>(
+            let attention = take_one::<Box<RawValue>>(
                 import,
                 "mind_perception_attention",
                 &row.id,
@@ -382,15 +381,21 @@ pub(crate) fn read_reception_rows(
                     put(
                         &mut attention,
                         field,
-                        ordinary_map::<Value>(import, table, &record.id, Some(field), true)?,
+                        ordinary_map::<Box<RawValue>>(
+                            import,
+                            table,
+                            &record.id,
+                            Some(field),
+                            true,
+                        )?,
                     )?;
                 }
-                crate::attention::decode_attention_storage(decode(Value::Object(attention))?)
+                crate::attention::decode_attention_storage(decode(attention)?)
                     .map_err(|_| invalid())
             })
             .transpose()?;
             body.remove("attention");
-            let geometry = take_one::<Value>(
+            let geometry = take_one::<Box<RawValue>>(
                 import,
                 "mind_perception_geometry",
                 &row.id,
@@ -444,11 +449,11 @@ pub(crate) fn read_reception_rows(
                     boundaries.push(value);
                 }
                 put(&mut geometry, "boundaries", Some(boundaries))?;
-                decode(Value::Object(geometry))
+                decode(geometry)
             })
             .transpose()?;
             body.remove("geometry");
-            let mut owner: PerceptionEvidenceOwner = decode(Value::Object(body))?;
+            let mut owner: PerceptionEvidenceOwner = decode(body)?;
             owner.current = current.ok_or_else(invalid)?;
             owner.attention = attention;
             owner.geometry = geometry;
@@ -540,15 +545,17 @@ fn validate_reference_columns(
     }
     for (column, cell) in columns.iter().zip(&row.extra) {
         let valid = match column.as_str() {
-            "actor_id" => cell.as_str() == Some(actor),
+            "actor_id" => cell.as_text().is_some_and(|value| value == actor),
             "value_refs" => cell.as_array().is_some_and(|values| {
                 values.len() == references.len()
-                    && values
-                        .iter()
-                        .zip(references)
-                        .all(|(value, expected)| value.as_str() == Some(*expected))
+                    && values.iter().zip(references).all(|(value, expected)| {
+                        value.as_text().is_some_and(|value| value == *expected)
+                    })
             }),
-            "metadata" => cell.as_str() == metadata,
+            "metadata" => match metadata {
+                Some(expected) => cell.as_text().is_some_and(|value| value == expected),
+                None => cell.is_null(),
+            },
             _ => false,
         };
         if !valid {

@@ -53,6 +53,7 @@ impl From<TemporalAppendError> for AwarenessAcquisitionError {
 }
 struct Decision {
     body: Awareness,
+    encoding: AwarenessEncoding,
     reason: RecordingReason,
     selected: bool,
     sensory: bool,
@@ -108,8 +109,7 @@ fn source_header(
     payload: &str,
     law: &impl AccountRecordingLaw,
 ) -> Result<PersonalSourceHeader, ExperienceError> {
-    let body: Value =
-        serde_json::from_str(payload).map_err(|_| ExperienceError::InvalidBody("new awareness"))?;
+    let body = super::header_input::header_input(payload)?;
     let object = object(&body)?;
     header(
         object,
@@ -146,7 +146,7 @@ fn available_new_source(
 pub(crate) fn prepare_awareness_admission(
     core: &mut CoreMutation<'_>,
     actor_id: &str,
-    input: &[Awareness],
+    input: &[AwarenessInput<'_>],
     activity: Option<ActivityRecordingContext<'_>>,
     budget: &ByteBudget,
 ) -> Result<AwarenessAdmission, AwarenessAcquisitionError> {
@@ -173,7 +173,8 @@ pub(crate) fn prepare_awareness_admission(
             .ok_or(ExperienceError::Capacity)?,
     ])
     .ok_or(ExperienceError::Capacity)?;
-    for body in input {
+    for input in input {
+        let body = input.awareness;
         if body.actor_id != actor_id {
             return Err(ExperienceError::ForeignOwner.into());
         }
@@ -208,7 +209,8 @@ pub(crate) fn prepare_awareness_admission(
         .try_reserve_exact(input.len())
         .map_err(|_| ExperienceError::Capacity)?;
     let mut ids = BTreeSet::new();
-    for awareness in input {
+    for input in input {
+        let awareness = input.awareness;
         let mut reason = if has_memory {
             selected_reason(awareness, &law)
         } else {
@@ -248,7 +250,8 @@ pub(crate) fn prepare_awareness_admission(
         }
         let mut selected = reason != RecordingReason::None;
         if selected {
-            let payload = json_record(&body).map_err(|_| AwarenessAcquisitionError::Encoding)?;
+            let payload = super::awareness_encoding::encode(&body, input.encoding)
+                .map_err(|_| AwarenessAcquisitionError::Encoding)?;
             let header = source_header(&payload, &law)?;
             if !quota
                 .as_mut()
@@ -287,6 +290,7 @@ pub(crate) fn prepare_awareness_admission(
         }
         decisions.push(Decision {
             body,
+            encoding: input.encoding,
             reason,
             selected,
             sensory,
@@ -331,15 +335,18 @@ pub(crate) fn acquire_awareness_accounts(
             let data = body
                 .event_data
                 .as_ref()
-                .map(|data| serde_json::to_value(data))
+                .map(|data| {
+                    #[derive(Serialize)]
+                    struct Data<'a>(
+                        #[serde(serialize_with = "crate::encoding::serialize_js_map")]
+                        &'a IndexMap<String, crate::reception::EventScalar>,
+                    );
+                    json_record(&Data(data))
+                })
                 .transpose()
                 .map_err(|_| AwarenessAcquisitionError::Encoding)?
-                .map(|value| {
-                    value
-                        .as_object()
-                        .expect("typed event data is an object")
-                        .clone()
-                });
+                .map(crate::received::values::PersonalAccountData::from_encoded)
+                .transpose()?;
             let physical_life = core
                 .state
                 .physical
@@ -480,7 +487,8 @@ pub(crate) fn acquire_awareness_accounts(
         if !decision.selected && !decision.sensory {
             continue;
         }
-        let payload = json_record(&body).map_err(|_| AwarenessAcquisitionError::Encoding)?;
+        let payload = super::awareness_encoding::encode(&body, decision.encoding)
+            .map_err(|_| AwarenessAcquisitionError::Encoding)?;
         let header = source_header(&payload, &law)?;
         if decision.selected
             && !quota
@@ -520,9 +528,13 @@ pub(crate) fn acquire_awareness_accounts(
             &body.event_id,
         ])
         .map_err(|_| AwarenessAcquisitionError::Encoding)?;
-        let mut extra =
-            super::columns::awareness_columns(&body, &header, &payload, &law, policy, schema)
-                .map_err(|_| AwarenessAcquisitionError::Encoding)?;
+        let mut extra: Vec<crate::records::SqlCell> = super::columns::awareness_columns(
+            &body, &header, &payload, &law, policy, schema, budget,
+        )
+        .map_err(|_| AwarenessAcquisitionError::Encoding)?
+        .into_iter()
+        .map(Into::into)
+        .collect();
         for cell in &mut extra {
             crate::records::save::normalize_cell(cell);
         }

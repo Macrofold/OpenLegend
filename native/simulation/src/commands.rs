@@ -93,13 +93,13 @@ pub(crate) enum NativeCommand {
     Say {
         #[serde(flatten)]
         envelope: CommandEnvelope,
-        text: String,
+        text: crate::text::JsText,
         #[serde(skip_serializing_if = "Option::is_none")]
         target_id: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
         target_role: Option<SpeechTargetRole>,
         #[serde(skip_serializing_if = "Option::is_none")]
-        self_introduction: Option<String>,
+        self_introduction: Option<crate::text::JsText>,
         #[serde(skip_serializing_if = "Option::is_none")]
         volume: Option<String>,
     },
@@ -135,7 +135,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:String,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:String,target_id:String,target_role:SpeechTargetRole,self_introduction:String,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:String,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {

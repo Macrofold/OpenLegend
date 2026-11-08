@@ -24,6 +24,7 @@ import { canReachEntity, nearbyLivingEntities } from './spatial.js';
 import { activelyParticipates } from './participation-state.js';
 import { forgetProjectileBodyEncounters } from './ranged.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
+import { selectedObservationRules } from './world-composition.js';
 import type { Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface DeathScar {
@@ -38,6 +39,7 @@ export interface DeathScar {
 export interface ReincarnationPolicy {
   implementation: 'rest-replacement';
   qualifyingController: 'player';
+  corpseKind: Entity['kind'];
   restKind: Entity['kind'];
   radius: number;
   retainedTypeFraction: number;
@@ -98,7 +100,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
     id: corpseId,
     name: entity.name,
     nameForm: entity.nameForm,
-    kind: 'remains',
+    kind: policy.corpseKind,
     appearance: entity.appearance,
     spatial: { ...entity.spatial },
     placement: entity.placement && { ...entity.placement },
@@ -194,7 +196,7 @@ export function separateDeadLife(world: WorldState, entity: Entity, events: Worl
   emit(
     world,
     events,
-    'player-death',
+    selectedObservationRules(world).body.playerDeathEvent,
     policy.deathText,
     entity,
     undefined,
@@ -416,6 +418,7 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
     !hasRecordFields(policy, [
       'implementation',
       'qualifyingController',
+      'corpseKind',
       'restKind',
       'radius',
       'retainedTypeFraction',
@@ -446,6 +449,7 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
   if (
     policy.implementation !== 'rest-replacement' ||
     policy.qualifyingController !== 'player' ||
+    policy.corpseKind !== 'remains' ||
     !['campfire', 'resource', 'item-pile'].includes(policy.restKind) ||
     !Number.isFinite(policy.retainedTypeFraction) ||
     policy.retainedTypeFraction < 0 ||

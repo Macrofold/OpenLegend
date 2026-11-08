@@ -2,14 +2,13 @@
 //! share the candidate's owners; provider yields cannot publish partial work.
 use super::*;
 use crate::events::WorldEvent;
-use crate::execution::{AcquisitionLease, CoreMutation, ExecutionError};
+use crate::execution::{CoreMutation, ExecutionError};
 use crate::experience::Awareness;
 use crate::geometry::GeometryBinding;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::language::{CollationAnswer, CollationRequest};
 use crate::worlds::InstalledBodyFamiliarityPreparation;
-use indexmap::IndexSet;
 use std::{mem::size_of, sync::Arc};
 
 enum Phase {
@@ -18,17 +17,10 @@ enum Phase {
     Complete,
 }
 pub(crate) struct ReceivingCursor {
-    observer: ObserverLife,
+    current: CurrentReceptionLifetime,
     event_id: String,
     pending: Option<PendingAwarenessObservation>,
     phase: Phase,
-    acquisition: Option<AcquisitionLease>,
-    prefix: Option<CurrentContactBatchLease>,
-    before: Option<Arc<CurrentCohort>>,
-    measured: IndexSet<String>,
-    checked: IndexSet<String>,
-    reconciled: bool,
-    sample_token: Option<u64>,
     reservation: ByteReservation,
 }
 pub(crate) enum ReceivingStep<'a> {
@@ -68,100 +60,20 @@ impl ReceivingCursor {
             ])
             .ok_or(ExecutionError::Capacity)?,
         )?;
-        let acquisition = match pending.acquisition.take() {
-            Some(lease) => lease,
-            None => {
-                let observer = core
-                    .state
-                    .physical
-                    .entities
-                    .get(&awareness.actor_id)
-                    .ok_or(ExecutionError::MissingActor)?;
-                core.journal.acquisitions.begin_acquisition(
-                    &awareness.actor_id,
-                    pending.observer.physical_life,
-                    Some(ObservationFrame {
-                        position_at_observation: observer
-                            .world_position()
-                            .ok_or(ExecutionError::UnsupportedFamily)?,
-                        forward_at_observation: Some(observer.spatial.heading),
-                    }),
-                )?
-            }
-        };
+        let current = CurrentReceptionLifetime::begin(
+            core,
+            &pending.observer,
+            pending.acquisition.take(),
+            sample_token,
+            budget,
+        )?;
         Ok(Some(Self {
-            observer: pending.observer.clone(),
+            current,
             event_id: event.id.clone(),
             pending: Some(pending),
             phase: Phase::Current,
-            acquisition: Some(acquisition),
-            prefix: None,
-            before: None,
-            measured: IndexSet::new(),
-            checked: IndexSet::new(),
-            reconciled: false,
-            sample_token,
             reservation,
         }))
-    }
-    fn ensure_prefix(
-        &mut self,
-        core: &mut CoreMutation<'_>,
-        budget: &ByteBudget,
-    ) -> Result<(), ExecutionError> {
-        if self.prefix.is_some() {
-            return Ok(());
-        }
-        self.before = CurrentCohort::capture(
-            &core.state.physical,
-            &core.state.reception,
-            &core.state.installed,
-            &core.state.experience,
-            &self.observer.actor_id,
-            budget,
-        )?;
-        self.prefix = Some(
-            core.journal
-                .current
-                .begin_batch(&core.state.reception, &self.observer.actor_id)?,
-        );
-        self.reconciled = false;
-        Ok(())
-    }
-    fn note(&mut self, source: &str, changed: bool) -> Result<(), ExecutionError> {
-        let target = if changed {
-            &mut self.measured
-        } else {
-            &mut self.checked
-        };
-        if target.contains(source) {
-            return Ok(());
-        }
-        let storage = if target.len() == target.capacity() {
-            map_storage::<String, ()>(
-                target
-                    .len()
-                    .checked_add(1)
-                    .and_then(|n| n.checked_mul(2))
-                    .ok_or(ExecutionError::Capacity)?,
-            )
-            .ok_or(ExecutionError::Capacity)?
-        } else {
-            0
-        };
-        self.reservation.resize(
-            self.reservation
-                .bytes()
-                .checked_add(source.len())
-                .and_then(|n| n.checked_add(storage))
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
-        target
-            .try_reserve(1)
-            .map_err(|_| ExecutionError::Capacity)?;
-        target.insert(source.to_owned());
-        self.reconciled = false;
-        Ok(())
     }
     pub(crate) fn language_request(&self) -> Option<&CollationRequest> {
         match &self.phase {
@@ -180,14 +92,14 @@ impl ReceivingCursor {
     ) -> Result<ReceivingStep<'a>, ExecutionError> {
         if self.event_id != event.id
             || awareness.event_id != event.id
-            || awareness.actor_id != self.observer.actor_id
+            || awareness.actor_id != self.current.observer.actor_id
             || core
                 .state
                 .physical
                 .entities
-                .get(&self.observer.actor_id)
+                .get(&self.current.observer.actor_id)
                 .and_then(|entity| entity.physical_life())
-                != Some(self.observer.physical_life)
+                != Some(self.current.observer.physical_life)
         {
             return Err(invalid());
         }
@@ -248,7 +160,7 @@ impl ReceivingCursor {
                     self.pending.as_mut().ok_or_else(invalid)?.current.remove(0);
                     if let Some(preparation) = InstalledBodyFamiliarityPreparation::prepare(
                         core,
-                        &self.observer.actor_id,
+                        &self.current.observer.actor_id,
                         &subject_id,
                         binding,
                         budget,
@@ -270,10 +182,10 @@ impl ReceivingCursor {
                         .state
                         .physical
                         .entities
-                        .get(&self.observer.actor_id)
+                        .get(&self.current.observer.actor_id)
                         .is_some_and(|observer| observer.has_memory())
                     {
-                        self.ensure_prefix(core, budget)?;
+                        self.current.ensure_prefix(core, budget)?;
                         let source = self
                             .pending
                             .as_ref()
@@ -284,7 +196,7 @@ impl ReceivingCursor {
                             3 * subject_id.len(),
                             size_of::<ObservationFactKey>(),
                             source.id.len(),
-                            self.observer.actor_id.len(),
+                            self.current.observer.actor_id.len(),
                             map_storage::<String, ObservationFactKey>(2)
                                 .ok_or(ExecutionError::Capacity)?,
                             map_storage::<String, f64>(2).ok_or(ExecutionError::Capacity)?,
@@ -299,7 +211,7 @@ impl ReceivingCursor {
                                     family: EvidenceFamily::NativeExposure,
                                     id: source.id.clone(),
                                     revision: SourceRevision::Number(source.revision),
-                                    observer: self.observer.clone(),
+                                    observer: self.current.observer.clone(),
                                 },
                                 ordinal,
                             },
@@ -317,7 +229,7 @@ impl ReceivingCursor {
                             &core.state.installed,
                             &core.state.experience,
                             &mut core.journal.current,
-                            &self.observer.actor_id,
+                            &self.current.observer.actor_id,
                             AttentionUpdate {
                                 changed_source_ids: Some(&changed),
                                 urgency: Some(&urgency),
@@ -326,15 +238,15 @@ impl ReceivingCursor {
                                 geometry_source_ids: None,
                             },
                         )?;
-                        if let Some(before) = &self.before {
+                        if let Some(before) = &self.current.before {
                             reconcile_current_cohort(
                                 core,
                                 Arc::clone(before),
-                                self.sample_token,
+                                self.current.sample_token,
                                 budget,
                             )?;
                         }
-                        self.reconciled = true;
+                        self.current.reconciled = true;
                     }
                     self.pending.as_mut().ok_or_else(invalid)?.current.remove(0);
                 }
@@ -345,22 +257,7 @@ impl ReceivingCursor {
             .take()
             .ok_or_else(invalid)?
             .finish(core, awareness, budget)?;
-        self.flush_before_snapshot(core, budget)?;
-        let acquisition = self.acquisition.take().ok_or_else(invalid)?;
-        if let Some(values) = core.state.reception.received_values.as_ref() {
-            core.journal.acquisitions.finish_acquisition(
-                acquisition,
-                &mut core.state.temporal,
-                values,
-                &mut core.state.physical.identity,
-                &crate::worlds::InstalledEvidenceMeaning,
-                &mut core.journal.meters,
-            )?;
-        } else {
-            core.journal
-                .acquisitions
-                .finish_empty_acquisition(acquisition)?;
-        }
+        self.current.finish(core, budget)?;
         self.phase = Phase::Complete;
         Ok(ReceivingStep::Complete(completed))
     }
@@ -374,7 +271,7 @@ impl ReceivingCursor {
         ordinal: u64,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
-        self.ensure_prefix(core, budget)?;
+        self.current.ensure_prefix(core, budget)?;
         let source = self
             .pending
             .as_ref()
@@ -386,7 +283,7 @@ impl ReceivingCursor {
             &core.state.installed,
             &core.state.experience,
             &crate::worlds::InstalledEvidenceMeaning,
-            &self.observer.actor_id,
+            &self.current.observer.actor_id,
         )?
         .ok_or_else(invalid)?;
         let body = scope
@@ -450,7 +347,7 @@ impl ReceivingCursor {
             revision: 1,
             availability: None,
         };
-        let token = match self.sample_token {
+        let token = match self.current.sample_token {
             Some(token) => token,
             None => {
                 let token = core
@@ -459,13 +356,13 @@ impl ReceivingCursor {
                     .identity
                     .allocate("received-sample")?
                     .sequence;
-                self.sample_token = Some(token);
+                self.current.sample_token = Some(token);
                 token
             }
         };
         let lease = core.journal.acquisitions.begin_received(
-            &self.observer.actor_id,
-            self.observer.physical_life,
+            &self.current.observer.actor_id,
+            self.current.observer.physical_life,
             Some(token),
         )?;
         let before = CurrentCohort::capture(
@@ -473,16 +370,17 @@ impl ReceivingCursor {
             &core.state.reception,
             &core.state.installed,
             &core.state.experience,
-            &self.observer.actor_id,
+            &self.current.observer.actor_id,
             budget,
         )?;
         if let Some(pending) = prepare_current_sample(
             core,
-            &self.observer.actor_id,
+            &self.current.observer.actor_id,
             input,
             CurrentValueMode::Sampled,
+            budget,
         )? {
-            close_current_sample_history(core, &self.observer.actor_id, &pending, budget)?;
+            close_current_sample_history(core, &self.current.observer.actor_id, &pending, budget)?;
             let (status, parts) = apply_current_sample(
                 &mut core.journal.current,
                 &mut core.state.reception,
@@ -495,7 +393,7 @@ impl ReceivingCursor {
                 },
             )?;
             let changed = status == CurrentSampleStatus::Changed;
-            self.note(subject, changed)?;
+            self.current.note(subject, changed)?;
             let correspondence = changed
                 && (parts.membership || parts.association)
                 && before
@@ -513,7 +411,7 @@ impl ReceivingCursor {
                 if let Some(before) = &before {
                     reconcile_current_cohort(core, Arc::clone(before), Some(token), budget)?;
                 }
-                self.reconciled = true;
+                self.current.reconciled = true;
             }
             if changed {
                 let active = if correspondence {
@@ -522,7 +420,7 @@ impl ReceivingCursor {
                         &core.state.reception,
                         &core.state.installed,
                         &core.state.experience,
-                        &self.observer.actor_id,
+                        &self.current.observer.actor_id,
                         budget,
                     )?
                     .map(|before| {
@@ -544,7 +442,7 @@ impl ReceivingCursor {
                 if let Some(active) = active {
                     record_current_reception(
                         core,
-                        &self.observer.actor_id,
+                        &self.current.observer.actor_id,
                         subject,
                         "association",
                         &active,
@@ -570,60 +468,11 @@ impl ReceivingCursor {
         )?;
         Ok(())
     }
-    /// Source beforeSnapshot callback: finish THIS observer, flush its actual
-    /// temporal page, then seal its contact prefix before the next observer.
     pub(crate) fn flush_before_snapshot(
         &mut self,
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
-        let Some(prefix) = self.prefix.take() else {
-            return Ok(());
-        };
-        if !self.measured.is_empty() {
-            prune_withdrawn_attention(
-                &core.state.physical,
-                &mut core.state.reception,
-                &core.state.installed,
-                &core.state.experience,
-                &mut core.journal.current,
-                &self.observer.actor_id,
-                Some(&self.measured),
-                None,
-            )?;
-        }
-        if !self.reconciled && (!self.measured.is_empty() || !self.checked.is_empty()) {
-            if let Some(before) = &self.before {
-                reconcile_current_cohort(core, Arc::clone(before), self.sample_token, budget)?;
-            }
-            self.reconciled = true;
-        }
-        if prefix.owns_prefix() {
-            if let Some(values) = core.state.reception.received_values.as_ref() {
-                core.journal.acquisitions.flush_acquisition(
-                    self.acquisition.ok_or_else(invalid)?,
-                    &mut core.state.temporal,
-                    values,
-                    &mut core.state.physical.identity,
-                    &crate::worlds::InstalledEvidenceMeaning,
-                    &mut core.journal.meters,
-                )?;
-            } else if core
-                .journal
-                .acquisitions
-                .pending_charge(&self.observer.actor_id)?
-                != (0, 0)
-            {
-                return Err(invalid());
-            }
-        }
-        core.journal
-            .current
-            .finish_batch(&mut core.state.reception, prefix)?;
-        self.before = None;
-        self.measured.clear();
-        self.checked.clear();
-        self.sample_token = None;
-        Ok(())
+        self.current.flush_before_snapshot(core, budget)
     }
 }

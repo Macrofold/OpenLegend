@@ -1,11 +1,11 @@
 //! Changed action-history rows selected by this writer's real inverse journal.
 use super::*;
+use crate::records::SqlCell;
 use crate::records::{
     OrderedMapRows, RecordEncodingError, RecordLedger, RowEffects, RowEncoder, SelectedPlacement,
 };
 use indexmap::IndexSet;
 use serde::Serialize;
-use serde_json::Value;
 
 fn error() -> RecordEncodingError {
     RecordEncodingError("Action history save requires its actual current record placement.")
@@ -207,7 +207,7 @@ impl ActivityJournal {
                             .checked_mul(2)?,
                     )
                 })
-                .and_then(|bytes| bytes.checked_add(6 * size_of::<Value>() + 16))
+                .and_then(|bytes| bytes.checked_add(6 * size_of::<SqlCell>() + 16))
                 .ok_or_else(error)?;
             let _cells = budget.reserve(bytes).map_err(|_| error())?;
             let placement = SelectedPlacement::new(
@@ -227,15 +227,20 @@ impl ActivityJournal {
                 ActivityStatus::Cancelled => "cancelled",
             };
             let extra = [
-                Value::from(actor),
-                Value::from(id),
-                Value::from(entry.at),
-                Value::from(status),
-                entry.parent_id.as_deref().map_or(Value::Null, Value::from),
+                crate::records::SqlCell::from(actor),
+                crate::records::SqlCell::from(id),
+                crate::records::SqlCell::from(entry.at),
+                crate::records::SqlCell::from(status),
+                entry
+                    .parent_id
+                    .as_deref()
+                    .map_or(crate::records::SqlCell::Null, crate::records::SqlCell::from),
                 entry
                     .result_evidence
                     .as_ref()
-                    .map_or(Value::Null, |evidence| Value::from(evidence.id())),
+                    .map_or(crate::records::SqlCell::Null, |evidence| {
+                        crate::records::SqlCell::from(evidence.id())
+                    }),
             ];
             output.write(
                 "activity_occurrences",

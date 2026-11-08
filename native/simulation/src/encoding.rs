@@ -11,6 +11,9 @@ use serde_json::Value;
 use std::fmt::Write as _;
 use std::io;
 
+mod fields;
+pub(crate) use fields::RawFields;
+
 /// Source `<`/`>` string ordering compares UTF-16 code units, including keys
 /// containing supplementary characters. It is distinct from localeCompare.
 pub fn js_string_cmp(left: &str, right: &str) -> std::cmp::Ordering {

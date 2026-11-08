@@ -662,9 +662,133 @@ export interface MemoryModel {
   dimensions: number;
 }
 
+/** Compile actual encoded changed accounts once, before the shared writer or
+ * its pending read overlay consumes them. Both runtime owners use this finite
+ * projection; it performs no SQL and retains no world. */
+export function prepareMemorySources(
+  worldId: string,
+  changes: RecordChanges,
+  allowance: DerivedMemoryAllowance | undefined,
+  versions?: SourceVersionPlan,
+  actorId?: string,
+): PreparedMemorySources {
+  const groups = new Map<SourceKind, readonly PreparedSource[]>();
+  for (const kind of Object.keys(sourceTables) as SourceKind[])
+    groups.set(kind, [...sourceRows(worldId, kind, changes, actorId)]);
+  if (!allowance || allowance.worldId !== worldId)
+    throw new Error('Selected memory retention policy is unavailable.');
+  return { worldId, changes, groups, allowance, versions };
+}
+
+function* sourceRows(
+  worldId: string,
+  kind: SourceKind,
+  changes: RecordChanges,
+  selectedActor?: string,
+): Generator<PreparedSource> {
+  for (const row of changes.writes.get(sourceTables[kind]) ?? []) {
+    const path = JSON.parse(row.id) as string[];
+    const actorId = kind === 'memory' ? path[2]! : path[3]!;
+    if (selectedActor !== undefined && actorId !== selectedActor) continue;
+    const value = JSON.parse(row.payload) as Record<string, unknown>;
+    const id = value[kind === 'awareness' ? 'eventId' : 'id'];
+    const exposure = value['exposure'] as Awareness['exposure'];
+    const sources = kind === 'summary' ? value['sources'] : [];
+    const manifest =
+      kind === 'summary' || kind === 'memory'
+        ? (value['manifest'] as ExperienceSummary['manifest'] | undefined)
+        : undefined;
+    if (manifest) validateExperienceManifest(manifest);
+    if (
+      typeof id !== 'string' ||
+      id !== path.at(-1) ||
+      !Array.isArray(sources) ||
+      sources.some((source) => !validPersonalSourceRef(source)) ||
+      (kind === 'summary' && !validExperienceSummary(value, actorId)) ||
+      (exposure !== undefined && !validEncounterExposure(exposure))
+    )
+      throw new Error('Invalid memory source projection.');
+    const evidence =
+      kind === 'memory'
+        ? (value as unknown as MemoryRecord).evidence
+        : (value as unknown as Awareness);
+    const { originals, learning } = accountObservationInputs({
+      source: kind,
+      value,
+    } as unknown as ExperienceEntry);
+    const places =
+      kind === 'awareness'
+        ? exposure?.kind === 'place'
+          ? [
+              knownPlaceCapsule(value as unknown as Awareness, {
+                kind,
+                id: String(id),
+                revision: personalAccountRevision(row.payload),
+              }),
+            ]
+          : []
+        : retainedPlaceObservations(originals, {
+            kind,
+            id: String(id),
+            revision: personalAccountRevision(row.payload),
+          }).map((place) => place.capsule);
+    if (places.some((capsule) => !capsule)) throw new MemoryPreparationError();
+    const values: unknown[] = [
+      worldId,
+      actorId,
+      id,
+      kind,
+      row.id,
+      personalAccountRevision(row.payload),
+      value['eventId'] ?? null,
+      value['kind'] ?? null,
+      value['source'] ?? null,
+      value['eventType'] ?? null,
+      value[kind === 'summary' ? 'to' : 'at'],
+      value['importance'],
+      value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
+      0,
+      value['sequence'] ?? 0,
+      kind === 'awareness'
+        ? nativeText((value as unknown as Awareness).text)
+        : (value[kind === 'memory' ? 'summary' : 'text'] ?? ''),
+      kind === 'awareness' && hasLinguisticSpeech(value as unknown as Awareness) ? 1 : 0,
+      Buffer.byteLength(row.payload),
+      kind === 'awareness' ? value['retentionClass'] : 'memory',
+    ];
+    // These are the actual SQL fields: required times/ranks cannot become NULL,
+    // sequence must fit BIGINT exactly, and supplied text must remain text.
+    for (let index = 0; index < values.length; index++) {
+      const part = values[index];
+      if ((index >= 10 && index <= 14) || (index >= 16 && index <= 17)) {
+        if (
+          typeof part !== 'number' ||
+          !Number.isFinite(part) ||
+          (index >= 12 && !Number.isSafeInteger(part))
+        )
+          throw new Error('Invalid numeric memory source projection.');
+      } else if (
+        part === null ? index < 6 || index === sourceColumnNames.length : typeof part !== 'string'
+      )
+        throw new Error('Invalid text memory source projection.');
+    }
+    if (kind === 'awareness') validateEventEvidence(value);
+    yield {
+      row,
+      actorId,
+      id,
+      sources,
+      manifest,
+      values,
+      originals,
+      learning,
+      places: places as KnownPlaceCapsule[],
+    };
+  }
+}
+
 /** SQL owns permission scope, current source eligibility and top-N selection. Text
- * interpretation remains with domain/AI owners; this repository invents no semantics.
- */
+ * interpretation remains with domain/AI owners; this repository invents no semantics. */
 export class MemoryRepository {
   private readonly versionPlans = new WeakMap<WorldState, SourceVersionPlan>();
   stageSourceVersions(world: WorldState, plan: SourceVersionPlan | undefined) {
@@ -2018,27 +2142,13 @@ export class MemoryRepository {
     versions?: SourceVersionPlan,
     actorId?: string,
   ): PreparedMemorySources {
-    return this.prepareSourceChanges(worldId, changes, allowance, versions, actorId);
+    return prepareMemorySources(worldId, changes, allowance, versions, actorId);
   }
   captureAllowance(worldId: string): DerivedMemoryAllowance {
     const allowance = this.derivedAllowance;
     if (!allowance || allowance.worldId !== worldId)
       throw new Error('Selected memory retention policy is unavailable.');
     return allowance;
-  }
-  private prepareSourceChanges(
-    worldId: string,
-    changes: RecordChanges,
-    allowance: DerivedMemoryAllowance | undefined,
-    versions?: SourceVersionPlan,
-    actorId?: string,
-  ): PreparedMemorySources {
-    const groups = new Map<SourceKind, readonly PreparedSource[]>();
-    for (const kind of Object.keys(sourceTables) as SourceKind[])
-      groups.set(kind, [...this.sourceRows(worldId, kind, changes, actorId)]);
-    if (!allowance || allowance.worldId !== worldId)
-      throw new Error('Selected memory retention policy is unavailable.');
-    return { worldId, changes, groups, allowance, versions };
   }
   /** Capture only personal source rows. The returned factory's lexical inputs
    * exclude the original full change set and every accepted world snapshot. */
@@ -2073,117 +2183,11 @@ export class MemoryRepository {
       const key = actorId ?? '';
       let result = prepared.get(key);
       if (!result) {
-        result = this.prepareSourceChanges(worldId, changes, allowance, versions, actorId);
+        result = prepareMemorySources(worldId, changes, allowance, versions, actorId);
         prepared.set(key, result);
       }
       return result;
     };
-  }
-  private *sourceRows(
-    worldId: string,
-    kind: SourceKind,
-    changes: RecordChanges,
-    selectedActor?: string,
-  ): Generator<PreparedSource> {
-    for (const row of changes.writes.get(sourceTables[kind]) ?? []) {
-      const path = JSON.parse(row.id) as string[];
-      const actorId = kind === 'memory' ? path[2]! : path[3]!;
-      if (selectedActor !== undefined && actorId !== selectedActor) continue;
-      const value = JSON.parse(row.payload) as Record<string, unknown>;
-      const id = value[kind === 'awareness' ? 'eventId' : 'id'];
-      const exposure = value['exposure'] as Awareness['exposure'];
-      const sources = kind === 'summary' ? value['sources'] : [];
-      const manifest =
-        kind === 'summary' || kind === 'memory'
-          ? (value['manifest'] as ExperienceSummary['manifest'] | undefined)
-          : undefined;
-      if (manifest) validateExperienceManifest(manifest);
-      if (
-        typeof id !== 'string' ||
-        id !== path.at(-1) ||
-        !Array.isArray(sources) ||
-        sources.some((source) => !validPersonalSourceRef(source)) ||
-        (kind === 'summary' && !validExperienceSummary(value, actorId)) ||
-        (exposure !== undefined && !validEncounterExposure(exposure))
-      )
-        throw new Error('Invalid memory source projection.');
-      const evidence =
-        kind === 'memory'
-          ? (value as unknown as MemoryRecord).evidence
-          : (value as unknown as Awareness);
-      const { originals, learning } = accountObservationInputs({
-        source: kind,
-        value,
-      } as unknown as ExperienceEntry);
-      const places =
-        kind === 'awareness'
-          ? exposure?.kind === 'place'
-            ? [
-                knownPlaceCapsule(value as unknown as Awareness, {
-                  kind,
-                  id: String(id),
-                  revision: personalAccountRevision(row.payload),
-                }),
-              ]
-            : []
-          : retainedPlaceObservations(originals, {
-              kind,
-              id: String(id),
-              revision: personalAccountRevision(row.payload),
-            }).map((place) => place.capsule);
-      if (places.some((capsule) => !capsule)) throw new MemoryPreparationError();
-      const values: unknown[] = [
-        worldId,
-        actorId,
-        id,
-        kind,
-        row.id,
-        personalAccountRevision(row.payload),
-        value['eventId'] ?? null,
-        value['kind'] ?? null,
-        value['source'] ?? null,
-        value['eventType'] ?? null,
-        value[kind === 'summary' ? 'to' : 'at'],
-        value['importance'],
-        value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
-        0,
-        value['sequence'] ?? 0,
-        kind === 'awareness'
-          ? nativeText((value as unknown as Awareness).text)
-          : (value[kind === 'memory' ? 'summary' : 'text'] ?? ''),
-        kind === 'awareness' && hasLinguisticSpeech(value as unknown as Awareness) ? 1 : 0,
-        Buffer.byteLength(row.payload),
-        kind === 'awareness' ? value['retentionClass'] : 'memory',
-      ];
-      // These are the actual SQL fields: required times/ranks cannot become NULL,
-      // sequence must fit BIGINT exactly, and supplied text must remain text.
-      for (let index = 0; index < values.length; index++) {
-        const part = values[index];
-        if ((index >= 10 && index <= 14) || (index >= 16 && index <= 17)) {
-          if (
-            typeof part !== 'number' ||
-            !Number.isFinite(part) ||
-            (index >= 12 && !Number.isSafeInteger(part))
-          )
-            throw new Error('Invalid numeric memory source projection.');
-        } else if (
-          part === null ? index < 6 || index === sourceColumnNames.length : typeof part !== 'string'
-        )
-          throw new Error('Invalid text memory source projection.');
-      }
-      if (kind === 'awareness') validateEventEvidence(value);
-      yield {
-        row,
-        actorId,
-        id,
-        sources,
-        manifest,
-        values,
-        originals,
-        learning,
-        places: places as KnownPlaceCapsule[],
-      };
-    }
   }
   /** Insert only after current records have changed. All awareness must precede
    * episode eligibility; summary links must precede their summaries. Final
@@ -2206,8 +2210,7 @@ export class MemoryRepository {
     const repository = this;
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
       // Complete restores stream rows rather than allocating a second complete source set.
-      const writes = () =>
-        prepared?.groups.get(kind) ?? repository.sourceRows(worldId, kind, changes);
+      const writes = () => prepared?.groups.get(kind) ?? sourceRows(worldId, kind, changes);
       function* derivationLinks() {
         for (const entry of writes()) yield* sourceDerivationDependencies(worldId, kind, entry);
       }

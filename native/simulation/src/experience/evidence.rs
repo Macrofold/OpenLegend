@@ -278,6 +278,83 @@ fn association_unrevoked(
         && personal_fact_alias(original_id, ordinal).is_ok_and(|alias| unrevoked(privacy, &alias))
 }
 
+/// The same original/member privacy fence used by temporal history reads.
+/// A receipt address or shared fragment never grants another observer's fact.
+pub(crate) fn temporal_facet_eligible(
+    experience: &ExperienceState,
+    actor_id: &str,
+    field: &crate::received::TemporalFacetReference,
+    value: &crate::received::ReceivedValueFragment,
+    meaning: &dyn TemporalValueMeaning,
+) -> Result<bool, ExperienceError> {
+    let privacy = experience.actor(actor_id).map(|actor| &actor.privacy);
+    let fact = |key: &ObservationFactKey| {
+        key.source.observer.actor_id == actor_id && fact_unrevoked(privacy, key)
+    };
+    if field.original.as_ref().is_some_and(|key| !fact(key))
+        || field.received_from.as_ref().is_some_and(|source| {
+            source.observer.actor_id != actor_id || !unrevoked(privacy, &source.id)
+        })
+    {
+        return Ok(false);
+    }
+    for proof in field
+        .support
+        .iter()
+        .chain(field.detail_support.iter().map(|detail| &detail.proof))
+    {
+        if !fact(&proof.original)
+            || !unrevoked(privacy, &proof.confirmation.id)
+            || proof
+                .aliases
+                .iter()
+                .flatten()
+                .any(|alias| !unrevoked(privacy, alias))
+        {
+            return Ok(false);
+        }
+    }
+    let crate::received::ReceivedValueFragment::Sensory(value) = value else {
+        return Ok(true);
+    };
+    match value {
+        SensoryFacet::Association {
+            learning_support, ..
+        } => Ok(meaning
+            .recognition_support_source_ids(learning_support.as_deref().unwrap_or(&[]))
+            .map_err(|_| ExperienceError::InvalidBody("recognition support"))?
+            .iter()
+            .all(|id| unrevoked(privacy, id))),
+        SensoryFacet::Claim {
+            support,
+            support_aliases,
+            ..
+        } => Ok(support.iter().all(|key| {
+            fact(key)
+                && support_aliases
+                    .iter()
+                    .flatten()
+                    .all(|alias| unrevoked(privacy, &alias.id))
+        })),
+        SensoryFacet::PhysicalBoundary { boundary } => {
+            Ok(fact(&boundary.near_surface.support) && fact(&boundary.far_surface.support))
+        }
+        SensoryFacet::ObservedMotion { earlier, later, .. } => {
+            Ok([earlier, later].into_iter().all(|sample| {
+                fact(&sample.original)
+                    && sample.confirmation.observer.actor_id == actor_id
+                    && source_fact_unrevoked(privacy, &sample.confirmation, sample.original.ordinal)
+                    && sample
+                        .aliases
+                        .iter()
+                        .flatten()
+                        .all(|alias| unrevoked(privacy, alias))
+            }))
+        }
+        _ => Ok(true),
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AssociationEvidenceStatus {
     Retained,

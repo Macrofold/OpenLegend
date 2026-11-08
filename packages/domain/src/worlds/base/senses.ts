@@ -1,3 +1,4 @@
+import { BASE_OBSERVATION_RULES } from './observation-rules.js';
 import type { Entity } from '../../types.js';
 import type { ObservedBody } from '../../perception-evidence.js';
 import type { SenseDefinition } from '../../perception.js';
@@ -20,11 +21,7 @@ export const DETECTION_SUPPORT_POLICY = {
 } as const;
 /** Routine presence belongs to current sight and attended chronology. Only a
  * meaningful received outward change produces a narrative notice. */
-export const SIGHTING_POLICY = {
-  routine: { importance: 0, urgency: 0, semanticTrigger: false },
-  changedBeing: { importance: 6, urgency: 2, semanticTrigger: true },
-  episodeGraceSeconds: 0.5,
-} as const;
+export const SIGHTING_POLICY = BASE_OBSERVATION_RULES.sighting;
 export function changedOutwardNotice(
   before: ObservedBody,
   after: ObservedBody,
@@ -64,7 +61,13 @@ export const DEFAULT_SENSES: SenseDefinition[] = [
 
 export function baseOutwardActivity(entity: Entity): string | undefined {
   const action = entity.actor?.action;
-  return action && ['strike', 'hunt', 'aim', 'shoot-once'].includes(action.type)
-    ? JSON.stringify([action.id, action.type, action.stage, action.strikePhase ?? 'preparing'])
+  const rules = BASE_OBSERVATION_RULES.outwardActivity;
+  return action && rules.actions.some((type) => type === action.type)
+    ? JSON.stringify([
+        action.id,
+        action.type,
+        action.stage,
+        action.strikePhase ?? rules.preparingPhase,
+      ])
     : undefined;
 }

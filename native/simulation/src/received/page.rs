@@ -155,7 +155,7 @@ pub(super) fn projection(
     physical_life: u64,
     epoch: &str,
     payload_bytes: usize,
-) -> Result<Vec<Value>, ReceivedError> {
+) -> Result<Vec<crate::records::SqlCell>, ReceivedError> {
     let mut references = metadata.references.clone();
     references.sort_by(|a, b| a.encode_utf16().cmp(b.encode_utf16()));
     let mut buckets = BTreeSet::new();
@@ -195,7 +195,10 @@ pub(super) fn projection(
         Value::from(references),
         Value::from(metadata.occurrence_keys.clone()),
         Value::from(buckets.into_iter().collect::<Vec<_>>()),
-    ])
+    ]
+    .into_iter()
+    .map(Into::into)
+    .collect())
 }
 
 /// Encoded body is canonical authority; typed batches and projections are
@@ -208,7 +211,7 @@ pub struct TemporalPageRecord {
     slot: String,
     position: u64,
     payload: Arc<str>,
-    columns: Arc<[Value]>,
+    columns: Arc<[crate::records::SqlCell]>,
     actor_id: String,
     physical_life: u64,
     epoch: String,
@@ -375,7 +378,7 @@ impl TemporalPageRecord {
     pub fn slot(&self) -> &str {
         &self.slot
     }
-    pub fn columns(&self) -> &[Value] {
+    pub fn columns(&self) -> &[crate::records::SqlCell] {
         &self.columns
     }
     pub fn metadata(&self) -> &TemporalPageMetadata {

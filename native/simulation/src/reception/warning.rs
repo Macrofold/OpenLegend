@@ -156,15 +156,13 @@ pub(crate) fn acquire_ordinary_warning(
         },
         strength: PossibleStrength::Possible,
         speaker,
-        words_as_heard: speech
-            .segments
-            .iter()
-            .filter_map(|segment| match segment {
-                SpeechSegment::Heard { text } => Some(text.as_str()),
+        words_as_heard: crate::text::JsText::join(
+            speech.segments.iter().filter_map(|segment| match segment {
+                SpeechSegment::Heard { text } => Some(text),
                 _ => None,
-            })
-            .collect::<Vec<_>>()
-            .join(" "),
+            }),
+            " ",
+        ),
         support: vec![
             ObservationFactKey {
                 source: EvidenceSource {

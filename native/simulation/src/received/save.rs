@@ -84,7 +84,8 @@ pub(crate) fn encode_received_value_changes(
             Value::from(record.id.clone()),
             Value::from(record.at),
             Value::Null,
-        ];
+        ]
+        .map(Into::into);
         output.write(
             "mind_perception_values",
             &placement,

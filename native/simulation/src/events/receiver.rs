@@ -2,9 +2,7 @@
 //! names or facts; recording/attention eligibility is checked before rendering.
 use super::*;
 use crate::activity::EventActivity;
-use crate::attention::{
-    AccountRecordingInput, AccountRecordingLaw, RecordingInput, RecordingReason, RecordingSource,
-};
+use crate::attention::{AccountRecordingInput, RecordingInput, RecordingReason, RecordingSource};
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::experience::{
     Awareness, AwarenessRetentionClass, ExperienceRetention, OutwardChange, RetentionReason,
@@ -74,6 +72,30 @@ pub(super) fn prepare_receiver_awareness(
     {
         return Ok(None);
     }
+    let references = event
+        .narration
+        .as_ref()
+        .map_or(0, |narration| narration.parts.len())
+        .checked_add(event.data.as_ref().map_or(0, IndexMap::len))
+        .and_then(|n| n.checked_add(2))
+        .ok_or(ExecutionError::Capacity)?;
+    let _preparation = budget.reserve(
+        heap_sum([
+            event
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+                .checked_mul(3)
+                .ok_or(ExecutionError::Capacity)?,
+            references
+                .checked_mul(
+                    size_of::<(&str, crate::reception::ReferenceRole)>() + size_of::<&str>(),
+                )
+                .ok_or(ExecutionError::Capacity)?,
+            map_storage::<&str, bool>(references.checked_mul(2).ok_or(ExecutionError::Capacity)?)
+                .ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?,
+    )?;
     let selection = prepare_event_observation(
         &core.state.physical.entities,
         event,
@@ -207,10 +229,10 @@ pub(super) fn prepare_receiver_awareness(
     };
     let change = if truth(event.data.as_ref(), "acquisition") {
         match event.data.as_ref().and_then(|data| data.get("change")) {
-            Some(EventScalar::Text(value)) => match value.as_str() {
-                "onset" => Some(OutwardChange::Onset),
-                "detail" => Some(OutwardChange::Detail),
-                "end" => Some(OutwardChange::End),
+            Some(EventScalar::Text(value)) => match value.as_unicode() {
+                Some("onset") => Some(OutwardChange::Onset),
+                Some("detail") => Some(OutwardChange::Detail),
+                Some("end") => Some(OutwardChange::End),
                 _ => None,
             },
             _ => None,

@@ -143,6 +143,37 @@ impl CognitionJournal {
         self.retained_bytes = retained;
         Ok(())
     }
+    /// Body reconciliation asks an existing private mind to reconsider. This
+    /// flag alone changes neither its revision nor its authored identity.
+    pub(crate) fn require_reconsideration(
+        &mut self,
+        state: &mut MindState,
+        actor: &str,
+    ) -> Result<(), ExecutionError> {
+        let Some(inner) = state
+            .inner_worlds
+            .as_ref()
+            .and_then(|worlds| worlds.get(actor))
+        else {
+            return Ok(());
+        };
+        if inner.reconsideration_required == Some(true) {
+            return Ok(());
+        }
+        let before = inner.reconsideration_required;
+        self.reserve(1, actor.len())?;
+        let inner = state
+            .inner_worlds
+            .as_mut()
+            .and_then(|worlds| worlds.get_mut(actor))
+            .ok_or(ExecutionError::Invariant)?;
+        self.undo.push(Undo::Reconsideration {
+            actor: actor.to_owned(),
+            before,
+        });
+        inner.reconsideration_required = Some(true);
+        Ok(())
+    }
     /// The selected proof already has its actors' authored initial minds. A
     /// different installer must supply that real initialization prerequisite;
     /// an absent mind cannot become an invented empty identity here.

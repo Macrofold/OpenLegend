@@ -166,7 +166,7 @@ pub(crate) struct ActivityObject {
 pub(crate) struct ActivityEffect {
     pub id: String,
     pub subject_id: String,
-    pub label: String,
+    pub label: crate::text::JsText,
     pub property: String,
     #[serde(
         default,
@@ -361,10 +361,10 @@ impl ActivityOccurrence {
                     !is_safe_record_id(&effect.id)
                         || !ids.insert(&effect.id)
                         || !is_safe_record_id(&effect.subject_id)
-                        || [&effect.label, &effect.property].iter().any(|text| {
-                            js_trim(text).is_empty()
-                                || text.encode_utf16().count() as u64 > limits.text
-                        })
+                        || effect.label.trim_is_empty()
+                        || effect.label.units_len() as u64 > limits.text
+                        || js_trim(&effect.property).is_empty()
+                        || effect.property.encode_utf16().count() as u64 > limits.text
                         || effect
                             .unit
                             .as_ref()
@@ -374,7 +374,7 @@ impl ActivityOccurrence {
                             .any(|value| match value {
                                 ActivityScalar::Number(n) => !n.is_finite(),
                                 ActivityScalar::String(text) => {
-                                    text.encode_utf16().count() as u64 > limits.text
+                                    text.units_len() as u64 > limits.text
                                 }
                                 _ => false,
                             })

@@ -323,7 +323,7 @@ pub(crate) fn capture_public_attribute_projection(
 // the retained result is resized to its actual String/Vec capacities afterward.
 fn template_bound_length(length: usize, entity: &Entity) -> Result<usize, ProjectionError> {
     let named = sum([
-        entity.name.len(),
+        entity.name.storage_bytes(),
         entity.name_form.as_ref().map_or(0, String::len),
         entity.indefinite_article.as_ref().map_or(0, String::len),
     ])?;
@@ -342,10 +342,13 @@ fn template_bound_length(length: usize, entity: &Entity) -> Result<usize, Projec
         map_storage::<&str, TemplateBinding<'_>>(3).ok_or_else(capacity)?,
     ])
 }
-fn template_bound(template: &str, entity: &Entity) -> Result<usize, ProjectionError> {
+pub(crate) fn own_template_bound(
+    template: &str,
+    entity: &Entity,
+) -> Result<usize, ProjectionError> {
     template_bound_length(template.len(), entity)
 }
-fn own_text(template: &str, entity: &Entity) -> String {
+pub(crate) fn own_text(template: &str, entity: &Entity) -> crate::text::JsText {
     let named = Named {
         name: entity.name.clone(),
         name_form: entity.name_form.clone(),
@@ -414,7 +417,7 @@ fn render_inputs(
                 }
             }
             if let Some(concern) = &d.concern {
-                bytes = sum([bytes, template_bound(&concern.text, entity)?])?;
+                bytes = sum([bytes, own_template_bound(&concern.text, entity)?])?;
             }
         }
     }

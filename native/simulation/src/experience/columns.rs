@@ -112,6 +112,7 @@ struct AgreementMetadata {
 fn agreement_metadata(
     awareness: &Awareness,
     law: &impl AccountRecordingLaw,
+    budget: &crate::host::ByteBudget,
 ) -> Result<Option<AgreementMetadata>, RecordEncodingError> {
     if awareness.retention_class != AwarenessRetentionClass::Memory {
         return Ok(None);
@@ -142,7 +143,21 @@ fn agreement_metadata(
         expires_at: Option<f64>,
         end_at: Option<f64>,
     }
-    let life: Lifecycle = serde_json::from_str(encoded)
+    let _json = budget
+        .reserve(
+            encoded
+                .json_document_bound()
+                .and_then(|bytes| bytes.checked_mul(2))
+                .and_then(|bytes| bytes.checked_add(256))
+                .ok_or(RecordEncodingError(
+                    "Agreement document allowance overflowed.",
+                ))?,
+        )
+        .map_err(|_| RecordEncodingError("Agreement document exceeds its allowance."))?;
+    let document = encoded
+        .json_document()
+        .map_err(|_| RecordEncodingError("Invalid acquired agreement lifecycle."))?;
+    let life: Lifecycle = serde_json::from_str(&document)
         .map_err(|_| RecordEncodingError("Invalid acquired agreement lifecycle."))?;
     let phase = life.phase.as_deref().or(life.status.as_deref());
     let key = json_record(&(
@@ -168,10 +183,11 @@ pub(super) fn awareness_columns(
     law: &impl AccountRecordingLaw,
     policy: &crate::attention::AttentionRetentionPolicy,
     schema: &RecordSchema,
+    budget: &crate::host::ByteBudget,
 ) -> Result<Vec<Value>, RecordEncodingError> {
     let mut individuals = Some(individual_ids(awareness));
     let mut retention = Some(retention_metadata(awareness, law)?);
-    let agreement = agreement_metadata(awareness, law)?;
+    let agreement = agreement_metadata(awareness, law, budget)?;
     schema
         .layout("mind_awareness")?
         .columns

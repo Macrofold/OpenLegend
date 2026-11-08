@@ -1,13 +1,13 @@
 //! Operation-owned output for the existing writer. Semantic owners supply the
 //! actual rows; this buffer neither traverses a world nor decides mutations.
 
+use super::SqlCell;
 use super::{
     ChangedRow, ChangedRows, OwnerCoverage, RecordEncodingError, RecordPlacement, RecordSchema,
 };
 use crate::host::retained_size::heap_sum;
 use crate::host::{ByteBudget, ByteReservation};
 use serde::Serialize;
-use serde_json::Value;
 use std::mem::size_of;
 
 #[derive(Default)]
@@ -78,14 +78,14 @@ impl<'a> RowEncoder<'a> {
         table: &str,
         placement: &RecordPlacement,
         payload_bytes: usize,
-        extra: &[Value],
+        extra: &[SqlCell],
         effects: &RowEffects<'_>,
     ) -> Result<usize, RecordEncodingError> {
         self.schema.layout(table)?;
         let cells = extra.iter().try_fold(
             extra
                 .len()
-                .checked_mul(size_of::<Value>())
+                .checked_mul(size_of::<SqlCell>())
                 .ok_or_else(error)?,
             |bytes, cell| {
                 bytes
@@ -118,7 +118,7 @@ impl<'a> RowEncoder<'a> {
         table: &str,
         placement: &RecordPlacement,
         payload: String,
-        extra: &[Value],
+        extra: &[SqlCell],
         create: bool,
         effects: RowEffects<'_>,
     ) -> Result<(), RecordEncodingError> {
@@ -147,7 +147,7 @@ impl<'a> RowEncoder<'a> {
         table: &str,
         placement: &RecordPlacement,
         payload: &str,
-        extra: &[Value],
+        extra: &[SqlCell],
         create: bool,
         effects: RowEffects<'_>,
     ) -> Result<(), RecordEncodingError> {
@@ -159,7 +159,7 @@ impl<'a> RowEncoder<'a> {
         table: &str,
         placement: &RecordPlacement,
         value: &T,
-        extra: &[Value],
+        extra: &[SqlCell],
         create: bool,
         effects: RowEffects<'_>,
     ) -> Result<(), RecordEncodingError> {

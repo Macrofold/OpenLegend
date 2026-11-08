@@ -60,7 +60,7 @@ import { chargeWork } from './work-budget.js';
 import { countDomainWork, maximumDomainWork } from './diagnostic-counters.js';
 import { BASE_ACTION_DEFAULTS, nativeMovementSpeed } from './worlds/base/actions.js';
 import { animalWanderRemaining } from './native-response-controller.js';
-import { BASE_TIME_POLICY } from './worlds/base/time.js';
+import { selectedTimeRules } from './world-composition.js';
 import type { Entity, WorldState } from './types.js';
 import { current, isDraft } from 'immer';
 import { readOnlyDraftView } from './draft.js';
@@ -97,7 +97,9 @@ export function motionTravelBounds(
     if (!entity?.actor?.alive || entity.actor.incapacitated || !hasMemory(entity)) return [];
     const senses = sensesFor(world, entity).filter(
       (s): s is Extract<typeof s, { radius: number }> =>
-        'radius' in s && s.radius > 0 && s.radius / 4 < BASE_TIME_POLICY.perceptionTravelMetres,
+        'radius' in s &&
+        s.radius > 0 &&
+        s.radius / 4 < selectedTimeRules(world).perceptionTravelMetres,
     );
     if (!senses.length) return [];
     const radius = Math.max(...senses.map((s) => s.radius));
@@ -107,13 +109,13 @@ export function motionTravelBounds(
         radius,
         reach: motionReach(world, entity, seconds) + bodyProfile(entity).height,
         travel: Math.min(
-          BASE_TIME_POLICY.perceptionTravelMetres,
+          selectedTimeRules(world).perceptionTravelMetres,
           ...senses.map((s) => s.radius / 4),
         ),
       },
     ];
   });
-  if (!observers.length) return () => BASE_TIME_POLICY.perceptionTravelMetres;
+  if (!observers.length) return () => selectedTimeRules(world).perceptionTravelMetres;
   const near = spatialCandidates(observers);
   const maximum = observers.reduce(
     (max, observer) => Math.max(max, observer.radius + observer.reach),
@@ -124,7 +126,7 @@ export function motionTravelBounds(
     const entity = entityGet(world.entities, id)!;
     const position = worldPosition(entity);
     const reach = motionReach(world, entity, seconds) + bodyProfile(entity).height;
-    let travel: number = BASE_TIME_POLICY.perceptionTravelMetres;
+    let travel: number = selectedTimeRules(world).perceptionTravelMetres;
     for (const observer of near(position, reach + maximum))
       if (distance3D(position, observer.position) <= reach + observer.reach + observer.radius)
         travel = Math.min(travel, observer.travel);
@@ -1072,7 +1074,7 @@ export function sensoryCrossingBound(
   const entities = readOnlyDraftView(world.entities);
   crossingGeometryCurrent(world, cache);
   const now = world.simTime,
-    horizon = Math.max(seconds, BASE_TIME_POLICY.idleHorizonSeconds);
+    horizon = Math.max(seconds, selectedTimeRules(world).idleHorizonSeconds);
   const actors = new Set(actorIds),
     ambient = new Set(ambientIds);
   const bodies = new Map<string, BodyCertificate>();

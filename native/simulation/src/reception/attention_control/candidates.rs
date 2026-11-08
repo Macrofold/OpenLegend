@@ -71,9 +71,9 @@ struct AttributeMeaning<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     meaning: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    condition: Option<&'a str>,
+    condition: Option<&'a crate::text::JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    concern: Option<&'a str>,
+    concern: Option<&'a crate::text::JsText>,
     // Source object-rest appends a category's sample after every retained field.
     #[serde(skip_serializing_if = "Option::is_none")]
     value: Option<Option<&'a crate::values::AttributeValue>>,
@@ -99,8 +99,8 @@ impl Serialize for AttributeMeanings<'_> {
                 unit: value.unit.as_deref(),
                 editor_critical_comparison: value.editor_critical_comparison.as_ref(),
                 meaning: value.meaning.as_deref(),
-                condition: value.condition.as_deref(),
-                concern: value.concern.as_deref(),
+                condition: value.condition.as_ref(),
+                concern: value.concern.as_ref(),
                 value: (value.display == AttributeDisplay::Category)
                     .then_some(value.value.as_ref()),
             })?;
@@ -150,8 +150,8 @@ fn descriptions(
         });
     }
     let description = match values[0] {
-        Some(SensoryFacet::Description { text }) => Some(text.as_str()),
-        _ => appearance.and_then(|appearance| appearance.description.as_deref()),
+        Some(SensoryFacet::Description { text }) => Some(text),
+        _ => appearance.and_then(|appearance| appearance.description.as_ref()),
     };
     let body = appearance.map(|appearance| {
         crate::reception::body_meaning::body_details_meaning(appearance, description)

@@ -1,0 +1,528 @@
+//! Finite actor-owned read products. The application supplies its current
+//! authorized scope and rechecks that scope before publishing the result. No
+//! producer here exports physical authority or supplies a missing observation.
+
+use crate::commands::SpeechTargetRole;
+use crate::execution::ExecutionError;
+use crate::experience::{CapturedEvidenceCut, capture_evidence_cut};
+use crate::host::retained_size::HeapBytes;
+use crate::host::{ByteBudget, ByteReservation};
+use crate::reception::{CurrentBodyReadScope, ObserverSubject, OwnedCurrentFacet};
+use crate::simulation::SimulationState;
+use crate::worlds::{InstalledPersonalNameReader, OwnedPersonalName};
+use serde::{Serialize, Serializer};
+use std::mem::size_of;
+
+// The Source currentObservedFacetValues default is a finite presentation
+// selection, not every field of every channel in a stored contact. In
+// particular field_order holds encoded addresses, not sensory kind names.
+const BODY_VALUE_KINDS: [&str; 9] = [
+    "detected",
+    "location",
+    "body",
+    "description",
+    "carried",
+    "pile-contents",
+    "public-attributes",
+    "contact",
+    "association",
+];
+
+#[derive(Clone, Copy)]
+pub(crate) enum ActorReadPurpose {
+    PlayerView,
+    NpcDecision,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PreferredName {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    known_name: Option<crate::text::JsText>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    nickname: Option<crate::text::JsText>,
+    revision: u64,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CapturedBodyBinding {
+    // Routing stays server-side. Public/model text receives the shared opaque
+    // reference formatter's tokens, never this private canonical ID.
+    pub source_id: String,
+    pub physical_life: Option<u64>,
+    pub lease_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subject: Option<ObserverSubject>,
+    #[serde(serialize_with = "serialize_name")]
+    pub name: OwnedPersonalName,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub identity: Option<PreferredName>,
+    pub actor: bool,
+    pub talk_requires_ai: bool,
+    pub first: usize,
+    pub count: usize,
+}
+fn serialize_name<S: Serializer>(
+    name: &OwnedPersonalName,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    name.name().serialize(serializer)
+}
+pub(crate) struct CapturedActorPerception {
+    pub world_id: String,
+    pub actor_id: String,
+    pub at: f64,
+    pub sight_confirmed_through: Option<f64>,
+    pub bodies: Vec<CapturedBodyBinding>,
+    pub evidence: CapturedEvidenceCut,
+    _reservation: ByteReservation,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PerceptionProduct<'a> {
+    world_id: &'a str,
+    actor_id: &'a str,
+    at: f64,
+    sight_confirmed_through: Option<f64>,
+    bodies: &'a [CapturedBodyBinding],
+    cut: &'a crate::experience::EvidenceCut,
+}
+impl CapturedActorPerception {
+    pub(crate) fn write_json(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<(String, ByteReservation), ExecutionError> {
+        let product = PerceptionProduct {
+            world_id: &self.world_id,
+            actor_id: &self.actor_id,
+            at: self.at,
+            sight_confirmed_through: self.sight_confirmed_through,
+            bodies: &self.bodies,
+            cut: self.evidence.cut(),
+        };
+        let length =
+            crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
+        // The JSON writer grows its byte vector before converting it to the
+        // single owned string. Its capacity remains with the detached output.
+        let mut reservation = budget.reserve(
+            length
+                .checked_mul(2)
+                .map(|n| n.max(8))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let encoded =
+            crate::encoding::json_record(&product).map_err(|_| ExecutionError::Invariant)?;
+        reservation.resize(encoded.capacity())?;
+        Ok((encoded, reservation))
+    }
+}
+
+/// Synchronous internal read, called only under the simulation's accepted-read
+/// gate. Names and fields come from one borrowed receiving life; that reader is
+/// released before the output can cross an application await.
+pub(crate) fn capture_actor_perception(
+    state: &SimulationState,
+    actor_id: &str,
+    budget: &ByteBudget,
+) -> Result<CapturedActorPerception, ExecutionError> {
+    state
+        .physical
+        .entities
+        .get(actor_id)
+        .and_then(|entity| entity.actor.as_ref())
+        .ok_or(ExecutionError::MissingActor)?;
+    let scope = CurrentBodyReadScope::prepare(
+        &state.reception,
+        &state.physical.entities,
+        &state.installed,
+        &state.experience,
+        &crate::worlds::InstalledEvidenceMeaning,
+        actor_id,
+    )?;
+    let names = InstalledPersonalNameReader::prepare(
+        &state.physical,
+        &state.reception,
+        &state.installed,
+        &state.experience,
+        actor_id,
+    )?;
+    let mut bytes = size_of::<CapturedActorPerception>()
+        .checked_add(state.physical.header.id.len())
+        .and_then(|n| n.checked_add(actor_id.len()))
+        .ok_or(ExecutionError::Capacity)?;
+    let mut maximum_fields = 0usize;
+    let count = scope
+        .as_ref()
+        .map_or(0, |scope| scope.state().current.len());
+    if let Some(scope) = &scope {
+        for id in scope.state().current.keys() {
+            let body = scope.native_body(id)?;
+            if let Some(body) = body {
+                maximum_fields = maximum_fields
+                    .checked_add(BODY_VALUE_KINDS.len() + 1)
+                    .ok_or(ExecutionError::Capacity)?;
+                let individual = names.current_body_identity(id)?;
+                let copied = body
+                    .field
+                    .local_subject
+                    .heap_bytes()
+                    .and_then(|n| n.checked_add(body.field.id.len()))
+                    .and_then(|n| n.checked_add(id.len()))
+                    .and_then(|n| {
+                        n.checked_add(
+                            individual
+                                .and_then(|identity| identity.individual_id.as_ref())
+                                .map_or(0, String::len),
+                        )
+                    })
+                    .and_then(|n| {
+                        n.checked_add(individual.map_or(0, |identity| {
+                            identity.given_name.storage_bytes()
+                                + identity
+                                    .nickname
+                                    .as_ref()
+                                    .map_or(0, crate::text::JsText::storage_bytes)
+                        }))
+                    })
+                    .ok_or(ExecutionError::Capacity)?;
+                // current_body_subject's exact note key quotes the subject once;
+                // both possible local/association keys and their transient JSON
+                // writer growth are funded before that semantic lookup.
+                bytes = bytes
+                    .checked_add(
+                        copied
+                            .checked_mul(6)
+                            .and_then(|n| n.checked_add(2 * 64))
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .ok_or(ExecutionError::Capacity)?;
+            }
+        }
+    }
+    bytes = bytes
+        .checked_add(
+            count
+                .checked_mul(size_of::<CapturedBodyBinding>())
+                .ok_or(ExecutionError::Capacity)?,
+        )
+        .and_then(|n| n.checked_add(maximum_fields.checked_mul(size_of::<OwnedCurrentFacet>())?))
+        .ok_or(ExecutionError::Capacity)?;
+    let reservation = budget.reserve(bytes)?;
+    let mut bodies = Vec::new();
+    bodies
+        .try_reserve_exact(count)
+        .map_err(|_| ExecutionError::Capacity)?;
+    let mut current = Vec::new();
+    current
+        .try_reserve_exact(maximum_fields)
+        .map_err(|_| ExecutionError::Capacity)?;
+    if let Some(scope) = &scope {
+        let ordered = scope.ordered_subjects(budget)?;
+        for id in ordered.ids() {
+            if id == actor_id {
+                continue;
+            }
+            let Some(body) = scope.native_body(id)? else {
+                continue;
+            };
+            let first = current.len();
+            for kind in BODY_VALUE_KINDS {
+                if let Some(field) = scope.capture(id, kind, budget)? {
+                    current.push(field);
+                }
+            }
+            if let Some(motion) =
+                scope.capture_motion(id, state.physical.header.sim_time, budget)?
+            {
+                current.push(motion);
+            }
+            // A verified current body must have its actual permitted body
+            // field among these captures. No neutral/canonical substitute.
+            if !current[first..].iter().any(|field| {
+                matches!(
+                    field.facet().value,
+                    crate::reception::SensoryFacet::Body { .. }
+                )
+            }) {
+                return Err(ExecutionError::Invariant);
+            }
+            let subject = names.current_body_subject(id)?;
+            let identity = subject
+                .as_ref()
+                .and_then(|subject| names.observer_individual(subject))
+                .filter(|identity| identity.seed_only != Some(true))
+                .map(|identity| PreferredName {
+                    known_name: (!identity.given_name.is_empty())
+                        .then(|| identity.given_name.clone()),
+                    nickname: identity
+                        .nickname
+                        .as_ref()
+                        .filter(|nickname| !nickname.is_empty())
+                        .cloned(),
+                    revision: identity.revision,
+                });
+            let actor = state
+                .physical
+                .entities
+                .get(id)
+                .and_then(|entity| entity.actor.as_ref());
+            bodies.push(CapturedBodyBinding {
+                source_id: id.to_owned(),
+                physical_life: body.grant.subject_physical_life,
+                lease_id: body.field.id.clone(),
+                subject,
+                name: names.capture_intended_name(id, SpeechTargetRole::Body, budget)?,
+                identity,
+                actor: actor.is_some(),
+                talk_requires_ai: actor.is_some_and(|actor| actor.controller == "npc"),
+                first,
+                count: current.len() - first,
+            });
+        }
+    }
+    let sight_confirmed_through = scope
+        .as_ref()
+        .and_then(|scope| scope.state().visual_confirmation.as_ref())
+        .map(|confirmation| confirmation.through);
+    drop(names);
+    drop(scope);
+    let evidence = capture_evidence_cut(
+        &state.experience,
+        &state.physical.entities,
+        &state.occurrences,
+        actor_id,
+        state.physical.header.sim_time,
+        Vec::new(),
+        current,
+        budget,
+    )?;
+    Ok(CapturedActorPerception {
+        world_id: state.physical.header.id.clone(),
+        actor_id: actor_id.to_owned(),
+        at: state.physical.header.sim_time,
+        sight_confirmed_through,
+        bodies,
+        evidence,
+        _reservation: reservation,
+    })
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OwnIdentity<'a> {
+    id: &'a str,
+    name: &'a crate::text::JsText,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name_form: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    indefinite_article: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    appearance: Option<&'a crate::text::JsText>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    species: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    traits: Option<&'a [crate::state::CharacterTrait]>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OwnAction<'a> {
+    id: &'a str,
+    #[serde(rename = "type")]
+    kind: &'a str,
+    stage: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    target_id: Option<&'a str>,
+    total_seconds: f64,
+    remaining_seconds: f64,
+    preparing_navigation: bool,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OwnActorProduct<'a> {
+    world_id: &'a str,
+    actor_id: &'a str,
+    generation: &'a str,
+    at: f64,
+    sequence: u64,
+    identity: OwnIdentity<'a>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    physical_life: Option<u64>,
+    alive: bool,
+    incapacitated: bool,
+    position: crate::state::Point,
+    heading: f64,
+    support_surface_id: Option<&'a str>,
+    body_profile: &'a crate::state::BodyProfile,
+    attributes: &'a [crate::reception::AttributeView],
+    status_effects: &'a [crate::worlds::base_observed::StatusEffectProjection],
+    action_status_labels: &'a [&'a str],
+    action: Option<OwnAction<'a>>,
+    speech: bool,
+    speech_blocked: bool,
+    manual_work: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    agency: Option<&'a crate::state::ActorAgency>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    mind: Option<&'a crate::cognition::ActorMind>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    inner_world: Option<&'a crate::cognition::InnerWorld>,
+}
+
+/// First-person facts for the real player/NPC formatters. Purpose controls the
+/// private mental fields; source validation stays in the native capture owner,
+/// while operational account/control permission stays in the application.
+pub(crate) fn write_actor_self(
+    state: &SimulationState,
+    actor_id: &str,
+    purpose: ActorReadPurpose,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), ExecutionError> {
+    use crate::status::{
+        AttributeAudience, effective_body_profile, project_attributes, project_status_effects,
+    };
+    let entity = state
+        .physical
+        .entities
+        .get(actor_id)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+    let private = matches!(purpose, ActorReadPurpose::NpcDecision);
+    if private && (!entity.has_memory() || actor.controller != "npc") {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let attributes = project_attributes(
+        entity,
+        &state.installed.attributes,
+        state.physical.pending_values.as_ref(),
+        AttributeAudience::Owner,
+        budget,
+    )?;
+    let statuses = project_status_effects(
+        entity,
+        &state.installed.status_policy,
+        AttributeAudience::Owner,
+        budget,
+    )?;
+    let profile = effective_body_profile(entity, budget)?;
+    let count = state
+        .installed
+        .status_policy
+        .definitions
+        .iter()
+        .filter(|definition| {
+            definition.actions.is_some()
+                && entity
+                    .status_effects
+                    .as_ref()
+                    .and_then(|states| states.get(&definition.id))
+                    .is_some_and(|state| state.active)
+        })
+        .count();
+    let _labels = budget.reserve(
+        count
+            .checked_mul(size_of::<&str>())
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let mut labels = Vec::new();
+    labels
+        .try_reserve_exact(count)
+        .map_err(|_| ExecutionError::Capacity)?;
+    for definition in &state.installed.status_policy.definitions {
+        if definition.actions.is_some()
+            && entity
+                .status_effects
+                .as_ref()
+                .and_then(|states| states.get(&definition.id))
+                .is_some_and(|state| state.active)
+        {
+            labels.push(definition.label.as_str());
+        }
+    }
+    let mind = if private {
+        Some(
+            state
+                .minds
+                .minds
+                .as_ref()
+                .and_then(|minds| minds.get(actor_id))
+                .ok_or(ExecutionError::UnsupportedFamily)?,
+        )
+    } else {
+        None
+    };
+    let product = OwnActorProduct {
+        world_id: &state.physical.header.id,
+        actor_id,
+        generation: &state.generation,
+        at: state.physical.header.sim_time,
+        sequence: state.physical.header.sequence,
+        identity: OwnIdentity {
+            id: actor_id,
+            name: &entity.name,
+            name_form: entity.name_form.as_deref(),
+            indefinite_article: entity.indefinite_article.as_deref(),
+            appearance: entity.appearance.as_ref(),
+            species: actor.species.as_deref(),
+            traits: actor.traits.as_deref(),
+        },
+        physical_life: actor.physical_life,
+        alive: actor.alive,
+        incapacitated: actor.incapacitated,
+        position: entity
+            .world_position()
+            .ok_or(ExecutionError::InvalidPosition)?,
+        heading: entity.spatial.heading,
+        support_surface_id: match entity.placement.as_ref() {
+            Some(crate::state::Placement::World {
+                support_surface_id, ..
+            }) => support_surface_id.as_deref(),
+            _ => None,
+        },
+        body_profile: &profile,
+        attributes: attributes.rows(),
+        status_effects: statuses.rows(),
+        action_status_labels: &labels,
+        action: actor.action.as_ref().map(|action| OwnAction {
+            id: &action.id,
+            kind: &action.kind,
+            stage: &action.stage,
+            target_id: action.target_id.as_deref(),
+            total_seconds: action.total_seconds,
+            remaining_seconds: action.remaining_seconds,
+            preparing_navigation: action.navigation.is_some(),
+        }),
+        speech: actor
+            .capabilities
+            .as_ref()
+            .map_or(actor.controller != "native", |capabilities| {
+                capabilities.speech
+            }),
+        speech_blocked: state
+            .installed
+            .capabilities
+            .capability_blocked(Some(entity), "speech")?,
+        manual_work: actor.body.as_ref().is_some_and(|body| body.plan == "biped"),
+        agency: private.then_some(&actor.agency),
+        mind,
+        inner_world: private
+            .then(|| {
+                state
+                    .minds
+                    .inner_worlds
+                    .as_ref()
+                    .and_then(|worlds| worlds.get(actor_id))
+            })
+            .flatten(),
+    };
+    let length =
+        crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
+    let mut reservation = budget.reserve(
+        length
+            .checked_mul(2)
+            .map(|bytes| bytes.max(8))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let encoded = crate::encoding::json_record(&product).map_err(|_| ExecutionError::Invariant)?;
+    reservation.resize(encoded.capacity())?;
+    Ok((encoded, reservation))
+}

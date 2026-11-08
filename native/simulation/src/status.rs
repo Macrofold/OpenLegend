@@ -9,6 +9,10 @@ use crate::values::{
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+mod integration;
+pub(crate) use integration::{
+    BodyPeriodicChange, BodyRate, BodyRates, StatusIntegrationCursor, StatusIntegrationStep,
+};
 mod rates;
 pub(crate) use rates::*;
 mod projection;

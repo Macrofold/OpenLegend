@@ -106,8 +106,20 @@ impl VoiceReceptionPreparation {
             return Err(invalid());
         }
         let body = if let Some(sight) = visible {
-            if sight.binding() != binding
-                || sight.observer().actor_id != observer_id
+            let physical_binding = sight.binding();
+            // Sight belongs to the contact phase; collation has its own unique
+            // provider serial. Both must still refer to this exact candidate cut.
+            if (
+                physical_binding.candidate_id,
+                physical_binding.base_cut,
+                physical_binding.generation,
+                physical_binding.geometry_revision,
+            ) != (
+                binding.candidate_id,
+                binding.base_cut,
+                binding.generation,
+                binding.geometry_revision,
+            ) || sight.observer().actor_id != observer_id
                 || sight.observer().physical_life != actor.physical_life.unwrap_or(0)
             {
                 return Err(invalid());
@@ -511,7 +523,7 @@ fn blank_identity(
         voice: None,
         sight: None,
         name_evidence_ids: None,
-        given_name: String::new(),
+        given_name: crate::text::JsText::default(),
         nickname: None,
         revision,
         encounter_id,
@@ -628,6 +640,7 @@ fn perceive_voice(
     let quality = quality.min(resolution(features));
     let mut result = IndividualRecognition {
         recognized: false,
+        body_support_before_matching: body_support.is_some(),
         subject: None,
         learned_subject: None,
         candidates: Vec::new(),

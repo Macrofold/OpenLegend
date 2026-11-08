@@ -55,7 +55,9 @@ pub(crate) fn appraise_event(
         None | Some(EventScalar::Null(())) => 0.0,
         Some(EventScalar::Number(value)) => *value,
         Some(EventScalar::Boolean(value)) => f64::from(u8::from(*value)),
-        Some(EventScalar::Text(value)) => crate::encoding::js_number(value),
+        Some(EventScalar::Text(value)) => value
+            .as_unicode()
+            .map_or(f64::NAN, crate::encoding::js_number),
     };
     let damage = -delta;
     if !damage.is_finite() || damage <= 0.0 {

@@ -24,11 +24,13 @@ use crate::values::{
     ValueError, materialize_episode,
 };
 use crate::work::{InvocationEdit, WorkDemand, WorkError, WorkPlan, WorkRequest, WorkUndo};
-use indexmap::IndexMap;
-use std::collections::BTreeSet;
+use indexmap::{IndexMap, IndexSet};
 use std::mem::size_of;
 
 mod attributes;
+mod body;
+mod conditions;
+mod rates;
 mod routes;
 mod save;
 mod semantic;
@@ -323,6 +325,12 @@ impl CandidateJournal {
         if self.frames.len() != token.depth + 1 {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        let physical = self
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?
+            .physical;
+        self.physical.prepare_keep(physical)?;
         let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
         self.acquisitions.keep(frame.acquisitions)?;
         self.physical.keep(frame.physical)
@@ -697,6 +705,11 @@ impl From<IdentityExhausted> for ExecutionError {
 
 #[derive(Clone, Debug)]
 pub(crate) enum PhysicalChange {
+    Membership {
+        entity_id: String,
+        before: Option<Point>,
+        after: Option<Point>,
+    },
     Navigation {
         entity_id: String,
     },
@@ -761,8 +774,14 @@ pub(crate) struct ActionRouteWrite {
     pub replans: Option<u64>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum UndoKey {
+    BodyRevision(usize, u64),
+    BodyLifecycle(usize, u64),
+    Remains(usize, u64),
+    PendingDeath(usize, u64),
+    Scar(usize, u64, String),
+    Contacts(usize, u64),
     Placement(usize, u64),
     Heading(usize, u64),
     Health(usize, u64),
@@ -781,6 +800,7 @@ enum UndoKey {
     ResultEvidence(usize, u64),
     Status(usize, u64, String),
     Attribute(usize, u64, String),
+    Condition(usize, u64, String),
     NativeWindow,
     Episode(String),
     Invocation(String),
@@ -815,7 +835,7 @@ struct Frame {
     changes_start: usize,
     clock: ClockSnapshot,
     identity: IdentityState,
-    written: BTreeSet<UndoKey>,
+    written: IndexSet<UndoKey>,
 }
 #[derive(Clone, Copy)]
 pub(crate) struct PhysicalCheckpoint {
@@ -843,6 +863,44 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    AddedEntity(crate::state::EntityInsertion),
+    BodyRevision {
+        entity: EntityHandle,
+        before: u64,
+    },
+    BodyLifecycle {
+        entity: EntityHandle,
+        alive: bool,
+        incapacitated: bool,
+        fall_velocity: Option<f64>,
+        local_avoidance_ready_at: Option<f64>,
+    },
+    Remains {
+        entity: EntityHandle,
+        before: Option<crate::state::Remains>,
+    },
+    PendingDeath {
+        entity: EntityHandle,
+        before: Option<crate::body::PendingDeath>,
+        combat_ready_at: Option<f64>,
+        evasion_ready_at: Option<f64>,
+    },
+    Scar {
+        entity: EntityHandle,
+        key: String,
+        before: Option<(usize, f64)>,
+        root_present: bool,
+    },
+    Contacts {
+        entity: EntityHandle,
+        before: IndexMap<String, crate::reception::ContactEpisode>,
+    },
+    Condition {
+        entity: EntityHandle,
+        key: String,
+        before: Option<(usize, crate::state::ConditionEpisode)>,
+        root_present: bool,
+    },
     ActionNavigation {
         entity: EntityHandle,
         action_id: String,
@@ -969,17 +1027,83 @@ impl PhysicalJournal {
             changes_start: 0,
             clock: ClockSnapshot::capture(state),
             identity: state.identity,
-            written: BTreeSet::new(),
+            written: IndexSet::new(),
         });
         Ok(value)
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
-        let total = self
-            .reservation
-            .bytes()
-            .checked_add(bytes)
+        use crate::host::retained_size::map_storage;
+        let undo_capacity = if self.undo.len() == self.undo.capacity() {
+            self.undo
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(4))
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        let changes_needed = self
+            .changes
+            .len()
+            .checked_add(2)
             .ok_or(ExecutionError::Capacity)?;
+        let change_capacity = if changes_needed > self.changes.capacity() {
+            self.changes
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(changes_needed).max(4))
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        let written = self
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let key_capacity = if written.written.len() == written.written.capacity() {
+            written
+                .written
+                .len()
+                .checked_add(1)
+                .and_then(|n| n.checked_mul(2))
+                .and_then(|n| n.checked_add(8))
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        let total = heap_sum([
+            self.reservation.bytes(),
+            bytes,
+            undo_capacity
+                .checked_mul(size_of::<Undo>())
+                .ok_or(ExecutionError::Capacity)?,
+            change_capacity
+                .checked_mul(size_of::<PhysicalChange>())
+                .ok_or(ExecutionError::Capacity)?,
+            map_storage::<UndoKey, ()>(key_capacity).ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
         self.reservation.resize(total)?;
+        if undo_capacity > 0 {
+            self.undo
+                .try_reserve_exact(undo_capacity - self.undo.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        if change_capacity > 0 {
+            self.changes
+                .try_reserve_exact(change_capacity - self.changes.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        if key_capacity > 0 {
+            let frame = self
+                .frames
+                .last_mut()
+                .ok_or(ExecutionError::InvalidCheckpoint)?;
+            frame
+                .written
+                .try_reserve(key_capacity - frame.written.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
         Ok(())
     }
     pub(crate) fn checkpoint(
@@ -991,9 +1115,27 @@ impl PhysicalJournal {
             .checked_add(1)
             .ok_or(ExecutionError::InvalidCheckpoint)?;
         self.reserve(size_of::<Frame>() * 2)?;
-        self.frames
-            .try_reserve(1)
-            .map_err(|_| ExecutionError::Capacity)?;
+        if self.frames.len() == self.frames.capacity() {
+            let capacity = self
+                .frames
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(2))
+                .ok_or(ExecutionError::Capacity)?;
+            self.reservation.resize(
+                self.reservation
+                    .bytes()
+                    .checked_add(
+                        capacity
+                            .checked_mul(size_of::<Frame>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            self.frames
+                .try_reserve_exact(capacity - self.frames.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
         let token = PhysicalCheckpoint {
             depth: self.frames.len(),
             serial,
@@ -1004,7 +1146,7 @@ impl PhysicalJournal {
             changes_start: self.changes.len(),
             clock: ClockSnapshot::capture(state),
             identity: state.identity,
-            written: BTreeSet::new(),
+            written: IndexSet::new(),
         });
         Ok(token)
     }
@@ -1020,8 +1162,42 @@ impl PhysicalJournal {
         }
         Ok(())
     }
-    pub(crate) fn keep(&mut self, checkpoint: PhysicalCheckpoint) -> Result<(), ExecutionError> {
+    fn prepare_keep(&mut self, checkpoint: PhysicalCheckpoint) -> Result<(), ExecutionError> {
         self.check_top(checkpoint)?;
+        let child = self
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let parent_index = self.frames.len() - 2;
+        let parent = &self.frames[parent_index];
+        let needed = parent
+            .written
+            .len()
+            .checked_add(child.written.len())
+            .ok_or(ExecutionError::Capacity)?;
+        if needed > parent.written.capacity() {
+            let capacity = needed
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(8))
+                .ok_or(ExecutionError::Capacity)?;
+            let bytes = crate::host::retained_size::map_storage::<UndoKey, ()>(capacity)
+                .ok_or(ExecutionError::Capacity)?;
+            self.reservation.resize(
+                self.reservation
+                    .bytes()
+                    .checked_add(bytes)
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let parent = &mut self.frames[parent_index];
+            parent
+                .written
+                .try_reserve(capacity - parent.written.len())
+                .map_err(|_| ExecutionError::Capacity)?;
+        }
+        Ok(())
+    }
+    pub(crate) fn keep(&mut self, checkpoint: PhysicalCheckpoint) -> Result<(), ExecutionError> {
+        self.prepare_keep(checkpoint)?;
         let child = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
         self.frames
             .last_mut()
@@ -1053,6 +1229,101 @@ impl PhysicalJournal {
         while self.undo.len() > frame.undo_start {
             let undo = self.undo.pop().ok_or(ExecutionError::Invariant)?;
             match undo {
+                Undo::AddedEntity(before) => {
+                    let (id, renumbered) = state
+                        .entities
+                        .undo_insertion(before)
+                        .map_err(|_| ExecutionError::Invariant)?;
+                    if renumbered {
+                        state.bodies.refresh_ordering(&state.entities);
+                    }
+                    state.bodies.refresh(&state.entities, &id);
+                }
+                Undo::BodyRevision { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.body.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .revision = before;
+                }
+                Undo::BodyLifecycle {
+                    entity,
+                    alive,
+                    incapacitated,
+                    fall_velocity,
+                    local_avoidance_ready_at,
+                } => {
+                    let entity = state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
+                    actor.alive = alive;
+                    actor.incapacitated = incapacitated;
+                    entity.spatial.fall_velocity = fall_velocity;
+                    entity.spatial.local_avoidance_ready_at = local_avoidance_ready_at;
+                    let id = entity.id.clone();
+                    state.bodies.refresh(&state.entities, &id);
+                }
+                Undo::Remains { entity, before } => {
+                    let entity = state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?;
+                    entity.remains = before;
+                    let id = entity.id.clone();
+                    state.bodies.refresh(&state.entities, &id);
+                }
+                Undo::PendingDeath {
+                    entity,
+                    before,
+                    combat_ready_at,
+                    evasion_ready_at,
+                } => {
+                    let entity = state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?;
+                    let actor = entity.actor.as_mut().ok_or(ExecutionError::Invariant)?;
+                    actor.pending_death = before;
+                    actor.combat_ready_at = combat_ready_at;
+                    actor.evasion_ready_at = evasion_ready_at;
+                    let id = entity.id.clone();
+                    state.bodies.refresh(&state.entities, &id);
+                }
+                Undo::Scar {
+                    entity,
+                    key,
+                    before,
+                    root_present,
+                } => {
+                    let actor = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    let scars = actor.scars.as_mut().ok_or(ExecutionError::Invariant)?;
+                    scars.shift_remove(&key);
+                    if let Some((position, value)) = before {
+                        scars.shift_insert(position, key, value);
+                    }
+                    if !root_present {
+                        if !scars.is_empty() {
+                            return Err(ExecutionError::Invariant);
+                        }
+                        actor.scars = None;
+                    }
+                }
+                Undo::Contacts { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .contacts = Some(before);
+                }
                 Undo::NativeWindow { before } => match before {
                     None => {
                         if state.pending_values.as_ref().is_some_and(|window| {
@@ -1103,6 +1374,29 @@ impl PhysicalJournal {
                         if window.binding_count == 0 {
                             state.pending_values = None;
                         }
+                    }
+                }
+                Undo::Condition {
+                    entity,
+                    key,
+                    before,
+                    root_present,
+                } => {
+                    let actor = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    let map = actor.conditions.as_mut().ok_or(ExecutionError::Invariant)?;
+                    map.shift_remove(&key);
+                    if let Some((position, before)) = before {
+                        map.shift_insert(position, key, before);
+                    }
+                    if !root_present {
+                        if !map.is_empty() {
+                            return Err(ExecutionError::Invariant);
+                        }
+                        actor.conditions = None;
                     }
                 }
                 Undo::Attribute { entity, id, before } => {
@@ -1355,9 +1649,14 @@ impl PhysicalJournal {
             .contains(key))
     }
     fn retain(&mut self, key: UndoKey, undo: Undo) -> Result<(), ExecutionError> {
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ExecutionError::Capacity)?;
+        if self.undo.len() == self.undo.capacity()
+            || self
+                .frames
+                .last()
+                .is_none_or(|frame| frame.written.len() == frame.written.capacity())
+        {
+            return Err(ExecutionError::Invariant);
+        }
         self.frames
             .last_mut()
             .ok_or(ExecutionError::InvalidCheckpoint)?
@@ -1367,9 +1666,9 @@ impl PhysicalJournal {
         Ok(())
     }
     fn change(&mut self, change: PhysicalChange) -> Result<(), ExecutionError> {
-        self.changes
-            .try_reserve(1)
-            .map_err(|_| ExecutionError::Capacity)?;
+        if self.changes.len() == self.changes.capacity() {
+            return Err(ExecutionError::Invariant);
+        }
         self.changes.push(change);
         Ok(())
     }

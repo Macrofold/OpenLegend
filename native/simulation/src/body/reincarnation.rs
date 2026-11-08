@@ -21,6 +21,7 @@ pub(crate) struct DeathScar {
 pub(crate) struct ReincarnationPolicy {
     pub implementation: String,
     pub qualifying_controller: String,
+    pub corpse_kind: String,
     pub rest_kind: String,
     pub radius: f64,
     pub retained_type_fraction: f64,

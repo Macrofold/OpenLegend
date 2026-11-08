@@ -4,6 +4,7 @@
 use crate::encoding::js_trim;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::received::TemporalReceiptLocator;
+use crate::text::{JsText, TextRef};
 use crate::values::{deserialize_present_option, is_safe_record_id};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
@@ -18,17 +19,28 @@ mod install;
 mod retained_size;
 pub(crate) use install::install_activity;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum ActivityScalar {
-    String(String),
+    String(JsText),
     Number(f64),
     Boolean(bool),
+}
+impl<'de> Deserialize<'de> for ActivityScalar {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
+        match raw.get().trim_start().as_bytes().first() {
+            Some(b'"') => serde_json::from_str(raw.get()).map(Self::String),
+            Some(b't' | b'f') => serde_json::from_str(raw.get()).map(Self::Boolean),
+            _ => serde_json::from_str(raw.get()).map(Self::Number),
+        }
+        .map_err(serde::de::Error::custom)
+    }
 }
 
 /// The current renderer admits a finite human-labelled JSON detail tree. Null,
 /// executable values and unbounded nesting are not part of this family.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum ActivityDetail {
     Scalar(ActivityScalar),
@@ -37,6 +49,34 @@ pub enum ActivityDetail {
         #[serde(serialize_with = "crate::encoding::serialize_js_map")]
         IndexMap<String, ActivityDetail>,
     ),
+}
+impl<'de> Deserialize<'de> for ActivityDetail {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        fn parse(raw: &str, depth: usize) -> Result<ActivityDetail, serde_json::Error> {
+            if depth > 4 {
+                return Err(<serde_json::Error as serde::de::Error>::custom(
+                    "Activity detail nesting exceeds current format.",
+                ));
+            }
+            match raw.trim_start().as_bytes().first() {
+                Some(b'[') => serde_json::from_str::<Vec<Box<serde_json::value::RawValue>>>(raw)?
+                    .into_iter()
+                    .map(|value| parse(value.get(), depth + 1))
+                    .collect::<Result<Vec<_>, _>>()
+                    .map(ActivityDetail::List),
+                Some(b'{') => {
+                    serde_json::from_str::<IndexMap<String, Box<serde_json::value::RawValue>>>(raw)?
+                        .into_iter()
+                        .map(|(key, value)| parse(value.get(), depth + 1).map(|value| (key, value)))
+                        .collect::<Result<IndexMap<_, _>, _>>()
+                        .map(ActivityDetail::Fields)
+                }
+                _ => serde_json::from_str(raw).map(ActivityDetail::Scalar),
+            }
+        }
+        let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
+        parse(raw.get(), 0).map_err(serde::de::Error::custom)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -50,7 +90,7 @@ pub struct ActivityFact {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub sentence: Option<String>,
+    pub sentence: Option<JsText>,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -61,19 +101,19 @@ pub struct ActivityView {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub actor: Option<String>,
+    pub actor: Option<JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub target: Option<String>,
+    pub target: Option<JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub tool: Option<String>,
+    pub tool: Option<JsText>,
     pub facts: Vec<ActivityFact>,
     #[serde(
         default,
@@ -86,7 +126,7 @@ pub struct ActivityView {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub result: Option<String>,
+    pub result: Option<JsText>,
 }
 
 pub(crate) fn approach_view_bytes(
@@ -212,9 +252,7 @@ impl ActivityDetail {
             Self::Scalar(ActivityScalar::Number(value)) if !value.is_finite() => {
                 Err(ActivityError::InvalidFact)
             }
-            Self::Scalar(ActivityScalar::String(value))
-                if value.encode_utf16().count() > limits.text =>
-            {
+            Self::Scalar(ActivityScalar::String(value)) if value.units_len() > limits.text => {
                 Err(ActivityError::InvalidFact)
             }
             Self::Scalar(_) => Ok(()),
@@ -259,7 +297,7 @@ impl ActivityFact {
 }
 
 pub struct ActivityProjection {
-    pub text: String,
+    pub text: JsText,
     pub covered: Vec<String>,
     pub fallback: Vec<String>,
     pub omitted: bool,
@@ -274,133 +312,161 @@ fn activity_text_sum(left: usize, right: usize) -> Result<usize, serde_json::Err
     })
 }
 fn activity_record_text_sizes(view: &ActivityView) -> Result<(usize, usize), serde_json::Error> {
-    let mut bytes = view.name.len();
+    let mut units = view.name.encode_utf16().count();
     let mut temporary = 0;
     for (label, value) in [
-        ("actor", view.actor.as_deref()),
-        ("target", view.target.as_deref()),
-        ("tool", view.tool.as_deref()),
+        ("actor", view.actor.as_ref()),
+        ("target", view.target.as_ref()),
+        ("tool", view.tool.as_ref()),
     ] {
         if let Some(value) = value.filter(|value| !value.is_empty()) {
-            bytes = activity_text_sum(bytes, activity_text_sum(4 + label.len(), value.len())?)?;
+            units = activity_text_sum(
+                units,
+                activity_text_sum(4 + label.len(), value.units_len())?,
+            )?;
         }
     }
     for fact in &view.facts {
         let (length, scratch) = match &fact.value {
-            ActivityDetail::Scalar(ActivityScalar::String(value)) => (value.len(), 0),
+            ActivityDetail::Scalar(ActivityScalar::String(value)) => (value.units_len(), 0),
             value => {
-                let length = crate::encoding::json_record_len(value)?;
-                // The shared streaming encoder grows a Vec<u8>; admit its
-                // pinned amortized capacity, including Vec's minimum allocation.
-                let scratch = length
-                    .checked_mul(2)
-                    .map(|bytes| bytes.max(8))
-                    .ok_or_else(|| {
-                        <serde_json::Error as serde::ser::Error>::custom(
-                            "Activity fact encoding allocation overflow.",
-                        )
-                    })?;
-                (length, scratch)
+                let bytes = crate::encoding::json_record_len(value)?;
+                (
+                    bytes,
+                    bytes
+                        .checked_mul(2)
+                        .map(|bytes| bytes.max(8))
+                        .ok_or_else(|| {
+                            <serde_json::Error as serde::ser::Error>::custom(
+                                "Activity fact allocation overflow.",
+                            )
+                        })?,
+                )
             }
         };
-        bytes = activity_text_sum(bytes, activity_text_sum(4 + fact.name.len(), length)?)?;
+        units = activity_text_sum(
+            units,
+            activity_text_sum(4 + fact.name.encode_utf16().count(), length)?,
+        )?;
         temporary = temporary.max(scratch);
     }
     if let Some(children) = &view.children {
         for child in children {
             let (length, scratch) = activity_record_text_sizes(child)?;
-            bytes = activity_text_sum(bytes, activity_text_sum(2, length)?)?;
+            units = activity_text_sum(units, activity_text_sum(2, length)?)?;
             temporary = temporary.max(scratch);
         }
     }
-    if let Some(result) = view.result.as_deref().filter(|value| !value.is_empty()) {
-        bytes = activity_text_sum(bytes, activity_text_sum(10, result.len())?)?;
+    if let Some(result) = view.result.as_ref().filter(|value| !value.is_empty()) {
+        units = activity_text_sum(units, activity_text_sum(10, result.units_len())?)?;
     }
-    Ok((bytes, temporary))
+    Ok((units, temporary))
 }
 pub(crate) fn activity_record_text_bound(view: &ActivityView) -> Result<usize, serde_json::Error> {
-    let (bytes, temporary) = activity_record_text_sizes(view)?;
+    let (units, temporary) = activity_record_text_sizes(view)?;
+    // One exact UTF16 output, optional raw JSON string (at most six bytes per
+    // unit), and the owner's Unicode/encoding scratch coexist at construction.
     activity_text_sum(
-        activity_text_sum(bytes, temporary)?,
-        std::mem::size_of::<String>(),
+        activity_text_sum(
+            units.checked_mul(16).ok_or_else(|| {
+                <serde_json::Error as serde::ser::Error>::custom(
+                    "Activity text allocation overflow.",
+                )
+            })?,
+            temporary,
+        )?,
+        std::mem::size_of::<JsText>(),
     )
 }
-/// Stream the exact complete Source sequence into one output. Its caller can
-/// reserve output plus the largest single encoded fact before rendering; child
-/// text and a vector of every intermediate fragment are unnecessary.
-pub fn activity_record_text(view: &ActivityView) -> Result<String, serde_json::Error> {
-    fn append(view: &ActivityView, text: &mut String) -> Result<(), serde_json::Error> {
-        text.push_str(&view.name);
+/// Complete Source event-time facts: one UTF16 output preserves isolated units;
+/// only one non-string fact is encoded at a time. Display omission never edits it.
+pub fn activity_record_text(view: &ActivityView) -> Result<JsText, serde_json::Error> {
+    fn append(view: &ActivityView, units: &mut Vec<u16>) -> Result<(), serde_json::Error> {
+        units.extend(view.name.encode_utf16());
         for (label, value) in [
-            ("actor", view.actor.as_deref()),
-            ("target", view.target.as_deref()),
-            ("tool", view.tool.as_deref()),
+            ("actor", view.actor.as_ref()),
+            ("target", view.target.as_ref()),
+            ("tool", view.tool.as_ref()),
         ] {
             if let Some(value) = value.filter(|value| !value.is_empty()) {
-                text.push_str("; ");
-                text.push_str(label);
-                text.push_str(": ");
-                text.push_str(value);
+                units.extend("; ".encode_utf16());
+                units.extend(label.encode_utf16());
+                units.extend(": ".encode_utf16());
+                units.extend(value.units());
             }
         }
         for fact in &view.facts {
-            text.push_str("; ");
-            text.push_str(&fact.name);
-            text.push_str(": ");
+            units.extend("; ".encode_utf16());
+            units.extend(fact.name.encode_utf16());
+            units.extend(": ".encode_utf16());
             match &fact.value {
-                ActivityDetail::Scalar(ActivityScalar::String(value)) => text.push_str(value),
-                value => text.push_str(&crate::encoding::json_record(value)?),
+                ActivityDetail::Scalar(ActivityScalar::String(value)) => {
+                    units.extend(value.units())
+                }
+                value => units.extend(crate::encoding::json_record(value)?.encode_utf16()),
             }
         }
         if let Some(children) = &view.children {
             for child in children {
-                text.push_str("; ");
-                append(child, text)?;
+                units.extend("; ".encode_utf16());
+                append(child, units)?;
             }
         }
-        if let Some(result) = view.result.as_deref().filter(|value| !value.is_empty()) {
-            text.push_str("; Result: ");
-            text.push_str(result);
+        if let Some(result) = view.result.as_ref().filter(|value| !value.is_empty()) {
+            units.extend("; Result: ".encode_utf16());
+            units.extend(result.units());
         }
         Ok(())
     }
-    let mut text = String::with_capacity(activity_record_text_sizes(view)?.0);
-    append(view, &mut text)?;
-    Ok(text)
+    let mut units = Vec::with_capacity(activity_record_text_sizes(view)?.0);
+    append(view, &mut units)?;
+    Ok(JsText::from_units(units))
 }
-
-fn prose(value: &str) -> String {
-    let mut result = String::with_capacity(value.len());
+fn prose<'a>(value: impl Into<TextRef<'a>>) -> JsText {
+    let value = value.into().to_owned();
+    let mut result = Vec::with_capacity(value.units_len());
     let mut newline = false;
-    for ch in value.chars() {
-        match ch {
-            '\r' | '\n' => {
+    for unit in value.units() {
+        match unit {
+            10 | 13 => {
                 if !newline {
-                    result.push(' ');
+                    result.push(32);
                 }
                 newline = true;
             }
-            '[' => {
-                result.push('［');
+            91 => {
+                result.push(0xff3b);
                 newline = false;
             }
-            ']' => {
-                result.push('］');
+            93 => {
+                result.push(0xff3d);
                 newline = false;
             }
-            ch => {
-                result.push(ch);
+            unit => {
+                result.push(unit);
                 newline = false;
             }
         }
     }
-    result
+    JsText::from_units(result)
 }
-fn scalar_text(value: &ActivityScalar) -> Result<String, ActivityError> {
+fn scalar_text(value: &ActivityScalar) -> Result<JsText, ActivityError> {
     match value {
         ActivityScalar::String(value) => Ok(value.clone()),
-        _ => crate::encoding::json_record(value).map_err(|_| ActivityError::InvalidFact),
+        _ => crate::encoding::json_record(value)
+            .map(Into::into)
+            .map_err(|_| ActivityError::InvalidFact),
     }
+}
+fn text_join(values: &[JsText], separator: &str) -> JsText {
+    let mut text = JsText::default();
+    for (index, value) in values.iter().enumerate() {
+        if index > 0 {
+            text.push_str(separator);
+        }
+        text.push_text(value);
+    }
+    text
 }
 
 /// Same bounded grammar/coverage as the existing projectActivity formatter.
@@ -408,23 +474,23 @@ fn scalar_text(value: &ActivityScalar) -> Result<String, ActivityError> {
 #[derive(Clone, Copy)]
 struct View<'a> {
     name: &'a str,
-    actor: Option<&'a str>,
-    target: Option<&'a str>,
-    tool: Option<&'a str>,
+    actor: Option<&'a JsText>,
+    target: Option<&'a JsText>,
+    tool: Option<&'a JsText>,
     facts: &'a [ActivityFact],
     children: Option<&'a [ActivityView]>,
-    result: Option<&'a str>,
+    result: Option<&'a JsText>,
 }
 impl<'a> From<&'a ActivityView> for View<'a> {
     fn from(view: &'a ActivityView) -> Self {
         Self {
             name: &view.name,
-            actor: view.actor.as_deref(),
-            target: view.target.as_deref(),
-            tool: view.tool.as_deref(),
+            actor: view.actor.as_ref(),
+            target: view.target.as_ref(),
+            tool: view.tool.as_ref(),
             facts: &view.facts,
             children: view.children.as_deref(),
-            result: view.result.as_deref(),
+            result: view.result.as_ref(),
         }
     }
 }
@@ -470,7 +536,7 @@ fn project_view(
                 node: View<'_>,
                 depth: usize,
                 path: &str,
-            ) -> Result<String, ActivityError> {
+            ) -> Result<JsText, ActivityError> {
                 self.count += 1;
                 if self.count > self.limits.nodes || depth > self.limits.depth {
                     return Err(ActivityError::InvalidStructure);
@@ -488,7 +554,9 @@ fn project_view(
                     ("tool", node.tool),
                 ] {
                     if let Some(value) = value.filter(|value| !value.is_empty()) {
-                        details.push(format!("{label}: {}", prose(value)));
+                        let mut text: JsText = format!("{label}: ").into();
+                        text.push_text(&prose(value));
+                        details.push(text);
                     }
                 }
                 let mut extra: IndexMap<String, &ActivityDetail> = IndexMap::new();
@@ -506,11 +574,10 @@ fn project_view(
                     {
                         details.push(prose(sentence));
                     } else if let ActivityDetail::Scalar(value) = &fact.value {
-                        details.push(format!(
-                            "{}: {}",
-                            prose(&fact.name),
-                            prose(&scalar_text(value)?)
-                        ));
+                        let mut text = prose(fact.name.as_str());
+                        text.push_str(": ");
+                        text.push_text(&prose(&scalar_text(value)?));
+                        details.push(text);
                     } else if fact.critical {
                         extra.insert(fact.name.clone(), &fact.value);
                         self.fallback.push(key.clone());
@@ -524,39 +591,48 @@ fn project_view(
                 if let Some(nodes) = &node.children {
                     for (index, child) in nodes.iter().enumerate() {
                         let prefix = if depth >= self.detail_depth {
-                            format!("Step {} within {}: ", index + 1, prose(&node.name))
+                            let mut prefix: JsText = format!("Step {} within ", index + 1).into();
+                            prefix.push_text(&prose(node.name));
+                            prefix.push_str(": ");
+                            prefix
                         } else {
-                            String::new()
+                            JsText::default()
                         };
-                        children.push(format!(
-                            "{prefix}{}",
-                            self.render(child.into(), depth + 1, &format!("{path}.{index}"))?
-                        ));
+                        let mut text = prefix;
+                        text.push_text(&self.render(
+                            child.into(),
+                            depth + 1,
+                            &format!("{path}.{index}"),
+                        )?);
+                        children.push(text);
                     }
                 }
-                let mut text = prose(&node.name);
+                let mut text = prose(node.name);
                 if !details.is_empty() {
-                    text.push_str(&format!(" ({})", details.join("; ")));
+                    text.push_str(" (");
+                    text.push_text(&text_join(&details, "; "));
+                    text.push_str(")");
                 }
                 if !children.is_empty() {
                     if depth >= self.detail_depth {
-                        text.push_str(&format!(
-                            ". Nested layout is not shown. {}",
-                            children.join("; ")
-                        ));
+                        text.push_str(". Nested layout is not shown. ");
+                        text.push_text(&text_join(&children, "; "));
                     } else {
-                        text.push_str(&format!(" [{}]", children.join("; ")));
+                        text.push_str(" [");
+                        text.push_text(&text_join(&children, "; "));
+                        text.push_str("]");
                     }
                 }
                 let last_result = node
                     .children
                     .and_then(|children| children.last())
-                    .and_then(|child| child.result.as_deref());
+                    .and_then(|child| child.result.as_ref());
                 if let Some(result) = node
                     .result
                     .filter(|result| !result.is_empty() && Some(*result) != last_result)
                 {
-                    text.push_str(&format!(". Result: {}", prose(result)));
+                    text.push_str(". Result: ");
+                    text.push_text(&prose(result));
                 }
                 if !extra.is_empty() {
                     struct Extra<'a>(IndexMap<String, &'a ActivityDetail>);
@@ -588,7 +664,9 @@ fn project_view(
         };
         let body = renderer.render(view, 0, "action")?;
         let mut text = if let Some(header) = header.filter(|h| !h.is_empty()) {
-            format!("{header}: {body}")
+            let mut text: JsText = format!("{header}: ").into();
+            text.push_text(&body);
+            text
         } else {
             body
         };
@@ -596,7 +674,7 @@ fn project_view(
             text.push_str(". Optional details are not shown.");
         }
         Ok(ActivityProjection {
-            bytes: text.len(),
+            bytes: text.utf8_len(),
             text,
             covered: renderer.covered,
             fallback: renderer.fallback,

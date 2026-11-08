@@ -30,6 +30,9 @@ pub mod base_event_disclosure;
 #[path = "../../../packages/domain/src/worlds/base/native/movement.rs"]
 pub(crate) mod base_movement;
 pub(crate) use base_movement::InstalledMovementPolicy;
+#[path = "../../../packages/domain/src/worlds/base/native/time.rs"]
+pub(crate) mod base_time;
+pub(crate) use base_time::InstalledTimeRules;
 
 #[path = "../../../packages/domain/src/worlds/base/native/speech.rs"]
 pub(crate) mod base_speech;

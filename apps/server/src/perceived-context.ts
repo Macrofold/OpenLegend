@@ -294,6 +294,17 @@ export function perceivedEntityText(
     reads,
   );
   const label = namePhrase(observerName(world, observerId, entityId, reads), 'indefinite');
+  return formatPerceivedEntityText(body, facts, label, entityHandle(world, observerId, entityId));
+}
+
+/** Shared text formatting takes only the selected receiving products. It has
+ * no entity lookup and cannot fill a missing detail from physical authority. */
+export function formatPerceivedEntityText(
+  body: NonNullable<ReturnType<typeof currentBodyValue>>,
+  facts: readonly ReturnType<typeof currentObservedFacetValues>[number][],
+  label: string,
+  handle: string,
+): string {
   const received = (
     facet: Pick<
       (typeof facts)[number],
@@ -301,9 +312,7 @@ export function perceivedEntityText(
     >,
   ) =>
     `Measured at simulation second ${facet.valueMeasuredFrom}${facet.valueMeasuredThrough !== facet.valueMeasuredFrom ? `–${facet.valueMeasuredThrough}` : ''}; received at ${facet.valueAcquiredAt}.`;
-  const text = [
-    `I can see ${label} (ID:${entityHandle(world, observerId, entityId)}). Physical form: ${received(body)}`,
-  ];
+  const text = [`I can see ${label} (ID:${handle}). Physical form: ${received(body)}`];
   if (body.value.body.description)
     text.push(
       `Observed description: ${body.value.body.description}${body.descriptionSupport ? ` ${received({ valueMeasuredFrom: body.descriptionSupport.descriptionMeasuredFrom, valueMeasuredThrough: body.descriptionSupport.descriptionMeasuredThrough, valueAcquiredAt: body.descriptionSupport.descriptionAcquiredAt })}` : ''}`,
@@ -332,8 +341,17 @@ export function relativeLocation(
 ): string | undefined {
   const received = currentBodyValue(world, observer.id, target.id);
   if (!received) return undefined;
+  return formatRelativeLocation(worldPosition(observer), observer.spatial.heading, received);
+}
+
+/** Relative wording uses the observer's own captured pose and the subject's
+ * received pose, never the subject's current hidden physical location. */
+export function formatRelativeLocation(
+  here: Position,
+  heading: number,
+  received: NonNullable<ReturnType<typeof currentBodyValue>>,
+): string {
   const position = received.value.body.position;
-  const here = worldPosition(observer);
   const dx = position.x - here.x,
     dz = position.z - here.z,
     dy = position.y - here.y;
@@ -348,7 +366,7 @@ export function relativeLocation(
     'to my left',
     'ahead and to my left',
   ];
-  const bearing = observer.spatial.heading - Math.atan2(dx, dz);
+  const bearing = heading - Math.atan2(dx, dz);
   const direction = directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8];
   const height =
     Math.abs(dy) < 0.1

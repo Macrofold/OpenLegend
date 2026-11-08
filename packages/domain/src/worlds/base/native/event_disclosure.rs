@@ -65,8 +65,8 @@ fn subject_narration(id: &str, rest: &str) -> EmissionText {
                 role: PersonRole::Subject,
                 article: None,
             },
-            NarrationPart::Literal(" ".to_owned()),
-            NarrationPart::Literal(rest.to_owned()),
+            NarrationPart::Literal(" ".to_owned().into()),
+            NarrationPart::Literal(rest.to_owned().into()),
         ],
     })
 }
@@ -103,7 +103,7 @@ impl EventDisclosure {
         self.physical_references
             .iter()
             .filter_map(|key| match self.value(event, key) {
-                Some(EventScalar::Text(value)) => Some(value.as_str()),
+                Some(EventScalar::Text(value)) => value.as_unicode(),
                 _ => None,
             })
             .collect()
@@ -138,7 +138,7 @@ impl EventDisclosure {
             .checked_add(2 * std::mem::size_of::<NarrationPart>())?;
         let complete = crate::narration::native_text_bound(&event.text)?;
         let cause = match self.value(event, &self.cause_field) {
-            Some(EventScalar::Text(text)) => text.len().checked_mul(3)?,
+            Some(EventScalar::Text(text)) => text.storage_bytes().checked_mul(3)?,
             _ => 0,
         };
         partial
@@ -169,7 +169,7 @@ impl EventDisclosure {
         if let Some(target) = target_id {
             return subject_narration(target, &self.text.target_activity);
         }
-        EmissionText::Literal(self.text.unknown_activity.clone())
+        EmissionText::Literal(self.text.unknown_activity.clone().into())
     }
 
     pub fn complete_text(
@@ -182,12 +182,16 @@ impl EventDisclosure {
             && let Some(EventScalar::Text(cause)) = data.get(&self.cause_field)
         {
             let mut value = native_text(&text);
-            if value.ends_with(['.', '!', '?']) {
-                value.pop();
+            if value
+                .units()
+                .last()
+                .is_some_and(|unit| matches!(unit, 46 | 33 | 63))
+            {
+                value.truncate_units(value.units_len() - 1);
             }
             value.push_str(&self.text.cause_prefix);
-            value.push_str(&cause.to_lowercase());
-            value.push('.');
+            value.push_text(&cause.lowercase());
+            value.push_str(".");
             NativeText::Literal(value)
         } else {
             text

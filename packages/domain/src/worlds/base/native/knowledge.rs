@@ -16,6 +16,9 @@ mod learn_introduction;
 #[path = "knowledge/name_evidence.rs"]
 mod name_evidence;
 pub(crate) use learn_introduction::learn_heard_introductions;
+#[path = "knowledge/body_individual.rs"]
+mod body_individual;
+pub(crate) use body_individual::{EnsuredBodyIndividual, ensure_body_individual};
 
 fn retained_flag<'de, D: serde::Deserializer<'de>>(
     deserializer: D,
@@ -78,13 +81,13 @@ pub struct ObserverIdentity {
         skip_serializing_if = "Option::is_none"
     )]
     pub name_evidence_ids: Option<Vec<String>>,
-    pub given_name: String,
+    pub given_name: crate::text::JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub nickname: Option<String>,
+    pub nickname: Option<crate::text::JsText>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     #[serde(deserialize_with = "deserialize_nullable")]
@@ -135,14 +138,14 @@ fn capacity() -> ReceivedError {
 
 #[derive(Clone, Copy)]
 pub(crate) struct PersonalName<'a> {
-    pub name: &'a str,
+    pub name: crate::text::TextRef<'a>,
     pub name_form: Option<&'a str>,
     pub indefinite_article: Option<&'a str>,
 }
 impl<'a> From<&'a Named> for PersonalName<'a> {
     fn from(name: &'a Named) -> Self {
         Self {
-            name: &name.name,
+            name: (&name.name).into(),
             name_form: name.name_form.as_deref(),
             indefinite_article: name.indefinite_article.as_deref(),
         }
@@ -151,7 +154,7 @@ impl<'a> From<&'a Named> for PersonalName<'a> {
 impl PersonalName<'_> {
     fn heap_bound(self) -> Result<usize, ReceivedError> {
         heap_sum([
-            self.name.len(),
+            self.name.storage_bytes(),
             self.name_form.map_or(0, str::len),
             self.indefinite_article.map_or(0, str::len),
         ])
@@ -192,7 +195,7 @@ impl CapturedNames {
         &self,
         narration: &crate::narration::Narration,
         person: crate::narration::GrammaticalPerson,
-    ) -> Result<String, ReceivedError> {
+    ) -> Result<crate::text::JsText, ReceivedError> {
         if narration.parts.iter().any(|part| match part {
             crate::narration::NarrationPart::Literal(_) => false,
             crate::narration::NarrationPart::Participant { entity_id, .. } => {
@@ -448,13 +451,14 @@ impl<'a> PersonalNameReader<'a> {
             PersonalName {
                 name: species
                     .filter(|species| *species != self.rules.human_species)
-                    .unwrap_or(&self.rules.person_noun),
+                    .unwrap_or(&self.rules.person_noun)
+                    .into(),
                 name_form: Some("count"),
                 indefinite_article: None,
             }
         } else {
             PersonalName {
-                name: &entity.name,
+                name: (&entity.name).into(),
                 name_form: entity.name_form.as_deref(),
                 indefinite_article: entity.indefinite_article.as_deref(),
             }
@@ -463,21 +467,19 @@ impl<'a> PersonalNameReader<'a> {
     }
     pub(crate) fn observer_name(&self, id: &str) -> Result<PersonalName<'_>, ReceivedError> {
         let known = if self.observer_id == id {
-            self.entities.get(id).map(|entity| entity.name.as_str())
+            self.entities.get(id).map(|entity| &entity.name)
         } else {
             self.current_body_identity(id)?.and_then(|identity| {
                 identity
                     .nickname
-                    .as_deref()
+                    .as_ref()
                     .filter(|name| !name.is_empty())
-                    .or_else(|| {
-                        (!identity.given_name.is_empty()).then_some(identity.given_name.as_str())
-                    })
+                    .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
             })
         };
         if let Some(name) = known.filter(|name| !name.is_empty()) {
             return Ok(PersonalName {
-                name,
+                name: name.into(),
                 name_form: Some("proper"),
                 indefinite_article: None,
             });
@@ -510,14 +512,12 @@ impl<'a> PersonalNameReader<'a> {
             if let Some(identity) = self.identity_for_entity(id) {
                 if let Some(name) = identity
                     .nickname
-                    .as_deref()
+                    .as_ref()
                     .filter(|name| !name.is_empty())
-                    .or_else(|| {
-                        (!identity.given_name.is_empty()).then_some(identity.given_name.as_str())
-                    })
+                    .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
                 {
                     return Ok(PersonalName {
-                        name,
+                        name: name.into(),
                         name_form: Some("proper"),
                         indefinite_article: None,
                     });
