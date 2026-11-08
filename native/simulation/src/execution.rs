@@ -2807,7 +2807,11 @@ impl PhysicalMutation<'_> {
                 .try_reserve(1)
                 .map_err(|_| ExecutionError::Capacity)?;
             let undo = self.state.work.apply(edit)?;
-            if first {
+            // Keep structural inverses in their real order even when this
+            // invocation's earlier value was already captured. Otherwise a
+            // later removal leaves holes when older absolute positions replay.
+            // Removed records move into this inverse; no extra clone is needed.
+            if first || undo.changes_membership() {
                 self.journal.retain(key, Undo::Work(undo))?;
             }
         }

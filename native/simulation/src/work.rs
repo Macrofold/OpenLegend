@@ -317,6 +317,7 @@ pub(crate) struct WorkUndo {
     id: String,
     before: Option<(usize, WorkInvocation)>,
     owner_present: bool,
+    membership_changed: bool,
 }
 
 impl WorkUndo {
@@ -325,6 +326,9 @@ impl WorkUndo {
     }
     pub(crate) fn was_present(&self) -> bool {
         self.before.is_some()
+    }
+    pub(crate) fn changes_membership(&self) -> bool {
+        self.membership_changed
     }
 }
 
@@ -689,6 +693,7 @@ impl WorkBook {
             InvocationEdit::Put(value) => Some(value),
             InvocationEdit::Remove(_) => None,
         };
+        let after_present = next.is_some();
         self.adjust_indexes(prior.cloned().as_ref(), next)?;
         let state = self.state.get_or_insert_with(|| WorkState {
             policy_version: self.policy.value.version.clone(),
@@ -698,6 +703,7 @@ impl WorkBook {
             .invocations
             .shift_remove_full(&id)
             .map(|(index, _, value)| (index, value));
+        let membership_changed = before.is_some() != after_present;
         match edit {
             InvocationEdit::Put(value) => {
                 let index = before
@@ -711,6 +717,7 @@ impl WorkBook {
             id,
             before,
             owner_present,
+            membership_changed,
         })
     }
     pub(crate) fn rollback(&mut self, undo: WorkUndo) -> Result<(), WorkError> {

@@ -356,7 +356,14 @@ fn flush(
         &payload,
         &columns,
         true,
-        RowEffects::default(),
+        // This new closed page already owns its exact reference directory.
+        // Preserve Source's append delta so the SQL writer can use this
+        // directory directly instead of reading or parsing references again.
+        RowEffects {
+            logical_removal: Some(false),
+            received_value_additions: Some(&metadata.references),
+            ..RowEffects::default()
+        },
     )
 }
 

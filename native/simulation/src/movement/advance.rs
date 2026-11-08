@@ -197,20 +197,25 @@ impl MoveAdvanceCursor {
     ) -> Result<MoveAdvanceStep<'a>, ExecutionError> {
         let progress = self.drive(core, answer)?;
         Ok(match progress {
-            Progress::Geometry => MoveAdvanceStep::Geometry(if let Some(motion) = &self.motion {
-                motion.queries().ok_or(ExecutionError::Invariant)?
-            } else {
-                &self.queries.as_ref().ok_or(ExecutionError::Invariant)?.0
-            }),
+            Progress::Geometry => MoveAdvanceStep::Geometry(self.queries()?),
             Progress::Occurrence(event) => MoveAdvanceStep::Occurrence(event),
-            Progress::Personal => MoveAdvanceStep::Personal(
-                self.pending
-                    .as_ref()
-                    .ok_or(ExecutionError::Invariant)?
-                    .personal(),
-            ),
+            Progress::Personal => MoveAdvanceStep::Personal(self.personal()?),
             Progress::Complete => MoveAdvanceStep::Complete,
         })
+    }
+    pub(crate) fn queries(&self) -> Result<&GeometryQueries, ExecutionError> {
+        if let Some(motion) = &self.motion {
+            motion.queries().ok_or(ExecutionError::Invariant)
+        } else {
+            Ok(&self.queries.as_ref().ok_or(ExecutionError::Invariant)?.0)
+        }
+    }
+    pub(crate) fn personal(&self) -> Result<&PendingActivityResult, ExecutionError> {
+        Ok(self
+            .pending
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .personal())
     }
     fn drive(
         &mut self,

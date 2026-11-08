@@ -8,3 +8,7 @@ mod prediction;
 pub(crate) use prediction::MechanicalForecast;
 mod motion;
 pub(crate) use motion::{next_animal_review, private_motion_seconds};
+mod actions;
+pub(crate) use actions::SliceActions;
+mod endpoint;
+pub(crate) use endpoint::{EndpointAnswer, EndpointCursor, EndpointStep};

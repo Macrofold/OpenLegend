@@ -155,6 +155,12 @@ impl BodyRates {
             .get(target)
             .and_then(|index| self.rates.get(*index))
     }
+    pub(crate) fn index_for_target(&self, target: &str) -> Option<usize> {
+        self.by_target.get(target).copied()
+    }
+    pub(crate) fn get(&self, index: usize) -> Option<&BodyRate> {
+        self.rates.get(index)
+    }
     pub(crate) fn iter(&self) -> impl Iterator<Item = &BodyRate> {
         self.rates.iter()
     }

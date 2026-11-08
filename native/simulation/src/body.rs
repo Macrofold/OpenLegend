@@ -11,6 +11,8 @@ mod scars;
 pub(crate) use reconcile::{BodyAnswer, BodyReconcileCursor, BodyStep};
 mod health;
 pub(crate) use health::HealthChangeCursor;
+mod rates;
+pub(crate) use rates::BodyRateCursor;
 mod remains;
 pub(crate) use remains::{RemainsCursor, RemainsStep, next_remains_deadline};
 

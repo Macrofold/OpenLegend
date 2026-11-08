@@ -82,6 +82,14 @@ impl HealthChangeCursor {
         )?;
         Ok(())
     }
+    pub(super) fn personal(
+        &self,
+    ) -> Result<&crate::activity::PendingActivityResult, ExecutionError> {
+        self.reconcile
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .personal()
+    }
     pub(crate) fn step<'a>(
         &'a mut self,
         core: &mut CoreMutation<'_>,

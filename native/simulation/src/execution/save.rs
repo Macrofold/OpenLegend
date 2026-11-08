@@ -106,6 +106,19 @@ fn write_placement(
         RowEffects::default(),
     )
 }
+fn attribute_changed(
+    state: &PhysicalState,
+    entity: EntityHandle,
+    id: &str,
+    before: &crate::values::AttributeState,
+) -> bool {
+    state
+        .entities
+        .resolve(entity)
+        .and_then(|entity| entity.stored_attributes())
+        .and_then(|attributes| attributes.get(id))
+        != Some(before)
+}
 #[derive(Default)]
 struct EntityRows<'a> {
     added: bool,
@@ -537,8 +550,13 @@ impl PhysicalJournal {
                     rows.statuses
                         .entry(episode.binding.1.status_id.as_str())
                         .or_insert(true);
-                    for (id, _) in &episode.attributes {
-                        rows.attributes.entry(id.as_str()).or_insert(true);
+                    for (id, before) in &episode.attributes {
+                        // A retained binding can include a meter clamped at
+                        // its bound. Ending that episode materializes only
+                        // changed meters; its inverse also retains anchors.
+                        if attribute_changed(state, episode.entity, id, before) {
+                            rows.attributes.entry(id.as_str()).or_insert(true);
+                        }
                     }
                 }
                 _ => {
@@ -666,8 +684,13 @@ impl PhysicalJournal {
                                 .or_insert(before.is_some());
                             rows.actor |= !root_present;
                         }
-                        Undo::Attribute { id, .. } => {
-                            rows.attributes.entry(id.as_str()).or_insert(true);
+                        Undo::Attribute { entity, id, before } => {
+                            // Materialization also takes an inverse for a
+                            // clamped, unchanged anchor. That alone is no
+                            // persisted meter change.
+                            if attribute_changed(state, *entity, id, before) {
+                                rows.attributes.entry(id.as_str()).or_insert(true);
+                            }
                         }
                         Undo::Practice { key, .. } => {
                             rows.practice.entry(key.as_str()).or_insert(true);
@@ -1067,16 +1090,24 @@ impl PhysicalJournal {
         }
         if !work.is_empty() {
             let current = state.work.state();
-            one(
-                ledger,
-                output,
-                "sim_work_state",
-                &["world", "workState"],
-                &["world"],
-                "workState",
-                current,
-                budget,
-            )?;
+            // The installed policy is immutable; the parent has only its pin
+            // and the empty invocation marker. Changing a child cannot dirty
+            // that header (or add a database write to every rate interval).
+            let present = ledger
+                .presence("sim_work_state", "[\"world\",\"workState\"]", "[\"world\"]")
+                .ok_or_else(error)?;
+            if present != current.is_some() {
+                one(
+                    ledger,
+                    output,
+                    "sim_work_state",
+                    &["world", "workState"],
+                    &["world"],
+                    "workState",
+                    current,
+                    budget,
+                )?;
+            }
             map(
                 ledger,
                 output,
