@@ -71,7 +71,7 @@ import {
   choiceWorkCurrent,
   type ActionChoice,
 } from './action-capabilities.js';
-import { discardSuspended, proposeActionRevision } from './agency.js';
+import { discardSuspended, proposeActionRevision, activityCommandSyntax } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
 import { isSpeechTargetRole, type SpeechTargetRole } from './speech.js';
 import { hasMemory, supportsManualWork } from './living.js';
@@ -1125,7 +1125,11 @@ export function commitActorResponse(
           entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan)
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (selected && choice.transition === 'continue' && isActivityCommand(selected)) {
+      else if (
+        selected &&
+        choice.transition === 'continue' &&
+        isActivityCommand(selected, activityCommandSyntax(world))
+      ) {
         const prepared = prepareNativeChoice(world, actorId, selected, 'continue');
         const available = 'ok' in prepared ? prepared : prepared.outcome;
         if (!available.ok) components[localId] = available;

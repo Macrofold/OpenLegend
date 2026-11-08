@@ -112,6 +112,11 @@ pub(crate) fn encode_root_changes(
     )?;
     marker(
         &mut body,
+        "coachingEpisodes",
+        state.physical.coaching.is_present(),
+    );
+    marker(
+        &mut body,
         "workState",
         state.physical.work.state().is_some(),
     );

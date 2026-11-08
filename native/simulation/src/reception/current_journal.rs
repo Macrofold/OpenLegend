@@ -24,6 +24,16 @@ pub(crate) struct CurrentCheckpoint {
     retained: usize,
 }
 enum CurrentUndo {
+    VisiblePlaces {
+        observer: String,
+        prior: IndexMap<String, u64>,
+    },
+    Visibility {
+        observer: String,
+        people: bool,
+        prior: Option<(usize, Vec<String>)>,
+        root_present: bool,
+    },
     VisualMeasurement {
         observer: String,
         subject: String,
@@ -157,6 +167,9 @@ impl CurrentJournal {
     pub(crate) fn dead_visibility_changes(&self) -> impl Iterator<Item = (&str, bool)> {
         self.undo.iter().filter_map(|undo| match undo {
             CurrentUndo::DeadVisibility {
+                observer, people, ..
+            }
+            | CurrentUndo::Visibility {
                 observer, people, ..
             } => Some((observer.as_str(), *people)),
             _ => None,
@@ -385,6 +398,10 @@ impl CurrentJournal {
                         .content_batch
                         .as_ref()
                         .is_some_and(|token| Arc::ptr_eq(token, &lease.token))
+                        || group
+                            .metadata_batch
+                            .as_ref()
+                            .is_some_and(|token| Arc::ptr_eq(token, &lease.token))
                 })
                 .count();
             if count == 0 {
@@ -406,6 +423,13 @@ impl CurrentJournal {
                 {
                     group.field_identity = Arc::new(());
                     group.content_batch = None;
+                }
+                if group
+                    .metadata_batch
+                    .as_ref()
+                    .is_some_and(|token| Arc::ptr_eq(token, &lease.token))
+                {
+                    group.metadata_batch = None;
                 }
             }
         }
@@ -438,6 +462,36 @@ impl CurrentJournal {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
+                CurrentUndo::VisiblePlaces { observer, prior } => {
+                    *state
+                        .visible_places
+                        .as_mut()
+                        .and_then(|r| r.get_mut(&observer))
+                        .ok_or_else(invalid)? = prior;
+                }
+                CurrentUndo::Visibility {
+                    observer,
+                    people,
+                    prior,
+                    root_present,
+                } => {
+                    let root = if people {
+                        &mut state.visible_people
+                    } else {
+                        &mut state.visible_objects
+                    };
+                    let rows = root.as_mut().ok_or_else(invalid)?;
+                    rows.shift_remove(&observer);
+                    if let Some((at, prior)) = prior {
+                        if at > rows.len() {
+                            return Err(invalid());
+                        }
+                        rows.shift_insert(at, observer, prior);
+                    }
+                    if !root_present {
+                        *root = None;
+                    }
+                }
                 CurrentUndo::VisualMeasurement {
                     observer,
                     subject,

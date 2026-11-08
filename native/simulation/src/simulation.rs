@@ -26,6 +26,7 @@ pub(crate) use save::encode_root_changes;
 /// with their typed meanings; a digest is never used as content equality.
 /// Additional selected-law owners must join this composition before install.
 pub(crate) struct InstalledWorld {
+    pub encounter_batch_entries: usize,
     pub manifest: crate::install::AuthoredManifest,
     pub retained: crate::install::RetainedDefinitions,
     pub schema: Arc<crate::records::RecordSchema>,
@@ -104,6 +105,7 @@ impl InstalledWorld {
 /// All physical and arithmetic mutation targets, once. This owner does not
 /// derive Clone and does not expose a bridge-visible writable-world getter.
 pub(crate) struct PhysicalState {
+    pub coaching: crate::install::ClosedCoachingState,
     pub actor_only_families: crate::install::ActorOnlyPhysicalFamilies,
     pub header: WorldHeader,
     pub identity: IdentityState,

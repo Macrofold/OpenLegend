@@ -13,6 +13,49 @@ use crate::reception::{
 use indexmap::IndexSet;
 use std::mem::size_of;
 
+/// Expansion repeats only the immutable metadata referenced by these fields.
+/// The same allowance funds read captures and canonical privacy replacements;
+/// neither path may materialize proof trees before admitting their allocation.
+pub(super) fn receipt_expansion_bound(
+    batch: &ReceivedBatch,
+    entry: &ReceivedEntry,
+) -> Result<usize, ReceivedError> {
+    let overflow = || ReceivedError("Temporal read allocation overflow.");
+    let metadata = heap_sum([
+        entry.receipt.sources.heap_bytes().ok_or_else(overflow)?,
+        entry.receipt.frames.heap_bytes().ok_or_else(overflow)?,
+        batch
+            .actor_id
+            .len()
+            .checked_add(batch.epoch.len())
+            .ok_or_else(overflow)?,
+    ])
+    .ok_or_else(overflow)?;
+    heap_sum([
+        size_of::<CapturedTemporalReceipt>(),
+        entry.receipt.heap_bytes().ok_or_else(overflow)?,
+        metadata
+            .checked_mul(
+                entry
+                    .receipt
+                    .facets
+                    .len()
+                    .checked_mul(6)
+                    .and_then(|n| n.checked_add(1))
+                    .ok_or_else(overflow)?,
+            )
+            .ok_or_else(overflow)?,
+        entry
+            .receipt
+            .facets
+            .len()
+            .checked_mul(size_of::<TemporalFacetReference>())
+            .ok_or_else(overflow)?,
+    ])
+    .and_then(|n| n.checked_mul(3))
+    .ok_or_else(overflow)
+}
+
 pub(crate) fn temporal_receipt_aliases(
     receipt: &TemporalReceipt,
     values: &impl ReceivedValueLookup,
@@ -47,6 +90,21 @@ pub(crate) fn temporal_receipt_account_aliases<'a>(
         .map(String::as_str)
         .collect())
 }
+pub(crate) fn temporal_field_aliases(
+    receipt_id: &str,
+    field: &TemporalFacetReference,
+    values: &impl ReceivedValueLookup,
+    meaning: &dyn TemporalValueMeaning,
+) -> Result<IndexSet<String>, ReceivedError> {
+    field_aliases(
+        receipt_id,
+        std::slice::from_ref(field),
+        &[],
+        values,
+        meaning,
+        None,
+    )
+}
 fn receipt_aliases(
     receipt: &TemporalReceipt,
     fields: &[TemporalFacetReference],
@@ -55,8 +113,18 @@ fn receipt_aliases(
     meaning: &dyn TemporalValueMeaning,
     fragments: Option<&[ReceivedValueFragment]>,
 ) -> Result<IndexSet<String>, ReceivedError> {
+    field_aliases(&receipt.id, fields, source_ids, values, meaning, fragments)
+}
+fn field_aliases(
+    receipt_id: &str,
+    fields: &[TemporalFacetReference],
+    source_ids: &[String],
+    values: &impl ReceivedValueLookup,
+    meaning: &dyn TemporalValueMeaning,
+    fragments: Option<&[ReceivedValueFragment]>,
+) -> Result<IndexSet<String>, ReceivedError> {
     let mut aliases = source_ids.iter().cloned().collect::<IndexSet<_>>();
-    aliases.insert(receipt.id.clone());
+    aliases.insert(receipt_id.to_owned());
     let fact =
         |aliases: &mut IndexSet<String>, key: &ObservationFactKey| -> Result<(), ReceivedError> {
             aliases.insert(key.source.id.clone());
@@ -68,7 +136,7 @@ fn receipt_aliases(
         };
     for (index, field) in fields.iter().enumerate() {
         aliases.insert(
-            personal_fact_alias(&receipt.id, field.member_index)
+            personal_fact_alias(receipt_id, field.member_index)
                 .map_err(|_| ReceivedError("Temporal member alias failed."))?,
         );
         if let Some(original) = &field.original {
@@ -318,45 +386,7 @@ impl TemporalState {
                 "Temporal receipt requires original cold coverage.",
             ));
         };
-        let metadata = heap_sum([
-            entry
-                .receipt
-                .sources
-                .heap_bytes()
-                .ok_or(ReceivedError("Temporal source allocation overflow."))?,
-            entry
-                .receipt
-                .frames
-                .heap_bytes()
-                .ok_or(ReceivedError("Temporal frame allocation overflow."))?,
-        ])
-        .ok_or(ReceivedError("Temporal read allocation overflow."))?;
-        let bound = heap_sum([
-            size_of::<CapturedTemporalReceipt>(),
-            entry
-                .receipt
-                .heap_bytes()
-                .ok_or(ReceivedError("Temporal read allocation overflow."))?,
-            metadata
-                .checked_mul(
-                    entry
-                        .receipt
-                        .facets
-                        .len()
-                        .checked_mul(6)
-                        .and_then(|n| n.checked_add(1))
-                        .ok_or(ReceivedError("Temporal read allocation overflow."))?,
-                )
-                .ok_or(ReceivedError("Temporal read allocation overflow."))?,
-            entry
-                .receipt
-                .facets
-                .len()
-                .checked_mul(size_of::<TemporalFacetReference>())
-                .ok_or(ReceivedError("Temporal read allocation overflow."))?,
-        ])
-        .and_then(|n| n.checked_mul(3))
-        .ok_or(ReceivedError("Temporal read allocation overflow."))?;
+        let bound = receipt_expansion_bound(batch, entry)?;
         let reservation = budget
             .reserve(bound)
             .map_err(|_| ReceivedError("Temporal read capacity exhausted."))?;

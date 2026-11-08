@@ -149,6 +149,8 @@ pub(crate) struct PersonalEvidencePreparationSettings {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NativeSetupSettings {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub encounter_batch_entries: u64,
     pub work: WorkPolicy,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub maximum_change_scopes: u64,
@@ -511,10 +513,12 @@ pub(crate) fn install_physical(
         )
         .map_err(|_| InstallError::CurrentFormat)?;
     }
+    let coaching = super::ClosedCoachingState::install(import, &mut children)?;
     let bodies = crate::movement::BodyIndex::install(&entities);
     Ok(PhysicalInstallation {
         state: PhysicalState {
             actor_only_families: ActorOnlyPhysicalFamilies { _private: () },
+            coaching,
             header,
             identity,
             entities,

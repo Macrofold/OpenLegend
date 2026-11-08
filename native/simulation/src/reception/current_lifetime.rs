@@ -3,7 +3,7 @@
 //! and only then its contact prefix is sealed. No other actor is flushed here.
 use super::*;
 use crate::execution::{AcquisitionLease, CoreMutation, ExecutionError};
-use crate::host::retained_size::{heap_sum, map_storage};
+use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use indexmap::IndexSet;
 use std::{mem::size_of, sync::Arc};
@@ -19,6 +19,12 @@ pub(super) struct CurrentReceptionLifetime {
     pub before: Option<Arc<CurrentCohort>>,
     measured: IndexSet<String>,
     checked: IndexSet<String>,
+    selected_sources: IndexSet<String>,
+    frame_checked: IndexSet<String>,
+    frame_checked_ready: bool,
+    frame_ref: Option<crate::received::ReceivedValueReference>,
+    frame_changed: bool,
+    frame_recorded: bool,
     pub reconciled: bool,
     pub sample_token: Option<u64>,
     reservation: ByteReservation,
@@ -64,6 +70,12 @@ impl CurrentReceptionLifetime {
             before: None,
             measured: IndexSet::new(),
             checked: IndexSet::new(),
+            selected_sources: IndexSet::new(),
+            frame_checked: IndexSet::new(),
+            frame_checked_ready: false,
+            frame_ref: None,
+            frame_changed: false,
+            frame_recorded: false,
             reconciled: false,
             sample_token,
             reservation,
@@ -90,8 +102,52 @@ impl CurrentReceptionLifetime {
                 .current
                 .begin_batch(&core.state.reception, &self.observer.actor_id)?,
         );
+        if let Some(before) = self.before.as_ref().map(Arc::clone) {
+            self.note_selected(before.track_source_ids())?;
+        }
         self.reconciled = false;
         Ok(())
+    }
+    pub(super) fn note_selected<'a>(
+        &mut self,
+        ids: impl Iterator<Item = &'a str> + Clone,
+    ) -> Result<(), ExecutionError> {
+        let count = ids
+            .clone()
+            .filter(|id| !self.selected_sources.contains(*id))
+            .count();
+        if count == 0 {
+            return Ok(());
+        }
+        let bytes = ids
+            .clone()
+            .filter(|id| !self.selected_sources.contains(*id))
+            .try_fold(0usize, |sum, id| sum.checked_add(id.len()))
+            .ok_or(ExecutionError::Capacity)?;
+        let capacity = self
+            .selected_sources
+            .len()
+            .checked_add(count)
+            .ok_or(ExecutionError::Capacity)?;
+        self.reservation.resize(
+            self.reservation
+                .bytes()
+                .checked_add(bytes)
+                .and_then(|n| n.checked_add(map_storage::<String, ()>(capacity)?))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.selected_sources
+            .try_reserve(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        for id in ids {
+            if !self.selected_sources.contains(id) {
+                self.selected_sources.insert(id.to_owned());
+            }
+        }
+        Ok(())
+    }
+    pub(super) fn selected_sources(&self) -> impl Iterator<Item = &str> {
+        self.selected_sources.iter().map(String::as_str)
     }
     pub(super) fn note(&mut self, source: &str, changed: bool) -> Result<(), ExecutionError> {
         let target = if changed {
@@ -128,6 +184,241 @@ impl CurrentReceptionLifetime {
         self.reconciled = false;
         Ok(())
     }
+    /// Both a visual subject patch and an acquired event association complete
+    /// their actual correspondence/recording immediately after the sole setter.
+    pub(super) fn installed_sample(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        source: &str,
+        kind: &str,
+        status: CurrentSampleStatus,
+        parts: AttentionChangedParts,
+        before: Option<&Arc<CurrentCohort>>,
+        token: u64,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let changed = status == CurrentSampleStatus::Changed;
+        self.note(source, changed)?;
+        let correspondence = changed
+            && (parts.membership || parts.association)
+            && before
+                .map(|before| {
+                    before.correspondence_changed(
+                        &core.state.reception,
+                        &core.state.experience,
+                        source,
+                    )
+                })
+                .transpose()?
+                .unwrap_or(false);
+        if correspondence {
+            if let Some(before) = before {
+                reconcile_current_cohort(core, Arc::clone(before), Some(token), budget)?;
+            }
+            self.reconciled = true;
+        }
+        if changed {
+            let fresh = if correspondence {
+                CurrentCohort::capture(
+                    &core.state.physical,
+                    &core.state.reception,
+                    &core.state.installed,
+                    &core.state.experience,
+                    &self.observer.actor_id,
+                    budget,
+                )?
+            } else {
+                None
+            };
+            let selected = fresh
+                .as_ref()
+                .or(before)
+                .map(|before| {
+                    before.active_tracks(&core.state.reception, &core.state.experience, source)
+                })
+                .transpose()?;
+            if let Some(selected) = selected {
+                self.note_selected(selected.keys().map(String::as_str))?;
+                record_current_reception(
+                    core,
+                    &self.observer.actor_id,
+                    source,
+                    kind,
+                    &selected,
+                    Some(token),
+                    budget,
+                )?;
+            }
+        }
+        Ok(())
+    }
+    pub(super) fn note_frame(
+        &mut self,
+        reference: &crate::received::ReceivedValueReference,
+        changed: bool,
+    ) -> Result<(), ExecutionError> {
+        self.reservation.resize(
+            self.reservation
+                .bytes()
+                .checked_add(reference.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.frame_ref = Some(reference.clone());
+        self.frame_changed |= changed;
+        Ok(())
+    }
+    pub(super) fn note_frame_checked<'a>(
+        &mut self,
+        ids: impl Iterator<Item = &'a str> + Clone,
+        changed: bool,
+    ) -> Result<(), ExecutionError> {
+        if !changed && self.frame_checked_ready {
+            return Ok(());
+        }
+        let count = ids.clone().count();
+        let bytes = ids
+            .clone()
+            .try_fold(0usize, |sum, id| sum.checked_add(id.len()))
+            .ok_or(ExecutionError::Capacity)?;
+        self.reservation.resize(
+            self.reservation
+                .bytes()
+                .checked_add(bytes)
+                .and_then(|n| n.checked_add(map_storage::<String, ()>(count)?))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.frame_checked.clear();
+        self.frame_checked
+            .try_reserve(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        self.frame_checked.extend(ids.map(str::to_owned));
+        self.frame_checked_ready = true;
+        Ok(())
+    }
+    pub(super) fn record_receiver_frame(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        if !self.frame_changed
+            || self.frame_recorded
+            || self.frame_ref.is_none()
+            || !self.measured.is_empty()
+        {
+            return Ok(());
+        }
+        let Some(before) = &self.before else {
+            return Ok(());
+        };
+        if before.selection_changed(&core.state.reception) {
+            return Ok(());
+        }
+        for id in &self.checked {
+            if before.correspondence_changed(&core.state.reception, &core.state.experience, id)? {
+                return Ok(());
+            }
+        }
+        if !crate::received::ensure_temporal_actor(core, &self.observer.actor_id, budget)? {
+            return Ok(());
+        }
+        let owner = core
+            .state
+            .reception
+            .perception_evidence
+            .as_ref()
+            .and_then(|o| o.get(&self.observer.actor_id))
+            .ok_or_else(invalid)?;
+        let entries = owner
+            .attention
+            .as_ref()
+            .map_or(&[][..], |a| a.entries.as_slice());
+        self.reservation.resize(
+            self.reservation
+                .bytes()
+                .checked_add(
+                    entries
+                        .len()
+                        .checked_mul(size_of::<&str>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let now = core.state.physical.header.sim_time;
+        let mut tracks = Vec::with_capacity(entries.len());
+        for entry in entries {
+            if !self.checked.contains(&entry.source_id)
+                && !self.frame_checked.contains(&entry.source_id)
+            {
+                continue;
+            }
+            let Some(contact) = owner.current.get(&entry.source_id) else {
+                continue;
+            };
+            let mut held = false;
+            for group in &contact.content.groups {
+                if group.received.grant.modality != Modality::Sight
+                    || received_track_key(
+                        &group.received.grant.exposure,
+                        &group.received.grant.channel,
+                    )? != entry.exposure.track
+                {
+                    continue;
+                }
+                for partition in &group.metadata {
+                    if partition.availability.is_none()
+                        && effective_current_partition(owner, group, partition, false)?
+                            .times
+                            .expanded()
+                            .confirmed_through
+                            == now
+                    {
+                        held = true;
+                        break;
+                    }
+                }
+                if held {
+                    break;
+                }
+            }
+            if held {
+                tracks.push(entry.exposure.track.as_str());
+            }
+        }
+        if tracks.is_empty() {
+            return Ok(());
+        }
+        let frame = received_observation_frame(
+            &core.state.reception.received_values.as_ref(),
+            self.frame_ref.as_ref().ok_or_else(invalid)?,
+        )?
+        .clone();
+        let policy = &core.state.installed.attention.value().retention;
+        core.state.temporal.append_receiver_frame(
+            &mut crate::received::CurrentRecordingContext {
+                actor_id: &self.observer.actor_id,
+                owner,
+                values: core
+                    .state
+                    .reception
+                    .received_values
+                    .as_mut()
+                    .ok_or_else(invalid)?,
+                identity: &mut core.state.physical.identity,
+                scopes: &mut core.journal.acquisitions,
+                recent_policy: &policy.recent,
+                maintenance_headroom: policy.maintenance_headroom,
+                meaning: &crate::worlds::InstalledEvidenceMeaning,
+                meters: &mut core.journal.meters,
+                now,
+                sequence: core.state.physical.header.sequence,
+                budget,
+            },
+            &tracks,
+            &frame,
+        )?;
+        self.frame_recorded = true;
+        Ok(())
+    }
     /// Source beforeSnapshot callback: finish THIS observer, flush its actual
     /// temporal page, then seal its contact prefix before the next observer.
     pub(super) fn flush_before_snapshot(
@@ -156,6 +447,7 @@ impl CurrentReceptionLifetime {
             }
             self.reconciled = true;
         }
+        self.record_receiver_frame(core, budget)?;
         if prefix.owns_prefix() {
             if let Some(values) = core.state.reception.received_values.as_ref() {
                 core.journal.acquisitions.flush_acquisition(
@@ -181,7 +473,13 @@ impl CurrentReceptionLifetime {
         self.before = None;
         self.measured.clear();
         self.checked.clear();
+        self.selected_sources.clear();
         self.sample_token = None;
+        self.frame_checked.clear();
+        self.frame_checked_ready = false;
+        self.frame_ref = None;
+        self.frame_changed = false;
+        self.frame_recorded = false;
         Ok(())
     }
     pub(super) fn finish(

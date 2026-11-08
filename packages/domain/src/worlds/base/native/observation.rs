@@ -45,9 +45,20 @@ pub(crate) struct SightingNotice {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct SightingRules {
+    pub event_type: String,
+    pub wording: SightingWording,
     pub routine: SightingNotice,
     pub changed_being: SightingNotice,
     pub episode_grace_seconds: f64,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct SightingWording {
+    pub departed: String,
+    pub detail: String,
+    pub routine: String,
+    pub detail_prefix: String,
+    pub ending: String,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

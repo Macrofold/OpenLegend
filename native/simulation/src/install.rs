@@ -17,7 +17,9 @@ use crate::identity::MAX_SAFE_INTEGER;
 use crate::records::{CurrentRecords, EntityOrdering, InstalledRow, OwnerCoverage};
 use crate::values::{DefinitionPin, is_safe_record_id};
 
+mod coaching;
 mod content;
+pub(crate) use coaching::ClosedCoachingState;
 mod inventory;
 pub(crate) use inventory::ClosedInventory;
 mod knowledge;

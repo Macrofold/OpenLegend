@@ -140,6 +140,46 @@ pub(crate) struct ActivityJournal {
     pending: BTreeSet<(String, String)>,
 }
 impl ActivityJournal {
+    pub(crate) fn revoke_evidence(
+        &mut self,
+        state: &mut ActivityState,
+        actor: &str,
+        selected: &indexmap::IndexSet<String>,
+    ) -> Result<(), ActivityError> {
+        let Some(collection) = state.collections.get(actor) else {
+            return Ok(());
+        };
+        if !collection.complete {
+            return Err(ActivityError::InvalidStructure);
+        }
+        let length = collection.records.len();
+        for index in 0..length {
+            let (id, record) = state
+                .collections
+                .get(actor)
+                .and_then(|owner| owner.records.get_index(index))
+                .ok_or(ActivityError::InvalidStructure)?;
+            let entry = &record.occurrence;
+            if entry.revoked == Some(true)
+                || !(selected.contains(&entry.id)
+                    || entry.evidence_ids.iter().any(|id| selected.contains(id)))
+            {
+                continue;
+            }
+            self.record_before(state, actor, id)?;
+            state
+                .collections
+                .get_mut(actor)
+                .and_then(|owner| owner.records.get_index_mut(index))
+                .ok_or(ActivityError::InvalidStructure)?
+                .1
+                .occurrence
+                .revoked = Some(true);
+        }
+        // Acquisition families have no admitted nonempty native producer yet;
+        // their canonical rows remain an explicit installer refusal.
+        Ok(())
+    }
     /// The committing family supplies actual clamped values and its current
     /// personally permitted label; this owner never resolves a canonical name.
     pub(crate) fn record_effect(
@@ -190,7 +230,8 @@ impl ActivityJournal {
             + before.heap_bytes().ok_or(ActivityError::Capacity)?
             + after.heap_bytes().ok_or(ActivityError::Capacity)?;
         let count = old.len() + usize::from(found.is_none());
-        let fields = map_storage::<String, ActivityDetail>(5).ok_or(ActivityError::Capacity)?;
+        let fields =
+            map_storage::<crate::text::JsText, ActivityDetail>(5).ok_or(ActivityError::Capacity)?;
         self.reserve(
             labels
                 .checked_mul(4)
@@ -233,28 +274,27 @@ impl ActivityJournal {
         for effect in effects {
             let mut fields = IndexMap::new();
             fields.insert(
-                "target".to_owned(),
+                "target".into(),
                 ActivityDetail::Scalar(ActivityScalar::String(effect.label.clone())),
             );
             fields.insert(
-                "property".to_owned(),
+                "property".into(),
                 ActivityDetail::Scalar(ActivityScalar::String(effect.property.clone().into())),
             );
             if let Some(unit) = effect.unit.as_ref().filter(|unit| !unit.is_empty()) {
                 fields.insert(
-                    "unit".to_owned(),
+                    "unit".into(),
                     ActivityDetail::Scalar(ActivityScalar::String(unit.clone().into())),
                 );
             }
             fields.insert(
-                "before".to_owned(),
+                "before".into(),
                 ActivityDetail::Scalar(effect.before.clone()),
             );
-            fields.insert(
-                "after".to_owned(),
-                ActivityDetail::Scalar(effect.after.clone()),
-            );
-            values.push(ActivityDetail::Fields(fields));
+            fields.insert("after".into(), ActivityDetail::Scalar(effect.after.clone()));
+            values.push(ActivityDetail::Fields(
+                ActivityFields::new(fields).map_err(|_| ActivityError::InvalidFact)?,
+            ));
             let mut sentence = effect.label.clone();
             sentence.push_str(": ");
             sentence.push_str(&effect.property);
@@ -294,7 +334,7 @@ impl ActivityJournal {
             sentences.push(sentence);
         }
         let fact = ActivityFact {
-            name: "observed changes".to_owned(),
+            name: "observed changes".into(),
             critical: true,
             value: ActivityDetail::List(values),
             sentence: Some(super::text_join(&sentences, "; ")),
@@ -577,6 +617,9 @@ impl ActivityJournal {
             heap_sum([
                 size_of::<ActivityRecord>(),
                 command.heap_bytes().ok_or(ActivityError::Capacity)?,
+                command
+                    .source_edit_heap_bound(0)
+                    .ok_or(ActivityError::Capacity)?,
                 view.heap_bytes().ok_or(ActivityError::Capacity)?,
                 object_bytes,
                 map_storage::<String, ActivityObject>(2).ok_or(ActivityError::Capacity)?,
@@ -618,7 +661,9 @@ impl ActivityJournal {
             method_id: None,
             at,
             ended_at: None,
-            command: command.recorded(),
+            command: command
+                .recorded()
+                .map_err(|_| ActivityError::InvalidStructure)?,
             objects,
             view,
             status: ActivityStatus::Running,
@@ -826,7 +871,13 @@ impl ActivityJournal {
                     .facts
                     .iter()
                     .try_fold(0usize, |bytes, fact| {
-                        bytes.checked_add(prior_fact_names.get(&fact.name).map_or(0, String::len))
+                        bytes.checked_add(
+                            prior_fact_names
+                                .iter()
+                                .find(|(name, _)| fact.name == name.as_str())
+                                .map(|(_, value)| value)
+                                .map_or(0, String::len),
+                        )
                     })
                     .ok_or(ActivityError::Capacity)?,
         )?;
@@ -864,8 +915,12 @@ impl ActivityJournal {
             }
         }
         for fact in &mut entry.view.facts {
-            if let Some(name) = prior_fact_names.get(&fact.name) {
-                fact.name = name.clone();
+            if let Some(name) = prior_fact_names
+                .iter()
+                .find(|(name, _)| fact.name == name.as_str())
+                .map(|(_, value)| value)
+            {
+                fact.name = name.clone().into();
             }
         }
         if let Some(outputs) = &result.outputs {

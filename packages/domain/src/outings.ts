@@ -22,7 +22,7 @@ import { custodian } from './objects.js';
 import { recipeMechanicalPin } from './invention-families.js';
 import { sameDefinitionPin } from './definition-pins.js';
 import { hasMemory, canSpeak, understandsSpeech } from './living.js';
-import { rememberedPlace, rememberSighting } from './agency.js';
+import { rememberedPlace, rememberSighting, activityCommandSyntax } from './agency.js';
 import {
   cooperationTermsCurrent,
   cooperationTermsLabel,
@@ -2368,6 +2368,7 @@ function chosenCooperationTerms(
       { bindings: compiled.bindings, outputs: {} },
       actorId,
       'cooperation-phase',
+      activityCommandSyntax(world),
     );
     if (bound?.type !== 'assemble') return;
     const phase = nativeOperationFields(bound),

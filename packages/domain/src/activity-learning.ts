@@ -6,7 +6,7 @@ import { commandEntityFields, nativeOutputBinding } from './native-command-contr
 import { preparationDefinition } from './food-preparation.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { cloneValue } from './draft.js';
-import { isActivityCommand } from './agency.js';
+import { isActivityCommand, activityCommandSyntax } from './agency.js';
 import {
   ACTIVITY_LIMITS,
   validateActivityNode,
@@ -218,7 +218,7 @@ export function normalizeActivity(
         // Preserve historical records, but do not infer current ingredient quantities
         // for a reusable method from a preparation whose meaning has since changed.
         (entry.command.type === 'cook' && !preparationDefinition(world, entry.command)) ||
-        !isActivityCommand(entry.command),
+        !isActivityCommand(entry.command, activityCommandSyntax(world)),
     )
   )
     return;

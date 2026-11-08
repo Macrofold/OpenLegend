@@ -453,6 +453,10 @@ pub struct CurrentReceivedGroup {
     pub(super) field_identity: Arc<()>,
     #[serde(skip)]
     pub(super) content_batch: Option<Arc<()>>,
+    /// Source metadataGroup mutates an already prepared group in place within
+    /// its actual contact prefix. Later sibling checks see that body's writes.
+    #[serde(skip)]
+    pub(super) metadata_batch: Option<Arc<()>>,
 }
 impl CurrentReceivedGroup {
     pub(super) fn installed(
@@ -466,6 +470,7 @@ impl CurrentReceivedGroup {
             recordings,
             field_identity: Arc::new(()),
             content_batch: None,
+            metadata_batch: None,
         }
     }
 }

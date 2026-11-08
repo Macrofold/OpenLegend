@@ -57,9 +57,15 @@ mod save;
 pub(crate) use save::{
     PersonalPredecessors, capture_personal_predecessors, encode_personal_changes,
 };
+mod invalidation;
 mod mutation;
+mod privacy_header;
+pub(crate) use invalidation::{
+    PrivacyConsequences, PrivacySelection, continue_privacy_selection, prepare_privacy_selection,
+};
 mod privacy_mutation;
 pub(crate) use mutation::{ExperienceCheckpoint, ExperienceJournal};
+pub use privacy_header::{AssociationPrivacyFact, PersonalPrivacyHeader};
 mod result;
 pub(crate) use result::{
     ActivityResultAcquisition, ResultAcquisitionError, acquire_activity_result,
@@ -291,6 +297,7 @@ pub struct PersonalSourceHeader {
     /// Whole-account propagation uses experienceDependsOn, excluding the
     /// action/result alias phase and independently revoked facet provenance.
     pub privacy_dependencies: Vec<String>,
+    pub privacy: PersonalPrivacyHeader,
 }
 
 #[derive(Clone, Debug)]
@@ -886,6 +893,7 @@ fn header(
         owned_observations: own_observations(body)?,
         dependencies: source_dependencies(body, kind, meaning, true)?,
         privacy_dependencies: source_dependencies(body, kind, meaning, false)?,
+        privacy: privacy_header::derive(body, kind, meaning)?,
     })
 }
 

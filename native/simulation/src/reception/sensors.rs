@@ -356,7 +356,7 @@ impl SightResults {
                 SightDecision::Rays { .. } => unreachable!("Sight results resolve every bound ray"),
             })
     }
-    pub(crate) fn iter(&self) -> impl Iterator<Item = (&str, bool)> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = (&str, bool)> + Clone {
         self.checks.iter().map(|check| {
             (
                 check.target_id.as_str(),

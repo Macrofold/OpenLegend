@@ -13,6 +13,7 @@ mod recording;
 pub(crate) use receive::{
     CompletedGeometryReception, CurrentReceivedGeometry, GeometryReceptionAnswer,
     GeometryReceptionCursor, GeometryReceptionStep, current_received_geometry,
+    expire_received_geometry_motion,
 };
 
 pub(crate) fn end_received_geometry(

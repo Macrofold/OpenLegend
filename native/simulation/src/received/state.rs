@@ -19,8 +19,17 @@ use std::{collections::BTreeMap, sync::Arc};
 
 mod accounts;
 mod actor;
+mod materialize;
+pub(crate) use materialize::{
+    CompleteTemporalPages, TemporalPageReadRequest, materialize_temporal_pages,
+};
 mod privacy;
 pub(crate) use privacy::TemporalAccountAliases;
+mod revoke;
+pub(crate) use revoke::{
+    ReleasedTemporalProofs, TemporalFacetRevocation, TemporalPageRevocation,
+    invalidate_temporal_evidence, invalidate_temporal_facets,
+};
 mod append;
 mod save;
 mod versions;
@@ -404,6 +413,20 @@ enum TemporalUndo {
     PendingAppend {
         actor_id: String,
     },
+    PageEdit {
+        actor_id: String,
+        before: Arc<TemporalPageRecord>,
+        after_position: Option<u64>,
+        removed: Vec<ReceivedChargeDirectory>,
+        appended: Vec<ReceivedChargeDirectory>,
+    },
+    HydratedPages {
+        actor_id: String,
+        before: BTreeMap<u64, Arc<TemporalPageRecord>>,
+        pending: Vec<Arc<PendingTemporalPage>>,
+        complete: bool,
+        next_ordinal: u64,
+    },
 }
 
 impl TemporalState {
@@ -519,6 +542,43 @@ impl TemporalState {
                     actor
                         .recent
                         .rollback_append(&page.metadata().charge_directory)?;
+                }
+                TemporalUndo::PageEdit {
+                    actor_id,
+                    before,
+                    after_position,
+                    removed,
+                    appended,
+                } => {
+                    let actor = self
+                        .actors
+                        .get_mut(&actor_id)
+                        .ok_or(ReceivedError("Temporal edit rollback actor is absent."))?;
+                    for directory in appended.iter().rev() {
+                        actor.recent.rollback_append(directory)?;
+                    }
+                    for directory in &removed {
+                        actor.recent.append(directory)?;
+                    }
+                    if let Some(position) = after_position {
+                        actor.pages.remove(&position);
+                    }
+                    actor.pages.insert(before.position(), before);
+                }
+                TemporalUndo::HydratedPages {
+                    actor_id,
+                    before,
+                    pending,
+                    complete,
+                    next_ordinal,
+                } => {
+                    let actor = self.actors.get_mut(&actor_id).ok_or(ReceivedError(
+                        "Temporal hydration rollback actor is absent.",
+                    ))?;
+                    actor.pages = before;
+                    actor.pending_pages = pending;
+                    actor.complete_pages = complete;
+                    actor.page_order_upper_bound = next_ordinal;
                 }
             }
         }

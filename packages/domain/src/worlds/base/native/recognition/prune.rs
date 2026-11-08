@@ -90,10 +90,18 @@ fn recent_root(
     }
     true
 }
-pub(crate) fn prune_lost_body_individuals(
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum IndividualPruneMode {
+    CurrentLoss,
+    RecentRetirement,
+}
+/// Both actual callers supply a finite candidate set and no new revoked source
+/// IDs. Recent retirement additionally releases obsolete personal ownership.
+pub(crate) fn prune_observer_individuals(
     core: &mut CoreMutation<'_>,
     observer: &str,
     candidates: &IndexSet<String>,
+    mode: IndividualPruneMode,
     budget: &ByteBudget,
 ) -> Result<usize, ExecutionError> {
     if candidates.is_empty() {
@@ -108,18 +116,6 @@ pub(crate) fn prune_lost_body_individuals(
     else {
         return Ok(0);
     };
-    // Authored plans are not an empty list of work episodes. This proof's
-    // installer refuses them until their actual typed owner is supported.
-    if core
-        .state
-        .physical
-        .entities
-        .get(observer)
-        .and_then(|entity| entity.actor.as_ref())
-        .is_some_and(|actor| actor.agency.plan.is_some())
-    {
-        return Err(unavailable().into());
-    }
     let mut bytes = heap_sum([
         size_of::<IndexSet<String>>() * 3,
         map_storage::<String, ()>(candidates.len().checked_mul(4).ok_or_else(capacity)?)
@@ -279,7 +275,29 @@ pub(crate) fn prune_lost_body_individuals(
                 .sight
                 .as_ref()
                 .is_some_and(|p| p.authored.is_some() || !p.samples.is_empty())
-            || pinned.contains(id);
+            || pinned.contains(id)
+            || identity.encounter_id.as_deref().is_some_and(|episode| {
+                core.state
+                    .physical
+                    .entities
+                    .get(observer)
+                    .and_then(|e| e.actor.as_ref())
+                    .and_then(|a| a.agency.plan.as_ref())
+                    .is_some_and(|plan| {
+                        plan.steps
+                            .iter()
+                            .filter(|s| {
+                                matches!(
+                                    s.status,
+                                    crate::plans::StepStatus::Queued
+                                        | crate::plans::StepStatus::Running
+                                )
+                            })
+                            .flat_map(|s| s.target_episodes.iter().flat_map(|m| m.values()))
+                            .flatten()
+                            .any(|held| held == episode)
+                    })
+            });
         for root in identity.familiarity.iter().flat_map(|state| &state.roots) {
             if meaningful || root.required {
                 held.insert(root.source_key.clone());
@@ -350,7 +368,7 @@ pub(crate) fn prune_lost_body_individuals(
             .checked_add(1)
             .filter(|r| *r <= crate::identity::MAX_SAFE_INTEGER)
             .ok_or_else(unavailable)?;
-        core.journal.recognition.replace_faded_familiarity(
+        core.journal.recognition.replace_incidental_identity(
             &mut core.state.reception,
             &mut core.state.temporal,
             observer,
@@ -403,6 +421,8 @@ pub(crate) fn prune_lost_body_individuals(
             }
         }
     }
+    let _retained_pins = budget.reserve(pinned.heap_bytes().ok_or_else(capacity)?)?;
+    let retained_pins = pinned.clone();
     if let Some(current) = core
         .state
         .reception
@@ -443,6 +463,44 @@ pub(crate) fn prune_lost_body_individuals(
         else {
             continue;
         };
+        let learned = identity.authored
+            || identity
+                .nickname
+                .as_ref()
+                .is_some_and(|name| !name.is_empty())
+            || !identity.given_name.is_empty()
+            || identity
+                .voice
+                .as_ref()
+                .is_some_and(|p| p.authored.is_some() || !p.samples.is_empty())
+            || identity
+                .sight
+                .as_ref()
+                .is_some_and(|p| p.authored.is_some() || !p.samples.is_empty())
+            || identity
+                .familiarity
+                .as_ref()
+                .is_some_and(|f| f.authored.is_some() || !f.roots.is_empty());
+        if mode == IndividualPruneMode::RecentRetirement
+            && identity.retained == Some(true)
+            && !learned
+            && !retained_pins.contains(id)
+            && pinned.contains(id)
+        {
+            let _copy = budget.reserve(identity.heap_bytes().ok_or_else(capacity)?)?;
+            let mut next = identity.clone();
+            next.retained = None;
+            core.journal.recognition.replace_incidental_identity(
+                &mut core.state.reception,
+                &mut core.state.temporal,
+                observer,
+                id,
+                next,
+                now,
+                &core.state.installed.attention.value().retention,
+            )?;
+            continue;
+        }
         if identity.authored
             || pinned.contains(id)
             || core.state.temporal.actor(observer).is_some_and(|actor| {
@@ -450,7 +508,7 @@ pub(crate) fn prune_lost_body_individuals(
                     .recent()
                     .has_individual(identity.individual_id.as_deref().unwrap_or(id))
             })
-            || identity.retained == Some(true)
+            || mode == IndividualPruneMode::CurrentLoss && identity.retained == Some(true)
             || identity
                 .nickname
                 .as_ref()

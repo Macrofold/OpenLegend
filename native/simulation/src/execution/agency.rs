@@ -4,6 +4,9 @@ use super::*;
 use crate::plans::{ActorPlan, PlanStep};
 
 impl PhysicalMutation<'_> {
+    pub(crate) fn reserve_plan_growth(&mut self, bytes: usize) -> Result<(), ExecutionError> {
+        self.journal.reserve(bytes)
+    }
     pub(crate) fn plan_mut(&mut self, id: &str) -> Result<&mut Option<ActorPlan>, ExecutionError> {
         let handle = self
             .state
@@ -193,6 +196,125 @@ impl PhysicalMutation<'_> {
             .and_then(|e| e.actor.as_mut())
             .ok_or(ExecutionError::MissingActor)?
             .plan_generation = after;
+        Ok(())
+    }
+}
+
+impl crate::host::retained_size::HeapBytes for crate::state::RememberedPlace {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            self.subject_id.capacity(),
+            self.label.heap_bytes()?,
+            self.episode.heap_bytes()?,
+            self.point.heap_bytes()?,
+        ])
+    }
+}
+impl PhysicalMutation<'_> {
+    /// Source remembers at most the installed bounded actor-local place list.
+    /// Its one inverse preserves absent versus present-empty ownership.
+    pub(crate) fn remember_sighting(
+        &mut self,
+        actor_id: &str,
+        subject: &str,
+        point: crate::state::SurfacePoint,
+        label: crate::text::JsText,
+        episode: Option<String>,
+        limit: u64,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(actor_id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let key = UndoKey::AgencyPlaces(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            let places = &self
+                .state
+                .entities
+                .resolve(handle)
+                .and_then(|e| e.actor.as_ref())
+                .ok_or(ExecutionError::MissingActor)?
+                .agency
+                .places;
+            self.journal.reserve(
+                places
+                    .heap_bytes()
+                    .and_then(|n| n.checked_add(2 * size_of::<Undo>()))
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let before = places.clone();
+            self.journal.retain(
+                key,
+                Undo::AgencyPlaces {
+                    entity: handle,
+                    before,
+                },
+            )?;
+        }
+        let places = &mut self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.actor.as_mut())
+            .ok_or(ExecutionError::MissingActor)?
+            .agency
+            .places;
+        let count = places.as_ref().map_or(0, Vec::len);
+        self.journal.reserve(
+            heap_sum([
+                label.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                episode.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                point.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                subject.len(),
+                count
+                    .checked_add(1)
+                    .and_then(|n| n.checked_mul(2 * size_of::<crate::state::RememberedPlace>()))
+                    .ok_or(ExecutionError::Capacity)?,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let places = places.get_or_insert_with(Vec::new);
+        if let Some(last) = places
+            .last_mut()
+            .filter(|last| last.subject_id == subject && last.episode == episode)
+        {
+            last.point = point;
+            last.at = self.state.header.sim_time;
+            last.label = label;
+            return Ok(());
+        }
+        if let Some(index) = places.iter().position(|place| place.subject_id == subject) {
+            places.remove(index);
+        }
+        places.push(crate::state::RememberedPlace {
+            subject_id: subject.into(),
+            label,
+            episode,
+            point,
+            at: self.state.header.sim_time,
+        });
+        if places.len() as u64 > limit {
+            places.remove(0);
+        }
+        Ok(())
+    }
+}
+
+impl PhysicalMutation<'_> {
+    /// The installer has proved complete zero lessons, and selected admissions
+    /// refuse coaching references. Source's sweep still deletes a present {}.
+    pub(crate) fn reconcile_closed_coaching(&mut self) -> Result<(), ExecutionError> {
+        if !self.state.coaching.present {
+            return Ok(());
+        }
+        let key = UndoKey::CoachingPresence;
+        self.journal.reserve(2 * size_of::<Undo>())?;
+        if self.journal.first(&key)? {
+            self.journal
+                .retain(key, Undo::CoachingPresence { before: true })?;
+        }
+        self.state.coaching.present = false;
         Ok(())
     }
 }

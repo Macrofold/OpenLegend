@@ -2,9 +2,7 @@
 //! never cloned: the journal retains only a changed record's mutable subtrees.
 
 use super::*;
-use crate::commands::{
-    ActivityOutput, CommandEnvelope, CooperationBinding, NativeCommand, Outcome, PurposeBinding,
-};
+use crate::commands::{ActivityOutput, CooperationBinding, NativeCommand, Outcome, PurposeBinding};
 use crate::host::retained_size::{HeapBytes, heap_record, heap_sum};
 
 impl HeapBytes for ActivityScalar {
@@ -115,15 +113,7 @@ heap_record!(PurposeBinding {
     roles,
     source_ids
 });
-heap_record!(CommandEnvelope {
-    id,
-    actor_id,
-    cooperation,
-    combat_help_id,
-    human_initiated,
-    purpose,
-    chosen_purpose
-});
+
 impl HeapBytes for NativeCommand {
     fn heap_bytes(&self) -> Option<usize> {
         match self {

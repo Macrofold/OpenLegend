@@ -9,6 +9,14 @@ export const BASE_OBSERVATION_RULES = {
     preparingPhase: 'preparing',
   },
   sighting: {
+    eventType: 'encounter',
+    wording: {
+      departed: 'lost sight of ',
+      detail: 'noticed ',
+      routine: 'saw ',
+      detailPrefix: ': ',
+      ending: '.',
+    },
     routine: { importance: 0, urgency: 0, semanticTrigger: false },
     changedBeing: { importance: 6, urgency: 2, semanticTrigger: true },
     episodeGraceSeconds: 0.5,

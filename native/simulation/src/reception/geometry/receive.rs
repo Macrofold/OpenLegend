@@ -40,6 +40,49 @@ fn owner<'a>(core: &'a CoreMutation<'_>, id: &str) -> Option<&'a PerceptionEvide
         .as_ref()
         .and_then(|v| v.get(id))
 }
+/// Source retires the previous motion frame before any participant's due-sight
+/// decision. This changes held availability without acquiring new terrain.
+pub(crate) fn expire_received_geometry_motion(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
+    let Some(previous) = owner(core, observer).and_then(|o| o.geometry.as_ref()) else {
+        return Ok(false);
+    };
+    if previous.prior_frame.is_none()
+        || core.state.physical.header.sim_time
+            < previous.frame_at
+                + core
+                    .state
+                    .installed
+                    .attention
+                    .value()
+                    .geometry
+                    .interval_seconds
+    {
+        return Ok(false);
+    }
+    // The copied bounded value is funded before allocation. replace_geometry
+    // then assumes custody of the replacement and moves the real old owner to undo.
+    let _scratch = budget.reserve(previous.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+    let mut next = previous.clone();
+    next.prior_frame = None;
+    core.journal
+        .current
+        .replace_geometry(&mut core.state.reception, observer, next)?;
+    attention_control::dirty_attention_self_relations(
+        &core.state.physical,
+        &mut core.state.reception,
+        &mut core.journal.current,
+        observer,
+        &[
+            AttentionRelationFamily::ClosingBody,
+            AttentionRelationFamily::ClosingDrop,
+        ],
+    )?;
+    Ok(true)
+}
 struct Receptor {
     observer: ObserverLife,
     detector: DetectorIdentity,
@@ -108,6 +151,12 @@ pub(crate) struct GeometryReceptionCursor {
     reservation: Option<ByteReservation>,
 }
 impl GeometryReceptionCursor {
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.request.as_ref()
+    }
+    pub(crate) fn language_request(&self) -> Option<&CollationRequest> {
+        self.language.as_ref()
+    }
     pub(crate) fn prepare(
         core: &mut CoreMutation<'_>,
         observer: &str,
@@ -225,30 +274,8 @@ impl GeometryReceptionCursor {
             return Ok(());
         };
         let now = core.state.physical.header.sim_time;
-        let mut expired = false;
+        let expired = expire_received_geometry_motion(core, &self.observer, budget)?;
         if let Some(previous) = &self.previous {
-            if previous.prior_frame.is_some()
-                && now >= previous.frame_at + self.policy.interval_seconds
-            {
-                let mut next = previous.clone();
-                next.prior_frame = None;
-                core.journal.current.replace_geometry(
-                    &mut core.state.reception,
-                    &self.observer,
-                    next,
-                )?;
-                expired = true;
-                attention_control::dirty_attention_self_relations(
-                    &core.state.physical,
-                    &mut core.state.reception,
-                    &mut core.journal.current,
-                    &self.observer,
-                    &[
-                        AttentionRelationFamily::ClosingBody,
-                        AttentionRelationFamily::ClosingDrop,
-                    ],
-                )?;
-            }
             if previous.frame.position_at_observation != input.frame.position_at_observation {
                 attention_control::dirty_attention_self_relations(
                     &core.state.physical,

@@ -136,6 +136,7 @@ pub(crate) fn assemble_core(
     let statuses_present = child(&mut root.children, "statusEffectPolicy", true)?;
     let profiles_present = child(&mut root.children, "nativeResponseProfiles", false)?;
     let NativeSetupSettings {
+        encounter_batch_entries,
         work,
         maximum_change_scopes,
         spatial,
@@ -148,6 +149,10 @@ pub(crate) fn assemble_core(
         mind,
         agency,
     } = settings;
+    let encounter_batch_entries = usize::try_from(encounter_batch_entries)
+        .ok()
+        .filter(|n| *n > 0)
+        .ok_or(InstallError::CurrentFormat)?;
     let meanings = install_physical_meanings(
         &mut import,
         manifest_present,
@@ -228,6 +233,7 @@ pub(crate) fn assemble_core(
     let retained = install_retained(&mut import, &mut children, retained, &schema)?;
     super::physical::validate_physical_item_references(&physical, &retained)?;
     let installed = Arc::new(InstalledWorld {
+        encounter_batch_entries,
         manifest: meanings.manifest,
         retained,
         schema: schema.clone(),

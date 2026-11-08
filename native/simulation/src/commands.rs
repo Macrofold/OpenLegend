@@ -2,15 +2,20 @@
 //! protocol and binder retain their existing owner; unsupported input does not
 //! acquire a generic JSON execution path or silently lose optional parameters.
 
-use crate::encoding::js_trim;
 use crate::state::SurfacePoint;
 use crate::values::{
     DefinitionPin, deserialize_present_option, deserialize_present_safe_integer,
     deserialize_safe_integer, is_safe_record_id,
 };
 use indexmap::IndexMap;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+mod encoding;
+use encoding::CommandEncoding;
 
+mod operation;
+pub(crate) use operation::*;
+mod finalization;
+pub(crate) use finalization::*;
 mod state;
 pub(crate) use state::*;
 mod run;
@@ -28,7 +33,7 @@ pub(crate) struct CooperationBinding {
 pub(crate) struct PurposeBinding {
     pub definition: DefinitionPin,
     pub id: String,
-    pub description: String,
+    pub description: crate::text::JsText,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub roles: IndexMap<String, String>,
     pub source_ids: Vec<String>,
@@ -37,8 +42,8 @@ impl PurposeBinding {
     fn valid(&self) -> bool {
         self.definition.is_valid()
             && is_safe_record_id(&self.id)
-            && !js_trim(&self.description).is_empty()
-            && self.description.encode_utf16().count() <= 500
+            && !self.description.trim_is_empty()
+            && self.description.units_len() <= 500
             && self.roles.len() <= 8
             && self
                 .roles
@@ -49,9 +54,11 @@ impl PurposeBinding {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct CommandEnvelope {
+    #[serde(skip)]
+    encoding: CommandEncoding,
     pub id: String,
     pub actor_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -61,7 +68,7 @@ pub(crate) struct CommandEnvelope {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub human_initiated: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub purpose: Option<String>,
+    pub purpose: Option<crate::text::JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chosen_purpose: Option<PurposeBinding>,
 }
@@ -78,48 +85,31 @@ pub(crate) enum SpeechTargetRole {
     Remembered,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize)]
-#[serde(
-    tag = "type",
-    rename_all = "kebab-case",
-    rename_all_fields = "camelCase"
-)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) enum NativeCommand {
     Move {
-        #[serde(flatten)]
         envelope: CommandEnvelope,
         destination: SurfacePoint,
     },
     Say {
-        #[serde(flatten)]
         envelope: CommandEnvelope,
         text: crate::text::JsText,
-        #[serde(skip_serializing_if = "Option::is_none")]
         target_id: Option<String>,
-        #[serde(skip_serializing_if = "Option::is_none")]
         target_role: Option<SpeechTargetRole>,
-        #[serde(skip_serializing_if = "Option::is_none")]
         self_introduction: Option<crate::text::JsText>,
-        #[serde(skip_serializing_if = "Option::is_none")]
         volume: Option<String>,
     },
     StatusEffect {
-        #[serde(flatten)]
         envelope: CommandEnvelope,
         target_id: String,
         definition_id: String,
         operation: StatusOperation,
-        #[serde(skip_serializing_if = "Option::is_none")]
         facing_heading: Option<f64>,
-        #[serde(skip_serializing_if = "Option::is_none")]
         resting_place_id: Option<String>,
-        #[serde(skip_serializing_if = "Option::is_none")]
         resting_bay: Option<u64>,
     },
     Cancel {
-        #[serde(flatten)]
         envelope: CommandEnvelope,
-        #[serde(skip_serializing_if = "Option::is_none")]
         expected_action_id: Option<String>,
     },
 }
@@ -135,11 +125,13 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:String,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let input = CommandInput::deserialize(deserializer)?;
+        let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
+        let input: CommandInput =
+            serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
         use serde::de::Error;
         if !is_safe_record_id(&input.id)
             || !is_safe_record_id(&input.actor_id)
@@ -152,9 +144,10 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 .cooperation
                 .as_ref()
                 .is_some_and(|binding| !is_safe_record_id(&binding.id))
-            || input.purpose.as_ref().is_some_and(|value| {
-                js_trim(value).is_empty() || value.encode_utf16().count() > 120
-            })
+            || input
+                .purpose
+                .as_ref()
+                .is_some_and(|value| value.trim_is_empty() || value.units_len() > 120)
             || input
                 .chosen_purpose
                 .as_ref()
@@ -198,6 +191,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             || input.resting_place_id.is_some()
             || input.resting_bay.is_some();
         let envelope = CommandEnvelope {
+            encoding: CommandEncoding::decode(raw.get()).map_err(D::Error::custom)?,
             id: input.id,
             actor_id: input.actor_id,
             cooperation: input.cooperation,
@@ -249,6 +243,28 @@ impl<'de> Deserialize<'de> for NativeCommand {
     }
 }
 impl NativeCommand {
+    /// Pausing changes the id at its actual existing property position.
+    pub(crate) fn restart_id(&mut self, id: String) -> Result<(), serde_json::Error> {
+        let encoding = self.envelope().encoding.edit(Some(&id), &[])?;
+        let envelope = self.envelope_mut();
+        envelope.encoding = encoding;
+        envelope.id = id;
+        Ok(())
+    }
+    fn envelope_mut(&mut self) -> &mut CommandEnvelope {
+        match self {
+            Self::Move { envelope, .. }
+            | Self::Say { envelope, .. }
+            | Self::StatusEffect { envelope, .. }
+            | Self::Cancel { envelope, .. } => envelope,
+        }
+    }
+    pub(crate) fn source_encoding(&self) -> &str {
+        self.envelope().encoding.json.get()
+    }
+    pub(crate) fn source_edit_heap_bound(&self, extra: usize) -> Option<usize> {
+        self.envelope().encoding.edit_heap_bound(extra)
+    }
     pub(crate) fn envelope(&self) -> &CommandEnvelope {
         match self {
             Self::Move { envelope, .. }
@@ -265,18 +281,23 @@ impl NativeCommand {
             Self::Cancel { .. } => "cancel",
         }
     }
-    pub(crate) fn recorded(&self) -> Self {
+    pub(crate) fn recorded(&self) -> Result<Self, serde_json::Error> {
         let mut value = self.clone();
-        let envelope = match &mut value {
-            Self::Move { envelope, .. }
-            | Self::Say { envelope, .. }
-            | Self::StatusEffect { envelope, .. }
-            | Self::Cancel { envelope, .. } => envelope,
-        };
-        envelope.human_initiated = None;
-        envelope.combat_help_id = None;
-        envelope.cooperation = None;
-        value
+        if self.envelope().human_initiated.is_some()
+            || self.envelope().combat_help_id.is_some()
+            || self.envelope().cooperation.is_some()
+        {
+            let encoding = self
+                .envelope()
+                .encoding
+                .edit(None, &["humanInitiated", "combatHelpId", "cooperation"])?;
+            let envelope = value.envelope_mut();
+            envelope.encoding = encoding;
+            envelope.human_initiated = None;
+            envelope.combat_help_id = None;
+            envelope.cooperation = None;
+        }
+        Ok(value)
     }
 }
 
@@ -343,4 +364,36 @@ pub struct Outcome {
         skip_serializing_if = "Option::is_none"
     )]
     pub action_id: Option<String>,
+}
+
+impl PartialEq for CommandEnvelope {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+            && self.actor_id == other.actor_id
+            && self.cooperation == other.cooperation
+            && self.combat_help_id == other.combat_help_id
+            && self.human_initiated == other.human_initiated
+            && self.purpose == other.purpose
+            && self.chosen_purpose == other.chosen_purpose
+    }
+}
+impl Serialize for NativeCommand {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.envelope().encoding.json.serialize(serializer)
+    }
+}
+impl crate::host::retained_size::HeapBytes for CommandEnvelope {
+    fn heap_bytes(&self) -> Option<usize> {
+        use crate::host::retained_size::{HeapBytes, heap_sum};
+        heap_sum([
+            self.id.heap_bytes()?,
+            self.actor_id.heap_bytes()?,
+            self.cooperation.heap_bytes()?,
+            self.combat_help_id.heap_bytes()?,
+            self.human_initiated.heap_bytes()?,
+            self.purpose.heap_bytes()?,
+            self.chosen_purpose.heap_bytes()?,
+            self.encoding.heap_bytes(),
+        ])
+    }
 }

@@ -463,7 +463,7 @@ import { reconcileConditions } from './conditions.js';
 import { gatheringYield, gatheringBindingProblem } from './gathering.js';
 import { FOLLOW_RULES, followState, updateFollowPath, followUnavailable } from './follow.js';
 import { updateContactEpisodes } from './contact-acquisition.js';
-import { confirmActionRevision } from './agency.js';
+import { confirmActionRevision, activityCommandSyntax } from './agency.js';
 import { current, isDraft } from 'immer';
 import {
   distance3D,
@@ -1586,7 +1586,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     return reject(ordinaryRules.actionsRestricted.code, ordinaryRules.actionsRestricted.message);
   if (
     localPoseBlocksWork(world, source) &&
-    isActivityCommand(command) &&
+    isActivityCommand(command, activityCommandSyntax(world)) &&
     !['move', 'follow', 'evade', 'say'].includes(command.type)
   )
     return reject('posture-held', BASE_SKILLED_TEXT.postureHeld);
@@ -1671,7 +1671,7 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
       return reject('not-visible', 'The action target is not currently perceived.');
   }
   if (
-    isRecordedActivityCommand(command) &&
+    isRecordedActivityCommand(command, activityCommandSyntax(world)) &&
     hasMemory(source) &&
     world.actionExperience.admitted >= ACTIVITY_LIMITS.retainedRecords
   )
@@ -1927,7 +1927,11 @@ function operationAfterWork(
           'work-transition',
           'Starting this activity requires choosing how to replace or pause the current work.',
         );
-      if (work && !('ok' in prepared && !prepared.ok) && isRecordedActivityCommand(command)) {
+      if (
+        work &&
+        !('ok' in prepared && !prepared.ok) &&
+        isRecordedActivityCommand(command, activityCommandSyntax(world))
+      ) {
         const capture = prepareActivity(
           world,
           command,
@@ -2102,7 +2106,7 @@ function prepareNativeOperation(
       ),
     };
   const reject = (code: string, message: string) => outcome(false, code, message);
-  if (!isActivityCommand(command) && command.type !== 'learn-record')
+  if (!isActivityCommand(command, activityCommandSyntax(world)) && command.type !== 'learn-record')
     return reject('invalid-plan', 'Only supported native physical work can be queued.');
   if (!nativeCommandSupported(world, command.type))
     return reject('unsupported-capability', 'This world does not install that action.');
@@ -3190,7 +3194,7 @@ function executeCommandNative(
   if (!nativeCommandSupported(original, command.type))
     return reject('unsupported-capability', 'This world does not install that action.');
   if (command.type === 'eat' && command.sourceId) {
-    if (!isActivityCommand(command))
+    if (!isActivityCommand(command, activityCommandSyntax(original)))
       return reject('invalid-command', 'Choose an exact item or a supported selected stock scope.');
     const actorProblem = nativeActorProblem(original, command);
     if (actorProblem) return { world: original, events: [], outcome: actorProblem };
@@ -3205,7 +3209,7 @@ function executeCommandNative(
     return finishCommandTransition(world, [], consumption);
   }
   command = consumption;
-  const activity = isActivityCommand(command);
+  const activity = isActivityCommand(command, activityCommandSyntax(original));
   const prepared =
     activity || command.type === 'learn-record'
       ? prepareNativeOperation(original, command, {
@@ -3305,7 +3309,7 @@ function executeCommandNative(
   }
   if (choiceOutcome || equipmentPreview) {
     const source = entityGet(original.entities, command.actorId)!;
-    if (isRecordedActivityCommand(command)) {
+    if (isRecordedActivityCommand(command, activityCommandSyntax(original))) {
       const plan = source.actor!.agency.plan;
       const record = prepareActivity(
         original,
@@ -3463,7 +3467,7 @@ function executeCommandNative(
     !options.nativeController &&
     !equipmentPreview &&
     !(options.preview && command.type === 'drop') &&
-    isRecordedActivityCommand(command)
+    isRecordedActivityCommand(command, activityCommandSyntax(world))
       ? beginActivity(
           world,
           command,

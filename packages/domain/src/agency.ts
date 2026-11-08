@@ -7,7 +7,11 @@ import { openingSemanticInterval, finishSemanticWork } from './semantic-opportun
 import { attackSubject, validAimPointSubject } from './combat-execution.js';
 import { isMaterialInputRole } from './native-inputs.js';
 import { recordSemanticChange } from './dependencies.js';
-import { selectedOrdinaryActionRules, selectedOutwardBodyActivity } from './world-composition.js';
+import {
+  selectedOrdinaryActionRules,
+  selectedOutwardBodyActivity,
+  selectedSpeechAction,
+} from './world-composition.js';
 import type { NativeExecutionPermissions } from './construction-permissions.js';
 import { validGateUseIntent } from './gate-operations.js';
 import { validBoundaryImpactIntent } from './boundary-impacts.js';
@@ -467,7 +471,7 @@ export function arrangePlan(
     return planOutcome(world, 'stepLimit');
   if (commands.some((command) => !nativeCommandSupported(world, command.type)))
     return planOutcome(world, 'unsupportedCapability');
-  if (commands.some((command) => !isPlannedCommand(command)))
+  if (commands.some((command) => !isPlannedCommand(command, activityCommandSyntax(world))))
     return planOutcome(world, 'invalidCommand');
   if (mode === 'enqueue' && current?.activity?.control && !current.activity.terminal)
     return planOutcome(world, 'chosenActivityActive');
@@ -658,7 +662,8 @@ export function ownedOffenseContinues(
       plan.steps.some(
         (step) => ['queued', 'running', 'blocked'].includes(step.status) && matches(step.command),
       ) ||
-      (plan.activity && hasPendingActivityCommand(plan.activity, actorId, matches))
+      (plan.activity &&
+        hasPendingActivityCommand(plan.activity, actorId, matches, activityCommandSyntax(world)))
     )
       return true;
   }
@@ -1236,7 +1241,7 @@ export function validateAgency(world: WorldState): void {
           !['enqueue', 'replace', 'interrupt'].includes(a.mode) ||
           !Number.isSafeInteger(a.expectedPlan) ||
           a.expectedPlan < 0 ||
-          !validAlternativeCommands(a.commands, entity.id)
+          !validAlternativeCommands(a.commands, entity.id, activityCommandSyntax(world))
         )
           throw new Error('Invalid saved action alternative.');
       }
@@ -1329,7 +1334,7 @@ export function validateAgency(world: WorldState): void {
           !validResultEvidence(step.resultEvidence, entity.id)) ||
         (step.targetEpisodes !== undefined && !validActionTargets(step.targetEpisodes)) ||
         !isSafeRecordId(step.id) ||
-        !isPlannedCommand(step.command) ||
+        !isPlannedCommand(step.command, activityCommandSyntax(world)) ||
         (step.command.chosenPurpose !== undefined &&
           !validResponsePurpose(step.command.chosenPurpose)) ||
         step.command.id !== step.id ||
@@ -1668,7 +1673,20 @@ export function isPhysicalCommand(command: Command): boolean {
 }
 
 /** Speech can be a chosen step without giving the speaker control of a reply. */
-export function isActivityCommand(command: Command): boolean {
+export interface ActivityCommandSyntax {
+  readonly maximumSpeechCharacters: number;
+  readonly speechSourceLevelsDb: Readonly<Record<string, number>>;
+}
+/** Finite installed syntax only: no actor, history or writable world is retained. */
+export function activityCommandSyntax(
+  world: Pick<WorldState, 'profile' | 'moduleManifest'>,
+): ActivityCommandSyntax {
+  return {
+    maximumSpeechCharacters: selectedSpeechAction(world).maximumCharacters,
+    speechSourceLevelsDb: world.moduleManifest.acoustics.sourceLevelDbSplAt1m,
+  };
+}
+export function isActivityCommand(command: Command, syntax: ActivityCommandSyntax): boolean {
   return (
     isPhysicalCommand(command) ||
     (!!command &&
@@ -1677,13 +1695,15 @@ export function isActivityCommand(command: Command): boolean {
       isSafeRecordId(command.actorId) &&
       typeof command.text === 'string' &&
       command.text.trim().length > 0 &&
-      command.text.length <= 1500 &&
+      command.text.length <= syntax.maximumSpeechCharacters &&
       (command.targetId === undefined || isSafeRecordId(command.targetId)) &&
-      (command.volume === undefined || ['whisper', 'normal', 'shout'].includes(command.volume)))
+      (command.volume === undefined ||
+        (typeof command.volume === 'string' &&
+          Object.hasOwn(syntax.speechSourceLevelsDb, command.volume))))
   );
 }
-function isPlannedCommand(command: PlannedCommand): boolean {
-  if (!command || !('itemFromStep' in command)) return isActivityCommand(command);
+function isPlannedCommand(command: PlannedCommand, syntax: ActivityCommandSyntax): boolean {
+  if (!command || !('itemFromStep' in command)) return isActivityCommand(command, syntax);
   return (
     isSafeRecordId(command.id) &&
     isSafeRecordId(command.actorId) &&
@@ -1766,7 +1786,11 @@ export function resolvePlanCommand(plan: ActorPlan, step: PlanStep): Command | u
 }
 
 /** A held revision is either a plan-eligible native sequence or one bounded composition. */
-function validAlternativeCommands(commands: Command[], actorId: string): boolean {
+function validAlternativeCommands(
+  commands: Command[],
+  actorId: string,
+  syntax: ActivityCommandSyntax,
+): boolean {
   if (!Array.isArray(commands) || !commands.length || commands.length > AGENCY_LIMITS.steps)
     return false;
   const [first] = commands;
@@ -1789,7 +1813,7 @@ function validAlternativeCommands(commands: Command[], actorId: string): boolean
   }
   return (
     validOutputReferences(commands) &&
-    commands.every((c) => isPlannedCommand(c) && c.actorId === actorId)
+    commands.every((c) => isPlannedCommand(c, syntax) && c.actorId === actorId)
   );
 }
 
@@ -1813,7 +1837,7 @@ export function proposeActionRevision(
     !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     !Number.isSafeInteger(expectedPlan) ||
     expectedPlan < 0 ||
-    !validAlternativeCommands(commands, actorId)
+    !validAlternativeCommands(commands, actorId, activityCommandSyntax(world))
   )
     return outcome(
       false,

@@ -11,9 +11,12 @@ use crate::received::{
     values::{FrameFragment, FrameKind},
 };
 use crate::work::WorkUnit;
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use std::{mem::size_of, sync::Arc};
 
+mod checks;
+mod personal;
+pub(crate) use personal::*;
 mod sample;
 use sample::receive_subject;
 fn invalid() -> ExecutionError {
@@ -44,6 +47,14 @@ pub(super) struct VisualReception {
     retired_motion: IndexSet<String>,
     lost_individuals: IndexSet<String>,
     current: CurrentReceptionLifetime,
+    attention_changes: IndexSet<String>,
+    geometry_changes: IndexSet<String>,
+    checked: IndexSet<String>,
+    detailed: IndexSet<String>,
+    sample_tokens: IndexMap<String, u64>,
+    before_attention: IndexSet<String>,
+    collect_notices: bool,
+    notices: IndexMap<String, crate::text::JsText>,
     reservation: ByteReservation,
 }
 /// Only this real producer can return a completed memoryless sight cut. It
@@ -70,15 +81,83 @@ pub(crate) fn receive_native_visual(
     sight: &SightResults,
     budget: &ByteBudget,
 ) -> Result<CompletedNativeVisual, ExecutionError> {
+    if core
+        .state
+        .physical
+        .entities
+        .get(&sight.observer().actor_id)
+        .is_none_or(|e| e.has_memory())
+    {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let mut phase = begin_visual(core, sight, None, budget)?;
+    let now = core.state.physical.header.sim_time;
+    phase.receive_losses(core, sight, None, None, budget)?;
+    for (id, seen) in sight.iter() {
+        if seen && id != phase.observer.actor_id {
+            receive_subject(&mut phase, core, id, sight, false, budget)?;
+        }
+    }
+    phase.current.note_frame_checked(
+        sight
+            .iter()
+            .filter(|(id, seen)| *seen && *id != phase.observer.actor_id)
+            .map(|(id, _)| id),
+        phase.frame_changed,
+    )?;
+    phase.publish_confirmation(core, true)?;
+    phase.settle_housekeeping(core, budget)?;
+    phase.current.finish(core, budget)?;
+    let VisualReception {
+        observer,
+        input_revision,
+        mut reservation,
+        channel,
+        detector,
+        frame,
+        frame_ref,
+        prior,
+        unchecked,
+        retired_motion,
+        lost_individuals,
+        current,
+        ..
+    } = phase;
+    drop((
+        channel,
+        detector,
+        frame,
+        frame_ref,
+        prior,
+        unchecked,
+        retired_motion,
+        lost_individuals,
+        current,
+    ));
+    reservation.resize(
+        size_of::<CompletedNativeVisual>()
+            + observer.heap_bytes().ok_or(ExecutionError::Capacity)?,
+    )?;
+    Ok(CompletedNativeVisual {
+        observer,
+        at: now,
+        input_revision,
+        _reservation: reservation,
+    })
+}
+
+fn begin_visual(
+    core: &mut CoreMutation<'_>,
+    sight: &SightResults,
+    current: Option<CurrentReceptionLifetime>,
+    budget: &ByteBudget,
+) -> Result<VisualReception, ExecutionError> {
     let observer = core
         .state
         .physical
         .entities
         .get(&sight.observer().actor_id)
         .ok_or(ExecutionError::MissingActor)?;
-    if observer.has_memory() {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
     if observer.physical_life() != Some(sight.observer().physical_life) {
         return Err(invalid());
     }
@@ -131,7 +210,38 @@ pub(crate) fn receive_native_visual(
         prior.heap_bytes().ok_or(ExecutionError::Capacity)?,
     ])
     .ok_or(ExecutionError::Capacity)?;
-    let mut reservation = budget.reserve(bytes)?;
+    let count = sight.iter().count();
+    let id_bytes = sight
+        .iter()
+        .try_fold(0usize, |sum, (id, _)| sum.checked_add(id.len()))
+        .ok_or(ExecutionError::Capacity)?;
+    let before_attention = owner(core, &sight.observer().actor_id)?.attention.as_ref();
+    let extra = heap_sum([
+        id_bytes.checked_mul(7).ok_or(ExecutionError::Capacity)?,
+        crate::host::retained_size::map_storage::<String, crate::text::JsText>(count)
+            .ok_or(ExecutionError::Capacity)?
+            .checked_mul(7)
+            .ok_or(ExecutionError::Capacity)?,
+        before_attention
+            .map_or(Some(0), |a| {
+                a.entries
+                    .iter()
+                    .try_fold(0usize, |sum, e| sum.checked_add(e.source_id.len()))
+            })
+            .ok_or(ExecutionError::Capacity)?,
+        crate::host::retained_size::map_storage::<String, ()>(
+            before_attention.map_or(0, |a| a.entries.len()),
+        )
+        .ok_or(ExecutionError::Capacity)?,
+    ])
+    .ok_or(ExecutionError::Capacity)?;
+    let mut reservation =
+        budget.reserve(bytes.checked_add(extra).ok_or(ExecutionError::Capacity)?)?;
+    let before_attention = before_attention
+        .into_iter()
+        .flat_map(|a| &a.entries)
+        .map(|e| e.source_id.clone())
+        .collect();
     let prior = prior.clone();
     let revision = prior
         .as_ref()
@@ -167,9 +277,14 @@ pub(crate) fn receive_native_visual(
             )
             .ok_or(ExecutionError::Capacity)?,
     )?;
-    let mut current = CurrentReceptionLifetime::begin(core, sight.observer(), None, None, budget)?;
+    let mut current = match current {
+        Some(current) if current.observer == *sight.observer() => current,
+        Some(_) => return Err(invalid()),
+        None => CurrentReceptionLifetime::begin(core, sight.observer(), None, None, budget)?,
+    };
     current.ensure_prefix(core, budget)?;
-    let mut phase = VisualReception {
+    current.note_frame(&retained.reference, frame_changed)?;
+    Ok(VisualReception {
         observer: sight.observer().clone(),
         channel,
         detector,
@@ -188,95 +303,15 @@ pub(crate) fn receive_native_visual(
         retired_motion: IndexSet::new(),
         lost_individuals: IndexSet::new(),
         current,
+        attention_changes: IndexSet::with_capacity(count),
+        geometry_changes: IndexSet::with_capacity(count),
+        checked: IndexSet::with_capacity(count),
+        detailed: IndexSet::with_capacity(count),
+        sample_tokens: IndexMap::with_capacity(count),
+        before_attention,
+        collect_notices: false,
+        notices: IndexMap::with_capacity(count),
         reservation,
-    };
-    phase.receive_losses(core, sight, budget)?;
-    for (id, seen) in sight.iter() {
-        if seen && id != phase.observer.actor_id {
-            receive_subject(&mut phase, core, id, sight, false, budget)?;
-        }
-    }
-    let complete = Some(CurrentSightStamp {
-        through: now,
-        revision: phase.revision,
-        input_revision: phase.input_revision,
-        frame_ref: phase.frame_ref.clone(),
-        received_order: core
-            .state
-            .physical
-            .identity
-            .allocate("received-sample")?
-            .sequence,
-    });
-    core.journal.current.replace_visual_confirmation(
-        &mut core.state.reception,
-        &phase.observer.actor_id,
-        VisualConfirmation {
-            channel: phase.channel.clone(),
-            through: now,
-            revision: phase.revision,
-            complete,
-            frame_ref: phase.frame_ref.clone(),
-            frame_revision: if phase.frame_changed {
-                phase.revision
-            } else {
-                phase.prior.as_ref().ok_or_else(invalid)?.frame_revision
-            },
-        },
-    )?;
-    for id in &phase.retired_motion {
-        core.journal.current.set_motion(
-            &mut core.state.reception,
-            &phase.observer.actor_id,
-            id,
-            None,
-        )?;
-    }
-    crate::worlds::base_recognition::prune_lost_body_individuals(
-        core,
-        &phase.observer.actor_id,
-        &phase.lost_individuals,
-        budget,
-    )?;
-    core.journal
-        .current
-        .refresh_motion_expiry(&mut core.state.reception, &phase.observer.actor_id)?;
-    phase.current.finish(core, budget)?;
-    let VisualReception {
-        observer,
-        input_revision,
-        mut reservation,
-        channel,
-        detector,
-        frame,
-        frame_ref,
-        prior,
-        unchecked,
-        retired_motion,
-        lost_individuals,
-        current,
-        ..
-    } = phase;
-    drop((
-        channel,
-        detector,
-        frame,
-        frame_ref,
-        prior,
-        unchecked,
-        retired_motion,
-        lost_individuals,
-        current,
-    ));
-    reservation.resize(
-        size_of::<CompletedNativeVisual>()
-            + observer.heap_bytes().ok_or(ExecutionError::Capacity)?,
-    )?;
-    Ok(CompletedNativeVisual {
-        observer,
-        at: now,
-        input_revision,
-        _reservation: reservation,
     })
 }
 
@@ -286,6 +321,74 @@ struct Address {
     channel: DefinitionPin,
 }
 impl VisualReception {
+    fn publish_confirmation(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        full: bool,
+    ) -> Result<(), ExecutionError> {
+        let now = core.state.physical.header.sim_time;
+        let complete = if full {
+            Some(CurrentSightStamp {
+                through: now,
+                revision: self.revision,
+                input_revision: self.input_revision,
+                frame_ref: self.frame_ref.clone(),
+                received_order: core
+                    .state
+                    .physical
+                    .identity
+                    .allocate("received-sample")?
+                    .sequence,
+            })
+        } else {
+            self.prior
+                .as_ref()
+                .filter(|p| p.channel == self.channel)
+                .and_then(|p| p.complete.clone())
+        };
+        core.journal.current.replace_visual_confirmation(
+            &mut core.state.reception,
+            &self.observer.actor_id,
+            VisualConfirmation {
+                channel: self.channel.clone(),
+                through: now,
+                revision: self.revision,
+                complete,
+                frame_ref: self.frame_ref.clone(),
+                frame_revision: if self.frame_changed {
+                    self.revision
+                } else {
+                    self.prior.as_ref().ok_or_else(invalid)?.frame_revision
+                },
+            },
+        )?;
+        Ok(())
+    }
+    fn settle_housekeeping(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        for id in &self.retired_motion {
+            self.attention_changes.insert(id.clone());
+        }
+        super::phase::retire_motion_subjects(
+            core,
+            &self.observer.actor_id,
+            self.retired_motion.iter().map(String::as_str),
+        )?;
+        crate::worlds::base_recognition::prune_observer_individuals(
+            core,
+            &self.observer.actor_id,
+            &self.lost_individuals,
+            crate::worlds::IndividualPruneMode::CurrentLoss,
+            budget,
+        )?;
+        core.journal
+            .current
+            .refresh_motion_expiry(&mut core.state.reception, &self.observer.actor_id)?;
+        Ok(())
+    }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self.reservation.resize(
             self.reservation
@@ -299,12 +402,29 @@ impl VisualReception {
         &mut self,
         core: &mut CoreMutation<'_>,
         sight: &SightResults,
+        measured: Option<&IndexSet<String>>,
+        eligible: Option<&IndexSet<String>>,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         let now = core.state.physical.header.sim_time;
         let current = owner(core, &self.observer.actor_id)?;
-        let bound = current
-            .current
+        let count = measured.map_or(current.current.len(), IndexSet::len);
+        self.reserve(
+            count
+                .checked_mul(size_of::<(&String, &CurrentContact)>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut contacts = Vec::with_capacity(count);
+        if let Some(measured) = measured {
+            for id in measured {
+                if let Some(entry) = current.current.get_key_value(id) {
+                    contacts.push(entry)
+                }
+            }
+        } else {
+            contacts.extend(current.current.iter());
+        }
+        let bound = contacts
             .iter()
             .try_fold(0usize, |sum, (id, c)| {
                 heap_sum([
@@ -321,10 +441,6 @@ impl VisualReception {
             })
             .ok_or(ExecutionError::Capacity)?;
         self.reserve(bound)?;
-        let mut contacts: Vec<_> = owner(core, &self.observer.actor_id)?
-            .current
-            .iter()
-            .collect();
         contacts.sort_by_key(|(_, c)| c.order);
         let mut lost = Vec::new();
         let mut unchecked: Vec<(f64, Vec<CurrentGroupCoverage>)> = Vec::new();
@@ -414,6 +530,8 @@ impl VisualReception {
                 }
                 if let Some(at) = invalidated {
                     self.unchecked.insert(id.clone());
+                    self.attention_changes.insert(id.clone());
+                    self.geometry_changes.insert(id.clone());
                     self.retired_motion.insert(id.clone());
                     let coverage = CurrentGroupCoverage {
                         subject_id: id.clone(),
@@ -426,7 +544,10 @@ impl VisualReception {
                         unchecked.push((at, vec![coverage]));
                     }
                 }
-                let eligible = if sight.seen(id) == Some(true) && id != &self.observer.actor_id {
+                let eligible = if sight.seen(id) == Some(true)
+                    && id != &self.observer.actor_id
+                    && eligible.is_none_or(|ids| ids.contains(id))
+                {
                     core.state
                         .physical
                         .entities
@@ -438,6 +559,8 @@ impl VisualReception {
                 if Some(grant.subject_physical_life) == eligible && grant.channel == self.channel {
                     continue;
                 }
+                self.attention_changes.insert(id.clone());
+                self.geometry_changes.insert(id.clone());
                 if let Some(ObserverSubject::Individual { individual_id }) = group
                     .received
                     .fields
@@ -464,6 +587,7 @@ impl VisualReception {
             )?;
         }
         for (at, coverage) in unchecked {
+            close_unchecked_coverage(core, &self.observer.actor_id, &coverage, at, budget)?;
             current_set_unchecked(
                 &mut core.journal.current,
                 &mut core.state.reception,
@@ -471,15 +595,23 @@ impl VisualReception {
                 &coverage,
                 at,
             )?;
-        }
-        for id in &self.retired_motion {
-            core.journal.current.set_motion(
+            let sources = coverage.iter().map(|c| c.subject_id.clone()).collect();
+            prune_withdrawn_attention(
+                &core.state.physical,
                 &mut core.state.reception,
+                &core.state.installed,
+                &core.state.experience,
+                &mut core.journal.current,
                 &self.observer.actor_id,
-                id,
-                None,
+                Some(&sources),
+                Some(&sources),
             )?;
         }
+        super::phase::retire_motion_subjects(
+            core,
+            &self.observer.actor_id,
+            self.retired_motion.iter().map(String::as_str),
+        )?;
         let grace = core
             .state
             .installed
@@ -493,7 +625,18 @@ impl VisualReception {
                 .content
                 .time_policy
                 .normal_game_seconds_per_second;
+        let mut lost_sources = IndexSet::new();
+        let mut lost_geometry = IndexSet::new();
+        let loss_transition = core.journal.acquisitions.begin_received(
+            &self.observer.actor_id,
+            self.observer.physical_life,
+            None,
+        )?;
         for address in lost {
+            lost_sources.insert(address.subject.clone());
+            if matches!(address.kind.as_str(), "body" | "location") {
+                lost_geometry.insert(address.subject.clone());
+            }
             if address.kind == "body" && grace > 0.0 {
                 if let Some(body) = current_native_facet_at(
                     Some(owner(core, &self.observer.actor_id)?),
@@ -529,6 +672,24 @@ impl VisualReception {
                 &address.channel,
                 TemporalChange::Loss,
                 budget,
+            )?;
+        }
+        super::retirement::finish_received(core, loss_transition)?;
+        super::phase::retire_motion_subjects(
+            core,
+            &self.observer.actor_id,
+            self.retired_motion.iter().map(String::as_str),
+        )?;
+        if !lost_sources.is_empty() {
+            prune_withdrawn_attention(
+                &core.state.physical,
+                &mut core.state.reception,
+                &core.state.installed,
+                &core.state.experience,
+                &mut core.journal.current,
+                &self.observer.actor_id,
+                Some(&lost_sources),
+                Some(&lost_geometry),
             )?;
         }
         Ok(())

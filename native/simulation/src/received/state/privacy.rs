@@ -16,6 +16,7 @@ pub(crate) struct TemporalAccountAliases {
     groups: Vec<Vec<String>>,
     by_alias: IndexMap<String, Vec<usize>>,
     reservation: ByteReservation,
+    expansion_bytes: usize,
 }
 fn invalid() -> ReceivedError {
     ReceivedError(
@@ -49,8 +50,10 @@ impl TemporalAccountAliases {
         self.groups.push(group);
         Ok(())
     }
-    /// The index and its guard must remain alive while the caller uses the
-    /// expanded set. Extra personal-source IDs remain that caller's ownership.
+    /// The edit owner retains its root and affected sets while this index lives.
+    /// Fund both highwaters once; repeated fixed-point passes must not charge
+    /// the same already owned map/key allocation again. Extra personal IDs are
+    /// separately funded by that owner's preparation guard.
     pub(crate) fn expand(&mut self, selected: &mut IndexSet<String>) -> Result<(), ReceivedError> {
         let maximum = selected
             .len()
@@ -62,22 +65,27 @@ impl TemporalAccountAliases {
             .try_fold(0usize, |sum, key| sum.checked_add(key.len()))
             .ok_or_else(invalid)?;
         let bytes = heap_sum([
-            map_storage::<String, ()>(maximum).ok_or_else(invalid)?,
-            names,
+            map_storage::<String, ()>(maximum)
+                .and_then(|n| n.checked_mul(2))
+                .ok_or_else(invalid)?,
+            names.checked_mul(2).ok_or_else(invalid)?,
             self.groups
                 .len()
                 .checked_mul(size_of::<bool>())
                 .ok_or_else(invalid)?,
         ])
         .ok_or_else(invalid)?;
-        self.reservation
-            .resize(
-                self.reservation
-                    .bytes()
-                    .checked_add(bytes)
-                    .ok_or_else(invalid)?,
-            )
-            .map_err(|_| invalid())?;
+        if bytes > self.expansion_bytes {
+            self.reservation
+                .resize(
+                    self.reservation
+                        .bytes()
+                        .checked_add(bytes - self.expansion_bytes)
+                        .ok_or_else(invalid)?,
+                )
+                .map_err(|_| invalid())?;
+            self.expansion_bytes = bytes;
+        }
         selected
             .try_reserve(self.by_alias.len())
             .map_err(|_| invalid())?;
@@ -179,6 +187,7 @@ impl TemporalState {
             groups: Vec::new(),
             by_alias: IndexMap::new(),
             reservation,
+            expansion_bytes: 0,
         };
         index
             .groups

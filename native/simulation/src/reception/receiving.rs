@@ -400,65 +400,16 @@ impl ReceivingCursor {
                     frame_ref: None,
                 },
             )?;
-            let changed = status == CurrentSampleStatus::Changed;
-            self.current.note(subject, changed)?;
-            let correspondence = changed
-                && (parts.membership || parts.association)
-                && before
-                    .as_ref()
-                    .map(|before| {
-                        before.correspondence_changed(
-                            &core.state.reception,
-                            &core.state.experience,
-                            subject,
-                        )
-                    })
-                    .transpose()?
-                    .unwrap_or(false);
-            if correspondence {
-                if let Some(before) = &before {
-                    reconcile_current_cohort(core, Arc::clone(before), Some(token), budget)?;
-                }
-                self.current.reconciled = true;
-            }
-            if changed {
-                let active = if correspondence {
-                    CurrentCohort::capture(
-                        &core.state.physical,
-                        &core.state.reception,
-                        &core.state.installed,
-                        &core.state.experience,
-                        &self.current.observer.actor_id,
-                        budget,
-                    )?
-                    .map(|before| {
-                        before.active_tracks(&core.state.reception, &core.state.experience, subject)
-                    })
-                    .transpose()?
-                } else {
-                    before
-                        .as_ref()
-                        .map(|before| {
-                            before.active_tracks(
-                                &core.state.reception,
-                                &core.state.experience,
-                                subject,
-                            )
-                        })
-                        .transpose()?
-                };
-                if let Some(active) = active {
-                    record_current_reception(
-                        core,
-                        &self.current.observer.actor_id,
-                        subject,
-                        "association",
-                        &active,
-                        Some(token),
-                        budget,
-                    )?;
-                }
-            }
+            self.current.installed_sample(
+                core,
+                subject,
+                "association",
+                status,
+                parts,
+                before.as_ref(),
+                token,
+                budget,
+            )?;
         }
         let values = core
             .state

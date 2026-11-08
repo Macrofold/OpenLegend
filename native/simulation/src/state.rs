@@ -355,7 +355,7 @@ pub struct Goal {
     pub id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
-    pub objective: String,
+    pub objective: crate::text::JsText,
     pub status: String,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub parent_id: Option<String>,
@@ -397,7 +397,7 @@ pub struct SemanticContinuation {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RememberedPlace {
     pub subject_id: String,
-    pub label: String,
+    pub label: crate::text::JsText,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub episode: Option<String>,
     pub point: SurfacePoint,

@@ -30,9 +30,18 @@ mod materialize;
 pub use materialize::*;
 mod sensors;
 mod visual;
+pub(crate) use visual::{
+    CompletedObserverReception, ObserverReceptionAnswer, ObserverReceptionCursor,
+    ObserverReceptionError, ObserverReceptionStep,
+};
+mod phase;
 mod visual_source;
+pub(crate) use phase::begin_perception_phase;
 pub use sensors::*;
-pub(crate) use visual::{CompletedNativeVisual, receive_native_visual};
+pub(crate) use visual::{
+    CompletedNativeVisual, PersonalVisualAnswer, PersonalVisualCursor, PersonalVisualStep,
+    ReceivedPersonalVisual, VisualNotice, VisualOpportunity, receive_native_visual,
+};
 mod sound;
 pub use sound::*;
 mod audience;

@@ -304,6 +304,107 @@ impl OriginalJournal {
         Ok(())
     }
 
+    /// Source beginPerceptionPhase retains only originals acquired at this
+    /// actual simulation time. It neither starts a sequence nor drops held
+    /// current/history references to the same immutable observations.
+    pub(crate) fn begin_phase(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        now: f64,
+        sequence: u64,
+    ) -> Result<(), ReceivedError> {
+        let Some(owner) = state
+            .perception_evidence
+            .as_ref()
+            .and_then(|r| r.get(observer))
+        else {
+            return Ok(());
+        };
+        let values = &state.received_values.as_ref();
+        let retained = owner.received.iter().try_fold(0usize, |sum, o| {
+            Ok::<_, ReceivedError>(
+                sum + usize::from(received_observation_header(values, o)?.acquired_at >= now),
+            )
+        })?;
+        if retained == owner.received.len() {
+            return Ok(());
+        }
+        let keys = owner.received.iter().try_fold(0usize, |sum, o| {
+            let header = received_observation_header(values, o)?;
+            if header.acquired_at < now {
+                return Ok(sum);
+            };
+            sum.checked_add(super::materialize::observation_acquisition_key_len(
+                header.modality,
+                &header.detector,
+                header.channel.as_ref(),
+                &o.origin,
+            )?)
+            .ok_or_else(capacity)
+        })?;
+        self.slot(
+            heap_sum([
+                observer.len(),
+                owner.received.iter().try_fold(
+                    owner
+                        .received
+                        .capacity()
+                        .checked_mul(size_of::<Arc<ReceivedObservation>>())
+                        .ok_or_else(capacity)?,
+                    |sum, o| {
+                        heap_sum([
+                            sum,
+                            size_of::<ReceivedObservation>(),
+                            2 * size_of::<usize>(),
+                            o.heap_bytes().ok_or_else(capacity)?,
+                        ])
+                        .ok_or_else(capacity)
+                    },
+                )?,
+                owner.receipts.heap_bytes().ok_or_else(capacity)?,
+                retained
+                    .checked_mul(size_of::<Arc<ReceivedObservation>>())
+                    .ok_or_else(capacity)?,
+                map_storage::<String, u64>(retained).ok_or_else(capacity)?,
+                keys,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let mut received = Vec::new();
+        received
+            .try_reserve_exact(retained)
+            .map_err(|_| capacity())?;
+        let mut receipts = IndexMap::with_capacity(retained);
+        for original in &owner.received {
+            let header = received_observation_header(values, original)?;
+            if header.acquired_at < now {
+                continue;
+            };
+            let key = observation_acquisition_key(
+                header.modality,
+                &header.detector,
+                header.channel.as_ref(),
+                &original.origin,
+            )?;
+            receipts.insert(key, received.len() as u64);
+            received.push(Arc::clone(original));
+        }
+        let owner = state
+            .perception_evidence
+            .as_mut()
+            .and_then(|r| r.get_mut(observer))
+            .ok_or_else(invalid)?;
+        self.undo.push(OriginalUndo::PhaseReset {
+            observer: observer.into(),
+            sequence: owner.received_at_sequence,
+            received: std::mem::replace(&mut owner.received, received),
+            receipts: std::mem::replace(&mut owner.receipts, receipts),
+        });
+        owner.received_at_sequence = sequence;
+        Ok(())
+    }
+
     pub(crate) fn acquire(
         &mut self,
         state: &mut ReceptionState,

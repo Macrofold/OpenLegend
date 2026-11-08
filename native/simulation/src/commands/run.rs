@@ -46,14 +46,14 @@ pub(crate) enum CommandStep<'a> {
         physical_life: u64,
         at: f64,
     },
-    Complete(Outcome),
+    Complete(super::PendingCommandCompletion),
 }
 enum Progress {
     Geometry,
     Occurrence(StagedOccurrence),
     Personal,
     EndEvidence,
-    Complete(Outcome),
+    Complete(super::PendingCommandCompletion),
 }
 #[derive(Clone, Copy)]
 enum Phase {
@@ -185,6 +185,12 @@ impl CommandCursor {
             materialized: false,
             _reservation: reservation,
         })
+    }
+    pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.sight
+            .as_ref()
+            .map(|sight| sight.queries())
+            .or(self.queries.as_ref())
     }
     pub(crate) fn actor_id(&self) -> &str {
         &self.command.envelope().actor_id
@@ -1445,7 +1451,14 @@ impl CommandCursor {
                         )?;
                     }
                     self.abort(core)?;
-                    return Ok(Progress::Complete(result));
+                    return Ok(Progress::Complete(super::PendingCommandCompletion::new(
+                        core,
+                        &self.command.envelope().actor_id,
+                        &self.command.envelope().id,
+                        result,
+                        self.finalize,
+                        &self.budget,
+                    )?));
                 }
                 Phase::Support | Phase::Probe | Phase::StatusSight => {
                     return Ok(Progress::Geometry);

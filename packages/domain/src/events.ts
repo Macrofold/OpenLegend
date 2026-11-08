@@ -4,6 +4,7 @@ import {
   nativeResponseNeedsEventReception,
 } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
+import { AUTOMATIC_ENCOUNTER_BATCH_ENTRIES } from './event-batch-limits.js';
 import { prepareEventObservation } from './event-observation.js';
 import {
   acquireAwarenessObservation,
@@ -57,6 +58,7 @@ import {
   selectedAccountAfterRelease,
   selectedEventSalience,
   selectedOccurrenceRules,
+  selectedObservationRules,
 } from './world-composition.js';
 import { activelyParticipates } from './participation-state.js';
 import { acquireCombatObservation } from './combat-encounters.js';
@@ -326,7 +328,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
     const event = recordEvent(
       world,
       events,
-      'encounter',
+      selectedObservationRules(world).sighting.eventType,
       wording,
       [source.id],
       source,
@@ -343,7 +345,7 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       pending,
     );
     // Bound temporary memory independently of the number of visible objects.
-    if (pending.length >= 128) flush();
+    if (pending.length >= AUTOMATIC_ENCOUNTER_BATCH_ENTRIES) flush();
     return event;
   };
   return Object.assign(acquire, { flush });

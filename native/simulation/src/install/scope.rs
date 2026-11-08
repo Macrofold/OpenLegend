@@ -10,7 +10,6 @@ pub(crate) fn finish_record_ownership(
     for (field, table, empty_map) in [
         ("finiteRain", "sim_finite_rain", false),
         ("exitExposures", "sim_exit_exposures", true),
-        ("coachingEpisodes", "sim_coaching_episodes", true),
         ("objectLineage", "sim_object_lineage", true),
         ("projectiles", "sim_projectiles", true),
         ("outings", "activity_outings", true),

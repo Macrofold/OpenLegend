@@ -29,6 +29,21 @@ function member(value: unknown, field: string): unknown {
     : undefined;
 }
 
+/** Both bootstrap and scoped hydration retain the sole current SQL column
+ * order and PostgreSQL integer conversion; neither decodes canonical bodies. */
+export function nativeCurrentRow(table: string, row: Record<string, unknown>) {
+  const node = RECORD_NODES.get(table);
+  if (!node) throw new Error('Native current row has no registered schema.');
+  return {
+    id: String(row['id']),
+    parent: String(row['parent_id']),
+    slot: String(row['slot']),
+    position: ordinal(row['position']),
+    payload: String(row['payload']),
+    extra: Object.entries(node.columns ?? {}).map(([name, column]) => cell(row[name], column.sql)),
+  };
+}
+
 /** Full current-format bootstrap at one committed PostgreSQL snapshot. Rows
  * retain their actual codec bytes and SQL metadata; no entity/history graph is
  * assembled. Partial working-set hydration remains an explicit separate read. */
@@ -69,14 +84,7 @@ export async function captureCurrentSources(records: WorldRecords, databaseSchem
         const next = ordinal(position + 1);
         const parent = String(row['parent_id']);
         owners.set(parent, Math.max(owners.get(parent) ?? 0, next));
-        return {
-          id: String(row['id']),
-          parent,
-          slot: String(row['slot']),
-          position,
-          payload: String(row['payload']),
-          extra: columns.map(([name, column]) => cell(row[name], column.sql)),
-        };
+        return nativeCurrentRow(table, row);
       });
       highwaters.set(table, owners);
     }

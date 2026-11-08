@@ -17,15 +17,16 @@ mod current;
 mod metadata;
 mod result;
 pub(crate) use current::{
-    CurrentRecordingContext, CurrentRecordingUpdates, TemporalCurrentGroupInput,
-    current_group_recording_complete, terminal_member_bytes,
+    CurrentRecordingContext, CurrentRecordingRevocation, CurrentRecordingUpdates,
+    TemporalCurrentGroupInput, current_group_recording_complete, plan_current_recording_revocation,
+    terminal_member_bytes,
 };
 mod save;
 mod selection;
 pub(crate) use save::encode_received_value_changes;
 pub(crate) use selection::{
     CapturedTemporalReceipt, observation_receipt_member_indices, select_temporal_receipt_facets,
-    temporal_receipt_account_aliases, temporal_receipt_aliases,
+    temporal_field_aliases, temporal_receipt_account_aliases, temporal_receipt_aliases,
 };
 mod retained_size;
 pub use result::*;
@@ -300,7 +301,7 @@ fn add_charge(previous: u64, added: u64) -> Result<u64, ReceivedError> {
 /// here once, and the actor codec writes these same values; a cold rebuild checks
 /// the saved totals before this owner can be installed. No receipt body is read
 /// merely to answer eligibility or membership.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct ReceivedRecentDirectory {
     blocks: BTreeMap<String, ReceivedChargeDirectory>,
     individuals: BTreeMap<String, u64>,
@@ -406,6 +407,54 @@ impl ReceivedRecentDirectory {
         self.bytes = bytes;
         self.count = count;
         Ok(())
+    }
+
+    /// Explicit correction removes a real eligible block and retains its exact
+    /// short directory for inverse mutation. Missing/expired blocks stay absent.
+    fn take_block(
+        &mut self,
+        physical_life: u64,
+        epoch: &str,
+        batch_order: u64,
+    ) -> Result<Option<ReceivedChargeDirectory>, ReceivedError> {
+        let key = block_key(physical_life, epoch, batch_order);
+        let Some(directory) = self.blocks.get(&key) else {
+            return Ok(None);
+        };
+        let mut bytes = self.bytes;
+        let mut count = self.count;
+        for header in &directory.entries {
+            bytes = bytes
+                .checked_sub(header.bytes)
+                .ok_or(ReceivedError("Recent edit bytes underflow."))?;
+            count = count
+                .checked_sub(header.count)
+                .ok_or(ReceivedError("Recent edit count underflow."))?;
+            for id in &header.individual_ids {
+                if !self.individuals.contains_key(id) {
+                    return Err(ReceivedError("Recent edit membership is absent."));
+                }
+            }
+        }
+        let directory = self
+            .blocks
+            .remove(&key)
+            .expect("Owned recent block checked");
+        for header in &directory.entries {
+            for id in &header.individual_ids {
+                let held = self
+                    .individuals
+                    .get_mut(id)
+                    .expect("Owned recent membership checked");
+                *held -= 1;
+                if *held == 0 {
+                    self.individuals.remove(id);
+                }
+            }
+        }
+        self.bytes = bytes;
+        self.count = count;
+        Ok(Some(directory))
     }
 
     /// Only the temporal mutation journal removes an unaccepted appended block.

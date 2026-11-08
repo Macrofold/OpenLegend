@@ -44,6 +44,28 @@ struct StoredPage {
     batches: Vec<StoredBatch>,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PageBody<'a> {
+    id: &'a str,
+    order: u64,
+    actor_id: &'a str,
+    physical_life: u64,
+    epoch: &'a str,
+    from_at: f64,
+    through_at: f64,
+    bytes: u64,
+    count: u64,
+    append_closed: bool,
+    batches: Vec<BatchBody<'a>>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BatchBody<'a> {
+    batch_order: u64,
+    entries: &'a [ReceivedEntry],
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TemporalPageMetadata {
@@ -221,6 +243,74 @@ pub struct TemporalPageRecord {
 }
 
 impl TemporalPageRecord {
+    /// An explicit current-format edit preserves the physical row identity and
+    /// original packing order. Its SQL position follows the first retained
+    /// batch, as the existing page writer does; receipt coordinates never move.
+    pub(super) fn replace_batches(
+        &self,
+        batches: Vec<Arc<ReceivedBatch>>,
+        values: &ReceivedValues,
+        meaning: &dyn TemporalValueMeaning,
+    ) -> Result<Option<Self>, ReceivedError> {
+        if batches.is_empty() {
+            return Ok(None);
+        }
+        let metadata = temporal_page_metadata(
+            &self.actor_id,
+            self.physical_life,
+            &self.epoch,
+            &batches,
+            values,
+            Some(meaning),
+        )?;
+        let body = PageBody {
+            id: &self.id,
+            order: self.order,
+            actor_id: &self.actor_id,
+            physical_life: self.physical_life,
+            epoch: &self.epoch,
+            from_at: metadata
+                .first_at
+                .ok_or(ReceivedError("Edited temporal page has no bounds."))?,
+            through_at: metadata
+                .last_at
+                .ok_or(ReceivedError("Edited temporal page has no bounds."))?,
+            bytes: metadata.entry_bytes,
+            count: metadata.count,
+            append_closed: true,
+            batches: batches
+                .iter()
+                .map(|batch| BatchBody {
+                    batch_order: batch.batch_order,
+                    entries: &batch.entries,
+                })
+                .collect(),
+        };
+        let payload = json_record(&body)
+            .map_err(|_| ReceivedError("Edited temporal page encoding failed."))?;
+        let columns = projection(
+            &metadata,
+            &self.actor_id,
+            self.physical_life,
+            &self.epoch,
+            payload.len(),
+        )?;
+        Ok(Some(Self {
+            id: self.id.clone(),
+            row_id: self.row_id.clone(),
+            parent: self.parent.clone(),
+            slot: self.slot.clone(),
+            position: batches[0].batch_order,
+            payload: Arc::from(payload),
+            columns: Arc::from(columns),
+            actor_id: self.actor_id.clone(),
+            physical_life: self.physical_life,
+            epoch: self.epoch.clone(),
+            order: self.order,
+            batches,
+            metadata,
+        }))
+    }
     pub fn install(
         row: InstalledRow,
         actor_id: &str,

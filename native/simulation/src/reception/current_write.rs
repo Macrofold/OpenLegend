@@ -276,8 +276,24 @@ fn set_metadata_groups(
     state: &mut ReceptionState,
     observer: &str,
     subject: &str,
-    groups: Vec<CurrentReceivedGroup>,
+    mut groups: Vec<CurrentReceivedGroup>,
 ) -> Result<(), ReceivedError> {
+    let token = journal.content_batch(observer, subject)?;
+    let prior = owner(state, observer)?
+        .current
+        .get(subject)
+        .ok_or_else(invalid)?;
+    for group in &mut groups {
+        if prior
+            .content
+            .groups
+            .iter()
+            .find(|old| CurrentGroupIdentity::of(old).matches(group))
+            .is_none_or(|old| old.metadata != group.metadata || old.recordings != group.recordings)
+        {
+            group.metadata_batch = Some(Arc::clone(&token));
+        }
+    }
     let contact = journal
         .contact_mut(state, observer, subject)?
         .ok_or_else(invalid)?;
@@ -531,6 +547,7 @@ fn current_facet_set_in_batch(
                 recordings: None,
                 field_identity: Arc::new(()),
                 content_batch: Some(batch.clone()),
+                metadata_batch: None,
                 received: Arc::new(CurrentReceivedContent {
                     grant: input.grant.clone(),
                     fields: IndexMap::from([(address.kind.to_owned(), input.field)]),
@@ -676,6 +693,7 @@ fn current_groups_set_recording_in_batch(
                 // A matching removal writes an explicitly empty recording list;
                 // absence and Some(empty) are different current-format states.
                 group.recordings = Some(remaining);
+                group.metadata_batch = Some(journal.content_batch(observer, subject)?);
                 changed = true;
             }
         }
@@ -831,89 +849,109 @@ fn current_set_unchecked_in_batch(
     }
     for (subject, masks) in by_subject {
         preflight(journal, state, observer, subject, false, 0)?;
-        let projected = {
-            let owner = owner(state, observer)?;
-            let Some(contact) = owner.current.get(subject) else {
-                continue;
-            };
-            journal.reserve_growth(
-                map_storage::<(&str, &str, u64, &str), ()>(contact.content.groups.len())
-                    .ok_or_else(capacity)?,
-            )?;
-            let mut body_tracks = IndexSet::with_capacity(contact.content.groups.len());
-            for group in &contact.content.groups {
-                let Some(kinds) = masks.get(&CurrentGroupIdentity::of(group)) else {
+        let projected =
+            {
+                let owner = owner(state, observer)?;
+                let Some(contact) = owner.current.get(subject) else {
                     continue;
                 };
-                if kinds.as_ref().is_some_and(|kinds| !kinds.contains("body")) {
-                    continue;
+                journal.reserve_growth(
+                    map_storage::<(&str, &str, u64, &str), ()>(contact.content.groups.len())
+                        .ok_or_else(capacity)?,
+                )?;
+                let mut body_tracks = IndexSet::with_capacity(contact.content.groups.len());
+                for group in &contact.content.groups {
+                    let Some(kinds) = masks.get(&CurrentGroupIdentity::of(group)) else {
+                        continue;
+                    };
+                    if kinds.as_ref().is_some_and(|kinds| !kinds.contains("body")) {
+                        continue;
+                    }
+                    let Some(body) = current_group_metadata(group, "body", None) else {
+                        continue;
+                    };
+                    if body.availability.is_some()
+                        || at
+                            < effective_current_partition(owner, group, body, false)?
+                                .times
+                                .expanded()
+                                .confirmed_through
+                    {
+                        continue;
+                    }
+                    body_tracks.insert(track(group));
                 }
-                let Some(body) = current_group_metadata(group, "body", None) else {
-                    continue;
-                };
-                if body.availability.is_some()
-                    || at
-                        < effective_current_partition(owner, group, body, false)?
-                            .times
-                            .expanded()
-                            .confirmed_through
-                {
-                    continue;
-                }
-                body_tracks.insert(track(group));
-            }
-            let mut groups = contact.content.groups.clone();
-            let mut changed = false;
-            for (index, original) in contact.content.groups.iter().enumerate() {
-                let identity = CurrentGroupIdentity::of(original);
-                let selected = masks.contains_key(&identity);
-                let kinds = masks.get(&identity).and_then(Option::as_ref);
-                if body_tracks.contains(&track(original)) {
-                    if let Some(metadata) = covered_partitions(
-                        original,
-                        |(kind, _)| !selected || kinds.is_some_and(|kinds| !kinds.contains(kind)),
-                        |partition| match effective_current_partition(
-                            owner, original, partition, true,
+                let mut groups = contact.content.groups.clone();
+                let mut changed = false;
+                for (index, original) in contact.content.groups.iter().enumerate() {
+                    let identity = CurrentGroupIdentity::of(original);
+                    let selected = masks.contains_key(&identity);
+                    let kinds = masks.get(&identity).and_then(Option::as_ref);
+                    // Source's already mutable metadata groups are shared with the
+                    // live contact. Earlier body withdrawal is visible to later
+                    // siblings during this same ordered map, before final publish.
+                    let body_withdrawn = contact.content.groups.iter().enumerate().take(index).any(
+                        |(before, group)| {
+                            (group.content_batch.is_some() || group.metadata_batch.is_some())
+                                && track(group) == track(original)
+                                && group.received.fields.contains_key("body")
+                                && current_group_metadata(&groups[before], "body", None)
+                                    .is_some_and(|m| m.availability.is_some())
+                        },
+                    );
+                    if body_tracks.contains(&track(original)) {
+                        if let Some(metadata) = covered_partitions(
+                            original,
+                            |(kind, _)| {
+                                !selected || kinds.is_some_and(|kinds| !kinds.contains(kind))
+                            },
+                            |partition| match if body_withdrawn {
+                                std::borrow::Cow::Borrowed(partition)
+                            } else {
+                                effective_current_partition(owner, original, partition, true)?
+                            } {
+                                std::borrow::Cow::Borrowed(_) => Ok(None),
+                                std::borrow::Cow::Owned(partition) => Ok(Some(partition)),
+                            },
                         )? {
-                            std::borrow::Cow::Borrowed(_) => Ok(None),
-                            std::borrow::Cow::Owned(partition) => Ok(Some(partition)),
+                            groups[index].metadata = metadata;
+                            changed = true;
+                        }
+                    }
+                    if !selected {
+                        continue;
+                    }
+                    if let Some(metadata) = covered_partitions(
+                        &groups[index],
+                        |(kind, _)| kinds.is_none_or(|kinds| kinds.contains(kind)),
+                        |partition| {
+                            let effective = if body_withdrawn {
+                                std::borrow::Cow::Borrowed(partition)
+                            } else {
+                                effective_current_partition(owner, original, partition, true)?
+                            };
+                            if at < effective.times.expanded().confirmed_through
+                                || partition
+                                    .availability
+                                    .as_ref()
+                                    .is_some_and(|availability| availability.at <= at)
+                            {
+                                return Ok(None);
+                            }
+                            let mut next = effective.into_owned();
+                            next.availability = Some(CurrentAvailability {
+                                state: CurrentAvailabilityState::Unchecked,
+                                at,
+                            });
+                            Ok(Some(next))
                         },
                     )? {
                         groups[index].metadata = metadata;
                         changed = true;
                     }
                 }
-                if !selected {
-                    continue;
-                }
-                if let Some(metadata) = covered_partitions(
-                    &groups[index],
-                    |(kind, _)| kinds.is_none_or(|kinds| kinds.contains(kind)),
-                    |partition| {
-                        let effective =
-                            effective_current_partition(owner, original, partition, true)?;
-                        if at < effective.times.expanded().confirmed_through
-                            || partition
-                                .availability
-                                .as_ref()
-                                .is_some_and(|availability| availability.at <= at)
-                        {
-                            return Ok(None);
-                        }
-                        let mut next = effective.into_owned();
-                        next.availability = Some(CurrentAvailability {
-                            state: CurrentAvailabilityState::Unchecked,
-                            at,
-                        });
-                        Ok(Some(next))
-                    },
-                )? {
-                    groups[index].metadata = metadata;
-                    changed = true;
-                }
-            }
-            changed.then_some(groups)
-        };
+                changed.then_some(groups)
+            };
         if let Some(groups) = projected {
             set_metadata_groups(journal, state, observer, subject, groups)?;
         }

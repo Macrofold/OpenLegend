@@ -394,7 +394,7 @@ pub(crate) fn read_reception_rows(
                     .map_err(|_| invalid())
             })
             .transpose()?;
-            body.remove("attention");
+            body.shift_remove("attention");
             let geometry = take_one::<Box<RawValue>>(
                 import,
                 "mind_perception_geometry",
@@ -452,7 +452,7 @@ pub(crate) fn read_reception_rows(
                 decode(geometry)
             })
             .transpose()?;
-            body.remove("geometry");
+            body.shift_remove("geometry");
             let mut owner: PerceptionEvidenceOwner = decode(body)?;
             owner.current = current.ok_or_else(invalid)?;
             owner.attention = attention;

@@ -18,6 +18,11 @@ pub use history::*;
 mod emission;
 mod save;
 pub(crate) use emission::{BegunOccurrence, EmissionError, begin_staged_occurrence};
+mod encounters;
+pub(crate) use encounters::{
+    EncounterBatch, EncounterCheckpoint, EncounterNoticeKind, EncounterScopes,
+    EventAccountPlacement, StagedEncounter, flush_encounter_batch,
+};
 pub(crate) use save::encode_occurrence_changes;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]

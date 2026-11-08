@@ -15,8 +15,10 @@ mod state;
 pub(crate) use state::*;
 mod journal;
 pub(crate) use journal::*;
+mod fields;
 mod install;
 mod retained_size;
+pub use fields::ActivityFields;
 pub(crate) use install::install_activity;
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -45,10 +47,7 @@ impl<'de> Deserialize<'de> for ActivityScalar {
 pub enum ActivityDetail {
     Scalar(ActivityScalar),
     List(Vec<ActivityDetail>),
-    Fields(
-        #[serde(serialize_with = "crate::encoding::serialize_js_map")]
-        IndexMap<String, ActivityDetail>,
-    ),
+    Fields(ActivityFields),
 }
 impl<'de> Deserialize<'de> for ActivityDetail {
     fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -64,13 +63,12 @@ impl<'de> Deserialize<'de> for ActivityDetail {
                     .map(|value| parse(value.get(), depth + 1))
                     .collect::<Result<Vec<_>, _>>()
                     .map(ActivityDetail::List),
-                Some(b'{') => {
-                    serde_json::from_str::<IndexMap<String, Box<serde_json::value::RawValue>>>(raw)?
-                        .into_iter()
-                        .map(|(key, value)| parse(value.get(), depth + 1).map(|value| (key, value)))
-                        .collect::<Result<IndexMap<_, _>, _>>()
-                        .map(ActivityDetail::Fields)
-                }
+                Some(b'{') => fields::raw_entries(raw)?
+                    .into_iter()
+                    .map(|(key, value)| parse(value.get(), depth + 1).map(|value| (key, value)))
+                    .collect::<Result<IndexMap<_, _>, _>>()
+                    .and_then(ActivityFields::new)
+                    .map(ActivityDetail::Fields),
                 _ => serde_json::from_str(raw).map(ActivityDetail::Scalar),
             }
         }
@@ -82,7 +80,7 @@ impl<'de> Deserialize<'de> for ActivityDetail {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ActivityFact {
-    pub name: String,
+    pub name: JsText,
     pub value: ActivityDetail,
     pub critical: bool,
     #[serde(
@@ -95,7 +93,7 @@ pub struct ActivityFact {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ActivityView {
-    pub name: String,
+    pub name: JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -137,7 +135,7 @@ pub(crate) fn approach_view_bytes(
     use crate::host::retained_size::HeapBytes;
     view.facts
         .iter()
-        .filter(|fact| facts.iter().any(|name| name == &fact.name))
+        .filter(|fact| facts.iter().any(|name| fact.name == name.as_str()))
         .try_fold(
             std::mem::size_of::<ActivityView>().checked_add(name.len())?,
             |bytes, fact| {
@@ -151,12 +149,12 @@ pub(crate) fn prepare_approach_view(view: &mut ActivityView, name: &str, facts: 
     let selected = || {
         view.facts
             .iter()
-            .filter(|fact| facts.iter().any(|name| name == &fact.name))
+            .filter(|fact| facts.iter().any(|name| fact.name == name.as_str()))
     };
     let mut held = Vec::with_capacity(selected().count());
     held.extend(selected().cloned());
     view.children = Some(vec![ActivityView {
-        name: name.to_owned(),
+        name: name.into(),
         actor: None,
         target: None,
         tool: None,
@@ -270,13 +268,15 @@ impl ActivityDetail {
                     return Err(ActivityError::InvalidFact);
                 }
                 for (key, value) in values {
-                    if js_trim(key).is_empty()
-                        || key.encode_utf16().count() > 80
-                        || key.contains(['_', '.', ':'])
-                        || matches!(
-                            key.to_ascii_lowercase().as_str(),
-                            "id" | "schema" | "kind" | "code" | "basis"
-                        )
+                    if key.trim_is_empty()
+                        || key.units_len() > 80
+                        || key.units().any(|u| matches!(u, 95 | 46 | 58))
+                        || key.as_unicode().is_some_and(|key| {
+                            matches!(
+                                key.to_ascii_lowercase().as_str(),
+                                "id" | "schema" | "kind" | "code" | "basis"
+                            )
+                        })
                     {
                         return Err(ActivityError::InvalidFact);
                     }
@@ -289,7 +289,7 @@ impl ActivityDetail {
 }
 impl ActivityFact {
     pub fn validate(&self, limits: &ActivityDisplayLimits) -> Result<(), ActivityError> {
-        if js_trim(&self.name).is_empty() || self.name.encode_utf16().count() > 80 {
+        if self.name.trim_is_empty() || self.name.units_len() > 80 {
             return Err(ActivityError::InvalidFact);
         }
         self.value.validate_at(limits, 0)
@@ -312,7 +312,7 @@ fn activity_text_sum(left: usize, right: usize) -> Result<usize, serde_json::Err
     })
 }
 fn activity_record_text_sizes(view: &ActivityView) -> Result<(usize, usize), serde_json::Error> {
-    let mut units = view.name.encode_utf16().count();
+    let mut units = view.name.units_len();
     let mut temporary = 0;
     for (label, value) in [
         ("actor", view.actor.as_ref()),
@@ -344,10 +344,7 @@ fn activity_record_text_sizes(view: &ActivityView) -> Result<(usize, usize), ser
                 )
             }
         };
-        units = activity_text_sum(
-            units,
-            activity_text_sum(4 + fact.name.encode_utf16().count(), length)?,
-        )?;
+        units = activity_text_sum(units, activity_text_sum(4 + fact.name.units_len(), length)?)?;
         temporary = temporary.max(scratch);
     }
     if let Some(children) = &view.children {
@@ -382,7 +379,7 @@ pub(crate) fn activity_record_text_bound(view: &ActivityView) -> Result<usize, s
 /// only one non-string fact is encoded at a time. Display omission never edits it.
 pub fn activity_record_text(view: &ActivityView) -> Result<JsText, serde_json::Error> {
     fn append(view: &ActivityView, units: &mut Vec<u16>) -> Result<(), serde_json::Error> {
-        units.extend(view.name.encode_utf16());
+        units.extend(view.name.units());
         for (label, value) in [
             ("actor", view.actor.as_ref()),
             ("target", view.target.as_ref()),
@@ -397,7 +394,7 @@ pub fn activity_record_text(view: &ActivityView) -> Result<JsText, serde_json::E
         }
         for fact in &view.facts {
             units.extend("; ".encode_utf16());
-            units.extend(fact.name.encode_utf16());
+            units.extend(fact.name.units());
             units.extend(": ".encode_utf16());
             match &fact.value {
                 ActivityDetail::Scalar(ActivityScalar::String(value)) => {
@@ -473,7 +470,7 @@ fn text_join(values: &[JsText], separator: &str) -> JsText {
 /// Formatting does not consult a world, grant evidence or choose activity facts.
 #[derive(Clone, Copy)]
 struct View<'a> {
-    name: &'a str,
+    name: TextRef<'a>,
     actor: Option<&'a JsText>,
     target: Option<&'a JsText>,
     tool: Option<&'a JsText>,
@@ -484,7 +481,7 @@ struct View<'a> {
 impl<'a> From<&'a ActivityView> for View<'a> {
     fn from(view: &'a ActivityView) -> Self {
         Self {
-            name: &view.name,
+            name: (&view.name).into(),
             actor: view.actor.as_ref(),
             target: view.target.as_ref(),
             tool: view.tool.as_ref(),
@@ -541,10 +538,15 @@ fn project_view(
                 if self.count > self.limits.nodes || depth > self.limits.depth {
                     return Err(ActivityError::InvalidStructure);
                 }
-                if js_trim(&node.name).is_empty()
-                    || node.name.encode_utf16().count() > self.limits.text
-                    || node.facts.len() > self.limits.facts
-                {
+                let valid_name = match node.name {
+                    TextRef::Unicode(name) => {
+                        !js_trim(name).is_empty() && name.encode_utf16().count() <= self.limits.text
+                    }
+                    TextRef::Text(name) => {
+                        !name.trim_is_empty() && name.units_len() <= self.limits.text
+                    }
+                };
+                if !valid_name || node.facts.len() > self.limits.facts {
                     return Err(ActivityError::InvalidStructure);
                 }
                 let mut details = Vec::new();
@@ -559,7 +561,7 @@ fn project_view(
                         details.push(text);
                     }
                 }
-                let mut extra: IndexMap<String, &ActivityDetail> = IndexMap::new();
+                let mut extra: IndexMap<JsText, &ActivityDetail> = IndexMap::new();
                 for (index, fact) in node.facts.iter().enumerate() {
                     if !fact.critical && (!self.optional || depth > self.detail_depth) {
                         self.omitted = true;
@@ -574,7 +576,7 @@ fn project_view(
                     {
                         details.push(prose(sentence));
                     } else if let ActivityDetail::Scalar(value) = &fact.value {
-                        let mut text = prose(fact.name.as_str());
+                        let mut text = prose(&fact.name);
                         text.push_str(": ");
                         text.push_text(&prose(&scalar_text(value)?));
                         details.push(text);
@@ -635,19 +637,9 @@ fn project_view(
                     text.push_text(&prose(result));
                 }
                 if !extra.is_empty() {
-                    struct Extra<'a>(IndexMap<String, &'a ActivityDetail>);
-                    impl Serialize for Extra<'_> {
-                        fn serialize<S: serde::Serializer>(
-                            &self,
-                            serializer: S,
-                        ) -> Result<S::Ok, S::Error> {
-                            crate::encoding::serialize_js_map(&self.0, serializer)
-                        }
-                    }
                     text.push_str(&format!(
                         ". Extra details: {}",
-                        crate::encoding::json_record(&Extra(extra))
-                            .map_err(|_| ActivityError::InvalidFact)?
+                        fields::encode(extra.iter()).map_err(|_| ActivityError::InvalidFact)?
                     ));
                 }
                 Ok(text)
@@ -699,7 +691,7 @@ pub fn validate_result_facts(
     // Same literal wrapper and ordinary formatter allowance as the source
     // temporal-value validator; optional facts still use its required fallback.
     let view = View {
-        name: "result validation",
+        name: "result validation".into(),
         actor: None,
         target: None,
         tool: None,

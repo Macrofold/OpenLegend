@@ -8,6 +8,21 @@ use crate::state::UnconvertedField;
 use crate::values::{deserialize_nullable, deserialize_present_option, deserialize_safe_integer};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+mod control;
+mod edit;
+mod finish;
+pub(crate) use finish::finish_plan_action;
+mod memory;
+mod ready;
+mod resume;
+pub(crate) use ready::{PlanReadyAnswer, PlanReadyCursor, PlanReadyStep, ReadyPlanStep};
+mod validation;
+pub(crate) use control::{
+    PlanControlCursor, PlanControlKind, PlanControlProgress, PlanControlStep,
+};
+pub(crate) use edit::{PlanEditCursor, PlanEditInput, PlanEditStep};
+pub(crate) use resume::{PlanResumeCursor, PlanResumeStep, ResumeMode};
+pub(crate) use validation::validate_installation;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -159,4 +174,35 @@ impl HeapBytes for ActorPlan {
             self.steps.heap_bytes()?,
         ])
     }
+}
+
+/// The selected commands have one finite entity-target slot. Missing objects
+/// remain normal command-admission work; actual actor references retain the
+/// existing creator-authored/perception-episode boundary.
+fn targets_current(
+    core: &crate::execution::CoreMutation<'_>,
+    actor: &str,
+    step: &PlanStep,
+) -> bool {
+    let target = match &step.command {
+        NativeCommand::Say { target_id, .. } => target_id.as_deref(),
+        NativeCommand::StatusEffect { target_id, .. } => Some(target_id.as_str()),
+        _ => None,
+    };
+    target
+        .filter(|target| *target != actor)
+        .is_none_or(|target| {
+            !core
+                .state
+                .physical
+                .entities
+                .get(target)
+                .is_some_and(|e| e.actor.is_some())
+                || crate::worlds::base_knowledge::subject_reference_current(
+                    &core.state.reception,
+                    actor,
+                    target,
+                    step.target_episodes.as_ref().and_then(|m| m.get(target)),
+                )
+        })
 }

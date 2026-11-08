@@ -277,6 +277,7 @@ pub(crate) struct CompletedEvent {
     pub reservation: ByteReservation,
 }
 pub(crate) struct EventCursor {
+    account_placement: EventAccountPlacement,
     begun: Option<BegunOccurrence>,
     binding: GeometryBinding,
     phase: Phase,
@@ -303,9 +304,24 @@ impl EventCursor {
         core: &CoreMutation<'_>,
         begun: BegunOccurrence,
         binding: GeometryBinding,
+        account_placement: EventAccountPlacement,
         budget: &ByteBudget,
     ) -> Result<Self, EventError> {
         crate::native_controller::require_supported_event(core, begun.event())?;
+        if let EventAccountPlacement::Encounter(batch) = &account_placement {
+            core.journal.encounters.validate_event(
+                batch,
+                begun.event(),
+                &core.state.physical,
+                &core
+                    .state
+                    .installed
+                    .observation_rules
+                    .value()
+                    .sighting
+                    .event_type,
+            )?;
+        }
         let activity = if core
             .state
             .installed
@@ -324,6 +340,7 @@ impl EventCursor {
         };
         let reservation = budget.reserve(size_of::<Self>())?;
         Ok(Self {
+            account_placement,
             begun: Some(begun),
             binding,
             phase: Phase::Initial,
@@ -1025,36 +1042,46 @@ impl EventCursor {
                         .map_err(ExecutionError::Activity)?;
                 }
                 let schema = Arc::clone(&core.state.installed.schema);
-                // Source places each acquired entry in original receiver order;
-                // there is no deferred awarenessBatch in this native emitter.
-                for (entry, encoding) in self.acquired.iter().zip(&self.acquired_encoding) {
-                    if entry.retention_class == crate::experience::AwarenessRetentionClass::Memory
-                        && !core
-                            .state
-                            .physical
-                            .entities
-                            .get(&entry.actor_id)
-                            .is_some_and(|actor| actor.has_memory())
-                    {
-                        continue;
-                    }
-                    let admission = prepare_awareness_admission(
-                        core,
-                        &entry.actor_id,
-                        &[AwarenessInput {
-                            awareness: entry,
-                            encoding: *encoding,
-                        }],
-                        None,
-                        budget,
+                if let EventAccountPlacement::Encounter(batch) = &self.account_placement {
+                    core.journal.encounters.enqueue(
+                        batch,
+                        &core.state.physical,
+                        &self.acquired,
+                        &self.acquired_encoding,
                     )?;
-                    let placed = acquire_awareness_accounts(core, admission, &schema, budget)?;
-                    for entry in placed
-                        .entries()
-                        .iter()
-                        .filter(|entry| entry.speech.is_some())
-                    {
-                        crate::worlds::retain_selected_recognition_evidence(core, entry, budget)?;
+                } else {
+                    for (entry, encoding) in self.acquired.iter().zip(&self.acquired_encoding) {
+                        if entry.retention_class
+                            == crate::experience::AwarenessRetentionClass::Memory
+                            && !core
+                                .state
+                                .physical
+                                .entities
+                                .get(&entry.actor_id)
+                                .is_some_and(|actor| actor.has_memory())
+                        {
+                            continue;
+                        }
+                        let admission = prepare_awareness_admission(
+                            core,
+                            &entry.actor_id,
+                            &[AwarenessInput {
+                                awareness: entry,
+                                encoding: *encoding,
+                            }],
+                            None,
+                            budget,
+                        )?;
+                        let placed = acquire_awareness_accounts(core, admission, &schema, budget)?;
+                        for entry in placed
+                            .entries()
+                            .iter()
+                            .filter(|entry| entry.speech.is_some())
+                        {
+                            crate::worlds::retain_selected_recognition_evidence(
+                                core, entry, budget,
+                            )?;
+                        }
                     }
                 }
                 let binding = self.next_binding(&mut core.journal)?;
@@ -1118,10 +1145,25 @@ impl EventCursor {
                     sequence: event.sequence,
                 };
                 core.complete_occurrence(&completed)?;
+                // Source's automatic 128-entry flush follows recordEvent's
+                // entire causal work, including obligation consequences.
+                if let EventAccountPlacement::Encounter(batch) = &self.account_placement {
+                    if core.journal.encounters.due(batch)? {
+                        flush_encounter_batch(core, batch, budget)?;
+                    }
+                }
                 let begun = self.begun.take().ok_or_else(invalid)?;
                 self.reservation.merge(begun.reservation)?;
                 self.phase = Phase::Complete;
-                let reservation = std::mem::replace(&mut self.reservation, budget.reserve(0)?);
+                // The caller may retain this finished cursor independently of
+                // its output. Each keeps custody of the allocations it owns.
+                let output_bytes = heap_sum([
+                    begun.event.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                    self.acquired.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                    completed.event_id.len(),
+                ])
+                .ok_or(ExecutionError::Capacity)?;
+                let reservation = self.reservation.split_off(output_bytes)?;
                 return Ok(EventStep::Complete(CompletedEvent {
                     event: begun.event,
                     completed,

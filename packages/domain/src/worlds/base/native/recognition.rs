@@ -30,7 +30,7 @@ mod warning;
 pub(crate) use warning::ordinary_warning;
 #[path = "recognition/prune.rs"]
 mod prune;
-pub(crate) use prune::prune_lost_body_individuals;
+pub(crate) use prune::{IndividualPruneMode, prune_observer_individuals};
 #[path = "recognition/validation.rs"]
 mod validation;
 pub(crate) use validation::validate_selected_identities;

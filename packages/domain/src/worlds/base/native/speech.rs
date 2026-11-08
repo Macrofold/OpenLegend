@@ -95,12 +95,9 @@ impl SpeechAction {
         if trimmed.is_empty() || text.units_len() as u64 > self.maximum_characters {
             return Err(&self.invalid_speech);
         }
-        let volume = match volume.as_deref().unwrap_or("normal") {
-            "whisper" => SpeechVolume::Whisper,
-            "normal" => SpeechVolume::Normal,
-            "shout" => SpeechVolume::Shout,
-            _ => return Err(&self.invalid_volume),
-        };
+        let volume = acoustics
+            .volume(volume.as_deref().unwrap_or("normal"))
+            .ok_or(&self.invalid_volume)?;
         if target_role.is_some() && target_id.is_none() {
             return Err(&self.invalid_role);
         }

@@ -113,9 +113,6 @@ fn end_current_for_life(
             _reservation: proof_reservation,
         });
     };
-    if current.life != life {
-        return Err(invalid());
-    }
     let has_work = !current.current.is_empty()
         || current.geometry.is_some()
         || current
@@ -134,6 +131,11 @@ fn end_current_for_life(
             at,
             _reservation: proof_reservation,
         });
+    }
+    // A retired old-life owner may remain as an empty historical header.
+    // Source cleanup returns before comparing lives when there is no end work.
+    if current.life != life {
+        return Err(invalid());
     }
     let mut count = 0usize;
     let mut bytes = current
@@ -321,7 +323,13 @@ fn end_current_for_life(
         None,
         None,
     )?;
-    crate::worlds::prune_selected_lost_body_individuals(core, observer, &lost, budget)?;
+    crate::worlds::prune_selected_observer_individuals(
+        core,
+        observer,
+        &lost,
+        crate::worlds::IndividualPruneMode::CurrentLoss,
+        budget,
+    )?;
     if let Some(before) = before {
         reconcile_current_cohort(core, Arc::clone(&before), None, budget)?;
     }

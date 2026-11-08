@@ -211,10 +211,10 @@ impl RecognitionJournal {
         });
         Ok(())
     }
-    /// Routine deletion of incidental roots preserves the existing ownership
-    /// flag. It changes preference without granting a new personal account or
-    /// a correspondence/knowledge-revision opportunity.
-    pub(super) fn replace_faded_familiarity(
+    /// Incidental roots can fade, and complete recent retirement can return an
+    /// unlearned body identity to current-only ownership. Neither operation
+    /// grants a correspondence or semantic knowledge-revision opportunity.
+    pub(super) fn replace_incidental_identity(
         &mut self,
         state: &mut ReceptionState,
         temporal: &mut TemporalState,
@@ -246,7 +246,11 @@ impl RecognitionJournal {
                 observer,
                 KnowledgeAccountChange {
                     before_bytes: Some(json_record_len(prior).map_err(|_| invalid())? as u64),
-                    after_bytes: Some(json_record_len(&next).map_err(|_| invalid())? as u64),
+                    after_bytes: if next.retained == Some(true) {
+                        Some(json_record_len(&next).map_err(|_| invalid())? as u64)
+                    } else {
+                        None
+                    },
                     required: false,
                     revocation: false,
                 },

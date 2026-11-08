@@ -233,34 +233,57 @@ pub fn materialize_observation(
 
 /// Identity of one actual acquisition. Source IDs, later aliases and retained
 /// facet contents cannot make a second acquisition of an existing occurrence.
-pub fn observation_acquisition_key(
+#[derive(Serialize)]
+#[serde(untagged)]
+enum AcquisitionOrigin<'a> {
+    Occurrence((&'static str, &'a str, f64, u64)),
+    Exposure((&'static str, &'a str, &'a str, f64, f64)),
+}
+fn acquisition_key<'a>(
     modality: Modality,
-    detector: &DetectorIdentity,
-    channel: Option<&DefinitionPin>,
-    origin: &ObservationOrigin,
-) -> Result<String, ReceivedError> {
-    let channel = channel.map(|pin| serde_json::json!([pin.id, pin.version, pin.digest]));
+    detector: &'a DetectorIdentity,
+    channel: Option<&'a DefinitionPin>,
+    origin: &'a ObservationOrigin,
+) -> impl Serialize + 'a {
+    let channel = channel.map(|pin| (&pin.id, pin.version, &pin.digest));
     let origin = match origin {
         ObservationOrigin::Occurrence {
             event_id,
             at,
             order,
-        } => serde_json::json!(["occurrence", event_id, at, order]),
+        } => AcquisitionOrigin::Occurrence(("occurrence", event_id, *at, *order)),
         ObservationOrigin::Exposure {
             episode_id,
             detector_id,
             measured_from,
             measured_through,
             ..
-        } => serde_json::json!([
+        } => AcquisitionOrigin::Exposure((
             "exposure",
             episode_id,
             detector_id,
-            measured_from,
-            measured_through
-        ]),
+            *measured_from,
+            *measured_through,
+        )),
     };
-    crate::encoding::json_record(&(modality, &detector.id, detector.version, channel, origin))
+    (modality, &detector.id, detector.version, channel, origin)
+}
+pub fn observation_acquisition_key(
+    modality: Modality,
+    detector: &DetectorIdentity,
+    channel: Option<&DefinitionPin>,
+    origin: &ObservationOrigin,
+) -> Result<String, ReceivedError> {
+    crate::encoding::json_record(&acquisition_key(modality, detector, channel, origin))
+        .map_err(|_| ReceivedError("Received acquisition identity encoding failed."))
+}
+pub(super) fn observation_acquisition_key_len(
+    modality: Modality,
+    detector: &DetectorIdentity,
+    channel: Option<&DefinitionPin>,
+    origin: &ObservationOrigin,
+) -> Result<usize, ReceivedError> {
+    crate::encoding::json_record_len(&acquisition_key(modality, detector, channel, origin))
         .map_err(|_| ReceivedError("Received acquisition identity encoding failed."))
 }
 

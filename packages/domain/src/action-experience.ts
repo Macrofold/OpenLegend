@@ -36,7 +36,7 @@ import type { Command, Outcome, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
 import { appendMemory, canonicalJson } from './events.js';
 
-import { isActivityCommand } from './agency.js';
+import { isActivityCommand, activityCommandSyntax, type ActivityCommandSyntax } from './agency.js';
 import {
   nativeCommandSupported,
   installedActivityHost,
@@ -373,8 +373,11 @@ export const emptyActionExperience = (): ActionExperienceState => ({
 
 /** Recording a committed transaction does not make its revision-bound command a
  * reusable plan. Such transactions remain inspectable through the same history. */
-export function isRecordedActivityCommand(command: Command): boolean {
-  if (isActivityCommand(command)) return true;
+export function isRecordedActivityCommand(
+  command: Command,
+  syntax: ActivityCommandSyntax,
+): boolean {
+  if (isActivityCommand(command, syntax)) return true;
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
   if (command.type === 'release-shot')
     return (
@@ -1576,7 +1579,7 @@ export function validateActionExperience(world: WorldState): void {
         (entry.methodId !== undefined && !state.methods[entry.methodId]) ||
         entry.command.id !== entry.id ||
         entry.command.actorId !== actorId ||
-        !isRecordedActivityCommand(entry.command) ||
+        !isRecordedActivityCommand(entry.command, activityCommandSyntax(world)) ||
         (entry.command.chosenPurpose !== undefined &&
           !validResponsePurpose(entry.command.chosenPurpose)) ||
         !Number.isFinite(entry.at) ||

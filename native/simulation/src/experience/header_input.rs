@@ -24,6 +24,7 @@ const MOTION_SAMPLE: &[(&str, Field)] = &[
     ("aliases", Scalar),
 ];
 const FACET: &[(&str, Field)] = &[
+    ("ordinal", Scalar),
     ("support", Object(PROOF)),
     (
         "value",
@@ -91,6 +92,7 @@ const ROOT: &[(&str, Field)] = &[
         ]),
     ),
     ("speech", Object(SPEECH)),
+    ("recognition", Object(&[("learningSupport", Scalar)])),
     (
         "evidence",
         Object(&[

@@ -15,6 +15,41 @@ heap_record!(AwarenessSourceBody {
 heap_record!(FeatureFamily { id });
 heap_record!(AwarenessReceivedFeatures { family, features });
 heap_record!(ExperienceRetention { receipt });
+heap_record!(AssociationPrivacyFact {
+    observation_id,
+    learning_sources
+});
+heap_record!(PersonalPrivacyHeader {
+    primary_observation,
+    direct_observations,
+    learning_observations,
+    learning_sources,
+    associations
+});
+impl HeapBytes for PersonalImpressionHeader {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(0)
+    }
+}
+heap_record!(PersonalSourceHeader {
+    reference,
+    actor_id,
+    event_id,
+    evidence_source_id,
+    evidence_target_id,
+    activity_id,
+    source_receipt,
+    record_kind,
+    source,
+    retention,
+    impression,
+    obligation_evidence_id,
+    completion_event_type,
+    owned_observations,
+    dependencies,
+    privacy_dependencies,
+    privacy
+});
 
 fn original_bytes(original: &Arc<ObservationContribution>) -> Option<usize> {
     heap_sum([

@@ -73,6 +73,14 @@ pub struct AcousticExposure {
 pub struct InvalidAcousticGeometry;
 
 impl AcousticPolicy {
+    /// The installed family's enum owns the same spellings as its complete
+    /// source-level record; callers do not restate world volume vocabulary.
+    pub fn volume(&self, name: &str) -> Option<SpeechVolume> {
+        SpeechVolume::deserialize(serde::de::value::BorrowedStrDeserializer::<
+            serde::de::value::Error,
+        >::new(name))
+        .ok()
+    }
     pub fn validate(&self) -> bool {
         let namespace = |value: &str| {
             let mut chars = value.bytes();

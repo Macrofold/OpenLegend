@@ -160,7 +160,7 @@ impl<'a> ReceivedSceneRead<'a> {
     pub(crate) fn catalogue(&self) -> impl Iterator<Item = (&str, &str)> {
         self.slots.iter().map(|(id, v)| (*id, v.track.as_str()))
     }
-    pub(crate) fn source_ids(&self) -> impl Iterator<Item = &'a str> + '_ {
+    pub(crate) fn source_ids(&self) -> impl Iterator<Item = &'a str> + Clone + '_ {
         self.slots.keys().copied()
     }
     pub(crate) fn body_by_track(

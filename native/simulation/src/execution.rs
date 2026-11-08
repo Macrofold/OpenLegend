@@ -31,6 +31,7 @@ mod agency;
 mod attributes;
 mod body;
 mod conditions;
+mod practice;
 mod rates;
 mod routes;
 mod save;
@@ -109,6 +110,7 @@ pub(crate) struct PendingActionFinish {
     actor_id: String,
     action_id: String,
     personal: crate::activity::PendingActivityResult,
+    outcome: crate::commands::Outcome,
 }
 impl PendingActionFinish {
     pub(crate) fn personal(&self) -> &crate::activity::PendingActivityResult {
@@ -121,6 +123,7 @@ pub(crate) enum ActionFinish {
 }
 
 struct CandidateFrame {
+    encounters: crate::events::EncounterCheckpoint,
     appraisals: crate::appraisals::AppraisalCheckpoint,
     cognition: crate::cognition::CognitionCheckpoint,
     physical: PhysicalCheckpoint,
@@ -149,6 +152,7 @@ pub(crate) struct CandidateCheckpoint {
 /// accept path is provided until actual receiving/history mutation and changed
 /// record encoding have joined this owner completely.
 pub(crate) struct CandidateJournal {
+    pub encounters: crate::events::EncounterScopes,
     budget: ByteBudget,
     pub cognition: crate::cognition::CognitionJournal,
     pub physical: PhysicalJournal,
@@ -208,6 +212,7 @@ impl CandidateJournal {
             return Err(ExecutionError::UnfinishedOccurrence);
         }
         self.current.require_closed()?;
+        self.encounters.require_closed()?;
         self.acquisitions.require_closed()
     }
     pub(crate) fn begin(
@@ -239,6 +244,7 @@ impl CandidateJournal {
         let cognition = crate::cognition::CognitionJournal::new(budget)?;
         let root_cognition = cognition.checkpoint();
         Ok(Self {
+            encounters: crate::events::EncounterScopes::new(budget)?,
             budget: budget.clone(),
             root_appraisals: state.appraisals.checkpoint(),
             cognition,
@@ -280,6 +286,7 @@ impl CandidateJournal {
         &mut self,
         state: &SimulationState,
     ) -> Result<CandidateCheckpoint, ExecutionError> {
+        let encounters = self.encounters.checkpoint()?;
         self.physical.reserve(
             size_of::<CandidateFrame>() * 2
                 + self
@@ -303,6 +310,7 @@ impl CandidateJournal {
             depth: self.frames.len(),
         };
         self.frames.push(CandidateFrame {
+            encounters,
             appraisals: state.appraisals.checkpoint(),
             cognition: self.cognition.checkpoint(),
             physical,
@@ -350,6 +358,7 @@ impl CandidateJournal {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.encounters.rollback_to(frame.encounters);
         self.acquisitions.rollback_to(frame.acquisitions)?;
         state.appraisals.rollback_to(frame.appraisals)?;
         self.cognition
@@ -403,6 +412,7 @@ impl CandidateJournal {
         &mut self,
         state: &mut SimulationState,
     ) -> Result<(), ExecutionError> {
+        self.encounters.rollback_all()?;
         self.acquisitions.rollback_all()?;
         state.appraisals.rollback_to(self.root_appraisals)?;
         self.cognition
@@ -474,12 +484,20 @@ impl CoreMutation<'_> {
             .get(actor_id)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        if actor.agency.plan.is_some() || actor.agency.suspended_plan().is_some() {
+        if actor.agency.plan.as_ref().is_some_and(|plan| {
+            plan.activity.is_some() || plan.steps.iter().any(|step| step.activity_key.is_some())
+        }) || actor
+            .agency
+            .suspended_plan()
+            .is_some_and(|plan| plan.activity.is_some())
+        {
             return Err(ExecutionError::UnsupportedFamily);
         }
-        self.journal
-            .physical
-            .reserve(actor_id.len() + action_id.len())?;
+        self.journal.physical.reserve(
+            actor_id.len()
+                + action_id.len()
+                + result.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        )?;
         self.physical().finish_semantic_work(actor_id, action_id)?;
         self.physical().behavior_changed(actor_id, false)?;
         let pending = self
@@ -489,7 +507,7 @@ impl CoreMutation<'_> {
                 &mut self.state.activity,
                 actor_id,
                 action_id,
-                result,
+                result.clone(),
                 self.state.physical.header.sim_time,
                 &self
                     .state
@@ -504,9 +522,23 @@ impl CoreMutation<'_> {
                 actor_id: actor_id.to_owned(),
                 action_id: action_id.to_owned(),
                 personal,
+                outcome: result,
             }));
         }
         self.physical().release_work(action_id)?;
+        let evidence = self
+            .state
+            .activity
+            .occurrence_for(actor_id, action_id)
+            .map_err(ExecutionError::Activity)?
+            .and_then(|entry| entry.result_evidence.as_ref());
+        self.journal.physical.reserve(
+            evidence
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let evidence = evidence.cloned();
+        crate::plans::finish_plan_action(self, actor_id, action_id, result, evidence)?;
         Ok(ActionFinish::Complete(CompletedAction {
             actor_id: actor_id.to_owned(),
             action_id: action_id.to_owned(),
@@ -519,6 +551,20 @@ impl CoreMutation<'_> {
     ) -> Result<CompletedAction, ExecutionError> {
         self.complete_activity_result(pending.personal, acquired)?;
         self.physical().release_work(&pending.action_id)?;
+        self.journal.physical.reserve(
+            acquired
+                .evidence()
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let evidence = acquired.evidence().cloned();
+        crate::plans::finish_plan_action(
+            self,
+            &pending.actor_id,
+            &pending.action_id,
+            pending.outcome,
+            evidence,
+        )?;
         Ok(CompletedAction {
             actor_id: pending.actor_id,
             action_id: pending.action_id,
@@ -782,6 +828,8 @@ pub(crate) struct ActionRouteWrite {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum UndoKey {
+    CoachingPresence,
+    AgencyPlaces(usize, u64),
     AgencyPlan(usize, u64),
     AgencySuspended(usize, u64),
     AgencyHistory(usize, u64),
@@ -812,6 +860,7 @@ enum UndoKey {
     Status(usize, u64, String),
     Attribute(usize, u64, String),
     Condition(usize, u64, String),
+    Practice(usize, u64, String),
     NativeWindow,
     Episode(String),
     Invocation(String),
@@ -874,6 +923,18 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    CoachingPresence {
+        before: bool,
+    },
+    Practice {
+        entity: EntityHandle,
+        key: String,
+        before: crate::state::PracticeProgress,
+    },
+    AgencyPlaces {
+        entity: EntityHandle,
+        before: Option<Vec<crate::state::RememberedPlace>>,
+    },
     AgencyPlan {
         entity: EntityHandle,
         before: Option<crate::plans::ActorPlan>,
@@ -1269,6 +1330,18 @@ impl PhysicalJournal {
                         .agency
                         .plan = before;
                 }
+                Undo::CoachingPresence { before } => {
+                    state.coaching.present = before;
+                }
+                Undo::AgencyPlaces { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .places = before;
+                }
                 Undo::AgencySuspended { entity, before } => {
                     state
                         .entities
@@ -1486,6 +1559,19 @@ impl PhysicalJournal {
                     }
                     .ok_or(ExecutionError::Invariant)?;
                     *attributes.get_mut(&id).ok_or(ExecutionError::Invariant)? = before;
+                }
+                Undo::Practice {
+                    entity,
+                    key,
+                    before,
+                } => {
+                    *state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.practice.as_mut())
+                        .and_then(|practice| practice.get_mut(&key))
+                        .ok_or(ExecutionError::Invariant)? = before;
                 }
                 Undo::Placement {
                     entity,

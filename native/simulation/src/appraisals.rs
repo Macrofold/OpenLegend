@@ -597,9 +597,13 @@ pub(crate) fn appraise_perceived_event(
     value: f64,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
-    let Some(entity) = core.state.physical.entities.get(actor).filter(|entity| {
-        entity.has_memory() && entity.actor.as_ref().is_some_and(|actor| actor.alive)
-    }) else {
+    let Some(entity) = core
+        .state
+        .physical
+        .entities
+        .get(actor)
+        .filter(|entity| entity.has_memory())
+    else {
         return Ok(());
     };
     if !event.audience.iter().any(|id| id == actor) {
@@ -935,4 +939,99 @@ pub(crate) fn advance_next_appraisal(
         origin: None,
         exposure: None,
     })?))
+}
+
+/// A private-state notice from the actual invalidation owner. Its caller must
+/// publish this actor's appraisal dependency change even when no record existed.
+pub(crate) struct InvalidatedAppraisals {
+    actor_id: String,
+    _reservation: ByteReservation,
+}
+impl InvalidatedAppraisals {
+    pub(crate) fn actor_id(&self) -> &str {
+        &self.actor_id
+    }
+}
+pub(crate) fn invalidate_appraisals(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    budget: &ByteBudget,
+) -> Result<InvalidatedAppraisals, ExecutionError> {
+    let owner = core.state.appraisals.owners.get(actor_id);
+    if owner.is_some_and(|owner| !owner.coverage.complete) {
+        return Err(ExecutionError::Invariant);
+    }
+    let count = owner.map_or(0, |owner| owner.records.len());
+    let key_bytes = owner
+        .into_iter()
+        .flat_map(|o| o.records.keys())
+        .try_fold(0usize, |n, key| n.checked_add(key.len()))
+        .ok_or(ExecutionError::Capacity)?;
+    let selection = budget.reserve(
+        heap_sum([
+            key_bytes,
+            count
+                .checked_mul(size_of::<String>())
+                .ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let notice = budget.reserve(actor_id.len())?;
+    let mut ids = Vec::new();
+    ids.try_reserve_exact(count)
+        .map_err(|_| ExecutionError::Capacity)?;
+    ids.extend(
+        owner
+            .into_iter()
+            .flat_map(|owner| owner.records.keys().cloned()),
+    );
+    ids.sort_by(|a, b| crate::encoding::js_property_cmp(a, b));
+    for id in ids {
+        let record = core
+            .state
+            .appraisals
+            .owners
+            .get(actor_id)
+            .and_then(|owner| owner.records.get(&id))
+            .ok_or(ExecutionError::Invariant)?;
+        let bound = crate::experience::encoded_body_bound(&record.row.payload)?
+            .checked_add(record.row.payload.len())
+            .and_then(|n| n.checked_add(8192))
+            .ok_or(ExecutionError::Capacity)?;
+        let reservation = budget.reserve(bound)?;
+        let mut value = record.value.clone();
+        if value.state != "invalidated" {
+            value.state = "invalidated".into();
+            value.revision = value
+                .revision
+                .checked_add(1)
+                .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Identity)?;
+            value.changed_at = core.state.physical.header.sim_time;
+            value.next_at = None;
+            core.physical().release_work(&id)?;
+        }
+        value.cause = None;
+        value.target_id = None;
+        value.stack_key.clear();
+        value.value = AppraisalValue::Qualitative;
+        value.lifetime = AppraisalLifetime::Persistent;
+        value.last_operation = AppraisalOperation {
+            id: value.id.clone(),
+            body: String::new(),
+        };
+        value.creation_operation = AppraisalOperation {
+            id: value.id.clone(),
+            body: String::new(),
+        };
+        value.predecessor_id = None;
+        put(core, value, reservation)?;
+    }
+    // Enrolled processes are a refused installed family and have no selected
+    // producer. Their absent owner is not replaced by a synthesized process.
+    drop(selection);
+    Ok(InvalidatedAppraisals {
+        actor_id: actor_id.into(),
+        _reservation: notice,
+    })
 }

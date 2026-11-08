@@ -39,7 +39,7 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
 
-const maximumPreparation = 4 * 1024 * 1024;
+export const maximumTemporalPreparationBytes = 4 * 1024 * 1024;
 export const maximumTemporalPreparationRows = 8192;
 export { temporalPageRecordId } from './temporal-page-storage.js';
 export { temporalPageValueReferences } from './temporal-page-storage.js';
@@ -352,7 +352,7 @@ export async function readTemporalHistory(
       )
     : undefined;
   const limit = Math.max(1, Math.min(128, query.limit ?? 128));
-  const maxBytes = Math.max(1, Math.min(maximumPreparation, query.bytes ?? 8192));
+  const maxBytes = Math.max(1, Math.min(maximumTemporalPreparationBytes, query.bytes ?? 8192));
   const metadata = await db
     .prepare(
       `SELECT id,first_at,receipt_epoch,first_batch_order,first_entry,first_member,
@@ -408,7 +408,7 @@ export async function readTemporalHistory(
     hasMore = metadata.length > 128;
   for (const row of metadata.slice(0, 128)) {
     const size = Number(row['encoded_bytes']);
-    if (preparationBytes + size > maximumPreparation) {
+    if (preparationBytes + size > maximumTemporalPreparationBytes) {
       incomplete = true;
       hasMore = true;
       if (!selected.length) metadataBefore = metadataCursor(row);
@@ -537,7 +537,10 @@ export async function readTemporalHistory(
     hasMore: !!metadataBefore,
     ...(metadataBefore ? { nextBefore: metadataBefore } : {}),
   });
-  if (preparationBytes > maximumPreparation || missing.length > maximumTemporalPreparationRows)
+  if (
+    preparationBytes > maximumTemporalPreparationBytes ||
+    missing.length > maximumTemporalPreparationRows
+  )
     return unavailable();
   if (missing.length) {
     const args = [scope.worldId, missing];
@@ -548,7 +551,7 @@ export async function readTemporalHistory(
       )
       .get(...args);
     preparationBytes += Number(sizes?.['bytes'] ?? 0);
-    if (preparationBytes > maximumPreparation) return unavailable();
+    if (preparationBytes > maximumTemporalPreparationBytes) return unavailable();
     for (const row of await db
       .prepare(
         `SELECT source_id,(payload::json->'value')::text AS payload

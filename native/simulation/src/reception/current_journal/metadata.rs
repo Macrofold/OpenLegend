@@ -2,6 +2,94 @@
 //! Every mutation moves its prior field into the same candidate journal.
 use super::*;
 impl CurrentJournal {
+    /// The installed actor-only physical family cannot expose a place landmark.
+    /// Source still clears a previously held nonempty outward place list.
+    pub(in super::super) fn clear_visible_places(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+    ) -> Result<bool, ReceivedError> {
+        let Some(prior) = state
+            .visible_places
+            .as_ref()
+            .and_then(|r| r.get(observer))
+            .filter(|r| !r.is_empty())
+        else {
+            return Ok(false);
+        };
+        self.reserve_growth(
+            observer
+                .len()
+                .checked_add(prior.heap_bytes().ok_or_else(capacity)?)
+                .ok_or_else(capacity)?,
+        )?;
+        let prior = std::mem::take(
+            state
+                .visible_places
+                .as_mut()
+                .and_then(|r| r.get_mut(observer))
+                .ok_or_else(invalid)?,
+        );
+        self.undo.push(CurrentUndo::VisiblePlaces {
+            observer: observer.into(),
+            prior,
+        });
+        Ok(true)
+    }
+
+    pub(crate) fn set_visibility(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        people: bool,
+        after: Vec<String>,
+    ) -> Result<bool, ReceivedError> {
+        let root = if people {
+            &mut state.visible_people
+        } else {
+            &mut state.visible_objects
+        };
+        let root_present = root.is_some();
+        let prior = root.as_ref().and_then(|r| r.get_full(observer));
+        if prior.is_some_and(|(_, _, value)| *value == after) {
+            return Ok(false);
+        }
+        let inserting = prior.is_none();
+        let growth = if inserting && root.as_ref().is_none_or(|r| r.len() == r.capacity()) {
+            map_storage::<String, Vec<String>>(root.as_ref().map_or(1, |r| r.len() + 1))
+                .ok_or_else(capacity)?
+        } else {
+            0
+        };
+        self.reserve_growth(
+            heap_sum([
+                2 * observer.len(),
+                growth,
+                after.heap_bytes().ok_or_else(capacity)?,
+                prior
+                    .map_or(Some(0), |(_, _, p)| p.heap_bytes())
+                    .ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let root = root.get_or_insert_with(IndexMap::new);
+        if inserting {
+            root.try_reserve(1).map_err(|_| capacity())?;
+        }
+        let prior = root.shift_remove_full(observer).map(|(at, _, p)| (at, p));
+        if let Some((at, _)) = &prior {
+            root.shift_insert(*at, observer.into(), after);
+        } else {
+            root.insert(observer.into(), after);
+        }
+        self.undo.push(CurrentUndo::Visibility {
+            observer: observer.into(),
+            people,
+            prior,
+            root_present,
+        });
+        Ok(true)
+    }
     pub(in super::super) fn set_visual_measurement(
         &mut self,
         state: &mut ReceptionState,

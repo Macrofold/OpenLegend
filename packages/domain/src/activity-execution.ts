@@ -22,6 +22,8 @@ import {
   cancelPlan,
   recordPlanResult,
   resolvePlanCommand,
+  activityCommandSyntax,
+  type ActivityCommandSyntax,
 } from './agency.js';
 import {
   captureActionTargets,
@@ -211,7 +213,13 @@ export function cancelActivityCommands(
   while (pending.length) {
     const node = pending.pop()!;
     if (node.kind === 'invoke') {
-      const command = bindActivityCommand(node, execution, actorId, `${plan.id}:cancel-selection`);
+      const command = bindActivityCommand(
+        node,
+        execution,
+        actorId,
+        `${plan.id}:cancel-selection`,
+        activityCommandSyntax(world),
+      );
       if (command && matches(command)) cancelled.add(node.key);
     } else if (node.kind === 'sequence') pending.push(...node.children);
     else if (node.kind === 'branch') {
@@ -232,6 +240,7 @@ export function hasPendingActivityCommand(
   execution: ActivityExecution,
   actorId: string,
   matches: (command: Command) => boolean,
+  syntax: ActivityCommandSyntax,
 ): boolean {
   const pending = execution.pending.map((frame) => frame.node),
     seen = new Set<string>(),
@@ -241,7 +250,13 @@ export function hasPendingActivityCommand(
     if (node.kind === 'invoke') {
       if (seen.has(node.key) || cancelled.has(node.key)) continue;
       seen.add(node.key);
-      const command = bindActivityCommand(node, execution, actorId, 'remaining-command-query');
+      const command = bindActivityCommand(
+        node,
+        execution,
+        actorId,
+        'remaining-command-query',
+        syntax,
+      );
       if (command && matches(command)) return true;
     } else if (node.kind === 'sequence') pending.push(...node.children);
     else if (node.kind === 'branch') {
@@ -769,6 +784,7 @@ export function bindActivityCommand(
   >,
   actorId: string,
   id: string,
+  syntax: ActivityCommandSyntax,
 ): Command | undefined {
   const command = {
     id,
@@ -816,7 +832,7 @@ export function bindActivityCommand(
       tools[field.slice(5)] = bound;
     } else command[field] = bound;
   }
-  return isActivityCommand(command) ? command : undefined;
+  return isActivityCommand(command, syntax) ? command : undefined;
 }
 
 /** Only unfolds control and admits the next native step. The kernel remains the
@@ -956,7 +972,13 @@ export function activityFrontier(
           }
         }
         const id = `${plan.id}:step:${++execution.serial}`;
-        const command = bindActivityCommand(node, execution, actorId, id);
+        const command = bindActivityCommand(
+          node,
+          execution,
+          actorId,
+          id,
+          activityCommandSyntax(world),
+        );
         if (!command) {
           execution.pending.push(frame);
           block('A required actual output or compatible binding is unavailable.');
@@ -1371,7 +1393,7 @@ function firstActivityCommand(
     }
     if (node.kind === 'invoke') {
       if (cancelled?.has(node.key)) return;
-      const bound = bindActivityCommand(node, execution, actorId, id);
+      const bound = bindActivityCommand(node, execution, actorId, id, activityCommandSyntax(world));
       if (!bound)
         return outcome(
           false,

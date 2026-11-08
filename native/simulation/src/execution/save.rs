@@ -7,6 +7,7 @@ use crate::records::{
     SelectedPlacement, SqlCell,
 };
 use serde::Serialize;
+mod agency;
 fn error() -> RecordEncodingError {
     RecordEncodingError("Physical save has no complete current owner, placement or capacity.")
 }
@@ -117,12 +118,15 @@ struct EntityRows<'a> {
     actor: bool,
     action: bool,
     agency: bool,
+    plan_before: Option<&'a Option<crate::plans::ActorPlan>>,
+    history_before: Option<&'a Vec<crate::plans::PlanStep>>,
     animal: bool,
     episode: bool,
     episode_before: Option<&'a Option<crate::native_response::NativeResponseEpisode>>,
     attributes: IndexMap<&'a str, bool>,
     statuses: IndexMap<&'a str, bool>,
     conditions: IndexMap<&'a str, bool>,
+    practice: IndexMap<&'a str, bool>,
     patterns: IndexMap<&'a str, bool>,
 }
 fn one<T: Serialize + ?Sized>(
@@ -488,7 +492,7 @@ impl PhysicalJournal {
         let bytes = heap_sum([
             map_storage::<(usize, u64), EntityRows<'_>>(maximum).ok_or_else(error)?,
             map_storage::<&str, bool>(keys)
-                .and_then(|bytes| bytes.checked_mul(4))
+                .and_then(|bytes| bytes.checked_mul(5))
                 .ok_or_else(error)?,
             map_storage::<&str, bool>(maximum).ok_or_else(error)?,
         ])
@@ -499,9 +503,11 @@ impl PhysicalJournal {
         let mut bindings = IndexMap::with_capacity(maximum);
         let mut subjects = IndexMap::with_capacity(maximum);
         let mut window = false;
+        let mut coaching = false;
         let mut added = 0u64;
         for change in &self.undo {
             match change {
+                Undo::CoachingPresence { .. } => coaching = true,
                 Undo::AddedEntity(before) => {
                     let rows = selected
                         .entry((before.handle.slot, before.handle.generation))
@@ -538,6 +544,7 @@ impl PhysicalJournal {
                 _ => {
                     let handle = match change {
                         Undo::Placement { entity, .. }
+                        | Undo::AgencyPlaces { entity, .. }
                         | Undo::AgencyPlan { entity, .. }
                         | Undo::AgencySuspended { entity, .. }
                         | Undo::AgencyHistory { entity, .. }
@@ -566,6 +573,7 @@ impl PhysicalJournal {
                         | Undo::ResultEvidence { entity, .. }
                         | Undo::Status { entity, .. }
                         | Undo::Attribute { entity, .. }
+                        | Undo::Practice { entity, .. }
                         | Undo::Condition { entity, .. } => *entity,
                         _ => return Err(error()),
                     };
@@ -624,11 +632,18 @@ impl PhysicalJournal {
                         }
                         Undo::SemanticMeta { .. }
                         | Undo::SemanticResolved { .. }
-                        | Undo::AgencyPlan { .. }
+                        | Undo::AgencyPlaces { .. }
                         | Undo::AgencySuspended { .. }
-                        | Undo::AgencyHistory { .. }
                         | Undo::AgencyRevision { .. }
                         | Undo::ResultEvidence { .. } => rows.agency = true,
+                        Undo::AgencyPlan { before, .. } => {
+                            rows.agency = true;
+                            rows.plan_before.get_or_insert(before);
+                        }
+                        Undo::AgencyHistory { before, .. } => {
+                            rows.agency = true;
+                            rows.history_before.get_or_insert(before);
+                        }
                         Undo::Status {
                             key,
                             before,
@@ -654,6 +669,9 @@ impl PhysicalJournal {
                         Undo::Attribute { id, .. } => {
                             rows.attributes.entry(id.as_str()).or_insert(true);
                         }
+                        Undo::Practice { key, .. } => {
+                            rows.practice.entry(key.as_str()).or_insert(true);
+                        }
                         _ => return Err(error()),
                     }
                 }
@@ -665,6 +683,16 @@ impl PhysicalJournal {
                 .entry((handle.slot, handle.generation))
                 .or_default()
                 .root = true;
+        }
+        if coaching {
+            observe(
+                output,
+                "sim_coaching_episodes",
+                &["world"],
+                state.coaching.is_present(),
+                0,
+                budget,
+            )?;
         }
         for ((slot, generation), rows) in selected {
             let entity = state
@@ -789,6 +817,7 @@ impl PhysicalJournal {
                 || rows.agency
                 || !rows.attributes.is_empty()
                 || !rows.conditions.is_empty()
+                || !rows.practice.is_empty()
             {
                 let actor = entity.actor.as_ref();
                 if rows.action {
@@ -814,6 +843,15 @@ impl PhysicalJournal {
                         actor.map(|actor| &actor.agency),
                         budget,
                     )?;
+                    agency::encode(
+                        id,
+                        &actor.ok_or_else(error)?.agency,
+                        rows.plan_before,
+                        rows.history_before,
+                        ledger,
+                        output,
+                        budget,
+                    )?;
                 }
                 if !rows.conditions.is_empty() {
                     map(
@@ -824,6 +862,19 @@ impl PhysicalJournal {
                         "conditions",
                         actor.and_then(|actor| actor.conditions.as_ref()),
                         &rows.conditions,
+                        false,
+                        budget,
+                    )?;
+                }
+                if !rows.practice.is_empty() {
+                    map(
+                        ledger,
+                        output,
+                        "sim_actor_practice",
+                        &actor_parent,
+                        "practice",
+                        actor.and_then(|actor| actor.practice.as_ref()),
+                        &rows.practice,
                         false,
                         budget,
                     )?;

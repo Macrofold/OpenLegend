@@ -57,14 +57,20 @@ impl TemporalState {
             .map(|(at, _, record)| (at, Arc::clone(record)));
         let next_ordinal = supports.coverage.next_ordinal;
         let parent_present = supports.coverage.parent_present;
+        // This is an ordinary Source object map, not a stable history list.
+        // Structural edits change later Object.entries SQL positions as well.
+        if before.is_some() != after.is_some() && !supports.coverage.complete {
+            return Err(invalid());
+        }
         let next = if after.is_some() && before.is_none() {
-            next_ordinal
-                .checked_add(1)
-                .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
-                .ok_or_else(invalid)?
+            supports.records.len().checked_add(1).ok_or_else(invalid)?
+        } else if after.is_none() && before.is_some() {
+            supports.records.len().checked_sub(1).ok_or_else(invalid)?
+        } else if supports.coverage.complete {
+            supports.records.len()
         } else {
-            next_ordinal
-        };
+            next_ordinal as usize
+        } as u64;
         self.undo
             .try_reserve(1)
             .map_err(|_| ReceivedError("Temporal support undo capacity is unavailable."))?;
@@ -87,6 +93,7 @@ impl TemporalState {
                 supports.records.insert(id.to_owned(), record);
             }
             None => {
+                supports.coverage.next_ordinal = next;
                 supports.records.shift_remove(id);
             }
         }
@@ -180,9 +187,10 @@ impl TemporalState {
         {
             return Ok(None);
         }
-        let position = prior
-            .as_ref()
-            .map_or(supports.coverage.next_ordinal, |prior| prior.position);
+        let position = supports
+            .records
+            .get_index_of(&capsule.receipt.id)
+            .map_or(supports.records.len() as u64, |position| position as u64);
         if let Some(prior) = &prior {
             self.adjust_account(
                 actor_id,

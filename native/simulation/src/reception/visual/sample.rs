@@ -283,7 +283,7 @@ pub(super) fn receive_subject(
     sight: &SightResults,
     detailed: bool,
     budget: &ByteBudget,
-) -> Result<(), ExecutionError> {
+) -> Result<Option<u64>, ExecutionError> {
     core.journal.meters.charge(&[(WorkUnit::Tests, 1)])?;
     core.journal.current.set_gap(
         &mut core.state.reception,
@@ -313,8 +313,12 @@ pub(super) fn receive_subject(
                 entity.physical_life(),
             )
         }
-        _ => return Ok(()),
+        _ => return Ok(None),
     };
+    phase.checked.insert(subject.into());
+    if detailed {
+        phase.detailed.insert(subject.into());
+    }
     let mut prepared = super::super::visual_source::prepare_visual_source(
         core.state,
         &phase.observer.actor_id,
@@ -351,8 +355,9 @@ pub(super) fn receive_subject(
             .is_some_and(|m| core.state.physical.header.sim_time > m.through)
         {
             phase.retired_motion.insert(subject.into());
+            phase.attention_changes.insert(subject.into());
         }
-        return Ok(());
+        return Ok(None);
     }
     let now = core.state.physical.header.sim_time;
     let bound = prepared
@@ -464,6 +469,33 @@ pub(super) fn receive_subject(
             };
         if !changed {
             continue;
+        }
+        phase.attention_changes.insert(subject.into());
+        if kind == "location" {
+            phase.geometry_changes.insert(subject.into());
+        }
+        if let (Some(SensoryFacet::Body { body: a }), SensoryFacet::Body { body: b }) =
+            (&previous, &facet)
+        {
+            let (ad, ap) = split_observed_body(a.clone());
+            let (bd, bp) = split_observed_body(b.clone());
+            if ap != bp || ad.radius != bd.radius || ad.height != bd.height {
+                phase.geometry_changes.insert(subject.into());
+            }
+            if phase.collect_notices {
+                if let Some(detail) = core
+                    .state
+                    .installed
+                    .observation_rules
+                    .value()
+                    .changed_outward_notice(a, b)
+                {
+                    phase.reserve(detail.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+                    phase.notices.insert(subject.into(), detail);
+                }
+            }
+        } else if kind == "body" {
+            phase.geometry_changes.insert(subject.into());
         }
         if kind == "location" && !reacquired {
             if let (
@@ -684,6 +716,14 @@ pub(super) fn receive_subject(
         });
     }
     if !samples.is_empty() {
+        let before = CurrentCohort::capture(
+            &core.state.physical,
+            &core.state.reception,
+            &core.state.installed,
+            &core.state.experience,
+            &phase.observer.actor_id,
+            budget,
+        )?;
         let token = sample_token(core, &mut token)?;
         let transition = core.journal.acquisitions.begin_received(
             &phase.observer.actor_id,
@@ -695,9 +735,10 @@ pub(super) fn receive_subject(
                 prepare_current_sample(core, &phase.observer.actor_id, input, value, budget)?
             {
                 close_current_sample_history(core, &phase.observer.actor_id, &pending, budget)?;
+                let kind = pending.kind().to_owned();
                 let confirmed_revision = pending.revision();
                 let frame_ref = Some(pending.received_frame().unwrap_or(&phase.frame_ref).clone());
-                let (status, _) = apply_current_sample(
+                let (status, parts) = apply_current_sample(
                     &mut core.journal.current,
                     &mut core.state.reception,
                     pending,
@@ -708,9 +749,16 @@ pub(super) fn receive_subject(
                         frame_ref,
                     },
                 )?;
-                phase
-                    .current
-                    .note(subject, status == CurrentSampleStatus::Changed)?;
+                phase.current.installed_sample(
+                    core,
+                    subject,
+                    &kind,
+                    status,
+                    parts,
+                    before.as_ref(),
+                    token,
+                    budget,
+                )?;
             }
         }
         super::super::retirement::finish_received(core, transition)?;
@@ -739,7 +787,13 @@ pub(super) fn receive_subject(
             .sensory
             .as_ref()
             .map_or(0.0, |s| s.epoch_at);
-        let period = policy.and_then(|p| p.seconds);
+        let period = policy.and_then(|p| {
+            if phase.before_attention.contains(subject) {
+                p.detail_seconds.or(p.seconds)
+            } else {
+                p.seconds
+            }
+        });
         let expires_at = period.map_or(now, |p| epoch + (((now - epoch) / p).floor() + 1.0) * p);
         let continuity_revision = location.field.motion_continuity_revision.unwrap_or(0);
         core.journal.current.set_motion(
@@ -785,5 +839,8 @@ pub(super) fn receive_subject(
             }),
         )?;
     }
-    Ok(())
+    if let Some(token) = token {
+        phase.sample_tokens.insert(subject.into(), token);
+    }
+    Ok(token)
 }

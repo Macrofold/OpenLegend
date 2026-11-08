@@ -42,6 +42,26 @@ pub(crate) struct CurrentCohort {
     _reservation: ByteReservation,
 }
 impl CurrentCohort {
+    pub(super) fn track_source_ids(&self) -> impl Iterator<Item = &str> + Clone {
+        self.tracks.keys().map(String::as_str)
+    }
+    pub(super) fn entry_source_ids(&self) -> impl Iterator<Item = &str> + Clone {
+        self.entries.iter().map(|e| e.source_id.as_str())
+    }
+    pub(super) fn selection_changed(&self, reception: &ReceptionState) -> bool {
+        let after = reception
+            .perception_evidence
+            .as_ref()
+            .and_then(|o| o.get(&self.observer.actor_id))
+            .and_then(|o| o.attention.as_ref())
+            .map_or(&[][..], |a| a.entries.as_slice());
+        self.entries.len() != after.len()
+            || self
+                .entries
+                .iter()
+                .zip(after)
+                .any(|(a, b)| a.key != b.key || a.subject != b.subject)
+    }
     pub(crate) fn observer(&self) -> &ObserverLife {
         &self.observer
     }

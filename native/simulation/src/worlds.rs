@@ -90,4 +90,6 @@ pub(crate) use base_knowledge::{
     CapturedNames, OwnedPersonalName, PersonalNameReader as InstalledPersonalNameReader,
 };
 
-pub(crate) use base_recognition::prune_lost_body_individuals as prune_selected_lost_body_individuals;
+pub(crate) use base_recognition::{
+    IndividualPruneMode, prune_observer_individuals as prune_selected_observer_individuals,
+};

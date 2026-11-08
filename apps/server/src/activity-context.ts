@@ -5,6 +5,7 @@ import {
   acquiredActivities,
   activityRoleCompatible,
   bindActivityCommand,
+  activityCommandSyntax,
   nativeActivityView,
   renderActivity,
   ACTIVITY_SYNTAX,
@@ -117,7 +118,13 @@ export function activityChoiceView(
             `Requires ${arg.quantity} ${name} actually produced by earlier work; it is not owned yet`,
           );
         }
-      const command = bindActivityCommand(node, { bindings, outputs }, actorId, 'view-only');
+      const command = bindActivityCommand(
+        node,
+        { bindings, outputs },
+        actorId,
+        'view-only',
+        activityCommandSyntax(world),
+      );
       const result = command ? nativeActivityView(world, command) : { name: node.name, facts: [] };
       result.name = node.name;
       result.facts.push(

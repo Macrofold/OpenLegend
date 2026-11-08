@@ -19,6 +19,8 @@ use indexmap::IndexSet;
 use std::mem::size_of;
 
 mod projection;
+mod revoke;
+pub(crate) use revoke::{CurrentRecordingRevocation, plan_current_recording_revocation};
 mod support;
 mod terminal;
 pub(crate) use terminal::terminal_member_bytes;

@@ -6,6 +6,7 @@ import {
   PERSONAL_EVIDENCE_PREPARATION,
   type TemporalHistorySelection,
   type ActionResultValue,
+  activityCommandSyntax,
 } from '@open-legend/domain';
 import { captureTemporalHistoryReadContext, temporalHistoryWindow } from './temporal-storage.js';
 import { historicalAccountText } from './entity-references.js';
@@ -7267,7 +7268,11 @@ export class WorldService {
   ): PreparedNativeChoice | Outcome | ApiResult {
     const bound = this.bindCommand('prepared-choice', input, actorId, false);
     if ('ok' in bound) return bound;
-    if (!isActivityCommand(bound) && bound.type !== 'learn-record' && bound.type !== 'compose')
+    if (
+      !isActivityCommand(bound, activityCommandSyntax(this.world)) &&
+      bound.type !== 'learn-record' &&
+      bound.type !== 'compose'
+    )
       return this.previewNativeCommand(input, actorId);
     return this.prepareNativeCommandChoice(bound, transition);
   }
