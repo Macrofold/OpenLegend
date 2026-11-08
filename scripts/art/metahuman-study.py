@@ -604,16 +604,20 @@ def prepare(manifest_path, out, report):
     if remaining:
         path = source_file(manifest['prepared_master'])
         names = [objects[key]['object'] for key in remaining]
+        expected_names = set(names)
         with bpy.data.libraries.load(str(path), link=False) as (available, loaded):
-            if not set(names).issubset(available.objects):
+            if not expected_names.issubset(available.objects):
                 raise ValueError('A declared prepared part/helper mesh is missing')
-            loaded.objects = names
+            # Blender replaces this list's strings with datablocks on exit.
+            loaded.objects = list(names)
         for obj in loaded.objects:
             if obj.type != 'MESH' or obj.modifiers or obj.constraints or obj.parent:
                 raise ValueError('Prepared part/helper objects must be frozen unparented meshes')
             bpy.context.collection.objects.link(obj)
-        if {obj.name for obj in loaded.objects} != set(names):
+        if {obj.name for obj in loaded.objects} != expected_names:
             raise ValueError('Prepared object names were truncated or collided')
+        # Linked object transforms are not evaluated until the graph settles.
+        bpy.context.view_layer.update()
     # Native head/body partitions can coincide yet use different blend weights.
     # The existing seam already makes body positions authoritative; share those
     # weights once in the master before the compiler applies its influence cap.
