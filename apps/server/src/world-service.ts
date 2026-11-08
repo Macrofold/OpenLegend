@@ -1,5 +1,6 @@
 import {
   recentResultEligible,
+  captureActivityResults,
   resultEvidenceId,
   resultEvidenceMatchesReceipt,
   selectCapturedTemporalHistory,
@@ -3460,15 +3461,12 @@ export class WorldService {
     }
     rows.sort((a, b) => a.position - b.position);
     const denied = new Set(original.world.experience?.forgotten[actorId] ?? []);
-    const discovered = discoverActivities(
-      original.world,
-      actorId,
-      rows.map((row) =>
-        denied.has(row.entry.id) || row.entry.evidenceIds.some((id) => denied.has(id))
-          ? { ...row.entry, revoked: true }
-          : row.entry,
-      ),
+    const entries = rows.map((row) =>
+      denied.has(row.entry.id) || row.entry.evidenceIds.some((id) => denied.has(id))
+        ? { ...row.entry, revoked: true }
+        : row.entry,
     );
+    const discovered = discoverActivities(original.world, actorId, entries);
     const assessed = original.world.actionExperience.learning[actorId]?.assessed ?? [];
     const proposedAssessments = [
       ...new Set([...assessed, ...discovered.candidates.map((candidate) => candidate.signature)]),
@@ -3479,7 +3477,7 @@ export class WorldService {
     updateWorld(
       original.world,
       (draft) => {
-        draft.actionExperience.occurrences[actorId] = rows.map((row) => row.entry);
+        draft.actionExperience.occurrences[actorId] = entries;
         for (const candidate of discovered.candidates)
           if (!retainActivity(draft, actorId, candidate)) retentionBlocked = true;
       },
@@ -3489,7 +3487,13 @@ export class WorldService {
       retentionBlocked ||
       proposedAssessments.length > ACTIVITY_LIMITS.assessed ||
       Buffer.byteLength(JSON.stringify(proposedAssessments)) > ACTIVITY_LIMITS.assessmentBytes;
-    return { ...discovered, rows, through, generation, actorId, capacityBlocked };
+    const capturedResults = captureActivityResults(
+      original.world,
+      actorId,
+      discovered.candidates,
+      entries,
+    );
+    return { ...discovered, rows, through, generation, actorId, capacityBlocked, capturedResults };
   }
 
   async publishActivityLearning(
@@ -3504,7 +3508,9 @@ export class WorldService {
       !batch.capacityBlocked &&
       !this.paused &&
       this.generation === batch.generation &&
-      !!entityGet(this.world.entities, batch.actorId)?.actor?.alive;
+      !!entityGet(this.world.entities, batch.actorId)?.actor?.alive &&
+      (entityGet(this.world.entities, batch.actorId)?.actor?.physicalLife ?? 0) ===
+        batch.capturedResults.physicalLife;
     if (!eligible()) return false;
     const original = this.world;
     const generation = this.generation;
@@ -3604,7 +3610,7 @@ export class WorldService {
                   !entry.evidenceIds.some((source) => denied.has(source))
                 );
               });
-              if (!valid || !retainActivity(draft, batch.actorId, candidate))
+              if (!valid || !retainActivity(draft, batch.actorId, candidate, batch.capturedResults))
                 throw new Error(
                   'Learning could not be retained; no partial publication was committed.',
                 );

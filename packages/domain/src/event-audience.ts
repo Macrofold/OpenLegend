@@ -4,7 +4,7 @@ import { nativeEntityGroups } from './entity-index.js';
 import { takeNativeChanges } from './native-change-feed.js';
 import { hasMemory } from './living.js';
 import { activelyParticipates } from './participation-state.js';
-import { seesEntity, visionRadius } from './perception.js';
+import { seesEntity, installedVisionRadius } from './perception.js';
 import { SpatialCandidateIndex } from './spatial.js';
 import { worldPosition } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
@@ -22,7 +22,7 @@ function refreshReceiver(world: WorldState, index: ReceiverIndex, id: string): v
     previous = index.receivers.get(id),
     radius =
       entity && hasMemory(entity) && entity.actor?.alive && activelyParticipates(entity)
-        ? visionRadius(world, entity)
+        ? installedVisionRadius(world, entity)
         : 0,
     key = radius > 0 ? entityOrdering(world.entities, id)?.key : undefined,
     position = key && entity ? worldPosition(entity) : undefined;

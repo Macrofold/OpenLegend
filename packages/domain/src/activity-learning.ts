@@ -1,4 +1,10 @@
-import { recentResultEligible, resultEvidenceId } from './result-evidence.js';
+import {
+  recentResultEligible,
+  recentResultUnrevoked,
+  resultEvidenceId,
+  sameResultEvidence,
+  type ResultEvidence,
+} from './result-evidence.js';
 import { isNativeInputField } from './native-inputs.js';
 import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
@@ -44,6 +50,38 @@ export interface ActivityCandidate {
    * when two compatible known spans overlap. Never shown as another's knowledge. */
   matches?: { methodId: string; occurrenceIds: string[] }[];
   matchingDeferred?: boolean;
+}
+
+/** A finite learning request may finish after ordinary history expiry. Keep only
+ * exact addresses admitted for its verified candidates, never a retained world
+ * or a new retention right. Explicit edits and observer replacement still apply.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#bk29-d--one-personal-source-for-routine-results */
+export interface CapturedActivityResults {
+  actorId: string;
+  physicalLife: number;
+  results: ReadonlyMap<string, Extract<ResultEvidence, { kind: 'recent' }>>;
+}
+export function captureActivityResults(
+  world: WorldState,
+  actorId: string,
+  candidates: readonly ActivityCandidate[],
+  entries: readonly ActivityOccurrence[],
+): CapturedActivityResults {
+  const selected = new Set(candidates.flatMap((candidate) => candidate.occurrenceIds));
+  const results = new Map<string, Extract<ResultEvidence, { kind: 'recent' }>>();
+  if (selected.size)
+    for (const entry of entries)
+      if (
+        selected.has(entry.id) &&
+        entry.resultEvidence?.kind === 'recent' &&
+        recentResultEligible(world, actorId, entry.resultEvidence)
+      )
+        results.set(entry.id, cloneValue(entry.resultEvidence));
+  return {
+    actorId,
+    physicalLife: entityGet(world.entities, actorId)?.actor?.physicalLife ?? 0,
+    results,
+  };
 }
 /** One current binding check shared by the native chooser and prepared offers.
  * Seeing a basket does not disclose its contents or authorize fresh stock selection.
@@ -200,16 +238,27 @@ export function normalizeActivity(
   actorId: string,
   entries: ActivityOccurrence[],
   incomplete = false,
+  capture?: CapturedActivityResults,
 ): ActivityCandidate | undefined {
   if (entries.length < 2 || entries.length > ACTIVITY_LIMITS.nodes) return;
   entries = entries.map(resolvedLearningOccurrence);
+  const capturedResults =
+    capture?.actorId === actorId &&
+    capture.physicalLife === (entityGet(world.entities, actorId)?.actor?.physicalLife ?? 0)
+      ? capture.results
+      : undefined;
   if (
     entries.some(
       (entry) =>
         entry.actorId !== actorId ||
         entry.revoked ||
         (entry.resultEvidence !== undefined &&
-          !recentResultEligible(world, actorId, entry.resultEvidence)) ||
+          !recentResultEligible(world, actorId, entry.resultEvidence) &&
+          !(
+            entry.resultEvidence.kind === 'recent' &&
+            sameResultEvidence(capturedResults?.get(entry.id), entry.resultEvidence) &&
+            recentResultUnrevoked(world, actorId, entry.resultEvidence)
+          )) ||
         entry.noLearningControl ||
         !supportedStockOccurrence(entry) ||
         (entry.command.type === 'tend-fire' && entry.command.onlyWhenLow === true) ||
@@ -612,6 +661,7 @@ export function retainActivity(
   world: WorldState,
   actorId: string,
   candidate: ActivityCandidate,
+  capture?: CapturedActivityResults,
 ): string | undefined {
   validateActivityNode(candidate.method.root);
   if (candidate.method.manifest !== activityManifest(world)) return;
@@ -628,6 +678,7 @@ export function retainActivity(
     actorId,
     sources as ActivityOccurrence[],
     !candidate.method.executable,
+    capture,
   );
   if (!verified || verified.signature !== candidate.signature) return;
   const state = world.actionExperience;

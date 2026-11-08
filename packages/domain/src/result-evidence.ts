@@ -75,6 +75,19 @@ export interface ActionResultValue {
   facts: ActivityFact[];
 }
 
+/** Explicit source edits remain authoritative even after ordinary raw expiry. */
+export function recentResultUnrevoked(
+  world: WorldState,
+  actorId: string,
+  evidence: Extract<ResultEvidence, { kind: 'recent' }>,
+): boolean {
+  return (
+    evidence.receipt.actorId === actorId &&
+    !temporalReadSourceRevoked(world, actorId, evidence.subject) &&
+    !temporalReadSourceRevoked(world, actorId, resultEvidenceId(evidence)!)
+  );
+}
+
 /** Eligibility checks the existing directory, never hydrates execution history or
  * extends retention. Exact readers still validate the selected receipt/value. */
 export function recentResultEligible(
@@ -85,10 +98,8 @@ export function recentResultEligible(
   if (evidence.kind !== 'recent') return true;
   const actor = world.experience?.temporal?.actors[actorId];
   return (
-    evidence.receipt.actorId === actorId &&
     !!actor &&
-    !temporalReadSourceRevoked(world, actorId, evidence.subject) &&
-    !temporalReadSourceRevoked(world, actorId, resultEvidenceId(evidence)!) &&
+    recentResultUnrevoked(world, actorId, evidence) &&
     receivedDirectoryContains(
       actor.recent,
       evidence.receipt,

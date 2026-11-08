@@ -1162,6 +1162,10 @@ export class SqlGameRepository implements GameRepository {
   adoptHistory(original: SavedWorld, prepared: SavedWorld): void {
     if (original !== this.acceptedState || original.world.id !== prepared.world.id)
       throw new Error('Prepared history no longer matches the committed world.');
+    // Hydration can add mutable branches. Seal the owned predecessor once so a
+    // later deferred save can retain its immutable history intent; already frozen
+    // branches stop traversal. docs/save-and-load.md#current-history-capture-boundary
+    freezeWorld(prepared.world);
     inheritSavedTemporalTails(original.world, prepared.world);
     this.acceptedState = prepared;
   }
@@ -1172,16 +1176,14 @@ export class SqlGameRepository implements GameRepository {
   ): Promise<SavedWorld> {
     if (state !== this.acceptedState) throw new Error('Flush before materializing history.');
     const full = await this.records.withHistory(state, actorIds, sourceIds);
-    inheritSavedTemporalTails(state.world, full.world);
-    this.acceptedState = full;
+    this.adoptHistory(state, full);
     return full;
   }
   async hydrateStatusEffectHistory(state: SavedWorld): Promise<SavedWorld> {
     if (state !== this.acceptedState)
       throw new Error('Flush before materializing condition history.');
     const full = await this.records.withStatusEffectHistory(state);
-    inheritSavedTemporalTails(state.world, full.world);
-    this.acceptedState = full;
+    this.adoptHistory(state, full);
     return full;
   }
   async load(active = false): Promise<{ revision: number; state: SavedWorld } | null> {

@@ -340,6 +340,12 @@ export function sensesFor(world: WorldState, entity: Entity): SenseDefinition[] 
 }
 export function visionRadius(world: WorldState, entity: Entity): number {
   if (capabilityBlocked(world, entity, 'perception')) return 0;
+  return installedVisionRadius(world, entity);
+}
+/** Conservative receiving bound, never visibility authority. Temporary restrictions
+ * can end through another source or elapsed time without changing this body.
+ * docs/status-effects.md#independent-capability-contributions */
+export function installedVisionRadius(world: WorldState, entity: Entity): number {
   return resolveSenses(world, entity).vision;
 }
 export function visionFieldOfView(world: WorldState, entity: Entity): number {
