@@ -101,6 +101,8 @@ No new gameplay mechanic, fixed geographic barrier, loading screen, perfect cogn
 
 **Required passes:** connected journeys for the delivered stage, exact once-only effects, current privacy and restored continuation, and the existing operating gates applicable to that stage. **Required measurements:** full process/core cost, allocation/retention, database/network amplification, latency and scaling with complete equal work. **Explorations:** speculative layout, library, worker and placement variants. A faster variant that loses required behavior fails. Human enjoyment, live model quality and production capacity remain separate evidence; do not infer them from deterministic fixtures.
 
+Coverage includes the [current caller/field and lifecycle cases](native-simulation-core-tech-design.md#94-full-adoption-inventory-and-removal-targets), including unloaded history, unsaved reads, partial replies, live edits and restore-time authority. A successful fresh opening does not establish complete conversion. Ordinary queries see accepted state; loading cold records does not create memories, and restoring a save cannot restore forgotten information or renew expired control input.
+
 **Open product decisions:** None needed to begin the scoped proof after implementation authorization. Rust-wide adoption, measured capacity, adaptive thresholds and distributed-family enablement are explicitly gated engineering decisions, not unanswered permission questions. The unrelated PS/D22 choices for federation, broader powers and product congestion limits remain with their existing owners.
 
 ## Maintained records
