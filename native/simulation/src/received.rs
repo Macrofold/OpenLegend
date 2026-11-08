@@ -18,14 +18,14 @@ mod metadata;
 mod result;
 pub(crate) use current::{
     CurrentRecordingContext, CurrentRecordingUpdates, TemporalCurrentGroupInput,
-    current_group_recording_complete,
+    current_group_recording_complete, terminal_member_bytes,
 };
 mod save;
 mod selection;
 pub(crate) use save::encode_received_value_changes;
 pub(crate) use selection::{
     CapturedTemporalReceipt, observation_receipt_member_indices, select_temporal_receipt_facets,
-    temporal_receipt_aliases,
+    temporal_receipt_account_aliases, temporal_receipt_aliases,
 };
 mod retained_size;
 pub use result::*;

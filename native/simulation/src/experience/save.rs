@@ -9,6 +9,7 @@ use crate::records::{
 };
 use serde::ser::{SerializeStruct, Serializer};
 use std::mem::size_of;
+mod privacy;
 
 fn encoding() -> RecordEncodingError {
     RecordEncodingError("Personal source save has no exact current placement or byte allowance.")
@@ -123,6 +124,7 @@ pub(crate) fn encode_personal_changes(
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
+    privacy::encode_privacy_changes(state, journal, ledger, output, budget)?;
     if journal.header_changed() {
         let placement = ledger
             .placement("experience_state", "[\"world\",\"experience\"]")

@@ -243,7 +243,7 @@ impl BodyReconcileCursor {
                         let result = Outcome {
                             ok: false,
                             code: rules.unavailable_code.clone(),
-                            message: rules.unavailable_text.clone(),
+                            message: rules.unavailable_text.clone().into(),
                             spent: None,
                             outputs: None,
                             recipe_id: None,
@@ -355,7 +355,7 @@ impl BodyReconcileCursor {
                     // Physical installation and selected command writers close
                     // the genuinely empty custody branch; no item lot can be
                     // invented or silently abandoned by this constructor.
-                    if actor.agency.plan.is_some() || actor.agency.suspended.is_some() {
+                    if actor.agency.plan.is_some() || actor.agency.suspended_plan().is_some() {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
                     let growth = super::corpse::allocation_bound(entity)

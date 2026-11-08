@@ -152,7 +152,7 @@ impl CoreMutation<'_> {
                     "interrupted"
                 }
                 .to_owned(),
-                message: reason.to_owned(),
+                message: reason.into(),
                 recipe_id: None,
                 item_id: None,
                 entity_id: None,

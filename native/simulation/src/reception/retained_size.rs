@@ -13,6 +13,7 @@ use crate::values::{AttributeValue, DefinitionPin};
 
 macro_rules! fixed { ($($ty:ty),* $(,)?)=>{$(impl HeapBytes for $ty { fn heap_bytes(&self)->Option<usize>{Some(0)} })*}; }
 fixed!(FacetRole, Point);
+heap_record!(VisualMeasurement { lease_id, token });
 fixed!(
     EvidenceFamily,
     SurfaceEdge,

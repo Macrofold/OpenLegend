@@ -75,7 +75,17 @@ pub(crate) struct CapturedActorPerception {
     pub sight_confirmed_through: Option<f64>,
     pub bodies: Vec<CapturedBodyBinding>,
     pub evidence: CapturedEvidenceCut,
+    pub geometry: Option<CapturedGeometryRange>,
     _reservation: ByteReservation,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct CapturedGeometryRange {
+    first: usize,
+    count: usize,
+    complete: bool,
+    visited: u64,
+    supported_through: f64,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -86,6 +96,8 @@ struct PerceptionProduct<'a> {
     sight_confirmed_through: Option<f64>,
     bodies: &'a [CapturedBodyBinding],
     cut: &'a crate::experience::EvidenceCut,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    geometry: Option<&'a CapturedGeometryRange>,
 }
 impl CapturedActorPerception {
     pub(crate) fn write_json(
@@ -99,6 +111,7 @@ impl CapturedActorPerception {
             sight_confirmed_through: self.sight_confirmed_through,
             bodies: &self.bodies,
             cut: self.evidence.cut(),
+            geometry: self.geometry.as_ref(),
         };
         let length =
             crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
@@ -123,6 +136,7 @@ impl CapturedActorPerception {
 pub(crate) fn capture_actor_perception(
     state: &SimulationState,
     actor_id: &str,
+    purpose: ActorReadPurpose,
     budget: &ByteBudget,
 ) -> Result<CapturedActorPerception, ExecutionError> {
     state
@@ -286,13 +300,49 @@ pub(crate) fn capture_actor_perception(
         .map(|confirmation| confirmation.through);
     drop(names);
     drop(scope);
+    let (acquired, geometry) = if matches!(purpose, ActorReadPurpose::NpcDecision) {
+        let read = crate::reception::current_received_geometry(state, actor_id, budget)?;
+        let count = read.observations().count();
+        let mut acquired = Vec::new();
+        let bytes = count
+            .checked_mul(size_of::<crate::reception::OwnedObservation>())
+            .ok_or(ExecutionError::Capacity)?;
+        // The final cut takes over each payload guard. This temporary vector's
+        // own backing remains funded through the consuming cut constructor.
+        let skeleton = budget.reserve(bytes)?;
+        acquired
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        for observation in read.observations() {
+            acquired.push(crate::reception::capture_stored_observation(
+                observation,
+                budget,
+            )?);
+        }
+        (
+            Some((acquired, skeleton)),
+            Some(CapturedGeometryRange {
+                first: 0,
+                count,
+                complete: read.complete(),
+                visited: read.visited(),
+                supported_through: read.supported_through(),
+            }),
+        )
+    } else {
+        (None, None)
+    };
+    let (acquired, _acquired_backing) = acquired
+        .map_or((Vec::new(), None), |(values, reservation)| {
+            (values, Some(reservation))
+        });
     let evidence = capture_evidence_cut(
         &state.experience,
         &state.physical.entities,
         &state.occurrences,
         actor_id,
         state.physical.header.sim_time,
-        Vec::new(),
+        acquired,
         current,
         budget,
     )?;
@@ -303,6 +353,7 @@ pub(crate) fn capture_actor_perception(
         sight_confirmed_through,
         bodies,
         evidence,
+        geometry,
         _reservation: reservation,
     })
 }

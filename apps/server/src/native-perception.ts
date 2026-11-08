@@ -33,6 +33,14 @@ export interface NativeActorPerception {
   readonly sightConfirmedThrough: number | null;
   readonly bodies: readonly NativeBodyBinding[];
   readonly cut: EvidenceCut;
+  /** Only an NPC scene request captures this selected acquired-original range. */
+  readonly geometry?: {
+    readonly first: number;
+    readonly count: number;
+    readonly complete: boolean;
+    readonly visited: number;
+    readonly supportedThrough: number;
+  };
 }
 /** This packet contains only the selected actor's first-person facts. The host
  * owns operational permission and its accepted-cut/current-privacy fence. */

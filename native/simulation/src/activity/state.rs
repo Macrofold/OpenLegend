@@ -619,6 +619,18 @@ pub(crate) struct ActivityState {
     pub display: Arc<ActivityDisplayLimits>,
 }
 impl ActivityState {
+    pub(crate) fn occurrence_for(
+        &self,
+        actor_id: &str,
+        action_id: &str,
+    ) -> Result<Option<&ActivityOccurrence>, ActivityError> {
+        let Some(collection) = self.collections.get(actor_id) else {
+            return Ok(None);
+        };
+        collection
+            .action_record(action_id)
+            .map(|record| record.map(|record| &record.occurrence))
+    }
     /// Methods/acquisitions have no selected producer/consumer yet: their real
     /// nonempty input remains unclaimed/refused by the complete installer.
     pub(crate) fn install(

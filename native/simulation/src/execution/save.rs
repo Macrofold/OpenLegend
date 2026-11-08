@@ -538,6 +538,11 @@ impl PhysicalJournal {
                 _ => {
                     let handle = match change {
                         Undo::Placement { entity, .. }
+                        | Undo::AgencyPlan { entity, .. }
+                        | Undo::AgencySuspended { entity, .. }
+                        | Undo::AgencyHistory { entity, .. }
+                        | Undo::AgencyRevision { entity, .. }
+                        | Undo::PlanGeneration { entity, .. }
                         | Undo::BodyRevision { entity, .. }
                         | Undo::BodyLifecycle { entity, .. }
                         | Undo::Remains { entity, .. }
@@ -569,6 +574,7 @@ impl PhysicalJournal {
                         .or_default();
                     match change {
                         Undo::BodyRevision { .. }
+                        | Undo::PlanGeneration { .. }
                         | Undo::PendingDeath { .. }
                         | Undo::Scar { .. }
                         | Undo::Contacts { .. } => rows.actor = true,
@@ -618,6 +624,10 @@ impl PhysicalJournal {
                         }
                         Undo::SemanticMeta { .. }
                         | Undo::SemanticResolved { .. }
+                        | Undo::AgencyPlan { .. }
+                        | Undo::AgencySuspended { .. }
+                        | Undo::AgencyHistory { .. }
+                        | Undo::AgencyRevision { .. }
                         | Undo::ResultEvidence { .. } => rows.agency = true,
                         Undo::Status {
                             key,

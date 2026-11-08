@@ -32,7 +32,7 @@ struct Envelope<'a> {
     source_ids: [(); 0],
     facets: [(); 0],
 }
-pub(super) fn member_bytes(
+pub(crate) fn terminal_member_bytes(
     actor_id: &str,
     epoch: &str,
     subject: &str,

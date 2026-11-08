@@ -140,6 +140,7 @@ pub fn decode_current_contact_storage(
     }
     Ok(CurrentContact {
         encoded_payload: Some(Arc::from(payload)),
+        visual_measurement: None,
         order: body.order,
         content: CurrentContactContent {
             field_order: body.content.field_order,

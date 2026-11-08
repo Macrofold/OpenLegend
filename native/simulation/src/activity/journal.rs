@@ -818,7 +818,7 @@ impl ActivityJournal {
         }
         self.reserve(
             result.heap_bytes().ok_or(ActivityError::Capacity)?
-                + result.message.len() * 2
+                + result.message.storage_bytes() * 2
                 + actor.len() * 3
                 + entry.id.len() * 3
                 + entry
@@ -853,14 +853,14 @@ impl ActivityJournal {
             ActivityStatus::Blocked
         };
         entry.ended_at = Some(at);
-        entry.view.result = Some(result.message.clone().into());
+        entry.view.result = Some(result.message.clone());
         if let Some(last) = entry.view.children.as_mut().and_then(|v| v.last_mut()) {
             if last
                 .result
                 .as_ref()
                 .is_none_or(crate::text::JsText::is_empty)
             {
-                last.result = Some(result.message.clone().into());
+                last.result = Some(result.message.clone());
             }
         }
         for fact in &mut entry.view.facts {

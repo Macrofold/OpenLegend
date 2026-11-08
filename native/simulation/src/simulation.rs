@@ -67,6 +67,7 @@ pub(crate) struct InstalledWorld {
     pub response_settings: crate::install::ResponseSettings,
     pub personal_evidence_preparation: crate::install::PersonalEvidencePreparationSettings,
     pub mind_limits: crate::cognition::MindLimits,
+    pub agency_limits: crate::plans::AgencyLimits,
 }
 impl InstalledWorld {
     pub(crate) fn movement_speed(
@@ -103,6 +104,7 @@ impl InstalledWorld {
 /// All physical and arithmetic mutation targets, once. This owner does not
 /// derive Clone and does not expose a bridge-visible writable-world getter.
 pub(crate) struct PhysicalState {
+    pub actor_only_families: crate::install::ActorOnlyPhysicalFamilies,
     pub header: WorldHeader,
     pub identity: IdentityState,
     pub entities: EntityStore,

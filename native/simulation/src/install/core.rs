@@ -146,6 +146,7 @@ pub(crate) fn assemble_core(
         native_response,
         personal_evidence_preparation,
         mind,
+        agency,
     } = settings;
     let meanings = install_physical_meanings(
         &mut import,
@@ -269,6 +270,7 @@ pub(crate) fn assemble_core(
         response_settings: native_response,
         personal_evidence_preparation,
         mind_limits: mind,
+        agency_limits: agency,
     });
     // Every presence below is consumed from the actual root, including empty
     // owners. Missing rows never synthesize an empty receiver or personal graph.

@@ -6,6 +6,41 @@ use crate::received::TemporalCurrentGroupCheckpoint;
 use crate::values::{deserialize_present_option, deserialize_safe_integer};
 use serde::{Deserialize, Serialize};
 
+mod math;
+pub(super) use math::EPSILON as RECEIVED_GEOMETRY_EPSILON;
+mod receive;
+mod recording;
+pub(crate) use receive::{
+    CompletedGeometryReception, CurrentReceivedGeometry, GeometryReceptionAnswer,
+    GeometryReceptionCursor, GeometryReceptionStep, current_received_geometry,
+};
+
+pub(crate) fn end_received_geometry(
+    core: &mut crate::execution::CoreMutation<'_>,
+    observer: &str,
+    budget: &crate::host::ByteBudget,
+) -> Result<(), crate::execution::ExecutionError> {
+    let Some(owner) = core
+        .state
+        .reception
+        .perception_evidence
+        .as_ref()
+        .and_then(|owners| owners.get(observer))
+    else {
+        return Ok(());
+    };
+    if owner.geometry.is_none() {
+        return Ok(());
+    }
+    let life = owner.life;
+    let lease = core
+        .journal
+        .acquisitions
+        .begin_received(observer, life, None)?;
+    recording::end_geometry(core, observer, budget)?;
+    retirement::finish_received(core, lease)
+}
+
 // The runtime uses a bool for this literal while decoding checks it below.
 fn true_flag<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<Option<bool>, D::Error> {
     let flag = bool::deserialize(deserializer)?;
@@ -113,6 +148,7 @@ pub struct GeometryFragment {
     pub u1: f64,
     pub v0: f64,
     pub v1: f64,
+    pub key: String,
     pub observation: ObservationContribution,
     #[serde(
         default,
@@ -120,7 +156,6 @@ pub struct GeometryFragment {
         skip_serializing_if = "Option::is_none"
     )]
     pub recording: Option<TemporalCurrentGroupCheckpoint>,
-    pub key: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -130,12 +165,12 @@ pub struct PriorGeometryFrame {
     pub frame: ObservationFrame,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReceivedGeometryState {
+    pub basis: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub input_revision: u64,
-    pub basis: String,
     pub source_basis: String,
     pub episode_id: String,
     pub frame: ObservationFrame,
@@ -155,12 +190,6 @@ pub struct ReceivedGeometryState {
     pub generation: u64,
     pub next_at: f64,
     pub query_key: String,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub feature_cursor: Option<BoundsQueryCursor>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub anchor_cursor: u64,
     pub fragments: Vec<GeometryFragment>,
@@ -173,6 +202,12 @@ pub struct ReceivedGeometryState {
     pub visited: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub bytes: u64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub feature_cursor: Option<BoundsQueryCursor>,
 }
 
 impl ReceivedGeometryState {

@@ -2,6 +2,50 @@
 //! Every mutation moves its prior field into the same candidate journal.
 use super::*;
 impl CurrentJournal {
+    pub(in super::super) fn set_visual_measurement(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        subject: &str,
+        after: Option<VisualMeasurement>,
+    ) -> Result<(), ReceivedError> {
+        let Some(contact) = owner(state, observer)?.current.get(subject) else {
+            return if after.is_none() {
+                Ok(())
+            } else {
+                Err(invalid())
+            };
+        };
+        if contact.visual_measurement.is_none() && after.is_none() {
+            return Ok(());
+        }
+        self.reserve_growth(
+            heap_sum([
+                observer.len(),
+                subject.len(),
+                contact
+                    .visual_measurement
+                    .heap_bytes()
+                    .ok_or_else(capacity)?,
+                after.heap_bytes().ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let prior = std::mem::replace(
+            &mut owner_mut(state, observer)?
+                .current
+                .get_mut(subject)
+                .ok_or_else(invalid)?
+                .visual_measurement,
+            after,
+        );
+        self.undo.push(CurrentUndo::VisualMeasurement {
+            observer: observer.into(),
+            subject: subject.into(),
+            prior,
+        });
+        Ok(())
+    }
     pub(in super::super) fn replace_visual_confirmation(
         &mut self,
         state: &mut ReceptionState,

@@ -63,6 +63,15 @@ impl PendingCurrentSample {
     pub(super) fn needs_history_close(&self) -> bool {
         self.close
     }
+    pub(super) fn revision(&self) -> u64 {
+        self.input.revision
+    }
+    pub(super) fn received_frame(&self) -> Option<&ReceivedValueReference> {
+        match &self.input.field.value.reception {
+            Some(FacetReception::Location { frame_ref }) => Some(frame_ref),
+            _ => None,
+        }
+    }
 }
 fn owner<'a>(
     state: &'a ReceptionState,
@@ -115,7 +124,10 @@ fn reference_bound(
     ])
     .ok_or_else(capacity)
 }
-fn value_bound(state: &ReceptionState, value: &ReceivedFacetValue) -> Result<usize, ReceivedError> {
+pub(super) fn value_bound(
+    state: &ReceptionState,
+    value: &ReceivedFacetValue,
+) -> Result<usize, ReceivedError> {
     let first = reference_bound(state, &value.reference)?;
     let extra = match &value.reception {
         Some(FacetReception::Body { pose_ref }) => reference_bound(state, pose_ref)?,
@@ -253,10 +265,12 @@ fn changed_parts(previous: Option<&SensoryFacet>, next: &SensoryFacet) -> Attent
 
 /// None is the actual older-sample refusal; it has no current mutation. The
 /// caller already owns the exact retained reference from original acquisition.
-#[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum CurrentValueMode {
     Retained,
-    Sampled,
+    Measured {
+        value: SensoryFacet,
+        prepared_pose: Option<ObservedBodyPose>,
+    },
 }
 pub(super) fn prepare_current_sample(
     core: &mut CoreMutation<'_>,
@@ -341,13 +355,19 @@ pub(super) fn prepare_current_sample(
     ])
     .ok_or_else(capacity)?;
     core.journal.current.reserve_growth(bytes)?;
-    if mode == CurrentValueMode::Sampled {
+    if let CurrentValueMode::Measured {
+        value,
+        prepared_pose,
+    } = mode
+    {
         let preferred = previous.map(|previous| previous.field.value.clone());
-        let value = received_facet_value(values, &input.field.value)?.ok_or_else(invalid)?;
+        core.journal
+            .current
+            .reserve_growth(value.heap_bytes().ok_or_else(capacity)?)?;
         let (retained, added) = super::originals::retain_facet(
             &mut core.state.reception.received_values,
             value,
-            None,
+            prepared_pose,
             preferred.as_ref(),
             core.state.physical.header.sim_time,
             core.state.physical.header.sequence,

@@ -28,6 +28,25 @@ pub(crate) fn temporal_receipt_aliases(
         fragments,
     )
 }
+pub(crate) fn temporal_receipt_account_aliases<'a>(
+    receipt: &'a TemporalReceipt,
+    values: &impl ReceivedValueLookup,
+    meaning: &dyn TemporalValueMeaning,
+    fragments: Option<&[ReceivedValueFragment]>,
+) -> Result<Vec<&'a str>, ReceivedError> {
+    let dependencies = receipt_aliases(receipt, &receipt.facets, &[], values, meaning, fragments)?;
+    let event = match &receipt.origin {
+        Some(ObservationOrigin::Occurrence { event_id, .. }) => Some(event_id.as_str()),
+        _ => None,
+    };
+    Ok(receipt
+        .header
+        .source_ids
+        .iter()
+        .filter(|id| event == Some(id.as_str()) || !dependencies.contains(*id))
+        .map(String::as_str)
+        .collect())
+}
 fn receipt_aliases(
     receipt: &TemporalReceipt,
     fields: &[TemporalFacetReference],

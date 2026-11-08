@@ -310,7 +310,8 @@ impl StatusActivationCursor {
                                         .ordinary_actions
                                         .value()
                                         .status_interruption_suffix
-                                ),
+                                )
+                                .into(),
                                 spent: None,
                                 outputs: None,
                                 recipe_id: None,

@@ -19,7 +19,9 @@ use indexmap::IndexSet;
 use std::mem::size_of;
 
 mod projection;
+mod support;
 mod terminal;
+pub(crate) use terminal::terminal_member_bytes;
 
 #[derive(Clone, Copy)]
 pub(crate) struct TemporalCurrentGroupInput<'a> {
@@ -517,7 +519,7 @@ impl TemporalState {
                     .ok_or_else(error)?;
                 let terminal_bytes = reservation_mark.map_or_else(
                     || {
-                        terminal::member_bytes(
+                        terminal_member_bytes(
                             context.actor_id,
                             &actor.header().epoch,
                             &subject,

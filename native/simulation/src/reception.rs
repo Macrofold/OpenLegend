@@ -29,8 +29,10 @@ pub use state::*;
 mod materialize;
 pub use materialize::*;
 mod sensors;
+mod visual;
 mod visual_source;
 pub use sensors::*;
+pub(crate) use visual::{CompletedNativeVisual, receive_native_visual};
 mod sound;
 pub use sound::*;
 mod audience;
@@ -45,7 +47,8 @@ pub(crate) use acquisition::*;
 mod attention_control;
 mod current_journal;
 pub(crate) use attention_control::{
-    AttentionSelection, AttentionUpdate, prune_withdrawn_attention, update_attention,
+    AttentionSelection, AttentionUpdate, evaluate_attention_relations, prune_withdrawn_attention,
+    update_attention,
 };
 mod cohort;
 pub(crate) use cohort::{
@@ -94,6 +97,10 @@ pub use storage::*;
 mod current_scope;
 pub(crate) use current_scope::CurrentBodyReadScope;
 pub use current_scope::OwnedCurrentFacet;
+pub(crate) use current_scope::{
+    BodyGeometry, BodyMotion, GeometrySample, LocationGeometrySample, OwnedSceneBody,
+    ReceivedSceneBody, ReceivedSceneRead,
+};
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

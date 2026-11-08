@@ -27,6 +27,7 @@ use crate::work::{InvocationEdit, WorkDemand, WorkError, WorkPlan, WorkRequest, 
 use indexmap::{IndexMap, IndexSet};
 use std::mem::size_of;
 
+mod agency;
 mod attributes;
 mod body;
 mod conditions;
@@ -148,6 +149,7 @@ pub(crate) struct CandidateCheckpoint {
 /// accept path is provided until actual receiving/history mutation and changed
 /// record encoding have joined this owner completely.
 pub(crate) struct CandidateJournal {
+    budget: ByteBudget,
     pub cognition: crate::cognition::CognitionJournal,
     pub physical: PhysicalJournal,
     pub meters: crate::work::WorkMeters,
@@ -180,6 +182,9 @@ pub(crate) struct CandidateJournal {
     next_provider_serial: u64,
 }
 impl CandidateJournal {
+    pub(crate) fn byte_budget(&self) -> &ByteBudget {
+        &self.budget
+    }
     /// Disposable provider binding freshness, independent of gameplay identity
     /// and retained across nested rollback to fence every late answer.
     pub(crate) fn next_provider_serial(&mut self) -> Result<u64, ExecutionError> {
@@ -234,6 +239,7 @@ impl CandidateJournal {
         let cognition = crate::cognition::CognitionJournal::new(budget)?;
         let root_cognition = cognition.checkpoint();
         Ok(Self {
+            budget: budget.clone(),
             root_appraisals: state.appraisals.checkpoint(),
             cognition,
             root_cognition,
@@ -468,7 +474,7 @@ impl CoreMutation<'_> {
             .get(actor_id)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        if actor.agency.plan.is_some() || actor.agency.suspended.is_some() {
+        if actor.agency.plan.is_some() || actor.agency.suspended_plan().is_some() {
             return Err(ExecutionError::UnsupportedFamily);
         }
         self.journal
@@ -776,6 +782,11 @@ pub(crate) struct ActionRouteWrite {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum UndoKey {
+    AgencyPlan(usize, u64),
+    AgencySuspended(usize, u64),
+    AgencyHistory(usize, u64),
+    AgencyRevision(usize, u64),
+    PlanGeneration(usize, u64),
     BodyRevision(usize, u64),
     BodyLifecycle(usize, u64),
     Remains(usize, u64),
@@ -863,6 +874,26 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    AgencyPlan {
+        entity: EntityHandle,
+        before: Option<crate::plans::ActorPlan>,
+    },
+    AgencySuspended {
+        entity: EntityHandle,
+        before: Option<Option<crate::plans::ActorPlan>>,
+    },
+    AgencyHistory {
+        entity: EntityHandle,
+        before: Vec<crate::plans::PlanStep>,
+    },
+    AgencyRevision {
+        entity: EntityHandle,
+        before: u64,
+    },
+    PlanGeneration {
+        entity: EntityHandle,
+        before: u64,
+    },
     AddedEntity(crate::state::EntityInsertion),
     BodyRevision {
         entity: EntityHandle,
@@ -1229,6 +1260,50 @@ impl PhysicalJournal {
         while self.undo.len() > frame.undo_start {
             let undo = self.undo.pop().ok_or(ExecutionError::Invariant)?;
             match undo {
+                Undo::AgencyPlan { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .plan = before;
+                }
+                Undo::AgencySuspended { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .suspended = before;
+                }
+                Undo::AgencyHistory { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .history = before;
+                }
+                Undo::AgencyRevision { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .revision = before;
+                }
+                Undo::PlanGeneration { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .plan_generation = before;
+                }
                 Undo::AddedEntity(before) => {
                     let (id, renumbered) = state
                         .entities

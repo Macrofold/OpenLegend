@@ -1,8 +1,11 @@
+import { BASE_PLAN_RULES } from './plan-rules.js';
+
 /** Wording for the bundled world's ordinary movement, status and cancellation
  * families. Source and the compiled native family consume this same data. */
 export const BASE_ORDINARY_ACTION_RULES = {
   id: 'wilderness:ordinary-action-rules',
   version: 1,
+  plan: BASE_PLAN_RULES,
   invalidCommand: {
     code: 'invalid-command',
     message: 'A command needs bounded actor and command IDs.',

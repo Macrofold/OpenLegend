@@ -1022,81 +1022,37 @@ fn credit_contact(
     if !sample.contact_eligible {
         return Ok(());
     }
-    let previous = identity(state, observer, key)?;
-    if previous.individual_id.is_none() || previous.seed_only == Some(true) {
-        return Ok(());
-    }
-    let contact_key =
-        json_record(&("contact", &sample.source_key, sample.at)).map_err(|_| invalid())?;
-    if !valid_support_key(&sample.source_key)
-        || recognition_support_sources(std::slice::from_ref(&sample.source_key)).is_empty()
-        || !sample.at.is_finite()
-        || sample.at < 0.0
-        || sample.at > now
-        || !sample.order.is_finite()
+    if !sample.order.is_finite()
         || sample.order < 0.0
         || sample.order.fract() != 0.0
         || sample.order > crate::identity::MAX_SAFE_INTEGER as f64
     {
         return Err(invalid().into());
     }
-    if previous.familiarity.as_ref().is_some_and(|state| {
-        state.next_credit_at.is_some_and(|at| sample.at < at)
-            || state.roots.iter().any(|root| root.key == contact_key)
-    }) {
+    let previous = identity(state, observer, key)?;
+    let Some(candidate) = super::contact::contact_candidate(
+        previous,
+        super::contact::ContactInput {
+            source_key: &sample.source_key,
+            at: sample.at,
+            order: sample.order as u64,
+            support: &[],
+        },
+        now,
+        policy,
+        scale,
+        ranks,
+    )?
+    else {
         return Ok(());
-    }
-    let mut candidate = previous.clone();
-    let familiarity = candidate
-        .familiarity
-        .get_or_insert_with(|| FamiliarityState {
-            roots: Vec::new(),
-            authored: None,
-            last_credit_at: None,
-            next_credit_at: None,
-            fast_credits: 0,
-        });
-    familiarity.roots.push(FamiliarityRoot {
-        key: contact_key,
-        source_key: sample.source_key.clone(),
-        at: sample.at,
-        order: sample.order as u64,
-        support: vec![sample.source_key.clone()],
-        required: false,
-        credited: true,
-    });
-    let mut roots: Vec<(FamiliarityRoot, u32)> = std::mem::take(&mut familiarity.roots)
-        .into_iter()
-        .map(|root| Ok((root.clone(), collation(ranks.rank(&root.key))?)))
-        .collect::<Result<_, ReceivedError>>()?;
-    roots.sort_by(|(a, ar), (b, br)| {
-        b.required
-            .cmp(&a.required)
-            .then_with(|| b.at.total_cmp(&a.at))
-            .then_with(|| b.order.cmp(&a.order))
-            .then_with(|| ar.cmp(br))
-    });
-    familiarity.roots = roots
-        .into_iter()
-        .take(policy.familiarity_roots as usize)
-        .map(|(root, _)| root)
-        .collect();
-    familiarity.fast_credits = 6.min(familiarity.fast_credits + 1);
-    familiarity.last_credit_at = Some(sample.at);
-    familiarity.next_credit_at = Some(
-        sample.at
-            + if familiarity.fast_credits < 6 {
-                policy.credit_seconds * scale
-            } else {
-                policy.familiarity_mature_seconds
-            },
-    );
+    };
     journal.commit(
         state, temporal, observer, key, candidate, now, policy, scale, retention, physical,
         installed, receiving,
     )?;
     Ok(())
 }
+
 fn familiarity_support(
     state: &mut ReceptionState,
     temporal: &mut TemporalState,

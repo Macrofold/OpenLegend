@@ -59,29 +59,7 @@ impl PrivacyUndo {
 }
 impl ExperienceJournal {
     fn privacy_capacity(&mut self, bytes: usize) -> Result<(), ExperienceError> {
-        let bytes = bytes
-            .checked_add(
-                self.undo
-                    .capacity()
-                    .checked_add(1)
-                    .and_then(|count| {
-                        count.checked_mul(2 * size_of::<super::mutation::ExperienceUndo>())
-                    })
-                    .ok_or(ExperienceError::Capacity)?,
-            )
-            .ok_or(ExperienceError::Capacity)?;
-        self.reservation
-            .resize(
-                self.reservation
-                    .bytes()
-                    .checked_add(bytes)
-                    .ok_or(ExperienceError::Capacity)?,
-            )
-            .map_err(|_| ExperienceError::Capacity)?;
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ExperienceError::Capacity)?;
-        Ok(())
+        self.prepare_undo(bytes)
     }
     pub(super) fn advance_privacy_revision(
         &mut self,
@@ -133,18 +111,27 @@ impl ExperienceJournal {
             return Err(ExperienceError::InvalidBody("forgotten source"));
         }
         let length = privacy.forgotten.len();
+        let target = if length == privacy.forgotten.capacity() {
+            privacy
+                .forgotten
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(4))
+                .ok_or(ExperienceError::Capacity)?
+        } else {
+            privacy.forgotten.capacity()
+        };
+        let growth = if target > privacy.forgotten.capacity() {
+            target
+                .checked_mul(size_of::<String>())
+                .ok_or(ExperienceError::Capacity)?
+        } else {
+            0
+        };
         let bytes = actor
             .len()
             .checked_add(id.len().checked_mul(3).ok_or(ExperienceError::Capacity)?)
-            .and_then(|bytes| {
-                bytes.checked_add(
-                    privacy
-                        .forgotten
-                        .capacity()
-                        .checked_add(1)?
-                        .checked_mul(2 * size_of::<String>())?,
-                )
-            })
+            .and_then(|bytes| bytes.checked_add(growth))
             .and_then(|bytes| bytes.checked_add(tree_node_bound::<String, ()>()?))
             .ok_or(ExperienceError::Capacity)?;
         self.privacy_capacity(bytes)?;
@@ -153,10 +140,12 @@ impl ExperienceJournal {
             .get_mut(actor)
             .ok_or(ExperienceError::ForeignOwner)?
             .privacy;
-        privacy
-            .forgotten
-            .try_reserve(1)
-            .map_err(|_| ExperienceError::Capacity)?;
+        if target > privacy.forgotten.capacity() {
+            privacy
+                .forgotten
+                .try_reserve_exact(target - length)
+                .map_err(|_| ExperienceError::Capacity)?;
+        }
         let operation = PrivacyUndo::Forgotten {
             actor: actor.to_owned(),
             id: id.to_owned(),
@@ -190,20 +179,30 @@ impl ExperienceJournal {
             .corrections
             .get_full(id)
             .map(|(position, _, value)| (position, value.as_str()));
+        let target = if before.is_none()
+            && evidence.is_some()
+            && privacy.corrections.len() == privacy.corrections.capacity()
+        {
+            privacy
+                .corrections
+                .capacity()
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(2))
+                .ok_or(ExperienceError::Capacity)?
+        } else {
+            privacy.corrections.capacity()
+        };
+        let growth = if target > privacy.corrections.capacity() {
+            map_storage::<String, String>(target).ok_or(ExperienceError::Capacity)?
+        } else {
+            0
+        };
         let bytes = actor
             .len()
             .checked_add(id.len().checked_mul(3).ok_or(ExperienceError::Capacity)?)
             .and_then(|bytes| bytes.checked_add(evidence.map_or(0, str::len)))
             .and_then(|bytes| bytes.checked_add(before.map_or(0, |(_, value)| value.len())))
-            .and_then(|bytes| {
-                bytes.checked_add(map_storage::<String, String>(
-                    privacy
-                        .corrections
-                        .capacity()
-                        .checked_mul(2)?
-                        .checked_add(2)?,
-                )?)
-            })
+            .and_then(|bytes| bytes.checked_add(growth))
             .ok_or(ExperienceError::Capacity)?;
         self.privacy_capacity(bytes)?;
         if evidence.is_some() {
@@ -214,10 +213,12 @@ impl ExperienceJournal {
             .get_mut(actor)
             .ok_or(ExperienceError::ForeignOwner)?
             .privacy;
-        privacy
-            .corrections
-            .try_reserve(1)
-            .map_err(|_| ExperienceError::Capacity)?;
+        if target > privacy.corrections.capacity() {
+            privacy
+                .corrections
+                .try_reserve(target - privacy.corrections.len())
+                .map_err(|_| ExperienceError::Capacity)?;
+        }
         let before = privacy
             .corrections
             .get_full(id)

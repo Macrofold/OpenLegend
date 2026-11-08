@@ -13,6 +13,9 @@ mod familiarity;
 #[path = "recognition/voice.rs"]
 mod voice;
 pub(crate) use familiarity::BodyFamiliarityPreparation;
+#[path = "recognition/contact.rs"]
+mod contact;
+pub(crate) use contact::AttentionContactPreparation;
 #[path = "recognition/retention.rs"]
 mod retention;
 pub(crate) use retention::{

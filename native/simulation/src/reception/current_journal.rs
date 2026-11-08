@@ -24,6 +24,11 @@ pub(crate) struct CurrentCheckpoint {
     retained: usize,
 }
 enum CurrentUndo {
+    VisualMeasurement {
+        observer: String,
+        subject: String,
+        prior: Option<VisualMeasurement>,
+    },
     VisualConfirmation {
         observer: String,
         prior: Option<VisualConfirmation>,
@@ -75,7 +80,7 @@ enum CurrentUndo {
     },
     Geometry {
         observer: String,
-        prior: ReceivedGeometryState,
+        prior: Option<ReceivedGeometryState>,
     },
     Motion {
         observer: String,
@@ -433,6 +438,17 @@ impl CurrentJournal {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
+                CurrentUndo::VisualMeasurement {
+                    observer,
+                    subject,
+                    prior,
+                } => {
+                    owner_mut(state, &observer)?
+                        .current
+                        .get_mut(&subject)
+                        .ok_or_else(invalid)?
+                        .visual_measurement = prior;
+                }
                 CurrentUndo::VisualConfirmation { observer, prior } => {
                     owner_mut(state, &observer)?.visual_confirmation = prior
                 }
@@ -531,7 +547,7 @@ impl CurrentJournal {
                     owner_mut(state, &observer)?.next_contact = prior
                 }
                 CurrentUndo::Geometry { observer, prior } => {
-                    owner_mut(state, &observer)?.geometry = Some(prior)
+                    owner_mut(state, &observer)?.geometry = prior
                 }
                 CurrentUndo::Motion {
                     observer,
@@ -739,9 +755,35 @@ impl CurrentJournal {
             .ok_or_else(invalid)?;
         self.undo.push(CurrentUndo::Geometry {
             observer: observer.to_owned(),
-            prior,
+            prior: Some(prior),
         });
         Ok(true)
+    }
+    /// The received geometry is bounded by its selected policy. The actual old
+    /// owner moves into undo; replacing it never copies other receiver state.
+    pub(super) fn replace_geometry(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        next: ReceivedGeometryState,
+    ) -> Result<(), ReceivedError> {
+        let prior = owner(state, observer)?.geometry.as_ref();
+        self.reserve_growth(
+            heap_sum([
+                observer.len(),
+                prior
+                    .map_or(Some(0), HeapBytes::heap_bytes)
+                    .ok_or_else(capacity)?,
+                next.heap_bytes().ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let prior = owner_mut(state, observer)?.geometry.replace(next);
+        self.undo.push(CurrentUndo::Geometry {
+            observer: observer.into(),
+            prior,
+        });
+        Ok(())
     }
     pub(super) fn retire_motion(
         &mut self,
@@ -890,6 +932,10 @@ pub(super) fn contact_copy_heap(contact: &CurrentContact) -> Result<usize, Recei
             )
             .ok_or_else(capacity)?,
         contact.sight.heap_bytes().ok_or_else(capacity)?,
+        contact
+            .visual_measurement
+            .heap_bytes()
+            .ok_or_else(capacity)?,
         keys,
         map_storage::<String, Arc<ReceivedObservation>>(contact.content.originals.capacity())
             .ok_or_else(capacity)?,

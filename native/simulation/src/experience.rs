@@ -283,6 +283,7 @@ pub struct PersonalSourceHeader {
     pub unresolved_commitment: bool,
     pub unresolved_obligation: bool,
     pub obligation_due_at: Option<f64>,
+    pub obligation_evidence_id: Option<String>,
     /// Owned originals are aliases only after this actual account is revoked.
     pub owned_observations: Vec<String>,
     /// Only the source's real dependency closure can revoke its descendants.
@@ -874,6 +875,13 @@ fn header(
         unresolved_commitment,
         unresolved_obligation,
         obligation_due_at,
+        obligation_evidence_id: body
+            .get("obligation")
+            .map(object)
+            .transpose()?
+            .map(|obligation| optional_text(obligation, "evidenceId"))
+            .transpose()?
+            .flatten(),
         completion_event_type,
         owned_observations: own_observations(body)?,
         dependencies: source_dependencies(body, kind, meaning, true)?,
@@ -917,8 +925,12 @@ impl PersonalSourceRecord {
         }
         #[derive(Deserialize)]
         struct Body {
-            #[serde(flatten)]
-            own: Inputs,
+            // Decode each selected original directly from its JSON bytes.
+            // Flatten would route nested JsText through Serde's value buffer.
+            #[serde(default, deserialize_with = "deserialize_present_option")]
+            observation: Option<Arc<crate::reception::ObservationContribution>>,
+            #[serde(default, deserialize_with = "deserialize_present_option")]
+            observations: Option<Vec<Arc<crate::reception::ObservationContribution>>>,
             #[serde(default, deserialize_with = "deserialize_present_option")]
             evidence: Option<Inputs>,
             #[serde(default, deserialize_with = "deserialize_present_option")]
@@ -934,12 +946,12 @@ impl PersonalSourceRecord {
                 "Foreign personal evidence owner.",
             ));
         }
-        for input in std::iter::once(&body.own).chain(body.evidence.iter()) {
-            for observation in input
-                .observation
+        for (single, multiple) in std::iter::once((&body.observation, &body.observations)).chain(
+            body.evidence
                 .iter()
-                .chain(input.observations.iter().flatten())
-            {
+                .map(|input| (&input.observation, &input.observations)),
+        ) {
+            for observation in single.iter().chain(multiple.iter().flatten()) {
                 if observation.observer.actor_id != self.header.actor_id
                     || observation.acquired_at > through
                 {

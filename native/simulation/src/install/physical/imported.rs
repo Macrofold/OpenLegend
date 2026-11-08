@@ -386,12 +386,27 @@ pub(super) fn install_entities(
         )?;
         entity(import, &mut value, &row.id)?;
         let entity: Entity = decode(&value)?;
-        let expected = [
-            crate::records::SqlCell::from(id.clone()),
-            crate::records::SqlCell::from(entity.kind.clone()),
-            crate::records::SqlCell::from(entity.name.clone()),
-        ];
-        if row.extra != expected {
+        let expected_id = crate::records::SqlCell::from(id.clone());
+        let expected_kind = crate::records::SqlCell::from(entity.kind.clone());
+        let name_matches = row
+            .extra
+            .get(2)
+            .and_then(crate::records::SqlCell::as_text)
+            .is_some_and(|indexed| {
+                // PostgreSQL TEXT receives Node's UTF8 transport, which replaces
+                // isolated UTF16 units. The canonical JSON body retains those
+                // original units; this comparison never rewrites that authority.
+                if import.durable_revision() > 0 {
+                    entity.name.matches_utf8_transport(indexed)
+                } else {
+                    entity.name == *indexed
+                }
+            });
+        if row.extra.len() != 3
+            || row.extra[0] != expected_id
+            || row.extra[1] != expected_kind
+            || !name_matches
+        {
             return Err(InstallError::CurrentFormat);
         }
         validate_entity(&entity, installed, now)?;

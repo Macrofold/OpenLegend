@@ -373,11 +373,19 @@ impl ReceivingCursor {
             &self.current.observer.actor_id,
             budget,
         )?;
+        let measured = received_facet_value(
+            &core.state.reception.received_values.as_ref(),
+            &input.field.value,
+        )?
+        .ok_or_else(invalid)?;
         if let Some(pending) = prepare_current_sample(
             core,
             &self.current.observer.actor_id,
             input,
-            CurrentValueMode::Sampled,
+            CurrentValueMode::Measured {
+                value: measured,
+                prepared_pose: None,
+            },
             budget,
         )? {
             close_current_sample_history(core, &self.current.observer.actor_id, &pending, budget)?;

@@ -541,6 +541,11 @@ pub struct CurrentContactContent {
 pub struct CurrentContact {
     #[serde(skip)]
     pub(crate) encoded_payload: Option<Arc<str>>,
+    /// The Source measuredSources WeakMap is an ephemeral complete-input
+    /// preparation, bound to this actual body original and lease. Cold restore
+    /// must check again; this never supplies a fact, ID or saved revision.
+    #[serde(skip)]
+    pub(crate) visual_measurement: Option<VisualMeasurement>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub order: u64,
     pub content: CurrentContactContent,
@@ -550,6 +555,14 @@ pub struct CurrentContact {
         skip_serializing_if = "Option::is_none"
     )]
     pub sight: Option<CurrentSightCheck>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct VisualMeasurement {
+    pub original: usize,
+    pub lease_id: String,
+    pub token: String,
+    pub detailed: bool,
 }
 
 impl PartialEq for CurrentContact {

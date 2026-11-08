@@ -58,7 +58,8 @@ type RetainedNativeFields = Pick<
 >;
 
 /** Called at installation from actual current immutable definition records.
- * The result retains only their exact canonical bytes and identities.
+ * The result retains their verified canonical identity and exact source JSON
+ * order, which existing receiving signatures also consume.
  */
 export function nativeDefinitionInputs(
   selected: Pick<
@@ -78,7 +79,7 @@ export function nativeDefinitionInputs(
   const world = selectedNativeLawDefinitions(selected);
   const definition = (value: { id: string; version: number }, pin: DefinitionPin | undefined) => {
     if (!pin) throw new Error('Native installation requires the actual installed definition pin.');
-    return { pin, canonical: canonicalJson(value) };
+    return { pin, canonical: canonicalJson(value), source: JSON.stringify(value) };
   };
   const policy = (value: object | null) => {
     const canonical = canonicalJson(value);

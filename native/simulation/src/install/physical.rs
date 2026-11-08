@@ -161,6 +161,7 @@ pub(crate) struct NativeSetupSettings {
     pub native_response: ResponseSettings,
     pub personal_evidence_preparation: PersonalEvidencePreparationSettings,
     pub mind: crate::cognition::MindLimits,
+    pub agency: crate::plans::AgencyLimits,
 }
 
 /// Presence is consumed only during installation by the actual child owners.
@@ -194,6 +195,13 @@ pub(crate) struct PhysicalInstallation {
     pub assembly_geometry_revision: Option<u64>,
     pub story_policy_revision: Option<u64>,
     pub children: WorldChildren,
+}
+/// Installation proves every live entity belongs to an actor family. Selected
+/// creation also enforces that closure, so Source landmarkAtPlace (which rejects
+/// actors) has no eligible physical landmark. Authored map geometry is separate.
+/// This proof grants no observations, visible places or remembered names.
+pub(crate) struct ActorOnlyPhysicalFamilies {
+    _private: (),
 }
 pub(crate) struct PhysicalRoot {
     pub header: WorldHeader,
@@ -506,6 +514,7 @@ pub(crate) fn install_physical(
     let bodies = crate::movement::BodyIndex::install(&entities);
     Ok(PhysicalInstallation {
         state: PhysicalState {
+            actor_only_families: ActorOnlyPhysicalFamilies { _private: () },
             header,
             identity,
             entities,
@@ -588,6 +597,13 @@ fn validate_entity(
         return Err(InstallError::UnsupportedFamily(
             "actor-less physical entities",
         ));
+    }
+    if !crate::narration::valid_name_parts(
+        &entity.name,
+        entity.name_form.as_deref(),
+        entity.indefinite_article.as_deref(),
+    ) {
+        return Err(InstallError::CurrentFormat);
     }
     if entity.hearth.is_some()
         || entity.practice_target.is_some()
@@ -693,7 +709,7 @@ fn validate_entity(
             || actor.coaching_episode_id.is_some()
             || actor.inventory_inspection.is_some()
             || actor.agency.plan.is_some()
-            || actor.agency.suspended.is_some()
+            || actor.agency.suspended_plan().is_some()
             || !actor.agency.history.is_empty()
             || !actor.agency.attempts.is_empty()
         {

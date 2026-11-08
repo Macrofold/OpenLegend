@@ -36,13 +36,14 @@ pub(crate) fn install_temporal(
     }
     let actors = take_collection(import, "mind_temporal_actors", &root.id, true, true)?;
     let mut histories = IndexMap::new();
+    let actor_coverage = actors.coverage;
     for row in actors.rows {
         validate_map_row(
             &row,
             &root.id,
             "actors",
             &row.slot,
-            actors.coverage.next_ordinal,
+            actor_coverage.next_ordinal,
         )?;
         let actor_id = row.slot.clone();
         let pages = take_collection(import, "mind_temporal_pages", &row.id, true, false)?;
@@ -119,5 +120,10 @@ pub(crate) fn install_temporal(
             return Err(InstallError::DuplicateRow.into());
         }
     }
-    Ok(Some(TemporalState::install(generation, header, histories)?))
+    Ok(Some(TemporalState::install(
+        generation,
+        header,
+        histories,
+        actor_coverage,
+    )?))
 }

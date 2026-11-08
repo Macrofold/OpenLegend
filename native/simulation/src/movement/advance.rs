@@ -666,7 +666,7 @@ impl MoveAdvanceCursor {
                             outputs: None,
                             ok: false,
                             code: "action-failed".into(),
-                            message: reason.clone(),
+                            message: reason.clone().into(),
                             recipe_id: None,
                             item_id: None,
                             entity_id: None,

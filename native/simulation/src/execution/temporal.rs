@@ -145,6 +145,27 @@ fn append_error(error: TemporalAppendError) -> ExecutionError {
     }
 }
 impl TemporalScopes {
+    /// Source retained current support shares an actual active transition. With
+    /// none, it allocates one order without opening a receipt/acquisition scope;
+    /// subsequent independent support calls must not inherit that order.
+    pub(crate) fn received_order(
+        &mut self,
+        actor: &str,
+        identity: &mut IdentityState,
+    ) -> Result<u64, ExecutionError> {
+        if !self.transitions.contains_key(actor) {
+            return ReceivedTransition::new(None)
+                .received_order(identity)
+                .map_err(ExecutionError::Received);
+        }
+        self.touch_transition(actor)?;
+        self.transitions
+            .get_mut(actor)
+            .ok_or(ExecutionError::Invariant)?
+            .value
+            .received_order(identity)
+            .map_err(ExecutionError::Received)
+    }
     pub(crate) fn owns_received(&self, lease: ReceivedLease) -> Result<bool, ExecutionError> {
         let guard = self
             .received

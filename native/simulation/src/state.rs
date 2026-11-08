@@ -424,20 +424,26 @@ pub struct ActorAgency {
     pub revision: u64,
     pub goals: Vec<Goal>,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
-    pub plan: Option<UnconvertedField>,
+    pub(crate) plan: Option<crate::plans::ActorPlan>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub suspended: Option<UnconvertedField>,
-    pub history: Vec<UnconvertedField>,
+    pub(crate) suspended: Option<Option<crate::plans::ActorPlan>>,
+    pub(crate) history: Vec<crate::plans::PlanStep>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub places: Option<Vec<RememberedPlace>>,
+}
+impl ActorAgency {
+    /// An explicit saved null clears paused work but retains its field presence.
+    pub(crate) fn suspended_plan(&self) -> Option<&crate::plans::ActorPlan> {
+        self.suspended.as_ref().and_then(Option::as_ref)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -1526,6 +1532,12 @@ impl EntityStore {
         Some(bytes)
     }
     pub(crate) fn insert_new(&mut self, entity: Entity) -> Result<EntityInsertion, &'static str> {
+        // The scoped installation's actor-only proof remains true across every
+        // selected creation. A new actorless family needs its actual owners and
+        // a changed installation closure before this store may admit it.
+        if entity.actor.is_none() {
+            return Err("The installed physical family requires an actor.");
+        }
         if self.by_id.contains_key(&entity.id) {
             return Err("Existing entity membership.");
         }

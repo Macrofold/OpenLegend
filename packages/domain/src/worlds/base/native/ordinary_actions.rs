@@ -5,6 +5,8 @@ use crate::commands::Outcome;
 use crate::install::DefinitionIdentity;
 use crate::values::deserialize_safe_integer;
 use serde::{Deserialize, Serialize};
+#[path = "plan_rules.rs"]
+mod plan_rules;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -19,7 +21,7 @@ impl ActionMessage {
             outputs: None,
             ok,
             code: self.code.clone(),
-            message: self.message.clone(),
+            message: self.message.clone().into(),
             recipe_id: None,
             item_id: None,
             entity_id: None,
@@ -35,6 +37,7 @@ pub(crate) struct OrdinaryActionRules {
     pub id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub version: u64,
+    pub plan: plan_rules::PlanRules,
     pub invalid_command: ActionMessage,
     pub unknown_actor: ActionMessage,
     pub inactive: ActionMessage,

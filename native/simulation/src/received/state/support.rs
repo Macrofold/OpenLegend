@@ -20,7 +20,7 @@ use std::collections::BTreeSet;
 
 mod receipt;
 pub(crate) use receipt::SupportRetentionContext;
-mod encoding;
+pub(super) mod encoding;
 use encoding::SupportEncoding;
 
 fn invalid() -> ReceivedError {
@@ -121,7 +121,7 @@ impl TemporalState {
             capsule,
         }))
     }
-    fn admit_support(
+    pub(in super::super) fn admit_support(
         &mut self,
         actor_id: &str,
         mut capsule: TemporalSupportCapsule,

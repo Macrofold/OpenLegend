@@ -304,7 +304,7 @@ function workProblem(
   if (
     mode === 'interrupt' &&
     (actor.agency.suspended ||
-      pauseRefusal(actor.action) ||
+      pauseRefusal(world, actor.action) ||
       (actor.action &&
         !plan?.steps.some(
           (step) => step.status === 'running' && step.actionId === actor.action!.id,

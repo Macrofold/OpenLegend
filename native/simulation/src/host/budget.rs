@@ -88,6 +88,17 @@ impl ByteReservation {
         self.bytes
     }
 
+    /// Detach custody of an already funded output while the producer keeps
+    /// its own scratch. No allocation or gap in host accounting is required.
+    pub fn split_off(&mut self, bytes: usize) -> Result<ByteReservation, CapacityError> {
+        let remaining = self.bytes.checked_sub(bytes).ok_or(CapacityError)?;
+        self.bytes = remaining;
+        Ok(ByteReservation {
+            owner: Arc::clone(&self.owner),
+            bytes,
+        })
+    }
+
     /// Transfer already admitted storage without opening an unfunded interval.
     /// Both guards must belong to the same host allowance; the global count
     /// stays unchanged while the transferred guard is disarmed.

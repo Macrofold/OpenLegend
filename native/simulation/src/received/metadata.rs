@@ -123,9 +123,23 @@ pub fn received_record_aliases(
     values: &ReceivedValues,
     meaning: Option<&dyn TemporalValueMeaning>,
 ) -> Result<Vec<String>, ReceivedError> {
+    received_record_aliases_with_sources(owner, entry, values, meaning, true)
+}
+
+fn received_record_aliases_with_sources(
+    owner: &ReceivedBatch,
+    entry: &ReceivedEntry,
+    values: &ReceivedValues,
+    meaning: Option<&dyn TemporalValueMeaning>,
+    include_source_ids: bool,
+) -> Result<Vec<String>, ReceivedError> {
     let record = &entry.receipt;
     let id = owner.locator(entry.entry_index).id();
-    let mut aliases: IndexSet<String> = record.header.source_ids.iter().cloned().collect();
+    let mut aliases: IndexSet<String> = if include_source_ids {
+        record.header.source_ids.iter().cloned().collect()
+    } else {
+        IndexSet::new()
+    };
     aliases.insert(id.clone());
     for field in &record.facets {
         aliases.insert(fact_alias(&id, field.member_index)?);
@@ -154,6 +168,33 @@ pub fn received_record_aliases(
         }
     }
     Ok(aliases.into_iter().collect())
+}
+
+/// Whole-account aliases exclude directional facet provenance. This is the
+/// compact interpretation of temporalReceiptAccountAliases, with no expanded
+/// receipt/body allocation and exactly the same dependency owner as metadata.
+pub(crate) fn received_record_account_aliases<'a>(
+    owner: &ReceivedBatch,
+    entry: &'a ReceivedEntry,
+    values: &ReceivedValues,
+    meaning: &dyn TemporalValueMeaning,
+) -> Result<Vec<&'a str>, ReceivedError> {
+    let dependencies =
+        received_record_aliases_with_sources(owner, entry, values, Some(meaning), false)?
+            .into_iter()
+            .collect::<IndexSet<_>>();
+    let event = match &entry.receipt.origin {
+        Some(super::ReceivedOrigin::Occurrence { event_id, .. }) => Some(event_id.as_str()),
+        _ => None,
+    };
+    Ok(entry
+        .receipt
+        .header
+        .source_ids
+        .iter()
+        .filter(|id| event == Some(id.as_str()) || !dependencies.contains(*id))
+        .map(String::as_str)
+        .collect())
 }
 
 pub fn received_record_individual_ids(

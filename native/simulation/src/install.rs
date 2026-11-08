@@ -101,6 +101,9 @@ pub struct DefinitionInput {
     /// Existing canonicalJson bytes supplied once by the authored owner. Native
     /// code never substitutes Rust lexical ordering for localeCompare.
     pub canonical: String,
+    /// Source JSON enumeration order is observable in acquisition signatures;
+    /// canonicalJson's sorted identity bytes cannot reproduce that spelling.
+    pub source: String,
 }
 
 /// The installed family supplies identity fields; the bridge does not redefine
@@ -147,6 +150,7 @@ impl DefinitionIdentity for crate::native_response::NativeResponseProfile {
 pub struct VerifiedDefinition<T> {
     pin: DefinitionPin,
     canonical: Arc<str>,
+    source: Arc<str>,
     value: T,
 }
 
@@ -166,12 +170,15 @@ impl DefinitionInput {
         }
         let decoded: T =
             serde_json::from_str(&self.canonical).map_err(|_| InstallError::DefinitionBody)?;
-        if decoded != expected {
+        let source: T =
+            serde_json::from_str(&self.source).map_err(|_| InstallError::DefinitionBody)?;
+        if decoded != expected || source != expected {
             return Err(InstallError::DefinitionBody);
         }
         Ok(VerifiedDefinition {
             pin: self.pin,
             canonical: Arc::from(self.canonical),
+            source: Arc::from(self.source),
             // canonicalJson sorts record keys for identity. The actual source
             // record retains its own declared enumeration order; validating its
             // canonical content must not replace that order with sorted keys.
@@ -187,6 +194,9 @@ impl<T> VerifiedDefinition<T> {
     pub fn canonical(&self) -> &str {
         &self.canonical
     }
+    pub fn source(&self) -> &str {
+        &self.source
+    }
     pub fn value(&self) -> &T {
         &self.value
     }
@@ -195,7 +205,7 @@ impl<T> VerifiedDefinition<T> {
     }
 
     pub fn same_content(&self, other: &Self) -> bool {
-        self.pin == other.pin && self.canonical == other.canonical
+        self.pin == other.pin && self.canonical == other.canonical && self.source == other.source
     }
 }
 

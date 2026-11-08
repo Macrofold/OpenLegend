@@ -111,7 +111,7 @@ pub struct AttentionEntry {
     pub stable_until: f64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum AttentionRelationFamily {
     ClosingBody,

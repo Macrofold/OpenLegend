@@ -215,6 +215,65 @@ impl CapturedNames {
         ))
     }
 }
+/// Source identityForEntity selects authored/current-episode evidence in actual
+/// JavaScript enumeration order. It does not read current physical visibility.
+fn identity_for_entity<'a>(
+    reception: &'a ReceptionState,
+    observer_id: &str,
+    id: &str,
+) -> Option<&'a ObserverIdentity> {
+    let identities = reception.observer_identities.as_ref()?.get(observer_id)?;
+    let episode = reception
+        .perception_episodes
+        .as_ref()
+        .and_then(|owners| owners.get(observer_id))
+        .and_then(|episodes| episodes.get(id));
+    let mut first = None;
+    let mut preferred = None;
+    for (at, (key, identity)) in identities.iter().enumerate() {
+        if identity.seed_only == Some(true) || identity.canonical_id.as_deref() != Some(id) {
+            continue;
+        }
+        let rank =
+            crate::encoding::array_index(key).map_or((1, at as u64), |index| (0, u64::from(index)));
+        if first.as_ref().is_none_or(|(old, _)| rank < *old) {
+            first = Some((rank, identity));
+        }
+        if identity.authored
+            || identity
+                .encounter_id
+                .as_ref()
+                .is_some_and(|encounter| !encounter.is_empty() && Some(encounter) == episode)
+        {
+            if preferred.as_ref().is_none_or(|(old, _)| rank < *old) {
+                preferred = Some((rank, identity));
+            }
+        }
+    }
+    preferred.or(first).map(|(_, identity)| identity)
+}
+
+/// A captured anonymous episode and an authored identity have distinct validity.
+/// Recognition or visibility alone never upgrades an old executable reference.
+pub(crate) fn subject_reference_current(
+    reception: &ReceptionState,
+    observer_id: &str,
+    subject_id: &str,
+    expected: Option<&Option<String>>,
+) -> bool {
+    observer_id == subject_id
+        || identity_for_entity(reception, observer_id, subject_id)
+            .is_some_and(|identity| identity.authored)
+        || expected.is_some_and(|expected| {
+            expected.as_ref()
+                == reception
+                    .perception_episodes
+                    .as_ref()
+                    .and_then(|owners| owners.get(observer_id))
+                    .and_then(|episodes| episodes.get(subject_id))
+        })
+}
+
 pub(crate) struct PersonalNameReader<'a> {
     observer_id: &'a str,
     reception: &'a ReceptionState,
@@ -260,31 +319,7 @@ impl<'a> PersonalNameReader<'a> {
             .and_then(|episodes| episodes.get(id))
     }
     fn identity_for_entity(&self, id: &str) -> Option<&'a ObserverIdentity> {
-        let identities = self.identities()?;
-        let episode = self.episode(id);
-        let mut first = None;
-        let mut preferred = None;
-        for (at, (key, identity)) in identities.iter().enumerate() {
-            if identity.seed_only == Some(true) || identity.canonical_id.as_deref() != Some(id) {
-                continue;
-            }
-            let rank = crate::encoding::array_index(key)
-                .map_or((1, at as u64), |index| (0, u64::from(index)));
-            if first.as_ref().is_none_or(|(old, _)| rank < *old) {
-                first = Some((rank, identity));
-            }
-            if identity.authored
-                || identity
-                    .encounter_id
-                    .as_ref()
-                    .is_some_and(|encounter| !encounter.is_empty() && Some(encounter) == episode)
-            {
-                if preferred.as_ref().is_none_or(|(old, _)| rank < *old) {
-                    preferred = Some((rank, identity));
-                }
-            }
-        }
-        preferred.or(first).map(|(_, identity)| identity)
+        identity_for_entity(self.reception, self.observer_id, id)
     }
     pub(crate) fn observer_individual(
         &self,

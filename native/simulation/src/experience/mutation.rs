@@ -57,6 +57,39 @@ pub(crate) struct ExperienceJournal {
     pub(super) reservation: ByteReservation,
 }
 impl ExperienceJournal {
+    /// Admit only this operation's new payload and actual geometric undo growth.
+    /// Recharging the already owned capacity per edit would make a linear
+    /// privacy closure consume a quadratic allowance.
+    pub(super) fn prepare_undo(&mut self, bytes: usize) -> Result<(), ExperienceError> {
+        let capacity = self.undo.capacity();
+        let target = if self.undo.len() == capacity {
+            capacity
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(usize::from(capacity == 0) * 4))
+                .ok_or(ExperienceError::Capacity)?
+        } else {
+            capacity
+        };
+        let growth = target
+            .checked_sub(capacity)
+            .and_then(|n| n.checked_mul(size_of::<ExperienceUndo>()))
+            .ok_or(ExperienceError::Capacity)?;
+        self.reservation
+            .resize(
+                self.reservation
+                    .bytes()
+                    .checked_add(bytes)
+                    .and_then(|n| n.checked_add(growth))
+                    .ok_or(ExperienceError::Capacity)?,
+            )
+            .map_err(|_| ExperienceError::Capacity)?;
+        if target > capacity {
+            self.undo
+                .try_reserve_exact(target - self.undo.len())
+                .map_err(|_| ExperienceError::Capacity)?;
+        }
+        Ok(())
+    }
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ExperienceError> {
         Ok(Self {
             undo: Vec::new(),
@@ -571,14 +604,6 @@ impl ExperienceJournal {
             .len()
             .checked_add(id.len())
             .and_then(|bytes| {
-                bytes.checked_add(
-                    self.undo
-                        .capacity()
-                        .checked_add(1)?
-                        .checked_mul(2 * size_of::<ExperienceUndo>())?,
-                )
-            })
-            .and_then(|bytes| {
                 bytes
                     .checked_add(
                         crate::host::retained_size::tree_node_bound::<String, u64>()?
@@ -597,17 +622,7 @@ impl ExperienceJournal {
                     )
             })
             .ok_or(ExperienceError::Capacity)?;
-        self.reservation
-            .resize(
-                self.reservation
-                    .bytes()
-                    .checked_add(bytes)
-                    .ok_or(ExperienceError::Capacity)?,
-            )
-            .map_err(|_| ExperienceError::Capacity)?;
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ExperienceError::Capacity)?;
+        self.prepare_undo(bytes)?;
         let undo = ExperienceUndo::Remove {
             actor_id: actor_id.to_owned(),
             kind,
@@ -661,17 +676,7 @@ impl ExperienceJournal {
             .checked_mul(24)
             .and_then(|bytes| bytes.checked_add(2048))
             .ok_or(ExperienceError::Capacity)?;
-        self.reservation
-            .resize(
-                self.reservation
-                    .bytes()
-                    .checked_add(bytes)
-                    .ok_or(ExperienceError::Capacity)?,
-            )
-            .map_err(|_| ExperienceError::Capacity)?;
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ExperienceError::Capacity)?;
+        self.prepare_undo(bytes)?;
         let mut fields: IndexMap<String, Box<serde_json::value::RawValue>> =
             serde_json::from_str(&state.header_payload)
                 .map_err(|_| ExperienceError::InvalidBody("experience header"))?;

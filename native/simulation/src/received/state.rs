@@ -18,9 +18,13 @@ use serde_json::Value;
 use std::{collections::BTreeMap, sync::Arc};
 
 mod accounts;
+mod actor;
+mod privacy;
+pub(crate) use privacy::TemporalAccountAliases;
 mod append;
 mod save;
 mod versions;
+pub(crate) use actor::ensure_temporal_actor;
 pub(crate) use versions::{SourceVersionPlan, apply_source_version_plan};
 mod support;
 pub(crate) use accounts::{AccountAdditionBudget, KnowledgeAccountChange};
@@ -31,6 +35,7 @@ pub use append::{
 };
 pub(crate) use save::{TemporalSaveLimits, encode_temporal_changes, pack_temporal_save};
 pub(crate) use support::SupportRetentionContext;
+pub(super) use support::encoding::SupportEncoding;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -368,6 +373,7 @@ pub struct TemporalState {
     generation: String,
     header: TemporalStateHeader,
     actors: IndexMap<String, TemporalActorHistory>,
+    actor_coverage: OwnerCoverage,
     undo: Vec<TemporalUndo>,
 }
 
@@ -379,6 +385,10 @@ pub struct TemporalCheckpoint {
 #[derive(Debug)]
 enum TemporalUndo {
     Reservation(crate::host::ByteReservation),
+    CreatedActor {
+        actor_id: String,
+        before_next: u64,
+    },
     Support {
         actor_id: String,
         id: String,
@@ -401,8 +411,13 @@ impl TemporalState {
         generation: String,
         header: TemporalStateHeader,
         actors: IndexMap<String, TemporalActorHistory>,
+        actor_coverage: OwnerCoverage,
     ) -> Result<Self, ReceivedError> {
-        if generation.is_empty()
+        if actor_coverage.table != "mind_temporal_actors"
+            || actor_coverage.owner != "[\"world\",\"experience\",\"temporal\"]"
+            || !actor_coverage.complete
+            || !actor_coverage.parent_present
+            || generation.is_empty()
             || header.version != 1
             || actors
                 .iter()
@@ -414,6 +429,7 @@ impl TemporalState {
             generation,
             header,
             actors,
+            actor_coverage,
             undo: Vec::new(),
         })
     }
@@ -431,6 +447,16 @@ impl TemporalState {
             operations: self.undo.len(),
         }
     }
+    pub(super) fn retain_reservation(
+        &mut self,
+        reservation: crate::host::ByteReservation,
+    ) -> Result<(), ReceivedError> {
+        self.undo
+            .try_reserve_exact(1)
+            .map_err(|_| ReceivedError("Temporal undo capacity is unavailable."))?;
+        self.undo.push(TemporalUndo::Reservation(reservation));
+        Ok(())
+    }
     pub fn rollback_to(&mut self, checkpoint: TemporalCheckpoint) -> Result<(), ReceivedError> {
         if checkpoint.operations > self.undo.len() {
             return Err(ReceivedError("Stale temporal rollback cursor."));
@@ -438,6 +464,15 @@ impl TemporalState {
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().expect("Journal length checked") {
                 TemporalUndo::Reservation(_) => {}
+                TemporalUndo::CreatedActor {
+                    actor_id,
+                    before_next,
+                } => {
+                    if self.actors.shift_remove(&actor_id).is_none() {
+                        return Err(ReceivedError("Temporal rollback actor is absent."));
+                    }
+                    self.actor_coverage.next_ordinal = before_next;
+                }
                 TemporalUndo::Support {
                     actor_id,
                     id,

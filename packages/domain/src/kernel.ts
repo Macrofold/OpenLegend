@@ -1,4 +1,4 @@
-import { selectedTimeRules } from './world-composition.js';
+import { selectedMovementRules, selectedTimeRules } from './world-composition.js';
 import { beginPerceptionMeasurements } from './perception-timing.js';
 import { beginAttentionPreparation } from './attention.js';
 import { materializeNativeEntity } from './native-values.js';
@@ -2327,7 +2327,8 @@ function prepareNativeOperation(
       if (
         visionRadius(world, actor) === 0 &&
         (!validPosition(command.destination) ||
-          distance(worldPosition(actor), command.destination) > 1)
+          distance(worldPosition(actor), command.destination) >
+            selectedMovementRules(world).directProbeMaxDistance)
       )
         return reject(
           ordinaryRules.unsupportedNavigation.code,

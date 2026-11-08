@@ -125,7 +125,7 @@ fn outcome(ok: bool, code: &str, message: &str) -> Outcome {
         outputs: None,
         ok,
         code: code.to_owned(),
-        message: message.to_owned(),
+        message: message.into(),
         recipe_id: None,
         item_id: None,
         entity_id: None,
@@ -1483,7 +1483,7 @@ fn actor_problem(
     if command.envelope().cooperation.is_some()
         || command.envelope().combat_help_id.is_some()
         || actor.agency.plan.is_some()
-        || actor.agency.suspended.is_some()
+        || actor.agency.suspended_plan().is_some()
     {
         return Err(ExecutionError::UnsupportedFamily);
     }

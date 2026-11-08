@@ -5,7 +5,7 @@ use crate::attention::AttentionRelationFamily;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
-use crate::received::{CoverageGap, TemporalCaptureInput, TemporalChange};
+use crate::received::TemporalChange;
 use indexmap::IndexSet;
 use std::{mem::size_of, sync::Arc};
 pub(crate) struct EndedCurrentEvidence {
@@ -43,7 +43,7 @@ fn owner<'a>(core: &'a CoreMutation<'_>, observer: &str) -> Option<&'a Perceptio
         .as_ref()
         .and_then(|owners| owners.get(observer))
 }
-fn finish_received(
+pub(super) fn finish_received(
     core: &mut CoreMutation<'_>,
     lease: crate::execution::ReceivedLease,
 ) -> Result<(), ExecutionError> {
@@ -66,112 +66,10 @@ fn end_geometry(
     life: u64,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
-    if owner(core, observer).is_none_or(|owner| owner.geometry.is_none()) {
-        return Ok(());
+    if owner(core, observer).is_some_and(|owner| owner.geometry.is_some() && owner.life != life) {
+        return Err(invalid());
     }
-    let transition = core
-        .journal
-        .acquisitions
-        .begin_received(observer, life, None)?;
-    let count = owner(core, observer)
-        .and_then(|owner| owner.geometry.as_ref())
-        .map_or(0, |geometry| {
-            geometry.fragments.len() + geometry.boundaries.len()
-        });
-    for index in 0..count {
-        let geometry = owner(core, observer)
-            .and_then(|owner| owner.geometry.as_ref())
-            .ok_or_else(invalid)?;
-        let (observation, mark) = if index < geometry.fragments.len() {
-            let feature = &geometry.fragments[index];
-            (&feature.observation, &feature.recording)
-        } else {
-            let feature = &geometry.boundaries[index - geometry.fragments.len()];
-            (&feature.observation, &feature.recording)
-        };
-        let Some(mark) = mark.as_ref().filter(|mark| !mark.gap) else {
-            continue;
-        };
-        let reservation = budget.reserve(
-            heap_sum([
-                size_of::<TemporalCaptureInput>(),
-                observation.id.len(),
-                mark.members.heap_bytes().ok_or(ExecutionError::Capacity)?,
-                mark.members
-                    .len()
-                    .checked_mul(size_of::<(String, CurrentReceivedPart)>())
-                    .ok_or(ExecutionError::Capacity)?,
-            ])
-            .ok_or(ExecutionError::Capacity)?,
-        )?;
-        let terminal = mark
-            .terminal_bytes
-            .checked_mul(mark.members.len() as u64)
-            .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
-            .ok_or_else(invalid)?;
-        let input = TemporalCaptureInput {
-            spatial_context: true,
-            availability_at: None,
-            coverage_gap: Some(CoverageGap {
-                from: mark.last_at.max(geometry.supported_through),
-                through: core.state.physical.header.sim_time,
-            }),
-            ended_fields: Some(
-                mark.members
-                    .iter()
-                    .map(|member| (member.kind.clone(), member.part))
-                    .collect(),
-            ),
-            terminal_reservation_bytes: Some(terminal),
-            terminal_reservation_delta: None,
-            received_at: None,
-            received_order: None,
-            availability: None,
-            receiver_frame: None,
-            subject: observation.id.clone(),
-            context_subjects: None,
-            subject_identity: None,
-            change: TemporalChange::Loss,
-            required: false,
-            source_ids: Vec::new(),
-            origin: None,
-            facets: Vec::new(),
-        };
-        let policy = &core.state.installed.attention.value().retention;
-        core.journal.acquisitions.append_receipt(
-            &mut core.state.temporal,
-            core.state
-                .reception
-                .received_values
-                .as_mut()
-                .ok_or_else(invalid)?,
-            &mut core.state.physical.identity,
-            &crate::worlds::InstalledEvidenceMeaning,
-            &mut core.journal.meters,
-            observer,
-            life,
-            core.state.physical.header.sim_time,
-            core.state.physical.header.sequence,
-            input,
-            &policy.recent,
-            policy.maintenance_headroom,
-        )?;
-        core.state
-            .temporal
-            .release_terminal_reservation(observer, terminal)?;
-        drop(reservation);
-    }
-    core.journal
-        .current
-        .end_geometry(&mut core.state.reception, observer)?;
-    attention_control::dirty_attention_relations(
-        &core.state.physical,
-        &mut core.state.reception,
-        &mut core.journal.current,
-        observer,
-        &[AttentionRelationFamily::ClosingDrop],
-    )?;
-    finish_received(core, transition)
+    super::geometry::end_received_geometry(core, observer, budget)
 }
 /// Full ordinary end (zero episode grace), used by perception-restricting
 /// statuses. Targeted/modality-specific loss remains the detector's operation.

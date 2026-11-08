@@ -306,7 +306,7 @@ pub struct Outcome {
     pub outputs: Option<Vec<ActivityOutput>>,
     pub ok: bool,
     pub code: String,
-    pub message: String,
+    pub message: crate::text::JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

@@ -70,6 +70,23 @@ pub(crate) enum MovementRecordingPhase {
     Result,
 }
 impl<'a> AccountLaw<'a> {
+    pub(crate) fn attention_contact_due(
+        &self,
+        reception: &crate::reception::ReceptionState,
+        observer: &str,
+        subject: &crate::reception::ObserverSubject,
+        at: f64,
+    ) -> bool {
+        self.attention_identity(reception, observer, Some(subject))
+            .is_some_and(|(_, identity)| {
+                identity.seed_only != Some(true)
+                    && identity
+                        .familiarity
+                        .as_ref()
+                        .and_then(|state| state.next_credit_at)
+                        .is_none_or(|next| at >= next)
+            })
+    }
     pub(crate) fn attention_familiarity(
         &self,
         reception: &crate::reception::ReceptionState,

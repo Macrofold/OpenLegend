@@ -37,9 +37,13 @@ pub(crate) fn encode_temporal_changes(
     supports
         .try_reserve(state.undo.len())
         .map_err(|_| error())?;
+    let created = state
+        .undo
+        .iter()
+        .any(|operation| matches!(operation, TemporalUndo::CreatedActor { .. }));
     for operation in &state.undo {
         match operation {
-            TemporalUndo::Header { actor_id, .. } => {
+            TemporalUndo::Header { actor_id, .. } | TemporalUndo::CreatedActor { actor_id, .. } => {
                 actors.insert(actor_id.as_str());
             }
             TemporalUndo::Support {
@@ -55,7 +59,27 @@ pub(crate) fn encode_temporal_changes(
             TemporalUndo::PendingAppend { .. } | TemporalUndo::Reservation(_) => {}
         }
     }
-    for actor_id in actors {
+    // Ordinary Source map insertion can shift existing numeric-key positions.
+    // This finite owner is complete; no page or cold-body scan is involved.
+    let _order = budget
+        .reserve(
+            state
+                .actors
+                .len()
+                .checked_mul(std::mem::size_of::<&str>())
+                .ok_or_else(error)?,
+        )
+        .map_err(|_| error())?;
+    let mut ordered = Vec::new();
+    ordered
+        .try_reserve_exact(state.actors.len())
+        .map_err(|_| error())?;
+    ordered.extend(state.actors.keys().map(String::as_str));
+    ordered.sort_by(|a, b| crate::encoding::js_property_cmp(a, b));
+    if created {
+        output.observe_owner(&state.actor_coverage)?;
+    }
+    for (position, actor_id) in ordered.into_iter().enumerate() {
         let actor = state.actors.get(actor_id).ok_or_else(error)?;
         let _temporary = budget
             .reserve(
@@ -68,9 +92,25 @@ pub(crate) fn encode_temporal_changes(
             .map_err(|_| error())?;
         let id = json_record(&["world", "experience", "temporal", "actors", actor_id])
             .map_err(|_| error())?;
-        let placement = ledger
-            .placement("mind_temporal_actors", &id)
-            .ok_or_else(error)?;
+        let prior = ledger.placement("mind_temporal_actors", &id);
+        let placement;
+        let placement = if created {
+            placement = RecordPlacement {
+                id: id.clone(),
+                parent: state.actor_coverage.owner.clone(),
+                slot: actor_id.to_owned(),
+                position: position as u64,
+            };
+            &placement
+        } else {
+            prior.ok_or_else(error)?
+        };
+        if !actors.contains(actor_id)
+            && prior.is_some_and(|prior| prior.position == placement.position)
+        {
+            continue;
+        }
+        let new = prior.is_none();
         let header = &actor.header;
         let pressure = header
             .frontier
@@ -99,7 +139,7 @@ pub(crate) fn encode_temporal_changes(
             placement,
             &actor.payload,
             &columns,
-            false,
+            new,
             RowEffects::default(),
         )?;
         output.observe_owner(&OwnerCoverage {
@@ -109,6 +149,9 @@ pub(crate) fn encode_temporal_changes(
             next_ordinal: identity_through,
             parent_present: true,
         })?;
+        if new {
+            output.observe_owner(&actor.supports.as_ref().ok_or_else(error)?.coverage)?;
+        }
     }
     for ((actor_id, id), original) in supports {
         let actor = state.actors.get(actor_id).ok_or_else(error)?;

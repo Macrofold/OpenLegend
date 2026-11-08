@@ -472,6 +472,7 @@ fn current_facet_set_in_batch(
             address.subject_id,
             Some(CurrentContact {
                 encoded_payload: None,
+                visual_measurement: None,
                 order,
                 content: CurrentContactContent {
                     field_order: Vec::new(),

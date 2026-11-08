@@ -58,6 +58,22 @@ impl OwnedObservation {
     }
 }
 
+/// A validated stored geometry feature already retains its complete original.
+/// A detached permitted product funds that exact selected observation before
+/// copying it; it never reacquires or renews a sensory measurement.
+pub(crate) fn capture_stored_observation(
+    observation: &ObservationContribution,
+    budget: &ByteBudget,
+) -> Result<OwnedObservation, ReceivedError> {
+    let reservation = budget
+        .reserve(arc_bytes(observation).ok_or_else(capacity)?)
+        .map_err(|_| capacity())?;
+    Ok(OwnedObservation {
+        value: Arc::new(observation.clone()),
+        reservation,
+    })
+}
+
 impl CapturedReceivedOriginals {
     pub fn observer(&self) -> &ObserverLife {
         &self.observer

@@ -18,6 +18,15 @@ pub(super) fn facet_input(
     let native =
         current_group_native_facet(input.group, input.original_source, kind, Some(partition))
             .ok_or(ReceivedError("Received change has no current typed value."))?;
+    native_facet_input(owner, values, native)
+}
+
+pub(super) fn native_facet_input(
+    owner: &PerceptionEvidenceOwner,
+    values: &ReceivedValues,
+    native: crate::reception::CurrentNativeFacet<'_>,
+) -> Result<TemporalCaptureFacet, ReceivedError> {
+    let partition = native.metadata;
     let observer = owner.observer.as_ref().ok_or(ReceivedError(
         "Current temporal field has no receiving observer.",
     ))?;

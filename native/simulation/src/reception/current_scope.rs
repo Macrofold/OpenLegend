@@ -12,6 +12,11 @@ use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
 mod motion;
+mod scene;
+pub(crate) use scene::{
+    BodyGeometry, BodyMotion, GeometrySample, LocationGeometrySample, OwnedSceneBody,
+    ReceivedSceneBody, ReceivedSceneRead,
+};
 
 fn unavailable() -> ReceivedError {
     ReceivedError("Selected current received value is unavailable or incompatible.")

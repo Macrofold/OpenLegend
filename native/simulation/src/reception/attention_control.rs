@@ -11,9 +11,11 @@ use indexmap::IndexSet;
 use std::mem::size_of;
 
 mod candidates;
+mod relations;
 mod selection;
 mod withdrawal;
 use candidates::{AttentionCandidate, build_candidates, current_point};
+pub(crate) use relations::evaluate_attention_relations;
 pub(crate) use withdrawal::prune_withdrawn_attention;
 
 fn invalid() -> ReceivedError {
@@ -531,6 +533,33 @@ pub(super) fn dirty_attention_relations(
     observer: &str,
     families: &[AttentionRelationFamily],
 ) -> Result<(), ReceivedError> {
+    dirty_relations(physical, reception, journal, observer, families, None)
+}
+pub(super) fn dirty_attention_self_relations(
+    physical: &PhysicalState,
+    reception: &mut ReceptionState,
+    journal: &mut CurrentJournal,
+    observer: &str,
+    families: &[AttentionRelationFamily],
+) -> Result<(), ReceivedError> {
+    let anchors = IndexSet::from([SELF_RELATION_KEY.to_owned()]);
+    dirty_relations(
+        physical,
+        reception,
+        journal,
+        observer,
+        families,
+        Some(&anchors),
+    )
+}
+fn dirty_relations(
+    physical: &PhysicalState,
+    reception: &mut ReceptionState,
+    journal: &mut CurrentJournal,
+    observer: &str,
+    families: &[AttentionRelationFamily],
+    anchors: Option<&IndexSet<String>>,
+) -> Result<(), ReceivedError> {
     let Some(prior) = owner(reception, observer).and_then(|owner| owner.attention.as_ref()) else {
         return Ok(());
     };
@@ -559,7 +588,7 @@ pub(super) fn dirty_attention_relations(
         target(physical, observer),
         physical.header.sim_time,
         families,
-        None,
+        anchors,
     )?;
     *journal.attention_mut(reception, observer)? = Some(next);
     Ok(())

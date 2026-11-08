@@ -449,7 +449,7 @@ export function validateReincarnationPolicy(policy: ReincarnationPolicy | null):
   if (
     policy.implementation !== 'rest-replacement' ||
     policy.qualifyingController !== 'player' ||
-    policy.corpseKind !== 'remains' ||
+    !isSafeRecordId(policy.corpseKind) ||
     !['campfire', 'resource', 'item-pile'].includes(policy.restKind) ||
     !Number.isFinite(policy.retainedTypeFraction) ||
     policy.retainedTypeFraction < 0 ||

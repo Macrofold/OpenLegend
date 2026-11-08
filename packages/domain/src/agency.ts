@@ -7,7 +7,7 @@ import { openingSemanticInterval, finishSemanticWork } from './semantic-opportun
 import { attackSubject, validAimPointSubject } from './combat-execution.js';
 import { isMaterialInputRole } from './native-inputs.js';
 import { recordSemanticChange } from './dependencies.js';
-import { selectedOutwardBodyActivity } from './world-composition.js';
+import { selectedOrdinaryActionRules, selectedOutwardBodyActivity } from './world-composition.js';
 import type { NativeExecutionPermissions } from './construction-permissions.js';
 import { validGateUseIntent } from './gate-operations.js';
 import { validBoundaryImpactIntent } from './boundary-impacts.js';
@@ -85,6 +85,27 @@ export function producedItemDefinition(world: WorldState, command: Command): str
   if (command.type === 'pickup' && command.itemId)
     return itemFor(world, command.itemId)?.definitionId;
   return activityHostForCommand(world, command.type)?.outputDefinition?.(world, command);
+}
+type PlanWords = ReturnType<typeof selectedOrdinaryActionRules>['plan'];
+type PlanOutcomeKey = {
+  [K in keyof PlanWords]: PlanWords[K] extends { code: string; message: string } ? K : never;
+}[keyof PlanWords];
+type PlanTextKey = {
+  [K in keyof PlanWords]: PlanWords[K] extends string ? K : never;
+}[keyof PlanWords];
+function planOutcome(world: WorldState, key: PlanOutcomeKey, ok = false): Outcome {
+  const message = selectedOrdinaryActionRules(world).plan[key];
+  return outcome(ok, message.code, message.message);
+}
+function planText(
+  world: WorldState,
+  key: PlanTextKey,
+  values: Readonly<Record<string, string | number>>,
+): string {
+  return selectedOrdinaryActionRules(world).plan[key].replace(
+    /\{([a-z]+)\}/gu,
+    (marker, name: string) => (values[name] === undefined ? marker : String(values[name])),
+  );
 }
 export const AGENCY_LIMITS = {
   goals: 8,
@@ -438,54 +459,35 @@ export function arrangePlan(
     !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     new Set(commands.map((command) => command.id)).size !== commands.length
   )
-    return outcome(false, 'invalid-plan', 'Plan and child identities must be valid and unique.');
-  if ((current?.revision ?? 0) !== expectedRevision)
-    return outcome(false, 'stale-plan', 'Refresh the changed plan before editing it.');
+    return planOutcome(world, 'invalidIdentity');
+  if ((current?.revision ?? 0) !== expectedRevision) return planOutcome(world, 'stalePlan');
   if (goalId && !agency.goals.some((goal) => goal.id === goalId && goal.status === 'active'))
-    return outcome(
-      false,
-      'invalid-goal',
-      'A plan requires an active goal belonging to this actor.',
-    );
+    return planOutcome(world, 'invalidGoal');
   if (!commands.length || commands.length > AGENCY_LIMITS.steps)
-    return outcome(false, 'plan-limit', 'A frontier needs one to eight steps.');
+    return planOutcome(world, 'stepLimit');
   if (commands.some((command) => !nativeCommandSupported(world, command.type)))
-    return outcome(
-      false,
-      'unsupported-capability',
-      'This world does not install a requested action.',
-    );
+    return planOutcome(world, 'unsupportedCapability');
   if (commands.some((command) => !isPlannedCommand(command)))
-    return outcome(false, 'invalid-plan', 'Only native physical work can be queued.');
+    return planOutcome(world, 'invalidCommand');
   if (mode === 'enqueue' && current?.activity?.control && !current.activity.terminal)
-    return outcome(
-      false,
-      'chosen-activity-active',
-      'Finish this chosen activity or explicitly replace or interrupt it before adding other work.',
-    );
+    return planOutcome(world, 'chosenActivityActive');
   const prior =
     mode === 'enqueue' && current?.status === 'active'
       ? current.steps.map((step) => step.command)
       : [];
-  if (!validOutputReferences([...prior, ...commands]))
-    return outcome(
-      false,
-      'invalid-plan',
-      'Item references require an earlier single-output native step.',
-    );
+  if (!validOutputReferences([...prior, ...commands])) return planOutcome(world, 'invalidOutputs');
   if (
     mode === 'enqueue' &&
     current &&
     current.status !== 'completed' &&
     current.status !== 'cancelled'
   ) {
-    if (current.status === 'blocked')
-      return outcome(false, 'plan-blocked', 'Explicitly replace or cancel the blocked frontier.');
+    if (current.status === 'blocked') return planOutcome(world, 'planBlocked');
     if (
       current.steps.length + commands.length > AGENCY_LIMITS.steps ||
       (goalId !== null && current.goalId !== goalId)
     )
-      return outcome(false, 'plan-limit', 'Frontier is full or belongs to a different goal.');
+      return planOutcome(world, 'frontierFull');
     current.steps.push(
       ...commands.map((command) => ({
         id: command.id,
@@ -520,7 +522,7 @@ export function arrangePlan(
   // docs/architecture.md#action-fulfillment-and-revision-approval
   actor.planGeneration++;
   return {
-    ...outcome(true, 'queued', 'Native work queued; it has not completed.'),
+    ...planOutcome(world, 'queued', true),
     planId: agency.plan!.id,
   };
 }
@@ -666,49 +668,34 @@ export function ownedOffenseContinues(
  * already spent inputs or committed a strike finish or are replaced instead; nothing is
  * refunded and no progress is invented. docs/action-capabilities.md#15-resource-claims-interruption-and-timing
  */
-export function pauseRefusal(action: ActorComponent['action']): string | null {
+export function pauseRefusal(world: WorldState, action: ActorComponent['action']): string | null {
   if (!action) return null;
-  if (action.type === 'status-effect') return 'This state cannot be paused.';
+  if (action.type === 'status-effect') return selectedOrdinaryActionRules(world).plan.pauseState;
   if (
     action.strikePhase ||
     (nativeActionMeaning(action.type)?.unpausableWhileWorking && action.stage === 'working')
   )
-    return 'An attack already under way cannot be paused; let it finish or replace it.';
+    return selectedOrdinaryActionRules(world).plan.pauseAttack;
   if (action.stage === 'working' && action.consumed.length)
-    return 'Materials are already in use for this step; let it finish or replace it.';
+    return selectedOrdinaryActionRules(world).plan.pauseMaterials;
   return null;
 }
 
 /** Read the same pause boundary used at commit, before offering an interruption. */
 export function suspensionProblem(world: WorldState, actorId: string): Outcome | null {
   const actor = entityGet(world.entities, actorId)?.actor;
-  if (!actor) return outcome(false, 'actor-unavailable', 'This actor is unavailable.');
+  if (!actor) return planOutcome(world, 'actorUnavailable');
   const plan = actor.agency.plan;
   if (!plan || plan.status !== 'active')
-    return actor.action
-      ? outcome(
-          false,
-          'cannot-pause',
-          'This work is not a chosen plan that can be paused; replace it or let it finish.',
-        )
-      : null;
-  if (actor.agency.suspended)
-    return outcome(
-      false,
-      'already-paused',
-      'Other paused work is already waiting to resume; let it resume, or replace it.',
-    );
+    return actor.action ? planOutcome(world, 'notChosenPlan') : null;
+  if (actor.agency.suspended) return planOutcome(world, 'alreadyPaused');
   const running = plan.steps.find((step) => step.status === 'running');
   if (actor.action && running?.actionId !== actor.action.id)
-    return outcome(
-      false,
-      'cannot-pause',
-      'This work is not a chosen plan that can be paused; replace it or let it finish.',
-    );
-  const refusal = pauseRefusal(actor.action);
+    return planOutcome(world, 'notChosenPlan');
+  const refusal = pauseRefusal(world, actor.action);
   if (refusal) return outcome(false, 'cannot-pause', refusal);
   if (running && !isSafeRecordId(`${running.id}:r${plan.revision}`))
-    return outcome(false, 'cannot-pause', 'This work has been paused too many times.');
+    return planOutcome(world, 'pauseTooOften');
   return null;
 }
 
@@ -731,7 +718,7 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
         world,
         actorId,
         actor.action.id,
-        outcome(false, 'paused', 'Paused for other work; this step restarts later.'),
+        planOutcome(world, 'pausedStep'),
       );
     releaseInvocationResources(world, actor.action.id);
     actor.action = null;
@@ -740,7 +727,7 @@ export function suspendCurrentWork(world: WorldState, actorId: string): Outcome 
     actor.agency.history.push({
       ...cloneValue(step),
       status: 'cancelled',
-      outcome: outcome(false, 'paused', 'Paused for other work; restarted later as a new step.'),
+      outcome: planOutcome(world, 'pausedRestart'),
     });
     actor.agency.history = actor.agency.history.slice(-AGENCY_LIMITS.history);
     const {
@@ -793,13 +780,13 @@ function suspendedWorkReason(world: WorldState, actorId: string, paused: ActorPl
       !actionTargetsCurrent(world, actorId, [step.command], step.targetEpisodes),
   );
   return paused.goalId && (!goal || (goal.status !== 'active' && goal.status !== 'paused'))
-    ? 'its goal is no longer active.'
+    ? selectedOrdinaryActionRules(world).plan.inactiveGoalReason
     : changed
-      ? 'a target is no longer the one I saw.'
+      ? selectedOrdinaryActionRules(world).plan.changedTargetReason
       : objects.some(
             (id) => !entityHas(world.entities, id) || entityGet(world.entities, id)!.retirement,
           )
-        ? 'something the activity uses no longer exists.'
+        ? selectedOrdinaryActionRules(world).plan.missingObjectReason
         : null;
 }
 export function suspendedWorkProblem(
@@ -810,25 +797,22 @@ export function suspendedWorkProblem(
 ): Outcome | null {
   const paused = entityGet(world.entities, actorId)?.actor?.agency.suspended;
   if (!paused || paused.id !== planId || paused.revision !== revision)
-    return outcome(false, 'stale-plan', 'That paused work has ended or changed.');
+    return planOutcome(world, 'stalePaused');
   const reason = suspendedWorkReason(world, actorId, paused);
-  return reason ? outcome(false, 'resume-refused', `Could not resume: ${reason}`) : null;
+  return reason
+    ? outcome(
+        false,
+        'resume-refused',
+        `${selectedOrdinaryActionRules(world).plan.resumeRefusedPrefix}${reason}`,
+      )
+    : null;
 }
 /** Called only after complete remaining-step preflight by the native command owner.
  * End the intervention without discarding the saved frontier or committed effects. */
 export function resumeWorkByChoice(world: WorldState, actorId: string): void {
   const actor = entityGet(world.entities, actorId)!.actor!;
   if (actor.action) {
-    endActivity(
-      world,
-      actorId,
-      actor.action.id,
-      outcome(
-        false,
-        'cancelled',
-        'Ended by choice to return to paused work; committed effects remain.',
-      ),
-    );
+    endActivity(world, actorId, actor.action.id, planOutcome(world, 'returnedFromIntervention'));
     releaseInvocationResources(world, actor.action.id);
     actor.action = null;
   }
@@ -849,7 +833,7 @@ function resumeSuspended(world: WorldState, actorId: string): void {
     paused.activity?.request?.name ??
     world.actionExperience.methods[paused.activity?.methodId ?? '']?.name ??
     paused.steps.find((step) => step.status === 'queued')?.command.purpose ??
-    'my paused work';
+    selectedOrdinaryActionRules(world).plan.pausedWorkName;
   const reason = suspendedWorkReason(world, actorId, paused);
   const changed = paused.steps.find(
     (step) =>
@@ -858,16 +842,22 @@ function resumeSuspended(world: WorldState, actorId: string): void {
       !actionTargetsCurrent(world, actorId, [step.command], step.targetEpisodes),
   );
   paused.status = reason ? 'blocked' : 'active';
-  if (reason && paused.activity) paused.activity.reason = `Could not resume: ${reason}`;
+  if (reason && paused.activity)
+    paused.activity.reason = `${selectedOrdinaryActionRules(world).plan.resumeRefusedPrefix}${reason}`;
   else if (reason) {
     // A plain plan records the reason on the step whose target changed, or otherwise on
     // the step that would have run next.
     const next =
-      (reason === 'a target is no longer the one I saw.' ? changed : undefined) ??
-      paused.steps.find((step) => step.status === 'queued');
+      (reason === selectedOrdinaryActionRules(world).plan.changedTargetReason
+        ? changed
+        : undefined) ?? paused.steps.find((step) => step.status === 'queued');
     if (next) {
       next.status = 'blocked';
-      next.outcome = outcome(false, 'resume-refused', `Could not resume: ${reason}`);
+      next.outcome = outcome(
+        false,
+        'resume-refused',
+        `${selectedOrdinaryActionRules(world).plan.resumeRefusedPrefix}${reason}`,
+      );
     }
   }
   paused.revision = latest + 1;
@@ -878,8 +868,8 @@ function resumeSuspended(world: WorldState, actorId: string): void {
     parts: [
       person(actorId, 'possessive'),
       reason
-        ? ` paused work (${name}) could not resume: ${reason} Nothing more of it was done.`
-        : ` paused work (${name}) resumed. The stopped step restarts from its beginning.`,
+        ? planText(world, 'resumeBlocked', { name, reason })
+        : planText(world, 'resumed', { name }),
     ],
   });
 }
@@ -899,7 +889,7 @@ export function recordPlanResult(
       appendMemory(world, actorId, {
         kind: 'episode',
         source: 'internal',
-        importance: 6,
+        importance: selectedOrdinaryActionRules(world).plan.controlImportance,
         entityIds: [actorId],
         summary,
       }),
@@ -932,7 +922,10 @@ function summarizeStoppedActivity(
       recordPlanResult(world, ownerId, plan, {
         parts: [
           person(ownerId, 'possessive'),
-          ` chosen work was cancelled at simulation time ${world.simTime}. ${plan.steps.filter((step) => !step.actionId).length} queued steps never started. Previously committed effects and costs remain; no further result is claimed.`,
+          planText(world, 'stoppedSummary', {
+            time: world.simTime,
+            queued: plan.steps.filter((step) => !step.actionId).length,
+          }),
         ],
       });
     return;
@@ -966,7 +959,7 @@ export function discardSuspended(world: WorldState, actor: ActorComponent, actor
         ? {
             ...cloneValue(step),
             status: 'cancelled' as const,
-            outcome: outcome(false, 'cancelled', 'Paused work was cancelled; it will not resume.'),
+            outcome: planOutcome(world, 'discardedPaused'),
           }
         : cloneValue(step),
     ),
@@ -995,10 +988,10 @@ export function cancelPlan(
           world,
           step.command.actorId,
           step.actionId,
-          outcome(false, 'cancelled', 'Cancelled; committed costs remain spent.'),
+          planOutcome(world, 'cancelledStep'),
         );
       step.status = 'cancelled';
-      step.outcome = outcome(false, 'cancelled', 'Cancelled; committed costs remain spent.');
+      step.outcome = planOutcome(world, 'cancelledStep');
     }
   plan.status = 'cancelled';
   if (summarizeControl) summarizeStoppedActivity(world, plan, actorId);
@@ -1051,9 +1044,16 @@ export function finishPlanAction(
           appendMemory(world, actorId, {
             kind: 'episode',
             source: 'internal',
-            importance: 5,
+            importance: selectedOrdinaryActionRules(world).plan.resultImportance,
             entityIds: [actorId],
-            summary: `The requested action (${step.command.purpose ?? step.command.type}) ${result.ok ? 'reported completion' : 'was refused'}: ${result.message} Result code: ${result.code}.`,
+            summary: planText(world, 'fallbackResultSummary', {
+              purpose: step.command.purpose ?? step.command.type,
+              status: result.ok
+                ? selectedOrdinaryActionRules(world).plan.completedResult
+                : selectedOrdinaryActionRules(world).plan.refusedResult,
+              message: result.message,
+              code: result.code,
+            }),
           }),
         )
       : undefined);
@@ -1106,12 +1106,7 @@ export function readyPlanStep(world: WorldState, actorId: string): PlanStep | un
   if (plan.status !== 'active') return;
   const running = plan.steps.find((step) => step.status === 'running');
   if (running && running.actionId !== actor.action?.id)
-    finishPlanAction(
-      world,
-      actorId,
-      running.actionId!,
-      outcome(false, 'interrupted', 'Native work was interrupted; explicitly revise the frontier.'),
-    );
+    finishPlanAction(world, actorId, running.actionId!, planOutcome(world, 'interruptedStep'));
   if (
     plan.status !== 'active' ||
     actor.action ||
@@ -1968,7 +1963,7 @@ export function stopCooperativeWork(
         invocationId: current.id,
       });
       resultEvidence = endActivity(world, actorId, current.id, reason);
-    } else if (pauseRefusal(current)) delete current.cooperation;
+    } else if (pauseRefusal(world, current)) delete current.cooperation;
     else {
       resultEvidence = endActivity(world, actorId, current.id, reason);
       releaseInvocationResources(world, current.id);

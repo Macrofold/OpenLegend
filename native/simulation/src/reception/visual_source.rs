@@ -7,7 +7,8 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::simulation::SimulationState;
 use crate::state::{Named, Placement};
 use crate::status::{
-    AttributeAudience, effective_body_profile, project_attributes, project_status_effects,
+    AttributeAudience, capture_public_attribute_projection, effective_body_profile,
+    project_attributes, project_status_effects,
 };
 use serde::Deserialize;
 use std::mem::size_of;
@@ -17,6 +18,7 @@ pub(super) struct PreparedVisualSource {
     pub pose: ObservedBodyPose,
     pub facets: Vec<SensoryFacet>,
     pub inventory_revision: u64,
+    pub token: String,
     pub reservation: ByteReservation,
 }
 fn invalid() -> ExecutionError {
@@ -255,12 +257,40 @@ pub(super) fn prepare_visual_source(
         point: ObservedPoint::from(position),
         error_radius: 0.0,
     };
+    // The selected source has no mutable item definitions, assembly or live
+    // contribution family. These are precisely the remaining encounter-frame
+    // dependencies: outward body/pose, description, life and the captured
+    // public inputs (including revisions even when wording is unchanged).
+    // Equality alone is consumed; the Source's ephemeral identity number for
+    // its immutable item-definition object has no cross-process meaning.
+    let public = capture_public_attribute_projection(
+        subject,
+        &state.installed.attributes,
+        state.physical.pending_values.as_ref(),
+        budget,
+    )?;
+    let descriptor = (
+        &facets[1],
+        description,
+        subject.actor.as_ref().and_then(|a| a.physical_life),
+        &pose,
+        public.key(),
+    );
+    let token_bytes = crate::encoding::json_record_len(&descriptor).map_err(|_| invalid())?;
+    reservation.resize(
+        reservation
+            .bytes()
+            .checked_add(token_bytes)
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let token = crate::encoding::json_record(&descriptor).map_err(|_| invalid())?;
     reservation.resize(
         heap_sum([
             size_of::<PreparedVisualSource>(),
             location.heap_bytes().ok_or(ExecutionError::Capacity)?,
             pose.heap_bytes().ok_or(ExecutionError::Capacity)?,
             facets.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            token.capacity(),
         ])
         .ok_or(ExecutionError::Capacity)?,
     )?;
@@ -269,6 +299,7 @@ pub(super) fn prepare_visual_source(
         pose,
         facets,
         inventory_revision: inventory.revision,
+        token,
         reservation,
     })
 }

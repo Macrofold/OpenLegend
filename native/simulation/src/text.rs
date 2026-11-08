@@ -445,6 +445,17 @@ impl JsText {
                 .sum(),
         }
     }
+    /// Match the existing Node PostgreSQL client's scalar TEXT transport. Its
+    /// UTF-8 encoding replaces isolated units, while the canonical JSON body
+    /// retains their escapes. This comparison never rewrites canonical text.
+    pub fn matches_utf8_transport(&self, received: &Self) -> bool {
+        let Some(received) = received.as_unicode() else {
+            return false;
+        };
+        char::decode_utf16(self.units())
+            .map(|character| character.unwrap_or(char::REPLACEMENT_CHARACTER))
+            .eq(received.chars())
+    }
     /// Array.from(text).length, used by the selected world's personal-name cap.
     pub fn character_count(&self) -> usize {
         character_count(self.units())

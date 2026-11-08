@@ -7,9 +7,10 @@ use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::value::RawValue;
 
-pub(super) enum SupportEncoding<'a> {
+pub(in super::super::super) enum SupportEncoding<'a> {
     Receipt { availability_last: bool },
     Observation,
+    Current,
     Existing(&'a str),
 }
 struct OriginalFacet<'a>(&'a TemporalFacetReference);
@@ -46,6 +47,49 @@ impl Serialize for OriginalFacets<'_> {
         list.end()
     }
 }
+struct CurrentFacet<'a>(&'a TemporalFacetReference);
+impl Serialize for CurrentFacet<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let f = self.0;
+        let mut fields = s.serialize_map(None)?;
+        if let Some(detail) = &f.detail_support {
+            fields.serialize_entry("detailSupport", detail)?;
+        }
+        if let Some(frame) = &f.pose_frame {
+            fields.serialize_entry("poseFrame", frame)?;
+        }
+        if let Some(support) = &f.support {
+            fields.serialize_entry("support", support)?;
+        }
+        fields.serialize_entry("role", &f.clock.role)?;
+        fields.serialize_entry("asOf", &f.clock.as_of)?;
+        fields.serialize_entry("measuredFrom", &f.clock.measured_from)?;
+        fields.serialize_entry("measuredThrough", &f.clock.measured_through)?;
+        fields.serialize_entry("acquiredAt", &f.clock.acquired_at)?;
+        if let Some(original) = &f.original {
+            fields.serialize_entry("original", original)?;
+        }
+        if let Some(received) = &f.received_from {
+            fields.serialize_entry("receivedFrom", received)?;
+        }
+        fields.serialize_entry("valueRef", &f.value_ref)?;
+        fields.serialize_entry("memberIndex", &f.member_index)?;
+        if let Some(reception) = &f.reception {
+            fields.serialize_entry("reception", reception)?;
+        }
+        fields.end()
+    }
+}
+struct CurrentFacets<'a>(&'a [TemporalFacetReference]);
+impl Serialize for CurrentFacets<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut list = s.serialize_seq(Some(self.0.len()))?;
+        for field in self.0 {
+            list.serialize_element(&CurrentFacet(field))?;
+        }
+        list.end()
+    }
+}
 struct Receipt<'a> {
     receipt: &'a TemporalReceipt,
     mode: &'a SupportEncoding<'a>,
@@ -55,7 +99,10 @@ impl Serialize for Receipt<'_> {
         let r = self.receipt;
         let h = &r.header;
         let mut fields = s.serialize_map(None)?;
-        if matches!(self.mode, SupportEncoding::Observation) {
+        if matches!(
+            self.mode,
+            SupportEncoding::Observation | SupportEncoding::Current
+        ) {
             fields.serialize_entry("actorId", &r.locator.actor_id)?;
             fields.serialize_entry("physicalLife", &r.locator.physical_life)?;
             fields.serialize_entry("epoch", &r.locator.epoch)?;
@@ -69,7 +116,11 @@ impl Serialize for Receipt<'_> {
             fields.serialize_entry("change", &h.change)?;
             fields.serialize_entry("required", &r.required)?;
             fields.serialize_entry("sourceIds", &h.source_ids)?;
-            fields.serialize_entry("facets", &OriginalFacets(&r.facets))?;
+            if matches!(self.mode, SupportEncoding::Current) {
+                fields.serialize_entry("facets", &CurrentFacets(&r.facets))?;
+            } else {
+                fields.serialize_entry("facets", &OriginalFacets(&r.facets))?;
+            }
             if let Some(identity) = &h.subject_identity {
                 fields.serialize_entry("subjectIdentity", identity)?;
             }

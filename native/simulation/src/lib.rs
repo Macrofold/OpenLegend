@@ -28,6 +28,7 @@ pub mod native_controller;
 pub mod native_danger;
 pub mod native_refuge;
 pub mod native_response;
+pub(crate) mod plans;
 pub mod received;
 pub mod reception;
 pub mod records;
