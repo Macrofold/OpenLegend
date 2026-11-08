@@ -228,7 +228,11 @@ pub(crate) fn install_physical_meanings(
         return Err(InstallError::CurrentFormat);
     }
     input.status_policy.verify(&status_policy)?;
-    let status_work = crate::status::compile_status_work(&status_policy, &status_row.payload)?;
+    // Work invocation identity uses Source canonicalJson(definition), while
+    // the stored policy preserves its authored property order. JSON key order
+    // changes the pin even when all current values and byte counts agree.
+    let status_work =
+        crate::status::compile_status_work(&status_policy, &input.status_policy.canonical)?;
     let population_work = crate::status::compile_status_installation(
         &manifest_row.payload,
         &status_policy,

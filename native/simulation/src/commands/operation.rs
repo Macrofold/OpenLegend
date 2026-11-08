@@ -56,10 +56,12 @@ impl From<MemoryAcquisitionError> for CommandOperationError {
 pub(crate) enum CommandOperationAnswer {
     Geometry(GeometryAnswers),
     Event(CompletedEvent),
+    Display(super::CompletedActivityDisplay),
 }
 pub(crate) enum CommandOperationStep<'a> {
     Geometry(&'a GeometryQueries),
     Event(&'a mut EventCursor),
+    Display(&'a mut super::ActivityDisplayCursor),
     Complete(CompletedCommandOperation),
 }
 pub(crate) struct CompletedCommandOperation {
@@ -87,6 +89,7 @@ pub(crate) struct CommandOperation {
 enum Progress {
     Geometry,
     Event,
+    Display,
     Complete(CompletedCommandOperation),
 }
 impl CommandOperation {
@@ -209,6 +212,11 @@ impl CommandOperation {
                 CommandOperationStep::Event(self.event.as_mut().ok_or(ExecutionError::Invariant)?)
             }
             Progress::Complete(value) => CommandOperationStep::Complete(value),
+            Progress::Display => CommandOperationStep::Display(
+                self.cursor
+                    .display_cursor()
+                    .ok_or(ExecutionError::Invariant)?,
+            ),
         })
     }
     fn drive(
@@ -224,6 +232,9 @@ impl CommandOperation {
             Some(CommandOperationAnswer::Event(value)) => {
                 self.command_answer = Some(self.retain_event(value)?)
             }
+            Some(CommandOperationAnswer::Display(value)) if self.event.is_none() => {
+                self.command_answer = Some(CommandAnswer::Display(value));
+            }
             Some(CommandOperationAnswer::Geometry(value)) if self.event.is_none() => {
                 self.command_answer = Some(CommandAnswer::Geometry(value))
             }
@@ -236,6 +247,7 @@ impl CommandOperation {
         loop {
             match self.cursor.step(core, self.command_answer.take())? {
                 CommandStep::Geometry(_) => return Ok(Progress::Geometry),
+                CommandStep::Display(_) => return Ok(Progress::Display),
                 CommandStep::Occurrence(staged) => {
                     let reservation = budget.reserve(
                         staged

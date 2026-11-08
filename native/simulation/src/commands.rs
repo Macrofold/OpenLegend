@@ -18,6 +18,8 @@ mod finalization;
 pub(crate) use finalization::*;
 mod state;
 pub(crate) use state::*;
+mod display;
+pub(crate) use display::*;
 mod run;
 pub(crate) use run::*;
 

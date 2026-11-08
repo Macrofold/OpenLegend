@@ -36,6 +36,7 @@ pub(crate) enum CommandAnswer {
     Occurrence(CompletedOccurrence),
     Personal(AcquiredActivityResult),
     EvidenceEnded(crate::reception::EndedCurrentEvidence),
+    Display(super::CompletedActivityDisplay),
 }
 pub(crate) enum CommandStep<'a> {
     Geometry(&'a GeometryQueries),
@@ -46,6 +47,7 @@ pub(crate) enum CommandStep<'a> {
         physical_life: u64,
         at: f64,
     },
+    Display(&'a mut super::ActivityDisplayCursor),
     Complete(super::PendingCommandCompletion),
 }
 enum Progress {
@@ -53,6 +55,7 @@ enum Progress {
     Occurrence(StagedOccurrence),
     Personal,
     EndEvidence,
+    Display,
     Complete(super::PendingCommandCompletion),
 }
 #[derive(Clone, Copy)]
@@ -63,6 +66,9 @@ enum Phase {
     Route,
     Probe,
     Prepared,
+    RecordPrepared,
+    RecordStatus,
+    RecordSpeech,
     Interrupt,
     Replace,
     Install,
@@ -77,6 +83,7 @@ enum Phase {
     Speech,
     ImmediateResult,
     Tail,
+    Conditions,
     Done,
 }
 enum PersonalTask {
@@ -96,6 +103,12 @@ pub(crate) struct CommandCursor {
     command: NativeCommand,
     canonical: String,
     view: Option<ActivityView>,
+    view_reservation: Option<ByteReservation>,
+    display: Option<super::ActivityDisplayCursor>,
+    prepared_speech: Option<EventEmissionIntent>,
+    before_action_id: Option<String>,
+    chosen_work_done: bool,
+    conditions: Option<crate::conditions::ConditionReconcileCursor>,
     options: CommandOptions,
     phase: Phase,
     queries: Option<GeometryQueries>,
@@ -140,7 +153,6 @@ impl CommandCursor {
     pub(crate) fn new(
         command: NativeCommand,
         canonical: String,
-        view: Option<ActivityView>,
         options: CommandOptions,
         binding: GeometryBinding,
         budget: &ByteBudget,
@@ -152,16 +164,18 @@ impl CommandCursor {
         }
         let bytes = std::mem::size_of::<Self>()
             + canonical.capacity()
-            + command.heap_bytes().ok_or(ExecutionError::Capacity)?
-            + view
-                .as_ref()
-                .map_or(Some(0), HeapBytes::heap_bytes)
-                .ok_or(ExecutionError::Capacity)?;
+            + command.heap_bytes().ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(bytes)?;
         Ok(Self {
             command,
             canonical,
-            view,
+            view: None,
+            view_reservation: None,
+            display: None,
+            prepared_speech: None,
+            before_action_id: None,
+            chosen_work_done: false,
+            conditions: None,
             options,
             phase: Phase::Start,
             queries: None,
@@ -186,6 +200,9 @@ impl CommandCursor {
             _reservation: reservation,
         })
     }
+    pub(super) fn display_cursor(&mut self) -> Option<&mut super::ActivityDisplayCursor> {
+        self.display.as_mut()
+    }
     pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
         self.sight
             .as_ref()
@@ -195,16 +212,63 @@ impl CommandCursor {
     pub(crate) fn actor_id(&self) -> &str {
         &self.command.envelope().actor_id
     }
-    pub(crate) fn requires_finalization(&self) -> bool {
-        self.finalize
-    }
     /// The coordinator calls this on an operational error before rolling back
     /// its command checkpoint. Operational work already spent is never refunded.
     pub(crate) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         if let Some(meter) = self.meter.take() {
             core.journal.meters.finish(meter)?;
         }
+        self.display = None;
+        self.view = None;
+        self.view_reservation = None;
+        self.prepared_speech = None;
+        self.conditions = None;
         Ok(())
+    }
+    fn begin_chosen_work(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        if self.chosen_work_done {
+            return Ok(());
+        }
+        self.chosen_work_done = true;
+        if self.options.native_controller || self.outcome.as_ref().is_none_or(|outcome| !outcome.ok)
+        {
+            return Ok(());
+        }
+        let actor_id = &self.command.envelope().actor_id;
+        let action = core
+            .state
+            .physical
+            .entities
+            .get(actor_id)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref());
+        let Some(action) =
+            action.filter(|action| self.before_action_id.as_deref() != Some(action.id.as_str()))
+        else {
+            return Ok(());
+        };
+        let _name = self.budget.reserve(action.id.len())?;
+        let action_id = action.id.clone();
+        core.physical().begin_semantic_work(actor_id, &action_id)
+    }
+    fn needs_display(&mut self, core: &mut CoreMutation<'_>) -> Result<bool, ExecutionError> {
+        if self.options.native_controller || self.view.is_some() {
+            return Ok(false);
+        }
+        if self.display.is_none() {
+            let candidate = crate::host::CandidateKey {
+                id: self.binding.candidate_id,
+                base_cut: self.binding.base_cut,
+                generation: self.binding.generation,
+            };
+            self.display = Some(super::ActivityDisplayCursor::prepare(
+                core,
+                &self.command,
+                candidate,
+                &self.budget,
+            )?);
+        }
+        Ok(true)
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self._reservation.resize(
@@ -285,6 +349,9 @@ impl CommandCursor {
                 }
             }
             Progress::Occurrence(event) => CommandStep::Occurrence(event),
+            Progress::Display => {
+                CommandStep::Display(self.display.as_mut().ok_or(ExecutionError::Invariant)?)
+            }
             Progress::Complete(result) => CommandStep::Complete(result),
         })
     }
@@ -296,9 +363,18 @@ impl CommandCursor {
         let installed = core.state.installed.clone();
         let ordinary = installed.ordinary_actions.value();
         let mut answer = answer;
-        if self.activation.is_none() {
+        if self.activation.is_none() && self.conditions.is_none() {
             if let Some(answer) = answer.take() {
                 match answer {
+                    CommandAnswer::Display(completed) => {
+                        if self.display.is_none() || self.view.is_some() {
+                            return Err(ExecutionError::Invariant);
+                        }
+                        let (view, reservation) = completed.into_view(&self.command)?;
+                        self.view = Some(view);
+                        self.view_reservation = Some(reservation);
+                        self.display = None;
+                    }
                     CommandAnswer::Occurrence(completed) => {
                         if self.event.as_deref() != Some(completed.event_id()) {
                             return Err(ExecutionError::UnfinishedOccurrence);
@@ -453,6 +529,23 @@ impl CommandCursor {
             }
         }
         loop {
+            if let Some(conditions) = self.conditions.as_mut() {
+                let completed = match answer.take() {
+                    Some(CommandAnswer::Occurrence(completed)) => Some(completed),
+                    None => None,
+                    Some(_) => return Err(ExecutionError::UnfinishedOccurrence),
+                };
+                match conditions.step(core, completed)? {
+                    crate::conditions::ConditionReconcileStep::Occurrence(event) => {
+                        return Ok(Progress::Occurrence(event));
+                    }
+                    crate::conditions::ConditionReconcileStep::Complete => {
+                        self.conditions = None;
+                        self.phase = Phase::Done;
+                        continue;
+                    }
+                }
+            }
             if let Some(activation) = self.activation.as_mut() {
                 let supplied = answer
                     .take()
@@ -466,7 +559,9 @@ impl CommandCursor {
                         CommandAnswer::EvidenceEnded(value) => {
                             Ok(StatusActivationAnswer::EvidenceEnded(value))
                         }
-                        CommandAnswer::Geometry(_) => Err(ExecutionError::UnfinishedOccurrence),
+                        CommandAnswer::Geometry(_) | CommandAnswer::Display(_) => {
+                            Err(ExecutionError::UnfinishedOccurrence)
+                        }
                     })
                     .transpose()?;
                 match activation.drive(core, supplied)? {
@@ -492,6 +587,21 @@ impl CommandCursor {
             let actor_id = self.command.envelope().actor_id.clone();
             match self.phase {
                 Phase::Start => {
+                    let prior = core
+                        .state
+                        .physical
+                        .entities
+                        .get(self.actor_id())
+                        .and_then(|entity| entity.actor.as_ref())
+                        .and_then(|actor| actor.action.as_ref());
+                    self._reservation.resize(
+                        self._reservation
+                            .bytes()
+                            .checked_add(prior.map_or(0, |action| action.id.len()))
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    self.before_action_id = prior.map(|action| action.id.clone());
+
                     // At most the current result and its immediate personal
                     // completion copy coexist here. Other owners fund their
                     // own history/receipt before-images before cloning them.
@@ -748,8 +858,18 @@ impl CommandCursor {
                     }
                     core.physical().settle_entity(&actor_id)?;
                     self.materialized = true;
+                    self.phase = Phase::RecordPrepared;
+                }
+                Phase::RecordPrepared => {
+                    if self.needs_display(core)? {
+                        return Ok(Progress::Display);
+                    }
                     if !self.options.native_controller {
                         let mut view = self.view.take().ok_or(ExecutionError::Invariant)?;
+                        let _view_guard = self
+                            .view_reservation
+                            .take()
+                            .ok_or(ExecutionError::Invariant)?;
                         if self
                             .action
                             .as_ref()
@@ -1204,8 +1324,27 @@ impl CommandCursor {
                     self.status_was_active = active;
                     core.physical().settle_entity(&actor_id)?;
                     self.materialized = true;
+                    self.phase = Phase::RecordStatus;
+                }
+                Phase::RecordStatus => {
+                    if self.needs_display(core)? {
+                        return Ok(Progress::Display);
+                    }
+                    let NativeCommand::StatusEffect {
+                        target_id,
+                        definition_id,
+                        operation,
+                        ..
+                    } = &self.command
+                    else {
+                        return Err(ExecutionError::Invariant);
+                    };
                     if !self.options.native_controller {
                         let view = self.view.take().ok_or(ExecutionError::Invariant)?;
+                        let _view_guard = self
+                            .view_reservation
+                            .take()
+                            .ok_or(ExecutionError::Invariant)?;
                         self.activity_id = Some(
                             core.journal
                                 .activity
@@ -1384,10 +1523,23 @@ impl CommandCursor {
                             .checked_add(bytes)
                             .ok_or(ExecutionError::Capacity)?,
                     )?;
+                    self.prepared_speech = Some(plan.emission());
+                    self.outcome =
+                        Some(outcome(true, &speech.success.code, &speech.success.message));
                     core.physical().settle_entity(&actor_id)?;
                     self.materialized = true;
+                    self.phase = Phase::RecordSpeech;
+                }
+                Phase::RecordSpeech => {
+                    if self.needs_display(core)? {
+                        return Ok(Progress::Display);
+                    }
                     if !self.options.native_controller {
                         let view = self.view.take().ok_or(ExecutionError::Invariant)?;
+                        let _view_guard = self
+                            .view_reservation
+                            .take()
+                            .ok_or(ExecutionError::Invariant)?;
                         let id = core
                             .journal
                             .activity
@@ -1403,14 +1555,17 @@ impl CommandCursor {
                             .map_err(ExecutionError::Activity)?;
                         self.activity_id = Some(id);
                     }
-                    let event = core.stage_event(plan.emission())?;
+                    let event = core.stage_event(
+                        self.prepared_speech
+                            .take()
+                            .ok_or(ExecutionError::Invariant)?,
+                    )?;
                     self.event = Some(event.id.clone());
                     self.after_event = Phase::ImmediateResult;
-                    self.outcome =
-                        Some(outcome(true, &speech.success.code, &speech.success.message));
                     return Ok(Progress::Occurrence(event));
                 }
                 Phase::ImmediateResult => {
+                    self.begin_chosen_work(core)?;
                     if self.activity_id.is_some() {
                         let result = self
                             .outcome
@@ -1437,19 +1592,28 @@ impl CommandCursor {
                     self.phase = Phase::Tail;
                 }
                 Phase::Tail => {
-                    self.phase = Phase::Done;
-                }
-                Phase::Done => {
-                    let result = self.outcome.take().ok_or(ExecutionError::Invariant)?;
-                    self.finalize = result.ok && !self.duplicate;
+                    self.begin_chosen_work(core)?;
+                    let result = self.outcome.as_ref().ok_or(ExecutionError::Invariant)?;
                     if result.ok && !self.duplicate && !self.options.native_controller {
                         core.journal.commands.append(
                             &mut core.state.commands,
                             &self.command.envelope().id,
                             &self.canonical,
-                            &result,
+                            result,
                         )?;
                     }
+                    // Source records the command receipt before reconciling its
+                    // actor's real condition episodes and private notices.
+                    self.conditions = Some(crate::conditions::ConditionReconcileCursor::new(
+                        &actor_id,
+                        &self.budget,
+                    )?);
+                    self.phase = Phase::Conditions;
+                }
+                Phase::Conditions => return Err(ExecutionError::UnfinishedOccurrence),
+                Phase::Done => {
+                    let result = self.outcome.take().ok_or(ExecutionError::Invariant)?;
+                    self.finalize = result.ok && !self.duplicate;
                     self.abort(core)?;
                     return Ok(Progress::Complete(super::PendingCommandCompletion::new(
                         core,

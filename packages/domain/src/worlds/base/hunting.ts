@@ -5,7 +5,7 @@ import {
   prepareCurrentBodyReadScope,
   currentObservedFacetValues,
 } from '../../perception-evidence.js';
-import { projectAttributes } from '../../world-modules.js';
+import { projectAttributes, type AttributeView } from '../../world-modules.js';
 import type { WorldState } from '../../types.js';
 import type { RangedPolicy } from '../../ranged-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
@@ -66,17 +66,26 @@ export function observedBodyHealth(
   observerId: string,
   targetId: string,
 ): string {
+  return formatObservedBodyHealth(observedBodyHealthValue(world, observerId, targetId));
+}
+export function observedBodyHealthValue(
+  world: WorldState,
+  observerId: string,
+  targetId: string,
+): AttributeView | undefined {
   const own = observerId === targetId,
     target = own ? entityGet(world.entities, targetId) : undefined;
-  if (own && !target?.actor) return '';
+  if (own && !target?.actor) return undefined;
   const reads = own ? undefined : prepareCurrentBodyReadScope(world, observerId);
-  if (!own && !reads?.nativeBody(targetId)) return '';
+  if (!own && !reads?.nativeBody(targetId)) return undefined;
   const attributes = own
     ? projectAttributes(world, target!, 'owner')
     : currentObservedFacetValues(world, observerId, targetId, ['public-attributes'], reads).flatMap(
         (facet) => (facet.value.kind === 'public-attributes' ? facet.value.attributes : []),
       );
-  const health = attributes.find((attribute) => attribute.bodyHealth);
+  return attributes.find((attribute) => attribute.bodyHealth);
+}
+export function formatObservedBodyHealth(health: AttributeView | undefined): string {
   if (!health || typeof health.value !== 'number') return '';
   const range =
     health.max === undefined

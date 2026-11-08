@@ -53,6 +53,7 @@ pub(crate) enum ExecutionError {
     MissingEntity,
     MissingActor,
     MissingBody,
+    Sensor(crate::reception::SensorError),
     UnsupportedFamily,
     InvalidPosition,
     InvalidHealth,

@@ -1,6 +1,7 @@
 import { gateUseLabel } from '../../gate-operations.js';
 import { entityGet } from '../../entity-collection.js';
-import { observedBodyHealth } from './hunting.js';
+import { observedBodyHealthValue } from './hunting.js';
+import { ordinaryActivityView, appendObservedActivityFacts } from './ordinary-activity-view.js';
 import { equippedItem } from '../../equipment.js';
 import { bodyPolicy } from '../../body-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
@@ -110,6 +111,41 @@ function activityView(
   const target = targetId ? entityGet(world.entities, targetId) : undefined;
   const perceived =
     !!actor && !!target && (actor.id === target.id || seesEntity(world, actor, target));
+  const actorView =
+    actor && (perceived || command.type === 'move')
+      ? { position: worldPosition(actor), heading: actor.spatial.heading }
+      : undefined;
+  const targetView = perceived
+    ? {
+        name: observerDescription(world, command.actorId, target.id),
+        position: worldPosition(target),
+        health: observedBodyHealthValue(world, command.actorId, target.id),
+      }
+    : undefined;
+  if (command.type === 'move' || command.type === 'say' || command.type === 'status-effect') {
+    const purpose = { purpose: command.purpose, chosenPurpose: command.chosenPurpose?.description };
+    const effect =
+      command.type === 'status-effect'
+        ? world.statusEffectPolicy.definitions.find((effect) => effect.id === command.definitionId)
+        : undefined;
+    return ordinaryActivityView({
+      command:
+        command.type === 'move'
+          ? { ...purpose, type: 'move', destination: command.destination }
+          : command.type === 'say'
+            ? { ...purpose, type: 'say', text: command.text }
+            : { ...purpose, type: 'status-effect', operation: command.operation },
+      actor: actorView,
+      target: targetView,
+      effect: effect
+        ? {
+            label: effect.label,
+            activate: effect.actions?.activate,
+            deactivate: effect.actions?.deactivate,
+          }
+        : undefined,
+    });
+  }
   const itemId =
     heldAim?.weaponItemId ??
     heldStrike?.weaponItemId ??
@@ -137,7 +173,6 @@ function activityView(
     eat: 'Eat',
     equip: 'Equip',
     guard: 'Guard with shield',
-    move: 'Move',
     evade: bodyPolicy(world)?.evasion?.label,
     gather: 'Gather',
     craft: 'Make',
@@ -151,7 +186,6 @@ function activityView(
     replenish: 'Replenish',
     recover: 'Recover',
     'treat-scar': 'Treat a scar',
-    say: 'Speak',
     teach: 'Teach',
     'learn-record': 'Learn a recorded method',
   };
@@ -197,50 +231,7 @@ function activityView(
         critical: true,
       });
   }
-  if (perceived) {
-    view.target = observerDescription(world, command.actorId, target.id);
-    const a = worldPosition(actor),
-      b = worldPosition(target);
-    view.facts.push({
-      name: 'distance',
-      value: `${Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z).toFixed(1)} m`,
-      critical: true,
-    });
-    // Right-handed, Y-up (packages/spatial): facing +Z puts the right hand at -X.
-    const bearing = actor.spatial.heading - Math.atan2(b.x - a.x, b.z - a.z);
-    const directions = [
-      'ahead',
-      'ahead and to my right',
-      'to my right',
-      'behind and to my right',
-      'behind',
-      'behind and to my left',
-      'to my left',
-      'ahead and to my left',
-    ];
-    view.facts.push({
-      name: 'direction',
-      value: directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8]!,
-      critical: true,
-    });
-    const health = observedBodyHealth(world, command.actorId, target.id);
-    if (health)
-      view.facts.push({
-        name: 'health',
-        value: health,
-        critical: true,
-      });
-  }
-  if (command.type === 'move' && actor) {
-    const from = worldPosition(actor),
-      to = command.destination;
-    view.target = `the chosen place at ${to.x.toFixed(1)}, ${to.z.toFixed(1)}`;
-    view.facts.push({
-      name: 'distance',
-      value: `${Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z).toFixed(1)} m directly; the route length is not known`,
-      critical: true,
-    });
-  }
+  appendObservedActivityFacts(view, actorView, targetView);
   if (definition) {
     if (possessions) view.tool = possessions.names.get(item!.id);
     else {
@@ -370,19 +361,6 @@ function activityView(
       value: world.recipes[command.recipeId]?.name ?? 'a known technique',
       critical: true,
     });
-  if (command.type === 'say') {
-    for (let at = 0; at < command.text.length; at += 500)
-      view.facts.push({
-        name: at ? 'more of my words' : 'my words',
-        value: command.text.slice(at, at + 500),
-        critical: true,
-      });
-    view.facts.push({
-      name: 'reply',
-      value: 'Speaking does not promise that anyone hears, answers or agrees',
-      critical: true,
-    });
-  }
   if (command.type === 'cook') {
     const preparation = preparationDefinition(world, command);
     if (preparation) {
@@ -569,21 +547,6 @@ function activityView(
     command.quantity !== undefined
   )
     view.facts.push({ name: 'quantity', value: command.quantity, critical: true });
-  if (command.type === 'status-effect') {
-    const effect = world.statusEffectPolicy.definitions.find(
-      (effect) => effect.id === command.definitionId,
-    );
-    if (effect)
-      view.name =
-        command.operation === 'activate'
-          ? (effect.actions?.activate ?? `Begin ${effect.label}`)
-          : (effect.actions?.deactivate ?? `End ${effect.label}`);
-    view.facts.push({
-      name: 'result',
-      value: 'An attempt; the actual applied or resisted change is recorded when it happens',
-      critical: true,
-    });
-  }
   if (command.type === 'eat' && definition?.nutrition)
     view.facts.push({
       name: 'food',

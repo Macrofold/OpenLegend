@@ -36,7 +36,7 @@ impl CommandState {
                 &row.slot,
                 rows.coverage.next_ordinal,
             )?;
-            if !row.extra.is_empty() {
+            if !row.extra.is_empty() || row.position != 0 {
                 return Err(InstallError::CurrentFormat);
             }
             let receipt: CommandReceipt =

@@ -310,6 +310,25 @@ impl<'a> CurrentBodyReadScope<'a> {
         }
         Ok(Some(input))
     }
+    /// Borrow the actual admitted public attribute facet. Physical health and
+    /// private needs are never substituted for unavailable received detail.
+    pub(crate) fn observed_attributes(
+        &self,
+        id: &str,
+    ) -> Result<Option<&'a [AttributeView]>, ReceivedError> {
+        let Some(input) = self.observed(id, "public-attributes")? else {
+            return Ok(None);
+        };
+        match self
+            .value(&input.field.value.reference)
+            .ok_or_else(unavailable)?
+        {
+            ReceivedValueFragment::Sensory(SensoryFacet::PublicAttributes { attributes }) => {
+                Ok(Some(attributes))
+            }
+            _ => Err(unavailable()),
+        }
+    }
     pub(crate) fn local_subject(
         &self,
         id: &str,

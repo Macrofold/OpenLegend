@@ -1,3 +1,7 @@
+import {
+  ordinaryActivityView,
+  type OrdinaryActivityViewInput,
+} from './worlds/base/ordinary-activity-view.js';
 import { BASE_SIMULATION_TIME_RULES } from './worlds/base/time.js';
 import { baseOutwardActivity, changedOutwardNotice } from './worlds/base/senses.js';
 import {
@@ -449,9 +453,9 @@ export function selectedCreationProfileForCandidate(value: unknown): {
     throw new Error('Incompatible selected creation profile.');
   return { profile, candidate: profile.validate(value) };
 }
-export function selectedCreationProfileForWorld(
-  world: Pick<WorldState, 'profile'>,
-): WorldCreationProfile {
+export function selectedCreationProfileForWorld(world: {
+  profile: { id: string; version: number };
+}): WorldCreationProfile {
   if (world.profile.id !== 'grounded-wilderness' || world.profile.version !== 1)
     throw new Error('This world has no supported initial creation profile.');
   return BASE_CREATION_PROFILE;
@@ -524,6 +528,16 @@ export function selectedTypedRequestVocabulary(world: WorldState) {
 export function commandDescriptions(): Readonly<Record<string, string>> {
   return BASE_COMMAND_DESCRIPTIONS;
 }
+
+/** Pure selected-world presentation of an already permitted native capture. */
+export function formatOrdinaryActivityView(
+  profile: { id: string; version: number },
+  input: OrdinaryActivityViewInput,
+) {
+  selectedCreationProfileForWorld({ profile });
+  return ordinaryActivityView(input);
+}
+export type { OrdinaryActivityViewInput } from './worlds/base/ordinary-activity-view.js';
 
 export function nativeActivityView(world: WorldState, command: Command) {
   selectedCreationProfileForWorld(world);
