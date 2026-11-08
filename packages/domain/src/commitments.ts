@@ -77,10 +77,10 @@ export function hasCommitmentCompletion(
   eventTypes: readonly string[],
 ): boolean {
   const index = commitmentIndex(world.memories);
-  return eventTypes.some((type) =>
-    index.completions
-      .get(JSON.stringify([actorId, type]))
-      ?.some(({ record }) => record.obligation?.status === 'active'),
+  // The index contains unresolved promises, including overdue promises that can
+  // still be fulfilled. Match the same candidates as advanceCommitments.
+  return eventTypes.some(
+    (type) => !!index.completions.get(JSON.stringify([actorId, type]))?.length,
   );
 }
 /** Reuse the obligation owner's existing sorted deadline index. */
