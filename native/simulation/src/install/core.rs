@@ -279,6 +279,7 @@ pub(crate) fn assemble_core(
         mind_limits: mind,
         agency_limits: agency,
     });
+    crate::plans::validate_installation(&physical, &installed)?;
     // Every presence below is consumed from the actual root, including empty
     // owners. Missing rows never synthesize an empty receiver or personal graph.
     let roots = ReceptionRoots {

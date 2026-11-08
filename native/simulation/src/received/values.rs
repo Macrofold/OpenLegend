@@ -423,6 +423,33 @@ pub fn retain_received_value(
 }
 
 impl ReceivedValues {
+    /// Source's sharing index belongs to a particular working world object as
+    /// well as its simulation time. A command's isolated draft cannot reuse an
+    /// earlier caller's index merely because both ran at the same instant.
+    pub(crate) fn new_preparation_scope_bound(&self) -> Option<usize> {
+        if self.phase_at.is_none() && self.phase_values.is_empty() {
+            return Some(0);
+        }
+        let slots = if self.undo.len() < self.undo.capacity() {
+            1
+        } else {
+            self.undo.capacity().checked_add(1)?.checked_mul(2)?
+        };
+        slots.checked_mul(std::mem::size_of::<ReceivedValuesUndo>())
+    }
+    pub(crate) fn begin_preparation_scope(&mut self) -> Result<(), ReceivedError> {
+        if self.phase_at.is_none() && self.phase_values.is_empty() {
+            return Ok(());
+        }
+        self.undo
+            .try_reserve(1)
+            .map_err(|_| ReceivedError("Received-value scope exceeds native allowance."))?;
+        self.undo.push(ReceivedValuesUndo::PhaseReplace {
+            at: self.phase_at.take(),
+            values: std::mem::take(&mut self.phase_values),
+        });
+        Ok(())
+    }
     pub(crate) fn inserted_records(&self) -> impl Iterator<Item = &Arc<ReceivedValueRecord>> {
         self.undo.iter().filter_map(|operation| match operation {
             ReceivedValuesUndo::SourceInsert(id) => self.sources.get(id).map(|value| &value.record),

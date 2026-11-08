@@ -69,6 +69,14 @@ export const BASE_PLAN_RULES = {
     code: 'interrupted',
     message: 'Native work was interrupted; explicitly revise the frontier.',
   },
+  staleEncounter: {
+    code: 'stale-encounter',
+    message: 'The queued target encounter changed. Revise the plan.',
+  },
+  missingOutput: {
+    code: 'missing-plan-output',
+    message: 'The earlier step has no completed item output. Revise the plan.',
+  },
   fallbackResultSummary:
     'The requested action ({purpose}) {status}: {message} Result code: {code}.',
   completedResult: 'reported completion',

@@ -108,7 +108,9 @@ pub(crate) struct CommandCursor {
     prepared_speech: Option<EventEmissionIntent>,
     before_action_id: Option<String>,
     chosen_work_done: bool,
+    source_scope_started: bool,
     conditions: Option<crate::conditions::ConditionReconcileCursor>,
+    exposure: Option<super::exposure::CommandExposure>,
     options: CommandOptions,
     phase: Phase,
     queries: Option<GeometryQueries>,
@@ -175,7 +177,9 @@ impl CommandCursor {
             prepared_speech: None,
             before_action_id: None,
             chosen_work_done: false,
+            source_scope_started: false,
             conditions: None,
+            exposure: None,
             options,
             phase: Phase::Start,
             queries: None,
@@ -223,6 +227,7 @@ impl CommandCursor {
         self.view_reservation = None;
         self.prepared_speech = None;
         self.conditions = None;
+        self.exposure = None;
         Ok(())
     }
     fn begin_chosen_work(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
@@ -250,6 +255,13 @@ impl CommandCursor {
         let _name = self.budget.reserve(action.id.len())?;
         let action_id = action.id.clone();
         core.physical().begin_semantic_work(actor_id, &action_id)
+    }
+    fn begin_source_scope(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        if !self.source_scope_started {
+            core.begin_received_value_scope()?;
+            self.source_scope_started = true;
+        }
+        Ok(())
     }
     fn needs_display(&mut self, core: &mut CoreMutation<'_>) -> Result<bool, ExecutionError> {
         if self.options.native_controller || self.view.is_some() {
@@ -861,6 +873,14 @@ impl CommandCursor {
                     self.phase = Phase::RecordPrepared;
                 }
                 Phase::RecordPrepared => {
+                    if !self.source_scope_started {
+                        self.exposure = super::exposure::CommandExposure::prepare(
+                            core,
+                            &self.command,
+                            &self.budget,
+                        )?;
+                    }
+                    self.begin_source_scope(core)?;
                     if self.needs_display(core)? {
                         return Ok(Progress::Display);
                     }
@@ -899,7 +919,7 @@ impl CommandCursor {
                                 &self.command.envelope().id,
                                 view,
                                 core.state.physical.header.sim_time,
-                                None,
+                                activity_parent(&core.state.physical.entities, &self.command),
                             )
                             .map_err(ExecutionError::Activity)?;
                         self.activity_id = Some(id);
@@ -961,6 +981,14 @@ impl CommandCursor {
                     };
                 }
                 Phase::Replace | Phase::CancelEnd => {
+                    if !self.source_scope_started {
+                        self.exposure = super::exposure::CommandExposure::prepare(
+                            core,
+                            &self.command,
+                            &self.budget,
+                        )?;
+                    }
+                    self.begin_source_scope(core)?;
                     let cancelling = matches!(self.phase, Phase::CancelEnd);
                     let old = core
                         .state
@@ -1327,6 +1355,14 @@ impl CommandCursor {
                     self.phase = Phase::RecordStatus;
                 }
                 Phase::RecordStatus => {
+                    if !self.source_scope_started {
+                        self.exposure = super::exposure::CommandExposure::prepare(
+                            core,
+                            &self.command,
+                            &self.budget,
+                        )?;
+                    }
+                    self.begin_source_scope(core)?;
                     if self.needs_display(core)? {
                         return Ok(Progress::Display);
                     }
@@ -1355,7 +1391,7 @@ impl CommandCursor {
                                     &self.command.envelope().id,
                                     view,
                                     core.state.physical.header.sim_time,
-                                    None,
+                                    activity_parent(&core.state.physical.entities, &self.command),
                                 )
                                 .map_err(ExecutionError::Activity)?,
                         );
@@ -1531,6 +1567,7 @@ impl CommandCursor {
                     self.phase = Phase::RecordSpeech;
                 }
                 Phase::RecordSpeech => {
+                    self.begin_source_scope(core)?;
                     if self.needs_display(core)? {
                         return Ok(Progress::Display);
                     }
@@ -1550,7 +1587,7 @@ impl CommandCursor {
                                 &self.command.envelope().id,
                                 view,
                                 core.state.physical.header.sim_time,
-                                None,
+                                activity_parent(&core.state.physical.entities, &self.command),
                             )
                             .map_err(ExecutionError::Activity)?;
                         self.activity_id = Some(id);
@@ -1613,6 +1650,7 @@ impl CommandCursor {
                 Phase::Conditions => return Err(ExecutionError::UnfinishedOccurrence),
                 Phase::Done => {
                     let result = self.outcome.take().ok_or(ExecutionError::Invariant)?;
+                    let exposure = self.exposure.take();
                     self.finalize = result.ok && !self.duplicate;
                     self.abort(core)?;
                     return Ok(Progress::Complete(super::PendingCommandCompletion::new(
@@ -1621,6 +1659,7 @@ impl CommandCursor {
                         &self.command.envelope().id,
                         result,
                         self.finalize,
+                        exposure,
                         &self.budget,
                     )?));
                 }
@@ -1659,8 +1698,12 @@ fn actor_problem(
     }
     if command.envelope().cooperation.is_some()
         || command.envelope().combat_help_id.is_some()
-        || actor.agency.plan.is_some()
-        || actor.agency.suspended_plan().is_some()
+        || [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
+            .into_iter()
+            .flatten()
+            .any(|plan| {
+                plan.activity.is_some() || plan.steps.iter().any(|step| step.activity_key.is_some())
+            })
     {
         return Err(ExecutionError::UnsupportedFamily);
     }
@@ -1720,4 +1763,20 @@ fn actor_problem(
         return Ok(Some(ordinary.experience_capacity.outcome(false)));
     }
     Ok(None)
+}
+
+fn activity_parent<'a>(
+    entities: &'a crate::state::EntityStore,
+    command: &NativeCommand,
+) -> Option<&'a str> {
+    entities
+        .get(&command.envelope().actor_id)
+        .and_then(|entity| entity.actor.as_ref())
+        .and_then(|actor| actor.agency.plan.as_ref())
+        .filter(|plan| {
+            plan.steps
+                .iter()
+                .any(|step| step.id == command.envelope().id)
+        })
+        .map(|plan| plan.id.as_str())
 }

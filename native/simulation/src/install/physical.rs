@@ -712,9 +712,6 @@ fn validate_entity(
             || actor.encounters.is_some()
             || actor.coaching_episode_id.is_some()
             || actor.inventory_inspection.is_some()
-            || actor.agency.plan.is_some()
-            || actor.agency.suspended_plan().is_some()
-            || !actor.agency.history.is_empty()
             || !actor.agency.attempts.is_empty()
         {
             return Err(InstallError::CurrentFormat);

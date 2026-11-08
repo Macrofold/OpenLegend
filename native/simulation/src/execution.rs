@@ -190,6 +190,20 @@ impl CandidateJournal {
     pub(crate) fn byte_budget(&self) -> &ByteBudget {
         &self.budget
     }
+    pub(crate) fn encode_sensory_changes(
+        &self,
+        state: &SimulationState,
+        output: &mut crate::records::RowEncoder<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), crate::records::RecordEncodingError> {
+        self.sensory.encode_changes(
+            &state.reception,
+            self.root_sensory,
+            &state.records,
+            output,
+            budget,
+        )
+    }
     /// Disposable provider binding freshness, independent of gameplay identity
     /// and retained across nested rollback to fence every late answer.
     pub(crate) fn next_provider_serial(&mut self) -> Result<u64, ExecutionError> {
@@ -336,16 +350,25 @@ impl CandidateJournal {
         });
         Ok(token)
     }
-    pub(crate) fn keep(&mut self, token: CandidateCheckpoint) -> Result<(), ExecutionError> {
+    pub(crate) fn keep(
+        &mut self,
+        state: &mut SimulationState,
+        token: CandidateCheckpoint,
+    ) -> Result<(), ExecutionError> {
         if self.frames.len() != token.depth + 1 {
             return Err(ExecutionError::InvalidCheckpoint);
         }
-        let physical = self
+        let frame = self
             .frames
             .last()
-            .ok_or(ExecutionError::InvalidCheckpoint)?
-            .physical;
-        self.physical.prepare_keep(physical)?;
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.acquisitions.validate_keep(frame.acquisitions)?;
+        if let Err(error) = self.physical.prepare_keep(frame.physical) {
+            // Capacity is still tentative here. The linear child token must
+            // restore its state before it is consumed, including IDs/history.
+            self.rollback_to(state, token)?;
+            return Err(error);
+        }
         let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
         self.acquisitions.keep(frame.acquisitions)?;
         self.physical.keep(frame.physical)
@@ -470,6 +493,19 @@ pub(crate) struct CoreMutation<'a> {
     pub journal: &'a mut CandidateJournal,
 }
 impl CoreMutation<'_> {
+    pub(crate) fn begin_received_value_scope(&mut self) -> Result<(), ExecutionError> {
+        if let Some(values) = &mut self.state.reception.received_values {
+            self.journal.physical.reserve(
+                values
+                    .new_preparation_scope_bound()
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            values
+                .begin_preparation_scope()
+                .map_err(ExecutionError::Received)?;
+        }
+        Ok(())
+    }
     /// Source finishPlanAction duties precede its optional plan-step branch.
     /// An absent plan never skips semantic closure, personal recording or work.
     pub(crate) fn begin_finish_action(
@@ -500,7 +536,9 @@ impl CoreMutation<'_> {
                 + result.heap_bytes().ok_or(ExecutionError::Capacity)?,
         )?;
         self.physical().finish_semantic_work(actor_id, action_id)?;
-        self.physical().behavior_changed(actor_id, false)?;
+        // Source finishPlanAction publishes this behavior change even when an
+        // immediate command has no continuing action. It owes a sensory recheck.
+        self.physical().behavior_changed(actor_id, true)?;
         let pending = self
             .journal
             .activity

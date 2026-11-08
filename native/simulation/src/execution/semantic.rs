@@ -4,6 +4,79 @@
 
 use super::*;
 
+impl CoreMutation<'_> {
+    /// Source finishCommandWorld reconciles the command actor and characters
+    /// whose chosen purpose can have changed. Placement, received detail and
+    /// ordinary attribute writes cannot change that purpose; plan/action owners
+    /// can. Select from this child journal, never the whole population/history.
+    pub(crate) fn reconcile_command_semantics(
+        &mut self,
+        child: &CandidateCheckpoint,
+        actor: &str,
+    ) -> Result<(), ExecutionError> {
+        if self.journal.frames.len() != child.depth + 1 {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        let physical = self
+            .journal
+            .frames
+            .last()
+            .ok_or(ExecutionError::InvalidCheckpoint)?
+            .physical;
+        let frame = self
+            .journal
+            .physical
+            .frames
+            .get(physical.depth)
+            .filter(|frame| frame.serial == physical.serial)
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let changed = &self.journal.physical.undo[frame.undo_start..];
+        let count = changed
+            .iter()
+            .filter(|undo| semantic_subject(undo).is_some())
+            .count()
+            .checked_add(1)
+            .ok_or(ExecutionError::Capacity)?;
+        let text_bytes = changed
+            .iter()
+            .try_fold(actor.len(), |bytes, undo| {
+                bytes.checked_add(
+                    semantic_subject(undo)
+                        .and_then(|handle| self.state.physical.entities.resolve(handle))
+                        .map_or(0, |entity| entity.id.len()),
+                )
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        let budget = self.journal.byte_budget().clone();
+        let _guard = budget.reserve(
+            crate::host::retained_size::map_storage::<String, ()>(count)
+                .and_then(|bytes| bytes.checked_add(text_bytes))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut ids = IndexSet::with_capacity(count);
+        ids.insert(actor.to_owned());
+        for undo in changed {
+            if let Some(entity) = semantic_subject(undo)
+                .and_then(|handle| self.state.physical.entities.resolve(handle))
+            {
+                if !ids.contains(&entity.id) {
+                    ids.insert(entity.id.clone());
+                }
+            }
+        }
+        for id in ids {
+            self.physical().reconcile_semantic_interval(&id)?;
+        }
+        Ok(())
+    }
+}
+fn semantic_subject(undo: &Undo) -> Option<EntityHandle> {
+    match undo {
+        Undo::Action { entity, .. } | Undo::AgencyPlan { entity, .. } => Some(*entity),
+        _ => None,
+    }
+}
+
 impl PhysicalMutation<'_> {
     fn semantic_meta(&mut self, handle: EntityHandle) -> Result<(), ExecutionError> {
         let key = UndoKey::SemanticMeta(handle.slot, handle.generation);
@@ -99,11 +172,19 @@ impl PhysicalMutation<'_> {
         {
             return Ok(());
         }
-        if actor.agency.plan.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
-        self.journal.reserve(action_id.len() * 2 + 64)?;
-        let purpose = crate::encoding::json_record(&["action", action_id])
+        let (kind, purpose_id) = actor
+            .agency
+            .plan
+            .as_ref()
+            .filter(|plan| {
+                matches!(
+                    plan.status,
+                    crate::plans::PlanStatus::Active | crate::plans::PlanStatus::Blocked
+                )
+            })
+            .map_or(("action", action_id), |plan| ("plan", plan.id.as_str()));
+        self.journal.reserve(purpose_id.len() * 6 + 64)?;
+        let purpose = crate::encoding::json_record(&[kind, purpose_id])
             .map_err(|_| ExecutionError::Invariant)?;
         if actor
             .agency
@@ -170,21 +251,28 @@ impl PhysicalMutation<'_> {
         let Some(semantic) = &actor.agency.semantic else {
             return Ok(());
         };
-        if actor.agency.plan.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
         let purpose = if actor.capabilities.as_ref().is_some_and(|c| !c.cognition) {
             None
+        } else if let Some(plan) = actor.agency.plan.as_ref().filter(|plan| {
+            matches!(
+                plan.status,
+                crate::plans::PlanStatus::Active | crate::plans::PlanStatus::Blocked
+            )
+        }) {
+            self.journal.reserve(plan.id.len() * 6 + 64)?;
+            Some(
+                crate::encoding::json_record(&["plan", plan.id.as_str()])
+                    .map_err(|_| ExecutionError::Invariant)?,
+            )
+        } else if let Some(action) = &actor.action {
+            self.journal.reserve(action.id.len() * 6 + 64)?;
+            Some(
+                crate::encoding::json_record(&["action", action.id.as_str()])
+                    .map_err(|_| ExecutionError::Invariant)?,
+            )
+            .filter(|purpose| semantic.occupied_purpose.as_ref() == Some(purpose))
         } else {
-            actor
-                .action
-                .as_ref()
-                .map(|action| {
-                    crate::encoding::json_record(&["action", action.id.as_str()])
-                        .map_err(|_| ExecutionError::Invariant)
-                })
-                .transpose()?
-                .filter(|action| semantic.occupied_purpose.as_ref() == Some(action))
+            None
         };
         if purpose == semantic.occupied_purpose {
             return Ok(());

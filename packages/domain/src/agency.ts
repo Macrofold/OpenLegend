@@ -1100,6 +1100,24 @@ export function finishPlanAction(
   // Exact action results already belong to personal memories. The plan retains references,
   // not another narrative of the same effects. Goal completion remains actor-declared.
 }
+/** The command has settled its isolated effects/refusal before the frontier
+ * records that attempt. Immediate results share the ordinary action finisher. */
+export function recordPlanDispatch(
+  world: WorldState,
+  actorId: string,
+  stepId: string,
+  result: Outcome,
+): void {
+  const actor = entityGet(world.entities, actorId)!.actor!;
+  const step = actor.agency.plan!.steps.find((entry) => entry.id === stepId)!;
+  step.status = 'running';
+  step.actionId = actor.action?.id ?? stepId;
+  step.outcome = result;
+  actor.agency.plan!.revision++;
+  actor.agency.revision++;
+  if (!result.ok || !actor.action) finishPlanAction(world, actorId, step.actionId, result);
+}
+
 export function readyPlanStep(world: WorldState, actorId: string): PlanStep | undefined {
   const actor = entityGet(world.entities, actorId)!.actor!;
   // Paused work resumes once the interrupting frontier has ended, whatever its outcome.

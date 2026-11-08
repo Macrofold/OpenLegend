@@ -14,6 +14,10 @@ mod finish;
 pub(crate) use finish::finish_plan_action;
 mod memory;
 mod ready;
+mod run;
+pub(crate) use run::{
+    CompletedPlanRun, PlanCommandRequest, PlanRunAnswer, PlanRunCursor, PlanRunStep,
+};
 mod resume;
 pub(crate) use ready::{PlanReadyAnswer, PlanReadyCursor, PlanReadyStep, ReadyPlanStep};
 mod validation;

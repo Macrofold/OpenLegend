@@ -137,6 +137,20 @@ fn end_current_for_life(
     if current.life != life {
         return Err(invalid());
     }
+    if entity.physical_life() == Some(life) {
+        // Source receiveCurrentChange enters the current sequence even when
+        // ending perception leaves no eligible receiver for the next event.
+        // Old-life retirement must keep its old owner until that life closes.
+        core.journal
+            .originals
+            .ensure_owner(
+                &mut core.state.reception,
+                entity,
+                core.state.physical.header.sequence,
+            )
+            .map_err(ExecutionError::Received)?;
+    }
+    let current = owner(core, observer).ok_or_else(invalid)?;
     let mut count = 0usize;
     let mut bytes = current
         .current

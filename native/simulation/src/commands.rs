@@ -14,6 +14,7 @@ use encoding::CommandEncoding;
 
 mod operation;
 pub(crate) use operation::*;
+mod exposure;
 mod finalization;
 pub(crate) use finalization::*;
 mod state;

@@ -289,13 +289,20 @@ impl TemporalScopes {
         self.frame = checkpoint.frame;
         Ok(checkpoint)
     }
-    pub(crate) fn keep(
-        &mut self,
+    pub(super) fn validate_keep(
+        &self,
         checkpoint: TemporalScopesCheckpoint,
     ) -> Result<(), ExecutionError> {
         if self.frame != checkpoint.frame || !self.no_loans() {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        Ok(())
+    }
+    pub(crate) fn keep(
+        &mut self,
+        checkpoint: TemporalScopesCheckpoint,
+    ) -> Result<(), ExecutionError> {
+        self.validate_keep(checkpoint)?;
         self.frame = checkpoint.previous_frame;
         Ok(())
     }

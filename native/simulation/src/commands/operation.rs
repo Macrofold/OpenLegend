@@ -93,6 +93,9 @@ enum Progress {
     Complete(CompletedCommandOperation),
 }
 impl CommandOperation {
+    pub(crate) fn is_complete(&self) -> bool {
+        self.child.is_none() && self.reservation.is_none()
+    }
     /// Cursor construction is read-only. The checkpoint precedes its first
     /// step, so an ordinary refusal cannot retain even a dependent write.
     pub(crate) fn from_cursor(

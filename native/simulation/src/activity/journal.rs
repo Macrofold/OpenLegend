@@ -574,7 +574,7 @@ impl ActivityJournal {
         let envelope = command.envelope();
         let actor_id = &envelope.actor_id;
         let id = &envelope.id;
-        if parent_id.is_some() || envelope.cooperation.is_some() {
+        if envelope.cooperation.is_some() {
             return Err(ActivityError::UnsupportedFamily);
         }
         if !is_safe_record_id(action_id)
@@ -592,6 +592,19 @@ impl ActivityJournal {
                 return Ok(record.occurrence.id.clone());
             }
         }
+        let plan = entities
+            .get(actor_id)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.agency.plan.as_ref())
+            .filter(|plan| Some(plan.id.as_str()) == parent_id);
+        if plan.is_some_and(|plan| plan.activity.is_some()) {
+            return Err(ActivityError::UnsupportedFamily);
+        }
+        let parent_name = plan.and_then(|plan| {
+            plan.steps
+                .iter()
+                .find_map(|step| step.command.envelope().purpose.as_ref())
+        });
         let fields: [Option<&str>; 2] = match command {
             NativeCommand::Say { target_id, .. } => [target_id.as_deref(), None],
             NativeCommand::StatusEffect {
@@ -627,6 +640,10 @@ impl ActivityJournal {
                 actor_id.len() * 4,
                 id.len() * 6,
                 action_id.len() * 4,
+                parent_id.map_or(0, str::len),
+                parent_name
+                    .map_or(Some(0), HeapBytes::heap_bytes)
+                    .ok_or(ActivityError::Capacity)?,
                 state.display.display_bytes * 2,
             ])
             .ok_or(ActivityError::Capacity)?,
@@ -656,8 +673,8 @@ impl ActivityJournal {
             actor_id: actor_id.clone(),
             command_id: id.clone(),
             action_id: action_id.to_owned(),
-            parent_id: None,
-            parent_name: None,
+            parent_id: parent_id.map(str::to_owned),
+            parent_name: parent_name.cloned(),
             method_id: None,
             at,
             ended_at: None,

@@ -24,6 +24,88 @@ impl ReadyPlanStep {
     pub(crate) fn step_id(&self) -> &str {
         &self.step
     }
+    pub(super) fn targets_current(&self, core: &CoreMutation<'_>) -> Result<bool, ExecutionError> {
+        self.command(core)?;
+        let step = core
+            .state
+            .physical
+            .entities
+            .get(&self.actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.agency.plan.as_ref())
+            .and_then(|plan| plan.steps.iter().find(|step| step.id == self.step))
+            .ok_or(ExecutionError::Invariant)?;
+        Ok(super::targets_current(core, &self.actor, step))
+    }
+    /// Dispatch marks the frontier only after the common command owner has
+    /// completed or a current encounter check has refused before execution.
+    pub(super) fn complete(
+        self,
+        core: &mut CoreMutation<'_>,
+        result: &Outcome,
+    ) -> Result<(), ExecutionError> {
+        self.command(core)?;
+        let actor = core
+            .state
+            .physical
+            .entities
+            .get(&self.actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        let action_id = actor
+            .action
+            .as_ref()
+            .map_or(self.step.as_str(), |action| action.id.as_str());
+        let growth = action_id.len() * 2 + result.heap_bytes().ok_or(ExecutionError::Capacity)?;
+        core.physical().reserve_plan_growth(growth)?;
+        let action_id = core
+            .state
+            .physical
+            .entities
+            .get(&self.actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .map_or(self.step.as_str(), |action| action.id.as_str())
+            .to_owned();
+        let immediate = !result.ok
+            || core
+                .state
+                .physical
+                .entities
+                .get(&self.actor)
+                .and_then(|entity| entity.actor.as_ref())
+                .is_some_and(|actor| actor.action.is_none());
+        {
+            let mut physical = core.physical();
+            let plan = physical
+                .plan_mut(&self.actor)?
+                .as_mut()
+                .ok_or(ExecutionError::Invariant)?;
+            let step = plan
+                .steps
+                .iter_mut()
+                .find(|step| step.id == self.step)
+                .ok_or(ExecutionError::Invariant)?;
+            step.status = StepStatus::Running;
+            step.action_id = Some(action_id.clone());
+            step.outcome = Some(result.clone());
+            plan.revision = plan
+                .revision
+                .checked_add(1)
+                .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Invariant)?;
+        }
+        core.physical().advance_agency_revision(&self.actor)?;
+        if immediate {
+            match core.begin_finish_action(&self.actor, &action_id, result.clone())? {
+                ActionFinish::Complete(_) => {}
+                // An immediate ordinary command already completed its real
+                // personal result. A second result would duplicate history.
+                ActionFinish::Personal(_) => return Err(ExecutionError::UnfinishedOccurrence),
+            }
+        }
+        Ok(())
+    }
     pub(crate) fn command<'a>(
         &self,
         core: &'a CoreMutation<'_>,
@@ -82,6 +164,12 @@ pub(crate) struct PlanReadyCursor {
     reservation: ByteReservation,
 }
 impl PlanReadyCursor {
+    pub(super) fn geometry_request(&self) -> Result<&GeometryQueries, ExecutionError> {
+        self.sight
+            .as_ref()
+            .map(SightBatch::queries)
+            .ok_or(ExecutionError::Invariant)
+    }
     pub(crate) fn new(
         actor: &str,
         binding: GeometryBinding,

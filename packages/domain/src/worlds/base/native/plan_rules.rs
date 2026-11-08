@@ -39,6 +39,8 @@ pub(crate) struct PlanRules {
     pub discarded_paused: ActionMessage,
     pub cancelled_step: ActionMessage,
     pub interrupted_step: ActionMessage,
+    pub stale_encounter: ActionMessage,
+    pub missing_output: ActionMessage,
     pub fallback_result_summary: String,
     pub completed_result: String,
     pub refused_result: String,

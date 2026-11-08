@@ -16,6 +16,7 @@ pub(crate) struct PendingCommandCompletion {
     finalize: bool,
     sequence: u64,
     at: f64,
+    exposure: Option<super::exposure::CommandExposure>,
     _reservation: ByteReservation,
 }
 impl PendingCommandCompletion {
@@ -25,6 +26,7 @@ impl PendingCommandCompletion {
         command_id: &str,
         outcome: Outcome,
         finalize: bool,
+        exposure: Option<super::exposure::CommandExposure>,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let reservation = budget.reserve(
@@ -43,6 +45,7 @@ impl PendingCommandCompletion {
             finalize,
             sequence: core.state.physical.header.sequence,
             at: core.state.physical.header.sim_time,
+            exposure,
             _reservation: reservation,
         })
     }
@@ -64,7 +67,7 @@ impl CompletedCommand {
 pub(crate) fn complete_command_in_draft(
     core: &mut CoreMutation<'_>,
     child: CandidateCheckpoint,
-    pending: PendingCommandCompletion,
+    mut pending: PendingCommandCompletion,
     events: &[WorldEvent],
     budget: &ByteBudget,
 ) -> Result<CompletedCommand, MemoryAcquisitionError> {
@@ -88,6 +91,11 @@ pub(crate) fn complete_command_in_draft(
                 .filter(|next| *next <= MAX_SAFE_INTEGER)
                 .ok_or(ExecutionError::Identity)?;
             core.state.physical.header.sequence = next;
+            core.reconcile_command_semantics(&child, &pending.actor_id)?;
+            core.sync_sensory_changes()?;
+            if let Some(exposure) = pending.exposure.take() {
+                exposure.reconcile(core, budget)?;
+            }
         }
         Ok(())
     })();
@@ -96,9 +104,10 @@ pub(crate) fn complete_command_in_draft(
         return Err(error);
     }
     if pending.outcome.ok {
-        core.journal.keep(child)?;
+        core.journal.keep(core.state, child)?;
     } else {
         core.journal.rollback_to(core.state, child)?;
     }
+    pending.exposure = None;
     Ok(CompletedCommand(pending))
 }

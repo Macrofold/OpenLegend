@@ -500,6 +500,7 @@ import {
   suspendCurrentWork,
   finishPlanAction,
   readyPlanStep,
+  recordPlanDispatch,
   isActivityCommand,
   resolvePlanCommand,
   suspendedWorkProblem,
@@ -7215,8 +7216,8 @@ function* advanceWorldNative(
                   events: [],
                   outcome: outcome(
                     false,
-                    'stale-encounter',
-                    'The queued target encounter changed. Revise the plan.',
+                    selectedOrdinaryActionRules(world).plan.staleEncounter.code,
+                    selectedOrdinaryActionRules(world).plan.staleEncounter.message,
                   ),
                 }
             : {
@@ -7224,8 +7225,8 @@ function* advanceWorldNative(
                 events: [],
                 outcome: outcome(
                   false,
-                  'missing-plan-output',
-                  'The earlier step has no completed item output. Revise the plan.',
+                  selectedOrdinaryActionRules(world).plan.missingOutput.code,
+                  selectedOrdinaryActionRules(world).plan.missingOutput.message,
                 ),
               };
           const successor = completedNativeWorld(transition.world);
@@ -7236,14 +7237,7 @@ function* advanceWorldNative(
           absorbConstructionPermissionBatch(constructionBatch, transition);
           actor = entityGet(world.entities, actorId)!;
           component = actor.actor!;
-          const started = component.agency.plan!.steps.find((entry) => entry.id === stepId)!;
-          started.status = 'running';
-          started.actionId = component.action?.id ?? stepId;
-          started.outcome = transition.outcome;
-          component.agency.plan!.revision++;
-          component.agency.revision++;
-          if (!transition.outcome.ok || !component.action)
-            finishPlanAction(world, actorId, started.actionId, transition.outcome);
+          recordPlanDispatch(world, actorId, stepId, transition.outcome);
         }
 
         const priorFollowStage =

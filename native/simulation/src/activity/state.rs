@@ -214,7 +214,7 @@ pub(crate) struct ActivityOccurrence {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub parent_name: Option<String>,
+    pub parent_name: Option<crate::text::JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -305,9 +305,10 @@ impl ActivityOccurrence {
                 .parent_id
                 .as_ref()
                 .is_some_and(|id| !is_safe_record_id(id))
-            || self.parent_name.as_ref().is_some_and(|name| {
-                js_trim(name).is_empty() || name.encode_utf16().count() as u64 > limits.text
-            })
+            || self
+                .parent_name
+                .as_ref()
+                .is_some_and(|name| name.trim_is_empty() || name.units_len() as u64 > limits.text)
             || self.outputs.len() as u64 > limits.outputs
             || self.connections.len() as u64 > limits.links
             || self.evidence_ids.len() as u64 > limits.links

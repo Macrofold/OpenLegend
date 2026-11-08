@@ -15,6 +15,7 @@ use crate::values::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::mem::size_of;
+mod save;
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -132,7 +133,7 @@ heap_record!(PendingSightScope {
 heap_record!(SightMark { revision, at });
 heap_record!(SightProgress { broad, detail });
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 struct SensoryHeader {
     epoch_at: f64,
     revision: u64,
