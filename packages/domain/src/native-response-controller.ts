@@ -46,7 +46,7 @@ import {
 } from './native-response-navigation.js';
 import { attackPreparation } from './combat-encounters.js';
 import { seesEntity } from './perception.js';
-import { recordSemanticChange, recordSensoryChange } from './dependencies.js';
+import { recordSemanticChange } from './dependencies.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { interruptStatusEffects } from './status-effects.js';
 import { readEntityAttribute } from './status-effects.js';
@@ -71,8 +71,14 @@ import {
 
 function changed(world: WorldState, animal: Entity): void {
   recordAnimalClockWrite(world, animal.id);
-  recordSensoryChange(world, animal.id, true);
-  recordSemanticChange(world, { kind: 'state', entityId: animal.id, field: 'behavior' });
+  // The controller's private alarm/proposal is not received activity. Actual
+  // locomotion, body and participation writers publish their own sensory changes.
+  recordSemanticChange(world, {
+    kind: 'state',
+    entityId: animal.id,
+    field: 'behavior',
+    outwardChange: false,
+  });
 }
 
 /** Control and body-life writers retire only this controller's uncommitted
@@ -642,7 +648,7 @@ export function nativeResponseDecision(
   ) {
     if (episode.reviewAt <= world.simTime) {
       episode.reviewAt = world.simTime + profile.reviewSeconds;
-      changed(world, animal);
+      recordAnimalClockWrite(world, animal.id);
     }
     return { status: 'pending' };
   }
@@ -755,7 +761,7 @@ export function nativeResponseDecision(
         preparation.choices[0]!.candidate.retained
       ) {
         episode.reviewAt = nextReview();
-        changed(world, animal);
+        recordAnimalClockWrite(world, animal.id);
         return { status: 'none' };
       }
       return { status: 'flight-choices', preparation };
@@ -778,7 +784,7 @@ export function nativeResponseDecision(
       distance3D(worldPosition(animal), episode.refuge.point) > SPATIAL_LIMITS.epsilon
     ) {
       episode.reviewAt = nextReview();
-      changed(world, animal);
+      recordAnimalClockWrite(world, animal.id);
       return { status: 'none' };
     }
   }

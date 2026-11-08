@@ -49,5 +49,7 @@ export function setForagingDestination(
     return;
   if (destination) state.destination = { ...destination };
   else delete state.destination;
-  foragingBehaviorChanged(world, animal);
+  // A proposed destination is private preparation. Admitted locomotion records
+  // its actual execution and position through the ordinary movement owner.
+  recordAnimalClockWrite(world, animal.id);
 }

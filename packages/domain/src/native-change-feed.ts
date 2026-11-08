@@ -25,6 +25,7 @@ export function recordNativeChange(world: WorldState, change: SemanticChange): v
   queueSightChange(world, change);
   if (
     change.kind === 'state' &&
+    !(change.field === 'behavior' && change.outwardChange === false) &&
     ['body', 'behavior', 'participation', 'contribution'].includes(change.field)
   ) {
     invalidatePerceptionMeasurements(world, change.entityId);
