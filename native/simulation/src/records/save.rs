@@ -315,7 +315,7 @@ fn prefix_index_bound(changes: &ChangedRows) -> Option<usize> {
     Some(bytes)
 }
 
-fn normalize_cell(value: &mut Value) {
+pub(crate) fn normalize_cell(value: &mut Value) {
     match value {
         Value::Array(values) => {
             for value in values {
@@ -334,7 +334,7 @@ fn normalize_cell(value: &mut Value) {
         _ => {}
     }
 }
-fn cell_heap(value: &Value) -> Option<usize> {
+pub(crate) fn cell_heap(value: &Value) -> Option<usize> {
     use crate::host::retained_size::map_storage;
     match value {
         Value::String(text) => Some(text.capacity()),

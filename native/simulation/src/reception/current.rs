@@ -339,18 +339,6 @@ pub struct CapturedCurrentFacet {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CurrentStoredField {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub pose_support: Option<CurrentBodyPoseSupport>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub description_support: Option<CurrentDescriptionSupport>,
     pub id: String,
     #[serde(
         default,

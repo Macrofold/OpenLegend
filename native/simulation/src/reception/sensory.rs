@@ -384,6 +384,7 @@ impl SensoryJournal {
                 ..
             } => (entity_id, Some(*before), Some(*after), *discontinuity),
             PhysicalChange::Body { entity_id }
+            | PhysicalChange::Contribution { entity_id }
             | PhysicalChange::Behavior { entity_id, .. }
             | PhysicalChange::Attribute { entity_id, .. } => (entity_id, None, None, false),
         };

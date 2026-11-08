@@ -574,18 +574,20 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
             },
             agreement_key: {
               sql: 'TEXT',
-              value: (value) =>
-                personalAgreementMetadata(value as unknown as Awareness)?.key ?? null,
+              value: (value, _path, world) =>
+                personalAgreementMetadata(world!, value as unknown as Awareness)?.key ?? null,
             },
             agreement_open: {
               sql: 'BIGINT NOT NULL',
-              value: (value) =>
-                Number(personalAgreementMetadata(value as unknown as Awareness)?.open ?? false),
+              value: (value, _path, world) =>
+                Number(
+                  personalAgreementMetadata(world!, value as unknown as Awareness)?.open ?? false,
+                ),
             },
             agreement_until: {
               sql: 'DOUBLE PRECISION',
-              value: (value) =>
-                personalAgreementMetadata(value as unknown as Awareness)?.until ?? null,
+              value: (value, _path, world) =>
+                personalAgreementMetadata(world!, value as unknown as Awareness)?.until ?? null,
             },
             agreement_head: { sql: 'BIGINT NOT NULL', value: () => 0 },
           }

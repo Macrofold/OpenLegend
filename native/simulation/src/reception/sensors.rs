@@ -295,17 +295,26 @@ impl SightBatch {
         &self.queries
     }
 
-    pub(crate) fn finish(mut self, answers: GeometryAnswers) -> Result<SightResults, SensorError> {
+    pub(crate) fn finish(self, answers: GeometryAnswers) -> Result<SightResults, SensorError> {
         self.queries
             .validate_answers(&answers)
             .map_err(|_| SensorError::Geometry)?;
+        self.finish_sight(answers.binding, &answers.sight)
+    }
+    /// A combined phase validates its complete provider product first, then
+    /// gives this prepared owner its exact bound slice without another copy.
+    pub(crate) fn finish_sight(
+        mut self,
+        binding: GeometryBinding,
+        sight: &[bool],
+    ) -> Result<SightResults, SensorError> {
+        if binding != self.queries.binding || sight.len() != self.queries.sight.len() {
+            return Err(SensorError::Geometry);
+        }
         for check in &mut self.checks {
             if let SightDecision::Rays { first, count } = check.decision {
-                check.decision = SightDecision::Known(
-                    answers.sight[first..first + count]
-                        .iter()
-                        .any(|clear| *clear),
-                );
+                check.decision =
+                    SightDecision::Known(sight[first..first + count].iter().any(|clear| *clear));
             }
         }
         let binding = self.queries.binding;

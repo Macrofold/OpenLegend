@@ -1,8 +1,114 @@
 //! Allocation capacities retained by immutable wilderness outward facts. This
 //! accounting stays beside their world-owned fields rather than teaching the
 //! engine a world's assembly roles, voice dimensions or claim vocabulary.
+use super::base_knowledge::ObserverIdentity;
 use super::base_observed::*;
+use super::base_recognition::{
+    AuthoredExemplar, AuthoredFamiliarity, AuthoredRecognition, FamiliarityRoot, FamiliarityState,
+    IndividualRecognition, RecognitionBaseline, RecognitionCandidate, RecognitionInterval,
+    RecognitionKnowledge, RecognitionSample, SeedCorrelation, VoiceFeatures,
+};
 use crate::reception::retained_size::{HeapBytes, heap_record, heap_sum};
+
+impl HeapBytes for VoiceFeatures {
+    fn heap_bytes(&self) -> Option<usize> {
+        // This family's four bounded integer fields are inline, with no heap
+        // allocation. Their meaning remains with the recognition owner.
+        Some(0)
+    }
+}
+heap_record!(RecognitionCandidate {
+    individual_id,
+    distance
+});
+heap_record!(SeedCorrelation {
+    sample_key,
+    individual_id
+});
+heap_record!(IndividualRecognition {
+    recognized,
+    subject,
+    learned_subject,
+    candidates,
+    more_candidates,
+    quality,
+    perception,
+    policy,
+    prior_exemplar_key,
+    learning_support,
+    seed_correlation,
+    familiarity
+});
+heap_record!(RecognitionInterval { min, max });
+heap_record!(RecognitionSample {
+    key,
+    source_key,
+    at,
+    order,
+    encounter,
+    features,
+    quality,
+    perception,
+    policy,
+    support,
+    contact_eligible
+});
+heap_record!(RecognitionKnowledge {
+    samples,
+    authored,
+    last_credit_at,
+    next_credit_at
+});
+heap_record!(AuthoredExemplar {
+    features,
+    quality,
+    ordinal
+});
+heap_record!(AuthoredRecognition {
+    source,
+    installed_at,
+    perception,
+    order,
+    baseline,
+    exemplars
+});
+impl HeapBytes for RecognitionBaseline {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(0)
+    }
+}
+heap_record!(FamiliarityRoot {
+    key,
+    source_key,
+    at,
+    order,
+    support,
+    required,
+    credited
+});
+heap_record!(AuthoredFamiliarity { source, value });
+heap_record!(FamiliarityState {
+    roots,
+    authored,
+    last_credit_at,
+    next_credit_at,
+    fast_credits
+});
+heap_record!(ObserverIdentity {
+    retained,
+    familiarity,
+    individual_id,
+    canonical_id,
+    seed_only,
+    voice,
+    sight,
+    name_evidence_ids,
+    given_name,
+    nickname,
+    revision,
+    encounter_id,
+    authored
+});
 heap_record!(FinitePanel { corners, thickness });
 impl HeapBytes for AssemblyRole {
     fn heap_bytes(&self) -> Option<usize> {

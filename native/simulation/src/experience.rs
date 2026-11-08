@@ -26,6 +26,19 @@ mod evidence;
 pub use evidence::*;
 mod install;
 pub use install::*;
+mod policy;
+pub use policy::*;
+mod mutation;
+pub(crate) use mutation::{ExperienceCheckpoint, ExperienceJournal};
+mod result;
+pub(crate) use result::{
+    ActivityResultAcquisition, ResultAcquisitionError, acquire_activity_result,
+    prepare_activity_result,
+};
+mod columns;
+mod owners;
+mod retained_size;
+pub use owners::PersonalOwnerMap;
 
 /// Completion proof from actual personally acquired result evidence. There is
 /// no constructor while the result/account acquisition owner remains unjoined.
@@ -146,6 +159,7 @@ pub enum ExperienceError {
     Unavailable,
     Revoked,
     Expired,
+    Capacity,
 }
 
 impl fmt::Display for ExperienceError {
@@ -224,10 +238,46 @@ pub struct PersonalSourceHeader {
     pub protected: bool,
     pub expires_at: Option<f64>,
     pub retention: Option<ExperienceRetention>,
+    pub impression: Option<PersonalImpressionHeader>,
+    /// Original unresolved obligation completion, including overdue promises.
+    /// Event suppression and fulfillment consult this same source projection.
+    pub completion_event_type: Option<String>,
     /// Owned originals are aliases only after this actual account is revoked.
     pub owned_observations: Vec<String>,
     /// Only the source's real dependency closure can revoke its descendants.
     pub dependencies: Vec<String>,
+}
+
+#[derive(Clone, Debug)]
+pub struct PersonalImpressionHeader {
+    pub reason: RetentionReason,
+    pub weakened: bool,
+    pub weaken_at: f64,
+    pub expires_at: f64,
+}
+
+pub fn experience_retention_due(
+    header: &PersonalSourceHeader,
+    policy: &crate::attention::AttentionRetentionPolicy,
+) -> Option<f64> {
+    if let Some(impression) = &header.impression {
+        return Some(if impression.weakened {
+            impression.expires_at
+        } else {
+            impression.weaken_at.min(impression.expires_at)
+        });
+    }
+    if header.class == AccountClass::Speech || header.protected {
+        return None;
+    }
+    Some(
+        header.at
+            + if header.class == AccountClass::Required {
+                policy.aftermath_seconds
+            } else {
+                policy.recent.max_age_seconds
+            },
+    )
 }
 
 fn own_observations(body: &Map<String, Value>) -> Result<Vec<String>, ExperienceError> {
@@ -279,6 +329,26 @@ fn source_references(value: &Value) -> Result<Vec<PersonalSourceRef>, Experience
 /// pure native compiler runs once for a changed source, never as a TS callback.
 pub trait PersonalEvidenceMeaning {
     fn recognition_source_ids(&self, keys: &[String]) -> Vec<String>;
+}
+
+/// Personal source keys and received source addresses share retention routing;
+/// selected-world recognition owns the grammar that produces these references.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[serde(untagged)]
+pub enum PersonalLearningSource {
+    Personal {
+        kind: PersonalSourceKind,
+        id: String,
+    },
+    Evidence(EvidenceSource),
+}
+impl PersonalLearningSource {
+    pub fn id(&self) -> &str {
+        match self {
+            Self::Personal { id, .. } => id,
+            Self::Evidence(source) => &source.id,
+        }
+    }
 }
 
 fn dependency_source(value: &Value, ids: &mut IndexSet<String>) -> Result<(), ExperienceError> {
@@ -658,6 +728,47 @@ fn header(
     } else {
         AccountClass::Optional
     };
+    let impression = if kind == PersonalSourceKind::Memory {
+        body.get("impression")
+            .map(|value| {
+                let impression = object(value)?;
+                let reason: RetentionReason = serde_json::from_value(
+                    impression
+                        .get("reason")
+                        .ok_or(ExperienceError::InvalidBody("impression.reason"))?
+                        .clone(),
+                )
+                .map_err(|_| ExperienceError::InvalidBody("impression.reason"))?;
+                let weakened = impression
+                    .get("weakened")
+                    .and_then(Value::as_bool)
+                    .ok_or(ExperienceError::InvalidBody("impression.weakened"))?;
+                Ok::<_, ExperienceError>(PersonalImpressionHeader {
+                    reason,
+                    weakened,
+                    weaken_at: number(impression, "weakenAt")?,
+                    expires_at: number(impression, "expiresAt")?,
+                })
+            })
+            .transpose()?
+    } else {
+        None
+    };
+    let completion_event_type = if kind == PersonalSourceKind::Memory
+        && !body
+            .get("resolved")
+            .and_then(Value::as_bool)
+            .unwrap_or(false)
+    {
+        body.get("obligation")
+            .map(object)
+            .transpose()?
+            .and_then(|obligation| obligation.get("completion"))
+            .map(|completion| text(object(completion)?, "eventType").map(str::to_owned))
+            .transpose()?
+    } else {
+        None
+    };
     Ok(PersonalSourceHeader {
         reference: PersonalSourceRef {
             kind,
@@ -676,6 +787,8 @@ fn header(
         protected,
         expires_at: optional_number(body, "expiresAt")?,
         retention,
+        impression,
+        completion_event_type,
         owned_observations: own_observations(body)?,
         dependencies: source_dependencies(body, kind, meaning)?,
     })
@@ -693,6 +806,50 @@ pub struct PersonalSourceRecord {
 }
 
 impl PersonalSourceRecord {
+    pub(crate) fn validate_originals(
+        &self,
+        registry: &mut crate::reception::OriginalRevisionRegistry,
+    ) -> Result<(), crate::received::ReceivedError> {
+        #[derive(Deserialize)]
+        struct Inputs {
+            #[serde(default, deserialize_with = "deserialize_present_option")]
+            observation: Option<Arc<crate::reception::ObservationContribution>>,
+            #[serde(default, deserialize_with = "deserialize_present_option")]
+            observations: Option<Vec<Arc<crate::reception::ObservationContribution>>>,
+        }
+        #[derive(Deserialize)]
+        struct Manifest {
+            observations: Vec<Arc<crate::reception::ObservationContribution>>,
+        }
+        #[derive(Deserialize)]
+        struct Body {
+            #[serde(flatten)]
+            own: Inputs,
+            #[serde(default, deserialize_with = "deserialize_present_option")]
+            evidence: Option<Inputs>,
+            #[serde(default, deserialize_with = "deserialize_present_option")]
+            manifest: Option<Manifest>,
+        }
+        let body: Body = serde_json::from_str(&self.payload).map_err(|_| {
+            crate::received::ReceivedError("Invalid personal source original evidence.")
+        })?;
+        for input in std::iter::once(&body.own).chain(body.evidence.iter()) {
+            for observation in input
+                .observation
+                .iter()
+                .chain(input.observations.iter().flatten())
+            {
+                registry.validate(observation)?;
+            }
+        }
+        if let Some(manifest) = &body.manifest {
+            for observation in &manifest.observations {
+                registry.validate(observation)?;
+            }
+        }
+        Ok(())
+    }
+
     pub fn install(
         kind: PersonalSourceKind,
         actor_id: &str,
@@ -891,6 +1048,7 @@ pub struct PersonalHistory {
     sources: IndexMap<PersonalSourceKind, PersonalSourceCollection>,
     pub privacy: ActorPrivacy,
     pub consolidated_at: Option<f64>,
+    completion_events: BTreeMap<String, u64>,
 }
 
 impl PersonalHistory {
@@ -906,10 +1064,22 @@ impl PersonalHistory {
                 return Err(ExperienceError::DuplicateIdentity);
             }
         }
+        let mut completion_events = BTreeMap::new();
+        if let Some(memories) = sources.get(&PersonalSourceKind::Memory) {
+            for record in memories.records() {
+                if let Some(event_type) = &record.header.completion_event_type {
+                    let count = completion_events.entry(event_type.clone()).or_insert(0_u64);
+                    *count = count
+                        .checked_add(1)
+                        .ok_or(ExperienceError::InvalidOrdinal)?;
+                }
+            }
+        }
         Ok(Self {
             sources,
             privacy,
             consolidated_at,
+            completion_events,
         })
     }
     pub fn collection(
@@ -978,6 +1148,7 @@ pub struct ExperienceState {
     generation: String,
     header: ExperienceHeader,
     actors: IndexMap<String, PersonalHistory>,
+    owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
 }
 
 impl ExperienceState {
@@ -985,6 +1156,7 @@ impl ExperienceState {
         generation: String,
         header: ExperienceHeader,
         actors: IndexMap<String, PersonalHistory>,
+        owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
     ) -> Result<Self, ExperienceError> {
         if header.version != 1
             || header
@@ -1005,10 +1177,29 @@ impl ExperienceState {
                 return Err(ExperienceError::ForeignOwner);
             }
         }
+        for kind in [
+            PersonalSourceKind::Memory,
+            PersonalSourceKind::Awareness,
+            PersonalSourceKind::Summary,
+        ] {
+            let owners = owner_maps
+                .get(&kind)
+                .ok_or(ExperienceError::UnknownCoverage)?;
+            if actors.iter().any(|(actor, history)| {
+                history.sources.contains_key(&kind) != owners.placements.contains_key(actor)
+            }) || owners
+                .placements
+                .keys()
+                .any(|actor| !actors.contains_key(actor))
+            {
+                return Err(ExperienceError::ForeignOwner);
+            }
+        }
         Ok(Self {
             generation,
             header,
             actors,
+            owner_maps,
         })
     }
 
@@ -1022,6 +1213,31 @@ impl ExperienceState {
 
     pub fn actor(&self, actor_id: &str) -> Option<&PersonalHistory> {
         self.actors.get(actor_id)
+    }
+    pub fn has_commitment_completion<I, S>(
+        &self,
+        actor_id: &str,
+        event_types: I,
+    ) -> Result<bool, ExperienceError>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        let actor = self
+            .actors
+            .get(actor_id)
+            .ok_or(ExperienceError::ForeignOwner)?;
+        if event_types
+            .into_iter()
+            .any(|event_type| actor.completion_events.contains_key(event_type.as_ref()))
+        {
+            return Ok(true);
+        }
+        let memories = actor.collection(PersonalSourceKind::Memory)?;
+        if !memories.coverage.complete {
+            return Err(ExperienceError::Unavailable);
+        }
+        Ok(false)
     }
 
     pub fn capture(

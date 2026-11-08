@@ -110,14 +110,9 @@ export function editMapMarker(world: WorldState, actorId: string, edit: MapMarke
   return outcome(true, 'marker-saved', 'Marker saved.');
 }
 
-export function validateCartography(world: WorldState): void {
-  const record = (value: unknown) =>
-    value !== null &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
-  if (world.mapMarkers !== undefined && !record(world.mapMarkers))
-    throw new Error('Invalid map marker collection.');
+/** Validate only the authored map descriptor; actual markers require actors
+ * and their saved ownership and are checked by validateMapMarkers below. */
+export function validateMapArtwork(world: Pick<WorldState, 'presentation'>): void {
   const art = world.presentation?.mapArt;
   if (art) {
     const b = art.bounds;
@@ -154,6 +149,17 @@ export function validateCartography(world: WorldState): void {
     )
       throw new Error('Invalid installed map artwork.');
   }
+}
+
+export function validateMapMarkers(world: WorldState): void {
+  const record = (value: unknown) =>
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    (Object.getPrototypeOf(value) === Object.prototype || Object.getPrototypeOf(value) === null);
+  if (world.mapMarkers !== undefined && !record(world.mapMarkers))
+    throw new Error('Invalid map marker collection.');
+  const art = world.presentation?.mapArt;
   for (const [actorId, markers] of Object.entries(world.mapMarkers ?? {})) {
     if (
       !record(markers) ||

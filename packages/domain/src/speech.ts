@@ -25,7 +25,7 @@ import {
   validateIndividualRecognition,
 } from './worlds/base/recognition.js';
 import { hasMemory, understandsSpeech } from './living.js';
-import { selectedVoiceReception } from './world-composition.js';
+import { selectedOccurrenceRules, selectedVoiceReception } from './world-composition.js';
 import { currentBodyGrant, currentBodyLocalSubject } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
@@ -237,8 +237,8 @@ export function perceiveSpeech(
       ...(hasMemory(observer) && learnedSubject ? { sourceSubject: learnedSubject } : {}),
       intelligible: false,
       entityIds: [],
-      importance: event.importance ?? 3,
-      urgency: event.urgency ?? 4,
+      importance: event.importance ?? selectedOccurrenceRules(world).unintelligibleSpeechImportance,
+      urgency: event.urgency ?? selectedOccurrenceRules(world).receivedUrgency,
       triggerKind: 'observed_event',
     };
   }
@@ -356,8 +356,10 @@ export function perceiveSpeech(
       }),
     ),
     importance:
-      perception === 'seen' || speech.intelligibility === 'none' ? 3 : (event.importance ?? 7),
-    urgency: event.urgency ?? 4,
+      perception === 'seen' || speech.intelligibility === 'none'
+        ? selectedOccurrenceRules(world).unintelligibleSpeechImportance
+        : (event.importance ?? selectedOccurrenceRules(world).speechImportance),
+    urgency: event.urgency ?? selectedOccurrenceRules(world).receivedUrgency,
     triggerKind: self
       ? 'self_event'
       : perception === 'seen'

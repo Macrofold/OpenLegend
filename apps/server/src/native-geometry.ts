@@ -1,4 +1,5 @@
 import { immutableDataSnapshot } from '@open-legend/domain';
+import { navigationResultProblem } from '@open-legend/domain/native-install';
 import type { NativeGeometryAnswers, NativeGeometryQueries } from '@open-legend/native-simulation';
 import {
   canStand,
@@ -20,7 +21,7 @@ import {
   type SpatialMap,
 } from '@open-legend/spatial';
 import { GeometryBatches } from './geometry-batches.js';
-import { prepareCandidateNavigation } from './navigation/preparation.js';
+import { NavigationPreparation } from './navigation/preparation.js';
 
 /** Physical preparation retains one immutable provider map, never a WorldState.
  * Native owns the bodies, action, permission and acquiring observer. The caller
@@ -29,6 +30,7 @@ import { prepareCandidateNavigation } from './navigation/preparation.js';
 export class NativeGeometryProviders {
   private readonly map: SpatialMap;
   private readonly batches = new GeometryBatches();
+  private readonly navigation = new NavigationPreparation();
   private closed = false;
   private active = false;
 
@@ -133,11 +135,14 @@ export class NativeGeometryProviders {
           id: String(at + offset),
           request: navigationRequest(request),
         }));
-        const results = await prepareCandidateNavigation(this.map, requests);
-        for (const { id } of requests) {
+        const results = await this.navigation.compute(this.map, requests);
+        for (const { id, request } of requests) {
           const result = results.get(id);
           if (!result) throw new Error('Native route preparation returned an incomplete batch.');
-          navigation.push(result);
+          navigation.push({
+            result,
+            problem: navigationResultProblem(this.map, request, result, request.body),
+          });
         }
       }
       if (this.closed) throw new Error('Native physical provider closed during preparation.');
@@ -163,9 +168,9 @@ export class NativeGeometryProviders {
     }
   }
 
-  close(): void {
+  async close(): Promise<void> {
     this.closed = true;
-    this.batches.close();
+    await Promise.all([this.batches.close(), this.navigation.close()]);
   }
 }
 

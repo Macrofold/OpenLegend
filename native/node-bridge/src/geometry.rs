@@ -239,6 +239,12 @@ pub struct NativeNavigationResult {
 }
 
 #[napi(object)]
+pub struct NativeNavigationAnswer {
+    pub result: NativeNavigationResult,
+    pub problem: Option<String>,
+}
+
+#[napi(object)]
 pub struct NativeGeometryAnswers {
     pub binding: NativeGeometryBinding,
     pub sight: Vec<bool>,
@@ -250,7 +256,7 @@ pub struct NativeGeometryAnswers {
     pub surface_lines: Vec<Option<NativeSurfaceLine>>,
     pub sight_sweeps: Vec<NativeSightSweep>,
     pub sound: Vec<f64>,
-    pub navigation: Vec<NativeNavigationResult>,
+    pub navigation: Vec<NativeNavigationAnswer>,
     pub routes: Vec<NativeRoutePlan>,
     pub features: Vec<NativePhysicalFeatureAnswer>,
     pub feature_ids: Vec<Option<NativePhysicalFeature>>,
@@ -563,7 +569,11 @@ impl TryFrom<NativeGeometryAnswers> for core::GeometryAnswers {
             surface_lines: value
                 .surface_lines
                 .into_iter()
-                .map(|value| value.map(|value| value.path.into_iter().map(Into::into).collect()))
+                .map(|value| {
+                    value.map(|value| core::SurfaceLineAnswer {
+                        path: value.path.into_iter().map(Into::into).collect(),
+                    })
+                })
                 .collect(),
             sight_sweeps: value
                 .sight_sweeps
@@ -576,7 +586,12 @@ impl TryFrom<NativeGeometryAnswers> for core::GeometryAnswers {
             navigation: value
                 .navigation
                 .into_iter()
-                .map(TryInto::try_into)
+                .map(|value| {
+                    Ok(core::NavigationAnswer {
+                        result: value.result.try_into()?,
+                        problem: value.problem,
+                    })
+                })
                 .collect::<Result<_>>()?,
             routes: value
                 .routes

@@ -1,3 +1,4 @@
+import { selectedAgreementEvent } from './world-composition.js';
 import { entityGet } from './entity-collection.js';
 import { seesEntity, hearsEntity } from './perception.js';
 import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
@@ -14,12 +15,13 @@ import type { Awareness } from './experience.js';
 /** Derived lookup facts only. Exact acquired terms remain in their original
  * personal evidence, independently of whether live assent still exists. */
 export function personalAgreementMetadata(
+  world: Pick<WorldState, 'profile'>,
   entry: Awareness,
 ): { key: string; open: boolean; until?: number } | undefined {
   if (
     entry.retentionClass !== 'memory' ||
     typeof entry.eventData?.agreement !== 'string' ||
-    (!['cooperation', 'social-compact'].includes(entry.eventType ?? '') &&
+    (!selectedAgreementEvent(world, entry.eventType ?? '') &&
       entry.eventData.personalAgreement !== true)
   )
     return;
@@ -54,7 +56,7 @@ export function retainedAgreementEvidence(world: WorldState, actorId: string): S
     latest = new Map<string, { id: string; open: boolean; until?: number }>();
   for (const entry of world.experience?.awareness[actorId] ?? []) {
     if (omitted.has(entry.eventId) || corrections?.[entry.eventId]) continue;
-    const metadata = personalAgreementMetadata(entry);
+    const metadata = personalAgreementMetadata(world, entry);
     if (metadata) latest.set(metadata.key, { ...metadata, id: entry.eventId });
   }
   return new Set(

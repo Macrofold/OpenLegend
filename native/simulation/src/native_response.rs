@@ -10,6 +10,9 @@ use crate::values::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod validation;
+pub(crate) use validation::validate_native_response;
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NativeLocomotion {

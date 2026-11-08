@@ -15,6 +15,28 @@ export const BASE_ACTION_DEFAULTS = {
   shotSeconds: 18,
 } as const;
 
+/** This world's speaking family owns its wording and input allowance. Native
+ * execution receives this same definition rather than universalizing it. */
+export const BASE_SPEECH_ACTION = {
+  id: 'wilderness:speech-action',
+  version: 1,
+  maximumCharacters: 1500,
+  eventType: 'speech',
+  noSpeech: { code: 'no-speech', message: 'This actor cannot speak.' },
+  invalidSpeech: { code: 'invalid-speech', message: 'Speech must contain 1–1500 characters.' },
+  invalidVolume: { code: 'invalid-volume', message: 'Choose whisper, normal or shout.' },
+  invalidRole: { code: 'invalid-recipient', message: 'Choose a permitted recipient role.' },
+  missingRecipient: {
+    code: 'invalid-recipient',
+    message: 'The intended recipient no longer exists.',
+  },
+  nonPersonRecipient: {
+    code: 'invalid-recipient',
+    message: 'The intended recipient is not a person.',
+  },
+  success: { code: 'spoken', message: 'Spoken.' },
+} as const;
+
 /** Describe current carried capability, never a future invention's possible maximum.
  * Paged possessions disclose the missing tool knowledge. docs/worlds/base/actions.md */
 export function gatheringDescription(

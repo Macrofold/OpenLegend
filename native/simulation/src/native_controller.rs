@@ -793,9 +793,10 @@ impl WanderContinuation {
             } => *remaining_seconds += wait,
         }
         mutation.animal_clock_changed(&self.actor_id)?;
-        let Some(path) = path else {
+        let Some(line) = path else {
             return Ok(None);
         };
+        let path = line.path;
         let Some(point) = path.last() else {
             return Ok(None);
         };

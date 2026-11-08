@@ -293,7 +293,7 @@ export function attributeBoundary(
 
 /** Convert an authored normal-play duration once; runtime speed and pause only
  * determine how quickly the shared simulation clock advances. */
-export function normalSpeedSeconds(world: WorldState, seconds: number): number {
+export function normalSpeedSeconds(world: Pick<WorldState, 'timePolicy'>, seconds: number): number {
   const rate = world.timePolicy?.normalGameSecondsPerSecond;
   if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0)
     throw new Error('A normal-play duration requires an installed world clock rate.');

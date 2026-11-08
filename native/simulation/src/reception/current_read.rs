@@ -265,7 +265,7 @@ pub fn effective_current_check<'a>(
     )
 }
 
-fn same_reference(
+pub(crate) fn same_received_value_reference(
     left: &ReceivedValueReference,
     right: &ReceivedValueReference,
 ) -> Result<bool, ReceivedError> {
@@ -300,7 +300,7 @@ pub fn current_partition_with_check<'a>(
         && partition.received_order == confirmation.received_order
     {
         if let Some(reference) = partition.frame_ref.as_ref()
-            && same_reference(reference, confirmation.frame_ref)?
+            && same_received_value_reference(reference, confirmation.frame_ref)?
         {
             return Ok(Cow::Borrowed(partition));
         }

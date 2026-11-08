@@ -10,6 +10,11 @@ use crate::values::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod work;
+pub(crate) use work::{
+    CompiledStatusWork, StatusInstallationWork, compile_status_installation, compile_status_work,
+};
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AttributePresentation {
@@ -950,6 +955,91 @@ fn compare_status(left: Option<&StatusValue>, operator: Comparison, right: &Stat
 }
 
 impl StatusRead<'_> {
+    /// Exact ordinary-status admission. Contributions remain another compiled
+    /// family and cannot borrow this path's simpler self-owned state shape.
+    pub fn can_activate(
+        &self,
+        bindings: EffectBindings<'_>,
+        definition: &StatusDefinition,
+    ) -> Result<bool, ValueError> {
+        if definition.contribution.is_some() {
+            return Err(ValueError::InvalidMeaning);
+        }
+        let Some(subject) = self.entities.get(bindings.subject) else {
+            return Ok(false);
+        };
+        if !subject.actively_participates() {
+            return Ok(false);
+        }
+        if definition.occupies_action {
+            if let Some(action) = subject.actor.as_ref().and_then(|a| a.action.as_ref()) {
+                if action.kind == "status-effect"
+                    && !self
+                        .policy
+                        .definitions
+                        .iter()
+                        .find(|d| Some(d.id.as_str()) == action.definition_id.as_deref())
+                        .is_some_and(|d| d.interrupt_on.iter().any(|r| r == "new-action"))
+                {
+                    return Ok(false);
+                }
+            }
+        }
+        if !definition.enabled
+            || subject
+                .status_effects
+                .as_ref()
+                .and_then(|s| s.get(&definition.id))
+                .is_some_and(|s| s.active)
+            || (definition.occupies_action && subject.actor.is_none())
+            || !self.evaluate(bindings, &definition.requires)?.matches
+        {
+            return Ok(false);
+        }
+        if let Some(condition) = &definition.activation_condition {
+            if !self.evaluate(bindings, condition)?.matches {
+                return Ok(false);
+            }
+        }
+        for operation in &definition.while_active {
+            let (target, attribute) = match operation {
+                StatusOperation::Rate { change_rate, .. } => {
+                    (change_rate.target, change_rate.attribute.as_str())
+                }
+                StatusOperation::Every { change_every, .. } => {
+                    (change_every.target, change_every.attribute.as_str())
+                }
+                StatusOperation::Restrict { .. } => continue,
+            };
+            if !matches!(
+                self.value(bindings.target(target), attribute)?,
+                Some(AttributeValue::Number(_))
+            ) {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+    pub fn interruption_required(&self, entity_id: &str, reason: &str) -> Result<bool, ValueError> {
+        let Some(entity) = self.entities.get(entity_id) else {
+            return Ok(false);
+        };
+        if entity
+            .status_effects
+            .as_ref()
+            .is_some_and(|s| s.values().any(|state| state.contribution.is_some()))
+        {
+            return Err(ValueError::InvalidMeaning);
+        }
+        Ok(self.policy.definitions.iter().any(|d| {
+            (reason == "body-unavailable" || d.interrupt_on.iter().any(|r| r == reason))
+                && entity
+                    .status_effects
+                    .as_ref()
+                    .and_then(|s| s.get(&d.id))
+                    .is_some_and(|state| state.active)
+        }))
+    }
     fn value(
         &self,
         entity_id: &str,

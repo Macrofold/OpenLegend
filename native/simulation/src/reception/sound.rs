@@ -166,13 +166,29 @@ impl SoundBatch {
     }
 
     pub(crate) fn finish(
-        mut self,
+        self,
         answers: GeometryAnswers,
         policy: &crate::install::VerifiedDefinition<AcousticPolicy>,
     ) -> Result<SoundResults, SensorError> {
         self.queries
             .validate_answers(&answers)
             .map_err(|_| SensorError::Geometry)?;
+        self.finish_exposure(answers.binding, &answers.sound, policy)
+    }
+    pub(crate) fn finish_exposure(
+        mut self,
+        binding: GeometryBinding,
+        transmissions: &[f64],
+        policy: &crate::install::VerifiedDefinition<AcousticPolicy>,
+    ) -> Result<SoundResults, SensorError> {
+        if binding != self.queries.binding
+            || transmissions.len() != self.queries.sound.len()
+            || transmissions.iter().any(|transmission| {
+                !transmission.is_finite() || !(0.0..=1.0).contains(transmission)
+            })
+        {
+            return Err(SensorError::Geometry);
+        }
         if policy.pin() != &self.acoustic_pin {
             return Err(SensorError::Geometry);
         }
@@ -186,7 +202,7 @@ impl SoundBatch {
                             .expect("An admitted acoustic ray has a hearing floor"),
                         self.source_level,
                         check.separation,
-                        answers.sound[index],
+                        transmissions[index],
                     )
                     .map_err(|_| SensorError::PhysicalPosition)?;
             }

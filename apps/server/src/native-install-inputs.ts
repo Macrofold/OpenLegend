@@ -11,6 +11,7 @@ import {
 import {
   nativeSetupSettings,
   selectedNativeLawDefinitions,
+  validateNativeDefinitions,
 } from '@open-legend/domain/native-install';
 import { createHash } from 'node:crypto';
 
@@ -20,11 +21,18 @@ import { createHash } from 'node:crypto';
 export function nativeDefinitionInputs(
   selected: Pick<
     WorldState,
-    'profile' | 'moduleManifest' | 'nativeResponseProfiles' | 'statusEffectPolicy'
+    | 'profile'
+    | 'timePolicy'
+    | 'moduleManifest'
+    | 'nativeResponseProfiles'
+    | 'statusEffectPolicy'
+    | 'itemDefinitions'
+    | 'presentation'
   >,
 ) {
+  validateNativeDefinitions(selected);
   const { moduleManifest: manifest } = selected;
-  const world = selectedNativeLawDefinitions(selected.profile);
+  const world = selectedNativeLawDefinitions(selected);
   const definition = (value: { id: string; version: number }, pin: DefinitionPin | undefined) => {
     if (!pin) throw new Error('Native installation requires the actual installed definition pin.');
     return { pin, canonical: canonicalJson(value) };
@@ -37,13 +45,28 @@ export function nativeDefinitionInputs(
     attributes: manifest.definitions.map((value, at) => definition(value, manifest.pins[at])),
     senses: manifest.senses.map((value, at) => definition(value, manifest.sensePins[at])),
     acoustics: definition(manifest.acoustics, manifest.acousticsPin),
+    bodyPolicy:
+      manifest.bodyPolicy === null
+        ? null
+        : definition(manifest.bodyPolicy, manifest.bodyPolicyPin ?? undefined),
     responseProfiles: Object.values(selected.nativeResponseProfiles ?? {}).map((value) =>
       definition(value, definitionPin(value)),
     ),
     attention: definition(world.attention, definitionPin(world.attention)),
+    accountRules: definition(world.accountRules, definitionPin(world.accountRules)),
+    nameRules: definition(world.nameRules, definitionPin(world.nameRules)),
+    recognition: definition(world.recognition, definitionPin(world.recognition)),
+    occurrenceRules: definition(world.occurrenceRules, definitionPin(world.occurrenceRules)),
+    socialDefaults: policy(world.socialDefaults),
+    speechAction: definition(world.speechAction, definitionPin(world.speechAction)),
+    presentation: selected.presentation === undefined ? null : policy(selected.presentation),
     eventDisclosure: definition(world.eventDisclosure, definitionPin(world.eventDisclosure)),
+    detectionSupport: definition(world.detectionSupport, definitionPin(world.detectionSupport)),
+    preparedResponses: definition(world.preparedResponses, definitionPin(world.preparedResponses)),
+    movementPolicy: policy(world.movement),
     statusPolicy: policy(selected.statusEffectPolicy),
     workPolicy: policy(nativeSetupSettings.work),
+    manifest: policy(manifest),
   };
 }
 

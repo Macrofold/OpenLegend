@@ -12,7 +12,9 @@ mod state;
 pub(crate) use state::*;
 mod journal;
 pub(crate) use journal::*;
+mod install;
 mod retained_size;
+pub(crate) use install::install_activity;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]

@@ -10,6 +10,7 @@ const BODY_CELL_SIZE: f64 = 8.0;
 
 #[derive(Debug)]
 pub(crate) enum MovementError {
+    Capacity,
     UnsupportedFamily,
     MissingEntity,
     MissingAction,
@@ -337,6 +338,23 @@ pub(crate) struct MotionCursor {
     low: f64,
     high: f64,
     pending_to: SurfacePoint,
+    preview: Option<MotionPreview>,
+}
+#[derive(Debug, serde::Serialize)]
+pub(crate) struct MotionTrack {
+    pub at: Vec<f64>,
+    pub pose: Vec<SurfacePoint>,
+}
+struct MotionPreview {
+    seconds: f64,
+    distance_budget: f64,
+    track: MotionTrack,
+    reservation: crate::host::ByteReservation,
+}
+pub(crate) struct MotionForecast {
+    pub track: MotionTrack,
+    pub complete: bool,
+    pub reservation: crate::host::ByteReservation,
 }
 
 impl MotionCursor {
@@ -387,6 +405,97 @@ impl MotionCursor {
             low: 0.0,
             high: 1.0,
             pending_to: position,
+            preview: None,
+        })
+    }
+    /// Same path reader, with source event-time samples and no canonical write.
+    /// Capacity remains attached to the forecast while another mover uses it.
+    pub(crate) fn start_forecast(
+        actor: EntityHandle,
+        entity: &Entity,
+        path: Vec<SurfacePoint>,
+        distance_budget: f64,
+        seconds: f64,
+        occupied: bool,
+        epsilon: f64,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<Self, MovementError> {
+        if !seconds.is_finite() || seconds < 0.0 {
+            return Err(MovementError::InvalidPath);
+        }
+        let point = entity
+            .supported_position()
+            .ok_or(MovementError::InvalidPath)?;
+        let count = path
+            .len()
+            .checked_add(2)
+            .ok_or(MovementError::InvalidPath)?;
+        let max_id = path
+            .iter()
+            .map(|p| p.surface_id.len())
+            .chain(std::iter::once(point.surface_id.len()))
+            .max()
+            .unwrap_or(0);
+        let bytes = count
+            .checked_mul(std::mem::size_of::<SurfacePoint>() + std::mem::size_of::<f64>() + max_id)
+            .and_then(|n| n.checked_add(path.capacity() * std::mem::size_of::<SurfacePoint>()))
+            .and_then(|n| {
+                n.checked_add(path.iter().map(|p| p.surface_id.capacity()).sum::<usize>())
+            })
+            .and_then(|n| {
+                n.checked_add(
+                    std::mem::size_of::<Self>()
+                        + point.surface_id.len() * 5
+                        + entity.spatial.body.id.len()
+                        + entity
+                            .actor
+                            .as_ref()
+                            .and_then(|a| a.action.as_ref())
+                            .map_or(0, |a| a.id.len()),
+                )
+            })
+            .ok_or(MovementError::InvalidPath)?;
+        let reservation = budget.reserve(bytes).map_err(|_| MovementError::Capacity)?;
+        let mut cursor = Self::start(actor, entity, path, distance_budget, occupied, epsilon)?;
+        let mut at = Vec::with_capacity(count);
+        let mut pose = Vec::with_capacity(count);
+        at.push(0.0);
+        pose.push(point);
+        cursor.preview = Some(MotionPreview {
+            seconds,
+            distance_budget,
+            track: MotionTrack { at, pose },
+            reservation,
+        });
+        Ok(cursor)
+    }
+    pub(crate) fn is_forecast(&self) -> bool {
+        self.preview.is_some()
+    }
+    pub(crate) fn into_forecast(mut self) -> Result<MotionForecast, MovementError> {
+        let complete = self.result().ok_or(MovementError::InvalidAnswer)?;
+        let mut preview = self.preview.take().ok_or(MovementError::InvalidAnswer)?;
+        if preview
+            .track
+            .at
+            .last()
+            .is_some_and(|at| *at < preview.seconds)
+            || preview.track.at.len() == 1
+        {
+            preview.track.at.push(preview.seconds);
+            preview.track.pose.push(
+                preview
+                    .track
+                    .pose
+                    .last()
+                    .ok_or(MovementError::InvalidAnswer)?
+                    .clone(),
+            );
+        }
+        Ok(MotionForecast {
+            track: preview.track,
+            complete,
+            reservation: preview.reservation,
         })
     }
     pub(crate) fn body(&self) -> &BodyProfile {
@@ -601,6 +710,22 @@ impl MotionCursor {
             z: point.z,
             surface_id: support,
         };
+        if let Some(preview) = &mut self.preview {
+            if preview.distance_budget > 0.0 {
+                let at = (self.travelled / preview.distance_budget * preview.seconds)
+                    .min(preview.seconds);
+                if at > *preview.track.at.last().expect("initial forecast sample") {
+                    preview.track.at.push(at);
+                    preview.track.pose.push(self.position.clone());
+                } else {
+                    *preview
+                        .track
+                        .pose
+                        .last_mut()
+                        .expect("initial forecast pose") = self.position.clone();
+                }
+            }
+        }
     }
     pub(crate) fn result(&self) -> Option<bool> {
         if let Phase::Done(result) = self.phase {

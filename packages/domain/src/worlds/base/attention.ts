@@ -15,6 +15,45 @@ import { readAttribute } from '../../world-modules.js';
 import { FOCUS } from './attributes.js';
 import { ORDINARY_CONTEXT_SECONDS } from './senses.js';
 
+/** One authored source for lasting account and routine-result vocabulary. Native
+ * composition installs this same data with its exact content pin. */
+export const BASE_ACCOUNT_RULES = {
+  id: 'base:attention-accounts',
+  version: 1,
+  requiredEvents: [
+    'speech',
+    'inventory-inspected',
+    'item-inspected',
+    'learned',
+    'taught',
+    'recipe-learned',
+  ] as readonly string[],
+  ignoredEvents: ['encounter'] as readonly string[],
+  optionalEvents: [
+    'struck',
+    'projectile-contact',
+    'fire-out',
+    'fire-lit',
+    'fire-extinguished',
+    'crafted',
+    'construction-phase',
+    'cover-lowered',
+  ] as readonly string[],
+  routineCommandType: 'move',
+  routineRunningEvents: ['action-started', 'moved'] as readonly string[],
+  routineCommitmentEvents: ['action-started', 'moved', 'action-stopped'] as readonly string[],
+  routineArrivalEvent: 'moved',
+  completedCode: 'completed',
+  cancelledCode: 'cancelled',
+  agreementEvents: ['cooperation', 'social-compact'] as readonly string[],
+  resultEvents: { say: 'speech-result' } as Readonly<Record<string, string>>,
+  priority: { deliberate: 2, consequence: 1, learning: 1, interpretation: 0 },
+  fallbackPriority: 0,
+} as const;
+export function baseActivityResultEventType(commandType: string): string | undefined {
+  return BASE_ACCOUNT_RULES.resultEvents[commandType];
+}
+
 /** The selected world's initial allowances, not measured population capacity.
  * docs/worlds/base/attention.md */
 export const BASE_ATTENTION_POLICY: AttentionPolicy = {
@@ -113,32 +152,17 @@ export function baseAttributeAffectsObservation(observer: Entity, attributeId: s
 /** Lasting admission is separate from current receipt and attended recent capture. */
 export function baseRecordingReason(world: WorldState, input: RecordingInput): RecordingReason {
   if (input.source === 'confirmation') return 'none';
-  if (input.eventType === 'speech' || input.hasExposure) return 'required';
+  if (
+    (input.eventType && BASE_ACCOUNT_RULES.requiredEvents.includes(input.eventType)) ||
+    input.hasExposure
+  )
+    return 'required';
   if (input.own && input.consequence) return 'required';
   if (input.eventType && world.cognitionPolicy.significantEventTypes.includes(input.eventType))
     return 'required';
-  if (
-    input.eventType &&
-    ['inventory-inspected', 'item-inspected', 'learned', 'taught', 'recipe-learned'].includes(
-      input.eventType,
-    )
-  )
-    return 'required';
-  if (input.eventType === 'encounter') return 'none';
+  if (input.eventType && BASE_ACCOUNT_RULES.ignoredEvents.includes(input.eventType)) return 'none';
   // These are received outward outcomes, not the private action that caused them.
-  if (
-    input.eventType &&
-    [
-      'struck',
-      'projectile-contact',
-      'fire-out',
-      'fire-lit',
-      'fire-extinguished',
-      'crafted',
-      'construction-phase',
-      'cover-lowered',
-    ].includes(input.eventType)
-  )
+  if (input.eventType && BASE_ACCOUNT_RULES.optionalEvents.includes(input.eventType))
     return 'optional';
   if (input.source === 'summary' || (input.source === 'memory' && input.own)) return 'optional';
   return input.consequence ? 'optional' : 'none';
@@ -151,7 +175,7 @@ export function baseAccountAfterRelease(input: AccountRecordingInput): AccountAf
   if (
     !input.own ||
     !activity ||
-    activity.commandType !== 'move' ||
+    activity.commandType !== BASE_ACCOUNT_RULES.routineCommandType ||
     activity.bound ||
     activity.effects ||
     activity.outputs ||
@@ -160,7 +184,8 @@ export function baseAccountAfterRelease(input: AccountRecordingInput): AccountAf
     return 'impression';
   if (
     input.source === 'awareness' &&
-    (input.eventType === 'action-started' || input.eventType === 'moved') &&
+    !!input.eventType &&
+    BASE_ACCOUNT_RULES.routineRunningEvents.includes(input.eventType) &&
     activity.status === 'running'
   )
     return 'discard';
@@ -168,10 +193,10 @@ export function baseAccountAfterRelease(input: AccountRecordingInput): AccountAf
     input.source === 'memory' &&
     ((activity.status === 'completed' &&
       activity.outcome?.ok === true &&
-      activity.outcome.code === 'completed') ||
+      activity.outcome.code === BASE_ACCOUNT_RULES.completedCode) ||
       (activity.status === 'cancelled' &&
         activity.outcome?.ok === false &&
-        activity.outcome.code === 'cancelled'))
+        activity.outcome.code === BASE_ACCOUNT_RULES.cancelledCode))
   )
     return 'discard';
   return 'impression';
@@ -187,7 +212,7 @@ export function baseRoutineMovement(
 ): boolean {
   if (
     !activity ||
-    activity.commandType !== 'move' ||
+    activity.commandType !== BASE_ACCOUNT_RULES.routineCommandType ||
     activity.bound ||
     activity.effects ||
     activity.outputs ||
@@ -203,14 +228,17 @@ export function baseRoutineMovement(
       ((source &&
         Object.keys(encounters.pairs).some((id) => baseEncounterParticipant(world, source, id))) ||
         Object.values(encounters.unknown).some((entry) => entry.until > world.simTime))) ||
-    hasCommitmentCompletion(world, actorId, ['action-started', 'moved', 'action-stopped'])
+    hasCommitmentCompletion(world, actorId, BASE_ACCOUNT_RULES.routineCommitmentEvents)
   )
     return false;
   // A known threat is not necessarily known reciprocally. Reuse the occurrence
   // receiver index only when this world's actual recording policy admits the
   // observer's ordinary moved account; default unconsumed prose does no query.
   // The performer's own routine result needs no additional retained account.
-  if (phase === 'arrival' && world.cognitionPolicy.significantEventTypes.includes('moved')) {
+  if (
+    phase === 'arrival' &&
+    world.cognitionPolicy.significantEventTypes.includes(BASE_ACCOUNT_RULES.routineArrivalEvent)
+  ) {
     if (
       source &&
       hasExternalAudience(
@@ -229,14 +257,14 @@ export function baseRoutineMovement(
   if (
     activity.status === 'completed' &&
     activity.outcome?.ok === true &&
-    activity.outcome.code === 'completed'
+    activity.outcome.code === BASE_ACCOUNT_RULES.completedCode
   )
     return true;
   return (
     phase === 'result' &&
     activity.status === 'cancelled' &&
     activity.outcome?.ok === false &&
-    activity.outcome.code === 'cancelled'
+    activity.outcome.code === BASE_ACCOUNT_RULES.cancelledCode
   );
 }
 
@@ -247,8 +275,7 @@ export function baseAccountRetentionSelection(entry: ExperienceEntry) {
       ? (entry.value.impression?.reason ?? entry.value.retention?.reason)
       : entry.value.retention?.reason;
   return {
-    priority:
-      reason === 'deliberate' ? 2 : reason === 'consequence' || reason === 'learning' ? 1 : 0,
+    priority: reason ? BASE_ACCOUNT_RULES.priority[reason] : BASE_ACCOUNT_RULES.fallbackPriority,
     protected:
       entry.source === 'memory' &&
       (entry.value.obligation?.status === 'active' ||

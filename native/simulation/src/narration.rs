@@ -8,6 +8,8 @@ use crate::values::{deserialize_present_option, is_safe_record_id};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod retained_size;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum NameArticle {
@@ -484,6 +486,59 @@ pub struct SpeechPresentation {
     pub quotation: Option<String>,
     pub detail: String,
     pub description: String,
+}
+
+/// A heard bearing is language over already acquired facts. It performs no
+/// source lookup and does not turn direction into a remembered location.
+pub fn sound_description(sound: &crate::reception::PerceivedSound) -> String {
+    use crate::reception::{Elevation, SoundAcquisition};
+    let source = if sound.acquisition == SoundAcquisition::SelfBody {
+        Some("my own body".to_owned())
+    } else {
+        sound
+            .visible_source
+            .as_ref()
+            .map(|source| name_phrase(&source.description, NameArticle::Indefinite, false))
+    };
+    let direction = sound.direction.map(|direction| {
+        let sector = [
+            "east",
+            "southeast",
+            "south",
+            "southwest",
+            "west",
+            "northwest",
+            "north",
+            "northeast",
+        ][direction.sector as usize];
+        let elevation = match direction.elevation {
+            Elevation::Above => " and above",
+            Elevation::Level => "",
+            Elevation::Below => " and below",
+        };
+        (sector, elevation)
+    });
+    let mut text = String::with_capacity(
+        "I heard a sound.".len()
+            + source
+                .as_ref()
+                .map_or(0, |source| " from ".len() + source.len())
+            + direction.map_or(0, |(sector, elevation)| {
+                " to the ".len() + sector.len() + elevation.len()
+            }),
+    );
+    text.push_str("I heard a sound");
+    if let Some(source) = source {
+        text.push_str(" from ");
+        text.push_str(&source);
+    }
+    if let Some((sector, elevation)) = direction {
+        text.push_str(" to the ");
+        text.push_str(sector);
+        text.push_str(elevation);
+    }
+    text.push('.');
+    text
 }
 
 pub fn speech_presentation(input: SpeechPresentationInput<'_>) -> SpeechPresentation {

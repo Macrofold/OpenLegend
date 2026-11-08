@@ -6,7 +6,7 @@
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
-use crate::narration::{Narration, NativeText};
+use crate::narration::{CapturedNarration, Narration, NativeText};
 use crate::reception::{EncounterExposure, EventScalar};
 use crate::state::Point;
 use crate::values::{
@@ -15,11 +15,14 @@ use crate::values::{
 
 mod history;
 pub use history::*;
+mod emission;
+pub(crate) use emission::{BegunOccurrence, EmissionError, begin_staged_occurrence};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum EmissionText {
     Literal(String),
+    Captured(CapturedNarration),
     Narration(Narration),
 }
 
@@ -117,8 +120,6 @@ pub struct EventEmissionIntent {
     pub target_id: Option<String>,
     pub data: Option<IndexMap<String, EventScalar>>,
     pub scope: EventScope,
-    pub importance: Option<f64>,
-    pub urgency: Option<f64>,
     pub origin: Option<Point>,
     pub exposure: Option<EncounterExposure>,
 }

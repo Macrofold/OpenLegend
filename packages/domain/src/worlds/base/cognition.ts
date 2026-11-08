@@ -2,30 +2,90 @@ import type { CognitionPolicy } from '../../cognition-policy.js';
 import { definitionPin } from '../../world-modules.js';
 import { BASE_THREAT_RESPONSE_PROFILE } from './threat-response-profile.js';
 import type { WorldEvent } from '../../types.js';
+import { freeze } from 'immer';
+
+export const BASE_OCCURRENCE_RULES = freeze(
+  {
+    id: 'wilderness:occurrences',
+    version: 1,
+    importantEvents: ['death', 'taught', 'incapacitated'] as readonly string[],
+    importantValue: 9,
+    speechEvent: 'speech',
+    speechImportance: 7,
+    soundImportance: 3,
+    receivedUrgency: 4,
+    unintelligibleSpeechImportance: 3,
+    semanticEvents: [
+      'crafted',
+      'declaration-admitted',
+      'shot-released',
+      'projectile-contact',
+      'struck',
+      'fire-out',
+      'fire-lit',
+      'fire-extinguished',
+      'rested',
+    ] as readonly string[],
+    semanticImportance: 6,
+    ordinaryImportance: 3,
+    urgentEvents: ['death', 'incapacitated'] as readonly string[],
+    urgentValue: 10,
+    speechUrgency: 4,
+    ordinaryUrgency: 2,
+    activityEvents: [
+      'action-started',
+      'speech',
+      'ate',
+      'equipped',
+      'gathered',
+      'prepared',
+      'crafted',
+      'harvested',
+      'cooked',
+      'fire-lit',
+      'fire-fueled',
+      'fire-extinguished',
+      'struck',
+      'guarded',
+      'shot-released',
+      'shot-ended',
+      'body-effect',
+      'moved',
+      'action-stopped',
+    ] as readonly string[],
+    nativeTargetEvents: [
+      'struck',
+      'projectile-contact',
+      'projectile-passage',
+      'shot-released',
+      'attack-cue',
+      'action-started',
+    ] as readonly string[],
+    projectileContactEvent: 'projectile-contact',
+    projectilePassageEvent: 'projectile-passage',
+    importancePolicy: 'native-v1',
+    significantReason: 'significant',
+  },
+  true,
+);
 
 /** Authored fallback salience; explicit producer metrics are normalized by the event owner. */
 export function baseEventSalience(type: string, data: WorldEvent['data']) {
+  const rules = BASE_OCCURRENCE_RULES;
   return {
     importance:
-      data?.['significant'] === true || ['death', 'taught', 'incapacitated'].includes(type)
-        ? 9
-        : type === 'speech'
-          ? 7
-          : data?.['semanticTrigger'] === true ||
-              [
-                'crafted',
-                'declaration-admitted',
-                'shot-released',
-                'projectile-contact',
-                'struck',
-                'fire-out',
-                'fire-lit',
-                'fire-extinguished',
-                'rested',
-              ].includes(type)
-            ? 6
-            : 3,
-    urgency: ['death', 'incapacitated'].includes(type) ? 10 : type === 'speech' ? 4 : 2,
+      data?.['significant'] === true || rules.importantEvents.includes(type)
+        ? rules.importantValue
+        : type === rules.speechEvent
+          ? rules.speechImportance
+          : data?.['semanticTrigger'] === true || rules.semanticEvents.includes(type)
+            ? rules.semanticImportance
+            : rules.ordinaryImportance,
+    urgency: rules.urgentEvents.includes(type)
+      ? rules.urgentValue
+      : type === rules.speechEvent
+        ? rules.speechUrgency
+        : rules.ordinaryUrgency,
   };
 }
 

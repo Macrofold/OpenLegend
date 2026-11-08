@@ -134,7 +134,7 @@ impl PendingTemporalPage {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Terminal {
     entry: usize,
     reserved_bytes: u64,
@@ -142,7 +142,7 @@ struct Terminal {
 
 /// Operation-local scope, reusable by nested receiving calls. It is flushed by
 /// its actual owner before a snapshot/yield; beginning it allocates no IDs.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TemporalAcquisition {
     batch: ReceivedBatch,
     frame: Option<ObservationFrame>,
@@ -160,16 +160,27 @@ pub struct TemporalAcquisition {
 
 /// One actual receiving transition shares its reserved order across nested
 /// history calls. Its lifetime is separate from the larger acquisition batch.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct ReceivedTransition {
     order: Option<u64>,
+    sample_token: Option<u64>,
 }
 
 impl ReceivedTransition {
     pub fn new(sample_token: Option<u64>) -> Self {
         Self {
             order: sample_token,
+            sample_token,
         }
+    }
+    pub fn sample_token(&self) -> Option<u64> {
+        self.sample_token
+    }
+    pub fn checkpoint(&self) -> Self {
+        *self
+    }
+    pub fn restore(&mut self, before: Self) {
+        *self = before;
     }
     pub fn received_order(&mut self, identity: &mut IdentityState) -> Result<u64, ReceivedError> {
         if let Some(order) = self.order {
@@ -255,7 +266,7 @@ impl TemporalState {
         }))
     }
 
-    fn replace_header(
+    pub(super) fn replace_header(
         &mut self,
         actor_id: &str,
         header: TemporalActorHeader,
@@ -385,6 +396,12 @@ impl TemporalState {
 }
 
 impl TemporalAcquisition {
+    pub(crate) fn actor_id(&self) -> &str {
+        &self.batch.actor_id
+    }
+    pub(crate) fn physical_life(&self) -> u64 {
+        self.batch.physical_life
+    }
     pub fn decision(&self, key: &str) -> Option<&Option<TemporalReceiptLocator>> {
         self.decisions.get(key)
     }
@@ -723,5 +740,78 @@ impl TemporalAcquisition {
         self.count = add_count(self.count, count)?;
         self.slots = add_count(self.slots, slots)?;
         Ok(Some(self.batch.locator(entry_index)))
+    }
+}
+
+/// A nested candidate retains only its active compact builder. Completed pages,
+/// actor history and the shared value pool retain their own sparse undo cursors.
+pub(crate) struct TemporalAcquisitionCheckpoint {
+    before: TemporalAcquisition,
+    _reservation: crate::host::ByteReservation,
+}
+impl TemporalAcquisition {
+    pub(crate) fn checkpoint(
+        &self,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<TemporalAcquisitionCheckpoint, ReceivedError> {
+        use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+        let mut terminals =
+            map_storage::<String, IndexMap<String, Terminal>>(self.terminals.capacity())
+                .ok_or(ReceivedError("Temporal terminal allocation overflow."))?;
+        for (subject, parts) in &self.terminals {
+            terminals = heap_sum([
+                terminals,
+                subject
+                    .heap_bytes()
+                    .ok_or(ReceivedError("Temporal terminal allocation overflow."))?,
+                map_storage::<String, Terminal>(parts.capacity())
+                    .ok_or(ReceivedError("Temporal terminal allocation overflow."))?,
+            ])
+            .ok_or(ReceivedError("Temporal terminal allocation overflow."))?;
+            for key in parts.keys() {
+                terminals = terminals
+                    .checked_add(
+                        key.heap_bytes()
+                            .ok_or(ReceivedError("Temporal terminal allocation overflow."))?,
+                    )
+                    .ok_or(ReceivedError("Temporal terminal allocation overflow."))?;
+            }
+        }
+        let mut values = map_storage::<String, ()>(self.values.capacity())
+            .ok_or(ReceivedError("Temporal values allocation overflow."))?;
+        for value in &self.values {
+            values = values
+                .checked_add(
+                    value
+                        .heap_bytes()
+                        .ok_or(ReceivedError("Temporal values allocation overflow."))?,
+                )
+                .ok_or(ReceivedError("Temporal values allocation overflow."))?;
+        }
+        let bytes = heap_sum([
+            std::mem::size_of::<TemporalAcquisitionCheckpoint>(),
+            self.batch
+                .heap_bytes()
+                .ok_or(ReceivedError("Temporal builder allocation overflow."))?,
+            self.frame
+                .heap_bytes()
+                .ok_or(ReceivedError("Temporal frame allocation overflow."))?,
+            terminals,
+            values,
+            self.decisions
+                .heap_bytes()
+                .ok_or(ReceivedError("Temporal decision allocation overflow."))?,
+        ])
+        .ok_or(ReceivedError("Temporal checkpoint allocation overflow."))?;
+        let reservation = budget
+            .reserve(bytes)
+            .map_err(|_| ReceivedError("Temporal checkpoint capacity exhausted."))?;
+        Ok(TemporalAcquisitionCheckpoint {
+            before: self.clone(),
+            _reservation: reservation,
+        })
+    }
+    pub(crate) fn restore(&mut self, checkpoint: TemporalAcquisitionCheckpoint) {
+        *self = checkpoint.before;
     }
 }

@@ -5,6 +5,43 @@ use crate::values::deserialize_safe_integer;
 use indexmap::IndexMap;
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
+#[path = "recognition/journal.rs"]
+mod journal;
+pub(crate) use journal::{RecognitionCheckpoint, RecognitionEffect, RecognitionJournal};
+#[path = "recognition/voice.rs"]
+mod voice;
+pub(crate) use voice::{
+    VoiceReception, VoiceReceptionParts, VoiceReceptionPreparation, individual_familiarity,
+};
+
+/// The actual selected world's descriptor is installed with its source pin.
+/// Its clocks are policy fields; the engine supplies the world's time scale.
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RecognitionPolicy {
+    pub id: String,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub version: u64,
+    pub credit_seconds: f64,
+    pub seed_seconds: f64,
+    pub warning_seconds: f64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub retained_credits: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub matching_exemplars: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub familiarity_roots: u64,
+    pub familiarity_mature_seconds: f64,
+    pub voice_feature_family: crate::experience::FeatureFamily,
+}
+impl crate::install::DefinitionIdentity for RecognitionPolicy {
+    fn definition_id(&self) -> &str {
+        &self.id
+    }
+    fn definition_version(&self) -> u64 {
+        self.version
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

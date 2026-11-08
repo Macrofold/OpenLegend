@@ -17,7 +17,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::BTreeMap, sync::Arc};
 
+mod accounts;
 mod append;
+mod support;
+pub(crate) use accounts::{AccountAdditionBudget, KnowledgeAccountChange};
+pub(crate) use append::TemporalAcquisitionCheckpoint;
 pub use append::{
     PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalAppendError,
     TemporalCaptureFacet, TemporalCaptureInput,
@@ -369,6 +373,13 @@ pub struct TemporalCheckpoint {
 
 #[derive(Debug)]
 enum TemporalUndo {
+    Support {
+        actor_id: String,
+        id: String,
+        before: Option<(usize, Arc<super::TemporalSupportRecord>)>,
+        next_ordinal: u64,
+        parent_present: bool,
+    },
     Header {
         actor_id: String,
         before: TemporalActorHeader,
@@ -420,6 +431,28 @@ impl TemporalState {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().expect("Journal length checked") {
+                TemporalUndo::Support {
+                    actor_id,
+                    id,
+                    before,
+                    next_ordinal,
+                    parent_present,
+                } => {
+                    let actor = self
+                        .actors
+                        .get_mut(&actor_id)
+                        .ok_or(ReceivedError("Temporal support rollback actor is absent."))?;
+                    let supports = actor
+                        .supports
+                        .as_mut()
+                        .ok_or(ReceivedError("Temporal support rollback owner is absent."))?;
+                    supports.records.shift_remove(&id);
+                    if let Some((at, record)) = before {
+                        supports.records.shift_insert(at, id, record);
+                    }
+                    supports.coverage.next_ordinal = next_ordinal;
+                    supports.coverage.parent_present = parent_present;
+                }
                 TemporalUndo::Header {
                     actor_id,
                     before,

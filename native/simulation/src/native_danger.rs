@@ -2,21 +2,19 @@
 //! actual sight alone updates its retained estimates. Hidden death, replacement
 //! and removal never resolve an old body record.
 
-use crate::encoding::{js_string_cmp, json_record};
+use crate::encoding::js_string_cmp;
 use crate::execution::{ExecutionError, PhysicalMutation};
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::{ByteBudget, ByteReservation};
-use crate::native_response::{DangerExtent, NativeDanger, NativeResponseProfile, profile_key};
+use crate::native_response::{
+    DangerExtent, NativeDanger, NativeResponseProfile, body_danger_key, profile_key,
+};
 use crate::reception::{SightBatch, SightResults, vision_parameters};
 use crate::simulation::{InstalledWorld, PhysicalState};
 use crate::state::{Entity, EntityHandle};
 use crate::work::{WorkMeters, WorkUnit};
 use std::collections::BTreeSet;
 use std::mem::size_of;
-
-pub(crate) fn body_danger_key(id: &str, life: u64) -> Result<String, ExecutionError> {
-    json_record(&("body", id, life)).map_err(|_| ExecutionError::Invariant)
-}
 
 fn danger_body(profile: &NativeResponseProfile, source: &Entity) -> bool {
     source.actor.as_ref().is_some_and(|actor| {
@@ -266,7 +264,7 @@ impl DangerBatch {
                     .remains
                     .as_ref()
                     .map_or(id.as_str(), |remains| remains.source_id.as_str());
-                let key = body_danger_key(original, life)?;
+                let key = body_danger_key(original, life).map_err(|_| ExecutionError::Invariant)?;
                 if matches!(episode.dangers.get(&key), Some(NativeDanger::Body { .. }))
                     && seen(&sight, id)?
                 {
@@ -274,7 +272,7 @@ impl DangerBatch {
                 }
                 continue;
             }
-            let key = body_danger_key(id, life)?;
+            let key = body_danger_key(id, life).map_err(|_| ExecutionError::Invariant)?;
             let old = episode.dangers.get(&key);
             if (old.is_none() && !danger_source(profile, source)?) || !seen(&sight, id)? {
                 continue;

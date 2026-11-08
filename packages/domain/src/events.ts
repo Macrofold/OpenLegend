@@ -56,6 +56,7 @@ import {
   selectedRecordingReason,
   selectedAccountAfterRelease,
   selectedEventSalience,
+  selectedOccurrenceRules,
 } from './world-composition.js';
 import { activelyParticipates } from './participation-state.js';
 import { acquireCombatObservation } from './combat-encounters.js';
@@ -372,6 +373,7 @@ function recordEvent(
       ? Math.max(0, Math.min(10, value))
       : fallback;
   const salience = selectedEventSalience(world, type, data);
+  const occurrenceRules = selectedOccurrenceRules(world);
   const importance = boundedMetric(data?.['importance'], salience.importance);
   const urgency = boundedMetric(data?.['urgency'], salience.urgency);
   const event: WorldEvent = {
@@ -403,33 +405,13 @@ function recordEvent(
   if (targetId) event.targetId = targetId;
   event.data = {
     ...cloneValue(data),
-    importancePolicy: 'native-v1',
-    importanceReason: data?.['significant'] ? 'significant' : type,
+    importancePolicy: occurrenceRules.importancePolicy,
+    importanceReason: data?.['significant'] ? occurrenceRules.significantReason : type,
   };
   // Resolve this already admitted occurrence once, before receiver callbacks or
   // a deferred awareness batch can finish/replace it. Its private eligibility is
   // used only by the actor's own account, never by public event data or witnesses.
-  const tracksActivity = [
-    'action-started',
-    'speech',
-    'ate',
-    'equipped',
-    'gathered',
-    'prepared',
-    'crafted',
-    'harvested',
-    'cooked',
-    'fire-lit',
-    'fire-fueled',
-    'fire-extinguished',
-    'struck',
-    'guarded',
-    'shot-released',
-    'shot-ended',
-    'body-effect',
-    'moved',
-    'action-stopped',
-  ].includes(type);
+  const tracksActivity = occurrenceRules.activityEvents.includes(type);
   const cause = tracksActivity
     ? (data?.['actionId'] ??
       data?.['effectId'] ??
@@ -455,17 +437,10 @@ function recordEvent(
     nativeTarget.actor.alive &&
     activelyParticipates(nativeTarget) &&
     !audience.includes(nativeTarget.id) &&
-    [
-      'struck',
-      'projectile-contact',
-      'projectile-passage',
-      'shot-released',
-      'attack-cue',
-      'action-started',
-    ].includes(type) &&
+    occurrenceRules.nativeTargetEvents.includes(type) &&
     (feltTargetId === nativeTarget.id ||
-      type === 'projectile-contact' ||
-      type === 'projectile-passage' ||
+      type === occurrenceRules.projectileContactEvent ||
+      type === occurrenceRules.projectilePassageEvent ||
       (source && seesEntity(world, nativeTarget, source)))
   ) {
     audience.push(nativeTarget.id);
@@ -495,7 +470,8 @@ function recordEvent(
   const receivers = audience.flatMap((actorId) => {
     const observer = entityGet(world.entities, actorId);
     if (!observer?.actor?.alive || !activelyParticipates(observer)) return [];
-    const nativeContact = actorId === nativeTarget?.id && type === 'projectile-contact';
+    const nativeContact =
+      actorId === nativeTarget?.id && type === occurrenceRules.projectileContactEvent;
     const modality: Awareness['modality'] =
       speechAwareness.get(actorId)?.modality ??
       (feltTargetId === actorId || nativeContact

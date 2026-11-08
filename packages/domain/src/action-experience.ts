@@ -1,4 +1,8 @@
-import { selectedRoutineMovement, selectedTemporalPolicy } from './world-composition.js';
+import {
+  selectedActivityResultMetadata,
+  selectedRoutineMovement,
+  selectedTemporalPolicy,
+} from './world-composition.js';
 import { appendTemporalReceipt } from './temporal-evidence.js';
 import { hasMemory } from './living.js';
 import {
@@ -987,9 +991,7 @@ export function endActivity(
             activityId: entry.id,
             // Retain the completed speech in personal history without making a speaker
             // answer their own output after the original decision's saved watermark.
-            ...(entry.command.type === 'say'
-              ? { eventType: 'speech-result', speakerId: actorId }
-              : {}),
+            ...selectedActivityResultMetadata(world, actorId, entry.command.type),
             summary: {
               parts: [
                 person(actorId, 'possessive'),

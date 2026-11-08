@@ -12,6 +12,7 @@ import {
   BASE_EVENT_DISCLOSURE_DATA,
 } from './worlds/base/event-disclosure.js';
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
+import { BASE_ACTION_DEFAULTS, BASE_SPEECH_ACTION } from './worlds/base/actions.js';
 import { baseAnimalActivity } from './worlds/base/animal-response-profile.js';
 import { baseAssemblyPresentation } from './worlds/base/presentation.js';
 import type { AssemblyFamily } from './assembly-types.js';
@@ -55,6 +56,7 @@ import {
   ordinaryWarningPlace,
   ordinaryWarningDurationSeconds,
   BASE_VOICE_FEATURE_FAMILY,
+  BASE_PERCEPTION_POLICY,
   receivedVoiceFeatures,
   perceiveVoice,
   recognitionSupportSourceIds,
@@ -67,6 +69,7 @@ import {
 import { hasMemory } from './living.js';
 import { currentBodyObservation, observationFactKey } from './perception-evidence.js';
 import {
+  BASE_PERSONAL_NAME_RULES,
   ensureBodyIndividual,
   outwardBodyName,
   associateBodyFamiliarity,
@@ -78,6 +81,8 @@ import { DETECTION_SUPPORT_POLICY } from './worlds/base/senses.js';
 import { normalSpeedSeconds } from './simulation-time.js';
 import {
   BASE_ATTENTION_POLICY,
+  BASE_ACCOUNT_RULES,
+  baseActivityResultEventType,
   baseAttentionCapacity,
   baseAttributeAffectsObservation,
   baseRecordingReason,
@@ -87,7 +92,7 @@ import {
 } from './worlds/base/attention.js';
 import type { AccountRecordingInput, RecordingInput } from './attention.js';
 import { sightingNarration } from './worlds/base/event-presentation.js';
-import { baseEventSalience } from './worlds/base/cognition.js';
+import { baseEventSalience, BASE_OCCURRENCE_RULES } from './worlds/base/cognition.js';
 import type { ObserverSubject } from './knowledge.js';
 import {
   subjectFamiliarity,
@@ -117,6 +122,22 @@ export function selectedAccountAfterRelease(world: WorldState, input: AccountRec
   selectedCreationProfileForWorld(world);
   return baseAccountAfterRelease(input);
 }
+export function selectedAgreementEvent(
+  world: Pick<WorldState, 'profile'>,
+  eventType: string,
+): boolean {
+  selectedCreationProfileForWorld(world);
+  return BASE_ACCOUNT_RULES.agreementEvents.includes(eventType);
+}
+export function selectedActivityResultMetadata(
+  world: WorldState,
+  actorId: string,
+  commandType: string,
+) {
+  selectedCreationProfileForWorld(world);
+  const eventType = baseActivityResultEventType(commandType);
+  return eventType ? { eventType, speakerId: actorId } : {};
+}
 export function selectedRoutineMovement(
   world: WorldState,
   actorId: string,
@@ -130,6 +151,10 @@ export function selectedRoutineMovement(
 export function selectedEventSalience(world: WorldState, type: string, data: WorldEvent['data']) {
   selectedCreationProfileForWorld(world);
   return baseEventSalience(type, data);
+}
+export function selectedOccurrenceRules(world: WorldState) {
+  selectedCreationProfileForWorld(world);
+  return BASE_OCCURRENCE_RULES;
 }
 export function selectedSightingNarration(
   world: WorldState,
@@ -213,7 +238,7 @@ export function selectedPruneObserverIndividuals(
   return pruneObserverIndividuals(world, actorId, input);
 }
 
-export function selectedDetectionSupportPolicy(world: WorldState) {
+export function selectedDetectionSupportPolicy(world: Pick<WorldState, 'profile' | 'timePolicy'>) {
   selectedCreationProfileForWorld(world);
   return {
     ...DETECTION_SUPPORT_POLICY,
@@ -426,13 +451,32 @@ export function selectedCreationProfileForWorld(
  * world remains their one source; native installation carries data and pins,
  * never executable TypeScript policy functions or a reconstructed world.
  */
-export function selectedNativeLawDefinitions(profile: WorldState['profile']) {
-  selectedCreationProfileForWorld({ profile });
-  return { attention: BASE_ATTENTION_POLICY, eventDisclosure: BASE_EVENT_DISCLOSURE_DATA };
+export function selectedNativeLawDefinitions(world: Pick<WorldState, 'profile' | 'timePolicy'>) {
+  selectedCreationProfileForWorld(world);
+  return {
+    attention: BASE_ATTENTION_POLICY,
+    accountRules: BASE_ACCOUNT_RULES,
+    nameRules: BASE_PERSONAL_NAME_RULES,
+    recognition: { ...BASE_PERCEPTION_POLICY, voiceFeatureFamily: BASE_VOICE_FEATURE_FAMILY },
+    occurrenceRules: BASE_OCCURRENCE_RULES,
+    socialDefaults: BASE_SOCIAL_POLICY,
+    speechAction: BASE_SPEECH_ACTION,
+    eventDisclosure: BASE_EVENT_DISCLOSURE_DATA,
+    detectionSupport: selectedDetectionSupportPolicy(world),
+    preparedResponses: BASE_THREAT_RESPONSE_PROFILE,
+    movement: {
+      movementTilesPerSecond: BASE_ACTION_DEFAULTS.movementTilesPerSecond,
+      interactionRadius: BASE_ACTION_DEFAULTS.interactionRadius,
+    },
+  };
 }
 export function selectedSocialDefaults(world: WorldState) {
   selectedCreationProfileForWorld(world);
   return BASE_SOCIAL_POLICY;
+}
+export function selectedSpeechAction(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_SPEECH_ACTION;
 }
 export function selectedTypedRequestVocabulary(world: WorldState) {
   selectedCreationProfileForWorld(world);

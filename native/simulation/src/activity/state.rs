@@ -11,6 +11,22 @@ use crate::values::{deserialize_present_safe_integer, deserialize_safe_integer};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
+// Source list cursors use -1 for "before the first member". They remain
+// JavaScript safe integers, including JSON 1.0; null cannot erase a supplied one.
+fn deserialize_cursor<'de, D: serde::Deserializer<'de>>(d: D) -> Result<i64, D::Error> {
+    let n = f64::deserialize(d)?;
+    if n.is_finite() && n >= -1.0 && n <= MAX_SAFE_INTEGER as f64 && n.fract() == 0.0 {
+        Ok(n as i64)
+    } else {
+        Err(serde::de::Error::custom("Invalid action-learning cursor."))
+    }
+}
+fn deserialize_present_cursor<'de, D: serde::Deserializer<'de>>(
+    d: D,
+) -> Result<Option<i64>, D::Error> {
+    deserialize_cursor(d).map(Some)
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ActivityLimits {
@@ -296,6 +312,13 @@ impl ActivityOccurrence {
             || self.connections.len() as u64 > limits.links
             || self.evidence_ids.len() as u64 > limits.links
             || self.evidence_ids.iter().any(|id| !is_safe_record_id(id))
+            || self.command.envelope().human_initiated.is_some()
+            || self.command.envelope().combat_help_id.is_some()
+            || self.command.envelope().cooperation.is_some()
+            || self
+                .cooperation
+                .as_ref()
+                .is_some_and(|binding| !is_safe_record_id(&binding.id) || binding.revision == 0)
         {
             return Err(ActivityError::InvalidStructure);
         }
@@ -338,14 +361,31 @@ impl ActivityOccurrence {
                     !is_safe_record_id(&effect.id)
                         || !ids.insert(&effect.id)
                         || !is_safe_record_id(&effect.subject_id)
+                        || [&effect.label, &effect.property].iter().any(|text| {
+                            js_trim(text).is_empty()
+                                || text.encode_utf16().count() as u64 > limits.text
+                        })
+                        || effect
+                            .unit
+                            .as_ref()
+                            .is_some_and(|text| text.encode_utf16().count() as u64 > limits.text)
+                        || [&effect.before, &effect.after]
+                            .iter()
+                            .any(|value| match value {
+                                ActivityScalar::Number(n) => !n.is_finite(),
+                                ActivityScalar::String(text) => {
+                                    text.encode_utf16().count() as u64 > limits.text
+                                }
+                                _ => false,
+                            })
                 })
             {
                 return Err(ActivityError::InvalidStructure);
             }
         }
-        let body =
-            crate::encoding::json_record(self).map_err(|_| ActivityError::InvalidStructure)?;
-        if body.len() as u64 > limits.record_bytes {
+        let bytes =
+            crate::encoding::json_record_len(self).map_err(|_| ActivityError::InvalidStructure)?;
+        if bytes as u64 > limits.record_bytes {
             return Err(ActivityError::Capacity);
         }
         project_activity(
@@ -517,8 +557,8 @@ pub(crate) struct ActivityReference {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct LearningInspection {
     pub event_id: String,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub after: u64,
+    #[serde(deserialize_with = "deserialize_cursor")]
+    pub after: i64,
     #[serde(
         default,
         deserialize_with = "deserialize_present_safe_integer",
@@ -539,10 +579,10 @@ pub(crate) struct LearningCursor {
     pub after: Option<String>,
     #[serde(
         default,
-        deserialize_with = "deserialize_present_safe_integer",
+        deserialize_with = "deserialize_present_cursor",
         skip_serializing_if = "Option::is_none"
     )]
-    pub position: Option<u64>,
+    pub position: Option<i64>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -596,20 +636,59 @@ impl ActivityState {
             return Err(ActivityError::InvalidStructure);
         }
         let mut ids = BTreeSet::new();
+        let mut all: BTreeMap<&str, (&str, &ActivityRecord)> = BTreeMap::new();
         let mut count = 0_u64;
         for (actor, collection) in &collections {
             if actor != &collection.actor_id {
                 return Err(ActivityError::InvalidStructure);
             }
-            for id in collection.records.keys() {
+            for (id, record) in &collection.records {
                 if !ids.insert(id) {
                     return Err(ActivityError::InvalidStructure);
                 }
                 count = count.checked_add(1).ok_or(ActivityError::Capacity)?;
+                all.insert(id, (actor, record));
             }
         }
         if count > header.admitted {
             return Err(ActivityError::InvalidStructure);
+        }
+        for (actor, owner) in &collections {
+            for record in owner.records.values() {
+                for link in &record.occurrence.connections {
+                    if let Some((other_actor, source)) = all.get(link.from.as_str()) {
+                        if actor.as_str() != *other_actor
+                            || source.occurrence.at > record.occurrence.at
+                            || source.position >= record.position
+                        {
+                            return Err(ActivityError::InvalidStructure);
+                        }
+                    }
+                }
+            }
+        }
+        for cursor in learning.values() {
+            if cursor.assessed.len() as u64 > limits.assessed
+                || crate::encoding::json_record_len(&cursor.assessed)
+                    .map_err(|_| ActivityError::InvalidStructure)? as u64
+                    > limits.assessment_bytes
+                || cursor.pending.len() as u64 > limits.page
+                || cursor
+                    .examined
+                    .as_ref()
+                    .is_some_and(|values| values.len() as u64 > limits.visits)
+                || cursor
+                    .pending
+                    .iter()
+                    .chain(cursor.examined.iter().flatten())
+                    .any(|id| !is_safe_record_id(id))
+                || cursor
+                    .inspection
+                    .as_ref()
+                    .is_some_and(|inspection| !is_safe_record_id(&inspection.event_id))
+            {
+                return Err(ActivityError::InvalidStructure);
+            }
         }
         for (action, reference) in &active {
             let entry = collections

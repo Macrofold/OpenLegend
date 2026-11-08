@@ -6,13 +6,34 @@ use super::{DefinitionInput, InstallError, InstalledContent, RowImport};
 use crate::activity::ActivityLimits;
 use crate::experience::PersonalRootPresence;
 use crate::identity::{IdentityState, MAX_SAFE_INTEGER};
-use crate::simulation::{InstalledWorld, PhysicalState};
+use crate::simulation::PhysicalState;
 use crate::state::{Entity, EntityStore, WorkState, WorldHeader};
 use crate::values::{NativeValueWindow, deserialize_safe_integer};
 use crate::work::{WorkBook, WorkPolicy};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::{Map, Value};
+use std::sync::Arc;
+
+/// Borrowed immutable meanings needed by physical admission, before root
+/// content and geometry join the final InstalledWorld allocation.
+pub(crate) struct PhysicalDefinitions<'a> {
+    pub senses: &'a IndexMap<String, super::VerifiedDefinition<crate::reception::SenseDefinition>>,
+    pub default_senses: &'a [String],
+    pub response_profiles: &'a IndexMap<
+        String,
+        super::VerifiedDefinition<crate::native_response::NativeResponseProfile>,
+    >,
+    pub work_policy: Arc<crate::work::InstalledWorkPolicy>,
+    pub attributes:
+        &'a IndexMap<String, super::VerifiedDefinition<crate::status::AttributeDefinition>>,
+    pub status_policy: &'a crate::status::StatusEffectPolicy,
+    pub maximum_candidates: usize,
+    pub maximum_path_points: usize,
+    pub epsilon: f64,
+    pub population_work: &'a crate::status::StatusInstallationWork,
+    pub presentation: Option<&'a CanonicalInput>,
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -21,6 +42,17 @@ pub(crate) struct CanonicalInput {
     pub sha256: String,
 }
 impl CanonicalInput {
+    pub(crate) fn verify_json(&self, expected: &Value) -> Result<(), InstallError> {
+        if crate::encoding::sha256_hex(self.canonical.as_bytes()) != self.sha256 {
+            return Err(InstallError::DefinitionPin);
+        }
+        let actual: Value =
+            serde_json::from_str(&self.canonical).map_err(|_| InstallError::DefinitionBody)?;
+        if !same_json_value(&actual, expected) {
+            return Err(InstallError::DefinitionBody);
+        }
+        Ok(())
+    }
     pub(crate) fn verify<T: serde::de::DeserializeOwned + PartialEq>(
         &self,
         expected: &T,
@@ -39,6 +71,7 @@ impl CanonicalInput {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NativeDefinitionInputs {
+    pub manifest: CanonicalInput,
     pub attributes: Vec<DefinitionInput>,
     pub senses: Vec<DefinitionInput>,
     pub acoustics: DefinitionInput,
@@ -47,6 +80,19 @@ pub(crate) struct NativeDefinitionInputs {
     pub event_disclosure: DefinitionInput,
     pub status_policy: CanonicalInput,
     pub work_policy: CanonicalInput,
+    pub detection_support: DefinitionInput,
+    pub prepared_responses: DefinitionInput,
+    pub movement_policy: CanonicalInput,
+    pub account_rules: DefinitionInput,
+    pub name_rules: DefinitionInput,
+    pub recognition: DefinitionInput,
+    pub occurrence_rules: DefinitionInput,
+    pub speech_action: DefinitionInput,
+    pub social_defaults: CanonicalInput,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub presentation: Option<CanonicalInput>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub body_policy: Option<DefinitionInput>,
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -86,6 +132,14 @@ pub(crate) struct ResponseSettings {
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct PersonalEvidencePreparationSettings {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub rows: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub bytes: u64,
+}
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NativeSetupSettings {
     pub work: WorkPolicy,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -97,6 +151,7 @@ pub(crate) struct NativeSetupSettings {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub activity_display_bytes: u64,
     pub native_response: ResponseSettings,
+    pub personal_evidence_preparation: PersonalEvidencePreparationSettings,
 }
 
 /// Presence is consumed only during installation by the actual child owners.
@@ -227,7 +282,7 @@ fn empty_marker(value: &Value, array: bool) -> bool {
 
 pub(crate) fn install_physical(
     import: &mut RowImport,
-    installed: &InstalledWorld,
+    installed: &PhysicalDefinitions<'_>,
 ) -> Result<PhysicalInstallation, InstallError> {
     let (row, mut root) =
         super::rows::take_one::<Map<String, Value>>(import, "world_settings", "[]", "world", true)?
@@ -242,7 +297,21 @@ pub(crate) fn install_physical(
         next_id,
     )
     .map_err(|_| InstallError::Identity)?;
-    let presentation = remove_optional(&mut root, "presentation")?;
+    let presentation: Option<Value> = remove_optional(&mut root, "presentation")?;
+    match (presentation.as_ref(), installed.presentation) {
+        (None, None) => {}
+        (Some(value), Some(input)) => {
+            if crate::encoding::sha256_hex(input.canonical.as_bytes()) != input.sha256 {
+                return Err(InstallError::DefinitionPin);
+            }
+            let expected: Value =
+                serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
+            if !same_json_value(value, &expected) {
+                return Err(InstallError::DefinitionBody);
+            }
+        }
+        _ => return Err(InstallError::DefinitionBody),
+    }
     let time_policy = required(&mut root, "timePolicy")?;
     let profile = required(&mut root, "profile")?;
     let content = InstalledContent::install(presentation, time_policy, profile)?;
@@ -291,7 +360,11 @@ pub(crate) fn install_physical(
         received_values: present("receivedValues"),
         events: present("events"),
     };
-    let entities = install_entities(import, present("entities"), installed)?;
+    let entities = install_entities(import, present("entities"), installed, header.sim_time)?;
+    installed
+        .population_work
+        .require_population(&entities, &installed.work_policy)
+        .map_err(|_| InstallError::CurrentFormat)?;
     let pending_values = take_window(import, present("pendingNativeIntegration"))?;
     let work_state = take_work(import, present("workState"))?;
     let work = WorkBook::install(
@@ -301,6 +374,34 @@ pub(crate) fn install_physical(
         header.sim_time,
     )
     .map_err(|_| InstallError::CurrentFormat)?;
+    if let Some(window) = &pending_values {
+        let mut meanings = IndexMap::new();
+        for binding in window.bindings.values() {
+            if !meanings.contains_key(&binding.status_id) {
+                let definition = installed
+                    .status_policy
+                    .definitions
+                    .iter()
+                    .find(|d| d.id == binding.status_id)
+                    .ok_or(InstallError::DefinitionBody)?;
+                meanings.insert(
+                    binding.status_id.clone(),
+                    crate::status::compile_arithmetic_meaning(definition, installed.attributes)
+                        .map_err(|_| InstallError::DefinitionBody)?,
+                );
+            }
+        }
+        crate::values::validate_window(
+            window,
+            header.sim_time,
+            &WindowValidation {
+                entities: &entities,
+                work: &work,
+                meanings: &meanings,
+            },
+        )
+        .map_err(|_| InstallError::CurrentFormat)?;
+    }
     let bodies = crate::movement::BodyIndex::install(&entities);
     fields.shift_remove("entities");
     fields.shift_remove("pendingNativeIntegration");
@@ -329,6 +430,53 @@ fn object(value: Value) -> Result<Map<String, Value>, InstallError> {
         _ => Err(InstallError::CurrentFormat),
     }
 }
+// JavaScript has one numeric JSON kind. Preserve usable 1.0 == 1 while exact
+// string/array/map content still fences validating one presentation and loading
+// another; object enumeration is not an authored presentation identity.
+fn same_json_value(left: &Value, right: &Value) -> bool {
+    match (left, right) {
+        (Value::Number(a), Value::Number(b)) => a.as_f64() == b.as_f64(),
+        (Value::Array(a), Value::Array(b)) => {
+            a.len() == b.len() && a.iter().zip(b).all(|(a, b)| same_json_value(a, b))
+        }
+        (Value::Object(a), Value::Object(b)) => {
+            a.len() == b.len()
+                && a.iter().all(|(key, value)| {
+                    b.get(key)
+                        .is_some_and(|other| same_json_value(value, other))
+                })
+        }
+        _ => left == right,
+    }
+}
+struct WindowValidation<'a> {
+    entities: &'a EntityStore,
+    work: &'a WorkBook,
+    meanings: &'a IndexMap<String, crate::values::ArithmeticMeaning>,
+}
+impl crate::values::NativeValueValidation for WindowValidation<'_> {
+    fn is_actor(&self, id: &str) -> bool {
+        self.entities.get(id).is_some_and(|e| e.actor.is_some())
+    }
+    fn attribute(&self, id: &str, attribute: &str) -> Option<&crate::values::AttributeState> {
+        self.entities
+            .get(id)?
+            .actor
+            .as_ref()?
+            .attributes
+            .as_ref()?
+            .get(attribute)
+    }
+    fn status(&self, id: &str, status: &str) -> Option<&crate::values::StatusInstance> {
+        self.entities.get(id)?.status_effects.as_ref()?.get(status)
+    }
+    fn invocation(&self, episode: &str) -> Option<&crate::values::WorkInvocation> {
+        self.work.invocation(episode)
+    }
+    fn meaning(&self, _id: &str, status: &str) -> Option<&crate::values::ArithmeticMeaning> {
+        self.meanings.get(status)
+    }
+}
 fn child_present(
     parent: &Map<String, Value>,
     field: &str,
@@ -354,6 +502,39 @@ fn one(
     {
         if table != "sim_placements" && !row.extra.is_empty() {
             return Err(InstallError::CurrentFormat);
+        }
+        if table == "sim_placements" {
+            let path: Vec<String> =
+                serde_json::from_str(&row.id).map_err(|_| InstallError::RowIdentity)?;
+            let entity_id = path.get(2).ok_or(InstallError::RowIdentity)?;
+            let field = |name: &str| value.get(name).cloned().unwrap_or(Value::Null);
+            let component = |field: &str, axis: &str| {
+                value
+                    .get(field)
+                    .and_then(|v| v.get(axis))
+                    .cloned()
+                    .unwrap_or(Value::Null)
+            };
+            let expected = serde_json::json!([
+                entity_id,
+                field("mode"),
+                field("parentEntityId"),
+                field("portId"),
+                field("slot"),
+                component("local", "x"),
+                component("local", "y"),
+                component("local", "z"),
+                field("supportSurfaceId"),
+                component("position", "x"),
+                component("position", "y"),
+                component("position", "z")
+            ]);
+            if crate::encoding::json_record(&row.extra).map_err(|_| InstallError::CurrentFormat)?
+                != crate::encoding::json_value(&expected)
+                    .map_err(|_| InstallError::CurrentFormat)?
+            {
+                return Err(InstallError::CurrentFormat);
+            }
         }
         join(import, &mut value, &row.id)?;
         parent.insert(field.to_owned(), Value::Object(value));
@@ -671,7 +852,8 @@ fn entity(
 fn install_entities(
     import: &mut RowImport,
     present: bool,
-    installed: &InstalledWorld,
+    installed: &PhysicalDefinitions<'_>,
+    now: f64,
 ) -> Result<EntityStore, InstallError> {
     if !present {
         return Err(InstallError::ParentPresence);
@@ -706,7 +888,7 @@ fn install_entities(
         entity(import, &mut value, &row.id)?;
         let entity: Entity = serde_json::from_value(Value::Object(value))
             .map_err(|_| InstallError::CurrentFormat)?;
-        validate_entity(&entity, installed)?;
+        validate_entity(&entity, installed, now)?;
         let order = orders.shift_remove(&id).ok_or(InstallError::Identity)?;
         entries.push((order, entity));
     }
@@ -715,7 +897,11 @@ fn install_entities(
     }
     EntityStore::install(entries, ordering.next_insertion).map_err(|_| InstallError::Identity)
 }
-fn validate_entity(entity: &Entity, installed: &InstalledWorld) -> Result<(), InstallError> {
+fn validate_entity(
+    entity: &Entity,
+    installed: &PhysicalDefinitions<'_>,
+    now: f64,
+) -> Result<(), InstallError> {
     if entity.hearth.is_some()
         || entity.practice_target.is_some()
         || entity.threat.is_some()
@@ -725,12 +911,21 @@ fn validate_entity(entity: &Entity, installed: &InstalledWorld) -> Result<(), In
         || entity.container.is_some()
         || entity.declared_owner.is_some()
         || entity.retirement.is_some()
+        || entity.resource.is_some()
+        || entity.replenisher.is_some()
+        || entity.heat.is_some()
+        || entity.remains.is_some()
         || entity
             .mechanism_fields
             .as_ref()
             .is_some_and(|f| !f.is_empty())
         || entity.spatial.flight.is_some()
         || entity.spatial.local_pose.is_some()
+        || entity.status_effects.as_ref().is_some_and(|statuses| {
+            statuses
+                .values()
+                .any(|status| status.contribution.is_some())
+        })
     {
         return Err(InstallError::CurrentFormat);
     }
@@ -747,11 +942,11 @@ fn validate_entity(entity: &Entity, installed: &InstalledWorld) -> Result<(), In
         {
             return Err(InstallError::CurrentFormat);
         }
-        if actor
-            .action
-            .as_ref()
-            .is_some_and(|a| !matches!(a.kind.as_str(), "move" | "status-effect"))
-        {
+        if actor.action.as_ref().is_some_and(|a| {
+            a.has_unconverted_fields()
+                || a.target_life.is_some()
+                || !matches!(a.kind.as_str(), "move" | "status-effect")
+        }) {
             return Err(InstallError::CurrentFormat);
         }
         if !actor.health.is_finite()
@@ -763,7 +958,7 @@ fn validate_entity(entity: &Entity, installed: &InstalledWorld) -> Result<(), In
         {
             return Err(InstallError::CurrentFormat);
         }
-        for id in actor.senses.as_deref().unwrap_or(&installed.default_senses) {
+        for id in actor.senses.as_deref().unwrap_or(installed.default_senses) {
             if !installed.senses.contains_key(id) {
                 return Err(InstallError::DefinitionBody);
             }
@@ -773,14 +968,25 @@ fn validate_entity(entity: &Entity, installed: &InstalledWorld) -> Result<(), In
         if animal.foraging.is_some() {
             return Err(InstallError::CurrentFormat);
         }
+        let key = crate::native_response::profile_key(&animal.profile)
+            .map_err(|_| InstallError::DefinitionPin)?;
         let profile = installed
             .response_profiles
-            .get(&animal.profile.id)
+            .get(&key)
             .ok_or(InstallError::DefinitionPin)?;
         if profile.pin() != &animal.profile {
             return Err(InstallError::DefinitionPin);
         }
     }
+    crate::native_response::validate_native_response(
+        entity,
+        installed.response_profiles,
+        now,
+        installed.maximum_candidates,
+        installed.maximum_path_points,
+        installed.epsilon,
+    )
+    .map_err(|_| InstallError::CurrentFormat)?;
     let body = entity.body_profile();
     if ![
         body.radius,
@@ -830,7 +1036,7 @@ fn take_window(
         false,
         plain,
     )?;
-    // byEntity values are arrays of IDs, so decode them at their actual owner.
+    // byEntity values bind attribute IDs to their actual retained episodes.
     let is_present = child_present(&value, "byEntity", false)?;
     let collection = super::rows::take_collection(
         import,
@@ -851,7 +1057,7 @@ fn take_window(
         if !child.extra.is_empty() {
             return Err(InstallError::CurrentFormat);
         }
-        let ids: Vec<String> =
+        let ids: IndexMap<String, String> =
             serde_json::from_str(&child.payload).map_err(|_| InstallError::CurrentFormat)?;
         subjects.insert(
             child.slot,

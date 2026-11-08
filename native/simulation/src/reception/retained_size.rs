@@ -12,11 +12,7 @@ use crate::state::{Point, SurfacePoint};
 use crate::values::{AttributeValue, DefinitionPin};
 
 macro_rules! fixed { ($($ty:ty),* $(,)?)=>{$(impl HeapBytes for $ty { fn heap_bytes(&self)->Option<usize>{Some(0)} })*}; }
-fixed!(
-    FacetRole,
-    Point,
-    crate::worlds::base_recognition::RecognitionInterval
-);
+fixed!(FacetRole, Point);
 fixed!(
     EvidenceFamily,
     SurfaceEdge,
@@ -680,8 +676,8 @@ impl HeapBytes for ReceivedValueFragment {
             Self::BodyPose(value) => value.heap_bytes(),
             Self::Header(value) => value.heap_bytes(),
             Self::Frame(value) => value.heap_bytes(),
-            // Personal accounts never appear in a sensory original's selected closure.
-            Self::PersonalAccount(_) | Self::ActionResult(_) => None,
+            Self::PersonalAccount(value) => value.heap_bytes(),
+            Self::ActionResult(value) => value.heap_bytes(),
         }
     }
 }

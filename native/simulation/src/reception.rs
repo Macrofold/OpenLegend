@@ -28,6 +28,8 @@ mod sensors;
 pub use sensors::*;
 mod sound;
 pub use sound::*;
+mod audience;
+pub(crate) use audience::*;
 mod event;
 pub(crate) use event::*;
 mod capture;
@@ -41,6 +43,9 @@ mod sensory;
 pub use sensory::*;
 mod episodes;
 pub(crate) use episodes::*;
+mod validate_state;
+mod validation;
+pub(crate) use validation::*;
 mod import;
 pub(crate) use import::{ReceptionRoots, read_reception_rows};
 mod storage;
@@ -1655,6 +1660,9 @@ impl CurrentGroupTimes {
         Self(values)
     }
 
+    pub(crate) fn is_canonically_packed(&self) -> bool {
+        self.0.last().is_some_and(Option::is_some)
+    }
     pub fn expanded(&self) -> CurrentFacetTimes {
         // The private representation's constructor/deserializer establishes the
         // first time once; expansion is a pure trusted internal read.
@@ -1747,7 +1755,7 @@ impl PerceivedSound {
                     .episode_id
                     .as_ref()
                     .is_some_and(|id| !is_safe_record_id(id))
-                || source.description.name.trim().is_empty()
+                || crate::encoding::js_trim(&source.description.name).is_empty()
                 || !matches!(
                     source.description.name_form.as_deref(),
                     Some("count" | "mass" | "plural")
@@ -2143,4 +2151,70 @@ pub struct ObservedBody {
     pub heading: f64,
     #[serde(deserialize_with = "deserialize_nullable")]
     pub support_surface_id: Option<String>,
+}
+
+impl SenseDefinition {
+    /// Exact current trusted detector-family domain. These are installation
+    /// constraints from world-modules.ts, not the bundled world's chosen rates.
+    pub(crate) fn validate(&self) -> bool {
+        let namespace = |id: &str| {
+            let part = |part: &str, maximum: usize| {
+                !part.is_empty()
+                    && part.len() <= maximum
+                    && part.as_bytes()[0].is_ascii_lowercase()
+                    && part.bytes().skip(1).all(|byte| {
+                        byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-'
+                    })
+            };
+            id.split_once(':')
+                .is_some_and(|(owner, name)| part(owner, 40) && part(name, 60))
+        };
+        if !namespace(self.id()) || self.version() != 1 {
+            return false;
+        }
+        match self {
+            Self::VisionGeometry {
+                routine_timing,
+                radius,
+                sample_seconds,
+                detail_sample_seconds,
+                field_of_view_radians,
+                ..
+            } => {
+                radius.is_finite()
+                    && *radius > 0.0
+                    && *radius <= 32.0
+                    && (*routine_timing != SightTiming::Cadence || sample_seconds.is_some())
+                    && sample_seconds.is_none_or(|seconds| seconds.is_finite() && seconds > 0.0)
+                    && detail_sample_seconds.is_none_or(|seconds| {
+                        seconds.is_finite()
+                            && seconds > 0.0
+                            && sample_seconds.is_some_and(|broad| seconds <= broad)
+                    })
+                    && field_of_view_radians.is_none_or(|radians| {
+                        radians.is_finite()
+                            && radians > 0.0
+                            && radians <= 2.0 * std::f64::consts::PI
+                    })
+            }
+            Self::BodyContact {
+                radius,
+                awareness_timing,
+                sample_seconds,
+                ..
+            } => {
+                radius.is_finite()
+                    && *radius == 0.0
+                    && (*awareness_timing != ContactTiming::Sampled
+                        || sample_seconds
+                            .is_some_and(|seconds| seconds.is_finite() && seconds > 0.0))
+            }
+            Self::HearingDb {
+                hearing_floor_db_spl,
+                ..
+            } => {
+                hearing_floor_db_spl.is_finite() && (-120.0..=200.0).contains(hearing_floor_db_spl)
+            }
+        }
+    }
 }

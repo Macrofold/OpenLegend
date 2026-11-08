@@ -7,7 +7,6 @@ use super::{EventScalar, ObserverLife, ReceivedReference, ReferenceRole};
 use crate::events::{EmissionText, EventScope, WorldEvent};
 use crate::narration::{
     GrammaticalPerson, NameArticle, Narration, NarrationPart, NativeText, PersonRole, name_phrase,
-    render_narration_parts,
 };
 use crate::state::{EntityStore, Named, Placement};
 use crate::worlds::InstalledEventDisclosure;
@@ -272,18 +271,15 @@ impl EventObservationSelection<'_> {
     /// cannot repair the cut using an authored canonical name or later lookup.
     pub(crate) fn materialize(
         self,
-        names: &IndexMap<String, Named>,
+        names: &crate::worlds::CapturedNames,
     ) -> Result<PermittedEventObservation, SensorError> {
-        let render = |narration: &Narration| -> Result<String, SensorError> {
-            if narration_references(Some(narration)).any(|id| !names.contains_key(id)) {
-                return Err(SensorError::PhysicalPosition);
-            }
-            Ok(render_narration_parts(
-                narration,
-                names,
-                Some(&self.observer.actor_id),
-                GrammaticalPerson::First,
-            ))
+        if names.observer() != &self.observer {
+            return Err(SensorError::Capability);
+        }
+        let render = |narration: &Narration| {
+            names
+                .render_narration(narration, GrammaticalPerson::First)
+                .map_err(|_| SensorError::Capability)
         };
         let label = |id: &str, captured: bool| -> Result<String, SensorError> {
             if captured
@@ -325,6 +321,7 @@ impl EventObservationSelection<'_> {
             {
                 EmissionText::Literal(text) => NativeText::Literal(text),
                 EmissionText::Narration(narration) => NativeText::Literal(render(&narration)?),
+                EmissionText::Captured(text) => NativeText::Captured(text),
             }
         };
         let references = self

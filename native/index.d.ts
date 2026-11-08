@@ -131,7 +131,7 @@ export interface NativeGeometryAnswers {
   surfaceLines: Array<NativeSurfaceLine | undefined | null>;
   sightSweeps: Array<NativeSightSweep>;
   sound: Array<number>;
-  navigation: Array<NativeNavigationResult>;
+  navigation: Array<NativeNavigationAnswer>;
   routes: Array<NativeRoutePlan>;
   features: Array<NativePhysicalFeatureAnswer>;
   featureIds: Array<NativePhysicalFeature | undefined | null>;
@@ -167,6 +167,11 @@ export interface NativeGeometryQueries {
 }
 
 export declare function nativeHostStatus(): HostStatus | null;
+
+export interface NativeNavigationAnswer {
+  result: NativeNavigationResult;
+  problem?: string;
+}
 
 export interface NativeNavigationRequest {
   wait?: string;

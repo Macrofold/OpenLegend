@@ -1,7 +1,7 @@
 import { supportsCommitmentCompletion } from './commitments.js';
 import { invalidateAttentionPreparation } from './attention.js';
 import { currentFacetGet, currentFacetGrant, receivedTrackKey } from './perception-current.js';
-import { validateCartography } from './cartography.js';
+import { validateMapMarkers, validateMapArtwork } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
 import { validLethalPermission } from './combat-consent.js';
@@ -1240,39 +1240,11 @@ export function advanceReservoirs(
       );
   }
 }
-export function validateWorldModules(world: WorldState): void {
-  validateSensoryContinuation(world);
-  if (world.socialOfferPolicy !== undefined) validateSocialOfferPolicy(world.socialOfferPolicy);
-  if (Object.hasOwn(world, 'conversations'))
-    throw new Error(
-      'Current worlds contain personal speech evidence, not ordinary social membership records.',
-    );
-  if (world.pendingNativeIntegration !== undefined) {
-    // Validate the existing anchors before any pending operation is read, then the
-    // exact continuation and its current view. Neither validation installs a twin
-    // world or changes the candidate that the save owner actually persists.
-    const anchors = { ...world };
-    delete anchors.pendingNativeIntegration;
-    validateWorldModules(anchors);
-    validateNativeValueWindow(world);
-    validateWorldModules(materializeNativeValues(world));
-    return;
-  }
-  validateEntityCollection(world.entities);
-  validateOrderedRecord(
-    world.commandReceipts,
-    (entry) =>
-      hasRecordFields(entry, ['digest', 'outcome']) &&
-      typeof entry.digest === 'string' &&
-      !!entry.outcome &&
-      typeof entry.outcome === 'object' &&
-      Object.hasOwn(entry.outcome, 'ok') &&
-      typeof (entry.outcome as { ok: unknown }).ok === 'boolean' &&
-      Object.hasOwn(entry.outcome, 'code') &&
-      typeof (entry.outcome as { code: unknown }).code === 'string' &&
-      Object.hasOwn(entry.outcome, 'message') &&
-      typeof (entry.outcome as { message: unknown }).message === 'string',
-  );
+/** Authored presentation is immutable content, independently checked before a
+ * native installation. Saved map markers retain their separate live owner. */
+export function validateWorldPresentation(
+  world: Pick<WorldState, 'presentation' | 'statusEffectPolicy'>,
+): void {
   if (
     world.presentation !== undefined &&
     (!hasRecordFields(
@@ -1309,7 +1281,7 @@ export function validateWorldModules(world: WorldState): void {
           ))))
   )
     throw new Error('Invalid authored clock wording.');
-  validateCartography(world);
+  validateMapArtwork(world);
   validatePortraitArt(world);
   validateItemArt(world);
   const daylight = world.presentation?.daylight;
@@ -1328,6 +1300,43 @@ export function validateWorldModules(world: WorldState): void {
     throw new Error('Invalid authored daylight presentation.');
   if (world.presentation?.crafting !== undefined)
     validateCraftCatalogue(world.presentation.crafting);
+}
+
+export function validateWorldModules(world: WorldState): void {
+  validateSensoryContinuation(world);
+  if (world.socialOfferPolicy !== undefined) validateSocialOfferPolicy(world.socialOfferPolicy);
+  if (Object.hasOwn(world, 'conversations'))
+    throw new Error(
+      'Current worlds contain personal speech evidence, not ordinary social membership records.',
+    );
+  if (world.pendingNativeIntegration !== undefined) {
+    // Validate the existing anchors before any pending operation is read, then the
+    // exact continuation and its current view. Neither validation installs a twin
+    // world or changes the candidate that the save owner actually persists.
+    const anchors = { ...world };
+    delete anchors.pendingNativeIntegration;
+    validateWorldModules(anchors);
+    validateNativeValueWindow(world);
+    validateWorldModules(materializeNativeValues(world));
+    return;
+  }
+  validateEntityCollection(world.entities);
+  validateOrderedRecord(
+    world.commandReceipts,
+    (entry) =>
+      hasRecordFields(entry, ['digest', 'outcome']) &&
+      typeof entry.digest === 'string' &&
+      !!entry.outcome &&
+      typeof entry.outcome === 'object' &&
+      Object.hasOwn(entry.outcome, 'ok') &&
+      typeof (entry.outcome as { ok: unknown }).ok === 'boolean' &&
+      Object.hasOwn(entry.outcome, 'code') &&
+      typeof (entry.outcome as { code: unknown }).code === 'string' &&
+      Object.hasOwn(entry.outcome, 'message') &&
+      typeof (entry.outcome as { message: unknown }).message === 'string',
+  );
+  validateWorldPresentation(world);
+  validateMapMarkers(world);
   const originalObservations = new Map<string, string>();
   const validatePersonalOriginals = (
     evidence: {

@@ -13,6 +13,8 @@ mod storage;
 pub use storage::*;
 mod validation;
 pub use validation::attention_subject_key;
+mod recording;
+pub(crate) use recording::*;
 
 pub const SELF_RELATION_KEY: &str = "@self";
 

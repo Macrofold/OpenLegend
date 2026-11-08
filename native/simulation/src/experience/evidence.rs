@@ -4,14 +4,18 @@
 
 use super::{ActorPrivacy, ExperienceError, ExperienceState, personal_fact_alias};
 use crate::events::OccurrenceHistory;
+use crate::host::retained_size::map_storage;
+use crate::host::{ByteBudget, ByteReservation};
 use crate::received::TemporalValueMeaning;
 use crate::reception::{
     CapturedCurrentFacet, EvidenceSource, ObservationContribution, ObservationFactKey,
-    ObservationOrigin, ObserverLife, ReceivedFacetProof, SensoryFacet,
+    ObservationOrigin, ObserverLife, OwnedCurrentFacet, OwnedObservation, ReceivedFacetProof,
+    SensoryFacet,
 };
 use crate::state::EntityStore;
 use indexmap::IndexMap;
 use serde::Serialize;
+use std::mem::size_of;
 use std::sync::Arc;
 
 #[derive(Debug, Serialize)]
@@ -27,10 +31,11 @@ pub struct EvidenceCut {
 
 /// The native owner also binds the saved-world replacement generation. This
 /// operational fence is kept outside the existing personally permitted DTO.
-#[derive(Debug)]
 pub struct CapturedEvidenceCut {
     generation: String,
     cut: EvidenceCut,
+    _owned: Vec<ByteReservation>,
+    _skeleton: ByteReservation,
 }
 
 impl CapturedEvidenceCut {
@@ -48,48 +53,132 @@ pub fn capture_evidence_cut(
     occurrences: &OccurrenceHistory,
     observer_id: &str,
     at: f64,
-    acquired: &[Arc<ObservationContribution>],
-    current: &[Arc<CapturedCurrentFacet>],
+    acquired: Vec<OwnedObservation>,
+    current: Vec<OwnedCurrentFacet>,
+    budget: &ByteBudget,
 ) -> Result<CapturedEvidenceCut, ExperienceError> {
     let actor = entities
         .get(observer_id)
         .and_then(|entity| entity.actor.as_ref())
         .ok_or(ExperienceError::ForeignOwner)?;
+    let physical_life = actor.physical_life.unwrap_or(0);
+    let slots = acquired
+        .len()
+        .checked_add(current.len())
+        .ok_or(ExperienceError::Capacity)?;
+    let mut bytes = size_of::<CapturedEvidenceCut>()
+        .checked_add(experience.generation().len())
+        .and_then(|n| n.checked_add(observer_id.len()))
+        .and_then(|n| {
+            n.checked_add(map_storage::<
+                String,
+                (Arc<ObservationContribution>, ByteReservation),
+            >(acquired.len())?)
+        })
+        .and_then(|n| n.checked_add(slots.checked_mul(size_of::<ByteReservation>())?))
+        .and_then(|n| {
+            n.checked_add(
+                acquired
+                    .len()
+                    .checked_mul(size_of::<Arc<ObservationContribution>>())?,
+            )
+        })
+        .and_then(|n| {
+            n.checked_add(
+                current
+                    .len()
+                    .checked_mul(size_of::<Arc<CapturedCurrentFacet>>())?,
+            )
+        })
+        .ok_or(ExperienceError::Capacity)?;
+    for owned in &acquired {
+        bytes = bytes
+            .checked_add(owned.observation().id.len())
+            .and_then(|n| n.checked_add(21))
+            .ok_or(ExperienceError::Capacity)?;
+    }
+    // Retained payload guards move with their Arc. This extra guard admits only
+    // the cut's own selection keys/vectors before allocating them.
+    let mut skeleton = budget
+        .reserve(bytes)
+        .map_err(|_| ExperienceError::Capacity)?;
     let observer = ObserverLife {
         actor_id: observer_id.to_owned(),
-        physical_life: actor.physical_life.unwrap_or(0),
+        physical_life,
     };
-    let mut unique = IndexMap::new();
-    for contribution in acquired {
+    let mut unique = IndexMap::with_capacity(acquired.len());
+    for owned in acquired {
+        let (contribution, reservation) = owned.into_parts();
         if contribution.observer == observer {
             unique.insert(
                 format!("{}:{}", contribution.id, contribution.revision),
-                Arc::clone(contribution),
+                (contribution, reservation),
             );
         }
     }
     let mut last_included_order = occurrences.last_hot_order();
-    for observation in unique.values() {
+    for (observation, _) in unique.values() {
         if let ObservationOrigin::Occurrence { order, .. } = observation.origin {
             last_included_order = last_included_order.max(order);
         }
     }
+    let mut observations = Vec::with_capacity(unique.len());
+    let mut current_facets = Vec::with_capacity(current.len());
+    let mut reservations = Vec::with_capacity(slots);
+    for (observation, reservation) in unique.into_values() {
+        observations.push(observation);
+        reservations.push(reservation);
+    }
+    for owned in current {
+        let (facet, reservation) = owned.into_parts();
+        if facet.observer == observer {
+            current_facets.push(facet);
+            reservations.push(reservation);
+        }
+    }
+    let generation = experience.generation().to_owned();
+    let retained = size_of::<CapturedEvidenceCut>()
+        .checked_add(generation.capacity())
+        .and_then(|n| n.checked_add(observer.actor_id.capacity()))
+        .and_then(|n| {
+            n.checked_add(
+                observations
+                    .capacity()
+                    .checked_mul(size_of::<Arc<ObservationContribution>>())?,
+            )
+        })
+        .and_then(|n| {
+            n.checked_add(
+                current_facets
+                    .capacity()
+                    .checked_mul(size_of::<Arc<CapturedCurrentFacet>>())?,
+            )
+        })
+        .and_then(|n| {
+            n.checked_add(
+                reservations
+                    .capacity()
+                    .checked_mul(size_of::<ByteReservation>())?,
+            )
+        })
+        .ok_or(ExperienceError::Capacity)?;
+    skeleton
+        .resize(retained)
+        .map_err(|_| ExperienceError::Capacity)?;
     Ok(CapturedEvidenceCut {
-        generation: experience.generation().to_owned(),
+        generation,
         cut: EvidenceCut {
-            observer: observer.clone(),
+            observer,
             privacy_revision: experience
                 .actor(observer_id)
                 .map_or(0, |actor| actor.privacy.revision()),
             at,
             last_included_order,
-            acquired: unique.into_values().collect(),
-            current: current
-                .iter()
-                .filter(|fact| fact.observer == observer)
-                .cloned()
-                .collect(),
+            acquired: observations,
+            current: current_facets,
         },
+        _owned: reservations,
+        _skeleton: skeleton,
     })
 }
 

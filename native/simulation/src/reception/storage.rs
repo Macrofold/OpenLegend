@@ -159,3 +159,70 @@ pub fn decode_current_contact_storage(
         sight: times.sight,
     })
 }
+
+pub fn received_facet_value_references(
+    value: &super::ReceivedFacetValue,
+) -> impl Iterator<Item = &str> {
+    std::iter::once(&value.reference)
+        .chain(match &value.reception {
+            Some(super::FacetReception::Body { pose_ref }) => Some(pose_ref),
+            Some(super::FacetReception::Location { frame_ref }) => Some(frame_ref),
+            None => None,
+        })
+        .filter_map(|reference| match reference {
+            crate::received::ReceivedValueReference::Shared(id) => Some(id.as_str()),
+            _ => None,
+        })
+}
+fn shared(reference: &crate::received::ReceivedValueReference) -> Option<&str> {
+    match reference {
+        crate::received::ReceivedValueReference::Shared(id) => Some(id.as_str()),
+        _ => None,
+    }
+}
+fn sorted_unique(mut references: Vec<&str>) -> Vec<&str> {
+    references.sort_by(|a, b| crate::encoding::js_string_cmp(a, b));
+    references.dedup();
+    references
+}
+/// The same complete shared-value closure as the existing SQL reference owner.
+pub fn received_contact_value_references(contact: &CurrentContact) -> Vec<&str> {
+    let mut references = Vec::new();
+    for source in contact.content.originals.values() {
+        references.extend(super::received_observation_value_references(source));
+    }
+    for group in &contact.content.groups {
+        for field in group.received.fields.values() {
+            references.extend(received_facet_value_references(&field.value));
+        }
+        for partition in &group.metadata {
+            references.extend(partition.frame_ref.as_ref().and_then(shared));
+        }
+    }
+    for stamp in contact.sight.iter() {
+        references.extend(shared(&stamp.frame_ref));
+        references.extend(
+            stamp
+                .detail
+                .as_ref()
+                .and_then(|stamp| shared(&stamp.frame_ref)),
+        );
+    }
+    sorted_unique(references)
+}
+pub fn received_owner_value_references(owner: &super::PerceptionEvidenceOwner) -> Vec<&str> {
+    let mut references = Vec::new();
+    if let Some(phase) = &owner.visual_confirmation {
+        references.extend(shared(&phase.frame_ref));
+        references.extend(
+            phase
+                .complete
+                .as_ref()
+                .and_then(|stamp| shared(&stamp.frame_ref)),
+        );
+    }
+    for source in &owner.received {
+        references.extend(super::received_observation_value_references(source));
+    }
+    sorted_unique(references)
+}

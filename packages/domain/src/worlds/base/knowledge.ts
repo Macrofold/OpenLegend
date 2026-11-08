@@ -1077,6 +1077,15 @@ export function rememberSubject(
   });
 }
 
+/** Current personal naming vocabulary shared with the resident world law. */
+export const BASE_PERSONAL_NAME_RULES = {
+  id: 'base:personal-names',
+  version: 1,
+  humanSpecies: 'human',
+  personNoun: 'person',
+  unidentified: { name: 'unidentified subject', nameForm: 'count' },
+} as const;
+
 /** Snapshot the selected world's outward category only when the body is measured.
  * This does not identify an individual or inherit a hidden authored actor name. */
 export function outwardBodyName(_world: WorldState, entity: Entity): Named {
@@ -1087,7 +1096,10 @@ export function outwardBodyName(_world: WorldState, entity: Entity): Named {
       indefiniteArticle: entity.indefiniteArticle,
     };
   const species = entity.actor.species;
-  const noun = !species || species === 'human' ? 'person' : species;
+  const noun =
+    !species || species === BASE_PERSONAL_NAME_RULES.humanSpecies
+      ? BASE_PERSONAL_NAME_RULES.personNoun
+      : species;
   return { name: noun, nameForm: 'count', indefiniteArticle: undefined };
 }
 
@@ -1108,8 +1120,7 @@ export function observerName(
   if (entity && accessiblePossession(world, observerId, subjectId))
     return outwardBodyName(world, entity);
   return {
-    name: 'unidentified subject',
-    nameForm: 'count',
+    ...BASE_PERSONAL_NAME_RULES.unidentified,
     indefiniteArticle: undefined,
   };
 }

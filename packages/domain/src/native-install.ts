@@ -5,8 +5,50 @@ import { NATIVE_RESPONSE_LIMITS } from './native-response.js';
 import { immutableDataSnapshot } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { WORK_LIMITS } from './work-budget.js';
+import { validateBodyPolicy } from './body-policy.js';
+import { nativeResponseProfileKey, validateNativeResponseProfile } from './native-response.js';
+import { validateStatusEffectDefinitions } from './status-effect-validation.js';
+import {
+  definitionPin,
+  validateModuleManifest,
+  validateWorldPresentation,
+} from './world-modules.js';
+import type { WorldState } from './types.js';
+import { PERSONAL_EVIDENCE_PREPARATION } from './experience-source.js';
 
 export { selectedNativeLawDefinitions } from './world-composition.js';
+export { navigationResultProblem } from './navigation-result.js';
+
+/** Immutable definitions retain their existing validation owner. Installation
+ * supplies these finite records once; runtime reads and mutations never call
+ * back through TypeScript or reconstruct a WorldState to run this validation.
+ */
+export function validateNativeDefinitions(
+  selected: Pick<
+    WorldState,
+    | 'moduleManifest'
+    | 'statusEffectPolicy'
+    | 'nativeResponseProfiles'
+    | 'itemDefinitions'
+    | 'presentation'
+  >,
+): void {
+  const manifest = selected.moduleManifest;
+  validateModuleManifest(manifest);
+  validateStatusEffectDefinitions(selected, selected.statusEffectPolicy);
+  validateWorldPresentation(selected);
+  validateBodyPolicy(
+    manifest.bodyPolicy,
+    manifest.definitions,
+    new Set(selected.statusEffectPolicy.definitions.map(({ id }) => id)),
+    selected.itemDefinitions,
+  );
+  for (const [key, profile] of Object.entries(selected.nativeResponseProfiles ?? {})) {
+    validateNativeResponseProfile(profile);
+    if (key !== nativeResponseProfileKey(definitionPin(profile)))
+      throw new Error('Invalid installed native response definition identity.');
+  }
+}
 
 /** Native execution installs the same operational limits as the source runtime.
  * Keep their semantic owners above; this is a detached installation descriptor,
@@ -21,4 +63,5 @@ export const nativeSetupSettings = immutableDataSnapshot({
   activity: ACTIVITY_LIMITS,
   activityDisplayBytes: ACTIVITY_DISPLAY_BYTES,
   nativeResponse: NATIVE_RESPONSE_LIMITS,
+  personalEvidencePreparation: PERSONAL_EVIDENCE_PREPARATION,
 });

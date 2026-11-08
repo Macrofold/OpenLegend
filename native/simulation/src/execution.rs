@@ -2,13 +2,19 @@
 //! It records changed subrecords, never a world/actor clone. Receiver/history
 //! journals must join this same candidate before an actual Ready path exists.
 
+use crate::activity::{ActivityCheckpoint, ActivityJournal};
+use crate::commands::{CommandCheckpoint, CommandJournal};
 use crate::events::{
     AcquiredOccurrence, CompletedOccurrence, EventEmissionIntent, OccurrenceCheckpoint,
 };
+use crate::experience::{ExperienceCheckpoint, ExperienceJournal};
 use crate::host::{ByteBudget, ByteReservation, CapacityError};
 use crate::identity::{IdentityExhausted, IdentityState, IssuedIdentity, MAX_SAFE_INTEGER};
 use crate::received::{ReceivedValuesCheckpoint, TemporalCheckpoint};
-use crate::reception::{OriginalCheckpoint, OriginalJournal, SensoryCheckpoint, SensoryJournal};
+use crate::reception::{
+    EpisodeCheckpoint, EpisodeJournal, OriginalCheckpoint, OriginalJournal, SensoryCheckpoint,
+    SensoryJournal,
+};
 use crate::simulation::{PhysicalState, SimulationState};
 use crate::state::{Action, EntityHandle, NativeInterval, Placement, Point};
 use crate::status::AttributeDefinition;
@@ -22,6 +28,8 @@ use std::collections::BTreeSet;
 use std::mem::size_of;
 
 mod semantic;
+mod status;
+pub(crate) use status::{PendingStatusEnd, StatusEnd};
 
 #[derive(Debug)]
 pub(crate) enum ExecutionError {
@@ -39,6 +47,7 @@ pub(crate) enum ExecutionError {
     Values(ValueError),
     Work(WorkError),
     Received(crate::received::ReceivedError),
+    Activity(crate::activity::ActivityError),
     OwnerRollback,
 }
 
@@ -68,6 +77,32 @@ pub(crate) struct StagedOccurrence {
     pub sequence: u64,
     pub at: f64,
 }
+pub(crate) struct CompletedAction {
+    actor_id: String,
+    action_id: String,
+}
+impl CompletedAction {
+    pub(crate) fn actor_id(&self) -> &str {
+        &self.actor_id
+    }
+    pub(crate) fn action_id(&self) -> &str {
+        &self.action_id
+    }
+}
+pub(crate) struct PendingActionFinish {
+    actor_id: String,
+    action_id: String,
+    personal: crate::activity::PendingActivityResult,
+}
+impl PendingActionFinish {
+    pub(crate) fn personal(&self) -> &crate::activity::PendingActivityResult {
+        &self.personal
+    }
+}
+pub(crate) enum ActionFinish {
+    Complete(CompletedAction),
+    Personal(PendingActionFinish),
+}
 
 struct CandidateFrame {
     physical: PhysicalCheckpoint,
@@ -76,6 +111,10 @@ struct CandidateFrame {
     temporal: TemporalCheckpoint,
     originals: OriginalCheckpoint,
     sensory: SensoryCheckpoint,
+    episodes: EpisodeCheckpoint,
+    activity: ActivityCheckpoint,
+    experience: ExperienceCheckpoint,
+    commands: CommandCheckpoint,
     sensory_cursor: PhysicalChangeCursor,
     // This is only the finite synchronous emitter call stack, not event bodies,
     // physical state or accumulated history. Saved work limits bound its depth.
@@ -93,11 +132,19 @@ pub(crate) struct CandidateJournal {
     pub meters: crate::work::WorkMeters,
     pub originals: OriginalJournal,
     pub sensory: SensoryJournal,
+    pub episodes: EpisodeJournal,
+    pub activity: ActivityJournal,
+    pub experience: ExperienceJournal,
+    pub commands: CommandJournal,
     root_received: Option<ReceivedValuesCheckpoint>,
     root_occurrences: OccurrenceCheckpoint,
     root_temporal: TemporalCheckpoint,
     root_originals: OriginalCheckpoint,
     root_sensory: SensoryCheckpoint,
+    root_episodes: EpisodeCheckpoint,
+    root_activity: ActivityCheckpoint,
+    root_experience: ExperienceCheckpoint,
+    root_commands: CommandCheckpoint,
     sensory_cursor: PhysicalChangeCursor,
     frames: Vec<CandidateFrame>,
     pending: Vec<PendingOccurrence>,
@@ -115,12 +162,24 @@ impl CandidateJournal {
         let root_originals = originals.checkpoint();
         let sensory = SensoryJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
         let root_sensory = sensory.checkpoint(&state.reception);
+        let episodes = EpisodeJournal::new(budget).map_err(ExecutionError::Received)?;
+        let root_episodes = episodes.checkpoint(&state.reception);
+        let activity = ActivityJournal::new(budget).map_err(ExecutionError::Activity)?;
+        let root_activity = activity.checkpoint();
+        let experience = ExperienceJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
+        let root_experience = experience.checkpoint();
+        let commands = CommandJournal::new(budget)?;
+        let root_commands = commands.checkpoint();
         let sensory_cursor = physical.change_cursor();
         Ok(Self {
             physical,
             meters: crate::work::WorkMeters::new(group)?,
             originals,
             sensory,
+            episodes,
+            activity,
+            experience,
+            commands,
             root_received: state
                 .reception
                 .received_values
@@ -130,6 +189,10 @@ impl CandidateJournal {
             root_temporal: state.temporal.checkpoint(),
             root_originals,
             root_sensory,
+            root_episodes,
+            root_activity,
+            root_experience,
+            root_commands,
             sensory_cursor,
             frames: Vec::new(),
             pending: Vec::new(),
@@ -166,6 +229,10 @@ impl CandidateJournal {
             temporal: state.temporal.checkpoint(),
             originals: self.originals.checkpoint(),
             sensory: self.sensory.checkpoint(&state.reception),
+            episodes: self.episodes.checkpoint(&state.reception),
+            activity: self.activity.checkpoint(),
+            experience: self.experience.checkpoint(),
+            commands: self.commands.checkpoint(),
             sensory_cursor: self.sensory_cursor,
             pending: self.pending.clone(),
         });
@@ -187,6 +254,17 @@ impl CandidateJournal {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.activity
+            .rollback_to(&mut state.activity, frame.activity)
+            .map_err(ExecutionError::Activity)?;
+        self.commands
+            .rollback_to(&mut state.commands, frame.commands)?;
+        self.experience
+            .rollback_to(&mut state.experience, frame.experience)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.episodes
+            .rollback_to(&mut state.reception, frame.episodes)
+            .map_err(ExecutionError::Received)?;
         state
             .occurrences
             .rollback_to(frame.occurrences)
@@ -219,6 +297,17 @@ impl CandidateJournal {
         &mut self,
         state: &mut SimulationState,
     ) -> Result<(), ExecutionError> {
+        self.activity
+            .rollback_to(&mut state.activity, self.root_activity)
+            .map_err(ExecutionError::Activity)?;
+        self.commands
+            .rollback_to(&mut state.commands, self.root_commands)?;
+        self.experience
+            .rollback_to(&mut state.experience, self.root_experience)
+            .map_err(|_| ExecutionError::OwnerRollback)?;
+        self.episodes
+            .rollback_to(&mut state.reception, self.root_episodes)
+            .map_err(ExecutionError::Received)?;
         state
             .occurrences
             .rollback_to(self.root_occurrences)
@@ -254,6 +343,88 @@ pub(crate) struct CoreMutation<'a> {
     pub journal: &'a mut CandidateJournal,
 }
 impl CoreMutation<'_> {
+    /// Source finishPlanAction duties precede its optional plan-step branch.
+    /// An absent plan never skips semantic closure, personal recording or work.
+    pub(crate) fn begin_finish_action(
+        &mut self,
+        actor_id: &str,
+        action_id: &str,
+        result: crate::commands::Outcome,
+    ) -> Result<ActionFinish, ExecutionError> {
+        let actor = self
+            .state
+            .physical
+            .entities
+            .get(actor_id)
+            .and_then(|e| e.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        if actor.agency.plan.is_some() || actor.agency.suspended.is_some() {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        self.journal
+            .physical
+            .reserve(actor_id.len() + action_id.len())?;
+        self.physical().finish_semantic_work(actor_id, action_id)?;
+        self.physical().behavior_changed(actor_id, false)?;
+        let pending = self
+            .journal
+            .activity
+            .prepare_end(
+                &mut self.state.activity,
+                actor_id,
+                action_id,
+                result,
+                self.state.physical.header.sim_time,
+            )
+            .map_err(ExecutionError::Activity)?;
+        if let Some(personal) = pending {
+            return Ok(ActionFinish::Personal(PendingActionFinish {
+                actor_id: actor_id.to_owned(),
+                action_id: action_id.to_owned(),
+                personal,
+            }));
+        }
+        self.physical().release_work(action_id)?;
+        Ok(ActionFinish::Complete(CompletedAction {
+            actor_id: actor_id.to_owned(),
+            action_id: action_id.to_owned(),
+        }))
+    }
+    pub(crate) fn complete_finish_action(
+        &mut self,
+        pending: PendingActionFinish,
+        acquired: &crate::experience::AcquiredActivityResult,
+    ) -> Result<CompletedAction, ExecutionError> {
+        self.complete_activity_result(pending.personal, acquired)?;
+        self.physical().release_work(&pending.action_id)?;
+        Ok(CompletedAction {
+            actor_id: pending.actor_id,
+            action_id: pending.action_id,
+        })
+    }
+    pub(crate) fn remove_observer_episodes(
+        &mut self,
+        observer: &str,
+    ) -> Result<(), ExecutionError> {
+        self.journal
+            .episodes
+            .remove_observer(&mut self.state.reception, observer)
+            .map(|_| ())
+            .map_err(ExecutionError::Received)
+    }
+    pub(crate) fn complete_activity_result(
+        &mut self,
+        pending: crate::activity::PendingActivityResult,
+        acquired: &crate::experience::AcquiredActivityResult,
+    ) -> Result<(), ExecutionError> {
+        let actor = acquired.actor_id();
+        let evidence = self
+            .journal
+            .activity
+            .complete_result(&mut self.state.activity, pending, acquired)
+            .map_err(ExecutionError::Activity)?;
+        self.physical().set_result_evidence(actor, evidence)
+    }
     pub(crate) fn physical(&mut self) -> PhysicalMutation<'_> {
         PhysicalMutation {
             state: &mut self.state.physical,
@@ -426,6 +597,9 @@ pub(crate) enum PhysicalChange {
         entity_id: String,
         outward_change: bool,
     },
+    Contribution {
+        entity_id: String,
+    },
     AnimalClock {
         entity_id: String,
     },
@@ -468,6 +642,8 @@ enum UndoKey {
     AcousticPattern(usize, u64, String),
     SemanticMeta(usize, u64),
     SemanticResolved(usize, u64),
+    ResultEvidence(usize, u64),
+    Status(usize, u64, String),
     Episode(String),
     Invocation(String),
 }
@@ -569,6 +745,16 @@ enum Undo {
     SemanticResolved {
         entity: EntityHandle,
         before: IndexMap<String, crate::state::ResolvedSemanticCause>,
+    },
+    ResultEvidence {
+        entity: EntityHandle,
+        before: Option<crate::activity::ResultEvidence>,
+    },
+    Status {
+        entity: EntityHandle,
+        key: String,
+        before: Option<(usize, StatusInstance)>,
+        root_present: bool,
     },
     Episode(EpisodeUndo),
     Work(WorkUndo),
@@ -707,6 +893,38 @@ impl PhysicalJournal {
                         .and_then(|e| e.actor.as_mut())
                         .ok_or(ExecutionError::Invariant)?
                         .health = before
+                }
+                Undo::ResultEvidence { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .agency
+                        .last_result_evidence = before;
+                }
+                Undo::Status {
+                    entity,
+                    key,
+                    before,
+                    root_present,
+                } => {
+                    let statuses = &mut state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .status_effects;
+                    let map = statuses.as_mut().ok_or(ExecutionError::Invariant)?;
+                    map.shift_remove(&key);
+                    if let Some((at, value)) = before {
+                        map.shift_insert(at, key, value);
+                    }
+                    if !root_present {
+                        if !map.is_empty() {
+                            return Err(ExecutionError::Invariant);
+                        }
+                        *statuses = None;
+                    }
                 }
                 Undo::Action {
                     entity,
@@ -868,6 +1086,184 @@ pub(crate) struct PhysicalMutation<'a> {
     pub journal: &'a mut PhysicalJournal,
 }
 impl PhysicalMutation<'_> {
+    pub(crate) fn settle_entity(&mut self, id: &str) -> Result<(), ExecutionError> {
+        let Some(bindings) = self
+            .state
+            .pending_values
+            .as_ref()
+            .and_then(|window| window.by_entity.get(id))
+        else {
+            return Ok(());
+        };
+        self.journal.reserve(
+            bindings.len() * size_of::<String>() * 2
+                + bindings.values().map(String::len).sum::<usize>(),
+        )?;
+        // Object.values takes a snapshot before the first materialization
+        // removes any binding. Preserve duplicates and source iteration order.
+        let episodes: Vec<String> = bindings.values().cloned().collect();
+        for episode in episodes {
+            self.settle_episode(&episode)?;
+        }
+        Ok(())
+    }
+    pub(crate) fn admit_status_work(
+        &mut self,
+        actor_id: &str,
+        episode: &str,
+        work: &crate::status::CompiledStatusWork,
+    ) -> Result<(), ExecutionError> {
+        self.journal.reserve(
+            actor_id.len()
+                + episode.len()
+                + work.pin.id.len() * 2
+                + work.pin.digest.len()
+                + size_of::<WorkRequest>(),
+        )?;
+        self.admit_work(work.request(actor_id, episode)?)
+    }
+    pub(crate) fn reserve_status_growth(&mut self, bytes: usize) -> Result<(), ExecutionError> {
+        self.journal.reserve(bytes)
+    }
+    pub(crate) fn replace_status(
+        &mut self,
+        id: &str,
+        status_id: &str,
+        status: StatusInstance,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        if status.contribution.is_some()
+            || entity
+                .status_effects
+                .as_ref()
+                .and_then(|s| s.get(status_id))
+                .is_some_and(|s| s.contribution.is_some())
+        {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        if let Some(episode) = entity
+            .status_effects
+            .as_ref()
+            .and_then(|s| s.get(status_id))
+            .map(|s| s.episode.as_str())
+        {
+            self.journal.reserve(episode.len())?;
+            let episode = episode.to_owned();
+            self.settle_episode(&episode)?;
+        }
+        let entity = self
+            .state
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        self.journal.reserve(status_id.len())?;
+        let key = UndoKey::Status(handle.slot, handle.generation, status_id.to_owned());
+        let first = self.journal.first(&key)?;
+        let capacity = entity.status_effects.as_ref().map_or(0, IndexMap::capacity);
+        let len = entity.status_effects.as_ref().map_or(0, IndexMap::len);
+        let growth = if len == capacity {
+            crate::host::retained_size::map_storage::<String, StatusInstance>(
+                capacity.saturating_add(1).saturating_mul(2),
+            )
+            .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        self.journal.reserve(
+            size_of::<Undo>() * 2
+                + size_of::<PhysicalChange>() * 2
+                + status_id.len() * 3
+                + id.len() * 2
+                + growth,
+        )?;
+        self.journal
+            .undo
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        self.journal.change(PhysicalChange::Contribution {
+            entity_id: id.to_owned(),
+        })?;
+        let target = self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        let root_present = target.status_effects.is_some();
+        let map = target.status_effects.get_or_insert_with(IndexMap::new);
+        let before = map
+            .shift_remove_full(status_id)
+            .map(|(at, _, value)| (at, value));
+        if let Some((at, _)) = &before {
+            map.shift_insert(*at, status_id.to_owned(), status);
+        } else {
+            map.insert(status_id.to_owned(), status);
+        }
+        if first {
+            self.journal.retain(
+                key,
+                Undo::Status {
+                    entity: handle,
+                    key: status_id.to_owned(),
+                    before,
+                    root_present,
+                },
+            )?;
+        }
+        Ok(())
+    }
+    pub(crate) fn set_result_evidence(
+        &mut self,
+        id: &str,
+        evidence: Option<crate::activity::ResultEvidence>,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        if self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|e| e.actor.as_ref())
+            .is_none()
+        {
+            return Err(ExecutionError::MissingActor);
+        }
+        let key = UndoKey::ResultEvidence(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        self.journal.reserve(size_of::<Undo>() * 2)?;
+        self.journal
+            .undo
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let actor = self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|e| e.actor.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        let before = std::mem::replace(&mut actor.agency.last_result_evidence, evidence);
+        if first {
+            self.journal.retain(
+                key,
+                Undo::ResultEvidence {
+                    entity: handle,
+                    before,
+                },
+            )?;
+        }
+        Ok(())
+    }
     pub(crate) fn draw(&mut self) -> f64 {
         self.state.identity.draw()
     }
@@ -1484,6 +1880,9 @@ impl PhysicalMutation<'_> {
         &mut self,
         mut cursor: crate::movement::MotionCursor,
     ) -> Result<bool, ExecutionError> {
+        if cursor.is_forecast() {
+            return Err(ExecutionError::Invariant);
+        }
         let result = cursor.result().ok_or(ExecutionError::Invariant)?;
         let entity = self
             .state

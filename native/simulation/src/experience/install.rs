@@ -3,7 +3,8 @@
 
 use super::{
     ActorPrivacy, EmptyChildOwner, ExperienceError, ExperienceHeader, ExperienceState,
-    PersonalEvidenceMeaning, PersonalHistory, PersonalSourceCollection, PersonalSourceKind,
+    PersonalEvidenceMeaning, PersonalHistory, PersonalOwnerMap, PersonalSourceCollection,
+    PersonalSourceKind,
 };
 use crate::activity::ActivityDisplayLimits;
 use crate::encoding::json_record;
@@ -144,6 +145,7 @@ pub(crate) struct PersonalInstallContext<'a> {
     /// Complete indexed directories at the captured database cut. Required for
     /// a partial cold page tail; resident bodies alone never imply completeness.
     pub cold_directories: Option<&'a IndexMap<String, Vec<ReceivedChargeDirectory>>>,
+    pub original_revisions: &'a mut crate::reception::OriginalRevisionRegistry,
 }
 
 pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning>(
@@ -167,7 +169,8 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         return Err(InstallError::CurrentFormat.into());
     }
     let mut actors: IndexMap<String, ActorSources> = IndexMap::new();
-    install_sources(
+    let mut owner_maps = IndexMap::new();
+    let memory_owners = install_sources(
         import,
         &mut actors,
         PersonalSourceKind::Memory,
@@ -177,7 +180,8 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         context.presence.memories,
         meaning,
     )?;
-    install_sources(
+    owner_maps.insert(PersonalSourceKind::Memory, memory_owners);
+    let awareness_owners = install_sources(
         import,
         &mut actors,
         PersonalSourceKind::Awareness,
@@ -187,7 +191,8 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         true,
         meaning,
     )?;
-    install_sources(
+    owner_maps.insert(PersonalSourceKind::Awareness, awareness_owners);
+    let summary_owners = install_sources(
         import,
         &mut actors,
         PersonalSourceKind::Summary,
@@ -197,6 +202,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         true,
         meaning,
     )?;
+    owner_maps.insert(PersonalSourceKind::Summary, summary_owners);
     install_forgotten(import, &mut actors, &experience_row.id)?;
     install_corrections(
         import,
@@ -224,6 +230,11 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
     )?;
     let mut histories = IndexMap::new();
     for (actor_id, source) in actors {
+        for collection in &source.collections {
+            for record in collection.records() {
+                record.validate_originals(context.original_revisions)?;
+            }
+        }
         let privacy = ActorPrivacy::install(
             source.forgotten,
             source.corrections,
@@ -242,7 +253,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         context.cold_directories,
         meaning,
     )?;
-    let experience = ExperienceState::install(generation, header, histories)?;
+    let experience = ExperienceState::install(generation, header, histories, owner_maps)?;
     let events = take_collection(
         import,
         "world_hot_events",
@@ -282,8 +293,9 @@ fn install_sources(
     field: &str,
     present: bool,
     meaning: &impl PersonalEvidenceMeaning,
-) -> Result<(), PersonalInstallError> {
+) -> Result<PersonalOwnerMap, PersonalInstallError> {
     let owners = take_collection(import, owner_table, parent, present, true)?;
+    let mut placements = IndexMap::new();
     for owner in owners.rows {
         validate_map_row(
             &owner,
@@ -301,13 +313,18 @@ fn install_sources(
             child.coverage,
             meaning,
         )?;
+        placements.insert(owner.slot.clone(), owner.position);
         actors
             .entry(owner.slot)
             .or_default()
             .collections
             .push(collection);
     }
-    Ok(())
+    Ok(PersonalOwnerMap::install(
+        kind,
+        owners.coverage,
+        placements,
+    )?)
 }
 
 fn install_forgotten(

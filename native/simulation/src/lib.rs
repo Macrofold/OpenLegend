@@ -6,6 +6,7 @@
 
 pub mod activity;
 pub mod attention;
+pub mod body;
 pub mod commands;
 pub mod encoding;
 pub mod events;
@@ -15,6 +16,7 @@ pub mod geometry;
 pub mod host;
 pub mod identity;
 pub mod install;
+pub mod language;
 pub mod movement;
 pub mod narration;
 pub mod native_controller;
@@ -26,6 +28,7 @@ pub mod reception;
 pub mod records;
 pub mod simulation;
 pub mod spatial;
+pub mod speech;
 pub mod state;
 pub mod status;
 pub mod values;

@@ -98,6 +98,45 @@ fn ordinary_map<T: DeserializeOwned>(
         parse(&row.payload)
     })
 }
+
+/// SQL JSON numbers have the same integral domain as current source data;
+/// `1.0` is a valid revision just as `1` is. The strict shared parser owns the
+/// finite safe-integer check instead of serde's narrower integer token parser.
+#[derive(Deserialize)]
+struct Revision(#[serde(deserialize_with = "crate::values::deserialize_safe_integer")] u64);
+
+fn revision_map(
+    import: &mut RowImport,
+    table: &str,
+    parent: &str,
+    field: Option<&str>,
+    present: bool,
+) -> Result<Option<IndexMap<String, u64>>, InstallError> {
+    map_rows(import, table, parent, field, present, |_import, row| {
+        parse::<Revision>(&row.payload).map(|revision| revision.0)
+    })
+}
+
+fn nested_revisions(
+    import: &mut RowImport,
+    owner_table: &str,
+    table: &str,
+    field: &str,
+    present: bool,
+) -> Result<Option<IndexMap<String, IndexMap<String, u64>>>, InstallError> {
+    let root = path(&["world"])?;
+    map_rows(
+        import,
+        owner_table,
+        &root,
+        Some(field),
+        present,
+        |import, row| {
+            crate::install::rows::validate_marker(row, ChildShape::Object)?;
+            revision_map(import, table, &row.id, None, true)?.ok_or_else(invalid)
+        },
+    )
+}
 fn list_rows<T: DeserializeOwned>(
     import: &mut RowImport,
     table: &str,
@@ -275,15 +314,22 @@ pub(crate) fn read_reception_rows(
                         .iter()
                         .position(|column| column == "metadata")
                         .ok_or_else(invalid)?;
-                    decode_current_contact_storage(
-                        &current.payload,
-                        current
-                            .extra
-                            .get(at)
-                            .and_then(Value::as_str)
-                            .ok_or_else(invalid)?,
-                    )
-                    .map_err(|_| invalid())
+                    let metadata = current
+                        .extra
+                        .get(at)
+                        .and_then(Value::as_str)
+                        .ok_or_else(invalid)?;
+                    let contact = decode_current_contact_storage(&current.payload, metadata)
+                        .map_err(|_| invalid())?;
+                    validate_reference_columns(
+                        "mind_perception_current",
+                        current,
+                        schema,
+                        &row.slot,
+                        &received_contact_value_references(&contact),
+                        Some(metadata),
+                    )?;
+                    Ok(contact)
                 },
             )?;
             // Split contacts must retain their immutable content cache. Serializing
@@ -292,12 +338,28 @@ pub(crate) fn read_reception_rows(
             put(
                 &mut body,
                 "motionSamples",
-                ordinary_map::<CurrentMotionSample>(
+                map_rows(
                     import,
                     "mind_perception_motion_samples",
                     &row.id,
                     Some("motionSamples"),
                     motion,
+                    |_import, motion| {
+                        let track: CurrentMotionSample = parse(&motion.payload)?;
+                        let mut references: Vec<_> =
+                            received_facet_value_references(&track.earlier.value).collect();
+                        references.sort_by(|a, b| crate::encoding::js_string_cmp(a, b));
+                        references.dedup();
+                        validate_reference_columns(
+                            "mind_perception_motion_samples",
+                            motion,
+                            schema,
+                            &row.slot,
+                            &references,
+                            None,
+                        )?;
+                        Ok(track)
+                    },
                 )?,
             )?;
             let attention = take_one::<Value>(
@@ -368,7 +430,7 @@ pub(crate) fn read_reception_rows(
                 for boundary in collection.rows {
                     let value: ReceivedGeometryFeature = parse(&boundary.payload)?;
                     let mut parts: Vec<String> = parse(&record.id)?;
-                    parts.extend(["boundaries".to_owned(), value.observation.id.clone()]);
+                    parts.extend(["boundaries".to_owned(), boundaries.len().to_string()]);
                     validate_row(
                         &boundary,
                         &parts.iter().map(String::as_str).collect::<Vec<_>>(),
@@ -390,6 +452,14 @@ pub(crate) fn read_reception_rows(
             owner.current = current.ok_or_else(invalid)?;
             owner.attention = attention;
             owner.geometry = geometry;
+            validate_reference_columns(
+                "mind_perception_owners",
+                row,
+                schema,
+                &row.slot,
+                &received_owner_value_references(&owner),
+                None,
+            )?;
             Ok(owner)
         },
     )?;
@@ -418,7 +488,7 @@ pub(crate) fn read_reception_rows(
             "actorKnowledge",
             roots.actor_knowledge,
         )?,
-        knowledge_revisions: ordinary_map(
+        knowledge_revisions: revision_map(
             import,
             "mind_knowledge_revisions",
             &world,
@@ -439,7 +509,7 @@ pub(crate) fn read_reception_rows(
             "visiblePeople",
             roots.visible_people,
         )?,
-        visible_places: nested_maps(
+        visible_places: nested_revisions(
             import,
             "mind_visible_places_owners",
             "mind_visible_places",
@@ -454,4 +524,36 @@ pub(crate) fn read_reception_rows(
             roots.map_markers,
         )?,
     })
+}
+
+fn validate_reference_columns(
+    table: &str,
+    row: &crate::records::InstalledRow,
+    schema: &RecordSchema,
+    actor: &str,
+    references: &[&str],
+    metadata: Option<&str>,
+) -> Result<(), InstallError> {
+    let columns = &schema.layout(table).map_err(|_| invalid())?.columns;
+    if row.extra.len() != columns.len() {
+        return Err(invalid());
+    }
+    for (column, cell) in columns.iter().zip(&row.extra) {
+        let valid = match column.as_str() {
+            "actor_id" => cell.as_str() == Some(actor),
+            "value_refs" => cell.as_array().is_some_and(|values| {
+                values.len() == references.len()
+                    && values
+                        .iter()
+                        .zip(references)
+                        .all(|(value, expected)| value.as_str() == Some(*expected))
+            }),
+            "metadata" => cell.as_str() == metadata,
+            _ => false,
+        };
+        if !valid {
+            return Err(invalid());
+        }
+    }
+    Ok(())
 }

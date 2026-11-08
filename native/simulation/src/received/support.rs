@@ -13,11 +13,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct TemporalSupportCapsule {
-    pub receipt: TemporalReceipt,
-    pub values: Vec<ReceivedValueFragment>,
+    pub receipt: Arc<TemporalReceipt>,
+    pub values: Arc<[ReceivedValueFragment]>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub bytes: u64,
     pub required: bool,
@@ -27,7 +27,7 @@ impl TemporalSupportCapsule {
         let mut bytes = json_record(self)
             .map_err(|_| ReceivedError("Retained support encoding failed."))?
             .len() as i128;
-        for (field, value) in self.receipt.facets.iter().zip(&self.values) {
+        for (field, value) in self.receipt.facets.iter().zip(self.values.iter()) {
             let fragment_bytes = json_record(value)
                 .map_err(|_| ReceivedError("Support value encoding failed."))?
                 .len() as i128;
@@ -55,12 +55,12 @@ impl TemporalSupportCapsule {
 
 #[derive(Debug)]
 pub struct TemporalSupportRecord {
-    id: String,
-    parent: String,
-    slot: String,
-    position: u64,
-    payload: Arc<str>,
-    capsule: TemporalSupportCapsule,
+    pub(super) id: String,
+    pub(super) parent: String,
+    pub(super) slot: String,
+    pub(super) position: u64,
+    pub(super) payload: Arc<str>,
+    pub(super) capsule: TemporalSupportCapsule,
 }
 impl TemporalSupportRecord {
     fn install(
@@ -150,8 +150,8 @@ impl TemporalSupportRecord {
 
 #[derive(Debug)]
 pub struct TemporalSupportCollection {
-    records: IndexMap<String, Arc<TemporalSupportRecord>>,
-    coverage: OwnerCoverage,
+    pub(super) records: IndexMap<String, Arc<TemporalSupportRecord>>,
+    pub(super) coverage: OwnerCoverage,
 }
 impl TemporalSupportCollection {
     pub fn install(

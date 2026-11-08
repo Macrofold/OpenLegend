@@ -806,6 +806,50 @@ pub struct Action {
 }
 
 impl Action {
+    pub(crate) fn has_unconverted_fields(&self) -> bool {
+        self.feeding.is_some()
+            || self.gathering.is_some()
+            || self.attack_observers.is_some()
+            || self.cooperation.is_some()
+            || self.combat_help_id.is_some()
+            || self.evasion.is_some()
+            || self.ranged.is_some()
+            || self.attack_execution.is_some()
+            || self.competence_pin.is_some()
+            || self.ranged_policy_pin.is_some()
+            || self.coaching_episode_id.is_some()
+            || self.assembly_phase.is_some()
+            || self.assembly_exit_pending.is_some()
+            || self.gate_work.is_some()
+            || self.boundary_impact.is_some()
+            || self.hearth_work.is_some()
+            || self.assembly_corner.is_some()
+            || self.construction_grant.is_some()
+            || self.material_permission.is_some()
+            || self.material_origin_ids.is_some()
+            || self.material_contribution_ids.is_some()
+            || self.requires_lethal_review.is_some()
+            || self.lethal_permission.is_some()
+            || self.scar_id.is_some()
+            || self.recipe_pin.is_some()
+            || self.manufacture_tools.is_some()
+            || self.food_preparation.is_some()
+            || self.fishing.is_some()
+            || self.strike_phase.is_some()
+            || self.strike_motion.is_some()
+            || self.strike_outcome.is_some()
+            || self.guard.is_some()
+            || self.follow.is_some()
+            || self.transferred.is_some()
+            || self.quantity.is_some()
+            || self.recipe_id.is_some()
+            || self.item_id.is_some()
+            || self.weapon_item_id.is_some()
+            || self.ammo_item_id.is_some()
+            || self.heat_id.is_some()
+            || self.fire_operation.is_some()
+            || self.fire_guard.is_some()
+    }
     // Same minimal owned record as kernel.ts's temporary action. Installation
     // never calls this constructor to fill missing fields in an imported action.
     fn native_action(id: String, kind: &str, stage: &str) -> Self {
@@ -971,7 +1015,7 @@ pub struct ActorState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub pending_death: Option<UnconvertedField>,
+    pub(crate) pending_death: Option<crate::body::PendingDeath>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1331,6 +1375,28 @@ pub struct Entity {
 }
 
 impl Entity {
+    pub fn has_memory(&self) -> bool {
+        self.actor.as_ref().is_some_and(|actor| {
+            actor
+                .capabilities
+                .as_ref()
+                .map_or(actor.controller != "native", |capabilities| {
+                    capabilities.memory
+                })
+        })
+    }
+    pub fn physical_root(&self) -> bool {
+        self.retirement.is_none()
+            && self
+                .actor
+                .as_ref()
+                .is_none_or(|actor| actor.pending_death.is_none())
+            && self
+                .remains
+                .as_ref()
+                .is_none_or(|remains| remains.phase != "removed")
+            && matches!(self.placement, Some(Placement::World { .. }))
+    }
     pub fn world_position(&self) -> Option<Point> {
         match &self.placement {
             Some(Placement::World { position, .. }) => Some(*position),

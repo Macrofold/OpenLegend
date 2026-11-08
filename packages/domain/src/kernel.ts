@@ -2,7 +2,11 @@ import { beginPerceptionMeasurements } from './perception-timing.js';
 import { beginAttentionPreparation } from './attention.js';
 import { materializeNativeEntity } from './native-values.js';
 import { currentContactGet } from './perception-current.js';
-import { selectedCommitmentLimit, selectedOutwardBodyNotice } from './world-composition.js';
+import {
+  selectedCommitmentLimit,
+  selectedOutwardBodyNotice,
+  selectedSpeechAction,
+} from './world-composition.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
 import { referencedReceivedValues, type ReceivedValueState } from './received-values.js';
@@ -2222,20 +2226,25 @@ function prepareNativeOperation(
       break;
     }
     case 'say': {
-      if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
+      const speechAction = selectedSpeechAction(world);
+      if (!canSpeak(actor))
+        return reject(speechAction.noSpeech.code, speechAction.noSpeech.message);
       if (!isSpeechVolume(command.volume ?? 'normal'))
-        return reject('invalid-volume', 'Choose whisper, normal or shout.');
+        return reject(speechAction.invalidVolume.code, speechAction.invalidVolume.message);
       if (
         command.targetRole !== undefined &&
         (!command.targetId || !isSpeechTargetRole(command.targetRole))
       )
-        return reject('invalid-recipient', 'Choose a permitted recipient role.');
+        return reject(speechAction.invalidRole.code, speechAction.invalidRole.message);
       const recipient = command.targetId;
       if (recipient && !entityOwn(world.entities, recipient))
-        return reject('invalid-recipient', 'The intended recipient no longer exists.');
+        return reject(speechAction.missingRecipient.code, speechAction.missingRecipient.message);
       const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
       if (command.targetId && !target?.actor)
-        return reject('invalid-recipient', 'The intended recipient is not a person.');
+        return reject(
+          speechAction.nonPersonRecipient.code,
+          speechAction.nonPersonRecipient.message,
+        );
       break;
     }
     case 'pickup': {
@@ -4266,33 +4275,38 @@ function executeCommandNative(
         break;
       }
       case 'say': {
-        if (!canSpeak(actor)) return reject('no-speech', 'This actor cannot speak.');
+        const speechAction = selectedSpeechAction(world);
+        if (!canSpeak(actor))
+          return reject(speechAction.noSpeech.code, speechAction.noSpeech.message);
         if (
           typeof command.text !== 'string' ||
           command.text.trim().length < 1 ||
-          command.text.length > 1500
+          command.text.length > speechAction.maximumCharacters
         )
-          return reject('invalid-speech', 'Speech must contain 1–1500 characters.');
+          return reject(speechAction.invalidSpeech.code, speechAction.invalidSpeech.message);
         const volume = command.volume ?? 'normal';
         if (!isSpeechVolume(volume))
-          return reject('invalid-volume', 'Choose whisper, normal or shout.');
+          return reject(speechAction.invalidVolume.code, speechAction.invalidVolume.message);
         if (
           command.targetRole !== undefined &&
           (!command.targetId || !isSpeechTargetRole(command.targetRole))
         )
-          return reject('invalid-recipient', 'Choose a permitted recipient role.');
+          return reject(speechAction.invalidRole.code, speechAction.invalidRole.message);
         const target = command.targetId ? entityOwn(world.entities, command.targetId) : undefined;
         const addresseeId = command.targetId;
         if (addresseeId && !entityOwn(world.entities, addresseeId))
-          return reject('invalid-recipient', 'The intended recipient no longer exists.');
+          return reject(speechAction.missingRecipient.code, speechAction.missingRecipient.message);
         if (command.targetId && !target?.actor)
-          return reject('invalid-recipient', 'The intended recipient is not a person.');
+          return reject(
+            speechAction.nonPersonRecipient.code,
+            speechAction.nonPersonRecipient.message,
+          );
         // Intention is not delivery: a quiet utterance can miss its target and still be overheard.
         // docs/hearing-and-speech.md#4-speech-volume-and-admission
         emit(
           world,
           events,
-          'speech',
+          speechAction.eventType,
           { parts: [person(actor), ': ', command.text.trim()] },
           actor,
           command.targetId,
@@ -4307,7 +4321,7 @@ function executeCommandNative(
             sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
           },
         );
-        result = outcome(true, 'spoken', 'Spoken.');
+        result = outcome(true, speechAction.success.code, speechAction.success.message);
         break;
       }
       case 'goal': {

@@ -15,6 +15,7 @@ use crate::values::{deserialize_nullable, deserialize_present_option, deserializ
 
 mod metadata;
 mod result;
+mod retained_size;
 pub use result::*;
 mod page;
 mod state;

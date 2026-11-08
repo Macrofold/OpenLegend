@@ -174,3 +174,151 @@ pub struct ReceivedGeometryState {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub bytes: u64,
 }
+
+impl ReceivedGeometryState {
+    pub(crate) fn validate(
+        &self,
+        owner: &PerceptionEvidenceOwner,
+        _values: &impl ReceivedValueLookup,
+        now: f64,
+        input_revision: u64,
+        attention: &crate::attention::AttentionPolicy,
+        temporal: &crate::received::TemporalState,
+        originals: &mut OriginalRevisionRegistry,
+    ) -> Result<(), crate::received::ReceivedError> {
+        let invalid = || crate::received::ReceivedError("Invalid received contextual geometry.");
+        let time = |at: f64| at.is_finite() && at >= 0.0 && at <= now;
+        let policy = &attention.geometry;
+        if [
+            &self.basis,
+            &self.source_basis,
+            &self.episode_id,
+            &self.query_key,
+        ]
+        .into_iter()
+        .any(|text| text.is_empty())
+            || !time(self.frame_at)
+            || self.prior_frame.as_ref().is_some_and(|prior| {
+                !prior.at.is_finite()
+                    || prior.at < 0.0
+                    || prior.at > self.frame_at
+                    || !prior.frame.validate()
+            })
+            || !self.frame.validate()
+            || ![self.eye.x, self.eye.y, self.eye.z, self.radius]
+                .into_iter()
+                .all(f64::is_finite)
+            || self.radius <= 0.0
+            || !time(self.supported_through)
+            || !self.next_at.is_finite()
+            || self.next_at < 0.0
+            || self.visited > policy.visits
+            || self.bytes > policy.max_bytes
+            || self.input_revision > input_revision
+            || self.complete != (self.finished && !self.unknown)
+            || self.fragments.len() + self.boundaries.len() > policy.max_views as usize
+            || self.boundary_keys.len() != self.boundaries.len()
+            || self
+                .boundary_keys
+                .iter()
+                .collect::<std::collections::BTreeSet<_>>()
+                .len()
+                != self.boundary_keys.len()
+            || self
+                .feature_cursor
+                .as_ref()
+                .is_some_and(|cursor| !cursor.validate())
+        {
+            return Err(invalid());
+        }
+        let observer = owner.observer.as_ref().ok_or_else(invalid)?;
+        let mut ids = std::collections::BTreeSet::new();
+        let mut keys = std::collections::BTreeSet::new();
+        let mut bytes = 0u64;
+        for fragment in &self.fragments {
+            let extent = crate::encoding::json_record(&(
+                &fragment.feature_id,
+                fragment.u0,
+                fragment.u1,
+                fragment.v0,
+                fragment.v1,
+            ))
+            .map_err(|_| invalid())?;
+            if fragment.feature_id.is_empty()
+                || ![fragment.u0, fragment.u1, fragment.v0, fragment.v1]
+                    .into_iter()
+                    .all(|value| value.is_finite() && (0.0..=1.0).contains(&value))
+                || fragment.u0 >= fragment.u1
+                || fragment.v0 >= fragment.v1
+                || fragment.key != extent
+                || !keys.insert(fragment.key.as_str())
+                || fragment.observation.facets.len() != 1
+                || !matches!(
+                    fragment.observation.facets[0].value,
+                    SensoryFacet::SurfacePatch { .. }
+                )
+            {
+                return Err(invalid());
+            }
+        }
+        for (observation, recording) in self
+            .fragments
+            .iter()
+            .map(|fragment| (&fragment.observation, fragment.recording.as_ref()))
+            .chain(
+                self.boundaries
+                    .iter()
+                    .map(|boundary| (&boundary.observation, boundary.recording.as_ref())),
+            )
+        {
+            originals.validate(observation)?;
+            if !ids.insert(observation.id.as_str())
+                || observation.observer.actor_id != observer.actor_id
+                || observation.observer.physical_life != owner.life
+                || observation.modality != Modality::Sight
+                || observation.acquired_at > now
+                || observation.facets.len() != 1
+                || !matches!(
+                    observation.facets[0].value,
+                    SensoryFacet::SurfacePatch { .. } | SensoryFacet::PhysicalBoundary { .. }
+                )
+            {
+                return Err(invalid());
+            }
+            if let Some(recording) = recording {
+                let epoch = &temporal
+                    .actor(&observer.actor_id)
+                    .ok_or_else(invalid)?
+                    .header()
+                    .epoch;
+                recording.validate(
+                    now,
+                    &[crate::received::CurrentMemberPart {
+                        kind: observation.facets[0].value.kind().to_owned(),
+                        part: CurrentReceivedPart::Value,
+                    }],
+                    &observation.observer,
+                    epoch,
+                )?;
+            }
+            if let SensoryFacet::PhysicalBoundary { boundary } = &observation.facets[0].value {
+                for surface in [&boundary.near_surface, &boundary.far_surface] {
+                    let source = &surface.support.source;
+                    if source.family!=EvidenceFamily::NativeExposure||source.observer.actor_id!=observer.actor_id||source.observer.physical_life!=owner.life||surface.support.ordinal!=0||!self.fragments.iter().any(|fragment|fragment.observation.id==source.id&&matches!(source.revision,SourceRevision::Number(revision)if revision==fragment.observation.revision)&&matches!(fragment.observation.facets[0].value,SensoryFacet::SurfacePatch{..})){return Err(invalid())}
+                }
+            }
+            bytes = bytes
+                .checked_add(
+                    u64::try_from(
+                        crate::encoding::json_record_len(observation).map_err(|_| invalid())?,
+                    )
+                    .map_err(|_| invalid())?,
+                )
+                .ok_or_else(invalid)?;
+        }
+        if bytes != self.bytes {
+            return Err(invalid());
+        }
+        Ok(())
+    }
+}

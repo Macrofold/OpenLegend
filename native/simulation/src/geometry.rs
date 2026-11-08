@@ -479,16 +479,32 @@ pub struct GeometryAnswers {
     pub walking: Vec<bool>,
     pub support: Vec<Option<SurfacePoint>>,
     pub standing: Vec<bool>,
-    pub surface_lines: Vec<Option<Vec<SurfacePoint>>>,
+    pub surface_lines: Vec<Option<SurfaceLineAnswer>>,
     pub sight_sweeps: Vec<SightSweep>,
     pub sound: Vec<f64>,
-    pub navigation: Vec<NavigationResult>,
+    pub navigation: Vec<NavigationAnswer>,
     pub routes: Vec<RoutePlan>,
     pub features: Vec<PhysicalFeatureAnswer>,
     pub feature_ids: Vec<Option<PhysicalFeature>>,
     pub convex_views: Vec<ConvexViewAnswer>,
     pub body_sweeps: Vec<BodySweepAnswer>,
     pub standing_columns: Vec<Option<StandingSelection>>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SurfaceLineAnswer {
+    pub path: Vec<SurfacePoint>,
+}
+
+/// Recast's answer is checked by the existing physical route validator against
+/// this request and immutable map before native gameplay considers admission.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct NavigationAnswer {
+    pub result: NavigationResult,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    pub problem: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -560,6 +576,22 @@ pub enum GeometryAnswerError {
 }
 
 impl GeometryQueries {
+    pub fn is_empty(&self) -> bool {
+        self.sight.is_empty()
+            && self.walking.is_empty()
+            && self.support.is_empty()
+            && self.standing.is_empty()
+            && self.surface_lines.is_empty()
+            && self.sight_sweeps.is_empty()
+            && self.sound.is_empty()
+            && self.navigation.is_empty()
+            && self.routes.is_empty()
+            && self.features.is_empty()
+            && self.feature_ids.is_empty()
+            && self.convex_views.is_empty()
+            && self.body_sweeps.is_empty()
+            && self.standing_columns.is_empty()
+    }
     pub fn new(binding: GeometryBinding) -> Self {
         Self {
             binding,
@@ -615,7 +647,7 @@ impl GeometryQueries {
                 .surface_lines
                 .iter()
                 .flatten()
-                .flatten()
+                .flat_map(|line| &line.path)
                 .any(|value| !point(value))
             || answer.sight_sweeps.iter().any(|sweep| {
                 sweep
@@ -627,7 +659,7 @@ impl GeometryQueries {
                 .sound
                 .iter()
                 .any(|value| !value.is_finite() || *value < 0.0 || *value > 1.0)
-            || answer.navigation.iter().any(|result| match result {
+            || answer.navigation.iter().any(|answer| match &answer.result {
                 NavigationResult::Reached { path, length } => {
                     !length.is_finite() || *length < 0.0 || path.iter().any(|value| !point(value))
                 }

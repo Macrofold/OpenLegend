@@ -158,7 +158,7 @@ fn serialize_value_entries<'a, S: Serializer>(
 
 /// JSON.stringify enumerates canonical array-index properties numerically,
 /// followed by all other string keys in their actual insertion order.
-fn array_index(key: &str) -> Option<u32> {
+pub(crate) fn array_index(key: &str) -> Option<u32> {
     if key.is_empty() || (key.len() > 1 && key.starts_with('0')) {
         return None;
     }

@@ -1,6 +1,7 @@
 import { namePhrase, type Named } from '@open-legend/language';
 import { finitePoint } from '@open-legend/spatial';
 import { entityGet } from './entity-collection.js';
+import { selectedOccurrenceRules } from './world-composition.js';
 import { hasMemory } from './living.js';
 import { worldPosition } from './spatial-state.js';
 import { soundPerception, type AcousticEmission } from './perception.js';
@@ -216,7 +217,7 @@ export function perceiveSound(
     eventType: event.type,
     sound,
     ...soundEvidenceProjection(observer.id, sound),
-    importance: 3,
-    urgency: event.urgency ?? 4,
+    importance: selectedOccurrenceRules(world).soundImportance,
+    urgency: event.urgency ?? selectedOccurrenceRules(world).receivedUrgency,
   };
 }

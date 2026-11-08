@@ -138,6 +138,182 @@ pub(crate) struct ActivityJournal {
     pending: BTreeSet<(String, String)>,
 }
 impl ActivityJournal {
+    /// The committing family supplies actual clamped values and its current
+    /// personally permitted label; this owner never resolves a canonical name.
+    pub(crate) fn record_effect(
+        &mut self,
+        state: &mut ActivityState,
+        cause: &str,
+        subject_id: &str,
+        property: &str,
+        unit: Option<&str>,
+        before: ActivityScalar,
+        after: ActivityScalar,
+        label: &str,
+    ) -> Result<(), ActivityError> {
+        let Some(reference) = state.active.get(cause) else {
+            return Ok(());
+        };
+        self.reserve(reference.actor_id.len() + reference.occurrence_id.len())?;
+        let actor = reference.actor_id.clone();
+        let id = reference.occurrence_id.clone();
+        self.record_before(state, &actor, &id)?;
+        let entry = &state
+            .collections
+            .get(&actor)
+            .ok_or(ActivityError::InvalidStructure)?
+            .get(&id)?
+            .ok_or(ActivityError::InvalidStructure)?
+            .occurrence;
+        let old = entry.effects.as_deref().unwrap_or(&[]);
+        let found = old
+            .iter()
+            .position(|effect| effect.subject_id == subject_id && effect.property == property);
+        if found.is_none() && old.len() as u64 >= state.limits.outputs {
+            return Err(ActivityError::Capacity);
+        }
+        let labels = old
+            .iter()
+            .map(|effect| {
+                effect.label.len()
+                    + effect.property.len()
+                    + effect.unit.as_ref().map_or(0, String::len)
+                    + effect.before.heap_bytes().unwrap_or(0)
+                    + effect.after.heap_bytes().unwrap_or(0)
+            })
+            .sum::<usize>()
+            + label.len()
+            + property.len()
+            + unit.map_or(0, str::len)
+            + before.heap_bytes().ok_or(ActivityError::Capacity)?
+            + after.heap_bytes().ok_or(ActivityError::Capacity)?;
+        let count = old.len() + usize::from(found.is_none());
+        let fields = map_storage::<String, ActivityDetail>(5).ok_or(ActivityError::Capacity)?;
+        self.reserve(
+            labels
+                .checked_mul(4)
+                .and_then(|n| {
+                    n.checked_add(
+                        count
+                            * (size_of::<ActivityEffect>() * 2
+                                + size_of::<ActivityDetail>()
+                                + fields
+                                + 128),
+                    )
+                })
+                .and_then(|n| n.checked_add(subject_id.len() + id.len() + 96))
+                .ok_or(ActivityError::Capacity)?,
+        )?;
+        let entry = &mut state
+            .collections
+            .get_mut(&actor)
+            .ok_or(ActivityError::InvalidStructure)?
+            .records
+            .get_mut(&id)
+            .ok_or(ActivityError::InvalidStructure)?
+            .occurrence;
+        let effects = entry.effects.get_or_insert_with(Vec::new);
+        if let Some(index) = found {
+            effects[index].after = after;
+        } else {
+            effects.push(ActivityEffect {
+                id: format!("{}:effect:{}", entry.id, effects.len()),
+                subject_id: subject_id.to_owned(),
+                label: label.to_owned(),
+                property: property.to_owned(),
+                unit: unit.map(str::to_owned),
+                before,
+                after,
+            });
+        }
+        let mut values = Vec::with_capacity(effects.len());
+        let mut sentences = Vec::with_capacity(effects.len());
+        for effect in effects {
+            let mut fields = IndexMap::new();
+            fields.insert(
+                "target".to_owned(),
+                ActivityDetail::Scalar(ActivityScalar::String(effect.label.clone())),
+            );
+            fields.insert(
+                "property".to_owned(),
+                ActivityDetail::Scalar(ActivityScalar::String(effect.property.clone())),
+            );
+            if let Some(unit) = effect.unit.as_ref().filter(|unit| !unit.is_empty()) {
+                fields.insert(
+                    "unit".to_owned(),
+                    ActivityDetail::Scalar(ActivityScalar::String(unit.clone())),
+                );
+            }
+            fields.insert(
+                "before".to_owned(),
+                ActivityDetail::Scalar(effect.before.clone()),
+            );
+            fields.insert(
+                "after".to_owned(),
+                ActivityDetail::Scalar(effect.after.clone()),
+            );
+            values.push(ActivityDetail::Fields(fields));
+            let sentence = match (&effect.before, &effect.after) {
+                (ActivityScalar::Boolean(before), ActivityScalar::Boolean(after)) => format!(
+                    "{}: {} {}",
+                    effect.label,
+                    effect.property,
+                    if before == after {
+                        if *after {
+                            "remained active"
+                        } else {
+                            "remained inactive"
+                        }
+                    } else if *after {
+                        "began"
+                    } else {
+                        "ended"
+                    }
+                ),
+                (before, after) => {
+                    let text = |v: &ActivityScalar| match v {
+                        ActivityScalar::String(value) => Ok(value.clone()),
+                        v => crate::encoding::json_record(v)
+                            .map_err(|_| ActivityError::InvalidStructure),
+                    };
+                    let change =
+                        if let (ActivityScalar::Number(before), ActivityScalar::Number(after)) =
+                            (before, after)
+                        {
+                            let n = after - before;
+                            format!(
+                                " ({}{})",
+                                if n >= 0.0 { "+" } else { "" },
+                                crate::encoding::json_record(&n)
+                                    .map_err(|_| ActivityError::InvalidStructure)?
+                            )
+                        } else {
+                            String::new()
+                        };
+                    format!(
+                        "{}: {} {} to {}{change}",
+                        effect.label,
+                        effect.property,
+                        text(before)?,
+                        text(after)?
+                    )
+                }
+            };
+            sentences.push(sentence);
+        }
+        let fact = ActivityFact {
+            name: "observed changes".to_owned(),
+            critical: true,
+            value: ActivityDetail::List(values),
+            sentence: Some(sentences.join("; ")),
+        };
+        if let Some(index) = entry.view.facts.iter().position(|f| f.name == fact.name) {
+            entry.view.facts[index] = fact;
+        } else {
+            entry.view.facts.push(fact);
+        }
+        Ok(())
+    }
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ActivityError> {
         Ok(Self {
             reservation: budget
@@ -177,6 +353,9 @@ impl ActivityJournal {
     pub(crate) fn is_complete(&self) -> bool {
         self.pending.is_empty()
     }
+    fn is_pending(&self, actor: &str, id: &str) -> bool {
+        self.pending.iter().any(|(a, i)| a == actor && i == id)
+    }
     pub(crate) fn discard_undo(&mut self) -> Result<(), ActivityError> {
         if !self.is_complete() {
             return Err(ActivityError::InvalidStructure);
@@ -211,11 +390,11 @@ impl ActivityJournal {
         })
     }
     fn current_before(&mut self, state: &ActivityState, key: &str) -> Result<(), ActivityError> {
+        self.reserve(key.len() + state.current.get(key).map_or(0, String::len))?;
         let before = state
             .current
             .get_full(key)
             .map(|(at, _, v)| (at, v.clone()));
-        self.reserve(key.len() + state.current.get(key).map_or(0, String::len))?;
         self.push(ActivityUndo::Current {
             key: key.to_owned(),
             before,
@@ -255,9 +434,9 @@ impl ActivityJournal {
         })
     }
     fn pending_before(&mut self, actor: &str, id: &str) -> Result<(), ActivityError> {
-        let key = (actor.to_owned(), id.to_owned());
-        let before = self.pending.contains(&key);
         self.reserve(actor.len() * 2 + id.len() * 2 + size_of::<(String, String)>() * 4)?;
+        let key = (actor.to_owned(), id.to_owned());
+        let before = self.is_pending(actor, id);
         self.push(ActivityUndo::Pending {
             actor: key.0,
             id: key.1,
@@ -381,19 +560,44 @@ impl ActivityJournal {
                 return Ok(record.occurrence.id.clone());
             }
         }
-        let mut objects = IndexMap::new();
-        let fields: Vec<&str> = match command {
-            NativeCommand::Say { target_id, .. } => target_id.as_deref().into_iter().collect(),
+        let fields: [Option<&str>; 2] = match command {
+            NativeCommand::Say { target_id, .. } => [target_id.as_deref(), None],
             NativeCommand::StatusEffect {
                 target_id,
                 resting_place_id,
                 ..
-            } => std::iter::once(target_id.as_str())
-                .chain(resting_place_id.as_deref())
-                .collect(),
-            _ => Vec::new(),
+            } => [Some(target_id.as_str()), resting_place_id.as_deref()],
+            _ => [None, None],
         };
-        for id in fields {
+        let object_bytes = fields
+            .iter()
+            .flatten()
+            .try_fold(0_usize, |n, id| {
+                let Some(entity) = entities.get(id) else {
+                    return Some(n);
+                };
+                n.checked_add(id.len())?.checked_add(entity.kind.len())
+            })
+            .ok_or(ActivityError::Capacity)?;
+        // Reserve before cloning borrowed command/facts and object labels.
+        // Existing source capacities bound their cloned allocation capacities.
+        self.reserve(
+            heap_sum([
+                size_of::<ActivityRecord>(),
+                command.heap_bytes().ok_or(ActivityError::Capacity)?,
+                view.heap_bytes().ok_or(ActivityError::Capacity)?,
+                object_bytes,
+                map_storage::<String, ActivityObject>(2).ok_or(ActivityError::Capacity)?,
+                map_storage::<String, ActivityRecord>(1).ok_or(ActivityError::Capacity)?,
+                actor_id.len() * 4,
+                id.len() * 6,
+                action_id.len() * 4,
+                state.display.display_bytes * 2,
+            ])
+            .ok_or(ActivityError::Capacity)?,
+        )?;
+        let mut objects = IndexMap::new();
+        for id in fields.into_iter().flatten() {
             if let Some(entity) = entities.get(id) {
                 if entity.item.is_some() {
                     return Err(ActivityError::UnsupportedFamily);
@@ -444,16 +648,6 @@ impl ActivityJournal {
             .checked_add(1)
             .filter(|n| *n <= state.limits.retained_records)
             .ok_or(ActivityError::Capacity)?;
-        // Newly retained work is charged separately from the undo buffers. The
-        // candidate must transfer this reservation to accepted residency later.
-        self.reserve(
-            size_of::<ActivityRecord>()
-                + entry.live_heap_bytes().ok_or(ActivityError::Capacity)?
-                + map_storage::<String, ActivityRecord>(1).ok_or(ActivityError::Capacity)?
-                + actor_id.len() * 4
-                + id.len() * 6
-                + action_id.len() * 4,
-        )?;
         let new_owner = !state.collections.contains_key(actor_id);
         let (position, parent_present) =
             state.collections.get(actor_id).map_or((0, false), |owner| {
@@ -669,13 +863,35 @@ impl ActivityJournal {
         let id = pending.occurrence_id;
         if acquired.actor_id() != actor
             || acquired.occurrence_id() != id
-            || !self.pending.contains(&(actor.clone(), id.clone()))
+            || !self.is_pending(&actor, &id)
         {
             return Err(ActivityError::InvalidEvidence);
         }
         if let Some(evidence) = acquired.evidence() {
             evidence.validate(&actor)?;
         }
+        let cursor = state
+            .learning
+            .get(&actor)
+            .ok_or(ActivityError::InvalidStructure)?;
+        self.reserve(
+            heap_sum([
+                acquired
+                    .evidence()
+                    .map_or(Some(0), HeapBytes::heap_bytes)
+                    .ok_or(ActivityError::Capacity)?
+                    .checked_mul(3)
+                    .ok_or(ActivityError::Capacity)?,
+                id.len(),
+                cursor
+                    .pending
+                    .len()
+                    .checked_add(1)
+                    .and_then(|n| n.checked_mul(size_of::<String>() * 2))
+                    .ok_or(ActivityError::Capacity)?,
+            ])
+            .ok_or(ActivityError::Capacity)?,
+        )?;
         self.record_before(state, &actor, &id)?;
         self.learning_before(state, &actor)?;
         self.pending_before(&actor, &id)?;

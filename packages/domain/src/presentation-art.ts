@@ -33,7 +33,7 @@ export function isPresentationArtPath(value: unknown): value is string {
   );
 }
 
-export function validatePortraitArt(world: WorldState): void {
+export function validatePortraitArt(world: Pick<WorldState, 'presentation'>): void {
   const portraits = world.presentation?.portraits;
   if (portraits === undefined) return;
   if (!portraits || typeof portraits !== 'object' || Array.isArray(portraits))
@@ -49,7 +49,7 @@ export function validatePortraitArt(world: WorldState): void {
       throw new Error('Invalid authored portrait artwork.');
 }
 
-export function validateItemArt(world: WorldState): void {
+export function validateItemArt(world: Pick<WorldState, 'presentation'>): void {
   const items = world.presentation?.itemArt;
   if (items === undefined) return;
   if (!items || typeof items !== 'object' || Array.isArray(items))

@@ -3,6 +3,7 @@ import { evaluateGeometryBatch, type GeometryBatch } from '@open-legend/spatial'
 
 interface Slot {
   worker?: Worker;
+  retiring?: Promise<void>;
   map?: GeometryBatch['map'];
   revision?: number;
   pending?: {
@@ -21,6 +22,7 @@ export class GeometryBatches {
   private serial = 0;
   private closed = false;
   private failedMap?: GeometryBatch['map'];
+  private readonly retirements = new Set<Promise<void>>();
   failures = 0;
   batches = 0;
   sightQueries = 0;
@@ -28,7 +30,8 @@ export class GeometryBatches {
   async compute(batch: GeometryBatch): Promise<boolean[]> {
     if (this.closed || this.failedMap === batch.map || batch.queries.length < 32)
       return evaluateGeometryBatch(batch);
-    if (this.slots.some((slot) => slot.pending)) return evaluateGeometryBatch(batch);
+    if (this.slots.some((slot) => slot.pending || slot.retiring))
+      return evaluateGeometryBatch(batch);
     const split =
       batch.queries.length >= 64 ? Math.ceil(batch.queries.length / 2) : batch.queries.length;
     try {
@@ -49,11 +52,15 @@ export class GeometryBatches {
       return evaluateGeometryBatch(batch);
     }
   }
-  private query(
+  private async query(
     slot: Slot,
     batch: GeometryBatch,
     rays: GeometryBatch['queries'],
   ): Promise<boolean[]> {
+    // A changed map may need a replacement after failure. Join the old slot
+    // before allocating another worker so termination remains inside its bound.
+    if (slot.retiring) await slot.retiring;
+    if (this.closed) throw new Error('Geometry executor stopped.');
     if (!slot.worker) {
       const worker = new Worker(new URL('./geometry-worker.mjs', import.meta.url), {
         execArgv: [],
@@ -112,13 +119,24 @@ export class GeometryBatches {
       clearTimeout(pending.timer);
       pending.reject(new Error('Geometry executor stopped.'));
     }
-    if (worker)
-      void worker.terminate().catch(() => {
-        this.failures++;
-      });
+    if (worker) {
+      const retiring = worker
+        .terminate()
+        .then(() => {})
+        .catch(() => {
+          this.failures++;
+        })
+        .finally(() => {
+          this.retirements.delete(retiring);
+          if (slot.retiring === retiring) slot.retiring = undefined;
+        });
+      slot.retiring = retiring;
+      this.retirements.add(retiring);
+    }
   }
-  close(): void {
+  async close(): Promise<void> {
     this.closed = true;
     for (const slot of this.slots) this.retire(slot);
+    await Promise.all(this.retirements);
   }
 }

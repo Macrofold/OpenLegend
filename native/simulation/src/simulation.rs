@@ -2,6 +2,7 @@
 //! installer until every required family, current record and real consumer is
 //! connected; constructing individual records is not admission of a world.
 
+use crate::activity::ActivityState;
 use crate::events::OccurrenceHistory;
 use crate::experience::ExperienceState;
 use crate::geometry::GeometryMap;
@@ -23,6 +24,7 @@ use std::sync::Arc;
 /// with their typed meanings; a digest is never used as content equality.
 /// Additional selected-law owners must join this composition before install.
 pub(crate) struct InstalledWorld {
+    pub content: crate::install::InstalledContent,
     pub attributes: IndexMap<String, VerifiedDefinition<AttributeDefinition>>,
     pub senses: IndexMap<String, VerifiedDefinition<SenseDefinition>>,
     pub default_senses: Vec<String>,
@@ -31,13 +33,46 @@ pub(crate) struct InstalledWorld {
     pub status_policy: StatusEffectPolicy,
     pub capabilities: StatusCapabilities,
     pub status_policy_canonical: Arc<str>,
+    pub status_work: IndexMap<String, crate::status::CompiledStatusWork>,
     pub geometry: Arc<GeometryMap>,
     pub work_policy: Arc<InstalledWorkPolicy>,
     pub event_disclosure: VerifiedDefinition<crate::worlds::InstalledEventDisclosure>,
     pub attention: VerifiedDefinition<crate::attention::AttentionPolicy>,
+    pub cognition: Arc<crate::experience::CognitionPolicy>,
+    pub name_rules: VerifiedDefinition<crate::worlds::InstalledPersonalNameRules>,
+    pub recognition: VerifiedDefinition<crate::worlds::InstalledRecognitionPolicy>,
+    pub social: crate::install::SocialSettings,
+    pub speech_action: VerifiedDefinition<crate::worlds::InstalledSpeechAction>,
+    pub account_rules: VerifiedDefinition<crate::worlds::InstalledAccountRules>,
+    pub occurrence_rules: VerifiedDefinition<crate::worlds::InstalledOccurrenceRules>,
+    pub detection_support: VerifiedDefinition<crate::reception::DetectionSupportPolicy>,
     pub maximum_change_scopes: usize,
+    pub movement: crate::worlds::InstalledMovementPolicy,
+    pub body_policy: Option<VerifiedDefinition<crate::body::BodyPolicy>>,
+    pub spatial: crate::install::SpatialSettings,
+    pub movement_settings: crate::install::MovementSettings,
+    pub time_epsilon: f64,
+    pub response_settings: crate::install::ResponseSettings,
+    pub personal_evidence_preparation: crate::install::PersonalEvidencePreparationSettings,
 }
 impl InstalledWorld {
+    pub(crate) fn movement_speed(
+        &self,
+        entity: &crate::state::Entity,
+    ) -> Result<f64, crate::execution::ExecutionError> {
+        self.movement.speed(
+            entity,
+            &self.response_profiles,
+            crate::body::scar_factor(
+                self.body_policy.as_ref().map(VerifiedDefinition::value),
+                entity,
+                crate::body::ScarEffect::Movement,
+            ),
+        )
+    }
+    pub(crate) fn account_law(&self) -> crate::worlds::InstalledAccountLaw<'_> {
+        crate::worlds::InstalledAccountLaw::new(self.account_rules.value(), &self.cognition)
+    }
     pub(crate) fn status_read<'a>(
         &'a self,
         physical: &'a PhysicalState,
@@ -75,6 +110,8 @@ pub(crate) struct SimulationState {
     pub experience: ExperienceState,
     pub temporal: TemporalState,
     pub occurrences: OccurrenceHistory,
+    pub activity: ActivityState,
+    pub commands: crate::commands::CommandState,
 }
 
 /// The application owns its serialized admission lane. The fence is separate

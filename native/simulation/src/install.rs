@@ -18,7 +18,13 @@ use crate::records::{CurrentRecords, EntityOrdering, InstalledRow, OwnerCoverage
 use crate::values::{DefinitionPin, is_safe_record_id};
 
 mod content;
+mod social;
+pub(crate) use social::{SocialSettings, install_social};
+mod definitions;
 pub(crate) use content::{InstalledContent, TimePolicy, WorldProfile};
+pub(crate) use definitions::{
+    AuthoredManifest, PhysicalDefinitionInputs, PhysicalMeanings, install_physical_meanings,
+};
 
 mod physical;
 pub(crate) mod rows;
@@ -104,6 +110,14 @@ impl DefinitionIdentity for crate::reception::SenseDefinition {
     }
 }
 impl DefinitionIdentity for crate::reception::AcousticPolicy {
+    fn definition_id(&self) -> &str {
+        &self.id
+    }
+    fn definition_version(&self) -> u64 {
+        self.version
+    }
+}
+impl DefinitionIdentity for crate::native_response::NativeResponseProfile {
     fn definition_id(&self) -> &str {
         &self.id
     }

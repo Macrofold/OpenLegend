@@ -282,6 +282,54 @@ impl<'a> CurrentBodyReadScope<'a> {
         }
         Ok(Some(input))
     }
+    pub(crate) fn local_subject(
+        &self,
+        id: &str,
+    ) -> Result<Option<&'a ObserverSubject>, ReceivedError> {
+        Ok(self
+            .native_body(id)?
+            .and_then(|body| body.field.local_subject.as_ref()))
+    }
+    pub(crate) fn association(&self, id: &str) -> Result<Option<&ObserverSubject>, ReceivedError> {
+        let Some(body) = self.native_body(id)? else {
+            return Ok(None);
+        };
+        let Some(input) = self.native(
+            id,
+            "association",
+            CurrentFacetSelector {
+                modality: Some(Modality::Sight),
+                ..Default::default()
+            },
+        )?
+        else {
+            return Ok(None);
+        };
+        let Some(ReceivedValueFragment::Sensory(
+            value @ SensoryFacet::Association {
+                strength: AssociationStrength::Supported,
+                subject,
+                ..
+            },
+        )) = self.lookup().value_at(&input.field.value.reference)
+        else {
+            return Ok(None);
+        };
+        if input.field.body_lease_id.as_ref() != Some(&body.field.id)
+            || association_evidence_status(
+                self.experience,
+                &self.observer.id,
+                value,
+                Some((&input.original_source.id, input.field.original_ordinal)),
+                self.meaning,
+            )
+            .map_err(|_| unavailable())?
+                != AssociationEvidenceStatus::Retained
+        {
+            return Ok(None);
+        }
+        Ok(Some(subject))
+    }
     pub(crate) fn ordered_subjects(
         &self,
         budget: &ByteBudget,
@@ -385,16 +433,6 @@ impl<'a> CurrentBodyReadScope<'a> {
                     .local_subject
                     .heap_bytes()
                     .ok_or_else(capacity)?,
-                selected
-                    .field
-                    .pose_support
-                    .heap_bytes()
-                    .ok_or_else(capacity)?,
-                selected
-                    .field
-                    .description_support
-                    .heap_bytes()
-                    .ok_or_else(capacity)?,
                 selected.grant.subject_id.capacity(),
                 selected.grant.exposure.capacity(),
                 selected.grant.channel.heap_bytes().ok_or_else(capacity)?,
@@ -427,8 +465,7 @@ impl<'a> CurrentBodyReadScope<'a> {
         let pose_support = pose
             .map(|pose| self.pose_support(pose))
             .transpose()?
-            .flatten()
-            .or_else(|| input.field.pose_support.clone());
+            .flatten();
         let mut description_support = None;
         if let Some(description) = description {
             if let (SensoryFacet::Body { body }, Some(SensoryFacet::Description { text })) = (
