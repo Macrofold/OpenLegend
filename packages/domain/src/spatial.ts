@@ -91,6 +91,9 @@ export class SpatialCandidateIndex<T extends { id: string; position: Position; o
   constructor(private readonly cellSize = CANDIDATE_CELL_SIZE) {
     countDomainWork('spatialBuilds');
   }
+  get size(): number {
+    return this.entries.size;
+  }
   private key(position: Position) {
     return [position.x, position.y, position.z].map((v) => Math.floor(v / this.cellSize)).join(',');
   }

@@ -146,6 +146,23 @@ export function basePreparedThreatOpportunity(
   );
 }
 
+/** The current personal encounter is this observer's knowledge, not the other
+ * person's reciprocal state. Routine public outcomes must retain its real causes. */
+export function baseEncounterParticipant(
+  world: WorldState,
+  observer: Entity,
+  subjectId: string,
+): boolean {
+  const state = observer.actor?.encounters;
+  const pair =
+    state?.life === (observer.actor?.physicalLife ?? 0) ? state.pairs[subjectId] : undefined;
+  return !!(
+    pair &&
+    (pair.lastCause || pair.own || Object.keys(pair.active).length) &&
+    subjectReferenceCurrent(world, observer.id, subjectId, pair.episode)
+  );
+}
+
 interface SituationBinding {
   roles: Record<string, string>;
   sources: Set<string>;
@@ -185,10 +202,8 @@ export function basePreparedThreatResponses(
   const physicalLife = (entity: Entity) => entity.actor?.physicalLife ?? 0;
   const state =
     actor.actor.encounters?.life === physicalLife(actor) ? actor.actor.encounters : undefined;
-  const pairs = Object.entries(state?.pairs ?? {}).filter(
-    ([id, pair]) =>
-      subjectReferenceCurrent(world, actor.id, id, pair.episode) &&
-      !!(pair.lastCause || pair.own || Object.keys(pair.active).length),
+  const pairs = Object.entries(state?.pairs ?? {}).filter(([id]) =>
+    baseEncounterParticipant(world, actor, id),
   );
   const original = worldPosition(actor);
   const currentWork =

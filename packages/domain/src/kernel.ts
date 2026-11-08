@@ -322,7 +322,6 @@ import {
   reconcileCrossings,
   sensoryCrossingBound,
 } from './motion-boundaries.js';
-import { withStableAudience } from './event-audience.js';
 import { stateChangeRevision } from './dependencies.js';
 import {
   canAccessContainer,
@@ -7236,10 +7235,8 @@ function* advanceWorldNative(
       };
       const flushFlight = () => {
         const sources = occurrences.map((occurrence) => occurrence[4]?.id ?? '');
-        withStableAudience(world, () => {
-          occurrences.sort((a, b) => (a[4]?.id ?? '').localeCompare(b[4]?.id ?? ''));
-          for (const occurrence of occurrences) emit(...occurrence);
-        });
+        occurrences.sort((a, b) => (a[4]?.id ?? '').localeCompare(b[4]?.id ?? ''));
+        for (const occurrence of occurrences) emit(...occurrence);
         occurrences.length = 0;
         return sources;
       };

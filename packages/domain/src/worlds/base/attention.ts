@@ -1,3 +1,5 @@
+import { hasExternalAudience } from '../../event-audience.js';
+import { baseEncounterParticipant } from './threat-responses.js';
 import { entityGet } from '../../entity-collection.js';
 import { hasCommitmentCompletion } from '../../commitments.js';
 import type {
@@ -191,16 +193,37 @@ export function baseRoutineMovement(
     activity.spending
   )
     return false;
-  const actor = entityGet(world.entities, actorId)?.actor;
+  const source = entityGet(world.entities, actorId);
+  const actor = source?.actor;
   const encounters = actor?.encounters;
   if (
     (encounters &&
       encounters.life === (actor?.physicalLife ?? 0) &&
-      (Object.keys(encounters.pairs).length ||
+      ((source &&
+        Object.keys(encounters.pairs).some((id) => baseEncounterParticipant(world, source, id))) ||
         Object.values(encounters.unknown).some((entry) => entry.until > world.simTime))) ||
     hasCommitmentCompletion(world, actorId, ['action-started', 'moved', 'action-stopped'])
   )
     return false;
+  // A known threat is not necessarily known reciprocally. Reuse the occurrence
+  // receiver index only when this world's actual recording policy admits the
+  // observer's ordinary moved account; default unconsumed prose does no query.
+  // The performer's own routine result needs no additional retained account.
+  if (phase === 'arrival' && world.cognitionPolicy.significantEventTypes.includes('moved')) {
+    if (
+      source &&
+      hasExternalAudience(
+        world,
+        source,
+        (observer) =>
+          observer.id !== actorId &&
+          observer.actor?.encounters?.pairs[actorId]?.otherLife ===
+            (source.actor?.physicalLife ?? 0) &&
+          baseEncounterParticipant(world, observer, actorId),
+      )
+    )
+      return false;
+  }
   if (phase === 'departure') return activity.status === 'running';
   if (
     activity.status === 'completed' &&

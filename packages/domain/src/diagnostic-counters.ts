@@ -185,6 +185,7 @@ export const DOMAIN_COUNTERS = [
   'observersSkipped',
   /** External-event receiver enumerations and the receivers they considered. */
   'audienceScans',
+  'audienceReceiverUpdates',
   'audienceCandidates',
   /** Recorded occurrences and awareness entries written for them. */
   'eventsRecorded',
