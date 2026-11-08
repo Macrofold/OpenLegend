@@ -192,6 +192,9 @@ impl TemporalScopes {
             .as_ref()
             .map_or((0, 0), TemporalAcquisition::pending_charge))
     }
+    pub(crate) fn prepared_frame(&self, actor: &str) -> Option<&ObservationFrame> {
+        self.scopes.get(actor)?.prepared.as_ref()?.prepared_frame()
+    }
     /// Source appendTemporalReceipt owns one None-sample transition unless an
     /// actual outer transition already exists. A larger actor acquisition alone
     /// does not share receipt order across independent append calls.

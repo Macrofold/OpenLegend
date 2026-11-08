@@ -24,7 +24,6 @@ pub(super) struct CurrentReceptionLifetime {
     frame_checked_ready: bool,
     frame_ref: Option<crate::received::ReceivedValueReference>,
     frame_changed: bool,
-    frame_recorded: bool,
     pub reconciled: bool,
     pub sample_token: Option<u64>,
     reservation: ByteReservation,
@@ -75,7 +74,6 @@ impl CurrentReceptionLifetime {
             frame_checked_ready: false,
             frame_ref: None,
             frame_changed: false,
-            frame_recorded: false,
             reconciled: false,
             sample_token,
             reservation,
@@ -254,6 +252,7 @@ impl CurrentReceptionLifetime {
     }
     pub(super) fn note_frame(
         &mut self,
+        core: &mut CoreMutation<'_>,
         reference: &crate::received::ReceivedValueReference,
         changed: bool,
     ) -> Result<(), ExecutionError> {
@@ -265,6 +264,9 @@ impl CurrentReceptionLifetime {
         )?;
         self.frame_ref = Some(reference.clone());
         self.frame_changed |= changed;
+        core.journal
+            .current
+            .note_frame_context(&self.observer.actor_id, self.frame_changed)?;
         Ok(())
     }
     pub(super) fn note_frame_checked<'a>(
@@ -300,27 +302,12 @@ impl CurrentReceptionLifetime {
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
-        if !self.frame_changed
-            || self.frame_recorded
-            || self.frame_ref.is_none()
-            || !self.measured.is_empty()
-        {
+        if !self.frame_changed || self.frame_ref.is_none() {
             return Ok(());
         }
         let Some(before) = &self.before else {
             return Ok(());
         };
-        if before.selection_changed(&core.state.reception) {
-            return Ok(());
-        }
-        for id in &self.checked {
-            if before.correspondence_changed(&core.state.reception, &core.state.experience, id)? {
-                return Ok(());
-            }
-        }
-        if !crate::received::ensure_temporal_actor(core, &self.observer.actor_id, budget)? {
-            return Ok(());
-        }
         let owner = core
             .state
             .reception
@@ -332,22 +319,57 @@ impl CurrentReceptionLifetime {
             .attention
             .as_ref()
             .map_or(&[][..], |a| a.entries.as_slice());
+        let count = entries
+            .len()
+            .checked_add(before.entry_entries().len())
+            .ok_or(ExecutionError::Capacity)?;
+        let track_bytes = before
+            .entry_entries()
+            .iter()
+            .chain(entries)
+            .try_fold(0usize, |bytes, entry| {
+                bytes.checked_add(entry.exposure.track.len())
+            })
+            .ok_or(ExecutionError::Capacity)?;
         self.reservation.resize(
             self.reservation
                 .bytes()
                 .checked_add(
-                    entries
-                        .len()
-                        .checked_mul(size_of::<&str>())
+                    count
+                        .checked_mul(size_of::<String>() + size_of::<&str>())
                         .ok_or(ExecutionError::Capacity)?,
                 )
+                .and_then(|bytes| {
+                    bytes.checked_add(map_storage::<&str, &crate::attention::AttentionEntry>(
+                        count,
+                    )?)
+                })
+                .and_then(|bytes| bytes.checked_add(track_bytes))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let now = core.state.physical.header.sim_time;
-        let mut tracks = Vec::with_capacity(entries.len());
-        for entry in entries {
+        let frame = received_observation_frame(
+            &core.state.reception.received_values.as_ref(),
+            self.frame_ref.as_ref().ok_or_else(invalid)?,
+        )?
+        .clone();
+        let mut candidates = indexmap::IndexMap::with_capacity(count);
+        for entry in before.entry_entries().iter().chain(entries) {
+            candidates.insert(entry.exposure.track.as_str(), entry);
+        }
+        let mut tracks = Vec::with_capacity(count);
+        for (track, entry) in candidates {
             if !self.checked.contains(&entry.source_id)
+                && !self.measured.contains(&entry.source_id)
                 && !self.frame_checked.contains(&entry.source_id)
+            {
+                continue;
+            }
+            if core
+                .journal
+                .current
+                .recorded_frame(&self.observer.actor_id, track)
+                == Some(&frame)
             {
                 continue;
             }
@@ -365,12 +387,19 @@ impl CurrentReceptionLifetime {
                     continue;
                 }
                 for partition in &group.metadata {
-                    if partition.availability.is_none()
-                        && effective_current_partition(owner, group, partition, false)?
-                            .times
-                            .expanded()
-                            .confirmed_through
-                            == now
+                    let effective = effective_current_partition(owner, group, partition, false)?;
+                    if effective.availability.is_some()
+                        || effective.times.expanded().confirmed_through != now
+                    {
+                        continue;
+                    }
+                    let Some(reference) = effective.frame_ref.as_ref() else {
+                        continue;
+                    };
+                    if received_observation_frame(
+                        &core.state.reception.received_values.as_ref(),
+                        reference,
+                    )? == &frame
                     {
                         held = true;
                         break;
@@ -381,20 +410,29 @@ impl CurrentReceptionLifetime {
                 }
             }
             if held {
-                tracks.push(entry.exposure.track.as_str());
+                tracks.push(entry.exposure.track.clone());
             }
         }
         if tracks.is_empty() {
             return Ok(());
         }
-        let frame = received_observation_frame(
-            &core.state.reception.received_values.as_ref(),
-            self.frame_ref.as_ref().ok_or_else(invalid)?,
-        )?
-        .clone();
+        // An empty contextual selection does not create a timeline or rotate
+        // its body-life epoch. Only an actual receipt needs that owner.
+        if !crate::received::ensure_temporal_actor(core, &self.observer.actor_id, budget)? {
+            return Ok(());
+        }
+        let owner = core
+            .state
+            .reception
+            .perception_evidence
+            .as_ref()
+            .and_then(|owners| owners.get(&self.observer.actor_id))
+            .ok_or_else(invalid)?;
+        let tracks: Vec<&str> = tracks.iter().map(String::as_str).collect();
         let policy = &core.state.installed.attention.value().retention;
         core.state.temporal.append_receiver_frame(
             &mut crate::received::CurrentRecordingContext {
+                current: &mut core.journal.current,
                 actor_id: &self.observer.actor_id,
                 owner,
                 values: core
@@ -416,7 +454,6 @@ impl CurrentReceptionLifetime {
             &tracks,
             &frame,
         )?;
-        self.frame_recorded = true;
         Ok(())
     }
     /// Source beforeSnapshot callback: finish THIS observer, flush its actual
@@ -479,7 +516,6 @@ impl CurrentReceptionLifetime {
         self.frame_checked_ready = false;
         self.frame_ref = None;
         self.frame_changed = false;
-        self.frame_recorded = false;
         Ok(())
     }
     pub(super) fn finish(

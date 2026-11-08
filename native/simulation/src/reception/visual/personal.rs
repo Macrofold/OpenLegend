@@ -195,7 +195,6 @@ impl PersonalVisualCursor {
                         reconcile_current_cohort(core, before, None, budget)?;
                     }
                     visual.current.reconciled = true;
-                    visual.current.record_receiver_frame(core, budget)?;
                     self.prepare_contacts(core, budget)?;
                     self.phase = Phase::Contacts;
                 }
@@ -415,7 +414,6 @@ impl PersonalVisualCursor {
                     ..Default::default()
                 },
             )?;
-            visual.current.record_receiver_frame(core, budget)?;
             if let Some(before) = visual.current.before.as_ref().map(Arc::clone) {
                 reconcile_current_cohort(core, before, None, budget)?;
             }
@@ -693,6 +691,7 @@ impl PersonalVisualCursor {
         let policy = &installed.attention.value().retention;
         let held = core.state.temporal.retain_current_support(
             &mut CurrentRecordingContext {
+                current: &mut core.journal.current,
                 actor_id: observer,
                 owner: current,
                 values: core

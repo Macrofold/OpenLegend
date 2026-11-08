@@ -167,6 +167,11 @@ pub struct TemporalAcquisition {
     terminals: IndexMap<String, IndexMap<String, Terminal>>,
     decisions: IndexMap<String, Option<TemporalReceiptLocator>>,
 }
+impl TemporalAcquisition {
+    pub(crate) fn prepared_frame(&self) -> Option<&ObservationFrame> {
+        self.frame.as_ref()
+    }
+}
 
 /// One actual receiving transition shares its reserved order across nested
 /// history calls. Its lifetime is separate from the larger acquisition batch.

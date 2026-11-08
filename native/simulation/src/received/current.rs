@@ -48,6 +48,7 @@ impl CurrentRecordingUpdates {
     }
 }
 pub(crate) struct CurrentRecordingContext<'a> {
+    pub current: &'a mut crate::reception::CurrentJournal,
     pub actor_id: &'a str,
     pub owner: &'a PerceptionEvidenceOwner,
     pub values: &'a mut ReceivedValues,
@@ -545,6 +546,13 @@ impl TemporalState {
                 let delta =
                     i64::try_from(i128::from(held) - i128::from(previous)).map_err(|_| error())?;
                 let epoch = actor.header().epoch.clone();
+                let capture_frame = context.current.wants_capture_frame(context.actor_id);
+                let _frame_subject = if capture_frame {
+                    Some(context.budget.reserve(subject.len())?)
+                } else {
+                    None
+                };
+                let frame_subject = capture_frame.then(|| subject.clone());
                 let locator = context.scopes.append_receipt(
                     self,
                     context.values,
@@ -587,6 +595,16 @@ impl TemporalState {
                     capture_policy,
                     context.maintenance_headroom,
                 )?;
+                if locator.is_some() {
+                    if let (Some(subject), Some(frame)) = (
+                        frame_subject.as_deref(),
+                        context.scopes.prepared_frame(context.actor_id),
+                    ) {
+                        context
+                            .current
+                            .note_captured_frame(context.actor_id, subject, frame)?;
+                    }
+                }
                 let actor = self.actor(context.actor_id).ok_or_else(error)?;
                 let (pending_bytes, pending_count) =
                     context.scopes.pending_charge(context.actor_id)?;

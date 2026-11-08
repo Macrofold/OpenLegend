@@ -221,6 +221,7 @@ pub(super) fn close_unchecked_coverage(
         let policy = &core.state.installed.attention.value().retention;
         let updates = core.state.temporal.close_current_group(
             &mut CurrentRecordingContext {
+                current: &mut core.journal.current,
                 actor_id: observer,
                 owner: current,
                 values: core
@@ -281,6 +282,7 @@ pub(super) fn close_current_member_history(
         let policy = &core.state.installed.attention.value().retention;
         let updates = core.state.temporal.close_current_group(
             &mut CurrentRecordingContext {
+                current: &mut core.journal.current,
                 actor_id: observer,
                 owner,
                 values: core
@@ -386,6 +388,7 @@ pub(super) fn record_current_reception(
     let policy = &core.state.installed.attention.value().retention;
     let updates = core.state.temporal.capture_current(
         &mut CurrentRecordingContext {
+            current: &mut core.journal.current,
             actor_id: observer,
             owner,
             values: core
@@ -543,6 +546,7 @@ pub(super) fn repair_current_recordings(
     let policy = &core.state.installed.attention.value().retention;
     let updates = core.state.temporal.capture_current(
         &mut CurrentRecordingContext {
+            current: &mut core.journal.current,
             actor_id: observer,
             owner: current,
             values: core

@@ -10,6 +10,7 @@ use indexmap::{IndexMap, IndexSet};
 use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
+mod frames;
 mod metadata;
 mod save;
 
@@ -76,6 +77,15 @@ enum CurrentUndo {
         observer: Arc<str>,
         subject: Arc<str>,
     },
+    BatchFrameContext {
+        observer: Arc<str>,
+        before: Option<bool>,
+    },
+    CapturedFrame {
+        observer: Arc<str>,
+        track: Arc<str>,
+        before: Option<ObservationFrame>,
+    },
     Contact {
         observer: String,
         subject: String,
@@ -106,6 +116,8 @@ enum CurrentUndo {
 struct CurrentBatch {
     token: Arc<()>,
     subjects: IndexSet<Arc<str>>,
+    frame_changed: Option<bool>,
+    recorded_frames: IndexMap<Arc<str>, ObservationFrame>,
 }
 /// A borrowed caller cannot seal its receiver's prefix. The token names only
 /// this actual in-memory batch; it is neither a saved ID nor another contact map.
@@ -286,6 +298,8 @@ impl CurrentJournal {
             CurrentBatch {
                 token: token.clone(),
                 subjects: IndexSet::new(),
+                frame_changed: None,
+                recorded_frames: IndexMap::new(),
             },
         );
         Ok(CurrentContactBatchLease {
@@ -580,6 +594,28 @@ impl CurrentJournal {
                         .ok_or_else(invalid)?
                         .subjects
                         .shift_remove(subject.as_ref());
+                }
+                CurrentUndo::BatchFrameContext { observer, before } => {
+                    self.batches
+                        .get_mut(observer.as_ref())
+                        .ok_or_else(invalid)?
+                        .frame_changed = before;
+                }
+                CurrentUndo::CapturedFrame {
+                    observer,
+                    track,
+                    before,
+                } => {
+                    let frames = &mut self
+                        .batches
+                        .get_mut(observer.as_ref())
+                        .ok_or_else(invalid)?
+                        .recorded_frames;
+                    if let Some(before) = before {
+                        frames.insert(track, before);
+                    } else {
+                        frames.shift_remove(track.as_ref());
+                    }
                 }
                 CurrentUndo::Contact {
                     observer,

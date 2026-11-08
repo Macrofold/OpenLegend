@@ -283,7 +283,7 @@ fn begin_visual(
         None => CurrentReceptionLifetime::begin(core, sight.observer(), None, None, budget)?,
     };
     current.ensure_prefix(core, budget)?;
-    current.note_frame(&retained.reference, frame_changed)?;
+    current.note_frame(core, &retained.reference, frame_changed)?;
     Ok(VisualReception {
         observer: sight.observer().clone(),
         channel,
