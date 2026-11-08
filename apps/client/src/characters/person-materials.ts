@@ -260,6 +260,10 @@ export class PersonMaterials {
     material.metalness = source.metallic;
     material.gloss = 1 - source.roughness;
     material.opacity = source.baseColor[3];
+    material.alphaTest = source.alphaCutoff ?? 0;
+    material.opacityMapChannel = 'a';
+    material.twoSidedLighting = source.doubleSided ?? false;
+    material.cull = source.doubleSided ? pc.CULLFACE_NONE : pc.CULLFACE_BACK;
     setVisibilityStencil(material, personStencil);
     const tint = new Float32Array(source.baseColor);
     const age = new Float32Array([0, 0]);
@@ -373,14 +377,21 @@ export class PersonMaterials {
     this.cancelPreparation();
     const request: MaterialRequest = { key, leases: new Map(), recipe, commit };
     this.pending = request;
+    // Coverage can share an age-paint image. Keep one lease per distinct map
+    // used by a material, rather than acquiring it again for another channel.
+    const gathered = new Map<string, Promise<pc.Texture>>();
     const take = (
       source: PersonTexture | undefined,
       id: string,
       linearData = false,
     ): Promise<pc.Texture | undefined> => {
       if (!source) return Promise.resolve(undefined);
+      const key = JSON.stringify([id, artifactReferenceKey(source.reference), linearData]);
+      const existing = gathered.get(key);
+      if (existing) return existing;
       const lease = this.textures.acquire(source, linearData);
       requiredPersonValue(request.leases.get(id), id).push(lease);
+      gathered.set(key, lease.ready);
       return lease.ready;
     };
     const ready = (async () => {
@@ -388,6 +399,7 @@ export class PersonMaterials {
         const loaded = await Promise.all(
           [...finishes].map(async ([id, finish]) => {
             request.leases.set(id, []);
+            const source = requiredPersonValue(this.family.materials[id], id);
             return {
               id,
               maps: await Promise.all([
@@ -395,7 +407,8 @@ export class PersonMaterials {
                 take(finish.upperColor, id),
                 take(finish.lowerNormal, id, true),
                 take(finish.upperNormal, id, true),
-                take(requiredPersonValue(this.family.materials[id], id).tintMask, id, true),
+                take(source.tintMask, id, true),
+                take(source.alphaCutoff === undefined ? undefined : source.colorTexture, id),
               ]),
             };
           }),
@@ -411,11 +424,12 @@ export class PersonMaterials {
         this.invalidate(changed);
         for (const {
           id,
-          maps: [color, upperColor, normal, upperNormal, tintMask],
+          maps: [color, upperColor, normal, upperNormal, tintMask, coverage],
         } of loaded) {
           const material = (this.values.get(id) ?? this.create(id)).material;
           material.diffuseMap = color ?? null;
           material.normalMap = normal ?? null;
+          material.opacityMap = coverage ?? null;
           const ageColor = upperColor ?? color;
           const ageNormal = upperNormal ?? normal;
           if (ageColor) material.setParameter('ol_personAgeColor', ageColor);

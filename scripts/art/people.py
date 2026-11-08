@@ -358,6 +358,13 @@ def load_family(path):
         master = source_file(root, document['master'])
         if family['reference'] != document['reference']:
             raise PeopleError('missing-source', 'family', 'Compiled family and manifest references differ.')
+        for material_id, material in family['materials'].items():
+            if 'alphaCutoff' in material:
+                cutoff = material['alphaCutoff']
+                if isinstance(cutoff, bool) or not isinstance(cutoff, (int, float)) or not math.isfinite(cutoff) or not 0 <= cutoff <= 1:
+                    raise PeopleError('missing-source', material_id, 'Alpha cutoff must be between zero and one.')
+            if 'doubleSided' in material and type(material['doubleSided']) is not bool:
+                raise PeopleError('missing-source', material_id, 'Double-sided material must be true or false.')
         meshes = family['meshes']
         if not isinstance(meshes, dict):
             raise PeopleError('missing-source', 'meshes', 'Expected a canonical mesh table.')
@@ -1078,7 +1085,7 @@ def _fit_motion_states(family, evaluated, art_helpers, states):
 
 
 def bake_materials(package, recipe, output, material_ids):
-    """Bake selected age/pigment once; opaque runtime materials use existing PBR."""
+    """Bake selected age/pigment once through the shared opaque/cutout PBR contract."""
     import bpy
     output = external_output(output); output.mkdir(parents=True, exist_ok=True)
     family = package['compiled']; textures = package['manifest'].get('textures', {})
@@ -1116,6 +1123,23 @@ def bake_materials(package, recipe, output, material_ids):
         image.pixels.foreach_set(np.asarray(values, dtype=np.float32).reshape(-1));image.update()
         image.filepath_raw = str(output/f'{material_id}-{role}.png'); image.file_format = 'PNG'; image.save(); image.pack()
         return image
+    def resized_pixels(texture, size, color=False):
+        original_size, values = texture
+        if original_size == size:return values
+        # Filter colour in linear space and keep alpha independent, like the
+        # runtime's separate colour/coverage texture samples.
+        if color:
+            values = values.copy();values[:, :3] = linear(values[:, :3])
+        image = bpy.data.images.new('Person coverage resample', width=original_size[0], height=original_size[1], alpha=True, float_buffer=True)
+        try:
+            image.colorspace_settings.name = 'Non-Color'
+            image.alpha_mode = 'CHANNEL_PACKED'
+            image.pixels.foreach_set(values.reshape(-1));image.update();image.scale(*size)
+            scaled = np.empty(size[0]*size[1]*4, dtype=np.float32);image.pixels.foreach_get(scaled)
+            scaled = scaled.reshape(-1, 4)
+            if color:scaled[:, :3] = srgb(scaled[:, :3])
+            return scaled
+        finally:bpy.data.images.remove(image)
     for material_id in dict.fromkeys(material_ids):
         definition = family['materials'][material_id]
         tint = np.asarray(definition['baseColor'], dtype=float)
@@ -1127,6 +1151,7 @@ def bake_materials(package, recipe, output, material_ids):
             value = (recipe['controls'][blend['control']]-low)/(high-low) if high > low else 0
             tint = (1-value)*tint+value*np.asarray(blend['color'])
         color = read_texture(definition['colorTexture']) if definition.get('colorTexture') else None
+        coverage = color if 'alphaCutoff' in definition else None
         normal = read_texture(definition['normalTexture']) if definition.get('normalTexture') else None
         if definition.get('ageMaps'):
             a,b,t = age_interval(definition['ageMaps'], age); first, second = (definition['ageMaps'][year_key(year)] for year in [a,b])
@@ -1137,17 +1162,41 @@ def bake_materials(package, recipe, output, material_ids):
             elif first_normal or second_normal:
                 raise PeopleError('missing-source', material_id, 'Both age endpoints require the same normal-map role.')
         mat = bpy.data.materials.new(material_id); mat.use_nodes = True; nodes = mat.node_tree.nodes; links = mat.node_tree.links
+        mat.use_backface_culling = not definition.get('doubleSided', False)
         bs = nodes.get('Principled BSDF'); bs.inputs['Roughness'].default_value = definition['roughness']; bs.inputs['Metallic'].default_value = definition['metallic']
+        color_node = None
         if color:
-            size, data = color; data = data.copy(); mask = np.ones((len(data), 1))
+            size, data = color; pigment = None
             if definition.get('tintMask'):
                 mask_size, mask_data = read_texture(definition['tintMask'])
                 if mask_size != size:raise PeopleError('missing-source', material_id, 'The pigment mask must match its colour atlas.')
-                mask = mask_data[:, :1]
+                pigment = (mask_size, mask_data)
+            if coverage:
+                # Preserve thin cutouts: lowering coverage resolution to an age
+                # paint's size can erase lashes before the cutoff is applied.
+                size = tuple(max(a, b) for a, b in zip(size, coverage[0]))
+                data = resized_pixels(color, size, color=True)
+            data = data.copy()
+            mask = resized_pixels(pigment, size)[:, :1] if pigment else np.ones((len(data), 1))
             factor = np.asarray(definition['baseColor'][:3])*(1-mask)+mask*tint[:3]
             data[:, :3] = srgb(linear(data[:, :3])*factor)
-            tex = nodes.new('ShaderNodeTexImage');tex.image = save_image(material_id, 'color', size, data);links.new(tex.outputs['Color'], bs.inputs['Base Color'])
+            if 'alphaCutoff' in definition:
+                # Age and palette choices repaint RGB; coverage always comes from
+                # the base atlas, matching the live material's opacity map.
+                data[:, 3] = resized_pixels(coverage, size)[:, 3] if coverage else 1
+            color_node = nodes.new('ShaderNodeTexImage');color_node.image = save_image(material_id, 'color', size, data);links.new(color_node.outputs['Color'], bs.inputs['Base Color'])
         else:bs.inputs['Base Color'].default_value = tint
+        if 'alphaCutoff' in definition:
+            alpha = nodes.new('ShaderNodeMath');alpha.operation = 'MULTIPLY'
+            alpha.inputs[0].default_value = definition['baseColor'][3];alpha.inputs[1].default_value = 1
+            if color_node:links.new(color_node.outputs['Alpha'], alpha.inputs[1])
+            # Blender 5.2's glTF exporter recognizes 1 - (alpha < cutoff) as
+            # MASK, retaining equality and the factor/texture alpha underneath.
+            # docs/projects/people-from-parts-authoring-contract.md#skin-age-and-material-production
+            below = nodes.new('ShaderNodeMath');below.operation = 'LESS_THAN';below.inputs[1].default_value = definition['alphaCutoff']
+            links.new(alpha.outputs[0], below.inputs[0])
+            keep = nodes.new('ShaderNodeMath');keep.operation = 'SUBTRACT';keep.inputs[0].default_value = 1
+            links.new(below.outputs[0], keep.inputs[1]);links.new(keep.outputs[0], bs.inputs['Alpha'])
         if normal:
             size,data = normal;tex=nodes.new('ShaderNodeTexImage');tex.image=save_image(material_id,'normal',size,data,True)
             node=nodes.new('ShaderNodeNormalMap');links.new(tex.outputs['Color'],node.inputs['Color']);links.new(node.outputs['Normal'],bs.inputs['Normal'])
