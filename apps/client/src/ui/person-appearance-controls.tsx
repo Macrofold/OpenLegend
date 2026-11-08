@@ -170,9 +170,11 @@ export function PersonAppearanceControls({
   selected,
   select,
   disabled = false,
+  visibleControls,
 }: {
   family: AppearanceFamilyDefinition;
   draft: PersonAppearanceDraft;
+  visibleControls?: readonly string[];
   selected?: string;
   select(id: string): void;
   disabled?: boolean;
@@ -205,9 +207,14 @@ export function PersonAppearanceControls({
         </p>
       )}
       {family.groups.map((group, index) => {
-        const controls = family.controls.filter((control) => control.group === group.id);
+        const controls = family.controls.filter(
+          (control) =>
+            control.group === group.id &&
+            (!visibleControls || visibleControls.includes(control.id)),
+        );
         const selections = family.selections.filter((selection) => selection.group === group.id);
         const presets = family.presets.filter((preset) => preset.group === group.id);
+        if (!controls.length && !selections.length && !presets.length) return null;
         const selectedPreset = presets.find(
           (preset) =>
             Object.entries(preset.controls).every(

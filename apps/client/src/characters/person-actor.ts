@@ -308,6 +308,16 @@ export class PersonActor {
   get availableMotions(): readonly string[] {
     return this.family?.motion?.clips.map((clip) => clip.name) ?? [];
   }
+  get availableStrides(): readonly Stride[] {
+    return this.fittedMotion
+      .flatMap((clip) =>
+        clip.groundSpeed === undefined ||
+        !this.family?.motion?.clips.some((source) => source.name === clip.name && source.stride)
+          ? []
+          : [{ name: clip.name, groundSpeed: clip.groundSpeed, seconds: clip.duration }],
+      )
+      .sort((a, b) => a.groundSpeed - b.groundSpeed);
+  }
   get source(): CompiledPersonFamily | undefined {
     return this.family;
   }
@@ -610,14 +620,7 @@ export class PersonActor {
     this.contact?.destroy();
     this.contact = evaluated.source.motion?.legs.length ? new PersonContact(evaluated) : undefined;
     if (!this.environment.preview) {
-      const strides = this.fittedMotion
-        .flatMap((clip) =>
-          clip.groundSpeed === undefined ||
-          !this.family?.motion?.clips.some((source) => source.name === clip.name && source.stride)
-            ? []
-            : [{ name: clip.name, groundSpeed: clip.groundSpeed, seconds: clip.duration }],
-        )
-        .sort((a, b) => a.groundSpeed - b.groundSpeed);
+      const strides = this.availableStrides;
       if (strides.length && this.tracks.some((track) => track.name === 'Idle'))
         this.installMotion(this.tracks, strides);
     }

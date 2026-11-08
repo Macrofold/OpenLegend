@@ -56,12 +56,14 @@ export function PersonAppearanceEditor({
   parts,
   disabled = false,
   onPreview,
+  visibleControls,
 }: {
   family: AppearanceFamilyDefinition;
   draft: PersonAppearanceDraft;
   parts: readonly string[];
   disabled?: boolean;
   onPreview(value: AppearancePreviewValidity): void;
+  visibleControls?: readonly string[];
 }) {
   const id = useId();
   const snapshot = useSyncExternalStore(draft.subscribe, draft.getSnapshot);
@@ -431,6 +433,7 @@ export function PersonAppearanceEditor({
         )}
       </div>
       <PersonAppearanceControls
+        visibleControls={visibleControls}
         family={family}
         draft={draft}
         selected={selected}

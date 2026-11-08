@@ -24,7 +24,7 @@ export interface AssetWorkServer {
   port: number;
   close(): Promise<void>;
 }
-const pages = new Set(['/', '/art-study.html', '/scene-study.html']);
+const pages = new Set(['/', '/art-study.html', '/scene-study.html', '/people-study.html']);
 const allowedBoundaries = new Set(['runtime', 'art-studies', 'art-library']);
 const codeExtension = /\.(?:[cm]?[jt]sx?|css|map|wasm)$/i;
 const jsonModules = new Set([
@@ -80,7 +80,7 @@ export async function serveAssetWork(options: AssetWorkServerOptions): Promise<A
     throw new Error('Choose a loopback port from 0 through 65535.');
   if (!pages.has(options.page))
     throw new Error(
-      'The operator viewer supports /art-study.html, /scene-study.html or /. Historical pages require a separately registered, verified viewer.',
+      'The operator viewer supports /art-study.html, /scene-study.html, /people-study.html or /. Historical pages require a separately registered, verified viewer.',
     );
   const configuration = await readAssetConfiguration(options.configPath);
   const identity = new S3AssetStorage(configuration);

@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native geometry exports survive Blender intake; source quality, portable materials, reduced rigs and browser qualification remain open. | 2026-11-07   |
+| Status      | Current progress                                                                                    | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Both foundations export and compile; live creation, modular clothing and motion remain unqualified. | 2026-11-08   |
 
 ## 1. Experiment and dependency boundary
 
@@ -32,7 +32,7 @@ Use these narrow authoring/study seams; unfinished responsibilities remain targe
 
 1. **[MetaHuman study exporter](../../scripts/art/metahuman-study-export.py)**, running inside the isolated Unreal project: duplicate a hash-pinned saved neutral for each explicitly supplied sample, commit ordered body constraints/paired face-landmark edits and export separate head/body FBXs with all native LODs and an incremental manifest. Its module documentation owns the plan format and invocation. A real neutral export passes; endpoint/correspondence qualification remains open. This is authoring code, never a game dependency.
 2. **Foundation intake adapter**, `scripts/art/metahuman-study.py`, running in Blender: normalize imported samples, retain correspondence and prepare the existing master/descriptor format. Delegate compilation to `people.compile_family(master, descriptor, output, reference)` and reuse its geometry/UV/weight handling; do not write another compiler, recipe schema or deformation engine.
-3. **Thin developer-study entry**, only if the existing study cannot host the family: connect its supplied `AppearanceFamilyDefinition`, `AppearanceRecipe` and `PersonAppearance` to the existing controls and `PersonPreviewRenderer`. A comparison layout can create multiple actors in one existing `PersonActors` owner. Study selection stays development-only; do not add MetaHuman branches to generic actor code or change the ordinary world.
+3. **Private developer-study entry**, `apps/client/people-study.html`: two repeated `family` query parameters select existing `AppearanceFamilyDefinition` files through the exact release/current-permission asset reader; repeated optional `part` parameters select the shared outfit IDs. The first family supplies three authored review presets, the second one. The existing appearance editor/draft supplies continuous editing, reset and recipe files; the comparison consumes the same four drafts through one `PersonActors` owner. Its movement choices call the actual game actor, including gait transitions/contact, rather than the single-clip preview path. Editor/comparison share one camera/light/floor setup; only the visible mode owns an application. Fixed study fields stay in recipe validation but are hidden from control selection. Implementation exists; actual-source browser/lifecycle qualification remains open. No MetaHuman branch enters generic actor logic or the ordinary world.
 
 A source adapter may contain MetaHuman bone/material names and export conventions. Engine consumers receive ordinary family data and part definitions. The study's physique ranges, names and recipes are authored study content; future base-world installation would place selections in the existing world owner. Geometry sliders do not change gameplay strength, cognition, identity or permissions in this POC.
 

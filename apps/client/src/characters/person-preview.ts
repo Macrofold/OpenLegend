@@ -1,7 +1,6 @@
 import * as pc from 'playcanvas';
 import type { AppearanceRecipe } from '@open-legend/protocol';
-import { ArtMaterials, candidateArt } from '../art-treatment';
-import { destroyModelApplication } from '../bundled-models';
+import { createPersonStage } from './person-stage';
 import { currentCameraProjection } from '../camera-projection';
 import type { PersonPreview, PersonPreviewState, PersonPreviewView } from '../world-renderer';
 import { PersonActors, type PersonActor, type PersonAppearance } from './person-actor';
@@ -14,10 +13,9 @@ export class PersonPreviewRenderer implements PersonPreview {
   private readonly owner: PersonActors;
   private readonly actor: PersonActor;
   private readonly camera: pc.Entity;
-  private readonly frame: pc.CameraFrame;
+  private readonly stage: ReturnType<typeof createPersonStage>;
   private readonly cameraComponent: pc.CameraComponent;
   private readonly observer: ResizeObserver;
-  private readonly floorMaterial: pc.StandardMaterial;
   private pending?: { recipe: AppearanceRecipe; parts: readonly string[]; editing: boolean };
   private appearance: PersonAppearance;
   private view: PersonPreviewView = 'front';
@@ -35,63 +33,11 @@ export class PersonPreviewRenderer implements PersonPreview {
     private readonly changed: (state: PersonPreviewState) => void,
   ) {
     this.appearance = appearance;
-    this.app = new pc.Application(canvas, {
-      graphicsDeviceOptions: { antialias: true, alpha: false },
-    });
-    this.app.graphicsDevice.maxPixelRatio = 1;
-    this.app.autoRender = false;
-    this.app.scene.ambientLight = new pc.Color(0.32, 0.35, 0.37);
-    this.camera = new pc.Entity('Appearance camera', this.app);
-    this.camera.addComponent('camera', {
-      projection: pc.PROJECTION_ORTHOGRAPHIC,
-      clearColor: new pc.Color(0.12, 0.18, 0.16),
-      nearClip: 0.01,
-      farClip: 40,
-    });
-    this.app.root.addChild(this.camera);
-    const camera = this.camera.camera;
-    if (!camera) throw new Error('Appearance camera could not be prepared.');
-    this.cameraComponent = camera;
-    this.frame = new pc.CameraFrame(this.app, camera);
-    this.frame.rendering.toneMapping = pc.TONEMAP_ACES;
-    this.frame.rendering.samples = 4;
-    this.frame.update();
-    const sun = new pc.Entity('Appearance daylight', this.app);
-    sun.addComponent('light', {
-      type: 'directional',
-      color: new pc.Color(1, 0.97, 0.88),
-      intensity: 1.45,
-      castShadows: true,
-      shadowType: pc.SHADOW_PCF3,
-      shadowResolution: 1024,
-      shadowDistance: 12,
-      normalOffsetBias: 0.02,
-    });
-    sun.setEulerAngles(42, -28, 0);
-    this.app.root.addChild(sun);
-    const fill = new pc.Entity('Appearance sky fill', this.app);
-    fill.addComponent('light', {
-      type: 'directional',
-      color: new pc.Color(0.68, 0.79, 1),
-      intensity: 0.5,
-    });
-    fill.setEulerAngles(25, 140, 0);
-    this.app.root.addChild(fill);
-    const art = new ArtMaterials(this.app.graphicsDevice);
-    art.update(candidateArt);
-    this.floorMaterial = new pc.StandardMaterial();
-    this.floorMaterial.diffuse = new pc.Color(0.19, 0.22, 0.18);
-    this.floorMaterial.gloss = 0;
-    this.floorMaterial.update();
-    const floor = new pc.Entity('Appearance ground', this.app);
-    floor.addComponent('render', {
-      type: 'plane',
-      material: this.floorMaterial,
-      castShadows: false,
-    });
-    floor.setLocalScale(20, 1, 20);
-    floor.setLocalPosition(0, -0.005, 0);
-    this.app.root.addChild(floor);
+    this.stage = createPersonStage(canvas);
+    const { app, camera, cameraComponent, sun, art } = this.stage;
+    this.app = app;
+    this.camera = camera;
+    this.cameraComponent = cameraComponent;
     this.owner = new PersonActors({
       app: this.app,
       camera: this.camera,
@@ -263,8 +209,6 @@ export class PersonPreviewRenderer implements PersonPreview {
     this.observer.disconnect();
     this.app.off('update', this.update, this);
     this.owner.destroy();
-    this.frame.destroy();
-    this.floorMaterial.destroy();
-    destroyModelApplication(this.app, []);
+    this.stage.destroy();
   }
 }
