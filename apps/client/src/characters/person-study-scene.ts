@@ -10,6 +10,30 @@ const studyCue = { heading: 0, action: null };
 const wearerSpacing = 1.8;
 const referenceHeight = 1.8;
 
+interface EditSample {
+  wearer: number;
+  inputAt: number;
+  queuedAt: number;
+  callCpuMs: number;
+  committedSynchronously: boolean;
+  editing: boolean;
+  recipe: PersonAppearance['recipe'];
+}
+
+interface EditCapture {
+  startedAt: number;
+  latestInput?: number;
+  requested: number;
+  superseded: number;
+  notCommitted: number;
+  dropped: number;
+  invalidInputTimestamps: number;
+  inFlight: number;
+  hidden: boolean;
+  samples: Array<EditSample & { inputToSubmissionMs: number }>;
+  awaitingRender: Map<number, EditSample>;
+}
+
 export type PersonStudyMovement = 'idle' | 'walk' | 'run' | 'transitions';
 export type PersonStudyView = 'front' | 'quarter' | 'left' | 'right' | 'back' | 'game';
 
@@ -29,9 +53,19 @@ export class PersonStudyScene {
   };
   private captureChanges = 0;
   private hiddenDuringCapture = false;
+  private editCapture?: EditCapture;
   private readonly parents: pc.Entity[] = [];
   private speeds: readonly { walk: number; run: number }[] = [];
-  private readonly pending = new Map<number, { appearance: PersonAppearance; editing: boolean }>();
+  private readonly pending = new Map<
+    number,
+    {
+      appearance: PersonAppearance;
+      editing: boolean;
+      inputAt?: number;
+      queuedAt?: number;
+      capture?: EditCapture;
+    }
+  >();
   private readonly editing = new Set<number>();
   private movement: PersonStudyMovement = 'idle';
   private view: PersonStudyView = 'front';
@@ -120,11 +154,40 @@ export class PersonStudyScene {
     const started = this.profiler?.begin();
     for (const [index, pending] of this.pending) {
       this.pending.delete(index);
-      void this.actors[index]
-        ?.setAppearance(pending.appearance, undefined, pending.editing)
-        .then(() => {
-          if (!this.disposed) this.changed();
-        });
+      const actor = this.actors[index];
+      if (!actor) continue;
+      const capture = pending.capture === this.editCapture ? this.editCapture : undefined;
+      const started = capture && pending.inputAt !== undefined ? performance.now() : undefined;
+      const previous = started === undefined ? undefined : actor.evaluation;
+      const ready = actor.setAppearance(pending.appearance, undefined, pending.editing);
+      const sample: EditSample | undefined =
+        started === undefined || pending.inputAt === undefined || pending.queuedAt === undefined
+          ? undefined
+          : {
+              wearer: index,
+              inputAt: pending.inputAt,
+              queuedAt: pending.queuedAt,
+              callCpuMs: performance.now() - started,
+              // Warm unchanged maps commit evaluation, fitting and draw synchronously
+              // inside PersonMaterials.prepare. Async map changes are reported separately.
+              committedSynchronously:
+                actor.evaluation !== previous &&
+                actor.evaluation?.recipe === pending.appearance.recipe,
+              editing: pending.editing,
+              recipe: pending.appearance.recipe,
+            };
+      if (capture && sample?.committedSynchronously) this.awaitRender(capture, sample);
+      if (capture && sample && !sample.committedSynchronously) capture.inFlight++;
+      void ready.then((accepted) => {
+        if (capture && sample && !sample.committedSynchronously) {
+          capture.inFlight--;
+          if (this.editCapture === capture) {
+            if (accepted) this.awaitRender(capture, sample);
+            else capture.notCommitted++;
+          }
+        }
+        if (!this.disposed) this.changed();
+      });
     }
     if (this.paused) {
       this.profiler?.update(started);
@@ -166,11 +229,83 @@ export class PersonStudyScene {
   private recordFrame(): void {
     if (this.profiler?.isRecording() && document.visibilityState === 'visible')
       this.profiler.renderedFrame(performance.now());
+    const capture = this.editCapture;
+    if (!capture || document.visibilityState !== 'visible' || !capture.awaitingRender.size) return;
+    const at = performance.now();
+    for (const sample of capture.awaitingRender.values()) {
+      if (this.actors[sample.wearer]?.evaluation?.recipe !== sample.recipe) capture.superseded++;
+      else if (capture.samples.length === 1024) capture.dropped++;
+      else capture.samples.push({ ...sample, inputToSubmissionMs: at - sample.inputAt });
+    }
+    capture.awaitingRender.clear();
+  }
+
+  private awaitRender(capture: EditCapture, sample: EditSample): void {
+    if (capture.awaitingRender.has(sample.wearer)) capture.superseded++;
+    capture.awaitingRender.set(sample.wearer, sample);
+  }
+
+  startEditCapture(): void {
+    if (!this.profiler || this.disposed || this.editCapture) return;
+    this.editCapture = {
+      startedAt: performance.now(),
+      requested: 0,
+      superseded: 0,
+      notCommitted: 0,
+      dropped: 0,
+      invalidInputTimestamps: 0,
+      inFlight: 0,
+      hidden: document.visibilityState !== 'visible',
+      samples: [],
+      awaitingRender: new Map(),
+    };
+  }
+
+  recordInput(at: number): void {
+    if (!this.editCapture) return;
+    if (Number.isFinite(at) && at >= this.editCapture.startedAt && at <= performance.now())
+      this.editCapture.latestInput = at;
+    else {
+      this.editCapture.latestInput = undefined;
+      this.editCapture.invalidInputTimestamps++;
+    }
+  }
+
+  stopEditCapture() {
+    const capture = this.editCapture;
+    if (!capture) return;
+    this.editCapture = undefined;
+    const unrendered =
+      capture.awaitingRender.size +
+      capture.inFlight +
+      [...this.pending.values()].filter((pending) => pending.capture === capture).length;
+    const samples = capture.samples;
+    capture.samples = [];
+    capture.awaitingRender.clear();
+    return {
+      startedAt: capture.startedAt,
+      stoppedAt: performance.now(),
+      configuration: this.configuration(),
+      framebuffer: this.framebuffer(),
+      requested: capture.requested,
+      superseded: capture.superseded,
+      notCommitted: capture.notCommitted,
+      dropped: capture.dropped,
+      unrendered,
+      invalidInputTimestamps: capture.invalidInputTimestamps,
+      hiddenDuringCapture: capture.hidden,
+      samples,
+      resources: this.diagnostics(),
+      browser: navigator.userAgent,
+      timingScope:
+        'Event timestamp to render submission, not physical display latency. callCpuMs covers the complete preparation/install only when committedSynchronously is true; async material waits are not CPU samples.',
+    };
   }
 
   private readonly recordVisibility = (): void => {
     if (this.captureStart && document.visibilityState !== 'visible')
       this.hiddenDuringCapture = true;
+    if (this.editCapture && document.visibilityState !== 'visible') this.editCapture.hidden = true;
   };
 
   private configuration() {
@@ -282,7 +417,20 @@ export class PersonStudyScene {
       if (this.captureStart) this.captureChanges++;
       if (editing) this.editing.add(index);
       else this.editing.delete(index);
-      this.pending.set(index, { appearance, editing });
+      const capture = this.editCapture;
+      const inputAt = capture?.latestInput;
+      if (capture && this.pending.get(index)?.capture === capture) capture.superseded++;
+      if (capture && inputAt !== undefined) {
+        capture.requested++;
+        capture.latestInput = undefined;
+      }
+      this.pending.set(index, {
+        appearance,
+        editing,
+        inputAt,
+        queuedAt: inputAt === undefined ? undefined : performance.now(),
+        capture: inputAt === undefined ? undefined : capture,
+      });
     }
   }
   setView(view: PersonStudyView): void {
@@ -309,10 +457,13 @@ export class PersonStudyScene {
       })),
     };
   }
-  destroy(): void {
+  destroy() {
     if (this.disposed) return;
+    const before = this.profiler ? this.diagnostics() : undefined;
+    if (this.editCapture) this.stopEditCapture();
     this.disposed = true;
     this.captureStart = undefined;
+    this.editCapture = undefined;
     this.pending.clear();
     this.observer.disconnect();
     this.stage.app.off('update', this.update, this);
@@ -327,5 +478,12 @@ export class PersonStudyScene {
     this.reference.destroy();
     this.referenceMaterial.destroy();
     this.stage.destroy();
+    if (before)
+      return {
+        before,
+        after: this.diagnostics(),
+        // Browser/driver memory is not measured by these owned-resource counters.
+        memoryScope: 'Character owner, textures and mesh buffers; GPU heap unavailable.',
+      };
   }
 }

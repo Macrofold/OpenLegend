@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
 import { validateAppearanceFamily } from '@open-legend/domain/appearance';
 import { resolveAppearanceRecipe, type AppearanceFamilyDefinition } from '@open-legend/protocol';
@@ -26,6 +26,8 @@ interface StudyWearer {
   draft: PersonAppearanceDraft;
 }
 
+type LifetimeReport = NonNullable<ReturnType<PersonStudyScene['destroy']>>;
+
 // Four explicit family/preset pairs choose the review wearers. Repeated family
 // paths share one definition read; the same scene can compare baked references
 // without introducing a separate actor. Exact release/permission reads still own access.
@@ -51,26 +53,33 @@ function Comparison({
   wearers,
   selected,
   dressed,
+  onDestroyed,
 }: {
   wearers: readonly StudyWearer[];
   selected: number;
   dressed: boolean;
+  onDestroyed(report: LifetimeReport): void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<PersonStudyScene | undefined>(undefined);
   const [status, setStatus] = useState('Preparing comparison…');
   const [canMove, setCanMove] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [capturingEdits, setCapturingEdits] = useState(false);
   const [movement, setMovement] = useState<PersonStudyMovement>('idle');
   const [paused, setPaused] = useState(true);
   const [view, setView] = useState<PersonStudyView>('front');
   const [control, setControl] = useState<string>();
   const wearer = wearers[selected]!;
   const snapshot = useSyncExternalStore(wearer.draft.subscribe, wearer.draft.getSnapshot);
+  const recordInput = profiling
+    ? (event: { timeStamp: number }) => renderer.current?.recordInput(event.timeStamp)
+    : undefined;
   useEffect(() => {
     if (!canvas.current) return;
     setCanMove(false);
     setCapturing(false);
+    setCapturingEdits(false);
     setStatus('Preparing comparison…');
     const scene = new PersonStudyScene(
       canvas.current,
@@ -102,10 +111,11 @@ function Comparison({
     renderer.current = scene;
     return () => {
       renderer.current = undefined;
-      scene.destroy();
+      const report = scene.destroy();
+      if (report) onDestroyed(report);
     };
     // Other controls update the existing actors; only a new input kit replaces the scene.
-  }, [wearers]);
+  }, [wearers, onDestroyed]);
   useEffect(() => {
     renderer.current?.setAppearance(selected, appearance(wearer, dressed), snapshot.editing);
   }, [selected, wearer, dressed, snapshot.recipe, snapshot.editing]);
@@ -169,13 +179,34 @@ function Comparison({
           <>
             <Button
               variant="quiet"
-              disabled={!canMove || paused || capturing}
+              disabled={!canMove || paused || capturing || capturingEdits}
               onPress={() => {
                 renderer.current?.startCapture();
                 setCapturing(true);
               }}
             >
               Start frame capture
+            </Button>
+            <Button
+              variant="quiet"
+              disabled={!canMove || capturing || capturingEdits}
+              onPress={() => {
+                renderer.current?.startEditCapture();
+                setCapturingEdits(true);
+              }}
+            >
+              Start edit capture
+            </Button>
+            <Button
+              variant="quiet"
+              disabled={!capturingEdits}
+              onPress={() => {
+                const report = renderer.current?.stopEditCapture();
+                setCapturingEdits(false);
+                if (report) downloadJson('character-edit-capture.json', report);
+              }}
+            >
+              Save edit capture
             </Button>
             <Button
               variant="quiet"
@@ -215,20 +246,30 @@ function Comparison({
       </p>
       {profiling && (
         <p className="ol-caption" role="status">
-          {capturing
-            ? 'Capturing frames. Keep this view in front without changing its controls; save after 30 seconds.'
-            : 'For each frame sample, play the same movement for 10 seconds before starting a 30-second capture.'}
+          {capturingEdits
+            ? 'Sweep the same control 20 times, let the final update appear, then save the edit capture.'
+            : capturing
+              ? 'Capturing frames. Keep this view in front without changing its controls; save after 30 seconds.'
+              : 'For each frame sample, play the same movement for 10 seconds before starting a 30-second capture.'}
         </p>
       )}
-      <PersonAppearanceControls
-        family={wearer.family}
-        draft={wearer.draft}
-        selected={control}
-        select={setControl}
-        visibleControls={wearer.family.controls
-          .filter((entry) => entry.maximum > entry.minimum)
-          .map((entry) => entry.id)}
-      />
+      <div
+        onPointerDownCapture={recordInput}
+        onPointerMoveCapture={recordInput}
+        onPointerUpCapture={recordInput}
+        onKeyDownCapture={recordInput}
+        onInputCapture={recordInput}
+      >
+        <PersonAppearanceControls
+          family={wearer.family}
+          draft={wearer.draft}
+          selected={control}
+          select={setControl}
+          visibleControls={wearer.family.controls
+            .filter((entry) => entry.maximum > entry.minimum)
+            .map((entry) => entry.id)}
+        />
+      </div>
     </>
   );
 }
@@ -238,6 +279,16 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
   const [mode, setMode] = useState('editor');
   const [dressed, setDressed] = useState(true);
   const [count, setCount] = useState('four');
+  const [lifetimes, setLifetimes] = useState<{ total: number; samples: LifetimeReport[] }>({
+    total: 0,
+    samples: [],
+  });
+  const recordLifetime = useCallback((report: LifetimeReport) => {
+    setLifetimes((previous) => ({
+      total: previous.total + 1,
+      samples: [...previous.samples.slice(-63), report],
+    }));
+  }, []);
   const wearer = wearers[selected]!;
   // This identity owns the scene lifetime. Selecting a different wearer in the
   // four-person view must not replace the other three actors.
@@ -284,6 +335,23 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
             {dressed ? 'Show base clothing' : 'Show outfit'}
           </Button>
         )}
+        {profiling && (
+          <Button
+            variant="quiet"
+            disabled={!lifetimes.total}
+            onPress={() =>
+              downloadJson('character-resource-capture.json', {
+                ...lifetimes,
+                dropped: lifetimes.total - lifetimes.samples.length,
+                familyPaths,
+                presetIds,
+                browser: navigator.userAgent,
+              })
+            }
+          >
+            Save resource capture
+          </Button>
+        )}
       </div>
       {mode === 'editor' ? (
         <PersonAppearanceEditor
@@ -297,7 +365,12 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           onPreview={() => {}}
         />
       ) : (
-        <Comparison wearers={shown} selected={count === 'one' ? 0 : selected} dressed={dressed} />
+        <Comparison
+          wearers={shown}
+          selected={count === 'one' ? 0 : selected}
+          dressed={dressed}
+          onDestroyed={recordLifetime}
+        />
       )}
     </main>
   );
