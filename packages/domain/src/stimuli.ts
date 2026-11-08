@@ -34,9 +34,13 @@ export interface ActiveStimulus {
 }
 
 /** Physical salience of one source under a policy: the strongest salient outward state. */
-export function stimulusSalience(entity: Entity, policy: StimulusPolicy): number {
+export function stimulusSalience(
+  world: Pick<WorldState, 'profile'>,
+  entity: Entity,
+  policy: StimulusPolicy,
+): number {
   let salience = 0;
-  for (const state of outwardStates(entity))
+  for (const state of outwardStates(world, entity))
     if (state) salience = Math.max(salience, policy.salience[state] ?? 0);
   return salience;
 }
@@ -59,10 +63,15 @@ export function activeStimuli(
   ]) {
     const source = entityGet(world.entities, sourceId);
     if (!source) continue;
-    const salience = stimulusSalience(source, policy);
+    const salience = stimulusSalience(world, source, policy);
     if (salience <= 0) continue;
     const seen = episodeStartedAt(episodes[sourceId]) ?? world.simTime;
-    salient.push({ sourceId, states: outwardStates(source).filter(Boolean), salience, seen });
+    salient.push({
+      sourceId,
+      states: outwardStates(world, source).filter(Boolean),
+      salience,
+      seen,
+    });
   }
   // A source that became salient while already in view (a fire lit) starts its period at the
   // observer's latest private outward-change record for it, not at first exposure. Only

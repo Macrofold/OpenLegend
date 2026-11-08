@@ -9,7 +9,8 @@ use crate::events::{
 };
 use crate::execution::{
     ActionWrite, CoreMutation, ExecutionError, PendingStatusEnd, PlanGenerationWrite,
-    StagedOccurrence, StatusEnd,
+    StagedOccurrence, StatusActivationAnswer, StatusActivationCursor, StatusActivationProgress,
+    StatusEnd,
 };
 use crate::experience::AcquiredActivityResult;
 use crate::geometry::{
@@ -34,17 +35,24 @@ pub(crate) enum CommandAnswer {
     Geometry(GeometryAnswers),
     Occurrence(CompletedOccurrence),
     Personal(AcquiredActivityResult),
+    EvidenceEnded(crate::reception::EndedCurrentEvidence),
 }
 pub(crate) enum CommandStep<'a> {
     Geometry(&'a GeometryQueries),
     Occurrence(StagedOccurrence),
     Personal(&'a PendingActivityResult),
+    EndEvidence {
+        observer_id: &'a str,
+        physical_life: u64,
+        at: f64,
+    },
     Complete(Outcome),
 }
 enum Progress {
     Geometry,
     Occurrence(StagedOccurrence),
     Personal,
+    EndEvidence,
     Complete(Outcome),
 }
 #[derive(Clone, Copy)]
@@ -102,6 +110,7 @@ pub(crate) struct CommandCursor {
     pending_release: Option<String>,
     sight: Option<crate::reception::SightBatch>,
     status_was_active: bool,
+    activation: Option<StatusActivationCursor>,
     budget: ByteBudget,
     outcome: Option<Outcome>,
     meter: Option<MeterToken>,
@@ -167,6 +176,7 @@ impl CommandCursor {
             pending_release: None,
             sight: None,
             status_was_active: false,
+            activation: None,
             budget: budget.clone(),
             outcome: None,
             meter: None,
@@ -203,12 +213,12 @@ impl CommandCursor {
         self.outcome = Some(message.outcome(false));
         self.phase = Phase::Done;
     }
-    fn question(&mut self, phase: Phase) -> Result<&mut GeometryQueries, ExecutionError> {
-        self.binding.serial = self
-            .binding
-            .serial
-            .checked_add(1)
-            .ok_or(ExecutionError::Invariant)?;
+    fn question(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        phase: Phase,
+    ) -> Result<&mut GeometryQueries, ExecutionError> {
+        self.binding.serial = core.journal.next_provider_serial()?;
         self.queries = Some(GeometryQueries::new(self.binding));
         self.phase = phase;
         self.queries.as_mut().ok_or(ExecutionError::Invariant)
@@ -248,12 +258,26 @@ impl CommandCursor {
             } else {
                 self.queries.as_ref().ok_or(ExecutionError::Invariant)?
             }),
-            Progress::Personal => CommandStep::Personal(
-                self.personal
+            Progress::Personal => CommandStep::Personal(if let Some(pending) = &self.personal {
+                pending.result()
+            } else {
+                self.activation
                     .as_ref()
+                    .and_then(StatusActivationCursor::personal)
                     .ok_or(ExecutionError::Invariant)?
-                    .result(),
-            ),
+            }),
+            Progress::EndEvidence => {
+                let (observer_id, physical_life, at) = self
+                    .activation
+                    .as_ref()
+                    .and_then(StatusActivationCursor::evidence_end)
+                    .ok_or(ExecutionError::Invariant)?;
+                CommandStep::EndEvidence {
+                    observer_id,
+                    physical_life,
+                    at,
+                }
+            }
             Progress::Occurrence(event) => CommandStep::Occurrence(event),
             Progress::Complete(result) => CommandStep::Complete(result),
         })
@@ -265,148 +289,197 @@ impl CommandCursor {
     ) -> Result<Progress, ExecutionError> {
         let installed = core.state.installed.clone();
         let ordinary = installed.ordinary_actions.value();
-        if let Some(answer) = answer {
-            match answer {
-                CommandAnswer::Occurrence(completed) => {
-                    if self.event.as_deref() != Some(completed.event_id()) {
+        let mut answer = answer;
+        if self.activation.is_none() {
+            if let Some(answer) = answer.take() {
+                match answer {
+                    CommandAnswer::Occurrence(completed) => {
+                        if self.event.as_deref() != Some(completed.event_id()) {
+                            return Err(ExecutionError::UnfinishedOccurrence);
+                        }
+                        self.event = None;
+                        self.phase = self.after_event;
+                    }
+                    CommandAnswer::EvidenceEnded(_) => {
                         return Err(ExecutionError::UnfinishedOccurrence);
                     }
-                    self.event = None;
-                    self.phase = self.after_event;
-                }
-                CommandAnswer::Personal(acquired) => {
-                    let task = self
-                        .personal
-                        .take()
-                        .ok_or(ExecutionError::UnfinishedOccurrence)?;
-                    match task {
-                        PersonalTask::Replaced(pending) => {
-                            core.complete_activity_result(pending, &acquired)?;
-                            if let Some(old) = self.pending_release.take() {
-                                core.physical().release_work(&old)?;
-                            }
-                            self.phase = if matches!(self.command, NativeCommand::Cancel { .. }) {
-                                Phase::CancelClear
-                            } else {
-                                Phase::Install
-                            };
-                        }
-                        PersonalTask::Immediate(pending) => {
-                            core.complete_activity_result(pending, &acquired)?;
-                            self.phase = Phase::Tail;
-                        }
-                        PersonalTask::Status(pending) => {
-                            let status = pending.resume(core, &acquired)?;
-                            if let Some(event) = self.complete_status(status, self.after_event)? {
-                                return Ok(Progress::Occurrence(event));
-                            }
-                        }
-                    }
-                }
-                CommandAnswer::Geometry(mut answer) => {
-                    if matches!(self.phase, Phase::StatusSight) {
-                        let sight = self
-                            .sight
+                    CommandAnswer::Personal(acquired) => {
+                        let task = self
+                            .personal
                             .take()
-                            .ok_or(ExecutionError::Invariant)?
-                            .finish(answer)
-                            .map_err(|_| ExecutionError::Invariant)?;
-                        let NativeCommand::StatusEffect { target_id, .. } = &self.command else {
-                            return Err(ExecutionError::Invariant);
-                        };
-                        if sight.seen(target_id) != Some(true) {
-                            self.refuse(&ordinary.out_of_reach);
-                        } else {
-                            self.phase = Phase::StatusReach;
+                            .ok_or(ExecutionError::UnfinishedOccurrence)?;
+                        match task {
+                            PersonalTask::Replaced(pending) => {
+                                core.complete_activity_result(pending, &acquired)?;
+                                if let Some(old) = self.pending_release.take() {
+                                    core.physical().release_work(&old)?;
+                                }
+                                self.phase = if matches!(self.command, NativeCommand::Cancel { .. })
+                                {
+                                    Phase::CancelClear
+                                } else {
+                                    Phase::Install
+                                };
+                            }
+                            PersonalTask::Immediate(pending) => {
+                                core.complete_activity_result(pending, &acquired)?;
+                                self.phase = Phase::Tail;
+                            }
+                            PersonalTask::Status(pending) => {
+                                let status = pending.resume(core, &acquired)?;
+                                if let Some(event) =
+                                    self.complete_status(status, self.after_event)?
+                                {
+                                    return Ok(Progress::Occurrence(event));
+                                }
+                            }
                         }
-                        return self.drive(core, None);
                     }
-                    self.queries
-                        .as_ref()
-                        .ok_or(ExecutionError::Invariant)?
-                        .validate_answers(&answer)
-                        .map_err(|_| ExecutionError::Invariant)?;
-                    match self.phase {
-                        Phase::Support => {
-                            let Some(point) =
-                                answer.support.pop().ok_or(ExecutionError::Invariant)?
+                    CommandAnswer::Geometry(mut answer) => {
+                        if matches!(self.phase, Phase::StatusSight) {
+                            let sight = self
+                                .sight
+                                .take()
+                                .ok_or(ExecutionError::Invariant)?
+                                .finish(answer)
+                                .map_err(|_| ExecutionError::Invariant)?;
+                            let NativeCommand::StatusEffect { target_id, .. } = &self.command
                             else {
-                                self.refuse(&ordinary.blocked);
-                                return self.drive(core, None);
+                                return Err(ExecutionError::Invariant);
                             };
-                            self.resolved = Some(point);
-                            self.phase = Phase::Standing;
-                            self.queries = None;
-                        }
-                        Phase::Standing => {
-                            if !answer.standing.pop().ok_or(ExecutionError::Invariant)? {
-                                self.refuse(&ordinary.blocked);
-                            } else {
-                                self.phase = Phase::Route;
-                            }
-                            self.queries = None;
-                        }
-                        Phase::Route => {
-                            let route = answer.routes.pop().ok_or(ExecutionError::Invariant)?;
-                            let action = self.action.as_mut().ok_or(ExecutionError::Invariant)?;
-                            match route {
-                                RoutePlan::Reached { path, .. } => {
-                                    action.path = path;
-                                    action.stage = "approaching".to_owned();
-                                }
-                                RoutePlan::Pending { request, .. } => {
-                                    action.stage = "approaching".to_owned();
-                                    action.navigation = Some(NavigationPending {
-                                        request,
-                                        failure: None,
-                                    });
-                                }
-                                RoutePlan::InvalidEndpoint { .. } => {
-                                    self.refuse(&ordinary.unreachable)
-                                }
-                                RoutePlan::NoRoute { .. } => self.refuse(&ordinary.no_route),
-                                RoutePlan::BudgetExceeded { .. } => {
-                                    self.refuse(&ordinary.budget_exceeded)
-                                }
-                            }
-                            if !matches!(self.phase, Phase::Done) {
-                                self.phase = Phase::Prepared;
-                            }
-                            self.queries = None;
-                        }
-                        Phase::StatusReach => {
-                            if !answer.sight.pop().ok_or(ExecutionError::Invariant)? {
+                            if sight.seen(target_id) != Some(true) {
                                 self.refuse(&ordinary.out_of_reach);
                             } else {
-                                self.phase = Phase::StatusApply;
+                                self.phase = Phase::StatusReach;
                             }
-                            self.queries = None;
+                            return self.drive(core, None);
                         }
-                        Phase::Probe => {
-                            if !answer.walking.pop().ok_or(ExecutionError::Invariant)? {
-                                self.refuse(&ordinary.unreachable);
-                            } else {
+                        self.queries
+                            .as_ref()
+                            .ok_or(ExecutionError::Invariant)?
+                            .validate_answers(&answer)
+                            .map_err(|_| ExecutionError::Invariant)?;
+                        match self.phase {
+                            Phase::Support => {
+                                let Some(point) =
+                                    answer.support.pop().ok_or(ExecutionError::Invariant)?
+                                else {
+                                    self.refuse(&ordinary.blocked);
+                                    return self.drive(core, None);
+                                };
+                                self.resolved = Some(point);
+                                self.phase = Phase::Standing;
+                                self.queries = None;
+                            }
+                            Phase::Standing => {
+                                if !answer.standing.pop().ok_or(ExecutionError::Invariant)? {
+                                    self.refuse(&ordinary.blocked);
+                                } else {
+                                    self.phase = Phase::Route;
+                                }
+                                self.queries = None;
+                            }
+                            Phase::Route => {
+                                let route = answer.routes.pop().ok_or(ExecutionError::Invariant)?;
                                 let action =
                                     self.action.as_mut().ok_or(ExecutionError::Invariant)?;
-                                action.stage = "approaching".to_owned();
-                                action.path = vec![
-                                    self.resolved
-                                        .as_ref()
-                                        .ok_or(ExecutionError::Invariant)?
-                                        .clone(),
-                                ];
-                                self.phase = Phase::Prepared;
+                                match route {
+                                    RoutePlan::Reached { path, .. } => {
+                                        action.path = path;
+                                        action.stage = "approaching".to_owned();
+                                    }
+                                    RoutePlan::Pending { request, .. } => {
+                                        action.stage = "approaching".to_owned();
+                                        action.navigation = Some(NavigationPending {
+                                            request,
+                                            failure: None,
+                                        });
+                                    }
+                                    RoutePlan::InvalidEndpoint { .. } => {
+                                        self.outcome = Some(outcome(
+                                            false,
+                                            "invalid-endpoint",
+                                            &ordinary.no_route.message,
+                                        ));
+                                        self.phase = Phase::Done;
+                                    }
+                                    RoutePlan::NoRoute { .. } => self.refuse(&ordinary.no_route),
+                                    RoutePlan::BudgetExceeded { .. } => {
+                                        self.refuse(&ordinary.budget_exceeded)
+                                    }
+                                }
+                                if !matches!(self.phase, Phase::Done) {
+                                    self.phase = Phase::Prepared;
+                                }
+                                self.queries = None;
                             }
-                            self.queries = None;
+                            Phase::StatusReach => {
+                                if !answer.sight.pop().ok_or(ExecutionError::Invariant)? {
+                                    self.refuse(&ordinary.out_of_reach);
+                                } else {
+                                    self.phase = Phase::StatusApply;
+                                }
+                                self.queries = None;
+                            }
+                            Phase::Probe => {
+                                if !answer.walking.pop().ok_or(ExecutionError::Invariant)? {
+                                    self.refuse(&ordinary.unreachable);
+                                } else {
+                                    let action =
+                                        self.action.as_mut().ok_or(ExecutionError::Invariant)?;
+                                    action.stage = "approaching".to_owned();
+                                    action.path = vec![
+                                        self.resolved
+                                            .as_ref()
+                                            .ok_or(ExecutionError::Invariant)?
+                                            .clone(),
+                                    ];
+                                    self.phase = Phase::Prepared;
+                                }
+                                self.queries = None;
+                            }
+                            _ => return Err(ExecutionError::Invariant),
                         }
-                        _ => return Err(ExecutionError::Invariant),
+                    }
+                }
+            } else if self.event.is_some() {
+                return Err(ExecutionError::UnfinishedOccurrence);
+            }
+        }
+        loop {
+            if let Some(activation) = self.activation.as_mut() {
+                let supplied = answer
+                    .take()
+                    .map(|answer| match answer {
+                        CommandAnswer::Personal(value) => {
+                            Ok(StatusActivationAnswer::Personal(value))
+                        }
+                        CommandAnswer::Occurrence(value) => {
+                            Ok(StatusActivationAnswer::Occurrence(value))
+                        }
+                        CommandAnswer::EvidenceEnded(value) => {
+                            Ok(StatusActivationAnswer::EvidenceEnded(value))
+                        }
+                        CommandAnswer::Geometry(_) => Err(ExecutionError::UnfinishedOccurrence),
+                    })
+                    .transpose()?;
+                match activation.drive(core, supplied)? {
+                    StatusActivationProgress::Personal => return Ok(Progress::Personal),
+                    StatusActivationProgress::Occurrence(event) => {
+                        return Ok(Progress::Occurrence(event));
+                    }
+                    StatusActivationProgress::EndEvidence => return Ok(Progress::EndEvidence),
+                    StatusActivationProgress::Complete(accepted) => {
+                        self.activation = None;
+                        if accepted {
+                            self.phase = Phase::StatusFacts;
+                        } else {
+                            self.refuse(&ordinary.not_applicable);
+                        }
+                        continue;
                     }
                 }
             }
-        } else if self.event.is_some() {
-            return Err(ExecutionError::UnfinishedOccurrence);
-        }
-        loop {
             if self.personal.is_some() {
                 return Ok(Progress::Personal);
             }
@@ -492,10 +565,12 @@ impl CommandCursor {
                             }
                             let point = destination.point();
                             let surface_id = destination.surface_id.clone();
-                            self.question(Phase::Support)?.support.push(SupportQuery {
-                                point,
-                                surface_id: Some(surface_id),
-                            });
+                            self.question(core, Phase::Support)?
+                                .support
+                                .push(SupportQuery {
+                                    point,
+                                    surface_id: Some(surface_id),
+                                });
                             return Ok(Progress::Geometry);
                         }
                         NativeCommand::Cancel {
@@ -517,17 +592,8 @@ impl CommandCursor {
                             }
                             self.phase = Phase::Interrupt;
                         }
-                        NativeCommand::StatusEffect {
-                            operation: StatusOperation::Deactivate,
-                            ..
-                        } => self.phase = Phase::Deactivate,
+                        NativeCommand::StatusEffect { .. } => self.phase = Phase::Deactivate,
                         NativeCommand::Say { .. } => self.phase = Phase::Speech,
-                        NativeCommand::StatusEffect {
-                            operation: StatusOperation::Activate,
-                            ..
-                        } => {
-                            return Err(ExecutionError::UnsupportedFamily);
-                        }
                     }
                 }
                 Phase::Standing => {
@@ -544,7 +610,7 @@ impl CommandCursor {
                         .as_ref()
                         .ok_or(ExecutionError::Invariant)?
                         .clone();
-                    self.question(Phase::Standing)?
+                    self.question(core, Phase::Standing)?
                         .standing
                         .push(StandingQuery { point, body });
                     return Ok(Progress::Geometry);
@@ -593,13 +659,17 @@ impl CommandCursor {
                     if crate::reception::vision_parameters(&core.state.installed, actor).radius
                         == 0.0
                     {
-                        self.question(Phase::Probe)?.walking.push(WalkingSegment {
-                            from,
-                            to,
-                            body,
-                        });
+                        if crate::spatial::distance(from.point(), to.point())
+                            > installed.movement.direct_probe_max_distance()
+                        {
+                            self.refuse(&ordinary.unreachable);
+                            continue;
+                        }
+                        self.question(core, Phase::Probe)?
+                            .walking
+                            .push(WalkingSegment { from, to, body });
                     } else {
-                        self.question(Phase::Route)?
+                        self.question(core, Phase::Route)?
                             .routes
                             .push(RouteQuery::Surface { from, to, body });
                     }
@@ -793,6 +863,7 @@ impl CommandCursor {
                                 &old,
                                 result,
                                 core.state.physical.header.sim_time,
+                                &ordinary.before_attempt_facts,
                             )
                             .map_err(ExecutionError::Activity)?
                         {
@@ -964,6 +1035,7 @@ impl CommandCursor {
                         facing_heading,
                         resting_place_id,
                         resting_bay,
+                        operation,
                         ..
                     } = &self.command
                     else {
@@ -987,7 +1059,15 @@ impl CommandCursor {
                         self.refuse(&ordinary.invalid_effect);
                         continue;
                     };
-                    if facing_heading.is_some() {
+                    if facing_heading.is_some_and(|heading| {
+                        !heading.is_finite()
+                            || *operation != StatusOperation::Activate
+                            || definition
+                                .presentation
+                                .as_ref()
+                                .and_then(|presentation| presentation.pose.as_deref())
+                                != Some("horizontal")
+                    }) {
                         self.refuse(&ordinary.invalid_facing);
                         continue;
                     }
@@ -996,15 +1076,13 @@ impl CommandCursor {
                         continue;
                     }
                     if &actor_id != target_id {
-                        if !actions.allow_other {
+                        if !actions.allow_other
+                            || *operation == StatusOperation::Activate && !actions.activate_other
+                        {
                             self.refuse(&ordinary.out_of_reach);
                             continue;
                         }
-                        self.binding.serial = self
-                            .binding
-                            .serial
-                            .checked_add(1)
-                            .ok_or(ExecutionError::Invariant)?;
+                        self.binding.serial = core.journal.next_provider_serial()?;
                         let sight = crate::reception::SightBatch::prepare(
                             &core.state.physical,
                             &installed,
@@ -1051,7 +1129,7 @@ impl CommandCursor {
                         self.refuse(&ordinary.out_of_reach);
                         continue;
                     }
-                    self.question(Phase::StatusReach)?
+                    self.question(core, Phase::StatusReach)?
                         .sight
                         .push(crate::geometry::SightRay { from, to });
                     return Ok(Progress::Geometry);
@@ -1060,6 +1138,7 @@ impl CommandCursor {
                     let NativeCommand::StatusEffect {
                         target_id,
                         definition_id,
+                        operation,
                         ..
                     } = &self.command
                     else {
@@ -1073,9 +1152,47 @@ impl CommandCursor {
                         .and_then(|e| e.status_effects.as_ref())
                         .and_then(|states| states.get(definition_id))
                         .is_some_and(|state| state.active);
-                    if !active {
+                    if *operation == StatusOperation::Deactivate && !active {
                         self.refuse(&ordinary.not_active);
                         continue;
+                    }
+                    if *operation == StatusOperation::Activate {
+                        let definition = installed
+                            .status_policy
+                            .definitions
+                            .iter()
+                            .find(|definition| &definition.id == definition_id)
+                            .ok_or(ExecutionError::Invariant)?;
+                        let bindings = crate::status::EffectBindings {
+                            subject: target_id,
+                            source: &actor_id,
+                            action_target: target_id,
+                        };
+                        let scratch = crate::status::status_condition_scratch(
+                            &core.state.physical.entities,
+                            bindings,
+                            &definition.requires,
+                        )
+                        .max(
+                            definition
+                                .activation_condition
+                                .as_ref()
+                                .map_or(0, |condition| {
+                                    crate::status::status_condition_scratch(
+                                        &core.state.physical.entities,
+                                        bindings,
+                                        condition,
+                                    )
+                                }),
+                        );
+                        core.physical().reserve_status_growth(scratch)?;
+                        if !installed
+                            .status_read(&core.state.physical)
+                            .can_activate_metered(bindings, definition, &mut core.journal.meters)?
+                        {
+                            self.refuse(&ordinary.not_applicable);
+                            continue;
+                        }
                     }
                     self.status_was_active = active;
                     core.physical().settle_entity(&actor_id)?;
@@ -1097,8 +1214,20 @@ impl CommandCursor {
                                 .map_err(ExecutionError::Activity)?,
                         );
                     }
+                    let activate = *operation == StatusOperation::Activate;
                     let target_id = target_id.clone();
                     let definition_id = definition_id.clone();
+                    if activate {
+                        self.activation = Some(StatusActivationCursor::new(
+                            &target_id,
+                            &definition_id,
+                            &actor_id,
+                            &target_id,
+                            "voluntary",
+                            &self.budget,
+                        )?);
+                        continue;
+                    }
                     let status = core.deactivate_status(&target_id, &definition_id, "voluntary")?;
                     if let Some(event) = self.complete_status(status, Phase::StatusFacts)? {
                         return Ok(Progress::Occurrence(event));
@@ -1108,11 +1237,16 @@ impl CommandCursor {
                     let NativeCommand::StatusEffect {
                         target_id,
                         definition_id,
+                        operation,
+                        facing_heading,
                         ..
                     } = &self.command
                     else {
                         return Err(ExecutionError::Invariant);
                     };
+                    if let Some(heading) = facing_heading {
+                        core.physical().set_heading(target_id, *heading)?;
+                    }
                     let installed = std::sync::Arc::clone(&core.state.installed);
                     let definition = installed
                         .status_policy
@@ -1182,7 +1316,7 @@ impl CommandCursor {
                     let bytes = definition
                         .label
                         .len()
-                        .checked_add(ordinary.deactivated.len())
+                        .checked_add(ordinary.deactivated.len().max(ordinary.activated.len()))
                         .and_then(|n| n.checked_add(ordinary.status_outcome_code.len()))
                         .and_then(|n| n.checked_add(4))
                         .ok_or(ExecutionError::Capacity)?;
@@ -1195,7 +1329,10 @@ impl CommandCursor {
                     self.outcome = Some(outcome(
                         true,
                         &ordinary.status_outcome_code,
-                        &ordinary.status_message(&definition.label, false),
+                        &ordinary.status_message(
+                            &definition.label,
+                            *operation == StatusOperation::Activate,
+                        ),
                     ));
                     self.phase = Phase::ImmediateResult;
                 }
@@ -1282,6 +1419,7 @@ impl CommandCursor {
                                 &self.command.envelope().id,
                                 result,
                                 core.state.physical.header.sim_time,
+                                &ordinary.before_attempt_facts,
                             )
                             .map_err(ExecutionError::Activity)?
                         {
@@ -1333,6 +1471,14 @@ fn actor_problem(
     let Some(actor) = &entity.actor else {
         return Ok(Some(ordinary.unknown_actor.outcome(false)));
     };
+    if entity.spatial.local_pose.is_some()
+        || actor
+            .action
+            .as_ref()
+            .is_some_and(|action| action.kind == "strike" && action.stage == "working")
+    {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
     if command.envelope().cooperation.is_some()
         || command.envelope().combat_help_id.is_some()
         || actor.agency.plan.is_some()

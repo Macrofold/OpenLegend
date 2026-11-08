@@ -10,7 +10,7 @@ use std::mem::{align_of, size_of};
 pub(crate) struct ExperienceCheckpoint {
     operations: usize,
 }
-struct AppendUndo {
+pub(super) struct AppendUndo {
     actor_id: String,
     kind: PersonalSourceKind,
     id: String,
@@ -19,6 +19,13 @@ struct AppendUndo {
 }
 pub(super) enum ExperienceUndo {
     Append(AppendUndo),
+    Replace {
+        actor_id: String,
+        kind: PersonalSourceKind,
+        id: String,
+        position: u64,
+        before: Arc<PersonalSourceRecord>,
+    },
     KnownPlaces {
         actor_id: String,
         before: Option<super::places::KnownPlacePreparation>,
@@ -60,6 +67,39 @@ impl ExperienceJournal {
             let operation = self.undo.pop().expect("journal cursor checked");
             let undo = match operation {
                 ExperienceUndo::Append(undo) => undo,
+                ExperienceUndo::Replace {
+                    actor_id,
+                    kind,
+                    id,
+                    position,
+                    before,
+                } => {
+                    let actor = state
+                        .actors
+                        .get_mut(&actor_id)
+                        .ok_or(ExperienceError::ForeignOwner)?;
+                    let current = actor
+                        .sources
+                        .get(&kind)
+                        .and_then(|source| source.by_ordinal.get(&position))
+                        .ok_or(ExperienceError::InvalidOrdinal)?;
+                    if current.header.reference.id != id {
+                        return Err(ExperienceError::InvalidOrdinal);
+                    }
+                    let current_event = current.header.completion_event_type.clone();
+                    replace_completion(
+                        actor,
+                        current_event.as_deref(),
+                        before.header.completion_event_type.as_deref(),
+                    )?;
+                    actor
+                        .sources
+                        .get_mut(&kind)
+                        .ok_or(ExperienceError::UnknownCoverage)?
+                        .by_ordinal
+                        .insert(position, before);
+                    continue;
+                }
                 ExperienceUndo::KnownPlaces { actor_id, before } => {
                     if let Some(before) = before {
                         state.known_places.insert(actor_id, before);
@@ -371,6 +411,114 @@ impl ExperienceJournal {
         self.undo.push(ExperienceUndo::Append(undo));
         Ok(())
     }
+    /// Replace one immutable body/header/SQL projection at its existing source
+    /// ordinal. The caller performs actual accounting and cognition duties in
+    /// the same candidate; this owner changes no unrelated retained history.
+    pub(super) fn replace(
+        &mut self,
+        state: &mut ExperienceState,
+        expected: &PersonalSourceRef,
+        record: PersonalSourceRecord,
+    ) -> Result<(), ExperienceError> {
+        let actor = state
+            .actors
+            .get(&record.header.actor_id)
+            .ok_or(ExperienceError::ForeignOwner)?;
+        let source = actor.collection(expected.kind)?;
+        let before = source
+            .get(&expected.id)?
+            .ok_or(ExperienceError::StaleHydration)?;
+        if &before.header.reference != expected
+            || record.header.reference.kind != expected.kind
+            || record.header.reference.id != expected.id
+            || record.row_id != before.row_id
+            || record.parent != before.parent
+            || record.slot != before.slot
+            || record.position != before.position
+        {
+            return Err(ExperienceError::StaleHydration);
+        }
+        let index_node = 11 * (size_of::<String>() + size_of::<u64>()) + 16 * size_of::<usize>();
+        let bytes = retained_bytes(&record)
+            .and_then(|bytes| bytes.checked_add(retained_bytes(before)?))
+            .and_then(|bytes| bytes.checked_add(self.reservation.bytes()))
+            .and_then(|bytes| bytes.checked_add(2 * size_of::<ExperienceUndo>() + 2 * index_node))
+            .and_then(|bytes| bytes.checked_add(record.header.actor_id.len()))
+            .and_then(|bytes| bytes.checked_add(record.header.reference.id.len()))
+            .and_then(|bytes| {
+                bytes.checked_add(
+                    record
+                        .header
+                        .completion_event_type
+                        .as_ref()
+                        .map_or(0, String::len),
+                )
+            })
+            .and_then(|bytes| {
+                bytes.checked_add(
+                    before
+                        .header
+                        .completion_event_type
+                        .as_ref()
+                        .map_or(0, String::len),
+                )
+            })
+            .ok_or(ExperienceError::Capacity)?;
+        self.reservation
+            .resize(bytes)
+            .map_err(|_| ExperienceError::Capacity)?;
+        self.undo
+            .try_reserve(1)
+            .map_err(|_| ExperienceError::Capacity)?;
+        let undo = ExperienceUndo::Replace {
+            actor_id: record.header.actor_id.clone(),
+            kind: expected.kind,
+            id: expected.id.clone(),
+            position: record.position,
+            before: Arc::clone(before),
+        };
+        let old_event = before.header.completion_event_type.clone();
+        let actor = state
+            .actors
+            .get_mut(&record.header.actor_id)
+            .ok_or(ExperienceError::ForeignOwner)?;
+        replace_completion(
+            actor,
+            old_event.as_deref(),
+            record.header.completion_event_type.as_deref(),
+        )?;
+        actor
+            .sources
+            .get_mut(&expected.kind)
+            .ok_or(ExperienceError::UnknownCoverage)?
+            .by_ordinal
+            .insert(record.position, Arc::new(record));
+        self.undo.push(undo);
+        Ok(())
+    }
+    pub(crate) fn replaced<'a>(
+        &'a self,
+        state: &'a ExperienceState,
+    ) -> impl Iterator<Item = &'a Arc<PersonalSourceRecord>> {
+        self.undo.iter().filter_map(|operation| {
+            let ExperienceUndo::Replace {
+                actor_id,
+                kind,
+                position,
+                ..
+            } = operation
+            else {
+                return None;
+            };
+            state
+                .actors
+                .get(actor_id)?
+                .sources
+                .get(kind)?
+                .by_ordinal
+                .get(position)
+        })
+    }
     pub(crate) fn appended<'a>(
         &'a self,
         state: &'a ExperienceState,
@@ -388,6 +536,44 @@ impl ExperienceJournal {
                 .get(&undo.position)
         })
     }
+}
+
+fn replace_completion(
+    actor: &mut PersonalHistory,
+    before: Option<&str>,
+    after: Option<&str>,
+) -> Result<(), ExperienceError> {
+    if before == after {
+        return Ok(());
+    }
+    if before.is_some_and(|event| {
+        actor
+            .completion_events
+            .get(event)
+            .is_none_or(|count| *count == 0)
+    }) || after.is_some_and(|event| {
+        actor.completion_events.get(event).copied().unwrap_or(0) >= MAX_SAFE_INTEGER
+    }) {
+        return Err(ExperienceError::InvalidOrdinal);
+    }
+    if let Some(event) = before {
+        let count = actor
+            .completion_events
+            .get_mut(event)
+            .expect("checked completion count");
+        *count -= 1;
+        if *count == 0 {
+            actor.completion_events.remove(event);
+        }
+    }
+    if let Some(event) = after {
+        if let Some(count) = actor.completion_events.get_mut(event) {
+            *count += 1
+        } else {
+            actor.completion_events.insert(event.to_owned(), 1);
+        }
+    }
+    Ok(())
 }
 
 fn receipt_heap(value: &TemporalReceiptLocator) -> Option<usize> {

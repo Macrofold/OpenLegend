@@ -5,7 +5,7 @@
 use super::*;
 use crate::attention::{RecordingInput, RecordingReason, RecordingSource};
 use crate::events::WorldEvent;
-use crate::execution::{CoreMutation, ExecutionError, ReceivedLease};
+use crate::execution::{AcquisitionLease, CoreMutation, ExecutionError};
 use crate::experience::{Awareness, ExperienceState};
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation};
@@ -19,6 +19,7 @@ use std::mem::size_of;
 use std::sync::Arc;
 
 mod context;
+pub(super) use context::event_body as received_event_body;
 use context::{awareness_body_context, event_body};
 
 fn invalid() -> ReceivedError {
@@ -42,6 +43,7 @@ struct PreparedAwarenessObservation {
 
 /// Work captured from the same original and current body grant. The receiver
 /// owns these operations; callers may not acknowledge them as mere callbacks.
+#[derive(Clone)]
 pub(crate) enum AwarenessCurrentWork {
     Association {
         subject_id: String,
@@ -57,13 +59,13 @@ pub(crate) enum AwarenessCurrentWork {
     },
 }
 pub(crate) struct PendingAwarenessObservation {
-    observer: ObserverLife,
-    source: Option<Arc<ReceivedObservation>>,
-    transition: Option<ReceivedLease>,
+    pub(super) observer: ObserverLife,
+    pub(super) source: Option<Arc<ReceivedObservation>>,
+    pub(super) acquisition: Option<AcquisitionLease>,
     fresh: bool,
     ordinary: bool,
-    current: Vec<AwarenessCurrentWork>,
-    reservation: ByteReservation,
+    pub(super) current: Vec<AwarenessCurrentWork>,
+    pub(super) reservation: ByteReservation,
 }
 pub(crate) enum AwarenessReceiptPlacement {
     Unchanged,
@@ -72,6 +74,7 @@ pub(crate) enum AwarenessReceiptPlacement {
 pub(crate) struct CompletedAwarenessObservation {
     pub observation: Option<OwnedObservation>,
     pub receipt: AwarenessReceiptPlacement,
+    pub reservation: ByteReservation,
 }
 impl PendingAwarenessObservation {
     pub(crate) fn current_work(&self) -> &[AwarenessCurrentWork] {
@@ -96,6 +99,7 @@ impl PendingAwarenessObservation {
             return Ok(CompletedAwarenessObservation {
                 observation: None,
                 receipt: AwarenessReceiptPlacement::Unchanged,
+                reservation: self.reservation,
             });
         };
         if self.ordinary {
@@ -183,6 +187,15 @@ impl PendingAwarenessObservation {
                     .bytes()
                     .checked_add(context_bytes)
                     .and_then(|bytes| bytes.checked_add(awareness.event_id.len() + source.id.len()))
+                    .and_then(|bytes| {
+                        bytes.checked_add(
+                            core.state
+                                .temporal
+                                .actor(&self.observer.actor_id)
+                                .map_or(0, |actor| actor.header().epoch.len())
+                                + size_of::<TemporalReceiptLocator>(),
+                        )
+                    })
                     .ok_or(ExecutionError::Capacity)?,
             )?;
             let context_subjects: Option<Vec<String>> =
@@ -193,7 +206,11 @@ impl PendingAwarenessObservation {
                         .map(|subject| subject.track.clone())
                         .collect()
                 });
-            let lease = self.transition.ok_or(ExecutionError::Invariant)?;
+            let lease = core.journal.acquisitions.begin_received(
+                &self.observer.actor_id,
+                self.observer.physical_life,
+                None,
+            )?;
             let policy = &core.state.installed.attention.value().retention;
             let mut loan = core.journal.acquisitions.loan(
                 lease,
@@ -225,12 +242,25 @@ impl PendingAwarenessObservation {
                 },
             );
             core.journal.acquisitions.return_loan(loan)?;
-            receipt = AwarenessReceiptPlacement::Set(result.map_err(temporal_error)?);
-        }
-        if let Some(transition) = self.transition.take() {
+            let result = result.map_err(temporal_error)?;
             if let Some(values) = core.state.reception.received_values.as_ref() {
                 core.journal.acquisitions.finish_received(
-                    transition,
+                    lease,
+                    &mut core.state.temporal,
+                    values,
+                    &mut core.state.physical.identity,
+                    &crate::worlds::InstalledEvidenceMeaning,
+                    &mut core.journal.meters,
+                )?;
+            } else {
+                core.journal.acquisitions.finish_empty_received(lease)?;
+            }
+            receipt = AwarenessReceiptPlacement::Set(result);
+        }
+        if let Some(acquisition) = self.acquisition.take() {
+            if let Some(values) = core.state.reception.received_values.as_ref() {
+                core.journal.acquisitions.finish_acquisition(
+                    acquisition,
                     &mut core.state.temporal,
                     values,
                     &mut core.state.physical.identity,
@@ -240,7 +270,7 @@ impl PendingAwarenessObservation {
             } else {
                 core.journal
                     .acquisitions
-                    .finish_empty_received(transition)?;
+                    .finish_empty_acquisition(acquisition)?;
             }
         }
         // The detached materialized observation's own guard survives this
@@ -249,6 +279,7 @@ impl PendingAwarenessObservation {
         Ok(CompletedAwarenessObservation {
             observation: Some(observation),
             receipt,
+            reservation: self.reservation,
         })
     }
 }
@@ -313,7 +344,7 @@ pub(crate) fn acquire_awareness_observation(
     let life = observer.physical_life().ok_or(ExecutionError::Invariant)?;
     let mut reservation =
         budget.reserve(size_of::<PendingAwarenessObservation>() + awareness.actor_id.len())?;
-    let mut transition = None;
+    let mut acquisition = None;
     let source = match prepared.source {
         OriginalPreparation::Existing => None,
         OriginalPreparation::Reused(source) => Some(source),
@@ -346,6 +377,20 @@ pub(crate) fn acquire_awareness_observation(
             } else {
                 sample_token
             };
+            // The real receiving lifetime owns the viewpoint even when its
+            // first history entry is an occurrence rather than a body sample.
+            acquisition = Some(
+                core.journal.acquisitions.begin_acquisition(
+                    &awareness.actor_id,
+                    life,
+                    Some(ObservationFrame {
+                        position_at_observation: observer
+                            .world_position()
+                            .ok_or(ExecutionError::UnsupportedFamily)?,
+                        forward_at_observation: Some(observer.spatial.heading),
+                    }),
+                )?,
+            );
             let lease =
                 core.journal
                     .acquisitions
@@ -365,7 +410,9 @@ pub(crate) fn acquire_awareness_observation(
                     &mut core.journal.meters,
                 )
                 .map_err(ExecutionError::Received)?;
-            transition = Some(lease);
+            // Original acquisition has not appended history. Its transition
+            // ends here, before later current changes and occurrence recording.
+            core.journal.acquisitions.finish_empty_received(lease)?;
             Some(original)
         }
     };
@@ -406,7 +453,7 @@ pub(crate) fn acquire_awareness_observation(
             physical_life: life,
         },
         source,
-        transition,
+        acquisition,
         fresh,
         ordinary: prepared.ordinary,
         current,

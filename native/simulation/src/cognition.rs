@@ -12,6 +12,12 @@ use crate::values::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod journal;
+pub(crate) use journal::{CognitionChange, CognitionCheckpoint, CognitionJournal};
+mod retained_size;
+mod save;
+pub(crate) use save::encode_cognition_changes;
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct MindLimits {
@@ -28,7 +34,7 @@ pub(crate) struct MindLimits {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub thoughts: u64,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum EvidenceRelation {
     Supports,
@@ -36,13 +42,13 @@ pub(crate) enum EvidenceRelation {
     DerivedFrom,
     Supersedes,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct EvidenceLink {
     pub id: String,
     pub relation: EvidenceRelation,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct MindDocument {
     pub id: String,
@@ -53,7 +59,7 @@ pub(crate) struct MindDocument {
     pub evidence: Vec<EvidenceLink>,
     pub protected: bool,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum InnerKind {
     Relationship,
@@ -66,20 +72,20 @@ pub(crate) enum InnerKind {
     Dream,
     Identity,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum InnerSource {
     Inferred,
     Imagined,
     Authored,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum InnerStatus {
     Active,
     Resolved,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct InnerRecord {
     pub id: String,
@@ -154,6 +160,21 @@ pub(crate) struct InnerWorld {
 pub(crate) struct MindState {
     pub minds: Option<IndexMap<String, ActorMind>>,
     pub inner_worlds: Option<IndexMap<String, InnerWorld>>,
+}
+impl MindState {
+    /// Source pins every retained individual interpretation, including resolved
+    /// records. Retirement does not infer that an interpretation was forgotten.
+    pub(crate) fn pinned_individuals<'a>(&'a self, actor: &str) -> impl Iterator<Item = &'a str> {
+        self.minds
+            .as_ref()
+            .and_then(|minds| minds.get(actor))
+            .into_iter()
+            .flat_map(|mind| &mind.records)
+            .filter_map(|record| match &record.subject_id {
+                Some(ObserverSubject::Individual { individual_id }) => Some(individual_id.as_str()),
+                _ => None,
+            })
+    }
 }
 
 fn plain_columns(

@@ -20,6 +20,8 @@ use std::collections::BTreeSet;
 
 mod receipt;
 pub(crate) use receipt::SupportRetentionContext;
+mod encoding;
+use encoding::SupportEncoding;
 
 fn invalid() -> ReceivedError {
     ReceivedError("Invalid sparse temporal support ownership or counters.")
@@ -95,6 +97,7 @@ impl TemporalState {
         actor_id: &str,
         capsule: TemporalSupportCapsule,
         position: u64,
+        encoding: SupportEncoding<'_>,
     ) -> Result<Arc<TemporalSupportRecord>, ReceivedError> {
         let id = json_record(&[
             "world",
@@ -108,7 +111,7 @@ impl TemporalState {
         .map_err(|_| invalid())?;
         let parent = json_record(&["world", "experience", "temporal", "actors", actor_id])
             .map_err(|_| invalid())?;
-        let payload = Arc::from(json_record(&capsule).map_err(|_| invalid())?);
+        let payload = Arc::from(encoding::encode(&capsule, encoding)?);
         Ok(Arc::new(TemporalSupportRecord {
             id,
             parent,
@@ -118,7 +121,7 @@ impl TemporalState {
             capsule,
         }))
     }
-    pub(super) fn admit_support(
+    fn admit_support(
         &mut self,
         actor_id: &str,
         mut capsule: TemporalSupportCapsule,
@@ -128,6 +131,7 @@ impl TemporalState {
         policy: &AttentionRetentionPolicy,
         meters: &mut WorkMeters,
         mut places: Option<crate::experience::KnownPlaceMutation<'_>>,
+        encoding: SupportEncoding<'_>,
     ) -> Result<Option<Arc<TemporalSupportRecord>>, TemporalAppendError> {
         for _ in 0..4 {
             let bytes = capsule.logical_bytes(values)?;
@@ -210,7 +214,7 @@ impl TemporalState {
         let bytes = capsule.bytes;
         let old_bytes = prior.as_ref().map_or(0, |prior| prior.capsule.bytes);
         let id = capsule.receipt.id.clone();
-        let record = self.support_record(actor_id, capsule, position)?;
+        let record = self.support_record(actor_id, capsule, position, encoding)?;
         let mut header = self
             .actors
             .get(actor_id)
@@ -355,7 +359,12 @@ impl TemporalState {
             now,
             policy,
         )?;
-        let replacement = self.support_record(actor_id, replacement, prior.position)?;
+        let replacement = self.support_record(
+            actor_id,
+            replacement,
+            prior.position,
+            SupportEncoding::Existing(prior.payload()),
+        )?;
         self.change_support(actor_id, id, Some(replacement))?;
         Ok(true)
     }
@@ -372,6 +381,7 @@ impl TemporalState {
         sequence: u64,
         policy: &AttentionRetentionPolicy,
         meters: &mut WorkMeters,
+        places: Option<crate::experience::KnownPlaceMutation<'_>>,
     ) -> Result<Option<TemporalReceiptLocator>, TemporalAppendError> {
         let actor_id = &observation.observer.actor_id;
         let actor = self.actors.get(actor_id).ok_or_else(invalid)?;
@@ -517,7 +527,8 @@ impl TemporalState {
             now,
             policy,
             meters,
-            None,
+            places,
+            SupportEncoding::Observation,
         )?;
         Ok(record.map(|_| locator))
     }

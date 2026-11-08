@@ -1,6 +1,12 @@
 import { decodeAttentionStorage, encodeAttentionStorage } from './attention-storage.js';
 import { decodeCurrentContactRow, serializeCurrentContact } from './current-contact-codec.js';
-import { decodeTemporalPageRow, serializeTemporalPage } from './temporal-page-storage.js';
+import {
+  decodeTemporalPageRow,
+  serializeTemporalPage,
+  TEMPORAL_PAGE_TARGET_BYTES,
+} from './temporal-page-storage.js';
+import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
+import { LIVE_SAVE_MAX_BYTES } from './pending-world-save.js';
 import { RECORD_NODES, type RecordNode } from './world-record-schema.js';
 import {
   canonicalJson,
@@ -14,6 +20,16 @@ import {
   validateNativeDefinitions,
 } from '@open-legend/domain/native-install';
 import { createHash } from 'node:crypto';
+
+/** Application storage settings are supplied once to the native save owner.
+ * They remain separate from world definitions and the shared scratch allowance. */
+export const nativeStorageSettings = Object.freeze({
+  temporalSave: Object.freeze({
+    targetBytes: TEMPORAL_PAGE_TARGET_BYTES,
+    rowBytes: CHECKPOINT_LIMITS.rowBytes,
+  }),
+  pendingSaveBytes: LIVE_SAVE_MAX_BYTES,
+});
 
 type RetainedNativeFields = Pick<
   WorldState,
@@ -87,6 +103,11 @@ export function nativeDefinitionInputs(
     socialDefaults: policy(world.socialDefaults),
     speechAction: definition(world.speechAction, definitionPin(world.speechAction)),
     ordinaryActions: definition(world.ordinaryActions, definitionPin(world.ordinaryActions)),
+    observationRules: definition(world.observationRules, definitionPin(world.observationRules)),
+    eventAppraisalRules: definition(
+      world.eventAppraisalRules,
+      definitionPin(world.eventAppraisalRules),
+    ),
     promises: definition(world.promises, definitionPin(world.promises)),
     presentation: selected.presentation === undefined ? null : policy(selected.presentation),
     eventDisclosure: definition(world.eventDisclosure, definitionPin(world.eventDisclosure)),

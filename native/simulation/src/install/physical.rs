@@ -89,6 +89,8 @@ pub(crate) struct NativeDefinitionInputs {
     pub occurrence_rules: DefinitionInput,
     pub speech_action: DefinitionInput,
     pub ordinary_actions: DefinitionInput,
+    pub observation_rules: DefinitionInput,
+    pub event_appraisal_rules: DefinitionInput,
     pub promises: DefinitionInput,
     pub social_defaults: CanonicalInput,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]

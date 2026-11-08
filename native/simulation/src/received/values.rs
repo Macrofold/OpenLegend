@@ -346,6 +346,12 @@ pub fn retain_received_value(
 }
 
 impl ReceivedValues {
+    pub(crate) fn inserted_records(&self) -> impl Iterator<Item = &Arc<ReceivedValueRecord>> {
+        self.undo.iter().filter_map(|operation| match operation {
+            ReceivedValuesUndo::SourceInsert(id) => self.sources.get(id).map(|value| &value.record),
+            _ => None,
+        })
+    }
     pub fn install(
         records: Vec<ReceivedValueRecord>,
         through: f64,

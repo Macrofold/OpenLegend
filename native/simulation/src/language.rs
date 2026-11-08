@@ -18,6 +18,126 @@ pub(crate) enum CollationError {
     MissingKey,
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct WordsRequest {
+    binding: GeometryBinding,
+    strings: Vec<String>,
+    #[serde(skip)]
+    reservation: ByteReservation,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct WordsAnswer {
+    pub binding: GeometryBinding,
+    pub words: Vec<Vec<String>>,
+}
+pub(crate) struct WordFacts {
+    words: Vec<Vec<String>>,
+    _reservation: ByteReservation,
+}
+impl WordFacts {
+    pub(crate) fn get(&self, index: usize) -> Option<&[String]> {
+        self.words.get(index).map(Vec::as_slice)
+    }
+}
+impl WordsRequest {
+    pub(crate) fn prepare<'a, I>(
+        binding: GeometryBinding,
+        strings: I,
+        budget: &ByteBudget,
+    ) -> Result<Self, CollationError>
+    where
+        I: Iterator<Item = &'a str> + Clone,
+    {
+        let (count, bytes) = strings
+            .clone()
+            .try_fold((0usize, 0usize), |(count, bytes), value| {
+                Some((count.checked_add(1)?, bytes.checked_add(value.len())?))
+            })
+            .ok_or(CollationError::Capacity)?;
+        // Every word-like result owns a nonempty source slice. Fund the request
+        // plus the maximum simultaneous returned slices before either copy.
+        // Deserialized nonempty Vec capacity can grow to twice its length or
+        // the pinned allocator's four-element minimum. Include both outer and
+        // inner vectors while the request still owns its input strings.
+        let outer = count.checked_mul(2).ok_or(CollationError::Capacity)?.max(4);
+        let inner = bytes
+            .checked_mul(2)
+            .ok_or(CollationError::Capacity)?
+            .max(count.checked_mul(4).ok_or(CollationError::Capacity)?);
+        let allowance = heap_sum([
+            size_of::<Self>() + size_of::<WordFacts>(),
+            count
+                .checked_mul(size_of::<String>())
+                .ok_or(CollationError::Capacity)?,
+            outer
+                .checked_mul(size_of::<Vec<String>>())
+                .ok_or(CollationError::Capacity)?,
+            inner
+                .checked_mul(size_of::<String>())
+                .ok_or(CollationError::Capacity)?,
+            bytes.checked_mul(2).ok_or(CollationError::Capacity)?,
+        ])
+        .ok_or(CollationError::Capacity)?;
+        let reservation = budget
+            .reserve(allowance)
+            .map_err(|_| CollationError::Capacity)?;
+        let mut owned = Vec::new();
+        owned
+            .try_reserve_exact(count)
+            .map_err(|_| CollationError::Capacity)?;
+        owned.extend(strings.map(str::to_owned));
+        Ok(Self {
+            binding,
+            strings: owned,
+            reservation,
+        })
+    }
+    pub(crate) fn strings(&self) -> &[String] {
+        &self.strings
+    }
+    pub(crate) fn binding(&self) -> GeometryBinding {
+        self.binding
+    }
+    pub(crate) fn finish(self, answer: WordsAnswer) -> Result<WordFacts, CollationError> {
+        if self.binding != answer.binding {
+            return Err(CollationError::Binding);
+        }
+        if self.strings.len() != answer.words.len() {
+            return Err(CollationError::Permutation);
+        }
+        for (text, words) in self.strings.iter().zip(&answer.words) {
+            let mut remaining = text.as_str();
+            for word in words {
+                if word.is_empty() {
+                    return Err(CollationError::MissingKey);
+                }
+                let Some(at) = remaining.find(word.as_str()) else {
+                    return Err(CollationError::MissingKey);
+                };
+                remaining = &remaining[at + word.len()..];
+            }
+        }
+        let Self {
+            binding: _,
+            strings,
+            mut reservation,
+        } = self;
+        drop(strings);
+        reservation
+            .resize(
+                size_of::<WordFacts>()
+                    + answer.words.heap_bytes().ok_or(CollationError::Capacity)?,
+            )
+            .map_err(|_| CollationError::Capacity)?;
+        Ok(WordFacts {
+            words: answer.words,
+            _reservation: reservation,
+        })
+    }
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct CollationAnswer {

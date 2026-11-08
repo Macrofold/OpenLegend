@@ -5,6 +5,18 @@ use crate::values::{deserialize_nullable, deserialize_present_option, deserializ
 use crate::worlds::base_recognition::{FamiliarityState, RecognitionKnowledge};
 use serde::{Deserialize, Serialize};
 
+#[path = "knowledge/introduction.rs"]
+mod introduction;
+pub(crate) use introduction::{HeardIntroductions, IntroductionWords};
+#[path = "knowledge/name_support.rs"]
+mod name_support;
+pub(crate) use name_support::StoredNameSupport;
+#[path = "knowledge/learn_introduction.rs"]
+mod learn_introduction;
+#[path = "knowledge/name_evidence.rs"]
+mod name_evidence;
+pub(crate) use learn_introduction::learn_heard_introductions;
+
 fn retained_flag<'de, D: serde::Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<bool>, D::Error> {

@@ -4,11 +4,14 @@
 
 use super::WorldEvent;
 use crate::encoding::json_record;
+use crate::host::retained_size::{HeapBytes, heap_sum, map_storage, tree_node_bound};
+use crate::host::{ByteBudget, ByteReservation};
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::records::{ChangedRow, InstalledRow, OwnerCoverage};
 use crate::values::is_safe_record_id;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+use std::mem::size_of;
 use std::{collections::BTreeMap, sync::Arc};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,6 +40,7 @@ struct HotEventPointer {
 pub struct OriginalOccurrence {
     event: WorldEvent,
     payload: Arc<str>,
+    _reservation: Option<ByteReservation>,
 }
 
 impl OriginalOccurrence {
@@ -57,6 +61,7 @@ impl OriginalOccurrence {
         Ok(Self {
             event,
             payload: Arc::from(input.payload),
+            _reservation: None,
         })
     }
     pub fn event(&self) -> &WorldEvent {
@@ -228,6 +233,11 @@ impl OccurrenceHistory {
     pub fn hot(&self) -> impl Iterator<Item = &HotOccurrencePlacement> {
         self.hot.values()
     }
+    pub(crate) fn appended(&self) -> impl Iterator<Item = &HotOccurrencePlacement> {
+        self.undo.iter().filter_map(|operation| match operation {
+            OccurrenceUndo::Append { position, .. } => self.hot.get(position),
+        })
+    }
     /// Missing residency is unavailable evidence, never proof no occurrence exists.
     pub fn original(&self, id: &str) -> Result<&Arc<OriginalOccurrence>, OccurrenceError> {
         self.originals.get(id).ok_or(OccurrenceError(
@@ -243,7 +253,8 @@ impl OccurrenceHistory {
     /// placement. Independent reaction events append later at their own ordinals.
     pub(crate) fn append(
         &mut self,
-        event: WorldEvent,
+        event: &WorldEvent,
+        budget: &ByteBudget,
     ) -> Result<Arc<OriginalOccurrence>, OccurrenceError> {
         if !is_safe_record_id(&event.id)
             || self.originals.contains_key(&event.id)
@@ -252,12 +263,45 @@ impl OccurrenceHistory {
         {
             return Err(OccurrenceError("Invalid new original occurrence."));
         }
+        let payload_bytes = crate::encoding::json_record_len(&event)
+            .map_err(|_| OccurrenceError("Original occurrence encoding failed."))?;
+        let bytes = heap_sum([
+            event
+                .heap_bytes()
+                .ok_or(OccurrenceError("Original occurrence capacity overflow."))?,
+            payload_bytes
+                .checked_mul(2)
+                .ok_or(OccurrenceError("Original occurrence capacity overflow."))?,
+            size_of::<OriginalOccurrence>() + 2 * size_of::<usize>(),
+            tree_node_bound::<u64, HotOccurrencePlacement>()
+                .ok_or(OccurrenceError("Original occurrence capacity overflow."))?,
+            map_storage::<String, Arc<OriginalOccurrence>>(4)
+                .ok_or(OccurrenceError("Original occurrence capacity overflow."))?,
+            event
+                .id
+                .len()
+                .checked_mul(9)
+                .and_then(|n| n.checked_add(128))
+                .ok_or(OccurrenceError("Original occurrence capacity overflow."))?,
+            4 * size_of::<OccurrenceUndo>(),
+        ])
+        .ok_or(OccurrenceError("Original occurrence capacity overflow."))?;
+        let reservation = budget
+            .reserve(bytes)
+            .map_err(|_| OccurrenceError("Original occurrence exceeds native byte allowance."))?;
+        self.originals
+            .try_reserve(1)
+            .map_err(|_| OccurrenceError("Original occurrence capacity unavailable."))?;
+        self.undo
+            .try_reserve_exact(1)
+            .map_err(|_| OccurrenceError("Original occurrence undo unavailable."))?;
         let payload = json_record(&event)
             .map_err(|_| OccurrenceError("Original occurrence encoding failed."))?;
         let id = event.id.clone();
         let original = Arc::new(OriginalOccurrence {
-            event,
+            event: event.clone(),
             payload: Arc::from(payload),
+            _reservation: Some(reservation),
         });
         let position = self.next_hot_ordinal;
         let row_id = json_record(&["world", "events", &id])
@@ -306,6 +350,6 @@ impl OccurrenceHistory {
         Ok(())
     }
     pub fn discard_undo(&mut self) {
-        self.undo.clear();
+        self.undo = Vec::new();
     }
 }

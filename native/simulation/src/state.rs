@@ -1435,15 +1435,18 @@ impl Entity {
             None => self.attributes.as_mut(),
         }
     }
-    pub fn body_profile(&self) -> Cow<'_, BodyProfile> {
-        let ordinary = match &self.actor {
+    pub(crate) fn ordinary_body_profile(&self) -> &BodyProfile {
+        match &self.actor {
             Some(actor) if !actor.alive => self
                 .spatial
                 .inactive_body
                 .as_ref()
                 .unwrap_or(&self.spatial.body),
             _ => &self.spatial.body,
-        };
+        }
+    }
+    pub fn body_profile(&self) -> Cow<'_, BodyProfile> {
+        let ordinary = self.ordinary_body_profile();
         match &self.spatial.soft_footprint {
             Some(form) => Cow::Owned(BodyProfile {
                 radius: form.width.max(form.length) / 2.0,

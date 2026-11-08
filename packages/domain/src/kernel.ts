@@ -4676,7 +4676,13 @@ function failAction(world: WorldState, actor: Entity, events: WorldEvent[], reas
       'private',
     );
   } else
-    emit(world, events, 'action-stopped', subjectNarration(actor, `stopped: ${reason}`), actor);
+    emit(
+      world,
+      events,
+      selectedOrdinaryActionRules(world).actionStoppedEvent,
+      subjectNarration(actor, `${selectedOrdinaryActionRules(world).actionStoppedPrefix}${reason}`),
+      actor,
+    );
 }
 function completeAction(
   world: WorldState,
@@ -4832,7 +4838,12 @@ function completeAction(
     }
     case 'move':
       if (!action.destination || !actionInReach(world, actor, action)) {
-        failAction(world, actor, events, 'the destination was not reached.');
+        failAction(
+          world,
+          actor,
+          events,
+          selectedOrdinaryActionRules(world).movementDestinationNotReached,
+        );
         return;
       }
       const movementRecord = occurrenceFor(world, actor.id, action.id);
@@ -4848,10 +4859,16 @@ function completeAction(
         emit(
           world,
           events,
-          'moved',
-          subjectNarration(actor, `moved to ${worldPosition(actor).x}, ${worldPosition(actor).z}.`),
+          selectedOrdinaryActionRules(world).movementArrivalEvent,
+          subjectNarration(
+            actor,
+            selectedOrdinaryActionRules(world)
+              .movementArrival.replace('{x}', String(worldPosition(actor).x))
+              .replace('{z}', String(worldPosition(actor).z)),
+          ),
           actor,
         );
+      completion = selectedOrdinaryActionRules(world).movementCompleted.message;
       break;
     case 'replenish':
       emit(
@@ -5744,7 +5761,12 @@ function advanceAction(
     }
     const destination = targetPosition(world, action);
     if (!destination) {
-      failAction(world, actor, events, 'the target disappeared.');
+      failAction(
+        world,
+        actor,
+        events,
+        selectedOrdinaryActionRules(world).movementMissingDestination,
+      );
       return;
     }
     if (
@@ -5778,7 +5800,7 @@ function advanceAction(
             world,
             actor,
             events,
-            'the target or route keeps changing; choose a new action.',
+            selectedOrdinaryActionRules(world).movementChangingRoute,
           );
           return;
         }
@@ -5801,7 +5823,7 @@ function advanceAction(
       ) {
         action.path = [];
         if ((action.replans ?? 0) >= MOVEMENT.maxReplans)
-          failAction(world, actor, events, 'the route became physically blocked.');
+          failAction(world, actor, events, selectedOrdinaryActionRules(world).movementBlockedRoute);
       }
       return;
     }

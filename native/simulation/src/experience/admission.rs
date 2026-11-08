@@ -15,9 +15,9 @@ use crate::received::values::{
     PersonalAccountFragment, PersonalAccountKind, PersonalAccountSource,
 };
 use crate::received::{
-    ReceivedError, ReceivedFieldClock, ReceivedRole, ReceivedTransition, ReceivedValueFragment,
-    SupportRetentionContext, TemporalAcquisition, TemporalAppendError, TemporalCaptureFacet,
-    TemporalCaptureInput, TemporalChange,
+    ReceivedError, ReceivedFieldClock, ReceivedRole, ReceivedValueFragment,
+    SupportRetentionContext, TemporalAppendError, TemporalCaptureFacet, TemporalCaptureInput,
+    TemporalChange,
 };
 use crate::reception::{EncounterExposure, TriggerKind};
 use crate::records::RecordSchema;
@@ -29,6 +29,12 @@ pub(crate) enum AwarenessAcquisitionError {
     Received(ReceivedError),
     Append(TemporalAppendError),
     Encoding,
+    Execution(crate::execution::ExecutionError),
+}
+impl From<crate::execution::ExecutionError> for AwarenessAcquisitionError {
+    fn from(error: crate::execution::ExecutionError) -> Self {
+        Self::Execution(error)
+    }
 }
 impl From<ExperienceError> for AwarenessAcquisitionError {
     fn from(error: ExperienceError) -> Self {
@@ -99,7 +105,6 @@ fn selected_reason(body: &Awareness, law: &impl AccountRecordingLaw) -> Recordin
     })
 }
 fn source_header(
-    body: &Awareness,
     payload: &str,
     law: &impl AccountRecordingLaw,
 ) -> Result<PersonalSourceHeader, ExperienceError> {
@@ -244,7 +249,7 @@ pub(crate) fn prepare_awareness_admission(
         let mut selected = reason != RecordingReason::None;
         if selected {
             let payload = json_record(&body).map_err(|_| AwarenessAcquisitionError::Encoding)?;
-            let header = source_header(&body, &payload, &law)?;
+            let header = source_header(&payload, &law)?;
             if !quota
                 .as_mut()
                 .ok_or(ReceivedError("Personal account quota is absent."))?
@@ -298,15 +303,13 @@ pub(crate) fn prepare_awareness_admission(
 pub(crate) fn acquire_awareness_accounts(
     core: &mut CoreMutation<'_>,
     mut admission: AwarenessAdmission,
-    scope: Option<(&mut TemporalAcquisition, &mut ReceivedTransition)>,
     schema: &RecordSchema,
     budget: &ByteBudget,
 ) -> Result<PlacedAwarenessAccounts, AwarenessAcquisitionError> {
     let now = core.state.physical.header.sim_time;
-    let sequence = core.state.physical.header.sequence;
-    let law = core.state.installed.account_law();
-    let policy = &core.state.installed.attention.value().retention;
-    let mut scope = scope;
+    let installed = Arc::clone(&core.state.installed);
+    let law = installed.account_law();
+    let policy = &installed.attention.value().retention;
     for decision in &mut admission.decisions {
         let body = &mut decision.body;
         let attended = original_contexts(body).any(|context| context.attended);
@@ -315,23 +318,6 @@ pub(crate) fn acquire_awareness_accounts(
         }
         let mut locator = body.source_receipt.clone();
         if locator.is_none() && decision.selected {
-            let Some((scope, transition)) = scope.as_mut() else {
-                return Err(ReceivedError(
-                    "Personal acquisition requires its actual temporal scope.",
-                )
-                .into());
-            };
-            if scope.actor_id() != admission.actor_id {
-                return Err(ExperienceError::ForeignOwner.into());
-            }
-            let values = core
-                .state
-                .reception
-                .received_values
-                .as_mut()
-                .ok_or(ReceivedError(
-                    "Actual received value ownership is unavailable.",
-                ))?;
             let context_subjects = original_contexts(body)
                 .flat_map(|context| context.subjects.iter().map(|subject| subject.track.clone()))
                 .collect::<IndexSet<_>>()
@@ -354,15 +340,19 @@ pub(crate) fn acquire_awareness_accounts(
                         .expect("typed event data is an object")
                         .clone()
                 });
-            locator = scope.append(
-                &mut core.state.temporal,
-                values,
-                &mut core.state.physical.identity,
-                transition,
-                &law,
-                &mut core.journal.meters,
-                now,
-                sequence,
+            let physical_life = core
+                .state
+                .physical
+                .entities
+                .get(&admission.actor_id)
+                .and_then(|entity| entity.actor.as_ref())
+                .ok_or(ExperienceError::ForeignOwner)?
+                .physical_life
+                .unwrap_or(0);
+            locator = super::receipt::append_personal_receipt(
+                core,
+                &admission.actor_id,
+                physical_life,
                 TemporalCaptureInput {
                     spatial_context: false,
                     availability_at: None,
@@ -491,7 +481,7 @@ pub(crate) fn acquire_awareness_accounts(
             continue;
         }
         let payload = json_record(&body).map_err(|_| AwarenessAcquisitionError::Encoding)?;
-        let header = source_header(&body, &payload, &law)?;
+        let header = source_header(&payload, &law)?;
         if decision.selected
             && !quota
                 .as_mut()

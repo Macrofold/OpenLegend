@@ -73,6 +73,17 @@ pub(crate) struct OrdinaryActionRules {
     pub deactivated: String,
     pub approach_name: String,
     pub approach_facts: Vec<String>,
+    pub before_attempt_facts: indexmap::IndexMap<String, String>,
+    pub status_interruption_suffix: String,
+    pub movement_arrival: String,
+    pub movement_completed: ActionMessage,
+    pub movement_missing_destination: String,
+    pub movement_destination_not_reached: String,
+    pub movement_changing_route: String,
+    pub movement_blocked_route: String,
+    pub action_stopped_prefix: String,
+    pub action_stopped_event: String,
+    pub movement_arrival_event: String,
 }
 impl DefinitionIdentity for OrdinaryActionRules {
     fn definition_id(&self) -> &str {
@@ -116,6 +127,7 @@ impl OrdinaryActionRules {
             &self.out_of_reach,
             &self.not_active,
             &self.not_applicable,
+            &self.movement_completed,
         ]
         .into_iter()
         .try_fold(0, |maximum, message| {
@@ -126,24 +138,33 @@ impl OrdinaryActionRules {
                 .map(|bytes| maximum.max(bytes))
         })
     }
-    pub(crate) fn departure_heap_bound(&self, point: crate::state::Point) -> Option<usize> {
+    fn positioned_heap_bound(template: &str, point: crate::state::Point) -> Option<usize> {
         let x = crate::encoding::json_record_len(&point.x).ok()?;
         let z = crate::encoding::json_record_len(&point.z).ok()?;
-        self.movement_departure
+        template
             .len()
             .checked_mul(2)?
             .checked_add(x.checked_add(z)?.checked_mul(3)?)
+    }
+    fn positioned(template: &str, point: crate::state::Point) -> Result<String, serde_json::Error> {
+        let x = crate::encoding::json_record(&point.x)?;
+        let z = crate::encoding::json_record(&point.z)?;
+        Ok(template.replacen("{x}", &x, 1).replacen("{z}", &z, 1))
+    }
+    pub(crate) fn departure_heap_bound(&self, point: crate::state::Point) -> Option<usize> {
+        Self::positioned_heap_bound(&self.movement_departure, point)
     }
     pub(crate) fn departure(
         &self,
         point: crate::state::Point,
     ) -> Result<String, serde_json::Error> {
-        let x = crate::encoding::json_record(&point.x)?;
-        let z = crate::encoding::json_record(&point.z)?;
-        Ok(self
-            .movement_departure
-            .replace("{x}", &x)
-            .replace("{z}", &z))
+        Self::positioned(&self.movement_departure, point)
+    }
+    pub(crate) fn arrival_heap_bound(&self, point: crate::state::Point) -> Option<usize> {
+        Self::positioned_heap_bound(&self.movement_arrival, point)
+    }
+    pub(crate) fn arrival(&self, point: crate::state::Point) -> Result<String, serde_json::Error> {
+        Self::positioned(&self.movement_arrival, point)
     }
     pub(crate) fn status_message(&self, label: &str, active: bool) -> String {
         format!(

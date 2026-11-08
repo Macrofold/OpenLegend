@@ -99,4 +99,18 @@ export const BASE_ORDINARY_ACTION_RULES = {
   deactivated: 'deactivated',
   approachName: 'Move into reach',
   approachFacts: ['distance', 'approach'],
+  beforeAttemptFacts: {
+    health: 'health before the attempt',
+    distance: 'distance before the attempt',
+  },
+  statusInterruptionSuffix: ' interrupted the activity.',
+  movementArrival: 'moved to {x}, {z}.',
+  movementCompleted: { code: 'completed', message: 'move completed.' },
+  movementMissingDestination: 'the target disappeared.',
+  movementDestinationNotReached: 'the destination was not reached.',
+  movementChangingRoute: 'the target or route keeps changing; choose a new action.',
+  movementBlockedRoute: 'the route became physically blocked.',
+  actionStoppedPrefix: 'stopped: ',
+  actionStoppedEvent: 'action-stopped',
+  movementArrivalEvent: 'moved',
 } as const;

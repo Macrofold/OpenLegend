@@ -5,10 +5,12 @@ use super::*;
 use crate::attention::AttentionRetentionPolicy;
 pub(crate) use crate::encoding::js_property_cmp as property_order;
 use crate::encoding::json_record_len;
+use crate::execution::ExecutionError;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::{KnowledgeAccountChange, ReceivedError, TemporalState};
-use crate::reception::ReceptionState;
+use crate::reception::{ReceivingMutation, ReceptionState};
+use crate::simulation::{InstalledWorld, PhysicalState};
 use crate::worlds::base_knowledge::ObserverIdentity;
 use std::mem::size_of;
 
@@ -32,8 +34,6 @@ fn map_growth<T>(
 #[derive(Clone, Copy)]
 pub(crate) struct RecognitionCheckpoint {
     operations: usize,
-    effects: usize,
-    next_effect: usize,
     identities_present: bool,
     revisions_present: bool,
 }
@@ -51,33 +51,23 @@ enum RecognitionUndo {
         prior: Option<u64>,
     },
 }
-/// The receiver must invalidate its actual ephemeral preparation before another
-/// reader resumes. Numeric familiarity changes do not run a new competition.
-pub(crate) struct RecognitionEffect {
-    pub observer: String,
-    pub individual_id: Option<String>,
-    pub knowledge_changed: bool,
-}
+/// Correspondence history is completed synchronously by the real receiver at
+/// each identity write. Borrowed native read scopes cannot survive that mutable
+/// write; scores are read afresh at the next actual attention opportunity.
 pub(crate) struct RecognitionJournal {
     undo: Vec<RecognitionUndo>,
-    effects: Vec<RecognitionEffect>,
-    next_effect: usize,
     reservation: ByteReservation,
 }
 impl RecognitionJournal {
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ReceivedError> {
         Ok(Self {
             undo: Vec::new(),
-            effects: Vec::new(),
-            next_effect: 0,
             reservation: budget.reserve(size_of::<Self>()).map_err(|_| capacity())?,
         })
     }
     pub(crate) fn checkpoint(&self, state: &ReceptionState) -> RecognitionCheckpoint {
         RecognitionCheckpoint {
             operations: self.undo.len(),
-            effects: self.effects.len(),
-            next_effect: self.next_effect,
             identities_present: state.observer_identities.is_some(),
             revisions_present: state.knowledge_revisions.is_some(),
         }
@@ -91,25 +81,14 @@ impl RecognitionJournal {
                     .ok_or_else(capacity)?,
             )
             .map_err(|_| capacity())?;
-        self.undo.try_reserve(1).map_err(|_| capacity())?;
-        self.effects.try_reserve(1).map_err(|_| capacity())
-    }
-    pub(crate) fn next_effect(&self) -> Option<&RecognitionEffect> {
-        self.effects.get(self.next_effect)
-    }
-    pub(crate) fn complete_effect(&mut self) -> Result<(), ReceivedError> {
-        if self.next_effect == self.effects.len() {
-            return Err(invalid());
-        }
-        self.next_effect += 1;
-        Ok(())
+        self.undo.try_reserve(1).map_err(|_| capacity())
     }
     pub(crate) fn rollback_to(
         &mut self,
         state: &mut ReceptionState,
         checkpoint: RecognitionCheckpoint,
     ) -> Result<(), ReceivedError> {
-        if checkpoint.operations > self.undo.len() || checkpoint.effects > self.effects.len() {
+        if checkpoint.operations > self.undo.len() {
             return Err(invalid());
         }
         while self.undo.len() > checkpoint.operations {
@@ -150,8 +129,6 @@ impl RecognitionJournal {
                 }
             }
         }
-        self.effects.truncate(checkpoint.effects);
-        self.next_effect = checkpoint.next_effect;
         if !checkpoint.identities_present {
             state.observer_identities = None;
         }
@@ -161,18 +138,9 @@ impl RecognitionJournal {
         Ok(())
     }
     pub(crate) fn discard_undo(&mut self) -> Result<(), ReceivedError> {
-        if self.next_effect != self.effects.len() {
-            return Err(invalid());
-        }
         self.undo.clear();
-        self.effects.clear();
-        self.next_effect = 0;
         self.reservation
-            .resize(
-                size_of::<Self>()
-                    + self.undo.capacity() * size_of::<RecognitionUndo>()
-                    + self.effects.capacity() * size_of::<RecognitionEffect>(),
-            )
+            .resize(size_of::<Self>() + self.undo.capacity() * size_of::<RecognitionUndo>())
             .map_err(|_| capacity())
     }
     pub(crate) fn ensure_observer(
@@ -243,8 +211,67 @@ impl RecognitionJournal {
         });
         Ok(())
     }
-    /// This returns false only for actual personal quota refusal. Unsupported
-    /// correspondence work is an explicit unfinished phase, never a lost update.
+    /// Routine deletion of incidental roots preserves the existing ownership
+    /// flag. It changes preference without granting a new personal account or
+    /// a correspondence/knowledge-revision opportunity.
+    pub(super) fn replace_faded_familiarity(
+        &mut self,
+        state: &mut ReceptionState,
+        temporal: &mut TemporalState,
+        observer: &str,
+        key: &str,
+        next: ObserverIdentity,
+        now: f64,
+        retention: &AttentionRetentionPolicy,
+    ) -> Result<(), ExecutionError> {
+        let prior = state
+            .observer_identities
+            .as_ref()
+            .and_then(|owners| owners.get(observer))
+            .and_then(|identities| identities.get(key))
+            .ok_or_else(invalid)?;
+        let charged = prior.retained == Some(true) && !prior.authored;
+        self.reserve(
+            heap_sum([
+                observer.len(),
+                key.len(),
+                size_of::<RecognitionUndo>(),
+                prior.heap_bytes().ok_or_else(capacity)?,
+                next.heap_bytes().ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        if charged
+            && !temporal.adjust_retained_knowledge(
+                observer,
+                KnowledgeAccountChange {
+                    before_bytes: Some(json_record_len(prior).map_err(|_| invalid())? as u64),
+                    after_bytes: Some(json_record_len(&next).map_err(|_| invalid())? as u64),
+                    required: false,
+                    revocation: false,
+                },
+                now,
+                retention,
+            )?
+        {
+            return Err(invalid().into());
+        }
+        let identities = state
+            .observer_identities
+            .as_mut()
+            .and_then(|owners| owners.get_mut(observer))
+            .ok_or_else(invalid)?;
+        let (position, _, prior) = identities.shift_remove_full(key).ok_or_else(invalid)?;
+        identities.shift_insert(position, key.to_owned(), next);
+        self.undo.push(RecognitionUndo::Identity {
+            observer: observer.to_owned(),
+            key: key.to_owned(),
+            prior: Some((position, prior)),
+        });
+        Ok(())
+    }
+    /// A personal quota refusal writes nothing. Every accepted correspondence
+    /// change closes its real current cohort before the next identity operation.
     pub(crate) fn commit(
         &mut self,
         state: &mut ReceptionState,
@@ -256,7 +283,10 @@ impl RecognitionJournal {
         policy: &RecognitionPolicy,
         time_scale: f64,
         retention: &AttentionRetentionPolicy,
-    ) -> Result<bool, ReceivedError> {
+        physical: &mut PhysicalState,
+        installed: &InstalledWorld,
+        receiving: &mut ReceivingMutation<'_>,
+    ) -> Result<bool, ExecutionError> {
         self.ensure_observer(state, observer)?;
         if !next.authored {
             next.retained = Some(true);
@@ -267,7 +297,7 @@ impl RecognitionJournal {
             .and_then(|root| root.get(observer))
             .ok_or_else(invalid)?;
         let prior = records.get(key);
-        ensure_correspondence_ready(state, observer, prior, Some(&next))?;
+        let correspondence = correspondence_changes(prior, Some(&next));
         let before_bytes = prior
             .filter(|prior| prior.retained == Some(true) && !prior.authored)
             .map(json_record_len)
@@ -283,7 +313,7 @@ impl RecognitionJournal {
             heap_sum([
                 3 * observer.len(),
                 2 * key.len(),
-                2 * size_of::<RecognitionUndo>() + 2 * size_of::<RecognitionEffect>(),
+                2 * size_of::<RecognitionUndo>(),
                 next.individual_id.as_ref().map_or(0, String::len),
                 next.heap_bytes().ok_or_else(capacity)?,
                 prior
@@ -308,11 +338,15 @@ impl RecognitionJournal {
         )? {
             return Ok(false);
         }
+        let cohort = if correspondence {
+            receiving.prepare_identity(physical, state, installed, observer)?
+        } else {
+            None
+        };
         if !dropped.is_empty() {
             temporal.mark_support_dirty(observer, Some(&dropped))?;
         }
         let due = recognition_seed_deadline(&next, policy, time_scale);
-        let individual_id = next.individual_id.clone();
         let records = state
             .observer_identities
             .as_mut()
@@ -331,11 +365,9 @@ impl RecognitionJournal {
             key: key.to_owned(),
             prior,
         });
-        self.effects.push(RecognitionEffect {
-            observer: observer.to_owned(),
-            individual_id,
-            knowledge_changed: false,
-        });
+        if let Some(cohort) = cohort {
+            receiving.reconcile(physical, state, installed, temporal, cohort, None)?;
+        }
         if let Some(due) = due {
             temporal.note_knowledge_due(observer, due)?;
         }
@@ -349,7 +381,10 @@ impl RecognitionJournal {
         key: &str,
         now: f64,
         retention: &AttentionRetentionPolicy,
-    ) -> Result<(), ReceivedError> {
+        physical: &mut PhysicalState,
+        installed: &InstalledWorld,
+        receiving: &mut ReceivingMutation<'_>,
+    ) -> Result<(), ExecutionError> {
         let Some(prior) = state
             .observer_identities
             .as_ref()
@@ -358,7 +393,11 @@ impl RecognitionJournal {
         else {
             return Ok(());
         };
-        ensure_correspondence_ready(state, observer, Some(prior), None)?;
+        let cohort = if correspondence_changes(Some(prior), None) {
+            receiving.prepare_identity(physical, state, installed, observer)?
+        } else {
+            None
+        };
         let bytes = if prior.retained == Some(true) && !prior.authored {
             Some(json_record_len(prior).map_err(|_| invalid())? as u64)
         } else {
@@ -369,7 +408,7 @@ impl RecognitionJournal {
                 3 * observer.len(),
                 key.len(),
                 prior.heap_bytes().ok_or_else(capacity)?,
-                2 * size_of::<RecognitionUndo>() + 2 * size_of::<RecognitionEffect>(),
+                2 * size_of::<RecognitionUndo>(),
                 prior.individual_id.as_ref().map_or(0, String::len),
                 source_scratch(Some(prior))?,
             ])
@@ -401,7 +440,7 @@ impl RecognitionJournal {
                 retention,
             )?
         {
-            return Err(invalid());
+            return Err(invalid().into());
         }
         if !dropped.is_empty() {
             temporal.mark_support_dirty(observer, Some(&dropped))?;
@@ -412,17 +451,14 @@ impl RecognitionJournal {
             .and_then(|root| root.get_mut(observer))
             .ok_or_else(invalid)?;
         let (at, _, prior) = records.shift_remove_full(key).ok_or_else(invalid)?;
-        let individual_id = prior.individual_id.clone();
         self.undo.push(RecognitionUndo::Identity {
             observer: observer.to_owned(),
             key: key.to_owned(),
             prior: Some((at, prior)),
         });
-        self.effects.push(RecognitionEffect {
-            observer: observer.to_owned(),
-            individual_id,
-            knowledge_changed: false,
-        });
+        if let Some(cohort) = cohort {
+            receiving.reconcile(physical, state, installed, temporal, cohort, None)?;
+        }
         for id in releases {
             temporal.release_support(observer, &id, now, retention, None)?;
         }
@@ -446,7 +482,7 @@ impl RecognitionJournal {
         self.reserve(
             heap_sum([
                 3 * observer.len(),
-                2 * size_of::<RecognitionUndo>() + 2 * size_of::<RecognitionEffect>(),
+                2 * size_of::<RecognitionUndo>(),
                 map_growth(state.knowledge_revisions.as_ref(), prior.is_none())?,
             ])
             .ok_or_else(capacity)?,
@@ -458,11 +494,6 @@ impl RecognitionJournal {
         self.undo.push(RecognitionUndo::Revision {
             observer: observer.to_owned(),
             prior,
-        });
-        self.effects.push(RecognitionEffect {
-            observer: observer.to_owned(),
-            individual_id: None,
-            knowledge_changed: true,
         });
         Ok(())
     }
@@ -519,12 +550,10 @@ fn dropped_sources(
         .map(|source| source.id().to_owned())
         .collect()
 }
-fn ensure_correspondence_ready(
-    state: &ReceptionState,
-    observer: &str,
+fn correspondence_changes(
     before: Option<&ObserverIdentity>,
     after: Option<&ObserverIdentity>,
-) -> Result<(), ReceivedError> {
+) -> bool {
     let removes = |before: Option<&RecognitionKnowledge>, after: Option<&RecognitionKnowledge>| {
         before.is_some_and(|before| {
             before.samples.iter().any(|sample| {
@@ -532,7 +561,7 @@ fn ensure_correspondence_ready(
             })
         })
     };
-    let correspondence = before.is_some_and(|before| {
+    before.is_some_and(|before| {
         after.is_none_or(|after| {
             before.individual_id != after.individual_id
                 || before.canonical_id != after.canonical_id
@@ -541,19 +570,7 @@ fn ensure_correspondence_ready(
                 || removes(before.voice.as_ref(), after.voice.as_ref())
                 || removes(before.sight.as_ref(), after.sight.as_ref())
         })
-    });
-    if correspondence
-        && state
-            .perception_evidence
-            .as_ref()
-            .and_then(|root| root.get(observer))
-            .is_some_and(|owner| owner.attention.is_some())
-    {
-        return Err(ReceivedError(
-            "Recognition correspondence requires the current reception finalizer.",
-        ));
-    }
-    Ok(())
+    })
 }
 pub(crate) fn recognition_seed_deadline(
     identity: &ObserverIdentity,

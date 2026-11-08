@@ -400,6 +400,7 @@ impl OriginalJournal {
                     &mut state.received_values,
                     facet.value,
                     facet.prepared_pose,
+                    None,
                     now,
                     sequence,
                     identity,
@@ -569,10 +570,11 @@ fn endpoint_input(mut input: ReceivedObservationInput) -> ReceivedObservationInp
     input
 }
 
-fn retain_facet(
+pub(super) fn retain_facet(
     values: &mut Option<crate::received::ReceivedValues>,
     value: SensoryFacet,
     pose: Option<ObservedBodyPose>,
+    previous: Option<&ReceivedFacetValue>,
     at: f64,
     sequence: u64,
     identity: &mut IdentityState,
@@ -595,7 +597,10 @@ fn retain_facet(
                     kind: BodyPoseKind::BodyPose,
                     pose,
                 }),
-                None,
+                previous.and_then(|previous| match &previous.reception {
+                    Some(FacetReception::Body { pose_ref }) => Some(pose_ref),
+                    _ => None,
+                }),
                 at,
                 sequence,
                 identity,
@@ -641,7 +646,15 @@ fn retain_facet(
         }
         value => ReceivedValueFragment::Sensory(value),
     };
-    let retained = retain_received_value(values, fragment, None, at, sequence, identity, limits)?;
+    let retained = retain_received_value(
+        values,
+        fragment,
+        previous.map(|previous| &previous.reference),
+        at,
+        sequence,
+        identity,
+        limits,
+    )?;
     Ok((
         ReceivedFacetValue {
             kind,

@@ -34,11 +34,19 @@ pub use install::*;
 mod policy;
 pub use policy::*;
 mod obligation;
-pub(crate) use obligation::{PreparedObligationReplacement, prepare_obligation_replacement};
+pub(crate) use obligation::{
+    PreparedObligationReplacement, apply_obligation_replacement, prepare_obligation_replacement,
+};
+mod commitments;
+mod receipt;
+pub(crate) use commitments::{advance_commitments, next_commitment_deadline};
 mod memory;
 pub(crate) use memory::{
-    MemoryAcquisitionError, MemoryAdmission, acquire_memory, prepare_memory_admission,
+    MemoryAcquisitionError, MemoryAdmission, acquire_memory, encoded_body_bound,
+    prepare_memory_admission,
 };
+mod save;
+pub(crate) use save::encode_personal_changes;
 mod mutation;
 pub(crate) use mutation::{ExperienceCheckpoint, ExperienceJournal};
 mod result;
@@ -53,6 +61,7 @@ pub use places::{KnownPlaceCapsule, PlaceProvenance, PreparedKnownPlaceEvidence}
 mod owners;
 mod retained_size;
 pub use owners::PersonalOwnerMap;
+pub(crate) use owners::{MemoryOwner, MemoryOwners};
 
 /// Completion proof from actual personally acquired result evidence. There is
 /// no constructor while the result/account acquisition owner remains unjoined.
@@ -259,6 +268,8 @@ pub struct PersonalSourceHeader {
     /// Every unresolved commitment counts, including forgotten records and a
     /// commitment that has no native obligation. This is not protection.
     pub unresolved_commitment: bool,
+    pub unresolved_obligation: bool,
+    pub obligation_due_at: Option<f64>,
     /// Owned originals are aliases only after this actual account is revoked.
     pub owned_observations: Vec<String>,
     /// Only the source's real dependency closure can revoke its descendants.
@@ -792,6 +803,25 @@ fn header(
             .get("resolved")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+    let unresolved_obligation = kind == PersonalSourceKind::Memory
+        && body.contains_key("obligation")
+        && !body
+            .get("resolved")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+    let obligation_due_at = if unresolved_obligation {
+        let obligation = object(
+            body.get("obligation")
+                .ok_or(ExperienceError::InvalidBody("obligation"))?,
+        )?;
+        if obligation.get("status").and_then(Value::as_str) == Some("active") {
+            optional_number(obligation, "dueAt")?
+        } else {
+            None
+        }
+    } else {
+        None
+    };
     Ok(PersonalSourceHeader {
         reference: PersonalSourceRef {
             kind,
@@ -812,6 +842,8 @@ fn header(
         retention,
         impression,
         unresolved_commitment,
+        unresolved_obligation,
+        obligation_due_at,
         completion_event_type,
         owned_observations: own_observations(body)?,
         dependencies: source_dependencies(body, kind, meaning)?,
@@ -1267,6 +1299,33 @@ impl ExperienceState {
 
     pub fn actor(&self, actor_id: &str) -> Option<&PersonalHistory> {
         self.actors.get(actor_id)
+    }
+    pub(crate) fn optional_collection(
+        &self,
+        actor_id: &str,
+        kind: PersonalSourceKind,
+    ) -> Result<Option<&PersonalSourceCollection>, ExperienceError> {
+        if !is_safe_record_id(actor_id) {
+            return Err(ExperienceError::ForeignOwner);
+        }
+        let owners = self
+            .owner_maps
+            .get(&kind)
+            .ok_or(ExperienceError::UnknownCoverage)?;
+        let collection = self
+            .actors
+            .get(actor_id)
+            .and_then(|actor| actor.sources.get(&kind));
+        if owners.placements.contains_key(actor_id) {
+            return collection.map(Some).ok_or(ExperienceError::UnknownCoverage);
+        }
+        if collection.is_some() {
+            return Err(ExperienceError::ForeignOwner);
+        }
+        if owners.coverage.complete {
+            return Ok(None);
+        }
+        Err(ExperienceError::UnknownCoverage)
     }
     pub fn has_commitment_completion<I, S>(
         &self,

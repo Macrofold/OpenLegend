@@ -13,6 +13,7 @@ use std::sync::Arc;
 pub(crate) struct MovementPolicy {
     pub movement_tiles_per_second: f64,
     pub interaction_radius: f64,
+    pub direct_probe_max_distance: f64,
 }
 pub(crate) struct InstalledMovementPolicy {
     value: MovementPolicy,
@@ -24,9 +25,13 @@ impl InstalledMovementPolicy {
         let value: MovementPolicy =
             serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
         input.verify(&value)?;
-        if ![value.movement_tiles_per_second, value.interaction_radius]
-            .iter()
-            .all(|n| n.is_finite() && *n > 0.0)
+        if ![
+            value.movement_tiles_per_second,
+            value.interaction_radius,
+            value.direct_probe_max_distance,
+        ]
+        .iter()
+        .all(|n| n.is_finite() && *n > 0.0)
         {
             return Err(InstallError::DefinitionBody);
         }
@@ -44,6 +49,9 @@ impl InstalledMovementPolicy {
     }
     pub(crate) fn interaction_radius(&self) -> f64 {
         self.value.interaction_radius
+    }
+    pub(crate) fn direct_probe_max_distance(&self) -> f64 {
+        self.value.direct_probe_max_distance
     }
     /// Scar meaning is supplied by the same installed body's lifecycle policy.
     /// This function does not invent a default for an unported scar or threat.

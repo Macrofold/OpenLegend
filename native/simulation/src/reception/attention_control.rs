@@ -12,7 +12,9 @@ use std::mem::size_of;
 
 mod candidates;
 mod selection;
+mod withdrawal;
 use candidates::{AttentionCandidate, build_candidates, current_point};
+pub(crate) use withdrawal::prune_withdrawn_attention;
 
 fn invalid() -> ReceivedError {
     ReceivedError("Invalid current attention opportunity.")
@@ -196,6 +198,9 @@ pub(crate) fn update_attention(
         )
         .ok_or_else(capacity)?;
     let state_bytes = current.attention.heap_bytes().ok_or_else(capacity)?;
+    // A fresh owner has no prior attention allocation. The complete immutable
+    // policy bounds the smaller policy-key tuple and its transient encoding.
+    let policy_bytes = crate::encoding::json_record_len(policy).map_err(|_| invalid())?;
     let current_bytes = current
         .current
         .iter()
@@ -215,6 +220,8 @@ pub(crate) fn update_attention(
         })
         .ok_or_else(capacity)?;
     let scratch = heap_sum([
+        policy_bytes.checked_mul(2).ok_or_else(capacity)?,
+        2 * size_of::<AttentionState>(),
         state_bytes.checked_mul(6).ok_or_else(capacity)?,
         current_bytes,
         count
@@ -248,6 +255,10 @@ pub(crate) fn update_attention(
     let policy_changed = state.policy != next_policy;
     state.policy = next_policy;
     let mut by_source: IndexMap<String, Vec<String>> = IndexMap::new();
+    let expiry_due = state.annotations.values().any(|value| {
+        value.urgency_through.unwrap_or(f64::INFINITY) <= now
+            || value.direct_through.unwrap_or(f64::INFINITY) <= now
+    });
     for (key, value) in ordered_annotations(&state) {
         by_source
             .entry(value.source_id.clone())
@@ -411,6 +422,8 @@ pub(crate) fn update_attention(
     let candidates = build_candidates(
         physical, reception, installed, experience, observer, &state, journal,
     )?;
+    let live: IndexSet<_> = candidates.keys().cloned().collect();
+    state.explicit.retain(|key| live.contains(key));
     let selected = selection::select(
         physical,
         reception,
@@ -421,12 +434,10 @@ pub(crate) fn update_attention(
         &entries_before,
         &candidates,
         capacity_value,
-        update.changed_source_ids.is_some() && !policy_changed,
+        update.changed_source_ids.is_some() && !policy_changed && !expiry_due,
         update.urgency.is_none_or(IndexMap::is_empty)
             && update.direct_subjects.is_none_or(|ids| ids.is_empty()),
     )?;
-    let live: IndexSet<_> = candidates.keys().cloned().collect();
-    state.explicit.retain(|key| live.contains(key));
     state.latches.retain(|_, latch| {
         latch.anchor_key == SELF_RELATION_KEY || live.contains(&latch.anchor_key)
     });
@@ -509,4 +520,47 @@ pub(crate) fn update_attention(
         subjects: selected.subjects,
         measurement_changed,
     })
+}
+
+/// Ending a motion/geometry input invalidates its actual relation scans without
+/// creating an attention selection or a fresh sensory sample.
+pub(super) fn dirty_attention_relations(
+    physical: &PhysicalState,
+    reception: &mut ReceptionState,
+    journal: &mut CurrentJournal,
+    observer: &str,
+    families: &[AttentionRelationFamily],
+) -> Result<(), ReceivedError> {
+    let Some(prior) = owner(reception, observer).and_then(|owner| owner.attention.as_ref()) else {
+        return Ok(());
+    };
+    journal.reserve_growth(
+        heap_sum([
+            prior
+                .heap_bytes()
+                .ok_or_else(capacity)?
+                .checked_mul(3)
+                .ok_or_else(capacity)?,
+            map_storage::<String, u64>(
+                prior
+                    .annotations
+                    .len()
+                    .checked_add(1)
+                    .and_then(|n| n.checked_mul(4))
+                    .ok_or_else(capacity)?,
+            )
+            .ok_or_else(capacity)?,
+        ])
+        .ok_or_else(capacity)?,
+    )?;
+    let mut next = prior.clone();
+    mark_relations(
+        &mut next,
+        target(physical, observer),
+        physical.header.sim_time,
+        families,
+        None,
+    )?;
+    *journal.attention_mut(reception, observer)? = Some(next);
+    Ok(())
 }

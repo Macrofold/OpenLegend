@@ -1,6 +1,7 @@
 //! Exact command replay receipts, owned once. An attempted command is not a
 //! receipt; only the command's real successful completion may append one.
 use super::*;
+mod save;
 use crate::host::retained_size::{HeapBytes, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::install::rows::{take_collection, validate_map_row};
@@ -15,7 +16,6 @@ pub(crate) struct CommandReceipt {
 }
 pub(crate) struct CommandReceiptRecord {
     pub receipt: CommandReceipt,
-    pub position: u64,
     pub slot: String,
 }
 pub(crate) struct CommandState {
@@ -48,7 +48,6 @@ impl CommandState {
                         row.slot.clone(),
                         CommandReceiptRecord {
                             receipt,
-                            position: row.position,
                             slot: row.slot,
                         },
                     )
@@ -105,14 +104,6 @@ impl CommandJournal {
     pub(crate) fn discard_undo(&mut self) {
         self.undo.clear();
     }
-    pub(crate) fn written<'a>(
-        &'a self,
-        state: &'a CommandState,
-    ) -> impl Iterator<Item = (&'a str, &'a CommandReceiptRecord)> + 'a {
-        self.undo
-            .iter()
-            .filter_map(|id| state.records.get(id).map(|r| (id.as_str(), r)))
-    }
     pub(crate) fn append(
         &mut self,
         state: &mut CommandState,
@@ -156,7 +147,6 @@ impl CommandJournal {
                 digest: digest.to_owned(),
                 outcome: outcome.clone(),
             },
-            position: 0,
             slot: id.to_owned(),
         };
         self.undo.push(id.to_owned());

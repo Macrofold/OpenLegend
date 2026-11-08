@@ -99,6 +99,7 @@ pub(crate) fn assemble_core(
         accepted_cut,
     } = input;
     let schema = Arc::new(RecordSchema::install(layouts)?);
+    let record_ledger = crate::records::RecordLedger::from_records(&records, accepted_cut, budget)?;
     let mut import = RowImport::new(records, CurrentFormat { database_schema })?;
     let host_settings = crate::administration::read_host_settings(&mut import)?;
     let NativeDefinitionInputs {
@@ -122,6 +123,8 @@ pub(crate) fn assemble_core(
         occurrence_rules,
         speech_action,
         ordinary_actions,
+        observation_rules,
+        event_appraisal_rules,
         promises,
         social_defaults,
         presentation,
@@ -183,6 +186,10 @@ pub(crate) fn assemble_core(
     let ordinary_actions =
         selected::<crate::worlds::InstalledOrdinaryActionRules>(ordinary_actions)?;
     let promises = selected::<crate::worlds::InstalledPromiseRules>(promises)?;
+    let observation_rules =
+        selected::<crate::worlds::InstalledObservationRules>(observation_rules)?;
+    let event_appraisal_rules =
+        selected::<crate::worlds::InstalledEventAppraisalRules>(event_appraisal_rules)?;
     let event_disclosure = selected::<crate::worlds::InstalledEventDisclosure>(event_disclosure)?;
     let detection_support =
         selected::<crate::reception::DetectionSupportPolicy>(detection_support)?;
@@ -230,6 +237,7 @@ pub(crate) fn assemble_core(
         capabilities: meanings.capabilities,
         status_policy_canonical: meanings.status_policy_canonical,
         status_work: meanings.status_work,
+        status_rosters: crate::status::StatusRosters::new(),
         geometry,
         work_policy: meanings.work_policy,
         event_disclosure,
@@ -242,6 +250,8 @@ pub(crate) fn assemble_core(
         speech_action,
         ordinary_actions,
         promises,
+        observation_rules,
+        event_appraisal_rules,
         account_rules,
         occurrence_rules,
         detection_support,
@@ -327,7 +337,20 @@ pub(crate) fn assemble_core(
         child(&mut children, "objectState", true)?,
         &physical.entities,
     )?;
+    let learned_capabilities = install_learned_capabilities(
+        &mut import,
+        child(&mut children, "knowledge", true)?,
+        &physical.entities,
+    )?;
+    let appraisals = crate::appraisals::install_appraisals(
+        &mut import,
+        child(&mut children, "appraisals", false)?,
+        child(&mut children, "appraisalProcesses", false)?,
+        &physical.entities,
+        &installed,
+    )?;
     let state = SimulationState {
+        records: record_ledger,
         generation: import.generation().to_owned(),
         accepted_cut,
         durable_revision: import.durable_revision(),
@@ -341,6 +364,8 @@ pub(crate) fn assemble_core(
         commands,
         minds,
         administration,
+        learned_capabilities,
+        appraisals,
     };
     Ok(CoreInstallation {
         state,

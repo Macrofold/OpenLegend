@@ -135,3 +135,70 @@ pub(crate) fn prepare_obligation_replacement(
         _reservation: reservation,
     }))
 }
+
+/// The sole obligation mutation performs accounting, immutable source exchange
+/// and actual cognition consequences before reporting success. An error leaves
+/// the enclosing candidate to roll back every joined owner.
+pub(crate) fn apply_obligation_replacement(
+    core: &mut crate::execution::CoreMutation<'_>,
+    plan: PreparedObligationReplacement,
+) -> Result<bool, crate::execution::ExecutionError> {
+    use crate::execution::ExecutionError;
+    let actor = plan.actor_id().to_owned();
+    let memory = plan.memory_id().to_owned();
+    let event = plan.event_id().map(str::to_owned);
+    let current = core
+        .state
+        .experience
+        .actor(&actor)
+        .ok_or(ExecutionError::Invariant)?
+        .collection(PersonalSourceKind::Memory)
+        .map_err(|_| ExecutionError::Invariant)?
+        .get(&memory)
+        .map_err(|_| ExecutionError::Invariant)?;
+    if current.is_none_or(|record| record.header.reference != plan.before.header.reference) {
+        return Ok(false);
+    }
+    let now = core.state.physical.header.sim_time;
+    let policy = &core.state.installed.attention.value().retention;
+    core.state.temporal.adjust_account(
+        &actor,
+        plan.before.header.class,
+        -(plan.before.payload.len() as i128),
+        -1,
+        None,
+        now,
+        policy,
+    )?;
+    core.state.temporal.adjust_account(
+        &actor,
+        plan.after.header.class,
+        plan.after.payload.len() as i128,
+        1,
+        experience_retention_due(&plan.after.header, policy),
+        now,
+        policy,
+    )?;
+    core.journal
+        .experience
+        .replace(
+            &mut core.state.experience,
+            &plan.before.header.reference,
+            plan.after,
+        )
+        .map_err(|error| {
+            if error == ExperienceError::Capacity {
+                ExecutionError::Capacity
+            } else {
+                ExecutionError::Invariant
+            }
+        })?;
+    core.journal.cognition.apply_obligation_change(
+        &mut core.state.minds,
+        &actor,
+        &memory,
+        event.as_deref(),
+        plan.resolved,
+    )?;
+    Ok(true)
+}

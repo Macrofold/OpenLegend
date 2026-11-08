@@ -608,7 +608,11 @@ export function activateStatusEffect(
         world,
         entity.id,
         actor.action.id,
-        outcome(false, 'interrupted', `${definition.label} interrupted the activity.`),
+        outcome(
+          false,
+          'interrupted',
+          `${definition.label}${selectedOrdinaryActionRules(world).statusInterruptionSuffix}`,
+        ),
       );
   }
   const episode = nextId(world, 'effect');

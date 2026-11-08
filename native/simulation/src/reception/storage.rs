@@ -149,10 +149,12 @@ pub fn decode_current_contact_storage(
                 .groups
                 .into_iter()
                 .zip(times.groups)
-                .map(|(content, metadata)| CurrentReceivedGroup {
-                    received: content.received,
-                    metadata: metadata.metadata,
-                    recordings: metadata.recordings,
+                .map(|(content, metadata)| {
+                    CurrentReceivedGroup::installed(
+                        content.received,
+                        metadata.metadata,
+                        metadata.recordings,
+                    )
                 })
                 .collect(),
         },

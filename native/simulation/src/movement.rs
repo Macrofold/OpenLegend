@@ -5,11 +5,16 @@
 use crate::state::{BodyProfile, Bounds, Entity, EntityHandle, EntityStore, Point, SurfacePoint};
 use crate::status::StatusEffectPolicy;
 use std::collections::{BTreeMap, BTreeSet};
+mod advance;
+pub(crate) use advance::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
+mod execution;
+pub(crate) use execution::{MotionOperation, MotionStep};
 
 const BODY_CELL_SIZE: f64 = 8.0;
 
 #[derive(Debug)]
 pub(crate) enum MovementError {
+    Work(crate::work::WorkError),
     Capacity,
     UnsupportedFamily,
     MissingEntity,
@@ -188,6 +193,54 @@ impl BodyIndex {
             .map(|(id, point)| (id, point.handle))
             .collect()
     }
+    pub(crate) fn candidates_metered(
+        &self,
+        origin: Point,
+        radius: f64,
+        meters: &mut crate::work::WorkMeters,
+    ) -> Result<Vec<(&str, EntityHandle)>, crate::work::WorkError> {
+        use crate::work::WorkUnit;
+        let low = cell(Point {
+            x: origin.x - radius,
+            y: origin.y - radius,
+            z: origin.z - radius,
+        });
+        let high = cell(Point {
+            x: origin.x + radius,
+            y: origin.y + radius,
+            z: origin.z + radius,
+        });
+        let volume = (high.0 as f64 - low.0 as f64 + 1.0)
+            * (high.1 as f64 - low.1 as f64 + 1.0)
+            * (high.2 as f64 - low.2 as f64 + 1.0);
+        if volume > self.cells.len() as f64 {
+            for (key, ids) in &self.cells {
+                meters.charge(&[(WorkUnit::Tests, 1)])?;
+                if key.0 >= low.0
+                    && key.0 <= high.0
+                    && key.1 >= low.1
+                    && key.1 <= high.1
+                    && key.2 >= low.2
+                    && key.2 <= high.2
+                {
+                    meters.charge(&[(WorkUnit::Candidates, ids.len() as u64)])?;
+                }
+            }
+        } else {
+            for x in low.0..=high.0 {
+                for y in low.1..=high.1 {
+                    for z in low.2..=high.2 {
+                        let count = self.cells.get(&(x, y, z)).map_or(0, BTreeSet::len);
+                        meters.charge(&[
+                            (WorkUnit::Tests, 1),
+                            (WorkUnit::Candidates, count as u64),
+                        ])?;
+                    }
+                }
+            }
+        }
+        Ok(self.candidates(origin, radius))
+    }
 }
 
 /// Exact source bodySpace AABB. A local contracted pose requires its installed
@@ -258,6 +311,7 @@ pub(crate) struct OccupiedSweep {
     pub furthest: Point,
     pub body: BodyProfile,
     pub bounds: Vec<Bounds>,
+    _reservation: crate::host::ByteReservation,
 }
 impl OccupiedSweep {
     pub(crate) fn prepare(
@@ -267,12 +321,47 @@ impl OccupiedSweep {
         actor: &Entity,
         from: Point,
         furthest: Point,
+        budget: &crate::host::ByteBudget,
+        meters: &mut crate::work::WorkMeters,
     ) -> Result<Self, MovementError> {
+        let mut reservation = budget
+            .reserve(std::mem::size_of::<Self>() + actor.ordinary_body_profile().id.len())
+            .map_err(|_| MovementError::Capacity)?;
         let body = actor.body_profile().into_owned();
         let radius =
             distance(from, furthest) + body.radius.max(body.height) + index.maximum_extent();
-        let mut bounds = Vec::new();
-        for (id, handle) in index.candidates(from, radius) {
+        let (count, _) = index.candidate_capacity(from, radius);
+        let mut scratch = 0usize;
+        index.visit_candidates(from, radius, |_, point| {
+            if let Some(entity) = entities
+                .resolve(point.handle)
+                .filter(|entity| entity.spatial.soft_footprint.is_some())
+            {
+                scratch = scratch.max(entity.ordinary_body_profile().id.len());
+            }
+        });
+        let buffers = count
+            .max(4)
+            .checked_mul(
+                2 * (std::mem::size_of::<(&str, &BodyPoint)>()
+                    + std::mem::size_of::<(&str, EntityHandle)>()),
+            )
+            .and_then(|n| n.checked_add(count.checked_mul(std::mem::size_of::<Bounds>())?))
+            .and_then(|n| n.checked_add(scratch))
+            .ok_or(MovementError::Capacity)?;
+        reservation
+            .resize(
+                reservation
+                    .bytes()
+                    .checked_add(buffers)
+                    .ok_or(MovementError::Capacity)?,
+            )
+            .map_err(|_| MovementError::Capacity)?;
+        let mut bounds = Vec::with_capacity(count);
+        for (id, handle) in index
+            .candidates_metered(from, radius, meters)
+            .map_err(MovementError::Work)?
+        {
             if id == actor.id {
                 continue;
             }
@@ -281,11 +370,19 @@ impl OccupiedSweep {
                 bounds.push(body_space(other, policy)?);
             }
         }
+        reservation
+            .resize(
+                std::mem::size_of::<Self>()
+                    + body.id.capacity()
+                    + bounds.capacity() * std::mem::size_of::<Bounds>(),
+            )
+            .map_err(|_| MovementError::Capacity)?;
         Ok(Self {
             from,
             furthest,
             body,
             bounds,
+            _reservation: reservation,
         })
     }
 }

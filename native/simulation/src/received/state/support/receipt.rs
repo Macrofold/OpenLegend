@@ -130,6 +130,7 @@ impl TemporalState {
         if facets.is_empty() {
             return Ok(None);
         }
+        let availability_last = facets.len() != receipt.facets.len();
         let mut selected_receipt =
             select_temporal_receipt_facets(receipt, facets, context.values, context.meaning)?;
         let mut aliases = selected_receipt
@@ -169,6 +170,7 @@ impl TemporalState {
             context.policy,
             context.meters,
             context.places.take(),
+            SupportEncoding::Receipt { availability_last },
         )
     }
 }

@@ -7,12 +7,27 @@ use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 #[path = "recognition/journal.rs"]
 mod journal;
-pub(crate) use journal::{RecognitionCheckpoint, RecognitionEffect, RecognitionJournal};
+pub(crate) use journal::{RecognitionCheckpoint, RecognitionJournal};
+#[path = "recognition/familiarity.rs"]
+mod familiarity;
 #[path = "recognition/voice.rs"]
 mod voice;
+pub(crate) use familiarity::BodyFamiliarityPreparation;
+#[path = "recognition/retention.rs"]
+mod retention;
+pub(crate) use retention::{
+    commit_observer_identity, member_indices, original_support, retain_recognition_evidence,
+    retire_observer_identity, source_json,
+};
 pub(crate) use voice::{
     VoiceReception, VoiceReceptionParts, VoiceReceptionPreparation, individual_familiarity,
 };
+#[path = "recognition/warning.rs"]
+mod warning;
+pub(crate) use warning::ordinary_warning;
+#[path = "recognition/prune.rs"]
+mod prune;
+pub(crate) use prune::prune_lost_body_individuals;
 #[path = "recognition/validation.rs"]
 mod validation;
 pub(crate) use validation::validate_selected_identities;
@@ -28,6 +43,7 @@ pub struct RecognitionPolicy {
     pub credit_seconds: f64,
     pub seed_seconds: f64,
     pub warning_seconds: f64,
+    pub warning: WarningRules,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub retained_credits: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -36,6 +52,14 @@ pub struct RecognitionPolicy {
     pub familiarity_roots: u64,
     pub familiarity_mature_seconds: f64,
     pub voice_feature_family: crate::experience::FeatureFamily,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct WarningRules {
+    pub prefixes: Vec<String>,
+    pub join: String,
+    pub suffix: String,
+    pub delimiters: String,
 }
 impl crate::install::DefinitionIdentity for RecognitionPolicy {
     fn definition_id(&self) -> &str {

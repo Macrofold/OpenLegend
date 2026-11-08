@@ -33,3 +33,9 @@ export function nativeCollation(values: readonly string[]): { order: number[]; g
   });
   return { order: sorted.map(({ index }) => index), groups };
 }
+
+/** A single language batch for the supplied name and all actually heard text
+ * segments. The native world decides whether that evidence can teach a name. */
+export function nativeWordSegments(values: readonly string[]): string[][] {
+  return values.map((value) => prepareSpeechWords(value).map(({ segment }) => segment));
+}

@@ -2,6 +2,8 @@
 //! the personal-history owner proves its real receipt/account acquisition.
 
 use super::*;
+mod event;
+mod save;
 use crate::commands::{NativeCommand, Outcome};
 use crate::experience::AcquiredActivityResult;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -803,6 +805,7 @@ impl ActivityJournal {
         action_id: &str,
         result: Outcome,
         at: f64,
+        prior_fact_names: &IndexMap<String, String>,
     ) -> Result<Option<PendingActivityResult>, ActivityError> {
         let Some(owner) = state.collections.get(actor) else {
             return Ok(None);
@@ -814,7 +817,6 @@ impl ActivityJournal {
             return Ok(None);
         }
         let entry = &record.occurrence;
-        let id = entry.id.clone();
         if entry.cooperation.is_some()
             || result.outputs.as_ref().is_some_and(|o| !o.is_empty())
             || !entry.outputs.is_empty()
@@ -828,8 +830,17 @@ impl ActivityJournal {
             result.heap_bytes().ok_or(ActivityError::Capacity)?
                 + result.message.len() * 2
                 + actor.len() * 3
-                + id.len() * 3,
+                + entry.id.len() * 3
+                + entry
+                    .view
+                    .facts
+                    .iter()
+                    .try_fold(0usize, |bytes, fact| {
+                        bytes.checked_add(prior_fact_names.get(&fact.name).map_or(0, String::len))
+                    })
+                    .ok_or(ActivityError::Capacity)?,
         )?;
+        let id = entry.id.clone();
         self.record_before(state, actor, &id)?;
         self.active_before(state, action_id)?;
         if state.current.get(actor).is_some_and(|v| v == action_id) {
@@ -859,11 +870,8 @@ impl ActivityJournal {
             }
         }
         for fact in &mut entry.view.facts {
-            if fact.name == "health" {
-                fact.name = "health before the attempt".to_owned();
-            }
-            if fact.name == "distance" {
-                fact.name = "distance before the attempt".to_owned();
+            if let Some(name) = prior_fact_names.get(&fact.name) {
+                fact.name = name.clone();
             }
         }
         if let Some(outputs) = &result.outputs {

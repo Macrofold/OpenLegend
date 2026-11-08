@@ -3,26 +3,19 @@
 
 use super::*;
 use crate::activity::{ActivityError, PendingActivityResult, ResultAccountSource, ResultEvidence};
-use crate::attention::{
-    AccountRecordingInput, AccountRecordingLaw, ActivityRecordingContext, RecordingInput,
-    RecordingReason, RecordingSource,
-};
+use crate::attention::ActivityRecordingContext;
 use crate::execution::CoreMutation;
 use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::narration::{
     GrammaticalPerson, Narration, NarrationPart, PersonRole, render_narration_parts,
 };
-use crate::received::values::{
-    PersonalAccountFragment, PersonalAccountKind, PersonalAccountSource,
-};
 use crate::received::{
     ActionResultKind, ActionResultOutcome, ActionResultStatus, ActionResultValue, ReceivedError,
-    ReceivedFieldClock, ReceivedRole, ReceivedTransition, ReceivedValueFragment,
-    TemporalAcquisition, TemporalAppendError, TemporalCaptureFacet, TemporalCaptureInput,
-    TemporalChange,
+    ReceivedFieldClock, ReceivedRole, ReceivedValueFragment, TemporalAppendError,
+    TemporalCaptureFacet, TemporalCaptureInput, TemporalChange,
 };
-use crate::records::{InstalledRow, RecordSchema};
+use crate::records::RecordSchema;
 use crate::state::Named;
 use serde::Serialize;
 
@@ -34,6 +27,12 @@ pub(crate) enum ResultAcquisitionError {
     Append(TemporalAppendError),
     Encoding,
     Memory(MemoryAcquisitionError),
+    Execution(crate::execution::ExecutionError),
+}
+impl From<crate::execution::ExecutionError> for ResultAcquisitionError {
+    fn from(error: crate::execution::ExecutionError) -> Self {
+        Self::Execution(error)
+    }
 }
 impl From<MemoryAcquisitionError> for ResultAcquisitionError {
     fn from(error: MemoryAcquisitionError) -> Self {
@@ -66,15 +65,7 @@ pub(crate) enum ActivityResultAcquisition {
     Recent(PendingRecentResult),
     Memory(PendingResultMemory),
 }
-impl ActivityResultAcquisition {
-    pub(crate) fn scope_owner(&self) -> Option<(&str, u64)> {
-        match self {
-            Self::Complete(_) => None,
-            Self::Recent(pending) => Some((&pending.actor_id, pending.physical_life)),
-            Self::Memory(pending) => pending.admission.scope_owner(),
-        }
-    }
-}
+
 pub(crate) struct PendingRecentResult {
     actor_id: String,
     occurrence_id: String,
@@ -170,6 +161,7 @@ pub(crate) fn prepare_activity_result(
     let status = match entry.status {
         crate::activity::ActivityStatus::Completed => "completed",
         crate::activity::ActivityStatus::Cancelled => "cancelled",
+        crate::activity::ActivityStatus::Blocked => "blocked",
         _ => return Err(ActivityError::InvalidStructure.into()),
     };
     let now = core.state.physical.header.sim_time;
@@ -297,51 +289,33 @@ pub(crate) fn prepare_activity_result(
     }
 }
 
-/// This phase uses the caller's actual existing/lazily opened acquisition. Its
-/// receipt remains owned there until the source's real flush boundary; IDs and
-/// work charges are therefore not moved ahead of later action finalization.
+/// Own the actual inner receiving boundary. Existing physical receiving stays
+/// borrowed; standalone receipt flush completes before later result/account
+/// duties and the action owner's completion.
 pub(crate) fn acquire_activity_result(
     core: &mut CoreMutation<'_>,
     plan: ActivityResultAcquisition,
-    scope: &mut TemporalAcquisition,
-    transition: &mut ReceivedTransition,
     schema: &RecordSchema,
 ) -> Result<AcquiredActivityResult, ResultAcquisitionError> {
     let now = core.state.physical.header.sim_time;
-    let sequence = core.state.physical.header.sequence;
-    let law = core.state.installed.account_law();
     match plan {
         ActivityResultAcquisition::Complete(acquired) => Ok(acquired),
         ActivityResultAcquisition::Recent(pending) => {
-            let values = core
-                .state
-                .reception
-                .received_values
-                .as_mut()
-                .ok_or(ReceivedError(
-                    "Actual received value ownership is unavailable.",
-                ))?;
-            require_scope(scope, &pending.actor_id, pending.physical_life)?;
-            let locator = scope
-                .append(
-                    &mut core.state.temporal,
-                    values,
-                    &mut core.state.physical.identity,
-                    transition,
-                    &law,
-                    &mut core.journal.meters,
+            let locator = super::receipt::append_personal_receipt(
+                core,
+                &pending.actor_id,
+                pending.physical_life,
+                input(
+                    &pending.occurrence_id,
+                    true,
                     now,
-                    sequence,
-                    input(
-                        &pending.occurrence_id,
-                        true,
-                        now,
-                        ReceivedValueFragment::ActionResult(pending.value),
-                    ),
-                )?
-                .ok_or(ReceivedError(
-                    "Required personal result could not be received.",
-                ))?;
+                    ReceivedValueFragment::ActionResult(pending.value),
+                ),
+            )?
+            .ok_or(ReceivedError(
+                "Required personal result could not be received.",
+            ))?;
+
             Ok(completed(
                 &pending.actor_id,
                 &pending.occurrence_id,
@@ -352,13 +326,12 @@ pub(crate) fn acquire_activity_result(
             ))
         }
         ActivityResultAcquisition::Memory(pending) => {
-            let evidence =
-                acquire_memory(core, pending.admission, Some((scope, transition)), schema)?.map(
-                    |id| ResultEvidence::Account {
-                        source: ResultAccountSource::Memory,
-                        id,
-                    },
-                );
+            let evidence = acquire_memory(core, pending.admission, schema)?.map(|id| {
+                ResultEvidence::Account {
+                    source: ResultAccountSource::Memory,
+                    id,
+                }
+            });
             Ok(completed(
                 &pending.actor_id,
                 &pending.occurrence_id,
@@ -368,14 +341,6 @@ pub(crate) fn acquire_activity_result(
     }
 }
 
-fn require_scope(scope: &TemporalAcquisition, actor: &str, life: u64) -> Result<(), ReceivedError> {
-    if scope.actor_id() != actor || scope.physical_life() != life {
-        return Err(ReceivedError(
-            "Personal result has foreign acquisition ownership.",
-        ));
-    }
-    Ok(())
-}
 fn input(
     subject: &str,
     required: bool,

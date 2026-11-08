@@ -176,7 +176,7 @@ pub struct AttributeState {
     pub concern_active: Option<bool>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct DefinitionPin {
     pub id: String,

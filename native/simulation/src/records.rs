@@ -10,8 +10,14 @@ use std::collections::BTreeMap;
 
 mod layout;
 pub use layout::{ChildShape, RecordChild, RecordCodec, RecordLayout};
+mod encode;
 mod merge;
 mod output;
+pub(crate) use encode::{EncodedRows, RowEffects, RowEncoder};
+mod selection;
+pub(crate) use selection::{OrderedMapRows, SelectedPlacement};
+mod ledger;
+pub(crate) use ledger::{PreparedRecordLedger, RecordLedger};
 pub(crate) mod save;
 pub use output::{RecordEncodingError, RecordPlacement, RecordSchema};
 
@@ -65,7 +71,7 @@ pub struct ChangedRows {
 
 /// Installation identifies unloaded owners explicitly. An omitted collection is
 /// not an empty collection, and hydration carries its original native ordinals.
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct OwnerCoverage {
     pub table: String,

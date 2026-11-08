@@ -319,6 +319,15 @@ pub(crate) struct WorkUndo {
     owner_present: bool,
 }
 
+impl WorkUndo {
+    pub(crate) fn id(&self) -> &str {
+        &self.id
+    }
+    pub(crate) fn was_present(&self) -> bool {
+        self.before.is_some()
+    }
+}
+
 /// WorkState is owned here, once. All maps below it are disposable indexes of
 /// that state, never a second independently writable invocation store.
 pub struct WorkBook {
@@ -868,6 +877,20 @@ pub(crate) struct WorkMeters {
 impl WorkMeters {
     pub(crate) fn is_idle(&self) -> bool {
         self.active.is_empty()
+    }
+    /// Bound a finite provider batch before it starts. The caller subsequently
+    /// charges only its actual tested prefix; other worlds cannot spend this
+    /// candidate's held meter while its private geometry preparation is pending.
+    pub(crate) fn remaining(&self, unit: WorkUnit) -> Result<u64, WorkError> {
+        self.active
+            .iter()
+            .try_fold(MAX_SAFE_INTEGER, |remaining, meter| {
+                Ok(remaining.min(
+                    unit.read(&meter.limit)
+                        .checked_sub(unit.read(&meter.used))
+                        .ok_or(WorkError::InvalidLineage)?,
+                ))
+            })
     }
     pub(crate) fn heap_bound(group: WorkDemand) -> Result<usize, WorkError> {
         let depth = usize::try_from(group.depth.ok_or(WorkError::InvalidPolicy)?)

@@ -384,6 +384,7 @@ impl SensoryJournal {
                 };
             }
             PhysicalChange::AnimalClock { .. }
+            | PhysicalChange::Navigation { .. }
             | PhysicalChange::Behavior {
                 outward_change: false,
                 ..

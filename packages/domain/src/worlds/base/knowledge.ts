@@ -908,7 +908,7 @@ export function assignGivenName(
   if (
     typeof edit.givenName !== 'string' ||
     !edit.givenName.trim() ||
-    characterCount(edit.givenName) > 120
+    characterCount(edit.givenName) > BASE_PERSONAL_NAME_RULES.givenNameCharacters
   )
     return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
   if (current?.givenName === edit.givenName.trim() && (!authored || current.authored))
@@ -1214,7 +1214,10 @@ export function assignSubjectName(
     return outcome(false, 'recognition-unavailable', 'No learned individual supports this name.');
   if (!Number.isSafeInteger(edit.expectedRevision) || edit.expectedRevision !== identity.revision)
     return outcome(false, 'stale-identity', 'The preferred name changed.');
-  if (!edit.givenName.trim() || characterCount(edit.givenName) > 120)
+  if (
+    !edit.givenName.trim() ||
+    characterCount(edit.givenName) > BASE_PERSONAL_NAME_RULES.givenNameCharacters
+  )
     return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
   if (identity.givenName === edit.givenName.trim())
     return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
@@ -1301,7 +1304,7 @@ export function learnSpeechIntroduction(
   if (
     typeof proposed !== 'string' ||
     !proposed.trim() ||
-    characterCount(proposed) > 120 ||
+    characterCount(proposed) > BASE_PERSONAL_NAME_RULES.givenNameCharacters ||
     typeof text !== 'string' ||
     !text.includes(proposed.trim())
   ) {

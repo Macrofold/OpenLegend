@@ -19,6 +19,8 @@ use crate::values::NativeValueWindow;
 use crate::work::{InstalledWorkPolicy, WorkBook};
 use indexmap::IndexMap;
 use std::sync::Arc;
+mod save;
+pub(crate) use save::encode_root_changes;
 
 /// Immutable selected definitions. Their exact source canonical bodies remain
 /// with their typed meanings; a digest is never used as content equality.
@@ -37,6 +39,7 @@ pub(crate) struct InstalledWorld {
     pub capabilities: StatusCapabilities,
     pub status_policy_canonical: Arc<str>,
     pub status_work: IndexMap<String, crate::status::CompiledStatusWork>,
+    pub status_rosters: crate::status::StatusRosters,
     pub geometry: Arc<GeometryMap>,
     pub work_policy: Arc<InstalledWorkPolicy>,
     pub event_disclosure: VerifiedDefinition<crate::worlds::InstalledEventDisclosure>,
@@ -49,6 +52,8 @@ pub(crate) struct InstalledWorld {
     pub speech_action: VerifiedDefinition<crate::worlds::InstalledSpeechAction>,
     pub ordinary_actions: VerifiedDefinition<crate::worlds::InstalledOrdinaryActionRules>,
     pub promises: VerifiedDefinition<crate::worlds::InstalledPromiseRules>,
+    pub event_appraisal_rules: VerifiedDefinition<crate::worlds::InstalledEventAppraisalRules>,
+    pub observation_rules: VerifiedDefinition<crate::worlds::InstalledObservationRules>,
     pub account_rules: VerifiedDefinition<crate::worlds::InstalledAccountRules>,
     pub occurrence_rules: VerifiedDefinition<crate::worlds::InstalledOccurrenceRules>,
     pub detection_support: VerifiedDefinition<crate::reception::DetectionSupportPolicy>,
@@ -108,6 +113,7 @@ pub(crate) struct PhysicalState {
 /// Receiver and history owners retain their independent chronology/privacy
 /// metadata. They are not reconstructed from a physical snapshot for reads.
 pub(crate) struct SimulationState {
+    pub records: crate::records::RecordLedger,
     pub generation: String,
     pub accepted_cut: u64,
     pub durable_revision: u64,
@@ -121,6 +127,8 @@ pub(crate) struct SimulationState {
     pub commands: crate::commands::CommandState,
     pub minds: crate::cognition::MindState,
     pub administration: crate::administration::AdministrationState,
+    pub learned_capabilities: crate::install::LearnedCapabilities,
+    pub appraisals: crate::appraisals::AppraisalState,
 }
 
 /// The application owns its serialized admission lane. The fence is separate

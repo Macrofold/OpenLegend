@@ -14,7 +14,7 @@ pub(super) struct BodyContext {
     pub sound: Option<ExposureParticipant>,
     pub reservation: ByteReservation,
 }
-pub(super) fn event_body<'a>(
+pub(in super::super) fn event_body<'a>(
     scope: &CurrentBodyReadScope<'a>,
     id: &str,
     at: f64,

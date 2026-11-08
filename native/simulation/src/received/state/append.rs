@@ -92,6 +92,7 @@ pub struct TemporalCaptureInput {
 #[derive(Debug)]
 pub struct PendingTemporalPage {
     id: String,
+    flush_order: u64,
     batch: Arc<ReceivedBatch>,
     metadata: TemporalPageMetadata,
     from_at: f64,
@@ -102,6 +103,9 @@ pub struct PendingTemporalPage {
 impl PendingTemporalPage {
     pub fn id(&self) -> &str {
         &self.id
+    }
+    pub(crate) fn flush_order(&self) -> u64 {
+        self.flush_order
     }
     pub fn batch(&self) -> &Arc<ReceivedBatch> {
         &self.batch
@@ -341,10 +345,9 @@ impl TemporalState {
         if batch.entries.is_empty() {
             return Ok(None);
         }
-        let id = identity
+        let issued = identity
             .allocate("temporal-page")
-            .map_err(|_| ReceivedError("Temporal page identity is exhausted."))?
-            .id;
+            .map_err(|_| ReceivedError("Temporal page identity is exhausted."))?;
         let from_at = batch.entries.first().expect("Batch not empty").received_at;
         let through_at = batch.entries.last().expect("Batch not empty").received_at;
         let batch = Arc::new(batch);
@@ -404,7 +407,8 @@ impl TemporalState {
         let actor = self.actors.get_mut(&actor_id).expect("Actor checked");
         actor.recent.append(&metadata.charge_directory)?;
         actor.pending_pages.push(Arc::new(PendingTemporalPage {
-            id,
+            id: issued.id,
+            flush_order: issued.sequence,
             batch,
             metadata,
             from_at,

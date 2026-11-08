@@ -108,6 +108,44 @@ impl EventDisclosure {
             })
             .collect()
     }
+    /// Allocation bound for this exact selected template. No clause or wording
+    /// is reconstructed in the engine to predict materialization.
+    pub(crate) fn text_allocation_bound(
+        &self,
+        event: &WorldEvent,
+        source: Option<&str>,
+        target: Option<&str>,
+        name_bytes: impl Fn(&str) -> Option<usize>,
+    ) -> Option<usize> {
+        let rest = if source.is_none() && target.is_some() && self.contact(event) {
+            &self.text.unseen_impact
+        } else if source.is_some() {
+            self.activity
+                .get(&event.event_type)
+                .unwrap_or(&self.text.default_activity)
+        } else if target.is_some() {
+            &self.text.target_activity
+        } else {
+            &self.text.unknown_activity
+        };
+        let name = source.or(target).map_or(Some(0), name_bytes)?;
+        // Template, rendered output and Unicode casing transients coexist.
+        let partial = rest
+            .len()
+            .checked_mul(4)?
+            .checked_add(name.checked_mul(4)?)?
+            .checked_add(source.or(target).map_or(0, str::len))?
+            .checked_add(2 * std::mem::size_of::<NarrationPart>())?;
+        let complete = crate::narration::native_text_bound(&event.text)?;
+        let cause = match self.value(event, &self.cause_field) {
+            Some(EventScalar::Text(text)) => text.len().checked_mul(3)?,
+            _ => 0,
+        };
+        partial
+            .checked_add(complete.checked_mul(2)?)?
+            .checked_add(cause)?
+            .checked_add(self.text.cause_prefix.len() + 1)
+    }
     pub fn partial(
         &self,
         event: &WorldEvent,

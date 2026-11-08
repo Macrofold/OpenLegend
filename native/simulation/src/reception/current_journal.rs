@@ -6,7 +6,7 @@ use crate::attention::AttentionState;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::ReceivedError;
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
@@ -22,6 +22,18 @@ pub(crate) struct CurrentCheckpoint {
     retained: usize,
 }
 enum CurrentUndo {
+    BatchStarted {
+        observer: Arc<str>,
+    },
+    BatchFinished {
+        observer: Arc<str>,
+        at: usize,
+        batch: CurrentBatch,
+    },
+    BatchSubject {
+        observer: Arc<str>,
+        subject: Arc<str>,
+    },
     Contact {
         observer: String,
         subject: String,
@@ -35,9 +47,39 @@ enum CurrentUndo {
         observer: String,
         prior: u64,
     },
+    Geometry {
+        observer: String,
+        prior: ReceivedGeometryState,
+    },
+    Motion {
+        observer: String,
+        prior: IndexMap<String, CurrentMotionSample>,
+        expires_at: Option<f64>,
+    },
+    Gaps {
+        observer: String,
+        prior: IndexMap<String, ReceptionGap>,
+    },
+}
+struct CurrentBatch {
+    token: Arc<()>,
+    subjects: IndexSet<Arc<str>>,
+}
+/// A borrowed caller cannot seal its receiver's prefix. The token names only
+/// this actual in-memory batch; it is neither a saved ID nor another contact map.
+pub(crate) struct CurrentContactBatchLease {
+    observer: Arc<str>,
+    token: Arc<()>,
+    owned: bool,
+}
+impl CurrentContactBatchLease {
+    pub(crate) fn owns_prefix(&self) -> bool {
+        self.owned
+    }
 }
 pub(crate) struct CurrentJournal {
     undo: Vec<CurrentUndo>,
+    batches: IndexMap<Arc<str>, CurrentBatch>,
     retained: IndexSet<usize>,
     reservation: ByteReservation,
 }
@@ -45,6 +87,7 @@ impl CurrentJournal {
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ReceivedError> {
         Ok(Self {
             undo: Vec::new(),
+            batches: IndexMap::new(),
             retained: IndexSet::new(),
             reservation: budget.reserve(size_of::<Self>()).map_err(|_| capacity())?,
         })
@@ -56,15 +99,256 @@ impl CurrentJournal {
         }
     }
     pub(super) fn reserve_growth(&mut self, bytes: usize) -> Result<(), ReceivedError> {
+        let old_storage = self
+            .undo
+            .capacity()
+            .checked_mul(size_of::<CurrentUndo>())
+            .ok_or_else(capacity)?;
+        let next_capacity = if self.undo.len() == self.undo.capacity() {
+            self.undo
+                .capacity()
+                .checked_mul(2)
+                .ok_or_else(capacity)?
+                .max(4)
+        } else {
+            self.undo.capacity()
+        };
+        let next_storage = next_capacity
+            .checked_mul(size_of::<CurrentUndo>())
+            .ok_or_else(capacity)?;
+        // Fund the replacement backing allocation while the old one is still
+        // live. reserve_exact avoids Vec's implicit minimum-four allocation.
         self.reservation
             .resize(
                 self.reservation
                     .bytes()
                     .checked_add(bytes)
+                    .and_then(|n| {
+                        n.checked_add(if next_capacity != self.undo.capacity() {
+                            next_storage
+                        } else {
+                            0
+                        })
+                    })
                     .ok_or_else(capacity)?,
             )
             .map_err(|_| capacity())?;
-        self.undo.try_reserve(1).map_err(|_| capacity())
+        if next_capacity != self.undo.capacity() {
+            self.undo
+                .try_reserve_exact(next_capacity - self.undo.len())
+                .map_err(|_| capacity())?;
+            let actual = self
+                .undo
+                .capacity()
+                .checked_mul(size_of::<CurrentUndo>())
+                .ok_or_else(capacity)?;
+            self.reservation
+                .resize(
+                    self.reservation
+                        .bytes()
+                        .checked_sub(old_storage)
+                        .and_then(|n| n.checked_sub(next_storage))
+                        .and_then(|n| n.checked_add(actual))
+                        .ok_or_else(capacity)?,
+                )
+                .map_err(|_| capacity())?;
+        }
+        Ok(())
+    }
+    pub(crate) fn begin_batch(
+        &mut self,
+        state: &ReceptionState,
+        observer: &str,
+    ) -> Result<CurrentContactBatchLease, ReceivedError> {
+        owner(state, observer)?;
+        if let Some((key, batch)) = self.batches.get_key_value(observer) {
+            return Ok(CurrentContactBatchLease {
+                observer: key.clone(),
+                token: batch.token.clone(),
+                owned: false,
+            });
+        }
+        let storage = if self.batches.len() == self.batches.capacity() {
+            map_storage::<Arc<str>, CurrentBatch>(
+                self.batches
+                    .len()
+                    .checked_add(1)
+                    .and_then(|n| n.checked_mul(2))
+                    .ok_or_else(capacity)?,
+            )
+            .ok_or_else(capacity)?
+        } else {
+            0
+        };
+        self.reserve_growth(
+            heap_sum([storage, observer.len(), 4 * size_of::<usize>()]).ok_or_else(capacity)?,
+        )?;
+        self.batches.try_reserve(1).map_err(|_| capacity())?;
+        let observer: Arc<str> = Arc::from(observer);
+        let token = Arc::new(());
+        self.undo.push(CurrentUndo::BatchStarted {
+            observer: observer.clone(),
+        });
+        self.batches.insert(
+            observer.clone(),
+            CurrentBatch {
+                token: token.clone(),
+                subjects: IndexSet::new(),
+            },
+        );
+        Ok(CurrentContactBatchLease {
+            observer,
+            token,
+            owned: true,
+        })
+    }
+    pub(super) fn content_batch(
+        &mut self,
+        observer: &str,
+        subject: &str,
+    ) -> Result<Arc<()>, ReceivedError> {
+        let (key, batch) = self.batches.get_key_value(observer).ok_or_else(invalid)?;
+        let key = key.clone();
+        let token = batch.token.clone();
+        if batch.subjects.contains(subject) {
+            return Ok(token);
+        }
+        let storage = if batch.subjects.len() == batch.subjects.capacity() {
+            map_storage::<Arc<str>, ()>(
+                batch
+                    .subjects
+                    .len()
+                    .checked_add(1)
+                    .and_then(|n| n.checked_mul(2))
+                    .ok_or_else(capacity)?,
+            )
+            .ok_or_else(capacity)?
+        } else {
+            0
+        };
+        self.reserve_growth(
+            heap_sum([
+                storage,
+                subject
+                    .len()
+                    .checked_add(2 * size_of::<usize>())
+                    .ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let batch = self.batches.get_mut(observer).ok_or_else(invalid)?;
+        batch.subjects.try_reserve(1).map_err(|_| capacity())?;
+        let subject: Arc<str> = Arc::from(subject);
+        batch.subjects.insert(subject.clone());
+        self.undo.push(CurrentUndo::BatchSubject {
+            observer: key,
+            subject,
+        });
+        Ok(token)
+    }
+    pub(super) fn mutable_group(
+        &mut self,
+        group: &mut CurrentReceivedGroup,
+        token: &Arc<()>,
+    ) -> Result<(), ReceivedError> {
+        if group
+            .content_batch
+            .as_ref()
+            .is_some_and(|held| Arc::ptr_eq(held, token))
+        {
+            return Ok(());
+        }
+        self.reserve_growth(2 * size_of::<usize>())?;
+        group.field_identity = Arc::new(());
+        group.content_batch = Some(token.clone());
+        Ok(())
+    }
+    pub(crate) fn finish_batch(
+        &mut self,
+        state: &mut ReceptionState,
+        lease: CurrentContactBatchLease,
+    ) -> Result<(), ReceivedError> {
+        let batch = self
+            .batches
+            .get(lease.observer.as_ref())
+            .ok_or_else(invalid)?;
+        if !Arc::ptr_eq(&batch.token, &lease.token) {
+            return Err(invalid());
+        }
+        if !lease.owned {
+            return Ok(());
+        }
+        // Only fields actually made mutable are snapshotted. Metadata-only
+        // confirmation retains the old immutable fields object's identity.
+        let subjects = batch.subjects.len();
+        self.reserve_growth(
+            subjects
+                .checked_mul(size_of::<Arc<str>>() + 2 * size_of::<usize>())
+                .ok_or_else(capacity)?,
+        )?;
+        let subjects: Vec<_> = self
+            .batches
+            .get(lease.observer.as_ref())
+            .ok_or_else(invalid)?
+            .subjects
+            .iter()
+            .cloned()
+            .collect();
+        for subject in subjects {
+            let Some(contact) = owner(state, &lease.observer)?.current.get(subject.as_ref()) else {
+                continue;
+            };
+            let count = contact
+                .content
+                .groups
+                .iter()
+                .filter(|group| {
+                    group
+                        .content_batch
+                        .as_ref()
+                        .is_some_and(|token| Arc::ptr_eq(token, &lease.token))
+                })
+                .count();
+            if count == 0 {
+                continue;
+            }
+            self.reserve_growth(
+                count
+                    .checked_mul(2 * size_of::<usize>())
+                    .ok_or_else(capacity)?,
+            )?;
+            let contact = self
+                .contact_mut(state, &lease.observer, &subject)?
+                .ok_or_else(invalid)?;
+            for group in &mut contact.content.groups {
+                if group
+                    .content_batch
+                    .as_ref()
+                    .is_some_and(|token| Arc::ptr_eq(token, &lease.token))
+                {
+                    group.field_identity = Arc::new(());
+                    group.content_batch = None;
+                }
+            }
+        }
+        self.reserve_growth(0)?;
+        let (at, observer, batch) = self
+            .batches
+            .shift_remove_full(lease.observer.as_ref())
+            .ok_or_else(invalid)?;
+        self.undo.push(CurrentUndo::BatchFinished {
+            observer,
+            at,
+            batch,
+        });
+        Ok(())
+    }
+    pub(crate) fn require_closed(&self) -> Result<(), ReceivedError> {
+        if self.batches.is_empty() {
+            Ok(())
+        } else {
+            Err(invalid())
+        }
     }
     pub(crate) fn rollback_to(
         &mut self,
@@ -76,6 +360,28 @@ impl CurrentJournal {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
+                CurrentUndo::BatchStarted { observer } => {
+                    self.batches
+                        .shift_remove(observer.as_ref())
+                        .ok_or_else(invalid)?;
+                }
+                CurrentUndo::BatchFinished {
+                    observer,
+                    at,
+                    batch,
+                } => {
+                    if at > self.batches.len() || self.batches.contains_key(observer.as_ref()) {
+                        return Err(invalid());
+                    }
+                    self.batches.shift_insert(at, observer, batch);
+                }
+                CurrentUndo::BatchSubject { observer, subject } => {
+                    self.batches
+                        .get_mut(observer.as_ref())
+                        .ok_or_else(invalid)?
+                        .subjects
+                        .shift_remove(subject.as_ref());
+                }
                 CurrentUndo::Contact {
                     observer,
                     subject,
@@ -96,12 +402,26 @@ impl CurrentJournal {
                 CurrentUndo::NextContact { observer, prior } => {
                     owner_mut(state, &observer)?.next_contact = prior
                 }
+                CurrentUndo::Geometry { observer, prior } => {
+                    owner_mut(state, &observer)?.geometry = Some(prior)
+                }
+                CurrentUndo::Motion {
+                    observer,
+                    prior,
+                    expires_at,
+                } => {
+                    let owner = owner_mut(state, &observer)?;
+                    owner.motion_samples = Some(prior);
+                    owner.motion_expires_at = expires_at;
+                }
+                CurrentUndo::Gaps { observer, prior } => owner_mut(state, &observer)?.gaps = prior,
             }
         }
         self.retained.truncate(checkpoint.retained);
         Ok(())
     }
     pub(crate) fn discard_undo(&mut self) -> Result<(), ReceivedError> {
+        self.require_closed()?;
         self.undo.clear();
         self.retained.clear();
         self.reservation
@@ -109,6 +429,8 @@ impl CurrentJournal {
                 heap_sum([
                     size_of::<Self>(),
                     self.undo.capacity() * size_of::<CurrentUndo>(),
+                    map_storage::<Arc<str>, CurrentBatch>(self.batches.capacity())
+                        .ok_or_else(capacity)?,
                     map_storage::<usize, ()>(self.retained.capacity()).ok_or_else(capacity)?,
                 ])
                 .ok_or_else(capacity)?,
@@ -131,6 +453,15 @@ impl CurrentJournal {
                 .checked_add(contact_copy_heap(contact)?)
                 .ok_or_else(capacity)?;
             for group in &contact.content.groups {
+                if !self
+                    .retained
+                    .contains(&(Arc::as_ptr(&group.field_identity) as usize))
+                {
+                    bytes = bytes
+                        .checked_add(2 * size_of::<usize>())
+                        .ok_or_else(capacity)?;
+                    added = added.checked_add(1).ok_or_else(capacity)?;
+                }
                 if !self
                     .retained
                     .contains(&(Arc::as_ptr(&group.received) as usize))
@@ -181,6 +512,8 @@ impl CurrentJournal {
         self.retained.try_reserve(added).map_err(|_| capacity())?;
         let prior = prior.map(|(at, _, contact)| {
             for group in &contact.content.groups {
+                self.retained
+                    .insert(Arc::as_ptr(&group.field_identity) as usize);
                 self.retained.insert(Arc::as_ptr(&group.received) as usize);
             }
             for original in contact.content.originals.values() {
@@ -259,6 +592,77 @@ impl CurrentJournal {
         });
         owner_mut(state, observer)?.next_contact = next;
         Ok(prior)
+    }
+    pub(super) fn end_geometry(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+    ) -> Result<bool, ReceivedError> {
+        let Some(prior) = owner(state, observer)?.geometry.as_ref() else {
+            return Ok(false);
+        };
+        self.reserve_growth(
+            heap_sum([observer.len(), prior.heap_bytes().ok_or_else(capacity)?])
+                .ok_or_else(capacity)?,
+        )?;
+        let prior = owner_mut(state, observer)?
+            .geometry
+            .take()
+            .ok_or_else(invalid)?;
+        self.undo.push(CurrentUndo::Geometry {
+            observer: observer.to_owned(),
+            prior,
+        });
+        Ok(true)
+    }
+    pub(super) fn retire_motion(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+    ) -> Result<bool, ReceivedError> {
+        let Some(prior) = owner(state, observer)?
+            .motion_samples
+            .as_ref()
+            .filter(|samples| !samples.is_empty())
+        else {
+            return Ok(false);
+        };
+        self.reserve_growth(
+            heap_sum([observer.len(), prior.heap_bytes().ok_or_else(capacity)?])
+                .ok_or_else(capacity)?,
+        )?;
+        let owner = owner_mut(state, observer)?;
+        let prior = owner
+            .motion_samples
+            .replace(IndexMap::new())
+            .ok_or_else(invalid)?;
+        let expires_at = owner.motion_expires_at.take();
+        self.undo.push(CurrentUndo::Motion {
+            observer: observer.to_owned(),
+            prior,
+            expires_at,
+        });
+        Ok(true)
+    }
+    pub(super) fn clear_gaps(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+    ) -> Result<(), ReceivedError> {
+        let prior = &owner(state, observer)?.gaps;
+        if prior.is_empty() {
+            return Ok(());
+        }
+        self.reserve_growth(
+            heap_sum([observer.len(), prior.heap_bytes().ok_or_else(capacity)?])
+                .ok_or_else(capacity)?,
+        )?;
+        let prior = std::mem::take(&mut owner_mut(state, observer)?.gaps);
+        self.undo.push(CurrentUndo::Gaps {
+            observer: observer.to_owned(),
+            prior,
+        });
+        Ok(())
     }
     pub(super) fn attention_mut<'a>(
         &mut self,

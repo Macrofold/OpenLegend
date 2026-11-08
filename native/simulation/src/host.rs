@@ -32,6 +32,17 @@ pub struct CandidateKey {
     pub generation: u64,
 }
 
+/// Proof of the fence's exact accepted candidate. Only host acceptance may
+/// create it; proposal owners can inspect its binding without re-settling.
+pub(crate) struct AcceptedCandidate {
+    key: CandidateKey,
+}
+impl AcceptedCandidate {
+    pub(crate) fn key(&self) -> CandidateKey {
+        self.key
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FenceError {
     Busy,
@@ -161,6 +172,21 @@ impl CandidateFence {
     }
 
     /// The writer has detached the accepted effects/delta for their real owners.
+    pub(crate) fn accepted_candidate(
+        &self,
+        key: CandidateKey,
+    ) -> Result<AcceptedCandidate, FenceError> {
+        self.check_bindings(key)?;
+        let current = self.token.load(Ordering::Acquire);
+        if current == token(key.id, CandidatePhase::Accepted) {
+            Ok(AcceptedCandidate { key })
+        } else if current >> STATE_BITS != key.id {
+            Err(FenceError::Stale)
+        } else {
+            Err(phase_error(current))
+        }
+    }
+
     pub fn accepted_complete(&self, key: CandidateKey) -> Result<(), FenceError> {
         self.check_bindings(key)?;
         self.transition(key.id, CandidatePhase::Accepted, CandidatePhase::Idle)

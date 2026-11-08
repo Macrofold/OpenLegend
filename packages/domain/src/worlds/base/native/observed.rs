@@ -339,6 +339,18 @@ pub struct StatusEffectProjection {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
+    pub pose: Option<ProjectedPose>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub particle: Option<Particle>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub explanation: Option<String>,
     #[serde(
         default,
@@ -352,18 +364,6 @@ pub struct StatusEffectProjection {
         skip_serializing_if = "Option::is_none"
     )]
     pub timing: Option<EffectTiming>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub pose: Option<ProjectedPose>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub particle: Option<Particle>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

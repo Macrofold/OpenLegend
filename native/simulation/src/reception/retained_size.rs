@@ -687,13 +687,54 @@ impl HeapBytes for std::sync::Arc<CurrentReceivedContent> {
         ])
     }
 }
-heap_record!(CurrentReceivedGroup {
-    recordings,
-    received,
-    metadata
-});
+impl HeapBytes for CurrentReceivedGroup {
+    fn heap_bytes(&self) -> Option<usize> {
+        // The fields token has its own actual Arc control block. A live batch token
+        // is shared with CurrentJournal and remains charged at that single owner.
+        heap_sum([
+            self.recordings.heap_bytes()?,
+            self.received.heap_bytes()?,
+            self.metadata.heap_bytes()?,
+            2 * std::mem::size_of::<usize>(),
+        ])
+    }
+}
 heap_record!(CurrentSightStamp { frame_ref });
 heap_record!(CurrentSightCheck { frame_ref, detail });
+heap_record!(BoundsQueryCursor { pending });
+heap_record!(PriorGeometryFrame { frame });
+heap_record!(GeometryFragment {
+    feature_id,
+    observation,
+    recording,
+    key
+});
+heap_record!(ReceivedGeometryFeature {
+    observation,
+    recording
+});
+heap_record!(MotionOriginal { id });
+heap_record!(MotionConfirmation { id });
+heap_record!(EarlierMotion {
+    value,
+    original,
+    confirmation,
+    aliases
+});
+heap_record!(CurrentMotionSample { earlier });
+heap_record!(ReceptionGap { episode_id });
+heap_record!(ReceivedGeometryState {
+    basis,
+    source_basis,
+    episode_id,
+    frame,
+    prior_frame,
+    query_key,
+    feature_cursor,
+    fragments,
+    boundaries,
+    boundary_keys
+});
 heap_record!(ReceivedValueRecord {
     id,
     at,

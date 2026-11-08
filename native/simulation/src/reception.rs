@@ -39,11 +39,25 @@ mod acquisition;
 pub(crate) use acquisition::*;
 mod attention_control;
 mod current_journal;
-pub(crate) use attention_control::{AttentionSelection, AttentionUpdate, update_attention};
+pub(crate) use attention_control::{
+    AttentionSelection, AttentionUpdate, prune_withdrawn_attention, update_attention,
+};
 mod cohort;
-pub(crate) use cohort::{CurrentCohort, reconcile_current_cohort};
+pub(crate) use cohort::{
+    CurrentCohort, ReceivingMutation, attended_event_participants, reconcile_current_cohort,
+};
+mod body_meaning;
+mod current_admission;
 mod current_write;
-pub(crate) use current_journal::{CurrentCheckpoint, CurrentJournal};
+use current_admission::*;
+mod current_recording;
+use current_recording::*;
+mod retirement;
+pub(crate) use retirement::{EndedCurrentEvidence, end_current_evidence};
+mod warning;
+pub(crate) use warning::acquire_ordinary_warning;
+mod receiving;
+pub(crate) use current_journal::{CurrentCheckpoint, CurrentContactBatchLease, CurrentJournal};
 use current_write::{
     CurrentFacetAddress, CurrentFacetInput, current_facet_set, materialize_current_checks,
 };
@@ -52,6 +66,7 @@ pub(crate) use current_write::{
     CurrentReceptionStamp, current_confirm_groups, current_facet_membership,
     current_groups_set_recording, current_set_unchecked,
 };
+pub(crate) use receiving::{ReceivingCursor, ReceivingStep};
 mod originals;
 pub(crate) use originals::*;
 mod current_read;
@@ -1109,6 +1124,44 @@ pub struct ObservationFactKey {
     pub source: EvidenceSource,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub ordinal: u64,
+}
+// These two source factories intentionally use different property orders.
+// Keep the generic evidence/temporal DTO serializer unchanged; only the actual
+// original-fact string owner uses contributionFactKey's authored order.
+#[derive(Serialize)]
+struct OriginalFactSource<'a> {
+    family: EvidenceFamily,
+    observer: &'a ObserverLife,
+    id: &'a str,
+    revision: &'a SourceRevision,
+}
+#[derive(Serialize)]
+pub(crate) struct OriginalFact<'a> {
+    source: OriginalFactSource<'a>,
+    ordinal: u64,
+}
+pub(crate) fn original_fact_view(fact: &ObservationFactKey) -> OriginalFact<'_> {
+    OriginalFact {
+        source: OriginalFactSource {
+            family: fact.source.family,
+            observer: &fact.source.observer,
+            id: &fact.source.id,
+            revision: &fact.source.revision,
+        },
+        ordinal: fact.ordinal,
+    }
+}
+pub(crate) fn original_fact_json(
+    fact: &ObservationFactKey,
+) -> Result<String, crate::received::ReceivedError> {
+    crate::encoding::json_record(&original_fact_view(fact))
+        .map_err(|_| crate::received::ReceivedError("Original fact encoding failed."))
+}
+pub(crate) fn original_fact_json_len(
+    fact: &ObservationFactKey,
+) -> Result<usize, crate::received::ReceivedError> {
+    crate::encoding::json_record_len(&original_fact_view(fact))
+        .map_err(|_| crate::received::ReceivedError("Original fact encoding failed."))
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

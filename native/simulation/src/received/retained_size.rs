@@ -88,6 +88,24 @@ heap_record!(ReceivedBatch {
     epoch,
     entries
 });
+heap_record!(ReceivedChargeEntry {
+    individual_ids,
+    source_ids
+});
+heap_record!(ReceivedChargeDirectory {
+    actor_id,
+    epoch,
+    entries
+});
+heap_record!(TemporalPageMetadata {
+    subjects,
+    tracks,
+    source_ids,
+    individual_ids,
+    occurrence_keys,
+    references,
+    charge_directory
+});
 heap_record!(ActionResultOutcome { code });
 heap_record!(ActionResultValue {
     id,

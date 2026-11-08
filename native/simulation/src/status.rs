@@ -11,6 +11,10 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 mod rates;
 pub(crate) use rates::*;
+mod projection;
+pub(crate) use projection::*;
+mod roster;
+pub(crate) use roster::{StatusRoster, StatusRosters};
 
 mod work;
 pub(crate) use work::{
@@ -940,7 +944,9 @@ pub struct ConditionEvaluation {
 }
 
 fn compare_status(left: Option<&StatusValue>, operator: Comparison, right: &StatusValue) -> bool {
-    let Some(left) = left else { return false };
+    let Some(left) = left else {
+        return operator == Comparison::NotEqual;
+    };
     match operator {
         Comparison::Equal => left == right,
         Comparison::NotEqual => left != right,
@@ -964,8 +970,28 @@ impl StatusRead<'_> {
         bindings: EffectBindings<'_>,
         definition: &StatusDefinition,
     ) -> Result<bool, ValueError> {
+        self.can_activate_with_charge(bindings, definition, &mut || Ok::<(), ValueError>(()))
+    }
+    pub(crate) fn can_activate_metered(
+        &self,
+        bindings: EffectBindings<'_>,
+        definition: &StatusDefinition,
+        meters: &mut crate::work::WorkMeters,
+    ) -> Result<bool, crate::execution::ExecutionError> {
+        self.can_activate_with_charge(bindings, definition, &mut || {
+            meters
+                .charge(&[(crate::work::WorkUnit::Tests, 1)])
+                .map_err(crate::execution::ExecutionError::Work)
+        })
+    }
+    fn can_activate_with_charge<E: From<ValueError>>(
+        &self,
+        bindings: EffectBindings<'_>,
+        definition: &StatusDefinition,
+        charge: &mut impl FnMut() -> Result<(), E>,
+    ) -> Result<bool, E> {
         if definition.contribution.is_some() {
-            return Err(ValueError::InvalidMeaning);
+            return Err(ValueError::InvalidMeaning.into());
         }
         let Some(subject) = self.entities.get(bindings.subject) else {
             return Ok(false);
@@ -994,12 +1020,17 @@ impl StatusRead<'_> {
                 .and_then(|s| s.get(&definition.id))
                 .is_some_and(|s| s.active)
             || (definition.occupies_action && subject.actor.is_none())
-            || !self.evaluate(bindings, &definition.requires)?.matches
+            || !self
+                .evaluate_with_charge(bindings, &definition.requires, charge)?
+                .matches
         {
             return Ok(false);
         }
         if let Some(condition) = &definition.activation_condition {
-            if !self.evaluate(bindings, condition)?.matches {
+            if !self
+                .evaluate_with_charge(bindings, condition, charge)?
+                .matches
+            {
                 return Ok(false);
             }
         }
@@ -1155,12 +1186,33 @@ impl StatusRead<'_> {
         bindings: EffectBindings<'_>,
         condition: &StatusCondition,
     ) -> Result<ConditionEvaluation, ValueError> {
+        self.evaluate_with_charge(bindings, condition, &mut || Ok::<(), ValueError>(()))
+    }
+    pub(crate) fn evaluate_metered(
+        &self,
+        bindings: EffectBindings<'_>,
+        condition: &StatusCondition,
+        meters: &mut crate::work::WorkMeters,
+    ) -> Result<ConditionEvaluation, crate::execution::ExecutionError> {
+        self.evaluate_with_charge(bindings, condition, &mut || {
+            meters
+                .charge(&[(crate::work::WorkUnit::Tests, 1)])
+                .map_err(crate::execution::ExecutionError::Work)
+        })
+    }
+    fn evaluate_with_charge<E: From<ValueError>>(
+        &self,
+        bindings: EffectBindings<'_>,
+        condition: &StatusCondition,
+        charge: &mut impl FnMut() -> Result<(), E>,
+    ) -> Result<ConditionEvaluation, E> {
+        charge()?;
         let mut tests = 1;
         let matches = match condition {
             StatusCondition::All { all } => {
                 let mut matches = true;
                 for child in all {
-                    let result = self.evaluate(bindings, child)?;
+                    let result = self.evaluate_with_charge(bindings, child, charge)?;
                     tests += result.tests;
                     if !result.matches {
                         matches = false;
@@ -1172,7 +1224,7 @@ impl StatusRead<'_> {
             StatusCondition::Any { any } => {
                 let mut matches = false;
                 for child in any {
-                    let result = self.evaluate(bindings, child)?;
+                    let result = self.evaluate_with_charge(bindings, child, charge)?;
                     tests += result.tests;
                     if result.matches {
                         matches = true;
@@ -1227,7 +1279,7 @@ impl StatusRead<'_> {
                             .as_ref()
                             .and_then(|s| s.get(&status_active.definition_id));
                         if active.is_some_and(|status| status.contribution.is_some()) {
-                            return Err(ValueError::InvalidMeaning);
+                            return Err(ValueError::InvalidMeaning.into());
                         }
                         active.is_some_and(|status| status.active) == status_active.value
                     }

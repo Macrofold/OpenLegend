@@ -5,12 +5,14 @@ use super::journal::property_order;
 use super::*;
 use crate::encoding::{json_record, json_record_len};
 use crate::events::WorldEvent;
+use crate::execution::{CoreMutation, ExecutionError};
 use crate::experience::{ExperienceState, FeatureFamily};
 use crate::geometry::GeometryBinding;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::language::{CollationAnswer, CollationRanks, CollationRequest};
 use crate::received::{ReceivedError, TemporalState};
+use crate::reception::ReceivingMutation;
 use crate::reception::{
     CurrentBodyReadScope, ObservationFactKey, ObserverLife, ObserverSubject, OwnedCurrentFacet,
     ReceptionState, SightResults,
@@ -162,7 +164,7 @@ impl VoiceReceptionPreparation {
             .map_err(|_| invalid())?;
         let proof_bytes = body
             .as_ref()
-            .map(|body| json_record_len(&body.facet().original))
+            .map(|body| crate::reception::original_fact_json_len(&body.facet().original))
             .transpose()
             .map_err(|_| invalid())?
             .unwrap_or(0);
@@ -275,28 +277,35 @@ impl VoiceReceptionPreparation {
     }
     pub(crate) fn finish(
         self,
-        physical: &mut PhysicalState,
-        reception: &mut ReceptionState,
-        installed: &InstalledWorld,
-        temporal: &mut TemporalState,
-        journal: &mut RecognitionJournal,
+        core: &mut CoreMutation<'_>,
         answer: &CollationAnswer,
-    ) -> Result<VoiceReception, ReceivedError> {
-        if physical
+        budget: &ByteBudget,
+    ) -> Result<VoiceReception, ExecutionError> {
+        if core
+            .state
+            .physical
             .entities
             .get(&self.observer.actor_id)
             .and_then(|observer| observer.physical_life())
             != Some(self.observer.physical_life)
         {
-            return Err(invalid());
+            return Err(invalid().into());
         }
         let ranks = collation(self.comparisons.finish(answer))?;
+        let mut receiving = ReceivingMutation {
+            experience: &core.state.experience,
+            current: &mut core.journal.current,
+            acquisitions: &mut core.journal.acquisitions,
+            meters: &mut core.journal.meters,
+            budget,
+        };
         let recognition = perceive_voice(
-            physical,
-            reception,
-            installed,
-            temporal,
-            journal,
+            &mut core.state.physical,
+            &mut core.state.reception,
+            &core.state.installed,
+            &mut core.state.temporal,
+            &mut core.journal.recognition,
+            &mut receiving,
             &self.observer.actor_id,
             &self.event,
             &self.features,
@@ -305,7 +314,13 @@ impl VoiceReceptionPreparation {
             self.body.as_ref().map(|body| &body.facet().original),
             &ranks,
         )?;
-        let family = installed.recognition.value().voice_feature_family.clone();
+        let family = core
+            .state
+            .installed
+            .recognition
+            .value()
+            .voice_feature_family
+            .clone();
         // Free operation-local names and retained body before returning their
         // scratch allowance. The detached result keeps its own actual fields.
         drop(self.observer);
@@ -598,6 +613,7 @@ fn perceive_voice(
     installed: &InstalledWorld,
     temporal: &mut TemporalState,
     journal: &mut RecognitionJournal,
+    receiving: &mut ReceivingMutation<'_>,
     observer: &str,
     event: &VoiceEvent,
     features: &IndexMap<String, RecognitionInterval>,
@@ -605,7 +621,7 @@ fn perceive_voice(
     visible: Option<&str>,
     body_support: Option<&ObservationFactKey>,
     ranks: &CollationRanks,
-) -> Result<IndividualRecognition, ReceivedError> {
+) -> Result<IndividualRecognition, ExecutionError> {
     let policy = installed.recognition.value();
     let scale = installed.content.time_policy.normal_game_seconds_per_second;
     let retention = &installed.attention.value().retention;
@@ -640,10 +656,10 @@ fn perceive_voice(
         crate::status::read_attribute(entity, definition.value(), physical.pending_values.as_ref())
             .map_err(|_| invalid())?
     else {
-        return Err(invalid());
+        return Err(invalid().into());
     };
     if !perception.is_finite() || !(0.0..=100.0).contains(&perception) {
-        return Err(invalid());
+        return Err(invalid().into());
     }
     let policy_key =
         json_record(&(&policy.id, policy.version, definition.pin())).map_err(|_| invalid())?;
@@ -672,6 +688,9 @@ fn perceive_voice(
             &key,
             physical.header.sim_time,
             retention,
+            physical,
+            installed,
+            receiving,
         )?;
     }
     journal.ensure_observer(state, observer)?;
@@ -715,7 +734,7 @@ fn perceive_voice(
     result.perception = Some(perception);
     result.policy = Some(policy_key);
     if let Some(proof) = body_support {
-        let proof = json_record(proof).map_err(|_| invalid())?;
+        let proof = crate::reception::original_fact_json(proof)?;
         sample.support.push(proof.clone());
         result.learning_support = Some(vec![proof]);
     }
@@ -809,6 +828,9 @@ fn perceive_voice(
             state,
             temporal,
             journal,
+            physical,
+            installed,
+            receiving,
             observer,
             &winner.key,
             physical.header.sim_time,
@@ -831,7 +853,7 @@ fn perceive_voice(
             let mut support = IndexSet::new();
             support.insert(winner.source_key.clone());
             if let Some(body) = body_support {
-                support.insert(json_record(body).map_err(|_| invalid())?);
+                support.insert(crate::reception::original_fact_json(body)?);
             }
             support.extend(proof.unwrap_or_default());
             result.learning_support = Some(support.iter().cloned().collect());
@@ -925,6 +947,9 @@ fn perceive_voice(
                     policy,
                     scale,
                     retention,
+                    physical,
+                    installed,
+                    receiving,
                 )?
             {
                 return Ok(result);
@@ -934,6 +959,9 @@ fn perceive_voice(
             state,
             temporal,
             journal,
+            physical,
+            installed,
+            receiving,
             observer,
             &key,
             &sample,
@@ -952,6 +980,7 @@ fn perceive_voice(
         installed,
         temporal,
         journal,
+        receiving,
         observer,
         &mut sample,
         &mut result,
@@ -965,6 +994,9 @@ fn credit_contact(
     state: &mut ReceptionState,
     temporal: &mut TemporalState,
     journal: &mut RecognitionJournal,
+    physical: &mut PhysicalState,
+    installed: &InstalledWorld,
+    receiving: &mut ReceivingMutation<'_>,
     observer: &str,
     key: &str,
     sample: &RecognitionSample,
@@ -973,7 +1005,7 @@ fn credit_contact(
     scale: f64,
     retention: &crate::attention::AttentionRetentionPolicy,
     ranks: &CollationRanks,
-) -> Result<(), ReceivedError> {
+) -> Result<(), ExecutionError> {
     if !sample.contact_eligible {
         return Ok(());
     }
@@ -993,7 +1025,7 @@ fn credit_contact(
         || sample.order.fract() != 0.0
         || sample.order > crate::identity::MAX_SAFE_INTEGER as f64
     {
-        return Err(invalid());
+        return Err(invalid().into());
     }
     if previous.familiarity.as_ref().is_some_and(|state| {
         state.next_credit_at.is_some_and(|at| sample.at < at)
@@ -1047,7 +1079,8 @@ fn credit_contact(
             },
     );
     journal.commit(
-        state, temporal, observer, key, candidate, now, policy, scale, retention,
+        state, temporal, observer, key, candidate, now, policy, scale, retention, physical,
+        installed, receiving,
     )?;
     Ok(())
 }
@@ -1055,6 +1088,9 @@ fn familiarity_support(
     state: &mut ReceptionState,
     temporal: &mut TemporalState,
     journal: &mut RecognitionJournal,
+    physical: &mut PhysicalState,
+    installed: &InstalledWorld,
+    receiving: &mut ReceivingMutation<'_>,
     observer: &str,
     key: &str,
     now: f64,
@@ -1062,7 +1098,7 @@ fn familiarity_support(
     scale: f64,
     retention: &crate::attention::AttentionRetentionPolicy,
     ranks: &CollationRanks,
-) -> Result<Option<Vec<String>>, ReceivedError> {
+) -> Result<Option<Vec<String>>, ExecutionError> {
     let prior = identity(state, observer, key)?;
     let Some(familiarity) = &prior.familiarity else {
         return Ok(Some(Vec::new()));
@@ -1167,7 +1203,8 @@ fn familiarity_support(
     }
     if candidate.individual_id.is_some()
         && !journal.commit(
-            state, temporal, observer, key, candidate, now, policy, scale, retention,
+            state, temporal, observer, key, candidate, now, policy, scale, retention, physical,
+            installed, receiving,
         )?
     {
         let values = state.received_values.as_ref().ok_or_else(invalid)?;
@@ -1198,12 +1235,13 @@ fn learn_unseen(
     installed: &InstalledWorld,
     temporal: &mut TemporalState,
     journal: &mut RecognitionJournal,
+    receiving: &mut ReceivingMutation<'_>,
     observer: &str,
     sample: &mut RecognitionSample,
     result: &mut IndividualRecognition,
     candidates: &[Match],
     ranks: &CollationRanks,
-) -> Result<(), ReceivedError> {
+) -> Result<(), ExecutionError> {
     let policy = installed.recognition.value();
     let scale = installed.content.time_policy.normal_game_seconds_per_second;
     let retention = &installed.attention.value().retention;
@@ -1322,6 +1360,9 @@ fn learn_unseen(
             policy,
             scale,
             retention,
+            physical,
+            installed,
+            receiving,
         )? {
             return Ok(());
         }
@@ -1329,6 +1370,9 @@ fn learn_unseen(
             state,
             temporal,
             journal,
+            physical,
+            installed,
+            receiving,
             observer,
             &id,
             &seed.prior,
@@ -1342,6 +1386,9 @@ fn learn_unseen(
             state,
             temporal,
             journal,
+            physical,
+            installed,
+            receiving,
             observer,
             &id,
             sample,
@@ -1359,6 +1406,9 @@ fn learn_unseen(
                 &seed.key,
                 physical.header.sim_time,
                 retention,
+                physical,
+                installed,
+                receiving,
             )?;
         }
         result.learned_subject = Some(local_subject(identity(state, observer, &id)?)?);
@@ -1385,6 +1435,9 @@ fn learn_unseen(
             policy,
             scale,
             retention,
+            physical,
+            installed,
+            receiving,
         )?;
     }
     Ok(())

@@ -20,7 +20,9 @@ pub(crate) use current::{
     CurrentRecordingContext, CurrentRecordingUpdates, TemporalCurrentGroupInput,
     current_group_recording_complete,
 };
+mod save;
 mod selection;
+pub(crate) use save::encode_received_value_changes;
 pub(crate) use selection::{
     CapturedTemporalReceipt, observation_receipt_member_indices, select_temporal_receipt_facets,
     temporal_receipt_aliases,
@@ -73,6 +75,22 @@ pub struct TemporalReceiptLocator {
 }
 
 impl TemporalReceiptLocator {
+    pub(crate) fn id_len(&self) -> Option<usize> {
+        "temporal-receipt-"
+            .len()
+            .checked_add(self.epoch.len())?
+            .checked_add(2)?
+            .checked_add(if self.batch_order == 0 {
+                1
+            } else {
+                self.batch_order.ilog10() as usize + 1
+            })?
+            .checked_add(if self.entry_index == 0 {
+                1
+            } else {
+                self.entry_index.ilog10() as usize + 1
+            })
+    }
     pub fn id(&self) -> String {
         format!(
             "temporal-receipt-{}-{}-{}",

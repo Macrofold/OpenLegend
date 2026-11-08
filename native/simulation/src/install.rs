@@ -18,7 +18,9 @@ use crate::records::{CurrentRecords, EntityOrdering, InstalledRow, OwnerCoverage
 use crate::values::{DefinitionPin, is_safe_record_id};
 
 mod content;
+mod knowledge;
 mod retained;
+pub(crate) use knowledge::{LearnedCapabilities, install_learned_capabilities};
 pub(crate) use retained::{RetainedDefinitionInputs, RetainedDefinitions, install_retained};
 mod social;
 pub(crate) use social::{SocialSettings, install_social};
@@ -52,11 +54,16 @@ pub enum InstallError {
     DefinitionPin,
     DefinitionBody,
     DefinitionCollision,
+    UnsupportedFamily(&'static str),
 }
 
 impl fmt::Display for InstallError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::UnsupportedFamily(family) => write!(
+                f,
+                "Native proof does not support the installed {family} family."
+            ),
             Self::UnclaimedRows(tables) => write!(
                 f,
                 "Native installation has no owner for record tables: {}.",

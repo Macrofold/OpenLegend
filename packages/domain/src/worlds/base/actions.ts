@@ -8,6 +8,7 @@ import { readOnlyDraftView } from '../../draft.js';
 // docs/worlds/base/survival.md
 export const BASE_ACTION_DEFAULTS = {
   movementTilesPerSecond: 0.11,
+  directProbeMaxDistance: 1,
   sightRadius: PERCEPTION_RULES.sightRadius,
   interactionRadius: 1.6,
   ...WILDERNESS_NEEDS,

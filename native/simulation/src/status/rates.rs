@@ -63,7 +63,7 @@ fn attribute_scratch(entities: &EntityStore, entity: &str, attribute: &str) -> u
             _ => 0,
         })
 }
-fn condition_scratch(
+pub(crate) fn status_condition_scratch(
     entities: &EntityStore,
     bindings: EffectBindings<'_>,
     condition: &StatusCondition,
@@ -71,7 +71,7 @@ fn condition_scratch(
     match condition {
         StatusCondition::All { all } | StatusCondition::Any { any: all } => all
             .iter()
-            .map(|condition| condition_scratch(entities, bindings, condition))
+            .map(|condition| status_condition_scratch(entities, bindings, condition))
             .max()
             .unwrap_or(0),
         StatusCondition::Compare { compare } => attribute_scratch(
@@ -104,6 +104,7 @@ pub(crate) fn prepare_status_rates(
     entity_id: &str,
     previous: Option<&StatusRateCapture>,
     budget: &ByteBudget,
+    meters: &mut crate::work::WorkMeters,
 ) -> Result<StatusRateCapture, ExecutionError> {
     let entity = read
         .entities
@@ -172,7 +173,7 @@ pub(crate) fn prepare_status_rates(
                 .ok_or(ExecutionError::Capacity)?;
             scratch = scratch.max(attribute_scratch(read.entities, target, attribute));
             if let Some(when) = when {
-                scratch = scratch.max(condition_scratch(read.entities, bindings, when));
+                scratch = scratch.max(status_condition_scratch(read.entities, bindings, when));
             }
         }
         // Predicate evaluation holds at most one copied categorical/field
@@ -184,7 +185,7 @@ pub(crate) fn prepare_status_rates(
             match operation {
                 StatusOperation::Rate { change_rate, when } => {
                     if let Some(when) = when {
-                        if !read.evaluate(bindings, when)?.matches {
+                        if !read.evaluate_metered(bindings, when, meters)?.matches {
                             continue;
                         }
                     }
@@ -200,7 +201,7 @@ pub(crate) fn prepare_status_rates(
                 }
                 StatusOperation::Every { change_every, when } => {
                     if let Some(when) = when {
-                        if !read.evaluate(bindings, when)?.matches {
+                        if !read.evaluate_metered(bindings, when, meters)?.matches {
                             continue;
                         }
                     }

@@ -19,6 +19,7 @@ use std::{collections::BTreeMap, sync::Arc};
 
 mod accounts;
 mod append;
+mod save;
 mod support;
 pub(crate) use accounts::{AccountAdditionBudget, KnowledgeAccountChange};
 pub(crate) use append::{ObservationCaptureOptions, TemporalAcquisitionCheckpoint};
@@ -26,6 +27,7 @@ pub use append::{
     PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalAppendError,
     TemporalCaptureFacet, TemporalCaptureInput,
 };
+pub(crate) use save::{TemporalSaveLimits, encode_temporal_changes, pack_temporal_save};
 pub(crate) use support::SupportRetentionContext;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

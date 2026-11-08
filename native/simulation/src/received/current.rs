@@ -3,6 +3,7 @@
 //! proposes only checkpoint metadata tied to that same immutable content.
 
 use super::*;
+use crate::execution::{ExecutionError, TemporalScopes};
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::identity::{IdentityState, MAX_SAFE_INTEGER};
@@ -47,8 +48,9 @@ pub(crate) struct CurrentRecordingContext<'a> {
     pub owner: &'a PerceptionEvidenceOwner,
     pub values: &'a mut ReceivedValues,
     pub identity: &'a mut IdentityState,
-    pub scope: &'a mut TemporalAcquisition,
-    pub transition: &'a mut ReceivedTransition,
+    pub scopes: &'a mut TemporalScopes,
+    pub recent_policy: &'a TemporalRetentionPolicy,
+    pub maintenance_headroom: f64,
     pub meaning: &'a dyn TemporalValueMeaning,
     pub meters: &'a mut WorkMeters,
     pub now: f64,
@@ -223,7 +225,7 @@ impl TemporalState {
         group: &CurrentReceivedGroup,
         reason: TemporalChange,
         partition: Option<&CurrentPartPartition>,
-    ) -> Result<CurrentRecordingUpdates, TemporalAppendError> {
+    ) -> Result<CurrentRecordingUpdates, ExecutionError> {
         let header = self.actor(context.actor_id).map(|actor| actor.header());
         let metadata = heap_sum([
             size_of::<CurrentRecordingUpdates>(),
@@ -252,7 +254,7 @@ impl TemporalState {
         reason: TemporalChange,
         partition: Option<&CurrentPartPartition>,
         updates: &mut Vec<CurrentGroupRecordingUpdate>,
-    ) -> Result<(), TemporalAppendError> {
+    ) -> Result<(), ExecutionError> {
         for mark in group
             .recordings
             .iter()
@@ -289,13 +291,19 @@ impl TemporalState {
                     .checked_mul(members.len() as u64)
                     .filter(|bytes| *bytes <= MAX_SAFE_INTEGER)
                     .ok_or_else(error)?;
-                context.scope.append(
+                context.scopes.append_receipt(
                     self,
                     context.values,
                     context.identity,
-                    context.transition,
                     context.meaning,
                     context.meters,
+                    context.actor_id,
+                    context
+                        .owner
+                        .observer
+                        .as_ref()
+                        .ok_or_else(error)?
+                        .physical_life,
                     context.now,
                     context.sequence,
                     TemporalCaptureInput {
@@ -328,6 +336,8 @@ impl TemporalState {
                         origin: None,
                         facets: Vec::new(),
                     },
+                    context.recent_policy,
+                    context.maintenance_headroom,
                 )?;
                 self.release_terminal_reservation(context.actor_id, bytes)?;
             }
@@ -344,12 +354,13 @@ impl TemporalState {
         &mut self,
         context: &mut CurrentRecordingContext<'_>,
         inputs: &[TemporalCurrentGroupInput<'_>],
-    ) -> Result<CurrentRecordingUpdates, TemporalAppendError> {
-        if context.scope.actor_id() != context.actor_id
-            || context.owner.observer.as_ref().is_none_or(|observer| {
-                observer.actor_id != context.actor_id
-                    || observer.physical_life != context.scope.physical_life()
-            })
+        capture_policy: &TemporalRetentionPolicy,
+    ) -> Result<CurrentRecordingUpdates, ExecutionError> {
+        if context
+            .owner
+            .observer
+            .as_ref()
+            .is_none_or(|observer| observer.actor_id != context.actor_id)
         {
             return Err(error().into());
         }
@@ -530,13 +541,19 @@ impl TemporalState {
                 let delta =
                     i64::try_from(i128::from(held) - i128::from(previous)).map_err(|_| error())?;
                 let epoch = actor.header().epoch.clone();
-                let locator = context.scope.append(
+                let locator = context.scopes.append_receipt(
                     self,
                     context.values,
                     context.identity,
-                    context.transition,
                     context.meaning,
                     context.meters,
+                    context.actor_id,
+                    context
+                        .owner
+                        .observer
+                        .as_ref()
+                        .ok_or_else(error)?
+                        .physical_life,
                     context.now,
                     context.sequence,
                     TemporalCaptureInput {
@@ -563,9 +580,12 @@ impl TemporalState {
                         origin: None,
                         facets,
                     },
+                    capture_policy,
+                    context.maintenance_headroom,
                 )?;
                 let actor = self.actor(context.actor_id).ok_or_else(error)?;
-                let (pending_bytes, pending_count) = context.scope.pending_charge();
+                let (pending_bytes, pending_count) =
+                    context.scopes.pending_charge(context.actor_id)?;
                 let recording = TemporalCurrentGroupCheckpoint {
                     epoch,
                     members: members

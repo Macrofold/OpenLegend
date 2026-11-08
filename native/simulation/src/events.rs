@@ -16,7 +16,9 @@ use crate::values::{
 mod history;
 pub use history::*;
 mod emission;
+mod save;
 pub(crate) use emission::{BegunOccurrence, EmissionError, begin_staged_occurrence};
+pub(crate) use save::encode_occurrence_changes;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -175,3 +177,7 @@ impl CompletedOccurrence {
         self.sequence
     }
 }
+
+mod cursor;
+mod receiver;
+pub(crate) use cursor::{CompletedEvent, EventAnswer, EventCursor, EventError, EventStep};

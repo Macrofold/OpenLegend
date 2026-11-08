@@ -45,24 +45,6 @@ pub(super) fn current_point(
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct BodyMeaning<'a> {
-    kind: &'a str,
-    appearance: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    label: Option<&'a Named>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    description: Option<&'a str>,
-    radius: f64,
-    height: f64,
-    outward: &'a [String; 4],
-    #[serde(skip_serializing_if = "Option::is_none")]
-    heat_lit: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    remains_phase: Option<&'a crate::worlds::base_observed::RemainsPhase>,
-    storage: bool,
-}
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
 struct AttributeMeaning<'a> {
     id: &'a str,
     version: u64,
@@ -171,17 +153,8 @@ fn descriptions(
         Some(SensoryFacet::Description { text }) => Some(text.as_str()),
         _ => appearance.and_then(|appearance| appearance.description.as_deref()),
     };
-    let body = appearance.map(|appearance| BodyMeaning {
-        kind: &appearance.kind,
-        appearance: &appearance.appearance,
-        label: appearance.label.as_ref(),
-        description,
-        radius: appearance.radius,
-        height: appearance.height,
-        outward: &appearance.outward,
-        heat_lit: appearance.heat_lit,
-        remains_phase: appearance.remains_phase.as_ref(),
-        storage: appearance.storage.is_some(),
+    let body = appearance.map(|appearance| {
+        crate::reception::body_meaning::body_details_meaning(appearance, description)
     });
     let contact = match values[5] {
         Some(SensoryFacet::Contact { detail, .. }) => Some(detail),

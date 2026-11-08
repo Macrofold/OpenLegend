@@ -88,6 +88,13 @@ pub(crate) fn map_storage<K, V>(capacity: usize) -> Option<usize> {
         )?
         .checked_add(16)
 }
+/// Pinned Rust B-tree nodes hold eleven keys and twelve edges. Charging one
+/// full node for every live entry bounds a sparse tree after removals as well.
+pub(crate) fn tree_node_bound<K, V>() -> Option<usize> {
+    11_usize
+        .checked_mul(size_of::<K>().checked_add(size_of::<V>())?)?
+        .checked_add(16 * size_of::<usize>())
+}
 impl<K: HeapBytes + Eq + Hash, V: HeapBytes> HeapBytes for IndexMap<K, V> {
     fn heap_bytes(&self) -> Option<usize> {
         self.iter().try_fold(

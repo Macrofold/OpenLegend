@@ -8,7 +8,8 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::identity::IdentityState;
 use crate::received::{
     ReceivedTransition, ReceivedValues, TemporalAcquisition, TemporalAcquisitionCheckpoint,
-    TemporalAppendError, TemporalRetentionPolicy, TemporalState, TemporalValueMeaning,
+    TemporalAppendError, TemporalCaptureInput, TemporalReceiptLocator, TemporalRetentionPolicy,
+    TemporalState, TemporalValueMeaning,
 };
 use crate::reception::ObservationFrame;
 use crate::work::WorkMeters;
@@ -144,6 +145,68 @@ fn append_error(error: TemporalAppendError) -> ExecutionError {
     }
 }
 impl TemporalScopes {
+    pub(crate) fn owns_received(&self, lease: ReceivedLease) -> Result<bool, ExecutionError> {
+        let guard = self
+            .received
+            .get(&lease.serial)
+            .ok_or(ExecutionError::UnfinishedOccurrence)?;
+        let transition = self
+            .transitions
+            .get(&guard.actor)
+            .ok_or(ExecutionError::Invariant)?;
+        if transition.serial != guard.transition || transition.loan.is_some() {
+            return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        Ok(guard.owned)
+    }
+    pub(crate) fn pending_charge(&self, actor: &str) -> Result<(u64, u64), ExecutionError> {
+        let Some(scope) = self.scopes.get(actor) else {
+            return Ok((0, 0));
+        };
+        if scope.loan.is_some() {
+            return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        Ok(scope
+            .prepared
+            .as_ref()
+            .map_or((0, 0), TemporalAcquisition::pending_charge))
+    }
+    /// Source appendTemporalReceipt owns one None-sample transition unless an
+    /// actual outer transition already exists. A larger actor acquisition alone
+    /// does not share receipt order across independent append calls.
+    pub(crate) fn append_receipt(
+        &mut self,
+        state: &mut TemporalState,
+        values: &mut ReceivedValues,
+        identity: &mut IdentityState,
+        meaning: &dyn TemporalValueMeaning,
+        meters: &mut WorkMeters,
+        actor: &str,
+        physical_life: u64,
+        now: f64,
+        sequence: u64,
+        input: TemporalCaptureInput,
+        policy: &TemporalRetentionPolicy,
+        maintenance_headroom: f64,
+    ) -> Result<Option<TemporalReceiptLocator>, ExecutionError> {
+        let lease = self.begin_received(actor, physical_life, None)?;
+        let mut loan = self.loan(lease, state, policy, maintenance_headroom)?;
+        let result = match loan.parts() {
+            Some((scope, transition)) => scope
+                .append(
+                    state, values, identity, transition, meaning, meters, now, sequence, input,
+                )
+                .map_err(append_error),
+            None => Ok(None),
+        };
+        // An error still returns the detached builder before the shared
+        // candidate rollback. Source abort does not flush a failed standalone
+        // call, so only successful work closes/flushes the owned lease here.
+        self.return_loan(loan)?;
+        let result = result?;
+        self.finish_received(lease, state, values, identity, meaning, meters)?;
+        Ok(result)
+    }
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ExecutionError> {
         Ok(Self {
             scopes: IndexMap::new(),
@@ -622,6 +685,34 @@ impl TemporalScopes {
         }
         self.close_acquisition(lease)
     }
+    /// A real inline-only acquisition has no value pool to flush through. A
+    /// borrowed lease leaves its owner's builder untouched; an owned lease may
+    /// close only when it contains no accepted entry requiring that owner.
+    pub(crate) fn finish_empty_acquisition(
+        &mut self,
+        lease: AcquisitionLease,
+    ) -> Result<(), ExecutionError> {
+        let guard = self
+            .acquisitions
+            .get(&lease.serial)
+            .ok_or(ExecutionError::UnfinishedOccurrence)?;
+        let scope = self
+            .scopes
+            .get(&guard.actor)
+            .ok_or(ExecutionError::Invariant)?;
+        if scope.serial != guard.scope
+            || scope.loan.is_some()
+            || guard.owned
+                && (scope.leases != 1
+                    || scope
+                        .prepared
+                        .as_ref()
+                        .is_some_and(TemporalAcquisition::has_pending_entries))
+        {
+            return Err(ExecutionError::UnfinishedOccurrence);
+        }
+        self.close_acquisition(lease)
+    }
     fn close_acquisition(&mut self, lease: AcquisitionLease) -> Result<(), ExecutionError> {
         let guard = self
             .acquisitions
@@ -713,26 +804,7 @@ impl TemporalScopes {
             return Err(ExecutionError::UnfinishedOccurrence);
         }
         if let Some(lease) = guard.acquisition {
-            let acquisition = self
-                .acquisitions
-                .get(&lease.serial)
-                .ok_or(ExecutionError::Invariant)?;
-            let scope = self
-                .scopes
-                .get(&acquisition.actor)
-                .ok_or(ExecutionError::Invariant)?;
-            if scope.serial != acquisition.scope
-                || scope.loan.is_some()
-                || acquisition.owned
-                    && (scope.leases != 1
-                        || scope
-                            .prepared
-                            .as_ref()
-                            .is_some_and(TemporalAcquisition::has_pending_entries))
-            {
-                return Err(ExecutionError::UnfinishedOccurrence);
-            }
-            self.close_acquisition(lease)?;
+            self.finish_empty_acquisition(lease)?;
         }
         self.close_received(lease)
     }

@@ -266,6 +266,70 @@ impl EventObservationSelection<'_> {
         &self.references
     }
 
+    pub(crate) fn materialization_bound(
+        &self,
+        names: &crate::worlds::CapturedNames,
+    ) -> Result<usize, SensorError> {
+        use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+        use std::mem::size_of;
+        let lookup = |id: &str| names.get(id).map(|name| name.name.len());
+        let text = self
+            .policy
+            .text_allocation_bound(self.event, self.source_id, self.target_id, lookup)
+            .ok_or(SensorError::Capacity)?;
+        let narration = match self.event.narration.as_ref() {
+            Some(narration) => Some(
+                crate::narration::narration_render_bound(narration, lookup)
+                    .ok_or(SensorError::Capacity)?,
+            ),
+            None => None,
+        };
+        let data = self.event.data.heap_bytes().ok_or(SensorError::Capacity)?;
+        let mut bytes = heap_sum([
+            size_of::<PermittedEventObservation>(),
+            text,
+            narration.unwrap_or(0),
+            data,
+            self.event
+                .actor_id
+                .heap_bytes()
+                .ok_or(SensorError::Capacity)?,
+            self.event
+                .target_id
+                .heap_bytes()
+                .ok_or(SensorError::Capacity)?,
+            self.event_type.len(),
+            map_storage::<String, EventScalar>(
+                self.event
+                    .data
+                    .as_ref()
+                    .map_or(0, IndexMap::len)
+                    .checked_mul(2)
+                    .ok_or(SensorError::Capacity)?,
+            )
+            .ok_or(SensorError::Capacity)?,
+            self.references
+                .len()
+                .checked_mul(size_of::<ReceivedReference>())
+                .ok_or(SensorError::Capacity)?,
+        ])
+        .ok_or(SensorError::Capacity)?;
+        for (id, _) in &self.references {
+            bytes = heap_sum([
+                bytes,
+                id.len(),
+                lookup(id)
+                    .ok_or(SensorError::Capability)?
+                    .checked_mul(4)
+                    .ok_or(SensorError::Capacity)?,
+                size_of::<NarrationPart>(),
+                id.len(),
+            ])
+            .ok_or(SensorError::Capacity)?;
+        }
+        Ok(bytes)
+    }
+
     /// `names` must be the selected personal-name owner's actual event-time
     /// capture. Missing values refuse this admitted materialization; this helper
     /// cannot repair the cut using an authored canonical name or later lookup.

@@ -4,6 +4,7 @@
 
 use super::merge::merge_changes;
 use super::{ChangedRows, RecordEncodingError, RecordSchema, SaveRows};
+use crate::host::retained_size::tree_node_bound;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::identity::MAX_SAFE_INTEGER;
 use serde_json::Value;
@@ -50,6 +51,14 @@ pub(crate) struct SaveAcknowledgement<'a> {
     pub identity_through: u64,
 }
 
+pub(crate) struct TemporalSaveCut<'a> {
+    pub world_id: &'a str,
+    pub generation: &'a str,
+    pub through_cut: u64,
+    pub identity_through: u64,
+    pub temporal: &'a crate::received::TemporalState,
+}
+
 pub(crate) struct SaveJournal {
     world_id: String,
     generation: String,
@@ -57,6 +66,7 @@ pub(crate) struct SaveJournal {
     next_prefix: u64,
     through_cut: u64,
     identity_through: u64,
+    durable_identity_through: u64,
     suffix: ChangedRows,
     suffix_reservation: ByteReservation,
     in_flight: Option<Arc<SavePrefix>>,
@@ -98,6 +108,7 @@ impl SaveJournal {
             next_prefix: 1,
             through_cut,
             identity_through,
+            durable_identity_through: identity_through,
             suffix: ChangedRows::default(),
             suffix_reservation,
             in_flight: None,
@@ -186,9 +197,48 @@ impl SaveJournal {
 
     /// A failed SQL attempt retries this same Arc and prefix. It never drains
     /// newer accepted output into an already advertised database transaction.
-    pub(crate) fn capture(&mut self) -> Result<Arc<SavePrefix>, SaveError> {
+    pub(crate) fn capture(
+        &mut self,
+        cut: TemporalSaveCut<'_>,
+        limits: crate::received::TemporalSaveLimits,
+        schema: &RecordSchema,
+        scratch: &ByteBudget,
+    ) -> Result<Arc<SavePrefix>, SaveError> {
+        if cut.world_id != self.world_id || cut.generation != self.generation {
+            return Err(SaveError::Binding);
+        }
         if let Some(prefix) = &self.in_flight {
             return Ok(Arc::clone(prefix));
+        }
+        if cut.through_cut != self.through_cut || cut.identity_through != self.identity_through {
+            return Err(SaveError::Binding);
+        }
+        let pages = crate::received::pack_temporal_save(
+            cut.temporal,
+            cut.world_id,
+            Some(self.durable_identity_through),
+            limits,
+            schema,
+            scratch,
+        )?;
+        if pages.changes().rows > 0 {
+            schema.validate_changes(&self.suffix)?;
+            let (pages, _owners, _reservation) = pages.into_parts();
+            let bytes = changes_heap(&self.suffix)
+                .and_then(|bytes| bytes.checked_add(changes_heap(&pages)?))
+                .and_then(|bytes| bytes.checked_mul(6))
+                .ok_or(SaveError::Capacity)?;
+            self.suffix_reservation
+                .resize(bytes)
+                .map_err(|_| SaveError::Capacity)?;
+            let previous = std::mem::take(&mut self.suffix);
+            // Both inputs just passed this same immutable schema. Folding
+            // changes only owned output and cannot fail after this move.
+            self.suffix = merge_changes(previous, pages, schema)
+                .expect("checked current changed-row layouts");
+            self.suffix_reservation
+                .resize(changes_heap(&self.suffix).ok_or(SaveError::Capacity)?)
+                .expect("shrinking an admitted save reservation");
         }
         if self.suffix.writes.is_empty() && self.suffix.deletes.is_empty() {
             return Err(SaveError::NoChanges);
@@ -264,6 +314,7 @@ impl SaveJournal {
             return Err(SaveError::Revision);
         }
         self.durable_revision = ack.revision;
+        self.durable_identity_through = ack.identity_through;
         self.in_flight = None;
         self.last_acknowledged = Some(completed);
         Ok(())
@@ -271,6 +322,9 @@ impl SaveJournal {
 
     pub(crate) fn durable_revision(&self) -> u64 {
         self.durable_revision
+    }
+    pub(crate) fn durable_identity_through(&self) -> u64 {
+        self.durable_identity_through
     }
 }
 
@@ -364,11 +418,6 @@ fn tree_heap<K, V>(
         .try_fold(map.len().checked_mul(node)?, |sum, (key, value)| {
             sum.checked_add(entry(key, value)?)
         })
-}
-fn tree_node_bound<K, V>() -> Option<usize> {
-    11_usize
-        .checked_mul(size_of::<K>().checked_add(size_of::<V>())?)?
-        .checked_add(16 * size_of::<usize>())
 }
 fn strings_heap(values: &Vec<String>) -> Option<usize> {
     values.iter().try_fold(

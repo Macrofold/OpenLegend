@@ -8,6 +8,8 @@ use crate::values::{deserialize_present_option, is_safe_record_id};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod event;
+pub(crate) use event::EventActivity;
 mod state;
 pub(crate) use state::*;
 mod journal;
@@ -159,6 +161,12 @@ impl ResultEvidence {
             _ => Err(ActivityError::InvalidEvidence),
         }
     }
+    pub(crate) fn id_len(&self) -> Option<usize> {
+        match self {
+            Self::Account { id, .. } => Some(id.len()),
+            Self::Recent { receipt, .. } => receipt.id_len(),
+        }
+    }
     pub fn id(&self) -> String {
         match self {
             Self::Account { id, .. } => id.clone(),
@@ -282,7 +290,17 @@ fn activity_record_text_sizes(view: &ActivityView) -> Result<(usize, usize), ser
             ActivityDetail::Scalar(ActivityScalar::String(value)) => (value.len(), 0),
             value => {
                 let length = crate::encoding::json_record_len(value)?;
-                (length, length)
+                // The shared streaming encoder grows a Vec<u8>; admit its
+                // pinned amortized capacity, including Vec's minimum allocation.
+                let scratch = length
+                    .checked_mul(2)
+                    .map(|bytes| bytes.max(8))
+                    .ok_or_else(|| {
+                        <serde_json::Error as serde::ser::Error>::custom(
+                            "Activity fact encoding allocation overflow.",
+                        )
+                    })?;
+                (length, scratch)
             }
         };
         bytes = activity_text_sum(bytes, activity_text_sum(4 + fact.name.len(), length)?)?;

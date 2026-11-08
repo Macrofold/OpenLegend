@@ -13,9 +13,8 @@ use crate::received::values::{
     PersonalAccountFragment, PersonalAccountKind, PersonalAccountSource,
 };
 use crate::received::{
-    ReceivedError, ReceivedFieldClock, ReceivedRole, ReceivedTransition, ReceivedValueFragment,
-    TemporalAcquisition, TemporalAppendError, TemporalCaptureFacet, TemporalCaptureInput,
-    TemporalChange,
+    ReceivedError, ReceivedFieldClock, ReceivedRole, ReceivedValueFragment, TemporalAppendError,
+    TemporalCaptureFacet, TemporalCaptureInput, TemporalChange,
 };
 use crate::records::RecordSchema;
 use std::mem::size_of;
@@ -29,6 +28,12 @@ pub(crate) enum MemoryAcquisitionError {
     Received(ReceivedError),
     Append(TemporalAppendError),
     Encoding,
+    Execution(crate::execution::ExecutionError),
+}
+impl From<crate::execution::ExecutionError> for MemoryAcquisitionError {
+    fn from(error: crate::execution::ExecutionError) -> Self {
+        Self::Execution(error)
+    }
 }
 impl From<ExperienceError> for MemoryAcquisitionError {
     fn from(error: ExperienceError) -> Self {
@@ -57,14 +62,7 @@ pub(crate) struct PreparedMemory {
     budget: ByteBudget,
     _reservation: ByteReservation,
 }
-impl MemoryAdmission {
-    pub(crate) fn scope_owner(&self) -> Option<(&str, u64)> {
-        match self {
-            Self::Complete(_) => None,
-            Self::Pending(value) => Some((&value.actor_id, value.physical_life)),
-        }
-    }
-}
+
 struct BodyView<'a>(&'a Map<String, Value>);
 impl Serialize for BodyView<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -83,7 +81,7 @@ fn serialize<T: Serialize>(value: &T) -> Result<Value, MemoryAcquisitionError> {
 /// bytes fund decoded strings, escaped encoding and bounded source projections.
 /// Charging long prose as one cell per byte would reject ordinary quota-sized
 /// optional accounts before their real quota decision could omit them.
-pub(super) fn encoded_body_bound(encoded: &str) -> Result<usize, ExperienceError> {
+pub(crate) fn encoded_body_bound(encoded: &str) -> Result<usize, ExperienceError> {
     let mut quoted = false;
     let mut escaped = false;
     let mut bytes = 0usize;
@@ -280,7 +278,9 @@ pub(crate) fn prepare_memory_admission(
     let mut quota = core.state.temporal.account_addition_budget(actor_id)?;
     if !quota.reserve(header.class, payload.len() as u64, policy)? {
         if header.class != AccountClass::Optional {
-            return Err(ReceivedError("Required personal experience could not be recorded.").into());
+            return Err(
+                ReceivedError("Required personal experience could not be recorded.").into(),
+            );
         }
         core.state
             .temporal
@@ -300,7 +300,6 @@ pub(crate) fn prepare_memory_admission(
 pub(crate) fn acquire_memory(
     core: &mut CoreMutation<'_>,
     admission: MemoryAdmission,
-    scope: Option<(&mut TemporalAcquisition, &mut ReceivedTransition)>,
     schema: &RecordSchema,
 ) -> Result<Option<String>, MemoryAcquisitionError> {
     let MemoryAdmission::Pending(mut pending) = admission else {
@@ -310,29 +309,15 @@ pub(crate) fn acquire_memory(
         return Ok(id);
     };
     let now = core.state.physical.header.sim_time;
-    let sequence = core.state.physical.header.sequence;
-    let law = core.state.installed.account_law();
-    let policy = &core.state.installed.attention.value().retention;
-    let Some((scope, transition)) = scope else {
-        return Err(ReceivedError("Personal memory requires its actual temporal scope.").into());
-    };
-    if scope.actor_id() != pending.actor_id || scope.physical_life() != pending.physical_life {
-        return Err(ExperienceError::ForeignOwner.into());
-    }
+    let installed = Arc::clone(&core.state.installed);
+    let law = installed.account_law();
+    let policy = &installed.attention.value().retention;
     let id = text(&pending.body, "id")?.to_owned();
     let at = number(&pending.body, "at")?;
     let context_subjects = columns::context_subjects(&pending.body)?;
     let source_ids = std::iter::once(id.clone())
         .chain(optional_text(&pending.body, "eventId")?)
         .collect();
-    let values = core
-        .state
-        .reception
-        .received_values
-        .as_mut()
-        .ok_or(ReceivedError(
-            "Actual received value ownership is unavailable.",
-        ))?;
     let required = pending
         .body
         .get("retention")
@@ -340,15 +325,10 @@ pub(crate) fn acquire_memory(
         .and_then(|value| value.get("required"))
         .and_then(Value::as_bool)
         == Some(true);
-    let locator = scope.append(
-        &mut core.state.temporal,
-        values,
-        &mut core.state.physical.identity,
-        transition,
-        &law,
-        &mut core.journal.meters,
-        now,
-        sequence,
+    let locator = super::receipt::append_personal_receipt(
+        core,
+        &pending.actor_id,
+        pending.physical_life,
         TemporalCaptureInput {
             spatial_context: false,
             availability_at: None,
@@ -418,7 +398,9 @@ pub(crate) fn acquire_memory(
         .account_addition_budget(&pending.actor_id)?;
     if !quota.reserve(header.class, payload.len() as u64, policy)? {
         if header.class != AccountClass::Optional {
-            return Err(ReceivedError("Required personal experience could not be recorded.").into());
+            return Err(
+                ReceivedError("Required personal experience could not be recorded.").into(),
+            );
         }
         core.state
             .temporal

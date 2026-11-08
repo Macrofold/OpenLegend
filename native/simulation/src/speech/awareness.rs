@@ -24,6 +24,24 @@ pub(crate) struct PreparedSpeechAwareness {
     pub(super) segments_reservation: Option<ByteReservation>,
 }
 
+impl PreparedSpeechAwareness {
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        Awareness,
+        ByteReservation,
+        Option<ByteReservation>,
+        Option<ByteReservation>,
+    ) {
+        (
+            self.awareness,
+            self.reservation,
+            self.voice_reservation,
+            self.segments_reservation,
+        )
+    }
+}
+
 pub(crate) fn prepare_sound_awareness(
     core: &mut CoreMutation<'_>,
     contacts: &SpeechContacts,

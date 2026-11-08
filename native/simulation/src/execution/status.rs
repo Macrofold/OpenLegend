@@ -7,6 +7,12 @@ use crate::narration::{TemplateBinding, narration_template};
 use crate::reception::EventScalar;
 use crate::state::Named;
 use crate::status::{EffectBindings, StatusDefinition};
+mod activation;
+pub(crate) use activation::{
+    StatusActivationAnswer, StatusActivationCursor, StatusActivationProgress, StatusActivationStep,
+};
+mod reconcile;
+pub(crate) use reconcile::{StatusReconcileCursor, StatusReconcileStep};
 
 pub(crate) enum StatusEnd {
     Unchanged,
@@ -65,11 +71,6 @@ impl CoreMutation<'_> {
             .iter()
             .filter(|d| {
                 (reason == "body-unavailable" || d.interrupt_on.iter().any(|r| r == reason))
-                    && entity
-                        .status_effects
-                        .as_ref()
-                        .and_then(|s| s.get(&d.id))
-                        .is_some_and(|s| s.active)
             })
             .map(|d| d.id.clone())
             .collect())

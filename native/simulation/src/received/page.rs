@@ -149,7 +149,7 @@ fn lookup_bucket(kind: &str, value: &str) -> u64 {
     u64::from(crate::encoding::content_hash(&format!("{kind}\0{value}")) & 16383)
 }
 
-fn projection(
+pub(super) fn projection(
     metadata: &TemporalPageMetadata,
     actor_id: &str,
     physical_life: u64,

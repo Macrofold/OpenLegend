@@ -2,6 +2,7 @@ import {
   selectedActivityResultMetadata,
   selectedRoutineMovement,
   selectedTemporalPolicy,
+  selectedOrdinaryActionRules,
 } from './world-composition.js';
 import { appendTemporalReceipt } from './temporal-evidence.js';
 import { hasMemory } from './living.js';
@@ -1018,10 +1019,10 @@ function applyActivityResult(world: WorldState, entry: ActivityOccurrence, resul
   entry.view.result = result.message;
   const last = entry.view.children?.at(-1);
   if (last && !last.result) last.result = result.message;
-  for (const fact of entry.view.facts) {
-    if (fact.name === 'health') fact.name = 'health before the attempt';
-    if (fact.name === 'distance') fact.name = 'distance before the attempt';
-  }
+  const priorFactNames: Readonly<Record<string, string>> =
+    selectedOrdinaryActionRules(world).beforeAttemptFacts;
+  for (const fact of entry.view.facts)
+    if (Object.hasOwn(priorFactNames, fact.name)) fact.name = priorFactNames[fact.name]!;
   entry.view.facts.push(...activityResultFacts(world, entry.outputs));
 }
 /** Refuse an unsaveable native capture before it replaces work or spends resources. */

@@ -96,6 +96,12 @@ export const BASE_PERCEPTION_POLICY = {
   creditSeconds: 2,
   seedSeconds: 30,
   warningSeconds: 2,
+  warning: {
+    prefixes: ['look out', 'watch out', 'danger'],
+    join: ' at ',
+    suffix: ' now',
+    delimiters: '.!?;',
+  },
   retainedCredits: 12,
   matchingExemplars: 4,
   familiarityRoots: 120,
@@ -1374,6 +1380,12 @@ export function validateRecognition(world: WorldState): void {
     }
 }
 
+const warningDelimiters = new RegExp(`[${BASE_PERCEPTION_POLICY.warning.delimiters}]+`, 'u');
+const warningClause = new RegExp(
+  `^(?:${BASE_PERCEPTION_POLICY.warning.prefixes.join('|')})${BASE_PERCEPTION_POLICY.warning.join}(.+)${BASE_PERCEPTION_POLICY.warning.suffix}$`,
+  'iu',
+);
+
 /** Match only complete actually understood clauses. A gap cannot discard a
  * negation and turn part of an utterance into a positive danger warning. */
 export function ordinaryWarningPlace(
@@ -1385,11 +1397,11 @@ export function ordinaryWarningPlace(
     .join(' ')
     .trim();
   const clauses = text
-    .split(/[.!?;]+/u)
+    .split(warningDelimiters)
     .map((clause) => clause.trim())
     .filter(Boolean);
   if (clauses.length !== 1) return undefined;
-  const match = /^(?:look out|watch out|danger) at (.+) now$/iu.exec(clauses[0]!);
+  const match = warningClause.exec(clauses[0]!);
   return match?.[1]?.trim() || undefined;
 }
 

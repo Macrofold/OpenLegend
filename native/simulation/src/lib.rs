@@ -6,6 +6,7 @@
 
 pub mod activity;
 pub mod administration;
+pub mod appraisals;
 pub mod attention;
 pub mod body;
 pub mod cognition;

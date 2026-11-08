@@ -129,7 +129,7 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
           : null,
       ]),
       poseSignature: JSON.stringify([worldSupport(entity), entity.spatial.heading]),
-      feature: outwardFeatureSignature(entity, selectedOutwardBodyActivity(world, entity)),
+      feature: outwardFeatureSignature(world, entity, selectedOutwardBodyActivity(world, entity)),
     };
   }
   if (frozen) captures.set(entity, { profile: selectedProfile, value: capture });

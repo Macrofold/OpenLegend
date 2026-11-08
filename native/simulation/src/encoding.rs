@@ -270,6 +270,105 @@ pub fn content_label(value: &str) -> String {
     String::from_utf8(digits[from..].to_vec()).expect("base36 digits must be UTF-8")
 }
 
+/// JavaScript Number(string), for the trusted scalar event-data coercion used
+/// by the selected injury law. Radix integers round once at the IEEE boundary;
+/// repeatedly multiplying an f64 loses the original integer's sticky bits.
+pub(crate) fn js_number(value: &str) -> f64 {
+    let value = js_trim(value);
+    if value.is_empty() {
+        return 0.0;
+    }
+    if matches!(value, "Infinity" | "+Infinity") {
+        return f64::INFINITY;
+    }
+    if value == "-Infinity" {
+        return f64::NEG_INFINITY;
+    }
+    let bytes = value.as_bytes();
+    if bytes.len() > 2 && bytes[0] == b'0' {
+        let bits = match bytes[1] {
+            b'x' | b'X' => 4,
+            b'o' | b'O' => 3,
+            b'b' | b'B' => 1,
+            _ => 0,
+        };
+        if bits != 0 {
+            let mut significant = 0usize;
+            let mut top = 0u64;
+            let mut kept = 0usize;
+            let mut sticky = false;
+            for digit in value[2..].bytes() {
+                let digit = match digit {
+                    b'0'..=b'9' => digit - b'0',
+                    b'a'..=b'f' => digit - b'a' + 10,
+                    b'A'..=b'F' => digit - b'A' + 10,
+                    _ => return f64::NAN,
+                };
+                if digit >= (1 << bits) {
+                    return f64::NAN;
+                }
+                for at in (0..bits).rev() {
+                    let bit = (digit >> at) & 1;
+                    if significant == 0 && bit == 0 {
+                        continue;
+                    }
+                    significant = significant.saturating_add(1);
+                    if kept < 54 {
+                        top = (top << 1) | u64::from(bit);
+                        kept += 1
+                    } else {
+                        sticky |= bit != 0
+                    }
+                }
+            }
+            if significant <= 53 {
+                return top as f64;
+            }
+            if significant > 1024 {
+                return f64::INFINITY;
+            }
+            let mut mantissa = top >> 1;
+            if top & 1 != 0 && (sticky || mantissa & 1 != 0) {
+                mantissa += 1
+            }
+            return (mantissa as f64) * 2.0f64.powi(significant as i32 - 53);
+        }
+    }
+    let mut at = usize::from(matches!(bytes[0], b'+' | b'-'));
+    let mut digits = 0usize;
+    while bytes.get(at).is_some_and(u8::is_ascii_digit) {
+        at += 1;
+        digits += 1
+    }
+    if bytes.get(at) == Some(&b'.') {
+        at += 1;
+        while bytes.get(at).is_some_and(u8::is_ascii_digit) {
+            at += 1;
+            digits += 1
+        }
+    }
+    if digits == 0 {
+        return f64::NAN;
+    }
+    if matches!(bytes.get(at), Some(b'e' | b'E')) {
+        at += 1;
+        if matches!(bytes.get(at), Some(b'+' | b'-')) {
+            at += 1
+        }
+        let begin = at;
+        while bytes.get(at).is_some_and(u8::is_ascii_digit) {
+            at += 1
+        }
+        if at == begin {
+            return f64::NAN;
+        }
+    }
+    if at != bytes.len() {
+        return f64::NAN;
+    }
+    value.parse().unwrap_or(f64::NAN)
+}
+
 /// Exact personal-source revision over already encoded current-format bytes.
 /// Callers must not substitute the smaller non-security content label.
 pub fn sha256_hex(bytes: &[u8]) -> String {

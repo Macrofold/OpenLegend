@@ -1252,7 +1252,7 @@ function prepareVisualSourceValues(
         appearance: subject.appearance ?? 'sprite',
         radius: profile.radius,
         height: profile.height,
-        outward: outwardStates(subject),
+        outward: outwardStates(world, subject),
         ...(activity ? { activity } : {}),
         ...(subject.actor
           ? {

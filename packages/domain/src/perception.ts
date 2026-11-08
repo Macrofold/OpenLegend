@@ -1,3 +1,4 @@
+import { selectedMovementRules } from './world-composition.js';
 import { readOnlyDraftView } from './draft.js';
 import { assemblyShapes } from './assembly-geometry.js';
 import { canonicalJson, contentLabel } from './events.js';
@@ -720,7 +721,13 @@ export function directProbe(
   const map = spatialMap(world),
     a = resolveSupport(map, from, fromSurfaceId),
     b = resolveSupport(map, to, toSurfaceId);
-  if (!a || !b || distance(from, to) > 1 || !canWalkSegment(map, a, b, body)) return null;
+  if (
+    !a ||
+    !b ||
+    distance(from, to) > selectedMovementRules(world).directProbeMaxDistance ||
+    !canWalkSegment(map, a, b, body)
+  )
+    return null;
   return [{ ...b }];
 }
 // Position-only helpers retain the default geometry for callers that do not have a receiver.

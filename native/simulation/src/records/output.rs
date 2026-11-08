@@ -16,7 +16,7 @@ impl std::fmt::Display for RecordEncodingError {
 }
 impl std::error::Error for RecordEncodingError {}
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct RecordPlacement {
     pub id: String,
     pub parent: String,

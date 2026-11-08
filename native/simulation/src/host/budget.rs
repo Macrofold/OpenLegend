@@ -33,6 +33,13 @@ pub struct ByteReservation {
     owner: Arc<ByteBudgetState>,
     bytes: usize,
 }
+impl fmt::Debug for ByteReservation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ByteReservation")
+            .field("bytes", &self.bytes)
+            .finish_non_exhaustive()
+    }
+}
 
 impl ByteBudget {
     pub fn new(limit: usize) -> Self {
@@ -79,6 +86,19 @@ impl ByteBudget {
 impl ByteReservation {
     pub fn bytes(&self) -> usize {
         self.bytes
+    }
+
+    /// Transfer already admitted storage without opening an unfunded interval.
+    /// Both guards must belong to the same host allowance; the global count
+    /// stays unchanged while the transferred guard is disarmed.
+    pub fn merge(&mut self, mut other: ByteReservation) -> Result<(), CapacityError> {
+        if !Arc::ptr_eq(&self.owner, &other.owner) {
+            return Err(CapacityError);
+        }
+        let bytes = self.bytes.checked_add(other.bytes).ok_or(CapacityError)?;
+        self.bytes = bytes;
+        other.bytes = 0;
+        Ok(())
     }
 
     /// Reserve growth before allocation; shrink only after the owner has freed

@@ -38,6 +38,13 @@ pub(crate) use base_speech::SpeechAction as InstalledSpeechAction;
 #[path = "../../../packages/domain/src/worlds/base/native/promises.rs"]
 pub(crate) mod base_promises;
 pub(crate) use base_promises::PromiseRules as InstalledPromiseRules;
+#[path = "../../../packages/domain/src/worlds/base/native/appraisals.rs"]
+pub(crate) mod base_appraisals;
+pub(crate) use base_appraisals::EventAppraisalRules as InstalledEventAppraisalRules;
+
+#[path = "../../../packages/domain/src/worlds/base/native/observation.rs"]
+pub(crate) mod base_observation;
+pub(crate) use base_observation::ObservationRules as InstalledObservationRules;
 
 #[path = "../../../packages/domain/src/worlds/base/native/ordinary_actions.rs"]
 pub(crate) mod base_ordinary_actions;
@@ -59,9 +66,10 @@ pub use base_recognition::VoiceFeatures as InstalledVoiceFeatures;
 pub use base_recognition::WildernessEvidenceMeaning as InstalledEvidenceMeaning;
 pub(crate) use base_recognition::validate_selected_identities;
 pub(crate) use base_recognition::{
+    BodyFamiliarityPreparation as InstalledBodyFamiliarityPreparation,
     RecognitionCheckpoint as InstalledRecognitionCheckpoint,
     RecognitionJournal as InstalledRecognitionJournal, VoiceReception, VoiceReceptionParts,
-    VoiceReceptionPreparation,
+    VoiceReceptionPreparation, retain_recognition_evidence as retain_selected_recognition_evidence,
 };
 pub type InstalledRecognitionFeatures =
     indexmap::IndexMap<String, base_recognition::RecognitionInterval>;
@@ -78,3 +86,5 @@ pub use base_knowledge::PersonalNameRules as InstalledPersonalNameRules;
 pub(crate) use base_knowledge::{
     CapturedNames, OwnedPersonalName, PersonalNameReader as InstalledPersonalNameReader,
 };
+
+pub(crate) use base_recognition::prune_lost_body_individuals as prune_selected_lost_body_individuals;

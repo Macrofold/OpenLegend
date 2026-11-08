@@ -13,13 +13,13 @@ use std::{
 };
 
 #[derive(Clone, Debug)]
-pub(crate) struct CurrentGroupIdentity(Arc<CurrentReceivedContent>);
+pub(crate) struct CurrentGroupIdentity(Arc<()>);
 impl CurrentGroupIdentity {
     pub(crate) fn of(group: &CurrentReceivedGroup) -> Self {
-        Self(group.received.clone())
+        Self(group.field_identity.clone())
     }
     pub(crate) fn matches(&self, group: &CurrentReceivedGroup) -> bool {
-        Arc::ptr_eq(&self.0, &group.received)
+        Arc::ptr_eq(&self.0, &group.field_identity)
     }
 }
 impl PartialEq for CurrentGroupIdentity {
@@ -293,6 +293,19 @@ pub(super) fn current_facet_set(
     address: CurrentFacetAddress<'_>,
     input: Option<(CurrentFacetInput, CurrentReceptionStamp)>,
 ) -> Result<(), ReceivedError> {
+    let lease = journal.begin_batch(state, observer)?;
+    let result = current_facet_set_in_batch(journal, state, observer, address, input)?;
+    journal.finish_batch(state, lease)?;
+    Ok(result)
+}
+
+fn current_facet_set_in_batch(
+    journal: &mut CurrentJournal,
+    state: &mut ReceptionState,
+    observer: &str,
+    address: CurrentFacetAddress<'_>,
+    input: Option<(CurrentFacetInput, CurrentReceptionStamp)>,
+) -> Result<(), ReceivedError> {
     let channel = input
         .as_ref()
         .map(|(input, _)| &input.grant.channel)
@@ -301,7 +314,7 @@ pub(super) fn current_facet_set(
         heap_sum([
             size_of::<CurrentReceivedGroup>(),
             size_of::<CurrentReceivedContent>(),
-            2 * size_of::<usize>(),
+            4 * size_of::<usize>(),
             input.field.heap_bytes().ok_or_else(capacity)?,
             input.grant.heap_bytes().ok_or_else(capacity)?,
             input.original.heap_bytes().ok_or_else(capacity)?,
@@ -391,6 +404,7 @@ pub(super) fn current_facet_set(
                 .ok_or_else(capacity)?,
         )?;
     }
+    let batch = journal.content_batch(observer, address.subject_id)?;
     let identity = channel
         .map(|channel| current_field_identity(address.kind, channel))
         .transpose()?;
@@ -405,6 +419,7 @@ pub(super) fn current_facet_set(
             continue;
         }
         let group = &mut groups[at];
+        journal.mutable_group(group, &batch)?;
         Arc::make_mut(&mut group.received)
             .fields
             .shift_remove(address.kind);
@@ -504,6 +519,7 @@ pub(super) fn current_facet_set(
             .position(|group| group.received.grant == input.grant);
         if let Some(index) = existing {
             let group = &mut groups[index];
+            journal.mutable_group(group, &batch)?;
             Arc::make_mut(&mut group.received)
                 .fields
                 .insert(address.kind.to_owned(), input.field);
@@ -512,6 +528,8 @@ pub(super) fn current_facet_set(
         } else {
             groups.push(CurrentReceivedGroup {
                 recordings: None,
+                field_identity: Arc::new(()),
+                content_batch: Some(batch.clone()),
                 received: Arc::new(CurrentReceivedContent {
                     grant: input.grant.clone(),
                     fields: IndexMap::from([(address.kind.to_owned(), input.field)]),
@@ -572,6 +590,18 @@ pub(super) fn current_facet_set(
 }
 
 pub(crate) fn current_groups_set_recording(
+    journal: &mut CurrentJournal,
+    state: &mut ReceptionState,
+    observer: &str,
+    updates: &[CurrentGroupRecordingUpdate],
+) -> Result<(), ReceivedError> {
+    let lease = journal.begin_batch(state, observer)?;
+    let result = current_groups_set_recording_in_batch(journal, state, observer, updates)?;
+    journal.finish_batch(state, lease)?;
+    Ok(result)
+}
+
+fn current_groups_set_recording_in_batch(
     journal: &mut CurrentJournal,
     state: &mut ReceptionState,
     observer: &str,
@@ -661,6 +691,16 @@ pub(super) fn materialize_current_checks(
     observer: &str,
     keys: &[CurrentFacetAddress<'_>],
 ) -> Result<(), ReceivedError> {
+    let lease = journal.begin_batch(state, observer)?;
+    materialize_current_checks_in_batch(journal, state, observer, keys)?;
+    journal.finish_batch(state, lease)
+}
+fn materialize_current_checks_in_batch(
+    journal: &mut CurrentJournal,
+    state: &mut ReceptionState,
+    observer: &str,
+    keys: &[CurrentFacetAddress<'_>],
+) -> Result<(), ReceivedError> {
     journal.reserve_growth(
         heap_sum([
             map_storage::<&str, Vec<&CurrentFacetAddress<'_>>>(keys.len()).ok_or_else(capacity)?,
@@ -732,6 +772,19 @@ pub(super) fn materialize_current_checks(
 }
 
 pub(crate) fn current_set_unchecked(
+    journal: &mut CurrentJournal,
+    state: &mut ReceptionState,
+    observer: &str,
+    coverage: &[CurrentGroupCoverage],
+    at: f64,
+) -> Result<(), ReceivedError> {
+    let lease = journal.begin_batch(state, observer)?;
+    let result = current_set_unchecked_in_batch(journal, state, observer, coverage, at)?;
+    journal.finish_batch(state, lease)?;
+    Ok(result)
+}
+
+fn current_set_unchecked_in_batch(
     journal: &mut CurrentJournal,
     state: &mut ReceptionState,
     observer: &str,
@@ -868,6 +921,26 @@ pub(crate) fn current_set_unchecked(
 }
 
 pub(crate) fn current_confirm_groups(
+    journal: &mut CurrentJournal,
+    state: &mut ReceptionState,
+    observer: &str,
+    subject: &str,
+    channel: &DefinitionPin,
+    through: f64,
+    received: &CurrentReceptionStamp,
+    scopes: Option<&[CurrentCheck]>,
+    exposures: Option<&IndexSet<String>>,
+    kinds: Option<&IndexSet<String>>,
+) -> Result<Vec<CurrentGroupSelection>, ReceivedError> {
+    let lease = journal.begin_batch(state, observer)?;
+    let result = current_confirm_groups_in_batch(
+        journal, state, observer, subject, channel, through, received, scopes, exposures, kinds,
+    )?;
+    journal.finish_batch(state, lease)?;
+    Ok(result)
+}
+
+fn current_confirm_groups_in_batch(
     journal: &mut CurrentJournal,
     state: &mut ReceptionState,
     observer: &str,

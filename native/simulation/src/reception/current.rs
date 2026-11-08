@@ -414,7 +414,7 @@ pub struct CurrentReceivedContent {
     pub fields: IndexMap<String, CurrentStoredField>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CurrentReceivedGroup {
     #[serde(
@@ -425,6 +425,53 @@ pub struct CurrentReceivedGroup {
     pub recordings: Option<Vec<TemporalCurrentGroupCheckpoint>>,
     pub received: Arc<CurrentReceivedContent>,
     pub metadata: Vec<CurrentPartPartition>,
+    // Source recording proposals identify the fields object, not its bytes. A
+    // mutable receiving prefix keeps that identity across payload COW writes;
+    // its actual immutable snapshot ends that lifetime. Neither token is saved.
+    #[serde(skip)]
+    pub(super) field_identity: Arc<()>,
+    #[serde(skip)]
+    pub(super) content_batch: Option<Arc<()>>,
+}
+impl CurrentReceivedGroup {
+    pub(super) fn installed(
+        received: Arc<CurrentReceivedContent>,
+        metadata: Vec<CurrentPartPartition>,
+        recordings: Option<Vec<TemporalCurrentGroupCheckpoint>>,
+    ) -> Self {
+        Self {
+            received,
+            metadata,
+            recordings,
+            field_identity: Arc::new(()),
+            content_batch: None,
+        }
+    }
+}
+impl PartialEq for CurrentReceivedGroup {
+    fn eq(&self, other: &Self) -> bool {
+        self.received == other.received
+            && self.metadata == other.metadata
+            && self.recordings == other.recordings
+    }
+}
+impl<'de> Deserialize<'de> for CurrentReceivedGroup {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase", deny_unknown_fields)]
+        struct Stored {
+            received: Arc<CurrentReceivedContent>,
+            metadata: Vec<CurrentPartPartition>,
+            #[serde(default, deserialize_with = "deserialize_present_option")]
+            recordings: Option<Vec<TemporalCurrentGroupCheckpoint>>,
+        }
+        let stored = Stored::deserialize(deserializer)?;
+        Ok(Self::installed(
+            stored.received,
+            stored.metadata,
+            stored.recordings,
+        ))
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

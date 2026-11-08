@@ -23,7 +23,7 @@ use indexmap::IndexMap;
 
 enum Phase {
     Voice(VoiceReceptionPreparation),
-    Effects(Option<VoiceReception>),
+    Received(Option<VoiceReception>),
     Unreceived,
     Complete,
 }
@@ -35,9 +35,6 @@ pub(crate) struct SpeechReceiverCursor {
 }
 pub(crate) enum SpeechReceiverStep<'a> {
     Language(&'a CollationRequest),
-    /// The actual recognition receiver must drain its pending invalidation and
-    /// correspondence effects before this cursor can select current names.
-    RecognitionEffects,
     Complete(Option<PreparedSpeechAwareness>),
 }
 fn capacity<T>(value: Result<T, SpeechError>) -> Result<T, ExecutionError> {
@@ -56,6 +53,7 @@ impl SpeechReceiverCursor {
         contacts: &SpeechContacts,
         observer_id: &str,
         event: &WorldEvent,
+        language_binding: crate::geometry::GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         contacts
@@ -96,18 +94,18 @@ impl SpeechReceiverCursor {
                     event,
                     clarity,
                     Some(sight),
-                    contacts.binding(),
+                    language_binding,
                     budget,
                 )
                 .map_err(ExecutionError::Received)?
                 {
                     Some(preparation) => Phase::Voice(preparation),
-                    None => Phase::Effects(None),
+                    None => Phase::Received(None),
                 },
-                None => Phase::Effects(None),
+                None => Phase::Received(None),
             }
         } else {
-            Phase::Effects(None)
+            Phase::Received(None)
         };
         Ok(Self {
             observer: sight.observer().clone(),
@@ -117,6 +115,12 @@ impl SpeechReceiverCursor {
         })
     }
 
+    pub(crate) fn language_request(&self) -> Option<&CollationRequest> {
+        match &self.phase {
+            Phase::Voice(preparation) => Some(preparation.comparisons()),
+            _ => None,
+        }
+    }
     pub(crate) fn step<'a>(
         &'a mut self,
         core: &mut CoreMutation<'_>,
@@ -146,17 +150,8 @@ impl SpeechReceiverCursor {
             else {
                 return Err(ExecutionError::Invariant);
             };
-            let voice = preparation
-                .finish(
-                    &mut core.state.physical,
-                    &mut core.state.reception,
-                    &core.state.installed,
-                    &mut core.state.temporal,
-                    &mut core.journal.recognition,
-                    &answer,
-                )
-                .map_err(ExecutionError::Received)?;
-            self.phase = Phase::Effects(Some(voice));
+            let voice = preparation.finish(core, &answer, budget)?;
+            self.phase = Phase::Received(Some(voice));
         }
         if matches!(self.phase, Phase::Voice(_)) {
             let Phase::Voice(preparation) = &self.phase else {
@@ -164,13 +159,8 @@ impl SpeechReceiverCursor {
             };
             return Ok(SpeechReceiverStep::Language(preparation.comparisons()));
         }
-        if matches!(self.phase, Phase::Effects(_))
-            && core.journal.recognition.next_effect().is_some()
-        {
-            return Ok(SpeechReceiverStep::RecognitionEffects);
-        }
         match std::mem::replace(&mut self.phase, Phase::Complete) {
-            Phase::Effects(voice) => Ok(SpeechReceiverStep::Complete(assemble(
+            Phase::Received(voice) => Ok(SpeechReceiverStep::Complete(assemble(
                 core,
                 contacts,
                 &self.observer.actor_id,

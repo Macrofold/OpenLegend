@@ -59,6 +59,26 @@ impl RecordLayout {
             }),
         }
     }
+    pub(crate) fn project_len<T: Serialize + ?Sized>(
+        &self,
+        value: &T,
+    ) -> Result<usize, serde_json::Error> {
+        match self.codec {
+            RecordCodec::EmptyArray | RecordCodec::EmptyObject => Ok(2),
+            RecordCodec::CurrentContact | RecordCodec::TemporalPage | RecordCodec::Attention => {
+                Err(<serde_json::Error as ser::Error>::custom(
+                    "This record requires its actual owned storage codec.",
+                ))
+            }
+            RecordCodec::Plain if self.children.is_empty() => {
+                crate::encoding::json_record_len(value)
+            }
+            _ => crate::encoding::json_record_len(&Projected {
+                value,
+                layout: self,
+            }),
+        }
+    }
     fn child(&self, key: &str) -> Option<ChildShape> {
         self.children
             .iter()

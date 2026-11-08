@@ -15,6 +15,8 @@ import {
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
 import { BASE_ACTION_DEFAULTS, BASE_SPEECH_ACTION } from './worlds/base/actions.js';
 import { BASE_ORDINARY_ACTION_RULES } from './worlds/base/ordinary-action-rules.js';
+import { BASE_OBSERVATION_RULES } from './worlds/base/observation-rules.js';
+import { BASE_EVENT_APPRAISAL_RULES } from './worlds/base/appraisals.js';
 import { baseAnimalActivity } from './worlds/base/animal-response-profile.js';
 import { baseAssemblyPresentation } from './worlds/base/presentation.js';
 import type { AssemblyFamily } from './assembly-types.js';
@@ -471,14 +473,21 @@ export function selectedNativeLawDefinitions(
     socialDefaults: BASE_SOCIAL_POLICY,
     speechAction: BASE_SPEECH_ACTION,
     ordinaryActions: BASE_ORDINARY_ACTION_RULES,
+    observationRules: BASE_OBSERVATION_RULES,
+    eventAppraisalRules: BASE_EVENT_APPRAISAL_RULES,
     promises: { ...BASE_PROMISE_RULES, definitions: nativePromiseDefinitions(world) },
     eventDisclosure: BASE_EVENT_DISCLOSURE_DATA,
     detectionSupport: selectedDetectionSupportPolicy(world),
     preparedResponses: BASE_THREAT_RESPONSE_PROFILE,
-    movement: {
-      movementTilesPerSecond: BASE_ACTION_DEFAULTS.movementTilesPerSecond,
-      interactionRadius: BASE_ACTION_DEFAULTS.interactionRadius,
-    },
+    movement: selectedMovementRules(world),
+  };
+}
+export function selectedMovementRules(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return {
+    movementTilesPerSecond: BASE_ACTION_DEFAULTS.movementTilesPerSecond,
+    interactionRadius: BASE_ACTION_DEFAULTS.interactionRadius,
+    directProbeMaxDistance: BASE_ACTION_DEFAULTS.directProbeMaxDistance,
   };
 }
 export function selectedSocialDefaults(world: WorldState) {
@@ -488,6 +497,10 @@ export function selectedSocialDefaults(world: WorldState) {
 export function selectedSpeechAction(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_SPEECH_ACTION;
+}
+export function selectedObservationRules(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_OBSERVATION_RULES;
 }
 export function selectedOrdinaryActionRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);

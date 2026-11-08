@@ -41,6 +41,19 @@ function arrayIndex(id: string): number | undefined {
 function numericOrder(id: string): string | undefined {
   return arrayIndex(id) === undefined ? undefined : `0/${id.padStart(10, '0')}`;
 }
+function insertionOrder(position: number): string {
+  return `1/${String(position).padStart(16, '0')}`;
+}
+/** SQL cold loading inserts keys in canonical row order. Capture that same
+ * ordering preparation without constructing placeholder entities or a world. */
+export function coldEntityOrdering(ids: Iterable<string>) {
+  let nextInsertion = 0;
+  const entries: { id: string; key: string }[] = [];
+  for (const id of ids)
+    entries.push({ id, key: numericOrder(id) ?? insertionOrder(nextInsertion++) });
+  entries.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  return { nextInsertion, entries };
+}
 function plainGet<T>(node: ObjectIndexNode<T> | undefined, key: string): T | undefined {
   while (node) {
     const current = readOnlyDraftView(node);
@@ -112,7 +125,7 @@ export function entitySet(records: EntityCollection, id: string, entity: Entity)
         records.size = 0;
         for (const [key, value] of entries) entitySet(records, key, value);
       }
-      order = `1/${String(records.nextInsertion++).padStart(16, '0')}`;
+      order = insertionOrder(records.nextInsertion++);
     }
     records.size++;
     records.byOrder = objectIndexSet(records.byOrder, order, id);
