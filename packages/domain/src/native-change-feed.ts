@@ -53,6 +53,7 @@ export function recordNativeChange(world: WorldState, change: SemanticChange): v
   if (!id || feed.changes.length === MAX_NATIVE_CHANGES) {
     // Unknown/global writers and overflow require the conservative original audit.
     feed.complete = false;
+    invalidateAttentionPreparation(world);
     return;
   }
   feed.changes.push({
