@@ -952,6 +952,7 @@ enum UndoKey {
     ActionReplans(usize, u64),
     ActionNavigation(usize, u64),
     ActionRemaining(usize, u64),
+    ActionSample(usize, u64),
     AnimalEpisode(usize, u64),
     AnimalWander(usize, u64),
     AnimalPhysicalLife(usize, u64),
@@ -1104,6 +1105,11 @@ enum Undo {
         entity: EntityHandle,
         action_id: String,
         before: f64,
+    },
+    ActionSample {
+        entity: EntityHandle,
+        action_id: String,
+        before: Option<f64>,
     },
     ActionReplans {
         entity: EntityHandle,
@@ -1716,6 +1722,20 @@ impl PhysicalJournal {
                         .filter(|action| action.id == action_id)
                         .ok_or(ExecutionError::Invariant)?
                         .remaining_seconds = before;
+                }
+                Undo::ActionSample {
+                    entity,
+                    action_id,
+                    before,
+                } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|entity| entity.actor.as_mut())
+                        .and_then(|actor| actor.action.as_mut())
+                        .filter(|action| action.id == action_id)
+                        .ok_or(ExecutionError::Invariant)?
+                        .motion_sample_remaining_metres = before;
                 }
                 Undo::ActionReplans {
                     entity,
@@ -2593,6 +2613,8 @@ impl PhysicalMutation<'_> {
         let first = self
             .journal
             .first(&UndoKey::Action(handle.slot, handle.generation))?;
+        let binding_changed = actor.action.as_ref().map(|action| action.id.as_str())
+            != action.as_ref().map(|action| action.id.as_str());
         self.journal
             .reserve(size_of::<Undo>() * 2 + size_of::<PhysicalChange>() * 2 + id.len() * 4)?;
         self.journal
@@ -2614,7 +2636,10 @@ impl PhysicalMutation<'_> {
         let before = std::mem::replace(&mut actor.action, action);
         let generation = actor.plan_generation;
         actor.plan_generation = next;
-        if first {
+        // Preserve each binding transition. Field inverses taken while a new
+        // action runs must see that action again before the earlier binding is
+        // restored. The old action moves into this inverse without cloning.
+        if first || binding_changed {
             self.journal.retain(
                 UndoKey::Action(handle.slot, handle.generation),
                 Undo::Action {

@@ -582,6 +582,7 @@ impl PhysicalJournal {
                         | Undo::ActionReplans { entity, .. }
                         | Undo::ActionNavigation { entity, .. }
                         | Undo::ActionRemaining { entity, .. }
+                        | Undo::ActionSample { entity, .. }
                         | Undo::AnimalEpisode { entity, .. }
                         | Undo::AnimalWander { entity, .. }
                         | Undo::AnimalPhysicalLife { entity, .. }
@@ -633,7 +634,8 @@ impl PhysicalJournal {
                         | Undo::ActionRoute { .. }
                         | Undo::ActionReplans { .. }
                         | Undo::ActionNavigation { .. }
-                        | Undo::ActionRemaining { .. } => rows.action = true,
+                        | Undo::ActionRemaining { .. }
+                        | Undo::ActionSample { .. } => rows.action = true,
                         Undo::AnimalEpisode { before, .. } => {
                             rows.episode = true;
                             if rows.episode_before.is_none() {

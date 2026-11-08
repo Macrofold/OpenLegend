@@ -12,3 +12,5 @@ mod actions;
 pub(crate) use actions::SliceActions;
 mod endpoint;
 pub(crate) use endpoint::{EndpointAnswer, EndpointCursor, EndpointStep};
+mod movement;
+pub(crate) use movement::MotionSliceCursor;

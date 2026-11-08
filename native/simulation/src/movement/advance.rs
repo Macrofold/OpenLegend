@@ -112,6 +112,9 @@ fn in_reach(entity: &Entity, action: &Action, tolerance: f64) -> bool {
         })
 }
 impl MoveAdvanceCursor {
+    pub(crate) fn action_id(&self) -> Option<&str> {
+        self.action_id.as_deref()
+    }
     pub(crate) fn new(
         actor_id: &str,
         seconds: f64,

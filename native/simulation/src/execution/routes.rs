@@ -19,6 +19,52 @@ fn navigation_bytes(
     .ok_or(ExecutionError::Capacity)
 }
 impl PhysicalMutation<'_> {
+    /// Private sampling is saved route continuation, not a new outward change.
+    /// docs/simulation-time.md#native-interval-contract
+    pub(crate) fn set_motion_sample_remaining(
+        &mut self,
+        handle: EntityHandle,
+        action_id: &str,
+        remaining: f64,
+    ) -> Result<(), ExecutionError> {
+        if !remaining.is_finite() || remaining < 0.0 {
+            return Err(ExecutionError::Invariant);
+        }
+        let action = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+            .and_then(|actor| actor.action.as_ref())
+            .filter(|action| action.id == action_id && action.kind == "move")
+            .ok_or(ExecutionError::Invariant)?;
+        let before = action.motion_sample_remaining_metres;
+        if before == Some(remaining) {
+            return Ok(());
+        }
+        self.journal
+            .reserve(2 * size_of::<Undo>() + action_id.len())?;
+        let key = UndoKey::ActionSample(handle.slot, handle.generation);
+        if self.journal.first(&key)? {
+            self.journal.retain(
+                key,
+                Undo::ActionSample {
+                    entity: handle,
+                    action_id: action_id.into(),
+                    before,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.action.as_mut())
+            .filter(|action| action.id == action_id)
+            .ok_or(ExecutionError::Invariant)?
+            .motion_sample_remaining_metres = Some(remaining);
+        Ok(())
+    }
     pub(crate) fn clear_action_navigation(
         &mut self,
         id: &str,
