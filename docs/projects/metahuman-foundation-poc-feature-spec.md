@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — feature specification
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native geometry export and private preservation work; attractive foundations and independent kit qualification remain open. | 2026-11-07   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Both neutral foundations export; browser appearance, human selection and independent-kit qualification remain open. | 2026-11-07   |
 
 ## Purpose
 
