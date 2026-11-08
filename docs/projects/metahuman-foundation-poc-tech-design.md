@@ -170,6 +170,8 @@ The existing compiled schema requires frame, stature and age controls. For each 
 
 Use one neutral face entry per family and saved recipe combinations for the initial face presets. This proves bounded face variation, not a large library of unrelated identities. Hair/coverage/eye selections use the existing selection roles. Material palettes and dependency landmarks must be expressed in the actual current format, not extra fields a runtime silently ignores.
 
+The private study uses one `character` presentation group for its complete character presets, including body, face and selected parts. Presets remain group-local patches under the existing validator; no cross-group exception or second recipe format is introduced.
+
 Initial review recipes (muscle/nose/jaw values are normalized):
 
 | Recipe         | Family    | Height | Muscle | Nose | Jaw  |
@@ -239,6 +241,8 @@ Include the latest preserved SAM/MHR + CC0 candidate in the visual comparison wh
 ### Controlled performance experiments
 
 Use the same machine/browser, fixed canvas resolution/DPR, camera, lights, exact assets and motion. Record versions, thermal/background conditions and timing method. Do not compare a bare old head to a fully dressed textured new person and attribute the difference to the evaluator.
+
+The private comparison’s `profile=1` frame-capture controls use `ScenePerformance`, including its CPU histograms, optional GPU queries and resource estimates. Start/save captures through the visible controls after the prescribed warmup; exported reports include exact recipes/compiled references, browser/module identity, start/end framebuffer/DPR and configuration/visibility changes. Reject mixed or hidden workloads. CPU brackets cover update through render submission, excluding frame wait; 0.25 ms histogram buckets are not exact raw percentile samples. Ordinary scene recording still requires its permitted world projection; the private study explicitly opts into rendering-only records. Recipe and capture JSON share the existing local-download behavior. Actual capture/drag/baked-baseline/lifetime evidence remains required.
 
 1. **Baked vs adjustable:** render the same evaluated character once as a baked mesh/rig and once through the family actor, matching materials, joints, triangles and clips. Measure one wearer, then the four-character comparison scene. Warm each case for 10 seconds; collect three alternating 30-second samples. Report CPU frame-time p50/p95, GPU timing only if the platform provides it, draw calls, actual payload, decoded estimates and live resource counts. Source conversion time is a separate metric, never runtime latency.
 2. **Dragging:** run 20 deliberate sweeps across the same control range. Measure recipe evaluation/mesh update p95 and input-to-visible-update p95. Proposed study thresholds are ≤16 ms p95 CPU update and ≤100 ms p95 visible response on the recorded development machine. One pending update per frame replaces superseded drag work; do not accumulate a queue or rebuild unchanged texture/rig resources.

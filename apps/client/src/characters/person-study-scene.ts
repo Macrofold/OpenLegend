@@ -1,6 +1,7 @@
 import * as pc from 'playcanvas';
 import { candidateArt } from '../art-treatment';
 import { initialCamera } from '../world-camera';
+import { ScenePerformance } from '../scene-performance';
 import { PersonActors, type PersonActor, type PersonAppearance } from './person-actor';
 import { createPersonStage } from './person-stage';
 
@@ -21,6 +22,13 @@ export class PersonStudyScene {
   private readonly observer: ResizeObserver;
   private readonly reference: pc.Entity;
   private readonly referenceMaterial: pc.StandardMaterial;
+  private readonly profiler?: ScenePerformance;
+  private captureStart?: {
+    configuration: ReturnType<PersonStudyScene['configuration']>;
+    framebuffer: ReturnType<PersonStudyScene['framebuffer']>;
+  };
+  private captureChanges = 0;
+  private hiddenDuringCapture = false;
   private readonly parents: pc.Entity[] = [];
   private speeds: readonly { walk: number; run: number }[] = [];
   private readonly pending = new Map<number, { appearance: PersonAppearance; editing: boolean }>();
@@ -33,7 +41,7 @@ export class PersonStudyScene {
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
-    appearances: readonly PersonAppearance[],
+    private readonly appearances: readonly PersonAppearance[],
     private readonly changed: () => void,
   ) {
     this.stage = createPersonStage(canvas);
@@ -84,6 +92,22 @@ export class PersonStudyScene {
       mark.setLocalPosition(0, height, 0);
       this.reference.addChild(mark);
     }
+    this.profiler = ScenePerformance.create(
+      canvas,
+      () => false,
+      () =>
+        this.actors.map((actor, index) => ({
+          id: String(index),
+          ...actor.diagnostics(),
+          screen: null,
+        })),
+    );
+    if (this.profiler) {
+      app.on('frameupdate', this.profiler.beginFrame);
+      app.on('frameend', this.endFrame, this);
+      app.on('postrender', this.recordFrame, this);
+      document.addEventListener('visibilitychange', this.recordVisibility);
+    }
     this.observer = new ResizeObserver(() => this.resize());
     this.observer.observe(canvas);
     app.on('update', this.update, this);
@@ -93,6 +117,7 @@ export class PersonStudyScene {
 
   private update(dt: number): void {
     if (this.disposed) return;
+    const started = this.profiler?.begin();
     for (const [index, pending] of this.pending) {
       this.pending.delete(index);
       void this.actors[index]
@@ -101,7 +126,10 @@ export class PersonStudyScene {
           if (!this.disposed) this.changed();
         });
     }
-    if (this.paused) return;
+    if (this.paused) {
+      this.profiler?.update(started);
+      return;
+    }
     this.elapsed += Math.min(dt, 0.1);
     for (const [index, actor] of this.actors.entries()) {
       if (this.editing.has(index)) continue;
@@ -128,15 +156,90 @@ export class PersonStudyScene {
       actor.update(studyCue, dt, speed, this.paused, 0, false, candidateArt);
     }
     if (!this.paused) this.stage.app.renderNextFrame = true;
+    this.profiler?.update(started);
+  }
+
+  private endFrame(): void {
+    this.profiler?.endFrame(null, undefined, this.stage.app, true);
+  }
+
+  private recordFrame(): void {
+    if (this.profiler?.isRecording() && document.visibilityState === 'visible')
+      this.profiler.renderedFrame(performance.now());
+  }
+
+  private readonly recordVisibility = (): void => {
+    if (this.captureStart && document.visibilityState !== 'visible')
+      this.hiddenDuringCapture = true;
+  };
+
+  private configuration() {
+    return {
+      view: this.view,
+      movement: this.movement,
+      paused: this.paused,
+      wearers: this.actors.map((actor, index) => ({
+        recipe: actor.evaluation?.recipe,
+        parts: actor.displayedParts,
+        compiled: this.appearances[index]?.compiled,
+      })),
+    };
+  }
+
+  private framebuffer() {
+    return {
+      width: this.canvas.width,
+      height: this.canvas.height,
+      devicePixelRatio: window.devicePixelRatio,
+    };
+  }
+
+  startCapture(): void {
+    if (!this.profiler || this.disposed) return;
+    this.profiler.stopCapture();
+    this.captureStart = {
+      configuration: this.configuration(),
+      framebuffer: this.framebuffer(),
+    };
+    this.captureChanges = 0;
+    this.hiddenDuringCapture = document.visibilityState !== 'visible';
+    this.profiler.startCapture();
+  }
+
+  stopCapture() {
+    if (!this.profiler || !this.captureStart || this.disposed) return;
+    const profile = this.profiler.stopCapture();
+    const result = {
+      profile,
+      configurationStart: this.captureStart.configuration,
+      configurationEnd: this.configuration(),
+      configurationChanges: this.captureChanges,
+      hiddenDuringCapture: this.hiddenDuringCapture,
+      framebufferStart: this.captureStart.framebuffer,
+      framebufferEnd: this.framebuffer(),
+      browser: navigator.userAgent,
+      buildModules: Array.from(document.scripts, (script) => script.src).filter(Boolean),
+      resources: this.diagnostics(),
+      timingScope:
+        'Frame update through render submission; excludes the browser frame wait. No world-state samples. CPU histograms use 0.25 ms buckets.',
+    };
+    this.captureStart = undefined;
+    return result;
   }
 
   private resize(): void {
+    const previous = this.captureStart ? this.framebuffer() : undefined;
     const bounds = this.canvas.getBoundingClientRect();
     this.stage.app.setCanvasResolution(
       pc.RESOLUTION_FIXED,
       Math.max(1, Math.round(bounds.width)),
       Math.max(1, Math.round(bounds.height)),
     );
+    if (
+      previous &&
+      (previous.width !== this.canvas.width || previous.height !== this.canvas.height)
+    )
+      this.captureChanges++;
     this.frame();
   }
 
@@ -176,19 +279,23 @@ export class PersonStudyScene {
 
   setAppearance(index: number, appearance: PersonAppearance, editing = false): void {
     if (!this.disposed && this.actors[index]) {
+      if (this.captureStart) this.captureChanges++;
       if (editing) this.editing.add(index);
       else this.editing.delete(index);
       this.pending.set(index, { appearance, editing });
     }
   }
   setView(view: PersonStudyView): void {
+    if (this.captureStart && view !== this.view) this.captureChanges++;
     this.view = view;
     this.frame();
   }
   setMovement(movement: PersonStudyMovement): void {
+    if (this.captureStart && movement !== this.movement) this.captureChanges++;
     this.movement = movement;
   }
   setPaused(paused: boolean): void {
+    if (this.captureStart && paused !== this.paused) this.captureChanges++;
     this.paused = paused;
     this.stage.app.renderNextFrame = true;
   }
@@ -205,9 +312,17 @@ export class PersonStudyScene {
   destroy(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.captureStart = undefined;
     this.pending.clear();
     this.observer.disconnect();
     this.stage.app.off('update', this.update, this);
+    if (this.profiler) {
+      this.stage.app.off('frameupdate', this.profiler.beginFrame);
+      this.stage.app.off('frameend', this.endFrame, this);
+      this.stage.app.off('postrender', this.recordFrame, this);
+      document.removeEventListener('visibilitychange', this.recordVisibility);
+      this.profiler.destroy();
+    }
     this.owner.destroy();
     this.reference.destroy();
     this.referenceMaterial.destroy();

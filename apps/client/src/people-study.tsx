@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { validateAppearanceFamily } from '@open-legend/domain/appearance';
 import { resolveAppearanceRecipe, type AppearanceFamilyDefinition } from '@open-legend/protocol';
 import { readAssetJson } from './asset-files';
+import { downloadJson } from './download-json';
 import {
   PersonStudyScene,
   type PersonStudyMovement,
@@ -32,6 +33,7 @@ const parameters = new URLSearchParams(location.search);
 const familyPaths = parameters.getAll('family');
 const presetIds = parameters.getAll('preset');
 const outfitParts = parameters.getAll('part');
+const profiling = parameters.get('profile') === '1';
 
 function appearance(wearer: StudyWearer, dressed: boolean) {
   const { compiled, compiledPath } = wearer.family;
@@ -58,6 +60,7 @@ function Comparison({
   const renderer = useRef<PersonStudyScene | undefined>(undefined);
   const [status, setStatus] = useState('Preparing comparison…');
   const [canMove, setCanMove] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [movement, setMovement] = useState<PersonStudyMovement>('idle');
   const [paused, setPaused] = useState(true);
   const [view, setView] = useState<PersonStudyView>('front');
@@ -67,6 +70,7 @@ function Comparison({
   useEffect(() => {
     if (!canvas.current) return;
     setCanMove(false);
+    setCapturing(false);
     setStatus('Preparing comparison…');
     const scene = new PersonStudyScene(
       canvas.current,
@@ -161,6 +165,31 @@ function Comparison({
         >
           {paused ? 'Play movement' : 'Pause movement'}
         </Button>
+        {profiling && (
+          <>
+            <Button
+              variant="quiet"
+              disabled={!canMove || paused || capturing}
+              onPress={() => {
+                renderer.current?.startCapture();
+                setCapturing(true);
+              }}
+            >
+              Start frame capture
+            </Button>
+            <Button
+              variant="quiet"
+              disabled={!capturing}
+              onPress={() => {
+                const report = renderer.current?.stopCapture();
+                setCapturing(false);
+                if (report) downloadJson('character-frame-capture.json', report);
+              }}
+            >
+              Save frame capture
+            </Button>
+          </>
+        )}
       </div>
       <canvas
         ref={canvas}
@@ -184,6 +213,13 @@ function Comparison({
         The height marker is 1.80 m. Movement plays in place; hair can extend above anatomical
         height.
       </p>
+      {profiling && (
+        <p className="ol-caption" role="status">
+          {capturing
+            ? 'Capturing frames. Keep this view in front without changing its controls; save after 30 seconds.'
+            : 'For each frame sample, play the same movement for 10 seconds before starting a 30-second capture.'}
+        </p>
+      )}
       <PersonAppearanceControls
         family={wearer.family}
         draft={wearer.draft}

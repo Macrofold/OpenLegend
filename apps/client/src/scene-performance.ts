@@ -57,6 +57,14 @@ export interface SceneProfileReport {
   gpuContextLostDiscarded: number;
   histograms: Record<DurationSeries, DurationHistogram>;
   latestFrame: Sample | null;
+  /** Renderer submission bracket, also available to a study without world state. */
+  latestSubmission: {
+    at: number;
+    cpuMs: number;
+    drawCalls: number;
+    estimatedGraphicsBytes: number;
+  } | null;
+  maximumDrawCalls: number;
   stationarySince: number;
   peakEstimatedGraphicsBytes: number;
   maxRenderedEntries: number;
@@ -134,7 +142,7 @@ export class ScenePerformance {
     // Capture cold scene preparation separately; the runner resets at its measured boundary.
     this.startCapture();
   }
-  private startCapture(): void {
+  startCapture(): void {
     if (this.recording || this.destroyed) return;
     this.releaseQueries();
     this.timer =
@@ -158,7 +166,7 @@ export class ScenePerformance {
     this.report.startedAt = performance.now();
     this.recording = true;
   }
-  private stopCapture(): SceneProfileReport {
+  stopCapture(): SceneProfileReport {
     if (!this.recording) return this.report;
     this.recording = false;
     this.report.stoppedAt = performance.now();
@@ -230,6 +238,8 @@ export class ScenePerformance {
         ]),
       ) as Record<DurationSeries, DurationHistogram>,
       latestFrame: null,
+      latestSubmission: null,
+      maximumDrawCalls: 0,
       stationarySince: 0,
       peakEstimatedGraphicsBytes: 0,
       maxRenderedEntries: 0,
@@ -309,7 +319,12 @@ export class ScenePerformance {
       gl.beginQuery(this.timer.TIME_ELAPSED_EXT, query);
     }
   };
-  endFrame(view: GameView | null, displayed: Point | undefined, app: pc.Application): void {
+  endFrame(
+    view: GameView | null,
+    displayed: Point | undefined,
+    app: pc.Application,
+    recordWithoutWorld = false,
+  ): void {
     if (!this.recording) return;
     const at = performance.now();
     if (this.gl?.isContextLost()) this.contextLost();
@@ -318,6 +333,27 @@ export class ScenePerformance {
       this.pending.push(this.active);
       this.active = undefined;
     }
+    // Ordinary scene measurements still require the permitted world projection.
+    // A private asset study can explicitly measure rendering without inventing one.
+    if ((!view || !displayed) && !recordWithoutWorld) return;
+    const cpuMs = at - this.frameStarted;
+    const estimatedGraphicsBytes = app.stats.vram.tex + app.stats.vram.vb + app.stats.vram.ib;
+    this.report.latestSubmission = {
+      at,
+      cpuMs,
+      drawCalls: app.stats.drawCalls.total,
+      estimatedGraphicsBytes,
+    };
+    this.report.maximumDrawCalls = Math.max(
+      this.report.maximumDrawCalls,
+      app.stats.drawCalls.total,
+    );
+    this.report.peakEstimatedGraphicsBytes = Math.max(
+      this.report.peakEstimatedGraphicsBytes,
+      estimatedGraphicsBytes,
+    );
+    this.duration('rendererCpu', cpuMs);
+    this.duration('sceneUpdate', this.updateMs);
     if (!view || !displayed) return;
     const p = view.player.position;
     // at, renderer CPU bracket, scene update CPU, latest scene-view time,
@@ -325,7 +361,7 @@ export class ScenePerformance {
     // whether the public player projection still has an active action (0/1).
     const sample = [
       at,
-      at - this.frameStarted,
+      cpuMs,
       this.updateMs,
       this.viewAt,
       p.x,
@@ -335,14 +371,10 @@ export class ScenePerformance {
       displayed.y,
       displayed.z,
       view.clock.seconds,
-      app.stats.vram.tex + app.stats.vram.vb + app.stats.vram.ib,
+      estimatedGraphicsBytes,
       view.player.action ? 1 : 0,
     ];
     this.report.latestFrame = sample;
-    this.report.peakEstimatedGraphicsBytes = Math.max(
-      this.report.peakEstimatedGraphicsBytes,
-      sample[11]!,
-    );
     if (
       !this.stationaryAnchor ||
       Math.hypot(
@@ -354,8 +386,6 @@ export class ScenePerformance {
       this.stationaryAnchor = { x: displayed.x, y: displayed.y, z: displayed.z };
       this.report.stationarySince = at;
     }
-    this.duration('rendererCpu', at - this.frameStarted);
-    this.duration('sceneUpdate', this.updateMs);
     this.append('frames', sample);
   }
   private duration(series: DurationSeries, ms: number): void {

@@ -8,6 +8,7 @@ import {
 } from '@open-legend/protocol';
 import { Button, SelectField } from '../design-system/components';
 import { useLoadingStatus } from '../design-system/loading';
+import { downloadJson } from '../download-json';
 import type {
   PersonPreview,
   PersonPreviewHandle,
@@ -180,14 +181,7 @@ export function PersonAppearanceEditor({
     }
   }
   function download() {
-    const url = URL.createObjectURL(
-      new Blob([JSON.stringify(snapshot.recipe, null, 2) + '\n'], { type: 'application/json' }),
-    );
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'appearance.json';
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadJson('appearance.json', snapshot.recipe);
   }
   const selectedDefinition = family.controls.find((control) => control.id === selected);
   const range =
