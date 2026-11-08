@@ -63,6 +63,11 @@ Every nonempty native material partition must be selected once or explicitly
 omitted. Matching uses the ORIGINAL partition/corner UVs before the declared
 shared UV packing transform. Canonical IDs are neutral partition-local vertices,
 not GLB render vertices. No nearest-position mapping or independent reduction.
+Exact corner recovery can collapse extra native control-point copies only when
+their positions and complete named skin weights are identical. Every source
+face/corner/point must still be covered; differing points and merges are refused.
+The declared body-side seam weights are copied once to the head boundary before
+the compiler's influence cap; moving seams still require actual qualification.
 
 Joint authority and aliases are explicit, including cross-head/body identities.
 Removed weights walk that source skeleton to a declared retained ancestor before
@@ -162,11 +167,12 @@ def rigid_source(world, unit_scale, np, Matrix):
 
 
 def correspondence(neutral, sample, np):
-    """Exact per-partition face/corner evidence, then a complete vertex bijection."""
+    """Exact corners recover canonical IDs, including identical native splits."""
     count = len(neutral['positions'])
-    if count != len(sample['positions']) or len(neutral['triangles']) != len(sample['triangles']):
-        raise ValueError('Selected source topology changed its vertex or triangle count')
-    if all(np.array_equal(neutral[key], sample[key]) for key in ('triangles', 'uvs', 'materials')):
+    if len(sample['positions']) < count or len(neutral['triangles']) != len(sample['triangles']):
+        raise ValueError('Selected source topology lost canonical vertices or changed triangle count')
+    if count == len(sample['positions']) and all(
+            np.array_equal(neutral[key], sample[key]) for key in ('triangles', 'uvs', 'materials')):
         return np.arange(count), 'identical-layout'
     def face_key(data, face):
         return (int(data['materials'][face]), tuple(sorted(map(tuple, data['uvs'][face]))))
@@ -208,7 +214,9 @@ def correspondence(neutral, sample, np):
                         continue
                     pairs = [(int(a), int(b)) for a, b in zip(vertices, neutral['triangles'][target][list(order)])]
                     if all((a not in forward or forward[a] == b) and
-                           (b not in reverse or reverse[b] == a) for a, b in pairs):
+                           (b not in reverse or reverse[b] == a or
+                            (np.array_equal(sample['positions'][a], sample['positions'][reverse[b]]) and
+                             sample['weights'][a] == sample['weights'][reverse[b]])) for a, b in pairs):
                         matches.append((target, pairs))
                         if len(matches) > 1:
                             break
@@ -219,17 +227,22 @@ def correspondence(neutral, sample, np):
             target, pairs = matches[0]
             used.add(target); unresolved.remove(face); progress = True
             for a, b in pairs:
-                forward[a] = b; reverse[b] = a
+                forward[a] = b; reverse.setdefault(b, a)
                 for other in incident[a]:
                     if other in unresolved and other not in queued:
                         queue.append(other); queued.add(other)
         if not progress:
             raise ValueError(f'Ambiguous/conflicting exact UV correspondence: {len(unresolved)} source faces')
         queue.extend(unresolved); queued.update(unresolved)
-    if len(forward) != count or len(reverse) != count:
+    if len(forward) != len(sample['positions']) or len(reverse) != count:
         raise ValueError('Exact corner correspondence does not cover every canonical vertex')
+    # Native source models can split a CP into identical copies (observed at a
+    # lip vertex). Collapse only exact position AND named-weight equality after
+    # unique face/corner recovery; no nearby point or differing corner is merged.
     # Output is indexed in neutral order, irrespective of native serialization.
-    return np.asarray([reverse[i] for i in range(count)]), 'exact-material-uv-corner-bijection'
+    method = ('exact-material-uv-corners-with-identical-source-splits'
+              if len(sample['positions']) > count else 'exact-material-uv-corner-bijection')
+    return np.asarray([reverse[i] for i in range(count)]), method
 
 
 def native_sample(definition, source_sha):
@@ -367,6 +380,40 @@ def source_point(definition, bones, normalization, context):
 def rotation_error(a, b):
     angle = abs(a.to_quaternion().rotation_difference(b.to_quaternion()).angle)
     return min(angle, 2 * math.pi - angle)
+
+
+def share_seam_weights(descriptor, bpy):
+    """Keep the declared position authority during skinning, not just at rest."""
+    objects = descriptor['objects']; planned = {}; maximum = 0
+    def weights(obj, vertex):
+        return {obj.vertex_groups[g.group].name: g.weight
+                for g in obj.data.vertices[vertex].groups if g.weight > 0}
+    for seam in descriptor['family']['seams']:
+        body = bpy.data.objects[objects[seam['bodyMesh']]['object']]
+        head = bpy.data.objects[objects[seam['headMesh']]['object']]
+        if len(seam['bodyVertices']) != len(seam['headVertices']):
+            raise ValueError('Shared seam requires a body authority for every head vertex')
+        for source, target in zip(seam['bodyVertices'], seam['headVertices']):
+            if any(type(index) is not int or not 0 <= index < len(obj.data.vertices)
+                   for index, obj in ((source, body), (target, head))):
+                raise ValueError('Shared seam has invalid canonical vertices')
+            value = weights(body, source); key = (head.name, target)
+            if key in planned and planned[key] != value:
+                raise ValueError('One head seam vertex has conflicting body weight authorities')
+            planned[key] = value
+            before = weights(head, target)
+            maximum = max(maximum, sum(abs(value.get(j, 0) - before.get(j, 0))
+                                       for j in set(value) | set(before)))
+    for (name, vertex), value in planned.items():
+        obj = bpy.data.objects[name]
+        for group in [g.group for g in obj.data.vertices[vertex].groups]:
+            obj.vertex_groups[group].remove([vertex])
+        for joint, weight in value.items():
+            obj.vertex_groups[joint].add([vertex], weight, 'REPLACE')
+    return {'authority': 'Declared body-side weights, matching the existing position seam.',
+            'headVertices': len(planned), 'maximumStoredWeightL1DifferenceBefore': maximum,
+            'bodyWeightsChanged': False,
+            'limits': 'Setup correction only; posed seams and reduction fidelity remain unqualified.'}
 
 
 def validate_textures(family, textures):
@@ -518,6 +565,7 @@ def prepare(manifest_path, out, report):
                 discarded = max((sum(sorted(v.values(), reverse=True)[4:]) / sum(v.values())
                                  for v in source_weights if sum(v.values()) > 0), default=0)
                 sample_report['parts'][mesh_id] = {'vertices': len(data['positions']), 'triangles': len(data['triangles']),
+                    'canonicalVertices': len(mapping), 'identicalSourceSplits': len(data['positions']) - len(mapping),
                     'correspondence': method, 'weightChangeMax': weight_change, 'fourInfluenceDiscardedFractionMax': discarded,
                     'zeroWeightVertices': sum(not value for value in source_weights)}
                 if sample_id == neutral_id:
@@ -566,6 +614,11 @@ def prepare(manifest_path, out, report):
             bpy.context.collection.objects.link(obj)
         if {obj.name for obj in loaded.objects} != set(names):
             raise ValueError('Prepared object names were truncated or collided')
+    # Native head/body partitions can coincide yet use different blend weights.
+    # The existing seam already makes body positions authoritative; share those
+    # weights once in the master before the compiler applies its influence cap.
+    # docs/projects/people-from-parts-authoring-contract.md#geometry-evaluation
+    report['seamWeights'] = share_seam_weights(descriptor, bpy)
     for key, definition in family['landmarks'].items():
         if 'surface' in definition:
             # Surface landmarks can address native anatomy or a prepared fit helper.
