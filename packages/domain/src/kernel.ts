@@ -1,9 +1,5 @@
 import { beginPerceptionMeasurements } from './perception-timing.js';
-import {
-  beginAttentionPreparation,
-  retainAttentionPreparation,
-  type AttentionPreparationContinuation,
-} from './attention.js';
+import { beginAttentionPreparation } from './attention.js';
 import { materializeNativeEntity } from './native-values.js';
 import { currentContactGet } from './perception-current.js';
 import { selectedCommitmentLimit, selectedOutwardBodyNotice } from './world-composition.js';
@@ -6363,7 +6359,6 @@ const nativeContinuations = new WeakMap<
   WorldState,
   {
     mechanics?: NativeMechanics;
-    attention?: AttentionPreparationContinuation;
     participants?: ReturnType<typeof nativeParticipants>;
     /** Selected operations are always rechecked before reuse; these are not truth certificates. */
     statusIntegration?: ReturnType<typeof prepareStatusIntegration>;
@@ -6779,7 +6774,6 @@ function* advanceWorldNative(
   // Only the exact immutable native successor can reuse this prediction. Commands,
   // edits and recovery create another identity and rebuild; forks copy the countdown.
   const continuation = Object.isFrozen(original) ? nativeContinuations.get(original) : undefined;
-  let incomingAttention = continuation?.attention;
   if (continuation?.mechanics) countDomainWork('nativeContinuationsReused');
   let outingBaseline = continuation?.outingBaseline?.deref();
   let offerBaseline = continuation?.offerBaseline?.deref();
@@ -6806,8 +6800,7 @@ function* advanceWorldNative(
     releasePerceptionPreparation?.();
     const working = draftWorld(next, { retainNativeValues: true });
     const releaseContacts = beginPerceptionMeasurements(working);
-    const releaseAttention = beginAttentionPreparation(working, incomingAttention);
-    incomingAttention = undefined;
+    const releaseAttention = beginAttentionPreparation(working);
     releasePerceptionPreparation = () => {
       releaseAttention();
       releaseContacts();
@@ -8259,9 +8252,7 @@ function* advanceWorldNative(
       // Continuation metadata belongs only to this completed immutable successor,
       // never a mutable result that could be edited before a later freeze.
       freezeWorld(result.world, { completedTransition: true });
-      const attention = retainAttentionPreparation(world);
       nativeContinuations.set(result.world, {
-        ...(attention ? { attention } : {}),
         outingBaseline: outingBaseline ? new WeakRef(outingBaseline) : undefined,
         offerBaseline: offerBaseline ? new WeakRef(offerBaseline) : undefined,
         statusBaseline: statusBaseline ? new WeakRef(statusBaseline) : undefined,
