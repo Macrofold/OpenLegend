@@ -16,9 +16,23 @@ pub(crate) struct ExposureObserver {
     /// None widens to every selected detail. An empty set proves that no
     /// subject changed; a source-only write contains only that subject.
     pub changed_detail: Option<IndexSet<String>>,
+    pub changed_people: Option<IndexSet<String>>,
+    pub objects_changed: bool,
+}
+/// Only the prior physical index category is retained, never received facts.
+/// A detail pass updates this category before a later broad roster refresh.
+pub(crate) struct ExposureObjects {
+    ids: IndexSet<EntityHandle>,
+    _reservation: ByteReservation,
+}
+impl ExposureObjects {
+    pub(crate) fn same_categories(&self, other: &Self) -> bool {
+        self.ids == other.ids
+    }
 }
 pub(crate) struct ExposureSelection {
     pub observers: Vec<ExposureObserver>,
+    pub objects: Option<ExposureObjects>,
     reservation: ByteReservation,
 }
 fn capacity() -> ExecutionError {
@@ -45,6 +59,7 @@ impl ExposureSelection {
         )?;
         let mut result = Self {
             observers: Vec::with_capacity(selected.len()),
+            objects: None,
             reservation,
         };
         let all = !state.reception.exposure_prepared
@@ -82,6 +97,8 @@ impl ExposureSelection {
                 handle: *handle,
                 affected: all,
                 changed_detail: (!all).then(IndexSet::new),
+                changed_people: (!all).then(IndexSet::new),
+                objects_changed: all,
             });
         }
         result.observers.sort_by(|a, b| {
@@ -100,6 +117,82 @@ impl ExposureSelection {
                 .entities
                 .ordering(&a.id)
                 .cmp(&state.physical.entities.ordering(&b.id))
+        });
+        let prior = state.reception.exposure_objects.as_ref();
+        let pending = state.reception.sensory.as_ref();
+        let count = if all {
+            0
+        } else {
+            prior.map_or(0, |objects| objects.ids.len())
+        };
+        let mut object_reservation = budget.reserve(
+            heap_sum([
+                size_of::<ExposureObjects>(),
+                2 * size_of::<usize>(),
+                map_storage::<EntityHandle, ()>(count).ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let mut objects = IndexSet::with_capacity(count);
+        if !all {
+            if let Some(prior) = prior {
+                objects.extend(prior.ids.iter().copied());
+            }
+        }
+        let mut update = |id: &str| -> Result<(), ExecutionError> {
+            let Some(handle) = state.physical.entities.handle(id) else {
+                return Ok(());
+            };
+            let entity = state
+                .physical
+                .entities
+                .resolve(handle)
+                .ok_or(ExecutionError::Invariant)?;
+            if entity.physical_root() && entity.actively_participates() && entity.remains.is_some()
+            {
+                if !objects.contains(&handle) {
+                    if objects.len() == objects.capacity() {
+                        let next = objects
+                            .len()
+                            .checked_add(1)
+                            .and_then(|n| n.checked_mul(2))
+                            .ok_or_else(capacity)?;
+                        let growth = map_storage::<EntityHandle, ()>(next)
+                            .and_then(|n| {
+                                n.checked_sub(map_storage::<EntityHandle, ()>(objects.capacity())?)
+                            })
+                            .ok_or_else(capacity)?;
+                        object_reservation.resize(
+                            object_reservation
+                                .bytes()
+                                .checked_add(growth)
+                                .ok_or_else(capacity)?,
+                        )?;
+                    }
+                    objects.try_reserve(1).map_err(|_| capacity())?;
+                    objects.insert(handle);
+                }
+            } else {
+                objects.shift_remove(&handle);
+            }
+            Ok(())
+        };
+        if all {
+            for id in state.physical.entities.ordered_ids() {
+                update(id)?;
+            }
+        } else {
+            // Clone only this small derived object category, then consume the
+            // real pending source scope; do not scan every actor per sample.
+            if let Some(pending) = pending {
+                for id in pending.scopes.keys() {
+                    update(id)?;
+                }
+            }
+        }
+        result.objects = Some(ExposureObjects {
+            ids: objects,
+            _reservation: object_reservation,
         });
         if all {
             return Ok(result);
@@ -137,6 +230,8 @@ impl ExposureSelection {
                 {
                     result.observers[*at].affected = true;
                     result.observers[*at].changed_detail = None;
+                    result.observers[*at].changed_people = None;
+                    result.observers[*at].objects_changed = true;
                 }
             }
             let current = state
@@ -182,39 +277,66 @@ impl ExposureSelection {
                         continue;
                     }
                     result.observers[at].affected = true;
-                    let Some(changed) = result.observers[at].changed_detail.as_ref() else {
-                        continue;
-                    };
-                    if changed.contains(source_id) {
-                        continue;
+                    let handle = state.physical.entities.handle(source_id);
+                    let was_object = handle.is_none_or(|handle| {
+                        state
+                            .reception
+                            .exposure_objects
+                            .as_ref()
+                            .is_some_and(|objects| objects.ids.contains(&handle))
+                    });
+                    let is_object = handle.is_none_or(|handle| {
+                        result
+                            .objects
+                            .as_ref()
+                            .is_some_and(|objects| objects.ids.contains(&handle))
+                    });
+                    result.observers[at].objects_changed |= was_object || is_object;
+                    if !was_object || !is_object {
+                        mark_source(
+                            &mut result.observers[at].changed_people,
+                            source_id,
+                            &mut result.reservation,
+                        )?;
                     }
-                    let growth = if changed.len() == changed.capacity() {
-                        let next = changed
-                            .len()
-                            .checked_add(1)
-                            .and_then(|n| n.checked_mul(2))
-                            .ok_or_else(capacity)?;
-                        map_storage::<String, ()>(next)
-                            .and_then(|bytes| {
-                                bytes.checked_sub(map_storage::<String, ()>(changed.capacity())?)
-                            })
-                            .ok_or_else(capacity)?
-                    } else {
-                        0
-                    };
-                    result.reservation.resize(
-                        heap_sum([result.reservation.bytes(), growth, source_id.len()])
-                            .ok_or_else(capacity)?,
+                    mark_source(
+                        &mut result.observers[at].changed_detail,
+                        source_id,
+                        &mut result.reservation,
                     )?;
-                    let changed = result.observers[at]
-                        .changed_detail
-                        .as_mut()
-                        .ok_or(ExecutionError::Invariant)?;
-                    changed.try_reserve(1).map_err(|_| capacity())?;
-                    changed.insert(source_id.clone());
                 }
             }
         }
         Ok(result)
     }
+}
+
+fn mark_source(
+    changed: &mut Option<IndexSet<String>>,
+    source: &str,
+    reservation: &mut ByteReservation,
+) -> Result<(), ExecutionError> {
+    let Some(changed) = changed else {
+        return Ok(());
+    };
+    if changed.contains(source) {
+        return Ok(());
+    }
+    let growth = if changed.len() == changed.capacity() {
+        let next = changed
+            .len()
+            .checked_add(1)
+            .and_then(|n| n.checked_mul(2))
+            .ok_or_else(capacity)?;
+        map_storage::<String, ()>(next)
+            .and_then(|bytes| bytes.checked_sub(map_storage::<String, ()>(changed.capacity())?))
+            .ok_or_else(capacity)?
+    } else {
+        0
+    };
+    reservation
+        .resize(heap_sum([reservation.bytes(), growth, source.len()]).ok_or_else(capacity)?)?;
+    changed.try_reserve(1).map_err(|_| capacity())?;
+    changed.insert(source.to_owned());
+    Ok(())
 }

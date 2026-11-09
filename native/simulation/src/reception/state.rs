@@ -199,6 +199,7 @@ pub struct ReceptionState {
     /// Derived cold/warm exposure preparation. Current records and evidence
     /// remain authoritative; a cold installation always rebuilds preparation.
     pub(crate) exposure_prepared: bool,
+    pub(crate) exposure_objects: Option<std::sync::Arc<super::exposure::ExposureObjects>>,
     pub sensory: Option<SensoryContinuation>,
     pub perception_evidence: Option<IndexMap<String, PerceptionEvidenceOwner>>,
     pub received_values: Option<ReceivedValues>,

@@ -223,6 +223,7 @@ impl ReceivingCursor {
                         } else {
                             Vec::new()
                         };
+                        core.sync_attention_changes()?;
                         update_attention(
                             &core.state.physical,
                             &mut core.state.reception,
@@ -378,6 +379,7 @@ impl ReceivingCursor {
             &input.field.value,
         )?
         .ok_or_else(invalid)?;
+        let unchanged_confirmation = [input.times.confirmed_from, input.times.confirmed_through];
         if let Some(pending) = prepare_current_sample(
             core,
             &self.current.observer.actor_id,
@@ -386,6 +388,7 @@ impl ReceivingCursor {
                 value: measured,
                 prepared_pose: None,
             },
+            unchanged_confirmation,
             budget,
         )? {
             close_current_sample_history(core, &self.current.observer.actor_id, &pending, budget)?;

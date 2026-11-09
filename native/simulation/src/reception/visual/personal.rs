@@ -17,6 +17,8 @@ pub(crate) struct VisualOpportunity {
     pub immediate: bool,
     pub due_subjects: IndexSet<String>,
     pub changed_detail_subjects: Option<IndexSet<String>>,
+    pub changed_people: Option<IndexSet<String>>,
+    pub objects_changed: bool,
 }
 pub(crate) struct RequestedVisualDetails {
     pub ids: IndexSet<String>,
@@ -147,6 +149,10 @@ impl PersonalVisualCursor {
                 .ok_or(ExecutionError::Capacity)?,
             opportunity
                 .changed_detail_subjects
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?,
+            opportunity
+                .changed_people
                 .heap_bytes()
                 .ok_or(ExecutionError::Capacity)?,
             sight
@@ -373,6 +379,73 @@ impl PersonalVisualCursor {
         // BodyIndex emits stable entity order. People and objects are separate
         // Source arrays; their concatenation owns episode insertion chronology.
         if !self.opportunity.detail_only {
+            if let Some(changed) = &self.opportunity.changed_people {
+                // A scoped broad sample retests changed people, not the entire
+                // prior roster. In particular, a detail-only body refresh does
+                // not itself replace the independently maintained broad list.
+                // All admitted mutable roots have actor bodies; an absent root
+                // or remains is the selected object's exposure dependency.
+                let previous = core
+                    .state
+                    .reception
+                    .visible_people
+                    .as_ref()
+                    .and_then(|rows| rows.get(observer));
+                let bytes = self
+                    .reservation
+                    .as_ref()
+                    .ok_or_else(invalid)?
+                    .bytes()
+                    .checked_add(
+                        previous
+                            .map_or(Some(0), HeapBytes::heap_bytes)
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .ok_or(ExecutionError::Capacity)?;
+                self.reservation
+                    .as_mut()
+                    .ok_or_else(invalid)?
+                    .resize(bytes)?;
+                self.people.retain(|id| changed.contains(id));
+                self.people.extend(
+                    previous
+                        .into_iter()
+                        .flatten()
+                        .filter(|id| !changed.contains(*id))
+                        .cloned(),
+                );
+                self.people.sort_by(|a, b| {
+                    core.state
+                        .physical
+                        .entities
+                        .ordering(a)
+                        .cmp(&core.state.physical.entities.ordering(b))
+                });
+                if !self.opportunity.objects_changed {
+                    if let Some(previous) = core
+                        .state
+                        .reception
+                        .visible_objects
+                        .as_ref()
+                        .and_then(|rows| rows.get(observer))
+                    {
+                        let bytes = self
+                            .reservation
+                            .as_ref()
+                            .ok_or_else(invalid)?
+                            .bytes()
+                            .checked_add(previous.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                            .ok_or(ExecutionError::Capacity)?;
+                        self.reservation
+                            .as_mut()
+                            .ok_or_else(invalid)?
+                            .resize(bytes)?;
+                        self.objects.clone_from(previous);
+                    }
+                }
+                eligible.clear();
+                eligible.extend(self.people.iter().chain(&self.objects).cloned());
+            }
             self.reconcile_episodes(core, &eligible, budget)?;
             core.journal
                 .current
@@ -461,6 +534,7 @@ impl PersonalVisualCursor {
             visual.finish_checks(core, true, budget)?;
             let changed: Vec<_> = visual.attention_changes.iter().cloned().collect();
             let geometry: Vec<_> = visual.geometry_changes.iter().cloned().collect();
+            core.sync_attention_changes()?;
             update_attention(
                 &core.state.physical,
                 &mut core.state.reception,
@@ -571,44 +645,41 @@ impl PersonalVisualCursor {
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
-        let visual = self.visual.as_mut().ok_or_else(invalid)?;
-        let entries = owner(core, &visual.observer.actor_id)?
-            .attention
-            .as_ref()
-            .map_or(&[][..], |a| a.entries.as_slice());
-        let count = visual
-            .current
-            .before
-            .as_ref()
-            .map_or(0, |b| b.entry_source_ids().count())
-            + visual.current.selected_sources().count()
-            + entries.len();
-        let bytes = visual
-            .current
-            .before
-            .as_ref()
-            .map_or(Some(0), |b| {
-                b.entry_source_ids()
-                    .try_fold(0usize, |sum, id| sum.checked_add(id.len()))
-            })
-            .and_then(|sum| {
-                visual
-                    .current
-                    .selected_sources()
-                    .try_fold(sum, |sum, id| sum.checked_add(id.len()))
-            })
-            .and_then(|sum| {
-                entries
-                    .iter()
-                    .try_fold(sum, |sum, e| sum.checked_add(e.source_id.len()))
-            })
-            .and_then(|n| {
-                n.checked_add(crate::host::retained_size::map_storage::<String, ()>(
-                    count,
-                )?)
-            })
-            .and_then(|n| n.checked_add(count.checked_mul(size_of::<String>())?))
+        let observer = &self.visual.as_ref().ok_or_else(invalid)?.observer.actor_id;
+        // Source finishes physical reception before its contact-credit phase.
+        // Its entry order is the completed attention selection, not the
+        // pre-sight cohort which also owns outgoing history above.
+        let Some(cohort) = CurrentCohort::capture(
+            &core.state.physical,
+            &core.state.reception,
+            &core.state.installed,
+            &core.state.experience,
+            observer,
+            budget,
+        )?
+        else {
+            self.contacts.clear();
+            return Ok(());
+        };
+        let count = cohort
+            .entry_source_ids()
+            .count()
+            .checked_add(cohort.track_source_ids().count())
             .ok_or(ExecutionError::Capacity)?;
+        let text = cohort
+            .entry_source_ids()
+            .chain(cohort.track_source_ids())
+            .try_fold(0usize, |sum, id| sum.checked_add(id.len()))
+            .ok_or(ExecutionError::Capacity)?;
+        let bytes = crate::host::retained_size::heap_sum([
+            text,
+            count
+                .checked_mul(size_of::<String>())
+                .ok_or(ExecutionError::Capacity)?,
+            crate::host::retained_size::map_storage::<String, ()>(count)
+                .ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
         let reservation = self.reservation.as_mut().ok_or_else(invalid)?;
         reservation.resize(
             reservation
@@ -617,21 +688,12 @@ impl PersonalVisualCursor {
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let mut ids = IndexSet::with_capacity(count);
-        if let Some(before) = &visual.current.before {
-            ids.extend(before.entry_source_ids().map(str::to_owned));
-        }
-        for id in visual.current.selected_sources() {
+        for id in cohort.entry_source_ids().chain(cohort.track_source_ids()) {
             if !ids.contains(id) {
-                ids.insert(id.into());
-            }
-        }
-        for entry in entries {
-            if !ids.contains(&entry.source_id) {
-                ids.insert(entry.source_id.clone());
+                ids.insert(id.to_owned());
             }
         }
         self.contacts = ids.into_iter().collect();
-        let _ = budget;
         Ok(())
     }
     fn prepare_contact(

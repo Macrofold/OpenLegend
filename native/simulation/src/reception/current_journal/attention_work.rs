@@ -7,12 +7,15 @@ pub(super) struct AttentionWork {
     pub(super) life: u64,
     pub(super) sources: AttentionSources,
     pub(super) selection: Option<AttentionCut>,
+    pub(super) familiarity: AttentionSources,
+    pub(super) familiarity_all: bool,
 }
 pub(super) struct AttentionCut {
     at: f64,
     policy: String,
     explicit: Vec<String>,
     target: Option<String>,
+    subjects: Vec<(String, ObserverSubject)>,
     _reservation: ByteReservation,
 }
 pub(super) struct AttentionSources {
@@ -144,6 +147,8 @@ impl CurrentJournal {
                 life,
                 sources: AttentionSources::empty(&self.budget)?,
                 selection: None,
+                familiarity: AttentionSources::empty(&self.budget)?,
+                familiarity_all: false,
             },
         );
         if grows {
@@ -168,7 +173,7 @@ impl CurrentJournal {
         });
         Ok(())
     }
-    pub(in super::super) fn invalidate_attention_work(
+    pub(crate) fn invalidate_attention_work(
         &mut self,
         observer: &str,
     ) -> Result<(), ReceivedError> {
@@ -185,6 +190,14 @@ impl CurrentJournal {
             prior,
         });
         Ok(())
+    }
+    pub(crate) fn invalidate_all_attention_work(&mut self) -> Result<(), ReceivedError> {
+        if self.attention_work.is_empty() {
+            return Ok(());
+        }
+        // Move the old preparation into its existing inverse. Clearing derived
+        // candidates keeps the working lifetime enabled and clones no cohort.
+        self.set_attention_preparation(self.attention_preparation)
     }
     pub(in super::super) fn selection_current(
         &self,
@@ -207,17 +220,32 @@ impl CurrentJournal {
                         .any(|entry| entry.stable_until > cut.at && entry.stable_until <= now)
             })
     }
-    pub(in super::super) fn complete_attention_selection(
+    pub(in super::super) fn complete_attention_selection<'a>(
         &mut self,
         observer: &str,
         state: &AttentionState,
         target: Option<&str>,
         at: f64,
+        subjects: impl Iterator<Item = (&'a str, &'a ObserverSubject)> + Clone,
     ) -> Result<(), ReceivedError> {
         if !self.attention_preparation {
             return Ok(());
         }
         self.reserve_growth(observer.len())?;
+        let count = subjects.clone().count();
+        let subject_bytes = subjects.clone().try_fold(
+            count
+                .checked_mul(size_of::<(String, ObserverSubject)>())
+                .ok_or_else(capacity)?,
+            |bytes, (source, subject)| {
+                heap_sum([
+                    bytes,
+                    source.len(),
+                    subject.heap_bytes().ok_or_else(capacity)?,
+                ])
+                .ok_or_else(capacity)
+            },
+        )?;
         let reservation = self
             .budget
             .reserve(
@@ -226,15 +254,20 @@ impl CurrentJournal {
                     state.explicit.heap_bytes().ok_or_else(capacity)?,
                     target.map_or(0, str::len),
                     size_of::<AttentionCut>(),
+                    subject_bytes,
                 ])
                 .ok_or_else(capacity)?,
             )
             .map_err(|_| capacity())?;
+        let mut prepared = Vec::new();
+        prepared.try_reserve_exact(count).map_err(|_| capacity())?;
+        prepared.extend(subjects.map(|(source, subject)| (source.to_owned(), subject.clone())));
         let selection = AttentionCut {
             at,
             policy: state.policy.clone(),
             explicit: state.explicit.clone(),
             target: target.map(str::to_owned),
+            subjects: prepared,
             _reservation: reservation,
         };
         let prior = self
@@ -257,6 +290,79 @@ impl CurrentJournal {
             .get(observer)
             .into_iter()
             .flat_map(|work| work.sources.ids.iter())
+    }
+    /// Numeric recognition credit dirties only subjects in the previous real
+    /// preparation. An unseen identity cannot manufacture a new opportunity.
+    pub(crate) fn note_attention_familiarity(
+        &mut self,
+        observer: &str,
+        individual: Option<&str>,
+    ) -> Result<(), ReceivedError> {
+        let Some(work) = self.attention_work.get(observer) else {
+            return Ok(());
+        };
+        if work.familiarity_all || individual.is_some_and(|id| work.familiarity.ids.contains(id)) {
+            return Ok(());
+        }
+        self.reserve_growth(
+            heap_sum([observer.len(), individual.map_or(0, str::len)]).ok_or_else(capacity)?,
+        )?;
+        let work = self.attention_work.get_mut(observer).ok_or_else(invalid)?;
+        if let Some(individual) = individual {
+            work.familiarity.insert(individual)?;
+        } else {
+            work.familiarity_all = true;
+        }
+        self.undo.push(CurrentUndo::AttentionFamiliarityChanged {
+            observer: observer.into(),
+            individual: individual.map(str::to_owned),
+        });
+        Ok(())
+    }
+    pub(in super::super) fn attention_familiarity_sources(
+        &self,
+        observer: &str,
+    ) -> impl Iterator<Item = &String> {
+        self.attention_work
+            .get(observer)
+            .into_iter()
+            .flat_map(|work| {
+                work.selection.iter().flat_map(move |cut| {
+                    cut.subjects.iter().filter_map(move |(source, subject)| {
+                        let changed = work.familiarity_all
+                            || match subject {
+                                ObserverSubject::Entity { .. } => !work.familiarity.ids.is_empty(),
+                                ObserverSubject::Individual { individual_id } => {
+                                    work.familiarity.ids.contains(individual_id)
+                                }
+                            };
+                        changed.then_some(source)
+                    })
+                })
+            })
+    }
+    pub(in super::super) fn consume_attention_familiarity(
+        &mut self,
+        observer: &str,
+    ) -> Result<(), ReceivedError> {
+        if self
+            .attention_work
+            .get(observer)
+            .is_none_or(|work| !work.familiarity_all && work.familiarity.ids.is_empty())
+        {
+            return Ok(());
+        }
+        self.reserve_growth(observer.len())?;
+        let empty = AttentionSources::empty(&self.budget)?;
+        let work = self.attention_work.get_mut(observer).ok_or_else(invalid)?;
+        let prior = std::mem::replace(&mut work.familiarity, empty);
+        let all = std::mem::replace(&mut work.familiarity_all, false);
+        self.undo.push(CurrentUndo::AttentionFamiliarityConsumed {
+            observer: observer.into(),
+            prior,
+            all,
+        });
+        Ok(())
     }
     pub(in super::super) fn note_attention_source(
         &mut self,

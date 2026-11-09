@@ -142,6 +142,7 @@ struct CandidateFrame {
     commands: CommandCheckpoint,
     recognition: crate::worlds::InstalledRecognitionCheckpoint,
     sensory_cursor: PhysicalChangeCursor,
+    attention_cursor: PhysicalChangeCursor,
     // This is only the finite synchronous emitter call stack, not event bodies,
     // physical state or accumulated history. Saved work limits bound its depth.
     pending: Vec<PendingOccurrence>,
@@ -182,6 +183,7 @@ pub(crate) struct CandidateJournal {
     root_cognition: crate::cognition::CognitionCheckpoint,
     root_appraisals: crate::appraisals::AppraisalCheckpoint,
     sensory_cursor: PhysicalChangeCursor,
+    attention_cursor: PhysicalChangeCursor,
     frames: Vec<CandidateFrame>,
     pending: Vec<PendingOccurrence>,
     next_occurrence: u64,
@@ -355,6 +357,7 @@ impl CandidateJournal {
             root_commands,
             root_recognition,
             sensory_cursor,
+            attention_cursor: sensory_cursor,
             frames: Vec::new(),
             pending: Vec::new(),
             next_occurrence: 0,
@@ -410,6 +413,7 @@ impl CandidateJournal {
             commands: self.commands.checkpoint(),
             recognition: self.recognition.checkpoint(&state.reception),
             sensory_cursor: self.sensory_cursor,
+            attention_cursor: self.attention_cursor,
             pending: self.pending.clone(),
         });
         Ok(token)
@@ -483,6 +487,7 @@ impl CandidateJournal {
             .rollback_to(&mut state.reception, frame.sensory)
             .map_err(|_| ExecutionError::OwnerRollback)?;
         self.sensory_cursor = frame.sensory_cursor;
+        self.attention_cursor = frame.attention_cursor;
         match (frame.received, state.reception.received_values.as_mut()) {
             (Some(checkpoint), Some(values)) => values
                 .rollback_to(checkpoint)
@@ -537,6 +542,7 @@ impl CandidateJournal {
             .rollback_to(&mut state.reception, self.root_sensory)
             .map_err(|_| ExecutionError::OwnerRollback)?;
         self.sensory_cursor = PhysicalChangeCursor { at: 0 };
+        self.attention_cursor = PhysicalChangeCursor { at: 0 };
         match (self.root_received, state.reception.received_values.as_mut()) {
             (Some(checkpoint), Some(values)) => values
                 .rollback_to(checkpoint)
@@ -702,7 +708,54 @@ impl CoreMutation<'_> {
             journal: &mut self.journal.physical,
         }
     }
+    /// Drain before a real selection as well as publication: a command can
+    /// change body/capabilities and receive an occurrence before its finalizer.
+    /// This derived reader consumes notices once without queuing sight twice.
+    pub(crate) fn sync_attention_changes(&mut self) -> Result<(), ExecutionError> {
+        let through = self.journal.physical.change_cursor();
+        for change in self
+            .journal
+            .physical
+            .changes_since(self.journal.attention_cursor)?
+        {
+            match change {
+                PhysicalChange::Body { .. }
+                | PhysicalChange::Contribution { .. }
+                | PhysicalChange::Spatial {
+                    discontinuity: true,
+                    ..
+                } => {
+                    self.journal.current.invalidate_all_attention_work()?;
+                }
+                PhysicalChange::Behavior {
+                    entity_id,
+                    outward_change: true,
+                } => {
+                    self.journal.current.invalidate_attention_work(entity_id)?;
+                }
+                // Membership here is Source's rootMembershipChanged spatial
+                // notice, not direct-contents query membership. Attribute and
+                // private animal bookkeeping notices do not clear attention.
+                PhysicalChange::Membership { .. }
+                | PhysicalChange::Navigation { .. }
+                | PhysicalChange::Spatial {
+                    discontinuity: false,
+                    ..
+                }
+                | PhysicalChange::Behavior {
+                    outward_change: false,
+                    ..
+                }
+                | PhysicalChange::Attribute { .. }
+                | PhysicalChange::ObservationParameters { .. }
+                | PhysicalChange::AnimalClock { .. } => {}
+            }
+        }
+        self.journal.attention_cursor = through;
+        Ok(())
+    }
     pub(crate) fn sync_sensory_changes(&mut self) -> Result<(), ExecutionError> {
+        self.sync_attention_changes()?;
         let through = self.journal.physical.change_cursor();
         for change in self
             .journal

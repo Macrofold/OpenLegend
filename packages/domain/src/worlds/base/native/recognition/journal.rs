@@ -373,6 +373,16 @@ impl RecognitionJournal {
         });
         if let Some(cohort) = cohort {
             receiving.reconcile(physical, state, installed, temporal, cohort, None)?;
+        } else {
+            let individual = state
+                .observer_identities
+                .as_ref()
+                .and_then(|root| root.get(observer))
+                .and_then(|records| records.get(key))
+                .and_then(|identity| identity.individual_id.as_deref());
+            receiving
+                .current
+                .note_attention_familiarity(observer, individual)?;
         }
         if let Some(due) = due {
             temporal.note_knowledge_due(observer, due)?;

@@ -274,6 +274,7 @@ pub(crate) fn update_attention(
     if let Some(ids) = update.changed_source_ids.filter(|_| !policy_changed) {
         changed.extend(ids.iter().cloned());
         changed.extend(journal.attention_changes(observer).cloned());
+        changed.extend(journal.attention_familiarity_sources(observer).cloned());
         if let Some(urgency) = update.urgency {
             let mut ids: Vec<_> = urgency.keys().collect();
             ids.sort_by(|a, b| crate::encoding::js_property_cmp(a, b));
@@ -429,6 +430,7 @@ pub(crate) fn update_attention(
         physical, reception, installed, experience, observer, &state, journal,
     )?;
     journal.consume_attention_changes(observer)?;
+    journal.consume_attention_familiarity(observer)?;
     let live: IndexSet<_> = candidates.keys().cloned().collect();
     state.explicit.retain(|key| live.contains(key));
     // A completed unchanged competition is retained until an actual dependency
@@ -542,7 +544,18 @@ pub(crate) fn update_attention(
             .zip(&entries_before)
             .any(|(a, b)| a.key != b.key || a.lease_id != b.lease_id || a.subject != b.subject);
     if !reuse {
-        journal.complete_attention_selection(observer, &state, work_target, now)?;
+        journal.complete_attention_selection(
+            observer,
+            &state,
+            work_target,
+            now,
+            candidates.values().filter_map(|candidate| {
+                candidate
+                    .subject
+                    .as_ref()
+                    .map(|subject| (candidate.annotation.source_id.as_str(), subject))
+            }),
+        )?;
     }
     *journal.attention_mut(reception, observer)? = Some(state);
     Ok(AttentionSelection {

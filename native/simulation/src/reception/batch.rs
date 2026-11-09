@@ -409,7 +409,11 @@ impl PerceptionCursor {
                         self.phase = Phase::Finish;
                         continue;
                     }
-                    let exposure = ExposureSelection::prepare(core.state, &readers, budget)?;
+                    let mut exposure = ExposureSelection::prepare(core.state, &readers, budget)?;
+                    core.journal.current.set_exposure_objects(
+                        &mut core.state.reception,
+                        exposure.objects.take().ok_or_else(invalid)?,
+                    )?;
                     for (index, observer) in exposure.observers.iter().enumerate() {
                         self.entries
                             .get_mut(&observer.handle)
@@ -556,6 +560,8 @@ impl PerceptionCursor {
                         immediate: timing.immediate,
                         due_subjects: std::mem::take(&mut timing.measurement.subjects),
                         changed_detail_subjects: None,
+                        changed_people: None,
+                        objects_changed: scope.objects_changed,
                     };
                     let mut opportunity = opportunity;
                     // Transfer the exact scope set, not a copy of another observer's inputs.
@@ -563,6 +569,11 @@ impl PerceptionCursor {
                         self.exposure.as_mut().ok_or_else(invalid)?.observers
                             [entry.scope.ok_or_else(invalid)?]
                         .changed_detail
+                        .take();
+                    opportunity.changed_people =
+                        self.exposure.as_mut().ok_or_else(invalid)?.observers
+                            [entry.scope.ok_or_else(invalid)?]
+                        .changed_people
                         .take();
                     let details = if timing.detail {
                         Some(requested_visual_details(

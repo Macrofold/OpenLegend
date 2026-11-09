@@ -477,6 +477,7 @@ pub(crate) fn read_reception_rows(
     )?;
     Ok(ReceptionState {
         exposure_prepared: false,
+        exposure_objects: None,
         sensory,
         perception_evidence,
         received_values,

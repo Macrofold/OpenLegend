@@ -34,6 +34,7 @@ pub(super) fn select_received_attention(
     observer: &str,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
+    core.sync_attention_changes()?;
     let entity = core
         .state
         .physical

@@ -50,7 +50,19 @@ enum CurrentUndo {
         observer: String,
         prior: AttentionSources,
     },
+    AttentionFamiliarityChanged {
+        observer: String,
+        individual: Option<String>,
+    },
+    AttentionFamiliarityConsumed {
+        observer: String,
+        prior: AttentionSources,
+        all: bool,
+    },
     ExposurePrepared,
+    ExposureObjects {
+        prior: Option<Arc<super::exposure::ExposureObjects>>,
+    },
     VisiblePlaces {
         observer: String,
         prior: IndexMap<String, u64>,
@@ -566,7 +578,28 @@ impl CurrentJournal {
                         .ok_or_else(invalid)?
                         .sources = prior;
                 }
+                CurrentUndo::AttentionFamiliarityChanged {
+                    observer,
+                    individual,
+                } => {
+                    let work = self.attention_work.get_mut(&observer).ok_or_else(invalid)?;
+                    if let Some(individual) = individual {
+                        work.familiarity.remove(&individual)?;
+                    } else {
+                        work.familiarity_all = false;
+                    }
+                }
+                CurrentUndo::AttentionFamiliarityConsumed {
+                    observer,
+                    prior,
+                    all,
+                } => {
+                    let work = self.attention_work.get_mut(&observer).ok_or_else(invalid)?;
+                    work.familiarity = prior;
+                    work.familiarity_all = all;
+                }
                 CurrentUndo::ExposurePrepared => state.exposure_prepared = false,
+                CurrentUndo::ExposureObjects { prior } => state.exposure_objects = prior,
                 CurrentUndo::VisiblePlaces { observer, prior } => {
                     *state
                         .visible_places

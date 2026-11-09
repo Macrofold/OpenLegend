@@ -2,6 +2,23 @@
 //! Every mutation moves its prior field into the same candidate journal.
 use super::*;
 impl CurrentJournal {
+    pub(crate) fn set_exposure_objects(
+        &mut self,
+        state: &mut ReceptionState,
+        objects: super::super::exposure::ExposureObjects,
+    ) -> Result<(), ReceivedError> {
+        if state
+            .exposure_objects
+            .as_ref()
+            .is_some_and(|prior| prior.same_categories(&objects))
+        {
+            return Ok(());
+        }
+        self.reserve_growth(0)?;
+        let prior = state.exposure_objects.replace(Arc::new(objects));
+        self.undo.push(CurrentUndo::ExposureObjects { prior });
+        Ok(())
+    }
     /// The installed actor-only physical family cannot expose a place landmark.
     /// Source still clears a previously held nonempty outward place list.
     pub(in super::super) fn clear_visible_places(

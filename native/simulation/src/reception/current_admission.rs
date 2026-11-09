@@ -277,6 +277,7 @@ pub(super) fn prepare_current_sample(
     observer: &str,
     mut input: CurrentFacetInput,
     mode: CurrentValueMode,
+    unchanged_confirmation: [f64; 2],
     budget: &ByteBudget,
 ) -> Result<Option<PendingCurrentSample>, ExecutionError> {
     let state = &core.state.reception;
@@ -441,8 +442,8 @@ pub(super) fn prepare_current_sample(
         input.grant = old.grant.clone();
         input.original = old.original.clone();
         input.times = CurrentFacetTimes {
-            confirmed_from: input.times.confirmed_from,
-            confirmed_through: input.times.confirmed_through,
+            confirmed_from: unchanged_confirmation[0],
+            confirmed_through: unchanged_confirmation[1],
             ..old.times
         };
     }

@@ -275,6 +275,7 @@ fn earlier(
 struct Sample {
     input: CurrentFacetInput,
     value: CurrentValueMode,
+    unchanged_confirmation: [f64; 2],
 }
 pub(super) fn receive_subject(
     phase: &mut VisualReception,
@@ -571,6 +572,12 @@ pub(super) fn receive_subject(
                 }
             }
         }
+        // Source's existing visual sample carries its held confirmation
+        // separately from the new measurement clock. Equal content preserves
+        // that start; the completed sight check extends its support later.
+        let unchanged_confirmation = old.as_ref().map_or([now, now], |p| {
+            [p.times.confirmed_from, p.times.confirmed_through]
+        });
         let (mut field, grant, times, revision, availability) = if let Some(p) = old {
             source = Arc::clone(&p.original);
             (
@@ -713,6 +720,7 @@ pub(super) fn receive_subject(
                 availability,
             },
             value,
+            unchanged_confirmation,
         });
     }
     if !samples.is_empty() {
@@ -730,10 +738,20 @@ pub(super) fn receive_subject(
             phase.observer.physical_life,
             Some(token),
         )?;
-        for Sample { input, value } in samples {
-            if let Some(pending) =
-                prepare_current_sample(core, &phase.observer.actor_id, input, value, budget)?
-            {
+        for Sample {
+            input,
+            value,
+            unchanged_confirmation,
+        } in samples
+        {
+            if let Some(pending) = prepare_current_sample(
+                core,
+                &phase.observer.actor_id,
+                input,
+                value,
+                unchanged_confirmation,
+                budget,
+            )? {
                 close_current_sample_history(core, &phase.observer.actor_id, &pending, budget)?;
                 let kind = pending.kind().to_owned();
                 let confirmed_revision = pending.revision();
