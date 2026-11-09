@@ -540,6 +540,8 @@ impl SensoryJournal {
         state: &mut ReceptionState,
         physical: &PhysicalState,
         installed: &InstalledWorld,
+        observers: &[crate::state::EntityHandle],
+        policies: &mut RoutinePolicyCache,
         completed: &IndexMap<String, CurrentCheck>,
         revision: u64,
     ) -> Result<(), ReceivedError> {
@@ -580,10 +582,11 @@ impl SensoryJournal {
         let mut broad = true;
         let mut detail = true;
         let mut active = Vec::new();
-        for id in physical.entities.ordered_ids() {
-            let Some(observer) = physical.entities.get(id) else {
+        for handle in observers {
+            let Some(observer) = physical.entities.resolve(*handle) else {
                 return Err(invariant());
             };
+            let id = &observer.id;
             if !routine_observation_relevant_parts(state.perception_episodes.as_ref(), observer)
                 || installed
                     .capabilities
@@ -592,7 +595,10 @@ impl SensoryJournal {
             {
                 continue;
             }
-            let Some(policy) = super::sensors::routine_sight_policy(installed, observer)
+            let prepared = policies.policy(observer)?;
+            let Some(policy) = prepared
+                .sight
+                .as_ref()
                 .filter(|policy| policy.mode == SightTiming::Cadence)
             else {
                 continue;
@@ -615,7 +621,7 @@ impl SensoryJournal {
             }
             if !active.contains(&policy.key) {
                 self.reserve(size_of::<String>() * 2 + policy.key.capacity())?;
-                active.push(policy.key);
+                active.push(policy.key.clone());
             }
         }
         for index in (0..pending.processed.len()).rev() {
@@ -764,9 +770,20 @@ pub(crate) fn sight_scope_due(
     installed: &InstalledWorld,
     observer: &Entity,
 ) -> Option<CurrentCheck> {
-    let pending = state.sensory.as_ref()?;
     let policy = super::sensors::routine_sight_policy(installed, observer)
         .filter(|policy| policy.mode == SightTiming::Cadence && policy.seconds.is_some())?;
+    sight_scope_due_prepared(state, physical, observer, Some(&policy))
+}
+
+pub(super) fn sight_scope_due_prepared(
+    state: &ReceptionState,
+    physical: &PhysicalState,
+    observer: &Entity,
+    policy: Option<&super::sensors::RoutineSightPolicy>,
+) -> Option<CurrentCheck> {
+    let pending = state.sensory.as_ref()?;
+    let policy =
+        policy.filter(|policy| policy.mode == SightTiming::Cadence && policy.seconds.is_some())?;
     if pending_sight_at(pending, &policy, false).is_some_and(|at| at <= physical.header.sim_time) {
         return Some(CurrentCheck::Broad);
     }

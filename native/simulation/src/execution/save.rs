@@ -583,6 +583,7 @@ impl PhysicalJournal {
                         | Undo::ActionNavigation { entity, .. }
                         | Undo::ActionRemaining { entity, .. }
                         | Undo::ActionSample { entity, .. }
+                        | Undo::SensoryProgress { entity, .. }
                         | Undo::AnimalEpisode { entity, .. }
                         | Undo::AnimalWander { entity, .. }
                         | Undo::AnimalPhysicalLife { entity, .. }
@@ -600,6 +601,7 @@ impl PhysicalJournal {
                         .entry((handle.slot, handle.generation))
                         .or_default();
                     match change {
+                        Undo::SensoryProgress { .. } => rows.root = true,
                         Undo::BodyRevision { .. }
                         | Undo::PlanGeneration { .. }
                         | Undo::PendingDeath { .. }

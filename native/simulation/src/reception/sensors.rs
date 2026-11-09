@@ -78,6 +78,33 @@ pub(crate) struct RoutineSightPolicy {
     pub seconds: Option<f64>,
     pub detail_seconds: Option<f64>,
 }
+pub(crate) struct RoutineContactPolicy {
+    pub key: String,
+    pub mode: super::ContactTiming,
+    pub seconds: Option<f64>,
+}
+
+fn routine_family_key(installed: &InstalledWorld, observer: &Entity, family: &str) -> String {
+    let bindings = observer
+        .actor
+        .as_ref()
+        .and_then(|actor| actor.senses.as_deref())
+        .unwrap_or(&installed.default_senses);
+    let mut canonical = String::from("[");
+    let mut first = true;
+    for definition in installed.senses.values().filter(|definition| {
+        bindings.iter().any(|id| id == definition.value().id())
+            && definition.value().implementation() == family
+    }) {
+        if !first {
+            canonical.push(',');
+        }
+        first = false;
+        canonical.push_str(definition.canonical());
+    }
+    canonical.push(']');
+    crate::encoding::content_label(&canonical)
+}
 
 pub(crate) fn routine_sight_policy(
     installed: &InstalledWorld,
@@ -106,18 +133,30 @@ pub(crate) fn routine_sight_policy(
     // Each immutable definition already retains its exact source canonicalJson
     // body. Array composition preserves manifest order without another object
     // collation implementation or a body/signature approximation.
-    let canonical = format!(
-        "[{}]",
-        std::iter::once(first.canonical())
-            .chain(selected.map(|definition| definition.canonical()))
-            .collect::<Vec<_>>()
-            .join(",")
-    );
     Some(RoutineSightPolicy {
-        key: crate::encoding::content_label(&canonical),
+        key: routine_family_key(installed, observer, "vision-geometry-v1"),
         mode: *routine_timing,
         seconds: *sample_seconds,
         detail_seconds: *detail_sample_seconds,
+    })
+}
+pub(crate) fn routine_contact_policy(
+    installed: &InstalledWorld,
+    observer: &Entity,
+) -> Option<RoutineContactPolicy> {
+    let SenseDefinition::BodyContact {
+        awareness_timing,
+        sample_seconds,
+        ..
+    } = selected_senses(installed, observer)
+        .find(|sense| matches!(sense, SenseDefinition::BodyContact { .. }))?
+    else {
+        unreachable!("Selected contact family")
+    };
+    Some(RoutineContactPolicy {
+        key: routine_family_key(installed, observer, "body-contact-v1"),
+        mode: *awareness_timing,
+        seconds: *sample_seconds,
     })
 }
 

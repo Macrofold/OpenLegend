@@ -36,6 +36,7 @@ mod rates;
 mod routes;
 mod save;
 mod semantic;
+mod sensing;
 mod status;
 mod temporal;
 mod values;
@@ -953,6 +954,7 @@ enum UndoKey {
     ActionNavigation(usize, u64),
     ActionRemaining(usize, u64),
     ActionSample(usize, u64),
+    SensoryProgress(usize, u64),
     AnimalEpisode(usize, u64),
     AnimalWander(usize, u64),
     AnimalPhysicalLife(usize, u64),
@@ -1089,6 +1091,10 @@ enum Undo {
     Contacts {
         entity: EntityHandle,
         before: IndexMap<String, crate::reception::ContactEpisode>,
+    },
+    SensoryProgress {
+        entity: EntityHandle,
+        before: Option<crate::reception::SensoryProgress>,
     },
     Condition {
         entity: EntityHandle,
@@ -1736,6 +1742,13 @@ impl PhysicalJournal {
                         .filter(|action| action.id == action_id)
                         .ok_or(ExecutionError::Invariant)?
                         .motion_sample_remaining_metres = before;
+                }
+                Undo::SensoryProgress { entity, before } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .sensory_progress = before;
                 }
                 Undo::ActionReplans {
                     entity,
