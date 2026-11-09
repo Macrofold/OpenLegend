@@ -8,8 +8,8 @@ use napi::{Env, Result};
 use napi_derive::napi;
 use openlegend_simulation::host::{ByteBudget, ByteReservation, CandidateFence, CandidateKey};
 use openlegend_simulation::runtime::{
-    NativeWorldSession, RuntimeActivation, RuntimeJson, RuntimePrepared, RuntimeProvider,
-    RuntimeSave, RuntimeSaveAcknowledgement, RuntimeStep,
+    NativeWorldSession, RuntimeActivation, RuntimeConsumer, RuntimeJson, RuntimePrepared,
+    RuntimeProvider, RuntimeSave, RuntimeSaveAcknowledgement, RuntimeStep,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -82,8 +82,48 @@ impl NativeWorldJson {
         }
     }
 }
+
+/// The actual decoded product owner retains this through its last consumer.
+/// Native ownership is shared explicitly across optional tasks and caches.
+#[napi]
+pub struct NativeWorldConsumer {
+    value: Option<RuntimeConsumer>,
+}
+#[napi]
+impl NativeWorldConsumer {
+    #[napi]
+    pub fn retain(&self) -> Result<Self> {
+        boundary(|| {
+            Ok(Self {
+                value: Some(
+                    self.value
+                        .as_ref()
+                        .ok_or_else(|| failure("native consumer was released"))?
+                        .retain()
+                        .map_err(operation_error)?,
+                ),
+            })
+        })
+    }
+    #[napi]
+    pub fn release(&mut self) {
+        self.value = None;
+    }
+}
 #[napi]
 impl NativeWorldJson {
+    #[napi]
+    pub fn consumer(&self) -> Result<NativeWorldConsumer> {
+        boundary(|| {
+            let value = self
+                .value
+                .as_ref()
+                .ok_or_else(|| failure("native output was already consumed"))?;
+            Ok(NativeWorldConsumer {
+                value: Some(value.consumer(&self.budget).map_err(operation_error)?),
+            })
+        })
+    }
     /// Consume once. Both external-buffer and engine-copy implementations keep
     /// the reservation on the actual Node Buffer until its finalizer runs.
     #[napi]
@@ -97,9 +137,12 @@ impl NativeWorldJson {
                 .budget
                 .reserve(value.bytes().len())
                 .map_err(|error| failure(error.to_string()))?;
-            let (bytes, custody) = self.value.take().expect("checked output").into_parts();
+            let (bytes, custody, handoff) = self.value.take().expect("checked output").into_parts();
             let mut buffer = BufferSlice::from_data(env, bytes)?;
             buffer.add_finalizer(custody, (), |context| drop(context.value))?;
+            if let Some(handoff) = handoff {
+                handoff.complete();
+            }
             drop(copy);
             Ok(buffer)
         })
@@ -142,16 +185,15 @@ impl NativeWorldPrepared {
         serde_json::to_string(&self.inner.allocation()).map_err(operation_error)
     }
     #[napi]
-    pub fn take_publication<'a>(&mut self, env: &'a Env) -> Result<BufferSlice<'a>> {
+    pub fn take_publication(&mut self) -> Result<NativeWorldJson> {
         boundary(|| {
             let output = self
                 .inner
                 .take_output()
                 .ok_or_else(|| failure("native publication was already consumed"))?;
-            let mut output = NativeWorldJson::new(output, self.budget.clone());
-            let buffer = output.consume(env)?;
+            let output = NativeWorldJson::new(output, self.budget.clone());
             self.output_delivered = true;
-            Ok(buffer)
+            Ok(output)
         })
     }
     #[napi]
@@ -433,12 +475,16 @@ impl NativeWorld {
         &self,
         env: &'a Env,
         bytes: BufferSlice<'_>,
-        canonical: String,
+        canonical: BufferSlice<'_>,
         preview: bool,
     ) -> Result<Object<'a>> {
         let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let (canonical, canonical_custody) = input(&canonical, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
             let _custody = custody;
+            let _canonical_custody = canonical_custody;
+            let canonical = String::from_utf8(canonical)
+                .map_err(|_| failure("native command identity must be UTF-8 JSON"))?;
             let key = if preview {
                 session.begin_cancel_preview(&bytes, canonical)
             } else {
@@ -454,11 +500,15 @@ impl NativeWorld {
         env: &'a Env,
         key: NativeCandidateKey,
         provider: &NativeWorldProvider,
-        json: String,
+        json: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
         let key = key.try_into()?;
         let provider = Arc::clone(&provider.inner);
+        let (bytes, custody) = input(json.as_ref(), &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
+            let _custody = custody;
+            let json = String::from_utf8(bytes)
+                .map_err(|_| failure("native provider answer must be UTF-8 JSON"))?;
             turn(session, key, Some((&provider, json)), cancel, budget)
         })
     }

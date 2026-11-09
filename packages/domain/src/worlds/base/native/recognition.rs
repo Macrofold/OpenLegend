@@ -33,6 +33,9 @@ mod prune;
 pub(crate) use prune::{IndividualPruneMode, prune_observer_individuals};
 #[path = "recognition/validation.rs"]
 mod validation;
+#[path = "recognition/privacy.rs"]
+mod privacy;
+pub(crate) use privacy::RecognitionPrivacyPreparation;
 pub(crate) use validation::validate_selected_identities;
 
 /// The actual selected world's descriptor is installed with its source pin.

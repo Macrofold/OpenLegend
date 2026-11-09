@@ -74,6 +74,12 @@ pub struct TemporalSupportRecord {
     pub(super) storage: crate::host::ResidentReservation,
 }
 impl TemporalSupportRecord {
+    pub(crate) fn retain_for_candidate(&self, budget: &ByteBudget) -> Result<(), ReceivedError> {
+        budget
+            .retain_record(&self.storage)
+            .and_then(|_| budget.retain_record(&self.body_storage))
+            .map_err(|_| ReceivedError("Retained support before-image exceeds native allowance."))
+    }
     fn install(
         row: InstalledRow,
         actor_id: &str,
@@ -202,10 +208,9 @@ impl TemporalSupportRecord {
             slot.len(),
             payload_bytes,
             2 * size_of::<usize>(),
-            // Each canonical map member owns its key and a conservative share
-            // of dense/hash backing; replacing a record retains this escrow.
+            // The canonical member key is a separate string. Collection backing
+            // remains with its actual map after removals empty that map.
             slot.len(),
-            map_storage::<String, Arc<Self>>(1).ok_or_else(error)?,
         ])
         .ok_or_else(error)?;
         budget.reserve_record(bytes).map_err(|_| error())
@@ -234,6 +239,8 @@ impl TemporalSupportRecord {
 pub struct TemporalSupportCollection {
     pub(super) records: IndexMap<String, Arc<TemporalSupportRecord>>,
     pub(super) coverage: OwnerCoverage,
+    backing: crate::host::ResidentReservation,
+    budget: ByteBudget,
 }
 impl TemporalSupportCollection {
     pub fn install(
@@ -273,7 +280,62 @@ impl TemporalSupportCollection {
                 ));
             }
         }
-        Ok(Self { records, coverage })
+        let bytes = map_storage::<String, Arc<TemporalSupportRecord>>(records.capacity())
+            .and_then(|n| n.checked_add(coverage.table.capacity()))
+            .and_then(|n| n.checked_add(coverage.owner.capacity()))
+            .ok_or(ReceivedError("Retained support map allocation overflow."))?;
+        Ok(Self {
+            records,
+            coverage,
+            backing: budget
+                .reserve_backing(bytes)
+                .map_err(|_| ReceivedError("Retained support map exceeds native allowance."))?,
+            budget: budget.clone(),
+        })
+    }
+    pub(super) fn reserve_insert(&mut self) -> Result<(), ReceivedError> {
+        if self.records.len() < self.records.capacity() {
+            return Ok(());
+        }
+        let error = || ReceivedError("Retained support map exceeds native allowance.");
+        let target = self
+            .records
+            .capacity()
+            .checked_add(1)
+            .and_then(|n| n.checked_mul(2))
+            .ok_or_else(error)?;
+        let fixed = self
+            .coverage
+            .table
+            .capacity()
+            .checked_add(self.coverage.owner.capacity())
+            .ok_or_else(error)?;
+        self.budget
+            .resize_backing(
+                &mut self.backing,
+                fixed
+                    .checked_add(
+                        map_storage::<String, Arc<TemporalSupportRecord>>(target)
+                            .ok_or_else(error)?,
+                    )
+                    .ok_or_else(error)?,
+            )
+            .map_err(|_| error())?;
+        self.records
+            .try_reserve(target - self.records.len())
+            .map_err(|_| error())?;
+        let actual = fixed
+            .checked_add(
+                map_storage::<String, Arc<TemporalSupportRecord>>(self.records.capacity())
+                    .ok_or_else(error)?,
+            )
+            .ok_or_else(error)?;
+        // The forecast precedes the allocator; tightening to its actual capacity
+        // cannot require capacity after the semantic map has changed.
+        if actual > self.backing.bytes() {
+            return Err(error());
+        }
+        self.backing.resize(actual).map_err(|_| error())
     }
     pub fn records(&self) -> impl Iterator<Item = &Arc<TemporalSupportRecord>> {
         self.records.values()

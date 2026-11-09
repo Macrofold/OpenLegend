@@ -22,6 +22,10 @@ pub(crate) enum CommandOperationError {
     Emission(crate::events::EmissionError),
     Result(ResultAcquisitionError),
     Reconcile(MemoryAcquisitionError),
+    Occurrence(crate::events::OccurrenceError),
+}
+impl From<crate::events::OccurrenceError> for CommandOperationError {
+    fn from(error: crate::events::OccurrenceError)->Self { Self::Occurrence(error) }
 }
 impl From<ExecutionError> for CommandOperationError {
     fn from(error: ExecutionError) -> Self {
@@ -68,6 +72,11 @@ pub(crate) struct CompletedCommandOperation {
     pub command: CompletedCommand,
     pub events: Vec<WorldEvent>,
     _reservation: ByteReservation,
+}
+impl CompletedCommandOperation {
+    pub(crate) fn into_parts(self) -> (CompletedCommand, Vec<WorldEvent>, ByteReservation) {
+        (self.command, self.events, self._reservation)
+    }
 }
 struct ExpectedEvent {
     id: String,

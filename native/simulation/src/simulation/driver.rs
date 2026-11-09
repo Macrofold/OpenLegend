@@ -36,6 +36,7 @@ pub(crate) enum ProviderKind {
     Display,
     Canonical,
     Normalization,
+    Digest,
 }
 #[derive(Debug)]
 pub(crate) enum DriveError {
@@ -218,7 +219,7 @@ impl DecodeShape {
             ProviderKind::Utterance => size_of::<SpeechWord>(),
             ProviderKind::Words => size_of::<Vec<JsText>>().max(size_of::<JsText>()),
             ProviderKind::Collation => size_of::<u32>(),
-            ProviderKind::Canonical => 0,
+            ProviderKind::Canonical | ProviderKind::Digest => 0,
             ProviderKind::Normalization => size_of::<JsText>(),
         };
         let arrays = self
@@ -281,6 +282,7 @@ enum Answer {
     Display(Formatted),
     Canonical(Canonical),
     Normalization(crate::language::AttemptNormalizationAnswer),
+    Digest(crate::response::ResponseDigestAnswer),
 }
 impl Answer {
     fn decode(input: &ProviderResponse) -> Result<Self, DriveError> {
@@ -308,6 +310,7 @@ impl Answer {
             ProviderKind::Canonical => {
                 Self::Canonical(serde_json::from_str(&input.json).map_err(parse)?)
             }
+            ProviderKind::Digest => Self::Digest(serde_json::from_str(&input.json).map_err(parse)?),
         };
         if value.binding() != input.binding {
             return Err(DriveError::StaleResponse);
@@ -323,6 +326,7 @@ impl Answer {
             Self::Display(v) => v.binding,
             Self::Canonical(v) => v.binding,
             Self::Normalization(v) => v.binding,
+            Self::Digest(v) => v.binding,
         }
     }
     fn kind(&self) -> ProviderKind {
@@ -334,6 +338,7 @@ impl Answer {
             Self::Display(_) => ProviderKind::Display,
             Self::Canonical(_) => ProviderKind::Canonical,
             Self::Normalization(_) => ProviderKind::Normalization,
+            Self::Digest(_) => ProviderKind::Digest,
         }
     }
 }
@@ -428,28 +433,32 @@ fn direct(answer: &mut Option<Answer>, kind: ProviderKind) -> Result<Answer, Dri
 pub(crate) enum CompletedOperation {
     Advance(CompletedAdvance),
     Command(CompletedCommandOperation),
+    Response(crate::response::CompletedResponse),
 }
 impl CompletedOperation {
     pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
         match self {
             Self::Advance(a) => &a.outcome,
             Self::Command(c) => c.command.outcome(),
+            Self::Response(r) => &r.outcome,
         }
     }
     pub(crate) fn events(&self) -> impl Iterator<Item = &crate::events::WorldEvent> + Clone {
-        let (advance, command) = match self {
-            Self::Advance(a) => (Some(a), None),
-            Self::Command(c) => (None, Some(c)),
+        let (advance, command, response) = match self {
+            Self::Advance(a) => (Some(a), None, None),
+            Self::Command(c) => (None, Some(c), None),
+            Self::Response(r) => (None, None, Some(r)),
         };
         advance
             .into_iter()
             .flat_map(|a| a.events())
             .chain(command.into_iter().flat_map(|c| c.events.iter()))
+            .chain(response.into_iter().flat_map(|r| r.events.iter()))
     }
     pub(crate) fn take_continuation(&mut self) -> Option<crate::time::AdvanceContinuation> {
         match self {
             Self::Advance(a) => a.continuation.take(),
-            Self::Command(_) => None,
+            Self::Command(_) | Self::Response(_) => None,
         }
     }
 }
@@ -457,10 +466,12 @@ impl CompletedOperation {
 enum OperationReply {
     Advance(AdvanceReply),
     Command(CommandReply),
+    Response(ResponseReply),
 }
 enum OperationCursor {
     Advance(AdvanceCursor),
     Command(CommandOperation),
+    Response(crate::response::ResponseCursor),
 }
 impl<T, R> Poll<T, R> {
     fn map<V, S>(self, completed: fn(T) -> V, route: fn(R) -> S) -> Poll<V, S> {
@@ -476,6 +487,7 @@ impl OperationCursor {
         match self {
             Self::Advance(a) => a.abort(core),
             Self::Command(c) => c.abort(core),
+            Self::Response(r) => r.abort(core),
         }
     }
     fn poll(
@@ -503,6 +515,15 @@ impl OperationCursor {
                 };
                 Ok(poll_command(cursor, core, answer, route, budget)?
                     .map(CompletedOperation::Command, OperationReply::Command))
+            }
+            Self::Response(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::Response(r)) => Some(r),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(poll_response(cursor, core, answer, route, budget)?
+                    .map(CompletedOperation::Response, OperationReply::Response))
             }
         }
     }
@@ -535,6 +556,13 @@ impl OperationDriver {
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::Command(cursor), budget)
+    }
+    pub(crate) fn response(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::response::ResponseCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::Response(cursor), budget)
     }
     fn new(
         core: &mut CoreMutation<'_>,
@@ -1225,6 +1253,124 @@ fn poll_advance(
                     Poll::Question(q, r) => {
                         return Ok(Poll::Question(q, AdvanceReply::Perception(r)));
                     }
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum ResponseReply {
+    Digest,
+    Normalization,
+    Geometry,
+    Display(DisplayReply),
+    Command(CommandReply),
+    Event(EventReply),
+}
+fn poll_response(
+    cursor: &mut crate::response::ResponseCursor,
+    core: &mut CoreMutation<'_>,
+    answer: &mut Option<Answer>,
+    mut route: Option<ResponseReply>,
+    budget: &ByteBudget,
+) -> Result<Poll<crate::response::CompletedResponse, ResponseReply>, DriveError> {
+    use crate::response::{ResponseAnswer, ResponseStep};
+    let mut supplied = match route {
+        Some(ResponseReply::Digest) => {
+            route = None;
+            let Answer::Digest(value) = direct(answer, ProviderKind::Digest)? else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(ResponseAnswer::Digest(value))
+        }
+        Some(ResponseReply::Normalization) => {
+            route = None;
+            let Answer::Normalization(value) = direct(answer, ProviderKind::Normalization)? else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(ResponseAnswer::Normalization(value))
+        }
+        Some(ResponseReply::Geometry) => {
+            route = None;
+            let Answer::Geometry(value) = direct(answer, ProviderKind::Geometry)? else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(ResponseAnswer::Geometry(value))
+        }
+        _ => None,
+    };
+    loop {
+        match cursor.step(core, supplied.take())? {
+            ResponseStep::Complete(value) => return Ok(Poll::Complete(value)),
+            ResponseStep::Digest(q) => {
+                return question(
+                    answer,
+                    ProviderKind::Digest,
+                    q.binding,
+                    q,
+                    budget,
+                    ResponseReply::Digest,
+                );
+            }
+            ResponseStep::Normalization(q) => {
+                return question(
+                    answer,
+                    ProviderKind::Normalization,
+                    q.binding,
+                    q,
+                    budget,
+                    ResponseReply::Normalization,
+                );
+            }
+            ResponseStep::Geometry(q) => {
+                return question(
+                    answer,
+                    ProviderKind::Geometry,
+                    q.binding,
+                    q,
+                    budget,
+                    ResponseReply::Geometry,
+                );
+            }
+            ResponseStep::Display(child) => {
+                let child_route = match route.take() {
+                    Some(ResponseReply::Display(r)) => Some(r),
+                    None => None,
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                match poll_display(child, core, answer, child_route, budget)? {
+                    Poll::Complete(value) => supplied = Some(ResponseAnswer::Display(value)),
+                    Poll::Continue => return Ok(Poll::Continue),
+                    Poll::Question(q, r) => {
+                        return Ok(Poll::Question(q, ResponseReply::Display(r)));
+                    }
+                }
+            }
+            ResponseStep::Command(child) => {
+                let child_route = match route.take() {
+                    Some(ResponseReply::Command(r)) => Some(r),
+                    None => None,
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                match poll_command(child, core, answer, child_route, budget)? {
+                    Poll::Complete(value) => supplied = Some(ResponseAnswer::Command(value)),
+                    Poll::Continue => return Ok(Poll::Continue),
+                    Poll::Question(q, r) => {
+                        return Ok(Poll::Question(q, ResponseReply::Command(r)));
+                    }
+                }
+            }
+            ResponseStep::Event(child) => {
+                let child_route = match route.take() {
+                    Some(ResponseReply::Event(r)) => Some(r),
+                    None => None,
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                match poll_event(child, core, answer, child_route, budget)? {
+                    Poll::Complete(value) => supplied = Some(ResponseAnswer::Event(value)),
+                    Poll::Continue => return Ok(Poll::Continue),
+                    Poll::Question(q, r) => return Ok(Poll::Question(q, ResponseReply::Event(r))),
                 }
             }
         }

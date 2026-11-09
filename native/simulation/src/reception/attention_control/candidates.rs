@@ -17,6 +17,7 @@ pub(super) fn current_point(
     scope: &CurrentBodyReadScope<'_>,
     id: &str,
     selector: CurrentFacetSelector<'_>,
+    journal: &mut CurrentJournal,
 ) -> Result<Option<AttentionPoint>, ReceivedError> {
     let Some(location) = scope.native(id, "location", selector)? else {
         return Ok(None);
@@ -32,11 +33,14 @@ pub(super) fn current_point(
             ObservedLocation::Point {
                 point,
                 error_radius,
-            } => Some(AttentionPoint {
-                point: point.clone(),
-                error_radius: *error_radius,
-                at,
-            }),
+            } => {
+                journal.reserve_growth(point.heap_bytes().ok_or_else(capacity)?)?;
+                Some(AttentionPoint {
+                    point: point.clone(),
+                    error_radius: *error_radius,
+                    at,
+                })
+            }
             _ => None,
         },
         _ => None,
@@ -199,6 +203,7 @@ pub(super) fn build_candidates(
     experience: &crate::experience::ExperienceState,
     observer_id: &str,
     state: &AttentionState,
+    keys: Option<&[&str]>,
     journal: &mut CurrentJournal,
 ) -> Result<IndexMap<String, AttentionCandidate>, ReceivedError> {
     let Some(scope) = CurrentBodyReadScope::prepare(
@@ -213,9 +218,25 @@ pub(super) fn build_candidates(
         return Ok(IndexMap::new());
     };
     let policy = installed.attention.value();
-    let mut result = IndexMap::with_capacity(state.annotations.len());
-    let mut annotations: Vec<_> = state.annotations.iter().collect();
-    annotations.sort_by(|(a, _), (b, _)| crate::encoding::js_property_cmp(a, b));
+    let count = keys.map_or(state.annotations.len(), |keys| keys.len());
+    journal.reserve_growth(
+        map_storage::<String, AttentionCandidate>(count)
+            .and_then(|bytes| {
+                bytes.checked_add(count.checked_mul(size_of::<(&String, &AttentionAnnotation)>())?)
+            })
+            .ok_or_else(capacity)?,
+    )?;
+    let mut result = IndexMap::with_capacity(count);
+    let mut annotations: Vec<_> = match keys {
+        Some(keys) => keys
+            .iter()
+            .filter_map(|key| state.annotations.get_key_value(*key))
+            .collect(),
+        None => state.annotations.iter().collect(),
+    };
+    if keys.is_none() {
+        annotations.sort_by(|(a, _), (b, _)| crate::encoding::js_property_cmp(a, b));
+    }
     for (key, annotation) in annotations {
         let Some(body) = scope.attention_source(&annotation.source_id, &annotation.lease_id)?
         else {
@@ -230,17 +251,28 @@ pub(super) fn build_candidates(
             modality: None,
         };
         let location = scope.native(&annotation.source_id, "location", selector)?;
-        let measured = current_point(&scope, &annotation.source_id, selector)?;
+        let measured = current_point(&scope, &annotation.source_id, selector, journal)?;
         let subject = if body.field.value.kind == "body"
             && scope
                 .native_body(&annotation.source_id)?
                 .is_some_and(|live| live.field.id == body.field.id)
         {
-            scope.association(&annotation.source_id)?.cloned()
+            scope.association(&annotation.source_id)?
         } else {
             None
         }
-        .or_else(|| body.field.local_subject.clone());
+        .or(body.field.local_subject.as_ref());
+        journal.reserve_growth(
+            heap_sum([
+                key.len(),
+                annotation.heap_bytes().ok_or_else(capacity)?,
+                subject
+                    .map_or(Some(0), HeapBytes::heap_bytes)
+                    .ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        let subject = subject.cloned();
         let description_revision = descriptions(&scope, &annotation.source_id, selector, journal)?;
         let displacement = match (&measured, &annotation.anchor) {
             (Some(measured), Some(anchor)) => {

@@ -1,16 +1,12 @@
-import type {
-  NativeWorld,
-  NativeWorldJson,
-  NativeWorldPlayerRead,
-} from '@open-legend/native-simulation';
+import type { NativeWorld, NativeWorldPlayerRead } from '@open-legend/native-simulation';
 import type { GameView } from '@open-legend/protocol';
 import type { RequestScope } from './authority.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativePlayerRead } from './native-player-view.js';
 import { ViewChangedError } from './player-view-async.js';
+import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
 
 type PlayerPacket = Pick<NativePlayerRead, 'self' | 'perception' | 'events' | 'controls'>;
-const packet = <T>(value: NativeWorldJson): T => JSON.parse(value.consume().toString('utf8')) as T;
 
 /** The actual bridge capture, independent of operational profiles, grants and
  * request scheduling. It retains scoped native evidence through async SQL and
@@ -18,10 +14,15 @@ const packet = <T>(value: NativeWorldJson): T => JSON.parse(value.consume().toSt
 export class NativePlayerCapture {
   private released = false;
   private constructor(
-    readonly facts: PlayerPacket,
+    private packet: PlayerPacket | undefined,
     private readonly world: NativeWorld,
     private readonly read: NativeWorldPlayerRead,
   ) {}
+
+  get facts(): PlayerPacket {
+    if (!this.packet) throw new ViewChangedError();
+    return this.packet;
+  }
 
   static async capture(
     world: NativeWorld,
@@ -33,11 +34,16 @@ export class NativePlayerCapture {
     try {
       const question = await read.controlQuestion();
       if (question) {
-        const query = packet<Parameters<NativeGeometryProviders['compute']>[0]>(question);
+        const query =
+          decodeNativeProduct<Parameters<NativeGeometryProviders['compute']>[0]>(question);
         const answers = await geometry.compute(query);
         await read.finishControls(Buffer.from(JSON.stringify(answers)));
       }
-      return new NativePlayerCapture(packet<PlayerPacket>(await read.packet()), world, read);
+      return new NativePlayerCapture(
+        decodeNativeProduct<PlayerPacket>(await read.packet()),
+        world,
+        read,
+      );
     } catch (error) {
       read.release();
       throw error;
@@ -70,7 +76,7 @@ export class NativePlayerCapture {
         !operationalStillCurrent()
       )
         throw new ViewChangedError();
-      return complete(publication.canUseInventory());
+      return retainNativeSources(complete(publication.canUseInventory()), this.facts);
     } finally {
       publication.release();
     }
@@ -78,6 +84,7 @@ export class NativePlayerCapture {
 
   release(): void {
     this.released = true;
+    this.packet = undefined;
     this.read.release();
   }
 }

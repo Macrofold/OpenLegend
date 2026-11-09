@@ -497,6 +497,12 @@ export function selectedNativeLawDefinitions(
     timeRules: selectedTimeRules(world),
   };
 }
+
+/** Creator recall controls use the selected world's account vocabulary. */
+export function selectedPrivacyOutcomes(world: WorldState) {
+  selectedCreationProfileForWorld(world);
+  return BASE_ACCOUNT_RULES.privacyOutcomes;
+}
 export function selectedTimeRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_SIMULATION_TIME_RULES;

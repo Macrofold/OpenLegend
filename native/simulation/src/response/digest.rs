@@ -22,6 +22,9 @@ pub(super) struct ResponseDigest {
     pub body: String,
     _reservation: ByteReservation,
 }
+impl ResponseDigest {
+    pub(super) fn into_parts(self)->(String,ByteReservation){(self.body,self._reservation)}
+}
 impl ResponseDigestRequest {
     pub(super) fn prepare<T: Serialize>(
         binding: GeometryBinding,

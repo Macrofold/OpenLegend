@@ -32,7 +32,7 @@ impl TemporalFacetRevocation<'_> {
         &self,
         receipt_id: &str,
         field: &TemporalFacetReference,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         meaning: &dyn TemporalValueMeaning,
     ) -> Result<bool, ReceivedError> {
         let Some(fragment) = values.value_at(&field.value_ref) else {
@@ -92,9 +92,10 @@ impl TemporalState {
     pub(crate) fn revoke_physical_facets(
         &mut self,
         actor_id: &str,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         meaning: &dyn TemporalValueMeaning,
         revoked: &TemporalFacetRevocation<'_>,
+        scope: &crate::experience::ClosedPrivacyScope,
         budget: &ByteBudget,
     ) -> Result<TemporalPageRevocation, ReceivedError> {
         let Some(actor) = self.actors.get(actor_id) else {
@@ -105,8 +106,26 @@ impl TemporalState {
         };
         // The edit preparation owner hydrates the actual packed live cut first.
         // A database barrier would hide the required accepted-unsaved case.
-        if !actor.complete_pages || !actor.pending_pages.is_empty() {
+        if !scope.permits_actor(actor_id) {
             return Err(invalid());
+        }
+        // Every affected logical append must have been exchanged for its actual
+        // selected physical projection. An unrelated pending suffix may remain.
+        for page in &actor.pending_pages {
+            for entry in &page.batch().entries {
+                let _expanded = budget
+                    .reserve(super::super::selection::receipt_expansion_bound(
+                        page.batch(),
+                        entry,
+                    )?)
+                    .map_err(|_| capacity())?;
+                let receipt = materialize_received_receipt(page.batch(), entry, None)?;
+                for field in &receipt.facets {
+                    if revoked.revokes(&receipt.id, field, values, meaning)? {
+                        return Err(invalid());
+                    }
+                }
+            }
         }
         let count = actor
             .pages
@@ -156,7 +175,6 @@ impl TemporalState {
                     .ok_or_else(capacity)?,
                 actor_id.len().checked_mul(5).ok_or_else(capacity)?,
                 page.row_id().len().checked_mul(3).ok_or_else(capacity)?,
-                size_of::<TemporalUndo>() * 3,
             ])
             .ok_or_else(capacity)?;
             for batch in page.batches() {
@@ -230,21 +248,22 @@ impl TemporalState {
                     });
                 }
                 if !entries.is_empty() {
-                    batches.push(crate::received::TemporalBatch::from_owned(
-                        ReceivedBatch {
-                            actor_id: batch.actor_id.clone(),
-                            physical_life: batch.physical_life,
-                            epoch: batch.epoch.clone(),
-                            batch_order: batch.batch_order,
-                            entries,
-                        },
-                        budget,
-                    )?);
+                    batches.push(ReceivedBatch {
+                        actor_id: batch.actor_id.clone(),
+                        physical_life: batch.physical_life,
+                        epoch: batch.epoch.clone(),
+                        batch_order: batch.batch_order,
+                        entries,
+                    });
                 }
             }
             if !changed {
                 continue;
             }
+            let batches = batches
+                .into_iter()
+                .map(|batch| crate::received::TemporalBatch::from_owned(batch, budget))
+                .collect::<Result<Vec<_>, _>>()?;
             let after = page
                 .replace_batches(batches, values, meaning, budget)?
                 .map(Arc::new);
@@ -273,7 +292,8 @@ impl TemporalState {
             {
                 return Err(invalid());
             }
-            self.undo.try_reserve(3).map_err(|_| capacity())?;
+            page.retain_for_candidate(budget)?;
+            self.reserve_undo_slots(3, budget)?;
             self.undo.push(TemporalUndo::Reservation(retained));
             self.undo.push(TemporalUndo::PageEdit {
                 actor_id: actor_id.to_owned(),

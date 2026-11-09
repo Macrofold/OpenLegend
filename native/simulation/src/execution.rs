@@ -1414,6 +1414,7 @@ enum Undo {
 /// transferred all owned scratch. Nested rollback does not claim freed capacity
 /// while Vec allocations and before-values are still retained by this batch.
 pub(crate) struct PhysicalJournal {
+    budget: ByteBudget,
     undo: Vec<Undo>,
     frames: Vec<Frame>,
     changes: Vec<PhysicalChange>,
@@ -1427,6 +1428,7 @@ impl PhysicalJournal {
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let mut value = Self {
+            budget: budget.clone(),
             reservation: budget.reserve(size_of::<Self>() + size_of::<Frame>())?,
             undo: Vec::new(),
             frames: Vec::with_capacity(1),
@@ -1706,7 +1708,7 @@ impl PhysicalJournal {
                 Undo::AddedEntity(before) => {
                     let (id, renumbered) = state
                         .entities
-                        .undo_insertion(before)
+                        .undo_insertion(before, &mut self.reservation)
                         .map_err(|_| ExecutionError::Invariant)?;
                     if renumbered {
                         state.bodies.refresh_ordering(&state.entities);
@@ -2102,6 +2104,9 @@ impl PhysicalJournal {
                     semantic.discovery = discovery;
                     semantic.reservation = reservation;
                     semantic.occupied_purpose = occupied_purpose;
+                    state
+                        .entities
+                        .settle_semantic_memory(entity, &mut self.reservation, true)?;
                 }
                 Undo::SemanticResolved { entity, before } => {
                     state
@@ -2111,6 +2116,9 @@ impl PhysicalJournal {
                         .and_then(|a| a.agency.semantic.as_mut())
                         .ok_or(ExecutionError::Invariant)?
                         .resolved = before;
+                    state
+                        .entities
+                        .settle_semantic_memory(entity, &mut self.reservation, true)?;
                 }
                 Undo::Episode(undo) => restore_episode(state, undo)?,
                 Undo::Work(undo) => state.work.rollback(undo)?,
@@ -2798,7 +2806,7 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::MissingEntity)?;
         if action
             .as_ref()
-            .is_some_and(|a| !a.storage.shares_owner(&self.journal.reservation))
+            .is_some_and(|a| !a.storage.is_funded_by(&self.journal.budget))
         {
             return Err(ExecutionError::Invariant);
         }
@@ -2834,6 +2842,12 @@ impl PhysicalMutation<'_> {
             })?;
         }
         let generation = actor.plan_generation;
+        if (first || binding_changed) && actor.action.is_some() {
+            self.state
+                .entities
+                .action_storage(handle)?
+                .retain(&self.journal.budget)?;
+        }
         let before = self.state.entities.swap_funded_action(handle, action)?;
         self.state
             .entities
@@ -3142,14 +3156,20 @@ impl PhysicalMutation<'_> {
                 let remaining = cursor.path.split_off(cursor.consumed_points);
                 let bytes = remaining.heap_bytes().ok_or(ExecutionError::Capacity)?;
                 let storage = self.journal.reservation.split_off(bytes)?;
+                if first {
+                    self.state
+                        .entities
+                        .retain_action_path(cursor.actor, &self.journal.budget)?;
+                }
                 let before = action_storage::swap_path(
                     self.state,
                     cursor.actor,
                     action_id,
-                    crate::state::FundedActionPath {
-                        value: remaining,
+                    crate::state::FundedActionPath::from_storage(
+                        remaining,
                         storage,
-                    },
+                        &self.journal.budget,
+                    )?,
                 )?;
 
                 if first {

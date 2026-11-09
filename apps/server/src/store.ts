@@ -2615,7 +2615,16 @@ export class SqlGameRepository implements GameRepository {
       try {
         await this.memories.closeLexical();
       } finally {
-        await this.db.close();
+        try {
+          await this.db.close();
+        } finally {
+          // Provider closures may own real native decoded products. Release
+          // this closed reader's references after its persistence work drains;
+          // still-running consumers retain their own independent custody.
+          this.liveReadCuts = undefined;
+          this.retainedValueLookup = undefined;
+          this.memories.setBackgroundSearchAdmission(() => false);
+        }
       }
     }
   }

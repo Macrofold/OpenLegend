@@ -57,12 +57,38 @@ enum RecognitionUndo {
 /// each identity write. Borrowed native read scopes cannot survive that mutable
 /// write; scores are read afresh at the next actual attention opportunity.
 pub(crate) struct RecognitionJournal {
+    budget: ByteBudget,
     undo: Vec<RecognitionUndo>,
     reservation: ByteReservation,
 }
 impl RecognitionJournal {
+    /// Source keeps read-only entry objects across replacements. Read the exact
+    /// moved before-image already owned by this operation, rather than cloning
+    /// the observer's whole identity directory for a later privacy callback.
+    pub(super) fn identity_at<'a>(
+        &'a self,
+        state: &'a ReceptionState,
+        checkpoint: RecognitionCheckpoint,
+        observer: &str,
+        key: &str,
+    ) -> Option<&'a ObserverIdentity> {
+        for undo in self.undo.get(checkpoint.operations..)? {
+            if let RecognitionUndo::Identity {
+                observer: owner,
+                key: changed,
+                prior,
+            } = undo
+            {
+                if owner == observer && changed == key {
+                    return prior.as_ref().map(|(_, identity)| identity);
+                }
+            }
+        }
+        state.observer_identities.as_ref()?.get(observer)?.get(key)
+    }
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ReceivedError> {
         Ok(Self {
+            budget: budget.clone(),
             undo: Vec::new(),
             reservation: budget.reserve(size_of::<Self>()).map_err(|_| capacity())?,
         })
@@ -96,12 +122,23 @@ impl RecognitionJournal {
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
                 RecognitionUndo::Observer { observer } => {
+                    let key_bytes = state
+                        .observer_identities
+                        .as_ref()
+                        .and_then(|root| root.get_key_value(&observer))
+                        .map_or(0, |(key, _)| key.capacity());
                     state
                         .observer_identities
                         .as_mut()
                         .ok_or_else(invalid)?
                         .shift_remove(&observer)
                         .ok_or_else(invalid)?;
+                    state.settle_recognition_roots(
+                        -(key_bytes as i128),
+                        0,
+                        &mut self.reservation,
+                        true,
+                    )?;
                 }
                 RecognitionUndo::Identity {
                     observer,
@@ -113,20 +150,27 @@ impl RecognitionJournal {
                         .as_mut()
                         .and_then(|root| root.get_mut(&observer))
                         .ok_or_else(invalid)?;
-                    records.shift_remove(&key);
-                    if let Some((at, prior)) = prior {
-                        if at > records.len() {
-                            return Err(invalid());
-                        }
-                        records.shift_insert(at, key, prior);
-                    }
+                    records.replace(&key, prior, &mut self.reservation, true)?;
                 }
                 RecognitionUndo::Revision { observer, prior } => {
+                    let key_bytes = state
+                        .knowledge_revisions
+                        .as_ref()
+                        .and_then(|root| root.get_key_value(&observer))
+                        .map_or(0, |(key, _)| key.capacity());
                     let revisions = state.knowledge_revisions.as_mut().ok_or_else(invalid)?;
                     if let Some(prior) = prior {
                         *revisions.get_mut(&observer).ok_or_else(invalid)? = prior;
                     } else {
                         revisions.shift_remove(&observer);
+                    }
+                    if prior.is_none() {
+                        state.settle_recognition_roots(
+                            0,
+                            -(key_bytes as i128),
+                            &mut self.reservation,
+                            true,
+                        )?;
                     }
                 }
             }
@@ -137,6 +181,7 @@ impl RecognitionJournal {
         if !checkpoint.revisions_present {
             state.knowledge_revisions = None;
         }
+        state.settle_recognition_roots(0, 0, &mut self.reservation, true)?;
         Ok(())
     }
     pub(crate) fn discard_undo(&mut self) -> Result<(), ReceivedError> {
@@ -168,7 +213,11 @@ impl RecognitionJournal {
         state
             .observer_identities
             .get_or_insert_with(IndexMap::new)
-            .insert(observer.to_owned(), IndexMap::new());
+            .insert(
+                observer.to_owned(),
+                crate::reception::IdentityDirectory::install(IndexMap::new(), &self.budget)?,
+            );
+        state.settle_recognition_roots(observer.len() as i128, 0, &mut self.reservation, false)?;
         self.undo.push(RecognitionUndo::Observer {
             observer: observer.to_owned(),
         });
@@ -200,12 +249,17 @@ impl RecognitionJournal {
             ])
             .ok_or_else(capacity)?,
         )?;
-        state
+        let records = state
             .observer_identities
             .as_mut()
             .and_then(|root| root.get_mut(observer))
-            .ok_or_else(invalid)?
-            .insert(key.to_owned(), value);
+            .ok_or_else(invalid)?;
+        records.replace(
+            key,
+            Some((records.len(), value)),
+            &mut self.reservation,
+            false,
+        )?;
         self.undo.push(RecognitionUndo::Identity {
             observer: observer.to_owned(),
             key: key.to_owned(),
@@ -267,8 +321,10 @@ impl RecognitionJournal {
             .as_mut()
             .and_then(|owners| owners.get_mut(observer))
             .ok_or_else(invalid)?;
-        let (position, _, prior) = identities.shift_remove_full(key).ok_or_else(invalid)?;
-        identities.shift_insert(position, key.to_owned(), next);
+        let position = identities.get_index_of(key).ok_or_else(invalid)?;
+        let (_, prior) = identities
+            .replace(key, Some((position, next)), &mut self.reservation, false)?
+            .ok_or_else(invalid)?;
         self.undo.push(RecognitionUndo::Identity {
             observer: observer.to_owned(),
             key: key.to_owned(),
@@ -358,14 +414,8 @@ impl RecognitionJournal {
             .as_mut()
             .and_then(|root| root.get_mut(observer))
             .ok_or_else(invalid)?;
-        let prior = records
-            .shift_remove_full(key)
-            .map(|(at, _, value)| (at, value));
-        if let Some((at, _)) = &prior {
-            records.shift_insert(*at, key.to_owned(), next);
-        } else {
-            records.insert(key.to_owned(), next);
-        }
+        let position = records.get_index_of(key).unwrap_or(records.len());
+        let prior = records.replace(key, Some((position, next)), &mut self.reservation, false)?;
         self.undo.push(RecognitionUndo::Identity {
             observer: observer.to_owned(),
             key: key.to_owned(),
@@ -466,7 +516,9 @@ impl RecognitionJournal {
             .as_mut()
             .and_then(|root| root.get_mut(observer))
             .ok_or_else(invalid)?;
-        let (at, _, prior) = records.shift_remove_full(key).ok_or_else(invalid)?;
+        let (at, prior) = records
+            .replace(key, None, &mut self.reservation, false)?
+            .ok_or_else(invalid)?;
         self.undo.push(RecognitionUndo::Identity {
             observer: observer.to_owned(),
             key: key.to_owned(),
@@ -511,6 +563,14 @@ impl RecognitionJournal {
             .knowledge_revisions
             .get_or_insert_with(IndexMap::new)
             .insert(observer.to_owned(), next);
+        if prior.is_none() {
+            state.settle_recognition_roots(
+                0,
+                observer.len() as i128,
+                &mut self.reservation,
+                false,
+            )?;
+        }
         self.undo.push(RecognitionUndo::Revision {
             observer: observer.to_owned(),
             prior,
@@ -570,7 +630,7 @@ fn dropped_sources(
         .map(|source| source.id().to_owned())
         .collect()
 }
-fn correspondence_changes(
+pub(super) fn correspondence_changes(
     before: Option<&ObserverIdentity>,
     after: Option<&ObserverIdentity>,
 ) -> bool {

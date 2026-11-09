@@ -306,12 +306,12 @@ pub(crate) fn change_goal(
         goal.author = author.into();
         goal.source_id = id.into();
     }
-    let funded = FundedGoals::new(after, storage)?;
+    let funded = FundedGoals::new(after, storage, budget)?;
     let mut mutation = PhysicalMutation {
         state: &mut core.state.physical,
         journal: &mut core.journal.physical,
     };
-    mutation.replace_goals(actor_id, funded)?;
+    mutation.replace_goals(actor_id, funded, budget)?;
     mutation.advance_agency_revision(actor_id)?;
     Ok(result)
 }

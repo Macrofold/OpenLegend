@@ -65,6 +65,9 @@ impl SharedMemoryPin {
 }
 
 impl ResidentMemory {
+    pub(crate) fn owns(&self, reservation: &ResidentReservation) -> bool {
+        Arc::ptr_eq(&self.inner, &reservation.owner)
+    }
     pub fn used(&self) -> usize {
         self.inner.used.load(Ordering::Acquire)
     }

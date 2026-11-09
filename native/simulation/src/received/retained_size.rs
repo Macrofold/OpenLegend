@@ -13,8 +13,18 @@ fixed!(
     ReceivedFieldClock,
     ReceivedClockDifference,
     ReceivedFact,
-    CurrentReceivedPart
+    CurrentReceivedPart,
+    AccountClass,
+    AccountCharge,
+    ReceivedFrontier
 );
+heap_record!(TemporalStateHeader { namespace });
+heap_record!(TemporalAccounts { archives });
+heap_record!(TemporalActorHeader {
+    epoch,
+    frontier,
+    accounts
+});
 heap_record!(ReceivedReceiptHeader {
     subject,
     source_ids,

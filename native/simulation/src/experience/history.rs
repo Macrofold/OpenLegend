@@ -105,6 +105,7 @@ struct HistoryInput {
 pub(crate) struct CapturedHistoryInput {
     input: HistoryInput,
     _reservations: Vec<ByteReservation>,
+    _pins: Vec<Arc<crate::host::SharedMemoryPin>>,
 }
 impl CapturedHistoryInput {
     pub(crate) fn value(&self) -> impl Serialize + '_ {
@@ -276,6 +277,7 @@ pub(crate) fn capture_history_input(
         max_guards
             .checked_mul(size_of::<ByteReservation>())
             .ok_or_else(capacity)?,
+        max_guards.checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>()).ok_or_else(capacity)?,
         max_subjects
             .checked_mul(size_of::<Subject>())
             .ok_or_else(capacity)?,
@@ -298,6 +300,8 @@ pub(crate) fn capture_history_input(
     .ok_or_else(capacity)?;
     let skeleton = reserve(budget, Some(skeleton))?;
     let mut reservations = Vec::new();
+    let mut pins = Vec::new();
+    pins.try_reserve_exact(max_guards).map_err(|_|capacity())?;
     reservations
         .try_reserve_exact(max_guards)
         .map_err(|_| capacity())?;
@@ -319,6 +323,7 @@ pub(crate) fn capture_history_input(
     for placed in history.appended() {
         let original = placed.event();
         let event = original.event();
+        pins.push(original.capture_pin(budget).map_err(|_|capacity())?);
         changed.push(Original(Arc::clone(original)));
         reservations.push(reserve(
             budget,
@@ -345,6 +350,7 @@ pub(crate) fn capture_history_input(
                         .find(|source| source.header.reference.id == event.id)
                 });
             if let Some(source) = awareness {
+                pins.push(source.capture_pin(budget)?);
                 let _ids = reserve(
                     budget,
                     event
@@ -525,6 +531,7 @@ pub(crate) fn capture_history_input(
             subjects,
         },
         _reservations: reservations,
+        _pins: pins,
     })
 }
 

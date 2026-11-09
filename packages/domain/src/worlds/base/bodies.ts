@@ -10,6 +10,7 @@ import { BASE_EQUIPMENT_PORTS } from './equipment.js';
 // Authored starting anatomy and animal capabilities; lifecycle integrity remains generic.
 // docs/worlds/base/survival.md
 /** The bundled world's species; typed requests and bodies read this one list. */
+export const BASE_MANUAL_WORK_BODY_PLANS: readonly LivingBody['plan'][] = ['biped'];
 export const BASE_SPECIES = ['human', 'deer', 'hare', 'construct', 'bird', 'wolf', 'bear'] as const;
 export function describeBodyRemains(
   entity: Entity,

@@ -320,6 +320,7 @@ impl<'a> PersonalNameReader<'a> {
             .observer_identities
             .as_ref()
             .and_then(|owners| owners.get(self.observer_id))
+            .map(|identities| &**identities)
     }
     fn episode(&self, id: &str) -> Option<&'a String> {
         self.reception

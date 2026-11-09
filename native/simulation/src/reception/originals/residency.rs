@@ -171,7 +171,8 @@ impl OriginalMetadata {
             .receipt_bytes
             .checked_add(key.capacity())
             .ok_or_else(capacity)?;
-        meta.budget.resize_backing(&mut meta.storage, metadata_bytes(received, receipts, keys)?)
+        meta.budget
+            .resize_backing(&mut meta.storage, metadata_bytes(received, receipts, keys)?)
             .map_err(|_| capacity())?;
         owner.received.try_reserve(1).map_err(|_| capacity())?;
         owner.receipts.try_reserve(1).map_err(|_| capacity())?;

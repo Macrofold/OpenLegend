@@ -8,6 +8,12 @@ import {
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 import { LIVE_SAVE_MAX_BYTES } from './pending-world-save.js';
 import { HOT_TEMPORAL_BYTES } from './history-residency.js';
+import {
+  correctionPageBytes,
+  correctionPageRows,
+  correctionSourceBytes,
+  correctionReceiptCount,
+} from './temporal-correction-selection.js';
 import { RECORD_NODES, type RecordNode } from './world-record-schema.js';
 import {
   canonicalJson,
@@ -31,6 +37,12 @@ export const nativeStorageSettings = Object.freeze({
     rowBytes: CHECKPOINT_LIMITS.rowBytes,
   }),
   pendingSaveBytes: LIVE_SAVE_MAX_BYTES,
+  historyEdit: Object.freeze({
+    pageBytes: correctionPageBytes,
+    pageRows: correctionPageRows,
+    sourceBytes: correctionSourceBytes,
+    receiptCount: correctionReceiptCount,
+  }),
 });
 
 type RetainedNativeFields = Pick<

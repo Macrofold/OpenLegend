@@ -40,11 +40,14 @@ struct HotEventPointer {
 pub struct OriginalOccurrence {
     event: WorldEvent,
     payload: Arc<str>,
-    _reservation: Option<ByteReservation>,
+    _reservation: Option<crate::host::ResidentReservation>,
 }
 
 impl OriginalOccurrence {
-    fn from_input(input: OriginalOccurrenceInput) -> Result<Self, OccurrenceError> {
+    fn from_input(
+        input: OriginalOccurrenceInput,
+        budget: &ByteBudget,
+    ) -> Result<Self, OccurrenceError> {
         let event: WorldEvent = serde_json::from_str(&input.payload)
             .map_err(|_| OccurrenceError("Invalid current original occurrence."))?;
         if event.id != input.event_id
@@ -58,10 +61,21 @@ impl OriginalOccurrence {
                 "Original occurrence identity or wording disagrees.",
             ));
         }
+        let bytes = heap_sum([
+            size_of::<Self>() + 4 * size_of::<usize>(),
+            event
+                .heap_bytes()
+                .ok_or(OccurrenceError("Original occurrence capacity overflow."))?,
+            input.payload.len(),
+        ])
+        .ok_or(OccurrenceError("Original occurrence capacity overflow."))?;
+        let storage = budget
+            .reserve_record(bytes)
+            .map_err(|_| OccurrenceError("Original occurrence exceeds native allowance."))?;
         Ok(Self {
             event,
             payload: Arc::from(input.payload),
-            _reservation: None,
+            _reservation: Some(storage),
         })
     }
     pub fn event(&self) -> &WorldEvent {
@@ -69,6 +83,18 @@ impl OriginalOccurrence {
     }
     pub fn payload(&self) -> &str {
         &self.payload
+    }
+    pub(crate) fn capture_pin(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Arc<crate::host::SharedMemoryPin>, OccurrenceError> {
+        self._reservation
+            .as_ref()
+            .ok_or(OccurrenceError(
+                "Original occurrence has no canonical custody.",
+            ))?
+            .capture_pin(budget)
+            .map_err(|_| OccurrenceError("Original occurrence capture exceeds native allowance."))
     }
 }
 
@@ -130,6 +156,12 @@ enum OccurrenceUndo {
         position: u64,
         next_ordinal: u64,
     },
+    Response {
+        id: String,
+        position: u64,
+        before: Arc<OriginalOccurrence>,
+        _storage: ByteReservation,
+    },
 }
 
 /// Original bodies are internal authority. A player/model still needs its own
@@ -151,6 +183,7 @@ impl OccurrenceHistory {
         originals: Vec<OriginalOccurrenceInput>,
         coverage: OwnerCoverage,
         archived_count: Option<u64>,
+        budget: &ByteBudget,
     ) -> Result<Self, OccurrenceError> {
         let parent = json_record(&["world"])
             .map_err(|_| OccurrenceError("Occurrence owner encoding failed."))?;
@@ -163,7 +196,7 @@ impl OccurrenceHistory {
         }
         let mut sources = IndexMap::new();
         for original in originals {
-            let original = Arc::new(OriginalOccurrence::from_input(original)?);
+            let original = Arc::new(OriginalOccurrence::from_input(original, budget)?);
             if sources
                 .insert(original.event.id.clone(), original)
                 .is_some()
@@ -251,6 +284,7 @@ impl OccurrenceHistory {
     pub(crate) fn appended(&self) -> impl Iterator<Item = &HotOccurrencePlacement> {
         self.undo.iter().filter_map(|operation| match operation {
             OccurrenceUndo::Append { position, .. } => self.hot.get(position),
+            OccurrenceUndo::Response { .. } => None,
         })
     }
     /// Missing residency is unavailable evidence, never proof no occurrence exists.
@@ -313,11 +347,14 @@ impl OccurrenceHistory {
         let payload = json_record(&event)
             .map_err(|_| OccurrenceError("Original occurrence encoding failed."))?;
         let id = event.id.clone();
-        let original = Arc::new(OriginalOccurrence {
-            event: event.clone(),
-            payload: Arc::from(payload),
-            _reservation: Some(reservation),
-        });
+        let original =
+            Arc::new(OriginalOccurrence {
+                event: event.clone(),
+                payload: Arc::from(payload),
+                _reservation: Some(budget.adopt_record(reservation).map_err(|_| {
+                    OccurrenceError("Original occurrence exceeds native allowance.")
+                })?),
+            });
         let position = self.next_hot_ordinal;
         let row_id = json_record(&["world", "events", &id])
             .map_err(|_| OccurrenceError("Hot occurrence identity encoding failed."))?;
@@ -360,11 +397,157 @@ impl OccurrenceHistory {
                     }
                     self.next_hot_ordinal = next_ordinal;
                 }
+                OccurrenceUndo::Response {
+                    id,
+                    position,
+                    before,
+                    ..
+                } => {
+                    let placed = self
+                        .hot
+                        .get_mut(&position)
+                        .ok_or(OccurrenceError("Annotated occurrence placement is absent."))?;
+                    let original = self
+                        .originals
+                        .get_mut(&id)
+                        .ok_or(OccurrenceError("Annotated occurrence source is absent."))?;
+                    placed.event = Arc::clone(&before);
+                    *original = before;
+                }
             }
         }
         Ok(())
     }
     pub fn discard_undo(&mut self) {
         self.undo = Vec::new();
+    }
+    /// Response commands finish receiving before their outer response adds this
+    /// metadata. Only a genuine append in this candidate can be annotated;
+    /// captured personal accounts retain their original pre-annotation bodies.
+    pub(crate) fn annotate_new_response(
+        &mut self,
+        event_id: &str,
+        response_id: &str,
+        budget: &ByteBudget,
+    ) -> Result<Arc<OriginalOccurrence>, OccurrenceError> {
+        let position = self
+            .undo
+            .iter()
+            .find_map(|operation| match operation {
+                OccurrenceUndo::Append { id, position, .. } if id == event_id => Some(*position),
+                _ => None,
+            })
+            .ok_or(OccurrenceError(
+                "Only a new occurrence may receive response metadata.",
+            ))?;
+        let before = self
+            .originals
+            .get(event_id)
+            .ok_or(OccurrenceError("New response occurrence is absent."))?;
+        let body = before
+            .event
+            .heap_bytes()
+            .ok_or(OccurrenceError("Response occurrence capacity overflow."))?;
+        let payload = crate::encoding::json_record_len(&before.event)
+            .map_err(|_| OccurrenceError("Response occurrence encoding failed."))?;
+        let data = before.event.data.as_ref().map_or(0, IndexMap::len);
+        let bytes = heap_sum([
+            body,
+            payload
+                .checked_mul(2)
+                .ok_or(OccurrenceError("Response occurrence capacity overflow."))?,
+            response_id
+                .len()
+                .checked_mul(8)
+                .ok_or(OccurrenceError("Response occurrence capacity overflow."))?,
+            map_storage::<String, crate::reception::EventScalar>(
+                data.checked_add(1)
+                    .and_then(|n| n.checked_mul(2))
+                    .ok_or(OccurrenceError("Response occurrence capacity overflow."))?,
+            )
+            .ok_or(OccurrenceError("Response occurrence capacity overflow."))?,
+            before
+                ._reservation
+                .as_ref()
+                .ok_or(OccurrenceError(
+                    "Original occurrence has no canonical custody.",
+                ))?
+                .bytes(),
+            size_of::<OriginalOccurrence>() + 4 * size_of::<usize>() + 64,
+        ])
+        .ok_or(OccurrenceError("Response occurrence capacity overflow."))?;
+        let mut storage = budget
+            .reserve(bytes)
+            .map_err(|_| OccurrenceError("Response occurrence exceeds native allowance."))?;
+        budget
+            .retain_record(before._reservation.as_ref().ok_or(OccurrenceError(
+                "Original occurrence has no canonical custody.",
+            ))?)
+            .map_err(|_| {
+                OccurrenceError("Response occurrence before-image exceeds native allowance.")
+            })?;
+        let undo_storage = budget
+            .reserve(event_id.len() + 2 * size_of::<OccurrenceUndo>())
+            .map_err(|_| OccurrenceError("Response occurrence undo exceeds native allowance."))?;
+        self.undo
+            .try_reserve_exact(1)
+            .map_err(|_| OccurrenceError("Response occurrence undo unavailable."))?;
+        let mut event = before.event.clone();
+        event.data.get_or_insert_with(IndexMap::new).insert(
+            "responseId".into(),
+            crate::reception::EventScalar::Text(response_id.into()),
+        );
+        let payload = json_record(&event)
+            .map_err(|_| OccurrenceError("Response occurrence encoding failed."))?;
+        // Keep existing per-original metadata custody until its separate map
+        // owner is extracted; replacing an Arc must not release live map/tree
+        // backing that the original append currently funds.
+        let metadata = before
+            ._reservation
+            .as_ref()
+            .ok_or(OccurrenceError(
+                "Original occurrence has no canonical custody.",
+            ))?
+            .bytes()
+            .saturating_sub(body + before.payload.len());
+        let retained = heap_sum([
+            event
+                .heap_bytes()
+                .ok_or(OccurrenceError("Response occurrence capacity overflow."))?,
+            payload.len(),
+            metadata,
+            size_of::<OriginalOccurrence>() + 4 * size_of::<usize>(),
+        ])
+        .ok_or(OccurrenceError("Response occurrence capacity overflow."))?;
+        storage
+            .resize(retained)
+            .map_err(|_| OccurrenceError("Response occurrence exceeds native allowance."))?;
+        let updated =
+            Arc::new(OriginalOccurrence {
+                event,
+                payload: Arc::from(payload),
+                _reservation: Some(budget.adopt_record(storage).map_err(|_| {
+                    OccurrenceError("Response occurrence exceeds native allowance.")
+                })?),
+            });
+        let before = Arc::clone(before);
+        self.undo.push(OccurrenceUndo::Response {
+            id: event_id.into(),
+            position,
+            before,
+            _storage: undo_storage,
+        });
+        *self
+            .originals
+            .get_mut(event_id)
+            .ok_or(OccurrenceError("Response occurrence source disappeared."))? =
+            Arc::clone(&updated);
+        self.hot
+            .get_mut(&position)
+            .ok_or(OccurrenceError(
+                "Response occurrence placement disappeared.",
+            ))?
+            .event = Arc::clone(&updated);
+        Ok(updated)
     }
 }

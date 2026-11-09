@@ -1,6 +1,7 @@
 //! Saved application control and account bindings. These facts establish who
 //! may request an actor's private capture; perceived identity grants do not.
 
+use crate::host::retained_size::{HeapBytes, heap_record, heap_sum};
 use crate::install::rows::{take_collection, take_one, validate_map_row, validate_row};
 use crate::install::{InstallError, RowImport};
 use crate::state::EntityStore;
@@ -10,6 +11,14 @@ use crate::values::{
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+heap_record!(ControlBindings {
+    controlled_entity_id,
+    default_resident_entity_id
+});
+heap_record!(Authorship {
+    creator_account_ids,
+    player_account_ids
+});
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -37,6 +46,7 @@ pub(crate) struct AdministrationState {
     pub control: Option<ControlBindings>,
     pub authorship: Authorship,
     pub object_membership: ObjectMembership,
+    _storage: crate::host::ResidentReservation,
 }
 
 /// Server controls travel back to the operational owner on installation. They
@@ -44,6 +54,8 @@ pub(crate) struct AdministrationState {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct InstalledHostSettings {
+    #[serde(skip)]
+    _storage: Option<crate::host::ResidentReservation>,
     pub world: crate::experience::EmptyChildOwner,
     // Exact immutable asset reference, interpreted/authorized by the existing
     // server asset owner. Native gameplay never uses it as a body permission.
@@ -71,6 +83,7 @@ pub(crate) struct InstalledHostSettings {
 
 pub(crate) fn read_host_settings(
     import: &mut RowImport,
+    budget: &crate::host::ByteBudget,
 ) -> Result<InstalledHostSettings, InstallError> {
     let mut rows = import.take_table("data_world");
     if rows.len() != 1 {
@@ -125,6 +138,22 @@ pub(crate) fn read_host_settings(
             return Err(InstallError::DuplicateRow);
         }
     }
+    let bytes = heap_sum([
+        settings
+            .presentation_release
+            .as_ref()
+            .map_or(0, |raw| raw.get().len()),
+        settings
+            .actor_milestones
+            .heap_bytes()
+            .ok_or(InstallError::Capacity)?,
+    ])
+    .ok_or(InstallError::Capacity)?;
+    settings._storage = Some(
+        budget
+            .reserve_record(bytes)
+            .map_err(|_| InstallError::Capacity)?,
+    );
     Ok(settings)
 }
 
@@ -134,6 +163,7 @@ pub(crate) fn install_administration(
     authorship_present: bool,
     objects_present: bool,
     entities: &EntityStore,
+    budget: &crate::host::ByteBudget,
 ) -> Result<AdministrationState, InstallError> {
     let control = take_one::<ControlBindings>(
         import,
@@ -230,6 +260,15 @@ pub(crate) fn install_administration(
         return Err(InstallError::CurrentFormat);
     }
     Ok(AdministrationState {
+        _storage: budget
+            .reserve_record(
+                heap_sum([
+                    control.heap_bytes().ok_or(InstallError::Capacity)?,
+                    authorship.heap_bytes().ok_or(InstallError::Capacity)?,
+                ])
+                .ok_or(InstallError::Capacity)?,
+            )
+            .map_err(|_| InstallError::Capacity)?,
         control,
         authorship,
         object_membership,

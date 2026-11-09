@@ -476,19 +476,31 @@ pub(crate) fn read_reception_rows(
             Ok(owner)
         },
     )?;
-    Ok(ReceptionState {
+    let mut state = ReceptionState {
         exposure_prepared: false,
         exposure_objects: None,
         sensory,
         perception_evidence,
         received_values,
+        recognition_storage: None,
         observer_identities: nested_maps(
             import,
             "mind_recognition_owners",
             "mind_recognition",
             "observerIdentities",
             roots.observer_identities,
-        )?,
+        )?
+        .map(|owners| {
+            owners
+                .into_iter()
+                .map(|(actor, records)| {
+                    super::IdentityDirectory::install(records, budget)
+                        .map(|records| (actor, records))
+                        .map_err(|_| invalid())
+                })
+                .collect::<Result<IndexMap<_, _>, InstallError>>()
+        })
+        .transpose()?,
         perception_episodes: nested_maps(
             import,
             "mind_exposure_owners",
@@ -496,13 +508,17 @@ pub(crate) fn read_reception_rows(
             "perceptionEpisodes",
             roots.perception_episodes,
         )?,
-        actor_knowledge: crate::knowledge::KnowledgeState::install(nested_maps(
-            import,
-            "mind_knowledge_documents_owners",
-            "mind_knowledge_documents",
-            "actorKnowledge",
-            roots.actor_knowledge,
-        )?, budget).map_err(|_| invalid())?,
+        actor_knowledge: crate::knowledge::KnowledgeState::install(
+            nested_maps(
+                import,
+                "mind_knowledge_documents_owners",
+                "mind_knowledge_documents",
+                "actorKnowledge",
+                roots.actor_knowledge,
+            )?,
+            budget,
+        )
+        .map_err(|_| invalid())?,
         knowledge_revisions: revision_map(
             import,
             "mind_knowledge_revisions",
@@ -538,7 +554,10 @@ pub(crate) fn read_reception_rows(
             "mapMarkers",
             roots.map_markers,
         )?,
-    })
+    };
+    state.recognition_storage =
+        Some(super::RecognitionRoots::install(&state, budget).map_err(|_| invalid())?);
+    Ok(state)
 }
 
 fn validate_reference_columns(

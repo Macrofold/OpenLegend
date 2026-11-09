@@ -32,11 +32,11 @@ export declare class NativeWorld {
   activate(receipt: string): Promise<void>;
   installation(): Promise<NativeWorldJson>;
   advance(seconds: number, maximumIntervals: number, bytes: Buffer): Promise<NativeWorldTurn>;
-  command(bytes: Buffer, canonical: string, preview: boolean): Promise<NativeWorldTurn>;
+  command(bytes: Buffer, canonical: Buffer, preview: boolean): Promise<NativeWorldTurn>;
   answer(
     key: NativeCandidateKey,
     provider: NativeWorldProvider,
-    json: string,
+    json: Buffer,
   ): Promise<NativeWorldTurn>;
   finishSettlement(key: NativeCandidateKey): Promise<boolean>;
   cancel(key: NativeCandidateKey): Promise<void>;
@@ -47,7 +47,17 @@ export declare class NativeWorld {
   finishStop(): Promise<void>;
 }
 
+/**
+ * The actual decoded product owner retains this through its last consumer.
+ * Native ownership is shared explicitly across optional tasks and caches.
+ */
+export declare class NativeWorldConsumer {
+  retain(): NativeWorldConsumer;
+  release(): void;
+}
+
 export declare class NativeWorldJson {
+  consumer(): NativeWorldConsumer;
   /**
    * Consume once. Both external-buffer and engine-copy implementations keep
    * the reservation on the actual Node Buffer until its finalizer runs.
@@ -70,7 +80,7 @@ export declare class NativeWorldPlayerRead {
 export declare class NativeWorldPrepared {
   key(): NativeCandidateKey;
   allocation(): string;
-  takePublication(): Buffer;
+  takePublication(): NativeWorldJson;
   ready(): void;
   settle(accept: boolean): boolean;
 }
@@ -306,6 +316,10 @@ export interface NativeRouteQuery {
   from: NativeSurfacePoint;
   to?: NativeSurfacePoint;
   bounds?: NativeBounds;
+  targetPosition?: NativePoint;
+  targetSupport?: NativeSurfacePoint;
+  goal?: NativePoint;
+  reach?: number;
   body: NativeBodyProfile;
 }
 

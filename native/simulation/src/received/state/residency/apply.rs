@@ -12,6 +12,7 @@ struct ActorProjection {
     pending: Vec<Arc<PendingTemporalPage>>,
     pending_storage: crate::host::ResidentReservation,
     complete: bool,
+    upper_bound: u64,
 }
 pub(crate) struct PreparedTemporalResidency {
     world: String,
@@ -233,8 +234,14 @@ impl SavedTemporalResidency {
                     .filter(|page| !affected || page.batch().batch_order >= self.identity_through)
                     .cloned(),
             );
-            let changed =
-                !same_pages(&pages, &actor.pages) || pending.len() != actor.pending_pages.len();
+            let upper_bound = if affected {
+                actor.page_order_upper_bound.max(self.identity_through)
+            } else {
+                actor.page_order_upper_bound
+            };
+            let changed = !same_pages(&pages, &actor.pages)
+                || pending.len() != actor.pending_pages.len()
+                || upper_bound != actor.page_order_upper_bound;
             if !changed {
                 continue;
             }
@@ -258,6 +265,7 @@ impl SavedTemporalResidency {
                     pending,
                     pending_storage,
                     complete: actor.complete_pages && after >= before,
+                    upper_bound,
                 },
             );
         }
@@ -355,6 +363,7 @@ impl PreparedTemporalResidency {
             actor.pending_pages = projection.pending;
             actor.pending_storage = projection.pending_storage;
             actor.complete_pages = projection.complete;
+            actor.page_order_upper_bound = projection.upper_bound;
             // Logical recent directories, charge totals, epochs/frontiers and
             // original SQL ordinal highwaters remain exactly the accepted cut.
         }

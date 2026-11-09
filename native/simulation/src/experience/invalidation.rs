@@ -2,11 +2,13 @@
 //! precedes any body pruning; one-way learning is applied only after the exact
 //! temporal owner reports which sparse proof it actually released.
 
+use super::privacy_prepare::ClosedPrivacyScope;
 use super::*;
 use crate::execution::ExecutionError;
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::{ReceivedValueFragment, ReceivedValues, TemporalAccountAliases};
+use crate::reception::ReceivedValueLookup;
 use crate::reception::{ObservationOrigin, ReceivedObservation, SensoryFacet};
 use crate::simulation::SimulationState;
 use std::mem::size_of;
@@ -19,6 +21,7 @@ pub(crate) struct PrivacySelection {
     pub roots: IndexSet<String>,
     pub affected: IndexSet<String>,
     aliases: TemporalAccountAliases,
+    pub(crate) scope: ClosedPrivacyScope,
     _reservation: ByteReservation,
 }
 pub(crate) struct PrivacyConsequences {
@@ -38,14 +41,11 @@ fn collection<'a>(
     kind: PersonalSourceKind,
 ) -> Result<Option<&'a PersonalSourceCollection>, ExecutionError> {
     let source = state.optional_collection(actor, kind)?;
-    if source.is_some_and(|source| !source.coverage.complete) {
-        return Err(invalid());
-    }
     Ok(source)
 }
 fn claim_depends(
     original: &ReceivedObservation,
-    values: &ReceivedValues,
+    values: &impl ReceivedValueLookup,
     affected: &IndexSet<String>,
 ) -> Result<bool, ExecutionError> {
     for facet in &original.facets {
@@ -77,23 +77,14 @@ pub(crate) fn prepare_privacy_selection(
     state: &SimulationState,
     actor: &str,
     source_ids: &[String],
+    scope: ClosedPrivacyScope,
     budget: &ByteBudget,
 ) -> Result<PrivacySelection, ExecutionError> {
     let history = state.experience.actor(actor).ok_or_else(invalid)?;
-    // This entry point owns a full resident input. A partial cold edit must
-    // carry the separate closed affected-selection witness, never this negative.
-    if state
-        .temporal
-        .actor(actor)
-        .is_none_or(|history| !history.complete_pages())
-    {
+    if !scope.matches(state, actor) {
         return Err(invalid());
     }
-    let values = state
-        .reception
-        .received_values
-        .as_ref()
-        .ok_or(ExecutionError::UnsupportedFamily)?;
+    let values = &state.reception.received_values.as_ref();
     let awareness = collection(&state.experience, actor, PersonalSourceKind::Awareness)?;
     let memories = collection(&state.experience, actor, PersonalSourceKind::Memory)?;
     let summaries = collection(&state.experience, actor, PersonalSourceKind::Summary)?;
@@ -103,9 +94,6 @@ pub(crate) fn prepare_privacy_selection(
         .as_ref()
         .and_then(|owners| owners.get(actor));
     let activities = state.activity.collections.get(actor);
-    if activities.is_some_and(|source| !source.complete) {
-        return Err(invalid());
-    }
     let mut bytes = heap_sum([
         size_of::<PrivacySelection>(),
         actor.len(),
@@ -308,6 +296,7 @@ pub(crate) fn prepare_privacy_selection(
         roots,
         affected,
         aliases,
+        scope,
         _reservation: reservation,
     })
 }
@@ -332,11 +321,7 @@ pub(crate) fn continue_privacy_selection(
     }
     let actor = selection.actor_id.as_str();
     let history = state.experience.actor(actor).ok_or_else(invalid)?;
-    let values = state
-        .reception
-        .received_values
-        .as_ref()
-        .ok_or(ExecutionError::UnsupportedFamily)?;
+    let values = &state.reception.received_values.as_ref();
     let awareness = collection(&state.experience, actor, PersonalSourceKind::Awareness)?;
     let memories = collection(&state.experience, actor, PersonalSourceKind::Memory)?;
     let summaries = collection(&state.experience, actor, PersonalSourceKind::Summary)?;

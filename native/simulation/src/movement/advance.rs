@@ -314,6 +314,7 @@ impl MoveAdvanceCursor {
                                     replans,
                                 },
                                 storage,
+                                &self.budget,
                             )?,
                         )?;
                         self.start_motion(
@@ -390,6 +391,7 @@ impl MoveAdvanceCursor {
                                     replans,
                                 },
                                 storage,
+                                &self.budget,
                             )?,
                         )?;
                         self.phase = Phase::Done;

@@ -1,10 +1,11 @@
 //! Each canonical document keeps its actual allocation through replacement,
 //! accepted publication and rollback. No shadow row/body ledger is retained.
 use super::*;
+use crate::host::ResidentReservation;
 
 pub(crate) struct KnowledgeEntry {
     document: KnowledgeDocument,
-    storage: ByteReservation,
+    storage: ResidentReservation,
 }
 impl std::ops::Deref for KnowledgeEntry {
     type Target = KnowledgeDocument;
@@ -19,7 +20,7 @@ impl Serialize for KnowledgeEntry {
 }
 pub(crate) struct KnowledgeState {
     pub(super) documents: Option<IndexMap<String, IndexMap<String, KnowledgeEntry>>>,
-    metadata: ByteReservation,
+    metadata: ResidentReservation,
 }
 impl KnowledgeState {
     pub(crate) fn install(
@@ -43,7 +44,8 @@ impl KnowledgeState {
                 )
             })
             .ok_or(ExecutionError::Capacity)?;
-        let metadata = budget.reserve(backing.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
+        let metadata =
+            budget.reserve_backing(backing.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
         let root = documents
             .map(|root| -> Result<_, ExecutionError> {
                 let mut out = IndexMap::with_capacity(root.len());
@@ -53,8 +55,9 @@ impl KnowledgeState {
                         if key != knowledge_key(document.subject_id.as_ref())? {
                             return Err(ExecutionError::Invariant);
                         }
-                        let storage = budget
-                            .reserve(document.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+                        let storage = budget.reserve_record(
+                            document.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                        )?;
                         values.insert(key, KnowledgeEntry { document, storage });
                     }
                     out.insert(actor, values);
@@ -125,12 +128,14 @@ pub(super) enum KnowledgeUndo {
 pub(crate) struct KnowledgeJournal {
     pub(super) undo: Vec<KnowledgeUndo>,
     reservation: ByteReservation,
+    budget: ByteBudget,
 }
 impl KnowledgeJournal {
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ExecutionError> {
         Ok(Self {
             undo: Vec::new(),
             reservation: budget.reserve(size_of::<Self>())?,
+            budget: budget.clone(),
         })
     }
     pub(crate) fn checkpoint(&self, state: &KnowledgeState) -> KnowledgeCheckpoint {
@@ -175,9 +180,9 @@ impl KnowledgeJournal {
         }
         let bytes = state.metadata_bytes().ok_or(ExecutionError::Capacity)?;
         if bytes > state.metadata.bytes() {
-            state
-                .metadata
-                .merge(self.reservation.split_off(bytes - state.metadata.bytes())?)?;
+            let growth = bytes - state.metadata.bytes();
+            self.budget
+                .restore_backing(&mut state.metadata, self.reservation.split_off(growth)?)?;
         }
         state.metadata.resize(bytes)?;
         Ok(())
@@ -203,14 +208,14 @@ impl KnowledgeJournal {
         } else {
             0
         };
-        state.metadata.resize(
-            state
-                .metadata
-                .bytes()
-                .checked_add(growth)
-                .and_then(|n| n.checked_add(actor.len()))
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
+        let metadata_bytes = state
+            .metadata
+            .bytes()
+            .checked_add(growth)
+            .and_then(|n| n.checked_add(actor.len()))
+            .ok_or(ExecutionError::Capacity)?;
+        self.budget
+            .resize_backing(&mut state.metadata, metadata_bytes)?;
         self.reservation.resize(
             self.reservation
                 .bytes()
@@ -249,6 +254,10 @@ impl KnowledgeJournal {
             .and_then(|root| root.get(actor))
             .ok_or(ExecutionError::Invariant)?;
         let new_document = !docs.contains_key(&key);
+        if let Some(prior) = docs.get(&key) {
+            self.budget.retain_record(&prior.storage)?;
+        }
+        let storage = self.budget.adopt_record(storage)?;
         let doc_growth = if new_document && docs.len() == docs.capacity() {
             map_storage::<String, KnowledgeEntry>(((docs.len() + 1) * 2).max(3))
                 .ok_or(ExecutionError::Capacity)?
@@ -257,13 +266,13 @@ impl KnowledgeJournal {
         };
         let added = heap_sum([doc_growth, if new_document { key.capacity() } else { 0 }])
             .ok_or(ExecutionError::Capacity)?;
-        state.metadata.resize(
-            state
-                .metadata
-                .bytes()
-                .checked_add(added)
-                .ok_or(ExecutionError::Capacity)?,
-        )?;
+        let metadata_bytes = state
+            .metadata
+            .bytes()
+            .checked_add(added)
+            .ok_or(ExecutionError::Capacity)?;
+        self.budget
+            .resize_backing(&mut state.metadata, metadata_bytes)?;
         let undo = heap_sum([
             4 * size_of::<KnowledgeUndo>(),
             actor.len() * 2,

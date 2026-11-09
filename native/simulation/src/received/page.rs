@@ -479,9 +479,16 @@ impl TemporalPageRecord {
         self.edit_identity.as_ref()
     }
     pub(crate) fn retain_for_candidate(&self, budget: &ByteBudget) -> Result<(), ReceivedError> {
-        budget.retain_record(self.storage.as_ref().ok_or(ReceivedError("Temporal page has no resident allowance."))?)
+        budget
+            .retain_record(
+                self.storage
+                    .as_ref()
+                    .ok_or(ReceivedError("Temporal page has no resident allowance."))?,
+            )
             .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?;
-        for batch in &self.batches { batch.retain_for_candidate(budget)?; }
+        for batch in &self.batches {
+            batch.retain_for_candidate(budget)?;
+        }
         Ok(())
     }
     pub(crate) fn protect_unsaved(&mut self) -> Result<(), ReceivedError> {

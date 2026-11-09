@@ -14,9 +14,10 @@ use serde::{Deserialize, Serialize};
 
 mod journal;
 mod notices;
-pub(crate) use notices::{PreparedSemanticNotices, SemanticNotice};
 pub(crate) use journal::{CognitionChange, CognitionCheckpoint, CognitionJournal};
+pub(crate) use notices::{PreparedSemanticNotices, SemanticNotice};
 mod retained_size;
+use retained_size::{inner_contents_bytes, mind_contents_bytes, mind_parent_bytes};
 mod save;
 pub(crate) use save::encode_cognition_changes;
 
@@ -129,6 +130,8 @@ pub(crate) struct PrivateThought {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ActorMind {
+    #[serde(skip)]
+    contents_storage: Option<crate::host::ResidentReservation>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub documents: Vec<MindDocument>,
@@ -141,6 +144,8 @@ pub(crate) struct ActorMind {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct InnerWorld {
+    #[serde(skip)]
+    contents_storage: Option<crate::host::ResidentReservation>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub source_snapshot: String,
@@ -162,6 +167,9 @@ pub(crate) struct InnerWorld {
 pub(crate) struct MindState {
     pub minds: Option<IndexMap<String, ActorMind>>,
     pub inner_worlds: Option<IndexMap<String, InnerWorld>>,
+    // Parent maps, keys and unchanged owner headers remain resident even when
+    // privacy replaces every derived document/vector with an empty value.
+    _storage: crate::host::ResidentReservation,
 }
 impl MindState {
     /// Source pins every retained individual interpretation, including resolved
@@ -232,6 +240,7 @@ pub(crate) fn install_minds(
     entities: &EntityStore,
     limits: &MindLimits,
     schema: &RecordSchema,
+    budget: &crate::host::ByteBudget,
 ) -> Result<MindState, InstallError> {
     let owners = take_collection(import, "mind_state", "[\"world\"]", minds_present, true)?;
     let mut minds = IndexMap::with_capacity(owners.rows.len());
@@ -295,6 +304,11 @@ pub(crate) fn install_minds(
         {
             return Err(InstallError::CurrentFormat);
         }
+        mind.contents_storage = Some(
+            budget
+                .reserve_record(mind_contents_bytes(&mind).ok_or(InstallError::Capacity)?)
+                .map_err(|_| InstallError::Capacity)?,
+        );
         if minds.insert(row.slot, mind).is_some() {
             return Err(InstallError::DuplicateRow);
         }
@@ -322,12 +336,21 @@ pub(crate) fn install_minds(
         {
             return Err(InstallError::ParentPresence);
         }
-        let value = serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        let mut value: InnerWorld =
+            serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        value.contents_storage = Some(
+            budget
+                .reserve_record(inner_contents_bytes(&value).ok_or(InstallError::Capacity)?)
+                .map_err(|_| InstallError::Capacity)?,
+        );
         if inner.insert(row.slot, value).is_some() {
             return Err(InstallError::DuplicateRow);
         }
     }
     Ok(MindState {
+        _storage: budget
+            .reserve_backing(mind_parent_bytes(&minds, &inner).ok_or(InstallError::Capacity)?)
+            .map_err(|_| InstallError::Capacity)?,
         minds: minds_present.then_some(minds),
         inner_worlds: inner_present.then_some(inner),
     })

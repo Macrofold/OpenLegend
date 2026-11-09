@@ -13,6 +13,8 @@ mod state;
 pub(crate) use state::{KnowledgeCheckpoint, KnowledgeJournal, KnowledgeState};
 mod edit;
 mod save;
+mod revoke;
+pub(crate) use revoke::revoke_knowledge_documents;
 pub(crate) use edit::{CompletedKnowledgeEdit, KnowledgeEdit, edit_knowledge};
 
 #[derive(Debug, Deserialize)]

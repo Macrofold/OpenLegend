@@ -12,8 +12,8 @@ use std::sync::Arc;
 
 mod attention_work;
 mod frames;
-use attention_work::{AttentionCut, AttentionSources, AttentionWork};
 use super::current_residency::{CurrentOwnerPart, CurrentOwnerStorage};
+use attention_work::{AttentionCut, AttentionSources, AttentionWork};
 mod metadata;
 mod save;
 
@@ -692,7 +692,7 @@ impl CurrentJournal {
                 }
                 CurrentUndo::VisualConfirmation { observer, prior } => {
                     owner_mut(state, &observer)?.visual_confirmation = prior;
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Sight,true)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Sight, true)?;
                 }
                 CurrentUndo::MotionMember {
                     observer,
@@ -712,7 +712,7 @@ impl CurrentJournal {
                     if !root_present {
                         owner.motion_samples = None;
                     }
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Motion,true)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Motion, true)?;
                 }
                 CurrentUndo::MotionExpiry { observer, prior } => {
                     owner_mut(state, &observer)?.motion_expires_at = prior
@@ -730,7 +730,7 @@ impl CurrentJournal {
                         }
                         gaps.shift_insert(at, subject, prior);
                     }
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Gaps,true)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Gaps, true)?;
                 }
 
                 CurrentUndo::DeadVisibility {
@@ -798,8 +798,15 @@ impl CurrentJournal {
                     prior,
                 } => {
                     let owner = owner_mut(state, &observer)?;
-                    let removed = owner.current.get_key_value(&subject).map_or(0, |(key,_)|key.capacity());
-                    let added = if prior.is_some() { subject.capacity() } else {0};
+                    let removed = owner
+                        .current
+                        .get_key_value(&subject)
+                        .map_or(0, |(key, _)| key.capacity());
+                    let added = if prior.is_some() {
+                        subject.capacity()
+                    } else {
+                        0
+                    };
                     owner.current.shift_remove(&subject);
                     if let Some((at, prior)) = prior {
                         if at > owner.current.len() {
@@ -807,19 +814,19 @@ impl CurrentJournal {
                         }
                         owner.current.shift_insert(at, subject, prior);
                     }
-                    CurrentOwnerStorage::key_change(owner,removed,added)?;
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Current,true)?;
+                    CurrentOwnerStorage::key_change(owner, removed, added)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Current, true)?;
                 }
                 CurrentUndo::Attention { observer, prior } => {
                     owner_mut(state, &observer)?.attention = prior;
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Attention,true)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Attention, true)?;
                 }
                 CurrentUndo::NextContact { observer, prior } => {
                     owner_mut(state, &observer)?.next_contact = prior
                 }
                 CurrentUndo::Geometry { observer, prior } => {
                     owner_mut(state, &observer)?.geometry = prior;
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Geometry,true)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Geometry, true)?;
                 }
                 CurrentUndo::Motion {
                     observer,
@@ -829,12 +836,12 @@ impl CurrentJournal {
                     let owner = owner_mut(state, &observer)?;
                     owner.motion_samples = Some(prior);
                     owner.motion_expires_at = expires_at;
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Motion,true)?;
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Motion, true)?;
                 }
                 CurrentUndo::Gaps { observer, prior } => {
                     owner_mut(state, &observer)?.gaps = prior;
-                    self.settle_owner(state,&observer,CurrentOwnerPart::Gaps,true)?;
-                },
+                    self.settle_owner(state, &observer, CurrentOwnerPart::Gaps, true)?;
+                }
             }
         }
         self.retained.truncate(checkpoint.retained);
@@ -996,7 +1003,14 @@ impl CurrentJournal {
     ) -> Result<(), ReceivedError> {
         let current = owner(state, observer)?;
         let inserting = after.is_some() && !current.current.contains_key(subject);
-        let removed_key = if after.is_none() { current.current.get_key_value(subject).map_or(0, |(k,_)|k.capacity()) } else { 0 };
+        let removed_key = if after.is_none() {
+            current
+                .current
+                .get_key_value(subject)
+                .map_or(0, |(k, _)| k.capacity())
+        } else {
+            0
+        };
         let extra = after.as_ref().map_or(Ok(0), contact_copy_heap)?;
         let growth = if inserting && current.current.len() == current.current.capacity() {
             map_storage::<String, CurrentContact>(2 * (current.current.len() + 1))
@@ -1039,7 +1053,11 @@ impl CurrentJournal {
                 current.current.shift_remove(subject);
             }
         }
-        CurrentOwnerStorage::key_change(current, removed_key, usize::from(inserting)*subject.len())?;
+        CurrentOwnerStorage::key_change(
+            current,
+            removed_key,
+            usize::from(inserting) * subject.len(),
+        )?;
         self.settle_owner(state, observer, CurrentOwnerPart::Current, false)?;
         Ok(())
     }
@@ -1218,7 +1236,11 @@ impl CurrentJournal {
         self.settle_contact_from(state, observer, subject, false)
     }
     fn settle_contact_from(
-        &mut self, state: &mut ReceptionState, observer: &str, subject: &str, restoring: bool,
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        subject: &str,
+        restoring: bool,
     ) -> Result<(), ReceivedError> {
         let Some(contact) = owner_mut(state, observer)?.current.get_mut(subject) else {
             return Ok(());
@@ -1230,16 +1252,35 @@ impl CurrentJournal {
                 .reservation
                 .split_off(bytes - storage.bytes())
                 .map_err(|_| capacity())?;
-            if restoring { self.budget.restore_backing(storage, growth) }
-            else { self.budget.fund_backing(storage, growth) }.map_err(|_| capacity())?;
+            if restoring {
+                self.budget.restore_backing(storage, growth)
+            } else {
+                self.budget.fund_backing(storage, growth)
+            }
+            .map_err(|_| capacity())?;
         }
         storage.resize(bytes).map_err(|_| capacity())
     }
-    fn settle_owner(&mut self, state:&mut ReceptionState, observer:&str, part:CurrentOwnerPart, restoring:bool) -> Result<(),ReceivedError> {
-        CurrentOwnerStorage::settle(owner_mut(state,observer)?,part,&mut self.reservation,restoring)
+    fn settle_owner(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        part: CurrentOwnerPart,
+        restoring: bool,
+    ) -> Result<(), ReceivedError> {
+        CurrentOwnerStorage::settle(
+            owner_mut(state, observer)?,
+            part,
+            &mut self.reservation,
+            restoring,
+        )
     }
-    pub(super) fn settle_attention(&mut self, state:&mut ReceptionState, observer:&str) -> Result<(),ReceivedError> {
-        self.settle_owner(state,observer,CurrentOwnerPart::Attention,false)
+    pub(super) fn settle_attention(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+    ) -> Result<(), ReceivedError> {
+        self.settle_owner(state, observer, CurrentOwnerPart::Attention, false)
     }
 }
 fn owner<'a>(

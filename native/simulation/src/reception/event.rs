@@ -392,11 +392,11 @@ impl EventObservationSelection<'_> {
             .references
             .iter()
             .map(|(id, role)| {
-                Ok(ReceivedReference {
-                    id: (*id).to_owned(),
-                    label: label(id, *role != ReferenceRole::Participant)?,
-                    role: *role,
-                })
+                Ok(ReceivedReference::ordinary(
+                    (*id).to_owned(),
+                    label(id, *role != ReferenceRole::Participant)?,
+                    *role,
+                ))
             })
             .collect::<Result<Vec<_>, SensorError>>()?;
         Ok(PermittedEventObservation {

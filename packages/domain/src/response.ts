@@ -1224,9 +1224,7 @@ export function commitActorResponse(
         components[localId] = outcome(
           false,
           supportsManualWork(source) ? 'invalid-expression' : 'unsupported-body',
-          supportsManualWork(source)
-            ? 'The expression target is unavailable or out of reach.'
-            : 'This gesture requires a supported biped body.',
+          supportsManualWork(source) ? rules.unavailable : rules.unsupportedBody,
         );
       else {
         emit(
@@ -1235,7 +1233,9 @@ export function commitActorResponse(
           rules.eventType,
           subjectNarration(source, [
             presentVerb(source, expression!.verb),
-            ...(expression!.headSuffix ? [' ', person(source, 'possessive'), expression!.headSuffix] : []),
+            ...(expression!.headSuffix
+              ? [' ', person(source, 'possessive'), expression!.headSuffix]
+              : []),
             ...(target
               ? [
                   expression!.targetPrefix,
@@ -1253,11 +1253,7 @@ export function commitActorResponse(
             ...(target ? { targetReference: true } : {}),
           },
         );
-        components[localId] = outcome(
-          true,
-          'expressed',
-          'Expression accepted without mechanical effects.',
-        );
+        components[localId] = outcome(true, 'expressed', rules.accepted);
       }
     } else if (act?.kind === 'proposal') {
       // Server-scoped interpretation chooses existing commands, never effects. Admission

@@ -44,7 +44,9 @@ pub(crate) fn encode_temporal_changes(
                     bytes.checked_add(map_storage::<(&str, &str), bool>(state.undo.len())?)
                 })
                 .and_then(|bytes| {
-                    bytes.checked_add(map_storage::<(&str, &str), Option<u64>>(page_count)?)
+                    bytes.checked_add(map_storage::<(&str, &str), (Option<u64>, bool)>(
+                        page_count,
+                    )?)
                 })
                 .ok_or_else(error)?,
         )
@@ -89,7 +91,9 @@ pub(crate) fn encode_temporal_changes(
                         .values()
                         .find(|page| page.row_id() == row_id)
                         .map(|page| page.position());
-                    pages.insert((actor_id.as_str(), row_id.as_str()), position);
+                    pages
+                        .entry((actor_id.as_str(), row_id.as_str()))
+                        .or_insert((position, false));
                 }
             }
             TemporalUndo::PageEdit {
@@ -98,7 +102,10 @@ pub(crate) fn encode_temporal_changes(
                 after_position,
                 ..
             } => {
-                pages.insert((actor_id.as_str(), before.row_id()), *after_position);
+                pages.insert(
+                    (actor_id.as_str(), before.row_id()),
+                    (*after_position, true),
+                );
             }
         }
     }
@@ -290,7 +297,7 @@ pub(crate) fn encode_temporal_changes(
             }
         }
     }
-    for ((actor_id, row_id), position) in pages {
+    for ((actor_id, row_id), (position, logical_removal)) in pages {
         let actor = state.actors.get(actor_id).ok_or_else(error)?;
         if let Some(position) = position {
             let page = actor
@@ -323,7 +330,7 @@ pub(crate) fn encode_temporal_changes(
                 page.columns(),
                 create,
                 RowEffects {
-                    logical_removal: Some(true),
+                    logical_removal: Some(logical_removal),
                     ..RowEffects::default()
                 },
             )?;

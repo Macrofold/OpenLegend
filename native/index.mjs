@@ -973,6 +973,7 @@ if (__napiLoadedBindingTarget === 'native' && nativeBinding !== __napiRequiredNa
 const {
   NativeHost,
   NativeWorld,
+  NativeWorldConsumer,
   NativeWorldJson,
   NativeWorldPlayerPublication,
   NativeWorldPlayerRead,
@@ -985,6 +986,7 @@ const {
 } = nativeBinding;
 export { NativeHost };
 export { NativeWorld };
+export { NativeWorldConsumer };
 export { NativeWorldJson };
 export { NativeWorldPlayerPublication };
 export { NativeWorldPlayerRead };

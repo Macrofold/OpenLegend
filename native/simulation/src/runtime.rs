@@ -14,7 +14,11 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
+mod handoff;
 mod player;
+pub use handoff::RuntimeOutputHandoff;
+mod consumer;
+pub use consumer::RuntimeConsumer;
 pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
 
 #[derive(Debug)]
@@ -72,8 +76,14 @@ fn decode_preparation(bytes: &[u8], budget: &ByteBudget) -> Result<ByteReservati
 pub struct RuntimeJson {
     bytes: Vec<u8>,
     custody: ByteReservation,
+    handoff: Option<RuntimeOutputHandoff>,
 }
 impl RuntimeJson {
+    /// Reserve decoded consumer custody before Node copies/parses these exact
+    /// selected bytes. Buffer finalization has a separate ownership lifetime.
+    pub fn consumer(&self, budget: &ByteBudget) -> Result<RuntimeConsumer, RuntimeError> {
+        consumer::prepare(&self.bytes, budget)
+    }
     fn encode(
         value: &(impl Serialize + ?Sized),
         budget: &ByteBudget,
@@ -89,13 +99,17 @@ impl RuntimeJson {
             .map_err(failure)?;
         let bytes = json_record(value).map_err(failure)?.into_bytes();
         custody.resize(bytes.capacity()).map_err(failure)?;
-        Ok(Self { bytes, custody })
+        Ok(Self {
+            bytes,
+            custody,
+            handoff: None,
+        })
     }
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
     }
-    pub fn into_parts(self) -> (Vec<u8>, ByteReservation) {
-        (self.bytes, self.custody)
+    pub fn into_parts(self) -> (Vec<u8>, ByteReservation, Option<RuntimeOutputHandoff>) {
+        (self.bytes, self.custody, self.handoff)
     }
 }
 
@@ -126,13 +140,18 @@ impl RuntimeProvider {
             .map_err(failure)?;
         let bytes = self.question.json().as_bytes().to_vec();
         custody.resize(bytes.capacity()).map_err(failure)?;
-        Ok(RuntimeJson { bytes, custody })
+        Ok(RuntimeJson {
+            bytes,
+            custody,
+            handoff: None,
+        })
     }
 }
 
 pub struct RuntimePrepared {
     prepared: crate::simulation::session::PreparedCandidate,
     output: Option<RuntimeJson>,
+    handoff: RuntimeOutputHandoff,
 }
 impl RuntimePrepared {
     pub fn key(&self) -> CandidateKey {
@@ -144,7 +163,7 @@ impl RuntimePrepared {
     /// The server reserves this complete allocation first. Its current input
     /// and authority check then runs immediately before fence.settle().
     pub fn ready(&self) -> Result<(), RuntimeError> {
-        if self.output.is_some() {
+        if self.output.is_some() || !self.handoff.is_complete() {
             return Err(failure(
                 "prepared output has not transferred to the application",
             ));
@@ -175,6 +194,7 @@ pub struct NativeWorldSession {
     next_read_serial: u64,
     active: bool,
     temporal_save_limits: crate::received::TemporalSaveLimits,
+    history_edit_limits: crate::experience::HistoryEditLimits,
 }
 impl NativeWorldSession {
     pub fn install(
@@ -193,6 +213,7 @@ impl NativeWorldSession {
             row_bytes: input.storage.temporal_save.row_bytes,
             resident_bytes: input.storage.temporal_resident_bytes,
         };
+        let history_edit_limits = input.storage.history_edit;
         let core = crate::install::CoreInstallInput {
             records: input.records,
             originals: input.originals,
@@ -246,6 +267,7 @@ impl NativeWorldSession {
             next_read_serial: 0,
             active: false,
             temporal_save_limits,
+            history_edit_limits,
         })
     }
     pub fn fence(&self) -> Arc<CandidateFence> {
@@ -374,14 +396,20 @@ impl NativeWorldSession {
             SessionStep::Prepared(prepared) => {
                 let (operation, history, notices) =
                     self.session.prepared_products(key).map_err(failure)?;
-                let output = match RuntimeJson::encode(
-                    &Products {
-                        operation,
-                        history,
-                        notices,
-                    },
-                    &self.budget,
-                ) {
+                let output = (|| {
+                    let handoff = RuntimeOutputHandoff::new(&self.budget)?;
+                    let mut output = RuntimeJson::encode(
+                        &Products {
+                            operation,
+                            history,
+                            notices,
+                        },
+                        &self.budget,
+                    )?;
+                    output.handoff = Some(handoff.clone());
+                    Ok::<_, RuntimeError>((output, handoff))
+                })();
+                let (output, handoff) = match output {
                     Ok(output) => output,
                     Err(error) => {
                         self.session.cancel(key).map_err(failure)?;
@@ -392,6 +420,7 @@ impl NativeWorldSession {
                 RuntimeStep::Prepared(RuntimePrepared {
                     prepared,
                     output: Some(output),
+                    handoff,
                 })
             }
         })
@@ -468,6 +497,7 @@ struct RuntimeStorageSettings {
     temporal_resident_bytes: usize,
     temporal_save: RuntimeTemporalSaveSettings,
     pending_save_bytes: usize,
+    history_edit: crate::experience::HistoryEditLimits,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

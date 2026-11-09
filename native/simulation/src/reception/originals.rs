@@ -4,6 +4,7 @@
 
 mod residency;
 pub(super) use residency::OriginalMetadata;
+mod privacy;
 mod save;
 
 use super::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -304,7 +305,10 @@ impl OriginalJournal {
             .and_then(|owners| owners.get_mut(&observer.id))
             .ok_or_else(invalid)?;
         if owner.metadata_storage.is_none() {
-            owner.metadata_storage = Some(super::current_residency::CurrentOwnerStorage::install(owner, &self.budget)?);
+            owner.metadata_storage = Some(super::current_residency::CurrentOwnerStorage::install(
+                owner,
+                &self.budget,
+            )?);
         }
         if owner.received_at_sequence != sequence {
             // Bodies and the moved phase arrays/maps retain their own guards.

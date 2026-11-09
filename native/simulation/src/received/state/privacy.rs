@@ -118,7 +118,16 @@ impl TemporalState {
         meaning: &dyn TemporalValueMeaning,
         budget: &ByteBudget,
     ) -> Result<TemporalAccountAliases, ReceivedError> {
-        let actor = self.actor(actor_id).ok_or_else(invalid)?;
+        let Some(actor) = self.actor(actor_id) else {
+            return Ok(TemporalAccountAliases {
+                groups: Vec::new(),
+                by_alias: IndexMap::new(),
+                expansion_bytes: 0,
+                reservation: budget
+                    .reserve(size_of::<TemporalAccountAliases>())
+                    .map_err(|_| invalid())?,
+            });
+        };
         if actor
             .supports
             .as_ref()

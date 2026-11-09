@@ -38,6 +38,13 @@ pub struct AccountRules {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub fallback_priority: u64,
     pub focus_attribute: String,
+    pub privacy_outcomes: PrivacyOutcomes,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PrivacyOutcomes {
+    pub commitment: crate::commands::Outcome,
+    pub forgotten: crate::commands::Outcome,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

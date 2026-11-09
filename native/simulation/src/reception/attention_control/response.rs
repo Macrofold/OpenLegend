@@ -70,7 +70,9 @@ pub(crate) fn set_attention_focus(
             .journal
             .current
             .attention_mut(&mut core.state.reception, observer)? = Some(attention);
-        core.journal.current.settle_attention(&mut core.state.reception, observer)?;
+        core.journal
+            .current
+            .settle_attention(&mut core.state.reception, observer)?;
     }
     let current = owner(&core.state.reception, observer)
         .and_then(|owner| owner.attention.as_ref())
@@ -107,7 +109,9 @@ pub(crate) fn set_attention_focus(
         .as_mut()
         .ok_or_else(invalid)?
         .explicit = next;
-    core.journal.current.settle_attention(&mut core.state.reception, observer)?;
+    core.journal
+        .current
+        .settle_attention(&mut core.state.reception, observer)?;
     select(core, observer, &[], budget)?;
     Ok(true)
 }
@@ -161,11 +165,64 @@ pub(crate) fn acknowledge_attention(
             changed.push(candidate.source_id.clone());
         }
     }
-    core.journal.current.settle_attention(&mut core.state.reception, observer)?;
+    core.journal
+        .current
+        .settle_attention(&mut core.state.reception, observer)?;
     for source in &changed {
         core.journal
             .current
             .note_attention_source(observer, source)?;
     }
     select(core, observer, &changed, budget)
+}
+
+/// A completed response resolves only the exact still-active presented cause.
+/// Other motion, later descriptions and a new latch generation remain pending.
+pub(crate) fn acknowledge_semantic_cause(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    key: &str,
+    generation: u64,
+    qualitative_revision: &str,
+    severity: f64,
+) -> Result<(), ExecutionError> {
+    let Some(state) =
+        owner(&core.state.reception, observer).and_then(|owner| owner.attention.as_ref())
+    else {
+        return Ok(());
+    };
+    let Some(latch) = state
+        .latches
+        .get(key)
+        .filter(|latch| latch.active && latch.generation == generation)
+    else {
+        return Ok(());
+    };
+    let candidates = build_candidates(
+        &core.state.physical,
+        &core.state.reception,
+        &core.state.installed,
+        &core.state.experience,
+        observer,
+        state,
+        Some(&[&latch.anchor_key]),
+        &mut core.journal.current,
+    )?;
+    if candidates
+        .get(&latch.anchor_key)
+        .is_none_or(|candidate| candidate.description_revision != qualitative_revision)
+    {
+        return Ok(());
+    }
+    crate::execution::PhysicalMutation {
+        state: &mut core.state.physical,
+        journal: &mut core.journal.physical,
+    }
+    .resolve_semantic_cause(
+        observer,
+        key,
+        qualitative_revision,
+        severity,
+        Some(&state.annotations),
+    )
 }

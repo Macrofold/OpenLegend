@@ -3,7 +3,7 @@
 use super::*;
 use crate::execution::ExecutionError;
 use crate::host::retained_size::{HeapBytes, heap_sum};
-use crate::host::{ByteBudget, ByteReservation};
+use crate::host::{ByteBudget, ByteReservation, ResidentReservation};
 
 impl HeapBytes for Goal {
     fn heap_bytes(&self) -> Option<usize> {
@@ -20,19 +20,23 @@ impl HeapBytes for Goal {
 }
 pub(crate) struct FundedGoals {
     pub value: Vec<Goal>,
-    pub storage: ByteReservation,
+    pub storage: ResidentReservation,
 }
 impl FundedGoals {
     pub(crate) fn new(
         value: Vec<Goal>,
         mut storage: ByteReservation,
+        budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let bytes = value.heap_bytes().ok_or(ExecutionError::Capacity)?;
         if storage.bytes() < bytes {
             return Err(ExecutionError::Capacity);
         }
         storage.resize(bytes)?;
-        Ok(Self { value, storage })
+        Ok(Self {
+            value,
+            storage: budget.adopt_record(storage)?,
+        })
     }
 }
 impl EntityStore {
@@ -50,7 +54,7 @@ impl EntityStore {
                 .and_then(|entity| entity.actor.as_ref())
             {
                 slot.goal_storage = Some(
-                    budget.reserve(
+                    budget.reserve_record(
                         actor
                             .agency
                             .goals
@@ -59,6 +63,21 @@ impl EntityStore {
                     )?,
                 );
             }
+        }
+        Ok(())
+    }
+    pub(crate) fn retain_goals(
+        &self,
+        handle: EntityHandle,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let slot = self
+            .slots
+            .get(handle.slot)
+            .filter(|slot| slot.generation == handle.generation)
+            .ok_or(ExecutionError::MissingEntity)?;
+        if let Some(storage) = &slot.goal_storage {
+            budget.retain_record(storage)?;
         }
         Ok(())
     }
@@ -89,10 +108,10 @@ impl EntityStore {
         } else if before_bytes != 0 {
             return Err(ExecutionError::Invariant);
         }
-        let before_storage = slot
-            .goal_storage
-            .take()
-            .unwrap_or(after.storage.split_off(0)?);
+        let before_storage = match slot.goal_storage.take() {
+            Some(storage) => storage,
+            None => after.storage.split_off(0)?,
+        };
         let value = std::mem::replace(&mut actor.agency.goals, after.value);
         slot.goal_storage = Some(after.storage);
         Ok(FundedGoals {

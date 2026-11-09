@@ -12,6 +12,13 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 mod encoding;
 use encoding::CommandEncoding;
 
+mod invocation;
+mod preparation;
+pub(crate) use invocation::{BoundInvocation, InvocationCursor, InvocationStep};
+pub(crate) use preparation::{
+    CommandChoiceAnswer, CommandChoiceCursor, CommandChoiceStep, InvocationLimits,
+    PreparedCommandChoice, WorkTransitionMode,
+};
 mod operation;
 pub(crate) use operation::*;
 mod exposure;

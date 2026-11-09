@@ -2,6 +2,7 @@
 //! immutable receipt keeps its payload/typed-read custody after acceptance;
 //! removed receipts move into undo until rollback or acceptance releases them.
 use super::*;
+use crate::host::ResidentReservation;
 use crate::install::rows::{take_collection, validate_map_row};
 use crate::install::{InstallError, RowImport};
 
@@ -9,13 +10,13 @@ pub(super) struct ReceiptRecord {
     pub receipt: ResponseReceipt,
     pub position: u64,
     pub payload: String,
-    _reservation: ByteReservation,
+    _reservation: ResidentReservation,
 }
 pub(crate) struct ResponseState {
     pub(super) records: IndexMap<String, ReceiptRecord>,
     pub(super) present: bool,
     pub(super) next_ordinal: u64,
-    metadata: ByteReservation,
+    metadata: ResidentReservation,
 }
 impl ResponseState {
     pub(crate) fn install(
@@ -40,7 +41,7 @@ impl ResponseState {
             .and_then(|n| n.checked_add(keys))
             .ok_or(InstallError::CurrentFormat)?;
         let metadata = budget
-            .reserve(bytes)
+            .reserve_backing(bytes)
             .map_err(|_| InstallError::CurrentFormat)?;
         rows.rows.sort_unstable_by_key(|row| row.position);
         let mut records = IndexMap::with_capacity(rows.rows.len());
@@ -89,7 +90,9 @@ impl ResponseState {
                         receipt,
                         position: row.position,
                         payload: row.payload,
-                        _reservation: reservation,
+                        _reservation: budget
+                            .adopt_record(reservation)
+                            .map_err(|_| InstallError::CurrentFormat)?,
                     },
                 )
                 .is_some()
@@ -137,12 +140,14 @@ pub(super) enum ResponseUndo {
 pub(crate) struct ResponseJournal {
     pub(super) undo: Vec<ResponseUndo>,
     reservation: ByteReservation,
+    budget: ByteBudget,
 }
 impl ResponseJournal {
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ExecutionError> {
         Ok(Self {
             undo: Vec::new(),
             reservation: budget.reserve(size_of::<Self>())?,
+            budget: budget.clone(),
         })
     }
     pub(crate) fn checkpoint(&self) -> ResponseCheckpoint {
@@ -181,9 +186,9 @@ impl ResponseJournal {
         }
         let bytes = state.metadata_bytes().ok_or(ExecutionError::Capacity)?;
         if bytes > state.metadata.bytes() {
-            state
-                .metadata
-                .merge(self.reservation.split_off(bytes - state.metadata.bytes())?)?;
+            let growth = bytes - state.metadata.bytes();
+            self.budget
+                .restore_backing(&mut state.metadata, self.reservation.split_off(growth)?)?;
         }
         state.metadata.resize(bytes)?;
         Ok(())
@@ -239,9 +244,9 @@ impl ResponseJournal {
         .and_then(|n| n.checked_add(state.records.keys().map(String::capacity).sum::<usize>()))
         .and_then(|n| n.checked_add(id.len()))
         .ok_or(ExecutionError::Capacity)?;
-        state
-            .metadata
-            .resize(state.metadata.bytes().max(map_bound))?;
+        let metadata_bytes = state.metadata.bytes().max(map_bound);
+        self.budget
+            .resize_backing(&mut state.metadata, metadata_bytes)?;
         let evictions = target.saturating_sub(
             usize::try_from(limits.receipts).map_err(|_| ExecutionError::Capacity)?,
         );
@@ -268,6 +273,7 @@ impl ResponseJournal {
             .records
             .try_reserve(1)
             .map_err(|_| ExecutionError::Capacity)?;
+        let record_reservation = budget.adopt_record(record_reservation)?;
         self.undo.push(ResponseUndo::Append {
             id: id.to_owned(),
             present: state.present,
@@ -294,6 +300,9 @@ impl ResponseJournal {
                 .min_by(|(_, a), (_, b)| crate::encoding::js_property_cmp(a, b))
                 .map(|(index, _)| index)
                 .ok_or(ExecutionError::Invariant)?;
+            if let Some((_, record)) = state.records.get_index(index) {
+                self.budget.retain_record(&record._reservation)?;
+            }
             let (id, record) = state
                 .records
                 .shift_remove_index(index)

@@ -4,6 +4,7 @@
 use super::*;
 use crate::attention::{AccountRetentionLimits, AttentionRetentionPolicy};
 use crate::experience::AccountClass;
+use crate::host::retained_size::HeapBytes;
 use crate::identity::IdentityState;
 use crate::received::{
     BodyReception, ReceivedFieldClock, ReceivedReceiptHeader, ReceivedRole, ReceivedTransition,
@@ -17,6 +18,7 @@ use crate::reception::{
 };
 use crate::work::{WorkMeters, WorkUnit};
 use std::collections::BTreeSet;
+use std::mem::size_of;
 
 mod capture;
 mod receipt;
@@ -57,6 +59,9 @@ impl TemporalState {
             .records
             .get_full(id)
             .map(|(at, _, record)| (at, Arc::clone(record)));
+        if let Some((_, record)) = &before {
+            record.retain_for_candidate(&self.budget)?;
+        }
         let next_ordinal = supports.coverage.next_ordinal;
         let parent_present = supports.coverage.parent_present;
         // This is an ordinary Source object map, not a stable history list.
@@ -73,7 +78,21 @@ impl TemporalState {
         } else {
             next_ordinal as usize
         } as u64;
-        self.reserve_undo_slots(1, &self.budget.clone())?;
+        // IDs in the sparse inverse are actual owned copies, not part of the
+        // shared immutable receipt/value body pin.
+        let ids = self
+            .budget
+            .reserve(actor_id.len().checked_add(id.len()).ok_or_else(invalid)?)
+            .map_err(|_| invalid())?;
+        self.reserve_undo_slots(2, &self.budget.clone())?;
+        if after.is_some() && before.is_none() {
+            self.actors
+                .get_mut(actor_id)
+                .and_then(|actor| actor.supports.as_mut())
+                .ok_or_else(invalid)?
+                .reserve_insert()?;
+        }
+        self.undo.push(TemporalUndo::Reservation(ids));
         self.undo.push(TemporalUndo::Support {
             actor_id: actor_id.to_owned(),
             id: id.to_owned(),
@@ -318,7 +337,7 @@ impl TemporalState {
         id: &str,
         required: bool,
         limits: &AccountRetentionLimits,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         now: f64,
         policy: &AttentionRetentionPolicy,
         budget: &crate::host::ByteBudget,
@@ -405,7 +424,8 @@ impl TemporalState {
         ordinals: Option<&BTreeSet<u64>>,
         required: bool,
         limits: &AccountRetentionLimits,
-        values: &mut ReceivedValues,
+        values: &mut Option<ReceivedValues>,
+        activity_limits: &Arc<crate::activity::ActivityDisplayLimits>,
         identity: &mut IdentityState,
         transition: &mut ReceivedTransition,
         now: f64,
@@ -420,6 +440,21 @@ impl TemporalState {
         if actor.header.physical_life != observation.observer.physical_life {
             return Ok(None);
         }
+        let _scratch = budget
+            .reserve(
+                observation
+                    .heap_bytes()
+                    .and_then(|bytes| bytes.checked_mul(8))
+                    .and_then(|bytes| {
+                        bytes.checked_add(observation.facets.len().checked_mul(
+                            size_of::<usize>()
+                                + size_of::<TemporalFacetReference>()
+                                + size_of::<ReceivedValueFragment>(),
+                        )?)
+                    })
+                    .ok_or_else(invalid)?,
+            )
+            .map_err(|_| invalid())?;
         let selected = observation
             .facets
             .iter()
@@ -462,7 +497,7 @@ impl TemporalState {
                     &prior.capsule.receipt.id,
                     true,
                     limits,
-                    values,
+                    &values.as_ref(),
                     now,
                     policy,
                     budget,
@@ -480,7 +515,16 @@ impl TemporalState {
         let mut fields = Vec::with_capacity(selected.len());
         for field in selected {
             let (fragment, reception) = split(&field.value)?;
-            let retained = values.retain(fragment.clone(), None, now, sequence, identity)?;
+            let retained = crate::received::retain_received_value(
+                values,
+                fragment.clone(),
+                None,
+                now,
+                sequence,
+                identity,
+                activity_limits,
+                budget,
+            )?;
             fragments.push(fragment);
             fields.push(TemporalFacetReference {
                 clock: ReceivedFieldClock {
@@ -556,7 +600,7 @@ impl TemporalState {
                 required,
             },
             limits,
-            values,
+            &values.as_ref(),
             now,
             policy,
             meters,

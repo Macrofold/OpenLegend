@@ -19,9 +19,9 @@ use std::{collections::BTreeMap, mem::size_of, sync::Arc};
 mod index;
 mod residency;
 use index::AppraisalIndex;
+mod hydration;
 mod read;
 mod response;
-mod hydration;
 pub(crate) use read::{AppraisalScope, write_actor_appraisals};
 pub(crate) use response::{
     AppraisalBindings, AppraisalChangeCursor, AppraisalChangeStep, AppraisalPublication,
@@ -70,6 +70,7 @@ pub(crate) struct Definition {
 pub(crate) struct InstalledAppraisalDefinition {
     pub value: Definition,
     pub pin: DefinitionPin,
+    _storage: Option<crate::host::ResidentReservation>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -166,7 +167,7 @@ pub(crate) struct Appraisal {
 pub(crate) struct AppraisalRecord {
     pub value: Appraisal,
     pub row: InstalledRow,
-    _reservation: Option<ByteReservation>,
+    _reservation: Option<crate::host::ResidentReservation>,
 }
 pub(crate) struct AppraisalOwner {
     pub row: Option<InstalledRow>,
@@ -174,6 +175,8 @@ pub(crate) struct AppraisalOwner {
     pub active_complete: bool,
     pub records: IndexMap<String, Arc<AppraisalRecord>>,
     index: AppraisalIndex,
+    allocation: Option<residency::OwnerAllocation>,
+    header_storage: Option<crate::host::ResidentReservation>,
 }
 pub(crate) struct AppraisalState {
     pub definitions: IndexMap<String, Arc<InstalledAppraisalDefinition>>,
@@ -183,6 +186,8 @@ pub(crate) struct AppraisalState {
     pub process_next_ordinal: u64,
     deadlines: BTreeMap<(u64, String), (String, String)>,
     undo: Vec<AppraisalUndo>,
+    allocation: Option<residency::RootAllocation>,
+    undo_storage: Option<ByteReservation>,
 }
 enum AppraisalUndo {
     HydratedOwner {
@@ -191,17 +196,20 @@ enum AppraisalUndo {
         complete: bool,
         active_complete: bool,
         _storage: ByteReservation,
+        allocation: Option<residency::OwnerAllocation>,
     },
     Record {
         actor: String,
         id: String,
         prior: Option<(usize, Arc<AppraisalRecord>)>,
         next: u64,
+        _workspace: ByteReservation,
     },
     Owner {
         actor: String,
         next: u64,
         parent_present: bool,
+        _workspace: ByteReservation,
     },
 }
 #[derive(Clone, Copy)]
@@ -271,6 +279,7 @@ pub(crate) fn install_appraisals(
             Arc::new(InstalledAppraisalDefinition {
                 value: definition,
                 pin,
+                _storage: None,
             }),
         );
     }
@@ -346,6 +355,8 @@ pub(crate) fn install_appraisals(
                 coverage: records.coverage,
                 records: values,
                 index: AppraisalIndex::default(),
+                allocation: None,
+                header_storage: None,
             },
         );
     }
@@ -369,6 +380,8 @@ pub(crate) fn install_appraisals(
         process_next_ordinal: process.coverage.next_ordinal,
         deadlines: BTreeMap::new(),
         undo: Vec::new(),
+        allocation: None,
+        undo_storage: None,
     };
     for owner in state.owners.values() {
         for record in owner.records.values() {
@@ -381,14 +394,16 @@ impl AppraisalState {
     /// A restored record keeps its body and derived-key allowance in that same
     /// canonical Arc. Replacement or acceptance cannot free a held old body.
     pub(crate) fn prepare_indices(&mut self, budget: &ByteBudget) -> Result<(), ExecutionError> {
+        residency::fund_initial(self, budget)?;
         for owner in self.owners.values_mut() {
             for record in owner.records.values_mut() {
                 let record = Arc::get_mut(record).ok_or(ExecutionError::Invariant)?;
                 if record._reservation.is_some() {
                     return Err(ExecutionError::Invariant);
                 }
-                record._reservation =
-                    Some(budget.reserve(residency::record_bytes(&record.value, &record.row)?)?);
+                record._reservation = Some(
+                    budget.reserve_record(residency::record_bytes(&record.value, &record.row)?)?,
+                );
                 owner.index.insert(&record.value)?;
             }
         }
@@ -408,8 +423,18 @@ impl AppraisalState {
         }
         while self.undo.len() > checkpoint.undo {
             match self.undo.pop().ok_or(ExecutionError::Invariant)? {
-                AppraisalUndo::HydratedOwner { actor, prior, complete, active_complete, .. } => {
-                    let owner = self.owners.get_mut(&actor).ok_or(ExecutionError::Invariant)?;
+                AppraisalUndo::HydratedOwner {
+                    actor,
+                    prior,
+                    complete,
+                    active_complete,
+                    allocation,
+                    ..
+                } => {
+                    let owner = self
+                        .owners
+                        .get_mut(&actor)
+                        .ok_or(ExecutionError::Invariant)?;
                     for record in owner.records.values() {
                         owner.index.remove(&record.value)?;
                         unindex_deadline(&mut self.deadlines, &record.value);
@@ -421,23 +446,27 @@ impl AppraisalState {
                     owner.records = prior;
                     owner.coverage.complete = complete;
                     owner.active_complete = active_complete;
+                    owner.allocation = allocation;
                 }
                 AppraisalUndo::Owner {
                     actor,
                     next,
                     parent_present,
+                    ..
                 } => {
                     self.owners
                         .shift_remove(&actor)
                         .ok_or(ExecutionError::Invariant)?;
                     self.owner_coverage.next_ordinal = next;
                     self.owner_coverage.parent_present = parent_present;
+                    self.remove_owner_allocation(actor.len())?;
                 }
                 AppraisalUndo::Record {
                     actor,
                     id,
                     prior,
                     next,
+                    ..
                 } => {
                     let owner = self
                         .owners
@@ -459,7 +488,10 @@ impl AppraisalState {
         Ok(())
     }
     pub(crate) fn discard_undo(&mut self) {
-        self.undo = Vec::new()
+        self.undo = Vec::new();
+        if let Some(storage) = &mut self.undo_storage {
+            storage.resize(0).expect("shrinking live undo storage");
+        }
     }
     pub(crate) fn changed_records(&self) -> impl Iterator<Item = (&str, &str)> + '_ {
         self.undo.iter().filter_map(|undo| match undo {
@@ -568,21 +600,16 @@ fn put(
     mut reservation: ByteReservation,
     checked: Option<&response::CheckedCreation>,
 ) -> Result<(), ExecutionError> {
+    let budget = core.journal.byte_budget().clone();
     let actor = &value.actor_id;
     let id = &value.id;
     let state = &mut core.state.appraisals;
-    state
-        .undo
-        .try_reserve_exact(2)
-        .map_err(|_| ExecutionError::Capacity)?;
+    state.reserve_undo_slots(2, &budget)?;
     if !state.owners.contains_key(actor) {
         if !state.owner_coverage.complete {
             return Err(ExecutionError::Invariant);
         }
-        state
-            .owners
-            .try_reserve(1)
-            .map_err(|_| ExecutionError::Capacity)?;
+        state.reserve_owner_member(actor, &budget)?;
         let parent =
             json_record(&["world", "appraisals", actor]).map_err(|_| ExecutionError::Invariant)?;
         let row = InstalledRow {
@@ -593,7 +620,7 @@ fn put(
             payload: "{}".to_owned(),
             extra: Vec::new(),
         };
-        let owner = AppraisalOwner {
+        let mut owner = AppraisalOwner {
             row: Some(row),
             coverage: OwnerCoverage {
                 table: "mind_appraisals".to_owned(),
@@ -605,11 +632,15 @@ fn put(
             records: IndexMap::new(),
             active_complete: true,
             index: AppraisalIndex::default(),
+            allocation: None,
+            header_storage: None,
         };
+        residency::fund_owner(&mut owner, &budget)?;
         state.undo.push(AppraisalUndo::Owner {
             actor: actor.clone(),
             next: state.owner_coverage.next_ordinal,
             parent_present: state.owner_coverage.parent_present,
+            _workspace: reservation.split_off(actor.len())?,
         });
         state.owner_coverage.next_ordinal = state
             .owner_coverage
@@ -627,6 +658,9 @@ fn put(
         .records
         .get_full(id)
         .map(|(at, _, record)| (at, Arc::clone(record)));
+    if let Some((_, record)) = &prior {
+        record.retain_for_candidate(&budget)?;
+    }
     if prior.is_none()
         && !owner.coverage.complete
         && !checked.is_some_and(|proof| proof.matches(actor, id))
@@ -650,19 +684,22 @@ fn put(
     // The preparation allowance covers encoding peak; the canonical owner must
     // keep every actual body/index allocation after that temporary work ends.
     let resident = residency::record_bytes(&value, &row)?;
-    if resident > reservation.bytes() {
-        reservation.resize(resident)?;
+    let needed = resident
+        .checked_add(actor.len())
+        .and_then(|n| n.checked_add(id.len()))
+        .ok_or(ExecutionError::Capacity)?;
+    if needed > reservation.bytes() {
+        reservation.resize(needed)?;
     }
+    let canonical_storage = budget.adopt_record(reservation.split_off(resident)?)?;
     let undo = AppraisalUndo::Record {
         actor: actor.clone(),
         id: id.clone(),
         prior,
         next,
+        _workspace: reservation,
     };
-    owner
-        .records
-        .try_reserve(1)
-        .map_err(|_| ExecutionError::Capacity)?;
+    owner.reserve_record_member(&budget)?;
     if let Some(prior) = owner.records.get(id) {
         owner.index.remove(&prior.value)?;
         unindex_deadline(&mut state.deadlines, &prior.value);
@@ -674,7 +711,7 @@ fn put(
         Arc::new(AppraisalRecord {
             value,
             row,
-            _reservation: Some(reservation),
+            _reservation: Some(canonical_storage),
         }),
     );
     if matches!(&undo, AppraisalUndo::Record { prior: None, .. }) {

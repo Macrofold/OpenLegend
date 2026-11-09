@@ -34,7 +34,7 @@ enum Undo {
         documents: Vec<super::MindDocument>,
         records: Vec<super::InnerRecord>,
         thoughts: Vec<super::PrivateThought>,
-        _replacement: ByteReservation,
+        storage: crate::host::ResidentReservation,
     },
     ResetInner {
         actor: String,
@@ -42,6 +42,7 @@ enum Undo {
         evidence_ids: Vec<String>,
         publication_body: Option<String>,
         reconsideration: Option<bool>,
+        storage: crate::host::ResidentReservation,
     },
 }
 #[derive(Clone, Copy)]
@@ -257,28 +258,29 @@ impl CognitionJournal {
                 bytes.checked_add(record_count.checked_mul(size_of::<super::InnerRecord>())?)
             })
             .ok_or(ExecutionError::Capacity)?;
-        let replacement = budget.reserve(new_bytes)?;
-        let before_bytes = heap_sum([
-            mind.documents
-                .heap_bytes()
-                .ok_or(ExecutionError::Capacity)?,
-            mind.records.heap_bytes().ok_or(ExecutionError::Capacity)?,
-            mind.thoughts.heap_bytes().ok_or(ExecutionError::Capacity)?,
-            inner
-                .map_or(Some(0), |inner| {
-                    heap_sum([
-                        inner.evidence_ids.heap_bytes()?,
-                        inner.publication_body.heap_bytes()?,
-                    ])
-                })
-                .ok_or(ExecutionError::Capacity)?,
+        let replacement = budget.adopt_record(budget.reserve(new_bytes)?)?;
+        budget.retain_record(
+            mind.contents_storage
+                .as_ref()
+                .ok_or(ExecutionError::Invariant)?,
+        )?;
+        if let Some(inner) = inner {
+            budget.retain_record(
+                inner
+                    .contents_storage
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?,
+            )?;
+        }
+        // The old vectors move with their canonical guards. Only actual actor
+        // strings in the inverse are separate workspace; no second body copy.
+        self.reserve(
+            1 + usize::from(inner.is_some()),
             actor
                 .len()
                 .checked_mul(1 + usize::from(inner.is_some()))
                 .ok_or(ExecutionError::Capacity)?,
-        ])
-        .ok_or(ExecutionError::Capacity)?;
-        self.reserve(1 + usize::from(inner.is_some()), before_bytes)?;
+        )?;
         let mut retained_documents = Vec::new();
         retained_documents
             .try_reserve_exact(document_count)
@@ -300,7 +302,10 @@ impl CognitionJournal {
             documents: std::mem::replace(&mut mind.documents, retained_documents),
             records: std::mem::replace(&mut mind.records, retained_records),
             thoughts: std::mem::take(&mut mind.thoughts),
-            _replacement: replacement,
+            storage: mind
+                .contents_storage
+                .replace(replacement)
+                .ok_or(ExecutionError::Invariant)?,
         });
         mind.revision = revision;
         if let Some(inner) = state
@@ -308,7 +313,16 @@ impl CognitionJournal {
             .as_mut()
             .and_then(|worlds| worlds.get_mut(actor))
         {
+            let empty = inner
+                .contents_storage
+                .as_mut()
+                .ok_or(ExecutionError::Invariant)?
+                .split_off(0)?;
             self.undo.push(Undo::ResetInner {
+                storage: inner
+                    .contents_storage
+                    .replace(empty)
+                    .ok_or(ExecutionError::Invariant)?,
                 actor: actor.to_owned(),
                 revision: inner.revision,
                 evidence_ids: std::mem::take(&mut inner.evidence_ids),
@@ -479,7 +493,7 @@ impl CognitionJournal {
                     documents,
                     records,
                     thoughts,
-                    _replacement,
+                    storage,
                 } => {
                     let mind = state
                         .minds
@@ -490,7 +504,7 @@ impl CognitionJournal {
                     mind.documents = documents;
                     mind.records = records;
                     mind.thoughts = thoughts;
-                    drop(_replacement);
+                    mind.contents_storage = Some(storage);
                 }
                 Undo::ResetInner {
                     actor,
@@ -498,6 +512,7 @@ impl CognitionJournal {
                     evidence_ids,
                     publication_body,
                     reconsideration,
+                    storage,
                 } => {
                     let inner = state
                         .inner_worlds
@@ -508,6 +523,7 @@ impl CognitionJournal {
                     inner.evidence_ids = evidence_ids;
                     inner.publication_body = publication_body;
                     inner.reconsideration_required = reconsideration;
+                    inner.contents_storage = Some(storage);
                 }
             }
         }

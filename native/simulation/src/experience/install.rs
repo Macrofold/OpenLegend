@@ -280,6 +280,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         originals,
         events.coverage,
         context.archived_event_count,
+        context.budget,
     )
     .map_err(|_| InstallError::CurrentFormat)?;
     if let Some(selection) = import.working_set() {

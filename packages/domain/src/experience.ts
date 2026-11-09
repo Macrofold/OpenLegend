@@ -89,6 +89,7 @@ import {
   selectedOccurrenceRules,
   selectedTemporalPolicy,
   selectedRetainRecognitionEvidence,
+  selectedPrivacyOutcomes,
 } from './world-composition.js';
 import {
   retainTemporalObservationSupport,
@@ -1833,11 +1834,7 @@ export function forgetExperience(input: WorldState, actorId: string, sourceId: s
     return {
       world: input,
       events: [],
-      outcome: outcome(
-        false,
-        'commitment',
-        'Resolve protected obligations before forgetting their evidence.',
-      ),
+      outcome: { ...selectedPrivacyOutcomes(input).commitment },
     };
   const world = draftWorld(input);
   migrateCognition(world);
@@ -1855,14 +1852,10 @@ export function forgetExperience(input: WorldState, actorId: string, sourceId: s
     return {
       world: input,
       events: [],
-      outcome: outcome(
-        false,
-        'commitment',
-        'Resolve protected obligations before forgetting their evidence.',
-      ),
+      outcome: { ...selectedPrivacyOutcomes(input).commitment },
     };
   return {
-    ...finish(world, [], outcome(true, 'forgotten', 'Recall and derived inner world invalidated.')),
+    ...finish(world, [], { ...selectedPrivacyOutcomes(input).forgotten }),
     invalidatedMemoryIds: { [actorId]: invalidated },
   };
 }

@@ -51,6 +51,7 @@ pub(crate) enum StatusActivationProgress {
     Complete(bool),
 }
 pub(crate) struct StatusActivationCursor {
+    budget: ByteBudget,
     subject: String,
     definition: String,
     source: String,
@@ -94,6 +95,7 @@ impl StatusActivationCursor {
         .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(bytes)?;
         Ok(Self {
+            budget: budget.clone(),
             subject: subject.into(),
             definition: definition.into(),
             source: source.into(),
@@ -389,7 +391,11 @@ impl StatusActivationCursor {
                             .split_off(action.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                         core.physical().replace_action(
                             &self.subject,
-                            Some(crate::state::FundedAction::from_storage(action, storage)?),
+                            Some(crate::state::FundedAction::from_storage(
+                                action,
+                                storage,
+                                &self.budget,
+                            )?),
                             ActionWrite {
                                 generation: PlanGenerationWrite::Advance,
                                 behavior: None,

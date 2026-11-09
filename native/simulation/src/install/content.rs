@@ -21,6 +21,7 @@ pub(crate) struct WorldProfile {
 }
 
 pub(crate) struct InstalledContent {
+    _storage: Option<crate::host::ResidentReservation>,
     /// Presentation is installed authored data, not a source of permissions or
     /// executable policy. The Node formatter may share this same immutable cut.
     pub presentation: Option<Arc<RawValue>>,
@@ -45,9 +46,34 @@ impl InstalledContent {
             return Err(super::InstallError::CurrentFormat);
         }
         Ok(Self {
+            _storage: None,
             presentation: presentation.map(Arc::from),
             time_policy,
             profile,
         })
+    }
+    pub(super) fn fund(
+        &mut self,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(), super::InstallError> {
+        if self._storage.is_some() {
+            return Err(super::InstallError::CurrentFormat);
+        }
+        let bytes = self
+            .profile
+            .id
+            .capacity()
+            .checked_add(
+                self.presentation
+                    .as_ref()
+                    .map_or(0, |raw| raw.get().len() + 2 * std::mem::size_of::<usize>()),
+            )
+            .ok_or(super::InstallError::Capacity)?;
+        self._storage = Some(
+            budget
+                .reserve_record(bytes)
+                .map_err(|_| super::InstallError::Capacity)?,
+        );
+        Ok(())
     }
 }

@@ -407,11 +407,17 @@ pub fn association_evidence_status(
     })
 }
 
-pub fn evidence_cut_eligible(
+/// A supplied response selects one dated source at a time. A revoked unused
+/// member in the same original capture cannot withdraw another selected fact.
+pub(crate) enum EvidenceCutMember {
+    Acquired(usize),
+    Current(usize),
+}
+
+fn evidence_header_eligible(
     experience: &ExperienceState,
     entities: &EntityStore,
     captured: &CapturedEvidenceCut,
-    meaning: &dyn TemporalValueMeaning,
 ) -> bool {
     if experience.generation() != captured.generation {
         return false;
@@ -432,58 +438,117 @@ pub fn evidence_cut_eligible(
     if actor.physical_life.unwrap_or(0) != cut.observer.physical_life {
         return false;
     }
-    for observation in &cut.acquired {
-        if !unrevoked(privacy, &observation.id) {
+    true
+}
+
+fn acquired_member_eligible(
+    observation: &ObservationContribution,
+    privacy: Option<&ActorPrivacy>,
+    meaning: &dyn TemporalValueMeaning,
+) -> bool {
+    if !unrevoked(privacy, &observation.id) {
+        return false;
+    }
+    match &observation.origin {
+        ObservationOrigin::Occurrence { event_id, .. } if !unrevoked(privacy, event_id) => {
             return false;
         }
-        match &observation.origin {
-            ObservationOrigin::Occurrence { event_id, .. } if !unrevoked(privacy, event_id) => {
-                return false;
-            }
-            ObservationOrigin::Exposure {
-                source: Some(source),
-                ..
-            } if !unrevoked(privacy, &source.id) => return false,
-            _ => {}
-        }
-        if observation.facets.iter().any(|facet|!facet_dependencies_unrevoked(privacy,&facet.value,facet.support.as_ref())||!association_unrevoked(privacy,&facet.value,&observation.id,facet.ordinal,meaning)||matches!(&facet.value,SensoryFacet::Claim {support_aliases,..} if support_aliases.iter().flatten().any(|alias|!unrevoked(privacy,&alias.id)))) {return false;}
+        ObservationOrigin::Exposure {
+            source: Some(source),
+            ..
+        } if !unrevoked(privacy, &source.id) => return false,
+        _ => {}
     }
-    cut.current.iter().all(|facet| {
-        if !fact_unrevoked(privacy, &facet.original)
-            || !unrevoked(privacy, &facet.confirmation.id)
-            || facet
-                .original_aliases
+    if observation.facets.iter().any(|facet|!facet_dependencies_unrevoked(privacy,&facet.value,facet.support.as_ref())||!association_unrevoked(privacy,&facet.value,&observation.id,facet.ordinal,meaning)||matches!(&facet.value,SensoryFacet::Claim {support_aliases,..} if support_aliases.iter().flatten().any(|alias|!unrevoked(privacy,&alias.id)))) {return false;}
+    true
+}
+fn current_member_eligible(
+    facet: &CapturedCurrentFacet,
+    privacy: Option<&ActorPrivacy>,
+    meaning: &dyn TemporalValueMeaning,
+) -> bool {
+    if !fact_unrevoked(privacy, &facet.original)
+        || !unrevoked(privacy, &facet.confirmation.id)
+        || facet
+            .original_aliases
+            .iter()
+            .flatten()
+            .any(|id| !unrevoked(privacy, id))
+    {
+        return false;
+    }
+    if facet.pose_support.as_ref().is_some_and(|support| {
+        !fact_unrevoked(privacy, &support.original)
+            || !unrevoked(privacy, &support.confirmation.id)
+            || support
+                .aliases
                 .iter()
                 .flatten()
                 .any(|id| !unrevoked(privacy, id))
-        {
-            return false;
-        }
-        if facet.pose_support.as_ref().is_some_and(|support| {
-            !fact_unrevoked(privacy, &support.original)
-                || !unrevoked(privacy, &support.confirmation.id)
-                || support
-                    .aliases
-                    .iter()
-                    .flatten()
-                    .any(|id| !unrevoked(privacy, id))
-        }) || facet.description_support.as_ref().is_some_and(|support| {
-            !fact_unrevoked(privacy, &support.original)
-                || !unrevoked(privacy, &support.confirmation.id)
-                || support
-                    .aliases
-                    .iter()
-                    .flatten()
-                    .any(|id| !unrevoked(privacy, id))
-        }) {
-            return false;
-        }
-        association_unrevoked(
-            privacy,
-            &facet.value,
-            &facet.original.source.id,
-            facet.original.ordinal,
-            meaning,
-        ) && facet_dependencies_unrevoked(privacy, &facet.value, None)
-    })
+    }) || facet.description_support.as_ref().is_some_and(|support| {
+        !fact_unrevoked(privacy, &support.original)
+            || !unrevoked(privacy, &support.confirmation.id)
+            || support
+                .aliases
+                .iter()
+                .flatten()
+                .any(|id| !unrevoked(privacy, id))
+    }) {
+        return false;
+    }
+    association_unrevoked(
+        privacy,
+        &facet.value,
+        &facet.original.source.id,
+        facet.original.ordinal,
+        meaning,
+    ) && facet_dependencies_unrevoked(privacy, &facet.value, None)
+}
+
+pub fn evidence_cut_eligible(
+    experience: &ExperienceState,
+    entities: &EntityStore,
+    captured: &CapturedEvidenceCut,
+    meaning: &dyn TemporalValueMeaning,
+) -> bool {
+    if !evidence_header_eligible(experience, entities, captured) {
+        return false;
+    }
+    let cut = captured.cut();
+    let privacy = experience
+        .actor(&cut.observer.actor_id)
+        .map(|actor| &actor.privacy);
+    cut.acquired
+        .iter()
+        .all(|member| acquired_member_eligible(member, privacy, meaning))
+        && cut
+            .current
+            .iter()
+            .all(|member| current_member_eligible(member, privacy, meaning))
+}
+
+pub(crate) fn evidence_cut_member_eligible(
+    experience: &ExperienceState,
+    entities: &EntityStore,
+    captured: &CapturedEvidenceCut,
+    member: EvidenceCutMember,
+    meaning: &dyn TemporalValueMeaning,
+) -> bool {
+    if !evidence_header_eligible(experience, entities, captured) {
+        return false;
+    }
+    let cut = captured.cut();
+    let privacy = experience
+        .actor(&cut.observer.actor_id)
+        .map(|actor| &actor.privacy);
+    match member {
+        EvidenceCutMember::Acquired(index) => cut
+            .acquired
+            .get(index)
+            .is_some_and(|observation| acquired_member_eligible(observation, privacy, meaning)),
+        EvidenceCutMember::Current(index) => cut
+            .current
+            .get(index)
+            .is_some_and(|facet| current_member_eligible(facet, privacy, meaning)),
+    }
 }

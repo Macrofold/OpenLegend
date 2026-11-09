@@ -9,6 +9,8 @@ use crate::values::{deserialize_present_option, is_safe_record_id};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod prepare;
+pub(crate) use prepare::{ActivityStartProblem, check_activity_start};
 mod event;
 pub(crate) use event::EventActivity;
 mod state;

@@ -1,3 +1,5 @@
+import { BASE_MANUAL_WORK_BODY_PLANS } from './bodies.js';
+
 /** The bundled world's gestures and private-thought presentation. The native
  * owner imports this same definition; the engine supplies structured grammar. */
 export const BASE_RESPONSE_RULES = {
@@ -5,6 +7,10 @@ export const BASE_RESPONSE_RULES = {
   interpretation: { importance: 5 },
   expression: {
     eventType: 'expression',
+    bodyPlans: BASE_MANUAL_WORK_BODY_PLANS,
+    unsupportedBody: 'This gesture requires a supported biped body.',
+    unavailable: 'The expression target is unavailable or out of reach.',
+    accepted: 'Expression accepted without mechanical effects.',
     verbs: {
       nod: { verb: 'nod', headSuffix: null, targetPrefix: ' toward ', requiresReach: false },
       smile: { verb: 'smile', headSuffix: null, targetPrefix: ' toward ', requiresReach: false },

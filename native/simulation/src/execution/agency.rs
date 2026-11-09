@@ -36,6 +36,7 @@ impl PhysicalMutation<'_> {
         &mut self,
         id: &str,
         after: crate::state::FundedGoals,
+        budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
         let handle = self
             .state
@@ -44,6 +45,7 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::MissingEntity)?;
         let key = UndoKey::AgencyGoals(handle.slot, handle.generation);
         let first = self.journal.first(&key)?;
+        self.state.entities.retain_goals(handle, budget)?;
         self.journal.reserve(2 * size_of::<Undo>())?;
         let before = self.state.entities.swap_funded_goals(handle, after)?;
         if first {

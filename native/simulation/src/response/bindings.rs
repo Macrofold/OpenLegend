@@ -1,0 +1,410 @@
+//! A response keeps the actual accepted NPC read and its finite issued aliases.
+//! Only the native context producer constructs this input. Public/model JSON
+//! carries a ticket and a response, never these permission-bearing maps.
+use super::*;
+use crate::appraisals::AppraisalBindings;
+use crate::attention::AttentionPresentation;
+use crate::commands::PurposeBinding;
+use crate::received::{CapturedTemporalReceipt, TemporalReceiptLocator};
+use crate::reception::ObserverSubject;
+use crate::simulation::{AcceptedActorRead, SimulationState};
+use crate::text::JsText;
+use serde::ser::SerializeStruct;
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct WorkPlanIdentity {
+    pub id: String,
+    pub revision: u64,
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ResponseWorkIdentity {
+    pub generation: u64,
+    pub life: u64,
+    pub controller: String,
+    pub action_id: Option<String>,
+    pub plan: Option<WorkPlanIdentity>,
+    pub suspended: Option<WorkPlanIdentity>,
+}
+impl ResponseWorkIdentity {
+    pub(crate) fn capture(
+        state: &SimulationState,
+        actor: &str,
+        budget: &ByteBudget,
+    ) -> Result<(Self, ByteReservation), ExecutionError> {
+        let actor = state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        let bytes = heap_sum([
+            actor.controller.capacity(),
+            actor
+                .action
+                .as_ref()
+                .map_or(0, |action| action.id.capacity()),
+            actor
+                .agency
+                .plan
+                .as_ref()
+                .map_or(0, |plan| plan.id.capacity()),
+            actor
+                .agency
+                .suspended_plan()
+                .map_or(0, |plan| plan.id.capacity()),
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let storage = budget.reserve(bytes)?;
+        let plan = |plan: &crate::plans::ActorPlan| WorkPlanIdentity {
+            id: plan.id.clone(),
+            revision: plan.revision,
+        };
+        Ok((
+            Self {
+                generation: actor.plan_generation,
+                life: actor.physical_life.unwrap_or(0),
+                controller: actor.controller.clone(),
+                action_id: actor.action.as_ref().map(|action| action.id.clone()),
+                plan: actor.agency.plan.as_ref().map(plan),
+                suspended: actor.agency.suspended_plan().map(plan),
+            },
+            storage,
+        ))
+    }
+    pub(super) fn current(&self, state: &SimulationState, id: &str) -> bool {
+        let Some(actor) = state
+            .physical
+            .entities
+            .get(id)
+            .and_then(|entity| entity.actor.as_ref())
+        else {
+            return false;
+        };
+        self.generation == actor.plan_generation
+            && self.life == actor.physical_life.unwrap_or(0)
+            && self.controller == actor.controller
+            && self.action_id.as_deref() == actor.action.as_ref().map(|action| action.id.as_str())
+            && self
+                .plan
+                .as_ref()
+                .map(|plan| (plan.id.as_str(), plan.revision))
+                == actor
+                    .agency
+                    .plan
+                    .as_ref()
+                    .map(|plan| (plan.id.as_str(), plan.revision))
+            && self
+                .suspended
+                .as_ref()
+                .map(|plan| (plan.id.as_str(), plan.revision))
+                == actor
+                    .agency
+                    .suspended_plan()
+                    .map(|plan| (plan.id.as_str(), plan.revision))
+    }
+}
+
+/// The trusted typed binder retains unsupported command families as immutable
+/// offered data. The executor refuses that action component; deserializing a
+/// response must never discard independent legitimate speech or interpretation.
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ResponseActionChoice {
+    pub invocation: Option<crate::records::SqlCell>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub purpose: Option<PurposeBinding>,
+    pub transition: crate::commands::WorkTransitionMode,
+    pub expected_work: ResponseWorkIdentity,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ResponseAttemptBinding {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub operation_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub manifest_revision: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_episodes: Option<IndexMap<String, Option<String>>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fulfillment: Option<crate::records::SqlCell>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<crate::plans::ActionResolution>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub keep: Option<bool>,
+    pub description: JsText,
+    pub commands: Vec<crate::records::SqlCell>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ResponseSemanticCause {
+    pub key: String,
+    pub qualitative_revision: String,
+    pub severity: f64,
+    pub generation: u64,
+}
+pub(crate) struct ResponseSituation {
+    pub privacy_revision: u64,
+    pub attention_references: IndexMap<String, String>,
+    pub retention_references: IndexMap<String, TemporalReceiptLocator>,
+    pub receipt_details: IndexMap<String, CapturedTemporalReceipt>,
+    /// Indices refer only to this ticket's guard-owning evidence cut.
+    pub observation_references: IndexMap<String, usize>,
+    pub current_references: IndexMap<String, usize>,
+    pub presented: Vec<AttentionPresentation>,
+    pub semantic_causes: Option<Vec<ResponseSemanticCause>>,
+}
+pub(crate) struct ResponseBindingInput {
+    pub read: AcceptedActorRead,
+    pub actions: IndexMap<String, ResponseActionChoice>,
+    pub entity_ids: Vec<String>,
+    pub expected_plan: u64,
+    pub attempt_bindings: Vec<ResponseAttemptBinding>,
+    pub expected_encounters: Option<IndexMap<String, String>>,
+    pub evidence_ids: Vec<String>,
+    pub knowledge_references: IndexMap<String, ObserverSubject>,
+    pub identity_references: IndexMap<String, ObserverSubject>,
+    pub entity_leases: IndexMap<String, String>,
+    pub situation: Option<ResponseSituation>,
+    pub appraisal_bindings: Option<AppraisalBindings>,
+}
+pub(crate) struct ResponseBindings {
+    pub(super) input: ResponseBindingInput,
+    _reservation: ByteReservation,
+}
+impl ResponseBindings {
+    /// The caller funds allocation before constructing these maps, then moves
+    /// their custody here. Existing read/source guards stay with their records.
+    pub(crate) fn new(
+        input: ResponseBindingInput,
+        mut storage: ByteReservation,
+    ) -> Result<Self, ExecutionError> {
+        if !matches!(
+            input.read.purpose,
+            crate::capture::ActorReadPurpose::NpcDecision
+        ) {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        if let Some(situation) = &input.situation {
+            let cut = input.read.perception.evidence.cut();
+            if situation.privacy_revision != cut.privacy_revision
+                || situation
+                    .observation_references
+                    .values()
+                    .any(|index| *index >= cut.acquired.len())
+                || situation
+                    .current_references
+                    .values()
+                    .any(|index| *index >= cut.current.len())
+            {
+                return Err(ExecutionError::InvalidCheckpoint);
+            }
+        }
+        let bytes = input.heap_bytes().ok_or(ExecutionError::Capacity)?;
+        if storage.bytes() < bytes {
+            return Err(ExecutionError::Capacity);
+        }
+        storage.resize(bytes)?;
+        Ok(Self {
+            input,
+            _reservation: storage,
+        })
+    }
+    pub(crate) fn actor_id(&self) -> &str {
+        &self.input.read.perception.actor_id
+    }
+    pub(crate) fn world_id(&self) -> &str {
+        &self.input.read.perception.world_id
+    }
+    pub(super) fn digest_view<'a>(&'a self, response: &'a ActorResponse) -> ResponseDigestView<'a> {
+        ResponseDigestView {
+            bindings: self,
+            response,
+        }
+    }
+}
+
+pub(super) struct ResponseDigestView<'a> {
+    bindings: &'a ResponseBindings,
+    response: &'a ActorResponse,
+}
+impl Serialize for ResponseDigestView<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let input = &self.bindings.input;
+        let mut out = serializer.serialize_struct("ResponseDigest", 13)?;
+        out.serialize_field("actorId", self.bindings.actor_id())?;
+        out.serialize_field("response", self.response.value())?;
+        out.serialize_field("actions", &input.actions)?;
+        out.serialize_field("entityIds", &input.entity_ids)?;
+        out.serialize_field("expectedPlan", &input.expected_plan)?;
+        out.serialize_field("attemptBindings", &input.attempt_bindings)?;
+        if let Some(value) = &input.expected_encounters {
+            out.serialize_field("expectedEncounters", value)?;
+        }
+        out.serialize_field("evidenceIds", &input.evidence_ids)?;
+        out.serialize_field("knowledgeReferences", &input.knowledge_references)?;
+        out.serialize_field("identityReferences", &input.identity_references)?;
+        out.serialize_field("entityLeases", &input.entity_leases)?;
+        if let Some(value) = &input.situation {
+            out.serialize_field(
+                "situationBinding",
+                &SituationDigest {
+                    situation: value,
+                    cut: self.bindings.input.read.perception.evidence.cut(),
+                },
+            )?;
+        }
+        if let Some(value) = &input.appraisal_bindings {
+            out.serialize_field("appraisalBindings", value)?;
+        }
+        out.end()
+    }
+}
+struct SituationDigest<'a> {
+    situation: &'a ResponseSituation,
+    cut: &'a crate::experience::EvidenceCut,
+}
+impl Serialize for SituationDigest<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        struct Observations<'a>(&'a SituationDigest<'a>);
+        impl Serialize for Observations<'_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                use serde::ser::SerializeMap;
+                let mut out = serializer
+                    .serialize_map(Some(self.0.situation.observation_references.len()))?;
+                for (key, index) in &self.0.situation.observation_references {
+                    let original = &self.0.cut.acquired[*index];
+                    out.serialize_entry(key, &(&original.id, original.revision))?;
+                }
+                out.end()
+            }
+        }
+        struct Currents<'a>(&'a SituationDigest<'a>);
+        impl Serialize for Currents<'_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                use serde::ser::SerializeMap;
+                let mut out =
+                    serializer.serialize_map(Some(self.0.situation.current_references.len()))?;
+                for (key, index) in &self.0.situation.current_references {
+                    let snapshot = &self.0.cut.current[*index];
+                    out.serialize_entry(
+                        key,
+                        &(
+                            &snapshot.confirmation,
+                            snapshot.value_measured_from,
+                            snapshot.value_measured_through,
+                            snapshot.value_acquired_at,
+                            &snapshot.value,
+                        ),
+                    )?;
+                }
+                out.end()
+            }
+        }
+        let mut out = serializer.serialize_struct("SituationBinding", 7)?;
+        out.serialize_field("privacyRevision", &self.situation.privacy_revision)?;
+        out.serialize_field("attentionReferences", &self.situation.attention_references)?;
+        out.serialize_field("retentionReferences", &self.situation.retention_references)?;
+        out.serialize_field("observationReferences", &Observations(self))?;
+        out.serialize_field("currentReferences", &Currents(self))?;
+        out.serialize_field("presented", &self.situation.presented)?;
+        if let Some(value) = &self.situation.semantic_causes {
+            out.serialize_field("semanticCauses", value)?;
+        }
+        out.end()
+    }
+}
+
+impl HeapBytes for WorkPlanIdentity {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.id.heap_bytes()
+    }
+}
+impl HeapBytes for ResponseWorkIdentity {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            self.controller.heap_bytes()?,
+            self.action_id.heap_bytes()?,
+            self.plan.heap_bytes()?,
+            self.suspended.heap_bytes()?,
+        ])
+    }
+}
+impl HeapBytes for ResponseActionChoice {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            self.invocation.heap_bytes()?,
+            self.purpose.heap_bytes()?,
+            self.expected_work.heap_bytes()?,
+        ])
+    }
+}
+impl HeapBytes for ResponseAttemptBinding {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            self.operation_id.heap_bytes()?,
+            self.target_episodes.heap_bytes()?,
+            self.fulfillment.heap_bytes()?,
+            self.resolution.heap_bytes()?,
+            self.description.heap_bytes()?,
+            self.commands.heap_bytes()?,
+        ])
+    }
+}
+impl HeapBytes for ResponseSemanticCause {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            self.key.heap_bytes()?,
+            self.qualitative_revision.heap_bytes()?,
+        ])
+    }
+}
+impl HeapBytes for ResponseSituation {
+    fn heap_bytes(&self) -> Option<usize> {
+        let receipts = self.receipt_details.keys().try_fold(
+            map_storage::<String, CapturedTemporalReceipt>(self.receipt_details.capacity())?,
+            |n, key| n.checked_add(key.capacity()),
+        )?;
+        let presentations = self.presented.iter().try_fold(
+            self.presented
+                .capacity()
+                .checked_mul(size_of::<AttentionPresentation>())?,
+            |n, value| {
+                heap_sum([
+                    n,
+                    value.key.heap_bytes()?,
+                    value.description_revision.heap_bytes()?,
+                    value.change_revision.heap_bytes()?,
+                    value.point.heap_bytes()?,
+                ])
+            },
+        )?;
+        heap_sum([
+            self.attention_references.heap_bytes()?,
+            self.retention_references.heap_bytes()?,
+            receipts,
+            self.observation_references.heap_bytes()?,
+            self.current_references.heap_bytes()?,
+            presentations,
+            self.semantic_causes.heap_bytes()?,
+        ])
+    }
+}
+impl HeapBytes for ResponseBindingInput {
+    fn heap_bytes(&self) -> Option<usize> {
+        heap_sum([
+            size_of::<ResponseBindings>(),
+            self.actions.heap_bytes()?,
+            self.entity_ids.heap_bytes()?,
+            self.attempt_bindings.heap_bytes()?,
+            self.expected_encounters.heap_bytes()?,
+            self.evidence_ids.heap_bytes()?,
+            self.knowledge_references.heap_bytes()?,
+            self.identity_references.heap_bytes()?,
+            self.entity_leases.heap_bytes()?,
+            self.situation.heap_bytes()?,
+            self.appraisal_bindings.heap_bytes()?,
+        ])
+    }
+}

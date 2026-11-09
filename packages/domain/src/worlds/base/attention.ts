@@ -50,6 +50,18 @@ export const BASE_ACCOUNT_RULES = {
   priority: { deliberate: 2, consequence: 1, learning: 1, interpretation: 0 },
   fallbackPriority: 0,
   focusAttribute: FOCUS.id,
+  privacyOutcomes: {
+    commitment: {
+      ok: false,
+      code: 'commitment',
+      message: 'Resolve protected obligations before forgetting their evidence.',
+    },
+    forgotten: {
+      ok: true,
+      code: 'forgotten',
+      message: 'Recall and derived inner world invalidated.',
+    },
+  },
 } as const;
 export function baseActivityResultEventType(commandType: string): string | undefined {
   return BASE_ACCOUNT_RULES.resultEvents[commandType];

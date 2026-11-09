@@ -12,13 +12,13 @@ use std::mem::size_of;
 
 mod candidates;
 mod relations;
+mod response;
 mod selection;
 mod timing;
 mod withdrawal;
-mod response;
-pub(crate) use response::{acknowledge_attention, set_attention_focus};
 use candidates::{AttentionCandidate, build_candidates, current_point};
 pub(crate) use relations::evaluate_attention_relations;
+pub(crate) use response::{acknowledge_attention, acknowledge_semantic_cause, set_attention_focus};
 pub(crate) use timing::next_attention_work_at;
 pub(crate) use withdrawal::prune_withdrawn_attention;
 
@@ -376,6 +376,7 @@ pub(crate) fn update_attention(
                         exposure: Some(&body.grant.exposure),
                         modality: None,
                     },
+                    journal,
                 )?;
             }
             if old.is_none() || geometry.contains(source_id) {
@@ -429,7 +430,7 @@ pub(crate) fn update_attention(
         }
     }
     let candidates = build_candidates(
-        physical, reception, installed, experience, observer, &state, journal,
+        physical, reception, installed, experience, observer, &state, None, journal,
     )?;
     journal.consume_attention_changes(observer)?;
     journal.consume_attention_familiarity(observer)?;

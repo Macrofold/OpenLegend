@@ -84,14 +84,20 @@ impl PhysicalMutation<'_> {
             entity_id: id.into(),
         })?;
         let storage = self.journal.reservation.split_off(0)?;
+        if first {
+            self.state
+                .entities
+                .retain_action_navigation(handle, &self.journal.budget)?;
+        }
         let before = action_storage::swap_navigation(
             self.state,
             handle,
             action_id,
-            crate::state::FundedActionNavigation {
-                value: None,
+            crate::state::FundedActionNavigation::from_storage(
+                None,
                 storage,
-            },
+                &self.journal.budget,
+            )?,
         )?;
         if first {
             self.journal.retain(
@@ -129,14 +135,20 @@ impl PhysicalMutation<'_> {
         let key = UndoKey::ActionPath(handle.slot, handle.generation);
         let first = self.journal.first(&key)?;
         let storage = self.journal.reservation.split_off(0)?;
+        if first {
+            self.state
+                .entities
+                .retain_action_path(handle, &self.journal.budget)?;
+        }
         let before = action_storage::swap_path(
             self.state,
             handle,
             action_id,
-            crate::state::FundedActionPath {
-                value: Vec::new(),
+            crate::state::FundedActionPath::from_storage(
+                Vec::new(),
                 storage,
-            },
+                &self.journal.budget,
+            )?,
         )?;
         if first {
             self.journal.retain(
@@ -271,12 +283,7 @@ impl PhysicalMutation<'_> {
         if action.kind != "move" {
             return Err(ExecutionError::UnsupportedFamily);
         }
-        if !self
-            .state
-            .entities
-            .action_storage(handle)?
-            .shares_owner(&after.storage)
-        {
+        if !after.storage.is_funded_by(&self.journal.budget) {
             return Err(ExecutionError::Invariant);
         }
         self.journal.reserve(
@@ -293,6 +300,11 @@ impl PhysicalMutation<'_> {
         self.journal.change(PhysicalChange::Navigation {
             entity_id: id.to_owned(),
         })?;
+        if first {
+            self.state
+                .entities
+                .retain_action_route(handle, &self.journal.budget)?;
+        }
         let before = action_storage::swap_route(self.state, handle, action_id, after)?;
         if first {
             self.journal.retain(

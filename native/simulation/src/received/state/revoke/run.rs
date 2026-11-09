@@ -20,20 +20,16 @@ pub(crate) fn invalidate_temporal_facets(
     core: &mut CoreMutation<'_>,
     actor: &str,
     revoked: &TemporalFacetRevocation<'_>,
+    scope: &crate::experience::ClosedPrivacyScope,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
     let installed = Arc::clone(&core.state.installed);
     let meaning = installed.account_law();
-    let values = core
-        .state
-        .reception
-        .received_values
-        .as_ref()
-        .ok_or_else(invalid)?;
+    let values = &core.state.reception.received_values.as_ref();
     let pages = core
         .state
         .temporal
-        .revoke_physical_facets(actor, values, &meaning, revoked, budget)?;
+        .revoke_physical_facets(actor, values, &meaning, revoked, scope, budget)?;
     let recordings = plan_current_recording_revocation(
         core.state
             .reception
@@ -70,6 +66,7 @@ pub(crate) fn invalidate_temporal_evidence(
     core: &mut CoreMutation<'_>,
     actor: &str,
     affected: &IndexSet<String>,
+    scope: &crate::experience::ClosedPrivacyScope,
     budget: &ByteBudget,
 ) -> Result<ReleasedTemporalProofs, ExecutionError> {
     let Some(history) = core.state.temporal.actor(actor) else {
@@ -78,8 +75,7 @@ pub(crate) fn invalidate_temporal_evidence(
             _reservation: budget.reserve(0)?,
         });
     };
-    if !history.complete_pages
-        || !history.pending_pages.is_empty()
+    if !scope.permits_actor(actor)
         || history
             .supports
             .as_ref()
@@ -89,12 +85,7 @@ pub(crate) fn invalidate_temporal_evidence(
     }
     let installed = Arc::clone(&core.state.installed);
     let meaning = installed.account_law();
-    let values = core
-        .state
-        .reception
-        .received_values
-        .as_ref()
-        .ok_or_else(invalid)?;
+    let values = &core.state.reception.received_values.as_ref();
     let mut bytes = size_of::<ReleasedTemporalProofs>();
     let mut count = 0usize;
     for page in history.pages.values() {
@@ -165,14 +156,10 @@ pub(crate) fn invalidate_temporal_evidence(
         core,
         actor,
         &TemporalFacetRevocation::Sources(affected),
+        scope,
         budget,
     )?;
-    let values = core
-        .state
-        .reception
-        .received_values
-        .as_ref()
-        .ok_or_else(invalid)?;
+    let values = &core.state.reception.received_values.as_ref();
     let mut supports = Vec::new();
     supports.try_reserve_exact(count).map_err(|_| capacity())?;
     let mut candidates = IndexSet::new();

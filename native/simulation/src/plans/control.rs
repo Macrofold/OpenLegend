@@ -546,68 +546,23 @@ impl PlanControlCursor {
                     }
                 }
                 Phase::SuspendEnd => {
+                    let prepared = super::prepare_suspension(core, &self.actor, &self.budget)?;
+                    self.reservation.merge(prepared.storage)?;
+                    if let Some(refusal) = prepared.outcome {
+                        self.refused = Some(refusal);
+                        self.phase = Phase::Done;
+                        continue;
+                    }
+                    self.restart = prepared.restart;
                     let actor = self.actor(core)?;
-                    let active = actor
+                    if actor
                         .agency
                         .plan
                         .as_ref()
-                        .filter(|plan| plan.status == PlanStatus::Active);
-                    let refusal = if active.is_none() {
-                        actor.action.as_ref().map(|_| &rules.not_chosen_plan)
-                    } else if actor.agency.suspended_plan().is_some() {
-                        Some(&rules.already_paused)
-                    } else if actor.action.as_ref().is_some_and(|action| {
-                        active
-                            .and_then(|p| p.steps.iter().find(|s| s.status == StepStatus::Running))
-                            .and_then(|step| step.action_id.as_ref())
-                            != Some(&action.id)
-                    }) {
-                        Some(&rules.not_chosen_plan)
-                    } else {
-                        None
-                    };
-                    if let Some(refusal) = refusal {
-                        self.refused = Some(self.message(refusal, false)?);
+                        .is_none_or(|plan| plan.status != PlanStatus::Active)
+                    {
                         self.phase = Phase::Done;
                         continue;
-                    }
-                    let Some(plan) = active else {
-                        self.phase = Phase::Done;
-                        continue;
-                    };
-                    if let Some(action) = &actor.action {
-                        if action.kind == "status-effect" {
-                            let mut refusal = self.message(&rules.not_chosen_plan, false)?;
-                            self.reserve(rules.pause_state.len() * 8)?;
-                            refusal.message = rules.pause_state.clone().into();
-                            self.refused = Some(refusal);
-                            self.phase = Phase::Done;
-                            continue;
-                        }
-                        if action.has_unconverted_fields() || !action.consumed.is_empty() {
-                            return Err(ExecutionError::UnsupportedFamily);
-                        }
-                    }
-                    let running = plan
-                        .steps
-                        .iter()
-                        .enumerate()
-                        .find(|(_, step)| step.status == StepStatus::Running);
-                    if let Some((index, step)) = running {
-                        self.reserve(
-                            step.id
-                                .len()
-                                .checked_add(32)
-                                .and_then(|bytes| bytes.checked_mul(3))
-                                .ok_or(ExecutionError::Capacity)?,
-                        )?;
-                        let restart = format!("{}:r{}", step.id, plan.revision);
-                        if !crate::values::is_safe_record_id(&restart) {
-                            self.refused = Some(self.message(&rules.pause_too_often, false)?);
-                            self.phase = Phase::Done;
-                            continue;
-                        }
-                        self.restart = Some((index, restart));
                     }
                     if let Some(action) = actor.action.as_ref() {
                         self.reserve(action.id.len())?;

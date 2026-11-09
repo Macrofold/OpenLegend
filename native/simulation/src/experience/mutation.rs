@@ -766,7 +766,7 @@ impl ExperienceJournal {
         self.undo.push(undo);
         Ok(true)
     }
-    pub(super) fn removed(&self) -> impl Iterator<Item = &Arc<PersonalSourceRecord>> {
+    pub(super) fn removed(&self) -> impl DoubleEndedIterator<Item = &Arc<PersonalSourceRecord>> {
         self.undo.iter().filter_map(|operation| match operation {
             ExperienceUndo::Remove { before, .. } => Some(before),
             _ => None,

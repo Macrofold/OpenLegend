@@ -51,13 +51,14 @@ pub(crate) enum CommandStep<'a> {
     Display(&'a mut super::ActivityDisplayCursor),
     Complete(super::PendingCommandCompletion),
 }
-enum Progress {
+pub(super) enum Progress {
     Geometry,
     Occurrence(StagedOccurrence),
     Personal,
     EndEvidence,
     Display,
     Complete(super::PendingCommandCompletion),
+    Choice(super::PreparedCommandChoice),
 }
 #[derive(Clone, Copy)]
 enum Phase {
@@ -67,6 +68,7 @@ enum Phase {
     Route,
     Probe,
     Prepared,
+    Choice,
     RecordPrepared,
     RecordStatus,
     RecordSpeech,
@@ -113,6 +115,7 @@ pub(crate) struct CommandCursor {
     conditions: Option<crate::conditions::ConditionReconcileCursor>,
     exposure: Option<super::exposure::CommandExposure>,
     options: CommandOptions,
+    preparation_mode: Option<super::WorkTransitionMode>,
     phase: Phase,
     queries: Option<GeometryQueries>,
     binding: GeometryBinding,
@@ -187,6 +190,7 @@ impl CommandCursor {
             conditions: None,
             exposure: None,
             options,
+            preparation_mode: None,
             phase: Phase::Start,
             queries: None,
             binding,
@@ -288,6 +292,39 @@ impl CommandCursor {
             )?);
         }
         Ok(true)
+    }
+    pub(super) fn budget(&self) -> &ByteBudget {
+        &self.budget
+    }
+    pub(super) fn for_preparation(mut self, mode: super::WorkTransitionMode) -> Self {
+        self.preparation_mode = Some(mode);
+        self
+    }
+    fn prepare_view(
+        &mut self,
+        view: &mut ActivityView,
+        ordinary: &crate::worlds::InstalledOrdinaryActionRules,
+    ) -> Result<(), ExecutionError> {
+        if self
+            .action
+            .as_ref()
+            .is_some_and(|action| action.stage == "approaching")
+        {
+            self.reserve(
+                crate::activity::approach_view_bytes(
+                    view,
+                    &ordinary.approach_name,
+                    &ordinary.approach_facts,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+            )?;
+            crate::activity::prepare_approach_view(
+                view,
+                &ordinary.approach_name,
+                &ordinary.approach_facts,
+            );
+        }
+        Ok(())
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self._reservation.resize(
@@ -398,9 +435,10 @@ impl CommandCursor {
                 CommandStep::Display(self.display.as_mut().ok_or(ExecutionError::Invariant)?)
             }
             Progress::Complete(result) => CommandStep::Complete(result),
+            Progress::Choice(_) => return Err(ExecutionError::InvalidCheckpoint),
         })
     }
-    fn drive(
+    pub(super) fn drive(
         &mut self,
         core: &mut CoreMutation<'_>,
         answer: Option<CommandAnswer>,
@@ -689,7 +727,7 @@ impl CommandCursor {
                     core.journal
                         .meters
                         .charge(&[(WorkUnit::InputBytes, input_bytes)])?;
-                    if !self.options.native_controller {
+                    if !self.options.native_controller && self.preparation_mode.is_none() {
                         if let Some(record) = core.state.commands.get(&self.command.envelope().id) {
                             if record.receipt.digest == self.canonical {
                                 self.reserve(
@@ -709,6 +747,18 @@ impl CommandCursor {
                             self.refuse(&ordinary.idempotency_conflict);
                             continue;
                         }
+                    }
+                    if self.preparation_mode.is_some()
+                        && matches!(self.command, NativeCommand::Cancel { .. })
+                    {
+                        self.reserve(128)?;
+                        self.outcome = Some(outcome(
+                            false,
+                            "invalid-plan",
+                            "Only supported native physical work can be queued.",
+                        ));
+                        self.phase = Phase::Done;
+                        continue;
                     }
                     if let Some(problem) =
                         actor_problem(core, &self.command, self.options.native_controller)?
@@ -752,6 +802,7 @@ impl CommandCursor {
                                 .push(SupportQuery {
                                     point,
                                     surface_id: Some(surface_id),
+                                    relative: None,
                                 });
                             return Ok(Progress::Geometry);
                         }
@@ -963,9 +1014,57 @@ impl CommandCursor {
                             .native_locomotion = Some(native.binding.clone());
                     }
                     self.size_action_storage()?;
+                    if self.preparation_mode.is_some() {
+                        self.phase = Phase::Choice;
+                        continue;
+                    }
                     core.physical().settle_entity(&actor_id)?;
                     self.materialized = true;
                     self.phase = Phase::RecordPrepared;
+                }
+                Phase::Choice => {
+                    if self.preparation_mode == Some(super::WorkTransitionMode::Continue)
+                        && self.action.is_some()
+                    {
+                        let message = "Starting this activity requires choosing how to replace or pause the current work.";
+                        self.reserve(message.len() + "work-transition".len())?;
+                        self.outcome = Some(outcome(false, "work-transition", message));
+                        self.phase = Phase::Done;
+                        continue;
+                    }
+                    if self.needs_display(core)? {
+                        return Ok(Progress::Display);
+                    }
+                    let mut view = self.view.take().ok_or(ExecutionError::Invariant)?;
+                    let mut storage = self
+                        .view_reservation
+                        .take()
+                        .ok_or(ExecutionError::Invariant)?;
+                    self.prepare_view(&mut view, ordinary)?;
+                    let actual = view.heap_bytes().ok_or(ExecutionError::Capacity)?;
+                    if actual > storage.bytes() {
+                        storage.merge(self._reservation.split_off(actual - storage.bytes())?)?;
+                    }
+                    let problem = crate::activity::check_activity_start(
+                        &core.state.activity,
+                        &core.state.physical.entities,
+                        &self.command,
+                        view,
+                        storage,
+                        core.state.physical.header.sim_time,
+                    )
+                    .map_err(ExecutionError::Activity)?;
+                    let (ok, code, message) = match &problem {
+                        Some(problem) => (false, "experience-capacity", problem.message()),
+                        None => (
+                            true,
+                            "available",
+                            "Current prerequisites are available; execution rechecks them.",
+                        ),
+                    };
+                    self.reserve(code.len() + message.len())?;
+                    self.outcome = Some(outcome(ok, code, message));
+                    self.phase = Phase::Done;
                 }
                 Phase::RecordPrepared => {
                     if !self.source_scope_started {
@@ -981,29 +1080,11 @@ impl CommandCursor {
                     }
                     if !self.options.native_controller {
                         let mut view = self.view.take().ok_or(ExecutionError::Invariant)?;
-                        let _view_guard = self
+                        let view_guard = self
                             .view_reservation
                             .take()
                             .ok_or(ExecutionError::Invariant)?;
-                        if self
-                            .action
-                            .as_ref()
-                            .is_some_and(|action| action.stage == "approaching")
-                        {
-                            self.reserve(
-                                crate::activity::approach_view_bytes(
-                                    &view,
-                                    &ordinary.approach_name,
-                                    &ordinary.approach_facts,
-                                )
-                                .ok_or(ExecutionError::Capacity)?,
-                            )?;
-                            crate::activity::prepare_approach_view(
-                                &mut view,
-                                &ordinary.approach_name,
-                                &ordinary.approach_facts,
-                            );
-                        }
+                        self.prepare_view(&mut view, ordinary)?;
                         let id = core
                             .journal
                             .activity
@@ -1013,6 +1094,7 @@ impl CommandCursor {
                                 &self.command,
                                 &self.command.envelope().id,
                                 view,
+                                view_guard,
                                 core.state.physical.header.sim_time,
                                 activity_parent(&core.state.physical.entities, &self.command),
                             )
@@ -1146,6 +1228,7 @@ impl CommandCursor {
                             self.action_storage
                                 .take()
                                 .ok_or(ExecutionError::Invariant)?,
+                            &self.budget,
                         )?),
                         ActionWrite {
                             generation: PlanGenerationWrite::Advance,
@@ -1454,6 +1537,10 @@ impl CommandCursor {
                         }
                     }
                     self.status_was_active = active;
+                    if self.preparation_mode.is_some() {
+                        self.phase = Phase::Choice;
+                        continue;
+                    }
                     core.physical().settle_entity(&actor_id)?;
                     self.materialized = true;
                     self.phase = Phase::RecordStatus;
@@ -1481,7 +1568,7 @@ impl CommandCursor {
                     };
                     if !self.options.native_controller {
                         let view = self.view.take().ok_or(ExecutionError::Invariant)?;
-                        let _view_guard = self
+                        let view_guard = self
                             .view_reservation
                             .take()
                             .ok_or(ExecutionError::Invariant)?;
@@ -1494,6 +1581,7 @@ impl CommandCursor {
                                     &self.command,
                                     &self.command.envelope().id,
                                     view,
+                                    view_guard,
                                     core.state.physical.header.sim_time,
                                     activity_parent(&core.state.physical.entities, &self.command),
                                 )
@@ -1651,6 +1739,10 @@ impl CommandCursor {
                             continue;
                         }
                     };
+                    if self.preparation_mode.is_some() {
+                        self.phase = Phase::Choice;
+                        continue;
+                    }
                     let bytes = plan
                         .heap_bound()
                         .and_then(|n| n.checked_add(speech.success.code.len()))
@@ -1677,7 +1769,7 @@ impl CommandCursor {
                     }
                     if !self.options.native_controller {
                         let view = self.view.take().ok_or(ExecutionError::Invariant)?;
-                        let _view_guard = self
+                        let view_guard = self
                             .view_reservation
                             .take()
                             .ok_or(ExecutionError::Invariant)?;
@@ -1690,6 +1782,7 @@ impl CommandCursor {
                                 &self.command,
                                 &self.command.envelope().id,
                                 view,
+                                view_guard,
                                 core.state.physical.header.sim_time,
                                 activity_parent(&core.state.physical.entities, &self.command),
                             )
@@ -1762,6 +1855,15 @@ impl CommandCursor {
                 Phase::Conditions => return Err(ExecutionError::UnfinishedOccurrence),
                 Phase::Done => {
                     let result = self.outcome.take().ok_or(ExecutionError::Invariant)?;
+                    if self.preparation_mode.is_some() {
+                        let storage = self
+                            ._reservation
+                            .split_off(result.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+                        self.abort(core)?;
+                        return Ok(Progress::Choice(super::PreparedCommandChoice::new(
+                            result, storage,
+                        )));
+                    }
                     let exposure = self.exposure.take();
                     self.finalize = result.ok && !self.duplicate && !self.options.preview;
                     self.abort(core)?;

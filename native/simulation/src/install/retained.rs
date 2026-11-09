@@ -4,10 +4,12 @@
 
 use super::rows::{take_collection, take_one, validate_map_row};
 use super::{CanonicalInput, InstallError, RowImport, WorldChildren};
+use crate::host::retained_size::{HeapBytes, heap_record};
 use crate::records::{InstalledRow, RecordSchema};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::Value;
+mod residency;
 
 pub(crate) enum RetainedOne {
     Null,
@@ -82,6 +84,7 @@ pub(crate) struct RetainedDefinitionInputs {
     pub places: CanonicalInput,
 }
 pub(crate) struct RetainedDefinitions {
+    _storage: Option<crate::host::ResidentReservation>,
     pub knowledge_policy: Option<RetainedOne>,
     pub knowledge_limits: Option<crate::knowledge::KnowledgePolicy>,
     pub item_handling: RetainedOne,
@@ -236,6 +239,7 @@ pub(crate) fn install_retained(
     children: &mut WorldChildren,
     input: RetainedDefinitionInputs,
     schema: &RecordSchema,
+    budget: &crate::host::ByteBudget,
 ) -> Result<RetainedDefinitions, InstallError> {
     let mut r = Reader {
         import,
@@ -267,10 +271,16 @@ pub(crate) fn install_retained(
         .transpose()
         .map_err(|_| InstallError::CurrentFormat)?
         .flatten();
-    let knowledge_limits = knowledge_policy.as_ref()
-        .map(|policy| serde_json::from_str::<Option<crate::knowledge::KnowledgePolicy>>(policy.payload()))
-        .transpose().map_err(|_| InstallError::CurrentFormat)?.flatten();
-    Ok(RetainedDefinitions {
+    let knowledge_limits = knowledge_policy
+        .as_ref()
+        .map(|policy| {
+            serde_json::from_str::<Option<crate::knowledge::KnowledgePolicy>>(policy.payload())
+        })
+        .transpose()
+        .map_err(|_| InstallError::CurrentFormat)?
+        .flatten();
+    let mut installed = RetainedDefinitions {
+        _storage: None,
         knowledge_policy,
         knowledge_limits,
         item_handling,
@@ -374,5 +384,11 @@ pub(crate) fn install_retained(
         places: r
             .map("places", "definition_places", Some(input.places))?
             .ok_or(InstallError::ParentPresence)?,
-    })
+    };
+    installed._storage = Some(
+        budget
+            .reserve_record(installed.heap_bytes().ok_or(InstallError::Capacity)?)
+            .map_err(|_| InstallError::Capacity)?,
+    );
+    Ok(installed)
 }

@@ -8,6 +8,7 @@ use super::{
 };
 use crate::encoding::json_record;
 use crate::experience::EmptyChildOwner;
+use crate::host::retained_size::HeapBytes;
 use crate::records::{InstalledRow, OwnerCoverage};
 use crate::values::{
     deserialize_nullable, deserialize_present_option, deserialize_safe_integer, is_safe_record_id,
@@ -20,9 +21,7 @@ use std::{collections::BTreeMap, sync::Arc};
 mod accounts;
 mod actor;
 mod materialize;
-pub(crate) use materialize::{
-    HydratedTemporalRows, hydrate_selected_temporal_pages,
-};
+pub(crate) use materialize::hydrate_selected_temporal_pages;
 mod privacy;
 pub(crate) use privacy::TemporalAccountAliases;
 mod revoke;
@@ -151,8 +150,10 @@ pub struct TemporalActorHeader {
 #[derive(Debug)]
 pub struct TemporalActorHistory {
     actor_id: String,
+    actor_storage: crate::host::ResidentReservation,
     header: TemporalActorHeader,
     payload: Arc<str>,
+    header_storage: crate::host::ResidentReservation,
     pages: BTreeMap<u64, Arc<TemporalPageRecord>>,
     complete_pages: bool,
     page_order_upper_bound: u64,
@@ -290,6 +291,7 @@ impl TemporalActorHistory {
             directories,
             header.frontier.as_ref(),
             Some((header.bytes, header.count)),
+            budget,
         )?;
         let mut installed = BTreeMap::new();
         for page in pages {
@@ -302,10 +304,26 @@ impl TemporalActorHistory {
                 ));
             }
         }
+        let header_storage = budget
+            .reserve_record(
+                header
+                    .heap_bytes()
+                    .and_then(|n| {
+                        n.checked_add(row.payload.len() + 2 * std::mem::size_of::<usize>())
+                    })
+                    .ok_or(ReceivedError("Temporal actor allocation overflow."))?,
+            )
+            .map_err(|_| ReceivedError("Temporal actor exceeds native allowance."))?;
         Ok(Self {
+            actor_storage: budget
+                .reserve_record(actor_id.capacity().checked_mul(2).ok_or(ReceivedError(
+                    "Temporal actor identity allocation overflow.",
+                ))?)
+                .map_err(|_| ReceivedError("Temporal actor identity exceeds native allowance."))?,
             actor_id,
             header,
             payload: Arc::from(row.payload),
+            header_storage,
             pages: installed,
             complete_pages: coverage.complete,
             page_order_upper_bound: coverage.next_ordinal,
@@ -326,7 +344,9 @@ impl TemporalActorHistory {
     pub fn payload(&self) -> &str {
         &self.payload
     }
-    pub fn pages(&self) -> impl DoubleEndedIterator<Item = &Arc<TemporalPageRecord>> {
+    pub fn pages(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = &Arc<TemporalPageRecord>> + ExactSizeIterator {
         self.pages.values()
     }
     pub fn pending_pages(&self) -> &[Arc<PendingTemporalPage>] {
@@ -392,6 +412,8 @@ pub struct TemporalState {
     header: TemporalStateHeader,
     actors: IndexMap<String, TemporalActorHistory>,
     actor_coverage: OwnerCoverage,
+    root_storage: crate::host::ResidentReservation,
+    actor_backing: crate::host::ResidentReservation,
     undo: Vec<TemporalUndo>,
     undo_storage: crate::host::ByteReservation,
     budget: crate::host::ByteBudget,
@@ -420,6 +442,7 @@ enum TemporalUndo {
         actor_id: String,
         before: TemporalActorHeader,
         payload: Arc<str>,
+        storage: crate::host::ResidentReservation,
     },
     PendingAppend {
         actor_id: String,
@@ -428,15 +451,13 @@ enum TemporalUndo {
         actor_id: String,
         before: Arc<TemporalPageRecord>,
         after_position: Option<u64>,
-        removed: Vec<ReceivedChargeDirectory>,
+        removed: Vec<super::RecentDirectoryBlock>,
         appended: Vec<ReceivedChargeDirectory>,
     },
     HydratedPages {
         actor_id: String,
-        before: BTreeMap<u64, Arc<TemporalPageRecord>>,
-        pending: Vec<Arc<PendingTemporalPage>>,
-        pending_storage: crate::host::ResidentReservation,
-        complete: bool,
+        positions: Vec<u64>,
+        pending: Vec<(usize, Arc<PendingTemporalPage>)>,
         next_ordinal: u64,
         // Physical projections of genuine pending batches must enter the same
         // accepted SQL output before their pending owners can be discarded.
@@ -465,6 +486,28 @@ impl TemporalState {
             return Err(ReceivedError("Invalid received history owner."));
         }
         Ok(Self {
+            root_storage: budget
+                .reserve_record(
+                    generation
+                        .capacity()
+                        .checked_add(
+                            header
+                                .heap_bytes()
+                                .ok_or(ReceivedError("Temporal root allocation overflow."))?,
+                        )
+                        .and_then(|n| n.checked_add(actor_coverage.table.capacity()))
+                        .and_then(|n| n.checked_add(actor_coverage.owner.capacity()))
+                        .ok_or(ReceivedError("Temporal root allocation overflow."))?,
+                )
+                .map_err(|_| ReceivedError("Temporal root exceeds native allowance."))?,
+            actor_backing: budget
+                .reserve_backing(
+                    crate::host::retained_size::map_storage::<String, TemporalActorHistory>(
+                        actors.capacity(),
+                    )
+                    .ok_or(ReceivedError("Temporal actor map allocation overflow."))?,
+                )
+                .map_err(|_| ReceivedError("Temporal actor map exceeds native allowance."))?,
             generation,
             header,
             actors,
@@ -478,6 +521,31 @@ impl TemporalState {
     }
     pub fn generation(&self) -> &str {
         &self.generation
+    }
+    fn reserve_actor_capacity(&mut self, capacity: usize) -> Result<(), ReceivedError> {
+        if capacity <= self.actors.capacity() {
+            return Ok(());
+        }
+        let error = || ReceivedError("Temporal actor map exceeds native allowance.");
+        let target = capacity.checked_mul(2).ok_or_else(error)?;
+        self.budget
+            .resize_backing(
+                &mut self.actor_backing,
+                crate::host::retained_size::map_storage::<String, TemporalActorHistory>(target)
+                    .ok_or_else(error)?,
+            )
+            .map_err(|_| error())?;
+        self.actors
+            .try_reserve(capacity - self.actors.len())
+            .map_err(|_| error())?;
+        let actual = crate::host::retained_size::map_storage::<String, TemporalActorHistory>(
+            self.actors.capacity(),
+        )
+        .ok_or_else(error)?;
+        if actual > self.actor_backing.bytes() {
+            return Err(error());
+        }
+        self.actor_backing.resize(actual).map_err(|_| error())
     }
     pub fn header(&self) -> &TemporalStateHeader {
         &self.header
@@ -540,6 +608,7 @@ impl TemporalState {
                     actor_id,
                     before,
                     payload,
+                    storage,
                 } => {
                     let actor = self
                         .actors
@@ -547,6 +616,7 @@ impl TemporalState {
                         .ok_or(ReceivedError("Temporal rollback actor is absent."))?;
                     actor.header = before;
                     actor.payload = payload;
+                    actor.header_storage = storage;
                 }
                 TemporalUndo::PendingAppend { actor_id } => {
                     let actor = self
@@ -575,8 +645,8 @@ impl TemporalState {
                     for directory in appended.iter().rev() {
                         actor.recent.rollback_append(directory)?;
                     }
-                    for directory in &removed {
-                        actor.recent.append(directory)?;
+                    for directory in removed {
+                        actor.recent.restore_block(directory)?;
                     }
                     if let Some(position) = after_position {
                         actor.pages.remove(&position);
@@ -585,20 +655,22 @@ impl TemporalState {
                 }
                 TemporalUndo::HydratedPages {
                     actor_id,
-                    before,
+                    positions,
                     pending,
-                    pending_storage,
-                    complete,
                     next_ordinal,
                     projected: _,
                 } => {
                     let actor = self.actors.get_mut(&actor_id).ok_or(ReceivedError(
                         "Temporal hydration rollback actor is absent.",
                     ))?;
-                    actor.pages = before;
-                    actor.pending_pages = pending;
-                    actor.pending_storage = pending_storage;
-                    actor.complete_pages = complete;
+                    for position in positions {
+                        actor.pages.remove(&position).ok_or(ReceivedError(
+                            "Hydrated temporal page is absent during rollback.",
+                        ))?;
+                    }
+                    for (position, page) in pending {
+                        actor.pending_pages.insert(position, page);
+                    }
                     actor.page_order_upper_bound = next_ordinal;
                 }
             }

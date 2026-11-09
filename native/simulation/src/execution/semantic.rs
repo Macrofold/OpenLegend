@@ -4,6 +4,38 @@
 
 use super::*;
 
+fn occupied_purpose(actor: &crate::state::ActorState) -> Result<Option<String>, ExecutionError> {
+    if actor
+        .capabilities
+        .as_ref()
+        .is_some_and(|capabilities| !capabilities.cognition)
+    {
+        return Ok(None);
+    }
+    if let Some(plan) = actor.agency.plan.as_ref().filter(|plan| {
+        matches!(
+            plan.status,
+            crate::plans::PlanStatus::Active | crate::plans::PlanStatus::Blocked
+        )
+    }) {
+        return crate::encoding::json_record(&["plan", plan.id.as_str()])
+            .map(Some)
+            .map_err(|_| ExecutionError::Invariant);
+    }
+    if let Some(action) = &actor.action {
+        let purpose = crate::encoding::json_record(&["action", action.id.as_str()])
+            .map_err(|_| ExecutionError::Invariant)?;
+        return Ok(Some(purpose).filter(|purpose| {
+            actor
+                .agency
+                .semantic
+                .as_ref()
+                .is_some_and(|semantic| semantic.occupied_purpose.as_ref() == Some(purpose))
+        }));
+    }
+    Ok(None)
+}
+
 impl CoreMutation<'_> {
     /// Source finishCommandWorld reconciles the command actor and characters
     /// whose chosen purpose can have changed. Placement, received detail and
@@ -78,6 +110,127 @@ fn semantic_subject(undo: &Undo) -> Option<EntityHandle> {
 }
 
 impl PhysicalMutation<'_> {
+    pub(crate) fn resolve_semantic_cause(
+        &mut self,
+        id: &str,
+        key: &str,
+        qualitative_revision: &str,
+        severity: f64,
+        live: Option<&IndexMap<String, crate::attention::AttentionAnnotation>>,
+    ) -> Result<(), ExecutionError> {
+        let Some(handle) = self.state.entities.handle(id) else {
+            return Ok(());
+        };
+        let Some(actor) = self
+            .state
+            .entities
+            .resolve(handle)
+            .and_then(|entity| entity.actor.as_ref())
+        else {
+            return Ok(());
+        };
+        let Some(semantic) = actor.agency.semantic.as_ref() else {
+            return Ok(());
+        };
+        let heap = semantic
+            .resolved
+            .heap_bytes()
+            .ok_or(ExecutionError::Capacity)?;
+        let growth =
+            crate::host::retained_size::map_storage::<String, crate::state::ResolvedSemanticCause>(
+                semantic
+                    .resolved
+                    .len()
+                    .checked_add(1)
+                    .and_then(|n| n.checked_mul(2))
+                    .ok_or(ExecutionError::Capacity)?,
+            )
+            .ok_or(ExecutionError::Capacity)?;
+        self.journal.reserve(
+            crate::host::retained_size::heap_sum([
+                heap.checked_mul(3).ok_or(ExecutionError::Capacity)?,
+                growth,
+                semantic
+                    .resolved
+                    .len()
+                    .checked_mul(size_of::<usize>())
+                    .ok_or(ExecutionError::Capacity)?,
+                key.len(),
+                qualitative_revision.len(),
+                actor
+                    .agency
+                    .plan
+                    .as_ref()
+                    .map_or(0, |plan| plan.id.len())
+                    .checked_mul(6)
+                    .ok_or(ExecutionError::Capacity)?,
+                actor
+                    .action
+                    .as_ref()
+                    .map_or(0, |action| action.id.len())
+                    .checked_mul(6)
+                    .ok_or(ExecutionError::Capacity)?,
+                2 * size_of::<Undo>() + 128,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let purpose = occupied_purpose(actor)?;
+        let mut removed = Vec::with_capacity(semantic.resolved.len());
+        for (index, existing) in semantic.resolved.keys().enumerate() {
+            let anchor: [String; 2] =
+                serde_json::from_str(existing).map_err(|_| ExecutionError::Invariant)?;
+            if live.is_none_or(|live| !live.contains_key(&anchor[0])) {
+                removed.push(index);
+            }
+        }
+        let undo = UndoKey::SemanticResolved(handle.slot, handle.generation);
+        if self.journal.first(&undo)? {
+            self.journal.retain(
+                undo,
+                Undo::SemanticResolved {
+                    entity: handle,
+                    before: semantic.resolved.clone(),
+                },
+            )?;
+        }
+        let semantic = self
+            .state
+            .entities
+            .resolve_mut(handle)
+            .and_then(|entity| entity.actor.as_mut())
+            .and_then(|actor| actor.agency.semantic.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        for index in removed.into_iter().rev() {
+            semantic.resolved.shift_remove_index(index);
+        }
+        semantic
+            .resolved
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        semantic.resolved.insert(
+            key.into(),
+            crate::state::ResolvedSemanticCause {
+                interval: semantic.interval,
+                purpose,
+                qualitative_revision: qualitative_revision.into(),
+                severity,
+            },
+        );
+        self.settle_semantic_memory(id)
+    }
+    pub(crate) fn settle_semantic_memory(&mut self, actor_id: &str) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(actor_id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        self.settle_semantic_handle(handle)
+    }
+    fn settle_semantic_handle(&mut self, handle: EntityHandle) -> Result<(), ExecutionError> {
+        self.state
+            .entities
+            .settle_semantic_memory(handle, &mut self.journal.reservation, false)
+    }
     fn semantic_meta(&mut self, handle: EntityHandle) -> Result<(), ExecutionError> {
         let key = UndoKey::SemanticMeta(handle.slot, handle.generation);
         if !self.journal.first(&key)? {
@@ -123,7 +276,20 @@ impl PhysicalMutation<'_> {
         self.semantic_meta(handle)?;
         let key = UndoKey::SemanticResolved(handle.slot, handle.generation);
         let first = self.journal.first(&key)?;
-        self.journal.reserve(size_of::<Undo>() * 2)?;
+        let held = if first {
+            self.state
+                .entities
+                .resolve(handle)
+                .and_then(|e| e.actor.as_ref())
+                .and_then(|a| a.agency.semantic.as_ref())
+                .ok_or(ExecutionError::Invariant)?
+                .resolved
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        self.journal.reserve(size_of::<Undo>() * 2 + held)?;
         self.journal
             .undo
             .try_reserve(1)
@@ -148,7 +314,7 @@ impl PhysicalMutation<'_> {
                 },
             )?;
         }
-        Ok(())
+        self.settle_semantic_handle(handle)
     }
     pub(crate) fn begin_semantic_work(
         &mut self,
@@ -202,7 +368,7 @@ impl PhysicalMutation<'_> {
             .and_then(|a| a.agency.semantic.as_mut())
             .ok_or(ExecutionError::Invariant)?
             .occupied_purpose = Some(purpose);
-        Ok(())
+        self.settle_semantic_handle(handle)
     }
     pub(crate) fn finish_semantic_work(
         &mut self,
@@ -221,6 +387,7 @@ impl PhysicalMutation<'_> {
         else {
             return Ok(());
         };
+        self.journal.reserve(action_id.len() * 6 + 64)?;
         let purpose = crate::encoding::json_record(&["action", action_id])
             .map_err(|_| ExecutionError::Invariant)?;
         if semantic.occupied_purpose.as_ref() != Some(&purpose) {
@@ -234,7 +401,7 @@ impl PhysicalMutation<'_> {
             .and_then(|a| a.agency.semantic.as_mut())
             .ok_or(ExecutionError::Invariant)?
             .occupied_purpose = None;
-        Ok(())
+        self.settle_semantic_handle(handle)
     }
     pub(crate) fn reconcile_semantic_interval(&mut self, id: &str) -> Result<(), ExecutionError> {
         let Some(handle) = self.state.entities.handle(id) else {
@@ -251,29 +418,18 @@ impl PhysicalMutation<'_> {
         let Some(semantic) = &actor.agency.semantic else {
             return Ok(());
         };
-        let purpose = if actor.capabilities.as_ref().is_some_and(|c| !c.cognition) {
-            None
-        } else if let Some(plan) = actor.agency.plan.as_ref().filter(|plan| {
-            matches!(
-                plan.status,
-                crate::plans::PlanStatus::Active | crate::plans::PlanStatus::Blocked
-            )
-        }) {
-            self.journal.reserve(plan.id.len() * 6 + 64)?;
-            Some(
-                crate::encoding::json_record(&["plan", plan.id.as_str()])
-                    .map_err(|_| ExecutionError::Invariant)?,
-            )
-        } else if let Some(action) = &actor.action {
-            self.journal.reserve(action.id.len() * 6 + 64)?;
-            Some(
-                crate::encoding::json_record(&["action", action.id.as_str()])
-                    .map_err(|_| ExecutionError::Invariant)?,
-            )
-            .filter(|purpose| semantic.occupied_purpose.as_ref() == Some(purpose))
-        } else {
-            None
-        };
+        self.journal.reserve(
+            actor
+                .agency
+                .plan
+                .as_ref()
+                .map_or(0, |plan| plan.id.len())
+                .max(actor.action.as_ref().map_or(0, |action| action.id.len()))
+                .checked_mul(6)
+                .and_then(|n| n.checked_add(64))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let purpose = occupied_purpose(actor)?;
         if purpose == semantic.occupied_purpose {
             return Ok(());
         }
@@ -289,7 +445,7 @@ impl PhysicalMutation<'_> {
             .and_then(|a| a.agency.semantic.as_mut())
             .ok_or(ExecutionError::Invariant)?
             .occupied_purpose = purpose;
-        Ok(())
+        self.settle_semantic_handle(handle)
     }
     pub(crate) fn reserve_discovery(
         &mut self,
@@ -318,6 +474,7 @@ impl PhysicalMutation<'_> {
         {
             return Ok(false);
         }
+        self.journal.reserve(reservation.capacity() + 32)?;
         self.semantic_meta(handle)?;
         let semantic = self
             .state
@@ -328,6 +485,7 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::Invariant)?;
         semantic.discovery = "reserved".to_owned();
         semantic.reservation = Some(reservation);
+        self.settle_semantic_handle(handle)?;
         Ok(true)
     }
     pub(crate) fn settle_discovery(
@@ -362,6 +520,7 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::Invariant)?;
         semantic.discovery = if dispatched { "spent" } else { "available" }.to_owned();
         semantic.reservation = None;
+        self.settle_semantic_handle(handle)?;
         Ok(true)
     }
 }

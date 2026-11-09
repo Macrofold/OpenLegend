@@ -134,7 +134,7 @@ fn assemble_selected_core(
     if let Some(selection) = working_set {
         import.install_working_set(selection, budget)?;
     }
-    let host_settings = crate::administration::read_host_settings(&mut import)?;
+    let host_settings = crate::administration::read_host_settings(&mut import, budget)?;
     let NativeDefinitionInputs {
         manifest,
         retained,
@@ -241,7 +241,7 @@ fn assemble_selected_core(
         usize::try_from(spatial.max_path_points).map_err(|_| InstallError::CurrentFormat)?;
     let PhysicalInstallation {
         state: mut physical,
-        content,
+        mut content,
         personal,
         archived_event_count,
         assembly_geometry_revision,
@@ -267,7 +267,9 @@ fn assemble_selected_core(
     physical.entities.fund_installed_actions(budget)?;
     physical.entities.fund_installed_goals(budget)?;
     physical.entities.fund_installed_intents(budget)?;
-    let retained = install_retained(&mut import, &mut children, retained, &schema)?;
+    physical.entities.fund_entity_metadata(budget)?;
+    content.fund(budget)?;
+    let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
     super::physical::validate_physical_item_references(&physical, &retained)?;
     let installed = Arc::new(InstalledWorld {
         encounter_batch_entries,
@@ -393,6 +395,7 @@ fn assemble_selected_core(
         &physical.entities,
         &installed.mind_limits,
         &schema,
+        budget,
     )?;
     let administration = crate::administration::install_administration(
         &mut import,
@@ -400,6 +403,7 @@ fn assemble_selected_core(
         child(&mut children, "authorship", true)?,
         child(&mut children, "objectState", true)?,
         &physical.entities,
+        budget,
     )?;
     let inventory = super::inventory::install_closed_inventory(
         &mut import,

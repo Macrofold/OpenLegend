@@ -220,6 +220,19 @@ pub struct SupportQuery {
         skip_serializing_if = "Option::is_none"
     )]
     pub surface_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub relative: Option<RelativeSupport>,
+}
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RelativeSupport {
+    pub x: f64,
+    pub z: f64,
+    pub heading: f64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -386,6 +399,14 @@ pub struct StandingSelection {
     deny_unknown_fields
 )]
 pub enum RouteQuery {
+    Approach {
+        from: SurfacePoint,
+        body: BodyProfile,
+        target_position: Point,
+        target_support: Option<SurfacePoint>,
+        reach: f64,
+        goal: Point,
+    },
     Surface {
         from: SurfacePoint,
         to: SurfacePoint,

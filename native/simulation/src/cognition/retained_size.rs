@@ -1,7 +1,7 @@
 //! Actual private interpretation allocations used by sparse edit admission.
 
 use super::*;
-use crate::host::retained_size::{HeapBytes, heap_record};
+use crate::host::retained_size::{HeapBytes, heap_record, heap_sum, map_storage};
 
 heap_record!(EvidenceLink { id });
 heap_record!(MindDocument {
@@ -29,3 +29,37 @@ heap_record!(InnerWorld {
     publication_body,
     evidence_ids
 });
+
+pub(super) fn mind_contents_bytes(mind: &ActorMind) -> Option<usize> {
+    heap_sum([
+        mind.documents.heap_bytes()?,
+        mind.records.heap_bytes()?,
+        mind.thoughts.heap_bytes()?,
+    ])
+}
+pub(super) fn inner_contents_bytes(inner: &InnerWorld) -> Option<usize> {
+    heap_sum([
+        inner.evidence_ids.heap_bytes()?,
+        inner.publication_body.heap_bytes()?,
+    ])
+}
+pub(super) fn mind_parent_bytes(
+    minds: &IndexMap<String, ActorMind>,
+    inner: &IndexMap<String, InnerWorld>,
+) -> Option<usize> {
+    let minds = minds.iter().try_fold(
+        map_storage::<String, ActorMind>(minds.capacity())?,
+        |sum, (key, mind)| heap_sum([sum, key.capacity(), mind.last_dream_episode.heap_bytes()?]),
+    )?;
+    inner.iter().try_fold(
+        minds.checked_add(map_storage::<String, InnerWorld>(inner.capacity())?)?,
+        |sum, (key, value)| {
+            heap_sum([
+                sum,
+                key.capacity(),
+                value.source_snapshot.capacity(),
+                value.publication_job_id.capacity(),
+            ])
+        },
+    )
+}

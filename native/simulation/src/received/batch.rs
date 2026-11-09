@@ -33,7 +33,9 @@ impl PartialEq for TemporalBatch {
 }
 impl TemporalBatch {
     pub(crate) fn retain_for_candidate(&self, budget: &ByteBudget) -> Result<(), ReceivedError> {
-        budget.retain_record(&self._storage).map_err(|_| ReceivedError("Temporal before-image exceeds native allowance."))
+        budget
+            .retain_record(&self._storage)
+            .map_err(|_| ReceivedError("Temporal before-image exceeds native allowance."))
     }
     pub fn value(&self) -> &ReceivedBatch {
         &self.value

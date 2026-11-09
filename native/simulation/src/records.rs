@@ -41,6 +41,13 @@ pub struct InstalledRow {
     pub payload: String,
     pub extra: Vec<SqlCell>,
 }
+crate::host::retained_size::heap_record!(InstalledRow {
+    id,
+    parent,
+    slot,
+    payload,
+    extra
+});
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]

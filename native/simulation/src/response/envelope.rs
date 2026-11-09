@@ -142,7 +142,7 @@ fn valid_operation(value: &SqlCell) -> bool {
         || FIELDS.iter().any(|key| {
             object
                 .get(*key)
-                    .is_some_and(|v| !v.is_null() && !v.is_object())
+                .is_some_and(|v| !v.is_null() && !v.is_object())
         })
         || FIELDS
             .iter()
@@ -382,8 +382,8 @@ impl ActorResponse {
         operation(self.value.get("operations")?.as_array()?.get(index)?)
     }
 }
-impl ResponseOperation<'_> {
-    pub(crate) fn text(&self, key: &str) -> Option<&JsText> {
+impl<'a> ResponseOperation<'a> {
+    pub(crate) fn text(&self, key: &str) -> Option<&'a JsText> {
         self.data.get(key)?.as_text()
     }
 }

@@ -48,8 +48,10 @@ impl ReceptionState {
             .iter_mut()
             .flat_map(indexmap::IndexMap::values_mut)
         {
-            owner.metadata_storage = Some(CurrentOwnerStorage::install(owner, budget)
-                .map_err(|_| crate::execution::ExecutionError::Capacity)?);
+            owner.metadata_storage = Some(
+                CurrentOwnerStorage::install(owner, budget)
+                    .map_err(|_| crate::execution::ExecutionError::Capacity)?,
+            );
             for contact in owner.current.values_mut() {
                 contact.metadata_storage = Some(
                     budget.reserve_backing(

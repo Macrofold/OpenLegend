@@ -61,6 +61,12 @@ mod save;
 pub(crate) use save::{
     PersonalPredecessors, capture_personal_predecessors, encode_personal_changes,
 };
+mod privacy_prepare;
+mod privacy_run;
+pub(crate) use privacy_run::{PrivacyEditCursor, PrivacyEditAnswer, PrivacyEditStep, PrivacyEditMode, CompletedPrivacyEdit};
+mod forget;
+pub(crate) use forget::{ForgetExperienceCursor, ForgetExperienceStep, CompletedForgetExperience};
+pub(crate) use privacy_prepare::{HistoryEditLimits, HistoryEditAnswer, HistoryEditQuestion, HistoryEditReadRequest, HistoryPreparationError, PreparedPrivacyEdit, PrivacyPreparationCursor, PrivacyPreparationStep, ClosedPrivacyScope};
 mod invalidation;
 mod hydration;
 mod mutation;

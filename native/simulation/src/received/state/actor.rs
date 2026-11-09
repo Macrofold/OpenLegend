@@ -69,10 +69,7 @@ pub(crate) fn ensure_temporal_actor(
     let reservation = budget.reserve(allocation)?;
     temporal.reserve_undo_slots(3, budget)?;
     if new_capacity > old_capacity {
-        temporal
-            .actors
-            .try_reserve(new_capacity - temporal.actors.len())
-            .map_err(|_| ExecutionError::Capacity)?;
+        temporal.reserve_actor_capacity(new_capacity)?;
     }
     // All capacity admission precedes the source's one receipt-epoch allocation.
     let issued = core.state.physical.identity.allocate("receipt-epoch")?;
@@ -105,7 +102,14 @@ pub(crate) fn ensure_temporal_actor(
             accounts: None,
             supports: None,
         };
-        let payload = Arc::from(json_record(&header).map_err(|_| ExecutionError::Invariant)?);
+        let payload: Arc<str> =
+            Arc::from(json_record(&header).map_err(|_| ExecutionError::Invariant)?);
+        let header_storage = budget.reserve_record(
+            header
+                .heap_bytes()
+                .and_then(|n| n.checked_add(payload.len() + 2 * std::mem::size_of::<usize>()))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
         let owner = json_record(&["world", "experience", "temporal", "actors", actor_id])
             .map_err(|_| ExecutionError::Invariant)?;
         let supports = super::super::TemporalSupportCollection::install(
@@ -135,13 +139,20 @@ pub(crate) fn ensure_temporal_actor(
         temporal.actors.insert(
             actor_id.to_owned(),
             TemporalActorHistory {
+                actor_storage: budget.reserve_record(
+                    actor_id
+                        .len()
+                        .checked_mul(2)
+                        .ok_or(ExecutionError::Capacity)?,
+                )?,
                 actor_id: actor_id.to_owned(),
                 header,
                 payload,
+                header_storage,
                 pages: BTreeMap::new(),
                 complete_pages: true,
                 page_order_upper_bound: core.state.physical.identity.next_id(),
-                recent: ReceivedRecentDirectory::default(),
+                recent: ReceivedRecentDirectory::new(budget),
                 pending_pages: Vec::new(),
                 pending_storage: budget.reserve_backing(0)?,
                 supports: Some(supports),

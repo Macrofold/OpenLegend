@@ -12,7 +12,7 @@ import { reconcileConditions } from './conditions.js';
 import { recordSemanticChange } from './dependencies.js';
 import { worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
-import { livingBody, nativeActor } from './worlds/base/bodies.js';
+import { BASE_MANUAL_WORK_BODY_PLANS, livingBody, nativeActor } from './worlds/base/bodies.js';
 import { bodyPolicy, bodyNarration } from './body-policy.js';
 import { setBodyHealth } from './body-state.js';
 import { interruptStatusEffects } from './status-effects.js';
@@ -51,7 +51,7 @@ export function hasMemory(entity: Entity | undefined): boolean {
 export function supportsManualWork(entity: Entity | undefined): boolean {
   const stored = entity && readOnlyDraftView(entity).actor;
   const actor = stored && readOnlyDraftView(stored);
-  return !!actor?.body && readOnlyDraftView(actor.body).plan === 'biped';
+  return !!actor?.body && BASE_MANUAL_WORK_BODY_PLANS.includes(readOnlyDraftView(actor.body).plan);
 }
 export function canSpeak(entity: Entity | undefined): boolean {
   const stored = entity && readOnlyDraftView(entity).actor;

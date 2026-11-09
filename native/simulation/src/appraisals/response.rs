@@ -7,35 +7,68 @@ use crate::execution::StagedOccurrence;
 use crate::records::SqlCell;
 use crate::values::{deserialize_present_option, is_safe_record_id};
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AppraisalPublication {
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub response_id: Option<String>,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub pipeline: Option<String>,
     #[serde(
         default,
-        deserialize_with = "crate::values::deserialize_present_safe_integer"
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
     )]
     pub input_sequence: Option<u64>,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub cause_ids: Option<Vec<String>>,
 }
-#[derive(Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AppraisalBindings {
     pub sources: Vec<PerceivedCause>,
     pub subjects: Vec<String>,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub reflection: Option<bool>,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub decision: Option<bool>,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub complete_creates: Option<Vec<String>>,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub prior_outcomes: Option<IndexMap<String, Appraisal>>,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub publication: Option<AppraisalPublication>,
 }
 /// A scoped negative lookup allows exactly this identity in a partial owner;

@@ -31,7 +31,9 @@ pub(crate) use selection::{
     CapturedTemporalReceipt, observation_receipt_member_indices, select_temporal_receipt_facets,
     temporal_field_aliases, temporal_receipt_account_aliases, temporal_receipt_aliases,
 };
+mod recent_residency;
 mod retained_size;
+use recent_residency::RecentDirectoryBlock;
 pub use result::*;
 mod page;
 mod state;
@@ -334,22 +336,47 @@ fn add_charge(previous: u64, added: u64) -> Result<u64, ReceivedError> {
 /// here once, and the actor codec writes these same values; a cold rebuild checks
 /// the saved totals before this owner can be installed. No receipt body is read
 /// merely to answer eligibility or membership.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Debug)]
 pub struct ReceivedRecentDirectory {
-    blocks: BTreeMap<String, ReceivedChargeDirectory>,
+    blocks: BTreeMap<String, RecentDirectoryBlock>,
     individuals: BTreeMap<String, u64>,
     bytes: u64,
     count: u64,
+    budget: crate::host::ByteBudget,
+}
+
+impl PartialEq for ReceivedRecentDirectory {
+    fn eq(&self, other: &Self) -> bool {
+        self.bytes == other.bytes
+            && self.count == other.count
+            && self.individuals == other.individuals
+            && self.blocks.len() == other.blocks.len()
+            && self.blocks.iter().zip(&other.blocks).all(
+                |((key, value), (other_key, other_value))| {
+                    key == other_key && value.directory == other_value.directory
+                },
+            )
+    }
 }
 
 impl ReceivedRecentDirectory {
+    pub(crate) fn new(budget: &crate::host::ByteBudget) -> Self {
+        Self {
+            blocks: BTreeMap::new(),
+            individuals: BTreeMap::new(),
+            bytes: 0,
+            count: 0,
+            budget: budget.clone(),
+        }
+    }
     pub fn install(
         directories: &[ReceivedChargeDirectory],
         frontier: Option<&ReceivedFrontier>,
         expected: Option<(u64, u64)>,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ReceivedError> {
         let selected = eligible_received_charge_directories(directories, frontier)?;
-        let mut installed = Self::default();
+        let mut installed = Self::new(budget);
         for directory in selected {
             installed.append(&directory)?;
         }
@@ -370,7 +397,7 @@ impl ReceivedRecentDirectory {
     }
 
     pub fn directories(&self) -> impl Iterator<Item = &ReceivedChargeDirectory> {
-        self.blocks.values()
+        self.blocks.values().map(|block| &block.directory)
     }
 
     pub fn has_individual(&self, id: &str) -> bool {
@@ -392,6 +419,10 @@ impl ReceivedRecentDirectory {
     }
 
     pub fn append(&mut self, directory: &ReceivedChargeDirectory) -> Result<(), ReceivedError> {
+        let mut workspace = self
+            .budget
+            .reserve(recent_residency::append_workspace(directory)?)
+            .map_err(|_| ReceivedError("Recent directory exceeds native allowance."))?;
         // Installation and mutation validate these short headers once. Reserve
         // charge arithmetic before insertion so a failed bound changes nothing.
         let mut bytes = self.bytes;
@@ -417,25 +448,31 @@ impl ReceivedRecentDirectory {
         for (id, added) in &individual_changes {
             add_charge(self.individuals.get(*id).copied().unwrap_or(0), *added)?;
         }
+        // Materialize each new canonical block under its own custody before
+        // changing either index. Undo moves that custody with the exact block.
+        let mut prepared = Vec::new();
+        prepared
+            .try_reserve_exact(directory.entries.len())
+            .map_err(|_| ReceivedError("Recent directory allocation failed."))?;
+        for header in &directory.entries {
+            prepared.push(RecentDirectoryBlock::prepare(
+                directory,
+                header,
+                &mut workspace,
+                &self.budget,
+            )?);
+        }
         for (id, added) in individual_changes {
             let next = self.individuals.get(id).copied().unwrap_or(0) + added;
             self.individuals.insert(id.to_owned(), next);
         }
-        for header in &directory.entries {
+        for block in prepared {
             let key = block_key(
-                directory.physical_life,
-                &directory.epoch,
-                header.batch_order,
+                block.physical_life,
+                &block.epoch,
+                block.entries[0].batch_order,
             );
-            self.blocks.insert(
-                key,
-                ReceivedChargeDirectory {
-                    actor_id: directory.actor_id.clone(),
-                    physical_life: directory.physical_life,
-                    epoch: directory.epoch.clone(),
-                    entries: vec![header.clone()],
-                },
-            );
+            self.blocks.insert(key, block);
         }
         self.bytes = bytes;
         self.count = count;
@@ -449,11 +486,14 @@ impl ReceivedRecentDirectory {
         physical_life: u64,
         epoch: &str,
         batch_order: u64,
-    ) -> Result<Option<ReceivedChargeDirectory>, ReceivedError> {
+    ) -> Result<Option<RecentDirectoryBlock>, ReceivedError> {
         let key = block_key(physical_life, epoch, batch_order);
         let Some(directory) = self.blocks.get(&key) else {
             return Ok(None);
         };
+        self.budget
+            .retain_record(&directory.storage)
+            .map_err(|_| ReceivedError("Recent before-image exceeds native allowance."))?;
         let mut bytes = self.bytes;
         let mut count = self.count;
         for header in &directory.entries {
@@ -490,6 +530,32 @@ impl ReceivedRecentDirectory {
         Ok(Some(directory))
     }
 
+    /// Restore the exact funded before-image. Its candidate pin was retained
+    /// before removal, so rollback neither clones a body nor asks for new quota.
+    fn restore_block(&mut self, block: RecentDirectoryBlock) -> Result<(), ReceivedError> {
+        let header = block
+            .entries
+            .first()
+            .ok_or(ReceivedError("Recent rollback block is empty."))?;
+        if block.entries.len() != 1 {
+            return Err(ReceivedError("Recent rollback block is not canonical."));
+        }
+        let key = block_key(block.physical_life, &block.epoch, header.batch_order);
+        if self.blocks.contains_key(&key) {
+            return Err(ReceivedError("Recent rollback block already exists."));
+        }
+        let bytes = add_charge(self.bytes, header.bytes)?;
+        let count = add_charge(self.count, header.count)?;
+        for id in &header.individual_ids {
+            let held = self.individuals.get(id).copied().unwrap_or(0);
+            self.individuals.insert(id.clone(), add_charge(held, 1)?);
+        }
+        self.blocks.insert(key, block);
+        self.bytes = bytes;
+        self.count = count;
+        Ok(())
+    }
+
     /// Only the temporal mutation journal removes an unaccepted appended block.
     /// Accepted age/pressure retirement has its separate chronological owner.
     fn rollback_append(
@@ -502,13 +568,12 @@ impl ReceivedRecentDirectory {
                 &directory.epoch,
                 header.batch_order,
             );
-            let expected = ReceivedChargeDirectory {
-                actor_id: directory.actor_id.clone(),
-                physical_life: directory.physical_life,
-                epoch: directory.epoch.clone(),
-                entries: vec![header.clone()],
-            };
-            if self.blocks.get(&key) != Some(&expected) {
+            if !self.blocks.get(&key).is_some_and(|held| {
+                held.actor_id == directory.actor_id
+                    && held.physical_life == directory.physical_life
+                    && held.epoch == directory.epoch
+                    && held.entries.as_slice() == std::slice::from_ref(header)
+            }) {
                 return Err(ReceivedError(
                     "Temporal rollback directory differs from its appended source.",
                 ));
@@ -543,7 +608,7 @@ impl ReceivedRecentDirectory {
             return Ok(Vec::new());
         };
         let mut released = Vec::new();
-        for header in directory.entries {
+        for header in directory.directory.entries {
             self.bytes = self.bytes.checked_sub(header.bytes).ok_or(ReceivedError(
                 "Recent block bytes underflow current authority.",
             ))?;

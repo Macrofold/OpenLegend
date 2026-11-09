@@ -14,7 +14,9 @@ pub use crate::worlds::InstalledVoiceFeatures as VoiceFeatures;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod references;
 mod text_decode;
+pub use references::ReceivedReference;
 
 mod source_encoding;
 pub(crate) use source_encoding::event_references_view;
@@ -25,7 +27,9 @@ mod geometry;
 pub use geometry::*;
 mod support;
 pub use support::*;
+mod identity_residency;
 mod state;
+pub(crate) use identity_residency::{IdentityDirectory, RecognitionRoots};
 pub use state::*;
 mod materialize;
 pub use materialize::*;
@@ -75,8 +79,9 @@ pub(crate) use batch::{
 };
 mod current_journal;
 pub(crate) use attention_control::{
-    AttentionSelection, AttentionUpdate, acknowledge_attention, evaluate_attention_relations,
-    next_attention_work_at, prune_withdrawn_attention, set_attention_focus, update_attention,
+    AttentionSelection, AttentionUpdate, acknowledge_attention, acknowledge_semantic_cause,
+    evaluate_attention_relations, next_attention_work_at, prune_withdrawn_attention,
+    set_attention_focus, update_attention,
 };
 mod cohort;
 pub(crate) use cohort::{
@@ -88,7 +93,9 @@ mod current_write;
 use current_admission::*;
 mod current_recording;
 use current_recording::*;
+mod privacy;
 mod retirement;
+pub(crate) use privacy::{revoke_attention_evidence, revoke_current_evidence};
 pub(crate) use retirement::{
     EndedCurrentEvidence, RetiredPerceptionLife, end_current_evidence, retire_perception_life,
 };
@@ -620,14 +627,6 @@ pub enum ReferenceRole {
     Actor,
     Target,
     Participant,
-}
-
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct ReceivedReference {
-    pub id: String,
-    pub label: crate::text::JsText,
-    pub role: ReferenceRole,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

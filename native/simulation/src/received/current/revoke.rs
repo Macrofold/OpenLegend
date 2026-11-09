@@ -13,7 +13,7 @@ pub(crate) struct CurrentRecordingRevocation {
 }
 pub(crate) fn plan_current_recording_revocation(
     owner: Option<&PerceptionEvidenceOwner>,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     revoked: &TemporalFacetRevocation<'_>,
     meaning: &dyn TemporalValueMeaning,
     budget: &ByteBudget,

@@ -1,3 +1,4 @@
+import { INVOCATION_LIMITS } from './action-capabilities.js';
 import { MOVEMENT, SPATIAL_LIMITS } from '@open-legend/spatial';
 import { ACTIVITY_DISPLAY_BYTES, ACTIVITY_LIMITS } from './action-experience.js';
 import { MAX_CHANGE_SCOPES } from './dependencies.js';
@@ -71,5 +72,9 @@ export const nativeSetupSettings = immutableDataSnapshot({
   mind: MIND_LIMITS,
   agency: AGENCY_LIMITS,
   encounterBatchEntries: AUTOMATIC_ENCOUNTER_BATCH_ENTRIES,
-  actorResponse: { ...RESPONSE_LIMITS, receipts: RESPONSE_RECEIPT_LIMIT },
+  actorResponse: {
+    ...RESPONSE_LIMITS,
+    receipts: RESPONSE_RECEIPT_LIMIT,
+    invocation: INVOCATION_LIMITS,
+  },
 });

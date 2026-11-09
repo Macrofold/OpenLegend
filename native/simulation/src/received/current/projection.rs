@@ -10,7 +10,7 @@ use crate::reception::{
 
 pub(super) fn facet_input(
     owner: &PerceptionEvidenceOwner,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     input: &TemporalCurrentGroupInput<'_>,
     kind: &str,
     partition: &CurrentPartPartition,
@@ -23,7 +23,7 @@ pub(super) fn facet_input(
 
 pub(super) fn native_facet_input(
     owner: &PerceptionEvidenceOwner,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     native: crate::reception::CurrentNativeFacet<'_>,
 ) -> Result<TemporalCaptureFacet, ReceivedError> {
     let partition = native.metadata;

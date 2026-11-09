@@ -207,8 +207,8 @@ pub struct ReceptionState {
     pub sensory: Option<SensoryContinuation>,
     pub perception_evidence: Option<IndexMap<String, PerceptionEvidenceOwner>>,
     pub received_values: Option<ReceivedValues>,
-    pub observer_identities:
-        Option<IndexMap<String, IndexMap<String, crate::worlds::InstalledObserverIdentity>>>,
+    pub observer_identities: Option<IndexMap<String, super::IdentityDirectory>>,
+    pub(crate) recognition_storage: Option<super::RecognitionRoots>,
     pub perception_episodes: Option<IndexMap<String, IndexMap<String, String>>>,
     pub(crate) actor_knowledge: crate::knowledge::KnowledgeState,
     pub knowledge_revisions: Option<IndexMap<String, u64>>,

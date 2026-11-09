@@ -680,11 +680,33 @@ heap_record!(CurrentPartPartition {
 });
 heap_record!(CurrentReceivedContent { grant, fields });
 heap_record!(DetectionLocation { value, frame });
-heap_record!(DetectionSupportInput { source, channel, detector, location, continuity });
-heap_record!(SupportReceipt { body, pattern_id, observation });
+heap_record!(DetectionSupportInput {
+    source,
+    channel,
+    detector,
+    location,
+    continuity
+});
+heap_record!(SupportReceipt {
+    body,
+    pattern_id,
+    observation
+});
 heap_record!(ActiveSupport { key, input });
-heap_record!(SupportPattern { id, channel, detector, continuity, envelope, active, observation });
-heap_record!(DetectionSupportState { policy, sources, patterns });
+heap_record!(SupportPattern {
+    id,
+    channel,
+    detector,
+    continuity,
+    envelope,
+    active,
+    observation
+});
+heap_record!(DetectionSupportState {
+    policy,
+    sources,
+    patterns
+});
 impl HeapBytes for std::sync::Arc<CurrentReceivedContent> {
     fn heap_bytes(&self) -> Option<usize> {
         heap_sum([

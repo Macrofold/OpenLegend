@@ -2,13 +2,7 @@
 //! These swaps are shared only by its semantic writer and reverse-order undo.
 use super::*;
 use crate::state::{FundedActionNavigation, FundedActionPath, FundedActionRoute};
-fn check(
-    state: &PhysicalState,
-    entity: EntityHandle,
-    id: &str,
-    incoming: &ByteReservation,
-    bytes: usize,
-) -> Result<(), ExecutionError> {
+fn check(state: &PhysicalState, entity: EntityHandle, id: &str) -> Result<(), ExecutionError> {
     let action = state
         .entities
         .resolve(entity)
@@ -18,10 +12,6 @@ fn check(
         .ok_or(ExecutionError::Invariant)?;
     if action.has_unconverted_fields() {
         return Err(ExecutionError::UnsupportedFamily);
-    }
-    let storage = state.entities.action_storage(entity)?;
-    if storage.bytes() < bytes || !storage.shares_owner(incoming) {
-        return Err(ExecutionError::Invariant);
     }
     Ok(())
 }
@@ -40,11 +30,10 @@ pub(super) fn swap_path(
         .path
         .heap_bytes()
         .ok_or(ExecutionError::Capacity)?;
-    check(state, entity, id, &after.storage, bytes)?;
-    let storage = state.entities.detach_action_storage(entity, bytes)?;
-    state
+    check(state, entity, id)?;
+    let storage = state
         .entities
-        .attach_action_storage(entity, after.storage)?;
+        .swap_action_path_storage(entity, after.storage, bytes)?;
     let action = state
         .entities
         .resolve_mut(entity)
@@ -69,11 +58,10 @@ pub(super) fn swap_navigation(
         .navigation
         .heap_bytes()
         .ok_or(ExecutionError::Capacity)?;
-    check(state, entity, id, &after.storage, bytes)?;
-    let storage = state.entities.detach_action_storage(entity, bytes)?;
-    state
+    check(state, entity, id)?;
+    let storage = state
         .entities
-        .attach_action_storage(entity, after.storage)?;
+        .swap_action_navigation_storage(entity, after.storage, bytes)?;
     let action = state
         .entities
         .resolve_mut(entity)
@@ -95,7 +83,7 @@ pub(super) fn swap_route(
         .and_then(|e| e.actor.as_ref())
         .and_then(|a| a.action.as_ref())
         .ok_or(ExecutionError::Invariant)?;
-    let bytes = heap_sum([
+    let _bytes = heap_sum([
         action.path.heap_bytes().ok_or(ExecutionError::Capacity)?,
         action
             .navigation
@@ -104,11 +92,10 @@ pub(super) fn swap_route(
         action.stage.capacity(),
     ])
     .ok_or(ExecutionError::Capacity)?;
-    check(state, entity, id, &after.storage, bytes)?;
-    let storage = state.entities.detach_action_storage(entity, bytes)?;
-    state
+    check(state, entity, id)?;
+    let storage = state
         .entities
-        .attach_action_storage(entity, after.storage)?;
+        .swap_action_route_storage(entity, after.storage)?;
     let action = state
         .entities
         .resolve_mut(entity)

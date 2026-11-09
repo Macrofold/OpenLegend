@@ -55,6 +55,13 @@ pub struct NativeWalkingSegment {
 pub struct NativeSupportQuery {
     pub point: NativePoint,
     pub surface_id: Option<String>,
+    pub relative: Option<NativeRelativeSupport>,
+}
+#[napi(object, object_from_js = false)]
+pub struct NativeRelativeSupport {
+    pub x: f64,
+    pub z: f64,
+    pub heading: f64,
 }
 
 #[napi(object, object_from_js = false)]
@@ -95,6 +102,10 @@ pub struct NativeRouteQuery {
     pub from: NativeSurfacePoint,
     pub to: Option<NativeSurfacePoint>,
     pub bounds: Option<NativeBounds>,
+    pub target_position: Option<NativePoint>,
+    pub target_support: Option<NativeSurfacePoint>,
+    pub goal: Option<NativePoint>,
+    pub reach: Option<f64>,
     pub body: NativeBodyProfile,
 }
 
@@ -432,6 +443,11 @@ impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
                 .map(|value| NativeSupportQuery {
                     point: value.point.into(),
                     surface_id: value.surface_id,
+                    relative: value.relative.map(|v| NativeRelativeSupport {
+                        x: v.x,
+                        z: v.z,
+                        heading: v.heading,
+                    }),
                 })
                 .collect(),
             standing: value
@@ -472,11 +488,33 @@ impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
                 .routes
                 .into_iter()
                 .map(|value| match value {
+                    core::RouteQuery::Approach {
+                        from,
+                        body,
+                        target_position,
+                        target_support,
+                        reach,
+                        goal,
+                    } => NativeRouteQuery {
+                        kind: "approach".to_owned(),
+                        from: from.into(),
+                        to: None,
+                        bounds: None,
+                        target_position: Some(target_position.into()),
+                        target_support: target_support.map(Into::into),
+                        goal: Some(goal.into()),
+                        reach: Some(reach),
+                        body: body.into(),
+                    },
                     core::RouteQuery::Surface { from, to, body } => NativeRouteQuery {
                         kind: "surface".to_owned(),
                         from: from.into(),
                         to: Some(to.into()),
                         bounds: None,
+                        target_position: None,
+                        target_support: None,
+                        goal: None,
+                        reach: None,
                         body: body.into(),
                     },
                     core::RouteQuery::Outside { from, bounds, body } => NativeRouteQuery {
@@ -484,6 +522,10 @@ impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
                         from: from.into(),
                         to: None,
                         bounds: Some(bounds.into()),
+                        target_position: None,
+                        target_support: None,
+                        goal: None,
+                        reach: None,
                         body: body.into(),
                     },
                 })

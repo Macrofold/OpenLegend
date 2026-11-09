@@ -24,6 +24,7 @@ import {
   clearPhysicalSegment,
   distance3D,
   findSurfaceRoute,
+  findApproachRoute,
   resolveSupport,
   surfacesInBounds,
   surfaceById,
@@ -489,98 +490,11 @@ export function findApproachPath(
 ): RoutePlan | null {
   const start = supportedPosition(actor);
   if (!start) return null;
-  const map = spatialMap(world),
-    profile = bodyProfile(actor),
-    targetPosition = worldPosition(target);
-  // Every candidate uses this call's exact geometry and body state. Capture them once:
-  // repeated reads through an Immer draft create avoidable proxies and allocations.
-  const anchor = (p: Position): Position => ({
-    x: p.x,
-    y: p.y + profile.interactionHeight,
-    z: p.z,
-  });
-  const reaches = (p: Position): boolean => {
-    const from = anchor(p);
-    return distance3D(from, goal) <= reach && clearSegment(map, from, goal);
-  };
-  const candidates: SurfacePoint[] = [];
-  const targetSupport = supportedPosition(target);
-  if (targetSupport && canStand(map, targetSupport, profile) && reaches(targetSupport))
-    candidates.push(targetSupport);
-  const radius = Math.min(12, Math.max(1, reach));
-  const footY = goal.y - profile.interactionHeight;
-  for (const surface of surfacesInBounds(map, {
-    min: {
-      x: targetPosition.x - radius,
-      y: footY - reach,
-      z: targetPosition.z - radius,
-    },
-    max: {
-      x: targetPosition.x + radius,
-      y: footY + reach,
-      z: targetPosition.z + radius,
-    },
-  })) {
-    for (
-      let z = Math.max(Math.ceil(surface.minZ), Math.ceil(targetPosition.z - radius));
-      z <= Math.min(Math.floor(surface.maxZ), Math.floor(targetPosition.z + radius));
-      z++
-    ) {
-      for (
-        let x = Math.max(Math.ceil(surface.minX), Math.ceil(targetPosition.x - radius));
-        x <= Math.min(Math.floor(surface.maxX), Math.floor(targetPosition.x + radius));
-        x++
-      ) {
-        const p = { x, y: surfaceHeight(surface, x, z), z, surfaceId: surface.id };
-        if (distance3D(anchor(p), goal) <= reach) candidates.push(p);
-      }
-    }
-  }
-  candidates.sort(
-    (a, b) =>
-      distance3D(start, a) - distance3D(start, b) ||
-      a.surfaceId.localeCompare(b.surfaceId) ||
-      a.z - b.z ||
-      a.x - b.x,
+  return findApproachRoute(
+    spatialMap(world), start, bodyProfile(actor), worldPosition(target),
+    supportedPosition(target), reach, goal,
+    occupiedBodies ? occupiedBodySweepReader(world, actor) : undefined,
   );
-  const destinations: SurfacePoint[] = [];
-  const sweeps = occupiedBodies ? occupiedBodySweepReader(world, actor) : undefined;
-  let occupiedRoutes = 0;
-  for (const candidate of candidates) {
-    if (!reaches(candidate) || !canStand(map, candidate, profile)) continue;
-    if (sweeps && !sweeps(candidate, candidate).clear(candidate)) continue;
-    if (destinations.length === 12) break;
-    if (sweeps && occupiedRoutes++ === 12) break;
-    const route = findSurfaceRoute(map, start, candidate, profile);
-    if (route.status === 'reached') {
-      // Different animals can approach the same food. A static route and a free
-      // destination do not prove the body can pass its current neighbours.
-      let from = start;
-      const clear =
-        !sweeps ||
-        route.path.every((point) => {
-          const result = sweeps(from, point).clear(point);
-          from = point;
-          return result;
-        });
-      if (clear) return route;
-      continue;
-    }
-    destinations.push(candidate);
-  }
-  return destinations.length
-    ? {
-        status: 'pending',
-        path: [],
-        expanded: 0,
-        request: {
-          from: start,
-          destinations,
-          body: { ...profile },
-          geometryRevision: map.spatial.revision,
-        },
-      }
-    : null;
 }
 /** Project a short voluntary movement only onto its existing support, not the floor below. */
 export function sameSurfacePoint(

@@ -393,5 +393,8 @@ export class PostgresDatabase implements SqlDatabase {
       await this.readReady.catch(() => undefined);
       await this.reader.end();
     }
+    // All read lanes are drained. A closed connection must no longer retain
+    // an operational world/capture through its live-overlay callback.
+    this.liveReadCuts = undefined;
   }
 }

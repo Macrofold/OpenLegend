@@ -31,13 +31,14 @@ impl CapturedPlayerEvents {
     }
 }
 enum Snapshot {
-    Awareness(Arc<PersonalSourceRecord>),
+    Awareness(Arc<PersonalSourceRecord>, Arc<crate::host::SharedMemoryPin>),
     Temporal {
         receipt: TemporalReceipt,
         members: Vec<usize>,
         values: IndexMap<String, Arc<ReceivedValueRecord>>,
         _receipt_guard: ByteReservation,
         _values_guard: ByteReservation,
+        _pins: Vec<Arc<crate::host::SharedMemoryPin>>,
     },
     Current {
         original: OwnedObservation,
@@ -48,6 +49,7 @@ enum Snapshot {
 struct AccountSnapshot {
     original: Arc<crate::events::OriginalOccurrence>,
     evidence: Snapshot,
+    _original_pin: Arc<crate::host::SharedMemoryPin>,
 }
 pub(super) struct PlayerEventFence {
     world_id: String,
@@ -83,9 +85,10 @@ impl PlayerEventFence {
                     .map_err(|_| ExperienceError::Unavailable)?,
             );
             let evidence = match account.evidence {
-                Evidence::Awareness(value) => Snapshot::Awareness(Arc::clone(
-                    value.source.ok_or(ExperienceError::Unavailable)?,
-                )),
+                Evidence::Awareness(value) => {
+                    let source = value.source.ok_or(ExperienceError::Unavailable)?;
+                    Snapshot::Awareness(Arc::clone(source), source.capture_pin(budget)?)
+                },
                 Evidence::Current {
                     original,
                     members,
@@ -111,9 +114,12 @@ impl PlayerEventFence {
                         .ok_or_else(capacity)?;
                     let bytes = map_storage::<String, Arc<ReceivedValueRecord>>(count)
                         .and_then(|n| n.checked_add(keys))
+                        .and_then(|n| n.checked_add(count.checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>())?))
                         .ok_or_else(capacity)?;
                     let values_guard = budget.reserve(bytes).map_err(|_| capacity())?;
                     let mut shared = IndexMap::new();
+                    let mut pins = Vec::new();
+                    pins.try_reserve_exact(count).map_err(|_| capacity())?;
                     shared.try_reserve(count).map_err(|_| capacity())?;
                     for &index in &members {
                         if let ReceivedValueReference::Shared(id) = &receipt.facets[index].value_ref
@@ -123,6 +129,7 @@ impl PlayerEventFence {
                                     .as_ref()
                                     .and_then(|pool| pool.shared_record(id))
                                     .ok_or(ExperienceError::Unavailable)?;
+                                pins.push(record.capture_pin(budget).map_err(|_|capacity())?);
                                 shared.insert(id.clone(), Arc::clone(record));
                             }
                         }
@@ -133,10 +140,12 @@ impl PlayerEventFence {
                         values: shared,
                         _receipt_guard: _guard,
                         _values_guard: values_guard,
+                        _pins: pins,
                     }
                 }
             };
-            retained.insert(id.to_owned(), AccountSnapshot { original, evidence });
+            let original_pin = original.capture_pin(budget).map_err(|_|capacity())?;
+            retained.insert(id.to_owned(), AccountSnapshot { original, evidence, _original_pin: original_pin });
         }
         Ok(Self {
             world_id: state.physical.header.id.clone(),
@@ -233,7 +242,7 @@ fn first_snapshot<'a>(value: &'a Snapshot, kind: &str) -> Option<&'a SensoryFace
             .iter()
             .map(|index| &original.observation().facets[*index].value)
             .find(|value| value.kind() == kind),
-        Snapshot::Awareness(_) => None,
+        Snapshot::Awareness(..) => None,
     }
 }
 fn first_current<'a>(value: &'a Evidence<'_>, kind: &str) -> Option<&'a SensoryFacet> {
@@ -269,7 +278,7 @@ fn same_evidence(
     after: &Evidence<'_>,
     budget: &ByteBudget,
 ) -> Result<bool, ExperienceError> {
-    if let Snapshot::Awareness(source) = before {
+    if let Snapshot::Awareness(source, _) = before {
         let Evidence::Awareness(after) = after else {
             return Ok(false);
         };

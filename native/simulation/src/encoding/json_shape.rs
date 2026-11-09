@@ -13,6 +13,7 @@ pub(crate) struct JsonAllocationShape {
     pub(crate) array_items: usize,
     pub(crate) members: usize,
     pub(crate) strings: usize,
+    pub(crate) containers: usize,
 }
 impl JsonAllocationShape {
     pub(crate) fn read(source: &str) -> Result<Self, JsonShapeError> {
@@ -42,6 +43,10 @@ impl JsonAllocationShape {
                         .ok_or(JsonShapeError::Capacity)?;
                 }
                 b'[' | b'{' => {
+                    result.containers = result
+                        .containers
+                        .checked_add(1)
+                        .ok_or(JsonShapeError::Capacity)?;
                     let slot = stack
                         .get_mut(depth)
                         .ok_or(JsonShapeError::MalformedResponse)?;

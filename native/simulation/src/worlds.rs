@@ -68,6 +68,7 @@ pub use base_recognition::RecognitionPolicy as InstalledRecognitionPolicy;
 pub use base_recognition::VoiceFeatures as InstalledVoiceFeatures;
 pub use base_recognition::WildernessEvidenceMeaning as InstalledEvidenceMeaning;
 pub(crate) use base_recognition::validate_selected_identities;
+pub(crate) use base_recognition::RecognitionPrivacyPreparation;
 pub(crate) use base_recognition::{
     BodyFamiliarityPreparation as InstalledBodyFamiliarityPreparation,
     RecognitionCheckpoint as InstalledRecognitionCheckpoint,

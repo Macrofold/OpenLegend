@@ -106,7 +106,9 @@ pub struct PendingTemporalPage {
 
 impl PendingTemporalPage {
     pub(crate) fn retain_for_candidate(&self, budget: &ByteBudget) -> Result<(), ReceivedError> {
-        budget.retain_record(&self._reservation).map_err(|_| ReceivedError("Temporal before-image exceeds native allowance."))?;
+        budget
+            .retain_record(&self._reservation)
+            .map_err(|_| ReceivedError("Temporal before-image exceeds native allowance."))?;
         self.batch.retain_for_candidate(budget)
     }
     pub fn id(&self) -> &str {
@@ -310,18 +312,47 @@ impl TemporalState {
         actor_id: &str,
         header: TemporalActorHeader,
     ) -> Result<(), ReceivedError> {
+        let length = crate::encoding::json_record_len(&header)
+            .map_err(|_| ReceivedError("Temporal actor encoding failed."))?;
+        let mut workspace = self
+            .budget
+            .reserve(
+                length
+                    .checked_mul(2)
+                    .map(|n| n.max(8))
+                    .ok_or(ReceivedError("Temporal actor allocation overflow."))?,
+            )
+            .map_err(|_| ReceivedError("Temporal actor exceeds native allowance."))?;
         let payload: Arc<str> = Arc::from(
             json_record(&header).map_err(|_| ReceivedError("Temporal actor encoding failed."))?,
         );
+        workspace
+            .resize(payload.len() + 2 * std::mem::size_of::<usize>())
+            .map_err(|_| ReceivedError("Temporal actor exceeds native allowance."))?;
+        let body = header
+            .heap_bytes()
+            .and_then(|n| n.checked_add(workspace.bytes()))
+            .ok_or(ReceivedError("Temporal actor allocation overflow."))?;
+        workspace
+            .resize(body)
+            .map_err(|_| ReceivedError("Temporal actor exceeds native allowance."))?;
+        let storage = self
+            .budget
+            .adopt_record(workspace)
+            .map_err(|_| ReceivedError("Temporal actor exceeds native allowance."))?;
         self.reserve_undo_slots(1, &self.budget.clone())?;
         let actor = self
             .actors
             .get_mut(actor_id)
             .ok_or(ReceivedError("Temporal actor is absent."))?;
+        self.budget
+            .retain_record(&actor.header_storage)
+            .map_err(|_| ReceivedError("Temporal actor before-image exceeds native allowance."))?;
         self.undo.push(TemporalUndo::Header {
             actor_id: actor_id.to_owned(),
             before: std::mem::replace(&mut actor.header, header),
             payload: std::mem::replace(&mut actor.payload, payload),
+            storage: std::mem::replace(&mut actor.header_storage, storage),
         });
         Ok(())
     }

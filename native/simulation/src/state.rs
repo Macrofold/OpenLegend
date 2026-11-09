@@ -8,6 +8,7 @@
 mod action_storage;
 mod goal_storage;
 mod intent_storage;
+mod residency;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::values::{
     AttributeState, DefinitionPin, StatusInstance, WorkInvocation, deserialize_present_option,
@@ -427,7 +428,6 @@ pub struct ActorAgency {
         skip_serializing_if = "Option::is_none"
     )]
     pub last_result_evidence: Option<crate::activity::ResultEvidence>,
-    pub attempts: Vec<crate::plans::PendingIntent>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub goals: Vec<Goal>,
@@ -440,6 +440,7 @@ pub struct ActorAgency {
     )]
     pub(crate) suspended: Option<Option<crate::plans::ActorPlan>>,
     pub(crate) history: Vec<crate::plans::PlanStep>,
+    pub attempts: Vec<crate::plans::PendingIntent>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1499,9 +1500,10 @@ struct EntitySlot {
     generation: u64,
     entity: Option<Entity>,
     order: String,
-    action_storage: Option<crate::host::ByteReservation>,
-    goal_storage: Option<crate::host::ByteReservation>,
+    action_storage: Option<action_storage::ActionStorage>,
+    goal_storage: Option<crate::host::ResidentReservation>,
     intent_storage: Option<crate::host::ResidentReservation>,
+    metadata_storage: Option<residency::EntityMetadata>,
 }
 /// Ordering labels are the source collection's actual labels. They are not
 /// identities and never change merely because jobs move between workers.
@@ -1510,6 +1512,7 @@ pub struct EntityStore {
     by_id: BTreeMap<String, EntityHandle>,
     by_order: BTreeMap<String, String>,
     pub next_insertion: u64,
+    memory: Option<residency::EntityStoreMemory>,
 }
 /// A membership inverse owns only collection metadata. The newly constructed
 /// entity itself is moved into the canonical store, never copied into an undo.
@@ -1517,6 +1520,7 @@ pub(crate) struct EntityInsertion {
     pub handle: EntityHandle,
     next_insertion: u64,
     renumbered: Option<(BTreeMap<String, String>, Vec<(usize, String)>)>,
+    memory_before: (usize, usize),
 }
 impl EntityInsertion {
     pub(crate) fn renumbered(&self) -> bool {
@@ -1542,7 +1546,11 @@ impl EntityStore {
         }
         Some(bytes)
     }
-    pub(crate) fn insert_new(&mut self, entity: Entity) -> Result<EntityInsertion, &'static str> {
+    pub(crate) fn insert_new(
+        &mut self,
+        entity: Entity,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<EntityInsertion, &'static str> {
         // The scoped installation's actor-only proof remains true across every
         // selected creation. A new actorless family needs its actual owners and
         // a changed installation closure before this store may admit it.
@@ -1559,6 +1567,13 @@ impl EntityStore {
         if self.by_id.contains_key(&entity.id) {
             return Err("Existing entity membership.");
         }
+        let memory_before = self
+            .memory
+            .as_ref()
+            .ok_or("Entity metadata custody.")?
+            .counts();
+        let metadata_storage =
+            Some(residency::EntityMetadata::new(&entity, budget).map_err(|_| "Entity capacity.")?);
         self.slots.try_reserve(1).map_err(|_| "Entity capacity.")?;
         let previous = self.next_insertion;
         let renumbered = if self.next_insertion == MAX_SAFE_INTEGER {
@@ -1570,6 +1585,7 @@ impl EntityStore {
                 .map_err(|_| "Entity capacity.")?;
             let mut next = 0u64;
             let mut order = BTreeMap::new();
+            let mut order_bytes = 0usize;
             for id in self.by_order.values() {
                 let handle = *self.by_id.get(id).ok_or("Entity membership.")?;
                 let old = &self.slots[handle.slot].order;
@@ -1581,6 +1597,16 @@ impl EntityStore {
                     label
                 };
                 order.insert(label.clone(), id.clone());
+                order_bytes = order_bytes
+                    .checked_add(
+                        residency::EntityStoreMemory::order_member_bytes(
+                            label.capacity(),
+                            label.len(),
+                            id.len(),
+                        )
+                        .ok_or("Entity capacity.")?,
+                    )
+                    .ok_or("Entity capacity.")?;
                 labels.push((handle.slot, label));
             }
             let old_order = std::mem::replace(&mut self.by_order, order);
@@ -1588,6 +1614,10 @@ impl EntityStore {
                 std::mem::swap(&mut self.slots[*slot].order, label);
             }
             self.next_insertion = next;
+            self.memory
+                .as_mut()
+                .ok_or("Entity metadata custody.")?
+                .set_order_bytes(order_bytes);
             Some((old_order, labels))
         } else {
             None
@@ -1600,6 +1630,11 @@ impl EntityStore {
         };
         self.by_id.insert(entity.id.clone(), handle);
         self.by_order.insert(order.clone(), entity.id.clone());
+        self.memory
+            .as_mut()
+            .ok_or("Entity metadata custody.")?
+            .add_member(entity.id.len(), order.capacity(), order.len())
+            .ok_or("Entity capacity.")?;
         self.slots.push(EntitySlot {
             generation: 0,
             entity: Some(entity),
@@ -1607,16 +1642,19 @@ impl EntityStore {
             action_storage: None,
             goal_storage: None,
             intent_storage: None,
+            metadata_storage,
         });
         Ok(EntityInsertion {
             handle,
             next_insertion: previous,
             renumbered,
+            memory_before,
         })
     }
     pub(crate) fn undo_insertion(
         &mut self,
         before: EntityInsertion,
+        funding: &mut crate::host::ByteReservation,
     ) -> Result<(String, bool), &'static str> {
         if before.handle.slot + 1 != self.slots.len() {
             return Err("Entity insertion order.");
@@ -1633,6 +1671,12 @@ impl EntityStore {
             }
         }
         self.next_insertion = before.next_insertion;
+        self.memory
+            .as_mut()
+            .ok_or("Entity metadata custody.")?
+            .restore_counts(before.memory_before);
+        self.settle_store_memory(funding, true)
+            .map_err(|_| "Entity metadata custody.")?;
         Ok((entity.id, renumbered))
     }
     pub fn install(
@@ -1647,6 +1691,7 @@ impl EntityStore {
             by_id: BTreeMap::new(),
             by_order: BTreeMap::new(),
             next_insertion,
+            memory: None,
         };
         for (order, entity) in entries {
             if !crate::values::is_safe_record_id(&entity.id)
@@ -1668,6 +1713,7 @@ impl EntityStore {
                 action_storage: None,
                 goal_storage: None,
                 intent_storage: None,
+                metadata_storage: None,
             });
         }
         Ok(value)

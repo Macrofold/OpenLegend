@@ -22,6 +22,7 @@ interface PreparationTotals {
   readonly sourceBytes: number;
 }
 export interface NativeHistoryEditReadRequest {
+  readonly actorId: string;
   readonly binding: {
     readonly worldId: string;
     readonly generation: string;
@@ -31,7 +32,7 @@ export interface NativeHistoryEditReadRequest {
     readonly candidateGeneration: number;
     readonly requestSerial: number;
   };
-  readonly phase: 'closure' | 'records';
+  readonly phase: 'closure' | 'records' | 'verify';
   readonly sources: readonly SourceAddress[];
   readonly residentPages: readonly string[];
   readonly residentValues: readonly string[];
@@ -40,6 +41,7 @@ export interface NativeHistoryEditReadRequest {
   readonly totals: PreparationTotals;
   /** Operational response admission from the actual awaiting native allowance. */
   readonly maximumTransferBytes: number;
+  readonly predecessors: readonly { readonly id: string; readonly revision: number }[];
 }
 function integer(value: unknown): number {
   const n = Number(value);
@@ -63,7 +65,9 @@ export async function readNativeHistoryEdit(
     binding.worldId !== cut.worldId ||
     binding.generation !== cut.generation ||
     binding.acceptedCut !== cut.sequence ||
-    !['closure', 'records'].includes(request.phase) ||
+    typeof request.actorId !== 'string' ||
+    !request.actorId ||
+    !['closure', 'records', 'verify'].includes(request.phase) ||
     !Number.isFinite(request.at) ||
     request.at < 0 ||
     !Number.isFinite(request.maxAgeSeconds) ||
@@ -73,10 +77,16 @@ export async function readNativeHistoryEdit(
     request.sources.some(
       (v) =>
         typeof v.actorId !== 'string' ||
+        v.actorId !== request.actorId ||
         !v.actorId ||
         typeof v.sourceId !== 'string' ||
         !v.sourceId,
     ) ||
+    request.predecessors.some(
+      (v) =>
+        typeof v.id !== 'string' || !v.id || !Number.isSafeInteger(v.revision) || v.revision < 0,
+    ) ||
+    (request.phase !== 'verify' && request.predecessors.length !== 0) ||
     [...request.residentPages, ...request.residentValues].some(
       (v) => typeof v !== 'string' || !v,
     ) ||
@@ -117,6 +127,41 @@ export async function readNativeHistoryEdit(
         Number(world.simTime) !== request.at
       )
         throw new Error('Native history projection differs from its accepted source cut.');
+      if (request.phase === 'verify') {
+        // This is the same exact immutable-page check Source performs after
+        // asynchronous preparation. Read through the actual accepted overlay;
+        // a changed/deleted page never becomes an adopted old predecessor.
+        const response = {
+          binding,
+          durableRevision: integer(head['revision']),
+          selection: [],
+          tables: {},
+          owners: [],
+          predecessors: request.predecessors,
+          totals: { pages: 0, pageBytes: 0, sourceBytes: 0 },
+        };
+        const wireBound = 1024 + request.predecessors.reduce((n, v) => n + 6 * v.id.length + 96, 0);
+        if (!Number.isSafeInteger(wireBound) || wireBound > request.maximumTransferBytes)
+          throw new Error('Native history response exceeds its admitted transfer allowance.');
+        const expected = new Map(request.predecessors.map((v) => [v.id, v.revision]));
+        if (expected.size !== request.predecessors.length)
+          throw new Error('Native history predecessor identities are duplicated.');
+        const ids = [...expected.keys()];
+        let found = 0;
+        for (let at = 0; at < ids.length; at += 256)
+          for (const row of await db
+            .prepare(
+              'SELECT id,revision FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])',
+            )
+            .all(cut.worldId, ids.slice(at, at + 256))) {
+            if (expected.get(String(row['id'])) !== integer(row['revision']))
+              throw new Error('Native history edit lost its selected immutable predecessor.');
+            found++;
+          }
+        if (found !== expected.size)
+          throw new Error('Native history edit lost its selected immutable predecessor.');
+        return response;
+      }
       const dependencyQuery = correctionDependencyQuery(
         cut.worldId,
         request.sources.map((v) => ({ actor_id: v.actorId, source_id: v.sourceId })),
@@ -136,7 +181,7 @@ export async function readNativeHistoryEdit(
         request.sources.map((v) => ({ actor_id: v.actorId, source_id: v.sourceId })),
       );
       const scope = JSON.stringify(selected);
-      const actors = [...new Set(selected.map((v) => v.actor_id))];
+      const actors = [request.actorId];
       const sourceTables = [
         'mind_awareness',
         'mind_memories',

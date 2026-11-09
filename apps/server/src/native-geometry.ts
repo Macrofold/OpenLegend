@@ -7,6 +7,8 @@ import {
   distanceBounds,
   findOutsideSurfaceRoute,
   findSurfaceRoute,
+  findApproachRoute,
+  relativeSurfacePoint,
   resolveSupport,
   physicalFeatureById,
   queryConvexView,
@@ -67,8 +69,18 @@ export class NativeGeometryProviders {
             queries: queries.walking.slice(at, at + 128),
           })),
         );
-      const support = queries.support.map(({ point, surfaceId }) =>
-        resolveSupport(this.map, point, surfaceId),
+      const support = queries.support.map(({ point, surfaceId, relative }) =>
+        relative
+          ? surfaceId
+            ? relativeSurfacePoint(
+                this.map,
+                { ...point, surfaceId },
+                relative.heading,
+                relative.x,
+                relative.z,
+              )
+            : null
+          : resolveSupport(this.map, point, surfaceId),
       );
       const standing = queries.standing.map(({ point, body }) => canStand(this.map, point, body));
       const standingColumns = queries.standingColumns.map((query) => {
@@ -124,6 +136,23 @@ export class NativeGeometryProviders {
         queryConvexView(this.map, from, target, allowance),
       );
       const routes = queries.routes.map((query) => {
+        if (
+          query.kind === 'approach' &&
+          query.targetPosition &&
+          query.goal &&
+          query.reach !== undefined
+        )
+          return (
+            findApproachRoute(
+              this.map,
+              query.from,
+              query.body,
+              query.targetPosition,
+              query.targetSupport ?? null,
+              query.reach,
+              query.goal,
+            ) ?? { status: 'no-route' as const, path: [], expanded: 0 }
+          );
         if (query.kind === 'surface' && query.to)
           return findSurfaceRoute(this.map, query.from, query.to, query.body);
         if (query.kind === 'outside' && query.bounds)

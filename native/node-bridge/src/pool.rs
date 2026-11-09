@@ -10,6 +10,11 @@ use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
+// Current typed action decoding exceeds the platform's small default worker
+// stack in debug builds. This fixed per-worker allocation is part of host
+// memory cost; it does not change record/depth admission or gameplay limits.
+const COMPUTE_STACK_BYTES: usize = 8 * 1024 * 1024;
+
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum HostError {
     Busy,
@@ -122,6 +127,7 @@ impl HostPool {
         let spawn_handles = Arc::clone(&handles);
         let built = ThreadPoolBuilder::new()
             .num_threads(workers)
+            .stack_size(COMPUTE_STACK_BYTES)
             .thread_name(|index| format!("openlegend-compute-{index}"))
             .spawn_handler(move |worker| {
                 let mut builder = thread::Builder::new();

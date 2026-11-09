@@ -8,8 +8,10 @@ use serde::{Deserialize, Serialize};
 
 mod math;
 pub(super) use math::EPSILON as RECEIVED_GEOMETRY_EPSILON;
+mod privacy;
 mod receive;
 mod recording;
+pub(crate) use privacy::revoke_received_geometry_evidence;
 pub(crate) use receive::{
     CompletedGeometryReception, CurrentReceivedGeometry, GeometryReceptionAnswer,
     GeometryReceptionCursor, GeometryReceptionStep, current_received_geometry,

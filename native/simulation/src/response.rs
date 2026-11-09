@@ -18,12 +18,67 @@ mod save;
 pub(crate) use envelope::{ActorResponse, ResponseKind, ResponseOperation};
 mod digest;
 pub(crate) use digest::{ResponseDigestAnswer, ResponseDigestRequest};
+mod bindings;
+pub(crate) use bindings::{
+    ResponseActionChoice, ResponseAttemptBinding, ResponseBindingInput, ResponseBindings,
+    ResponseSemanticCause, ResponseSituation, ResponseWorkIdentity,
+};
+mod actions;
+mod expression;
+mod run;
+mod sources;
+pub(crate) use expression::{
+    CompletedExpression, ExpressionAnswer, ExpressionCursor, ExpressionStep,
+};
+pub(crate) use run::{CompletedResponse, ResponseAnswer, ResponseCursor, ResponseStep};
 mod think;
 pub(crate) use think::{CompletedThought, Thought, remember_thought};
+
+pub(super) struct ComponentResult {
+    outcome: Outcome,
+    storage: ByteReservation,
+}
+impl ComponentResult {
+    fn from_parts(parts: (Outcome, ByteReservation)) -> Self {
+        Self {
+            outcome: parts.0,
+            storage: parts.1,
+        }
+    }
+    fn prepare(
+        ok: bool,
+        code: &str,
+        message: crate::text::TextRef<'_>,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let storage = budget.reserve(
+            code.len()
+                .checked_add(message.storage_bytes())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(Self {
+            outcome: Outcome {
+                ok,
+                code: code.into(),
+                message: message.to_owned(),
+                spent: None,
+                outputs: None,
+                recipe_id: None,
+                item_id: None,
+                entity_id: None,
+                goal_id: None,
+                plan_id: None,
+                action_id: None,
+            },
+            storage,
+        })
+    }
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ResponseLimits {
+    pub invocation: crate::commands::InvocationLimits,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub operations: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -33,7 +88,11 @@ pub(crate) struct ResponseLimits {
 }
 impl ResponseLimits {
     pub(crate) fn valid(&self) -> bool {
-        self.operations > 0 && self.bytes > 0 && self.receipts > 0
+        self.operations > 0
+            && self.bytes > 0
+            && self.receipts > 0
+            && self.invocation.offset.is_finite()
+            && self.invocation.offset > 0.0
     }
 }
 

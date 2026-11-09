@@ -178,6 +178,10 @@ impl RuntimePlayerRead {
             bytes.extend_from_slice(part);
         }
         custody.resize(bytes.capacity()).map_err(failure)?;
-        Ok(RuntimeJson { bytes, custody })
+        Ok(RuntimeJson {
+            bytes,
+            custody,
+            handoff: None,
+        })
     }
 }

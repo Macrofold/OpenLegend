@@ -3,7 +3,7 @@
 //! constructed or used as an incremental predecessor.
 use super::{
     CompletedOperation, DriveError, DriveStep, OperationDriver, PreparedPublication,
-    ProviderQuestion, ProviderResponse, PublicationError, Simulation,
+    ProviderQuestion, ProviderResponse, PublicationError, Simulation, SimulationState,
 };
 use crate::administration::InstalledHostSettings;
 use crate::execution::{CandidateJournal, CoreMutation, ExecutionError};
@@ -39,6 +39,43 @@ struct MemoryAllowance<'a> {
     max_bytes: u64,
     hard_bytes: f64,
     low_bytes: f64,
+}
+
+impl<'a> CurrentInstallation<'a> {
+    /// Capture only actual validated installation metadata. The public session
+    /// reader additionally requires its accepted Idle boundary.
+    pub(crate) fn capture(state: &'a SimulationState) -> Result<Self, SessionError> {
+        let policy = state.installed.attention.value();
+        let retention = &policy.retention;
+        let history_event_count = state
+            .occurrences
+            .archived_count()
+            .unwrap_or(0)
+            .checked_add(
+                u64::try_from(state.occurrences.hot().count())
+                    .map_err(|_| ExecutionError::Invariant)?,
+            )
+            .filter(|count| *count <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Invariant)?;
+        Ok(CurrentInstallation {
+            world_id: &state.physical.header.id,
+            generation: &state.generation,
+            revision: state.durable_revision,
+            accepted_cut: state.accepted_cut,
+            history_event_count,
+            memory_allowance: MemoryAllowance {
+                world_id: &state.physical.header.id,
+                policy_id: &policy.id,
+                policy_version: policy.version,
+                max_bytes: retention.derived_max_bytes,
+                hard_bytes: (retention.derived_max_bytes as f64
+                    * (1.0 + retention.maintenance_headroom))
+                    .floor(),
+                low_bytes: (retention.derived_max_bytes as f64 * retention.derived_low_water)
+                    .floor(),
+            },
+        })
+    }
 }
 
 #[derive(Debug)]
@@ -195,37 +232,7 @@ impl Session {
     /// Actual validated install facts used by the existing SQL writer's cold
     /// adoption. This finite summary conveys no actor facts or write permission.
     pub(crate) fn current_installation(&self) -> Result<CurrentInstallation<'_>, SessionError> {
-        let state = &self.accepted()?.state;
-        let policy = state.installed.attention.value();
-        let retention = &policy.retention;
-        let history_event_count = state
-            .occurrences
-            .archived_count()
-            .unwrap_or(0)
-            .checked_add(
-                u64::try_from(state.occurrences.hot().count())
-                    .map_err(|_| ExecutionError::Invariant)?,
-            )
-            .filter(|count| *count <= crate::identity::MAX_SAFE_INTEGER)
-            .ok_or(ExecutionError::Invariant)?;
-        Ok(CurrentInstallation {
-            world_id: &state.physical.header.id,
-            generation: &state.generation,
-            revision: state.durable_revision,
-            accepted_cut: state.accepted_cut,
-            history_event_count,
-            memory_allowance: MemoryAllowance {
-                world_id: &state.physical.header.id,
-                policy_id: &policy.id,
-                policy_version: policy.version,
-                max_bytes: retention.derived_max_bytes,
-                hard_bytes: (retention.derived_max_bytes as f64
-                    * (1.0 + retention.maintenance_headroom))
-                    .floor(),
-                low_bytes: (retention.derived_max_bytes as f64 * retention.derived_low_water)
-                    .floor(),
-            },
-        })
+        CurrentInstallation::capture(&self.accepted()?.state)
     }
     pub(crate) fn begin_advance(
         &mut self,
@@ -298,6 +305,33 @@ impl Session {
             OperationDriver::command(&mut core, command, &self.budget)
         })();
         self.install_driver(key, journal, driver, preview)
+    }
+    /// Bindings are the native context producer's opaque, guard-owning ticket;
+    /// no caller supplied permission map enters the writer.
+    pub(crate) fn begin_response(
+        &mut self,
+        id: &str,
+        response: crate::response::ActorResponse,
+        bindings: Arc<crate::response::ResponseBindings>,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::response::ResponseCursor::new(
+                &mut core,
+                id,
+                response,
+                bindings,
+                key,
+                &self.budget,
+            )
+            .map_err(DriveError::from)?;
+            OperationDriver::response(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
     }
     pub(crate) fn begin_cancel_preview(
         &mut self,

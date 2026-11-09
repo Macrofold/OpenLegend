@@ -205,9 +205,9 @@ pub(crate) fn prepare_sound_awareness(
     };
     let source_id = (self_body || visible).then_some(source_id);
     let references = if let Some(id) = source_id {
-        Some(ReceivedReference {
-            id: id.to_owned(),
-            label: if self_body {
+        Some(ReceivedReference::sound(
+            id.to_owned(),
+            if self_body {
                 "me".into()
             } else {
                 name_phrase(
@@ -220,8 +220,8 @@ pub(crate) fn prepare_sound_awareness(
                     false,
                 )
             },
-            role: ReferenceRole::Actor,
-        })
+            ReferenceRole::Actor,
+        ))
     } else {
         None
     };

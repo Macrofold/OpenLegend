@@ -241,11 +241,8 @@ pub(crate) fn original_support(
                 } else {
                     &policy.optional
                 },
-                core.state
-                    .reception
-                    .received_values
-                    .as_mut()
-                    .ok_or(ExecutionError::UnfinishedOccurrence)?,
+                &mut core.state.reception.received_values,
+                &core.state.activity.display,
                 &mut core.state.physical.identity,
                 transition,
                 core.state.physical.header.sim_time,

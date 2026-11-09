@@ -152,7 +152,7 @@ impl VoiceReceptionPreparation {
             .ok_or_else(capacity)?;
         let contact_storage = records
             .into_iter()
-            .flat_map(IndexMap::values)
+            .flat_map(|records| records.values())
             .flat_map(|identity| identity.voice.iter().flat_map(|voice| &voice.samples))
             .try_fold(0usize, |bytes, sample| {
                 heap_sum([
@@ -220,7 +220,7 @@ impl VoiceReceptionPreparation {
                 + size_of::<RecognitionSample>() * 6
                 + size_of::<ObserverIdentity>() * 2,
             records
-                .map_or(0, IndexMap::len)
+                .map_or(0, |records| records.len())
                 .checked_mul(size_of::<Match>() * 4 + size_of::<Exemplar<'_>>() * 4)
                 .ok_or_else(capacity)?,
         ])
@@ -236,7 +236,7 @@ impl VoiceReceptionPreparation {
             json_record(&("contact", &source_key, event.at)).map_err(|_| invalid())?;
         let prior_contacts: Vec<String> = records
             .into_iter()
-            .flat_map(IndexMap::values)
+            .flat_map(|records| records.values())
             .flat_map(|identity| identity.voice.iter().flat_map(|voice| &voice.samples))
             .map(|sample| {
                 json_record(&("contact", &sample.source_key, sample.at)).map_err(|_| invalid())

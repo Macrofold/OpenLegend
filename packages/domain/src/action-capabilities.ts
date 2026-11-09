@@ -1,10 +1,10 @@
 import { entityGet, entityHas } from './entity-collection.js';
-import { surfaceContains, surfaceHeight, type SurfacePoint } from '@open-legend/spatial';
-import { FOLLOW_RULES, headingFrame } from './follow.js';
+import { surfaceContains, surfaceHeight, relativeSurfacePoint, type SurfacePoint } from '@open-legend/spatial';
+import { FOLLOW_RULES } from './follow.js';
 export { FOLLOW_RULES } from './follow.js';
 import { rememberedPlace, suspensionProblem } from './agency.js';
-import { canReachEntity, findApproachPath, sameSurfacePoint } from './spatial.js';
-import { supportedPosition, worldPosition } from './spatial-state.js';
+import { canReachEntity, findApproachPath } from './spatial.js';
+import { supportedPosition, spatialMap } from './spatial-state.js';
 import { portableItems } from './item-handling.js';
 import { accessiblePossession } from './object-access.js';
 import { itemFor } from './objects.js';
@@ -668,14 +668,8 @@ export function bindActionInvocation(
     );
   if (raw.frame === 'actor') {
     // The actor's own facing is the frame, never a camera; only its current ground qualifies.
-    const here = worldPosition(actor);
-    const { forward, right } = headingFrame(actor.spatial.heading);
-    const destination = sameSurfacePoint(
-      world,
-      actor,
-      here.x + right.x * raw.x! + forward.x * raw.z!,
-      here.z + right.z * raw.x! + forward.z * raw.z!,
-    );
+    const from = supportedPosition(actor);
+    const destination = from && relativeSurfacePoint(spatialMap(world), from, actor.spatial.heading, raw.x!, raw.z!);
     return destination
       ? { id, actorId, type: 'move', destination }
       : outcome(

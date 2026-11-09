@@ -544,7 +544,9 @@ pub fn retain_received_value(
                 backing: budget
                     .reserve_backing(0)
                     .map_err(|_| ReceivedError("Received values exceed native allowance."))?,
-                undo_storage: budget.reserve(0).map_err(|_| ReceivedError("Received values exceed native allowance."))?,
+                undo_storage: budget
+                    .reserve(0)
+                    .map_err(|_| ReceivedError("Received values exceed native allowance."))?,
             };
             let retained =
                 owner.retain_shared(value, encoded, encoded_storage, at, sequence, identity)?;
@@ -583,9 +585,17 @@ impl ReceivedValues {
             .max(self.undo.capacity());
         let bytes = residency::backing(source_capacity, 0).ok_or_else(capacity)?;
         if bytes > self.backing.bytes() {
-            self.budget.resize_backing(&mut self.backing, bytes).map_err(|_| capacity())?;
+            self.budget
+                .resize_backing(&mut self.backing, bytes)
+                .map_err(|_| capacity())?;
         }
-        self.undo_storage.resize(undo_capacity.checked_mul(std::mem::size_of::<ReceivedValuesUndo>()).ok_or_else(capacity)?).map_err(|_|capacity())?;
+        self.undo_storage
+            .resize(
+                undo_capacity
+                    .checked_mul(std::mem::size_of::<ReceivedValuesUndo>())
+                    .ok_or_else(capacity)?,
+            )
+            .map_err(|_| capacity())?;
         self.sources
             .try_reserve(additional_sources)
             .map_err(|_| capacity())?;
@@ -672,7 +682,9 @@ impl ReceivedValues {
             activity_limits,
             budget: budget.clone(),
             backing,
-            undo_storage: budget.reserve(0).map_err(|_| ReceivedError("Received values exceed native allowance."))?,
+            undo_storage: budget
+                .reserve(0)
+                .map_err(|_| ReceivedError("Received values exceed native allowance."))?,
         })
     }
 
