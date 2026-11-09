@@ -183,6 +183,63 @@ pub struct NativeResponseEpisode {
     pub blocked: Option<BlockedResponse>,
 }
 
+impl NativeResponseEpisode {
+    /// The current schema stores dangers and preparations as child rows. A
+    /// child estimate changes no episode-header value; optional child presence
+    /// still changes its marker. Destructuring makes new fields an explicit
+    /// storage decision. See docs/performance/storage.md.
+    fn saved_header(&self) -> impl PartialEq + '_ {
+        let Self {
+            acoustic_cue,
+            acoustic_leg_required,
+            id,
+            started_at,
+            latest_cause,
+            preparations,
+            preferred_refuge,
+            aerial_route_id,
+            profile_pin,
+            locomotion,
+            mode,
+            dangers: _,
+            review_at,
+            clear_since,
+            proposal_generation,
+            proposal,
+            refuge,
+            movement,
+            blocked,
+        } = self;
+        (
+            (
+                acoustic_cue,
+                acoustic_leg_required,
+                id,
+                started_at,
+                latest_cause,
+                preparations.is_some(),
+                preferred_refuge,
+                aerial_route_id,
+                profile_pin,
+                locomotion,
+            ),
+            (
+                mode,
+                review_at,
+                clear_since,
+                proposal_generation,
+                proposal,
+                refuge,
+                movement,
+                blocked,
+            ),
+        )
+    }
+    pub(crate) fn same_saved_header(&self, other: &Self) -> bool {
+        self.saved_header() == other.saved_header()
+    }
+}
+
 // A retained undo record clones only this bounded response subtree. Rebuild its
 // maps at current length so obsolete raw-table capacity cannot hide behind an
 // encoded-size estimate or multiply across nested checkpoints.

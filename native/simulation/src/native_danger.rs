@@ -92,13 +92,19 @@ impl DangerAssessment {
 }
 
 pub(crate) struct DangerBatch {
+    selection: PreparedDanger,
+    sight: SightBatch,
+}
+/// Finite physical selection survives receiving without changing danger state.
+/// Reconciliation follows the animal's actual sight evidence and continuity.
+pub(crate) struct PreparedDanger {
+    binding: GeometryBinding,
     observer: EntityHandle,
     observer_id: String,
     episode_id: String,
     at: f64,
     complete: bool,
     candidates: Vec<String>,
-    sight: SightBatch,
     reservation: ByteReservation,
 }
 
@@ -130,9 +136,11 @@ impl DangerBatch {
             .and_then(|state| state.episode.as_ref())
             .ok_or(ExecutionError::Invariant)?;
         let pin = profile_key(&episode.profile_pin).map_err(|_| ExecutionError::Invariant)?;
-        if !installed.response_profiles.contains_key(&pin) {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
+        let profile = installed
+            .response_profiles
+            .get(&pin)
+            .ok_or(ExecutionError::UnsupportedFamily)?
+            .value();
         let vision = vision_parameters(installed, observer);
         let complete = vision.radius > 0.0
             && observer.actively_participates()
@@ -165,6 +173,14 @@ impl DangerBatch {
             .map_err(|_| ExecutionError::Capacity)?;
         let mut candidates = Vec::new();
         if complete {
+            let retained: BTreeSet<&str> = episode
+                .dangers
+                .values()
+                .filter_map(|danger| match danger {
+                    NativeDanger::Body { source_id, .. } => Some(source_id.as_str()),
+                    _ => None,
+                })
+                .collect();
             let origin = observer
                 .world_position()
                 .ok_or(ExecutionError::InvalidPosition)?;
@@ -173,6 +189,24 @@ impl DangerBatch {
                     .bodies
                     .candidates(origin, vision.radius)
                     .into_iter()
+                    .filter(|(id, _)| {
+                        let Some(source) = physical.entities.get(id) else {
+                            return false;
+                        };
+                        let Some(actor) = source.actor.as_ref() else {
+                            return false;
+                        };
+                        danger_body(profile, source)
+                            || (profile.dangers.current_natural_attack
+                                && actor
+                                    .natural_strike_ids
+                                    .as_ref()
+                                    .is_some_and(|ids| !ids.is_empty()))
+                            || retained.contains(id)
+                            || source.remains.as_ref().is_some_and(|remains| {
+                                retained.contains(remains.source_id.as_str())
+                            })
+                    })
                     .map(|(id, _)| id.to_owned()),
             );
         }
@@ -192,17 +226,20 @@ impl DangerBatch {
             SightBatch::prepare(physical, installed, observer_id, &targets, binding, budget)
                 .map_err(sensor_error)?;
         Ok(Self {
-            observer: physical
-                .entities
-                .handle(observer_id)
-                .ok_or(ExecutionError::MissingEntity)?,
-            observer_id: observer_id.to_owned(),
-            episode_id: episode.id.clone(),
-            at: physical.header.sim_time,
-            complete,
-            candidates,
+            selection: PreparedDanger {
+                binding,
+                observer: physical
+                    .entities
+                    .handle(observer_id)
+                    .ok_or(ExecutionError::MissingEntity)?,
+                observer_id: observer_id.to_owned(),
+                episode_id: episode.id.clone(),
+                at: physical.header.sim_time,
+                complete,
+                candidates,
+                reservation,
+            },
             sight,
-            reservation,
         })
     }
 
@@ -212,12 +249,31 @@ impl DangerBatch {
 
     pub(crate) fn finish(
         self,
+        answers: GeometryAnswers,
+    ) -> Result<(PreparedDanger, SightResults), ExecutionError> {
+        let sight = self.sight.finish(answers).map_err(sensor_error)?;
+        Ok((self.selection, sight))
+    }
+    pub(crate) fn finish_sight(
+        self,
+        binding: GeometryBinding,
+        answers: &[bool],
+    ) -> Result<(PreparedDanger, SightResults), ExecutionError> {
+        let sight = self
+            .sight
+            .finish_sight(binding, answers)
+            .map_err(sensor_error)?;
+        Ok((self.selection, sight))
+    }
+}
+impl PreparedDanger {
+    pub(crate) fn reconcile(
+        self,
         mutation: &mut PhysicalMutation<'_>,
         installed: &InstalledWorld,
         meters: &mut WorkMeters,
-        answers: GeometryAnswers,
+        sight: &SightResults,
     ) -> Result<DangerAssessment, ExecutionError> {
-        let sight = self.sight.finish(answers).map_err(sensor_error)?;
         let observer = mutation
             .state
             .entities
@@ -229,6 +285,7 @@ impl DangerBatch {
             .and_then(|state| state.episode.as_ref())
             .ok_or(ExecutionError::Invariant)?;
         if mutation.state.header.sim_time != self.at
+            || sight.binding() != self.binding
             || episode.id != self.episode_id
             || sight.observer().actor_id != self.observer_id
             || Some(sight.observer().physical_life) != observer.physical_life()
@@ -416,7 +473,6 @@ impl DangerBatch {
             Vec::new()
         };
         records.sort_by(|left, right| js_string_cmp(left, right));
-        drop(sight);
         drop(visible);
         drop(visibly_ended);
         drop(self.candidates);

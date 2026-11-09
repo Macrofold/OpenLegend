@@ -62,6 +62,12 @@ mod routine_observation;
 pub(crate) use routine_observation::RoutineObservation;
 mod held;
 pub(crate) use held::{CompletedHeldReception, HeldReceptionCursor, HeldReceptionStep};
+mod exposure;
+pub(crate) use exposure::{ExposureObserver, ExposureSelection};
+mod native_exposure;
+pub(crate) use native_exposure::{
+    CompletedNativeExposure, NativeExposureCursor, NativeExposureStep,
+};
 mod current_journal;
 pub(crate) use attention_control::{
     AttentionSelection, AttentionUpdate, evaluate_attention_relations, next_attention_work_at,

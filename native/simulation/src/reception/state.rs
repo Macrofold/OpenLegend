@@ -196,6 +196,9 @@ pub struct MapMarker {
 /// public capture or a generic mutable bridge input; the installer supplies its
 /// validated typed owners and the current cold-coverage metadata separately.
 pub struct ReceptionState {
+    /// Derived cold/warm exposure preparation. Current records and evidence
+    /// remain authoritative; a cold installation always rebuilds preparation.
+    pub(crate) exposure_prepared: bool,
     pub sensory: Option<SensoryContinuation>,
     pub perception_evidence: Option<IndexMap<String, PerceptionEvidenceOwner>>,
     pub received_values: Option<ReceivedValues>,

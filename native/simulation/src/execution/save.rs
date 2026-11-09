@@ -981,18 +981,25 @@ impl PhysicalJournal {
                 }
                 if rows.episode {
                     let episode_parent = ["world", "entities", id, "animal", "episode"];
-                    one(
-                        ledger,
-                        output,
-                        "sim_native_response_episodes",
-                        &episode_parent,
-                        &animal_parent,
-                        "episode",
-                        animal.episode.as_ref(),
-                        budget,
-                    )?;
                     let prior = rows.episode_before.and_then(|before| before.as_ref());
                     let current = animal.episode.as_ref();
+                    let header_changed = match (prior, current) {
+                        (Some(before), Some(after)) => !before.same_saved_header(after),
+                        (None, None) => false,
+                        _ => true,
+                    };
+                    if header_changed {
+                        one(
+                            ledger,
+                            output,
+                            "sim_native_response_episodes",
+                            &episode_parent,
+                            &animal_parent,
+                            "episode",
+                            current,
+                            budget,
+                        )?;
+                    }
                     let _keys = budget
                         .reserve(
                             map_storage::<&str, bool>(

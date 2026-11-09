@@ -26,6 +26,7 @@ pub(crate) struct CurrentCheckpoint {
     retained: usize,
 }
 enum CurrentUndo {
+    ExposurePrepared,
     VisiblePlaces {
         observer: String,
         prior: IndexMap<String, u64>,
@@ -467,6 +468,18 @@ impl CurrentJournal {
             Err(invalid())
         }
     }
+    pub(crate) fn complete_exposure_preparation(
+        &mut self,
+        state: &mut ReceptionState,
+    ) -> Result<(), ReceivedError> {
+        if state.exposure_prepared {
+            return Ok(());
+        }
+        self.reserve_growth(0)?;
+        self.undo.push(CurrentUndo::ExposurePrepared);
+        state.exposure_prepared = true;
+        Ok(())
+    }
     pub(crate) fn rollback_to(
         &mut self,
         state: &mut ReceptionState,
@@ -477,6 +490,7 @@ impl CurrentJournal {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
+                CurrentUndo::ExposurePrepared => state.exposure_prepared = false,
                 CurrentUndo::VisiblePlaces { observer, prior } => {
                     *state
                         .visible_places
