@@ -138,6 +138,7 @@ pub(crate) struct PersonalInstallation {
 }
 
 pub(crate) struct PersonalInstallContext<'a> {
+    pub activity_limits: &'a ActivityDisplayLimits,
     pub budget: &'a crate::host::ByteBudget,
     pub presence: PersonalRootPresence,
     pub through: f64,
@@ -257,6 +258,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         context.cold_directories,
         meaning,
         context.budget,
+        context.activity_limits,
     )?;
     let experience = ExperienceState::install(
         generation,
@@ -336,6 +338,11 @@ fn install_sources(
                     selected.open_agreement_heads(&owner.slot),
                     selected.sensory_awareness(&owner.slot),
                 );
+            }
+        }
+        if kind == PersonalSourceKind::Memory {
+            if let Some(selected) = import.working_set() {
+                collection.install_current_obligations(selected.unresolved_memories(&owner.slot));
             }
         }
         placements.insert(owner.slot.clone(), owner.position);

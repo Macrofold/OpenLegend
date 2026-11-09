@@ -54,7 +54,8 @@ impl Eq for Entry {}
 pub(super) struct SensoryDeadlines {
     entries: BTreeSet<Entry>,
     funded_nodes: usize,
-    reservation: ByteReservation,
+    reservation: crate::host::ResidentReservation,
+    budget: ByteBudget,
 }
 impl std::fmt::Debug for Entry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -74,8 +75,9 @@ impl SensoryDeadlines {
             entries: BTreeSet::new(),
             funded_nodes: 0,
             reservation: budget
-                .reserve(size_of::<Self>())
+                .reserve_backing(size_of::<Self>())
                 .map_err(|_| ExperienceError::Capacity)?,
+            budget: budget.clone(),
         };
         for actor in actors.values() {
             if let Some(source) = actor.sources.get(&PersonalSourceKind::Awareness) {
@@ -107,8 +109,8 @@ impl SensoryDeadlines {
                 .and_then(|bytes| bytes.checked_mul(needed))
                 .and_then(|bytes| bytes.checked_add(size_of::<Self>()))
                 .ok_or(ExperienceError::Capacity)?;
-            self.reservation
-                .resize(bytes)
+            self.budget
+                .resize_backing(&mut self.reservation, bytes)
                 .map_err(|_| ExperienceError::Capacity)?;
             self.funded_nodes = needed;
         }
@@ -153,7 +155,7 @@ fn complete_awareness(state: &ExperienceState) -> Result<(), ExperienceError> {
                 .actors
                 .get(actor)
                 .and_then(|actor| actor.sources.get(&PersonalSourceKind::Awareness))
-                .is_none_or(|source| !source.coverage.complete)
+                .is_none_or(|source| !source.complete_current_sensory())
         })
     {
         return Err(ExperienceError::Unavailable);

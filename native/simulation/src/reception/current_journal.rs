@@ -13,6 +13,7 @@ use std::sync::Arc;
 mod attention_work;
 mod frames;
 use attention_work::{AttentionCut, AttentionSources, AttentionWork};
+use super::current_residency::{CurrentOwnerPart, CurrentOwnerStorage};
 mod metadata;
 mod save;
 
@@ -429,6 +430,53 @@ impl CurrentJournal {
         group.content_batch = Some(token.clone());
         Ok(())
     }
+    pub(super) fn set_received_field(
+        &mut self,
+        group: &mut CurrentReceivedGroup,
+        kind: &str,
+        field: Option<CurrentStoredField>,
+    ) -> Result<(), ReceivedError> {
+        // A current body is immutable even inside Source's mutable prefix.
+        // The separate fields-object token preserves that prefix's identity.
+        let bound = received_content_copy_bytes(&group.received)?
+            .checked_add(field.heap_bytes().ok_or_else(capacity)?)
+            .and_then(|n| n.checked_add(kind.len()))
+            .and_then(|n| {
+                n.checked_add(map_storage::<String, CurrentStoredField>(
+                    (group.received.fields.len() + 1).checked_mul(2)?,
+                )?)
+            })
+            .ok_or_else(capacity)?;
+        self.reserve_growth(bound)?;
+        let grant = group.received.grant.clone();
+        let mut fields = group.received.fields.clone();
+        if let Some(field) = field {
+            fields.insert(kind.into(), field);
+        } else {
+            fields.shift_remove(kind);
+        }
+        group.received = self.received_content(grant, fields)?;
+        Ok(())
+    }
+    pub(super) fn received_content(
+        &mut self,
+        grant: CurrentFacetGrant,
+        fields: IndexMap<String, CurrentStoredField>,
+    ) -> Result<Arc<CurrentReceivedContent>, ReceivedError> {
+        let mut content = CurrentReceivedContent {
+            grant,
+            fields,
+            storage: None,
+        };
+        let bytes = received_content_copy_bytes(&content)?;
+        self.reserve_growth(bytes)?;
+        content.storage = Some(
+            self.budget
+                .adopt_record(self.reservation.split_off(bytes).map_err(|_| capacity())?)
+                .map_err(|_| capacity())?,
+        );
+        Ok(Arc::new(content))
+    }
     pub(crate) fn finish_batch(
         &mut self,
         state: &mut ReceptionState,
@@ -640,9 +688,11 @@ impl CurrentJournal {
                         .get_mut(&subject)
                         .ok_or_else(invalid)?
                         .visual_measurement = prior;
+                    self.settle_contact_from(state, &observer, &subject, true)?;
                 }
                 CurrentUndo::VisualConfirmation { observer, prior } => {
-                    owner_mut(state, &observer)?.visual_confirmation = prior
+                    owner_mut(state, &observer)?.visual_confirmation = prior;
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Sight,true)?;
                 }
                 CurrentUndo::MotionMember {
                     observer,
@@ -662,6 +712,7 @@ impl CurrentJournal {
                     if !root_present {
                         owner.motion_samples = None;
                     }
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Motion,true)?;
                 }
                 CurrentUndo::MotionExpiry { observer, prior } => {
                     owner_mut(state, &observer)?.motion_expires_at = prior
@@ -679,6 +730,7 @@ impl CurrentJournal {
                         }
                         gaps.shift_insert(at, subject, prior);
                     }
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Gaps,true)?;
                 }
 
                 CurrentUndo::DeadVisibility {
@@ -746,6 +798,8 @@ impl CurrentJournal {
                     prior,
                 } => {
                     let owner = owner_mut(state, &observer)?;
+                    let removed = owner.current.get_key_value(&subject).map_or(0, |(key,_)|key.capacity());
+                    let added = if prior.is_some() { subject.capacity() } else {0};
                     owner.current.shift_remove(&subject);
                     if let Some((at, prior)) = prior {
                         if at > owner.current.len() {
@@ -753,15 +807,19 @@ impl CurrentJournal {
                         }
                         owner.current.shift_insert(at, subject, prior);
                     }
+                    CurrentOwnerStorage::key_change(owner,removed,added)?;
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Current,true)?;
                 }
                 CurrentUndo::Attention { observer, prior } => {
-                    owner_mut(state, &observer)?.attention = prior
+                    owner_mut(state, &observer)?.attention = prior;
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Attention,true)?;
                 }
                 CurrentUndo::NextContact { observer, prior } => {
                     owner_mut(state, &observer)?.next_contact = prior
                 }
                 CurrentUndo::Geometry { observer, prior } => {
-                    owner_mut(state, &observer)?.geometry = prior
+                    owner_mut(state, &observer)?.geometry = prior;
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Geometry,true)?;
                 }
                 CurrentUndo::Motion {
                     observer,
@@ -771,8 +829,12 @@ impl CurrentJournal {
                     let owner = owner_mut(state, &observer)?;
                     owner.motion_samples = Some(prior);
                     owner.motion_expires_at = expires_at;
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Motion,true)?;
                 }
-                CurrentUndo::Gaps { observer, prior } => owner_mut(state, &observer)?.gaps = prior,
+                CurrentUndo::Gaps { observer, prior } => {
+                    owner_mut(state, &observer)?.gaps = prior;
+                    self.settle_owner(state,&observer,CurrentOwnerPart::Gaps,true)?;
+                },
             }
         }
         self.retained.truncate(checkpoint.retained);
@@ -840,9 +902,9 @@ impl CurrentJournal {
                     .retained
                     .contains(&(Arc::as_ptr(&group.received) as usize))
                 {
-                    bytes = bytes
-                        .checked_add(received_content_copy_bytes(&group.received)?)
-                        .ok_or_else(capacity)?;
+                    self.budget
+                        .retain_record(group.received.storage.as_ref().ok_or_else(invalid)?)
+                        .map_err(|_| capacity())?;
                     added = added.checked_add(1).ok_or_else(capacity)?;
                 }
             }
@@ -853,8 +915,9 @@ impl CurrentJournal {
                     .retained
                     .contains(&(Arc::as_ptr(payload) as *const u8 as usize))
                 {
-                    bytes = heap_sum([bytes, payload.len(), 2 * size_of::<usize>()])
-                        .ok_or_else(capacity)?;
+                    self.budget
+                        .retain_record(payload.storage()?)
+                        .map_err(|_| capacity())?;
                     added += 1;
                 }
             }
@@ -874,7 +937,7 @@ impl CurrentJournal {
         }
         self.reserve_growth(bytes)?;
         self.retained.try_reserve(added).map_err(|_| capacity())?;
-        let prior = prior.map(|(at, _, contact)| {
+        let prior = if let Some((at, _, contact)) = prior {
             for group in &contact.content.groups {
                 self.retained
                     .insert(Arc::as_ptr(&group.field_identity) as usize);
@@ -884,8 +947,25 @@ impl CurrentJournal {
                 self.retained
                     .insert(Arc::as_ptr(payload) as *const u8 as usize);
             }
-            (at, contact.clone())
-        });
+            let bytes = contact_copy_heap(contact)?;
+            let storage = self
+                .budget
+                .adopt_backing(self.reservation.split_off(bytes).map_err(|_| capacity())?)
+                .map_err(|_| capacity())?;
+            Some((
+                at,
+                CurrentContact {
+                    metadata_storage: Some(storage),
+                    encoded_payload: contact.encoded_payload.clone(),
+                    visual_measurement: contact.visual_measurement.clone(),
+                    order: contact.order,
+                    content: contact.content.clone(),
+                    sight: contact.sight.clone(),
+                },
+            ))
+        } else {
+            None
+        };
         self.undo.push(CurrentUndo::Contact {
             observer: observer.to_owned(),
             subject: subject.to_owned(),
@@ -912,10 +992,11 @@ impl CurrentJournal {
         state: &mut ReceptionState,
         observer: &str,
         subject: &str,
-        after: Option<CurrentContact>,
+        mut after: Option<CurrentContact>,
     ) -> Result<(), ReceivedError> {
         let current = owner(state, observer)?;
         let inserting = after.is_some() && !current.current.contains_key(subject);
+        let removed_key = if after.is_none() { current.current.get_key_value(subject).map_or(0, |(k,_)|k.capacity()) } else { 0 };
         let extra = after.as_ref().map_or(Ok(0), contact_copy_heap)?;
         let growth = if inserting && current.current.len() == current.current.capacity() {
             map_storage::<String, CurrentContact>(2 * (current.current.len() + 1))
@@ -924,6 +1005,13 @@ impl CurrentJournal {
             0
         };
         self.reserve_growth(heap_sum([extra, growth, subject.len()]).ok_or_else(capacity)?)?;
+        if let Some(contact) = &mut after {
+            contact.metadata_storage = Some(
+                self.budget
+                    .adopt_backing(self.reservation.split_off(extra).map_err(|_| capacity())?)
+                    .map_err(|_| capacity())?,
+            );
+        }
         self.snapshot_contact(state, observer, subject)?;
         let current = owner_mut(state, observer)?;
         match after {
@@ -951,6 +1039,8 @@ impl CurrentJournal {
                 current.current.shift_remove(subject);
             }
         }
+        CurrentOwnerStorage::key_change(current, removed_key, usize::from(inserting)*subject.len())?;
+        self.settle_owner(state, observer, CurrentOwnerPart::Current, false)?;
         Ok(())
     }
     pub(super) fn next_contact(
@@ -991,6 +1081,7 @@ impl CurrentJournal {
             observer: observer.to_owned(),
             prior: Some(prior),
         });
+        self.settle_owner(state, observer, CurrentOwnerPart::Geometry, false)?;
         Ok(true)
     }
     /// The received geometry is bounded by its selected policy. The actual old
@@ -1017,6 +1108,7 @@ impl CurrentJournal {
             observer: observer.into(),
             prior,
         });
+        self.settle_owner(state, observer, CurrentOwnerPart::Geometry, false)?;
         Ok(())
     }
     pub(super) fn retire_motion(
@@ -1046,6 +1138,7 @@ impl CurrentJournal {
             prior,
             expires_at,
         });
+        self.settle_owner(state, observer, CurrentOwnerPart::Motion, false)?;
         Ok(true)
     }
     pub(super) fn clear_gaps(
@@ -1066,6 +1159,7 @@ impl CurrentJournal {
             observer: observer.to_owned(),
             prior,
         });
+        self.settle_owner(state, observer, CurrentOwnerPart::Gaps, false)?;
         Ok(())
     }
     pub(super) fn attention_mut<'a>(
@@ -1109,7 +1203,43 @@ impl CurrentJournal {
             .ok_or_else(invalid)?;
         contact.invalidate_encoded_content();
         contact.content.originals.insert(key, source);
+        self.settle_contact(state, observer, subject)?;
         Ok(())
+    }
+
+    /// Metadata copies are funded before mutation by the actual writer. Move
+    /// their surviving allocation into the contact before undo can disappear.
+    pub(super) fn settle_contact(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        subject: &str,
+    ) -> Result<(), ReceivedError> {
+        self.settle_contact_from(state, observer, subject, false)
+    }
+    fn settle_contact_from(
+        &mut self, state: &mut ReceptionState, observer: &str, subject: &str, restoring: bool,
+    ) -> Result<(), ReceivedError> {
+        let Some(contact) = owner_mut(state, observer)?.current.get_mut(subject) else {
+            return Ok(());
+        };
+        let bytes = contact_copy_heap(contact)?;
+        let storage = contact.metadata_storage.as_mut().ok_or_else(invalid)?;
+        if bytes > storage.bytes() {
+            let growth = self
+                .reservation
+                .split_off(bytes - storage.bytes())
+                .map_err(|_| capacity())?;
+            if restoring { self.budget.restore_backing(storage, growth) }
+            else { self.budget.fund_backing(storage, growth) }.map_err(|_| capacity())?;
+        }
+        storage.resize(bytes).map_err(|_| capacity())
+    }
+    fn settle_owner(&mut self, state:&mut ReceptionState, observer:&str, part:CurrentOwnerPart, restoring:bool) -> Result<(),ReceivedError> {
+        CurrentOwnerStorage::settle(owner_mut(state,observer)?,part,&mut self.reservation,restoring)
+    }
+    pub(super) fn settle_attention(&mut self, state:&mut ReceptionState, observer:&str) -> Result<(),ReceivedError> {
+        self.settle_owner(state,observer,CurrentOwnerPart::Attention,false)
     }
 }
 fn owner<'a>(

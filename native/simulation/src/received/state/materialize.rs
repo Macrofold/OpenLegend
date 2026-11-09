@@ -1,335 +1,226 @@
-//! A protected edit reads physical pages at the accepted live SQL cut, including
-//! the existing packer's unsaved projection. This transport neither packs pages
-//! nor commits them. It verifies the actual pending contents before exchange.
-
+//! A purpose-bound history edit imports only selected physical rows. Loading a
+//! row neither grants historical absence nor changes the actor's logical charge
+//! directory. The owning preparation cursor validates the SQL selection witness.
 use super::*;
 use crate::execution::{CoreMutation, ExecutionError};
-use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
-use crate::host::{ByteBudget, ByteReservation, CandidateKey};
-use crate::received::{ReceivedBatch, ReceivedValues, TemporalValueMeaning};
-use crate::simulation::SimulationState;
+use crate::host::retained_size::{heap_sum, map_storage, tree_node_bound};
+use crate::host::{ByteBudget, ByteReservation};
+use crate::records::RecordPlacement;
 use std::mem::size_of;
+use std::collections::BTreeSet;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct TemporalPageReadBinding {
-    world_id: String,
-    generation: String,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    accepted_cut: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    identity_through: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_id: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    candidate_generation: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    request_serial: u64,
+pub(crate) struct HydratedTemporalRows {
+    pub(crate) placements: Vec<RecordPlacement>,
+    _storage: ByteReservation,
 }
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) struct TemporalPageReadRequest {
-    binding: TemporalPageReadBinding,
-    actor_id: String,
-    #[serde(skip)]
-    undo_cursor: usize,
-    #[serde(skip)]
-    header: Arc<str>,
-    #[serde(skip)]
-    at: f64,
-    #[serde(skip)]
-    _reservation: ByteReservation,
+fn invalid() -> ExecutionError {
+    ReceivedError("Selected temporal rows differ from their accepted physical contents.").into()
 }
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct CompleteTemporalPages {
-    binding: TemporalPageReadBinding,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    durable_revision: u64,
-    coverage: OwnerCoverage,
-    rows: Vec<InstalledRow>,
-    received_values: Vec<InstalledRow>,
-}
-fn error() -> ReceivedError {
-    ReceivedError("Temporal physical read is incomplete, stale or differs from accepted contents.")
+fn capacity() -> ExecutionError {
+    ExecutionError::Capacity
 }
 
-impl TemporalPageReadRequest {
-    /// The host issues this only under its actual preparing-candidate fence,
-    /// before privacy's first canonical mutation, and retains projection custody.
-    pub(crate) fn prepare(
-        state: &SimulationState,
-        actor: &str,
-        key: CandidateKey,
-        request_serial: u64,
-        budget: &ByteBudget,
-    ) -> Result<Self, ExecutionError> {
-        let history = state.temporal.actor(actor).ok_or_else(error)?;
-        if key.base_cut != state.accepted_cut
-            || request_serial > crate::identity::MAX_SAFE_INTEGER
-            || key.id > crate::identity::MAX_SAFE_INTEGER
-            || key.generation > crate::identity::MAX_SAFE_INTEGER
-        {
-            return Err(error().into());
-        }
-        let reservation = budget.reserve(
-            heap_sum([
-                state.physical.header.id.len(),
-                state.generation.len(),
-                actor.len(),
-                size_of::<Self>(),
-            ])
-            .ok_or(ExecutionError::Capacity)?,
-        )?;
-        Ok(Self {
-            binding: TemporalPageReadBinding {
-                world_id: state.physical.header.id.clone(),
-                generation: state.generation.clone(),
-                accepted_cut: state.accepted_cut,
-                identity_through: state.physical.identity.next_id(),
-                candidate_id: key.id,
-                candidate_generation: key.generation,
-                request_serial,
-            },
-            actor_id: actor.to_owned(),
-            undo_cursor: state.temporal.undo.len(),
-            header: Arc::clone(&history.payload),
-            at: state.physical.header.sim_time,
-            _reservation: reservation,
-        })
-    }
-    fn matches(&self, state: &SimulationState, key: CandidateKey) -> bool {
-        self.binding.world_id == state.physical.header.id
-            && self.binding.generation == state.generation
-            && self.binding.accepted_cut == state.accepted_cut
-            && key.base_cut == state.accepted_cut
-            && self.binding.identity_through == state.physical.identity.next_id()
-            && self.binding.candidate_id == key.id
-            && self.binding.candidate_generation == key.generation
-            && self.at == state.physical.header.sim_time
-            && self.undo_cursor == state.temporal.undo.len()
-            && state
-                .temporal
-                .actor(&self.actor_id)
-                .is_some_and(|actor| actor.payload == self.header)
-    }
-}
-
-pub(crate) fn materialize_temporal_pages(
+/// Called only after exact cut/selection validation and missing-value import.
+/// Existing pages remain shared, and generic partial coverage remains partial.
+pub(crate) fn hydrate_selected_temporal_pages(
     core: &mut CoreMutation<'_>,
-    key: CandidateKey,
-    request: TemporalPageReadRequest,
-    response: CompleteTemporalPages,
+    rows: Vec<InstalledRow>,
     budget: &ByteBudget,
-) -> Result<(), ExecutionError> {
-    if !request.matches(core.state, key)
-        || response.binding != request.binding
-        || response.durable_revision > core.state.durable_revision
-    {
-        return Err(error().into());
+) -> Result<HydratedTemporalRows, ExecutionError> {
+    let mut bytes = rows
+        .len()
+        .checked_mul(size_of::<RecordPlacement>())
+        .ok_or_else(capacity)?;
+    let mut decode = 0;
+    for row in &rows {
+        bytes = heap_sum([bytes, row.id.len(), row.parent.len(), row.slot.len()])
+            .ok_or_else(capacity)?;
+        decode = decode.max(crate::experience::encoded_body_bound(&row.payload)?);
     }
-    let owner = json_record(&[
-        "world",
-        "experience",
-        "temporal",
-        "actors",
-        &request.actor_id,
-    ])
-    .map_err(|_| error())?;
-    if response.coverage.table != "mind_temporal_pages"
-        || response.coverage.owner != owner
-        || !response.coverage.complete
-        || !response.coverage.parent_present
-        || response.coverage.next_ordinal != request.binding.identity_through
-    {
-        return Err(error().into());
-    }
-    let mut bytes =
-        map_storage::<String, u64>(response.rows.len()).ok_or(ExecutionError::Capacity)?;
-    for row in response.rows.iter().chain(&response.received_values) {
-        bytes = heap_sum([
-            bytes,
-            crate::experience::encoded_body_bound(&row.payload)?,
-            row.id
-                .len()
-                .checked_mul(3)
-                .ok_or(ExecutionError::Capacity)?,
-            row.parent.len(),
-            row.slot.len(),
-            row.extra.heap_bytes().ok_or(ExecutionError::Capacity)?,
-            size_of::<TemporalUndo>() * 2,
-        ])
-        .ok_or(ExecutionError::Capacity)?;
-    }
-    let reservation = budget.reserve(bytes)?;
-    // The provider closure is exactly this selected physical page set. Rich
-    // pool residence grants no actor access, but unrelated bodies are not input.
-    {
-        let layout = core
-            .state
-            .installed
-            .schema
-            .layout("mind_temporal_pages")
-            .map_err(|_| error())?;
-        let column = layout
-            .columns
-            .iter()
-            .position(|name| name == "value_refs")
-            .ok_or_else(error)?;
-        let mut required = std::collections::BTreeSet::new();
-        for row in &response.rows {
-            for value in row
-                .extra
-                .get(column)
-                .and_then(crate::records::SqlCell::as_array)
-                .ok_or_else(error)?
-            {
-                required.insert(value.as_str().ok_or_else(error)?);
-            }
+    let storage = budget.reserve(bytes)?;
+    let _decode = budget.reserve(decode)?;
+    let mut placements = Vec::new();
+    placements
+        .try_reserve_exact(rows.len())
+        .map_err(|_| capacity())?;
+    let _groups = budget.reserve(
+        map_storage::<String, Vec<InstalledRow>>(rows.len())
+            .ok_or_else(capacity)?
+            .checked_add(
+                rows.len()
+                    .checked_mul(size_of::<InstalledRow>())
+                    .ok_or_else(capacity)?,
+            )
+            .ok_or_else(capacity)?,
+    )?;
+    let mut grouped = IndexMap::<String, Vec<InstalledRow>>::new();
+    for row in rows {
+        let actor = row
+            .extra
+            .first()
+            .and_then(crate::records::SqlCell::as_str)
+            .ok_or_else(invalid)?;
+        if !core.state.temporal.actors.contains_key(actor) {
+            return Err(invalid());
         }
-        let mut supplied = std::collections::BTreeSet::new();
-        for row in &response.received_values {
-            if !required.contains(row.slot.as_str()) || !supplied.insert(row.slot.as_str()) {
-                return Err(error().into());
-            }
-        }
-        if supplied != required {
-            return Err(error().into());
-        }
+        placements.push(RecordPlacement {
+            id: row.id.clone(),
+            parent: row.parent.clone(),
+            slot: row.slot.clone(),
+            position: row.position,
+        });
+        grouped.entry(actor.to_owned()).or_default().push(row);
     }
-    core.state
-        .reception
-        .received_values
-        .as_mut()
-        .ok_or_else(error)?
-        .load_rows(
-            response.received_values,
-            request.at,
-            core.state.physical.header.sequence,
-        )?;
-    let values = core
-        .state
-        .reception
-        .received_values
-        .as_ref()
-        .ok_or_else(error)?;
-    let meaning = core.state.installed.account_law();
-    let mut pages = BTreeMap::new();
-    let mut ids = IndexMap::new();
-    let mut batches = IndexMap::new();
-    for row in response.rows {
-        let mut page = TemporalPageRecord::install(
-            row,
-            &request.actor_id,
-            request.at,
-            values,
-            Some(&meaning),
-            budget,
-        )?;
-        if let Some(previous) = core
+    for (actor_id, rows) in grouped {
+        let actor = core
             .state
             .temporal
             .actors
-            .get(&request.actor_id)
-            .and_then(|actor| actor.pages.get(&page.position()))
-        {
-            page.inherit_edit_identity(previous)?;
-        }
-        let page = Arc::new(page);
-        if page.position() >= response.coverage.next_ordinal
-            || ids
-                .insert(page.row_id().to_owned(), page.position())
-                .is_some()
-        {
-            return Err(error().into());
-        }
-        for batch in page.batches() {
-            if batches
-                .insert(
-                    (batch.physical_life, batch.epoch.clone(), batch.batch_order),
-                    Arc::clone(batch),
-                )
-                .is_some()
-            {
-                return Err(error().into());
+            .get(&actor_id)
+            .ok_or_else(invalid)?;
+        let count = actor
+            .pages
+            .len()
+            .checked_add(rows.len())
+            .ok_or_else(capacity)?;
+        let names = rows
+            .iter()
+            .try_fold(0usize, |n, row| n.checked_add(row.id.len()))
+            .ok_or_else(capacity)?;
+        let mut bookkeeping = budget.reserve(
+            heap_sum([
+                count
+                    .checked_mul(
+                        tree_node_bound::<u64, Arc<TemporalPageRecord>>().ok_or_else(capacity)?,
+                    )
+                    .ok_or_else(capacity)?,
+                rows.len()
+                    .checked_mul(size_of::<String>())
+                    .ok_or_else(capacity)?,
+                names,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        for page in actor.pages.values() { page.retain_for_candidate(budget)?; }
+        for page in &actor.pending_pages { page.retain_for_candidate(budget)?; }
+        let mut pages = actor.pages.clone();
+        let mut projected = Vec::new();
+        projected
+            .try_reserve_exact(rows.len())
+            .map_err(|_| capacity())?;
+        let mut represented = BTreeSet::<u64>::new();
+        for row in rows {
+            if let Some(previous) = actor.pages.values().find(|page| page.row_id() == row.id) {
+                if previous.position() != row.position
+                    || previous.payload() != row.payload
+                    || previous.columns() != row.extra
+                {
+                    return Err(invalid());
+                }
+                continue;
             }
+            let values = core.state.reception.received_values.as_ref();
+            let mut page = TemporalPageRecord::install(
+                row,
+                &actor_id,
+                core.state.physical.header.sim_time,
+                &values,
+                Some(&core.state.installed.account_law()),
+                &core.state.activity.display,
+                budget,
+            )?;
+            if page.position() >= actor.page_order_upper_bound
+                || pages.contains_key(&page.position())
+            {
+                return Err(invalid());
+            }
+            bookkeeping.resize(
+                bookkeeping
+                    .bytes()
+                    .checked_add(
+                        page.batches()
+                            .count()
+                            .checked_mul(tree_node_bound::<u64, ()>().ok_or_else(capacity)?)
+                            .ok_or_else(capacity)?,
+                    )
+                    .ok_or_else(capacity)?,
+            )?;
+            let mut pending_projection = false;
+            for batch in page.batches() {
+                if pages.values().flat_map(|page| page.batches()).any(|known| {
+                    known.physical_life == batch.physical_life
+                        && known.epoch == batch.epoch
+                        && known.batch_order == batch.batch_order
+                }) || !represented.insert(batch.batch_order)
+                {
+                    return Err(invalid());
+                }
+                if let Some(pending) = actor.pending_pages.iter().find(|pending| {
+                    let known = pending.batch();
+                    known.physical_life == batch.physical_life
+                        && known.epoch == batch.epoch
+                        && known.batch_order == batch.batch_order
+                }) {
+                    if pending.batch().value() != batch.value() {
+                        return Err(invalid());
+                    }
+                    pending_projection = true;
+                }
+            }
+            if pending_projection {
+                // The readAtCut overlay has only projected these unsaved bodies.
+                // Their actual row (or later tombstone) must be emitted at accept;
+                // older ACKs must not substitute an earlier captured version.
+                page.protect_unsaved()?;
+                projected.push(page.row_id().to_owned());
+            }
+            pages.insert(page.position(), Arc::new(page));
         }
-        if pages.insert(page.position(), page).is_some() {
-            return Err(error().into());
+        if pages.len() == actor.pages.len() {
+            continue;
         }
+        let keep = actor
+            .pending_pages
+            .iter()
+            .filter(|pending| {
+                let batch = pending.batch();
+                !represented.contains(&batch.batch_order)
+            })
+            .count();
+        let pending_storage = budget.reserve_backing(
+            keep.checked_mul(size_of::<Arc<PendingTemporalPage>>())
+                .ok_or_else(capacity)?,
+        )?;
+        let mut pending = Vec::new();
+        pending.try_reserve_exact(keep).map_err(|_| capacity())?;
+        pending.extend(
+            actor
+                .pending_pages
+                .iter()
+                .filter(|pending| {
+                    let batch = pending.batch();
+                    !represented.contains(&batch.batch_order)
+                })
+                .cloned(),
+        );
+        let temporal = &mut core.state.temporal;
+        temporal.reserve_undo_slots(2, budget)?;
+        temporal.undo.push(TemporalUndo::Reservation(bookkeeping));
+        let actor = temporal.actors.get_mut(&actor_id).ok_or_else(invalid)?;
+        temporal.undo.push(TemporalUndo::HydratedPages {
+            actor_id,
+            before: std::mem::replace(&mut actor.pages, pages),
+            pending: std::mem::replace(&mut actor.pending_pages, pending),
+            pending_storage: std::mem::replace(&mut actor.pending_storage, pending_storage),
+            complete: actor.complete_pages,
+            next_ordinal: actor.page_order_upper_bound,
+            projected,
+        });
+        // The existing recent/frontier/charge metadata describes all relevant
+        // SQL directories already; hydration must not rebuild it from a subset.
     }
-    let actor = core
-        .state
-        .temporal
-        .actor(&request.actor_id)
-        .ok_or_else(error)?;
-    let mut known = 0usize;
-    for page in actor.pages.values() {
-        let found = ids
-            .get(page.row_id())
-            .and_then(|position| pages.get(position))
-            .ok_or_else(error)?;
-        if page.position() != found.position()
-            || page.payload() != found.payload()
-            || page.columns() != found.columns()
-        {
-            return Err(error().into());
-        }
-        known = known
-            .checked_add(page.batches().count())
-            .ok_or(ExecutionError::Capacity)?;
-    }
-    for page in &actor.pending_pages {
-        let pending = page.batch();
-        if batches
-            .get(&(
-                pending.physical_life,
-                pending.epoch.clone(),
-                pending.batch_order,
-            ))
-            .is_none_or(|batch| batch.as_ref() != pending.as_ref())
-        {
-            return Err(error().into());
-        }
-        known = known.checked_add(1).ok_or(ExecutionError::Capacity)?;
-    }
-    if actor.complete_pages && known != batches.len() {
-        return Err(error().into());
-    }
-    let directories = pages
-        .values()
-        .map(|page| page.metadata().charge_directory.clone())
-        .collect::<Vec<_>>();
-    let recent = ReceivedRecentDirectory::install(
-        &directories,
-        actor.header.frontier.as_ref(),
-        Some((actor.header.bytes, actor.header.count)),
-    )?;
-    if recent != actor.recent {
-        return Err(error().into());
-    }
-    let temporal = &mut core.state.temporal;
-    temporal
-        .undo
-        .try_reserve(2)
-        .map_err(|_| ExecutionError::Capacity)?;
-    temporal.undo.push(TemporalUndo::Reservation(reservation));
-    let actor = temporal
-        .actors
-        .get_mut(&request.actor_id)
-        .ok_or_else(error)?;
-    temporal.undo.push(TemporalUndo::HydratedPages {
-        actor_id: request.actor_id,
-        before: std::mem::replace(&mut actor.pages, pages),
-        pending: std::mem::take(&mut actor.pending_pages),
-        pending_storage: std::mem::replace(&mut actor.pending_storage, budget.reserve(0)?),
-        complete: actor.complete_pages,
-        next_ordinal: actor.page_order_upper_bound,
-    });
-    actor.complete_pages = true;
-    actor.page_order_upper_bound = response.coverage.next_ordinal;
-    // No SQL or save-prefix acknowledgement occurred. The host must keep the
-    // actual packed projection/read cut alive, and transfer canonical resident
-    // custody before discard_undo/accept; the candidate guard is not that proof.
-    Ok(())
+    Ok(HydratedTemporalRows {
+        placements,
+        _storage: storage,
+    })
 }

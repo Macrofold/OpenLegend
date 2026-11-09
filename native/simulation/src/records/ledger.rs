@@ -5,6 +5,8 @@ use super::{ChangedRows, CurrentRecords, OwnerCoverage, RecordEncodingError, Rec
 use crate::host::retained_size::{heap_sum, map_storage};
 use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use indexmap::IndexMap;
+mod hydration;
+pub(crate) use hydration::PreparedHydrationLedger;
 use std::{mem::size_of, sync::Arc};
 
 pub(crate) struct RecordLedger {
@@ -45,7 +47,8 @@ pub(crate) struct PreparedRecordLedger {
 }
 /// Physical page placement is save-layout metadata at the same gameplay cut.
 /// It is intentionally not an accepted-candidate capability or a row body.
-pub(crate) struct PreparedTemporalPageLedger {
+pub(crate) struct PreparedTemporalPageLedger(PreparedSameCutLedger);
+struct PreparedSameCutLedger {
     identity: Arc<()>,
     accepted_cut: u64,
     metadata: Option<PreparedMetadata>,
@@ -661,6 +664,15 @@ impl RecordLedger {
         } else {
             Some(self.prepare_metadata(changes, observed)?)
         };
+        Ok(PreparedTemporalPageLedger(
+            self.prepare_same_cut(through_cut, metadata)?,
+        ))
+    }
+    fn prepare_same_cut(
+        &self,
+        through_cut: u64,
+        metadata: Option<PreparedMetadata>,
+    ) -> Result<PreparedSameCutLedger, RecordEncodingError> {
         let identity_reservation = if metadata.is_some() {
             Some(
                 self.budget
@@ -671,7 +683,7 @@ impl RecordLedger {
             None
         };
         let next_identity = metadata.as_ref().map(|_| Arc::new(()));
-        Ok(PreparedTemporalPageLedger {
+        Ok(PreparedSameCutLedger {
             identity: self.identity.clone(),
             accepted_cut: through_cut,
             metadata,
@@ -682,6 +694,12 @@ impl RecordLedger {
     pub(crate) fn validate_temporal_pages(
         &self,
         prepared: &PreparedTemporalPageLedger,
+    ) -> Result<(), RecordEncodingError> {
+        self.validate_same_cut(&prepared.0)
+    }
+    fn validate_same_cut(
+        &self,
+        prepared: &PreparedSameCutLedger,
     ) -> Result<(), RecordEncodingError> {
         if !Arc::ptr_eq(&self.identity, &prepared.identity)
             || self.accepted_cut != prepared.accepted_cut
@@ -697,8 +715,14 @@ impl RecordLedger {
         &mut self,
         prepared: PreparedTemporalPageLedger,
     ) -> Result<(), RecordEncodingError> {
-        self.validate_temporal_pages(&prepared)?;
-        let PreparedTemporalPageLedger {
+        self.apply_same_cut(prepared.0)
+    }
+    fn apply_same_cut(
+        &mut self,
+        prepared: PreparedSameCutLedger,
+    ) -> Result<(), RecordEncodingError> {
+        self.validate_same_cut(&prepared)?;
+        let PreparedSameCutLedger {
             identity,
             metadata,
             next_identity,

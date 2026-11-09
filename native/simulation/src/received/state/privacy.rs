@@ -109,19 +109,20 @@ impl TemporalAccountAliases {
     }
 }
 impl TemporalState {
-    pub(crate) fn account_alias_index(
+    /// A derived index of actual resident pages/builders/supports. It is not a
+    /// completeness proof; explicit edits must first close their SQL selection.
+    pub(crate) fn resident_account_alias_index(
         &self,
         actor_id: &str,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         meaning: &dyn TemporalValueMeaning,
         budget: &ByteBudget,
     ) -> Result<TemporalAccountAliases, ReceivedError> {
         let actor = self.actor(actor_id).ok_or_else(invalid)?;
-        if !actor.complete_pages
-            || actor
-                .supports
-                .as_ref()
-                .is_none_or(|supports| !supports.coverage.complete)
+        if actor
+            .supports
+            .as_ref()
+            .is_none_or(|supports| !supports.coverage.complete)
         {
             return Err(invalid());
         }

@@ -105,7 +105,7 @@ pub(super) fn prepare_visual_source(
             .and_then(|actor| actor.species.as_ref())
             .map_or(0, String::len),
         if detailed {
-            description.map_or(0, String::len)
+            description.map_or(0, crate::text::JsText::storage_bytes)
         } else {
             0
         },

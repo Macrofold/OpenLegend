@@ -1,3 +1,4 @@
+import { nativeNormalizedIntents } from './native-language.js';
 import { coldEntityOrdering, temporalPageReferences } from '@open-legend/domain';
 import { HISTORY_TABLES, HISTORY_MAP_TABLES, HOT_TEMPORAL_BYTES } from './history-residency.js';
 import { hotEventRecordDependencies, HOT_EVENT_RECENT_ROWS } from './hot-events.js';
@@ -194,6 +195,7 @@ function currentRecordMetadata(
     generation: head.generation,
     durableRevision: ordinal(head.revision),
     entityOrdering: coldEntityOrdering(entityIds),
+    normalizedIntents: nativeNormalizedIntents(tables['sim_intentions'] ?? []),
     tables,
     coverage,
   };
@@ -352,6 +354,9 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
         activeAppraisals: actorOwners('mind_appraisals_owners'),
         openAgreementHeads: actorOwners('mind_awareness_owners'),
         sensoryAwareness: actorOwners('mind_awareness_owners'),
+        // The maintained startup query unions all unresolved memories, even
+        // outside its recent tail. This certifies only that current duty.
+        unresolvedMemories: actorOwners('mind_memories_owners'),
         runningActivities: actorOwners('activity_occurrences_owners'),
         currentContributions: current.entityOrdering.entries.map((entry) => entry.id),
       },

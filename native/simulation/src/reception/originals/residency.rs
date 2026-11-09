@@ -12,6 +12,16 @@ pub(super) fn body_bytes(source: &ReceivedObservation) -> Result<usize, Received
     .ok_or_else(capacity)
 }
 impl ReceivedObservation {
+    pub(crate) fn capture_pin(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Arc<crate::host::SharedMemoryPin>, ReceivedError> {
+        self.storage
+            .as_ref()
+            .ok_or_else(capacity)?
+            .capture_pin(budget)
+            .map_err(|_| capacity())
+    }
     fn same_body(&self, other: &Self) -> bool {
         self.id == other.id
             && self.revision == other.revision
@@ -21,7 +31,7 @@ impl ReceivedObservation {
             && self.header_ref == other.header_ref
             && self.facets == other.facets
     }
-    pub(super) fn copy_with_storage(&self, storage: ByteReservation) -> Self {
+    pub(super) fn copy_with_storage(&self, storage: crate::host::ResidentReservation) -> Self {
         Self {
             id: self.id.clone(),
             revision: self.revision,
@@ -55,7 +65,7 @@ impl ReceptionState {
             }
             let bytes =
                 body_bytes(source).map_err(|_| crate::execution::ExecutionError::Capacity)?;
-            let storage = budget.reserve(bytes)?;
+            let storage = budget.reserve_record(bytes)?;
             Arc::get_mut(source)
                 .ok_or(crate::execution::ExecutionError::Invariant)?
                 .storage = Some(storage);
@@ -86,7 +96,8 @@ impl ReceptionState {
 #[derive(Debug)]
 pub(crate) struct OriginalMetadata {
     receipt_bytes: usize,
-    storage: ByteReservation,
+    storage: crate::host::ResidentReservation,
+    budget: ByteBudget,
 }
 fn metadata_bytes(
     received_capacity: usize,
@@ -106,7 +117,8 @@ impl OriginalMetadata {
     pub(super) fn empty(budget: &ByteBudget) -> Result<Self, ReceivedError> {
         Ok(Self {
             receipt_bytes: 0,
-            storage: budget.reserve(0).map_err(|_| capacity())?,
+            storage: budget.reserve_backing(0).map_err(|_| capacity())?,
+            budget: budget.clone(),
         })
     }
     fn install(
@@ -121,12 +133,13 @@ impl OriginalMetadata {
         Ok(Self {
             receipt_bytes: keys,
             storage: budget
-                .reserve(metadata_bytes(
+                .reserve_backing(metadata_bytes(
                     owner.received.capacity(),
                     owner.receipts.capacity(),
                     keys,
                 )?)
                 .map_err(|_| capacity())?,
+            budget: budget.clone(),
         })
     }
     pub(super) fn prepare_append(
@@ -158,8 +171,7 @@ impl OriginalMetadata {
             .receipt_bytes
             .checked_add(key.capacity())
             .ok_or_else(capacity)?;
-        meta.storage
-            .resize(metadata_bytes(received, receipts, keys)?)
+        meta.budget.resize_backing(&mut meta.storage, metadata_bytes(received, receipts, keys)?)
             .map_err(|_| capacity())?;
         owner.received.try_reserve(1).map_err(|_| capacity())?;
         owner.receipts.try_reserve(1).map_err(|_| capacity())?;
@@ -198,8 +210,9 @@ impl OriginalMetadata {
         Ok(Self {
             receipt_bytes: 0,
             storage: budget
-                .reserve(metadata_bytes(received, receipts, key_bound)?)
+                .reserve_backing(metadata_bytes(received, receipts, key_bound)?)
                 .map_err(|_| capacity())?,
+            budget: budget.clone(),
         })
     }
     pub(super) fn settle(

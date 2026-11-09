@@ -12,8 +12,8 @@ use crate::values::{NativeValueWindow, deserialize_safe_integer};
 use crate::work::{WorkBook, WorkPolicy};
 use indexmap::IndexMap;
 use serde::Deserialize;
-use serde_json::{Map, Value};
 use serde_json::value::RawValue;
+use serde_json::{Map, Value};
 use std::sync::Arc;
 mod imported;
 use imported::{install_entities, take_window, take_work};
@@ -320,9 +320,14 @@ pub(crate) fn read_physical_root(
     import: &mut RowImport,
     presentation_input: Option<&CanonicalInput>,
 ) -> Result<PhysicalRoot, InstallError> {
-    let (row, mut root) =
-        super::rows::take_one::<IndexMap<String, Box<RawValue>>>(import, "world_settings", "[]", "world", true)?
-            .ok_or(InstallError::CurrentFormat)?;
+    let (row, mut root) = super::rows::take_one::<IndexMap<String, Box<RawValue>>>(
+        import,
+        "world_settings",
+        "[]",
+        "world",
+        true,
+    )?
+    .ok_or(InstallError::CurrentFormat)?;
     if !row.extra.is_empty() {
         return Err(InstallError::CurrentFormat);
     }
@@ -339,8 +344,8 @@ pub(crate) fn read_physical_root(
     match (presentation.as_ref(), presentation_input) {
         (None, None) => {}
         (Some(value), Some(input)) => {
-            let actual: crate::records::SqlCell = serde_json::from_str(value.get())
-                .map_err(|_| InstallError::DefinitionBody)?;
+            let actual: crate::records::SqlCell =
+                serde_json::from_str(value.get()).map_err(|_| InstallError::DefinitionBody)?;
             input.verify(&actual)?;
         }
         _ => return Err(InstallError::DefinitionBody),
@@ -730,7 +735,6 @@ fn validate_entity(
             || actor.encounters.is_some()
             || actor.coaching_episode_id.is_some()
             || actor.inventory_inspection.is_some()
-            || !actor.agency.attempts.is_empty()
         {
             return Err(InstallError::CurrentFormat);
         }

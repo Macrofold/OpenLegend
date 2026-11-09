@@ -67,10 +67,7 @@ pub(crate) fn ensure_temporal_actor(
         .and_then(|n| n.checked_add(std::mem::size_of::<TemporalUndo>().checked_mul(3)?))
         .ok_or(ExecutionError::Capacity)?;
     let reservation = budget.reserve(allocation)?;
-    temporal
-        .undo
-        .try_reserve_exact(3)
-        .map_err(|_| ExecutionError::Capacity)?;
+    temporal.reserve_undo_slots(3, budget)?;
     if new_capacity > old_capacity {
         temporal
             .actors
@@ -123,6 +120,8 @@ pub(crate) fn ensure_temporal_actor(
             },
             core.state.physical.header.sim_time,
             None,
+            budget,
+            &core.state.activity.display,
         )?;
         let next = temporal
             .actor_coverage
@@ -144,7 +143,7 @@ pub(crate) fn ensure_temporal_actor(
                 page_order_upper_bound: core.state.physical.identity.next_id(),
                 recent: ReceivedRecentDirectory::default(),
                 pending_pages: Vec::new(),
-                pending_storage: budget.reserve(0)?,
+                pending_storage: budget.reserve_backing(0)?,
                 supports: Some(supports),
             },
         );

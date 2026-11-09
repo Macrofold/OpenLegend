@@ -22,6 +22,21 @@ pub(crate) fn encode_temporal_changes(
     if identity_through > crate::identity::MAX_SAFE_INTEGER {
         return Err(error());
     }
+    let projected_count = state
+        .undo
+        .iter()
+        .try_fold(0usize, |n, operation| {
+            n.checked_add(match operation {
+                TemporalUndo::HydratedPages { projected, .. } => projected.len(),
+                _ => 0,
+            })
+        })
+        .ok_or_else(error)?;
+    let page_count = state
+        .undo
+        .len()
+        .checked_add(projected_count)
+        .ok_or_else(error)?;
     let _selected = budget
         .reserve(
             map_storage::<&str, ()>(state.undo.len())
@@ -29,7 +44,7 @@ pub(crate) fn encode_temporal_changes(
                     bytes.checked_add(map_storage::<(&str, &str), bool>(state.undo.len())?)
                 })
                 .and_then(|bytes| {
-                    bytes.checked_add(map_storage::<(&str, &str), Option<u64>>(state.undo.len())?)
+                    bytes.checked_add(map_storage::<(&str, &str), Option<u64>>(page_count)?)
                 })
                 .ok_or_else(error)?,
         )
@@ -41,7 +56,7 @@ pub(crate) fn encode_temporal_changes(
         .try_reserve(state.undo.len())
         .map_err(|_| error())?;
     let mut pages = IndexMap::new();
-    pages.try_reserve(state.undo.len()).map_err(|_| error())?;
+    pages.try_reserve(page_count).map_err(|_| error())?;
     let created = state
         .undo
         .iter()
@@ -61,9 +76,22 @@ pub(crate) fn encode_temporal_changes(
                     .entry((actor_id.as_str(), id.as_str()))
                     .or_insert(before.is_some());
             }
-            TemporalUndo::PendingAppend { .. }
-            | TemporalUndo::Reservation(_)
-            | TemporalUndo::HydratedPages { .. } => {}
+            TemporalUndo::PendingAppend { .. } | TemporalUndo::Reservation(_) => {}
+            TemporalUndo::HydratedPages {
+                actor_id,
+                projected,
+                ..
+            } => {
+                let actor = state.actors.get(actor_id).ok_or_else(error)?;
+                for row_id in projected {
+                    let position = actor
+                        .pages
+                        .values()
+                        .find(|page| page.row_id() == row_id)
+                        .map(|page| page.position());
+                    pages.insert((actor_id.as_str(), row_id.as_str()), position);
+                }
+            }
             TemporalUndo::PageEdit {
                 actor_id,
                 before,

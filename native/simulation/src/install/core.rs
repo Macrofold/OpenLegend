@@ -266,6 +266,7 @@ fn assemble_selected_core(
     )?;
     physical.entities.fund_installed_actions(budget)?;
     physical.entities.fund_installed_goals(budget)?;
+    physical.entities.fund_installed_intents(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema)?;
     super::physical::validate_physical_item_references(&physical, &retained)?;
     let installed = Arc::new(InstalledWorld {
@@ -347,11 +348,13 @@ fn assemble_selected_core(
     )?;
     let mut reception = read_reception_rows(&mut import, roots, received, &schema, budget)?;
     reception.fund_originals(budget)?;
+    reception.fund_current_records(budget)?;
     let mut revisions = OriginalRevisionRegistry::new(budget)?;
     let personal_install = install_personal(
         &mut import,
         originals,
         PersonalInstallContext {
+            activity_limits: &display,
             budget,
             presence: personal,
             through: physical.header.sim_time,

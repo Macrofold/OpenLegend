@@ -8,20 +8,23 @@ use napi::{Env, Result};
 use napi_derive::napi;
 use openlegend_simulation::host::{ByteBudget, ByteReservation, CandidateFence, CandidateKey};
 use openlegend_simulation::runtime::{
-    NativeWorldSession, RuntimeJson, RuntimePrepared, RuntimeProvider, RuntimeSave,
-    RuntimeSaveAcknowledgement, RuntimeSaveLimits, RuntimeStep,
+    NativeWorldSession, RuntimeActivation, RuntimeJson, RuntimePrepared, RuntimeProvider,
+    RuntimeSave, RuntimeSaveAcknowledgement, RuntimeStep,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+mod player;
 
 fn operation_error(error: impl std::fmt::Debug) -> napi::Error {
     failure(format!("{error:?}"))
 }
 
 pub(crate) struct WorldRuntime {
+    world_id: String,
     session: Mutex<Option<NativeWorldSession>>,
     fence: Arc<CandidateFence>,
     stopped: AtomicBool,
+    active: AtomicBool,
 }
 impl WorldRuntime {
     pub(crate) fn stopped(&self) -> bool {
@@ -325,9 +328,11 @@ impl NativeHost {
                     NativeWorldSession::install(&bytes, &database_schema, host.bytes.clone())
                         .map_err(operation_error)?;
                 let world = Arc::new(WorldRuntime {
+                    world_id: session.world_id().map_err(operation_error)?.to_owned(),
                     fence: session.fence(),
                     session: Mutex::new(Some(session)),
                     stopped: AtomicBool::new(false),
+                    active: AtomicBool::new(false),
                 });
                 let mut worlds = host
                     .worlds
@@ -342,6 +347,34 @@ impl NativeHost {
                 drop(worlds);
                 Ok(NativeWorld { host, world })
             })
+        })
+    }
+}
+#[napi]
+impl NativeWorld {
+    #[napi(ts_return_type = "Promise<void>")]
+    pub fn activate<'a>(&self, env: &'a Env, receipt: String) -> Result<Object<'a>> {
+        let receipt: RuntimeActivation = serde_json::from_str(&receipt).map_err(operation_error)?;
+        let host = Arc::clone(&self.host);
+        let world = Arc::clone(&self.world);
+        self.compute(env, move |session, _cancel, _budget| {
+            let worlds = host
+                .worlds
+                .lock()
+                .map_err(|_| failure("native world registry unavailable"))?;
+            if world.active.load(Ordering::Acquire)
+                || worlds.iter().any(|other| {
+                    !Arc::ptr_eq(other, &world)
+                        && other.world_id == world.world_id
+                        && other.active.load(Ordering::Acquire)
+                        && !other.stopped()
+                })
+            {
+                return Err(failure("this world already has a native writer"));
+            }
+            session.activate(receipt).map_err(operation_error)?;
+            world.active.store(true, Ordering::Release);
+            Ok(())
         })
     }
 }
@@ -456,11 +489,10 @@ impl NativeWorld {
         self.world.fence.close_admission();
     }
     #[napi(ts_return_type = "Promise<NativeWorldSave>")]
-    pub fn capture_save<'a>(&self, env: &'a Env, limits: String) -> Result<Object<'a>> {
-        let limits: RuntimeSaveLimits = serde_json::from_str(&limits).map_err(operation_error)?;
+    pub fn capture_save<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
         self.compute(env, move |session, _cancel, budget| {
             session
-                .capture_save(limits)
+                .capture_save()
                 .map(|inner| NativeWorldSave {
                     inner,
                     budget: budget.clone(),

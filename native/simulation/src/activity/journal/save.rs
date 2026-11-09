@@ -116,7 +116,7 @@ impl ActivityJournal {
                 ActivityUndo::Learning { key, before } => {
                     learning.entry(key.as_str()).or_insert(before.is_some());
                 }
-                ActivityUndo::Pending { .. } => {}
+                ActivityUndo::Pending { .. } | ActivityUndo::Loaded { .. } => {}
             }
         }
         if header {

@@ -80,6 +80,15 @@ pub(crate) fn prepare_privacy_selection(
     budget: &ByteBudget,
 ) -> Result<PrivacySelection, ExecutionError> {
     let history = state.experience.actor(actor).ok_or_else(invalid)?;
+    // This entry point owns a full resident input. A partial cold edit must
+    // carry the separate closed affected-selection witness, never this negative.
+    if state
+        .temporal
+        .actor(actor)
+        .is_none_or(|history| !history.complete_pages())
+    {
+        return Err(invalid());
+    }
     let values = state
         .reception
         .received_values
@@ -167,7 +176,7 @@ pub(crate) fn prepare_privacy_selection(
         .ok_or(ExecutionError::Capacity)?;
     }
     let reservation = budget.reserve(bytes.checked_mul(16).ok_or(ExecutionError::Capacity)?)?;
-    let mut aliases = state.temporal.account_alias_index(
+    let mut aliases = state.temporal.resident_account_alias_index(
         actor,
         values,
         &state.installed.account_law(),

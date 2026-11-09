@@ -21,7 +21,7 @@ mod accounts;
 mod actor;
 mod materialize;
 pub(crate) use materialize::{
-    CompleteTemporalPages, TemporalPageReadRequest, materialize_temporal_pages,
+    HydratedTemporalRows, hydrate_selected_temporal_pages,
 };
 mod privacy;
 pub(crate) use privacy::TemporalAccountAliases;
@@ -45,8 +45,10 @@ pub use append::{
     TemporalCaptureFacet, TemporalCaptureInput,
 };
 pub(crate) use save::{TemporalSaveLimits, encode_temporal_changes, pack_temporal_save};
-pub(crate) use support::SupportRetentionContext;
 pub(super) use support::encoding::SupportEncoding;
+pub(crate) use support::{
+    SupportRetentionContext, record_snapshot_support, retain_captured_support,
+};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -156,7 +158,7 @@ pub struct TemporalActorHistory {
     page_order_upper_bound: u64,
     recent: ReceivedRecentDirectory,
     pending_pages: Vec<Arc<PendingTemporalPage>>,
-    pending_storage: crate::host::ByteReservation,
+    pending_storage: crate::host::ResidentReservation,
     supports: Option<super::TemporalSupportCollection>,
 }
 
@@ -309,7 +311,7 @@ impl TemporalActorHistory {
             page_order_upper_bound: coverage.next_ordinal,
             recent,
             pending_pages: Vec::new(),
-            pending_storage: budget.reserve(0).map_err(|_| {
+            pending_storage: budget.reserve_backing(0).map_err(|_| {
                 ReceivedError("Temporal pending placement exceeds native allowance.")
             })?,
             supports: None,
@@ -391,6 +393,8 @@ pub struct TemporalState {
     actors: IndexMap<String, TemporalActorHistory>,
     actor_coverage: OwnerCoverage,
     undo: Vec<TemporalUndo>,
+    undo_storage: crate::host::ByteReservation,
+    budget: crate::host::ByteBudget,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -431,9 +435,12 @@ enum TemporalUndo {
         actor_id: String,
         before: BTreeMap<u64, Arc<TemporalPageRecord>>,
         pending: Vec<Arc<PendingTemporalPage>>,
-        pending_storage: crate::host::ByteReservation,
+        pending_storage: crate::host::ResidentReservation,
         complete: bool,
         next_ordinal: u64,
+        // Physical projections of genuine pending batches must enter the same
+        // accepted SQL output before their pending owners can be discarded.
+        projected: Vec<String>,
     },
 }
 
@@ -443,6 +450,7 @@ impl TemporalState {
         header: TemporalStateHeader,
         actors: IndexMap<String, TemporalActorHistory>,
         actor_coverage: OwnerCoverage,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ReceivedError> {
         if actor_coverage.table != "mind_temporal_actors"
             || actor_coverage.owner != "[\"world\",\"experience\",\"temporal\"]"
@@ -462,6 +470,10 @@ impl TemporalState {
             actors,
             actor_coverage,
             undo: Vec::new(),
+            undo_storage: budget
+                .reserve(0)
+                .map_err(|_| ReceivedError("Temporal undo exceeds native allowance."))?,
+            budget: budget.clone(),
         })
     }
     pub fn generation(&self) -> &str {
@@ -482,9 +494,7 @@ impl TemporalState {
         &mut self,
         reservation: crate::host::ByteReservation,
     ) -> Result<(), ReceivedError> {
-        self.undo
-            .try_reserve_exact(1)
-            .map_err(|_| ReceivedError("Temporal undo capacity is unavailable."))?;
+        self.reserve_undo_slots(1, &self.budget.clone())?;
         self.undo.push(TemporalUndo::Reservation(reservation));
         Ok(())
     }
@@ -580,6 +590,7 @@ impl TemporalState {
                     pending_storage,
                     complete,
                     next_ordinal,
+                    projected: _,
                 } => {
                     let actor = self.actors.get_mut(&actor_id).ok_or(ReceivedError(
                         "Temporal hydration rollback actor is absent.",
@@ -601,5 +612,39 @@ impl TemporalState {
             drop(undo);
         }
         self.undo = Vec::new();
+        self.undo_storage
+            .resize(0)
+            .expect("shrinking a live reservation cannot fail");
+    }
+
+    pub(crate) fn reserve_undo_slots(
+        &mut self,
+        count: usize,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(), ReceivedError> {
+        let error = || ReceivedError("Temporal undo capacity is unavailable.");
+        if !budget.owns(&self.undo_storage) {
+            return Err(error());
+        }
+        let needed = self.undo.len().checked_add(count).ok_or_else(error)?;
+        if needed <= self.undo.capacity() {
+            return Ok(());
+        }
+        let target = self
+            .undo
+            .capacity()
+            .checked_mul(2)
+            .map(|n| n.max(needed).max(4))
+            .ok_or_else(error)?;
+        self.undo_storage
+            .resize(
+                target
+                    .checked_mul(std::mem::size_of::<TemporalUndo>())
+                    .ok_or_else(error)?,
+            )
+            .map_err(|_| error())?;
+        self.undo
+            .try_reserve_exact(target - self.undo.len())
+            .map_err(|_| error())
     }
 }

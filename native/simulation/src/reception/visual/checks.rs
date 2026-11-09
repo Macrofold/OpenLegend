@@ -104,6 +104,11 @@ impl VisualReception {
                             detail,
                         });
                     }
+                    core.journal.current.settle_contact(
+                        &mut core.state.reception,
+                        &self.observer.actor_id,
+                        source,
+                    )?;
                 }
             }
             // Source's explicit confirmation repairs its checked current groups

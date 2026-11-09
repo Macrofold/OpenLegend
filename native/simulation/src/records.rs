@@ -24,7 +24,7 @@ pub(crate) use map_changes::{MapPositions, encode_map_changes};
 mod selection;
 pub(crate) use selection::{OrderedMapRows, SelectedPlacement};
 mod ledger;
-pub(crate) use ledger::{PreparedRecordLedger, RecordLedger};
+pub(crate) use ledger::{PreparedHydrationLedger, PreparedRecordLedger, RecordLedger};
 pub(crate) mod save;
 pub use output::{RecordEncodingError, RecordPlacement, RecordSchema};
 
@@ -100,8 +100,19 @@ pub struct CurrentRecords {
     pub durable_revision: u64,
     pub generation: String,
     pub entity_ordering: EntityOrdering,
+    pub normalized_intents: Vec<NormalizedIntent>,
     pub tables: BTreeMap<String, Vec<InstalledRow>>,
     pub coverage: Vec<OwnerCoverage>,
+}
+
+/// One finite Node language result, bound to a current canonical SQL row.
+/// The row importer consumes this preparation; it is not saved world authority.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct NormalizedIntent {
+    pub row_id: String,
+    pub description: crate::text::JsText,
+    pub normalized: crate::text::JsText,
 }
 
 #[derive(Debug, Deserialize)]

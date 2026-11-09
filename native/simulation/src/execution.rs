@@ -127,6 +127,7 @@ pub(crate) enum ActionFinish {
 }
 
 struct CandidateFrame {
+    memory: crate::host::MemoryCheckpoint,
     knowledge: crate::knowledge::KnowledgeCheckpoint,
     encounters: crate::events::EncounterCheckpoint,
     appraisals: crate::appraisals::AppraisalCheckpoint,
@@ -201,6 +202,9 @@ pub(crate) struct CandidateJournal {
     // This guard also funds outer frames/meters. Drop it after their backing
     // allocations and every other owned journal, including on cancellation.
     pub physical: PhysicalJournal,
+    // Pins outlive every undo owner above, including their backing allocation.
+    memory: crate::host::CandidateMemory,
+    root_memory: crate::host::MemoryCheckpoint,
 }
 /// Sealed before Ready. This certifies closed semantic work, not row/save or
 /// host-input admission; those independent products must also be prepared.
@@ -395,6 +399,8 @@ impl CandidateJournal {
         state: &SimulationState,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        let memory = budget.begin_candidate_memory()?;
+        let root_memory = memory.checkpoint()?;
         let group = state.installed.work_policy.policy().group;
         let mut physical = PhysicalJournal::begin(&state.physical, budget)?;
         physical.reserve(
@@ -472,6 +478,8 @@ impl CandidateJournal {
             pending: Vec::new(),
             next_occurrence: 0,
             next_provider_serial: 0,
+            memory,
+            root_memory,
         })
     }
     pub(crate) fn checkpoint(
@@ -502,6 +510,7 @@ impl CandidateJournal {
             depth: self.frames.len(),
         };
         self.frames.push(CandidateFrame {
+            memory: self.memory.checkpoint()?,
             knowledge: self.knowledge.checkpoint(&state.reception.actor_knowledge),
             encounters,
             appraisals: state.appraisals.checkpoint(),
@@ -615,7 +624,9 @@ impl CandidateJournal {
         }
         self.pending = frame.pending;
         self.physical
-            .rollback_to(&mut state.physical, frame.physical)
+            .rollback_to(&mut state.physical, frame.physical)?;
+        self.memory.rollback(frame.memory)?;
+        Ok(())
     }
     pub(crate) fn rollback_all(
         &mut self,
@@ -674,7 +685,9 @@ impl CandidateJournal {
         }
         self.frames.clear();
         self.pending.clear();
-        self.physical.rollback_all(&mut state.physical)
+        self.physical.rollback_all(&mut state.physical)?;
+        self.memory.rollback(self.root_memory)?;
+        Ok(())
     }
 }
 
@@ -1118,6 +1131,7 @@ enum UndoKey {
     AgencyPlaces(usize, u64),
     AgencyPlan(usize, u64),
     AgencyGoals(usize, u64),
+    AgencyIntents(usize, u64),
     AgencySuspended(usize, u64),
     AgencyHistory(usize, u64),
     AgencyRevision(usize, u64),
@@ -1231,6 +1245,10 @@ enum Undo {
     AgencyGoals {
         entity: EntityHandle,
         before: crate::state::FundedGoals,
+    },
+    AgencyIntents {
+        entity: EntityHandle,
+        before: crate::state::FundedIntents,
     },
     AgencySuspended {
         entity: EntityHandle,
@@ -1634,6 +1652,9 @@ impl PhysicalJournal {
                 }
                 Undo::AgencyGoals { entity, before } => {
                     drop(state.entities.swap_funded_goals(entity, before)?);
+                }
+                Undo::AgencyIntents { entity, before } => {
+                    drop(state.entities.swap_funded_intents(entity, before)?);
                 }
                 Undo::CoachingPresence { before } => {
                     state.coaching.present = before;

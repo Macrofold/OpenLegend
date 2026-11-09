@@ -20,19 +20,28 @@ pub(crate) use run::{
 };
 mod resume;
 pub(crate) use ready::{PlanReadyAnswer, PlanReadyCursor, PlanReadyStep, ReadyPlanStep};
-mod validation;
+mod attempts;
 mod goals;
-pub(crate) use goals::{GoalChange, GoalOperation, change_goal};
+mod validation;
+pub use attempts::{ActionResolution, IntentSlots, PendingIntent};
+pub(crate) use attempts::{
+    CompletedIntentEdit, DeferredIntent, defer_attempt, resolve_attempt, withdraw_attempt,
+};
 pub(crate) use control::{
     PlanControlCursor, PlanControlKind, PlanControlProgress, PlanControlStep,
 };
 pub(crate) use edit::{PlanEditCursor, PlanEditInput, PlanEditStep};
+pub(crate) use goals::{GoalChange, GoalOperation, change_goal};
 pub(crate) use resume::{PlanResumeCursor, PlanResumeStep, ResumeMode};
 pub(crate) use validation::validate_installation;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AgencyLimits {
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub attempts: u64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub attempt_characters: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub goals: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -66,7 +75,7 @@ pub(crate) enum PlanStatus {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum PlanMode {
+pub enum PlanMode {
     Enqueue,
     Replace,
     Interrupt,

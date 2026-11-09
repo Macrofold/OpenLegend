@@ -1132,6 +1132,7 @@ fn familiarity_support(
             values,
             now,
             retention,
+            receiving.budget,
         )? {
             for id in promotions {
                 temporal.set_support_required(
@@ -1142,6 +1143,7 @@ fn familiarity_support(
                     values,
                     now,
                     retention,
+                    receiving.budget,
                 )?;
             }
             return Ok(None);
@@ -1167,6 +1169,7 @@ fn familiarity_support(
                 values,
                 now,
                 retention,
+                receiving.budget,
             )?;
         }
         return Ok(None);

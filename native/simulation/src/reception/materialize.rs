@@ -12,6 +12,13 @@ use crate::received::{
 pub trait ReceivedValueLookup {
     fn shared_value(&self, id: &str) -> Option<&ReceivedValueFragment>;
 
+    /// Saved charge metadata measures the actual immutable fragment. Live pools
+    /// supply their validated stored count; bounded read captures can count it
+    /// without constructing a payload or inventing an empty pool.
+    fn shared_value_bytes(&self, id: &str) -> Option<u64> {
+        u64::try_from(crate::encoding::json_record_len(self.shared_value(id)?).ok()?).ok()
+    }
+
     fn value_at<'a>(
         &'a self,
         reference: &'a ReceivedValueReference,
@@ -27,11 +34,17 @@ impl ReceivedValueLookup for ReceivedValues {
     fn shared_value(&self, id: &str) -> Option<&ReceivedValueFragment> {
         self.shared_value(id)
     }
+    fn shared_value_bytes(&self, id: &str) -> Option<u64> {
+        ReceivedValues::shared_value_bytes(self, id)
+    }
 }
 
 impl ReceivedValueLookup for Option<&ReceivedValues> {
     fn shared_value(&self, id: &str) -> Option<&ReceivedValueFragment> {
         self.and_then(|values| values.shared_value(id))
+    }
+    fn shared_value_bytes(&self, id: &str) -> Option<u64> {
+        self.and_then(|values| values.shared_value_bytes(id))
     }
 }
 

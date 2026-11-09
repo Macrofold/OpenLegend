@@ -118,7 +118,10 @@ impl AdvanceCursor {
             budget,
         )?;
         let mut seconds = sensed.seconds;
-        let landing = seconds >= mechanics.seconds;
+        // Only a stored absolute deadline owns an exact landing. A relative
+        // duration keeps Source's subtraction residue; zeroing it early changes
+        // shared-boundary work and later sampling chronology.
+        let landing = mechanics.ends_at.is_some() && seconds >= mechanics.seconds;
         let mut endpoint = if landing && mechanics.ends_at.is_some() {
             mechanics.ends_at
         } else if seconds >= review - now {

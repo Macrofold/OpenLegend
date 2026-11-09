@@ -560,6 +560,7 @@ pub(crate) fn update_attention(
         )?;
     }
     *journal.attention_mut(reception, observer)? = Some(state);
+    journal.settle_attention(reception, observer)?;
     Ok(AttentionSelection {
         before,
         after,
@@ -635,5 +636,6 @@ fn dirty_relations(
         anchors,
     )?;
     *journal.attention_mut(reception, observer)? = Some(next);
+    journal.settle_attention(reception, observer)?;
     Ok(())
 }

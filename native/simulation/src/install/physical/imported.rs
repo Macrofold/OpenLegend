@@ -151,6 +151,23 @@ fn collection(
     );
     Ok(())
 }
+fn intention(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<(), InstallError> {
+    let description: crate::text::JsText = serde_json::from_str(
+        value
+            .get("description")
+            .ok_or(InstallError::CurrentFormat)?
+            .get(),
+    )
+    .map_err(|_| InstallError::CurrentFormat)?;
+    let normalized: crate::text::JsText = serde_json::from_str(
+        value
+            .get("normalized")
+            .ok_or(InstallError::CurrentFormat)?
+            .get(),
+    )
+    .map_err(|_| InstallError::CurrentFormat)?;
+    import.validate_normalized_intent(id, &description, &normalized)
+}
 fn agency(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<(), InstallError> {
     collection(import, value, id, "goals", "sim_goals", true, true, plain)?;
     one(import, value, id, "plan", "sim_plans", plan)?;
@@ -172,7 +189,7 @@ fn agency(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<(),
         "sim_intentions",
         true,
         true,
-        plain,
+        intention,
     )
 }
 fn plan(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<(), InstallError> {

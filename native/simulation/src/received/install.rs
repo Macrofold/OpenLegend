@@ -20,6 +20,7 @@ pub(crate) fn install_temporal(
     cold_directories: Option<&IndexMap<String, Vec<ReceivedChargeDirectory>>>,
     meaning: &dyn TemporalValueMeaning,
     budget: &crate::host::ByteBudget,
+    activity_limits: &crate::activity::ActivityDisplayLimits,
 ) -> Result<Option<TemporalState>, PersonalInstallError> {
     let generation = import.generation().to_owned();
     let Some((root, header)) = take_one::<TemporalStateHeader>(
@@ -50,16 +51,14 @@ pub(crate) fn install_temporal(
         let pages = take_collection(import, "mind_temporal_pages", &row.id, true, false)?;
         let mut installed_pages = Vec::with_capacity(pages.rows.len());
         for page in pages.rows {
-            let values = reception
-                .received_values
-                .as_ref()
-                .ok_or(PersonalInstallError::Missing("received value"))?;
+            let values = reception.received_values.as_ref();
             installed_pages.push(Arc::new(TemporalPageRecord::install(
                 page,
                 &actor_id,
                 through,
-                values,
+                &values,
                 Some(meaning),
+                activity_limits,
                 budget,
             )?));
         }
@@ -117,6 +116,8 @@ pub(crate) fn install_temporal(
             supports.coverage,
             through,
             reception.received_values.as_ref(),
+            budget,
+            activity_limits,
         )?;
         history.install_supports(supports)?;
         if histories.insert(actor_id, history).is_some() {
@@ -128,5 +129,6 @@ pub(crate) fn install_temporal(
         header,
         histories,
         actor_coverage,
+        budget,
     )?))
 }

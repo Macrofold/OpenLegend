@@ -2,7 +2,9 @@
 //! these calls on its shared pool; provider waits and settlement retain no job.
 //! Opaque products retain their actual custody rather than exposing a world.
 use crate::encoding::{json_record, json_record_len};
-use crate::host::{ByteBudget, ByteReservation, CandidateFence, CandidateKey, FenceError};
+use crate::host::{
+    ByteBudget, ByteReservation, CandidateFence, CandidateKey, FenceError, ResidentReservation,
+};
 use crate::simulation::{
     CompletedOperation, ProviderQuestion, ProviderResponse, Session, SessionStep,
 };
@@ -12,6 +14,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
+mod player;
+pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
 
 #[derive(Debug)]
 pub struct RuntimeError(String);
@@ -102,6 +106,7 @@ struct Installation {
     originals: Vec<crate::events::OriginalOccurrenceInput>,
     definitions: crate::install::NativeDefinitionInputs,
     settings: crate::install::NativeSetupSettings,
+    storage: RuntimeStorageSettings,
     layouts: Vec<crate::records::RecordLayout>,
     cold_directories:
         Option<indexmap::IndexMap<String, Vec<crate::received::ReceivedChargeDirectory>>>,
@@ -166,7 +171,10 @@ pub struct NativeWorldSession {
     prepared_output: Option<CandidateKey>,
     history_policy_id: String,
     history_policy_revision: u64,
-    _history_policy_custody: ByteReservation,
+    _history_policy_custody: ResidentReservation,
+    next_read_serial: u64,
+    active: bool,
+    temporal_save_limits: crate::received::TemporalSaveLimits,
 }
 impl NativeWorldSession {
     pub fn install(
@@ -174,10 +182,17 @@ impl NativeWorldSession {
         database_schema: &str,
         budget: ByteBudget,
     ) -> Result<Self, RuntimeError> {
+        let budget = budget.for_world();
         // Parsed rows coexist with the caller's input and consuming installers.
         // This is transient preparation, not a canonical-world size policy.
         let _decode = decode_preparation(bytes, &budget)?;
         let input: Installation = serde_json::from_slice(bytes).map_err(failure)?;
+        let pending_save_budget = budget.pending_save(input.storage.pending_save_bytes);
+        let temporal_save_limits = crate::received::TemporalSaveLimits {
+            target_bytes: input.storage.temporal_save.target_bytes,
+            row_bytes: input.storage.temporal_save.row_bytes,
+            resident_bytes: input.storage.temporal_resident_bytes,
+        };
         let core = crate::install::CoreInstallInput {
             records: input.records,
             originals: input.originals,
@@ -206,7 +221,9 @@ impl NativeWorldSession {
             .story_policy
             .as_ref()
             .ok_or_else(|| failure("installed story policy is required by this proof"))?;
-        let history_policy_custody = budget.reserve(policy.payload().len()).map_err(failure)?;
+        let history_policy_custody = budget
+            .reserve_record(policy.payload().len())
+            .map_err(failure)?;
         let history_policy_id = serde_json::from_str::<StoryIdentity>(policy.payload())
             .map_err(failure)?
             .id;
@@ -219,12 +236,16 @@ impl NativeWorldSession {
             })
             .map_err(failure)?;
         Ok(Self {
-            session: Session::new(installed, generation, budget.clone()).map_err(failure)?,
+            session: Session::new(installed, generation, budget.clone(), pending_save_budget)
+                .map_err(failure)?,
             budget,
             prepared_output: None,
             history_policy_id,
             history_policy_revision,
             _history_policy_custody: history_policy_custody,
+            next_read_serial: 0,
+            active: false,
+            temporal_save_limits,
         })
     }
     pub fn fence(&self) -> Arc<CandidateFence> {
@@ -236,12 +257,47 @@ impl NativeWorldSession {
             &self.budget,
         )
     }
+    pub fn world_id(&self) -> Result<&str, RuntimeError> {
+        Ok(&self
+            .session
+            .accepted()
+            .map_err(failure)?
+            .state
+            .physical
+            .header
+            .id)
+    }
+    /// The existing SQL writer returns these facts only after adopting its
+    /// actual current head. Installation alone never admits gameplay work.
+    pub fn activate(&mut self, receipt: RuntimeActivation) -> Result<(), RuntimeError> {
+        let state = &self.session.accepted().map_err(failure)?.state;
+        if self.active
+            || receipt.world_id != state.physical.header.id
+            || receipt.generation != state.generation
+            || receipt.revision != state.durable_revision
+            || receipt.accepted_cut != state.accepted_cut
+        {
+            return Err(failure(
+                "native activation does not match its adopted SQL writer",
+            ));
+        }
+        self.active = true;
+        Ok(())
+    }
+    fn require_active(&self) -> Result<(), RuntimeError> {
+        if self.active {
+            Ok(())
+        } else {
+            Err(failure("native installation has no adopted writer"))
+        }
+    }
     pub fn begin_advance(
         &mut self,
         seconds: f64,
         maximum_intervals: usize,
         input: &[u8],
     ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let inputs = serde_json::from_slice(input).map_err(failure)?;
         self.session
@@ -253,6 +309,7 @@ impl NativeWorldSession {
         input: &[u8],
         canonical: String,
     ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let command = serde_json::from_slice(input).map_err(failure)?;
         self.session
@@ -272,6 +329,7 @@ impl NativeWorldSession {
         input: &[u8],
         canonical: String,
     ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let command = serde_json::from_slice(input).map_err(failure)?;
         self.session
@@ -353,6 +411,18 @@ impl NativeWorldSession {
         Ok(accepted.is_some())
     }
     pub fn cancel(&mut self, key: CandidateKey) -> Result<(), RuntimeError> {
+        // Terminal cursor errors already roll back through Session. Repeated
+        // cleanup may observe that exact completed binding; it must neither
+        // mask the original failure nor roll back an accepted operation.
+        if self
+            .session
+            .fence()
+            .validate_phase(key, crate::host::CandidatePhase::Idle)
+            .is_ok()
+        {
+            self.prepared_output = None;
+            return Ok(());
+        }
         self.session.cancel(key).map_err(failure)?;
         self.prepared_output = None;
         Ok(())
@@ -360,13 +430,9 @@ impl NativeWorldSession {
     pub fn save_barrier_complete(&self) -> bool {
         self.session.save_barrier_complete()
     }
-    pub fn capture_save(&mut self, limits: RuntimeSaveLimits) -> Result<RuntimeSave, RuntimeError> {
+    pub fn capture_save(&mut self) -> Result<RuntimeSave, RuntimeError> {
         self.session
-            .capture_save(crate::received::TemporalSaveLimits {
-                target_bytes: limits.target_bytes,
-                row_bytes: limits.row_bytes,
-                resident_bytes: limits.resident_bytes,
-            })
+            .capture_save(self.temporal_save_limits)
             .map(|prefix| RuntimeSave { prefix })
             .map_err(failure)
     }
@@ -387,13 +453,27 @@ impl NativeWorldSession {
         self.session.finish_stop().map_err(failure)
     }
 }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RuntimeActivation {
+    pub world_id: String,
+    pub generation: String,
+    pub revision: u64,
+    pub accepted_cut: u64,
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct RuntimeSaveLimits {
-    pub target_bytes: usize,
-    pub row_bytes: usize,
-    pub resident_bytes: usize,
+struct RuntimeStorageSettings {
+    temporal_resident_bytes: usize,
+    temporal_save: RuntimeTemporalSaveSettings,
+    pending_save_bytes: usize,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RuntimeTemporalSaveSettings {
+    target_bytes: usize,
+    row_bytes: usize,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

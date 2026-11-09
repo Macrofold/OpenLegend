@@ -17,7 +17,26 @@ use crate::values::{deserialize_safe_integer, is_safe_record_id};
 use indexmap::IndexSet;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{collections::BTreeSet, sync::Arc};
+use std::{
+    collections::BTreeSet,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
+};
+
+/// Source keeps saved edited batch objects in a WeakSet. This flag belongs to
+/// that same immutable object lifetime; it is neither saved state nor evidence.
+#[derive(Debug, Default)]
+pub(crate) struct TemporalPageEditIdentity(AtomicBool);
+impl TemporalPageEditIdentity {
+    pub(crate) fn acknowledged(&self) -> bool {
+        self.0.load(Ordering::Acquire)
+    }
+    pub(crate) fn acknowledge(&self) {
+        self.0.store(true, Ordering::Release);
+    }
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -97,7 +116,7 @@ pub fn temporal_page_metadata(
     physical_life: u64,
     epoch: &str,
     batches: &[Arc<TemporalBatch>],
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     meaning: Option<&dyn TemporalValueMeaning>,
 ) -> Result<TemporalPageMetadata, ReceivedError> {
     let mut subjects = IndexSet::new();
@@ -245,8 +264,8 @@ pub struct TemporalPageRecord {
     metadata: TemporalPageMetadata,
     // The same edited batch-object lifetime that Source's saved WeakSet tracks.
     // It is operational custody, never a saved identity, time or RNG draw.
-    edit_identity: Option<Arc<()>>,
-    storage: Option<ByteReservation>,
+    edit_identity: Option<Arc<TemporalPageEditIdentity>>,
+    storage: Option<crate::host::ResidentReservation>,
 }
 
 impl TemporalPageRecord {
@@ -256,7 +275,7 @@ impl TemporalPageRecord {
     pub(super) fn replace_batches(
         &self,
         batches: Vec<Arc<TemporalBatch>>,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         meaning: &dyn TemporalValueMeaning,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, ReceivedError> {
@@ -319,7 +338,7 @@ impl TemporalPageRecord {
                 batches,
                 metadata,
                 storage: None,
-                edit_identity: Some(Arc::new(())),
+                edit_identity: Some(Arc::new(TemporalPageEditIdentity::default())),
             }
             .fund(budget)?,
         ))
@@ -328,8 +347,9 @@ impl TemporalPageRecord {
         row: InstalledRow,
         actor_id: &str,
         through: f64,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         meaning: Option<&dyn TemporalValueMeaning>,
+        activity_limits: &crate::activity::ActivityDisplayLimits,
         budget: &ByteBudget,
     ) -> Result<Self, ReceivedError> {
         let page: StoredPage = serde_json::from_str(&row.payload)
@@ -393,7 +413,7 @@ impl TemporalPageRecord {
                     return Err(ReceivedError("Received change has no admitted content."));
                 }
                 let receipt = materialize_received_receipt(&batch, entry, None)?;
-                receipt.validate(actor_id, through, values, None)?;
+                receipt.validate(actor_id, through, values, None, activity_limits)?;
                 if compact_received_receipt(&batch.observer(), &receipt)? != entry.receipt {
                     return Err(ReceivedError("Noncanonical received record."));
                 }
@@ -455,8 +475,38 @@ impl TemporalPageRecord {
         }
         .fund(budget)?)
     }
-    pub(crate) fn edit_identity(&self) -> Option<&Arc<()>> {
+    pub(crate) fn edit_identity(&self) -> Option<&Arc<TemporalPageEditIdentity>> {
         self.edit_identity.as_ref()
+    }
+    pub(crate) fn retain_for_candidate(&self, budget: &ByteBudget) -> Result<(), ReceivedError> {
+        budget.retain_record(self.storage.as_ref().ok_or(ReceivedError("Temporal page has no resident allowance."))?)
+            .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?;
+        for batch in &self.batches { batch.retain_for_candidate(budget)?; }
+        Ok(())
+    }
+    pub(crate) fn protect_unsaved(&mut self) -> Result<(), ReceivedError> {
+        if self.edit_identity.is_none() {
+            let storage = self
+                .storage
+                .as_mut()
+                .ok_or(ReceivedError("Temporal page has no resident allowance."))?;
+            storage
+                .resize(
+                    storage
+                        .bytes()
+                        .checked_add(Self::edit_identity_bytes())
+                        .ok_or(ReceivedError("Temporal page allocation overflow."))?,
+                )
+                .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?;
+            self.edit_identity = Some(Arc::new(TemporalPageEditIdentity::default()));
+        }
+        Ok(())
+    }
+    pub(super) fn edit_identity_bytes() -> usize {
+        2 * std::mem::size_of::<usize>()
+            + std::mem::size_of::<TemporalPageEditIdentity>()
+            + std::mem::align_of::<usize>()
+            - 1
     }
     pub(crate) fn inherit_edit_identity(&mut self, previous: &Self) -> Result<(), ReceivedError> {
         if self.row_id == previous.row_id && self.payload == previous.payload {
@@ -469,7 +519,7 @@ impl TemporalPageRecord {
                     .resize(
                         storage
                             .bytes()
-                            .checked_add(2 * std::mem::size_of::<usize>())
+                            .checked_add(Self::edit_identity_bytes())
                             .ok_or(ReceivedError("Temporal page allocation overflow."))?,
                     )
                     .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?;

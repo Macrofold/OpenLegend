@@ -165,7 +165,8 @@ pub fn decode_current_contact_storage(
         return Err(invalid());
     }
     Ok(CurrentContact {
-        encoded_payload: Some(Arc::from(payload)),
+        metadata_storage: None,
+        encoded_payload: Some(super::current_residency::CurrentPayload::decoded(payload)),
         visual_measurement: None,
         order: body.order,
         content: CurrentContactContent {

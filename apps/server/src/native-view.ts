@@ -6,6 +6,7 @@ import {
   ownPracticeFrom,
   selectedNaturalStrikeBodyPlans,
   selectedPlayerViewRules,
+  selectedTradeViewTitle,
   selectedPlayerWorkLabels,
   supportsStrikeBody,
   perceptionGuideFrom,
@@ -140,7 +141,6 @@ export function nativePlayerViewDefinitions(
     | 'inventionPolicy'
   > &
     ActivityDefinitionScope,
-  tradeTitle: string,
 ): NativePlayerViewDefinitions {
   return {
     profile: definitions.profile,
@@ -158,7 +158,7 @@ export function nativePlayerViewDefinitions(
       itemHandling: definitions.itemHandling,
       constructionProfile: definitions.constructionProfile,
     }),
-    tradeTitle,
+    tradeTitle: selectedTradeViewTitle(definitions),
     attributeDefinitions: definitions.moduleManifest.definitions,
     practiceAttributeIds: new Set(
       definitions.moduleManifest.definitions

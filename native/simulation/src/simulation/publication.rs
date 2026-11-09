@@ -80,6 +80,7 @@ impl PreparedPublication {
             state.physical.identity.next_id(),
             changes,
             &state.installed.schema,
+            budget,
         )?;
         drop(owners);
         drop(rows_guard);

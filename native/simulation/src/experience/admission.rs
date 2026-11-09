@@ -128,10 +128,16 @@ fn available_new_source(
         if actor.privacy.forgotten_index.contains(id) {
             return Err(ExperienceError::Revoked);
         }
-        if let Some(source) = actor.sources.get(&PersonalSourceKind::Awareness) {
-            if source.get(id)?.is_some() {
-                return Err(ExperienceError::DuplicateIdentity);
-            }
+        // These inputs come from the genuine acquisition producer. Source
+        // places them against its resident awareness list, including a cold
+        // tail; it does not require all historical awareness to be hydrated.
+        // Historical reads keep using the coverage-aware `get` boundary.
+        if actor
+            .sources
+            .get(&PersonalSourceKind::Awareness)
+            .is_some_and(|source| source.lookup.contains_key(id))
+        {
+            return Err(ExperienceError::DuplicateIdentity);
         }
     }
     let owners = state

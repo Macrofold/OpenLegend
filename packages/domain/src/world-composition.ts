@@ -2,6 +2,7 @@ import {
   ordinaryActivityView,
   type OrdinaryActivityViewInput,
 } from './worlds/base/ordinary-activity-view.js';
+import { BASE_HANDOVER } from './worlds/base/handover.js';
 import { BASE_SIMULATION_TIME_RULES } from './worlds/base/time.js';
 import { baseOutwardActivity, changedOutwardNotice } from './worlds/base/senses.js';
 import {
@@ -523,6 +524,10 @@ export function selectedObservationRules(world: Pick<WorldState, 'profile'>) {
 export function selectedObservedBodyKind(world: Pick<WorldState, 'profile'>, kind: string) {
   selectedCreationProfileForWorld(world);
   return baseObservedBodyKind(kind);
+}
+export function selectedTradeViewTitle(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_HANDOVER.text.title;
 }
 export function selectedPlayerViewRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);

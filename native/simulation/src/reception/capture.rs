@@ -32,6 +32,7 @@ pub struct CapturedReceivedOriginals {
     observer: ObserverLife,
     originals: Vec<Arc<ReceivedObservation>>,
     values: IndexMap<String, Arc<ReceivedValueRecord>>,
+    _pins: Vec<Arc<crate::host::SharedMemoryPin>>,
     _reservation: ByteReservation,
 }
 
@@ -218,20 +219,12 @@ impl ReceptionState {
             if header.observer.actor_id != observer.id || header.observer.physical_life != life {
                 return Err(unavailable());
             }
-            preflight = preflight
-                .checked_add(arc_bytes(source.as_ref()).ok_or_else(capacity)?)
-                .ok_or_else(capacity)?;
             for id in received_observation_value_references(source) {
                 references = references.checked_add(1).ok_or_else(capacity)?;
-                let record = live_values
+                live_values
                     .and_then(|values| values.shared_record(id))
                     .ok_or_else(unavailable)?;
-                preflight = heap_sum([
-                    preflight,
-                    id.len(),
-                    arc_bytes(record.as_ref()).ok_or_else(capacity)?,
-                ])
-                .ok_or_else(capacity)?;
+                preflight = preflight.checked_add(id.len()).ok_or_else(capacity)?;
             }
         }
         let map_capacity_bound = references.checked_mul(2).ok_or_else(capacity)?;
@@ -241,7 +234,17 @@ impl ReceptionState {
                     .ok_or_else(capacity)?,
             )
             .ok_or_else(capacity)?;
+        let pins_count = sources.len().checked_add(references).ok_or_else(capacity)?;
+        preflight = preflight
+            .checked_add(
+                pins_count
+                    .checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>())
+                    .ok_or_else(capacity)?,
+            )
+            .ok_or_else(capacity)?;
         let mut reservation = budget.reserve(preflight).map_err(|_| capacity())?;
+        let mut pins = Vec::new();
+        pins.try_reserve_exact(pins_count).map_err(|_| capacity())?;
         let mut originals = Vec::new();
         originals
             .try_reserve_exact(sources.len())
@@ -249,12 +252,14 @@ impl ReceptionState {
         let mut values = IndexMap::new();
         values.try_reserve(references).map_err(|_| capacity())?;
         for source in sources {
+            pins.push(source.capture_pin(budget)?);
             originals.push(Arc::clone(source));
             for id in received_observation_value_references(source) {
                 if !values.contains_key(id) {
                     let record = live_values
                         .and_then(|values| values.shared_record(id))
                         .ok_or_else(unavailable)?;
+                    pins.push(record.capture_pin(budget)?);
                     values.insert(id.to_owned(), Arc::clone(record));
                 }
             }
@@ -272,32 +277,20 @@ impl ReceptionState {
                 .ok_or_else(capacity)?,
             map_storage::<String, Arc<ReceivedValueRecord>>(values.capacity())
                 .ok_or_else(capacity)?,
+            pins.capacity()
+                .checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>())
+                .ok_or_else(capacity)?,
         ])
         .ok_or_else(capacity)?;
-        for (index, original) in originals.iter().enumerate() {
-            if originals[..index]
-                .iter()
-                .any(|prior| Arc::ptr_eq(prior, original))
-            {
-                continue;
-            }
-            retained = retained
-                .checked_add(arc_bytes(original.as_ref()).ok_or_else(capacity)?)
-                .ok_or_else(capacity)?;
-        }
-        for (id, record) in &values {
-            retained = heap_sum([
-                retained,
-                id.capacity(),
-                arc_bytes(record.as_ref()).ok_or_else(capacity)?,
-            ])
-            .ok_or_else(capacity)?;
+        for id in values.keys() {
+            retained = retained.checked_add(id.capacity()).ok_or_else(capacity)?;
         }
         reservation.resize(retained).map_err(|_| capacity())?;
         Ok(CapturedReceivedOriginals {
             observer,
             originals,
             values,
+            _pins: pins,
             _reservation: reservation,
         })
     }

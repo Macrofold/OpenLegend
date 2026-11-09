@@ -134,6 +134,7 @@ struct EntityRows<'a> {
     plan_before: Option<&'a Option<crate::plans::ActorPlan>>,
     history_before: Option<&'a Vec<crate::plans::PlanStep>>,
     goals_before: Option<&'a Vec<crate::state::Goal>>,
+    intents_before: Option<&'a Vec<crate::plans::PendingIntent>>,
     animal: bool,
     episode: bool,
     episode_before: Option<&'a Option<crate::native_response::NativeResponseEpisode>>,
@@ -638,6 +639,7 @@ impl PhysicalJournal {
                         | Undo::AgencyPlaces { entity, .. }
                         | Undo::AgencyPlan { entity, .. }
                         | Undo::AgencyGoals { entity, .. }
+                        | Undo::AgencyIntents { entity, .. }
                         | Undo::AgencySuspended { entity, .. }
                         | Undo::AgencyHistory { entity, .. }
                         | Undo::AgencyRevision { entity, .. }
@@ -743,6 +745,10 @@ impl PhysicalJournal {
                         Undo::AgencyGoals { before, .. } => {
                             rows.agency = true;
                             rows.goals_before.get_or_insert(&before.value);
+                        }
+                        Undo::AgencyIntents { before, .. } => {
+                            rows.agency = true;
+                            rows.intents_before.get_or_insert(&before.value);
                         }
                         Undo::Status {
                             key,
@@ -954,6 +960,7 @@ impl PhysicalJournal {
                         rows.plan_before,
                         rows.history_before,
                         rows.goals_before,
+                        rows.intents_before,
                         ledger,
                         output,
                         budget,

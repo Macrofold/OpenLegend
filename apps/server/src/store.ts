@@ -1,3 +1,5 @@
+import { JOB_UPSERT_SQL, jobPayloadPrefix, jobSelection } from './job-storage.js';
+import { diagnosticStorage, diagnosticSelectionPattern } from './diagnostic-storage.js';
 import {
   resetPreparedSourceVersionAccounting,
   sourceVersionPreparationNeeded,
@@ -91,7 +93,7 @@ import { timed, timedSync, countMetric, recordBackgroundFailure } from './perfor
 import { HistoryRepository } from './history.js';
 import { prepareHistory, captureHistoryProjection } from './history-preparation.js';
 import type { CommitInputs } from './commit-inputs.js';
-import { insertRows, SqlWriteBatch } from './sql-rows.js';
+import { insertRows, SqlWriteBatch, sqlTextKey } from './sql-rows.js';
 import { IntegrationValues } from './integration-values.js';
 import {
   privacyLedgerKey,
@@ -143,12 +145,12 @@ export type DiagnosticRootSummary = Omit<IntelligenceCall, 'input' | 'output' | 
 function diagnosticPredicate(access: DiagnosticAccess): { sql: string; params: string[] } {
   const ids = access.actorIds;
   return {
-    sql: `((payload::jsonb #>> '{ownerAccountId}')=? OR ((payload::jsonb #>> '{ownerAccountId}') IS NULL AND (${ids.length ? `(payload::jsonb #>> '{actorId}') IN (${ids.map(() => '?').join(',')})` : '1=0'}${access.allowUnscoped ? " OR (payload::jsonb #>> '{actorId}') IS NULL" : ''})))`,
-    params: [access.accountId, ...ids],
+    sql: `((selection #>> '{ownerAccountId}')=? OR ((selection #>> '{ownerAccountId}') IS NULL AND (${ids.length ? `(selection #>> '{actorId}') IN (${ids.map(() => '?').join(',')})` : '1=0'}${access.allowUnscoped ? " OR (selection #>> '{actorId}') IS NULL" : ''})))`,
+    params: [sqlTextKey(access.accountId), ...ids.map(sqlTextKey)],
   };
 }
 function diagnosticRootSelection(filters: Record<string, string>, access?: DiagnosticAccess) {
-  const clauses = ["(payload::jsonb #>> '{parentId}') IS NULL"];
+  const clauses = ["(selection #>> '{parentId}') IS NULL"];
   const params: unknown[] = [];
   if (access) {
     const permitted = diagnosticPredicate(access);
@@ -166,19 +168,19 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
       params.push(value);
     } else if (key === 'stage') {
       clauses.push(
-        "id IN (SELECT (payload::jsonb #>> '{parentId}') FROM intelligence_calls WHERE LOWER((payload::jsonb #>> '{kind}')) LIKE LOWER(?))",
+        "(selection #>> '{id}') IN (SELECT (selection #>> '{parentId}') FROM intelligence_calls WHERE LOWER((selection #>> '{kind}')) LIKE LOWER(?))",
       );
-      params.push(`%${value}%`);
+      params.push(diagnosticSelectionPattern(value));
     } else if (key === 'outcome') {
       // Panel labels cover both root status and finer dispositions such as cancelled.
       const term = `%${value.replace(/canceled/i, 'cancel')}%`;
       clauses.push(
-        "(LOWER((payload::jsonb ->> 'disposition')) LIKE LOWER(?) OR LOWER((payload::jsonb ->> 'status')) LIKE LOWER(?))",
+        "(LOWER((selection ->> 'disposition')) LIKE LOWER(?) OR LOWER((selection ->> 'status')) LIKE LOWER(?))",
       );
-      params.push(term, term);
+      params.push(diagnosticSelectionPattern(value.replace(/canceled/i, 'cancel')), term);
     } else if (fields[key]) {
-      clauses.push(`LOWER((payload::jsonb ->> '${fields[key]}')) LIKE LOWER(?)`);
-      params.push(`%${value}%`);
+      clauses.push(`LOWER((selection ->> '${fields[key]}')) LIKE LOWER(?)`);
+      params.push(diagnosticSelectionPattern(value));
     }
   }
   return { where: clauses.join(' AND '), params };
@@ -186,7 +188,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '58';
+export const DATABASE_SCHEMA = '60';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(
@@ -351,6 +353,14 @@ interface TableWrite {
   state: SavedWorld;
   revision: number;
   inputs: CommitInputs;
+}
+
+/** The exact durable writer binding acquired by successful native adoption. */
+export interface NativeWorldAdoption {
+  readonly worldId: string;
+  readonly generation: string;
+  readonly revision: number;
+  readonly acceptedCut: number;
 }
 
 /** Replaceable persistence boundary for committed world state. */
@@ -852,9 +862,21 @@ export class SqlGameRepository implements GameRepository {
     if (!calls.length) return;
     await insertRows(
       this.db,
-      'intelligence_calls (id, started_at, payload)',
-      calls.map((call) => [call.id, call.startedAt, call.json]),
-      'ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
+      'intelligence_calls (id,started_at,payload,selection,summary,stage)',
+      (function* () {
+        for (const call of calls) {
+          const projected = diagnosticStorage(call.value);
+          yield [
+            call.id,
+            call.startedAt,
+            call.json,
+            projected.selection,
+            projected.summary,
+            projected.stage,
+          ];
+        }
+      })(),
+      'ON CONFLICT(id) DO UPDATE SET payload=excluded.payload,selection=excluded.selection,summary=excluded.summary,stage=excluded.stage',
     );
     // Diagnostic retention is approximate between periodic pruning passes.
     const previous = this.intelligenceWrites;
@@ -868,10 +890,10 @@ export class SqlGameRepository implements GameRepository {
     await this.ready;
     const permitted = access ? diagnosticPredicate(access) : undefined;
     const roots = permitted
-      ? `SELECT id FROM intelligence_calls WHERE (payload::jsonb #>> '{parentId}') IS NULL AND ${permitted.sql}`
+      ? `SELECT selection #>> '{id}' FROM intelligence_calls WHERE (selection #>> '{parentId}') IS NULL AND ${permitted.sql}`
       : '';
     const filter = permitted
-      ? ` WHERE id IN (${roots}) OR (payload::jsonb #>> '{parentId}') IN (${roots})`
+      ? ` WHERE (selection #>> '{id}') IN (${roots}) OR (selection #>> '{parentId}') IN (${roots})`
       : '';
     const rows = await this.db
       .prepare(
@@ -898,23 +920,9 @@ export class SqlGameRepository implements GameRepository {
   ): Promise<DiagnosticRootSummary[]> {
     await this.ready;
     const selection = diagnosticRootSelection(filters, access);
-    // Select the bounded page before decoding each body once. Keep SELECT outermost
-    // so the PostgreSQL adapter uses its reader rather than the gameplay writer.
     const rows = await this.db
       .prepare(
-        `SELECT summary FROM (
-          WITH selected AS MATERIALIZED (
-            SELECT id,started_at,payload::jsonb AS body FROM intelligence_calls
-            WHERE ${selection.where} ORDER BY started_at DESC,id DESC LIMIT 26 OFFSET ?
-          )
-          SELECT id,started_at,((body - 'input' - 'output' - 'exchanges') || jsonb_build_object(
-            'input', jsonb_build_object('reason',body #> '{input,reason}','text',body #> '{input,text}'),
-            'output', jsonb_build_object(
-              'ok',body #> '{output,ok}','code',body #> '{output,code}',
-              'message',body #> '{output,message}','reason',body #> '{output,reason}',
-              'error',body #> '{output,error}','receipt',body #> '{output,receipt}'),
-            'exchanges','[]'::jsonb))::text AS summary FROM selected
-          ) roots ORDER BY started_at DESC,id DESC`,
+        `SELECT summary FROM intelligence_calls WHERE ${selection.where} ORDER BY started_at DESC,id DESC LIMIT 26 OFFSET ?`,
       )
       .all(...selection.params, offset);
     return rows.map((row) => JSON.parse(String(row['summary'])) as DiagnosticRootSummary);
@@ -923,40 +931,13 @@ export class SqlGameRepository implements GameRepository {
     await this.ready;
 
     if (!parentIds.length) return [];
-    const fields = details
-      ? 'payload'
-      : `id,started_at,(payload::jsonb #>> '{parentId}') AS parent_id,(payload::jsonb #>> '{kind}') AS kind,(payload::jsonb #>> '{status}') AS status,(payload::jsonb #>> '{output,receipt}') AS receipt,(payload::jsonb #>> '{input,proposed,operations}') AS proposed_operations,(payload::jsonb #>> '{output,value,operations}') AS response_operations,CASE WHEN (payload::jsonb #>> '{kind}') = 'Action context' THEN (payload::jsonb #>> '{output}') END AS action_options,(payload::jsonb #>> '{output,reason}') AS reason,(payload::jsonb #>> '{output,error}') AS error,(payload::jsonb #>> '{output,message}') AS message`;
+    const field = details ? 'payload' : 'stage';
     const rows = await this.db
       .prepare(
-        `SELECT ${fields} FROM intelligence_calls WHERE (payload::jsonb #>> '{parentId}') IN (${parentIds.map(() => '?').join(',')}) ORDER BY started_at,id LIMIT 1000`,
+        `SELECT ${field} FROM intelligence_calls WHERE (selection #>> '{parentId}') IN (${parentIds.map(() => '?').join(',')}) ORDER BY started_at,id LIMIT 1000`,
       )
-      .all(...parentIds);
-    return rows.map((row) =>
-      details
-        ? (JSON.parse(String(row['payload'])) as IntelligenceCall)
-        : {
-            id: String(row['id']),
-            parentId: String(row['parent_id']),
-            kind: String(row['kind']),
-            startedAt: String(row['started_at']),
-            status: String(row['status']) as IntelligenceCall['status'],
-            input: row['proposed_operations']
-              ? { proposed: { operations: JSON.parse(String(row['proposed_operations'])) } }
-              : null,
-            output: row['action_options']
-              ? JSON.parse(String(row['action_options']))
-              : {
-                  ...(row['receipt'] ? { receipt: JSON.parse(String(row['receipt'])) } : {}),
-                  ...(row['response_operations']
-                    ? { value: { operations: JSON.parse(String(row['response_operations'])) } }
-                    : {}),
-                  reason: row['reason'],
-                  error: row['error'],
-                  message: row['message'],
-                },
-            exchanges: [],
-          },
-    );
+      .all(...parentIds.map(sqlTextKey));
+    return rows.map((row) => JSON.parse(String(row[field])) as IntelligenceCall);
   }
 
   readonly history: HistoryRepository;
@@ -1032,17 +1013,17 @@ export class SqlGameRepository implements GameRepository {
         throw new Error('Database schema marker is missing. Existing data was not changed.');
       const schema = `
       CREATE TABLE IF NOT EXISTS jobs (
-        id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, created_at BIGINT NOT NULL
+        id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, selection JSONB NOT NULL, created_at BIGINT NOT NULL
       );
-      CREATE INDEX IF NOT EXISTS jobs_inventor ON jobs ((payload::jsonb #>> '{request,invention,worldId}'), (payload::jsonb #>> '{request,invention,actorId}'), created_at, id);
-      CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs ((payload::jsonb #>> '{playerSpeechEventId}')) WHERE (payload::jsonb #>> '{kind}') = 'chat';
-      CREATE INDEX IF NOT EXISTS jobs_inventor_timeline ON jobs ((payload::jsonb #>> '{request,invention,worldId}'), (payload::jsonb #>> '{request,invention,actorId}'), (payload::jsonb #>> '{request,invention,timelineId}'), created_at, id);
-      CREATE INDEX IF NOT EXISTS jobs_unfinished ON jobs(id) WHERE (payload::jsonb #>> '{status}') IN ('queued','judging','generating');
+      CREATE INDEX IF NOT EXISTS jobs_inventor ON jobs ((selection #>> '{request,invention,worldId}'), (selection #>> '{request,invention,actorId}'), created_at, id);
+      CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs ((selection #>> '{playerSpeechEventId}')) WHERE (selection #>> '{kind}') = 'chat';
+      CREATE INDEX IF NOT EXISTS jobs_inventor_timeline ON jobs ((selection #>> '{request,invention,worldId}'), (selection #>> '{request,invention,actorId}'), (selection #>> '{request,invention,timelineId}'), created_at, id);
+      CREATE INDEX IF NOT EXISTS jobs_unfinished ON jobs(id) WHERE (selection #>> '{status}') IN ('queued','judging','generating');
       CREATE UNIQUE INDEX IF NOT EXISTS decision_actor_active ON jobs
-        ((payload::jsonb #>> '{decision,worldId}'), (payload::jsonb #>> '{decision,timelineId}'), (payload::jsonb #>> '{decision,actorId}'))
-        WHERE (payload::jsonb #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched');
+        ((selection #>> '{decision,worldId}'), (selection #>> '{decision,timelineId}'), (selection #>> '{decision,actorId}'))
+        WHERE (selection #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched');
       CREATE INDEX IF NOT EXISTS decision_unfinished ON jobs(id)
-        WHERE (payload::jsonb #>> '{decision,phase}') IN ('immediate','waiting-primary','higher');
+        WHERE (selection #>> '{decision,phase}') IN ('immediate','waiting-primary','higher');
       CREATE TABLE IF NOT EXISTS attempts (
         id TEXT PRIMARY KEY, provider TEXT NOT NULL, status TEXT NOT NULL,
         reserved BIGINT NOT NULL CHECK (reserved >= 0), spent BIGINT NOT NULL DEFAULT 0 CHECK (spent >= 0),
@@ -1061,9 +1042,9 @@ export class SqlGameRepository implements GameRepository {
       CREATE TABLE IF NOT EXISTS attempt_budgets (attempt_id TEXT PRIMARY KEY, budget_id TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS attempt_budget_scope ON attempt_budgets(budget_id, attempt_id);
       CREATE INDEX IF NOT EXISTS attempt_actor ON attempt_scopes(actor_id,attempt_id);
-      CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS intelligence_calls (id TEXT PRIMARY KEY, started_at TEXT NOT NULL, payload TEXT NOT NULL, selection JSONB NOT NULL, summary TEXT NOT NULL, stage TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS intelligence_calls_time ON intelligence_calls(started_at DESC, id DESC);
-      CREATE INDEX IF NOT EXISTS intelligence_calls_parent_time ON intelligence_calls((payload::jsonb #>> '{parentId}'), started_at DESC, id DESC);
+      CREATE INDEX IF NOT EXISTS intelligence_calls_parent_time ON intelligence_calls((selection #>> '{parentId}'), started_at DESC, id DESC);
       CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS player_profiles (
         id TEXT PRIMARY KEY, revision BIGINT NOT NULL,
@@ -1267,7 +1248,7 @@ export class SqlGameRepository implements GameRepository {
   async adoptNativeCurrentWorld(
     input: NativeCurrentWorldInstallation,
     providers: NativeWorldProviders,
-  ): Promise<void> {
+  ): Promise<NativeWorldAdoption> {
     const installed = {
       worldId: input.worldId,
       generation: input.generation,
@@ -1337,6 +1318,12 @@ export class SqlGameRepository implements GameRepository {
       installed.acceptedCut,
       capturedProviders,
     );
+    return Object.freeze({
+      worldId: installed.worldId,
+      generation: installed.generation,
+      revision: installed.revision,
+      acceptedCut: installed.acceptedCut,
+    });
   }
 
   /** Called only after the host installs the validated native authority. Failed
@@ -1853,35 +1840,33 @@ export class SqlGameRepository implements GameRepository {
     {
       for (const { id, outcome: result } of restore ? [] : inputs.outcomes) {
         const status = result.ok ? 'completed' : 'failed';
-        // Merge only completion fields within the world transaction, preserving the
-        // current diagnostic metadata without a separate read round trip. Decision roots
-        // are settled by their exact operational owner in this same transaction.
-        // Missing jobs stay absent; putJob still owns request/fingerprint admission.
-        const written = await this.db
-          .prepare(
-            `UPDATE jobs SET payload=CASE
-              WHEN payload::jsonb ->> 'status'='completed' AND ?<>'completed' THEN payload
-              ELSE ((payload::jsonb || ?::jsonb) || CASE
-                WHEN payload::jsonb ->> 'status'='completed' AND payload::jsonb -> 'completedAt' IS NOT NULL
-                THEN jsonb_build_object('completedAt',payload::jsonb -> 'completedAt')
-                ELSE '{}'::jsonb END || CASE
-                WHEN ?::text IS NOT NULL AND jsonb_typeof(payload::jsonb -> 'invention')='object'
-                THEN jsonb_build_object('invention',(payload::jsonb -> 'invention') ||
-                  jsonb_build_object('code','admitted','recipeId',?::text))
-                ELSE '{}'::jsonb END)::text END WHERE id=?
-              AND (payload::jsonb -> 'decision' IS NULL OR payload::jsonb -> 'decision'='null'::jsonb)
-              RETURNING fingerprint,payload::jsonb ->> 'fingerprint' AS body_fingerprint`,
-          )
-          .get(
-            status,
-            JSON.stringify({ status, message: result.message, result, completedAt: Date.now() }),
-            result.recipeId || null,
-            result.recipeId || null,
-            id,
-          );
-        if (written) this.invalidateRead(this.recentJobReads, this.db);
-        if (written && written['fingerprint'] !== written['body_fingerprint'])
+        // The body can contain exact UTF-16 prose that PostgreSQL JSON cannot
+        // decode. Lock this selected job inside the existing world transaction;
+        // the common upsert still protects its fingerprint/completed timestamp.
+        // Missing jobs remain absent and decision roots retain their own owner.
+        const row = await this.db
+          .prepare('SELECT fingerprint,payload FROM jobs WHERE id=? FOR UPDATE')
+          .get(id);
+        if (!row) continue;
+        const job = JSON.parse(String(row['payload'])) as JobRecord;
+        if (job.id !== id || job.fingerprint !== row['fingerprint'])
           throw new Error('A request ID cannot be reused with different input.');
+        if (job.decision !== undefined && job.decision !== null) continue;
+        if (job.status !== 'completed' || status === 'completed') {
+          await this.putJob({
+            ...job,
+            status,
+            message: result.message,
+            result,
+            completedAt: Date.now(),
+            ...(result.recipeId &&
+            typeof job.invention === 'object' &&
+            job.invention !== null &&
+            !Array.isArray(job.invention)
+              ? { invention: { ...job.invention, code: 'admitted', recipeId: result.recipeId } }
+              : {}),
+          });
+        } else this.invalidateRead(this.recentJobReads, this.db);
       }
     }
     const sources = inputs.sources;
@@ -2003,9 +1988,9 @@ export class SqlGameRepository implements GameRepository {
     if (!ids.length) return jobs;
     const rows = await this.db
       .prepare(
-        `SELECT payload FROM jobs WHERE (payload::jsonb #>> '{playerSpeechEventId}') IN (${ids.map(() => '?').join(',')}) AND (payload::jsonb #>> '{kind}') = 'chat' ORDER BY created_at DESC, id DESC`,
+        `SELECT payload FROM jobs WHERE (selection #>> '{playerSpeechEventId}') IN (${ids.map(() => '?').join(',')}) AND (selection #>> '{kind}') = 'chat' ORDER BY created_at DESC,id DESC`,
       )
-      .all(...ids);
+      .all(...ids.map(sqlTextKey));
     for (const row of rows) {
       const job = JSON.parse(String(row['payload'])) as JobRecord;
       if (job.playerSpeechEventId && !jobs.has(job.playerSpeechEventId))
@@ -2016,21 +2001,9 @@ export class SqlGameRepository implements GameRepository {
 
   async putJob(job: JobRecord): Promise<void> {
     await this.ready;
-    const status = "jobs.payload::jsonb ->> 'status'";
-    // Check identity and preserve completed work in the same statement that writes it;
-    // a separate read costs a round trip and races concurrent completions.
-    // This operational upsert uses the same adapter and any enclosing transaction.
     const written = await this.db
-      .prepare(
-        `INSERT INTO jobs VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload=
-          CASE WHEN ${status}='completed' AND ?<>'completed' THEN jobs.payload
-          ELSE (excluded.payload::jsonb || CASE
-            WHEN ${status}='completed' AND jobs.payload::jsonb -> 'completedAt' IS NOT NULL
-            THEN jsonb_build_object('completedAt',jobs.payload::jsonb -> 'completedAt')
-            ELSE '{}'::jsonb END)::text END
-          WHERE jobs.fingerprint=excluded.fingerprint RETURNING fingerprint`,
-      )
-      .get(job.id, job.fingerprint, JSON.stringify(job), job.createdAt, job.status)
+      .prepare(JOB_UPSERT_SQL)
+      .get(job.id, job.fingerprint, jobPayloadPrefix(job), jobSelection(job), job.createdAt)
       .finally(() => this.invalidateRead(this.recentJobReads, this.db));
     if (!written) throw new Error('A request ID cannot be reused with different input.');
   }
@@ -2093,9 +2066,9 @@ export class SqlGameRepository implements GameRepository {
       .get(JSON.stringify([worldId, timelineId, actorId]));
     return !!(await this.db
       .prepare(
-        "SELECT id FROM jobs WHERE (payload::jsonb #>> '{decision,worldId}')=? AND (payload::jsonb #>> '{decision,timelineId}')=? AND (payload::jsonb #>> '{decision,actorId}')=? AND (payload::jsonb #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched') AND id<>? LIMIT 1",
+        "SELECT id FROM jobs WHERE (selection #>> '{decision,worldId}')=? AND (selection #>> '{decision,timelineId}')=? AND (selection #>> '{decision,actorId}')=? AND (selection #>> '{decision,higher,state}') IN ('queued','preparing','reserved','dispatched') AND id<>? LIMIT 1",
       )
-      .get(worldId, timelineId, actorId, except));
+      .get(sqlTextKey(worldId), sqlTextKey(timelineId), sqlTextKey(actorId), except));
   }
 
   async decisionAttempts(rootJobId: string): Promise<LinkedDecisionAttempt[]> {
@@ -2167,18 +2140,16 @@ export class SqlGameRepository implements GameRepository {
       throw new Error('Invention history limit must be between 1 and 50.');
     // Filter before paging: abandoned timelines must not hide current actor feedback.
     // docs/architecture.md#bounded-invention-history-and-recovery
-    const timeline = selection
-      ? " AND (payload::jsonb #>> '{request,invention,timelineId}') = ?"
-      : '';
+    const timeline = selection ? " AND (selection #>> '{request,invention,timelineId}') = ?" : '';
     return (
       await this.db
         .prepare(
-          `SELECT payload FROM jobs WHERE (payload::jsonb #>> '{request,invention,worldId}') = ? AND (payload::jsonb #>> '{request,invention,actorId}') = ?${timeline} AND (created_at, id) < (?, ?) ORDER BY created_at DESC, id DESC LIMIT ?`,
+          `SELECT payload FROM jobs WHERE (selection #>> '{request,invention,worldId}') = ? AND (selection #>> '{request,invention,actorId}') = ?${timeline} AND (created_at, id) < (?, ?) ORDER BY created_at DESC, id DESC LIMIT ?`,
         )
         .all(
-          worldId,
-          actorId,
-          ...(selection ? [selection.timelineId] : []),
+          sqlTextKey(worldId),
+          sqlTextKey(actorId),
+          ...(selection ? [sqlTextKey(selection.timelineId)] : []),
           before.createdAt,
           before.id,
           limit,
@@ -2415,7 +2386,7 @@ export class SqlGameRepository implements GameRepository {
     for (;;) {
       const rows = await this.db
         .prepare(
-          "SELECT id FROM jobs WHERE (payload::jsonb #>> '{decision,phase}') IN ('immediate','waiting-primary','higher') ORDER BY id LIMIT 50",
+          "SELECT id FROM jobs WHERE (selection #>> '{decision,phase}') IN ('immediate','waiting-primary','higher') ORDER BY id LIMIT 50",
         )
         .all();
       if (!rows.length) break;
@@ -2463,7 +2434,7 @@ export class SqlGameRepository implements GameRepository {
     for (;;) {
       const rows = await this.db
         .prepare(
-          "SELECT payload FROM jobs WHERE (payload::jsonb #>> '{status}') IN ('queued','judging','generating') ORDER BY id LIMIT 50",
+          "SELECT payload FROM jobs WHERE (selection #>> '{status}') IN ('queued','judging','generating') ORDER BY id LIMIT 50",
         )
         .all();
       if (!rows.length) break;
@@ -2502,25 +2473,30 @@ export class SqlGameRepository implements GameRepository {
             // may close its root, in the same durable transaction.
             const written = await this.db
               .prepare(
-                "UPDATE jobs SET payload=? WHERE id=? AND (payload::jsonb ->> 'status') IN ('queued','judging','generating') RETURNING id",
+                "UPDATE jobs SET payload=?,selection=?::jsonb WHERE id=? AND (selection ->> 'status') IN ('queued','judging','generating') RETURNING id",
               )
-              .get(JSON.stringify(interrupted), job.id);
+              .get(JSON.stringify(interrupted), jobSelection(interrupted), job.id);
             if (!written) return;
             this.invalidateRead(this.recentJobReads, this.db);
             const diagnostic = await this.intelligenceCall(job.id);
             if (diagnostic?.status !== 'running') return;
+            const ended: IntelligenceCall = {
+              ...diagnostic,
+              status: 'failed',
+              disposition: 'stale',
+              completedAt: new Date(completedAt).toISOString(),
+              output: { message: interrupted.message },
+            };
+            const projected = diagnosticStorage(ended);
             await this.db
               .prepare(
-                "UPDATE intelligence_calls SET payload=? WHERE id=? AND (payload::jsonb ->> 'status')='running'",
+                "UPDATE intelligence_calls SET payload=?,selection=?::jsonb,summary=?,stage=? WHERE id=? AND selection->>'status'='running'",
               )
               .run(
-                JSON.stringify({
-                  ...diagnostic,
-                  status: 'failed',
-                  disposition: 'stale',
-                  completedAt: new Date(completedAt).toISOString(),
-                  output: { message: interrupted.message },
-                }),
+                JSON.stringify(ended),
+                projected.selection,
+                projected.summary,
+                projected.stage,
                 job.id,
               );
           });

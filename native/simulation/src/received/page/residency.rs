@@ -35,7 +35,7 @@ impl TemporalPageRecord {
                 .checked_mul(size_of::<Arc<super::super::TemporalBatch>>())
                 .ok_or(ReceivedError("Temporal page allocation overflow."))?,
             if self.edit_identity().is_some() {
-                2 * size_of::<usize>()
+                Self::edit_identity_bytes()
             } else {
                 0
             },
@@ -50,7 +50,7 @@ impl TemporalPageRecord {
         .ok_or(ReceivedError("Temporal page allocation overflow."))?;
         self.storage = Some(
             budget
-                .reserve(bytes)
+                .reserve_record(bytes)
                 .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?,
         );
         Ok(self)

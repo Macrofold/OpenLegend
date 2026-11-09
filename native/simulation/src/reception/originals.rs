@@ -276,6 +276,7 @@ impl OriginalJournal {
                 .insert(
                     observer.id.clone(),
                     PerceptionEvidenceOwner {
+                        metadata_storage: None,
                         visual_confirmation: None,
                         motion_samples: None,
                         motion_expires_at: None,
@@ -302,6 +303,9 @@ impl OriginalJournal {
             .as_mut()
             .and_then(|owners| owners.get_mut(&observer.id))
             .ok_or_else(invalid)?;
+        if owner.metadata_storage.is_none() {
+            owner.metadata_storage = Some(super::current_residency::CurrentOwnerStorage::install(owner, &self.budget)?);
+        }
         if owner.received_at_sequence != sequence {
             // Bodies and the moved phase arrays/maps retain their own guards.
             // Only the inverse's actor identifier is newly allocated here.
@@ -570,8 +574,12 @@ impl OriginalJournal {
             original_id: original.id.clone(),
         });
         original.storage = Some(
-            self.reservation
-                .split_off(residency::body_bytes(&original)?)
+            self.budget
+                .adopt_record(
+                    self.reservation
+                        .split_off(residency::body_bytes(&original)?)
+                        .map_err(|_| capacity())?,
+                )
                 .map_err(|_| capacity())?,
         );
         let source = Arc::new(original);
@@ -618,7 +626,11 @@ impl OriginalJournal {
             .reservation
             .split_off(residency::body_bytes(source)?)
             .map_err(|_| capacity())?;
-        let mut after = source.copy_with_storage(storage);
+        self.budget
+            .retain_record(source.storage.as_ref().ok_or_else(invalid)?)
+            .map_err(|_| capacity())?;
+        let mut after =
+            source.copy_with_storage(self.budget.adopt_record(storage).map_err(|_| capacity())?);
         after.context.as_mut().ok_or_else(invalid)?.attended = true;
         let after = Arc::new(after);
         let received = &mut state

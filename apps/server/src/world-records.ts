@@ -1,3 +1,4 @@
+import { nativeNormalizedIntents } from './native-language.js';
 import {
   currentContactPayload,
   currentContactMetadata,
@@ -694,6 +695,7 @@ export class WorldRecords {
             key: entityOrdering(after.world.entities, id)!.key,
           })),
         },
+        normalizedIntents: nativeNormalizedIntents(tables['sim_intentions'] ?? []),
         tables,
         coverage,
       },
@@ -1837,12 +1839,15 @@ export class WorldRecords {
       if (removed) state.world.archivedEventCount = (state.world.archivedEventCount ?? 0) + removed;
       this.needsHotPrune ||= removed > 0;
     }
-    await this.auditRetentionTotals(state);
+    await this.auditRetentionTotals(state, groups);
     return { revision: head.revision, state };
   }
   /** Cold bodies stay cold: independently sum canonical metadata in the same
    * snapshot so a damaged header cannot evade age/space maintenance after load. */
-  private async auditRetentionTotals(state: SavedWorld): Promise<void> {
+  private async auditRetentionTotals(
+    state: SavedWorld,
+    groups: Map<string, Map<string, JsonRecord[]>>,
+  ): Promise<void> {
     const actors = state.world.experience?.temporal?.actors;
     if (!actors || !Object.keys(actors).length) return;
     if (
@@ -1858,15 +1863,57 @@ export class WorldRecords {
         `SELECT actor_id,category,SUM(bytes) AS bytes,SUM(count) AS count FROM (
       ${['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => `SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM ${table} WHERE world_id=? GROUP BY actor_id,retention_class`).join('\nUNION ALL ')}
       UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
-      UNION ALL SELECT actor_id,'required' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_learned_capabilities WHERE world_id=? AND payload::jsonb->>'source'<>'authored' GROUP BY actor_id
-      UNION ALL SELECT actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_knowledge_documents WHERE world_id=? AND payload::jsonb->>'origin'='actor-edit' GROUP BY actor_id
       UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class
     ) canonical GROUP BY actor_id,category`,
       )
-      .all(...Array(7).fill(state.world.id));
+      .all(...Array(5).fill(state.world.id));
     const indexed = new Map(
       totals.map((row) => [JSON.stringify([row['actor_id'], row['category']]), row]),
     );
+    const add = (actorId: string, category: string, bytes: number, count: number) => {
+      if (!count) return;
+      const key = JSON.stringify([actorId, category]),
+        before = indexed.get(key);
+      indexed.set(key, {
+        actor_id: actorId,
+        category,
+        bytes: Number(before?.['bytes'] ?? 0) + bytes,
+        count: Number(before?.['count'] ?? 0) + count,
+      });
+    };
+    // Both families are already fully loaded by this same snapshot. Read their
+    // canonical fields from that owner, and charge the original SQL bytes.
+    // Independent domain validation still runs before the repository admits it.
+    // PostgreSQL json/jsonb field extraction rejects an unrelated isolated
+    // UTF-16 unit in quoted prose, which is valid JavaScript/current-format data.
+    for (const rows of groups.get('mind_knowledge_documents')?.values() ?? []) {
+      const actorId = String(rows[0]?.['actor_id']);
+      const documents = state.world.actorKnowledge?.[actorId];
+      let bytes = 0,
+        count = 0;
+      for (const row of rows)
+        if (documents?.[String(row['slot'])]?.origin === 'actor-edit') {
+          bytes += Buffer.byteLength(String(row['payload']));
+          count++;
+        }
+      add(actorId, 'optional', bytes, count);
+    }
+    for (const rows of groups.get('mind_learned_capabilities')?.values() ?? []) {
+      const actorId = String(rows[0]?.['actor_id']);
+      const sources = new Map<string, string>();
+      for (const entry of state.world.knowledge[actorId] ?? [])
+        sources.set(entry.recipeId, entry.source);
+      let bytes = 0,
+        count = 0;
+      for (const row of rows) {
+        const source = sources.get(String(row['slot']));
+        if (source !== undefined && source !== 'authored') {
+          bytes += Buffer.byteLength(String(row['payload']));
+          count++;
+        }
+      }
+      add(actorId, 'required', bytes, count);
+    }
     // Recognition is fully resident on activation. Its selected-world owner
     // separates learned facts from the bounded liveness locator; SQL's raw body
     // length would charge housekeeping as knowledge and disagree with admission.

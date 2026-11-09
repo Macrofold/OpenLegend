@@ -101,10 +101,14 @@ pub struct PendingTemporalPage {
     // Canonical history and detached page captures can outlive candidate undo.
     // The last actual page owner releases its admitted storage, not acceptance
     // or an unrelated/older database acknowledgement.
-    _reservation: ByteReservation,
+    _reservation: crate::host::ResidentReservation,
 }
 
 impl PendingTemporalPage {
+    pub(crate) fn retain_for_candidate(&self, budget: &ByteBudget) -> Result<(), ReceivedError> {
+        budget.retain_record(&self._reservation).map_err(|_| ReceivedError("Temporal before-image exceeds native allowance."))?;
+        self.batch.retain_for_candidate(budget)
+    }
     pub fn id(&self) -> &str {
         &self.id
     }
@@ -309,9 +313,7 @@ impl TemporalState {
         let payload: Arc<str> = Arc::from(
             json_record(&header).map_err(|_| ReceivedError("Temporal actor encoding failed."))?,
         );
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ReceivedError("Temporal undo reservation failed."))?;
+        self.reserve_undo_slots(1, &self.budget.clone())?;
         let actor = self
             .actors
             .get_mut(actor_id)
@@ -352,6 +354,7 @@ impl TemporalState {
         identity: &mut IdentityState,
         meaning: &dyn TemporalValueMeaning,
         backing: &mut ByteReservation,
+        budget: &ByteBudget,
     ) -> Result<Option<u64>, ReceivedError> {
         if batch.entries.is_empty() {
             return Ok(None);
@@ -361,7 +364,7 @@ impl TemporalState {
             .map_err(|_| ReceivedError("Temporal page identity is exhausted."))?;
         let from_at = batch.entries.first().expect("Batch not empty").received_at;
         let through_at = batch.entries.last().expect("Batch not empty").received_at;
-        let batch = crate::received::TemporalBatch::from_builder(batch, backing)?;
+        let batch = crate::received::TemporalBatch::from_builder(batch, backing, budget)?;
         let metadata = temporal_page_metadata(
             &batch.actor_id,
             batch.physical_life,
@@ -419,9 +422,7 @@ impl TemporalState {
         header.maintenance_due |=
             header.bytes > policy.max_bytes || header.count > policy.max_changes;
         let actor_id = batch.actor_id.clone();
-        self.undo
-            .try_reserve(2)
-            .map_err(|_| ReceivedError("Temporal undo reservation failed."))?;
+        self.reserve_undo_slots(2, &self.budget.clone())?;
         let actor = self.actors.get_mut(&actor_id).expect("Actor checked");
         if actor.pending_pages.len() == actor.pending_pages.capacity() {
             let capacity = actor
@@ -432,9 +433,9 @@ impl TemporalState {
                 .ok_or(ReceivedError(
                     "Temporal pending placement allocation overflow.",
                 ))?;
-            actor
-                .pending_storage
-                .resize(
+            budget
+                .resize_backing(
+                    &mut actor.pending_storage,
                     capacity
                         .checked_mul(std::mem::size_of::<Arc<PendingTemporalPage>>())
                         .ok_or(ReceivedError(
@@ -460,7 +461,9 @@ impl TemporalState {
             from_at,
             through_at,
             batch_encoded_bytes,
-            _reservation: retained,
+            _reservation: budget
+                .adopt_record(retained)
+                .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?,
         }));
         self.undo.push(TemporalUndo::PendingAppend { actor_id });
         Ok(Some(batch_encoded_bytes))
@@ -528,6 +531,7 @@ impl TemporalAcquisition {
             identity,
             meaning,
             &mut self.reservation,
+            &self.budget,
         )? {
             // Source charges the actual compact native append immediately,
             // including before allocating the next entry after a block split.

@@ -59,13 +59,13 @@ heap_record!(KnownPlaceCapsule {
 });
 struct PlaceCapsuleOwner {
     value: KnownPlaceCapsule,
-    _reservation: ByteReservation,
+    _reservation: crate::host::ResidentReservation,
 }
 pub struct PreparedKnownPlaceEvidence {
     capsules: Vec<Arc<PlaceCapsuleOwner>>,
     labels: IndexMap<JsText, Vec<usize>>,
     bytes: u64,
-    _reservation: ByteReservation,
+    _reservation: crate::host::ResidentReservation,
 }
 impl std::fmt::Debug for PreparedKnownPlaceEvidence {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -178,7 +178,9 @@ impl PreparedKnownPlaceEvidence {
             capsules,
             labels,
             bytes,
-            _reservation: reservation,
+            _reservation: budget
+                .adopt_record(reservation)
+                .map_err(|_| ExperienceError::Capacity)?,
         })
     }
     pub(crate) fn prepare(
@@ -243,7 +245,7 @@ impl PreparedKnownPlaceEvidence {
             ])
             .ok_or(ExperienceError::Capacity)?;
             let reservation = budget
-                .reserve(bytes)
+                .reserve_record(bytes)
                 .map_err(|_| ExperienceError::Capacity)?;
             capsules.push(Arc::new(PlaceCapsuleOwner {
                 value: (*capsule).clone(),
@@ -559,7 +561,7 @@ impl ExperienceJournal {
             ])
             .ok_or(ExperienceError::Capacity)?;
             let reservation = budget
-                .reserve(allocation)
+                .reserve_record(allocation)
                 .map_err(|_| ExperienceError::Capacity)?;
             capsules.retain(|prior| prior.value.place_id != capsule.place_id);
             capsules.push(Arc::new(PlaceCapsuleOwner {

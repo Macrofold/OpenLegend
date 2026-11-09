@@ -180,6 +180,7 @@ impl TemporalState {
             context.meters,
             None,
             SupportEncoding::Current,
+            context.budget,
         )
         .map_err(|error| match error {
             TemporalAppendError::Received(error) => ExecutionError::Received(error),

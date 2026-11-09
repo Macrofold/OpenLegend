@@ -4,6 +4,34 @@ use super::*;
 use crate::plans::{ActorPlan, PlanStep};
 
 impl PhysicalMutation<'_> {
+    pub(crate) fn replace_intents(
+        &mut self,
+        id: &str,
+        after: crate::state::FundedIntents,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let key = UndoKey::AgencyIntents(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        self.state.entities.retain_intents(handle, budget)?;
+        self.journal.reserve(2 * size_of::<Undo>())?;
+        let before = self.state.entities.swap_funded_intents(handle, after)?;
+        if first {
+            self.journal.retain(
+                key,
+                Undo::AgencyIntents {
+                    entity: handle,
+                    before,
+                },
+            )?;
+        }
+        Ok(())
+    }
+
     pub(crate) fn replace_goals(
         &mut self,
         id: &str,

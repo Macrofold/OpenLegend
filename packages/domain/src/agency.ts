@@ -112,6 +112,8 @@ function planText(
   );
 }
 export const AGENCY_LIMITS = {
+  attempts: 4,
+  attemptCharacters: 500,
   goals: 8,
   goalHistory: 16,
   steps: 8,
@@ -1238,7 +1240,7 @@ export function validateAgency(world: WorldState): void {
       (agency.lastResultEvidence !== undefined &&
         !validResultEvidence(agency.lastResultEvidence, entity.id)) ||
       !Array.isArray(agency.attempts) ||
-      agency.attempts.length > 4 ||
+      agency.attempts.length > AGENCY_LIMITS.attempts ||
       !Number.isSafeInteger(agency.revision) ||
       agency.revision < 0 ||
       !Array.isArray(agency.goals) ||
@@ -1256,7 +1258,7 @@ export function validateAgency(world: WorldState): void {
         !isSafeRecordId(attempt.id) ||
         typeof attempt.description !== 'string' ||
         !attempt.description.trim() ||
-        attempt.description.length > 500 ||
+        attempt.description.length > AGENCY_LIMITS.attemptCharacters ||
         typeof attempt.normalized !== 'string' ||
         attempt.normalized !== normalizeAttempt(attempt.description) ||
         !(attempt.targetEntityId === null || isSafeRecordId(attempt.targetEntityId)) ||
@@ -1407,10 +1409,23 @@ export function normalizeAttempt(description: string): string {
 /** Explicit withdrawal/resolution releases a private intent slot, never a physical action.
  * docs/architecture.md#actor-agency-foundation
  */
+/** Keep every accepted intention change within the current saved integer domain. */
+function attemptRevisionAvailable(actor: ActorComponent): boolean {
+  return Number.isSafeInteger(actor.agency.revision + 1);
+}
+function exhaustedAttemptRevision(): Outcome {
+  return outcome(
+    false,
+    'invalid-attempt',
+    'Existing intentions were kept; another change could not be recorded.',
+  );
+}
+
 export function withdrawAttempt(actor: ActorComponent, id: string): Outcome {
   const index = actor.agency.attempts.findIndex((attempt) => attempt.id === id);
   if (index < 0)
     return outcome(false, 'attempt-unavailable', 'That private intent is no longer pending.');
+  if (!attemptRevisionAvailable(actor)) return exhaustedAttemptRevision();
   actor.agency.attempts.splice(index, 1);
   actor.agency.revision++;
   return outcome(true, 'attempt-withdrawn', 'Private intent withdrawn; ongoing work is unchanged.');
@@ -1460,7 +1475,7 @@ export function deferAttempt(
     !isSafeRecordId(id) ||
     typeof description !== 'string' ||
     !description.trim() ||
-    description.length > 500 ||
+    description.length > AGENCY_LIMITS.attemptCharacters ||
     !(targetEntityId === null || isSafeRecordId(targetEntityId)) ||
     !['enqueue', 'replace', 'interrupt'].includes(mode) ||
     (slots !== null && !validIntentSlots(world, slots)) ||
@@ -1481,6 +1496,7 @@ export function deferAttempt(
       prior.status === 'needs-interpretation' &&
       JSON.stringify(prior.resolution) !== JSON.stringify(resolution)
     ) {
+      if (!attemptRevisionAvailable(actor)) return exhaustedAttemptRevision();
       prior.resolution = cloneValue(resolution);
       actor.agency.revision++;
     }
@@ -1490,10 +1506,11 @@ export function deferAttempt(
       'This intent already awaits interpretation; no action or paid work was repeated.',
     );
   }
-  if (actor.agency.attempts.length >= 4)
+  if (actor.agency.attempts.length >= AGENCY_LIMITS.attempts)
     return outcome(false, 'attempt-limit', 'Four unlisted intents already await interpretation.');
   if (actor.agency.attempts.some((attempt) => attempt.id === id))
     return outcome(false, 'attempt-conflict', 'This attempt identity belongs to different intent.');
+  if (!attemptRevisionAvailable(actor)) return exhaustedAttemptRevision();
   actor.agency.attempts.push({
     id,
     description: description.trim(),

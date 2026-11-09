@@ -12,6 +12,7 @@ use crate::reception::{
 };
 use indexmap::IndexSet;
 use std::mem::size_of;
+use std::sync::Arc;
 
 /// Expansion repeats only the immutable metadata referenced by these fields.
 /// The same allowance funds read captures and canonical privacy replacements;
@@ -250,6 +251,10 @@ pub(crate) fn observation_receipt_member_indices(
 pub(crate) struct CapturedTemporalReceipt {
     pub(super) receipt: TemporalReceipt,
     pub(super) fragments: Vec<ReceivedValueFragment>,
+    // The actual immutable source factory supplies metadata member order when
+    // a previously supplied sparse receipt is retained again. No live lookup or
+    // per-field ordering registry is introduced.
+    support: Option<Arc<TemporalSupportRecord>>,
     _reservation: ByteReservation,
 }
 impl CapturedTemporalReceipt {
@@ -257,6 +262,9 @@ impl CapturedTemporalReceipt {
         self,
     ) -> (TemporalReceipt, Vec<ReceivedValueFragment>, ByteReservation) {
         (self.receipt, self.fragments, self._reservation)
+    }
+    pub(crate) fn support_payload(&self) -> Option<&str> {
+        self.support.as_ref().map(|support| support.payload())
     }
     pub(crate) fn receipt(&self) -> &TemporalReceipt {
         &self.receipt
@@ -436,7 +444,7 @@ impl TemporalState {
                     .flatten()
                 {
                     if support.capsule().receipt.locator == *locator {
-                        return capture_support(support.capsule(), values, budget);
+                        return capture_support(support, values, budget);
                     }
                 }
                 return Err(error);
@@ -455,14 +463,15 @@ impl TemporalState {
         if support.capsule().receipt.locator != *locator {
             return Ok(None);
         }
-        capture_support(support.capsule(), values, budget)
+        capture_support(support, values, budget)
     }
 }
 fn capture_support(
-    capsule: &TemporalSupportCapsule,
+    support: &Arc<TemporalSupportRecord>,
     values: &impl ReceivedValueLookup,
     budget: &ByteBudget,
 ) -> Result<Option<CapturedTemporalReceipt>, ReceivedError> {
+    let capsule = support.capsule();
     let mut bytes = heap_sum([
         size_of::<CapturedTemporalReceipt>(),
         capsule
@@ -487,13 +496,17 @@ fn capture_support(
                 .ok_or(ReceivedError("Temporal support read allocation overflow."))?,
         )
         .map_err(|_| ReceivedError("Temporal support read capacity exhausted."))?;
-    capture_receipt(
+    let captured = capture_receipt(
         capsule.receipt.as_ref().clone(),
         Some(&capsule.values),
         values,
         budget,
         reservation,
-    )
+    )?;
+    Ok(captured.map(|mut capture| {
+        capture.support = Some(Arc::clone(support));
+        capture
+    }))
 }
 fn capture_receipt(
     mut receipt: TemporalReceipt,
@@ -604,6 +617,7 @@ fn capture_receipt(
     Ok(Some(CapturedTemporalReceipt {
         receipt,
         fragments: selected,
+        support: None,
         _reservation: reservation,
     }))
 }

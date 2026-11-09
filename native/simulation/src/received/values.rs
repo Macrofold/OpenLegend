@@ -301,7 +301,7 @@ pub struct ReceivedValueRecord {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub bytes: u64,
     #[serde(skip)]
-    storage: Option<ByteReservation>,
+    storage: Option<crate::host::ResidentReservation>,
 }
 impl PartialEq for ReceivedValueRecord {
     fn eq(&self, other: &Self) -> bool {
@@ -310,6 +310,18 @@ impl PartialEq for ReceivedValueRecord {
             && self.sequence == other.sequence
             && self.value == other.value
             && self.bytes == other.bytes
+    }
+}
+impl ReceivedValueRecord {
+    pub(crate) fn capture_pin(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Arc<crate::host::SharedMemoryPin>, ReceivedError> {
+        self.storage
+            .as_ref()
+            .ok_or(ReceivedError("Received value has no canonical custody."))?
+            .capture_pin(budget)
+            .map_err(|_| ReceivedError("Received capture exceeds native allowance."))
     }
 }
 
@@ -347,7 +359,8 @@ pub struct ReceivedValues {
     undo: Vec<ReceivedValuesUndo>,
     activity_limits: Arc<ActivityDisplayLimits>,
     budget: ByteBudget,
-    backing: ByteReservation,
+    backing: crate::host::ResidentReservation,
+    undo_storage: ByteReservation,
 }
 impl std::fmt::Debug for ReceivedValues {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -368,7 +381,7 @@ struct ValueEncoding(Arc<EncodingStorage>);
 #[derive(Debug)]
 struct EncodingStorage {
     text: Arc<str>,
-    _storage: ByteReservation,
+    _storage: crate::host::ResidentReservation,
 }
 impl std::borrow::Borrow<str> for ValueEncoding {
     fn borrow(&self) -> &str {
@@ -407,6 +420,7 @@ impl ValueEncoding {
         encoded: String,
         mut storage: ByteReservation,
         id_capacity: usize,
+        budget: &ByteBudget,
     ) -> Result<Self, ReceivedError> {
         // Arc conversion briefly owns both UTF-8 allocations. Its allowance
         // follows the resulting encoding through source and old phase maps.
@@ -425,7 +439,9 @@ impl ValueEncoding {
             .map_err(|_| ReceivedError("Received encoding exceeds native allowance."))?;
         Ok(Self(Arc::new(EncodingStorage {
             text,
-            _storage: storage,
+            _storage: budget
+                .adopt_record(storage)
+                .map_err(|_| ReceivedError("Received encoding exceeds native allowance."))?,
         })))
     }
 }
@@ -526,8 +542,9 @@ pub fn retain_received_value(
                 activity_limits: Arc::clone(limits),
                 budget: budget.clone(),
                 backing: budget
-                    .reserve(0)
+                    .reserve_backing(0)
                     .map_err(|_| ReceivedError("Received values exceed native allowance."))?,
+                undo_storage: budget.reserve(0).map_err(|_| ReceivedError("Received values exceed native allowance."))?,
             };
             let retained =
                 owner.retain_shared(value, encoded, encoded_storage, at, sequence, identity)?;
@@ -564,10 +581,11 @@ impl ReceivedValues {
             .checked_add(additional_undo)
             .ok_or_else(capacity)?
             .max(self.undo.capacity());
-        let bytes = residency::backing(source_capacity, undo_capacity).ok_or_else(capacity)?;
+        let bytes = residency::backing(source_capacity, 0).ok_or_else(capacity)?;
         if bytes > self.backing.bytes() {
-            self.backing.resize(bytes).map_err(|_| capacity())?;
+            self.budget.resize_backing(&mut self.backing, bytes).map_err(|_| capacity())?;
         }
+        self.undo_storage.resize(undo_capacity.checked_mul(std::mem::size_of::<ReceivedValuesUndo>()).ok_or_else(capacity)?).map_err(|_|capacity())?;
         self.sources
             .try_reserve(additional_sources)
             .map_err(|_| capacity())?;
@@ -616,7 +634,7 @@ impl ReceivedValues {
     ) -> Result<Self, ReceivedError> {
         let mut sources = IndexMap::new();
         let mut backing = budget
-            .reserve(
+            .reserve_backing(
                 residency::backing(
                     records
                         .len()
@@ -654,6 +672,7 @@ impl ReceivedValues {
             activity_limits,
             budget: budget.clone(),
             backing,
+            undo_storage: budget.reserve(0).map_err(|_| ReceivedError("Received values exceed native allowance."))?,
         })
     }
 
@@ -687,6 +706,11 @@ impl ReceivedValues {
         }
         Ok(())
     }
+    /// Residency/protection metadata only. An ID is not an observer receipt.
+    pub(crate) fn resident_ids(&self) -> impl ExactSizeIterator<Item = &str> {
+        self.sources.keys().map(String::as_str)
+    }
+
     pub fn activity_limits(&self) -> &ActivityDisplayLimits {
         &self.activity_limits
     }
@@ -832,8 +856,13 @@ impl ReceivedValues {
                     .ok_or(ReceivedError("Received value exceeds native allowance."))?,
             )
             .map_err(|_| ReceivedError("Received value exceeds native allowance."))?;
-        record.storage = Some(body_storage);
-        let key = ValueEncoding::install(encoded, encoded_storage, record.id.capacity())?;
+        record.storage = Some(
+            self.budget
+                .adopt_record(body_storage)
+                .map_err(|_| ReceivedError("Received value exceeds native allowance."))?,
+        );
+        let key =
+            ValueEncoding::install(encoded, encoded_storage, record.id.capacity(), &self.budget)?;
         let id = record.id.clone();
         let added_bytes = record.bytes;
         self.undo.push(ReceivedValuesUndo::SourceInsert(id.clone()));
@@ -943,7 +972,7 @@ fn restore_record(
     let encoded_len = json_record_len(&record.value)
         .map_err(|_| ReceivedError("Received value encoding failed."))?;
     let storage = budget
-        .reserve(
+        .reserve_record(
             residency::record_bytes(&record)
                 .ok_or(ReceivedError("Received values exceed native allowance."))?,
         )
@@ -958,6 +987,7 @@ fn restore_record(
         json_record(&record.value).map_err(|_| ReceivedError("Received value encoding failed."))?,
         encoded_storage,
         record.id.capacity(),
+        budget,
     )?;
     record.storage = Some(storage);
     Ok(SharedReceivedValue {

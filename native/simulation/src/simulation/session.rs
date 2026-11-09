@@ -9,7 +9,7 @@ use crate::administration::InstalledHostSettings;
 use crate::execution::{CandidateJournal, CoreMutation, ExecutionError};
 use crate::experience::{CapturedHistoryInput, HistorySettings, capture_history_input};
 use crate::host::{
-    ByteBudget, ByteReservation, CandidateFence, CandidateKey, CandidatePhase, FenceError,
+    ByteBudget, CandidateFence, CandidateKey, CandidatePhase, FenceError, ResidentReservation,
 };
 use crate::install::SelectedInstallation;
 use crate::received::TemporalSaveLimits;
@@ -145,7 +145,7 @@ pub(crate) struct Session {
     continuation: Option<AcceptedAdvanceContinuation>,
     generation: u64,
     budget: ByteBudget,
-    _reservation: ByteReservation,
+    _reservation: ResidentReservation,
 }
 impl Session {
     /// Consumes the fully checked current selected closure. Installation and
@@ -154,12 +154,13 @@ impl Session {
         installed: SelectedInstallation,
         generation: u64,
         budget: ByteBudget,
+        pending_save_budget: ByteBudget,
     ) -> Result<Self, SessionError> {
         if generation == 0 || generation > crate::identity::MAX_SAFE_INTEGER {
             return Err(FenceError::Stale.into());
         }
         let reservation = budget
-            .reserve(std::mem::size_of::<Self>())
+            .reserve_record(std::mem::size_of::<Self>())
             .map_err(|_| ExecutionError::Capacity)?;
         let state = installed.state;
         let save = SaveJournal::new(
@@ -168,7 +169,7 @@ impl Session {
             state.durable_revision,
             state.accepted_cut,
             state.physical.identity.next_id(),
-            budget.clone(),
+            pending_save_budget,
         )?;
         Ok(Self {
             simulation: Simulation {
@@ -187,6 +188,9 @@ impl Session {
     }
     pub(crate) fn fence(&self) -> Arc<CandidateFence> {
         self.simulation.fence.clone()
+    }
+    pub(crate) fn operational_generation(&self) -> u64 {
+        self.generation
     }
     /// Actual validated install facts used by the existing SQL writer's cold
     /// adoption. This finite summary conveys no actor facts or write permission.

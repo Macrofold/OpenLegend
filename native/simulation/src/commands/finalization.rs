@@ -135,6 +135,12 @@ fn finish_boundary(
     // An empty imported coaching owner still has the Source deletion duty.
     core.physical().reconcile_closed_coaching()?;
     crate::experience::advance_commitments(core, events, budget)?;
+    // A genuine command completion changes the semantic world. Source's
+    // transition finalizer discards an inherited sampling countdown here;
+    // replay/no-op completions never enter this boundary. The physical clock
+    // checkpoint restores it if the command or its outer candidate is rejected.
+    // docs/simulation-time.md#native-interval-contract
+    core.state.physical.header.native_interval = None;
     let next = core
         .state
         .physical

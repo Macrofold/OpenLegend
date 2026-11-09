@@ -471,6 +471,9 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       at: numberColumn(table === 'mind_summaries' ? 'to' : 'at'),
       importance: numberColumn('importance'),
       event_id: textColumn('eventId'),
+      // The explicit edit closure follows this safe identity without parsing
+      // unrelated quoted UTF-16 prose inside the canonical memory body.
+      ...(table === 'mind_memories' ? { activity_id: textColumn('activityId') } : {}),
       kind: textColumn('kind'),
       sequence: { ...numberColumn('sequence'), sql: 'BIGINT' },
       individual_ids: {

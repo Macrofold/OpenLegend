@@ -3,6 +3,7 @@
 use super::*;
 use crate::host::retained_size::{heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
+use crate::received::page::TemporalPageEditIdentity;
 use crate::records::{ChangedRows, EncodedRows, RecordEncodingError};
 use std::mem::size_of;
 mod apply;
@@ -33,7 +34,7 @@ impl PackedTemporalSave {
 }
 pub(super) struct SavedActorTail {
     pub(super) pages: Vec<Arc<TemporalPageRecord>>,
-    pub(super) edits: Vec<Arc<()>>,
+    pub(super) edits: Vec<Arc<TemporalPageEditIdentity>>,
 }
 pub(crate) struct SavedTemporalResidency {
     world_id: String,
@@ -121,7 +122,7 @@ impl SavedTemporalResidency {
                 )
                 .ok_or_else(error)?,
             current
-                .checked_mul(size_of::<Arc<()>>())
+                .checked_mul(size_of::<Arc<TemporalPageEditIdentity>>())
                 .ok_or_else(error)?,
         ])
         .ok_or_else(error)?;
@@ -190,7 +191,17 @@ impl SavedTemporalResidency {
                 .try_reserve_exact(actor.pages.len())
                 .map_err(|_| error())?;
             for page in actor.pages.values() {
-                if let Some(id) = page.edit_identity() {
+                // Only the exact body carried by this immutable SQL prefix can
+                // become acknowledged. A later sparse edit has another marker.
+                if let Some(id) = page.edit_identity().filter(|_| {
+                    existing
+                        .writes
+                        .get("mind_temporal_pages")
+                        .is_some_and(|rows| {
+                            rows.iter()
+                                .any(|row| row.id == page.row_id() && row.payload == page.payload())
+                        })
+                }) {
                     edits.push(Arc::clone(id));
                 }
                 pages.push(Arc::clone(page));
@@ -247,8 +258,9 @@ impl SavedTemporalResidency {
                         tail.pages
                             .capacity()
                             .checked_mul(size_of::<Arc<TemporalPageRecord>>())?,
-                        tail.edits.capacity().checked_mul(size_of::<Arc<()>>())?,
-                        tail.edits.len().checked_mul(2 * size_of::<usize>())?,
+                        tail.edits
+                            .capacity()
+                            .checked_mul(size_of::<Arc<TemporalPageEditIdentity>>())?,
                     ])
                 },
             )

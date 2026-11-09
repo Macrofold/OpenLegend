@@ -327,6 +327,10 @@ pub(in super::super) fn memory_columns(
                     .event_id
                     .as_ref()
                     .map_or(Value::Null, |id| Value::from(id.clone())),
+                "activity_id" => header
+                    .activity_id
+                    .as_ref()
+                    .map_or(Value::Null, |id| Value::from(id.clone())),
                 "kind" => Value::from(text(body, "kind")?),
                 "sequence" => header.sequence.map_or(Value::Null, Value::from),
                 "individual_ids" => Value::from(individuals.take().expect("unique schema column")),

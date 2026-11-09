@@ -3,7 +3,7 @@
 //! before admission here, and SQL still runs through the existing transaction.
 
 use super::SqlCell;
-use super::merge::merge_changes;
+use super::merge::{merge_changes, merge_workspace_bound};
 use super::{ChangedRows, RecordEncodingError, RecordSchema, SaveRows};
 use crate::host::retained_size::tree_node_bound;
 use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
@@ -79,6 +79,7 @@ struct PendingAppend {
     changes: ChangedRows,
     schema: Arc<RecordSchema>,
     reservation: ByteReservation,
+    _workspace: ByteReservation,
 }
 pub(crate) struct SaveJournal {
     owner: Arc<()>,
@@ -165,6 +166,7 @@ impl SaveJournal {
         identity_through: u64,
         mut changes: ChangedRows,
         schema: &Arc<RecordSchema>,
+        scratch: &ByteBudget,
     ) -> Result<PreparedSaveAppend, SaveError> {
         let through_cut = candidate
             .base_cut
@@ -199,22 +201,36 @@ impl SaveJournal {
                 }
             }
         }
-        // Fold creates temporary ordered key indexes and vectors. Keep a
-        // conservative six-copy allowance until those temporaries are freed.
+        // Payload ownership moves into the pending owner. Only the temporary
+        // key/vector fold belongs to the shared candidate scratch allowance.
         // A coherent accepted call may leave every saved record unchanged.
         // Advance its publication binding without copying the existing suffix
         // or manufacturing a SQL write solely to carry that operational cut.
         let unchanged =
             changes.writes.is_empty() && changes.deletes.is_empty() && changes.expired.is_empty();
-        let peak = if unchanged {
+        let workspace_bytes = if unchanged {
             0
         } else {
-            changes_heap(&self.suffix)
-                .and_then(|old| old.checked_add(changes_heap(&changes)?))
-                .and_then(|n| n.checked_mul(6))
+            merge_workspace_bound(&self.suffix, &changes).ok_or(SaveError::Capacity)?
+        };
+        let workspace = scratch
+            .reserve(workspace_bytes)
+            .map_err(|_| SaveError::Capacity)?;
+        let additional = if unchanged {
+            0
+        } else {
+            changes_heap(&changes)
+                .and_then(|n| n.checked_add(workspace_bytes))
                 .ok_or(SaveError::Capacity)?
         };
-        let reservation = self.budget.reserve(peak).map_err(|_| SaveError::Capacity)?;
+        self.suffix_reservation
+            .bytes()
+            .checked_add(additional)
+            .ok_or(SaveError::Capacity)?;
+        let reservation = self
+            .budget
+            .reserve(additional)
+            .map_err(|_| SaveError::Capacity)?;
         let serial = self
             .next_admission
             .checked_add(1)
@@ -228,6 +244,7 @@ impl SaveJournal {
             changes,
             schema: Arc::clone(schema),
             reservation,
+            _workspace: workspace,
         });
         Ok(PreparedSaveAppend {
             owner: Arc::clone(&self.owner),
@@ -275,12 +292,14 @@ impl SaveJournal {
             self.identity_through = pending.identity_through;
             return Ok(());
         }
-        let peak = pending.reservation.bytes();
         let previous_guard = std::mem::replace(&mut self.suffix_reservation, pending.reservation);
+        self.suffix_reservation
+            .merge(previous_guard)
+            .expect("same pending-save owner, preflighted complete capacity");
+        let peak = self.suffix_reservation.bytes();
         let previous = std::mem::take(&mut self.suffix);
         self.suffix = merge_changes(previous, pending.changes, &pending.schema)
             .expect("validated immutable canonical row merge");
-        drop(previous_guard);
         let actual = changes_heap(&self.suffix).expect("merged output bounded by admitted inputs");
         assert!(
             actual <= peak,
@@ -351,19 +370,28 @@ impl SaveJournal {
         // Fund the complete merge, fixed prefix and its presence index before
         // moving any accepted suffix. A refused capture must not leave packed
         // pages behind to be repacked with later gameplay into overlapping rows.
-        let peak = old
-            .checked_add(new)
-            .and_then(|n| n.checked_mul(6))
+        let workspace_bytes =
+            merge_workspace_bound(&self.suffix, pages.changes()).ok_or(SaveError::Capacity)?;
+        let _workspace = scratch
+            .reserve(workspace_bytes)
+            .map_err(|_| SaveError::Capacity)?;
+        let additional = new
+            .checked_add(workspace_bytes)
             .and_then(|n| n.checked_add(index))
             .and_then(|n| n.checked_add(fixed))
             .ok_or(SaveError::Capacity)?;
+        let peak = old.checked_add(additional).ok_or(SaveError::Capacity)?;
         let projection =
             ledger.prepare_temporal_pages(cut.through_cut, pages.changes(), pages.owners())?;
-        self.suffix_reservation
-            .resize(peak)
+        let additional = self
+            .budget
+            .reserve(additional)
             .map_err(|_| SaveError::Capacity)?;
         let replacement = self.budget.reserve(0).map_err(|_| SaveError::Capacity)?;
         let (pages, owners, pages_guard, temporal_residency) = pages.into_parts();
+        self.suffix_reservation
+            .merge(additional)
+            .expect("same pending-save owner, preflighted prefix capacity");
         let previous = std::mem::take(&mut self.suffix);
         let changes = merge_changes(previous, pages, schema)
             .expect("validated immutable save inputs with complete capacity admission");

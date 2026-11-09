@@ -8,7 +8,7 @@ use crate::reception::{ObservationFactKey, ObserverSubject, SensoryFacet};
 
 use super::{
     ReceivedBatch, ReceivedChargeDirectory, ReceivedChargeEntry, ReceivedEntry, ReceivedError,
-    ReceivedFact, ReceivedProof, ReceivedReceipt, ReceivedValueFragment, ReceivedValues,
+    ReceivedFact, ReceivedProof, ReceivedReceipt, ReceivedValueFragment,
     received_record_value_references,
 };
 
@@ -124,7 +124,7 @@ fn insert_proof(
 pub fn received_record_aliases(
     owner: &ReceivedBatch,
     entry: &ReceivedEntry,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     meaning: Option<&dyn TemporalValueMeaning>,
 ) -> Result<Vec<String>, ReceivedError> {
     received_record_aliases_with_sources(owner, entry, values, meaning, true)
@@ -133,7 +133,7 @@ pub fn received_record_aliases(
 fn received_record_aliases_with_sources(
     owner: &ReceivedBatch,
     entry: &ReceivedEntry,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     meaning: Option<&dyn TemporalValueMeaning>,
     include_source_ids: bool,
 ) -> Result<Vec<String>, ReceivedError> {
@@ -180,7 +180,7 @@ fn received_record_aliases_with_sources(
 pub(crate) fn received_record_account_aliases<'a>(
     owner: &ReceivedBatch,
     entry: &'a ReceivedEntry,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     meaning: &dyn TemporalValueMeaning,
 ) -> Result<Vec<&'a str>, ReceivedError> {
     let dependencies =
@@ -203,7 +203,7 @@ pub(crate) fn received_record_account_aliases<'a>(
 
 pub fn received_record_individual_ids(
     record: &ReceivedReceipt,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
 ) -> Vec<String> {
     let mut ids = IndexSet::new();
     if let Some(ObserverSubject::Individual { individual_id }) = &record.header.subject_identity {
@@ -222,7 +222,7 @@ pub fn received_record_individual_ids(
 
 pub fn received_batch_charge_directory(
     batch: &ReceivedBatch,
-    values: &ReceivedValues,
+    values: &impl crate::reception::ReceivedValueLookup,
     meaning: Option<&dyn TemporalValueMeaning>,
 ) -> Result<ReceivedChargeDirectory, ReceivedError> {
     let mut individual_ids = IndexSet::new();

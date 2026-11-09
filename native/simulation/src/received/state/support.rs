@@ -18,7 +18,9 @@ use crate::reception::{
 use crate::work::{WorkMeters, WorkUnit};
 use std::collections::BTreeSet;
 
+mod capture;
 mod receipt;
+pub(crate) use capture::{record_snapshot_support, retain_captured_support};
 pub(crate) use receipt::SupportRetentionContext;
 pub(super) mod encoding;
 use encoding::SupportEncoding;
@@ -71,9 +73,7 @@ impl TemporalState {
         } else {
             next_ordinal as usize
         } as u64;
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ReceivedError("Temporal support undo capacity is unavailable."))?;
+        self.reserve_undo_slots(1, &self.budget.clone())?;
         self.undo.push(TemporalUndo::Support {
             actor_id: actor_id.to_owned(),
             id: id.to_owned(),
@@ -105,6 +105,8 @@ impl TemporalState {
         capsule: TemporalSupportCapsule,
         position: u64,
         encoding: SupportEncoding<'_>,
+        prior: Option<&TemporalSupportRecord>,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Arc<TemporalSupportRecord>, ReceivedError> {
         let id = json_record(&[
             "world",
@@ -118,8 +120,18 @@ impl TemporalState {
         .map_err(|_| invalid())?;
         let parent = json_record(&["world", "experience", "temporal", "actors", actor_id])
             .map_err(|_| invalid())?;
+        let body_storage = TemporalSupportRecord::fund_body(&capsule, prior, budget)?;
+        let storage = TemporalSupportRecord::fund_record(
+            &id,
+            &parent,
+            &capsule.receipt.id,
+            encoding::encoded_len(&capsule, encoding)?,
+            budget,
+        )?;
         let payload = Arc::from(encoding::encode(&capsule, encoding)?);
         Ok(Arc::new(TemporalSupportRecord {
+            body_storage,
+            storage,
             id,
             parent,
             slot: capsule.receipt.id.clone(),
@@ -133,12 +145,13 @@ impl TemporalState {
         actor_id: &str,
         mut capsule: TemporalSupportCapsule,
         limits: &AccountRetentionLimits,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         now: f64,
         policy: &AttentionRetentionPolicy,
         meters: &mut WorkMeters,
         mut places: Option<crate::experience::KnownPlaceMutation<'_>>,
         encoding: SupportEncoding<'_>,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Option<Arc<TemporalSupportRecord>>, TemporalAppendError> {
         for _ in 0..4 {
             let bytes = capsule.logical_bytes(values)?;
@@ -191,6 +204,17 @@ impl TemporalState {
             .records
             .get_index_of(&capsule.receipt.id)
             .map_or(supports.records.len() as u64, |position| position as u64);
+        let bytes = capsule.bytes;
+        let old_bytes = prior.as_ref().map_or(0, |prior| prior.capsule.bytes);
+        let id = capsule.receipt.id.clone();
+        let record = self.support_record(
+            actor_id,
+            capsule,
+            position,
+            encoding,
+            prior.as_deref(),
+            budget,
+        )?;
         if let Some(prior) = &prior {
             self.adjust_account(
                 actor_id,
@@ -208,21 +232,17 @@ impl TemporalState {
         }
         self.adjust_account(
             actor_id,
-            if capsule.required {
+            if record.capsule.required {
                 AccountClass::Required
             } else {
                 AccountClass::Optional
             },
-            capsule.bytes as i128,
+            record.capsule.bytes as i128,
             1,
             None,
             now,
             policy,
         )?;
-        let bytes = capsule.bytes;
-        let old_bytes = prior.as_ref().map_or(0, |prior| prior.capsule.bytes);
-        let id = capsule.receipt.id.clone();
-        let record = self.support_record(actor_id, capsule, position, encoding)?;
         let mut header = self
             .actors
             .get(actor_id)
@@ -301,6 +321,7 @@ impl TemporalState {
         values: &ReceivedValues,
         now: f64,
         policy: &AttentionRetentionPolicy,
+        budget: &crate::host::ByteBudget,
     ) -> Result<bool, ReceivedError> {
         let Some(actor) = self.actors.get(actor_id) else {
             return Ok(false);
@@ -341,6 +362,14 @@ impl TemporalState {
         {
             return Ok(false);
         }
+        let replacement = self.support_record(
+            actor_id,
+            replacement,
+            prior.position,
+            SupportEncoding::Existing(prior.payload()),
+            Some(&prior),
+            budget,
+        )?;
         self.adjust_account(
             actor_id,
             if required {
@@ -361,17 +390,11 @@ impl TemporalState {
             } else {
                 AccountClass::Optional
             },
-            replacement.bytes as i128,
+            replacement.capsule.bytes as i128,
             1,
             None,
             now,
             policy,
-        )?;
-        let replacement = self.support_record(
-            actor_id,
-            replacement,
-            prior.position,
-            SupportEncoding::Existing(prior.payload()),
         )?;
         self.change_support(actor_id, id, Some(replacement))?;
         Ok(true)
@@ -390,6 +413,7 @@ impl TemporalState {
         policy: &AttentionRetentionPolicy,
         meters: &mut WorkMeters,
         places: Option<crate::experience::KnownPlaceMutation<'_>>,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Option<TemporalReceiptLocator>, TemporalAppendError> {
         let actor_id = &observation.observer.actor_id;
         let actor = self.actors.get(actor_id).ok_or_else(invalid)?;
@@ -441,6 +465,7 @@ impl TemporalState {
                     values,
                     now,
                     policy,
+                    budget,
                 )?
             {
                 return Ok(None);
@@ -537,6 +562,7 @@ impl TemporalState {
             meters,
             places,
             SupportEncoding::Observation,
+            budget,
         )?;
         Ok(record.map(|_| locator))
     }

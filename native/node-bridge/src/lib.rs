@@ -41,6 +41,10 @@ pub struct HostStatus {
     pub pending_bytes: u32,
     pub peak_bytes: u32,
     pub byte_allowance: u32,
+    pub resident_reserved_bytes: f64,
+    pub peak_resident_reserved_bytes: f64,
+    pub pending_save_reserved_bytes: f64,
+    pub peak_pending_save_reserved_bytes: f64,
     pub closing: bool,
     pub poisoned: bool,
     pub error: Option<String>,
@@ -84,6 +88,12 @@ impl HostRuntime {
             pending_bytes: integer(self.bytes.used())?,
             peak_bytes: integer(self.bytes.peak())?,
             byte_allowance: integer(self.bytes.limit())?,
+            // These are owned allocation bounds, not process RSS. Captured
+            // shared bodies remain counted until their final owner releases.
+            resident_reserved_bytes: self.bytes.resident().used() as f64,
+            peak_resident_reserved_bytes: self.bytes.resident().peak() as f64,
+            pending_save_reserved_bytes: self.bytes.pending_save_used() as f64,
+            peak_pending_save_reserved_bytes: self.bytes.pending_save_peak() as f64,
             closing: self.pool.is_closing(),
             poisoned: self.poisoned.load(Ordering::Acquire),
             error: self
@@ -136,7 +146,10 @@ impl HostRuntime {
                 }));
                 match result {
                     Ok(Ok(())) => {
-                        if retained.bytes.used() != 0 {
+                        if retained.bytes.used() != 0
+                            || retained.bytes.resident().used() != 0
+                            || retained.bytes.pending_save_used() != 0
+                        {
                             // Detached outputs/captures can outlive computation.
                             // Joining workers does not release their actual memory
                             // or permit a fresh host to borrow that allowance.

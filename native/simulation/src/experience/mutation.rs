@@ -11,11 +11,11 @@ pub(crate) struct ExperienceCheckpoint {
     operations: usize,
 }
 pub(super) struct AppendUndo {
-    actor_id: String,
-    kind: PersonalSourceKind,
-    id: String,
-    position: u64,
-    next_ordinal: u64,
+    pub(super) actor_id: String,
+    pub(super) kind: PersonalSourceKind,
+    pub(super) id: String,
+    pub(super) position: u64,
+    pub(super) next_ordinal: u64,
 }
 impl AppendUndo {
     pub(super) fn source_key(&self) -> (&str, PersonalSourceKind, &str) {
@@ -24,6 +24,7 @@ impl AppendUndo {
 }
 pub(super) enum ExperienceUndo {
     Append(AppendUndo),
+    Loaded(AppendUndo),
     Remove {
         actor_id: String,
         kind: PersonalSourceKind,
@@ -32,7 +33,7 @@ pub(super) enum ExperienceUndo {
     Header {
         before: ExperienceHeader,
         payload: Arc<str>,
-        storage: ByteReservation,
+        storage: crate::host::ResidentReservation,
     },
     Privacy(super::privacy_mutation::PrivacyUndo),
     Replace {
@@ -56,6 +57,7 @@ pub(super) enum ExperienceUndo {
 pub(crate) struct ExperienceJournal {
     pub(super) undo: Vec<ExperienceUndo>,
     pub(super) reservation: ByteReservation,
+    budget: ByteBudget,
 }
 impl ExperienceJournal {
     /// Admit only this operation's new payload and actual geometric undo growth.
@@ -94,6 +96,7 @@ impl ExperienceJournal {
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ExperienceError> {
         Ok(Self {
             undo: Vec::new(),
+            budget: budget.clone(),
             reservation: budget
                 .reserve(size_of::<Self>())
                 .map_err(|_| ExperienceError::Capacity)?,
@@ -115,7 +118,7 @@ impl ExperienceJournal {
         while self.undo.len() > checkpoint.operations {
             let operation = self.undo.pop().expect("journal cursor checked");
             let undo = match operation {
-                ExperienceUndo::Append(undo) => undo,
+                ExperienceUndo::Append(undo) | ExperienceUndo::Loaded(undo) => undo,
                 ExperienceUndo::Header {
                     before,
                     payload,
@@ -447,6 +450,7 @@ impl ExperienceJournal {
                 agreement_body_count: 0,
                 current_open_heads_selected: false,
                 sensory_selected: false,
+                unresolved_selected: false,
                 coverage: SourceCoverage {
                     complete: true,
                     next_ordinal: 0,
@@ -640,6 +644,9 @@ impl ExperienceJournal {
         {
             return Err(ExperienceError::StaleHydration);
         }
+        self.budget
+            .retain_record(&before._storage)
+            .map_err(|_| ExperienceError::Capacity)?;
         let bytes = (2 * size_of::<ExperienceUndo>())
             .checked_add(record.header.actor_id.len())
             .and_then(|n| n.checked_add(record.header.reference.id.len()))
@@ -708,6 +715,9 @@ impl ExperienceJournal {
         let Some(record) = source.get(id)? else {
             return Ok(false);
         };
+        self.budget
+            .retain_record(&record._storage)
+            .map_err(|_| ExperienceError::Capacity)?;
         let before = Arc::clone(record);
         let bytes = actor_id
             .len()
@@ -815,6 +825,13 @@ impl ExperienceJournal {
             .reservation
             .split_off(payload.len() + 2 * size_of::<usize>())
             .map_err(|_| ExperienceError::Capacity)?;
+        self.budget
+            .retain_record(&state.header_storage)
+            .map_err(|_| ExperienceError::Capacity)?;
+        let storage = self
+            .budget
+            .adopt_record(storage)
+            .map_err(|_| ExperienceError::Capacity)?;
         let old_storage = std::mem::replace(&mut state.header_storage, storage);
         let before = state.header.clone();
         let old_payload = Arc::clone(&state.header_payload);
@@ -911,7 +928,7 @@ fn replace_completion(
     Ok(())
 }
 
-fn adjust_agreements(
+pub(super) fn adjust_agreements(
     source: &mut PersonalSourceCollection,
     before: bool,
     after: bool,

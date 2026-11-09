@@ -21,6 +21,7 @@ mod residency;
 use index::AppraisalIndex;
 mod read;
 mod response;
+mod hydration;
 pub(crate) use read::{AppraisalScope, write_actor_appraisals};
 pub(crate) use response::{
     AppraisalBindings, AppraisalChangeCursor, AppraisalChangeStep, AppraisalPublication,
@@ -184,6 +185,13 @@ pub(crate) struct AppraisalState {
     undo: Vec<AppraisalUndo>,
 }
 enum AppraisalUndo {
+    HydratedOwner {
+        actor: String,
+        prior: IndexMap<String, Arc<AppraisalRecord>>,
+        complete: bool,
+        active_complete: bool,
+        _storage: ByteReservation,
+    },
     Record {
         actor: String,
         id: String,
@@ -400,6 +408,20 @@ impl AppraisalState {
         }
         while self.undo.len() > checkpoint.undo {
             match self.undo.pop().ok_or(ExecutionError::Invariant)? {
+                AppraisalUndo::HydratedOwner { actor, prior, complete, active_complete, .. } => {
+                    let owner = self.owners.get_mut(&actor).ok_or(ExecutionError::Invariant)?;
+                    for record in owner.records.values() {
+                        owner.index.remove(&record.value)?;
+                        unindex_deadline(&mut self.deadlines, &record.value);
+                    }
+                    for record in prior.values() {
+                        owner.index.insert(&record.value)?;
+                        index_deadline(&mut self.deadlines, &record.value);
+                    }
+                    owner.records = prior;
+                    owner.coverage.complete = complete;
+                    owner.active_complete = active_complete;
+                }
                 AppraisalUndo::Owner {
                     actor,
                     next,

@@ -360,11 +360,9 @@ pub(crate) fn reinforce_experience(
     else {
         return Ok(());
     };
-    // Partial/cold selected IDs need their actual body/negative coverage before
-    // mutation; a missing resident tail is not an absent historical source.
-    for id in source_ids {
-        collection.get(id)?;
-    }
+    // Source reinforces only the memories included in its working collection.
+    // An unrelated evidence ID needs no negative historical lookup, and a
+    // detached cold read does not itself request a canonical reinforcement.
     let count = collection
         .records()
         .filter(|record| {

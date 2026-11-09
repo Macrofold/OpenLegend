@@ -1,8 +1,4 @@
-import {
-  serializeTemporalPage,
-  temporalPageRecordId,
-  receiptLookupBucket,
-} from './temporal-page-storage.js';
+import { serializeTemporalPage, temporalPageRecordId } from './temporal-page-storage.js';
 import type {
   WorldEvent,
   Appraisal,
@@ -16,7 +12,16 @@ import {
   parsePersonalFactAlias,
   parseTemporalReceiptId,
 } from '@open-legend/domain';
-import { digest } from './content-digest.js';
+import {
+  correctionCandidates,
+  correctionPageBytes,
+  correctionPageRows,
+  correctionReceiptCount,
+  correctionSourceBytes,
+  readCorrectionDependencies,
+  readCorrectionPageMetadata,
+  type CorrectionSource,
+} from './temporal-correction-selection.js';
 import { readTemporalPageRecord } from './temporal-storage.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions, historyMapPositions } from './history-residency.js';
@@ -110,7 +115,7 @@ export async function prepareHistoryEdit(
       );
     }
     if (selection.receipts?.length) {
-      if (selection.receipts.length > 8192)
+      if (selection.receipts.length > correctionReceiptCount)
         throw new Error('Receipt correction exceeds bounded preparation.');
       const impressions = await db
         .prepare(
@@ -146,7 +151,7 @@ export async function prepareHistoryEdit(
     };
     // Alternate indexed dependency closure and exact personal account aliases. A
     // receipt address can name a cold canonical event; facet support cannot do so.
-    let affected: Record<string, unknown>[] = [];
+    let affected: CorrectionSource[] = [];
     const loadedChunks = new Set(
       Object.values(world.experience.temporal?.actors ?? {}).flatMap((actor) =>
         actor.pages.map((chunk) => chunk.id),
@@ -156,104 +161,23 @@ export async function prepareHistoryEdit(
       chunkBytes = 0,
       sourceBytes = 0;
     for (;;) {
-      affected = await db
-        .prepare(
-          `WITH RECURSIVE affected(actor_id,source_id) AS (
-      SELECT actor_id,source_id FROM jsonb_to_recordset(?::jsonb) AS roots(actor_id text,source_id text)
-      UNION
-      SELECT a.actor_id,d.id FROM affected a CROSS JOIN LATERAL (
-        SELECT id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND event_id=a.source_id
-        UNION SELECT event_id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND id=a.source_id AND source_kind='memory' AND event_id IS NOT NULL
-        UNION SELECT result_evidence_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_evidence_id IS NOT NULL
-        UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_evidence_id=a.source_id
-        UNION SELECT payload::jsonb->>'activityId' FROM mind_memories WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND payload::jsonb->>'activityId' IS NOT NULL
-        UNION SELECT derived_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND (source_id=a.source_id OR alias_id=a.source_id)
-        UNION SELECT source_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND derived_id=a.source_id AND support_key=?
-        UNION SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=a.actor_id AND correction_id=a.source_id
-      ) d
-    ) SELECT actor_id,source_id FROM affected`,
-        )
-        .all(
-          JSON.stringify(roots),
-          worldId,
-          worldId,
-          worldId,
-          worldId,
-          worldId,
-          worldId,
-          worldId,
-          digest('native-origin'),
-          worldId,
-        );
-      const candidates = affected.map((row) => {
-        const source = String(row['source_id']);
-        const fact = parsePersonalFactAlias(source);
-        const lookup = fact?.observationId ?? source;
-        const position = parseTemporalReceiptId(lookup);
-        return {
-          ...row,
-          actor_id: String(row['actor_id']),
-          lookup_source_id: lookup,
-          lookup_bucket: receiptLookupBucket('sourceIds', lookup),
-          ...(position ? { position, member_index: fact?.ordinal ?? null } : {}),
-        };
-      });
-      const scope = JSON.stringify(candidates.filter((candidate) => !candidate.position));
+      affected = await readCorrectionDependencies(db, worldId, roots);
+      const candidates = correctionCandidates(affected);
       // A creator correction must reach cold personal receipts too. Select the actor's
       // indexed source aliases before loading packed pages; shared blocks grant no access.
       if (world.experience.temporal) {
-        const aliases = candidates.some((candidate) => !candidate.position)
-          ? await db
-              .prepare(
-                `SELECT t.id,t.encoded_bytes AS bytes
-        FROM mind_temporal_pages t WHERE t.world_id=? AND t.last_at+?>? AND NOT (t.slot=ANY(?::text[])) AND EXISTS (
-          SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text,lookup_source_id text,lookup_bucket smallint)
-          WHERE a.actor_id=t.actor_id AND t.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND t.source_ids @> ARRAY[a.lookup_source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
-              )
-              .all(
-                worldId,
-                selectedTemporalPolicy(world).recent.maxAgeSeconds,
-                world.simTime,
-                [...loadedChunks],
-                scope,
-              )
-          : [];
-        const direct = candidates
-          .filter((candidate) => candidate.position)
-          .map((candidate) => ({
-            actor_id: String(candidate.actor_id),
-            epoch: candidate.position!.epoch,
-            batch_order: candidate.position!.batchOrder,
-            entry_index: candidate.position!.entryIndex,
-            member_index: candidate.member_index,
-          }));
-        const addressed = direct.length
-          ? await db
-              .prepare(
-                `WITH requested AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id text,epoch text,batch_order bigint,entry_index bigint,member_index bigint)
-        ) SELECT DISTINCT p.id,p.encoded_bytes AS bytes FROM requested q CROSS JOIN LATERAL (
-          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
-            FROM mind_temporal_pages WHERE world_id=? AND actor_id=q.actor_id
-              AND (first_batch_order,first_entry,first_member)<=(q.batch_order,q.entry_index,COALESCE(q.member_index,-1))
-            ORDER BY first_batch_order DESC,first_entry DESC,first_member DESC,id DESC LIMIT 1)
-          UNION ALL
-          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
-            FROM mind_temporal_pages WHERE q.member_index IS NULL AND world_id=? AND actor_id=q.actor_id
-              AND first_batch_order=q.batch_order AND first_entry=q.entry_index)
-        ) p WHERE p.receipt_epoch=q.epoch
-          AND (p.last_batch_order,p.last_entry,p.last_member)>=(q.batch_order,q.entry_index,COALESCE(q.member_index,0))
-          AND NOT(p.slot=ANY(?::text[])) LIMIT 8193`,
-              )
-              .all(JSON.stringify(direct), worldId, worldId, [...loadedChunks])
-          : [];
-        const selectedMetadata = [
-          ...new Map([...aliases, ...addressed].map((row) => [String(row['id']), row])).values(),
-        ];
+        const selectedMetadata = await readCorrectionPageMetadata(
+          db,
+          worldId,
+          candidates,
+          [...loadedChunks],
+          world.simTime,
+          selectedTemporalPolicy(world).recent.maxAgeSeconds,
+        );
         if (
-          chunkCount + selectedMetadata.length > 8192 ||
+          chunkCount + selectedMetadata.length > correctionPageRows ||
           chunkBytes + selectedMetadata.reduce((sum, row) => sum + Number(row['bytes']), 0) >
-            4 * 1024 * 1024
+            correctionPageBytes
         )
           throw new Error('Complete personal receipt correction exceeds bounded preparation.');
         const selected = selectedMetadata.length
@@ -268,7 +192,7 @@ export async function prepareHistoryEdit(
           : [];
         chunkCount += selected.length;
         chunkBytes += selected.reduce((sum, row) => sum + Number(row['bytes']), 0);
-        if (chunkCount > 8192 || chunkBytes > 4 * 1024 * 1024)
+        if (chunkCount > correctionPageRows || chunkBytes > correctionPageBytes)
           throw new Error('Complete personal receipt correction exceeds bounded preparation.');
         const temporal = {
           ...world.experience.temporal,
@@ -304,7 +228,7 @@ export async function prepareHistoryEdit(
             )
             .get(worldId, missing);
           sourceBytes += Number(size?.['bytes'] ?? 0);
-          if (sourceBytes > 4 * 1024 * 1024)
+          if (sourceBytes > correctionSourceBytes)
             throw new Error('Complete personal source correction exceeds bounded preparation.');
           for (const row of await db
             .prepare(

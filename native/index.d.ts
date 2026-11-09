@@ -22,6 +22,14 @@ export declare class NativeHost {
 }
 
 export declare class NativeWorld {
+  readPlayer(account: string, actor: string, eventWindow: number): Promise<NativeWorldPlayerRead>;
+  playerPublication(
+    read: NativeWorldPlayerRead,
+    selectedEventIds: Array<string>,
+    paused: boolean,
+    controlling: boolean,
+  ): Promise<NativeWorldPlayerPublication>;
+  activate(receipt: string): Promise<void>;
   installation(): Promise<NativeWorldJson>;
   advance(seconds: number, maximumIntervals: number, bytes: Buffer): Promise<NativeWorldTurn>;
   command(bytes: Buffer, canonical: string, preview: boolean): Promise<NativeWorldTurn>;
@@ -34,7 +42,7 @@ export declare class NativeWorld {
   cancel(key: NativeCandidateKey): Promise<void>;
   requestYield(): void;
   closeAdmission(): void;
-  captureSave(limits: string): Promise<NativeWorldSave>;
+  captureSave(): Promise<NativeWorldSave>;
   acknowledge(ack: string): Promise<void>;
   finishStop(): Promise<void>;
 }
@@ -45,6 +53,18 @@ export declare class NativeWorldJson {
    * the reservation on the actual Node Buffer until its finalizer runs.
    */
   consume(): Buffer;
+}
+
+export declare class NativeWorldPlayerPublication {
+  canUseInventory(): boolean;
+  release(): void;
+}
+
+export declare class NativeWorldPlayerRead {
+  controlQuestion(): Promise<NativeWorldJson | null>;
+  finishControls(bytes: Buffer): Promise<void>;
+  packet(): Promise<NativeWorldJson>;
+  release(): void;
 }
 
 export declare class NativeWorldPrepared {
@@ -78,6 +98,10 @@ export interface HostStatus {
   pendingBytes: number;
   peakBytes: number;
   byteAllowance: number;
+  residentReservedBytes: number;
+  peakResidentReservedBytes: number;
+  pendingSaveReservedBytes: number;
+  peakPendingSaveReservedBytes: number;
   closing: boolean;
   poisoned: boolean;
   error?: string;

@@ -86,6 +86,8 @@ pub struct ReceptionGap {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PerceptionEvidenceOwner {
+    #[serde(skip)]
+    pub(super) metadata_storage: Option<super::current_residency::CurrentOwnerStorage>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

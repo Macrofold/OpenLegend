@@ -4,6 +4,7 @@
 use super::*;
 mod event;
 mod save;
+mod hydration;
 use crate::commands::{NativeCommand, Outcome};
 use crate::experience::AcquiredActivityResult;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -102,6 +103,7 @@ impl MutableRecord {
     }
 }
 enum ActivityUndo {
+    Loaded { actor: String, id: String, position: u64 },
     Record {
         actor: String,
         id: String,
@@ -544,6 +546,12 @@ impl ActivityJournal {
         }
         while self.undo.len() > checkpoint.at {
             match self.undo.pop().ok_or(ActivityError::InvalidStructure)? {
+                ActivityUndo::Loaded { actor, id, position } => {
+                    let owner = state.collections.get_mut(&actor).ok_or(ActivityError::InvalidStructure)?;
+                    let record = owner.records.shift_remove(&id).ok_or(ActivityError::InvalidStructure)?;
+                    owner.order.remove(&position);
+                    owner.index_action(&id, position, Some(&record.occurrence.action_id), None);
+                }
                 ActivityUndo::Record { actor, id, before } => {
                     let owner = state
                         .collections
@@ -688,10 +696,16 @@ impl ActivityJournal {
         {
             return Err(ActivityError::InvalidStructure);
         }
-        if let Some(owner) = state.collections.get(actor_id) {
-            if let Some(record) = owner.get(id)? {
-                return Ok(record.occurrence.id.clone());
-            }
+        // Source prepareActivity searches the actual resident list, including
+        // its bounded cold tail. Beginning a command does not claim that an
+        // arbitrary historical activity is absent; command replay is admitted
+        // separately by the canonical command-receipt owner.
+        if let Some(record) = state
+            .collections
+            .get(actor_id)
+            .and_then(|owner| owner.records.get(id))
+        {
+            return Ok(record.occurrence.id.clone());
         }
         let plan = entities
             .get(actor_id)
@@ -829,7 +843,7 @@ impl ActivityJournal {
             occurrence: entry,
             position,
             slot: record_slot,
-            storage: record_storage,
+            storage: state.budget.adopt_backing(record_storage).map_err(|_| ActivityError::Capacity)?,
         };
         let prepared_owner = self.prepare_collection(state, actor_id)?;
         let metadata = self.prepare_metadata(state, actor_id, action_id, id, None)?;

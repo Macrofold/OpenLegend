@@ -139,8 +139,9 @@ impl ExperienceState {
         from: &mut crate::host::ByteReservation,
         bytes: usize,
     ) -> Result<(), ExperienceError> {
-        self.metadata_storage
-            .merge(
+        self.budget
+            .fund_backing(
+                &mut self.metadata_storage,
                 from.split_off(bytes)
                     .map_err(|_| ExperienceError::Capacity)?,
             )

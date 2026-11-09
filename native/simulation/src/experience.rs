@@ -62,6 +62,7 @@ pub(crate) use save::{
     PersonalPredecessors, capture_personal_predecessors, encode_personal_changes,
 };
 mod invalidation;
+mod hydration;
 mod mutation;
 mod privacy_header;
 pub(crate) use invalidation::{
@@ -934,7 +935,7 @@ pub struct PersonalSourceRecord {
     payload: Arc<str>,
     columns: Arc<[crate::records::SqlCell]>,
     header: PersonalSourceHeader,
-    _storage: crate::host::ByteReservation,
+    _storage: crate::host::ResidentReservation,
 }
 
 impl PersonalSourceRecord {
@@ -1043,7 +1044,9 @@ impl PersonalSourceRecord {
         // The caller still owns its funded import/preparation while this
         // immutable record acquires independent canonical custody.
         let storage = budget
-            .reserve(residency::record_parts_bytes(&row, &header).ok_or(ExperienceError::Capacity)?)
+            .reserve_record(
+                residency::record_parts_bytes(&row, &header).ok_or(ExperienceError::Capacity)?,
+            )
             .map_err(|_| ExperienceError::Capacity)?;
         Ok(Self {
             row_id: row.id,
@@ -1059,6 +1062,14 @@ impl PersonalSourceRecord {
 
     pub fn header(&self) -> &PersonalSourceHeader {
         &self.header
+    }
+    pub(crate) fn capture_pin(
+        &self,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<Arc<crate::host::SharedMemoryPin>, ExperienceError> {
+        self._storage
+            .capture_pin(budget)
+            .map_err(|_| ExperienceError::Capacity)
     }
     pub fn payload(&self) -> &str {
         &self.payload
@@ -1106,6 +1117,7 @@ pub struct PersonalSourceCollection {
     agreement_body_count: usize,
     current_open_heads_selected: bool,
     sensory_selected: bool,
+    unresolved_selected: bool,
 }
 
 impl PersonalSourceCollection {
@@ -1132,6 +1144,7 @@ impl PersonalSourceCollection {
             agreement_body_count: 0,
             current_open_heads_selected: false,
             sensory_selected: false,
+            unresolved_selected: false,
             coverage: SourceCoverage {
                 complete: coverage.complete,
                 next_ordinal: coverage.next_ordinal,
@@ -1178,6 +1191,14 @@ impl PersonalSourceCollection {
     }
     pub(crate) fn complete_current_sensory(&self) -> bool {
         self.coverage.complete || self.sensory_selected
+    }
+    pub(crate) fn install_current_obligations(&mut self, selected: bool) {
+        self.unresolved_selected = selected;
+    }
+    /// Startup selects every unresolved memory at the same SQL cut. It does
+    /// not certify any negative lookup in the person's historical records.
+    pub(crate) fn complete_current_obligations(&self) -> bool {
+        self.coverage.complete || self.unresolved_selected
     }
     pub fn kind(&self) -> PersonalSourceKind {
         self.kind
@@ -1363,8 +1384,9 @@ pub struct ExperienceState {
     sensory: sensory::SensoryDeadlines,
     metadata_data: usize,
     metadata_backing: usize,
-    header_storage: crate::host::ByteReservation,
-    metadata_storage: crate::host::ByteReservation,
+    header_storage: crate::host::ResidentReservation,
+    metadata_storage: crate::host::ResidentReservation,
+    budget: crate::host::ByteBudget,
 }
 
 impl ExperienceState {
@@ -1419,7 +1441,7 @@ impl ExperienceState {
         }
         let sensory = sensory::SensoryDeadlines::install(&actors, budget)?;
         let header_storage = budget
-            .reserve(header_payload.len() + 2 * std::mem::size_of::<usize>())
+            .reserve_record(header_payload.len() + 2 * std::mem::size_of::<usize>())
             .map_err(|_| ExperienceError::Capacity)?;
         let mut state = Self {
             generation,
@@ -1432,7 +1454,10 @@ impl ExperienceState {
             metadata_data: 0,
             metadata_backing: 0,
             header_storage,
-            metadata_storage: budget.reserve(0).map_err(|_| ExperienceError::Capacity)?,
+            metadata_storage: budget
+                .reserve_backing(0)
+                .map_err(|_| ExperienceError::Capacity)?,
+            budget: budget.clone(),
         };
         state.install_metadata()?;
         Ok(state)

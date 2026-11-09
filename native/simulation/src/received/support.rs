@@ -6,11 +6,14 @@ use super::{
     materialize_temporal_value,
 };
 use crate::encoding::{json_record, sha256_hex};
+use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+use crate::host::{ByteBudget, ByteReservation};
 use crate::records::{InstalledRow, OwnerCoverage};
 use crate::values::deserialize_safe_integer;
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -23,7 +26,10 @@ pub struct TemporalSupportCapsule {
     pub required: bool,
 }
 impl TemporalSupportCapsule {
-    pub fn logical_bytes(&self, values: &ReceivedValues) -> Result<u64, ReceivedError> {
+    pub fn logical_bytes(
+        &self,
+        values: &impl crate::reception::ReceivedValueLookup,
+    ) -> Result<u64, ReceivedError> {
         let mut bytes = json_record(self)
             .map_err(|_| ReceivedError("Retained support encoding failed."))?
             .len() as i128;
@@ -61,13 +67,20 @@ pub struct TemporalSupportRecord {
     pub(super) position: u64,
     pub(super) payload: Arc<str>,
     pub(super) capsule: TemporalSupportCapsule,
+    // Receipt/value custody survives acceptance and every detached record Arc.
+    // A required/optional promotion shares unchanged content, but owns its new
+    // immutable SQL payload and placement separately.
+    pub(super) body_storage: Arc<crate::host::ResidentReservation>,
+    pub(super) storage: crate::host::ResidentReservation,
 }
 impl TemporalSupportRecord {
     fn install(
         row: InstalledRow,
         actor_id: &str,
         through: f64,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
+        budget: &ByteBudget,
+        activity_limits: &crate::activity::ActivityDisplayLimits,
     ) -> Result<Self, ReceivedError> {
         let capsule: TemporalSupportCapsule = serde_json::from_str(&row.payload)
             .map_err(|_| ReceivedError("Invalid current retained support body."))?;
@@ -92,9 +105,13 @@ impl TemporalSupportRecord {
                 "Retained support has foreign ownership or incomplete values.",
             ));
         }
-        capsule
-            .receipt
-            .validate(actor_id, through, values, Some(&capsule.values))?;
+        capsule.receipt.validate(
+            actor_id,
+            through,
+            values,
+            Some(&capsule.values),
+            activity_limits,
+        )?;
         if capsule.logical_bytes(values)? != capsule.bytes {
             return Err(ReceivedError("Retained support charge disagrees."));
         }
@@ -119,7 +136,12 @@ impl TemporalSupportRecord {
                 "Retained support columns disagree with its body.",
             ));
         }
+        let body_storage = Self::fund_body(&capsule, None, budget)?;
+        let storage =
+            Self::fund_record(&row.id, &row.parent, &row.slot, row.payload.len(), budget)?;
         Ok(Self {
+            body_storage,
+            storage,
             id: row.id,
             parent: row.parent,
             slot: row.slot,
@@ -127,6 +149,66 @@ impl TemporalSupportRecord {
             payload: Arc::from(row.payload),
             capsule,
         })
+    }
+    pub(super) fn fund_body(
+        capsule: &TemporalSupportCapsule,
+        prior: Option<&Self>,
+        budget: &ByteBudget,
+    ) -> Result<Arc<crate::host::ResidentReservation>, ReceivedError> {
+        if let Some(prior) = prior.filter(|prior| {
+            Arc::ptr_eq(&prior.capsule.receipt, &capsule.receipt)
+                && Arc::ptr_eq(&prior.capsule.values, &capsule.values)
+        }) {
+            return Ok(Arc::clone(&prior.body_storage));
+        }
+        let error = || ReceivedError("Retained support body exceeds native allowance.");
+        let bytes = capsule
+            .values
+            .iter()
+            .try_fold(
+                heap_sum([
+                    size_of::<TemporalReceipt>(),
+                    2 * size_of::<usize>() + align_of::<TemporalReceipt>() - 1,
+                    capsule.receipt.heap_bytes().ok_or_else(error)?,
+                    capsule
+                        .values
+                        .len()
+                        .checked_mul(size_of::<ReceivedValueFragment>())
+                        .ok_or_else(error)?,
+                    2 * size_of::<usize>() + align_of::<ReceivedValueFragment>() - 1,
+                    size_of::<crate::host::ResidentReservation>()
+                        + 2 * size_of::<usize>()
+                        + align_of::<crate::host::ResidentReservation>()
+                        - 1,
+                ])
+                .ok_or_else(error)?,
+                |n, value| n.checked_add(value.heap_bytes()?),
+            )
+            .ok_or_else(error)?;
+        Ok(Arc::new(budget.reserve_record(bytes).map_err(|_| error())?))
+    }
+    pub(super) fn fund_record(
+        id: &str,
+        parent: &str,
+        slot: &str,
+        payload_bytes: usize,
+        budget: &ByteBudget,
+    ) -> Result<crate::host::ResidentReservation, ReceivedError> {
+        let error = || ReceivedError("Retained support record exceeds native allowance.");
+        let bytes = heap_sum([
+            size_of::<Self>() + 2 * size_of::<usize>() + align_of::<Self>() - 1,
+            id.len(),
+            parent.len(),
+            slot.len(),
+            payload_bytes,
+            2 * size_of::<usize>(),
+            // Each canonical map member owns its key and a conservative share
+            // of dense/hash backing; replacing a record retains this escrow.
+            slot.len(),
+            map_storage::<String, Arc<Self>>(1).ok_or_else(error)?,
+        ])
+        .ok_or_else(error)?;
+        budget.reserve_record(bytes).map_err(|_| error())
     }
     pub fn capsule(&self) -> &TemporalSupportCapsule {
         &self.capsule
@@ -160,6 +242,8 @@ impl TemporalSupportCollection {
         coverage: OwnerCoverage,
         through: f64,
         values: Option<&ReceivedValues>,
+        budget: &ByteBudget,
+        activity_limits: &crate::activity::ActivityDisplayLimits,
     ) -> Result<Self, ReceivedError> {
         let owner = json_record(&["world", "experience", "temporal", "actors", actor_id])
             .map_err(|_| ReceivedError("Support owner encoding failed."))?;
@@ -175,9 +259,9 @@ impl TemporalSupportCollection {
                 row,
                 actor_id,
                 through,
-                values.ok_or(ReceivedError(
-                    "Retained support requires its actual value owner.",
-                ))?,
+                &values,
+                budget,
+                activity_limits,
             )?;
             if record.position >= coverage.next_ordinal
                 || records

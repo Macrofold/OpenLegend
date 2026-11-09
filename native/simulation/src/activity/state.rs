@@ -404,7 +404,7 @@ pub(crate) struct ActivityRecord {
     pub occurrence: ActivityOccurrence,
     pub position: u64,
     pub slot: String,
-    pub(super) storage: crate::host::ByteReservation,
+    pub(super) storage: crate::host::ResidentReservation,
 }
 pub(crate) struct ActivityCollection {
     pub actor_id: String,
@@ -416,7 +416,7 @@ pub(crate) struct ActivityCollection {
     // The source searches in original list order. Keep only an address index,
     // including all equal-action addresses, rather than scan personal history.
     pub(super) actions: BTreeMap<String, BTreeMap<u64, String>>,
-    pub(super) storage: crate::host::ByteReservation,
+    pub(super) storage: crate::host::ResidentReservation,
 }
 impl ActivityCollection {
     pub(crate) fn install(
@@ -490,7 +490,7 @@ impl ActivityCollection {
             );
         }
         let storage = budget
-            .reserve(
+            .reserve_backing(
                 actor_id
                     .capacity()
                     .checked_add(
@@ -642,7 +642,8 @@ pub(crate) struct ActivityState {
     pub limits: Arc<ActivityLimits>,
     pub display: Arc<ActivityDisplayLimits>,
     pub(super) metadata_bytes: usize,
-    pub(super) metadata_storage: crate::host::ByteReservation,
+    pub(super) metadata_storage: crate::host::ResidentReservation,
+    pub(super) budget: crate::host::ByteBudget,
 }
 impl ActivityState {
     pub(crate) fn occurrence_for(
@@ -760,7 +761,8 @@ impl ActivityState {
             limits,
             display,
             metadata_bytes: 0,
-            metadata_storage: budget.reserve(0).map_err(|_| ActivityError::Capacity)?,
+            metadata_storage: budget.reserve_backing(0).map_err(|_| ActivityError::Capacity)?,
+            budget: budget.clone(),
         };
         state.install_metadata()?;
         Ok(state)

@@ -2,8 +2,86 @@
 //! products, not live semantic records. The existing writer still owns SQL order.
 
 use super::{ChangedRow, ChangedRows, RecordEncodingError, RecordSchema};
+use crate::host::retained_size::{map_storage, tree_node_bound};
 use indexmap::{IndexMap, IndexSet};
 use std::collections::BTreeMap;
+use std::mem::size_of;
+
+/// Folding moves immutable payloads and SQL cells; it does not copy their rich
+/// bodies. Fund the actual temporary key indexes, row vectors and mask/reference
+/// sets separately from the persistent pending-save bytes.
+pub(crate) fn merge_workspace_bound(previous: &ChangedRows, next: &ChangedRows) -> Option<usize> {
+    let mut bytes = size_of::<ChangedRows>();
+    for (table, _) in previous.writes.iter().chain(
+        next.writes
+            .iter()
+            .filter(|(table, _)| !previous.writes.contains_key(*table)),
+    ) {
+        let incoming = next.writes.get(table).map_or(0, Vec::len);
+        let old = previous.writes.get(table).map_or(0, Vec::len);
+        let count = old.checked_add(incoming)?;
+        bytes = bytes
+            .checked_add(tree_node_bound::<String, IndexMap<String, ChangedRow>>()?)?
+            .checked_add(table.capacity().checked_mul(2)?)?
+            .checked_add(map_storage::<String, ChangedRow>(
+                count.checked_mul(2)?.checked_add(1)?,
+            )?)?
+            .checked_add(count.checked_mul(4)?.checked_mul(size_of::<ChangedRow>())?)?
+            .checked_add(count.checked_mul(tree_node_bound::<&String, ()>()?)?)?;
+        for row in previous
+            .writes
+            .get(table)
+            .into_iter()
+            .flatten()
+            .chain(next.writes.get(table).into_iter().flatten())
+        {
+            bytes = bytes.checked_add(row.id.capacity().checked_mul(2)?)?;
+            for values in [
+                &row.write_columns,
+                &row.received_value_additions,
+                &row.received_value_removals,
+            ]
+            .into_iter()
+            .flatten()
+            {
+                bytes = bytes
+                    .checked_add(map_storage::<String, ()>(
+                        values.len().checked_mul(2)?.checked_add(1)?,
+                    )?)?
+                    .checked_add(
+                        values
+                            .len()
+                            .checked_mul(4)?
+                            .checked_mul(size_of::<String>())?,
+                    )?;
+            }
+        }
+    }
+    for (before, after) in [
+        (&previous.deletes, &next.deletes),
+        (&previous.expired, &next.expired),
+    ] {
+        for (table, _) in before.iter().chain(
+            after
+                .iter()
+                .filter(|(table, _)| !before.contains_key(*table)),
+        ) {
+            let count = before
+                .get(table)
+                .map_or(0, Vec::len)
+                .checked_add(after.get(table).map_or(0, Vec::len))?;
+            bytes = bytes
+                .checked_add(tree_node_bound::<String, IndexSet<String>>()?)?
+                .checked_add(table.capacity().checked_mul(2)?)?
+                .checked_add(map_storage::<String, ()>(
+                    count.checked_mul(2)?.checked_add(1)?,
+                )?)?
+                .checked_add(count.checked_mul(4)?.checked_mul(size_of::<String>())?)?
+                .checked_add(count.checked_mul(tree_node_bound::<&String, ()>()?)?)?;
+        }
+    }
+    Some(bytes)
+}
 
 fn fold_row(previous: &mut ChangedRow, mut next: ChangedRow, columns: &[String]) {
     let known_previous = previous.received_uses_changed == Some(false)

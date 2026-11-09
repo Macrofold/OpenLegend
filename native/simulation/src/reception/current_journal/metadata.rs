@@ -149,6 +149,7 @@ impl CurrentJournal {
             subject: subject.into(),
             prior,
         });
+        self.settle_contact(state, observer, subject)?;
         Ok(())
     }
     pub(in super::super) fn replace_visual_confirmation(
@@ -173,6 +174,7 @@ impl CurrentJournal {
             observer: observer.into(),
             prior,
         });
+        self.settle_owner(state, observer, CurrentOwnerPart::Sight, false)?;
         Ok(())
     }
     pub(in super::super) fn set_motion(
@@ -237,6 +239,7 @@ impl CurrentJournal {
             prior,
             root_present,
         });
+        self.settle_owner(state, observer, CurrentOwnerPart::Motion, false)?;
         Ok(true)
     }
     pub(in super::super) fn refresh_motion_expiry(
@@ -320,6 +323,7 @@ impl CurrentJournal {
             subject: subject.into(),
             prior,
         });
+        self.settle_owner(state, observer, CurrentOwnerPart::Gaps, false)?;
         Ok(())
     }
 }

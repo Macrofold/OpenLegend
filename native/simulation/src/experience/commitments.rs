@@ -42,7 +42,7 @@ where
     let owners = core.state.experience.memory_owners(budget)?;
     let now = core.state.physical.header.sim_time;
     let count = owners.iter().try_fold(0usize, |count, owner| {
-        if !owner.collection.coverage().complete {
+        if !owner.collection.complete_current_obligations() {
             return Err(ExperienceError::Unavailable);
         }
         count
@@ -137,7 +137,7 @@ pub(crate) fn next_commitment_deadline(
     let owners = state.experience.memory_owners(budget)?;
     let mut next = f64::INFINITY;
     for owner in owners.iter() {
-        if !owner.collection.coverage().complete {
+        if !owner.collection.complete_current_obligations() {
             return Err(ExperienceError::Unavailable);
         }
         for source in owner.collection.records() {

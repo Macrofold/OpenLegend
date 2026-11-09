@@ -749,7 +749,7 @@ export class GameSaves {
       if (!job['playerSpeechEventId']) continue;
       delete job['playerSpeechEventId'];
       await this.db
-        .prepare('UPDATE jobs SET payload=? WHERE id=?')
+        .prepare("UPDATE jobs SET payload=?,selection=selection-'playerSpeechEventId' WHERE id=?")
         .run(JSON.stringify(job), row['id']);
     }
     // Captured pending narration is not permission to repeat an uncertain paid request.

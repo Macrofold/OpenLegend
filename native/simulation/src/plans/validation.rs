@@ -111,9 +111,7 @@ pub(crate) fn validate_installation(
             .ok_or(InstallError::CurrentFormat)?;
         let agency = &actor.agency;
         let limits = &world.agency_limits;
-        if !agency.attempts.is_empty() {
-            return Err(InstallError::UnsupportedFamily("unlisted private intent"));
-        }
+        attempts::validate_installed(&agency.attempts, limits)?;
         if !valid_evidence(agency.last_result_evidence.as_ref(), id)
             || agency.goals.len() as u64
                 > limits

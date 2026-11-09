@@ -2,6 +2,10 @@ import type { SqlDatabase } from './store.js';
 import { countMetric, gaugeMetric, withGroupedWriteAttribution } from './performance.js';
 import { toUSVString } from 'node:util';
 
+/** Derived JSONB selectors compare exact JavaScript text without asking
+ * PostgreSQL to decode isolated UTF-16 units or conflating identity keys. */
+export const sqlTextKey = (value: string) => JSON.stringify(value);
+
 // Bound PostgreSQL parameters and bytes so a batch cannot grow without limit.
 export const parameterBatchLimit = 10000;
 

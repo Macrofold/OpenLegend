@@ -35,6 +35,7 @@ pub(crate) enum ProviderKind {
     Words,
     Display,
     Canonical,
+    Normalization,
 }
 #[derive(Debug)]
 pub(crate) enum DriveError {
@@ -218,6 +219,7 @@ impl DecodeShape {
             ProviderKind::Words => size_of::<Vec<JsText>>().max(size_of::<JsText>()),
             ProviderKind::Collation => size_of::<u32>(),
             ProviderKind::Canonical => 0,
+            ProviderKind::Normalization => size_of::<JsText>(),
         };
         let arrays = self
             .array_items
@@ -278,6 +280,7 @@ enum Answer {
     Words(WordsAnswer),
     Display(Formatted),
     Canonical(Canonical),
+    Normalization(crate::language::AttemptNormalizationAnswer),
 }
 impl Answer {
     fn decode(input: &ProviderResponse) -> Result<Self, DriveError> {
@@ -296,6 +299,9 @@ impl Answer {
                 Self::Collation(serde_json::from_str(&input.json).map_err(parse)?)
             }
             ProviderKind::Words => Self::Words(serde_json::from_str(&input.json).map_err(parse)?),
+            ProviderKind::Normalization => {
+                Self::Normalization(serde_json::from_str(&input.json).map_err(parse)?)
+            }
             ProviderKind::Display => {
                 Self::Display(serde_json::from_str(&input.json).map_err(parse)?)
             }
@@ -316,6 +322,7 @@ impl Answer {
             Self::Words(v) => v.binding,
             Self::Display(v) => v.binding,
             Self::Canonical(v) => v.binding,
+            Self::Normalization(v) => v.binding,
         }
     }
     fn kind(&self) -> ProviderKind {
@@ -326,6 +333,7 @@ impl Answer {
             Self::Words(_) => ProviderKind::Words,
             Self::Display(_) => ProviderKind::Display,
             Self::Canonical(_) => ProviderKind::Canonical,
+            Self::Normalization(_) => ProviderKind::Normalization,
         }
     }
 }

@@ -22,10 +22,18 @@ pub(crate) fn next_animal_review(
         if animal.foraging.is_some() {
             return Err(ExecutionError::UnsupportedFamily);
         }
-        if let Some(episode) = &animal.episode {
-            if episode.review_at > physical.header.sim_time {
-                next = next.min(episode.review_at);
-            }
+        // Source's private choice clock includes acoustic expiry even while
+        // the earned mechanical forecast is retained. Land on its absolute
+        // endpoint rather than reconstructing it by duration addition.
+        let choice = animal.acoustic_patterns.values().fold(
+            animal
+                .episode
+                .as_ref()
+                .map_or(f64::INFINITY, |episode| episode.review_at),
+            |at, pattern| at.min(pattern.idle_expires_at),
+        );
+        if choice > physical.header.sim_time {
+            next = next.min(choice);
         }
     }
     Ok(next)

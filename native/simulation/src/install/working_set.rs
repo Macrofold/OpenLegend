@@ -22,6 +22,7 @@ pub(crate) struct WorkingSetSelection {
     active_appraisals: Vec<String>,
     open_agreement_heads: Vec<String>,
     sensory_awareness: Vec<String>,
+    unresolved_memories: Vec<String>,
     running_activities: Vec<String>,
     current_contributions: Vec<String>,
 }
@@ -32,6 +33,7 @@ pub(crate) struct InstalledWorkingSet {
     active_appraisals: IndexSet<String>,
     open_agreement_heads: IndexSet<String>,
     sensory_awareness: IndexSet<String>,
+    unresolved_memories: IndexSet<String>,
     running_activities: IndexSet<String>,
     current_contributions: IndexSet<String>,
     _reservation: ByteReservation,
@@ -73,6 +75,7 @@ impl WorkingSetSelection {
             set_bound(&self.active_appraisals).ok_or(InstallError::Capacity)?,
             set_bound(&self.open_agreement_heads).ok_or(InstallError::Capacity)?,
             set_bound(&self.sensory_awareness).ok_or(InstallError::Capacity)?,
+            set_bound(&self.unresolved_memories).ok_or(InstallError::Capacity)?,
             set_bound(&self.running_activities).ok_or(InstallError::Capacity)?,
             set_bound(&self.current_contributions).ok_or(InstallError::Capacity)?,
         ])
@@ -86,6 +89,7 @@ impl WorkingSetSelection {
             active_appraisals: self.active_appraisals.into_iter().collect(),
             open_agreement_heads: self.open_agreement_heads.into_iter().collect(),
             sensory_awareness: self.sensory_awareness.into_iter().collect(),
+            unresolved_memories: self.unresolved_memories.into_iter().collect(),
             running_activities: self.running_activities.into_iter().collect(),
             current_contributions: self.current_contributions.into_iter().collect(),
             _reservation: reservation,
@@ -95,6 +99,7 @@ impl WorkingSetSelection {
             set_heap(&selected.active_appraisals).ok_or(InstallError::Capacity)?,
             set_heap(&selected.open_agreement_heads).ok_or(InstallError::Capacity)?,
             set_heap(&selected.sensory_awareness).ok_or(InstallError::Capacity)?,
+            set_heap(&selected.unresolved_memories).ok_or(InstallError::Capacity)?,
             set_heap(&selected.running_activities).ok_or(InstallError::Capacity)?,
             set_heap(&selected.current_contributions).ok_or(InstallError::Capacity)?,
         ])
@@ -115,6 +120,9 @@ impl InstalledWorkingSet {
     }
     pub(crate) fn sensory_awareness(&self, actor: &str) -> bool {
         self.sensory_awareness.contains(actor)
+    }
+    pub(crate) fn unresolved_memories(&self, actor: &str) -> bool {
+        self.unresolved_memories.contains(actor)
     }
     pub(crate) fn running_activities(&self, actor: &str) -> bool {
         self.running_activities.contains(actor)

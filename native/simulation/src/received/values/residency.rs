@@ -46,7 +46,7 @@ pub(crate) enum PreparedValueResidency {
     Unchanged,
     Replace {
         sources: IndexMap<String, SharedReceivedValue>,
-        backing: ByteReservation,
+        backing: crate::host::ResidentReservation,
         scratch: ByteReservation,
     },
 }
@@ -74,16 +74,19 @@ impl ReceivedValues {
             .iter()
             .try_fold(0usize, |n, key| n.checked_add(key.len()))
             .ok_or_else(error)?;
-        let scratch = budget.reserve(keys).map_err(|_| error())?;
+        let map_bound = super::residency::backing(references.len().checked_mul(2).and_then(|n|n.checked_add(1)).ok_or_else(error)?,0).ok_or_else(error)?;
+        // ACK preparation owns a new map before its infallible installation.
+        // Retain its actual workspace as well as future resident custody.
+        let scratch = budget.reserve(keys.checked_add(map_bound).ok_or_else(error)?).map_err(|_| error())?;
         let mut backing = budget
-            .reserve(
+            .reserve_backing(
                 super::residency::backing(
                     references
                         .len()
                         .checked_mul(2)
                         .and_then(|n| n.checked_add(1))
                         .ok_or_else(error)?,
-                    self.undo.capacity(),
+                    0,
                 )
                 .ok_or_else(error)?,
             )
@@ -101,7 +104,7 @@ impl ReceivedValues {
         }
         backing
             .resize(
-                super::residency::backing(sources.capacity(), self.undo.capacity())
+                super::residency::backing(sources.capacity(), 0)
                     .ok_or_else(error)?,
             )
             .map_err(|_| error())?;

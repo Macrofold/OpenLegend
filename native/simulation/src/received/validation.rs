@@ -136,8 +136,9 @@ impl TemporalReceipt {
         &self,
         actor_id: &str,
         through: f64,
-        values: &ReceivedValues,
+        values: &impl crate::reception::ReceivedValueLookup,
         selected_values: Option<&[ReceivedValueFragment]>,
+        activity_limits: &crate::activity::ActivityDisplayLimits,
     ) -> Result<(), ReceivedError> {
         let header = &self.header;
         let terminal = matches!(
@@ -228,7 +229,7 @@ impl TemporalReceipt {
                 None => values.value_at(&field.value_ref),
             }
             .ok_or(ReceivedError("Received member has no retained value."))?;
-            fragment.validate(through, values.activity_limits())?;
+            fragment.validate(through, activity_limits)?;
             let sources = [
                 field.original.as_ref().map(|key| &key.source),
                 field.received_from.as_ref(),

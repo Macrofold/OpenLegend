@@ -299,6 +299,7 @@ fn set_metadata_groups(
         .ok_or_else(invalid)?;
     // Clock/recording changes retain the exact acquired-content byte cache.
     contact.content.groups = groups;
+    journal.settle_contact(state, observer, subject)?;
     Ok(())
 }
 
@@ -449,9 +450,7 @@ fn current_facet_set_in_batch(
         }
         let group = &mut groups[at];
         journal.mutable_group(group, &batch)?;
-        Arc::make_mut(&mut group.received)
-            .fields
-            .shift_remove(address.kind);
+        journal.set_received_field(group, address.kind, None)?;
         if let Some(recordings) = group.recordings.as_mut() {
             let mut kept = Vec::with_capacity(recordings.len());
             for mark in recordings.iter() {
@@ -500,6 +499,7 @@ fn current_facet_set_in_batch(
             observer,
             address.subject_id,
             Some(CurrentContact {
+                metadata_storage: None,
                 encoded_payload: None,
                 visual_measurement: None,
                 order,
@@ -550,9 +550,7 @@ fn current_facet_set_in_batch(
         if let Some(index) = existing {
             let group = &mut groups[index];
             journal.mutable_group(group, &batch)?;
-            Arc::make_mut(&mut group.received)
-                .fields
-                .insert(address.kind.to_owned(), input.field);
+            journal.set_received_field(group, address.kind, Some(input.field))?;
             group.metadata.extend(partitions);
             group.metadata = merge_partitions(std::mem::take(&mut group.metadata))?;
         } else {
@@ -561,10 +559,10 @@ fn current_facet_set_in_batch(
                 field_identity: Arc::new(()),
                 content_batch: Some(batch.clone()),
                 metadata_batch: None,
-                received: Arc::new(CurrentReceivedContent {
-                    grant: input.grant.clone(),
-                    fields: IndexMap::from([(address.kind.to_owned(), input.field)]),
-                }),
+                received: journal.received_content(
+                    input.grant.clone(),
+                    IndexMap::from([(address.kind.to_owned(), input.field)]),
+                )?,
                 metadata: merge_partitions(partitions)?,
             });
         }
@@ -617,6 +615,7 @@ fn current_facet_set_in_batch(
                 .any(|group| &group.received.grant.original == original)
         });
     }
+    journal.settle_contact(state, observer, address.subject_id)?;
     Ok(())
 }
 

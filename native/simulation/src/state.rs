@@ -7,7 +7,7 @@
 
 mod action_storage;
 mod goal_storage;
-pub(crate) use goal_storage::FundedGoals;
+mod intent_storage;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::values::{
     AttributeState, DefinitionPin, StatusInstance, WorkInvocation, deserialize_present_option,
@@ -16,7 +16,9 @@ use crate::values::{
 pub(crate) use action_storage::{
     FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute,
 };
+pub(crate) use goal_storage::FundedGoals;
 use indexmap::IndexMap;
+pub(crate) use intent_storage::FundedIntents;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;
@@ -425,7 +427,7 @@ pub struct ActorAgency {
         skip_serializing_if = "Option::is_none"
     )]
     pub last_result_evidence: Option<crate::activity::ResultEvidence>,
-    pub attempts: Vec<UnconvertedField>,
+    pub attempts: Vec<crate::plans::PendingIntent>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub goals: Vec<Goal>,
@@ -1117,7 +1119,7 @@ pub struct ActorState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub description: Option<String>,
+    pub description: Option<crate::text::JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1301,7 +1303,7 @@ pub struct Entity {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub description: Option<String>,
+    pub description: Option<crate::text::JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -1499,6 +1501,7 @@ struct EntitySlot {
     order: String,
     action_storage: Option<crate::host::ByteReservation>,
     goal_storage: Option<crate::host::ByteReservation>,
+    intent_storage: Option<crate::host::ResidentReservation>,
 }
 /// Ordering labels are the source collection's actual labels. They are not
 /// identities and never change merely because jobs move between workers.
@@ -1603,6 +1606,7 @@ impl EntityStore {
             order,
             action_storage: None,
             goal_storage: None,
+            intent_storage: None,
         });
         Ok(EntityInsertion {
             handle,
@@ -1663,6 +1667,7 @@ impl EntityStore {
                 order,
                 action_storage: None,
                 goal_storage: None,
+                intent_storage: None,
             });
         }
         Ok(value)

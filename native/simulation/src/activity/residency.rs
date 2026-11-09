@@ -137,8 +137,7 @@ impl ActivityState {
         from: &mut ByteReservation,
         bytes: usize,
     ) -> Result<(), ActivityError> {
-        self.metadata_storage
-            .merge(from.split_off(bytes).map_err(|_| ActivityError::Capacity)?)
+        self.budget.fund_backing(&mut self.metadata_storage, from.split_off(bytes).map_err(|_| ActivityError::Capacity)?)
             .map_err(|_| ActivityError::Capacity)
     }
     pub(super) fn settle_metadata(
@@ -174,7 +173,7 @@ impl ActivityRecord {
         budget: &ByteBudget,
     ) -> Result<Self, ActivityError> {
         let storage = budget
-            .reserve(record_bytes(&occurrence, &slot).ok_or(ActivityError::Capacity)?)
+            .reserve_backing(record_bytes(&occurrence, &slot).ok_or(ActivityError::Capacity)?)
             .map_err(|_| ActivityError::Capacity)?;
         Ok(Self {
             occurrence,
@@ -199,11 +198,10 @@ impl ActivityJournal {
         let bytes =
             record_bytes(&record.occurrence, &record.slot).ok_or(ActivityError::Capacity)?;
         if bytes > record.storage.bytes() {
-            record
-                .storage
-                .merge(
+            let growth = bytes - record.storage.bytes();
+            state.budget.fund_backing(&mut record.storage,
                     self.reservation
-                        .split_off(bytes - record.storage.bytes())
+                        .split_off(growth)
                         .map_err(|_| ActivityError::Capacity)?,
                 )
                 .map_err(|_| ActivityError::Capacity)?;
@@ -241,9 +239,7 @@ impl ActivityJournal {
                 owner.records.len() == owner.records.capacity(),
             )?;
             self.reserve(add)?;
-            owner
-                .storage
-                .merge(
+            state.budget.fund_backing(&mut owner.storage,
                     self.reservation
                         .split_off(add)
                         .map_err(|_| ActivityError::Capacity)?,
@@ -275,6 +271,7 @@ impl ActivityJournal {
             .reservation
             .split_off(bytes)
             .map_err(|_| ActivityError::Capacity)?;
+        let storage = state.budget.adopt_backing(storage).map_err(|_| ActivityError::Capacity)?;
         let mut owner = ActivityCollection {
             actor_id: actor.to_owned(),
             complete: true,

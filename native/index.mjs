@@ -974,6 +974,8 @@ const {
   NativeHost,
   NativeWorld,
   NativeWorldJson,
+  NativeWorldPlayerPublication,
+  NativeWorldPlayerRead,
   NativeWorldPrepared,
   NativeWorldProvider,
   NativeWorldSave,
@@ -984,6 +986,8 @@ const {
 export { NativeHost };
 export { NativeWorld };
 export { NativeWorldJson };
+export { NativeWorldPlayerPublication };
+export { NativeWorldPlayerRead };
 export { NativeWorldPrepared };
 export { NativeWorldProvider };
 export { NativeWorldSave };

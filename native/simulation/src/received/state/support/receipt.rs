@@ -60,6 +60,7 @@ impl TemporalState {
                         context.values,
                         context.now,
                         context.policy,
+                        context.budget,
                     )?
                 {
                     return Ok(None);
@@ -171,6 +172,7 @@ impl TemporalState {
             context.meters,
             context.places.take(),
             SupportEncoding::Receipt { availability_last },
+            context.budget,
         )
     }
 }

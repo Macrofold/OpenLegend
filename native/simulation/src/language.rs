@@ -9,6 +9,12 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::mem::size_of;
 
+mod attempts;
+pub(crate) use attempts::{
+    AttemptNormalizationAnswer, AttemptNormalizationRequest, NormalizedAttempt,
+    NormalizedAttemptFacts,
+};
+
 #[derive(Debug)]
 pub(crate) enum CollationError {
     Capacity,

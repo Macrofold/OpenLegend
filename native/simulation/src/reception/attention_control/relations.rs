@@ -548,6 +548,7 @@ pub(crate) fn evaluate_attention_relations(
             .journal
             .current
             .attention_mut(&mut core.state.reception, observer)? = Some(state);
+        core.journal.current.settle_attention(&mut core.state.reception, observer)?;
         return Ok(());
     };
     let mut scene = ReceivedSceneRead::prepare(core.state, observer, budget)?;
@@ -793,5 +794,6 @@ pub(crate) fn evaluate_attention_relations(
         .journal
         .current
         .attention_mut(&mut core.state.reception, observer)? = Some(state);
+        core.journal.current.settle_attention(&mut core.state.reception, observer)?;
     Ok(())
 }

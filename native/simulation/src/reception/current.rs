@@ -223,7 +223,7 @@ pub struct ReceivedObservation {
     pub header_ref: ReceivedValueReference,
     pub facets: Vec<ReceivedObservationFacet>,
     #[serde(skip)]
-    pub(super) storage: Option<crate::host::ByteReservation>,
+    pub(super) storage: Option<crate::host::ResidentReservation>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -431,12 +431,19 @@ pub struct CurrentPartPartition {
     pub availability: Option<CurrentAvailability>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CurrentReceivedContent {
     pub grant: CurrentFacetGrant,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub fields: IndexMap<String, CurrentStoredField>,
+    #[serde(skip)]
+    pub(super) storage: Option<crate::host::ResidentReservation>,
+}
+impl PartialEq for CurrentReceivedContent {
+    fn eq(&self, other: &Self) -> bool {
+        self.grant == other.grant && self.fields == other.fields
+    }
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -545,11 +552,13 @@ pub struct CurrentContactContent {
     pub groups: Vec<CurrentReceivedGroup>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CurrentContact {
     #[serde(skip)]
-    pub(crate) encoded_payload: Option<Arc<str>>,
+    pub(super) metadata_storage: Option<crate::host::ResidentReservation>,
+    #[serde(skip)]
+    pub(crate) encoded_payload: Option<Arc<super::current_residency::CurrentPayload>>,
     /// The Source measuredSources WeakMap is an ephemeral complete-input
     /// preparation, bound to this actual body original and lease. Cold restore
     /// must check again; this never supplies a fact, ID or saved revision.

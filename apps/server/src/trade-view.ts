@@ -1,5 +1,5 @@
 import {
-  BASE_HANDOVER,
+  selectedTradeViewTitle,
   canHandleItems,
   currentBodySubject,
   prepareCurrentBodyReadScope,
@@ -166,7 +166,7 @@ export function tradeSummary(
     personId: person.id,
     personReference: currentContactReference(world, scope, person, reads),
     personName: observerName(world, actor.id, person.id, reads).name,
-    title: BASE_HANDOVER.text.title,
+    title: selectedTradeViewTitle(world),
     draftScope: tradeDraftScope(world, scope, person, reads),
     known,
     at: world.simTime,

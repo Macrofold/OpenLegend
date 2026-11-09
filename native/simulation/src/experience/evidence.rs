@@ -190,7 +190,8 @@ fn fact_unrevoked(privacy: Option<&ActorPrivacy>, fact: &ObservationFactKey) -> 
     member_unrevoked(privacy, &fact.source.id, fact.ordinal)
 }
 pub(super) fn member_unrevoked(privacy: Option<&ActorPrivacy>, id: &str, ordinal: u64) -> bool {
-    unrevoked(privacy, id) && personal_fact_alias(id, ordinal).is_ok_and(|alias| unrevoked(privacy, &alias))
+    unrevoked(privacy, id)
+        && personal_fact_alias(id, ordinal).is_ok_and(|alias| unrevoked(privacy, &alias))
 }
 
 fn source_fact_unrevoked(

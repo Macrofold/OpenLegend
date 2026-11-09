@@ -10,7 +10,7 @@ use std::collections::{BTreeMap, BTreeSet};
 struct ActorProjection {
     pages: BTreeMap<u64, Arc<TemporalPageRecord>>,
     pending: Vec<Arc<PendingTemporalPage>>,
-    pending_storage: ByteReservation,
+    pending_storage: crate::host::ResidentReservation,
     complete: bool,
 }
 pub(crate) struct PreparedTemporalResidency {
@@ -20,6 +20,7 @@ pub(crate) struct PreparedTemporalResidency {
     identity: u64,
     actors: IndexMap<String, ActorProjection>,
     values: Option<PreparedValueResidency>,
+    acknowledged_edits: Vec<Arc<TemporalPageEditIdentity>>,
     _storage: ByteReservation,
 }
 fn invalid() -> ExecutionError {
@@ -34,7 +35,9 @@ fn acknowledged_edit(page: &TemporalPageRecord, tail: Option<&SavedActorTail>) -
     })
 }
 fn protected_edit(page: &TemporalPageRecord, tail: Option<&SavedActorTail>) -> bool {
-    page.edit_identity().is_some() && !acknowledged_edit(page, tail)
+    page.edit_identity()
+        .is_some_and(|identity| !identity.acknowledged())
+        && !acknowledged_edit(page, tail)
 }
 fn same_pages(
     a: &BTreeMap<u64, Arc<TemporalPageRecord>>,
@@ -77,11 +80,19 @@ impl SavedTemporalResidency {
             .keys()
             .try_fold(0usize, |n, id| n.checked_add(id.len()))
             .ok_or_else(capacity)?;
+        let edit_count = self
+            .actors
+            .values()
+            .try_fold(0usize, |n, tail| n.checked_add(tail.edits.len()))
+            .ok_or_else(capacity)?;
         let bytes = heap_sum([
             size_of::<PreparedTemporalResidency>(),
             state.physical.header.id.len(),
             state.generation.len(),
             names,
+            edit_count
+                .checked_mul(size_of::<Arc<TemporalPageEditIdentity>>())
+                .ok_or_else(capacity)?,
             map_storage::<String, ActorProjection>(
                 state
                     .temporal
@@ -106,6 +117,13 @@ impl SavedTemporalResidency {
         ])
         .ok_or_else(capacity)?;
         let storage = budget.reserve(bytes)?;
+        let mut acknowledged_edits = Vec::new();
+        acknowledged_edits
+            .try_reserve_exact(edit_count)
+            .map_err(|_| capacity())?;
+        for tail in self.actors.values() {
+            acknowledged_edits.extend(tail.edits.iter().cloned());
+        }
         let mut actors = IndexMap::new();
         actors
             .try_reserve(state.temporal.actors.len())
@@ -202,7 +220,7 @@ impl SavedTemporalResidency {
                 .iter()
                 .filter(|page| !affected || page.batch().batch_order >= self.identity_through)
                 .count();
-            let pending_storage = budget.reserve(
+            let pending_storage = budget.reserve_backing(
                 keep.checked_mul(size_of::<Arc<PendingTemporalPage>>())
                     .ok_or_else(capacity)?,
             )?;
@@ -271,6 +289,7 @@ impl SavedTemporalResidency {
             identity: state.physical.identity.next_id(),
             actors,
             values,
+            acknowledged_edits,
             _storage: storage,
         })
     }
@@ -320,6 +339,11 @@ impl PreparedTemporalResidency {
             || self.values.is_some() != state.reception.received_values.is_some()
         {
             return Err((invalid(), self));
+        }
+        // Admission above is read-only. Only the exact successful ACK may mark
+        // these captured objects saved; an older prefix cannot mark a newer edit.
+        for identity in &self.acknowledged_edits {
+            identity.acknowledge();
         }
         for (id, projection) in self.actors {
             let actor = state

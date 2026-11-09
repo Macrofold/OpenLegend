@@ -249,6 +249,7 @@ pub struct RowImport {
     tables: IndexMap<String, IndexMap<String, Vec<InstalledRow>>>,
     coverage: IndexMap<(String, String), OwnerCoverage>,
     entity_ordering: Option<EntityOrdering>,
+    normalized_intents: IndexMap<String, crate::records::NormalizedIntent>,
     failed: bool,
 }
 
@@ -330,6 +331,15 @@ impl RowImport {
                 tables.insert(table, owners);
             }
         }
+        let mut normalized_intents = IndexMap::new();
+        for result in input.normalized_intents {
+            if normalized_intents
+                .insert(result.row_id.clone(), result)
+                .is_some()
+            {
+                return Err(InstallError::DuplicateRow);
+            }
+        }
         Ok(Self {
             working_set: None,
             world_id: input.world_id,
@@ -339,6 +349,7 @@ impl RowImport {
             tables,
             coverage,
             entity_ordering: Some(input.entity_ordering),
+            normalized_intents,
             failed: false,
         })
     }
@@ -370,6 +381,21 @@ impl RowImport {
     }
     /// Entity ordering has one compiled owner. SQL placement positions do not
     /// reconstruct the collection's insertion counter or relabeled keys.
+    pub(crate) fn validate_normalized_intent(
+        &mut self,
+        row: &str,
+        description: &crate::text::JsText,
+        normalized: &crate::text::JsText,
+    ) -> Result<(), InstallError> {
+        let result = self
+            .normalized_intents
+            .shift_remove(row)
+            .ok_or(InstallError::CurrentFormat)?;
+        if &result.description != description || &result.normalized != normalized {
+            return Err(InstallError::CurrentFormat);
+        }
+        Ok(())
+    }
     pub fn take_entity_ordering(&mut self) -> Result<EntityOrdering, InstallError> {
         self.entity_ordering
             .take()
@@ -432,6 +458,9 @@ impl RowImport {
             ));
         }
         if !self.coverage.is_empty() {
+            return Err(InstallError::UnclaimedCoverage);
+        }
+        if !self.normalized_intents.is_empty() {
             return Err(InstallError::UnclaimedCoverage);
         }
         if self.entity_ordering.is_some() {

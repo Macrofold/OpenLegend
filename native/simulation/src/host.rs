@@ -2,11 +2,15 @@
 //! must never acquire the writer lock held by native calculation.
 
 mod budget;
+mod resident;
+mod world_memory;
 pub(crate) mod retained_size;
 pub use budget::{ByteBudget, ByteReservation, CapacityError};
+pub use resident::{ResidentMemory, ResidentReservation, SharedMemoryPin};
+pub(crate) use world_memory::{CandidateMemory, MemoryCheckpoint};
 
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 
 const STATE_BITS: u32 = 4;
 const STATE_MASK: u64 = (1 << STATE_BITS) - 1;
@@ -23,6 +27,7 @@ pub enum CandidatePhase {
     RollingBack = 5,
     Poisoned = 6,
     Stopped = 7,
+    Publishing = 8,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -70,6 +75,24 @@ pub struct CandidateFence {
     stop_requested: AtomicBool,
     last_settlement: Mutex<Option<(CandidateKey, Settlement)>>,
 }
+/// Held only for the final synchronous Node disclosure turn. Slow SQL/provider
+/// work and socket backpressure cannot retain this gate. Scoped validation is
+/// done before minting it; unrelated earlier accepted changes remain allowed.
+pub struct PublicationLease {
+    fence: Arc<CandidateFence>,
+    token: u64,
+}
+impl Drop for PublicationLease {
+    fn drop(&mut self) {
+        // Poison/stop may have superseded this lease. Never reopen such a fence.
+        let _ = self.fence.token.compare_exchange(
+            self.token,
+            token(self.token >> STATE_BITS, CandidatePhase::Idle),
+            Ordering::AcqRel,
+            Ordering::Acquire,
+        );
+    }
+}
 
 impl Default for CandidateFence {
     fn default() -> Self {
@@ -78,6 +101,23 @@ impl Default for CandidateFence {
 }
 
 impl CandidateFence {
+    pub fn begin_publication(self: &Arc<Self>) -> Result<PublicationLease, FenceError> {
+        if self.closed.load(Ordering::Acquire) {
+            return Err(FenceError::Closed);
+        }
+        let before = self.token.load(Ordering::Acquire);
+        if phase(before) != CandidatePhase::Idle {
+            return Err(phase_error(before));
+        }
+        let publishing = token(before >> STATE_BITS, CandidatePhase::Publishing);
+        self.token
+            .compare_exchange(before, publishing, Ordering::AcqRel, Ordering::Acquire)
+            .map_err(phase_error)?;
+        Ok(PublicationLease {
+            fence: Arc::clone(self),
+            token: publishing,
+        })
+    }
     pub const fn new() -> Self {
         Self {
             token: AtomicU64::new(CandidatePhase::Idle as u64),
@@ -328,6 +368,7 @@ fn phase(value: u64) -> CandidatePhase {
         4 => CandidatePhase::Rejected,
         5 => CandidatePhase::RollingBack,
         6 => CandidatePhase::Poisoned,
+        8 => CandidatePhase::Publishing,
         _ => CandidatePhase::Stopped,
     }
 }

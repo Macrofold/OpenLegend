@@ -19,6 +19,7 @@ mod text_decode;
 mod source_encoding;
 pub(crate) use source_encoding::event_references_view;
 mod current;
+mod current_residency;
 pub use current::*;
 mod geometry;
 pub use geometry::*;
@@ -74,9 +75,8 @@ pub(crate) use batch::{
 };
 mod current_journal;
 pub(crate) use attention_control::{
-    AttentionSelection, AttentionUpdate, evaluate_attention_relations, next_attention_work_at,
-    prune_withdrawn_attention, update_attention,
-    acknowledge_attention, set_attention_focus,
+    AttentionSelection, AttentionUpdate, acknowledge_attention, evaluate_attention_relations,
+    next_attention_work_at, prune_withdrawn_attention, set_attention_focus, update_attention,
 };
 mod cohort;
 pub(crate) use cohort::{
@@ -1175,7 +1175,7 @@ pub struct ObservationFactKey {
 // Keep the generic evidence/temporal DTO serializer unchanged; only the actual
 // original-fact string owner uses contributionFactKey's authored order.
 #[derive(Serialize)]
-struct OriginalFactSource<'a> {
+pub(crate) struct OriginalFactSource<'a> {
     family: EvidenceFamily,
     observer: &'a ObserverLife,
     id: &'a str,
@@ -1186,14 +1186,17 @@ pub(crate) struct OriginalFact<'a> {
     source: OriginalFactSource<'a>,
     ordinal: u64,
 }
+pub(crate) fn original_source_view(source: &EvidenceSource) -> OriginalFactSource<'_> {
+    OriginalFactSource {
+        family: source.family,
+        observer: &source.observer,
+        id: &source.id,
+        revision: &source.revision,
+    }
+}
 pub(crate) fn original_fact_view(fact: &ObservationFactKey) -> OriginalFact<'_> {
     OriginalFact {
-        source: OriginalFactSource {
-            family: fact.source.family,
-            observer: &fact.source.observer,
-            id: &fact.source.id,
-            revision: &fact.source.revision,
-        },
+        source: original_source_view(&fact.source),
         ordinal: fact.ordinal,
     }
 }

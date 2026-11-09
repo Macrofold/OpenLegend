@@ -1,4 +1,4 @@
-import { canonicalJson, prepareSpeechWords } from '@open-legend/domain';
+import { canonicalJson, normalizeAttempt, prepareSpeechWords } from '@open-legend/domain';
 
 /** ICU word boundaries are prepared once per utterance by the existing language
  * owner. No listener, identity, evidence or world state participates here.
@@ -49,4 +49,37 @@ export function nativeResponseDigest(request: {
   value: unknown;
 }) {
   return { binding: request.binding, canonical: canonicalJson(request.value) };
+}
+
+/** Intent matching uses the same engine normalization as Source, including its
+ * NFKC and JavaScript Unicode rules. This finite language preparation receives
+ * descriptions only; it neither reads a world nor decides whether an intent is
+ * permitted, pending or executable. */
+export function nativeAttemptNormalization<Binding>(request: {
+  readonly binding: Binding;
+  readonly descriptions: readonly string[];
+}) {
+  return { binding: request.binding, normalized: request.descriptions.map(normalizeAttempt) };
+}
+
+/** Cold and first-creation inputs bind each pure result to its actual canonical
+ * intention row. The native importer consumes every supplied result exactly
+ * once and compares both the description and saved normalized value. */
+export function nativeNormalizedIntents(rows: readonly { id: string; payload: string }[]) {
+  const descriptions = rows.map((row) => {
+    const value: unknown = JSON.parse(row.payload);
+    if (
+      !value ||
+      typeof value !== 'object' ||
+      typeof (value as { description?: unknown }).description !== 'string'
+    )
+      throw new Error('The current intention row has no description to normalize.');
+    return (value as { description: string }).description;
+  });
+  const prepared = nativeAttemptNormalization({ binding: null, descriptions });
+  return rows.map((row, index) => ({
+    rowId: row.id,
+    description: descriptions[index]!,
+    normalized: prepared.normalized[index]!,
+  }));
 }
