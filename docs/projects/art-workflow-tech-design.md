@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Common production readiness and its implementation modules are designed; report/rehearsal support and production qualification remain open. | 2026-11-08   |
+| In progress | Common production readiness and its implementation modules are designed; report/rehearsal support and production qualification remain open. | 2026-11-09   |
 
 This design describes how the [art workflow](art-workflow-feature-spec.md) is built: which page owns what, the seam to the art direction, the naming and storage conventions, the helper tool, the local model preview, the consumer contract the 3D route relies on, and the delivery tasks. The workflow is an agent-operated procedure; almost all of it runs on tools that already exist (the Higgsfield CLI, the OpenAI Images API, Blender 5.2.2 and the `pnpm assets` CLI). The new code is deliberately small.
 
@@ -672,9 +672,10 @@ Do not generate a new specimen merely because a module needs evidence.
 #### PR2 — Extend the existing report, then its callers
 
 Current `report` imports a file before producing measurements. Its `creature` profile has no
-required clips although the prepared actor loader needs `Idle` and `Run`; import failure can also
-prevent a diagnostic report from being written. Extend this one inspection path and its active
-callers, without a new package registry or general glTF validator.
+required clips although the prepared actor loader needs `Idle` and `Run`. Extend this one
+inspection path and its active callers. A successful measurement remains complete; an input that
+cannot be inspected fails clearly through the existing error path. No partial-report protocol,
+package registry or general glTF validator is needed.
 
 **Planned interface:** `report --final-glb` selects the existing prepared-GLB format expectations;
 without it, supported FBX/OBJ/glTF inputs remain descriptive source inspections. Repeatable
@@ -715,36 +716,36 @@ Implementation order:
    Missing or ambiguous required anchors fail that manual package check; harmless duplicate names
    are not automatically forbidden.
 
-3. **Produce an honest per-file result.** Add `inspection: {mode, issues}` to the current report,
-   with mode `source` or `final-glb` and issues containing `code`, `message` and an optional
-   file/node/channel `location`. Store encoded facts separately from existing Blender measurements.
-   Skip import after a known blocking format/dependency failure; otherwise import once. Expected
-   input/import rejection becomes an inspection issue. Preserve available file/encoded facts and
-   use `null` for measurement groups that could not be obtained, never fabricated zero counts or
-   passing budgets. Write that diagnostic and continue the requested batch. Invalid invocation,
-   an unwritable report or an unexpected tool defect remains an execution failure independently
-   of `--strict`; do not conceal it as a successfully inspected candidate.
-4. **Use one blocking-findings helper in actual callers.** Combine inspection issues with the
-   existing budget, missing-clip and mesh/bone-name failures, handling unavailable measurements
-   without dereferencing them. Update current callers together; no legacy reader is needed.
-   An operation needing unavailable measurements stops with a useful input diagnostic; it cannot
-   dereference null groups or invent measurements. Readable but incomplete authoring candidates
-   retain their existing descriptive behavior.
+3. **Return complete measurements or fail clearly.** For successfully inspected inputs, add
+   `inspection: {mode, issues}`, with mode `source` or `final-glb` and findings containing `code`,
+   `message` and an optional file/node/channel `location`. Store encoded facts separately from
+   complete Blender measurement groups. A missing required clip or exceeded budget can therefore
+   have a complete report with blocking findings. Hard final-input violations (wrong format,
+   external dependencies or prohibited decoder requirements), unreadable data and import failure
+   instead raise a diagnostic identifying the input path and reason; do not return null groups or
+   fabricated measurements. These failures, an unwritable report and tool errors remain nonzero
+   regardless of `--strict`. The CLI may stop at that input; earlier completed reports remain usable.
+   Unattended batch recovery is outside this work.
+4. **Use one blocking-findings helper in final callers.** Combine inspectable export findings with
+   the existing budget, missing-clip and mesh/bone-name failures. The CLI and people final-export
+   gate consume that one result. Other measurement callers keep their complete-result/error
+   contract; they need no new nullable-result branches or compatibility reader.
 
-   | Caller                                        | Required behavior                                                                                                                                                                                                                                                                      |
-   | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `report` CLI                                  | Write each available diagnostic; return 2 with `--strict` if any requested input has blocking findings. Without strict, a written report is descriptive, never game acceptance                                                                                                         |
-   | `people.py` final covered/dressed exports     | Pass final expectations and the selected output's required clips directly to `measure`; reject common findings and existing zero-area failures before the expensive exported-motion check and success receipt. Do not spawn another Blender process or reimport merely to call the CLI |
-   | `normalize`, `clips`, `head` authoring stages | Keep descriptive intermediate reports and current export behavior; an unfinished authoring stage does not become a strict final-asset gate                                                                                                                                             |
-   | `sheet models`                                | Consume available measurements for labels; stop with the input diagnostic when required groups are unavailable. Preserve ordinary sheet behavior                                                                                                                                       |
-   | Active final-export instructions              | Apply clip requirements to the actual animated consumer file. The [animal recipe](../../scripts/prepare-game-animals.ts) also writes a static companion; only its `animatedFile` needs actor clips. Do not retrofit every historical study recipe                                      |
+   | Caller                                        | Required behavior                                                                                                                                                                                                                                                                                 |
+   | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `report` CLI                                  | For successfully inspected inputs, write complete reports and return 2 with `--strict` if any has blocking findings. Without strict, those reports remain descriptive. Inspection or output failure is always nonzero                                                                             |
+   | `people.py` final covered/dressed exports     | Pass final expectations and the selected output's required clips to `measure`; reject common findings and zero-area failures before the expensive motion check and success receipt. Inspection exceptions use its existing failed-receipt path; no second Blender process or reimport for the CLI |
+   | `normalize`, `clips`, `head` authoring stages | Keep descriptive intermediate reports and current export behavior; an unfinished authoring stage does not become a strict final-asset gate                                                                                                                                                        |
+   | `sheet models`                                | Keep its existing complete measurement input and ordinary failure behavior; no partial-label handling is required                                                                                                                                                                                 |
+   | Active final-export instructions              | Apply clip requirements to the actual animated consumer file. The [animal recipe](../../scripts/prepare-game-animals.ts) also writes a static companion; only its `animatedFile` needs actor clips. Do not retrofit every historical study recipe                                                 |
 
 5. **Check the actual boundaries.** Use disposable local cases: a valid static GLB; an FBX source
    with and without the final expectation; an animated creature missing `Run`; a required source
    action omitted from export or with unresolved channels; and a missing required texture/buffer.
-   Confirm the negative input writes a diagnostic and does not stop the next selected file, strict
-   exits nonzero, and the people final gate consumes the same finding. Check one normal intermediate
-   authoring output still succeeds. Other extension/material/playback compatibility remains an
+   Confirm inspectable missing-clip/budget cases write complete reports and strict returns 2;
+   uninspectable or hard-rejected final inputs identify the file and fail even without strict.
+   The people gate must reject both findings and inspection exceptions without a success receipt.
+   Check one normal intermediate output still succeeds. Other extension/material/playback compatibility remains an
    explicit PR3 consumer check; a clean offline report does not establish it.
 
 Keep the shared reader and finding collection small, with no new package dependency, retained

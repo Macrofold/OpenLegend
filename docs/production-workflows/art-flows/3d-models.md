@@ -118,8 +118,9 @@ Image-to-3D services rebuild what they are shown. A dramatic, lit, cropped conce
 - One subject, whole, including feet or base, centred, with the same scale and ground line in every view. Nothing is cropped or overlapping the edge.
 - Even, neutral light with no cast shadows, rim light, fog or strong colour cast; a plain light-grey background.
 - A long-lens, near-orthographic look with the camera at mid-height; no wide-angle distortion.
-- **Bodies in an A-pose:** arms about 30–45° down from horizontal and clear of the body, legs slightly apart, hands open and relaxed, head straight, a neutral face with the mouth closed. Use a T-pose only when the chosen rig route asks for it.
-- Gaps visible between arms and torso and between the legs; capes, hems and hair kept off the limbs where the design allows.
+- **Humanoid bodies:** use an A-pose with arms about 30–45° down from horizontal and clear of the body, legs slightly apart, hands open and relaxed, head straight, a neutral face with the mouth closed. Use a T-pose when the selected rig route requires it.
+- **Other anatomies:** preserve the selected source/rig's neutral rest stance. For a new authored rig, choose an anatomy-appropriate neutral stance in the brief; do not request human arms or hands for an animal. Keep that pose consistent across views.
+- Make the relevant limbs and appendages distinct, with gaps where needed for reconstruction; keep capes, hems and hair off them where the design allows.
 - **Separate what the game separates:** remove held items, weapons and removable packs from the views and make them their own assets. Keep straps, belts and anything sewn on.
 - At least 1,024 px on the long side, PNG.
 
@@ -137,7 +138,7 @@ Image-to-3D services rebuild what they are shown. A dramatic, lit, cropped conce
    - Back views come back as two figures, front and back side by side (all five did); crop the back figure.
    - About one side view in five faces the wrong way (two of ten). Check every side view's facing and regenerate wrong ones with the direction spelled out, for example "the nose points to the LEFT edge of the image".
 
-A tool-neutral prompt for a reference drawing follows. For people, show the complete body in the selected world’s fitted baseline undergarments, with its torso and pelvis visible around the coverage pieces. Make separate modeling references for each wearable as the [people procedure](people.md) describes.
+A tool-neutral prompt for a **humanoid** reference drawing follows. For another anatomy, replace its pose and body-part clauses with the selected neutral stance and actual limbs or appendages. For people, show the complete body in the selected world’s fitted baseline undergarments, with its torso and pelvis visible around the coverage pieces. Make separate modeling references for each wearable as the [people procedure](people.md) describes.
 
 > The same character as the reference image, shown as a clean modeling reference: full body from head to feet, **[front / back / left side / right side]** view, A-pose with arms angled about 40 degrees down from horizontal and clear of the body, hands open, legs slightly apart, neutral expression. Even soft studio light, no shadows, plain light-grey background, orthographic, centred, nothing cropped. Keep exactly: **[locks]**. Do not include: **[separate items]**.
 
@@ -166,7 +167,7 @@ A [generated head](#give-a-person-a-generated-head) takes four close-up views of
 ## Step 4 — Generate model candidates
 
 1. **Estimate** the batch ([how](tools.md#estimate-and-record-cost)) and add it to the running total.
-2. **Generate three candidates** from the same view set with the default routes: two from one model with different seeds and one from a second model, so their mistakes differ. The exact commands and settings are in [tools](tools.md#image-to-3d). Request texture and, for bodies, the A-pose; ask for the triangle budget of the subject's kind (20,000 for a rigid prop, 40,000 for a body; [polycount settings](tools.md#image-to-3d)); leave rigging until a candidate is picked (Step 8). A body that will be rigged through Higgsfield must come back as a GLB facing the front, since the rigger takes the raw candidate ([rigging](tools.md#rigging-and-clips)).
+2. **Generate three candidates** from the same view set with the default routes: two from one model with different seeds and one from a second model, so their mistakes differ. The exact commands and settings are in [tools](tools.md#image-to-3d). Request texture and, for articulated bodies, the anatomy/rig-appropriate pose selected in Step 3; ask for the triangle budget of the subject's kind (20,000 for a rigid prop, 40,000 for a body; [polycount settings](tools.md#image-to-3d)); leave rigging until a candidate is picked (Step 8). A body that will be rigged through Higgsfield must come back as a GLB facing the front, since the rigger takes the raw candidate ([rigging](tools.md#rigging-and-clips)).
 3. **Add outside candidates** when they apply: an accepted family body dressed to the concept (for people, not the rejected MakeHuman bodies), a library model, or a quick hand-blocked form. They are compared like any generated candidate.
 4. **Save each raw output** as `models/m0N-<subject>.glb`, unchanged, with its job ID and settings in the record. Upload the batch, including rejected candidates, to the private study collection as soon as it finishes ([preserve as you go](README.md#9-preserve-and-resume)), because provider links expire.
 
@@ -254,7 +255,7 @@ For an already rigged source, keep the armature transforms, rest pose, topology 
 
 ### Skinning checks
 
-Pose the model through its extremes before making clips, and fix the weights or topology rather than hiding a bad bend:
+Choose stress poses from the selected anatomy, rig and required motion before making clips. Fix weights or topology that fail those poses. For a humanoid, typical checks are:
 
 - arms raised to horizontal and above the head;
 - elbows and knees bent about 120°;
@@ -262,7 +263,7 @@ Pose the model through its extremes before making clips, and fix the weights or 
 - a 45° torso twist;
 - hands opening and closing where the hands are rigged.
 
-Check shoulders, armpits, hips, hems and anything worn over the body; garments must not pass through the legs or chest. Keep at most 4 influences per vertex and 64 joints, and keep bone names stable, because shared clips depend on them. Matching bone names alone does not make two skeletons compatible: proportions, rest pose and weights must also agree.
+For other anatomies, inspect the target rig's relevant joint limits, required motion extremes and contact points, including moving appendages when present. Check joints, body folds and attached or worn parts; for humanoids include shoulders, armpits, hips and hems. Required garments and attachments must not pass through the underlying body. Keep at most 4 influences per vertex and 64 joints, and keep bone names stable, because shared clips depend on them. Matching bone names alone does not make two skeletons compatible: proportions, rest pose and weights must also agree.
 
 **Rough export first.** Apply the [common early rehearsal](runtime-preparation.md#3-build-a-rough-assembly-and-rehearse-its-difficult-dependency) to every asset with an uncertain consumer dependency, including moving props, foliage and usable structures. For a character, before finishing materials or making a clip set, export the rough rigged body with its most demanding garment or carried thing and look at it in the study viewer ([Step 10](#step-10--export-and-check-in-the-games-look)): standing, turning and one representative bend. This finds wrong scale, bind pose, foot anchor, readability and material assumptions while they are cheap to change. When game integration is outside the request, this preview stands in for it and gameplay qualification stays open. A body, rig or garment meant for reuse is qualified with its family's [fit envelope](../../projects/3d-pixel-art-appearance-families.md#qualify-the-reusable-fit-envelope), and a route for repeated use is chosen with the [matched character-production comparison](../../projects/3d-pixel-art-validation.md#matched-character-production-comparison).
 
