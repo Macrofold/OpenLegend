@@ -3,7 +3,7 @@
 //! See docs/simulation-time.md#native-interval-contract.
 use super::{MechanicalForecast, SliceActions};
 use crate::execution::{CoreMutation, ExecutionError, StagedOccurrence};
-use crate::geometry::GeometryBinding;
+use crate::geometry::{GeometryBinding, GeometryQueries};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::movement::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
 use crate::state::Point;
@@ -26,6 +26,11 @@ pub(crate) struct MotionSliceCursor {
     _reservation: ByteReservation,
 }
 impl MotionSliceCursor {
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.current
+            .as_ref()
+            .and_then(|cursor| cursor.queries().ok())
+    }
     pub(crate) fn new(
         actions: SliceActions,
         seconds: f64,

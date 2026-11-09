@@ -16,7 +16,7 @@ pub(crate) use event::{acquire_event, event_reception_needed, require_supported_
 mod ground;
 pub(crate) use ground::{GroundTurn, ground_turn, proposal_current};
 mod movement;
-pub(crate) use movement::complete_movement;
+pub(crate) use movement::{complete_movement, movement_refused};
 mod response;
 mod search;
 mod wander;

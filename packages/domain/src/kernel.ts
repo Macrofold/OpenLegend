@@ -6792,7 +6792,7 @@ function* advanceWorldNative(
   if (
     !Number.isFinite(elapsedSimSeconds) ||
     elapsedSimSeconds < 0 ||
-    elapsedSimSeconds > SIMULATION_RULES.maxAdvanceSeconds ||
+    elapsedSimSeconds > selectedTimeRules(original).maxAdvanceSeconds ||
     !Number.isSafeInteger(maxIntervals) ||
     maxIntervals < 1 ||
     maxIntervals > 4096
@@ -6803,7 +6803,7 @@ function* advanceWorldNative(
       outcome: outcome(
         false,
         'invalid-duration',
-        'Supply zero to one game day and a bounded positive interval count.',
+        selectedTimeRules(original).invalidDurationMessage,
       ),
     };
   if (

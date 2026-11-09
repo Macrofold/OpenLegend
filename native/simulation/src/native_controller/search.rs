@@ -65,6 +65,15 @@ pub(super) struct GroundSearchCursor {
     prefix: usize,
     _reservation: ByteReservation,
 }
+impl GroundSearchCursor {
+    pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.clearance
+            .as_ref()
+            .and_then(PathClearanceCursor::geometry_request)
+            .or_else(|| self.question.as_ref().map(|(question, _)| question))
+            .or_else(|| self.support.as_ref().map(RefugeCandidateBatch::queries))
+    }
+}
 
 pub(super) fn route_plan(
     plan: RoutePlan,

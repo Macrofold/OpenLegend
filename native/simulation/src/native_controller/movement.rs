@@ -4,6 +4,41 @@ use super::*;
 use crate::commands::NativeMovementInput;
 use crate::execution::CoreMutation;
 
+pub(crate) fn movement_refused(
+    core: &mut CoreMutation<'_>,
+    actor: &str,
+    outcome: &crate::commands::Outcome,
+) -> Result<(), ExecutionError> {
+    let Some(state) = core
+        .state
+        .physical
+        .entities
+        .get(actor)
+        .and_then(|entity| entity.animal.as_ref())
+        .filter(|state| state.episode.is_some())
+    else {
+        return Ok(());
+    };
+    let Ok(profile) = selected_profile(&core.state.installed, state) else {
+        return Ok(());
+    };
+    let review_at = core.state.physical.header.sim_time + profile.blocked_review_seconds;
+    let mut mutation = core.physical();
+    mutation.reserve_response_growth(outcome.code.len() + "movement-admission".len())?;
+    let episode = mutation
+        .snapshot_episode(actor)?
+        .as_mut()
+        .ok_or(ExecutionError::Invariant)?;
+    episode.mode = ResponseMode::Blocked;
+    episode.review_at = review_at;
+    episode.blocked = Some(BlockedResponse {
+        reason: outcome.code.clone(),
+        basis: "movement-admission".into(),
+    });
+    episode.proposal = None;
+    mutation.animal_clock_changed(actor)
+}
+
 pub(crate) fn complete_movement(
     core: &mut CoreMutation<'_>,
     actor_id: &str,

@@ -56,6 +56,13 @@ pub(crate) struct GroundResponseCursor {
     _reservation: ByteReservation,
 }
 impl GroundResponseCursor {
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.search
+            .as_ref()
+            .and_then(GroundSearchCursor::geometry_request)
+            .or_else(|| self.question.as_ref().map(|(question, _)| question))
+            .or_else(|| self.danger.as_ref().map(DangerBatch::queries))
+    }
     pub(crate) fn prepare(
         actor: &str,
         candidate: CandidateKey,

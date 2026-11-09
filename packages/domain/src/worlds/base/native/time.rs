@@ -9,6 +9,7 @@ struct TimeRules {
     idle_horizon_seconds: f64,
     perception_travel_metres: f64,
     max_advance_seconds: f64,
+    invalid_duration_message: crate::text::JsText,
 }
 pub(crate) struct InstalledTimeRules {
     value: TimeRules,
@@ -44,6 +45,9 @@ impl InstalledTimeRules {
     }
     pub(crate) fn maximum_advance_seconds(&self) -> f64 {
         self.value.max_advance_seconds
+    }
+    pub(crate) fn invalid_duration_message(&self) -> &crate::text::JsText {
+        &self.value.invalid_duration_message
     }
     pub(crate) fn canonical(&self) -> &str {
         &self.canonical

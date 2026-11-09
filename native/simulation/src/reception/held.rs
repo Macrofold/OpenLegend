@@ -165,21 +165,9 @@ impl HeldReceptionCursor {
             return Err(invalid());
         }
         if self.active {
-            let entity = core
-                .state
-                .physical
-                .entities
-                .get(&self.observer)
-                .ok_or(ExecutionError::MissingActor)?;
-            if entity.has_memory() {
-                // Interpreting held geometry still enters the current receiving
-                // sequence, even when no fresh original observation is needed.
-                core.journal.originals.ensure_owner(
-                    &mut core.state.reception,
-                    entity,
-                    core.state.physical.header.sequence,
-                )?;
-            }
+            // Held geometry continuation alone does not start a new receiving
+            // sequence. Actual acquisition and due attention selection enter
+            // their own receiving owner, as Source continuePerceptionWork does.
             if let Some(before) = self.before.take() {
                 reconcile_current_cohort(core, before, None, budget)?;
             }

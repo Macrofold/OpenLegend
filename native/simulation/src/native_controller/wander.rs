@@ -37,6 +37,9 @@ pub(crate) struct WanderCursor {
     _reservation: ByteReservation,
 }
 impl WanderCursor {
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.turn.as_ref().map(|turn| &turn.queries)
+    }
     pub(crate) fn prepare(
         core: &mut CoreMutation<'_>,
         actor: &str,

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                 | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native ownership and immutable writer foundations are in progress; complete pipeline qualification remains open. | 2026-11-08   |
+| In progress | Native ownership and immutable writer foundations are in progress; complete pipeline qualification remains open. | 2026-11-09   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 

@@ -12,4 +12,5 @@ export const BASE_SIMULATION_TIME_RULES = {
   idleHorizonSeconds: BASE_TIME_POLICY.idleHorizonSeconds,
   perceptionTravelMetres: BASE_TIME_POLICY.perceptionTravelMetres,
   maxAdvanceSeconds: BASE_TIME_POLICY.maxAdvanceSeconds,
+  invalidDurationMessage: 'Supply zero to one game day and a bounded positive interval count.',
 } as const;

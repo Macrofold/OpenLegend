@@ -58,6 +58,28 @@ pub(crate) struct CompletedPerception {
     pub policies: RoutinePolicyCache,
     _reservation: ByteReservation,
 }
+impl CompletedPerception {
+    pub(crate) fn into_events(
+        self,
+    ) -> Result<(Vec<CompletedEvent>, RoutinePolicyCache, ByteReservation), ExecutionError> {
+        let Self {
+            events,
+            policies,
+            requested_sight,
+            _reservation: mut reservation,
+        } = self;
+        drop(requested_sight);
+        // The phase cursor and selected-ID product have ended. Only this event
+        // vector remains here; each event owns its own body/awareness allowance.
+        reservation.resize(
+            events
+                .capacity()
+                .checked_mul(size_of::<CompletedEvent>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok((events, policies, reservation))
+    }
+}
 struct Entry {
     id: String,
     timing: Option<RoutineObservation>,

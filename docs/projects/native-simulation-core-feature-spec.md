@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                        | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native owner integration is in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-08   |
+| In progress | Native owner integration is in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-09   |
 
 ## 1. Purpose and selected direction
 

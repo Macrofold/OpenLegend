@@ -13,11 +13,15 @@ struct ObligationFields {
 struct Pending {
     source: Arc<PersonalSourceRecord>,
 }
-fn possible(header: &PersonalSourceHeader, events: &[WorldEvent], now: f64) -> bool {
+fn possible<'a>(
+    header: &PersonalSourceHeader,
+    mut events: impl Iterator<Item = &'a WorldEvent>,
+    now: f64,
+) -> bool {
     header.unresolved_obligation
         && (header.obligation_due_at.is_some_and(|at| at <= now)
             || header.completion_event_type.as_deref().is_some_and(|kind| {
-                events.iter().any(|event| {
+                events.any(|event| {
                     event.actor_id.as_deref() == Some(header.actor_id.as_str())
                         && event.event_type == kind
                 })
@@ -25,11 +29,16 @@ fn possible(header: &PersonalSourceHeader, events: &[WorldEvent], now: f64) -> b
 }
 /// Unavailable residency remains a hydration request. Missing retained history
 /// never becomes proof that no obligation can be fulfilled or turn overdue.
-pub(crate) fn advance_commitments(
+pub(crate) fn advance_commitments<'a, E>(
     core: &mut CoreMutation<'_>,
-    events: &[WorldEvent],
+    events: E,
     budget: &ByteBudget,
-) -> Result<(), MemoryAcquisitionError> {
+) -> Result<(), MemoryAcquisitionError>
+where
+    E: IntoIterator<Item = &'a WorldEvent>,
+    E::IntoIter: Clone,
+{
+    let events = events.into_iter();
     let owners = core.state.experience.memory_owners(budget)?;
     let now = core.state.physical.header.sim_time;
     let count = owners.iter().try_fold(0usize, |count, owner| {
@@ -41,7 +50,7 @@ pub(crate) fn advance_commitments(
                 owner
                     .collection
                     .records()
-                    .filter(|record| possible(record.header(), events, now))
+                    .filter(|record| possible(record.header(), events.clone(), now))
                     .count(),
             )
             .ok_or(ExperienceError::Capacity)
@@ -61,7 +70,7 @@ pub(crate) fn advance_commitments(
         for record in owner
             .collection
             .records()
-            .filter(|record| possible(record.header(), events, now))
+            .filter(|record| possible(record.header(), events.clone(), now))
         {
             pending.push(Pending {
                 source: Arc::clone(record),
@@ -84,7 +93,7 @@ pub(crate) fn advance_commitments(
         let completion = obligation.get("completion").map(object).transpose()?;
         let evidence = if let Some(completion) = completion {
             let kind = text(completion, "eventType")?;
-            events.iter().find(|event|event.actor_id.as_deref()==Some(record.header.actor_id.as_str())&&event.id!=evidence_id&&event.event_type==kind
+            events.clone().find(|event|event.actor_id.as_deref()==Some(record.header.actor_id.as_str())&&event.id!=evidence_id&&event.event_type==kind
                 &&completion.get("targetId").and_then(Value::as_str).filter(|target|!target.is_empty()).is_none_or(|target|event.target_id.as_deref()==Some(target))
                 &&completion.get("definitionId").and_then(Value::as_str).filter(|id|!id.is_empty()).is_none_or(|id|
                     matches!(event.data.as_ref().and_then(|data|data.get("definitionId")),Some(crate::reception::EventScalar::Text(value)) if value==id)))

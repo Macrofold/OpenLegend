@@ -65,6 +65,9 @@ fn occurrence(
     }
 }
 impl EndpointCursor {
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.work.as_ref().and_then(|cursor| cursor.queries().ok())
+    }
     pub(crate) fn new(
         core: &mut CoreMutation<'_>,
         participants: &NativeParticipants,
