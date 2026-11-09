@@ -18,5 +18,5 @@ mod advance;
 mod reconcile;
 mod sensing;
 pub(crate) use advance::{
-    AdvanceAnswer, AdvanceCursor, AdvanceError, AdvanceStep, CompletedAdvance,
+    AdvanceAnswer, AdvanceContinuation, AdvanceCursor, AdvanceError, AdvanceStep, CompletedAdvance,
 };

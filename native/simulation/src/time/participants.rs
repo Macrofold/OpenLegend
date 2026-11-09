@@ -120,46 +120,50 @@ pub(crate) struct ParticipantPreparation {
     counts: [usize; GROUPS],
     reservation: ByteReservation,
 }
+#[derive(Clone)]
 pub(crate) struct NativeParticipants {
+    shared: std::sync::Arc<ParticipantGroups>,
+}
+struct ParticipantGroups {
     groups: [Vec<EntityHandle>; GROUPS],
     _reservation: ByteReservation,
 }
 impl NativeParticipants {
     pub(crate) fn actors(&self) -> &[EntityHandle] {
-        &self.groups[0]
+        &self.shared.groups[0]
     }
     pub(crate) fn ambient(&self) -> &[EntityHandle] {
-        &self.groups[1]
+        &self.shared.groups[1]
     }
     pub(crate) fn ambient_movers(&self) -> &[EntityHandle] {
-        &self.groups[2]
+        &self.shared.groups[2]
     }
     pub(crate) fn animals(&self) -> &[EntityHandle] {
-        &self.groups[3]
+        &self.shared.groups[3]
     }
     pub(crate) fn heat_sources(&self) -> &[EntityHandle] {
-        &self.groups[4]
+        &self.shared.groups[4]
     }
     pub(crate) fn remains(&self) -> &[EntityHandle] {
-        &self.groups[5]
+        &self.shared.groups[5]
     }
     pub(crate) fn planned_actors(&self) -> &[EntityHandle] {
-        &self.groups[6]
+        &self.shared.groups[6]
     }
     pub(crate) fn territorial(&self) -> &[EntityHandle] {
-        &self.groups[7]
+        &self.shared.groups[7]
     }
     pub(crate) fn statuses(&self) -> &[EntityHandle] {
-        &self.groups[8]
+        &self.shared.groups[8]
     }
     pub(crate) fn projectile_bodies(&self) -> &[EntityHandle] {
-        &self.groups[9]
+        &self.shared.groups[9]
     }
     pub(crate) fn permission_actions(&self) -> &[EntityHandle] {
-        &self.groups[10]
+        &self.shared.groups[10]
     }
     pub(crate) fn players(&self) -> &[EntityHandle] {
-        &self.groups[11]
+        &self.shared.groups[11]
     }
 }
 impl ParticipantPreparation {
@@ -300,14 +304,21 @@ impl ParticipantPreparation {
         }
         let retained = groups
             .iter()
-            .try_fold(size_of::<NativeParticipants>(), |bytes, group| {
-                bytes.checked_add(group.capacity().checked_mul(size_of::<EntityHandle>())?)
-            })
+            .try_fold(
+                size_of::<NativeParticipants>()
+                    + size_of::<ParticipantGroups>()
+                    + 2 * size_of::<usize>(),
+                |bytes, group| {
+                    bytes.checked_add(group.capacity().checked_mul(size_of::<EntityHandle>())?)
+                },
+            )
             .ok_or(ExecutionError::Capacity)?;
         self.reservation.resize(retained)?;
         Ok(NativeParticipants {
-            groups,
-            _reservation: self.reservation,
+            shared: std::sync::Arc::new(ParticipantGroups {
+                groups,
+                _reservation: self.reservation,
+            }),
         })
     }
 }

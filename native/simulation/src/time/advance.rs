@@ -42,6 +42,7 @@ use crate::reception::{
 };
 use crate::state::{EntityHandle, NativeInterval};
 use std::mem::size_of;
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub(crate) enum AdvanceError {
@@ -136,8 +137,37 @@ impl EventBatch {
 pub(crate) struct CompletedAdvance {
     pub outcome: Outcome,
     pub navigation: Vec<(EntityHandle, PendingRefugeNavigation)>,
+    pub continuation: Option<AdvanceContinuation>,
     events: Vec<EventBatch>,
     _reservation: ByteReservation,
+}
+/// Derived calculation for the exact completed private cut. The public host
+/// must bind any accepted continuation to its actual acceptance receipt; a
+/// caller cannot attach an old forecast to a different candidate or mutation.
+#[derive(Clone)]
+pub(crate) struct AdvanceContinuation(Arc<AdvanceSnapshot>);
+struct AdvanceSnapshot {
+    candidate: CandidateKey,
+    installed: Arc<crate::simulation::InstalledWorld>,
+    sequence: u64,
+    at: f64,
+    physical: PhysicalChangeCursor,
+    mechanics: MechanicalForecast,
+    roster: NativeParticipants,
+    _reservation: ByteReservation,
+}
+impl AdvanceContinuation {
+    fn current(&self, core: &CoreMutation<'_>, candidate: CandidateKey) -> bool {
+        self.0.candidate == candidate
+            && Arc::ptr_eq(&self.0.installed, &core.state.installed)
+            && self.0.sequence == core.state.physical.header.sequence
+            && self.0.at == core.state.physical.header.sim_time
+            && core
+                .journal
+                .physical
+                .changes_since(self.0.physical)
+                .is_ok_and(|changes| changes.is_empty())
+    }
 }
 impl CompletedAdvance {
     pub(crate) fn events(&self) -> impl Iterator<Item = &WorldEvent> + Clone {
@@ -249,6 +279,7 @@ pub(crate) struct AdvanceCursor {
     saved_interval: Option<NativeInterval>,
     navigation_blocked: bool,
     outcome: Option<Outcome>,
+    continuation: Option<AdvanceContinuation>,
     reservation: Option<ByteReservation>,
 }
 fn invalid() -> ExecutionError {
@@ -304,6 +335,7 @@ impl AdvanceCursor {
         max_intervals: usize,
         candidate: CandidateKey,
         prepared: Vec<(String, PreparedRefugeNavigation)>,
+        continuation: Option<&AdvanceContinuation>,
         budget: &ByteBudget,
     ) -> Result<Self, AdvanceError> {
         // The finite operation result owns only bounded control text.
@@ -325,6 +357,7 @@ impl AdvanceCursor {
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let now = core.state.physical.header.sim_time;
+        let continuation = continuation.filter(|value| value.current(core, candidate));
         let mut result = Self {
             candidate,
             child: None,
@@ -336,13 +369,13 @@ impl AdvanceCursor {
             slices_since_boundary: 0,
             phase: Phase::Begin,
             next: 0,
-            roster: None,
+            roster: continuation.map(|value| value.0.roster.clone()),
             roster_cursor: core.journal.physical.change_cursor(),
             perceivers: Vec::new(),
             perceivers_captured: false,
             preparation: None,
             policies: None,
-            mechanics: None,
+            mechanics: continuation.map(|value| value.0.mechanics.clone()),
             pending_seconds: 0.0,
             pending_rates: None,
             seconds: 0.0,
@@ -379,6 +412,7 @@ impl AdvanceCursor {
             saved_interval: None,
             navigation_blocked: false,
             outcome: None,
+            continuation: continuation.cloned(),
             reservation: Some(reservation),
         };
         if !seconds.is_finite()
@@ -413,6 +447,9 @@ impl AdvanceCursor {
                     budget,
                 )?);
                 result.saved_interval = core.state.physical.header.native_interval.take();
+                if result.mechanics.is_some() {
+                    result.saved_interval = None;
+                }
                 Ok(())
             })();
             if let Err(error) = initialized {

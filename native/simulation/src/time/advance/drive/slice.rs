@@ -349,6 +349,8 @@ impl AdvanceCursor {
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
     ) -> Result<(), AdvanceError> {
+        let publication = core.journal.physical.change_cursor();
+        let events = self.event_count();
         core.state.physical.header.native_interval = self
             .mechanics
             .as_ref()
@@ -360,6 +362,26 @@ impl AdvanceCursor {
         core.physical().reconcile_closed_coaching()?;
         advance_commitments(core, self.events(), budget)?;
         core.sync_sensory_changes()?;
+        if events != self.event_count()
+            || core
+                .journal
+                .physical
+                .changes_since(publication)?
+                .iter()
+                .any(|change| {
+                    matches!(
+                        change,
+                        crate::execution::PhysicalChange::Body { .. }
+                            | crate::execution::PhysicalChange::Behavior { .. }
+                            | crate::execution::PhysicalChange::Contribution { .. }
+                            | crate::execution::PhysicalChange::Attribute { .. }
+                            | crate::execution::PhysicalChange::Membership { .. }
+                    )
+                })
+        {
+            self.discard_mechanics()?;
+            core.state.physical.header.native_interval = None;
+        }
         core.state.physical.header.sequence = core
             .state
             .physical
@@ -387,6 +409,22 @@ impl AdvanceCursor {
                 self.motion_slices
             ),
         );
+        self.continuation = if let (Some(mechanics), Some(roster)) = (&self.mechanics, &self.roster)
+        {
+            Some(AdvanceContinuation(Arc::new(AdvanceSnapshot {
+                candidate: self.candidate,
+                installed: core.state.installed.clone(),
+                sequence: core.state.physical.header.sequence,
+                at: core.state.physical.header.sim_time,
+                physical: core.journal.physical.change_cursor(),
+                mechanics: mechanics.clone(),
+                roster: roster.clone(),
+                _reservation: budget
+                    .reserve(size_of::<AdvanceSnapshot>() + 2 * size_of::<usize>())?,
+            })))
+        } else {
+            None
+        };
         let child = self.child.take().ok_or(ExecutionError::InvalidCheckpoint)?;
         core.journal.keep(core.state, child)?;
         self.outcome = Some(result);

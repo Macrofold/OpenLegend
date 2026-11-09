@@ -28,15 +28,25 @@ impl Bound {
         }
     }
 }
+#[derive(Clone)]
 pub(crate) struct MechanicalForecast {
     pub seconds: f64,
     pub ends_at: Option<f64>,
+    preparation: Arc<MechanicalPreparation>,
+}
+pub(crate) struct MechanicalPreparation {
     pub requires_immediate_integration: bool,
     pub rates: Vec<Arc<StatusRateInterval>>,
     pub private_walkers: IndexSet<EntityHandle>,
     pub referenced: IndexSet<String>,
     travel: MotionTravelBounds,
     _reservation: ByteReservation,
+}
+impl std::ops::Deref for MechanicalForecast {
+    type Target = MechanicalPreparation;
+    fn deref(&self) -> &Self::Target {
+        &self.preparation
+    }
 }
 impl MechanicalForecast {
     pub(crate) fn travel_for(&self, entity: EntityHandle) -> f64 {
@@ -57,7 +67,7 @@ impl MechanicalForecast {
             MotionTravelBounds::prepare(physical, &installed, participants, requested, budget)?;
         let mut reservation = budget.reserve(
             heap_sum([
-                size_of::<Self>(),
+                size_of::<Self>() + size_of::<MechanicalPreparation>() + 2 * size_of::<usize>(),
                 map_storage::<EntityHandle, ()>(participants.actors().len())
                     .ok_or(ExecutionError::Capacity)?,
             ])
@@ -383,12 +393,14 @@ impl MechanicalForecast {
         Ok(Self {
             seconds,
             ends_at,
-            requires_immediate_integration: immediate,
-            rates,
-            private_walkers,
-            referenced,
-            travel,
-            _reservation: reservation,
+            preparation: Arc::new(MechanicalPreparation {
+                requires_immediate_integration: immediate,
+                rates,
+                private_walkers,
+                referenced,
+                travel,
+                _reservation: reservation,
+            }),
         })
     }
 }

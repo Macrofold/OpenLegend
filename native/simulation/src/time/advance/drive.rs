@@ -404,6 +404,11 @@ impl AdvanceCursor {
                     if answer.is_some() {
                         return Err(invalid().into());
                     }
+                    if self.mechanics.as_ref().is_some_and(|mechanics| {
+                        mechanics.seconds <= core.state.installed.time_epsilon
+                    }) {
+                        self.discard_mechanics()?;
+                    }
                     if self.mechanics.is_none() && self.pending_flush(core, Phase::Begin, budget)? {
                         continue;
                     }
@@ -845,6 +850,7 @@ impl AdvanceCursor {
                     return Ok(Progress::Complete(CompletedAdvance {
                         outcome: self.outcome.take().ok_or_else(invalid)?,
                         navigation: std::mem::take(&mut self.navigation),
+                        continuation: self.continuation.take(),
                         events: std::mem::take(&mut self.events),
                         _reservation: self.reservation.take().ok_or_else(invalid)?,
                     }));
