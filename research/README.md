@@ -2,7 +2,13 @@
 
 | Research status           | Progress                                                                                                                                                                     | Last updated |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Maintained research index | Links engine/platform research, the Godot community/AI review, and the current Unreal/Unity subsystem study; the browser-first milestone remains the selected next delivery. | 2026-10-24   |
+| Maintained research index | Links persistent-MMORPG foundations, engine/platform research, the Godot community/AI review, and the Unreal/Unity subsystem study; existing delivery priorities remain unchanged. | 2026-11-09   |
+
+## Foundations for persistent MMORPG scale
+
+The [MMORPG foundations collection](mmorpg-foundations/README.md) investigates which engine contracts should be established now or soon to avoid expensive rework as OpenLegend grows into a simulation-heavy persistent world. It covers independent seed copies, large coordinates, sparse physical residency, dependency and work bounds, autonomous-world service, disclosure-safe delivery, long-lived data, recovery and complete-path qualification. Its evidence cutoff is **2026-11-09**.
+
+Start with the [baseline and existing coverage](mmorpg-foundations/01-baseline-and-existing-coverage.md), then the [sequencing and qualification guide](mmorpg-foundations/08-sequencing-and-qualification.md). The [focused needs-design register](../docs/maintainers/mmorpg-scalability-needs-design.md) routes six preparation areas into existing owners without duplicating NSC/BK/PF/PS/NET/PD implementation queues. The [native-core design and staged experiments](../docs/maintainers/native-simulation-core.md) remain authoritative for that work. Research recommendations do not claim implementation, measured capacity, a changed release target or infrastructure adoption.
 
 ## Current Unreal and Unity runtime mechanisms
 

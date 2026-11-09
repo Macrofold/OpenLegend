@@ -8,6 +8,8 @@
 
 This tracker owns native-core conversion and its experiments. [PF10/PF11](performance.md#pf10--workers-and-movement-prediction) retains worker/operating and population qualification; [D6/PD12](production-deployment.md#conditional-launch-and-expansion) retains production distributed delivery. Do not duplicate their task bodies or claim their completion from a proof. [BK29](production-data.md#bk29--pressure-and-preparation-work-removal-proposed) remains the owner of current-runtime semantic/retention improvements; take its accepted source as common behavior when comparing.
 
+The [MMORPG foundations research](../../research/mmorpg-foundations/README.md) and [focused needs-design register](mmorpg-scalability-needs-design.md) identify additional preparation for large coordinates, sparse physical residency, independent seed-world lifecycles and cross-owner capacity contracts. Reconcile these against the actual implementation branch before proposing new work. They do not replace NSC's design, duplicate its implementation queue, change its stage order or establish capacity.
+
 ## Delivery stages
 
 - [x] **NSC00 — Architecture and staged decision design.** Specify compact resident authority, full smaller pipeline, host/native boundaries, exact personal evidence and restore, work pooling, cells, machine handoff, adaptive placement, isolation experiments and removal targets. Source inspection, primary research and affected documentation review establish design completion only. The [design pair](../projects/native-simulation-core-feature-spec.md) and E1–E7 are the deliverables.
