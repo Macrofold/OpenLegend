@@ -3,9 +3,7 @@
 
 use crate::execution::{ExecutionError, PhysicalMutation};
 use crate::experience::Awareness;
-use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, SurfaceLineQuery};
 use crate::native_danger::DangerAssessment;
-use crate::native_refuge::RefugeRoute;
 use crate::native_response::*;
 use crate::reception::SoundAcquisition;
 use crate::simulation::InstalledWorld;
@@ -21,9 +19,11 @@ mod movement;
 pub(crate) use movement::complete_movement;
 mod response;
 mod search;
+mod wander;
 pub(crate) use response::{
     CompletedGroundResponse, GroundResponseCursor, GroundResponseDecision, GroundResponseStep,
 };
+pub(crate) use wander::{CompletedWander, WanderCursor, WanderStep};
 
 /// The ordinary animal turn alone creates this saved search. Geometry resumes
 /// may fill its current candidate but never redraw its bearing, distance or side.
@@ -669,164 +669,4 @@ pub(crate) fn advance_wander_clock(
     };
     *remaining_seconds -= seconds;
     mutation.animal_clock_changed(actor_id)
-}
-
-/// Only a real finite physical question may create this continuation. The
-/// second random draw and wait-clock write occur after its exact answer.
-pub(crate) struct WanderContinuation {
-    actor: EntityHandle,
-    actor_id: String,
-    at: f64,
-    origin: crate::state::SurfacePoint,
-    clock: WanderClock,
-    binding: GeometryBinding,
-    index: usize,
-}
-
-pub(crate) fn prepare_wander(
-    mutation: &mut PhysicalMutation<'_>,
-    installed: &InstalledWorld,
-    actor_id: &str,
-    time_epsilon: f64,
-    queries: &mut GeometryQueries,
-) -> Result<Option<WanderContinuation>, ExecutionError> {
-    reconcile_wander(mutation, installed, actor_id, time_epsilon)?;
-    let entity = mutation
-        .state
-        .entities
-        .get(actor_id)
-        .ok_or(ExecutionError::MissingEntity)?;
-    let (Some(state), Some(actor), Some(from)) =
-        (&entity.animal, &entity.actor, entity.supported_position())
-    else {
-        return Ok(None);
-    };
-    if !actor.alive
-        || actor.controller != "native"
-        || actor.incapacitated
-        || !entity.actively_participates()
-        || installed
-            .capabilities
-            .capability_blocked(Some(entity), "actions")?
-        || state.episode.is_some()
-        || entity.threat.is_some()
-        || actor.action.is_some()
-        || entity.spatial.flight.is_some()
-        || entity.spatial.fall_velocity.is_some()
-        || installed
-            .capabilities
-            .capability_blocked(Some(entity), "locomotion")?
-        || wander_remaining(&state.wander, mutation.state.header.sim_time) > time_epsilon
-    {
-        return Ok(None);
-    }
-    if state.foraging.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
-    let profile = selected_profile(installed, state)?;
-    let handle = mutation
-        .state
-        .entities
-        .handle(actor_id)
-        .ok_or(ExecutionError::MissingEntity)?;
-    let body = entity.body_profile().into_owned();
-    let clock = state.wander.clone();
-    let at = mutation.state.header.sim_time;
-    mutation.reserve_response_growth(
-        std::mem::size_of::<WanderContinuation>()
-            .saturating_add(std::mem::size_of::<SurfaceLineQuery>())
-            .saturating_add(actor_id.len())
-            .saturating_add(from.surface_id.capacity().saturating_mul(2))
-            .saturating_add(body.id.capacity())
-            .saturating_add(256),
-    )?;
-    queries
-        .surface_lines
-        .try_reserve(1)
-        .map_err(|_| ExecutionError::Capacity)?;
-    let angle = mutation.draw() * std::f64::consts::PI * 2.0;
-    let index = queries.surface_lines.len();
-    queries.surface_lines.push(SurfaceLineQuery {
-        from: from.clone(),
-        x: from.x + angle.cos() * profile.wander.distance,
-        z: from.z + angle.sin() * profile.wander.distance,
-        body,
-    });
-    Ok(Some(WanderContinuation {
-        actor: handle,
-        actor_id: actor_id.to_owned(),
-        at,
-        origin: from,
-        clock,
-        binding: queries.binding,
-        index,
-    }))
-}
-
-impl WanderContinuation {
-    pub(crate) fn resume(
-        self,
-        mutation: &mut PhysicalMutation<'_>,
-        installed: &InstalledWorld,
-        answers: &mut GeometryAnswers,
-    ) -> Result<Option<RefugeRoute>, ExecutionError> {
-        if answers.binding != self.binding || mutation.state.header.sim_time != self.at {
-            return Err(ExecutionError::Invariant);
-        }
-        let animal = mutation
-            .state
-            .entities
-            .resolve(self.actor)
-            .ok_or(ExecutionError::MissingEntity)?;
-        let state = animal
-            .animal
-            .as_ref()
-            .ok_or(ExecutionError::UnsupportedFamily)?;
-        if state.wander != self.clock || animal.supported_position().as_ref() != Some(&self.origin)
-        {
-            return Err(ExecutionError::Invariant);
-        }
-        let profile = selected_profile(installed, state)?;
-        let path = answers
-            .surface_lines
-            .get_mut(self.index)
-            .ok_or(ExecutionError::Invariant)?
-            .take();
-        let wait = profile.wander.minimum_wait_seconds
-            + (mutation.draw() * profile.wander.wait_choices as f64).floor();
-        let clock = mutation.snapshot_wander(&self.actor_id)?;
-        match clock {
-            WanderClock::Due { due_at } => *due_at += wait,
-            WanderClock::Remaining {
-                remaining_seconds, ..
-            } => *remaining_seconds += wait,
-        }
-        mutation.animal_clock_changed(&self.actor_id)?;
-        let Some(line) = path else {
-            return Ok(None);
-        };
-        let path = line.path;
-        let Some(point) = path.last() else {
-            return Ok(None);
-        };
-        let point = point.clone();
-        let mut previous = self.origin.point();
-        let mut length = 0.0;
-        for next in &path {
-            length += crate::spatial::distance(previous, next.point());
-            previous = next.point();
-        }
-        Ok(Some(RefugeRoute {
-            candidate: RefugeCandidate {
-                id: "routine".to_owned(),
-                point,
-                retained: None,
-                preferred: None,
-            },
-            path,
-            length,
-            worsening: 0.0,
-            arrival_margin: 0.0,
-        }))
-    }
 }
