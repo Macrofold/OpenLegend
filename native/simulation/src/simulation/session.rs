@@ -2,8 +2,8 @@
 //! owner parked without retaining a compute worker. No TypeScript world is
 //! constructed or used as an incremental predecessor.
 use super::{
-    AdvanceDriver, DriveError, DriveStep, PreparedPublication, ProviderQuestion, ProviderResponse,
-    PublicationError, Simulation,
+    CompletedOperation, DriveError, DriveStep, OperationDriver, PreparedPublication,
+    ProviderQuestion, ProviderResponse, PublicationError, Simulation,
 };
 use crate::administration::InstalledHostSettings;
 use crate::execution::{CandidateJournal, CoreMutation, ExecutionError};
@@ -16,9 +16,7 @@ use crate::received::TemporalSaveLimits;
 use crate::records::save::{
     SaveAcknowledgement, SaveError, SaveJournal, SavePrefix, TemporalSaveCut,
 };
-use crate::time::{
-    AcceptedAdvanceContinuation, AdmittedWorldInput, AdvanceCursor, CompletedAdvance,
-};
+use crate::time::{AcceptedAdvanceContinuation, AdmittedWorldInput, AdvanceCursor};
 use crate::values::WorkVector;
 use std::sync::Arc;
 
@@ -104,20 +102,20 @@ pub(crate) enum SessionStep {
 }
 /// Only accepted effects leave the writer. Their existing guards stay with
 /// these actual products until the server's history/output owners consume them.
-pub(crate) struct AcceptedAdvance {
+pub(crate) struct AcceptedOperation {
     pub key: CandidateKey,
-    pub result: CompletedAdvance,
+    pub result: CompletedOperation,
     pub history: CapturedHistoryInput,
 }
 struct Preparing {
     journal: CandidateJournal,
-    driver: AdvanceDriver,
+    driver: OperationDriver,
     key: CandidateKey,
 }
 struct Prepared {
     journal: CandidateJournal,
     publication: PreparedPublication,
-    result: CompletedAdvance,
+    result: CompletedOperation,
     history: CapturedHistoryInput,
     key: CandidateKey,
 }
@@ -218,21 +216,7 @@ impl Session {
         prepared: Vec<(String, crate::native_refuge::PreparedRefugeNavigation)>,
         inputs: Vec<AdmittedWorldInput>,
     ) -> Result<CandidateKey, SessionError> {
-        if self.candidate.is_some() {
-            return Err(FenceError::Busy.into());
-        }
-        let key = self
-            .simulation
-            .fence
-            .begin(self.simulation.state.accepted_cut, self.generation)?;
-        let mut journal = match CandidateJournal::begin(&self.simulation.state, &self.budget) {
-            Ok(journal) => journal,
-            Err(error) => {
-                self.simulation.fence.rollback_preparation(key)?;
-                self.simulation.fence.rollback_complete(key)?;
-                return Err(error.into());
-            }
-        };
+        let (key, mut journal) = self.begin()?;
         let driver = (|| {
             let mut core = CoreMutation {
                 state: &mut self.simulation.state,
@@ -255,8 +239,68 @@ impl Session {
                 &self.budget,
             )
             .map_err(DriveError::from)?;
-            AdvanceDriver::from_cursor(&mut core, cursor, &self.budget)
+            OperationDriver::advance(&mut core, cursor, &self.budget)
         })();
+        self.install_driver(key, journal, driver)
+    }
+    pub(crate) fn begin_command(
+        &mut self,
+        command: crate::commands::NativeCommand,
+        canonical: String,
+        options: crate::commands::CommandOptions,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let binding = crate::geometry::GeometryBinding::new(
+                key,
+                self.simulation.state.installed.geometry.spatial.revision,
+                journal.next_provider_serial()?,
+            );
+            let cursor = crate::commands::CommandCursor::new(
+                command,
+                canonical,
+                options,
+                binding,
+                &self.budget,
+            )?;
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let command = crate::commands::CommandOperation::from_cursor(
+                &mut core,
+                cursor,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::command(&mut core, command, &self.budget)
+        })();
+        self.install_driver(key, journal, driver)
+    }
+    fn begin(&mut self) -> Result<(CandidateKey, CandidateJournal), SessionError> {
+        if self.candidate.is_some() {
+            return Err(FenceError::Busy.into());
+        }
+        let key = self
+            .simulation
+            .fence
+            .begin(self.simulation.state.accepted_cut, self.generation)?;
+        let journal = match CandidateJournal::begin(&self.simulation.state, &self.budget) {
+            Ok(journal) => journal,
+            Err(error) => {
+                self.simulation.fence.rollback_preparation(key)?;
+                self.simulation.fence.rollback_complete(key)?;
+                return Err(error.into());
+            }
+        };
+        Ok((key, journal))
+    }
+    fn install_driver(
+        &mut self,
+        key: CandidateKey,
+        mut journal: CandidateJournal,
+        driver: Result<OperationDriver, DriveError>,
+    ) -> Result<CandidateKey, SessionError> {
         match driver {
             Ok(driver) => {
                 self.candidate = Some(Candidate::Preparing(Preparing {
@@ -374,7 +418,7 @@ impl Session {
     pub(crate) fn finish_settlement(
         &mut self,
         key: CandidateKey,
-    ) -> Result<Option<AcceptedAdvance>, SessionError> {
+    ) -> Result<Option<AcceptedOperation>, SessionError> {
         let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
             return Err(FenceError::NotReady.into());
         };
@@ -422,8 +466,7 @@ impl Session {
             };
             prepared
                 .result
-                .continuation
-                .take()
+                .take_continuation()
                 .map(|continuation| continuation.accepted(&core, accepted))
                 .transpose()
                 .map_err(|error| {
@@ -444,7 +487,7 @@ impl Session {
             return Err(error.into());
         }
         self.simulation.fence.accepted_complete(key)?;
-        Ok(Some(AcceptedAdvance {
+        Ok(Some(AcceptedOperation {
             key,
             result: prepared.result,
             history: prepared.history,

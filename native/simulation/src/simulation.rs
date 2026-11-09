@@ -27,10 +27,11 @@ mod publication;
 pub(crate) use publication::{PreparedPublication, PublicationError};
 mod driver;
 mod session;
-pub(crate) use session::{Session, SessionError, SessionStep};
 pub(crate) use driver::{
-    AdvanceDriver, DriveError, DriveStep, ProviderKind, ProviderQuestion, ProviderResponse,
+    CompletedOperation, DriveError, DriveStep, OperationDriver, ProviderKind, ProviderQuestion,
+    ProviderResponse,
 };
+pub(crate) use session::{Session, SessionError, SessionStep};
 
 /// Immutable selected definitions. Their exact source canonical bodies remain
 /// with their typed meanings; a digest is never used as content equality.

@@ -27,23 +27,48 @@ function dependencies<T>(references: (value: T) => Iterable<string>) {
     },
   );
 }
+type AwarenessRow = NonNullable<WorldState['experience']>['awareness'][string][number];
+type MemoryRow = WorldState['memories'][string][number];
+type KnowledgeRow = WorldState['knowledge'][string][number];
+function* awarenessReferences(row: AwarenessRow) {
+  yield row.eventId;
+}
+function* memoryReferences(row: MemoryRow) {
+  if (row.eventId) yield row.eventId;
+  if (row.obligation) {
+    yield row.obligation.evidenceId;
+    if (row.obligation.fulfilledBy) yield row.obligation.fulfilledBy;
+  }
+}
+function* knowledgeReferences(row: KnowledgeRow) {
+  yield row.evidenceId;
+}
 const awareness = dependencies<NonNullable<WorldState['experience']>['awareness'][string]>(
   function* (rows) {
-    for (const row of rows) yield row.eventId;
+    for (const row of rows) yield* awarenessReferences(row);
   },
 );
 const memories = dependencies<WorldState['memories'][string]>(function* (rows) {
-  for (const row of rows) {
-    if (row.eventId) yield row.eventId;
-    if (row.obligation) {
-      yield row.obligation.evidenceId;
-      if (row.obligation.fulfilledBy) yield row.obligation.fulfilledBy;
-    }
-  }
+  for (const row of rows) yield* memoryReferences(row);
 });
 const knowledge = dependencies<WorldState['knowledge'][string]>(function* (rows) {
-  for (const row of rows) yield row.evidenceId;
+  for (const row of rows) yield* knowledgeReferences(row);
 });
+/** The startup row selector uses the same dependencies before constructing an
+ * authority. These are actual current account bodies, never a synthetic world. */
+export function hotEventRecordDependencies(
+  table: 'mind_awareness' | 'mind_memories' | 'mind_learned_capabilities',
+  row: Record<string, unknown>,
+): Iterable<string> {
+  switch (table) {
+    case 'mind_awareness':
+      return awarenessReferences(row as unknown as AwarenessRow);
+    case 'mind_memories':
+      return memoryReferences(row as unknown as MemoryRow);
+    case 'mind_learned_capabilities':
+      return knowledgeReferences(row as unknown as KnowledgeRow);
+  }
+}
 const empty = Object.freeze({});
 type EventPinRoots = {
   memories: WorldState['memories'];

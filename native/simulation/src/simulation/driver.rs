@@ -474,24 +474,122 @@ fn direct(answer: &mut Option<Answer>, kind: ProviderKind) -> Result<Answer, Dri
     answer.take().ok_or(DriveError::StaleResponse)
 }
 
+/// Complete semantic owners share the external preparation boundary. Their
+/// sealed completions remain distinct; there is no synthetic completion input.
+pub(crate) enum CompletedOperation {
+    Advance(CompletedAdvance),
+    Command(CompletedCommandOperation),
+}
+impl CompletedOperation {
+    pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
+        match self {
+            Self::Advance(a) => &a.outcome,
+            Self::Command(c) => c.command.outcome(),
+        }
+    }
+    pub(crate) fn events(&self) -> impl Iterator<Item = &crate::events::WorldEvent> + Clone {
+        let (advance, command) = match self {
+            Self::Advance(a) => (Some(a), None),
+            Self::Command(c) => (None, Some(c)),
+        };
+        advance
+            .into_iter()
+            .flat_map(|a| a.events())
+            .chain(command.into_iter().flat_map(|c| c.events.iter()))
+    }
+    pub(crate) fn take_continuation(&mut self) -> Option<crate::time::AdvanceContinuation> {
+        match self {
+            Self::Advance(a) => a.continuation.take(),
+            Self::Command(_) => None,
+        }
+    }
+}
+#[derive(Clone, Copy)]
+enum OperationReply {
+    Advance(AdvanceReply),
+    Command(CommandReply),
+}
+enum OperationCursor {
+    Advance(AdvanceCursor),
+    Command(CommandOperation),
+}
+impl<T, R> Poll<T, R> {
+    fn map<V, S>(self, completed: fn(T) -> V, route: fn(R) -> S) -> Poll<V, S> {
+        match self {
+            Self::Continue => Poll::Continue,
+            Self::Question(q, r) => Poll::Question(q, route(r)),
+            Self::Complete(value) => Poll::Complete(completed(value)),
+        }
+    }
+}
+impl OperationCursor {
+    fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        match self {
+            Self::Advance(a) => a.abort(core),
+            Self::Command(c) => c.abort(core),
+        }
+    }
+    fn poll(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        answer: &mut Option<Answer>,
+        route: Option<OperationReply>,
+        budget: &ByteBudget,
+    ) -> Result<Poll<CompletedOperation, OperationReply>, DriveError> {
+        match self {
+            Self::Advance(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::Advance(r)) => Some(r),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(poll_advance(cursor, core, answer, route, budget)?
+                    .map(CompletedOperation::Advance, OperationReply::Advance))
+            }
+            Self::Command(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::Command(r)) => Some(r),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(poll_command(cursor, core, answer, route, budget)?
+                    .map(CompletedOperation::Command, OperationReply::Command))
+            }
+        }
+    }
+}
 pub(crate) enum DriveStep {
     Continue,
     Question(Arc<ProviderQuestion>),
-    Complete(CompletedAdvance),
+    Complete(CompletedOperation),
 }
-pub(crate) struct AdvanceDriver {
-    cursor: AdvanceCursor,
-    pending: Option<(Arc<ProviderQuestion>, AdvanceReply)>,
+pub(crate) struct OperationDriver {
+    cursor: OperationCursor,
+    pending: Option<(Arc<ProviderQuestion>, OperationReply)>,
     installed: Arc<crate::simulation::InstalledWorld>,
     base_cut: u64,
     generation: String,
     done: bool,
     _reservation: ByteReservation,
 }
-impl AdvanceDriver {
-    pub(crate) fn from_cursor(
+impl OperationDriver {
+    pub(crate) fn advance(
         core: &mut CoreMutation<'_>,
-        mut cursor: AdvanceCursor,
+        cursor: AdvanceCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::Advance(cursor), budget)
+    }
+    pub(crate) fn command(
+        core: &mut CoreMutation<'_>,
+        cursor: CommandOperation,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::Command(cursor), budget)
+    }
+    fn new(
+        core: &mut CoreMutation<'_>,
+        mut cursor: OperationCursor,
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
         let reservation = match budget.reserve(size_of::<Self>() + core.state.generation.len()) {
@@ -566,7 +664,7 @@ impl AdvanceDriver {
         let route = input
             .as_ref()
             .and_then(|_| self.pending.as_ref().map(|(_, route)| *route));
-        let result = poll_advance(&mut self.cursor, core, &mut answer, route, budget);
+        let result = self.cursor.poll(core, &mut answer, route, budget);
         drop(answer);
         drop(decoded_guard);
         drop(input);

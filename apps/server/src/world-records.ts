@@ -1541,9 +1541,11 @@ export class WorldRecords {
       ? this.db.readTransaction(() => this.readRecords(active))
       : this.db.transaction(() => this.readRecords(active));
   }
-  private async readRecords(
-    active: boolean,
-  ): Promise<{ revision: number; state: SavedWorld } | null> {
+  /** Shared startup SQL selection, before either authority is constructed.
+   * The caller owns one fixed database snapshot. Native consumers receive these
+   * actual current rows and coverage; they never assemble a TypeScript world.
+   * Feature reads continue to use their scoped repositories below. */
+  async readCurrentRows(active: boolean) {
     const head = await this.head();
     if (!head) return null;
     const settings = active
@@ -1675,38 +1677,29 @@ export class WorldRecords {
           .all(head.worldId))
           nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
       }
-    const state = assembleWorldRecords(
-      groups,
-      head.worldId,
-      active,
-      nextPositions,
-      WORLD_RECORD_SCHEMA,
-    );
-    if (active && state.world.experience?.temporal)
-      restoreTemporalDirectories(
-        state.world,
-        await this.db
-          .prepare(
-            `SELECT p.actor_id,p.physical_life,p.receipt_epoch,p.first_batch_order,p.first_entry,p.first_member,
+    return { head, groups, nextPositions };
+  }
+  /** Metadata only; these directories preserve cold receipt identity without
+   * making every physical history block resident. */
+  async readTemporalDirectories(worldId: string) {
+    return this.db
+      .prepare(
+        `SELECT p.actor_id,p.physical_life,p.receipt_epoch,p.first_batch_order,p.first_entry,p.first_member,
           p.last_batch_order,p.last_entry,p.last_member,p.charge_directory
         FROM mind_temporal_pages p JOIN mind_temporal_actors a ON a.world_id=p.world_id AND a.actor_id=p.actor_id
         WHERE p.world_id=? AND NOT ${temporalBlockExpiredSql('p', 'a')}
         ORDER BY p.actor_id,p.first_batch_order,p.first_entry,p.first_member,p.id`,
-          )
-          .all(head.worldId),
-      );
-    if (active && state.world.receivedValues) {
-      const received = state.world.receivedValues;
-      const temporal = state.world.experience?.temporal;
-      const maximum = HOT_TEMPORAL_BYTES;
-      // Load each actor's bounded physical tail; older decoding seeds stay in
-      // their self-contained blocks and current knowledge has its own support.
-      // docs/save-and-load.md#shared-temporal-evidence-continuation
-      const references = new Set(referencedReceivedValues(state.world).keys());
-      const pages = temporal
-        ? await this.db
-            .prepare(
-              `SELECT c.* FROM mind_temporal_actors a CROSS JOIN LATERAL (
+      )
+      .all(worldId);
+  }
+  /** The same byte-tail selection serves Source and native cold restoration.
+   * Decoding and current reference closure remain with their actual owners. */
+  async readTemporalTail(worldId: string, maximum: number) {
+    if (!Number.isSafeInteger(maximum) || maximum < 0)
+      throw new Error('Temporal resident tail requires a finite byte allowance.');
+    return this.db
+      .prepare(
+        `SELECT c.* FROM mind_temporal_actors a CROSS JOIN LATERAL (
           WITH RECURSIVE selected AS (
             (SELECT p.*,p.encoded_bytes AS resident_bytes FROM mind_temporal_pages p
               WHERE p.world_id=a.world_id AND p.actor_id=a.actor_id
@@ -1720,9 +1713,57 @@ export class WorldRecords {
               WHERE prior.resident_bytes<?
           ) SELECT * FROM selected
         ) c WHERE a.world_id=? ORDER BY c.actor_id,c.first_batch_order,c.first_entry,c.first_member,c.id`,
-            )
-            .all(maximum, head.worldId)
-        : [];
+      )
+      .all(maximum, worldId);
+  }
+  /** Recent visible originals plus actual independently retained dependencies.
+   * Keep pointer bytes separate from original occurrence bytes for native import. */
+  async readActiveHotEvents(worldId: string, dependencies: readonly string[]) {
+    const missing = await this.db
+      .prepare(
+        `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
+      )
+      .get(worldId);
+    if (missing) throw new Error('Active history references a missing source; recovery refused.');
+    const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
+    const rows = await this.db
+      .prepare(
+        `SELECT t.id,t.parent_id,t.slot,t.position,t.payload AS pointer_payload,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT 512) OR h.id IN (${selector})) ORDER BY t.position`,
+      )
+      .all(worldId, worldId, JSON.stringify(dependencies));
+    const count = Number(
+      (
+        await this.db
+          .prepare('SELECT COUNT(*) AS n FROM world_hot_events WHERE world_id=?')
+          .get(worldId)
+      )?.['n'],
+    );
+    return { rows, count };
+  }
+  private async readRecords(
+    active: boolean,
+  ): Promise<{ revision: number; state: SavedWorld } | null> {
+    const captured = await this.readCurrentRows(active);
+    if (!captured) return null;
+    const { head, groups, nextPositions } = captured;
+    const state = assembleWorldRecords(
+      groups,
+      head.worldId,
+      active,
+      nextPositions,
+      WORLD_RECORD_SCHEMA,
+    );
+    if (active && state.world.experience?.temporal)
+      restoreTemporalDirectories(state.world, await this.readTemporalDirectories(head.worldId));
+    if (active && state.world.receivedValues) {
+      const received = state.world.receivedValues;
+      const temporal = state.world.experience?.temporal;
+      const maximum = HOT_TEMPORAL_BYTES;
+      // Load each actor's bounded physical tail; older decoding seeds stay in
+      // their self-contained blocks and current knowledge has its own support.
+      // docs/save-and-load.md#shared-temporal-evidence-continuation
+      const references = new Set(referencedReceivedValues(state.world).keys());
+      const pages = temporal ? await this.readTemporalTail(head.worldId, maximum) : [];
       const byActor = new Map<string, typeof pages>();
       for (const row of pages) {
         const actorId = String(row['actor_id']);
@@ -1752,19 +1793,9 @@ export class WorldRecords {
     if (active) {
       await this.validateHistoricalMaterialOrigins(state);
       markPartialObjectHistory(state.world.entities);
-      const missing = await this.db
-        .prepare(
-          `SELECT 1 AS missing FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND h.id IS NULL LIMIT 1`,
-        )
-        .get(head.worldId);
-      if (missing) throw new Error('Active history references a missing source; recovery refused.');
-      const ids = [...hotEventDependencies(state.world)];
-      const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
-      const rows = await this.db
-        .prepare(
-          `SELECT t.position,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT 512) OR h.id IN (${selector})) ORDER BY t.position`,
-        )
-        .all(head.worldId, head.worldId, JSON.stringify(ids));
+      const { rows, count } = await this.readActiveHotEvents(head.worldId, [
+        ...hotEventDependencies(state.world),
+      ]);
       state.world.events = rows.map((row) => JSON.parse(String(row['payload'])));
       historyPositions.set(state.world.events, {
         positions: new Map(
@@ -1772,13 +1803,6 @@ export class WorldRecords {
         ),
         next: rows.length ? Number(rows.at(-1)!['position']) + 1 : 0,
       });
-      const count = Number(
-        (
-          await this.db
-            .prepare('SELECT COUNT(*) AS n FROM world_hot_events WHERE world_id=?')
-            .get(head.worldId)
-        )?.['n'],
-      );
       const removed = count - state.world.events.length;
       if (removed < 0) throw new Error('Invalid active event coverage.');
       if (removed) state.world.archivedEventCount = (state.world.archivedEventCount ?? 0) + removed;
