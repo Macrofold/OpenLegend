@@ -51,6 +51,59 @@ impl MotionOperation {
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        let entity = core
+            .state
+            .physical
+            .entities
+            .get(actor_id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let action = entity
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.action.as_ref())
+            .ok_or(ExecutionError::MissingActor)?;
+        Self::with_path(
+            core,
+            actor_id,
+            &action.path,
+            Some(&action.id),
+            distance_budget,
+            occupied,
+            binding,
+            budget,
+        )
+    }
+    /// A transient steering route uses the same physical prefix writer without
+    /// allocating an Action or changing the character's physical work slot.
+    pub(crate) fn start_steering(
+        core: &CoreMutation<'_>,
+        actor_id: &str,
+        path: &[SurfacePoint],
+        distance_budget: f64,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        Self::with_path(
+            core,
+            actor_id,
+            path,
+            None,
+            distance_budget,
+            true,
+            binding,
+            budget,
+        )
+    }
+    fn with_path(
+        core: &CoreMutation<'_>,
+        actor_id: &str,
+        path: &[SurfacePoint],
+        action_id: Option<&str>,
+        distance_budget: f64,
+        occupied: bool,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         if !distance_budget.is_finite()
             || distance_budget < 0.0
             || binding.geometry_revision != core.state.installed.geometry.spatial.revision
@@ -72,11 +125,6 @@ impl MotionOperation {
             .entities
             .handle(actor_id)
             .ok_or(ExecutionError::MissingEntity)?;
-        let action = entity
-            .actor
-            .as_ref()
-            .and_then(|actor| actor.action.as_ref())
-            .ok_or(ExecutionError::MissingActor)?;
         let support = match &entity.placement {
             Some(crate::state::Placement::World {
                 support_surface_id: Some(support),
@@ -84,8 +132,7 @@ impl MotionOperation {
             }) => support,
             _ => return Err(ExecutionError::InvalidPosition),
         };
-        let maximum = action
-            .path
+        let maximum = path
             .iter()
             .map(|point| point.surface_id.len())
             .chain(std::iter::once(support.len()))
@@ -94,20 +141,16 @@ impl MotionOperation {
         let bytes = heap_sum([
             size_of::<Self>(),
             size_of::<MotionCursor>(),
-            action
-                .path
-                .len()
+            path.len()
                 .checked_mul(size_of::<SurfacePoint>())
                 .ok_or(ExecutionError::Capacity)?,
-            action
-                .path
-                .iter()
+            path.iter()
                 .try_fold(0usize, |bytes, point| {
                     bytes.checked_add(point.surface_id.len())
                 })
                 .ok_or(ExecutionError::Capacity)?,
             maximum.checked_mul(12).ok_or(ExecutionError::Capacity)?,
-            action.id.len(),
+            action_id.map_or(0, str::len),
             entity.ordinary_body_profile().id.len(),
         ])
         .ok_or(ExecutionError::Capacity)?;
@@ -115,7 +158,8 @@ impl MotionOperation {
         let cursor = MotionCursor::start(
             handle,
             entity,
-            action.path.clone(),
+            path.to_vec(),
+            action_id,
             distance_budget,
             occupied,
             core.state.installed.spatial.epsilon,

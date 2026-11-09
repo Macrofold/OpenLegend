@@ -812,6 +812,9 @@ impl AdvanceCursor {
                 Phase::Predict => {
                     self.begin_navigation_gate(core, NavigationAfter::Slice, budget)?;
                 }
+                Phase::Steering => {
+                    return self.steer_slice(core, answer.take(), budget);
+                }
                 Phase::NativeCommand => {
                     if self.pending_flush(core, Phase::NativeCommand, budget)? {
                         continue;

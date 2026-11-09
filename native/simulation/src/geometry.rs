@@ -235,7 +235,9 @@ pub struct SurfaceLineQuery {
     pub from: SurfacePoint,
     pub x: f64,
     pub z: f64,
-    pub body: BodyProfile,
+    /// A body requests a walkable line; its absence requests support topology
+    /// only. Steering traces topology before the movement owner checks bodies.
+    pub body: Option<BodyProfile>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

@@ -63,11 +63,58 @@ impl AdvanceCursor {
             mechanics,
             (self.end_at - now).min(mechanics.seconds).min(review - now),
         )?;
+        self.input_seconds = input_boundary(core, &self.inputs, mechanics, input)?;
+        let binding = self.binding(core)?;
+        self.steering_preparation = Some(SteeringPreparation::prepare(
+            core,
+            &self.inputs,
+            self.input_seconds,
+            binding,
+            budget,
+        )?);
+        self.phase = Phase::Steering;
+        Ok(())
+    }
+    pub(super) fn steer_slice(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        answer: Option<AdvanceAnswer>,
+        budget: &ByteBudget,
+    ) -> Result<Progress, AdvanceError> {
+        let preparation = self.steering_preparation.as_ref().ok_or_else(invalid)?;
+        if answer.is_none() && preparation.question().is_some() {
+            return Ok(Progress::Geometry);
+        }
+        let answer = match answer {
+            None => None,
+            Some(AdvanceAnswer::Geometry(value)) => Some(value),
+            _ => return Err(invalid().into()),
+        };
+        let steering = self
+            .steering_preparation
+            .take()
+            .ok_or_else(invalid)?
+            .finish(core, answer, budget)?;
+        self.finish_slice(core, steering, budget)?;
+        Ok(Progress::Continue)
+    }
+    fn finish_slice(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        steering: PreparedSteering,
+        budget: &ByteBudget,
+    ) -> Result<(), AdvanceError> {
+        let installed = core.state.installed.clone();
+        let participants = self.roster.as_ref().ok_or_else(invalid)?;
+        let mechanics = self.mechanics.as_ref().ok_or_else(invalid)?;
+        let now = core.state.physical.header.sim_time;
+        let review = next_animal_review(&core.state.physical, participants)?;
         let sensed = sensory_bound(
             core,
             participants,
             self.policies.as_mut().ok_or_else(invalid)?,
-            input,
+            self.input_seconds,
+            !steering.routes.is_empty(),
             budget,
         )?;
         let mut seconds = sensed.seconds;
@@ -143,6 +190,8 @@ impl AdvanceCursor {
         self.boundary_recorded = false;
         self.motion = Some(MotionSliceCursor::new(
             self.working.take().ok_or_else(invalid)?,
+            steering,
+            self.input_seconds,
             seconds,
             self.binding(core)?,
             budget,

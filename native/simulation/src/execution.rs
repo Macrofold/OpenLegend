@@ -2958,47 +2958,49 @@ impl PhysicalMutation<'_> {
             .entities
             .resolve(cursor.actor)
             .ok_or(ExecutionError::MissingEntity)?;
-        let action = entity
-            .actor
-            .as_ref()
-            .and_then(|a| a.action.as_ref())
-            .ok_or(ExecutionError::MissingActor)?;
-        if action.id != cursor.action_id || action.path != cursor.path {
-            return Err(ExecutionError::Invariant);
-        }
         self.journal.reserve(entity.id.len())?;
         let id = entity.id.clone();
-        if cursor.consumed_points > 0 {
-            self.journal.reserve(
-                size_of::<Undo>() * 2
-                    + cursor.action_id.len() * 2
-                    + action.path.heap_bytes().ok_or(ExecutionError::Capacity)?
-                    + cursor.path.len() * size_of::<crate::state::SurfacePoint>(),
-            )?;
-            self.journal
-                .undo
-                .try_reserve(1)
-                .map_err(|_| ExecutionError::Capacity)?;
-            let key = UndoKey::ActionPath(cursor.actor.slot, cursor.actor.generation);
-            let first = self.journal.first(&key)?;
-            let remaining = cursor.path.split_off(cursor.consumed_points);
-            let action = self
-                .state
-                .entities
-                .resolve_mut(cursor.actor)
-                .and_then(|e| e.actor.as_mut())
-                .and_then(|a| a.action.as_mut())
-                .ok_or(ExecutionError::Invariant)?;
-            let before = std::mem::replace(&mut action.path, remaining);
-            if first {
-                self.journal.retain(
-                    key,
-                    Undo::ActionPath {
-                        entity: cursor.actor,
-                        action_id: cursor.action_id,
-                        before,
-                    },
+        if let Some(action_id) = cursor.action_id.as_ref() {
+            let action = entity
+                .actor
+                .as_ref()
+                .and_then(|a| a.action.as_ref())
+                .ok_or(ExecutionError::MissingActor)?;
+            if action.id != *action_id || action.path != cursor.path {
+                return Err(ExecutionError::Invariant);
+            }
+            if cursor.consumed_points > 0 {
+                self.journal.reserve(
+                    size_of::<Undo>() * 2
+                        + action_id.len() * 2
+                        + action.path.heap_bytes().ok_or(ExecutionError::Capacity)?
+                        + cursor.path.len() * size_of::<crate::state::SurfacePoint>(),
                 )?;
+                self.journal
+                    .undo
+                    .try_reserve(1)
+                    .map_err(|_| ExecutionError::Capacity)?;
+                let key = UndoKey::ActionPath(cursor.actor.slot, cursor.actor.generation);
+                let first = self.journal.first(&key)?;
+                let remaining = cursor.path.split_off(cursor.consumed_points);
+                let action = self
+                    .state
+                    .entities
+                    .resolve_mut(cursor.actor)
+                    .and_then(|e| e.actor.as_mut())
+                    .and_then(|a| a.action.as_mut())
+                    .ok_or(ExecutionError::Invariant)?;
+                let before = std::mem::replace(&mut action.path, remaining);
+                if first {
+                    self.journal.retain(
+                        key,
+                        Undo::ActionPath {
+                            entity: cursor.actor,
+                            action_id: cursor.action_id.take().ok_or(ExecutionError::Invariant)?,
+                            before,
+                        },
+                    )?;
+                }
             }
         }
         if cursor.steps > 0 {

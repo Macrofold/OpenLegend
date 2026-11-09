@@ -14,6 +14,7 @@ import {
   sightSweep,
   soundTransmission,
   standingSurfaceAt,
+  traceSupportLine,
   validateSpatialMap,
   walkSurfaceLine,
   type NavigationRequest,
@@ -85,7 +86,9 @@ export class NativeGeometryProviders {
         return null;
       });
       const surfaceLines = queries.surfaceLines.map(({ from, x, z, body }) => {
-        const path = walkSurfaceLine(this.map, from, x, z, body);
+        const path = body
+          ? walkSurfaceLine(this.map, from, x, z, body)
+          : traceSupportLine(this.map, from, x, z);
         return path === null ? null : { path };
       });
       const sightSweeps = queries.sightSweeps.map(({ eyeFrom, eyeTo, pointFrom, pointTo }) => ({

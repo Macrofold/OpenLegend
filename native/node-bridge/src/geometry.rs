@@ -68,7 +68,7 @@ pub struct NativeSurfaceLineQuery {
     pub from: NativeSurfacePoint,
     pub x: f64,
     pub z: f64,
-    pub body: NativeBodyProfile,
+    pub body: Option<NativeBodyProfile>,
 }
 
 #[napi(object, object_from_js = false)]
@@ -449,7 +449,7 @@ impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
                     from: value.from.into(),
                     x: value.x,
                     z: value.z,
-                    body: value.body.into(),
+                    body: value.body.map(Into::into),
                 })
                 .collect(),
             sight_sweeps: value

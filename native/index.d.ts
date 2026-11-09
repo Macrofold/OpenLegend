@@ -296,7 +296,7 @@ export interface NativeSurfaceLineQuery {
   from: NativeSurfacePoint;
   x: number;
   z: number;
-  body: NativeBodyProfile;
+  body?: NativeBodyProfile;
 }
 
 export interface NativeSurfacePoint {

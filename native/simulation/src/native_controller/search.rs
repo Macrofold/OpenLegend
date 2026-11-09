@@ -494,7 +494,7 @@ impl GroundSearchCursor {
                             from: from.clone(),
                             x: from.x + (to.x - from.x) * fraction,
                             z: from.z + (to.z - from.z) * fraction,
-                            body: entity.body_profile().into_owned(),
+                            body: Some(entity.body_profile().into_owned()),
                         };
                         let mut question = GeometryQueries::new(self.binding(core)?);
                         question.surface_lines = vec![query];

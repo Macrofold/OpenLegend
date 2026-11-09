@@ -18,6 +18,7 @@ pub(super) fn sensory_bound(
     participants: &NativeParticipants,
     policies: &mut RoutinePolicyCache,
     requested: f64,
+    steering: bool,
     budget: &ByteBudget,
 ) -> Result<SensoryBound, ExecutionError> {
     let now = core.state.physical.header.sim_time;
@@ -31,24 +32,25 @@ pub(super) fn sensory_bound(
             bound = bound.min(core.state.installed.time_epsilon);
         }
     };
-    let moving = participants.ambient().iter().any(|handle| {
-        core.state
-            .physical
-            .entities
-            .resolve(*handle)
-            .is_some_and(|entity| {
-                entity.spatial.flight.is_some()
-                    || entity
-                        .animal
-                        .as_ref()
-                        .is_some_and(|animal| animal.episode.is_some())
-                    || entity
-                        .actor
-                        .as_ref()
-                        .and_then(|actor| actor.action.as_ref())
-                        .is_some_and(|action| action.kind == "move" && !action.path.is_empty())
-            })
-    });
+    let moving = steering
+        || participants.ambient().iter().any(|handle| {
+            core.state
+                .physical
+                .entities
+                .resolve(*handle)
+                .is_some_and(|entity| {
+                    entity.spatial.flight.is_some()
+                        || entity
+                            .animal
+                            .as_ref()
+                            .is_some_and(|animal| animal.episode.is_some())
+                        || entity
+                            .actor
+                            .as_ref()
+                            .and_then(|actor| actor.action.as_ref())
+                            .is_some_and(|action| action.kind == "move" && !action.path.is_empty())
+                })
+        });
     for handle in participants.actors() {
         let entity = core
             .state

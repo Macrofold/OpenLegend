@@ -53,6 +53,24 @@ impl InstalledMovementPolicy {
     pub(crate) fn direct_probe_max_distance(&self) -> f64 {
         self.value.direct_probe_max_distance
     }
+    /// Idle actors can steer in the converted action closure. Weapon preparation
+    /// and recovery must join this world-owned rule when those families convert;
+    /// the engine must not treat every physical work slot as a steering lock.
+    pub(crate) fn steering_action_allowed(
+        &self,
+        entity: &Entity,
+    ) -> Result<bool, crate::execution::ExecutionError> {
+        use crate::execution::ExecutionError;
+        match entity
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.action.as_ref())
+        {
+            None => Ok(true),
+            Some(action) if action.kind == "move" || action.kind == "status-effect" => Ok(false),
+            Some(_) => Err(ExecutionError::UnsupportedFamily),
+        }
+    }
     /// Scar meaning is supplied by the same installed body's lifecycle policy.
     /// This function does not invent a default for an unported scar or threat.
     pub(crate) fn speed(

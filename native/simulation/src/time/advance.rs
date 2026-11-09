@@ -1,6 +1,7 @@
 //! One ordered elapsed transition over the selected installed family closure.
 //! Provider work and child commands return sealed completions. Time, effects,
 //! receiving and publication remain in this one rollback-owned candidate.
+use super::input::{AdmittedWorldInput, PreparedSteering, SteeringPreparation, input_boundary};
 use super::navigation::{NavigationGate, NavigationGateStep};
 use super::reconcile::{ReconcileAnswer, ReconcileCursor, ReconcileStep};
 use super::sensing::sensory_bound;
@@ -189,6 +190,7 @@ enum Phase {
     AnimalChoices,
     SenseStart,
     Predict,
+    Steering,
     Move,
     Wander,
     Endpoint,
@@ -253,6 +255,9 @@ pub(crate) struct AdvanceCursor {
         ByteReservation,
     )>,
     seconds: f64,
+    input_seconds: f64,
+    inputs: Vec<AdmittedWorldInput>,
+    steering_preparation: Option<SteeringPreparation>,
     slice_cursor: PhysicalChangeCursor,
     slice_events: usize,
     event_count: usize,
@@ -318,6 +323,11 @@ impl AdvanceCursor {
             .as_ref()
             .and_then(NavigationGate::question)
             .or_else(|| {
+                self.steering_preparation
+                    .as_ref()
+                    .and_then(SteeringPreparation::question)
+            })
+            .or_else(|| {
                 self.response
                     .as_ref()
                     .and_then(GroundResponseCursor::geometry_request)
@@ -349,11 +359,21 @@ impl AdvanceCursor {
         max_intervals: usize,
         candidate: CandidateKey,
         prepared: Vec<(String, PreparedRefugeNavigation)>,
+        inputs: Vec<AdmittedWorldInput>,
         continuation: Option<&AdvanceContinuation>,
         budget: &ByteBudget,
     ) -> Result<Self, AdvanceError> {
         // The finite operation result owns only bounded control text.
         let mut reservation = budget.reserve(size_of::<Self>() + 512)?;
+        if inputs.iter().any(|input| !input.valid()) {
+            return Err(ExecutionError::Invariant.into());
+        }
+        reservation.resize(
+            reservation
+                .bytes()
+                .checked_add(inputs.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
         reservation.resize(
             reservation
                 .bytes()
@@ -394,6 +414,9 @@ impl AdvanceCursor {
             pending_seconds: 0.0,
             pending_rates: None,
             seconds: 0.0,
+            input_seconds: 0.0,
+            inputs,
+            steering_preparation: None,
             slice_cursor: core.journal.physical.change_cursor(),
             slice_events: 0,
             event_count: 0,

@@ -133,7 +133,7 @@ impl WanderCursor {
             from: from.clone(),
             x: from.x + angle.cos() * profile.wander.distance,
             z: from.z + angle.sin() * profile.wander.distance,
-            body,
+            body: Some(body),
         };
         let binding = GeometryBinding::new(
             candidate,

@@ -440,7 +440,7 @@ enum Phase {
 /// The cursor owns just this route, never a shadow actor or writable world.
 pub(crate) struct MotionCursor {
     pub actor: EntityHandle,
-    pub action_id: String,
+    pub action_id: Option<String>,
     pub path: Vec<SurfacePoint>,
     pub position: SurfacePoint,
     pub heading: f64,
@@ -483,6 +483,7 @@ impl MotionCursor {
         actor: EntityHandle,
         entity: &Entity,
         path: Vec<SurfacePoint>,
+        action_id: Option<&str>,
         distance_budget: f64,
         occupied: bool,
         epsilon: f64,
@@ -498,16 +499,19 @@ impl MotionCursor {
         let position = entity
             .supported_position()
             .ok_or(MovementError::InvalidPath)?;
-        let action_id = entity
-            .actor
-            .as_ref()
-            .and_then(|a| a.action.as_ref())
-            .ok_or(MovementError::MissingAction)?
-            .id
-            .clone();
+        if action_id.is_some_and(|id| {
+            entity
+                .actor
+                .as_ref()
+                .and_then(|actor| actor.action.as_ref())
+                .map(|action| action.id.as_str())
+                != Some(id)
+        }) {
+            return Err(MovementError::MissingAction);
+        }
         Ok(Self {
             actor,
-            action_id,
+            action_id: action_id.map(str::to_owned),
             path,
             position: position.clone(),
             heading: entity.spatial.heading,
@@ -577,7 +581,15 @@ impl MotionCursor {
             })
             .ok_or(MovementError::InvalidPath)?;
         let reservation = budget.reserve(bytes).map_err(|_| MovementError::Capacity)?;
-        let mut cursor = Self::start(actor, entity, path, distance_budget, occupied, epsilon)?;
+        let mut cursor = Self::start(
+            actor,
+            entity,
+            path,
+            None,
+            distance_budget,
+            occupied,
+            epsilon,
+        )?;
         let mut at = Vec::with_capacity(count);
         let mut pose = Vec::with_capacity(count);
         at.push(0.0);
