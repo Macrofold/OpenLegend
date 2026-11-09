@@ -10,7 +10,9 @@ use indexmap::{IndexMap, IndexSet};
 use std::mem::{align_of, size_of};
 use std::sync::Arc;
 
+mod attention_work;
 mod frames;
+use attention_work::{AttentionCut, AttentionSources, AttentionWork};
 mod metadata;
 mod save;
 
@@ -24,8 +26,30 @@ fn capacity() -> ReceivedError {
 pub(crate) struct CurrentCheckpoint {
     operations: usize,
     retained: usize,
+    reservation: usize,
+    storage: Option<usize>,
 }
 enum CurrentUndo {
+    AttentionPreparation {
+        enabled: bool,
+        prior: IndexMap<String, AttentionWork>,
+    },
+    AttentionSelection {
+        observer: String,
+        prior: Option<AttentionCut>,
+    },
+    AttentionWorkStarted {
+        observer: String,
+        prior: Option<(usize, AttentionWork)>,
+    },
+    AttentionSourceChanged {
+        observer: String,
+        source: String,
+    },
+    AttentionWorkConsumed {
+        observer: String,
+        prior: AttentionSources,
+    },
     ExposurePrepared,
     VisiblePlaces {
         observer: String,
@@ -136,12 +160,15 @@ pub(crate) struct CurrentJournal {
     undo: Vec<CurrentUndo>,
     batches: IndexMap<Arc<str>, CurrentBatch>,
     retained: IndexSet<usize>,
+    attention_work: IndexMap<String, AttentionWork>,
+    attention_preparation: bool,
+    budget: ByteBudget,
     reservation: ByteReservation,
 }
 impl CurrentJournal {
-    /// Death ends these two live outward lists only. Missing roots/observers
+    /// End these two live outward lists only. Missing roots/observers
     /// remain missing; retained identities and historical evidence are intact.
-    pub(crate) fn clear_dead_visibility(
+    pub(crate) fn clear_visibility(
         &mut self,
         state: &mut ReceptionState,
         observer: &str,
@@ -194,6 +221,9 @@ impl CurrentJournal {
             undo: Vec::new(),
             batches: IndexMap::new(),
             retained: IndexSet::new(),
+            attention_work: IndexMap::new(),
+            attention_preparation: false,
+            budget: budget.clone(),
             reservation: budget.reserve(size_of::<Self>()).map_err(|_| capacity())?,
         })
     }
@@ -201,7 +231,24 @@ impl CurrentJournal {
         CurrentCheckpoint {
             operations: self.undo.len(),
             retained: self.retained.len(),
+            reservation: self.reservation.bytes(),
+            storage: self.container_storage(),
         }
+    }
+    fn container_storage(&self) -> Option<usize> {
+        heap_sum([
+            self.undo.capacity().checked_mul(size_of::<CurrentUndo>())?,
+            map_storage::<Arc<str>, CurrentBatch>(self.batches.capacity())?,
+            map_storage::<usize, ()>(self.retained.capacity())?,
+            map_storage::<String, AttentionWork>(self.attention_work.capacity())?,
+            self.batches.values().try_fold(0usize, |sum, batch| {
+                heap_sum([
+                    sum,
+                    map_storage::<Arc<str>, ()>(batch.subjects.capacity())?,
+                    map_storage::<Arc<str>, ObservationFrame>(batch.recorded_frames.capacity())?,
+                ])
+            })?,
+        ])
     }
     pub(super) fn reserve_growth(&mut self, bytes: usize) -> Result<(), ReceivedError> {
         let old_storage = self
@@ -490,6 +537,35 @@ impl CurrentJournal {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().ok_or_else(invalid)? {
+                CurrentUndo::AttentionPreparation { enabled, prior } => {
+                    self.attention_preparation = enabled;
+                    self.attention_work = prior;
+                }
+                CurrentUndo::AttentionSelection { observer, prior } => {
+                    self.attention_work
+                        .get_mut(&observer)
+                        .ok_or_else(invalid)?
+                        .selection = prior;
+                }
+                CurrentUndo::AttentionWorkStarted { observer, prior } => {
+                    self.attention_work.shift_remove(&observer);
+                    if let Some((at, prior)) = prior {
+                        self.attention_work.shift_insert(at, observer, prior);
+                    }
+                }
+                CurrentUndo::AttentionSourceChanged { observer, source } => {
+                    self.attention_work
+                        .get_mut(&observer)
+                        .ok_or_else(invalid)?
+                        .sources
+                        .remove(&source)?;
+                }
+                CurrentUndo::AttentionWorkConsumed { observer, prior } => {
+                    self.attention_work
+                        .get_mut(&observer)
+                        .ok_or_else(invalid)?
+                        .sources = prior;
+                }
                 CurrentUndo::ExposurePrepared => state.exposure_prepared = false,
                 CurrentUndo::VisiblePlaces { observer, prior } => {
                     *state
@@ -667,6 +743,19 @@ impl CurrentJournal {
             }
         }
         self.retained.truncate(checkpoint.retained);
+        // The undone payloads and temporary bounds have been released. Keep
+        // funding real backing allocations that grew during the child; rejected
+        // probes must not accumulate fictitious capacity debt on replay.
+        let storage = self.container_storage().ok_or_else(capacity)?;
+        let retained_growth = storage.saturating_sub(checkpoint.storage.ok_or_else(capacity)?);
+        self.reservation
+            .resize(
+                checkpoint
+                    .reservation
+                    .checked_add(retained_growth)
+                    .ok_or_else(capacity)?,
+            )
+            .map_err(|_| capacity())?;
         Ok(())
     }
     pub(crate) fn discard_undo(&mut self) -> Result<(), ReceivedError> {
@@ -681,6 +770,9 @@ impl CurrentJournal {
                     map_storage::<Arc<str>, CurrentBatch>(self.batches.capacity())
                         .ok_or_else(capacity)?,
                     map_storage::<usize, ()>(self.retained.capacity()).ok_or_else(capacity)?,
+                    map_storage::<String, AttentionWork>(self.attention_work.capacity())
+                        .ok_or_else(capacity)?,
+                    self.attention_work_key_heap().ok_or_else(capacity)?,
                 ])
                 .ok_or_else(capacity)?,
             )

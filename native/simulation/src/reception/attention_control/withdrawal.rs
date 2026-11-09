@@ -84,6 +84,13 @@ pub(crate) fn prune_withdrawn_attention(
     if removed.is_empty() && changed_anchors.is_empty() {
         return Ok(false);
     }
+    if !removed.is_empty() {
+        journal.invalidate_attention_work(observer)?;
+    } else {
+        for key in &changed_anchors {
+            journal.note_attention_source(observer, &state.annotations[key].source_id)?;
+        }
+    }
     for key in &removed {
         state.annotations.shift_remove(key);
     }

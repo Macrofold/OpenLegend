@@ -87,6 +87,17 @@ impl CurrentReceptionLifetime {
         if self.prefix.is_some() {
             return Ok(());
         }
+        let entity = core
+            .state
+            .physical
+            .entities
+            .get(&self.observer.actor_id)
+            .ok_or(ExecutionError::MissingActor)?;
+        core.journal.originals.ensure_owner(
+            &mut core.state.reception,
+            entity,
+            core.state.physical.header.sequence,
+        )?;
         self.before = CurrentCohort::capture(
             &core.state.physical,
             &core.state.reception,

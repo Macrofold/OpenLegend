@@ -448,10 +448,10 @@ impl BodyReconcileCursor {
                     {
                         return Err(ExecutionError::Invariant);
                     }
-                    core.physical().clear_dead_contacts(&self.actor)?;
+                    core.physical().clear_contacts(&self.actor)?;
                     core.journal
                         .current
-                        .clear_dead_visibility(&mut core.state.reception, &self.actor)?;
+                        .clear_visibility(&mut core.state.reception, &self.actor)?;
                     core.journal
                         .episodes
                         .clear_observer(&mut core.state.reception, &self.actor)?;

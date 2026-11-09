@@ -5,6 +5,81 @@ use crate::attention::AttentionRelationFamily;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::host::ByteBudget;
 use std::mem::size_of;
+/// The complete recording phase retires participation before asking whether a
+/// new observation is due. Quiet native bodies retain acoustic-source bindings.
+pub(super) fn prepare_observer_phase(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<(), ExecutionError> {
+    begin_perception_phase(core, observer, budget)?;
+    let Some(entity) = core.state.physical.entities.get(observer) else {
+        return Ok(());
+    };
+    let Some(actor) = entity.actor.as_ref() else {
+        return Ok(());
+    };
+    let alive = actor.alive;
+    let active = entity.actively_participates();
+    let memory = entity.has_memory();
+    let native = actor.controller == "native" && entity.animal.is_some();
+    let episode = entity
+        .animal
+        .as_ref()
+        .is_some_and(|animal| animal.episode.is_some());
+    let sight = super::sensors::vision_parameters(&core.state.installed, entity).radius > 0.0
+        && !core
+            .state
+            .installed
+            .capabilities
+            .capability_blocked(Some(entity), "perception")?;
+    if alive && active && !sight {
+        // The selected restrictive-status owner has already ended perception.
+        // Live sight-only revocation requires its own modality/grace owner;
+        // an opaque family must never erase unrelated hearing to imitate it.
+        let unconverted = core
+            .state
+            .reception
+            .perception_evidence
+            .as_ref()
+            .and_then(|owners| owners.get(observer))
+            .is_some_and(|owner| {
+                owner.geometry.is_some()
+                    || owner.current.values().any(|contact| {
+                        contact
+                            .content
+                            .groups
+                            .iter()
+                            .any(|group| group.received.grant.modality == Modality::Sight)
+                    })
+            });
+        if unconverted {
+            return Err(ExecutionError::UnsupportedFamily);
+        }
+        core.journal
+            .episodes
+            .clear_observer(&mut core.state.reception, observer)?;
+    }
+    if alive && active && memory {
+        return Ok(());
+    }
+    if !alive || !active || !(native && episode) {
+        end_current_evidence(core, observer, budget)?;
+    }
+    core.journal
+        .current
+        .clear_visibility(&mut core.state.reception, observer)?;
+    core.journal
+        .current
+        .clear_visible_places(&mut core.state.reception, observer)?;
+    if !alive || !active || !native {
+        core.journal
+            .episodes
+            .clear_observer(&mut core.state.reception, observer)?;
+    }
+    core.physical().clear_contacts(observer)?;
+    Ok(())
+}
 /// Source's time-only phase precedes due-sense decisions, including observers
 /// that do not take a new physical sample at this cut.
 pub(crate) fn begin_perception_phase(

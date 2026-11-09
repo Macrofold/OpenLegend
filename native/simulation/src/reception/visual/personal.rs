@@ -18,6 +18,57 @@ pub(crate) struct VisualOpportunity {
     pub due_subjects: IndexSet<String>,
     pub changed_detail_subjects: Option<IndexSet<String>>,
 }
+pub(crate) struct RequestedVisualDetails {
+    pub ids: IndexSet<String>,
+    _reservation: ByteReservation,
+}
+/// Select detail from the actual received competition before constructing a
+/// physical query. Broad and detail-only reception share this same predicate.
+pub(crate) fn requested_visual_details(
+    core: &CoreMutation<'_>,
+    observer: &str,
+    opportunity: &VisualOpportunity,
+    budget: &ByteBudget,
+) -> Result<RequestedVisualDetails, ExecutionError> {
+    let state = owner(core, observer)?;
+    let entries = state
+        .attention
+        .as_ref()
+        .map_or(&[][..], |a| a.entries.as_slice());
+    let bytes = entries.iter().try_fold(
+        crate::host::retained_size::map_storage::<String, ()>(entries.len())
+            .ok_or(ExecutionError::Capacity)?,
+        |sum, e| {
+            sum.checked_add(e.source_id.len())
+                .ok_or(ExecutionError::Capacity)
+        },
+    )?;
+    let reservation = budget.reserve(bytes)?;
+    let ids = entries
+        .iter()
+        .filter(|entry| {
+            opportunity.immediate
+                || opportunity.due_subjects.contains(&entry.source_id)
+                || entry.started_at == core.state.physical.header.sim_time
+                || opportunity
+                    .changed_detail_subjects
+                    .as_ref()
+                    .is_none_or(|changed| changed.contains(&entry.source_id))
+                || state
+                    .current
+                    .get(&entry.source_id)
+                    .and_then(|c| c.sight.as_ref())
+                    .and_then(|s| s.detail.as_ref())
+                    .is_none()
+        })
+        .map(|e| e.source_id.clone())
+        .collect();
+    Ok(RequestedVisualDetails {
+        ids,
+        _reservation: reservation,
+    })
+}
+
 pub(crate) struct VisualNotice {
     pub target_id: String,
     pub detail: crate::text::JsText,
@@ -330,8 +381,14 @@ impl PersonalVisualCursor {
         let mut visual = begin_visual(core, sight, None, budget)?;
         visual.collect_notices = !self.opportunity.detail_only;
         if self.opportunity.detail_only {
-            let requested = self.requested_details(core, &visual, budget)?;
+            let requested = requested_visual_details(
+                core,
+                &visual.observer.actor_id,
+                &self.opportunity,
+                budget,
+            )?;
             let lost: IndexSet<_> = requested
+                .ids
                 .iter()
                 .filter(|id| !eligible.contains(*id))
                 .cloned()
@@ -386,9 +443,12 @@ impl PersonalVisualCursor {
                     )?;
                 }
             }
-            visual.receive_losses(core, sight, Some(&requested), Some(&eligible), budget)?;
-            for &(id, _) in &ordered {
-                if requested.contains(id) && eligible.contains(id) {
+            visual.receive_losses(core, sight, Some(&requested.ids), Some(&eligible), budget)?;
+            // A detail-only cut consumes the attention selection in its own
+            // order. Broad reception below consumes the physical candidate
+            // order; exchanging those orders changes saved sample chronology.
+            for id in &requested.ids {
+                if eligible.contains(id) {
                     receive_subject(&mut visual, core, id, sight, true, budget)?;
                 }
             }
@@ -419,12 +479,17 @@ impl PersonalVisualCursor {
             }
             visual.current.reconciled = true;
             visual.settle_housekeeping(core, budget)?;
-            let requested = self.requested_details(core, &visual, budget)?;
+            let requested = requested_visual_details(
+                core,
+                &visual.observer.actor_id,
+                &self.opportunity,
+                budget,
+            )?;
             let current = visual.current;
             let mut detail = begin_visual(core, sight, Some(current), budget)?;
-            detail.receive_losses(core, sight, Some(&requested), Some(&eligible), budget)?;
+            detail.receive_losses(core, sight, Some(&requested.ids), Some(&eligible), budget)?;
             for &(id, _) in &ordered {
-                if requested.contains(id) && eligible.contains(id) {
+                if requested.ids.contains(id) && eligible.contains(id) {
                     receive_subject(&mut detail, core, id, sight, true, budget)?;
                 }
             }
@@ -435,53 +500,6 @@ impl PersonalVisualCursor {
         }
         self.visual = Some(visual);
         Ok(())
-    }
-    fn requested_details(
-        &self,
-        core: &mut CoreMutation<'_>,
-        visual: &VisualReception,
-        budget: &ByteBudget,
-    ) -> Result<IndexSet<String>, ExecutionError> {
-        let state = owner(core, &visual.observer.actor_id)?;
-        let entries = state
-            .attention
-            .as_ref()
-            .map_or(&[][..], |a| a.entries.as_slice());
-        let bytes = entries.iter().try_fold(
-            crate::host::retained_size::map_storage::<String, ()>(entries.len())
-                .ok_or(ExecutionError::Capacity)?,
-            |sum, e| {
-                sum.checked_add(e.source_id.len())
-                    .ok_or(ExecutionError::Capacity)
-            },
-        )?;
-        core.journal.current.reserve_growth(bytes)?;
-        let _ = budget;
-        let state = owner(core, &visual.observer.actor_id)?;
-        let entries = state
-            .attention
-            .as_ref()
-            .map_or(&[][..], |a| a.entries.as_slice());
-        Ok(entries
-            .iter()
-            .filter(|entry| {
-                self.opportunity.immediate
-                    || self.opportunity.due_subjects.contains(&entry.source_id)
-                    || entry.started_at == core.state.physical.header.sim_time
-                    || self
-                        .opportunity
-                        .changed_detail_subjects
-                        .as_ref()
-                        .is_none_or(|changed| changed.contains(&entry.source_id))
-                    || state
-                        .current
-                        .get(&entry.source_id)
-                        .and_then(|c| c.sight.as_ref())
-                        .and_then(|s| s.detail.as_ref())
-                        .is_none()
-            })
-            .map(|e| e.source_id.clone())
-            .collect())
     }
     fn reconcile_episodes(
         &self,

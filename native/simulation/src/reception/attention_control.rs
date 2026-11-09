@@ -258,6 +258,7 @@ pub(crate) fn update_attention(
     let next_policy = policy_key(policy, Some(capacity_value as f64))?;
     let policy_changed = state.policy != next_policy;
     state.policy = next_policy;
+    journal.begin_attention_work(observer, current.life)?;
     let mut by_source: IndexMap<String, Vec<String>> = IndexMap::new();
     let expiry_due = state.annotations.values().any(|value| {
         value.urgency_through.unwrap_or(f64::INFINITY) <= now
@@ -272,6 +273,7 @@ pub(crate) fn update_attention(
     let mut changed = IndexSet::new();
     if let Some(ids) = update.changed_source_ids.filter(|_| !policy_changed) {
         changed.extend(ids.iter().cloned());
+        changed.extend(journal.attention_changes(observer).cloned());
         if let Some(urgency) = update.urgency {
             let mut ids: Vec<_> = urgency.keys().collect();
             ids.sort_by(|a, b| crate::encoding::js_property_cmp(a, b));
@@ -426,22 +428,44 @@ pub(crate) fn update_attention(
     let candidates = build_candidates(
         physical, reception, installed, experience, observer, &state, journal,
     )?;
+    journal.consume_attention_changes(observer)?;
     let live: IndexSet<_> = candidates.keys().cloned().collect();
     state.explicit.retain(|key| live.contains(key));
-    let selected = selection::select(
-        physical,
-        reception,
-        installed,
-        experience,
-        observer,
-        &mut state,
-        &entries_before,
-        &candidates,
-        capacity_value,
-        update.changed_source_ids.is_some() && !policy_changed && !expiry_due,
-        update.urgency.is_none_or(IndexMap::is_empty)
-            && update.direct_subjects.is_none_or(|ids| ids.is_empty()),
-    )?;
+    // A completed unchanged competition is retained until an actual dependency
+    // or stability deadline changes. Re-ranking here would rotate discovery and
+    // change the geometry anchors even though Source buys no new competition.
+    let reuse = update.changed_source_ids.is_some()
+        && changed.is_empty()
+        && !geometry_changed
+        && journal.selection_current(observer, &state.policy, work_target, &state, now);
+    let selected = if reuse {
+        selection::Selection {
+            entries: entries_before.clone(),
+            subjects: candidates
+                .values()
+                .filter_map(|candidate| {
+                    candidate.subject.as_ref().map(|subject| {
+                        (candidate.annotation.exposure.track.clone(), subject.clone())
+                    })
+                })
+                .collect(),
+        }
+    } else {
+        selection::select(
+            physical,
+            reception,
+            installed,
+            experience,
+            observer,
+            &mut state,
+            &entries_before,
+            &candidates,
+            capacity_value,
+            update.changed_source_ids.is_some() && !policy_changed && !expiry_due,
+            update.urgency.is_none_or(IndexMap::is_empty)
+                && update.direct_subjects.is_none_or(|ids| ids.is_empty()),
+        )?
+    };
     state.latches.retain(|_, latch| {
         latch.anchor_key == SELF_RELATION_KEY || live.contains(&latch.anchor_key)
     });
@@ -517,6 +541,9 @@ pub(crate) fn update_attention(
             .iter()
             .zip(&entries_before)
             .any(|(a, b)| a.key != b.key || a.lease_id != b.lease_id || a.subject != b.subject);
+    if !reuse {
+        journal.complete_attention_selection(observer, &state, work_target, now)?;
+    }
     *journal.attention_mut(reception, observer)? = Some(state);
     Ok(AttentionSelection {
         before,

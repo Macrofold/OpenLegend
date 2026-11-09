@@ -350,6 +350,19 @@ fn current_facet_set_in_batch(
         .ok_or_else(capacity)
     })?;
     preflight(journal, state, observer, address.subject_id, false, extra)?;
+    if input.is_some()
+        || owner(state, observer)?
+            .current
+            .get(address.subject_id)
+            .is_some_and(|contact| {
+                contact.content.groups.iter().any(|group| {
+                    channel.is_none_or(|channel| &group.received.grant.channel == channel)
+                        && group.received.fields.contains_key(address.kind)
+                })
+            })
+    {
+        journal.note_attention_source(observer, address.subject_id)?;
+    }
     if let (Some((input, received)), Some(contact)) = (
         input.as_ref(),
         owner(state, observer)?.current.get(address.subject_id),
@@ -953,6 +966,7 @@ fn current_set_unchecked_in_batch(
                 changed.then_some(groups)
             };
         if let Some(groups) = projected {
+            journal.note_attention_source(observer, subject)?;
             set_metadata_groups(journal, state, observer, subject, groups)?;
         }
     }
@@ -1091,6 +1105,9 @@ fn current_confirm_groups_in_batch(
     }
     if changed {
         set_metadata_groups(journal, state, observer, subject, groups)?;
+    }
+    if !checked.is_empty() {
+        journal.note_attention_source(observer, subject)?;
     }
     Ok(checked)
 }

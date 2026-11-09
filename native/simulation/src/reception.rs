@@ -68,6 +68,10 @@ mod native_exposure;
 pub(crate) use native_exposure::{
     CompletedNativeExposure, NativeExposureCursor, NativeExposureStep,
 };
+mod batch;
+pub(crate) use batch::{
+    CompletedPerception, PerceptionAnswer, PerceptionCursor, PerceptionStep, physical_sampling_due,
+};
 mod current_journal;
 pub(crate) use attention_control::{
     AttentionSelection, AttentionUpdate, evaluate_attention_relations, next_attention_work_at,

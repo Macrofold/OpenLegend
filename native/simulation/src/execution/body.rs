@@ -357,7 +357,7 @@ impl PhysicalMutation<'_> {
             after,
         })
     }
-    pub(crate) fn clear_dead_contacts(&mut self, id: &str) -> Result<(), ExecutionError> {
+    pub(crate) fn clear_contacts(&mut self, id: &str) -> Result<(), ExecutionError> {
         let handle = self
             .state
             .entities

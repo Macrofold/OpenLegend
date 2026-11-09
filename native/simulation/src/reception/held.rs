@@ -27,6 +27,48 @@ pub(crate) struct HeldReceptionCursor {
 fn invalid() -> ExecutionError {
     crate::received::ReceivedError("Held perception continuation is already complete.").into()
 }
+/// A real selection opportunity closes its own recording lifetime before a
+/// later physical phase begins. Held continuation and detail preparation share it.
+pub(super) fn select_received_attention(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<(), ExecutionError> {
+    let entity = core
+        .state
+        .physical
+        .entities
+        .get(observer)
+        .ok_or(ExecutionError::MissingActor)?;
+    if !entity.has_memory() {
+        return Ok(());
+    }
+    let life = ObserverLife {
+        actor_id: observer.into(),
+        physical_life: entity.physical_life().ok_or(ExecutionError::MissingActor)?,
+    };
+    let mut lifetime = CurrentReceptionLifetime::begin(core, &life, None, None, budget)?;
+    lifetime.ensure_prefix(core, budget)?;
+    attention_control::update_attention(
+        &core.state.physical,
+        &mut core.state.reception,
+        &core.state.installed,
+        &core.state.experience,
+        &mut core.journal.current,
+        observer,
+        attention_control::AttentionUpdate {
+            changed_source_ids: Some(&[]),
+            ..Default::default()
+        },
+    )?;
+    if let Some(before) = lifetime.before.as_ref() {
+        reconcile_current_cohort(core, Arc::clone(before), None, budget)?;
+    }
+    lifetime.reconciled = true;
+    lifetime.finish(core, budget)?;
+
+    Ok(())
+}
 impl HeldReceptionCursor {
     pub(crate) fn prepare(
         core: &mut CoreMutation<'_>,
@@ -65,35 +107,7 @@ impl HeldReceptionCursor {
             None
         };
         if due && memory {
-            let entity = core
-                .state
-                .physical
-                .entities
-                .get(observer)
-                .ok_or(ExecutionError::MissingActor)?;
-            let life = ObserverLife {
-                actor_id: observer.into(),
-                physical_life: entity.physical_life().ok_or(ExecutionError::MissingActor)?,
-            };
-            let mut lifetime = CurrentReceptionLifetime::begin(core, &life, None, None, budget)?;
-            lifetime.ensure_prefix(core, budget)?;
-            attention_control::update_attention(
-                &core.state.physical,
-                &mut core.state.reception,
-                &core.state.installed,
-                &core.state.experience,
-                &mut core.journal.current,
-                observer,
-                attention_control::AttentionUpdate {
-                    changed_source_ids: Some(&[]),
-                    ..Default::default()
-                },
-            )?;
-            if let Some(before) = lifetime.before.as_ref() {
-                reconcile_current_cohort(core, Arc::clone(before), None, budget)?;
-            }
-            lifetime.reconciled = true;
-            lifetime.finish(core, budget)?;
+            select_received_attention(core, observer, budget)?;
         }
         let geometry = if work.geometry {
             Some(GeometryReceptionCursor::prepare(
@@ -150,6 +164,21 @@ impl HeldReceptionCursor {
             return Err(invalid());
         }
         if self.active {
+            let entity = core
+                .state
+                .physical
+                .entities
+                .get(&self.observer)
+                .ok_or(ExecutionError::MissingActor)?;
+            if entity.has_memory() {
+                // Interpreting held geometry still enters the current receiving
+                // sequence, even when no fresh original observation is needed.
+                core.journal.originals.ensure_owner(
+                    &mut core.state.reception,
+                    entity,
+                    core.state.physical.header.sequence,
+                )?;
+            }
             if let Some(before) = self.before.take() {
                 reconcile_current_cohort(core, before, None, budget)?;
             }
