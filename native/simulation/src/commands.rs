@@ -17,6 +17,8 @@ pub(crate) use operation::*;
 mod exposure;
 mod finalization;
 pub(crate) use finalization::*;
+mod native_movement;
+pub(crate) use native_movement::begin_native_movement;
 mod state;
 pub(crate) use state::*;
 mod display;

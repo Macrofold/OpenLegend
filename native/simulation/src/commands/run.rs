@@ -166,7 +166,11 @@ impl CommandCursor {
         }
         let bytes = std::mem::size_of::<Self>()
             + canonical.capacity()
-            + command.heap_bytes().ok_or(ExecutionError::Capacity)?;
+            + command.heap_bytes().ok_or(ExecutionError::Capacity)?
+            + options
+                .native_movement
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(bytes)?;
         Ok(Self {
             command,
@@ -1660,6 +1664,7 @@ impl CommandCursor {
                         result,
                         self.finalize,
                         exposure,
+                        self.options.native_movement.take(),
                         &self.budget,
                     )?));
                 }

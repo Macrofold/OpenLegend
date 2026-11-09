@@ -17,6 +17,7 @@ pub(crate) struct PendingCommandCompletion {
     sequence: u64,
     at: f64,
     exposure: Option<super::exposure::CommandExposure>,
+    native_movement: Option<super::NativeMovementInput>,
     _reservation: ByteReservation,
 }
 impl PendingCommandCompletion {
@@ -27,6 +28,7 @@ impl PendingCommandCompletion {
         outcome: Outcome,
         finalize: bool,
         exposure: Option<super::exposure::CommandExposure>,
+        native_movement: Option<super::NativeMovementInput>,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let reservation = budget.reserve(
@@ -35,6 +37,9 @@ impl PendingCommandCompletion {
                 actor_id.len(),
                 command_id.len(),
                 outcome.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                native_movement
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
             ])
             .ok_or(ExecutionError::Capacity)?,
         )?;
@@ -46,6 +51,7 @@ impl PendingCommandCompletion {
             sequence: core.state.physical.header.sequence,
             at: core.state.physical.header.sim_time,
             exposure,
+            native_movement,
             _reservation: reservation,
         })
     }
@@ -78,23 +84,29 @@ pub(crate) fn complete_command_in_draft(
             return Err(ExecutionError::InvalidCheckpoint.into());
         }
         if pending.outcome.ok && pending.finalize {
-            // An empty imported coaching owner still has the Source deletion
-            // duty. Selected commands cannot create a lesson episode.
-            core.physical().reconcile_closed_coaching()?;
-            crate::experience::advance_commitments(core, events, budget)?;
-            let next = core
-                .state
-                .physical
-                .header
-                .sequence
-                .checked_add(1)
-                .filter(|next| *next <= MAX_SAFE_INTEGER)
-                .ok_or(ExecutionError::Identity)?;
-            core.state.physical.header.sequence = next;
-            core.reconcile_command_semantics(&child, &pending.actor_id)?;
-            core.sync_sensory_changes()?;
-            if let Some(exposure) = pending.exposure.take() {
-                exposure.reconcile(core, budget)?;
+            finish_boundary(
+                core,
+                &child,
+                &pending.actor_id,
+                events,
+                pending.exposure.take(),
+                budget,
+            )?;
+            if let Some(movement) = pending.native_movement.take() {
+                crate::native_controller::complete_movement(
+                    core,
+                    &pending.actor_id,
+                    pending
+                        .outcome
+                        .action_id
+                        .as_deref()
+                        .ok_or(ExecutionError::Invariant)?,
+                    movement,
+                )?;
+                // Source nativeMovementTransition first completes its command,
+                // then completes the controller consequence. Preserve both real
+                // sequence/transition boundaries; no extra occurrence is emitted.
+                finish_boundary(core, &child, &pending.actor_id, events, None, budget)?;
             }
         }
         Ok(())
@@ -109,5 +121,33 @@ pub(crate) fn complete_command_in_draft(
         core.journal.rollback_to(core.state, child)?;
     }
     pending.exposure = None;
+    pending.native_movement = None;
     Ok(CompletedCommand(pending))
+}
+fn finish_boundary(
+    core: &mut CoreMutation<'_>,
+    child: &CandidateCheckpoint,
+    actor: &str,
+    events: &[WorldEvent],
+    exposure: Option<super::exposure::CommandExposure>,
+    budget: &ByteBudget,
+) -> Result<(), MemoryAcquisitionError> {
+    // An empty imported coaching owner still has the Source deletion duty.
+    core.physical().reconcile_closed_coaching()?;
+    crate::experience::advance_commitments(core, events, budget)?;
+    let next = core
+        .state
+        .physical
+        .header
+        .sequence
+        .checked_add(1)
+        .filter(|next| *next <= MAX_SAFE_INTEGER)
+        .ok_or(ExecutionError::Identity)?;
+    core.state.physical.header.sequence = next;
+    core.reconcile_command_semantics(child, actor)?;
+    core.sync_sensory_changes()?;
+    if let Some(exposure) = exposure {
+        exposure.reconcile(core, budget)?;
+    }
+    Ok(())
 }
