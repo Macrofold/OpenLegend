@@ -27,7 +27,7 @@ use crate::experience::{
 };
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::retained_size::HeapBytes;
-use crate::host::{ByteBudget, ByteReservation, CandidateKey};
+use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::language::{CollationAnswer, CollationRequest};
 use crate::movement::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
@@ -148,6 +148,12 @@ pub(crate) struct CompletedAdvance {
 /// caller cannot attach an old forecast to a different candidate or mutation.
 #[derive(Clone)]
 pub(crate) struct AdvanceContinuation(Arc<AdvanceSnapshot>);
+/// An exact forecast may outlive private undo only after the real fence accepts
+/// its cut. Other accepted operations change that cut and invalidate this proof.
+pub(crate) struct AcceptedAdvanceContinuation {
+    snapshot: AdvanceContinuation,
+    accepted: AcceptedCandidate,
+}
 struct AdvanceSnapshot {
     candidate: CandidateKey,
     installed: Arc<crate::simulation::InstalledWorld>,
@@ -159,6 +165,21 @@ struct AdvanceSnapshot {
     _reservation: ByteReservation,
 }
 impl AdvanceContinuation {
+    pub(crate) fn accepted(
+        self,
+        core: &CoreMutation<'_>,
+        accepted: AcceptedCandidate,
+    ) -> Result<AcceptedAdvanceContinuation, ExecutionError> {
+        if !self.current(core, accepted.key())
+            || accepted.key().base_cut.checked_add(1) != Some(core.state.accepted_cut)
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        Ok(AcceptedAdvanceContinuation {
+            snapshot: self,
+            accepted,
+        })
+    }
     fn current(&self, core: &CoreMutation<'_>, candidate: CandidateKey) -> bool {
         self.0.candidate == candidate
             && Arc::ptr_eq(&self.0.installed, &core.state.installed)
@@ -169,6 +190,42 @@ impl AdvanceContinuation {
                 .physical
                 .changes_since(self.0.physical)
                 .is_ok_and(|changes| changes.is_empty())
+    }
+}
+impl AcceptedAdvanceContinuation {
+    /// Rebase the derived cursor onto a fresh journal, never carry the old
+    /// journal's numeric offset into a different operation. Rejection leaves
+    /// this accepted preparation available for another genuine candidate.
+    pub(crate) fn prepare(
+        &self,
+        core: &CoreMutation<'_>,
+        candidate: CandidateKey,
+        budget: &ByteBudget,
+    ) -> Result<Option<AdvanceContinuation>, ExecutionError> {
+        let prior = self.accepted.key();
+        let snapshot = &self.snapshot.0;
+        if prior.base_cut.checked_add(1) != Some(core.state.accepted_cut)
+            || candidate.base_cut != core.state.accepted_cut
+            || candidate.generation != prior.generation
+            || candidate.id <= prior.id
+            || !Arc::ptr_eq(&snapshot.installed, &core.state.installed)
+            || snapshot.sequence != core.state.physical.header.sequence
+            || snapshot.at != core.state.physical.header.sim_time
+            || !core.journal.physical.changes().is_empty()
+        {
+            return Ok(None);
+        }
+        let reservation = budget.reserve(size_of::<AdvanceSnapshot>() + 2 * size_of::<usize>())?;
+        Ok(Some(AdvanceContinuation(Arc::new(AdvanceSnapshot {
+            candidate,
+            installed: snapshot.installed.clone(),
+            sequence: snapshot.sequence,
+            at: snapshot.at,
+            physical: core.journal.physical.change_cursor(),
+            mechanics: snapshot.mechanics.clone(),
+            roster: snapshot.roster.clone(),
+            _reservation: reservation,
+        }))))
     }
 }
 impl CompletedAdvance {

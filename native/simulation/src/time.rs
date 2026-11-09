@@ -21,5 +21,6 @@ mod navigation;
 mod reconcile;
 mod sensing;
 pub(crate) use advance::{
-    AdvanceAnswer, AdvanceContinuation, AdvanceCursor, AdvanceError, AdvanceStep, CompletedAdvance,
+    AcceptedAdvanceContinuation, AdvanceAnswer, AdvanceContinuation, AdvanceCursor, AdvanceError,
+    AdvanceStep, CompletedAdvance,
 };
