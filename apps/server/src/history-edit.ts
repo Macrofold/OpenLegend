@@ -1,3 +1,6 @@
+/** Concurrent preparation is application capacity, never permission to edit a source. */
+export const SOURCE_EDIT_PREPARATION_CAPACITY = 64;
+
 import { serializeTemporalPage, temporalPageRecordId } from './temporal-page-storage.js';
 import type {
   WorldEvent,

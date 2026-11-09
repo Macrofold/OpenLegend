@@ -41,7 +41,7 @@ pub(crate) fn encode_received_value_changes(
             &placement,
             "{\"sources\":{}}",
             &[],
-            false,
+            true,
             RowEffects::default(),
         )?;
         output.observe_owner(&OwnerCoverage {
@@ -91,9 +91,10 @@ pub(crate) fn encode_received_value_changes(
             &placement,
             record.as_ref(),
             &columns,
-            // The Source pooled dictionary is partial after creation; ordinary
-            // changed saves use its upsert, independently of native custody.
-            false,
+            // SourceInsert is produced only by the sole identity allocator,
+            // after the imported global high-water. It proves this specific
+            // new key even when unrelated historical pool rows remain cold.
+            true,
             RowEffects::default(),
         )?;
     }

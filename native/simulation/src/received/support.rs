@@ -74,6 +74,25 @@ pub struct TemporalSupportRecord {
     pub(super) storage: crate::host::ResidentReservation,
 }
 impl TemporalSupportRecord {
+    pub(crate) fn capture_pins(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<
+        (
+            Arc<crate::host::SharedMemoryPin>,
+            Arc<crate::host::SharedMemoryPin>,
+        ),
+        ReceivedError,
+    > {
+        Ok((
+            self.storage
+                .capture_pin(budget)
+                .map_err(|_| ReceivedError("Retained support capture exceeds native allowance."))?,
+            self.body_storage
+                .capture_pin(budget)
+                .map_err(|_| ReceivedError("Retained support capture exceeds native allowance."))?,
+        ))
+    }
     pub(crate) fn retain_for_candidate(&self, budget: &ByteBudget) -> Result<(), ReceivedError> {
         budget
             .retain_record(&self.storage)

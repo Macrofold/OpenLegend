@@ -13,6 +13,7 @@ use crate::reception::{
 use indexmap::IndexSet;
 use std::mem::size_of;
 use std::sync::Arc;
+mod read;
 
 /// Expansion repeats only the immutable metadata referenced by these fields.
 /// The same allowance funds read captures and canonical privacy replacements;
@@ -255,9 +256,16 @@ pub(crate) struct CapturedTemporalReceipt {
     // a previously supplied sparse receipt is retained again. No live lookup or
     // per-field ordering registry is introduced.
     support: Option<Arc<TemporalSupportRecord>>,
+    _support_pins: Option<(
+        Arc<crate::host::SharedMemoryPin>,
+        Arc<crate::host::SharedMemoryPin>,
+    )>,
     _reservation: ByteReservation,
 }
 impl CapturedTemporalReceipt {
+    pub(crate) fn read_view(&self) -> impl serde::Serialize + '_ {
+        read::receipt_read(&self.receipt)
+    }
     pub(crate) fn into_parts(
         self,
     ) -> (TemporalReceipt, Vec<ReceivedValueFragment>, ByteReservation) {
@@ -340,6 +348,7 @@ impl TemporalState {
     pub(crate) fn native_receipt(
         &self,
         locator: &TemporalReceiptLocator,
+        members: Option<&std::collections::BTreeSet<u64>>,
         values: &impl ReceivedValueLookup,
         meaning: &dyn TemporalValueMeaning,
         budget: &ByteBudget,
@@ -394,43 +403,32 @@ impl TemporalState {
                 "Temporal receipt requires original cold coverage.",
             ));
         };
-        let bound = receipt_expansion_bound(batch, entry)?;
-        let reservation = budget
-            .reserve(bound)
-            .map_err(|_| ReceivedError("Temporal read capacity exhausted."))?;
-        let receipt = materialize_received_receipt(batch, entry, None)?;
-        let facets = receipt
-            .facets
-            .iter()
-            .filter(|field| {
-                received_position_eligible(
-                    &ReceivedPosition {
-                        batch_order: locator.batch_order,
-                        entry_index: locator.entry_index,
-                        member_index: field.member_index,
-                    },
-                    receipt.at,
-                    actor.header().frontier.as_ref(),
-                )
-            })
-            .cloned()
-            .collect::<Vec<_>>();
-        if facets.is_empty() {
+        // Retained support requires a real facet. History selection separately
+        // admits an actual fieldless boundary/frame through the same capture.
+        if entry.receipt.facets.is_empty() {
             return Ok(None);
         }
-        let receipt = select_temporal_receipt_facets(receipt, facets, values, meaning)?;
-        capture_receipt(receipt, None, values, budget, reservation)
+        capture_received_entry(
+            batch,
+            entry,
+            members,
+            actor.header().frontier.as_ref(),
+            values,
+            meaning,
+            budget,
+        )
     }
     pub(crate) fn retained_receipt(
         &self,
         locator: &TemporalReceiptLocator,
+        members: Option<&std::collections::BTreeSet<u64>>,
         values: &impl ReceivedValueLookup,
         meaning: &dyn TemporalValueMeaning,
         now: f64,
         max_age: f64,
         budget: &ByteBudget,
     ) -> Result<Option<CapturedTemporalReceipt>, ReceivedError> {
-        let native = self.native_receipt(locator, values, meaning, budget);
+        let native = self.native_receipt(locator, members, values, meaning, budget);
         match native {
             Ok(Some(captured)) if temporal_recent_at(captured.receipt.at, now, max_age) => {
                 return Ok(Some(captured));
@@ -444,7 +442,7 @@ impl TemporalState {
                     .flatten()
                 {
                     if support.capsule().receipt.locator == *locator {
-                        return capture_support(support, values, budget);
+                        return capture_support(support, members, values, meaning, budget);
                     }
                 }
                 return Err(error);
@@ -463,12 +461,64 @@ impl TemporalState {
         if support.capsule().receipt.locator != *locator {
             return Ok(None);
         }
-        capture_support(support, values, budget)
+        capture_support(support, members, values, meaning, budget)
     }
+}
+
+/// Capture one actual imported/native entry without constructing a temporal
+/// actor or changing canonical residency. A historical read supplies its own
+/// admitted frontier; later expiry must not rewrite that originating read.
+pub(crate) fn capture_received_entry(
+    batch: &ReceivedBatch,
+    entry: &ReceivedEntry,
+    members: Option<&BTreeSet<u64>>,
+    frontier: Option<&ReceivedFrontier>,
+    values: &impl ReceivedValueLookup,
+    meaning: &dyn TemporalValueMeaning,
+    budget: &ByteBudget,
+) -> Result<Option<CapturedTemporalReceipt>, ReceivedError> {
+    let reservation = budget
+        .reserve(receipt_expansion_bound(batch, entry)?)
+        .map_err(|_| ReceivedError("Temporal read capacity exhausted."))?;
+    let receipt = materialize_received_receipt(batch, entry, None)?;
+    let eligible = |member_index| {
+        received_position_eligible(
+            &ReceivedPosition {
+                batch_order: batch.batch_order,
+                entry_index: entry.entry_index,
+                member_index,
+            },
+            receipt.at,
+            frontier,
+        )
+    };
+    if receipt.facets.is_empty() {
+        return if members.is_none_or(BTreeSet::is_empty) && eligible(0) {
+            capture_receipt(receipt, None, values, budget, reservation)
+        } else {
+            Ok(None)
+        };
+    }
+    let facets = receipt
+        .facets
+        .iter()
+        .filter(|field| {
+            members.is_none_or(|members| members.contains(&field.member_index))
+                && eligible(field.member_index)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    if facets.is_empty() {
+        return Ok(None);
+    }
+    let receipt = select_temporal_receipt_facets(receipt, facets, values, meaning)?;
+    capture_receipt(receipt, None, values, budget, reservation)
 }
 fn capture_support(
     support: &Arc<TemporalSupportRecord>,
+    members: Option<&std::collections::BTreeSet<u64>>,
     values: &impl ReceivedValueLookup,
+    meaning: &dyn TemporalValueMeaning,
     budget: &ByteBudget,
 ) -> Result<Option<CapturedTemporalReceipt>, ReceivedError> {
     let capsule = support.capsule();
@@ -496,25 +546,84 @@ fn capture_support(
                 .ok_or(ReceivedError("Temporal support read allocation overflow."))?,
         )
         .map_err(|_| ReceivedError("Temporal support read capacity exhausted."))?;
+    let slots = capsule.receipt.facets.len();
+    let _lookup_storage = budget
+        .reserve(
+            crate::host::retained_size::map_storage::<&str, &ReceivedValueFragment>(slots).ok_or(
+                ReceivedError("Temporal support lookup allocation overflow."),
+            )?,
+        )
+        .map_err(|_| ReceivedError("Temporal support read capacity exhausted."))?;
+    let mut shared = indexmap::IndexMap::with_capacity(slots);
+    for (field, fragment) in capsule.receipt.facets.iter().zip(capsule.values.iter()) {
+        if let ReceivedValueReference::Shared(id) = &field.value_ref {
+            shared.insert(id.as_str(), fragment);
+        }
+    }
+    struct CapturedValues<'a, L> {
+        shared: indexmap::IndexMap<&'a str, &'a ReceivedValueFragment>,
+        fallback: &'a L,
+    }
+    impl<L: ReceivedValueLookup> ReceivedValueLookup for CapturedValues<'_, L> {
+        fn shared_value(&self, id: &str) -> Option<&ReceivedValueFragment> {
+            self.shared
+                .get(id)
+                .copied()
+                .or_else(|| self.fallback.shared_value(id))
+        }
+    }
+    let lookup = CapturedValues {
+        shared,
+        fallback: values,
+    };
+    let facets = capsule
+        .receipt
+        .facets
+        .iter()
+        .filter(|field| members.is_none_or(|members| members.contains(&field.member_index)))
+        .cloned()
+        .collect::<Vec<_>>();
+    if facets.is_empty() {
+        return Ok(None);
+    }
+    let receipt =
+        select_temporal_receipt_facets(capsule.receipt.as_ref().clone(), facets, &lookup, meaning)?;
     let captured = capture_receipt(
-        capsule.receipt.as_ref().clone(),
-        Some(&capsule.values),
-        values,
+        receipt,
+        Some((&capsule.receipt.facets, &capsule.values)),
+        &lookup,
         budget,
         reservation,
     )?;
-    Ok(captured.map(|mut capture| {
-        capture.support = Some(Arc::clone(support));
-        capture
-    }))
+    let Some(mut capture) = captured else {
+        return Ok(None);
+    };
+    capture._support_pins = Some(support.capture_pins(budget)?);
+    capture.support = Some(Arc::clone(support));
+    Ok(Some(capture))
 }
 fn capture_receipt(
     mut receipt: TemporalReceipt,
-    fragments: Option<&[ReceivedValueFragment]>,
+    fragments: Option<(&[TemporalFacetReference], &[ReceivedValueFragment])>,
     values: &impl ReceivedValueLookup,
-    _budget: &ByteBudget,
+    budget: &ByteBudget,
     mut reservation: ByteReservation,
 ) -> Result<Option<CapturedTemporalReceipt>, ReceivedError> {
+    let _indices_storage = budget
+        .reserve(
+            crate::host::retained_size::map_storage::<u64, &ReceivedValueFragment>(
+                fragments.map_or(0, |(fields, _)| fields.len()),
+            )
+            .ok_or(ReceivedError("Temporal selected lookup overflow."))?,
+        )
+        .map_err(|_| ReceivedError("Temporal selected lookup exceeds byte allowance."))?;
+    let mut by_member =
+        indexmap::IndexMap::with_capacity(fragments.map_or(0, |(fields, _)| fields.len()));
+    if let Some((fields, values)) = fragments {
+        for (field, value) in fields.iter().zip(values) {
+            by_member.insert(field.member_index, value);
+        }
+    }
     let mut bytes = heap_sum([
         size_of::<CapturedTemporalReceipt>(),
         receipt
@@ -527,11 +636,12 @@ fn capture_receipt(
             .ok_or(ReceivedError("Temporal read allocation overflow."))?,
     ])
     .ok_or(ReceivedError("Temporal read allocation overflow."))?;
-    for (index, field) in receipt.facets.iter().enumerate() {
-        let Some(fragment) = fragments.map_or_else(
-            || values.value_at(&field.value_ref),
-            |fragments| fragments.get(index),
-        ) else {
+    for field in receipt.facets.iter() {
+        let Some(fragment) = (if fragments.is_some() {
+            by_member.get(&field.member_index).copied()
+        } else {
+            values.value_at(&field.value_ref)
+        }) else {
             return Ok(None);
         };
         bytes = bytes
@@ -569,11 +679,12 @@ fn capture_receipt(
     selected
         .try_reserve_exact(receipt.facets.len())
         .map_err(|_| ReceivedError("Temporal values read capacity exhausted."))?;
-    for (index, field) in receipt.facets.iter_mut().enumerate() {
-        let Some(fragment) = fragments.map_or_else(
-            || values.value_at(&field.value_ref),
-            |fragments| fragments.get(index),
-        ) else {
+    for field in receipt.facets.iter_mut() {
+        let Some(fragment) = (if fragments.is_some() {
+            by_member.get(&field.member_index).copied()
+        } else {
+            values.value_at(&field.value_ref)
+        }) else {
             return Ok(None);
         };
         selected.push(fragment.clone());
@@ -618,6 +729,7 @@ fn capture_receipt(
         receipt,
         fragments: selected,
         support: None,
+        _support_pins: None,
         _reservation: reservation,
     }))
 }

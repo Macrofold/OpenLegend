@@ -35,6 +35,7 @@ impl PackedTemporalSave {
 pub(super) struct SavedActorTail {
     pub(super) pages: Vec<Arc<TemporalPageRecord>>,
     pub(super) edits: Vec<Arc<TemporalPageEditIdentity>>,
+    pub(super) empty_tail: Option<u64>,
 }
 pub(crate) struct SavedTemporalResidency {
     world_id: String,
@@ -232,7 +233,17 @@ impl SavedTemporalResidency {
                 start = index;
             }
             pages.drain(..start);
-            actors.insert(actor_id.clone(), SavedActorTail { pages, edits });
+            actors.insert(
+                actor_id.clone(),
+                SavedActorTail {
+                    pages,
+                    edits,
+                    empty_tail: affected
+                        .contains(actor_id)
+                        .then(|| actor.tail.empty_edit())
+                        .flatten(),
+                },
+            );
         }
         drop(grouped);
         drop(packed);

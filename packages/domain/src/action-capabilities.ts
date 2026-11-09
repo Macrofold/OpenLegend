@@ -176,7 +176,7 @@ export interface IntentSlots {
 export const INTENT_LIMITS = { quantity: 999, method: 200 } as const;
 /** The clock names this world lets a request use as a stopping time; the saved world's own
  * clock policy is the only source. docs/worlds/base/time.md#named-clock-times */
-export function namedClockTimes(world: WorldState): string[] {
+export function namedClockTimes(world: Pick<WorldState, 'statusEffectPolicy'>): string[] {
   return Object.keys(world.statusEffectPolicy.namedTimes);
 }
 const namedTime = (world: WorldState, name: unknown) =>

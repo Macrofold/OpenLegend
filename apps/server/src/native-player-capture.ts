@@ -3,6 +3,7 @@ import type { RequestScope } from './authority.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativePlayerRead } from './native-player-view.js';
 import { ViewChangedError } from './player-view-async.js';
+import type { PlayerInteractionFacts } from './player-interaction.js';
 import {
   decodeNativeProduct,
   freezeNativeProduct,
@@ -53,6 +54,25 @@ export class NativePlayerCapture {
     }
   }
 
+  /** The purpose-bound native reader checks current speech/action permission;
+   * the captured visible body alone cannot authorize a chosen recipient. */
+  async interaction(
+    mode: 'speak' | 'act',
+    targetId?: string,
+  ): Promise<Omit<PlayerInteractionFacts, 'controlling' | 'paused' | 'pauseReason'>> {
+    if (this.released) throw new ViewChangedError();
+    const result = freezeNativeProduct(
+      decodeNativeProduct<Omit<PlayerInteractionFacts, 'controlling' | 'paused' | 'pauseReason'>>(
+        await this.world.playerInteraction(
+          this.read,
+          Buffer.from(JSON.stringify({ mode, ...(targetId ? { targetId } : {}) })),
+        ),
+      ),
+    );
+    if (this.released) throw new ViewChangedError();
+    return result;
+  }
+
   /** Final projection runs while the native disclosure lease is held. The
    * application supplies its real synchronous authority/asset/narrator check;
    * neither a captured pause value nor a global world cut replaces that check. */
@@ -70,6 +90,7 @@ export class NativePlayerCapture {
       before.paused,
       before.controlling,
     );
+    if (!publication) throw new ViewChangedError();
     try {
       const current = operational();
       if (

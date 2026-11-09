@@ -3,6 +3,7 @@ import type {
   nativeSetupSettings,
   selectedNativeLawDefinitions,
 } from '@open-legend/domain/native-install';
+import type { WorldState } from '@open-legend/domain';
 import {
   decodeNativeProduct,
   freezeNativeProduct,
@@ -13,7 +14,8 @@ import { nativePlayerViewDefinitions } from './native-view.js';
 import type { NativeCurrentWorldInstallation } from './store.js';
 
 export interface NativeInstalledDefinitions {
-  readonly definitions: Parameters<typeof nativePlayerViewDefinitions>[2];
+  readonly definitions: Parameters<typeof nativePlayerViewDefinitions>[2] &
+    Pick<WorldState, 'hearthDefinitions'>;
   readonly geometry: ConstructorParameters<typeof NativeGeometryProviders>[0];
   readonly nativePolicies: Omit<
     ReturnType<typeof selectedNativeLawDefinitions>,

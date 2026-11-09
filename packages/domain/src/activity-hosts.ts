@@ -22,6 +22,11 @@ export type ActivityDefinitionScope = Pick<
   | 'recipes'
 >;
 
+/** Request wording reads installed definitions only; choices and execution keep
+ * their separate actor/current-world authority. */
+export type ActivityRequestDefinitionScope = ActivityDefinitionScope &
+  Pick<WorldState, 'workBatchPolicy'>;
+
 /** Installed trusted support for reusable commands and actor-scoped conditions.
  * Recipe-family installation grants neither of these capabilities.
  * docs/projects/parallel-batch-01-playable-week/camp-activities.md#predicates-deadlines-and-scheduling */
@@ -68,7 +73,7 @@ export interface ActivityHostDescriptor {
   ) => { value: boolean | undefined; depends: string[]; nextBoundary?: number };
   acceptsTarget?: (world: WorldState, targetId: string) => boolean;
   /** Trusted data projection from this world's installed policy; it grants no executor. */
-  requestDescriptors?: (world: WorldState) => ActivityRequestDescriptor[];
+  requestDescriptors?: (world: ActivityRequestDefinitionScope) => ActivityRequestDescriptor[];
   compileRequest?: (
     world: WorldState,
     actorId: string,
@@ -109,7 +114,10 @@ export interface ActivityActionMeaning {
 export function nativeActionMeaning(command: Command['type']): ActivityActionMeaning | undefined {
   return implementations().meanings.get(command);
 }
-export function installedActionMeaning(world: WorldState, command: Command['type']) {
+export function installedActionMeaning(
+  world: Pick<WorldState, 'moduleManifest'>,
+  command: Command['type'],
+) {
   const selected = selectedImplementations(world);
   const meaning = selected
     ? selected.meanings.get(command)
@@ -148,7 +156,7 @@ export function deadlineSafeActivityCommand(
     : trustedActivityHostForCommand(command);
   return host?.definition.deadlineSafeCommands.includes(command) ?? false;
 }
-export function itemOutputFamilies(world: WorldState, namedPorts = false): string[] {
+export function itemOutputFamilies(world: ActivityDefinitionScope, namedPorts = false): string[] {
   const result = new Set<string>(['pickup']);
   for (const [command, meaning] of installedActionMeanings(world))
     if (namedPorts ? meaning.itemOutputs : meaning.singleItemReceipt) result.add(command);
@@ -230,7 +238,7 @@ export interface ActivityRequestDescriptor {
   fields: Record<string, ActivityRequestField>;
 }
 export function activityHostRequests(
-  world: WorldState,
+  world: ActivityRequestDefinitionScope,
   host: ActivityHostDescriptor,
 ): readonly ActivityRequestDescriptor[] {
   return host.requestDescriptors
@@ -246,7 +254,9 @@ export function validateInstalledActivityRequests(world: WorldState): void {
       seen.add(request.id);
     }
 }
-export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
+export function activityRequestDescriptors(
+  world: ActivityRequestDefinitionScope,
+): ActivityRequestDescriptor[] {
   return selectedDescriptors(world)
     .flatMap((host) => activityHostRequests(world, host))
     .filter(
@@ -440,7 +450,9 @@ function selectedImplementations(
   selectedHosts.set(pins, result);
   return result;
 }
-function selectedDescriptors(world: WorldState): readonly ActivityHostDescriptor[] {
+function selectedDescriptors(
+  world: Pick<WorldState, 'moduleManifest'>,
+): readonly ActivityHostDescriptor[] {
   return (
     selectedImplementations(world)?.hosts ??
     world.moduleManifest.activityHosts.flatMap((pin) => {
@@ -505,7 +517,7 @@ export function activityHostForCommand(
 }
 
 export function installedActionMeanings(
-  world: WorldState,
+  world: ActivityDefinitionScope,
 ): [Command['type'], ActivityActionMeaning][] {
   const selected =
     selectedImplementations(world) ?? describeImplementations(selectedDescriptors(world));

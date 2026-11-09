@@ -78,7 +78,8 @@ pub(crate) fn encode_temporal_changes(
                     .entry((actor_id.as_str(), id.as_str()))
                     .or_insert(before.is_some());
             }
-            TemporalUndo::PendingAppend { .. } | TemporalUndo::Reservation(_) => {}
+            TemporalUndo::PendingAppend { .. } | TemporalUndo::Reservation(_)
+            | TemporalUndo::RecentRetirement { .. } => {}
             TemporalUndo::HydratedPages {
                 actor_id,
                 projected,

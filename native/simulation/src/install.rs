@@ -26,7 +26,7 @@ mod knowledge;
 mod retained;
 pub(crate) use knowledge::{LearnedCapabilities, install_learned_capabilities};
 pub(crate) use retained::{
-    RetainedDefinitionInputs, RetainedDefinitions, RetainedMap, RetainedOne, install_retained,
+    ParticipationReadPolicy, RetainedDefinitionInputs, RetainedDefinitions, RetainedMap, RetainedOne, install_retained,
 };
 mod social;
 pub(crate) use social::{SocialSettings, install_social};

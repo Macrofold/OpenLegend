@@ -180,6 +180,7 @@ pub(crate) enum SessionStep {
     Prepared(PreparedCandidate),
     Preview(PreviewOutcome),
     NpcCandidates(crate::capture::PreparedNpcCandidates),
+    NpcSources(crate::capture::PreparedNpcSources),
 }
 pub(crate) struct PreviewOutcome {
     command: crate::commands::CompletedCommand,
@@ -217,9 +218,15 @@ enum Candidate {
     Prepared(Prepared),
 }
 
+struct HostControlSnapshot {
+    speed: f64,
+    manually_paused: bool,
+}
+
 pub(crate) struct Session {
     simulation: Simulation,
     host: InstalledHostSettings,
+    host_before: Option<HostControlSnapshot>,
     save: SaveJournal,
     pending_residency: Option<Arc<crate::received::SavedTemporalResidency>>,
     candidate: Option<Candidate>,
@@ -263,6 +270,7 @@ impl Session {
                 state,
             },
             host: installed.host_settings,
+            host_before: None,
             save,
             pending_residency: None,
             candidate: None,
@@ -461,6 +469,31 @@ impl Session {
     pub(crate) fn is_npc_candidates(&self, key: CandidateKey) -> bool {
         matches!(&self.candidate, Some(Candidate::Preparing(preparing)) if preparing.key == key && preparing.driver.is_npc_candidates())
     }
+    pub(crate) fn begin_npc_sources(
+        &mut self,
+        scope: Arc<crate::capture::NpcHistoricalScope>,
+        selection: crate::capture::NpcSourceSelection,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::capture::NpcSourcesCursor::new(
+                &mut core,
+                scope,
+                selection,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::npc_sources(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn is_npc_sources(&self, key: CandidateKey) -> bool {
+        matches!(&self.candidate, Some(Candidate::Preparing(preparing)) if preparing.key == key && preparing.driver.is_npc_sources())
+    }
     pub(crate) fn begin_forget(
         &mut self,
         actor: &str,
@@ -487,6 +520,52 @@ impl Session {
                 &self.budget,
             )?;
             OperationDriver::forget(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    /// Host controls commit SQL before acceptance, just like protected privacy
+    /// edits. The caller owns authorization, presence and admitted clock debt.
+    pub(crate) fn begin_control(
+        &mut self,
+        paused: bool,
+        speed: f64,
+        manually_paused: bool,
+    ) -> Result<CandidateKey, SessionError> {
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let binding = crate::geometry::GeometryBinding::new(
+                key,
+                self.simulation.state.installed.geometry.spatial.revision,
+                journal.next_provider_serial()?,
+            );
+            let cursor =
+                super::host_control::HostControlCursor::new(binding, paused, speed, &self.budget)?;
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::host_control(&mut core, cursor, &self.budget)
+        })();
+        let key = self.install_driver(key, journal, driver, false)?;
+        self.host.speed = speed;
+        self.host.manually_paused = manually_paused;
+        Ok(key)
+    }
+    pub(crate) fn begin_recent_retention(
+        &mut self,
+        actors: Vec<String>,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::received::RecentRetentionCursor::new(actors, &self.budget)?;
+            OperationDriver::recent_retention(&mut core, cursor, &self.budget)
         })();
         self.install_driver(key, journal, driver, false)
     }
@@ -525,6 +604,10 @@ impl Session {
                 return Err(error.into());
             }
         };
+        self.host_before = Some(HostControlSnapshot {
+            speed: self.host.speed,
+            manually_paused: self.host.manually_paused,
+        });
         Ok((key, journal))
     }
     fn install_driver(
@@ -606,6 +689,16 @@ impl Session {
                 closed?;
                 Ok(SessionStep::NpcCandidates(done))
             }
+            DriveStep::NpcSources(done) => {
+                let closed = preparing.journal.require_closed_operations();
+                let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                    unreachable!()
+                };
+                self.simulation.fence.rollback_preparation(key)?;
+                self.rollback(&mut preparing.journal, key)?;
+                closed?;
+                Ok(SessionStep::NpcSources(done))
+            }
             DriveStep::Complete(result) => {
                 if preparing.preview {
                     let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
@@ -640,7 +733,8 @@ impl Session {
                     )
                     .map_err(PublicationError::from)?;
                     let protected = matches!(&result, CompletedOperation::Forget(done)
-                        if done.privacy_change().is_some());
+                        if done.privacy_change().is_some())
+                        || matches!(&result, CompletedOperation::HostControl(_));
                     let publication = PreparedPublication::prepare(
                         &mut self.simulation.state,
                         &preparing.journal,
@@ -648,7 +742,7 @@ impl Session {
                         &self.simulation.fence,
                         key,
                         &self.host,
-                        false,
+                        matches!(&result, CompletedOperation::HostControl(_)),
                         protected.then_some(self.temporal_save_limits),
                         &self.budget,
                     )?;
@@ -758,6 +852,7 @@ impl Session {
             return Err(error.into());
         }
         self.simulation.fence.accepted_complete(key)?;
+        self.host_before = None;
         self.apply_pending_residency()?;
         Ok(Some(AcceptedOperation {
             key,
@@ -849,6 +944,10 @@ impl Session {
         if let Err(error) = journal.rollback_all(&mut self.simulation.state) {
             self.simulation.fence.poison();
             return Err(error.into());
+        }
+        if let Some(before) = self.host_before.take() {
+            self.host.speed = before.speed;
+            self.host.manually_paused = before.manually_paused;
         }
         self.simulation.fence.rollback_complete(key)?;
         self.apply_pending_residency()?;

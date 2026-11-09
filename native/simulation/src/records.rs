@@ -71,8 +71,9 @@ pub struct ChangedRow {
     pub received_value_removals: Option<Vec<String>>,
 }
 
-/// Each vector keeps canonical row order. PostgreSQL's existing schema owner
-/// chooses inter-table dependency order; map order never chooses effect order.
+/// Each row carries its semantic position. Independent upserts can be selected
+/// in a different transport order; the PostgreSQL schema owner supplies actual
+/// uniqueness/dependency ordering. Map iteration never chooses gameplay effects.
 #[derive(Debug, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangedRows {

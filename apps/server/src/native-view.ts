@@ -521,6 +521,7 @@ export interface NativePlayerEventRead {
   readonly privacyRevision: number;
   readonly accounts: readonly {
     readonly original: EventOriginalMetadata;
+    readonly authoredBySelf: boolean;
     readonly evidence?: EventEvidence;
     readonly values?: readonly TemporalValue[];
     readonly roles: PlayerEventRoleFacts;

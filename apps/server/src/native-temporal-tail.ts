@@ -10,9 +10,10 @@ export interface NativeTemporalTailRequest {
   readonly tailRevision: number;
 }
 
-/** A physical last page can remain outside both the eligible recent directory
- * and the resident byte-tail after an edit. Read its indexed coordinates from
- * the same SQL+accepted-unsaved projection that owns the context's history. */
+/** An unclosed partial restore can lack its physical last-page witness. Read
+ * that indexed metadata at the same SQL+accepted-unsaved cut. Explicit recent
+ * retirement and unsaved empty edits stay with the native page-presence owner;
+ * this lookup does not replace those states with historical SQL membership. */
 export async function readNativeTemporalTail(
   db: SqlDatabase,
   captured: NativeActorReadCut,

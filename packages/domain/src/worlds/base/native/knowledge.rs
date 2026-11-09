@@ -8,6 +8,9 @@ use serde::{Deserialize, Serialize};
 #[path = "knowledge/communications.rs"]
 mod communications;
 pub(crate) use communications::{CommunicationSubject, RememberedCommunications};
+#[path = "knowledge/attribution.rs"]
+mod attribution;
+pub(crate) use attribution::CapturedAttributionIdentities;
 
 #[path = "knowledge/introduction.rs"]
 mod introduction;
@@ -104,7 +107,7 @@ pub struct ObserverIdentity {
 
 use crate::commands::SpeechTargetRole;
 use crate::experience::ExperienceState;
-use crate::host::retained_size::{heap_sum, map_storage};
+use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::ReceivedError;
 use crate::reception::{CurrentBodyReadScope, ObserverLife, ObserverSubject, ReceptionState};
@@ -186,6 +189,11 @@ pub(crate) struct OwnedPersonalName {
 impl OwnedPersonalName {
     pub(crate) fn name(&self) -> &Named {
         &self.name
+    }
+}
+impl Serialize for OwnedPersonalName {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.name.serialize(serializer)
     }
 }
 /// A sealed finite product from the actual selected personal-name owner. It
@@ -330,8 +338,26 @@ impl<'a> PersonalNameReader<'a> {
             .and_then(|owners| owners.get(self.observer_id))
             .and_then(|episodes| episodes.get(id))
     }
-    fn identity_for_entity(&self, id: &str) -> Option<&'a ObserverIdentity> {
+    pub(crate) fn identity_for_entity(&self, id: &str) -> Option<&'a ObserverIdentity> {
         identity_for_entity(self.reception, self.observer_id, id)
+    }
+    /// A historical occurrence may identify a role through this observer's
+    /// recognition or that exact continuing episode. A raw routing ID alone
+    /// never retroactively names an unknown source.
+    pub(crate) fn awareness_binds_subject(
+        &self,
+        id: &str,
+        source_id: Option<&str>,
+        target_id: Option<&str>,
+        entity_ids: &[String],
+        episode: Option<&str>,
+    ) -> Result<bool, ReceivedError> {
+        Ok(id == self.observer_id
+            || (self.recognizes_subject(id)?
+                && (source_id == Some(id)
+                    || target_id == Some(id)
+                    || entity_ids.iter().any(|entity| entity == id)))
+            || episode.is_some_and(|episode| self.episode(id).map(String::as_str) == Some(episode)))
     }
     pub(crate) fn observer_individual(
         &self,
@@ -479,6 +505,46 @@ impl<'a> PersonalNameReader<'a> {
                 individual_id: id.clone(),
             }))
     }
+    /// Notes for a continuous local subject and a recognized subject remain
+    /// separate. This temporary copy stays funded until the caller captures it.
+    pub(crate) fn capture_current_body_subjects(
+        &self,
+        id: &str,
+        budget: &ByteBudget,
+    ) -> Result<([Option<ObserverSubject>; 2], ByteReservation), ReceivedError> {
+        let local = self.current_body_local_subject(id)?;
+        let association = self
+            .current_body_association(id)?
+            .filter(|association| Some(*association) != local);
+        let fallback = if local.is_none() && association.is_none() {
+            self.current_body_identity(id)?
+                .and_then(|identity| identity.individual_id.as_ref())
+        } else {
+            None
+        };
+        let bytes = heap_sum([
+            local
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or_else(capacity)?,
+            association
+                .map_or(Some(0), HeapBytes::heap_bytes)
+                .ok_or_else(capacity)?,
+            fallback.map_or(0, String::len),
+        ])
+        .ok_or_else(capacity)?;
+        let storage = budget.reserve(bytes).map_err(|_| capacity())?;
+        Ok((
+            [
+                local.cloned().or_else(|| {
+                    fallback.map(|id| ObserverSubject::Individual {
+                        individual_id: id.clone(),
+                    })
+                }),
+                association.cloned(),
+            ],
+            storage,
+        ))
+    }
     pub(crate) fn recognizes_subject(&self, id: &str) -> Result<bool, ReceivedError> {
         Ok(self.observer_id == id || self.current_body_identity(id)?.is_some())
     }
@@ -621,6 +687,20 @@ impl<'a> PersonalNameReader<'a> {
         budget: &ByteBudget,
     ) -> Result<OwnedPersonalName, ReceivedError> {
         let value = self.intended_addressee_name(id, role)?;
+        let reservation = budget
+            .reserve(size_of::<OwnedPersonalName>() + value.heap_bound()?)
+            .map_err(|_| capacity())?;
+        Ok(OwnedPersonalName {
+            name: value.owned(),
+            _reservation: reservation,
+        })
+    }
+    pub(crate) fn capture_observer_name(
+        &self,
+        id: &str,
+        budget: &ByteBudget,
+    ) -> Result<OwnedPersonalName, ReceivedError> {
+        let value = self.observer_name(id)?;
         let reservation = budget
             .reserve(size_of::<OwnedPersonalName>() + value.heap_bound()?)
             .map_err(|_| capacity())?;

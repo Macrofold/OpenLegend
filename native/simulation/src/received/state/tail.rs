@@ -1,6 +1,7 @@
-//! The receipt cutoff uses the physical history tail, including expired blocks.
-//! Eligibility directories cannot reconstruct it. A cold predecessor remains
-//! explicitly missing until the fixed-cut SQL overlay supplies its real tail.
+//! The receipt cutoff follows Source's current page representation: the cold
+//! physical byte-tail, explicit retirement and unacknowledged edit tombstones.
+//! Eligibility directories alone cannot reconstruct a physical page's last
+//! receipt. An unclosed restore requests its actual fixed-cut tail witness.
 use super::*;
 use crate::identity::MAX_SAFE_INTEGER;
 
@@ -12,11 +13,14 @@ pub(crate) struct TemporalReceiptTail {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub entry_index: u64,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct ReceiptTailState {
-    // Some(None) certifies an empty physical history; None requests its tail.
+    // Some(None) certifies an empty current tail, including an edited last page
+    // with no batches. It does not claim that SQL contains no older history.
     last: Option<Option<TemporalReceiptTail>>,
     revision: u64,
+    // Source retains an empty edited last page until that exact deletion ACK.
+    empty_edit: Option<u64>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -55,12 +59,14 @@ impl ReceiptTailState {
         Self {
             last: closed_tail.then(|| maximum(pages.values().filter_map(|p| page_tail(p)))),
             revision: 0,
+            empty_edit: None,
         }
     }
     pub(super) fn empty() -> Self {
         Self {
             last: Some(None),
             revision: 0,
+            empty_edit: None,
         }
     }
     pub(super) fn appended(self, tail: TemporalReceiptTail) -> Result<Self, ReceivedError> {
@@ -78,13 +84,13 @@ impl ReceiptTailState {
                 .checked_add(1)
                 .filter(|n| *n <= MAX_SAFE_INTEGER)
                 .ok_or(ReceivedError("Temporal tail revision overflow."))?,
+            empty_edit: None,
         })
     }
     pub(super) fn edited(
         self,
         before: &TemporalPageRecord,
         after: Option<&TemporalPageRecord>,
-        actor: &TemporalActorHistory,
     ) -> Result<Self, ReceivedError> {
         let revision = self
             .revision
@@ -95,31 +101,57 @@ impl ReceiptTailState {
             page_tail(before) == Some(tail) && after.and_then(page_tail) != Some(tail)
         });
         let last = if changes_tail {
-            if actor.complete_pages {
-                Some(maximum(
-                    actor
-                        .pages
-                        .values()
-                        .filter(|page| page.position() != before.position())
-                        .filter_map(|page| page_tail(page))
-                        .chain(after.and_then(page_tail))
-                        .chain(actor.pending_pages.iter().filter_map(|page| {
-                            let batch = page.batch();
-                            Some(TemporalReceiptTail {
-                                batch_order: batch.batch_order,
-                                entry_index: batch.entries.last()?.entry_index,
-                            })
-                        })),
-                ))
-            } else {
-                // The old last block can be the entire loaded byte-tail. A
-                // surviving recent entry is not proof of the cold predecessor.
-                None
-            }
+            // The edited page keeps its place in Source's current pages, even
+            // when it becomes an empty deletion tombstone. It does not expose
+            // an older SQL predecessor before that exact deletion commits.
+            Some(after.and_then(page_tail))
         } else {
             self.last
         };
-        Ok(Self { last, revision })
+        Ok(Self {
+            last,
+            revision,
+            empty_edit: if changes_tail && after.is_none() {
+                Some(revision)
+            } else {
+                self.empty_edit
+            },
+        })
+    }
+    pub(super) fn empty_edit(&self) -> Option<u64> {
+        self.empty_edit
+    }
+    pub(super) fn projected(
+        self,
+        pages: &BTreeMap<u64, Arc<TemporalPageRecord>>,
+        pending: &[Arc<PendingTemporalPage>],
+        acknowledged_empty: bool,
+    ) -> Result<Self, ReceivedError> {
+        if self.last.is_none() || (self.empty_edit.is_some() && !acknowledged_empty) {
+            return Ok(self);
+        }
+        let last = maximum(pages.values().filter_map(|page| page_tail(page)).chain(
+            pending.iter().filter_map(|page| {
+                let batch = page.batch();
+                Some(TemporalReceiptTail {
+                    batch_order: batch.batch_order,
+                    entry_index: batch.entries.last()?.entry_index,
+                })
+            }),
+        ));
+        let last = Some(last);
+        if last == self.last && !acknowledged_empty {
+            return Ok(self);
+        }
+        Ok(Self {
+            last,
+            revision: self
+                .revision
+                .checked_add(1)
+                .filter(|n| *n <= MAX_SAFE_INTEGER)
+                .ok_or(ReceivedError("Temporal tail revision overflow."))?,
+            empty_edit: None,
+        })
     }
 }
 impl TemporalState {

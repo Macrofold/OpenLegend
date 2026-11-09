@@ -14,6 +14,13 @@ import type { ModelSpatialFrame } from './perceived-context.js';
 import type { SituationRead } from './situation-context.js';
 
 type Facts = NativeNpcCapture['facts'];
+export function nativeNpcSpatialFrame(self: Facts['self']): ModelSpatialFrame {
+  return {
+    position: self.position,
+    axes: headingFrame(self.heading),
+    support: self.supportSurfaceId,
+  };
+}
 export interface NativePresentationLabels {
   readonly worldId: string;
   readonly generation: string;
@@ -59,11 +66,7 @@ export function nativeSituationSources(
   );
   const geometry = perception.geometry;
   if (!geometry) throw new Error('The native NPC read has no acquired geometry cut.');
-  const frame: ModelSpatialFrame = {
-    position: self.position,
-    axes: headingFrame(self.heading),
-    support: self.supportSurfaceId,
-  };
+  const frame = nativeNpcSpatialFrame(self);
   const presented = new Map(presentations.map((value) => [value.key, value]));
   return {
     worldId: self.worldId,

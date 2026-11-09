@@ -234,6 +234,20 @@ impl SqlCell {
     pub fn is_object(&self) -> bool {
         matches!(self, Self::Object(_) | Self::ExactObject(_))
     }
+    /// Preserve every actual property value, including objects with exact
+    /// code-unit keys. A read walk never normalizes or drops those members.
+    pub(crate) fn object_values(&self) -> impl Iterator<Item = &Self> {
+        let ordinary = self.as_object().into_iter().flat_map(IndexMap::values);
+        let exact = match self {
+            Self::ExactObject(value) => Some(&value.members),
+            _ => None,
+        };
+        ordinary.chain(
+            exact
+                .into_iter()
+                .flat_map(|members| members.iter().map(|(_, value)| value)),
+        )
+    }
     pub fn object_len(&self) -> Option<usize> {
         match self {
             Self::Object(value) => Some(value.len()),

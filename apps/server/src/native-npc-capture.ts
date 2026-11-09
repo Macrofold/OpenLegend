@@ -15,7 +15,8 @@ import {
   nativeDecisionSelfContext,
   type NativeDecisionAppraisals,
 } from './native-decision-context.js';
-import { nativeBodyContext } from './native-perception.js';
+import { nativeBodyContext, nativePerceivedEntities } from './native-perception.js';
+import { formatEntityRecallCandidate } from './recall-entity.js';
 import {
   decodeNativeProduct,
   freezeNativeProduct,
@@ -27,12 +28,24 @@ import { presentationSubjects } from './experience-context.js';
 import { captureSituationFromRead, situationPresentationValues } from './situation-context.js';
 import {
   nativeExperiencePresentation,
+  nativeNpcSpatialFrame,
   nativeSituationSources,
   type NativePresentationLabels,
 } from './native-situation.js';
 import type { NativeDefinitionCapture } from './native-definition-capture.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
-import { driveNativeNpcCandidates } from './native-providers.js';
+import {
+  driveNativeNpcCandidates,
+  driveNativeNpcSources,
+  type NativeHistoryReadContext,
+} from './native-providers.js';
+import { captureNativeReadCut, nativeScopedReadCut } from './native-read-cut.js';
+import type {
+  NativeNpcHistoricalScope,
+  NativeNpcSourceInventory,
+  NativeNpcSourceSelection,
+  NativeNpcReferenceFacts,
+} from './native-npc-sources.js';
 import {
   nativeNpcCandidateDescriptions,
   type NativeNpcCandidates,
@@ -58,6 +71,15 @@ export interface NativeNpcActorSelf extends NativeActorSelf {
   readonly speech: boolean;
   readonly speechBlocked: boolean;
   readonly actionsBlocked: boolean;
+  readonly npc: {
+    readonly contacts: Readonly<
+      Record<string, NonNullable<NonNullable<Entity['actor']>['contacts']>[string]>
+    > | null;
+    readonly expressions: boolean;
+    readonly inventoryCount: number;
+    readonly knownRecipesCount: number;
+    readonly corrections?: Readonly<Record<string, string>>;
+  };
 }
 
 interface NpcPacket {
@@ -66,6 +88,9 @@ interface NpcPacket {
   readonly appraisals: NativeDecisionAppraisals;
   readonly history: Pick<NativeHistoryInput, 'worldId' | 'generation' | 'baseCut' | 'cuts'>;
   readonly candidates?: NativeNpcCandidates;
+  readonly historyScope: NativeNpcHistoricalScope;
+  readonly referenceFacts: NativeNpcReferenceFacts;
+  readonly sources: readonly NativeNpcSourceInventory[];
 }
 
 /** One actual native read owner across asynchronous context preparation. Source
@@ -152,6 +177,40 @@ export class NativeNpcCapture {
     return retainNativeSources(facts.candidates, facts);
   }
 
+  sources(): readonly NativeNpcSourceInventory[] {
+    const facts = this.facts;
+    return retainNativeSources(facts.sources, facts);
+  }
+
+  /** A later expansion keeps the original evidence window while reading the
+   * current genuine SQL/pending representation. No model-supplied source body
+   * or permission map crosses the native admission boundary. */
+  async prepareSources(
+    world: NativeWorld,
+    selection: NativeNpcSourceSelection,
+    geometry: NativeGeometryProviders,
+    history: NativeHistoryReadContext,
+    signal?: AbortSignal,
+  ): Promise<NativeNpcSourceInventory> {
+    const facts = this.facts;
+    signal?.throwIfAborted();
+    const current = await captureNativeReadCut(world, facts.self.actorId);
+    const pending = history.liveReadCuts({
+      worldId: facts.self.worldId,
+      actorId: facts.self.actorId,
+    });
+    if (!pending) throw new Error('Native source preparation has no accepted publication owner.');
+    const cut = nativeScopedReadCut(current, pending);
+    const prepared = { db: history.db, liveReadCuts: () => cut };
+    const first = await world.npcSources(this.read, Buffer.from(JSON.stringify(selection)));
+    await driveNativeNpcSources(world, this.read, first, geometry, prepared, signal);
+    this.packet = freezeNativeProduct(decodeNativeProduct<NpcPacket>(await this.read.packet()));
+    const sources = this.sources();
+    const latest = sources.at(-1);
+    if (!latest) throw new Error('Native source preparation produced no owned inventory.');
+    return retainNativeSources(latest, sources);
+  }
+
   choiceDescriptions(definitions: NativeDefinitionCapture) {
     const facts = this.facts,
       installed = definitions.facts;
@@ -162,6 +221,74 @@ export class NativeNpcCapture {
       nativeStrikes: installed.definitions.nativeStrikes,
       probes: installed.nativePolicies.occurrenceRules.response.offers.probes,
     });
+  }
+
+  recallEntities() {
+    const facts = this.facts,
+      choices = this.candidates();
+    const perceived = nativePerceivedEntities(facts.self, facts.perception, choices.bodyOrdinals);
+    return retainNativeSources(
+      perceived.entries.map((entry) => {
+        const binding = perceived.bindings.get(entry.handle)!;
+        const body = facts.perception.cut.current
+          .slice(binding.first, binding.first + binding.count)
+          .find((facet) => facet.value.kind === 'body');
+        if (!body || body.value.kind !== 'body')
+          throw new Error('The selected entity recall has no received body.');
+        return {
+          ...formatEntityRecallCandidate({
+            id: binding.sourceId,
+            description: entry.text,
+            relativeLocation: entry.relativeLocation,
+            acquiredAt: body.valueAcquiredAt,
+            outward: body.value.body.outward,
+          }),
+          // Source hard-query recall includes every actually selected detailed
+          // or expanded current body, independently of optional relevance.
+          required: true,
+        };
+      }),
+      facts,
+      choices,
+    );
+  }
+
+  async prepareExperiencePresentation(
+    world: NativeWorld,
+    definitions: NativeDefinitionCapture,
+    values: readonly unknown[],
+  ) {
+    const facts = this.facts,
+      installed = definitions.facts;
+    if (definitions.worldId !== facts.self.worldId)
+      throw new Error('NPC presentation definitions belong to another native world.');
+    const labels = freezeNativeProduct(
+      decodeNativeProduct<NativePresentationLabels>(
+        await world.npcPresentationLabels(
+          this.read,
+          Buffer.from(
+            JSON.stringify({
+              subjects: [
+                { kind: 'entity', entityId: facts.self.actorId },
+                ...presentationSubjects(values),
+              ],
+            }),
+          ),
+        ),
+      ),
+    );
+    return retainNativeSources(
+      nativeExperiencePresentation(
+        facts,
+        installed,
+        nativeNpcSpatialFrame(facts.self),
+        labels,
+        values,
+      ),
+      facts,
+      installed,
+      labels,
+    );
   }
 
   async prepareChoices(

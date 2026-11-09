@@ -10,11 +10,14 @@ pub struct RuntimeNpcRead {
     pub(super) read: AcceptedActorRead,
     pub(super) serial: u64,
     history: crate::experience::CapturedHistoryCuts,
+    pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
+    reference_facts: crate::capture::NpcReferenceFacts,
     candidates: Option<crate::capture::PreparedNpcCandidates>,
+    sources: Vec<crate::capture::PreparedNpcSources>,
     candidate_key: Option<CandidateKey>,
     _custody: ByteReservation,
 }
-pub enum RuntimeNpcCandidateStep {
+pub enum RuntimeNpcPreparationStep {
     Continue,
     Provider(RuntimeProvider),
     Complete,
@@ -58,6 +61,18 @@ impl NativeWorldSession {
             &self.budget,
         )
         .map_err(failure)?;
+        let historical_scope = Arc::new(
+            crate::capture::NpcHistoricalScope::capture(
+                &simulation.state,
+                &read,
+                serial,
+                &self.budget,
+            )
+            .map_err(failure)?,
+        );
+        let reference_facts =
+            crate::capture::NpcReferenceFacts::capture(&simulation.state, &read, &self.budget)
+                .map_err(failure)?;
         let custody = self
             .budget
             .reserve(size_of::<RuntimeNpcRead>())
@@ -67,7 +82,10 @@ impl NativeWorldSession {
             read,
             serial,
             history,
+            historical_scope,
+            reference_facts,
             candidates: None,
+            sources: Vec::new(),
             candidate_key: None,
             _custody: custody,
         })
@@ -96,14 +114,16 @@ impl NativeWorldSession {
         read.candidate_key = Some(key);
         Ok(key)
     }
-    pub fn step_npc_candidates(
+    pub fn step_npc_preparation(
         &mut self,
         read: &mut RuntimeNpcRead,
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, String)>,
-    ) -> Result<RuntimeNpcCandidateStep, RuntimeError> {
-        if read.candidate_key != Some(key) || !self.session.is_npc_candidates(key) {
-            return Err(failure("NPC choice preparation is stale"));
+    ) -> Result<RuntimeNpcPreparationStep, RuntimeError> {
+        if read.candidate_key != Some(key)
+            || !(self.session.is_npc_candidates(key) || self.session.is_npc_sources(key))
+        {
+            return Err(failure("NPC read preparation is stale"));
         }
         let answer = provider_response(answer, &self.budget)?;
         let result = self.session.step(
@@ -117,33 +137,82 @@ impl NativeWorldSession {
         let step = match result {
             Ok(step) => step,
             Err(error) => {
-                if !self.session.is_npc_candidates(key) {
+                if !(self.session.is_npc_candidates(key) || self.session.is_npc_sources(key)) {
                     read.candidate_key = None;
                 }
                 return Err(failure(error));
             }
         };
         Ok(match step {
-            SessionStep::Continue => RuntimeNpcCandidateStep::Continue,
+            SessionStep::Continue => RuntimeNpcPreparationStep::Continue,
             SessionStep::Question(question) => {
-                RuntimeNpcCandidateStep::Provider(RuntimeProvider { question })
+                RuntimeNpcPreparationStep::Provider(RuntimeProvider { question })
             }
             SessionStep::NpcCandidates(candidates) => {
                 read.candidates = Some(candidates);
                 read.candidate_key = None;
-                RuntimeNpcCandidateStep::Complete
+                RuntimeNpcPreparationStep::Complete
+            }
+            SessionStep::NpcSources(sources) => {
+                read.candidate_key = None;
+                sources
+                    .validate_origin(&read.read, &self.budget)
+                    .map_err(failure)?;
+                read.sources.push(sources);
+                RuntimeNpcPreparationStep::Complete
             }
             _ => return Err(failure("NPC discovery produced an executable completion")),
         })
     }
-    pub fn cancel_npc_candidates(&mut self, read: &RuntimeNpcRead) -> Result<(), RuntimeError> {
+    pub fn cancel_npc_preparation(&mut self, read: &RuntimeNpcRead) -> Result<(), RuntimeError> {
         if let Some(key) = read
             .candidate_key
-            .filter(|key| self.session.is_npc_candidates(*key))
+            .filter(|key| self.session.is_npc_candidates(*key) || self.session.is_npc_sources(*key))
         {
             self.session.cancel(key).map_err(failure)?;
         }
         Ok(())
+    }
+    pub fn begin_npc_sources(
+        &mut self,
+        read: &mut RuntimeNpcRead,
+        request: &[u8],
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        if read.candidate_key.is_some() {
+            return Err(failure("NPC read preparation is active"));
+        }
+        let _decode = decode_preparation(request, &self.budget)?;
+        let request: crate::capture::NpcSourceSelection =
+            serde_json::from_slice(request).map_err(failure)?;
+        if read.sources.len() == read.sources.capacity() {
+            let capacity = read
+                .sources
+                .len()
+                .checked_add(1)
+                .and_then(|n| n.max(4).checked_next_power_of_two())
+                .ok_or_else(|| failure("capacity"))?;
+            read._custody
+                .resize(
+                    size_of::<RuntimeNpcRead>()
+                        .checked_add(
+                            capacity
+                                .checked_mul(size_of::<crate::capture::PreparedNpcSources>())
+                                .ok_or_else(|| failure("capacity"))?,
+                        )
+                        .ok_or_else(|| failure("capacity"))?,
+                )
+                .map_err(failure)?;
+            read.sources
+                .try_reserve_exact(capacity - read.sources.len())
+                .map_err(failure)?;
+        }
+        let key = self
+            .session
+            .begin_npc_sources(Arc::clone(&read.historical_scope), request)
+            .map_err(failure)?;
+        read.candidate_key = Some(key);
+        Ok(key)
     }
 }
 
@@ -159,6 +228,9 @@ impl RuntimeNpcRead {
             .appraisals_json()
             .ok_or_else(|| failure("NPC appraisal capture is unavailable"))?;
         let history = RuntimeJson::encode(&self.history.value(), budget)?;
+        let history_scope = RuntimeJson::encode(&self.historical_scope, budget)?;
+        let reference_facts = RuntimeJson::encode(&self.reference_facts, budget)?;
+        let sources = RuntimeJson::encode(&self.sources, budget)?;
         let candidates = self
             .candidates
             .as_ref()
@@ -179,6 +251,12 @@ impl RuntimeNpcRead {
                 appraisals.as_bytes(),
                 b",\"history\":",
                 history.bytes(),
+                b",\"historyScope\":",
+                history_scope.bytes(),
+                b",\"referenceFacts\":",
+                reference_facts.bytes(),
+                b",\"sources\":",
+                sources.bytes(),
                 candidate_key,
                 candidate_value,
                 b"}",

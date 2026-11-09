@@ -25,6 +25,10 @@ A compound code separates canonical ownership from its read/storage consumers. N
 
 ## Candidate implementation ledger
 
+Application integration remains unfinished. `simulation/host_control.rs` and its real driver/session/runtime/bridge path update canonical pause and saved host speed/manual-pause under the private checkpoint and protected prefix, without changing gameplay sequence or native interval. The server shares the Source control wording/speed menu and player-interaction spending gate. `PostgresDatabase` exposes explicit transaction outcomes; `commitCaptured` restores one actual outer-transaction metadata predecessor after confirmed rollback. These joins still require the complete authenticated service/control/save/restore journey.
+
+The ordinary context algorithms now have finite read interfaces for native consumption: `recall-memory.ts`, `recall-retrieval.ts`, `recall-selection.ts`, `conversation-context.ts::selectConversation`, `response-reference-format.ts`, `response-trigger-format.ts`, `knowledge-context.ts::formatSubjectKnowledgeCandidate` and the shared narration grammar. `native-recall.ts` keeps native-admitted source bodies, presentation labels and permitted identities distinct; `native-decision-fields.ts` reads actual first-person, closed inventory/method metadata and installed definitions. A formatter is not the missing complete NPC producer, opaque ticket, trigger/director or response-admission proof; those boundaries remain open.
+
 These entries identify actual code owners. They do not close the base inventory's field/caller obligations or J1–J8.
 
 | Boundary                            | Candidate owner and current evidence                                                                                                                                                                                                      | Pending connected obligation                                                                                                                                                         |

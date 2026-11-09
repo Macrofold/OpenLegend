@@ -1,5 +1,9 @@
 import type { NativeWorld } from '@open-legend/native-simulation';
-import { decodeNativeProduct, freezeNativeProduct } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  freezeNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 
 export interface NativeRetainedValues {
   readonly worldId: string;
@@ -11,7 +15,11 @@ export interface NativeRetainedValues {
 }
 
 export async function captureNativeRetainedValues(world: NativeWorld) {
-  return freezeNativeProduct(
+  const captured = freezeNativeProduct(
     decodeNativeProduct<NativeRetainedValues>(await world.retainedValues()),
   );
+  // The SQL collector can retain just this lookup after the service refreshes
+  // its root. Keep the actual decoded keys/backing admitted for that lifetime.
+  retainNativeSources(captured.ids, captured);
+  return captured;
 }

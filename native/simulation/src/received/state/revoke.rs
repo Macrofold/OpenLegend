@@ -288,13 +288,15 @@ impl TemporalState {
                 .map_err(|_| capacity())?;
             let after_position = after.as_ref().map(|page| page.position());
             let tail_before = actor.tail;
-            let tail_after = tail_before.edited(&page, after.as_deref(), actor)?;
+            let tail_after = tail_before.edited(&page, after.as_deref())?;
             if after_position
                 .is_some_and(|next| next != position && actor.pages.contains_key(&next))
             {
                 return Err(invalid());
             }
             page.retain_for_candidate(budget)?;
+            let page_restore = budget.reserve(restored_page_bytes(usize::from(after.is_none()))?)
+                .map_err(|_| capacity())?;
             self.reserve_undo_slots(3, budget)?;
             self.undo.push(TemporalUndo::Reservation(retained));
             self.undo.push(TemporalUndo::PageEdit {
@@ -304,6 +306,7 @@ impl TemporalState {
                 removed,
                 appended: appended_undo,
                 tail_before,
+                page_restore,
             });
             let actor = self.actors.get_mut(actor_id).ok_or_else(invalid)?;
             let TemporalUndo::PageEdit {
@@ -334,6 +337,7 @@ impl TemporalState {
                     return Err(invalid());
                 }
             }
+            actor.settle_page_entries()?;
             let mut header = actor.header.clone();
             header.bytes = actor.recent.bytes();
             header.count = actor.recent.count();

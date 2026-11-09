@@ -34,6 +34,7 @@ mod attributes;
 mod body;
 mod conditions;
 mod practice;
+mod participation;
 mod rates;
 mod routes;
 mod save;
@@ -1130,6 +1131,8 @@ pub(crate) struct ActionRouteWrite {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum UndoKey {
+    Participation(usize, u64),
+    ExitExposure(String),
     CoachingPresence,
     AgencyPlaces(usize, u64),
     AgencyPlan(usize, u64),
@@ -1230,6 +1233,15 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    Participation {
+        entity: EntityHandle,
+        before: Option<crate::state::Participation>,
+    },
+    ExitExposure {
+        actor: String,
+        before: Option<(usize, f64)>,
+        root_present: bool,
+    },
     CoachingPresence {
         before: bool,
     },
@@ -1667,6 +1679,19 @@ impl PhysicalJournal {
                 }
                 Undo::CoachingPresence { before } => {
                     state.coaching.present = before;
+                }
+                Undo::Participation { entity, before } => {
+                    state.entities.resolve_mut(entity).and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?.participation = before;
+                    state.entities.settle_participation_memory(entity, &mut self.reservation, true)?;
+                }
+                Undo::ExitExposure { actor, before, root_present } => {
+                    let rows = &mut state.participation.exposures;
+                    if let Some((position, deadline)) = before {
+                        rows.as_mut().ok_or(ExecutionError::Invariant)?.shift_insert(position, actor, deadline);
+                    } else if let Some(rows) = rows { rows.shift_remove(&actor); }
+                    if !root_present { *rows = None; }
+                    state.participation.settle_restored(&mut self.reservation)?;
                 }
                 Undo::AgencyPlaces { entity, before } => {
                     state

@@ -55,7 +55,8 @@ const cacheSchema = z
     value: z.custom<ExperienceSummary>(),
   })
   .strict();
-type Compaction = z.infer<typeof cacheSchema>;
+export type ConversationCompaction = z.infer<typeof cacheSchema>;
+type Compaction = ConversationCompaction;
 export type ConversationGenerate = (
   request: Omit<GenerateRequest, 'requestId' | 'signal'>,
   operation: string,
@@ -115,11 +116,13 @@ function residentSpeechSources(state: WorldState, actorId: string) {
   return { sources: sources.reverse(), more: false };
 }
 
-interface ConversationValidityState {
+export interface ConversationSelectionValidity {
   boundSources: ConversationSource[];
   usedCache: Compaction | undefined;
   boundEntities: string[];
   expectedPerspective: string;
+}
+interface ConversationValidityState extends ConversationSelectionValidity {
   checkedWorld: WeakRef<WorldState>;
 }
 const speechPrivacy = (state: WorldState, actorId: string) =>
@@ -292,14 +295,6 @@ export async function buildConversationContext(input: {
       references: candidate.entityIds,
     };
   });
-  type Turn = (typeof turns)[number];
-  // Required causes keep their complete typed source in the decision's evidence
-  // section, but still belong in the chronological dialogue the actor is using.
-  const requiredTurns = turns.filter((turn) => required.has(turn.id));
-  const requiredLines = requiredTurns.map((turn) => turn.text);
-  if (requiredTurns.length && projectionBytes(requiredLines, []) > maxBytes)
-    throw new ContextBudgetError('Complete required conversation exceeds the input budget.');
-  const optional = turns.filter((turn) => !required.has(turn.id));
   const attribution = capturePersonalAttributionReader(readWorld(), actorId, [
     ...(cached?.value.entityIds ?? []),
     ...turns.flatMap((turn) => turn.entry.value.entityIds),
@@ -308,15 +303,6 @@ export async function buildConversationContext(input: {
     ...(cached ? [{ source: 'summary' as const, value: cached.value }] : []),
     ...turns.map((turn) => turn.entry),
   ]);
-  const summaryProjection = (value: Compaction | undefined) => {
-    if (!value) return undefined;
-    const candidate = projectSummary({ source: 'summary', value: value.value });
-    return {
-      text: `Older personally experienced speech (derived, with exact source coverage): ${candidate.text}`,
-      experience: candidate.experience ?? [],
-      references: candidate.entityIds,
-    };
-  };
   const validity: ConversationValidityState = {
     checkedWorld: initialWorld,
     boundSources: [],
@@ -334,6 +320,115 @@ export async function buildConversationContext(input: {
     initialPrivacy,
     validity,
   );
+  return selectConversation({
+    worldId,
+    actorId,
+    snapshot,
+    turns,
+    requiredIds: input.requiredIds,
+    maxBytes,
+    cached,
+    saved,
+    scope,
+    projectSummary,
+    attribution,
+    validity,
+    check,
+    assertCurrent,
+    signal,
+    attempt: input.attempt,
+    generate: input.generate,
+    model: service.config.macrofoldKey
+      ? service.config.macrofoldComplexModel
+      : service.config.complexModel,
+    ...(repository && scope
+      ? {
+          publishCompaction: (bound, refs, prior, next, current) =>
+            repository.publishConversationCompaction(scope, bound, refs, prior, next, current),
+        }
+      : {}),
+  });
+}
+
+export interface ConversationTurn extends ConversationSource {
+  entry: Extract<ExperienceEntry, { source: 'awareness' }>;
+  text: string;
+  experience: SharedModelExperience['experience'][];
+  references: string[];
+}
+/** Shared bounded chronology, suffix fitting and compaction over complete
+ * permitted turns. Timeline/source/identity validity remains with its reader. */
+export async function selectConversation(input: {
+  worldId: string;
+  actorId: string;
+  snapshot: { sequence: number; sources: ConversationSource[]; more: boolean };
+  turns: ConversationTurn[];
+  requiredIds: string[];
+  maxBytes: number;
+  cached?: ConversationCompaction;
+  saved: unknown;
+  scope?: MemoryScope;
+  projectSummary(entry: Extract<ExperienceEntry, { source: 'summary' }>): {
+    text: string;
+    experience: SharedModelExperience['experience'][];
+    entityIds: string[];
+  };
+  attribution(ids: Iterable<string>): string;
+  validity: ConversationSelectionValidity;
+  check(flush?: boolean, additionalSources?: CurrentMemorySource[]): Promise<void>;
+  assertCurrent(): void;
+  signal: AbortSignal;
+  attempt: number;
+  model: string;
+  generate?: ConversationGenerate;
+  publishCompaction?: (
+    bound: ConversationSource[],
+    refs: ExperienceSummary['sources'],
+    prior: unknown,
+    next: ConversationCompaction,
+    current: () => void,
+  ) => Promise<void>;
+}) {
+  const {
+    worldId,
+    actorId,
+    snapshot,
+    turns,
+    projectSummary,
+    attribution,
+    validity,
+    check,
+    assertCurrent,
+    signal,
+    attempt,
+    model,
+    generate,
+    publishCompaction,
+    saved,
+    scope,
+  } = input;
+  const sources = snapshot.sources,
+    required = new Set(input.requiredIds),
+    maxBytes = Math.max(0, Math.min(CONVERSATION_BYTES, Math.floor(input.maxBytes)));
+  let cached = input.cached;
+  type Turn = ConversationTurn;
+  const byId = new Map(turns.map((turn) => [turn.id, turn]));
+  // Required causes keep their complete typed source in the decision's evidence
+  // section, but still belong in the chronological dialogue the actor is using.
+  const requiredTurns = turns.filter((turn) => required.has(turn.id));
+  const requiredLines = requiredTurns.map((turn) => turn.text);
+  if (requiredTurns.length && projectionBytes(requiredLines, []) > maxBytes)
+    throw new ContextBudgetError('Complete required conversation exceeds the input budget.');
+  const optional = turns.filter((turn) => !required.has(turn.id));
+  const summaryProjection = (value: Compaction | undefined) => {
+    if (!value) return undefined;
+    const candidate = projectSummary({ source: 'summary', value: value.value });
+    return {
+      text: `Older personally experienced speech (derived, with exact source coverage): ${candidate.text}`,
+      experience: candidate.experience ?? [],
+      references: candidate.entityIds,
+    };
+  };
   // Only selected sources and their captured presentation cross compaction.
   // Synchronous assembly reads current authority without retaining an old root.
   const deriveSummary = (
@@ -398,7 +493,7 @@ export async function buildConversationContext(input: {
     calls = 0,
     compactionFailure: string | null = null;
   const older = optional.slice(0, optional.length - fitted.recent.length);
-  if (older.length && input.generate && repository && scope && maxBytes >= 1024) {
+  if (older.length && generate && publishCompaction && scope && maxBytes >= 1024) {
     // Optional work uses the same existing source/input/call bounds. Failure keeps
     // the previous valid artifact and exact recent suffix, never a prose-only source.
     try {
@@ -451,14 +546,12 @@ export async function buildConversationContext(input: {
 
         await check();
         const output = summarySchema.parse(
-          await input.generate(
+          await generate(
             {
               actorScope: actorId,
               execution: 'fast',
               task: 'conversation_compaction',
-              model: service.config.macrofoldKey
-                ? service.config.macrofoldComplexModel
-                : service.config.complexModel,
+              model,
               reasoningEffort: 'low',
               maxOutputTokens: 4096,
               instructions: `${instructions}\nThe summary must fit ${textBytes} UTF-8 bytes.`,
@@ -473,7 +566,7 @@ export async function buildConversationContext(input: {
               },
               schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
             },
-            `attempt:${input.attempt}:conversation-compaction:${calls++}`,
+            `attempt:${attempt}:conversation-compaction:${calls++}`,
           ),
         );
         if (!output.summary.trim() || Buffer.byteLength(output.summary) > textBytes)
@@ -498,8 +591,7 @@ export async function buildConversationContext(input: {
       if (previous && previous !== cached) {
         validity.usedCache = previous;
         await check();
-        await repository.publishConversationCompaction(
-          scope,
+        await publishCompaction!(
           validity.boundSources,
           previous.value.sources,
           saved,

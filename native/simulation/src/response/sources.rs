@@ -65,6 +65,7 @@ fn retained(
 ) -> Result<Option<CapturedTemporalReceipt>, ExecutionError> {
     Ok(core.state.temporal.retained_receipt(
         locator,
+        None,
         &core.state.reception.received_values.as_ref(),
         &core.state.installed.account_law(),
         core.state.physical.header.sim_time,

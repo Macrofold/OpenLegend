@@ -1,7 +1,7 @@
 //! Server-internal NPC capture. It retains one actual accepted read until its
 //! context owner releases it or moves it into a native response ticket.
 use super::*;
-use openlegend_simulation::runtime::{RuntimeNpcCandidateStep, RuntimeNpcRead};
+use openlegend_simulation::runtime::{RuntimeNpcPreparationStep, RuntimeNpcRead};
 use std::sync::Weak;
 
 struct NpcReadRuntime {
@@ -14,7 +14,7 @@ pub struct NativeWorldNpcTurn {
     pub kind: String,
     pub provider: Option<NativeWorldProvider>,
 }
-fn candidate_turn(
+fn preparation_turn(
     session: &mut NativeWorldSession,
     read: &mut RuntimeNpcRead,
     key: CandidateKey,
@@ -28,11 +28,11 @@ fn candidate_turn(
             session.fence().request_stop();
         }
         match session
-            .step_npc_candidates(read, key, answer.take())
+            .step_npc_preparation(read, key, answer.take())
             .map_err(operation_error)?
         {
-            RuntimeNpcCandidateStep::Continue => continue,
-            RuntimeNpcCandidateStep::Provider(value) => {
+            RuntimeNpcPreparationStep::Continue => continue,
+            RuntimeNpcPreparationStep::Provider(value) => {
                 return Ok(NativeWorldNpcTurn {
                     key: key.into(),
                     kind: "provider".into(),
@@ -42,7 +42,7 @@ fn candidate_turn(
                     }),
                 });
             }
-            RuntimeNpcCandidateStep::Complete => {
+            RuntimeNpcPreparationStep::Complete => {
                 return Ok(NativeWorldNpcTurn {
                     key: key.into(),
                     kind: "complete".into(),
@@ -107,7 +107,7 @@ impl NativeWorldNpcRead {
         if let Ok(mut session) = world.session.try_lock() {
             if let Ok(mut owner) = self.inner.read.try_lock() {
                 if let (Some(session), Some(read)) = (session.as_mut(), owner.as_ref()) {
-                    if session.cancel_npc_candidates(read).is_err() {
+                    if session.cancel_npc_preparation(read).is_err() {
                         world.fence.poison();
                     }
                 }
@@ -139,7 +139,7 @@ impl NativeWorldNpcRead {
                     crate::pool::HostError::SynchronizationFailed
                 })?;
                 if let (Some(session), Some(read)) = (session.as_mut(), owner.as_ref()) {
-                    if session.cancel_npc_candidates(read).is_err() {
+                    if session.cancel_npc_preparation(read).is_err() {
                         world.fence.poison();
                         return Err(crate::pool::HostError::Poisoned);
                     }
@@ -156,6 +156,51 @@ impl NativeWorldNpcRead {
             }
         }
     }
+}
+
+enum PreparationKind {
+    Candidates,
+    Sources,
+}
+fn begin_preparation<'a>(
+    world: &NativeWorld,
+    env: &'a Env,
+    read: &NativeWorldNpcRead,
+    request: BufferSlice<'_>,
+    kind: PreparationKind,
+) -> Result<Object<'a>> {
+    if !Weak::ptr_eq(&read.world, &Arc::downgrade(&world.world)) {
+        return Err(failure("NPC read belongs to another native writer"));
+    }
+    let read = Arc::clone(&read.inner);
+    let (request, custody) = input(&request, &world.host.bytes)?;
+    world.compute(env, move |session, cancel, budget| {
+        let _custody = custody;
+        let mut owner = read
+            .read
+            .try_lock()
+            .map_err(|_| failure("native NPC read is busy or unavailable"))?;
+        if read.released.load(Ordering::Acquire) {
+            return Err(failure("native NPC read was released"));
+        }
+        let read_owner = owner
+            .as_mut()
+            .ok_or_else(|| failure("native NPC read was released"))?;
+        let key = match kind {
+            PreparationKind::Candidates => session.begin_npc_candidates(read_owner, &request),
+            PreparationKind::Sources => session.begin_npc_sources(read_owner, &request),
+        }
+        .map_err(operation_error)?;
+        let result = preparation_turn(session, read_owner, key, None, cancel, budget);
+        if read.released.load(Ordering::Acquire) {
+            session
+                .cancel_npc_preparation(read_owner)
+                .map_err(operation_error)?;
+            *owner = None;
+            return Err(failure("native NPC read was released"));
+        }
+        result
+    })
 }
 
 #[napi]
@@ -199,39 +244,19 @@ impl NativeWorld {
         read: &NativeWorldNpcRead,
         request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
-            return Err(failure("NPC read belongs to another native writer"));
-        }
-        let read = Arc::clone(&read.inner);
-        let (request, custody) = input(&request, &self.host.bytes)?;
-        self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
-            let mut owner = read
-                .read
-                .try_lock()
-                .map_err(|_| failure("native NPC read is busy or unavailable"))?;
-            if read.released.load(Ordering::Acquire) {
-                return Err(failure("native NPC read was released"));
-            }
-            let read_owner = owner
-                .as_mut()
-                .ok_or_else(|| failure("native NPC read was released"))?;
-            let key = session
-                .begin_npc_candidates(read_owner, &request)
-                .map_err(operation_error)?;
-            let result = candidate_turn(session, read_owner, key, None, cancel, budget);
-            if read.released.load(Ordering::Acquire) {
-                session
-                    .cancel_npc_candidates(read_owner)
-                    .map_err(operation_error)?;
-                *owner = None;
-                return Err(failure("native NPC read was released"));
-            }
-            result
-        })
+        begin_preparation(self, env, read, request, PreparationKind::Candidates)
     }
     #[napi(ts_return_type = "Promise<NativeWorldNpcTurn>")]
-    pub fn answer_npc_candidates<'a>(
+    pub fn npc_sources<'a>(
+        &self,
+        env: &'a Env,
+        read: &NativeWorldNpcRead,
+        request: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        begin_preparation(self, env, read, request, PreparationKind::Sources)
+    }
+    #[napi(ts_return_type = "Promise<NativeWorldNpcTurn>")]
+    pub fn answer_npc_preparation<'a>(
         &self,
         env: &'a Env,
         read: &NativeWorldNpcRead,
@@ -260,7 +285,7 @@ impl NativeWorld {
                 .ok_or_else(|| failure("native NPC read was released"))?;
             let answer = String::from_utf8(answer)
                 .map_err(|_| failure("native provider answer must be UTF-8 JSON"))?;
-            let result = candidate_turn(
+            let result = preparation_turn(
                 session,
                 read_owner,
                 key,
@@ -270,7 +295,7 @@ impl NativeWorld {
             );
             if read.released.load(Ordering::Acquire) {
                 session
-                    .cancel_npc_candidates(read_owner)
+                    .cancel_npc_preparation(read_owner)
                     .map_err(operation_error)?;
                 *owner = None;
                 return Err(failure("native NPC read was released"));

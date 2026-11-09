@@ -13,6 +13,8 @@ struct ActorProjection {
     pending_storage: crate::host::ResidentReservation,
     complete: bool,
     upper_bound: u64,
+    tail: ReceiptTailState,
+    page_storage: ByteReservation,
 }
 pub(crate) struct PreparedTemporalResidency {
     world: String,
@@ -117,7 +119,7 @@ impl SavedTemporalResidency {
                 .ok_or_else(capacity)?,
         ])
         .ok_or_else(capacity)?;
-        let storage = budget.reserve(bytes)?;
+        let mut storage = budget.reserve(bytes)?;
         let mut acknowledged_edits = Vec::new();
         acknowledged_edits
             .try_reserve_exact(edit_count)
@@ -132,6 +134,9 @@ impl SavedTemporalResidency {
         for (id, actor) in &state.temporal.actors {
             let affected = self.affected.contains(id);
             let tail = self.actors.get(id);
+            let mut page_storage = storage.split_off(fresh_page_map_bytes(
+                actor.pages.len().checked_add(tail.map_or(0, |tail| tail.pages.len())).ok_or_else(capacity)?
+            )?)?;
             let mut pages = BTreeMap::new();
             let mut represented = BTreeSet::new();
             for page in &actor.pending_pages {
@@ -239,12 +244,23 @@ impl SavedTemporalResidency {
             } else {
                 actor.page_order_upper_bound
             };
+            let acknowledged_empty = actor
+                .tail
+                .empty_edit()
+                .is_some_and(|marker| tail.is_some_and(|tail| tail.empty_tail == Some(marker)));
+            let projected_tail = if acknowledged_empty {
+                actor.tail.projected(&pages, &pending, true)?
+            } else {
+                actor.tail
+            };
             let changed = !same_pages(&pages, &actor.pages)
                 || pending.len() != actor.pending_pages.len()
-                || upper_bound != actor.page_order_upper_bound;
+                || upper_bound != actor.page_order_upper_bound
+                || projected_tail != actor.tail;
             if !changed {
                 continue;
             }
+            page_storage.resize(fresh_page_map_bytes(pages.len())?)?;
             let before = actor
                 .pages
                 .values()
@@ -266,6 +282,8 @@ impl SavedTemporalResidency {
                     pending_storage,
                     complete: actor.complete_pages && after >= before,
                     upper_bound,
+                    tail: projected_tail,
+                    page_storage,
                 },
             );
         }
@@ -359,11 +377,15 @@ impl PreparedTemporalResidency {
                 .actors
                 .get_mut(&id)
                 .expect("prepared temporal actor exists");
+            let page_storage = state.temporal.budget.adopt_backing(projection.page_storage)
+                .expect("prepared page-index custody transfers without new workspace");
             actor.pages = projection.pages;
+            actor.page_storage = page_storage;
             actor.pending_pages = projection.pending;
             actor.pending_storage = projection.pending_storage;
             actor.complete_pages = projection.complete;
             actor.page_order_upper_bound = projection.upper_bound;
+            actor.tail = projection.tail;
             // Logical recent directories, charge totals, epochs/frontiers and
             // original SQL ordinal highwaters remain exactly the accepted cut.
         }

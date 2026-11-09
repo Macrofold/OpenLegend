@@ -282,6 +282,7 @@ fn assemble_selected_core(
     physical.entities.fund_installed_intents(budget)?;
     content.fund(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
+    physical.participation.validate_policy(retained.participation_read.as_ref(), &physical.entities)?;
     crate::worlds::base_decision_offers::validate_strike_reads(
         &retained.native_strike_read,
         &meanings.response_profiles,

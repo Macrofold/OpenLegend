@@ -220,6 +220,7 @@ pub(crate) fn hydrate_selected_temporal_pages(
         temporal.reserve_undo_slots(2, budget)?;
         temporal.undo.push(TemporalUndo::Reservation(bookkeeping));
         let actor = temporal.actors.get_mut(&actor_id).ok_or_else(invalid)?;
+        actor.reserve_page_entries(actor.pages.len().checked_add(pages.len()).ok_or_else(capacity)?, budget)?;
         temporal.undo.push(TemporalUndo::HydratedPages {
             actor_id,
             positions,

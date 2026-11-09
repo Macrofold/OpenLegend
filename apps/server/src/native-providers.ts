@@ -8,6 +8,7 @@ import type {
 } from '@open-legend/native-simulation';
 import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
+import { worldControlOutcome } from './world-control-outcome.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
 import type { SqlDatabase } from './store.js';
@@ -16,6 +17,7 @@ import {
   readNativeHistoryEdit,
   type NativeHistoryEditReadRequest,
 } from './native-temporal-pages.js';
+import { readNativeNpcSources, type NativeNpcSourcesRequest } from './native-npc-sources.js';
 import {
   nativeAttemptNormalization,
   nativeCollation,
@@ -53,6 +55,13 @@ async function prepareProviderAnswer(
 ): Promise<string> {
   const value = question.value;
   switch (question.kind) {
+    case 'control': {
+      const request = value as { binding: Binding; paused: boolean; speed: number };
+      return JSON.stringify({
+        binding: request.binding,
+        message: worldControlOutcome(request.paused, request.speed).message,
+      });
+    }
     case 'history': {
       const cut = history?.liveReadCuts();
       if (!history || !cut)
@@ -60,6 +69,16 @@ async function prepareProviderAnswer(
       return JSON.stringify(
         await readNativeHistoryEdit(history.db, value as NativeHistoryEditReadRequest, cut),
       );
+    }
+    case 'sources': {
+      const request = value as NativeNpcSourcesRequest;
+      const cut = history?.liveReadCuts({
+        worldId: request.origin.worldId,
+        actorId: request.origin.actorId,
+      });
+      if (!history || !cut)
+        throw new Error('Native source preparation has no accepted SQL read cut.');
+      return JSON.stringify(await readNativeNpcSources(history.db, request, cut));
     }
     case 'geometry':
       return JSON.stringify(await geometry.compute(value as NativeGeometryQueries));
@@ -140,14 +159,36 @@ export async function driveNativeNpcCandidates(
   geometry: NativeGeometryProviders,
   signal?: AbortSignal,
 ): Promise<void> {
+  return driveNativeNpcPreparation(world, read, first, geometry, signal);
+}
+
+export async function driveNativeNpcSources(
+  world: NativeWorld,
+  read: NativeWorldNpcRead,
+  first: NativeWorldNpcTurn,
+  geometry: NativeGeometryProviders,
+  history: NativeHistoryReadContext,
+  signal?: AbortSignal,
+): Promise<void> {
+  return driveNativeNpcPreparation(world, read, first, geometry, signal, history);
+}
+
+async function driveNativeNpcPreparation(
+  world: NativeWorld,
+  read: NativeWorldNpcRead,
+  first: NativeWorldNpcTurn,
+  geometry: NativeGeometryProviders,
+  signal?: AbortSignal,
+  history?: NativeHistoryReadContext,
+): Promise<void> {
   let turn = first;
   while (turn.kind === 'provider') {
     if (!turn.provider) throw new Error('Native NPC choices have no owned provider question.');
     try {
       signal?.throwIfAborted();
-      const answer = await answerNativeProvider(turn.provider, geometry);
+      const answer = await answerNativeProvider(turn.provider, geometry, history);
       signal?.throwIfAborted();
-      turn = await world.answerNpcCandidates(
+      turn = await world.answerNpcPreparation(
         read,
         turn.key,
         turn.provider,

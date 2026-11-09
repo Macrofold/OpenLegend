@@ -351,9 +351,11 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
         removedHotEvents,
         hotEventWindow: HOT_EVENT_RECENT_ROWS,
         receivedValueClosure: true,
-        // readTemporalTail includes the physical last block even after its
-        // receipts expire. Eligibility-only directories cannot prove this cut.
-        temporalTailActors: rows('mind_perception_value_state').length ? temporalActors : [],
+        // The shared active loader either executes readTemporalTail (including
+        // its last expired block), or leaves pages empty when the actual value
+        // root is absent. Both are closed Source current-page selections;
+        // neither certifies historical absence from the eligible directory.
+        temporalTailActors: temporalActors,
         activeAppraisals: actorOwners('mind_appraisals_owners'),
         openAgreementHeads: actorOwners('mind_awareness_owners'),
         sensoryAwareness: actorOwners('mind_awareness_owners'),

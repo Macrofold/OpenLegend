@@ -1,3 +1,5 @@
+import { SOURCE_EDIT_PREPARATION_CAPACITY } from './history-edit.js';
+import { worldControlOutcome, worldSpeedRefusal } from './world-control-outcome.js';
 import {
   recentResultEligible,
   resultEvidenceId,
@@ -125,7 +127,7 @@ import {
 } from '@open-legend/domain';
 import { workBatchDigest, previewWorkBatch } from './work-batches.js';
 import type { WorkBatchRequest, WorkBatchPreview } from '@open-legend/protocol';
-import { interactiveAllowance } from './cognition-budget.js';
+import { playerInteractionAvailability } from './player-interaction.js';
 import {
   canSpeak,
   activelyParticipates,
@@ -335,6 +337,7 @@ import {
 import { retainHotEvents } from './hot-events.js';
 import {
   COMMAND_RETRY_MS,
+  COMMAND_RECEIPT_CACHE_ENTRIES,
   commandRecoveryFingerprint,
   type CommandEpoch,
   type GameplayReceipt,
@@ -1987,9 +1990,9 @@ export class WorldService {
   }
 
   private pruneCommandReceipts(): void {
-    if (this.recentCommandResults.size <= 1024) return;
+    if (this.recentCommandResults.size <= COMMAND_RECEIPT_CACHE_ENTRIES) return;
     for (const id of this.recentCommandResults.keys()) {
-      if (this.recentCommandResults.size <= 1024) break;
+      if (this.recentCommandResults.size <= COMMAND_RECEIPT_CACHE_ENTRIES) break;
       if (
         !this.pendingSave?.receipts.has(id) &&
         !this.inFlightSave?.receipts.has(id) &&
@@ -2952,7 +2955,7 @@ export class WorldService {
     let release = this.pendingSourceEdits.get(key);
     const retainedDenial = !!release;
     if (!release) {
-      if (this.pendingSourceEdits.size >= 64)
+      if (this.pendingSourceEdits.size >= SOURCE_EDIT_PREPARATION_CAPACITY)
         return {
           ok: false,
           code: 'busy',
@@ -4341,17 +4344,10 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
 
-      if (
-        input.speed !== undefined &&
-        (!this.config.godMode || !this.currentScope(scope, 'create'))
-      )
-        return {
-          ok: false,
-          code: 'forbidden',
-          message: 'Game speed is available in God mode only.',
-        };
-      if (input.speed !== undefined && ![0.5, 1, 3, 8].includes(input.speed))
-        return { ok: false, code: 'speed', message: 'Choose 0.5×, 1×, 3× or 8×.' };
+      const speedRefusal = worldSpeedRefusal(input.speed, this.config.godMode, () =>
+        this.currentScope(scope, 'create'),
+      );
+      if (speedRefusal) return speedRefusal;
       if (this.maintenanceHeld && input.paused === false)
         return {
           ok: false,
@@ -4394,15 +4390,9 @@ export class WorldService {
       if (ok && next.world.paused) this.scheduleSave(0);
       if (ok && resuming) this.clockStartedAt = performance.now();
       if (ok) this.scheduleRetention(true);
-      return {
-        ok,
-        code: ok ? 'control' : 'storage',
-        message: ok
-          ? next.world.paused
-            ? 'World paused.'
-            : `World running at ${next.speed}×.`
-          : this.storageError!,
-      };
+      return ok
+        ? worldControlOutcome(next.world.paused, next.speed)
+        : { ok: false, code: 'storage', message: this.storageError! };
     });
   }
 
@@ -6865,96 +6855,42 @@ export class WorldService {
     scope = this.localScope,
   ): Promise<PlayerInteractionAvailability> {
     await this.ready;
-    const recipientName = () => {
-      if (mode !== 'speak' || !targetId || !this.currentScope(scope, 'play', true)) return {};
-      const name = observerGivenName(this.world, scope.actorId, targetId);
-      return name ? { recipientName: name } : {};
-    };
-    const unavailable = (code: string, reason: string): PlayerInteractionAvailability => ({
-      available: false,
-      code,
-      reason,
-      reply: false,
-      ...recipientName(),
+    return playerInteractionAvailability({
+      mode,
+      config: this.config,
+      read: () => {
+        const controlling = this.currentScope(scope, 'play', true);
+        const actor = entityGet(this.world.entities, scope.actorId);
+        const target =
+          mode === 'speak' && targetId ? entityGet(this.world.entities, targetId) : undefined;
+        const reply = mode === 'speak' && !!targetId && target?.actor?.controller === 'npc';
+        const name =
+          controlling && mode === 'speak' && targetId
+            ? observerGivenName(this.world, scope.actorId, targetId)
+            : undefined;
+        return {
+          controlling,
+          paused: this.paused,
+          pauseReason: this.pauseReason,
+          actorAvailable:
+            !!actor?.actor?.alive &&
+            !actor.actor.incapacitated &&
+            activelyParticipates(actor) &&
+            (mode !== 'speak' || canSpeak(actor)) &&
+            !capabilityBlocked(this.world, actor, mode === 'speak' ? 'speech' : 'actions'),
+          recipientAvailable:
+            mode !== 'speak' ||
+            !targetId ||
+            (!!target?.actor?.alive && !!actor && canAddressSpeech(this.world, actor, target)),
+          fundingActorId: reply ? targetId! : scope.actorId,
+          reply,
+          ...(name ? { recipientName: name } : {}),
+        };
+      },
+      budgetAvailable: (actor, allowance, ceiling) =>
+        this.store.budgetAvailable(actor, allowance, ceiling),
+      admit: (actor) => this.playerInteractionAdmission?.(actor) ?? true,
     });
-    const current = (): PlayerInteractionAvailability | undefined => {
-      if (!this.currentScope(scope, 'play', true))
-        return unavailable('control', 'Resume control of your character to send.');
-      if (this.paused)
-        return unavailable(
-          'paused',
-          this.pauseReason === 'storage'
-            ? 'Saving must recover before sending.'
-            : this.pauseReason === 'maintenance'
-              ? 'Sending is unavailable during maintenance.'
-              : 'Resume the world to send.',
-        );
-      const actor = entityGet(this.world.entities, scope.actorId);
-      if (
-        !actor?.actor?.alive ||
-        actor.actor.incapacitated ||
-        !activelyParticipates(actor) ||
-        (mode === 'speak' && !canSpeak(actor)) ||
-        capabilityBlocked(this.world, actor, mode === 'speak' ? 'speech' : 'actions')
-      )
-        return unavailable(
-          'actor-unavailable',
-          mode === 'speak' ? 'Your character cannot speak now.' : 'Your character cannot act now.',
-        );
-      if (mode === 'speak' && targetId) {
-        const target = entityGet(this.world.entities, targetId);
-        if (!target?.actor?.alive || !canAddressSpeech(this.world, actor, target))
-          return unavailable(
-            'invalid-recipient',
-            'Choose a known person or a person currently in sight.',
-          );
-      }
-      if (
-        this.config.jevOnly ||
-        !(this.config.macrofoldKey || this.config.jevKey) ||
-        !(this.config.macrofoldKey || this.config.llmKey) ||
-        this.config.budgetUsd <= 0
-      )
-        return unavailable(
-          'ai-unavailable',
-          'Speak and Act need configured character AI and an allowance.',
-        );
-    };
-    const fundingActor = () =>
-      mode === 'speak' &&
-      targetId &&
-      entityGet(this.world.entities, targetId)?.actor?.controller === 'npc'
-        ? targetId
-        : scope.actorId;
-    const refusal = current();
-    if (refusal) return refusal;
-    const account = fundingActor();
-    const funded = await this.store.budgetAvailable(
-      account,
-      interactiveAllowance(this.config),
-      this.config.budgetUsd,
-    );
-    const changed = current();
-    if (changed) return changed;
-    if (account !== fundingActor())
-      return unavailable('stale', 'The selected interaction changed. Refresh it.');
-    if (!funded)
-      return unavailable(
-        'ai-unavailable',
-        'Speak and Act need an available character AI allowance.',
-      );
-    if (this.playerInteractionAdmission && !this.playerInteractionAdmission(account))
-      return unavailable('busy', 'Character AI is busy. Your draft is saved; check again shortly.');
-    return {
-      available: true,
-      ...recipientName(),
-      code: 'available',
-      reason: null,
-      reply:
-        mode === 'speak' &&
-        !!targetId &&
-        entityGet(this.world.entities, targetId)?.actor?.controller === 'npc',
-    };
   }
 
   async command(

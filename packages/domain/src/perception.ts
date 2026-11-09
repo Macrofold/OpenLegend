@@ -724,7 +724,11 @@ export function hearsEntity(world: WorldState, observer: Entity, source: Entity)
   return speechExposure(world, observer, source).detail === 'clear';
 }
 export function contactViews(entity: Entity): ContactView[] {
-  return Object.values(entity.actor?.contacts ?? {}).map((c) => ({
+  return contactViewsFromContacts(Object.values(entity.actor?.contacts ?? {}));
+}
+/** Contact wording uses only the actual owner's finite tactile episodes. */
+export function contactViewsFromContacts(contacts: readonly ContactEpisode[]): ContactView[] {
+  return contacts.map((c) => ({
     id: c.id,
     senseId: c.senseId,
     recognized: false,

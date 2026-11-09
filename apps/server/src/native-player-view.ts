@@ -1,6 +1,7 @@
 import { isConversationEvent } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
+import { retainNativeSources } from './native-consumer.js';
 import type { GameRepository } from './store.js';
 import type { PlayerPracticeLoader } from './player-self-view.js';
 import { playerHasWork } from './player-self-view.js';
@@ -112,7 +113,7 @@ export interface NativePlayerViewRequest {
   /** Queue these exact bytes synchronously in the actual HTTP/connection sink.
    * Native disclosure remains fenced through serialization and this handoff;
    * a slow socket does not retain the publication lock while it drains. */
-  readonly publish: (bytes: Buffer) => void;
+  readonly publish: (bytes: Buffer, view: GameView) => void;
 }
 const caches = new WeakMap<NativePlayerRequestOwner, Map<string, PlayerAsyncCache>>();
 function scopedCache(owner: NativePlayerRequestOwner, scope: RequestScope): PlayerAsyncCache {
@@ -272,13 +273,9 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     await read.publishIfPermitted(
       selectedEvents.map((event) => event.id),
       (canUseInventory, own) => {
-        const bytes = own(
-          Buffer.from(
-            JSON.stringify({ ...projected, player: { ...projected.player, canUseInventory } }),
-            'utf8',
-          ),
-        );
-        request.publish(bytes);
+        const finalView = { ...projected, player: { ...projected.player, canUseInventory } };
+        const bytes = own(Buffer.from(JSON.stringify(finalView), 'utf8'));
+        request.publish(bytes, retainNativeSources(finalView, bytes));
         return bytes;
       },
       () => {

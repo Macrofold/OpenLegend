@@ -30,6 +30,9 @@ pub(crate) use revoke::{
     invalidate_temporal_evidence, invalidate_temporal_facets,
 };
 mod append;
+mod maintenance;
+mod page_storage;
+use page_storage::{fresh_page_map_bytes, restored_page_bytes};
 mod tail;
 use tail::ReceiptTailState;
 pub(crate) use tail::{TemporalReceiptPrefix, TemporalReceiptTail, TemporalReceiptTailRequest};
@@ -167,6 +170,7 @@ pub struct TemporalActorHistory {
     pending_pages: Vec<Arc<PendingTemporalPage>>,
     pending_storage: crate::host::ResidentReservation,
     supports: Option<super::TemporalSupportCollection>,
+    page_storage: crate::host::ResidentReservation,
 }
 
 fn finite_optional(value: Option<f64>) -> bool {
@@ -300,6 +304,8 @@ impl TemporalActorHistory {
             Some((header.bytes, header.count)),
             budget,
         )?;
+        let page_storage = budget.reserve(fresh_page_map_bytes(pages.len())?)
+            .map_err(|_| ReceivedError("Temporal page-index exceeds native allowance."))?;
         let mut installed = BTreeMap::new();
         for page in pages {
             if page.actor_id() != actor_id
@@ -342,6 +348,8 @@ impl TemporalActorHistory {
                 ReceivedError("Temporal pending placement exceeds native allowance.")
             })?,
             supports: None,
+            page_storage: budget.adopt_backing(page_storage)
+                .map_err(|_| ReceivedError("Temporal page-index custody is unavailable."))?,
         })
     }
     pub fn actor_id(&self) -> &str {
@@ -464,6 +472,7 @@ enum TemporalUndo {
         removed: Vec<super::RecentDirectoryBlock>,
         appended: Vec<ReceivedChargeDirectory>,
         tail_before: ReceiptTailState,
+        page_restore: crate::host::ByteReservation,
     },
     HydratedPages {
         actor_id: String,
@@ -473,6 +482,10 @@ enum TemporalUndo {
         // Physical projections of genuine pending batches must enter the same
         // accepted SQL output before their pending owners can be discarded.
         projected: Vec<String>,
+    },
+    RecentRetirement {
+        actor_id: String,
+        before: maintenance::RecentRetirementUndo,
     },
 }
 
@@ -653,6 +666,7 @@ impl TemporalState {
                     removed,
                     appended,
                     tail_before,
+                    page_restore,
                 } => {
                     let actor = self
                         .actors
@@ -667,7 +681,12 @@ impl TemporalState {
                     if let Some(position) = after_position {
                         actor.pages.remove(&position);
                     }
+                    if page_restore.bytes() != 0 {
+                        self.budget.restore_backing(&mut actor.page_storage, page_restore)
+                            .map_err(|_| ReceivedError("Temporal inverse page-index custody is unavailable."))?;
+                    }
                     actor.pages.insert(before.position(), before);
+                    actor.settle_page_entries()?;
                     actor.tail = tail_before;
                 }
                 TemporalUndo::HydratedPages {
@@ -689,6 +708,12 @@ impl TemporalState {
                         actor.pending_pages.insert(position, page);
                     }
                     actor.page_order_upper_bound = next_ordinal;
+                    actor.settle_page_entries()?;
+                }
+                TemporalUndo::RecentRetirement { actor_id, before } => {
+                    let actor = self.actors.get_mut(&actor_id)
+                        .ok_or(ReceivedError("Temporal retirement rollback actor is absent."))?;
+                    before.restore(actor)?;
                 }
             }
         }

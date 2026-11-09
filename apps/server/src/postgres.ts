@@ -32,6 +32,52 @@ interface TransactionScope {
   actor?: { worldId: string; actorId: string };
 }
 
+export type PostgresTransactionOutcome = 'rolled-back' | 'unknown' | 'committed';
+const confirmedRollbacks = new WeakSet<object>();
+
+/** SQL's outcome is independent of the caller receiving its acknowledgement.
+ * Protected native settlement must keep its owner across an unknown COMMIT. */
+export class PostgresTransactionError extends Error {
+  constructor(
+    readonly outcome: PostgresTransactionOutcome,
+    cause: unknown,
+  ) {
+    super(
+      outcome === 'unknown'
+        ? 'PostgreSQL commit outcome is unknown; reconcile its durable result before admitting more work.'
+        : outcome === 'committed'
+          ? 'PostgreSQL committed, but local publication failed; recover the committed result.'
+          : 'PostgreSQL confirmed transaction rollback.',
+      { cause },
+    );
+    this.name = 'PostgresTransactionError';
+  }
+}
+
+/** Preserve original permission/refusal error identity on a confirmed rollback.
+ * An arbitrary error or a successful later ROLLBACK proves nothing about a
+ * previously dispatched COMMIT. */
+export function postgresTransactionOutcome(error: unknown): PostgresTransactionOutcome | undefined {
+  if (error instanceof PostgresTransactionError) return error.outcome;
+  return error !== null &&
+    (typeof error === 'object' || typeof error === 'function') &&
+    confirmedRollbacks.has(error)
+    ? 'rolled-back'
+    : undefined;
+}
+
+function runTransactionCallbacks(callbacks: readonly (() => void)[]): unknown[] {
+  const errors: unknown[] = [];
+  for (const callback of callbacks) {
+    try {
+      callback();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  return errors;
+}
+
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
 export class PostgresDatabase implements SqlDatabase {
   get checkpointSource() {
@@ -238,6 +284,29 @@ export class PostgresDatabase implements SqlDatabase {
       actor,
     };
     return this.transactionContext.run(scope, async () => {
+      const rollback = async (error: unknown): Promise<never> => {
+        try {
+          await this.query('ROLLBACK');
+        } catch (failure) {
+          this.fail();
+          scope.active = false;
+          throw new PostgresTransactionError('unknown', new AggregateError([error, failure]));
+        }
+        scope.active = false;
+        const failures = runTransactionCallbacks(scope.rolledBack);
+        if (failures.length) {
+          this.fail();
+          throw new PostgresTransactionError(
+            'rolled-back',
+            new AggregateError([error, ...failures]),
+          );
+        }
+        if (error !== null && (typeof error === 'object' || typeof error === 'function')) {
+          confirmedRollbacks.add(error);
+          throw error;
+        }
+        throw new PostgresTransactionError('rolled-back', error);
+      };
       let result: T;
       try {
         // Cold extraction/restore can update an entire retained source set. Keep
@@ -251,20 +320,51 @@ export class PostgresDatabase implements SqlDatabase {
         );
         if (!readOnly && !this.writeGroups) await this.query("SET LOCAL statement_timeout = '30s'");
         result = await operation();
-        await this.query('COMMIT');
       } catch (error) {
-        await this.query('ROLLBACK').catch(() => {
-          this.fail();
+        return rollback(error);
+      }
+      let dispatched = false;
+      let completion;
+      try {
+        completion = await this.queryWithDispatch('COMMIT', [], () => {
+          dispatched = true;
         });
+      } catch (error) {
+        if (!dispatched) return rollback(error);
+        // A later ROLLBACK can succeed after COMMIT already completed. It must
+        // not run rollback callbacks or authorize rejecting durable gameplay.
+        this.fail();
         scope.active = false;
-        for (const callback of scope.rolledBack) callback();
-        throw error;
+        throw new PostgresTransactionError('unknown', error);
       }
       scope.active = false;
-      for (const callback of scope.committed) callback();
+      if (completion.command === 'ROLLBACK') {
+        const failures = runTransactionCallbacks(scope.rolledBack);
+        if (failures.length) this.fail();
+        throw new PostgresTransactionError(
+          'rolled-back',
+          new AggregateError(
+            failures,
+            'PostgreSQL ended the failed transaction without committing.',
+          ),
+        );
+      }
+      if (completion.command !== 'COMMIT') {
+        this.fail();
+        throw new PostgresTransactionError(
+          'unknown',
+          new Error('No COMMIT completion was received.'),
+        );
+      }
+      const failures = runTransactionCallbacks(scope.committed);
+      if (failures.length) {
+        this.fail();
+        throw new PostgresTransactionError('committed', new AggregateError(failures));
+      }
       return result;
     });
   }
+
   private async resolveLiveOverlay(scope: TransactionScope): Promise<LiveReadOverlay> {
     if (!scope.liveCuts) throw new LiveReadRevisionError();
     const requested = this.actorReadScope.getStore(),
@@ -313,6 +413,9 @@ export class PostgresDatabase implements SqlDatabase {
     return overlay;
   }
   async query(sql: string, params: unknown[] = []) {
+    return this.queryWithDispatch(sql, params);
+  }
+  private async queryWithDispatch(sql: string, params: unknown[], onDispatch?: () => void) {
     const template = sql;
     const execute = async () => {
       await this.ready;
@@ -337,13 +440,19 @@ export class PostgresDatabase implements SqlDatabase {
       const translated = sql.replace(/\?/g, () => `$${++index}`);
       const diagnostic = beginDatabaseQuery(template);
       try {
-        const result = await timed('postgres.statement', () =>
-          (this.transactionContext.getStore()?.active
-            ? this.transactionContext.getStore()!.client
-            : this.client
-          ).query(translated, params),
-        );
-        const value = { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
+        const result = await timed('postgres.statement', () => {
+          onDispatch?.();
+          return (
+            this.transactionContext.getStore()?.active
+              ? this.transactionContext.getStore()!.client
+              : this.client
+          ).query(translated, params);
+        });
+        const value = {
+          rows: result.rows ?? [],
+          changes: result.rowCount ?? 0,
+          command: result.command,
+        };
         finishDatabaseQuery(diagnostic, value);
         return value;
       } catch (error) {

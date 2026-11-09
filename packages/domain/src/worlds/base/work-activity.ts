@@ -5,6 +5,7 @@ import type {
   ActivityRequest,
   ActivityRequestChoice,
   ActivityRequestDescriptor,
+  ActivityRequestDefinitionScope,
 } from '../../activity-hosts.js';
 import type { Command, Outcome, WorldState } from '../../types.js';
 import { compileWorkBatch, type WorkRequestPresentation } from '../../work-batches.js';
@@ -19,7 +20,7 @@ import { outcome } from '../../events.js';
 import { observeActor } from '../../kernel.js';
 import { definitionPin } from '../../world-modules.js';
 
-function requestsFor(world: WorldState): ActivityRequestDescriptor[] {
+function requestsFor(world: ActivityRequestDefinitionScope): ActivityRequestDescriptor[] {
   const work = world.workBatchPolicy,
     text = work?.presentation,
     meal = world.moduleManifest.bodyPolicy?.consumption?.meal;

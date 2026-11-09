@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 export const COMMAND_TABLES = ['gameplay_receipts'] as const;
 export const COMMAND_RETRY_MS = 24 * 60 * 60 * 1000;
+export const COMMAND_RECEIPT_CACHE_ENTRIES = 1024;
 export interface GameplayReceipt {
   id: string;
   epoch: number;

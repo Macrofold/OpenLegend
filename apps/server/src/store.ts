@@ -836,6 +836,12 @@ export class SqlGameRepository implements GameRepository {
   private acceptedRevision = -1;
   private acceptedState: SavedWorld | null = null;
   private capturedOwner?: { worldId: string; generation: string; through: number };
+  private capturedRollbackBaseline?: {
+    revision: number;
+    owner: { worldId: string; generation: string; through: number };
+    baselineLost: boolean;
+    historyReady: boolean;
+  };
   /** Set when a commit rolled back after replacing the baseline. The live world may have
    * released history since, so reloading a complete baseline and diffing against it could
    * delete evicted rows; only an explicit load (restart) may continue. */
@@ -1360,6 +1366,8 @@ export class SqlGameRepository implements GameRepository {
     acceptedCut: number,
     providers: NativeWorldProviders,
   ): void {
+    if (!this.db.afterCommit || !this.db.afterRollback)
+      throw new Error('Native writer adoption requires actual transaction publication callbacks.');
     this.setLiveReadCuts(providers.liveReadCuts);
     this.setRetainedValueLookup(providers.retainedValues);
     this.memories.setBackgroundSearchAdmission(providers.backgroundSearchAdmission);
@@ -1408,6 +1416,29 @@ export class SqlGameRepository implements GameRepository {
     const publish = () => this.publishCommitInputs(inputs);
     const revision = await timed('persistence.transaction', () =>
       this.db.transaction(async () => {
+        // Several captured prefixes can share one outer transaction. Retain
+        // its original finite predecessor once, before any tentative metadata
+        // changes; forward rollback callbacks must not restore an inner prefix.
+        if (!this.capturedRollbackBaseline) {
+          const baseline = {
+            revision: this.acceptedRevision,
+            owner,
+            baselineLost: this.baselineLost,
+            historyReady: this.readyHistoryWorlds.has(inputs.worldId),
+          };
+          this.capturedRollbackBaseline = baseline;
+          this.db.afterRollback!(() => {
+            this.acceptedRevision = baseline.revision;
+            this.capturedOwner = baseline.owner;
+            this.baselineLost = baseline.baselineLost;
+            if (baseline.historyReady) this.readyHistoryWorlds.add(inputs.worldId);
+            else this.readyHistoryWorlds.delete(inputs.worldId);
+            this.capturedRollbackBaseline = undefined;
+          });
+          this.db.afterCommit!(() => {
+            this.capturedRollbackBaseline = undefined;
+          });
+        }
         if (cut.authority) await this.authority.assertFence(cut.authority);
         await cut.operationalChange?.();
         const revision = await this.records.advance(inputs.worldId, expectedRevision);
@@ -1415,11 +1446,6 @@ export class SqlGameRepository implements GameRepository {
         if (cut.receipts?.length) await this.commands.saveBatch(inputs.worldId, cut.receipts);
         await this.applyCommitPrivacy(inputs);
         await this.applyCommitInputs(inputs, revision);
-        this.db.afterRollback?.(() => {
-          this.acceptedRevision = -1;
-          this.baselineLost = true;
-          this.readyHistoryWorlds.clear();
-        });
         this.acceptedRevision = revision;
         this.capturedOwner = { ...owner, through: cut.through };
         if (this.db.afterCommit) {

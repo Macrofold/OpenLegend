@@ -136,6 +136,8 @@ impl ItemHandlingReadPolicy {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ParticipationReadPolicy {
+    #[serde(default, deserialize_with = "crate::values::deserialize_present_option")]
+    pub exit_exposure_seconds: Option<f64>,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_option"

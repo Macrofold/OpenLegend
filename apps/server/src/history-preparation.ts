@@ -281,6 +281,22 @@ function mergeHistoryIds(
   return merged;
 }
 
+/** A replacement changes archived personal wording only when its acquired
+ * evidence changed. Native changed-row readers reuse this exact comparison. */
+export function replacedHistoryAwareness(
+  before: ReadonlyMap<string, Awareness>,
+  after: readonly Awareness[],
+): readonly Awareness[] {
+  return after.filter((entry) => {
+    const prior = before.get(entry.eventId);
+    return (
+      !!prior &&
+      prior !== entry &&
+      JSON.stringify(eventEvidence(prior)) !== JSON.stringify(eventEvidence(entry))
+    );
+  });
+}
+
 export function captureHistoryProjection(
   previous: WorldState | undefined,
   world: WorldState,
@@ -357,17 +373,7 @@ export function captureHistoryProjection(
       let prefix = 0;
       while (prefix < before.length && entries[prefix] === before[prefix]) prefix++;
       const old = new Map(before.slice(prefix).map((entry) => [entry.eventId, entry]));
-      awarenessChanges.set(
-        actorId,
-        entries.slice(prefix).filter((entry) => {
-          const prior = old.get(entry.eventId);
-          return (
-            !!prior &&
-            prior !== entry &&
-            JSON.stringify(eventEvidence(prior)) !== JSON.stringify(eventEvidence(entry))
-          );
-        }),
-      );
+      awarenessChanges.set(actorId, replacedHistoryAwareness(old, entries.slice(prefix)));
     }
   const correctedEvents = new Map<string, readonly string[]>();
   for (const [actorId, corrections] of Object.entries(world.experience?.corrections ?? {})) {

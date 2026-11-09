@@ -10,6 +10,16 @@ import {
 
 type Policy = ReturnType<typeof selectedTemporalPolicy>;
 type DeadlineIndex = ObjectIndexNode<number> | undefined;
+export type RecentRetentionHeader = Pick<
+  TemporalActorHistory,
+  'maintenanceDue' | 'bytes' | 'count' | 'nextDue'
+>;
+export const RETENTION_MIN_DELAY_MS = 250;
+export function recentRetentionDeadline(actor: RecentRetentionHeader, policy: Policy['recent']) {
+  return actor.maintenanceDue || actor.bytes > policy.maxBytes || actor.count > policy.maxChanges
+    ? 0
+    : (actor.nextDue ?? Infinity);
+}
 export type RetentionWorkKind = 'recent' | 'accounts' | 'knowledge' | 'support';
 const emptyActors: Record<string, TemporalActorHistory> = Object.freeze({});
 const byPolicy = new WeakMap<
@@ -37,13 +47,7 @@ function indexes(world: WorldState) {
           ),
       );
     indexes = {
-      recent: make((actor) =>
-        actor.maintenanceDue ||
-        actor.bytes > policy.recent.maxBytes ||
-        actor.count > policy.recent.maxChanges
-          ? 0
-          : (actor.nextDue ?? Infinity),
-      ),
+      recent: make((actor) => recentRetentionDeadline(actor, policy.recent)),
       // Required admission already marks nextDue at its early maintenance target.
       // Protected grants above that target must not schedule empty SQL forever.
       accounts: make((actor) =>
@@ -96,12 +100,21 @@ export class RetentionActorSelection {
   private worldId?: string;
   private after: Partial<Record<RetentionWorkKind, string>> = {};
   select(world: WorldState, kind: RetentionWorkKind): string[] {
-    if (this.worldId !== world.id) {
-      this.worldId = world.id;
+    return this.selectIndex(
+      world.id,
+      kind,
+      indexes(world)[kind].read(actors(world)),
+      world.simTime,
+    );
+  }
+  /** The native application has the same actual scalar headers and deadline
+   * tree. Reuse the bounded fair traversal without manufacturing a world. */
+  selectIndex(worldId: string, kind: RetentionWorkKind, tree: DeadlineIndex, at: number): string[] {
+    if (this.worldId !== worldId) {
+      this.worldId = worldId;
       this.after = {};
     }
-    const tree = indexes(world)[kind].read(actors(world)),
-      threshold = -world.simTime,
+    const threshold = -at,
       after = this.after[kind],
       selected: string[] = [];
     for (const [id] of objectIndexEntriesAtLeast(tree, threshold, after)) {

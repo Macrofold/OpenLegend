@@ -14,8 +14,10 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
+mod control;
 mod handoff;
 mod input;
+mod maintenance;
 mod npc;
 mod npc_labels;
 mod player;
@@ -25,7 +27,7 @@ mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use consumer::RuntimeConsumer;
-pub use npc::{RuntimeNpcCandidateStep, RuntimeNpcRead};
+pub use npc::{RuntimeNpcPreparationStep, RuntimeNpcRead};
 pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
 
 #[derive(Debug)]
@@ -426,7 +428,7 @@ impl NativeWorldSession {
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, String)>,
     ) -> Result<RuntimeStep, RuntimeError> {
-        if self.session.is_npc_candidates(key) {
+        if self.session.is_npc_candidates(key) || self.session.is_npc_sources(key) {
             return Err(failure("NPC discovery requires its originating read"));
         }
         let answer = provider_response(answer, &self.budget)?;
@@ -448,8 +450,10 @@ impl NativeWorldSession {
             SessionStep::Preview(preview) => {
                 RuntimeStep::Preview(RuntimeJson::encode(preview.outcome(), &self.budget)?)
             }
-            SessionStep::NpcCandidates(_) => {
-                return Err(failure("NPC discovery requires its originating read"));
+            SessionStep::NpcCandidates(_) | SessionStep::NpcSources(_) => {
+                return Err(failure(
+                    "NPC read preparation requires its originating read",
+                ));
             }
             SessionStep::Prepared(prepared) => {
                 let (

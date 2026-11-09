@@ -7,6 +7,17 @@ use crate::host::PublicationLease;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PlayerInteractionInput {
+    mode: crate::simulation::InteractionMode,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    target_id: Option<String>,
+}
+
 pub struct RuntimePlayerRead {
     account: String,
     actor: String,
@@ -26,6 +37,32 @@ impl RuntimePlayerPublication {
     }
 }
 impl NativeWorldSession {
+    pub fn player_interaction(
+        &self,
+        read: &RuntimePlayerRead,
+        input: &[u8],
+    ) -> Result<RuntimeJson, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let input: PlayerInteractionInput = serde_json::from_slice(input).map_err(failure)?;
+        if input
+            .target_id
+            .as_deref()
+            .is_some_and(|id| !crate::values::is_safe_record_id(id))
+        {
+            return Err(failure("invalid selected interaction recipient"));
+        }
+        let simulation = self.session.accepted().map_err(failure)?;
+        let facts = simulation
+            .player_interaction(
+                &read.account,
+                &read.actor,
+                input.mode,
+                input.target_id.as_deref(),
+            )
+            .map_err(failure)?;
+        RuntimeJson::encode(&facts, &self.budget)
+    }
     pub fn read_player(
         &mut self,
         account: &str,
@@ -94,10 +131,12 @@ impl NativeWorldSession {
         selected_event_ids: &[String],
         paused: bool,
         controlling: bool,
-    ) -> Result<RuntimePlayerPublication, RuntimeError> {
+    ) -> Result<Option<RuntimePlayerPublication>, RuntimeError> {
         let simulation = self.session.accepted().map_err(failure)?;
-        if read.controls.is_none()
-            || !simulation
+        if read.controls.is_none() {
+            return Err(failure("player control preparation is unfinished"));
+        }
+        if !simulation
                 .player_read_still_permitted(&read.account, &read.actor, &read.read)
                 .map_err(failure)?
             || !simulation
@@ -110,16 +149,16 @@ impl NativeWorldSession {
                 )
                 .map_err(failure)?
         {
-            return Err(failure("selected player evidence is no longer permitted"));
+            return Ok(None);
         }
         let can_use_inventory = simulation
             .player_inventory_available(&read.account, &read.actor, paused, controlling)
             .map_err(failure)?;
         let lease = self.session.fence().begin_publication().map_err(failure)?;
-        Ok(RuntimePlayerPublication {
+        Ok(Some(RuntimePlayerPublication {
             can_use_inventory,
             _lease: lease,
-        })
+        }))
     }
 }
 impl RuntimePlayerRead {

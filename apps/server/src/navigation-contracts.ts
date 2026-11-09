@@ -5,6 +5,7 @@ import {
   namedClockTimes,
   activityRequestDescriptors,
   type WorldState,
+  type ActivityRequestDefinitionScope,
 } from '@open-legend/domain';
 
 export type InstalledActivityRequests = ReturnType<typeof activityRequestDescriptors>;
@@ -93,12 +94,15 @@ export function actionInvocationSchema(requests: InstalledActivityRequests = [])
 }
 
 /** A stopping-time field limited to this world's names; null only when it names none. */
-export function namedTimeSchema(world: WorldState) {
+export function namedTimeSchema(world: Pick<WorldState, 'statusEffectPolicy'>) {
   const names = namedClockTimes(world);
   return names.length ? z.enum(names as [string, ...string[]]).nullable() : z.null();
 }
 /** Built per world: the stopping-time names come from the world's own clock policy. */
-export function navigationInstructions(world: WorldState, receivedFrame = false): string {
+export function navigationInstructions(
+  world: ActivityRequestDefinitionScope & Pick<WorldState, 'statusEffectPolicy'>,
+  receivedFrame = false,
+): string {
   const times = namedClockTimes(world);
   const navigation = NAVIGATION_TEXT.replace(
     '{until}',

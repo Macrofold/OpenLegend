@@ -246,9 +246,13 @@ const orderedDocuments = new WeakMap<ActorKnowledge, readonly string[]>();
 /** Directional social text is this exact document revision, never a second writable
  * relationship record. Only a cold index build visits all of an actor's documents. */
 export function knowledgePage(world: WorldState, actorId: string, after = '', limit = 40) {
+  return knowledgePageFromDocuments(world.actorKnowledge?.[actorId] ?? {}, after, limit);
+}
+
+/** Page the selected owner's actual documents without requiring a world read. */
+export function knowledgePageFromDocuments(documents: Readonly<ActorKnowledge>, after = '', limit = 40) {
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
     throw new Error('Invalid knowledge page size.');
-  const documents = world.actorKnowledge?.[actorId] ?? {};
   let keys = Object.isFrozen(documents) ? orderedDocuments.get(documents) : undefined;
   if (!keys) {
     keys = Object.keys(documents).sort();

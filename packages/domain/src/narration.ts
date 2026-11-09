@@ -194,6 +194,19 @@ export function narrationTemplate(
   template: string,
   bindings: Record<string, Entity | Named | undefined>,
 ): Narration {
+  return narrationTemplateFromRead(template, bindings, (binding) => {
+    const value = bindings[binding];
+    return value && 'kind' in value ? value.id : undefined;
+  });
+}
+
+/** A native scoped read supplies only actual subject IDs and selected names;
+ * the same grammar builds structured narration without an Entity facade. */
+export function narrationTemplateFromRead(
+  template: string,
+  bindings: Readonly<Record<string, Named | undefined>>,
+  reference: (binding: string) => string | undefined,
+): Narration {
   const parts: NarrationPart[] = [];
   let end = 0;
   for (const match of template.matchAll(/\{([^{}]*)\}/g)) {
@@ -202,17 +215,17 @@ export function narrationTemplate(
     parts.push(template.slice(end, match.index));
     const value = bindings[token.binding];
     // Definition IDs identify content; only physical entities carry observer identity.
-    const entity = value && 'kind' in value ? value : undefined;
+    const entityId = reference(token.binding);
     if (token.verb) {
       parts.push(
-        entity
-          ? presentVerb(entity.id, token.verb)
+        entityId !== undefined
+          ? presentVerb(entityId, token.verb)
           : presentTense(token.verb, false, value?.nameForm === 'plural'),
       );
-    } else if (entity) {
+    } else if (entityId !== undefined) {
       // Even explicit name tokens pass through observer identity, never global names.
       parts.push({
-        entityId: entity.id,
+        entityId,
         role: token.role!,
         ...(token.article ? { article: token.article } : {}),
       });

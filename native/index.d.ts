@@ -33,13 +33,23 @@ export declare class NativeWorld {
     read: NativeWorldNpcRead,
     request: Buffer,
   ): Promise<NativeWorldNpcTurn>;
-  answerNpcCandidates(
+  npcSources(
+    read: NativeWorldNpcRead,
+    request: Buffer,
+  ): Promise<NativeWorldNpcTurn>;
+  answerNpcPreparation(
     read: NativeWorldNpcRead,
     key: NativeCandidateKey,
     provider: NativeWorldProvider,
     answer: Buffer,
   ): Promise<NativeWorldNpcTurn>;
   readNpc(request: Buffer): Promise<NativeWorldNpcRead>;
+  beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
+  beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
+  playerInteraction(
+    read: NativeWorldPlayerRead,
+    bytes: Buffer,
+  ): Promise<NativeWorldJson>;
   readPlayer(
     account: string,
     actor: string,
@@ -52,6 +62,7 @@ export declare class NativeWorld {
     controlling: boolean,
   ): Promise<NativeWorldPlayerPublication>;
   forget(bytes: Buffer): Promise<NativeWorldTurn>;
+  resolveReceiptTail(reply: Buffer): Promise<void>;
   readCut(request: Buffer): Promise<NativeWorldJson>;
   retainedValues(): Promise<NativeWorldJson>;
   activate(receipt: string): Promise<void>;

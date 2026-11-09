@@ -432,7 +432,7 @@ pub(crate) fn acquire_awareness_accounts(
                 if let Some(receipt) = core
                     .state
                     .temporal
-                    .native_receipt(locator, values, &law, budget)?
+                    .native_receipt(locator, None, values, &law, budget)?
                 {
                     let ordinals = receipt
                         .fragments()

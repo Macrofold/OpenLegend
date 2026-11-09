@@ -35,6 +35,9 @@ export class WorldInputOwner {
     return ++this.revision;
   }
   constructor(private readonly maximum: number) {}
+  has(actorId: string): boolean {
+    return this.states.has(actorId);
+  }
   state(actorId: string, identity: string, isCurrent: () => boolean = () => true): WorldInputState {
     const current = this.states.get(actorId);
     if (current?.identity === identity) return current;

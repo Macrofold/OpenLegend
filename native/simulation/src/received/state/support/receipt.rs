@@ -74,8 +74,13 @@ impl TemporalState {
                     .cloned());
             }
         }
-        let Some(captured) =
-            self.native_receipt(locator, context.values, context.meaning, context.budget)?
+        let Some(captured) = self.native_receipt(
+            locator,
+            None,
+            context.values,
+            context.meaning,
+            context.budget,
+        )?
         else {
             return Ok(None);
         };

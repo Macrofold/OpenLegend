@@ -8,6 +8,7 @@ use crate::records::{
 };
 use serde::Serialize;
 mod agency;
+mod participation;
 fn error() -> RecordEncodingError {
     RecordEncodingError("Physical save has no complete current owner, placement or capacity.")
 }
@@ -584,8 +585,10 @@ impl PhysicalJournal {
         let mut window = false;
         let mut coaching = false;
         let mut added = 0u64;
+        participation::encode_exposures(self, state, ledger, output, budget)?;
         for change in &self.undo {
             match change {
+                Undo::ExitExposure { .. } => {},
                 Undo::CoachingPresence { .. } => coaching = true,
                 Undo::AddedEntity(before) => {
                     let rows = selected
@@ -636,6 +639,7 @@ impl PhysicalJournal {
                 _ => {
                     let handle = match change {
                         Undo::Placement { entity, .. }
+                        | Undo::Participation { entity, .. }
                         | Undo::AgencyPlaces { entity, .. }
                         | Undo::AgencyPlan { entity, .. }
                         | Undo::AgencyGoals { entity, .. }
@@ -678,6 +682,7 @@ impl PhysicalJournal {
                         .or_default();
                     match change {
                         Undo::SensoryProgress { .. } => rows.root = true,
+                        Undo::Participation { .. } => rows.actor = true,
                         Undo::BodyRevision { .. }
                         | Undo::PlanGeneration { .. }
                         | Undo::PendingDeath { .. }

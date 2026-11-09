@@ -153,10 +153,11 @@ pub(crate) fn ensure_temporal_actor(
                 complete_pages: true,
                 page_order_upper_bound: core.state.physical.identity.next_id(),
                 tail: ReceiptTailState::empty(),
-                recent: ReceivedRecentDirectory::new(budget),
+                recent: ReceivedRecentDirectory::new(budget)?,
                 pending_pages: Vec::new(),
                 pending_storage: budget.reserve_backing(0)?,
                 supports: Some(supports),
+                page_storage: budget.reserve_backing(0)?,
             },
         );
     }

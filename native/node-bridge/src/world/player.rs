@@ -103,6 +103,41 @@ impl NativeWorldPlayerPublication {
 }
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn player_interaction<'a>(
+        &self,
+        env: &'a Env,
+        read: &NativeWorldPlayerRead,
+        bytes: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("player read belongs to another native writer"));
+        }
+        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let read = Arc::clone(&read.inner);
+        self.compute(env, move |session, _cancel, budget| {
+            let _custody = custody;
+            let owner = read
+                .read
+                .try_lock()
+                .map_err(|_| failure("native player read is busy or unavailable"))?;
+            if read.released.load(Ordering::Acquire) {
+                return Err(failure("native player read was released"));
+            }
+            let value = session
+                .player_interaction(
+                    owner
+                        .as_ref()
+                        .ok_or_else(|| failure("native player read was released"))?,
+                    &bytes,
+                )
+                .map_err(operation_error)?;
+            if read.released.load(Ordering::Acquire) {
+                return Err(failure("native player read was released"));
+            }
+            Ok(NativeWorldJson::new(value, budget.clone()))
+        })
+    }
     #[napi(ts_return_type = "Promise<NativeWorldPlayerRead>")]
     pub fn read_player<'a>(
         &self,
@@ -127,7 +162,7 @@ impl NativeWorld {
             })
         })
     }
-    #[napi(ts_return_type = "Promise<NativeWorldPlayerPublication>")]
+    #[napi(ts_return_type = "Promise<NativeWorldPlayerPublication | null>")]
     pub fn player_publication<'a>(
         &self,
         env: &'a Env,
@@ -159,10 +194,10 @@ impl NativeWorld {
                 )
                 .map_err(operation_error)?;
             drop(owner);
-            Ok(NativeWorldPlayerPublication {
-                inner: Some(publication),
+            Ok(publication.map(|inner| NativeWorldPlayerPublication {
+                inner: Some(inner),
                 read,
-            })
+            }))
         })
     }
 }

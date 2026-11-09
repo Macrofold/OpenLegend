@@ -21,11 +21,12 @@ use crate::work::{InstalledWorkPolicy, WorkBook};
 use indexmap::IndexMap;
 use std::sync::Arc;
 mod read;
-pub(crate) use read::{AcceptedActorRead, ActorReadError};
+pub(crate) use read::{AcceptedActorRead, ActorReadError, InteractionMode};
 mod save;
 pub(crate) use save::{encode_candidate_changes, encode_root_changes};
 mod publication;
 pub(crate) use publication::{PreparedPublication, PublicationError};
+mod host_control;
 mod driver;
 pub(crate) mod session;
 pub(crate) use driver::{
@@ -119,6 +120,7 @@ impl InstalledWorld {
 /// All physical and arithmetic mutation targets, once. This owner does not
 /// derive Clone and does not expose a bridge-visible writable-world getter.
 pub(crate) struct PhysicalState {
+    pub participation: crate::participation::ParticipationState,
     pub coaching: crate::install::ClosedCoachingState,
     pub actor_only_families: crate::install::ActorOnlyPhysicalFamilies,
     pub header: WorldHeader,

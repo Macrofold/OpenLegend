@@ -28,10 +28,12 @@ mod save;
 mod selection;
 pub(crate) use save::encode_received_value_changes;
 pub(crate) use selection::{
-    CapturedTemporalReceipt, observation_receipt_member_indices, select_temporal_receipt_facets,
+    CapturedTemporalReceipt, capture_received_entry, observation_receipt_member_indices, select_temporal_receipt_facets,
     temporal_field_aliases, temporal_receipt_account_aliases, temporal_receipt_aliases,
 };
 mod recent_residency;
+mod recent;
+pub(crate) use recent::{CompletedRecentRetention, RecentRetentionCursor};
 mod retained_size;
 use recent_residency::RecentDirectoryBlock;
 pub use result::*;
@@ -343,6 +345,7 @@ pub struct ReceivedRecentDirectory {
     bytes: u64,
     count: u64,
     budget: crate::host::ByteBudget,
+    _roots: crate::host::ResidentReservation,
 }
 
 impl PartialEq for ReceivedRecentDirectory {
@@ -360,14 +363,21 @@ impl PartialEq for ReceivedRecentDirectory {
 }
 
 impl ReceivedRecentDirectory {
-    pub(crate) fn new(budget: &crate::host::ByteBudget) -> Self {
-        Self {
+    pub(crate) fn new(budget: &crate::host::ByteBudget) -> Result<Self, ReceivedError> {
+        let roots = crate::host::retained_size::tree_node_bound::<String, RecentDirectoryBlock>()
+            .and_then(|n| n.checked_add(crate::host::retained_size::tree_node_bound::<String, u64>()?))
+            .ok_or(ReceivedError("Recent directory root allocation overflow."))?;
+        Ok(Self {
             blocks: BTreeMap::new(),
             individuals: BTreeMap::new(),
             bytes: 0,
             count: 0,
             budget: budget.clone(),
-        }
+            // Empty B-trees may retain their allocated root after retirement.
+            // Live block guards fund their actual additional nodes/memberships.
+            _roots: budget.reserve_backing(roots)
+                .map_err(|_| ReceivedError("Recent directory roots exceed native allowance."))?,
+        })
     }
     pub fn install(
         directories: &[ReceivedChargeDirectory],
@@ -376,7 +386,7 @@ impl ReceivedRecentDirectory {
         budget: &crate::host::ByteBudget,
     ) -> Result<Self, ReceivedError> {
         let selected = eligible_received_charge_directories(directories, frontier)?;
-        let mut installed = Self::new(budget);
+        let mut installed = Self::new(budget)?;
         for directory in selected {
             installed.append(&directory)?;
         }
@@ -603,116 +613,7 @@ impl ReceivedRecentDirectory {
         Ok(())
     }
 
-    fn remove_oldest(&mut self) -> Result<Vec<String>, ReceivedError> {
-        let Some((_, directory)) = self.blocks.pop_first() else {
-            return Ok(Vec::new());
-        };
-        let mut released = Vec::new();
-        for header in directory.directory.entries {
-            self.bytes = self.bytes.checked_sub(header.bytes).ok_or(ReceivedError(
-                "Recent block bytes underflow current authority.",
-            ))?;
-            self.count = self.count.checked_sub(header.count).ok_or(ReceivedError(
-                "Recent block count underflow current authority.",
-            ))?;
-            for id in header.individual_ids {
-                let held = self
-                    .individuals
-                    .get(&id)
-                    .copied()
-                    .ok_or(ReceivedError("Recent individual membership underflow."))?;
-                if held == 1 {
-                    self.individuals.remove(&id);
-                } else {
-                    self.individuals.insert(id.clone(), held - 1);
-                }
-                released.push(id);
-            }
-        }
-        Ok(released)
-    }
 
-    pub fn advance(
-        &mut self,
-        now: f64,
-        policy: &TemporalRetentionPolicy,
-        maintenance_due: &mut bool,
-        frontier: &mut Option<ReceivedFrontier>,
-        next_due: &mut Option<f64>,
-    ) -> Result<RecentRelease, ReceivedError> {
-        let cutoff = now - policy.max_age_seconds;
-        let first = self
-            .blocks
-            .first_key_value()
-            .and_then(|(_, block)| block.entries.first());
-        if !*maintenance_due
-            && self.bytes <= policy.max_bytes
-            && self.count <= policy.max_changes
-            && first.is_none_or(|header| header.at > cutoff)
-        {
-            return Ok(RecentRelease {
-                bytes: 0,
-                count: 0,
-                next_due: *next_due,
-                released_individual_ids: Vec::new(),
-            });
-        }
-        let previous = (self.bytes, self.count);
-        let frontier = frontier.get_or_insert(ReceivedFrontier {
-            expired_through_time: None,
-            pressure_through: None,
-        });
-        let mut released_individual_ids = Vec::new();
-        let mut seen = BTreeSet::new();
-        while let Some(header) = self
-            .blocks
-            .first_key_value()
-            .and_then(|(_, block)| block.entries.first())
-        {
-            if header.at > cutoff
-                && self.bytes <= policy.max_bytes
-                && self.count <= policy.max_changes
-            {
-                break;
-            }
-            let end = header.last_position();
-            if frontier
-                .pressure_through
-                .as_ref()
-                .is_none_or(|pressure| end > pressure.address)
-            {
-                frontier.pressure_through = Some(ReceivedPressureFrontier {
-                    address: end,
-                    received_at: header.through_at,
-                    order: header.order,
-                });
-            }
-            for id in self.remove_oldest()? {
-                if seen.insert(id.clone()) {
-                    released_individual_ids.push(id);
-                }
-            }
-        }
-        if cutoff >= 0.0 {
-            frontier.expired_through_time = Some(
-                frontier
-                    .expired_through_time
-                    .map_or(cutoff, |prior| prior.max(cutoff)),
-            );
-        }
-        *next_due = self
-            .blocks
-            .first_key_value()
-            .and_then(|(_, block)| block.entries.first())
-            .map(|header| header.at + policy.max_age_seconds);
-        *maintenance_due = false;
-        Ok(RecentRelease {
-            bytes: previous.0 - self.bytes,
-            count: previous.1 - self.count,
-            next_due: *next_due,
-            released_individual_ids,
-        })
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -723,14 +624,6 @@ pub struct TemporalRetentionPolicy {
     pub max_bytes: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub max_changes: u64,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct RecentRelease {
-    pub bytes: u64,
-    pub count: u64,
-    pub next_due: Option<f64>,
-    pub released_individual_ids: Vec<String>,
 }
 
 /// Physical packs may contain the same logical block metadata. Keep one exact

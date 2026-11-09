@@ -132,6 +132,7 @@ pub(crate) fn encode_root_changes(
         "appraisals",
         "appraisalProcesses",
         "responseReceipts",
+        "exitExposures",
     ];
     let extra = map_storage::<String, SqlCell>(
         body.len()
@@ -180,6 +181,7 @@ pub(crate) fn encode_root_changes(
         "coachingEpisodes",
         state.physical.coaching.is_present(),
     );
+    marker(&mut body, "exitExposures", state.physical.participation.is_present());
     marker(
         &mut body,
         "workState",

@@ -256,7 +256,13 @@ export function experienceEntityReferences(
 /** Captured historical attribution survives loss of current bodily contact.
  * Changing an acquired identity still invalidates its prepared presentation;
  * physical proposals separately recheck their captured body lease at execution. */
-type AttributionIdentity = readonly [string | null, string | null, string, string | null, boolean];
+export type AttributionIdentity = readonly [
+  string | null,
+  string | null,
+  string,
+  string | null,
+  boolean,
+];
 function attributionRevision(
   worldId: string,
   observerId: string,
@@ -290,7 +296,7 @@ export function personalAttributionRevision(
     [...ids].map((id) => [id, attributionIdentities(world, observerId, id)]),
   );
 }
-function capturedAttributionReader(
+export function capturedAttributionReader(
   worldId: string,
   observerId: string,
   identities: ReadonlyMap<string, readonly AttributionIdentity[]>,
@@ -337,11 +343,23 @@ export function historicalAccountText(text: string): string {
 /** A saved canonical annotation requires an acquired person association. Merely
  * individuating today's unfamiliar body cannot identify an earlier unknown one. */
 export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
-  return text.replace(/\(ID:([^()\s]+)\)/g, (_original, id: string) =>
+  return projectEntityMarkersFromRead(text, (id) =>
     canAddressRememberedSubject(world, observerId, id)
-      ? `(ID:${entityHandle(world, observerId, id)})`
-      : '(unrecognized identity)',
+      ? entityHandle(world, observerId, id)
+      : undefined,
   );
+}
+
+/** The read owner supplies acquired identity associations. Text annotations
+ * cannot discover a person or convert an unknown identity into permission. */
+export function projectEntityMarkersFromRead(
+  text: string,
+  reference: (id: string) => string | undefined,
+): string {
+  return text.replace(/\(ID:([^()\s]+)\)/g, (_original, id: string) => {
+    const handle = reference(id);
+    return handle === undefined ? '(unrecognized identity)' : `(ID:${handle})`;
+  });
 }
 
 /** Only associations acquired when this request was prepared may become lasting

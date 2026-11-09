@@ -91,7 +91,7 @@ pub(crate) use base_cognition::OccurrenceRules as InstalledOccurrenceRules;
 
 pub use base_knowledge::PersonalNameRules as InstalledPersonalNameRules;
 pub(crate) use base_knowledge::{
-    CapturedNames, OwnedPersonalName, PersonalName as InstalledPersonalName,
+    CapturedAttributionIdentities, CapturedNames, OwnedPersonalName, PersonalName as InstalledPersonalName,
     PersonalNameReader as InstalledPersonalNameReader,
 };
 pub(crate) use base_knowledge::{CommunicationSubject, RememberedCommunications};

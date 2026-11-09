@@ -14,6 +14,8 @@ use openlegend_simulation::runtime::{
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 mod npc;
+mod maintenance;
+mod control;
 mod player;
 mod privacy;
 mod read_cut;

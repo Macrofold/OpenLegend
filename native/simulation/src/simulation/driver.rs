@@ -38,6 +38,8 @@ pub(crate) enum ProviderKind {
     Normalization,
     Digest,
     History,
+    Control,
+    Sources,
 }
 #[derive(Debug)]
 pub(crate) enum DriveError {
@@ -231,7 +233,11 @@ impl DecodeShape {
             ProviderKind::Utterance => size_of::<SpeechWord>(),
             ProviderKind::Words => size_of::<Vec<JsText>>().max(size_of::<JsText>()),
             ProviderKind::Collation => size_of::<u32>(),
-            ProviderKind::Canonical | ProviderKind::Digest | ProviderKind::History => 0,
+            ProviderKind::Canonical
+            | ProviderKind::Digest
+            | ProviderKind::History
+            | ProviderKind::Control
+            | ProviderKind::Sources => 0,
             ProviderKind::Normalization => size_of::<JsText>(),
         };
         let arrays = self
@@ -296,6 +302,8 @@ enum Answer {
     Normalization(crate::language::AttemptNormalizationAnswer),
     Digest(crate::response::ResponseDigestAnswer),
     History(crate::experience::HistoryEditAnswer),
+    Control(super::host_control::ControlAnswer),
+    Sources(crate::capture::NpcSourcesAnswer),
 }
 impl Answer {
     fn decode(input: &ProviderResponse, budget: &ByteBudget) -> Result<Self, DriveError> {
@@ -324,6 +332,13 @@ impl Answer {
                 Self::Canonical(serde_json::from_str(&input.json).map_err(parse)?)
             }
             ProviderKind::Digest => Self::Digest(serde_json::from_str(&input.json).map_err(parse)?),
+            ProviderKind::Control => {
+                Self::Control(serde_json::from_str(&input.json).map_err(parse)?)
+            }
+            ProviderKind::Sources => Self::Sources(crate::capture::NpcSourcesAnswer::decode(
+                &input.json,
+                budget,
+            )?),
             ProviderKind::History => Self::History(crate::experience::HistoryEditAnswer::decode(
                 &input.json,
                 budget,
@@ -345,6 +360,8 @@ impl Answer {
             Self::Normalization(v) => v.binding,
             Self::Digest(v) => v.binding,
             Self::History(v) => v.provider_binding(geometry_revision),
+            Self::Control(v) => v.binding,
+            Self::Sources(v) => v.binding(),
         }
     }
     fn kind(&self) -> ProviderKind {
@@ -358,6 +375,8 @@ impl Answer {
             Self::Normalization(_) => ProviderKind::Normalization,
             Self::Digest(_) => ProviderKind::Digest,
             Self::History(_) => ProviderKind::History,
+            Self::Control(_) => ProviderKind::Control,
+            Self::Sources(_) => ProviderKind::Sources,
         }
     }
 }
@@ -454,6 +473,8 @@ pub(crate) enum CompletedOperation {
     Command(CompletedCommandOperation),
     Response(crate::response::CompletedResponse),
     Forget(crate::experience::CompletedForgetExperience),
+    RecentRetention(crate::received::CompletedRecentRetention),
+    HostControl(super::host_control::CompletedHostControl),
 }
 impl CompletedOperation {
     pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
@@ -462,6 +483,8 @@ impl CompletedOperation {
             Self::Command(c) => c.command.outcome(),
             Self::Response(r) => &r.outcome,
             Self::Forget(f) => f.outcome(),
+            Self::RecentRetention(r) => &r.outcome,
+            Self::HostControl(r) => &r.outcome,
         }
     }
     pub(crate) fn events(&self) -> impl Iterator<Item = &crate::events::WorldEvent> + Clone {
@@ -469,7 +492,7 @@ impl CompletedOperation {
             Self::Advance(a) => (Some(a), None, None),
             Self::Command(c) => (None, Some(c), None),
             Self::Response(r) => (None, None, Some(r)),
-            Self::Forget(_) => (None, None, None),
+            Self::Forget(_) | Self::RecentRetention(_) | Self::HostControl(_) => (None, None, None),
         };
         advance
             .into_iter()
@@ -480,7 +503,11 @@ impl CompletedOperation {
     pub(crate) fn take_continuation(&mut self) -> Option<crate::time::AdvanceContinuation> {
         match self {
             Self::Advance(a) => a.continuation.take(),
-            Self::Command(_) | Self::Response(_) | Self::Forget(_) => None,
+            Self::Command(_)
+            | Self::Response(_)
+            | Self::Forget(_)
+            | Self::RecentRetention(_)
+            | Self::HostControl(_) => None,
         }
     }
 }
@@ -491,6 +518,8 @@ enum OperationReply {
     Response(ResponseReply),
     Forget(ForgetReply),
     NpcCandidates(NpcCandidateReply),
+    HostControl,
+    NpcSources,
 }
 enum OperationCursor {
     Advance(AdvanceCursor),
@@ -498,6 +527,9 @@ enum OperationCursor {
     Response(crate::response::ResponseCursor),
     Forget(crate::experience::ForgetExperienceCursor),
     NpcCandidates(crate::capture::NpcCandidateCursor),
+    RecentRetention(crate::received::RecentRetentionCursor),
+    HostControl(super::host_control::HostControlCursor),
+    NpcSources(crate::capture::NpcSourcesCursor),
 }
 impl<T, R> Poll<T, R> {
     fn map<V, S>(self, completed: fn(T) -> V, route: fn(R) -> S) -> Poll<V, S> {
@@ -516,6 +548,7 @@ impl OperationCursor {
             Self::Response(r) => r.abort(core),
             Self::Forget(f) => f.abort(core),
             Self::NpcCandidates(cursor) => cursor.abort(core),
+            Self::RecentRetention(_) | Self::HostControl(_) | Self::NpcSources(_) => Ok(()),
         }
     }
     fn poll(
@@ -583,18 +616,76 @@ impl OperationCursor {
                     ),
                 )
             }
+            Self::NpcSources(cursor) => match route {
+                None => {
+                    let request = cursor.request();
+                    question(
+                        answer,
+                        ProviderKind::Sources,
+                        request.binding,
+                        request,
+                        budget,
+                        OperationReply::NpcSources,
+                    )
+                }
+                Some(OperationReply::NpcSources) => {
+                    let Answer::Sources(reply) = direct(answer, ProviderKind::Sources)? else {
+                        return Err(DriveError::StaleResponse);
+                    };
+                    Ok(Poll::Complete(DriverCompletion::NpcSources(
+                        cursor.complete(core, reply, budget)?,
+                    )))
+                }
+                _ => Err(DriveError::StaleResponse),
+            },
+            Self::HostControl(cursor) => match route {
+                None => {
+                    let kind = cursor.kind();
+                    let request = cursor.format(core)?;
+                    question(
+                        answer,
+                        kind,
+                        request.binding,
+                        request,
+                        budget,
+                        OperationReply::HostControl,
+                    )
+                }
+                Some(OperationReply::HostControl) => {
+                    let Answer::Control(reply) = direct(answer, ProviderKind::Control)? else {
+                        return Err(DriveError::StaleResponse);
+                    };
+                    Ok(Poll::Complete(DriverCompletion::Operation(
+                        CompletedOperation::HostControl(cursor.complete(reply, budget)?),
+                    )))
+                }
+                _ => Err(DriveError::StaleResponse),
+            },
+            Self::RecentRetention(cursor) => {
+                if route.is_some() || answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                Ok(match cursor.step(core, budget)? {
+                    Some(done) => Poll::Complete(DriverCompletion::Operation(
+                        CompletedOperation::RecentRetention(done),
+                    )),
+                    None => Poll::Continue,
+                })
+            }
         }
     }
 }
 enum DriverCompletion {
     Operation(CompletedOperation),
     NpcCandidates(crate::capture::PreparedNpcCandidates),
+    NpcSources(crate::capture::PreparedNpcSources),
 }
 pub(crate) enum DriveStep {
     Continue,
     Question(Arc<ProviderQuestion>),
     Complete(CompletedOperation),
     NpcCandidates(crate::capture::PreparedNpcCandidates),
+    NpcSources(crate::capture::PreparedNpcSources),
 }
 pub(crate) struct OperationDriver {
     cursor: OperationCursor,
@@ -606,6 +697,20 @@ pub(crate) struct OperationDriver {
     _reservation: ByteReservation,
 }
 impl OperationDriver {
+    pub(crate) fn host_control(
+        core: &mut CoreMutation<'_>,
+        cursor: super::host_control::HostControlCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::HostControl(cursor), budget)
+    }
+    pub(crate) fn recent_retention(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::received::RecentRetentionCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::RecentRetention(cursor), budget)
+    }
     pub(crate) fn advance(
         core: &mut CoreMutation<'_>,
         cursor: AdvanceCursor,
@@ -636,6 +741,16 @@ impl OperationDriver {
     }
     pub(crate) fn is_npc_candidates(&self) -> bool {
         matches!(self.cursor, OperationCursor::NpcCandidates(_))
+    }
+    pub(crate) fn npc_sources(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::capture::NpcSourcesCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::NpcSources(cursor), budget)
+    }
+    pub(crate) fn is_npc_sources(&self) -> bool {
+        matches!(self.cursor, OperationCursor::NpcSources(_))
     }
     pub(crate) fn forget(
         core: &mut CoreMutation<'_>,
@@ -713,7 +828,7 @@ impl OperationDriver {
                 if !v._reservation.shares_owner(&self._reservation) {
                     return Err(DriveError::StaleResponse);
                 }
-                if v.kind == ProviderKind::History {
+                if matches!(v.kind, ProviderKind::History | ProviderKind::Sources) {
                     return Ok(None);
                 }
                 let bytes = DecodeShape::read(&v.json)?.bound(v.kind, v.json.len())?;
@@ -749,6 +864,7 @@ impl OperationDriver {
                 Ok(match done {
                     DriverCompletion::Operation(done) => DriveStep::Complete(done),
                     DriverCompletion::NpcCandidates(done) => DriveStep::NpcCandidates(done),
+                    DriverCompletion::NpcSources(done) => DriveStep::NpcSources(done),
                 })
             }
             Err(DriveError::Semantic(error)) => {

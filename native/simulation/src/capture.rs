@@ -18,6 +18,13 @@ pub(crate) use definitions::write_installed_definitions;
 mod metadata;
 mod navigation;
 mod npc_current;
+mod npc_subject;
+mod npc_references;
+pub(crate) use npc_references::NpcReferenceFacts;
+mod npc_history;
+pub(crate) use npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
+mod npc_sources;
+pub(crate) use npc_sources::{NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer, NpcSourcesCursor, PreparedNpcSources};
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;
 mod npc_candidates;
@@ -68,7 +75,6 @@ pub(crate) struct CapturedBodyBinding {
     pub lease_id: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject: Option<ObserverSubject>,
-    #[serde(serialize_with = "serialize_name")]
     pub name: OwnedPersonalName,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub identity: Option<PreferredName>,
@@ -80,12 +86,6 @@ pub(crate) struct CapturedBodyBinding {
     _player_reservation: Option<ByteReservation>,
     pub first: usize,
     pub count: usize,
-}
-fn serialize_name<S: Serializer>(
-    name: &OwnedPersonalName,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    name.name().serialize(serializer)
 }
 pub(crate) struct CapturedActorPerception {
     pub world_id: String,
@@ -507,6 +507,16 @@ enum OwnReferenceAttribution<'a> {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+struct OwnNpcObservation<'a> {
+    contacts: &'a Option<indexmap::IndexMap<String, crate::reception::ContactEpisode>>,
+    expressions: bool,
+    inventory_count: usize,
+    known_recipes_count: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    corrections: Option<&'a indexmap::IndexMap<String, String>>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct OwnActorProduct<'a> {
     world_id: &'a str,
     actor_id: &'a str,
@@ -542,6 +552,8 @@ struct OwnActorProduct<'a> {
     knowledge: Option<&'a indexmap::IndexMap<String, crate::knowledge::KnowledgeEntry>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     inner_world: Option<&'a crate::cognition::InnerWorld>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    npc: Option<OwnNpcObservation<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     player: Option<OwnPlayerView<'a>>,
 }
@@ -763,6 +775,16 @@ pub(crate) fn write_actor_self(
                     .and_then(|worlds| worlds.get(actor_id))
             })
             .flatten(),
+        npc: private.then(|| OwnNpcObservation {
+            contacts: &actor.contacts,
+            expressions: actor.body.as_ref().is_some_and(|body| {
+                state.installed.occurrence_rules.value().response.offers.manual_work_body_plans
+                    .iter().any(|plan| *plan == body.plan)
+            }),
+            inventory_count: inventory.held_stock.len(),
+            known_recipes_count: state.learned_capabilities.known_recipes().len(),
+            corrections: state.experience.actor(actor_id).map(|actor| actor.privacy.corrections()),
+        }),
         player: if private {
             None
         } else {

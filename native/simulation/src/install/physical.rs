@@ -540,8 +540,12 @@ pub(crate) fn install_physical(
     let coaching = super::ClosedCoachingState::install(import, &mut children)?;
     let bodies = crate::movement::BodyIndex::install(&entities, budget)
         .map_err(|_| InstallError::Capacity)?;
+    let participation = crate::participation::ParticipationState::install(
+        import, &mut children, &entities, budget,
+    )?;
     Ok(PhysicalInstallation {
         state: PhysicalState {
+            participation,
             actor_only_families: ActorOnlyPhysicalFamilies { _private: () },
             coaching,
             header,

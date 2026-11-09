@@ -90,6 +90,7 @@ fn selected_members(
     let policy = &core.state.installed.attention.value().retention;
     let Some(retained) = core.state.temporal.retained_receipt(
         receipt,
+        None,
         &core.state.reception.received_values.as_ref(),
         &crate::worlds::InstalledEvidenceMeaning,
         core.state.physical.header.sim_time,

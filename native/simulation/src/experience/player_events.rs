@@ -85,6 +85,7 @@ struct AwarenessEvidence<'a> {
 }
 struct Account<'a> {
     original: &'a crate::events::WorldEvent,
+    authored_by_self: bool,
     evidence: Evidence<'a>,
     roles: Option<RoleFacts>,
 }
@@ -158,8 +159,11 @@ impl Serialize for Values<'_, '_> {
 }
 impl Serialize for Account<'_> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        let mut value = s.serialize_struct("PermittedPlayerEvent", 3)?;
+        let mut value = s.serialize_struct("PermittedPlayerEvent", 4)?;
         value.serialize_field("original", &Original(self.original))?;
+        // Authorship survives physical-life changes; current self-contact is
+        // evidence eligibility, not the job owner's historical identity.
+        value.serialize_field("authoredBySelf", &self.authored_by_self)?;
         match &self.evidence {
             Evidence::Awareness(source) => value.serialize_field("evidence", source)?,
             evidence => value.serialize_field("values", &Values(evidence))?,
@@ -275,6 +279,7 @@ fn select_temporal_page<'a>(
                 id,
                 Account {
                     original: hot[id],
+                    authored_by_self: hot[id].actor_id.as_deref() == Some(actor),
                     evidence,
                     roles: None,
                 },
@@ -333,6 +338,7 @@ fn select_player_accounts<'a>(
                         id,
                         Account {
                             original,
+                            authored_by_self: original.actor_id.as_deref() == Some(actor_id),
                             evidence: Evidence::Awareness(awareness_evidence(source)?),
                             roles: None,
                         },
@@ -433,6 +439,7 @@ fn select_player_accounts<'a>(
                 original.id.as_str(),
                 Account {
                     original,
+                    authored_by_self: original.actor_id.as_deref() == Some(actor_id),
                     evidence: Evidence::Current {
                         original: observation,
                         members,

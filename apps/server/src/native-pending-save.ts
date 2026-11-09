@@ -5,10 +5,7 @@ import type { GameplayReceipt } from './command-receipts.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { NativePublication } from './native-operation.js';
 import type { SqlGameRepository } from './store.js';
-import {
-  mergeHistoryProjection,
-  type HistoryProjection,
-} from './history-preparation.js';
+import { mergeHistoryProjection, type HistoryProjection } from './history-preparation.js';
 import { nativeAppendHistoryProjection } from './native-history.js';
 import { nativeRecordChanges, nativeSaveCut } from './native-records.js';
 import { retainNativeSources } from './native-consumer.js';
@@ -31,16 +28,21 @@ export interface NativePendingPublication {
 }
 interface Entry {
   readonly value: NativePendingPublication;
+  acceptedAt: number;
   next?: Entry;
 }
 /** An application-owned projection of an actual native immutable SQL prefix.
  * The opaque save and its decoded rows stay retained through retry and ACK.
  * They never absorb a newer publication or become a second row merge owner. */
 export interface NativePendingPrefix {
-  readonly save: NativeWorldSave;
+  /** A protected candidate already owns the exact private native prefix. It
+   * has no public Save handle until its SQL result determines settlement. */
+  readonly save?: NativeWorldSave;
   readonly cut: Cut;
   readonly inputs: CommitInputs;
   readonly receipts: readonly GameplayReceipt[];
+  readonly getSources: NativePendingPublication['getSources'];
+  readonly progress: NativePublication['progress'];
 }
 
 /** Only operational accepted products live here. The native save journal owns
@@ -74,6 +76,12 @@ export class NativePendingSave {
   get dirty(): boolean {
     return this.accepted !== this.durable;
   }
+  get oldestAcceptedAt(): number | undefined {
+    return this.head?.acceptedAt;
+  }
+  durableMark(): { revision: number; through: number } {
+    return { revision: this.revision, through: this.durable };
+  }
   get inFlight(): NativePendingPrefix | undefined {
     return this.prefix;
   }
@@ -85,6 +93,7 @@ export class NativePendingSave {
     versions: SourceVersionPlan,
     receipts: readonly GameplayReceipt[] = [],
     outcomes: CommitInputs['outcomes'] = [],
+    projectedHistory?: HistoryProjection,
   ): { readonly value: NativePendingPublication; accept(): void } {
     const { progress } = publication;
     if (
@@ -95,8 +104,9 @@ export class NativePendingSave {
     )
       throw new Error('Native publication no longer follows its operational pending owner.');
     const changes = retainNativeSources(nativeRecordChanges(publication.records), publication);
+    retainNativeSources(publication.progress, publication);
     const history = retainNativeSources(
-      nativeAppendHistoryProjection(publication.history),
+      projectedHistory ?? nativeAppendHistoryProjection(publication.history),
       publication,
     );
     const value = retainNativeSources(
@@ -111,7 +121,7 @@ export class NativePendingSave {
       },
       publication,
     );
-    const entry: Entry = { value };
+    const entry: Entry = { value, acceptedAt: 0 };
     const before = this.tail;
     let used = false;
     return {
@@ -120,10 +130,45 @@ export class NativePendingSave {
         if (used || this.tail !== before || this.accepted !== progress.baseCut)
           throw new Error('Native pending publication was reused or displaced before settlement.');
         used = true;
+        entry.acceptedAt = performance.now();
         if (before) before.next = entry;
         else this.head = entry;
         this.tail = entry;
         this.accepted = progress.throughCut;
+      },
+    };
+  }
+
+  /** A protected candidate follows a completed ordinary save barrier. Pack
+   * and SQL projection are already owned by that exact private native cut;
+   * accepting only installs the prepared node and the same prefix pointer. */
+  prepareProtected(
+    publication: NativePublication,
+    versions: SourceVersionPlan,
+    history: HistoryProjection,
+    privacy: ExperiencePrivacy,
+    outcomes: CommitInputs['outcomes'] = [],
+  ) {
+    if (this.head || this.prefix || this.accepted !== this.durable)
+      throw new Error('Protected native publication requires the completed save barrier.');
+    if (!publication.protectedSave)
+      throw new Error('Protected native publication has no held complete SQL prefix.');
+    const prepared = this.prepare(publication, versions, [], outcomes, history);
+    const prefix = this.projectPrefix(
+      undefined,
+      retainNativeSources(publication.protectedSave, publication),
+      [prepared.value],
+      privacy,
+      publication.progress.throughCut,
+    );
+    return {
+      value: prepared.value,
+      prefix,
+      accept: () => {
+        if (this.prefix)
+          throw new Error('Protected native save prefix was displaced before acceptance.');
+        prepared.accept();
+        this.prefix = prefix;
       },
     };
   }
@@ -136,14 +181,7 @@ export class NativePendingSave {
         through: cut.throughCut,
         changes: cut.changes,
         history: inputs.history,
-        getSources: (actor) =>
-          this.store.memories.prepareSources(
-            cut.worldId,
-            cut.changes,
-            inputs.sources.allowance,
-            inputs.sources.versions,
-            actor,
-          ),
+        getSources: this.prefix.getSources,
         versions: inputs.sources.versions,
       });
     }
@@ -172,8 +210,28 @@ export class NativePendingSave {
     };
   }
 
-  capture(save: NativeWorldSave, rows: NativeSaveRows, privacy: ExperiencePrivacy): NativePendingPrefix {
+  capture(
+    save: NativeWorldSave,
+    rows: NativeSaveRows,
+    privacy: ExperiencePrivacy,
+  ): NativePendingPrefix {
     if (this.prefix) return this.prefix;
+    const pending = function* (first: Entry | undefined) {
+      for (let entry = first; entry; entry = entry.next) yield entry.value;
+    };
+    const prefix = this.projectPrefix(save, rows, pending(this.head), privacy, this.accepted);
+    // Only the complete projection replaces this pointer. Refused capture
+    // leaves every earlier accepted publication and its exact suffix intact.
+    return (this.prefix = prefix);
+  }
+
+  private projectPrefix(
+    save: NativeWorldSave | undefined,
+    rows: NativeSaveRows,
+    pending: Iterable<NativePendingPublication>,
+    privacy: ExperiencePrivacy,
+    through: number,
+  ): NativePendingPrefix {
     if (this.store.records.needsHotPrune)
       throw new Error('Native save requires its installed hot-history projection.');
     const cut = retainNativeSources(nativeSaveCut(rows), rows);
@@ -182,7 +240,7 @@ export class NativePendingSave {
       cut.generation !== this.binding.generation ||
       cut.baseRevision !== this.revision ||
       cut.throughCut <= this.durable ||
-      cut.throughCut !== this.accepted
+      cut.throughCut !== through
     )
       throw new Error('Native save prefix does not cover the exact accepted operational suffix.');
     let history: HistoryProjection | undefined;
@@ -191,12 +249,16 @@ export class NativePendingSave {
     const outcomes = new Map<string, CommitInputs['outcomes'][number]>();
     const invalidations: Record<string, readonly string[]> = {};
     let privacyChanged = false;
-    for (let entry = this.head; entry; entry = entry.next) {
-      const value = entry.value;
+    let progress: NativePublication['progress'] | undefined;
+    const historyOwners: [object, ...object[]] = [rows];
+    for (const value of pending) {
       if (value.publication.progress.throughCut > cut.throughCut) break;
+      progress = value.publication.progress;
       history = history ? mergeHistoryProjection(history, value.history) : value.history;
+      historyOwners.push(value.history);
       for (const change of value.versions.changes) {
-        const key = sourceVersionKey(change), before = versions.get(key);
+        const key = sourceVersionKey(change),
+          before = versions.get(key);
         versions.set(key, before ? mergeSourceVersionChanges(before, change) : change);
       }
       for (const receipt of value.receipts) receipts.set(receipt.id, receipt);
@@ -205,7 +267,9 @@ export class NativePendingSave {
         invalidations[actor] = [...new Set([...(invalidations[actor] ?? []), ...ids])];
       privacyChanged ||= value.publication.privacyChange !== undefined;
     }
-    if (!history) throw new Error('Native save prefix is missing its accepted history projection.');
+    if (!history || !progress)
+      throw new Error('Native save prefix is missing its accepted history projection.');
+    retainNativeSources(history, ...historyOwners);
     const plan = { changes: [...versions.values()] };
     const sources = this.store.memories.prepareSources(
       cut.worldId,
@@ -229,7 +293,17 @@ export class NativePendingSave {
     };
     // The complete prefix is constructed before replacing this operational
     // pointer. A refused capture keeps the same accepted queue available.
-    return (this.prefix = retainNativeSources({ save, cut, inputs, receipts: [...receipts.values()] }, rows));
+    return retainNativeSources(
+      {
+        save,
+        cut,
+        inputs,
+        progress,
+        receipts: [...receipts.values()],
+        getSources: this.store.memories.captureSources(cut.worldId, cut.changes, plan),
+      },
+      rows,
+    );
   }
 
   acknowledge(prefix: NativePendingPrefix, revision: number): void {

@@ -17,7 +17,7 @@ import { entityLabel, historicalAccountText } from './entity-references.js';
 import type { AttentionCandidate } from './recall.js';
 import { createHash } from 'node:crypto';
 
-const noteReference = (actorId: string, subjectId: ObserverSubject): string =>
+export const noteReference = (actorId: string, subjectId: ObserverSubject): string =>
   `note-${createHash('sha256')
     .update(JSON.stringify([actorId, subjectKey(subjectId)]))
     .digest('hex')
@@ -129,22 +129,50 @@ export function subjectKnowledgeCandidates(
         ? entityLabel(world, entity, actorId)
         : subjectLabel(world, actorId, doc.subjectId);
     return [
-      {
-        id: `notepad:${id}`,
-        kind: 'knowledge' as const,
-        text: `Notepad ${noteReference(actorId, doc.subjectId)} about ${label}${bound ? '' : '; no current identity binding'}; revision ${doc.revision}; ${doc.origin === 'authored-starting' ? 'authored starting understanding' : 'actor-edited understanding'}. ${characterCount(doc.text)}/${world.knowledgePolicy!.maxCharacters.subject} characters.\n${historicalAccountText(doc.text)}`,
-        embeddingText: `Notes about ${name || 'a subject'}: ${doc.text}`,
-        // A new preferred name changes semantic search text; exposure tokens do not.
-        revision: JSON.stringify([doc.revision, name ?? '']),
+      formatSubjectKnowledgeCandidate({
+        id,
+        actorId,
+        doc,
+        subject: doc.subjectId,
+        label,
+        bound,
+        name,
         required:
           doc.subjectId.kind === 'entity'
             ? bound && involved.has(doc.subjectId.entityId)
             : involvedSubjects.has(subjectKey(doc.subjectId)),
-        automatic: false,
-        entityIds: bound && doc.subjectId.kind === 'entity' ? [doc.subjectId.entityId] : [],
+        maxCharacters: world.knowledgePolicy!.maxCharacters.subject,
         at: world.simTime,
-        salience: 3,
-      },
+      }),
     ];
   });
+}
+
+/** Native and Source readers separately prove subject binding and select the
+ * actual document. The ordinary wording and reference format are shared. */
+export function formatSubjectKnowledgeCandidate(read: {
+  readonly id: string;
+  readonly actorId: string;
+  readonly doc: NonNullable<ReturnType<typeof knowledgeDocument>>;
+  readonly subject: ObserverSubject;
+  readonly label: string;
+  readonly bound: boolean;
+  readonly name: string | undefined;
+  readonly required: boolean;
+  readonly maxCharacters: number;
+  readonly at: number;
+}): AttentionCandidate {
+  const { id, actorId, doc, subject, label, bound, name } = read;
+  return {
+    id: `notepad:${id}`,
+    kind: 'knowledge',
+    text: `Notepad ${noteReference(actorId, subject)} about ${label}${bound ? '' : '; no current identity binding'}; revision ${doc.revision}; ${doc.origin === 'authored-starting' ? 'authored starting understanding' : 'actor-edited understanding'}. ${characterCount(doc.text)}/${read.maxCharacters} characters.\n${historicalAccountText(doc.text)}`,
+    embeddingText: `Notes about ${name || 'a subject'}: ${doc.text}`,
+    revision: JSON.stringify([doc.revision, name ?? '']),
+    required: read.required,
+    automatic: false,
+    entityIds: bound && subject.kind === 'entity' ? [subject.entityId] : [],
+    at: read.at,
+    salience: 3,
+  };
 }

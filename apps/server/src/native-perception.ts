@@ -126,9 +126,19 @@ export function nativeBodyContext(self: NativeActorSelf): string {
 
 /** Feed real captured values to the existing NPC surroundings formatters.
  * Bindings are kept separately for current-source validation after the await. */
-export function nativePerceivedEntities(self: NativeActorSelf, perception: NativeActorPerception) {
+export function nativePerceivedEntities(
+  self: NativeActorSelf,
+  perception: NativeActorPerception,
+  bodyOrdinals?: readonly number[],
+) {
   const bindings = new Map<string, NativeBodyBinding>();
-  const entries = perception.bodies.map((binding) => {
+  const selected =
+    bodyOrdinals?.map((ordinal) => {
+      const body = perception.bodies[ordinal];
+      if (!body) throw new Error('The selected received body is unavailable.');
+      return body;
+    }) ?? perception.bodies;
+  const entries = selected.map((binding) => {
     const facets = perception.cut.current
       .slice(binding.first, binding.first + binding.count)
       .map(nativeCurrentValue);

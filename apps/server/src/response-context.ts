@@ -1,3 +1,9 @@
+import { formatResponseTrigger, formatResponseTriggerContext } from './response-trigger-format.js';
+import {
+  formatCurrentReference,
+  formatRememberedPersonReference,
+  formatRememberedIndividualReference,
+} from './response-reference-format.js';
 import { nativeText } from '@open-legend/domain';
 import { entityGet, entityHas } from '@open-legend/domain';
 import { accessiblePossession, worldPosition } from '@open-legend/domain';
@@ -47,14 +53,18 @@ export function responseTrigger(
   const aware = eventId
     ? (evidence ?? world.experience?.awareness[actorId])?.find((entry) => entry.eventId === eventId)
     : undefined;
-  if (!aware) return `Situation change: ${fallback}`;
-  const triggerKind = aware.triggerKind;
-  const time = `(${gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar?.dayLabel)})`;
-  if (aware.eventType === 'speech') {
-    if (!aware.speech) throw new Error('Speech is missing its committed listener perspective.');
-    return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware.speech, { observerId: actorId, targetId: aware.targetId })} ${time}`;
-  }
-  return `${triggerKind === 'directed_action' ? 'Action directed at me' : aware.modality === 'internal' ? 'Internal change' : 'World change'}: ${nativeText(aware.content ?? aware.text)} ${time}`;
+  return formatResponseTrigger(
+    aware,
+    actorId,
+    fallback,
+    aware
+      ? gameTime(
+          aware.at,
+          world.statusEffectPolicy.clockOffsetHours,
+          world.presentation?.calendar?.dayLabel,
+        )
+      : undefined,
+  );
 }
 
 /** Present event-time attribution alongside current perception, without filling unknown roles. */
@@ -87,9 +97,7 @@ export function responseTriggerContext(
     sourceBody.leaseId === aware.sourceBody!.leaseId &&
     aware.sourceBody!.physicalLife ===
       (entityGet(world.entities, aware.sourceBody!.entityId)?.actor?.physicalLife ?? 0);
-  const occurrenceLabel = (role: 'actor' | 'target') =>
-    aware.references?.find((reference) => reference.role === role)?.label;
-  return {
+  return formatResponseTriggerContext(aware, {
     experience: experienceForModel(
       { source: 'awareness', value: aware },
       experienceModelBindings(
@@ -105,35 +113,18 @@ export function responseTriggerContext(
       world.statusEffectPolicy.clockOffsetHours,
       world.presentation?.calendar?.dayLabel,
     ),
-    ageGameSeconds: Math.max(0, world.simTime - aware.at),
-    observerRelationship: aware.triggerKind ?? 'observed_event',
-    ...(aware.speech
-      ? {
-          speaker: aware.speech.speaker?.nameAtTime ?? 'Unknown speaker',
-          addressing: aware.speech.addressing,
-          intendedRecipient:
-            aware.speech.addressee?.nameAtTime ??
-            (aware.speech.addressing === 'ambient'
-              ? 'Ambient speech'
-              : 'Unknown; no recipient identity perceived'),
-          ...(aware.sourceSubject?.kind === 'individual'
-            ? { speakerSubject: subjectHandle(world, actorId, aware.sourceSubject) }
-            : {}),
-        }
+    now: world.simTime,
+    ...(aware.sourceSubject?.kind === 'individual'
+      ? { speakerSubject: subjectHandle(world, actorId, aware.sourceSubject) }
       : {}),
-    ...(source && !aware.speech
-      ? { source: occurrenceLabel('actor') ?? 'Unknown source', sourceIsMe: source.id === actorId }
-      : {}),
-    ...(!aware.speech && recipient
-      ? {
-          subject: occurrenceLabel('target') ?? 'Unidentified subject',
-          subjectCurrentlyVisible: !!currentBodyGrant(world, actorId, recipient.id),
-        }
+    ...(source ? { source: { myself: source.id === actorId } } : {}),
+    ...(recipient
+      ? { recipient: { currentBody: !!currentBodyGrant(world, actorId, recipient.id) } }
       : {}),
     sourceCurrentlyVisible: aware.speech
       ? sourceVisible
       : !!(source && currentBodyGrant(world, actorId, source.id)),
-  };
+  });
 }
 
 export function readableDecisionContext(
@@ -322,42 +313,37 @@ export function responseReferences(
         : received
           ? observerName(world, actorId, id).name
           : 'Unidentified source';
-    return JSON.stringify({
-      entityId: roleHandle(id),
-      label,
-      ...(id === actorId ? { relation: 'myself' } : {}),
-      currentBody: !!received,
-      ...(received
-        ? {
-            position: modelSpatialPoint(frame, received.value.body.position),
-            positionMeasuredFrom: received.valueMeasuredFrom,
-            positionMeasuredThrough: received.valueMeasuredThrough,
-            positionAcquiredAt: received.valueAcquiredAt,
-          }
-        : {}),
-      ...(currentSubject
-        ? {
-            noteRevision: knowledgeDocument(world, actorId, currentSubject)?.revision ?? 0,
-            noteCharacters: characterCount(
-              knowledgeDocument(world, actorId, currentSubject)?.text ?? '',
-            ),
-            nameRevision: observerIndividual(world, actorId, currentSubject)?.revision ?? 0,
-          }
-        : { knowledgeBinding: 'unresolved' }),
-      triggerRoles: roles.get(id) ?? [],
-    });
+    return formatCurrentReference(
+      {
+        handle: roleHandle(id),
+        label,
+        myself: id === actorId,
+        ...(received ? { received } : {}),
+        ...(currentSubject
+          ? {
+              knowledge: {
+                subject: currentSubject,
+                noteRevision: knowledgeDocument(world, actorId, currentSubject)?.revision ?? 0,
+                noteCharacters: characterCount(
+                  knowledgeDocument(world, actorId, currentSubject)?.text ?? '',
+                ),
+                nameRevision: observerIndividual(world, actorId, currentSubject)?.revision ?? 0,
+              },
+            }
+          : {}),
+        triggerRoles: roles.get(id) ?? [],
+      },
+      frame,
+    );
   });
   for (const id of remembered) {
     const subject: ObserverSubject = { kind: 'entity', entityId: id };
     const handle = rememberedHandle(id);
     identityReferences[handle] = subject;
     references.push(
-      JSON.stringify({
-        entityId: handle,
+      formatRememberedPersonReference({
+        handle,
         label: subjectLabel(world, actorId, subject),
-        role: 'remembered-person',
-        communication: true,
-        currentBody: false,
         nameRevision: identityForEntity(world, actorId, id)?.revision ?? 0,
         noteRevision: knowledgeDocument(world, actorId, subject)?.revision ?? 0,
       }),
@@ -406,11 +392,9 @@ export function responseReferences(
     if (identityReferences[handle]) continue;
     identityReferences[handle] = subject;
     references.push(
-      JSON.stringify({
-        subjectReference: handle,
+      formatRememberedIndividualReference({
+        handle,
         label: subjectLabel(world, actorId, subject),
-        role: 'remembered-individual',
-        currentBody: false,
         nameRevision: identity.revision,
         noteRevision: knowledgeDocument(world, actorId, subject)?.revision ?? 0,
       }),
