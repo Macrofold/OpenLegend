@@ -12,7 +12,7 @@ The selected direction is a resident simulation core with explicit state ownersh
 
 Design authorization covers these documents. Runtime implementation, dependency installation, paid experiments and deployment require the ordinary task authorization. Later-stage entry conditions below remain controlling even after implementation is requested.
 
-NSC01–NSC03 implementation is now authorized on the stealth-runtime source line. The [delivery tracker](../maintainers/native-simulation-core.md#current-progress) owns the frozen base, pending conversion inventory and current managed-worker prerequisite; no native gameplay or performance result is established.
+NSC01–NSC03 implementation is now authorized on the stealth-runtime source line. The [delivery tracker](../maintainers/native-simulation-core.md#current-progress) owns the frozen base, pending conversion inventory and current managed-worker prerequisite; complete gameplay-pipeline and AWS acceptance remain open.
 
 ## 2. Player value
 

@@ -1242,6 +1242,7 @@ export class SqlGameRepository implements GameRepository {
     worldId: string,
     revision: number,
     generation: string,
+    acceptedCut: number,
     providers: {
       liveReadCuts: LiveReadCutsProvider;
       retainedValues: (worldId: string) => Readonly<Record<string, unknown>>;
@@ -1252,13 +1253,17 @@ export class SqlGameRepository implements GameRepository {
       this.capturedOwner ||
       this.acceptedRevision !== revision ||
       this.acceptedState?.world.id !== worldId ||
-      !generation
+      !generation ||
+      !Number.isSafeInteger(acceptedCut) ||
+      acceptedCut < 0
     )
       throw new Error('Loaded world no longer matches the installed native authority.');
     this.setLiveReadCuts(providers.liveReadCuts);
     this.setRetainedValueLookup(providers.retainedValues);
     this.memories.setBackgroundSearchAdmission(providers.backgroundSearchAdmission);
-    this.capturedOwner = { worldId, generation, through: this.acceptedState.world.sequence };
+    // Native publication cuts and in-world occurrence sequences have separate
+    // owners. A cold world can already contain many events before native cut 0.
+    this.capturedOwner = { worldId, generation, through: acceptedCut };
     this.acceptedState = null;
   }
 

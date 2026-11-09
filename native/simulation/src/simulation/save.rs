@@ -6,6 +6,62 @@ use crate::host::ByteBudget;
 use crate::host::retained_size::map_storage;
 use crate::records::{RecordEncodingError, RowEncoder};
 use serde_json::{Map, Value};
+
+/// One complete gameplay delta for the existing SQL writer. Each semantic
+/// journal selects its own rows and columns; this composition does not diff a
+/// world or let a caller omit receiving, cognition or chronological recording.
+pub(crate) fn encode_candidate_changes(
+    state: &SimulationState,
+    journal: &crate::execution::CandidateJournal,
+    host: &InstalledHostSettings,
+    write_host: bool,
+    budget: &ByteBudget,
+) -> Result<crate::records::EncodedRows, RecordEncodingError> {
+    // Encoding is also useful inside a private rollback checkpoint. It grants
+    // no publication: Ready must separately require closed operations and fund
+    // the actual ledger/save/consumer products before accepting this delta.
+    let mut output = RowEncoder::new(&state.installed.schema, budget)?;
+    journal
+        .physical
+        .encode_changes(&state.physical, &state.records, &[], &mut output, budget)?;
+    journal
+        .activity
+        .encode_changes(&state.activity, &state.records, &mut output, budget)?;
+    journal
+        .commands
+        .encode_changes(&state.commands, &state.records, &mut output, budget)?;
+    journal.encode_reception_changes(state, &mut output, budget)?;
+    crate::experience::encode_personal_changes(
+        &state.experience,
+        &journal.experience,
+        &state.records,
+        &mut output,
+        budget,
+    )?;
+    crate::events::encode_occurrence_changes(&state.occurrences, &mut output, budget)?;
+    crate::appraisals::encode_appraisal_changes(
+        &state.appraisals,
+        &state.records,
+        &mut output,
+        budget,
+    )?;
+    crate::cognition::encode_cognition_changes(
+        &state.minds,
+        &journal.cognition,
+        &state.records,
+        &mut output,
+        budget,
+    )?;
+    crate::received::encode_temporal_changes(
+        &state.temporal,
+        &state.records,
+        &mut output,
+        budget,
+        state.physical.identity.next_id(),
+    )?;
+    encode_root_changes(state, host, write_host, &mut output, budget)?;
+    output.finish()
+}
 fn error() -> RecordEncodingError {
     RecordEncodingError("Native parent save has unavailable scalar fields or capacity.")
 }
