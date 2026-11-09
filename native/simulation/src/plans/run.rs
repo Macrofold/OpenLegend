@@ -175,6 +175,7 @@ impl PlanRunCursor {
                     command,
                     canonical,
                     CommandOptions {
+                        preview: false,
                         native_controller: false,
                         native_movement: None,
                     },

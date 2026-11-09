@@ -93,7 +93,7 @@ pub struct TemporalCaptureInput {
 pub struct PendingTemporalPage {
     id: String,
     flush_order: u64,
-    batch: Arc<ReceivedBatch>,
+    batch: Arc<crate::received::TemporalBatch>,
     metadata: TemporalPageMetadata,
     from_at: f64,
     through_at: f64,
@@ -111,7 +111,7 @@ impl PendingTemporalPage {
     pub(crate) fn flush_order(&self) -> u64 {
         self.flush_order
     }
-    pub fn batch(&self) -> &Arc<ReceivedBatch> {
+    pub fn batch(&self) -> &Arc<crate::received::TemporalBatch> {
         &self.batch
     }
     pub fn metadata(&self) -> &TemporalPageMetadata {
@@ -361,7 +361,7 @@ impl TemporalState {
             .map_err(|_| ReceivedError("Temporal page identity is exhausted."))?;
         let from_at = batch.entries.first().expect("Batch not empty").received_at;
         let through_at = batch.entries.last().expect("Batch not empty").received_at;
-        let batch = Arc::new(batch);
+        let batch = crate::received::TemporalBatch::from_builder(batch, backing)?;
         let metadata = temporal_page_metadata(
             &batch.actor_id,
             batch.physical_life,
@@ -387,12 +387,8 @@ impl TemporalState {
         // retained page, through private rollback and accepted residency alike.
         let allocation = heap_sum([
             std::mem::size_of::<PendingTemporalPage>(),
-            std::mem::size_of::<ReceivedBatch>(),
-            4 * std::mem::size_of::<usize>(),
+            2 * std::mem::size_of::<usize>(),
             issued.id.capacity(),
-            batch
-                .heap_bytes()
-                .ok_or(ReceivedError("Temporal block allocation overflow."))?,
             metadata
                 .heap_bytes()
                 .ok_or(ReceivedError("Temporal block allocation overflow."))?,
@@ -426,9 +422,30 @@ impl TemporalState {
         self.undo
             .try_reserve(2)
             .map_err(|_| ReceivedError("Temporal undo reservation failed."))?;
-        self.actors
-            .get_mut(&actor_id)
-            .expect("Actor checked")
+        let actor = self.actors.get_mut(&actor_id).expect("Actor checked");
+        if actor.pending_pages.len() == actor.pending_pages.capacity() {
+            let capacity = actor
+                .pending_pages
+                .capacity()
+                .checked_mul(2)
+                .and_then(|n| Some(n.max(4)))
+                .ok_or(ReceivedError(
+                    "Temporal pending placement allocation overflow.",
+                ))?;
+            actor
+                .pending_storage
+                .resize(
+                    capacity
+                        .checked_mul(std::mem::size_of::<Arc<PendingTemporalPage>>())
+                        .ok_or(ReceivedError(
+                            "Temporal pending placement allocation overflow.",
+                        ))?,
+                )
+                .map_err(|_| {
+                    ReceivedError("Temporal pending placement exceeds native allowance.")
+                })?;
+        }
+        actor
             .pending_pages
             .try_reserve(1)
             .map_err(|_| ReceivedError("Temporal page reservation failed."))?;

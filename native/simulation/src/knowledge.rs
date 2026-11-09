@@ -11,12 +11,20 @@ use std::mem::size_of;
 
 mod state;
 pub(crate) use state::{KnowledgeCheckpoint, KnowledgeJournal, KnowledgeState};
+mod edit;
 mod save;
+pub(crate) use edit::{CompletedKnowledgeEdit, KnowledgeEdit, edit_knowledge};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct KnowledgePolicy {
+    pub policy: KnowledgeFamily,
     pub max_characters: CharacterLimits,
+}
+#[derive(Debug, Deserialize)]
+pub(crate) enum KnowledgeFamily {
+    #[serde(rename = "editable-notepads")]
+    EditableNotepads,
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

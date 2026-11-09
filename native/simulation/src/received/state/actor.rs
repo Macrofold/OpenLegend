@@ -144,6 +144,7 @@ pub(crate) fn ensure_temporal_actor(
                 page_order_upper_bound: core.state.physical.identity.next_id(),
                 recent: ReceivedRecentDirectory::default(),
                 pending_pages: Vec::new(),
+                pending_storage: budget.reserve(0)?,
                 supports: Some(supports),
             },
         );

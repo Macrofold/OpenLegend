@@ -260,6 +260,7 @@ fn begin_visual(
         core.state.physical.header.sequence,
         &mut core.state.physical.identity,
         &core.state.activity.display,
+        budget,
     )?;
     if retained.added_bytes > 0 {
         core.journal

@@ -9,6 +9,7 @@ use super::{
 use crate::activity::ActivityDisplayLimits;
 use crate::encoding::json_record;
 use crate::events::{OccurrenceHistory, OriginalOccurrenceInput};
+use crate::host::ByteBudget;
 use crate::install::rows::{
     take_collection, take_one, validate_map_row, validate_marker, validate_row,
 };
@@ -87,6 +88,7 @@ pub(crate) fn install_received_values(
     through: f64,
     sequence: u64,
     limits: Arc<ActivityDisplayLimits>,
+    budget: &ByteBudget,
 ) -> Result<Option<ReceivedValues>, PersonalInstallError> {
     let Some((root, header)) = take_one::<ValueRoot>(
         import,
@@ -102,11 +104,19 @@ pub(crate) fn install_received_values(
     if !root.extra.is_empty() {
         return Err(InstallError::CurrentFormat.into());
     }
-    let sources = take_collection(import, "mind_perception_values", &root.id, true, true)?;
+    let partial_closure = import
+        .working_set()
+        .is_some_and(|working| working.received_value_closure);
+    let sources = take_collection(
+        import,
+        "mind_perception_values",
+        &root.id,
+        true,
+        !partial_closure,
+    )?;
     let mut values = Vec::with_capacity(sources.rows.len());
     for row in sources.rows {
-        let record: ReceivedValueRecord =
-            serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        let record = crate::received::values::decode_received_value_row(&row)?;
         validate_row(
             &row,
             &["world", "receivedValues", "sources", &record.id],
@@ -114,23 +124,10 @@ pub(crate) fn install_received_values(
             &record.id,
             sources.coverage.next_ordinal,
         )?;
-        if row.extra.len() != 3
-            || row.extra[0] != Value::from(record.id.clone())
-            || crate::encoding::json_record(&row.extra[1])
-                .map_err(|_| InstallError::CurrentFormat)?
-                != json_record(&record.at).map_err(|_| InstallError::CurrentFormat)?
-            || (!row.extra[2].is_null()
-                && crate::encoding::json_record(&row.extra[2])
-                    .ok()
-                    .and_then(|encoded| serde_json::from_str::<Ordinal>(&encoded).ok())
-                    .is_none())
-        {
-            return Err(InstallError::CurrentFormat.into());
-        }
         values.push(record);
     }
     Ok(Some(ReceivedValues::install(
-        values, through, sequence, limits,
+        values, through, sequence, limits, budget,
     )?))
 }
 
@@ -259,6 +256,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         context.reception,
         context.cold_directories,
         meaning,
+        context.budget,
     )?;
     let experience = ExperienceState::install(
         generation,
@@ -275,13 +273,16 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         context.presence.events,
         false,
     )?;
-    let occurrences = OccurrenceHistory::install(
+    let mut occurrences = OccurrenceHistory::install(
         events.rows,
         originals,
         events.coverage,
         context.archived_event_count,
     )
     .map_err(|_| InstallError::CurrentFormat)?;
+    if let Some(selection) = import.working_set() {
+        occurrences.install_hot_selection(selection.hot_event_window);
+    }
     Ok(PersonalInstallation {
         experience,
         temporal,
@@ -321,7 +322,7 @@ fn install_sources(
         )?;
         validate_marker(&owner, ChildShape::Array)?;
         let child = take_collection(import, kind.table(), &owner.id, true, false)?;
-        let collection = PersonalSourceCollection::install(
+        let mut collection = PersonalSourceCollection::install(
             kind,
             owner.slot.clone(),
             child.rows,
@@ -329,6 +330,14 @@ fn install_sources(
             meaning,
             budget,
         )?;
+        if kind == PersonalSourceKind::Awareness {
+            if let Some(selected) = import.working_set() {
+                collection.install_current_selection(
+                    selected.open_agreement_heads(&owner.slot),
+                    selected.sensory_awareness(&owner.slot),
+                );
+            }
+        }
         placements.insert(owner.slot.clone(), owner.position);
         actors
             .entry(owner.slot)

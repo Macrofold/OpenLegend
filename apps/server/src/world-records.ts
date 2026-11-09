@@ -25,7 +25,7 @@ import { sqlRecordBatchesWithCount, SqlWriteBatch } from './sql-rows.js';
 import { recordDatabaseRows } from './performance.js';
 import { tableRows } from './record-pages.js';
 import { readTemporalPageRecord, validateTemporalPageValueReferences } from './temporal-storage.js';
-import { hotEventDependencies } from './hot-events.js';
+import { hotEventDependencies, HOT_EVENT_RECENT_ROWS } from './hot-events.js';
 import {
   HISTORY_TABLES,
   HOT_AWARENESS_ROWS,
@@ -1545,7 +1545,7 @@ export class WorldRecords {
    * The caller owns one fixed database snapshot. Native consumers receive these
    * actual current rows and coverage; they never assemble a TypeScript world.
    * Feature reads continue to use their scoped repositories below. */
-  async readCurrentRows(active: boolean) {
+  async readCurrentRows(active: boolean, columns: 'source' | 'native') {
     const head = await this.head();
     if (!head) return null;
     const settings = active
@@ -1590,7 +1590,9 @@ export class WorldRecords {
         'slot',
         'position',
         'payload',
-        ...personalMetadataColumns(RECORD_NODES.get(table)!).map(([name]) => name),
+        ...(columns === 'native'
+          ? Object.keys(RECORD_NODES.get(table)!.columns ?? {})
+          : personalMetadataColumns(RECORD_NODES.get(table)!).map(([name]) => name)),
       ];
       if (partial && (table === 'activity_occurrences' || table === 'mind_awareness')) {
         const awareness = table === 'mind_awareness';
@@ -1665,19 +1667,46 @@ export class WorldRecords {
         siblings.sort((a, b) => Number(a['position']) - Number(b['position']));
       groups.set(table, parents);
     }
+    const nextPositions = active
+      ? await this.readOrdinalHighwaters(head.worldId, [...HISTORY_TABLES, ...HISTORY_MAP_TABLES])
+      : new Map<string, number>();
+    return { head, groups, nextPositions };
+  }
+  /** Indexed metadata only. Omitted bodies must never make a native append
+   * reuse a durable ordinal; this is the same predecessor seek used by Source
+   * partial history, also usable for native partial current-value collections. */
+  async readOrdinalHighwaters(worldId: string, tables: Iterable<string>) {
     const nextPositions = new Map<string, number>();
-    if (active)
-      for (const table of [...HISTORY_TABLES, ...HISTORY_MAP_TABLES]) {
-        for (const row of await this.db
-          .prepare(
-            `SELECT o.id AS parent_id,t.position+1 AS next FROM ${RECORD_PARENTS.get(table)!} o
+    for (const table of tables) {
+      const parent = RECORD_PARENTS.get(table);
+      if (!RECORD_NODES.has(table) || !parent)
+        throw new Error('Current ordinal selection has no registered parent.');
+      for (const row of await this.db
+        .prepare(
+          `SELECT o.id AS parent_id,t.position+1 AS next FROM ${parent} o
              CROSS JOIN LATERAL (SELECT position FROM ${table} WHERE world_id=o.world_id AND parent_id=o.id ORDER BY position DESC LIMIT 1) t
              WHERE o.world_id=?`,
-          )
-          .all(head.worldId))
-          nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
-      }
-    return { head, groups, nextPositions };
+        )
+        .all(worldId))
+        nextPositions.set(`${table}:${row['parent_id']}`, Number(row['next']));
+    }
+    return nextPositions;
+  }
+  /** Physical cardinality can prove that an actual filtered selection omitted
+   * no rows. It does not hydrate cold bodies or certify an unrelated subset. */
+  async readRecordCounts(worldId: string, tables: Iterable<string>) {
+    const counts = new Map<string, number>();
+    for (const table of tables) {
+      if (!RECORD_NODES.has(table)) throw new Error('Current count has no registered table.');
+      const row = await this.db
+        .prepare(`SELECT count(*) AS n FROM ${table} WHERE world_id=?`)
+        .get(worldId);
+      const count = Number(row?.['n']);
+      if (!Number.isSafeInteger(count) || count < 0)
+        throw new Error('Current record count exceeds its supported range.');
+      counts.set(table, count);
+    }
+    return counts;
   }
   /** Metadata only; these directories preserve cold receipt identity without
    * making every physical history block resident. */
@@ -1728,7 +1757,7 @@ export class WorldRecords {
     const selector = 'SELECT value FROM jsonb_array_elements_text(?::jsonb)';
     const rows = await this.db
       .prepare(
-        `SELECT t.id,t.parent_id,t.slot,t.position,t.payload AS pointer_payload,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT 512) OR h.id IN (${selector})) ORDER BY t.position`,
+        `SELECT t.id,t.parent_id,t.slot,t.position,t.payload AS pointer_payload,h.payload FROM world_hot_events t JOIN history_events h ON h.world_id=t.world_id AND h.id=t.payload::jsonb ->> 'id' WHERE t.world_id=? AND (t.position IN (SELECT position FROM world_hot_events WHERE world_id=? ORDER BY position DESC LIMIT ${HOT_EVENT_RECENT_ROWS}) OR h.id IN (${selector})) ORDER BY t.position`,
       )
       .all(worldId, worldId, JSON.stringify(dependencies));
     const count = Number(
@@ -1743,7 +1772,7 @@ export class WorldRecords {
   private async readRecords(
     active: boolean,
   ): Promise<{ revision: number; state: SavedWorld } | null> {
-    const captured = await this.readCurrentRows(active);
+    const captured = await this.readCurrentRows(active, 'source');
     if (!captured) return null;
     const { head, groups, nextPositions } = captured;
     const state = assembleWorldRecords(
@@ -2352,16 +2381,28 @@ function restoreTemporalDirectories(
   world: SavedWorld['world'],
   rows: readonly Record<string, unknown>[],
 ): void {
+  const directories = temporalDirectoriesFromRows(
+    Object.keys(world.experience?.temporal?.actors ?? {}),
+    rows,
+  );
+  for (const [actorId, selected] of Object.entries(directories))
+    restoreReceivedRecentDirectory(world, actorId, selected);
+}
+export function temporalDirectoriesFromRows(
+  actors: Iterable<string>,
+  rows: readonly Record<string, unknown>[],
+): Record<string, ReceivedChargeDirectory[]> {
+  const actorIds = new Set(actors);
+  const result = Object.create(null) as Record<string, ReceivedChargeDirectory[]>;
   const byActor = new Map<string, Record<string, unknown>[]>();
   for (const row of rows) {
     const actorId = String(row['actor_id']),
       selected = byActor.get(actorId) ?? [];
-    if (!world.experience?.temporal?.actors[actorId])
-      throw new Error('Temporal block has no actor owner.');
+    if (!actorIds.has(actorId)) throw new Error('Temporal block has no actor owner.');
     selected.push(row);
     byActor.set(actorId, selected);
   }
-  for (const [actorId] of Object.entries(world.experience?.temporal?.actors ?? {})) {
+  for (const actorId of actorIds) {
     const selected = (byActor.get(actorId) ?? []).sort(compareTemporalRows);
     const directories: ReceivedChargeDirectory[] = [];
     let previous: [number, number, number] | undefined;
@@ -2394,10 +2435,10 @@ function restoreTemporalDirectories(
         throw new Error('Foreign received charge directory.');
       directories.push(directory);
     }
-    restoreReceivedRecentDirectory(world, actorId, directories);
+    result[actorId] = directories;
   }
+  return result;
 }
-
 export function assembleWorldRecords(
   groups: Map<string, Map<string, JsonRecord[]>>,
   worldId: string,

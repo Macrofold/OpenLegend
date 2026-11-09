@@ -31,7 +31,9 @@ pub(crate) use revoke::{
     invalidate_temporal_evidence, invalidate_temporal_facets,
 };
 mod append;
+mod residency;
 mod save;
+pub(crate) use residency::{PackedTemporalSave, PreparedTemporalResidency, SavedTemporalResidency};
 mod versions;
 pub(crate) use actor::ensure_temporal_actor;
 pub(crate) use versions::{SourceVersionPlan, apply_source_version_plan};
@@ -154,6 +156,7 @@ pub struct TemporalActorHistory {
     page_order_upper_bound: u64,
     recent: ReceivedRecentDirectory,
     pending_pages: Vec<Arc<PendingTemporalPage>>,
+    pending_storage: crate::host::ByteReservation,
     supports: Option<super::TemporalSupportCollection>,
 }
 
@@ -173,6 +176,7 @@ impl TemporalActorHistory {
         directories: &[ReceivedChargeDirectory],
         recordings: &[&TemporalCurrentGroupCheckpoint],
         through: f64,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ReceivedError> {
         let header: TemporalActorHeader = serde_json::from_str(&row.payload)
             .map_err(|_| ReceivedError("Invalid current temporal actor encoding."))?;
@@ -305,6 +309,9 @@ impl TemporalActorHistory {
             page_order_upper_bound: coverage.next_ordinal,
             recent,
             pending_pages: Vec::new(),
+            pending_storage: budget.reserve(0).map_err(|_| {
+                ReceivedError("Temporal pending placement exceeds native allowance.")
+            })?,
             supports: None,
         })
     }
@@ -424,6 +431,7 @@ enum TemporalUndo {
         actor_id: String,
         before: BTreeMap<u64, Arc<TemporalPageRecord>>,
         pending: Vec<Arc<PendingTemporalPage>>,
+        pending_storage: crate::host::ByteReservation,
         complete: bool,
         next_ordinal: u64,
     },
@@ -569,6 +577,7 @@ impl TemporalState {
                     actor_id,
                     before,
                     pending,
+                    pending_storage,
                     complete,
                     next_ordinal,
                 } => {
@@ -577,6 +586,7 @@ impl TemporalState {
                     ))?;
                     actor.pages = before;
                     actor.pending_pages = pending;
+                    actor.pending_storage = pending_storage;
                     actor.complete_pages = complete;
                     actor.page_order_upper_bound = next_ordinal;
                 }

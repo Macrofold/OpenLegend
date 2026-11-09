@@ -367,6 +367,7 @@ pub(super) fn selected_tracks(
 /// attention competition. Recognition/familiarity affects the next opportunity.
 pub(crate) struct ReceivingMutation<'a> {
     pub(crate) experience: &'a ExperienceState,
+    pub(crate) cognition: &'a mut crate::cognition::CognitionJournal,
     pub(crate) current: &'a mut CurrentJournal,
     pub(crate) acquisitions: &'a mut crate::execution::TemporalScopes,
     pub(crate) meters: &'a mut crate::work::WorkMeters,
@@ -583,6 +584,7 @@ pub(crate) fn reconcile_current_cohort(
 ) -> Result<(), ExecutionError> {
     let mut receiver = ReceivingMutation {
         experience: &core.state.experience,
+        cognition: &mut core.journal.cognition,
         current: &mut core.journal.current,
         acquisitions: &mut core.journal.acquisitions,
         meters: &mut core.journal.meters,

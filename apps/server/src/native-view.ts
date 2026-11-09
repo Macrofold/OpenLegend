@@ -12,6 +12,16 @@ import {
   acousticReach,
   localWeatherAt,
   selectedDailyRain,
+  receivedEventEvidence,
+  projectEventEvidence,
+  type EventOriginalMetadata,
+  type EventEvidence,
+  selectedEventPresentation,
+  isConversationEvent,
+  definitionPin,
+  typedRequestVocabulary,
+  selectedTemporalPolicy,
+  type TemporalValue,
   type ActivityDefinitionScope,
   type ActivityView,
   type Entity,
@@ -19,6 +29,7 @@ import {
   type BodyEligibilityWitness,
   type WorldState,
 } from '@open-legend/domain';
+import { namePhrase } from '@open-legend/language';
 import type { EntityView, GameView } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import {
@@ -39,7 +50,12 @@ import {
   projectObservedCommunication,
   projectObservedEntity,
 } from './observed-body-view.js';
-import { communicationReference, currentContactReferenceFor } from './public-contact-references.js';
+import {
+  communicationReference,
+  currentContactReferenceFor,
+  projectPlayerEventRoles,
+  type PlayerEventRoleFacts,
+} from './public-contact-references.js';
 import {
   projectKnownTradeSummary,
   tradeDraftScopeFor,
@@ -48,7 +64,15 @@ import {
 } from './trade-view.js';
 import { projectMeleeAttackSource } from './attack-execution-view.js';
 import { projectActivityStatusFrom } from './activity-requests.js';
-import { projectPlayerPresentation, projectPlayerCartography, projectPlayerClock } from './player-world-view.js';
+import {
+  projectPlayerPresentation,
+  projectPlayerCartography,
+  projectPlayerClock,
+  playerHistoryText,
+} from './player-world-view.js';
+import { boundPlayerEvents, isPlayerJournalEvent } from './player-events-view.js';
+import { personalEventEvidence } from './personal-accounts.js';
+import { publicEvent, projectConversationEvent } from './perceived-events.js';
 import {
   hydratePlayerPractice,
   projectPlayerAction,
@@ -85,6 +109,11 @@ export interface NativePlayerViewDefinitions {
   readonly knowledgePolicy: WorldState['knowledgePolicy'];
   readonly dailyRain: ReturnType<typeof selectedDailyRain>;
   readonly acoustics: WorldState['moduleManifest']['acoustics'];
+  readonly eventPresentation: ReturnType<typeof selectedEventPresentation>;
+  readonly workBatchRevision: GameView['player']['workBatchRevision'];
+  readonly actionWording: GameView['player']['actionWording'];
+  readonly inventionPolicy: GameView['inventionPolicy'];
+  readonly recentMaxAgeSeconds: number;
 }
 
 /** Setup reads only immutable authored owners. The result remains outside
@@ -107,6 +136,8 @@ export function nativePlayerViewDefinitions(
     | 'knowledgePolicy'
     | 'constructionProfile'
     | 'dailyRainDefinitions'
+    | 'workBatchPolicy'
+    | 'inventionPolicy'
   > &
     ActivityDefinitionScope,
   tradeTitle: string,
@@ -144,6 +175,23 @@ export function nativePlayerViewDefinitions(
     knowledgePolicy: definitions.knowledgePolicy,
     dailyRain: selectedDailyRain(definitions),
     acoustics: definitions.moduleManifest.acoustics,
+    eventPresentation: selectedEventPresentation(definitions),
+    workBatchRevision: definitions.workBatchPolicy
+      ? JSON.stringify([
+          definitionPin(definitions.workBatchPolicy),
+          definitions.moduleManifest.bodyPolicyPin,
+        ])
+      : undefined,
+    actionWording: {
+      examples: [...typedRequestVocabulary(definitions).examples],
+      placeholder: typedRequestVocabulary(definitions).placeholder,
+    },
+    inventionPolicy: {
+      revision: definitions.inventionPolicy.revision,
+      playerLocked: definitions.inventionPolicy.playerLocked,
+      agentLocked: definitions.inventionPolicy.agentLocked,
+    },
+    recentMaxAgeSeconds: selectedTemporalPolicy(definitions).recent.maxAgeSeconds,
   };
 }
 export interface NativePlayerActorSelf extends NativeActorSelf {
@@ -151,10 +199,15 @@ export interface NativePlayerActorSelf extends NativeActorSelf {
   readonly alive: boolean;
   readonly incapacitated: boolean;
   readonly supportSurfaceId: GameView['player']['supportSurfaceId'];
-  readonly bodyProfile: Pick<Entity['spatial']['body'], 'radius' | 'height' | 'eyeHeight' | 'earHeight'>;
+  readonly bodyProfile: Pick<
+    Entity['spatial']['body'],
+    'radius' | 'height' | 'eyeHeight' | 'earHeight'
+  >;
   readonly statusEffects: GameView['player']['statusEffects'];
   readonly actionsBlocked: boolean;
-  readonly identity: NativeActorSelf['identity'] & { readonly traits?: PlayerActor['traits'] };
+  readonly identity: Omit<NativeActorSelf['identity'], 'traits'> & {
+    readonly traits?: PlayerActor['traits'];
+  };
   readonly speech: boolean;
   readonly speechBlocked: boolean;
   readonly action: {
@@ -197,6 +250,13 @@ export interface NativePlayerActorSelf extends NativeActorSelf {
       readonly hearingFloor: number | null;
     };
     readonly mapMarkers: NonNullable<GameView['cartography']>['markers'];
+    readonly communicationSubjects: readonly {
+      readonly id: string;
+      readonly label?: string;
+      readonly description?: Parameters<typeof namePhrase>[0];
+    }[];
+    /** Installed learned-capability rows were read completely and are empty. */
+    readonly knownRecipes: readonly [];
   };
 }
 
@@ -338,7 +398,28 @@ export async function nativePlayerOwnedView(
     // The same complete personal agreement proof covers the Source outing
     // readers; positive acquired terms refuse at the native capture owner.
     outings: [],
+    workBatchRevision: definitions.workBatchRevision,
+    actionWording: definitions.actionWording,
+    ...(definitions.presentation?.calendar?.historyTemplate
+      ? {
+          history: playerHistoryText(
+            self.at,
+            definitions.statusPolicy.clockOffsetHours,
+            definitions.presentation.calendar,
+          ),
+        }
+      : {}),
   };
+}
+
+export function nativePlayerCommunicationReferences(
+  self: NativePlayerActorSelf,
+  scope: RequestScope,
+) {
+  return self.player.communicationSubjects.map((subject) => ({
+    id: communicationReference(scope, { id: subject.id }),
+    label: subject.label ?? namePhrase(subject.description!, 'none'),
+  }));
 }
 export interface NativePlayerBodyBinding extends NativeBodyBinding {
   readonly player: {
@@ -350,10 +431,10 @@ export interface NativePlayerBodyBinding extends NativeBodyBinding {
 }
 export interface NativePlayerActorPerception extends NativeActorPerception {
   readonly bodies: readonly NativePlayerBodyBinding[];
-  /** Complete acquired awareness, filtered by actual privacy, proved no terms.
+  /** Complete current open-head selection, filtered by actual privacy, proved no terms.
    * A positive unconverted agreement refuses at the native read owner. */
   readonly player: {
-    readonly tradeHistory: 'no-acquired-agreements';
+    readonly tradeTerms: 'none';
     readonly physicalLandmarks: 'absent';
     readonly finiteWeatherCue: 'absent';
   };
@@ -366,12 +447,17 @@ export function nativePlayerWorldView(
   self: NativePlayerActorSelf,
   perception: NativePlayerActorPerception,
   definitions: NativePlayerViewDefinitions,
+  controls: NativePlayerControlFacts,
   operational: {
     readonly map: WorldState['map'];
     readonly placesRevision: NonNullable<GameView['cartography']>['placesRevision'];
-  } & Pick<GameView['clock'], 'speed' | 'baseRatio' | 'paused' | 'pauseReason' | 'preparingNavigation'>,
+  } & Pick<GameView['clock'], 'speed' | 'baseRatio' | 'paused' | 'pauseReason'>,
 ) {
-  if (perception.player.physicalLandmarks !== 'absent' || perception.player.finiteWeatherCue !== 'absent')
+  assertPlayerControlCut(self, controls);
+  if (
+    perception.player.physicalLandmarks !== 'absent' ||
+    perception.player.finiteWeatherCue !== 'absent'
+  )
     throw new Error('Native player world display requires its admitted physical families.');
   const senses = self.player.senses;
   const policy = definitions.acoustics;
@@ -385,20 +471,118 @@ export function nativePlayerWorldView(
   });
   return {
     presentation: projectPlayerPresentation(definitions.presentation),
-    ...(definitions.presentation?.mapArt ? {
-      cartography: projectPlayerCartography(definitions.presentation.mapArt,
-        definitions.knowledgePolicy?.maxCharacters.subject, self.player.knowledgeRevision,
-        operational.placesRevision, self.player.mapMarkers),
-    } : {}),
-    vision: {radius: senses.perceptionBlocked ? 0 : senses.radius, ...guide.vision},
-    hearing: {referenceRadius: senses.hearingFloor === null ? 0 : acousticReach(policy, senses.hearingFloor, 'normal', policy.thresholdsDb.clear), ...guide.hearing},
-    map: {...operational.map, seed:self.player.seed},
-    clock: projectPlayerClock(self.at, definitions.presentation, definitions.statusPolicy.namedTimes,
-      definitions.statusPolicy.clockOffsetHours, {
+    ...(definitions.presentation?.mapArt
+      ? {
+          cartography: projectPlayerCartography(
+            definitions.presentation.mapArt,
+            definitions.knowledgePolicy?.maxCharacters.subject,
+            self.player.knowledgeRevision,
+            operational.placesRevision,
+            self.player.mapMarkers,
+          ),
+        }
+      : {}),
+    vision: { radius: senses.perceptionBlocked ? 0 : senses.radius, ...guide.vision },
+    hearing: {
+      referenceRadius:
+        senses.hearingFloor === null
+          ? 0
+          : acousticReach(policy, senses.hearingFloor, 'normal', policy.thresholdsDb.clear),
+      ...guide.hearing,
+    },
+    map: { ...operational.map, seed: self.player.seed },
+    clock: projectPlayerClock(
+      self.at,
+      definitions.presentation,
+      definitions.statusPolicy.namedTimes,
+      definitions.statusPolicy.clockOffsetHours,
+      {
         ...operational,
-        weather: localWeatherAt(definitions.dailyRain, undefined, self.at, definitions.statusPolicy.clockOffsetHours, self.position),
-      }),
+        preparingNavigation: controls.preparingNavigation,
+        weather: localWeatherAt(
+          definitions.dailyRain,
+          undefined,
+          self.at,
+          definitions.statusPolicy.clockOffsetHours,
+          self.position,
+        ),
+      },
+    ),
   };
+}
+
+export interface NativePlayerEventRead {
+  readonly worldId: string;
+  readonly generation: string;
+  readonly acceptedCut: number;
+  readonly actorId: string;
+  readonly physicalLife: number | null;
+  readonly at: number;
+  readonly privacyRevision: number;
+  readonly accounts: readonly {
+    readonly original: EventOriginalMetadata;
+    readonly evidence?: EventEvidence;
+    readonly values?: readonly TemporalValue[];
+    readonly roles: PlayerEventRoleFacts;
+  }[];
+}
+export function nativePlayerEventViews(
+  self: NativePlayerActorSelf,
+  perception: NativePlayerActorPerception,
+  read: NativePlayerEventRead,
+  definitions: NativePlayerViewDefinitions,
+  scope: RequestScope,
+  timelineId: string,
+  replies: ReadonlyMap<string, Parameters<typeof projectConversationEvent>[2]>,
+) {
+  const events = nativePlayerEvents(self, perception, read, definitions);
+  const roles = new Map(read.accounts.map((account) => [account.original.id, account.roles]));
+  const rules = selectedPlayerViewRules({ profile: definitions.profile });
+  return {
+    events: events
+      .filter((event) => isPlayerJournalEvent(event, rules))
+      .slice(-60)
+      .map((event) =>
+        publicEvent(
+          event,
+          definitions.eventPresentation,
+          self.actorId,
+          JSON.stringify([self.worldId, `${timelineId}:${scopeKey(scope)}`]),
+          () => projectPlayerEventRoles(scope, event, roles.get(event.id)!),
+        ),
+      ),
+    conversation: events
+      .filter(isConversationEvent)
+      .slice(-30)
+      .map((event) => projectConversationEvent(event, self.actorId, replies.get(event.id))),
+  };
+}
+export function nativePlayerEvents(
+  self: NativePlayerActorSelf,
+  perception: NativePlayerActorPerception,
+  read: NativePlayerEventRead,
+  definitions: NativePlayerViewDefinitions,
+) {
+  if (
+    self.worldId !== read.worldId ||
+    self.generation !== read.generation ||
+    self.acceptedCut !== read.acceptedCut ||
+    self.actorId !== read.actorId ||
+    (self.physicalLife ?? 0) !== (read.physicalLife ?? 0) ||
+    self.at !== read.at ||
+    perception.cut.privacyRevision !== read.privacyRevision
+  )
+    throw new Error('The captured player event cut is unavailable.');
+  return boundPlayerEvents(
+    read.accounts.flatMap((account) => {
+      const evidence =
+        account.evidence !== undefined
+          ? personalEventEvidence(account.evidence)
+          : receivedEventEvidence(self.actorId, account.values ?? []);
+      return evidence ? [projectEventEvidence(account.original, evidence)] : [];
+    }),
+    selectedPlayerViewRules({ profile: definitions.profile }),
+  );
 }
 
 /** Sealed native preparation emits this only after the actual standing reply. */
@@ -410,6 +594,18 @@ export interface NativePlayerControlFacts {
   readonly physicalLife: number | null;
   readonly at: number;
   readonly canRecover: boolean;
+  readonly preparingNavigation: boolean;
+}
+function assertPlayerControlCut(self: NativePlayerActorSelf, read: NativePlayerControlFacts) {
+  if (
+    self.worldId !== read.worldId ||
+    self.actorId !== read.actorId ||
+    self.generation !== read.generation ||
+    self.acceptedCut !== read.acceptedCut ||
+    (self.physicalLife ?? 0) !== (read.physicalLife ?? 0) ||
+    self.at !== read.at
+  )
+    throw new Error('Native player control facts differ from the captured cut.');
 }
 export function nativePlayerControls(
   self: NativePlayerActorSelf,
@@ -428,15 +624,7 @@ export function nativePlayerControls(
     }[];
   },
 ): GameView['player']['controls'] {
-  if (
-    prepared.worldId !== self.worldId ||
-    prepared.actorId !== self.actorId ||
-    prepared.generation !== self.generation ||
-    prepared.acceptedCut !== self.acceptedCut ||
-    prepared.at !== self.at ||
-    prepared.physicalLife !== (self.physicalLife ?? null)
-  )
-    throw new Error('Native control preparation scope differs.');
+  assertPlayerControlCut(self, prepared);
   const rules = selectedPlayerViewRules({ profile: definitions.profile });
   const hasWork = playerHasWork(!!self.action, self.player.agency);
   if (hasWork && operational.paused && !operational.pausedStop)
@@ -519,7 +707,8 @@ export function nativePlayerEntities(
     self.actorId !== perception.actorId ||
     self.at !== perception.at ||
     scope.actorId !== self.actorId ||
-    scope.worldId !== self.worldId
+    scope.worldId !== self.worldId ||
+    perception.player.tradeTerms !== 'none'
   )
     throw new Error('Native player capture scope differs.');
   const referenceScope = { id: self.worldId };

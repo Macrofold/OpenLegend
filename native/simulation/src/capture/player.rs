@@ -92,16 +92,13 @@ impl<'a> PlayerReadScope<'a> {
             .experience
             .optional_collection(actor_id, PersonalSourceKind::Awareness)?
         {
-            if !collection.coverage().complete {
-                return Err(ExecutionError::UnsupportedFamily);
-            }
             let privacy = &state
                 .experience
                 .actor(actor_id)
                 .ok_or(ExecutionError::Invariant)?
                 .privacy;
             let law = state.installed.account_law();
-            if collection.has_agreement_bodies()?
+            if collection.may_have_current_trade_terms()?
                 && collection.records().any(|record| {
                     let header = record.header();
                     header.agreement_body
@@ -277,12 +274,14 @@ pub(super) struct OwnPlayerView<'a> {
     pub action_animation: Option<crate::worlds::base_observed::ObservedActionAnimation>,
     pub senses: &'a super::metadata::OwnSenses,
     pub map_markers: &'a [super::metadata::OwnMarker<'a>],
+    pub communication_subjects: &'a [crate::worlds::CommunicationSubject<'a>],
+    pub known_recipes: &'a [String],
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct CapturedPlayerPerception {
-    pub trade_history: &'static str,
+    pub trade_terms: &'static str,
     pub physical_landmarks: &'static str,
     pub finite_weather_cue: &'static str,
 }

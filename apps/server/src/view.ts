@@ -1,4 +1,26 @@
-import { playerCalendarFields, projectPlayerPresentation, projectPlayerCartography, projectPlayerClock } from './player-world-view.js';
+import {
+  memoizer,
+  optional,
+  permittedPlayerJobs,
+  projectPlayerJobs,
+  playerUsageFallback,
+  projectPlayerAi,
+  playerSpeechJobIds,
+  ViewChangedError,
+} from './player-view-async.js';
+export { ViewChangedError } from './player-view-async.js';
+import {
+  PLAYER_EVENT_WINDOW,
+  isPlayerJournalEvent,
+  boundPlayerEvents,
+} from './player-events-view.js';
+import {
+  playerCalendarFields,
+  projectPlayerPresentation,
+  projectPlayerCartography,
+  projectPlayerClock,
+  playerHistoryText,
+} from './player-world-view.js';
 import {
   nativeText,
   selectedTemporalPolicy,
@@ -19,7 +41,6 @@ import {
   entityChangesBetween,
   custodian,
 } from '@open-legend/domain';
-import { worldClockParts, worldDayText } from '@open-legend/protocol';
 import { receivedEventAccounts } from './received-event-accounts.js';
 import { attackSourceView } from './attack-execution-view.js';
 import { contributionWithdrawals } from './handover-actions.js';
@@ -137,13 +158,6 @@ function portraitArt(world: WorldState, appearance: string | undefined) {
     : undefined;
 }
 
-/** Private evidence changed during a read; discard and prepare a current view. */
-export class ViewChangedError extends Error {
-  constructor() {
-    super('The world changed while preparing this view. Refresh to see current information.');
-  }
-}
-
 interface ViewCache {
   scope: RequestScope;
   values: Map<string, { deps: unknown[]; value: unknown }>;
@@ -179,20 +193,6 @@ function scopedCache(service: WorldService, scope: RequestScope): ViewCache {
   }
   return cache;
 }
-function memoizer(cache: Pick<ViewCache, 'values'>) {
-  return <T>(key: string, deps: unknown[], build: () => T): T => {
-    const old = cache.values.get(key);
-    if (old && old.deps.length === deps.length && deps.every((dep, i) => dep === old.deps[i]))
-      return old.value as T;
-    const value = build();
-    cache.values.set(key, { deps, value });
-    if (value instanceof Promise)
-      void value.catch(() => {
-        if (cache.values.get(key)?.value === value) cache.values.delete(key);
-      });
-    return value;
-  };
-}
 /** Item attributes can change without changing contents membership. Follow the
  * existing exact native delta, not every world's item or only the HUD's first page.
  * The weak baseline keeps this derived hint from retaining an old world. */
@@ -223,44 +223,13 @@ function ownedInventoryDetailRevision(
   cache.inventoryDetails = { entities: new WeakRef(world.entities), contents, revision: selected };
   return selected;
 }
-/** An async result may populate only its original still-permitted private section. */
-function optional<T>(
-  service: WorldService,
-  cache: ViewCache,
-  key: string,
-  token: Promise<T>,
-  fallback: T,
-): T {
-  const old = cache.sections.get(key);
-  if (old?.token === token) return (old.value as T | undefined) ?? fallback;
-  const entry: { token: unknown; value?: unknown } = { token };
-  cache.sections.set(key, entry);
-  void token
-    .then((value) => {
-      if (cache.sections.get(key) !== entry || !service.currentScope(cache.scope)) return;
-      entry.value = value;
-      service.notify(false);
-    })
-    .catch(() => {});
-  return fallback;
-}
-
-function isJournalEvent(event: {
-  type: string;
-  text: import('@open-legend/domain').NativeText;
-  data?: Record<string, unknown>;
-}) {
-  return !(
-    event.type === 'action-started' &&
-    (event.data?.['actionType'] === 'move' ||
-      (event.data?.['actionType'] === undefined &&
-        nativeText(event.text).endsWith(' started move.')))
-  );
-}
-
 /** Calendar projection shared by embodied views and the characterless operations view. */
 export const calendarFields = (world: WorldState) => {
-  return playerCalendarFields(world.simTime, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar);
+  return playerCalendarFields(
+    world.simTime,
+    world.statusEffectPolicy.clockOffsetHours,
+    world.presentation?.calendar,
+  );
 };
 
 const publicDetailKinds = ['pile-contents', 'carried', 'public-attributes'] as const;
@@ -360,6 +329,7 @@ export async function projectView(
   );
   const actor = player.actor!;
   const playerViewRules = selectedPlayerViewRules(world);
+  const isJournalEvent = (event: ActorEvent) => isPlayerJournalEvent(event, playerViewRules);
   const practiceAttributeIds = memo(
     'practiceAttributeIds',
     [world.moduleManifest],
@@ -853,9 +823,9 @@ export async function projectView(
     // Actor-owned receipts authorize the recent sequence; global events supply
     // metadata only after that personal selection, never missing observations.
     const wanted = new Set([
-      ...world.events.slice(-512).map((event) => event.id),
+      ...world.events.slice(-PLAYER_EVENT_WINDOW).map((event) => event.id),
       ...(world.experience?.awareness[scope.actorId] ?? [])
-        .slice(-512)
+        .slice(-PLAYER_EVENT_WINDOW)
         .map((entry) => entry.eventId),
     ]);
     const visible = [
@@ -864,30 +834,17 @@ export async function projectView(
         evidenceOnly: true,
         index: cache.eventChunks,
       }),
-    ]
-      .flatMap(([id, account]) => {
-        const event = service.worldEvent(id);
-        return event
-          ? [
-              memo(`eventAccount:${id}`, [event, account.awareness ?? account.evidence], () =>
-                projectEventEvidence(event, account.evidence),
-              ),
-            ]
-          : [];
-      })
-      .sort((a, b) => (b.order ?? b.sequence) - (a.order ?? a.sequence));
-    const bounded: ActorEvent[] = [];
-    let journal = 0;
-    let conversation = 0;
-    for (const event of visible) {
-      const inJournal = isJournalEvent(event) && journal < 60;
-      const inConversation = isConversationEvent(event) && conversation < 30;
-      if (inJournal || inConversation) bounded.push(event);
-      if (inJournal) journal++;
-      if (inConversation) conversation++;
-      if (journal >= 60 && conversation >= 30) break;
-    }
-    return bounded.reverse();
+    ].flatMap(([id, account]) => {
+      const event = service.worldEvent(id);
+      return event
+        ? [
+            memo(`eventAccount:${id}`, [event, account.awareness ?? account.evidence], () =>
+              projectEventEvidence(event, account.evidence),
+            ),
+          ]
+        : [];
+    });
+    return boundPlayerEvents(visible, playerViewRules);
   });
   const selectedEventIds = new Set(events.map((event) => event.id));
   for (const key of cache.values.keys())
@@ -908,66 +865,39 @@ export async function projectView(
           : scope.actorId,
       ),
     ),
-    {
-      budget: { limitUsd: service.config.budgetUsd, spentUsd: 0, reservedUsd: 0, estimated: true },
-      usage: { jevCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, lastLatencyMs: 0 },
-    },
+    playerUsageFallback(service.config.budgetUsd),
   );
-  const jobs = optional(
-    service,
-    cache,
-    'jobs',
-    memo('jobs', [telemetryRevision], async () =>
-      (await service.store.recentJobs()).filter((job) =>
-        job.authority
-          ? job.authority.accountId === scope.accountId && job.authority.actorId === scope.actorId
-          : job.request.invention?.actorId === scope.actorId ||
-            (job.kind === 'thought' && job.request.npcId === scope.actorId) ||
-            (!!job.playerSpeechEventId &&
-              service.worldEvent(job.playerSpeechEventId)?.actorId === scope.actorId),
+  const jobs = projectPlayerJobs(
+    optional(
+      service,
+      cache,
+      'jobs',
+      memo('jobs', [telemetryRevision], async () =>
+        permittedPlayerJobs(
+          await service.store.recentJobs(),
+          scope,
+          (id) => service.worldEvent(id)?.actorId,
+        ),
       ),
+      [],
     ),
-    [],
-  ).map(({ id, kind, status, message, queueLatencyMs, totalLatencyMs }) => ({
-    id,
-    kind,
-    status,
-    // Operational telemetry must not reveal a resident's private selected plan.
-    message: kind === 'thought' ? `Resident reconsideration: ${status}.` : message,
-    queueLatencyMs,
-    totalLatencyMs,
-  }));
+  );
   const conversationEntries = events.filter((event) => isConversationEvent(event)).slice(-30);
+  const speechJobIds = playerSpeechJobIds(conversationEntries, scope.actorId);
   // Text is authoritative in memory; optional job reads must never hide it while refreshing.
   // See docs/architecture.md#performance-critical-path.
   const replies = optional(
     service,
     cache,
     'speechJobs',
-    memo('speechJobs', [service.historyEpoch, telemetryRevision, ...conversationEntries], () =>
-      service.store.getSpeechJobs(
-        conversationEntries
-          .filter((event) => event.actorId === scope.actorId)
-          .map((event) => event.id),
-      ),
+    memo('speechJobs', [service.historyEpoch, telemetryRevision, ...speechJobIds], () =>
+      service.store.getSpeechJobs(speechJobIds),
     ),
     new Map<string, never>(),
   );
   const jevConfigured = service.config.macrofoldKey ? true : !!service.config.jevKey;
   const llmConfigured =
     !service.config.jevOnly && !!(service.config.macrofoldKey || service.config.llmKey);
-  // Job history is not a service-health probe. A later completed request
-  // supersedes an older failure; cancellations do not diagnose provider health.
-  const latestSettled = jobs.find((job) => job.status === 'failed' || job.status === 'completed');
-  const latestProblem = latestSettled?.status === 'failed' ? latestSettled : undefined;
-  const aiMode =
-    executionSource === 'test-fixture'
-      ? 'fixture'
-      : jevConfigured
-        ? latestProblem
-          ? 'degraded'
-          : 'live'
-        : 'unconfigured';
   const hasWork = playerHasWork(!!actor.action, actor.agency);
   // Only paused existing work needs the service's exceptional-command check;
   // ordinary Stop remains a cheap direct control, not a fresh full action menu.
@@ -1131,12 +1061,22 @@ export async function projectView(
             ],
             () => {
               const art = world.presentation!.mapArt!;
-              return projectPlayerCartography(art, world.knowledgePolicy?.maxCharacters.subject,
-                world.knowledgeRevisions?.[player.id] ?? 0, placesRevision,
+              return projectPlayerCartography(
+                art,
+                world.knowledgePolicy?.maxCharacters.subject,
+                world.knowledgeRevisions?.[player.id] ?? 0,
+                placesRevision,
                 Object.values(world.mapMarkers?.[player.id] ?? {}).map((marker) => {
-                  const note = knowledgeDocument(world, player.id, {kind:'map-marker', markerId:marker.id});
-                  return {...marker, note:{text:note?.text ?? '', revision:note?.revision ?? 0}};
-                }));
+                  const note = knowledgeDocument(world, player.id, {
+                    kind: 'map-marker',
+                    markerId: marker.id,
+                  });
+                  return {
+                    ...marker,
+                    note: { text: note?.text ?? '', revision: note?.revision ?? 0 },
+                  };
+                }),
+              );
             },
           ),
         }
@@ -1180,12 +1120,20 @@ export async function projectView(
       ...world.map,
       seed: world.seed,
     })),
-    clock: projectPlayerClock(world.simTime, world.presentation, world.statusEffectPolicy.namedTimes,
-      world.statusEffectPolicy.clockOffsetHours, {
-        weather: localWeatherView(world, worldPosition(player)), speed,
-        baseRatio: service.config.baseRatio, paused, pauseReason,
+    clock: projectPlayerClock(
+      world.simTime,
+      world.presentation,
+      world.statusEffectPolicy.namedTimes,
+      world.statusEffectPolicy.clockOffsetHours,
+      {
+        weather: localWeatherView(world, worldPosition(player)),
+        speed,
+        baseRatio: service.config.baseRatio,
+        paused,
+        pauseReason,
         preparingNavigation: navigationBlocked(world),
-      }),
+      },
+    ),
     player: {
       ...projectPlayerBody(
         {
@@ -1320,19 +1268,13 @@ export async function projectView(
         service.historyEpoch,
         service.store.memories?.actorRevision(player.id) ?? 0,
       ]),
-      // Two finite presentation substitutions preserve the world's authored self
-      // description. Elapsed whole intervals use zero offset, unlike date labels.
       ...(world.presentation?.calendar?.historyTemplate
         ? {
-            history: world.presentation.calendar.historyTemplate
-              .replaceAll(
-                '{startDay}',
-                worldDayText(
-                  worldClockParts(0, world.statusEffectPolicy.clockOffsetHours).day,
-                  world.presentation.calendar.dayLabel,
-                ),
-              )
-              .replaceAll('{elapsedDays}', String(worldClockParts(world.simTime, 0).day - 1)),
+            history: playerHistoryText(
+              world.simTime,
+              world.statusEffectPolicy.clockOffsetHours,
+              world.presentation.calendar,
+            ),
           }
         : {}),
       inventory,
@@ -1481,20 +1423,7 @@ export async function projectView(
     conversation: conversationEntries.map((event) =>
       projectConversationEvent(event, scope.actorId, replies.get(event.id)),
     ),
-    ai: {
-      mode: aiMode,
-      jevConfigured,
-      llmConfigured,
-      message:
-        aiMode === 'fixture'
-          ? 'Injected test provider. This is not live AI acceptance evidence.'
-          : aiMode === 'unconfigured'
-            ? 'Configure backend AI credentials and a spending cap. Macrofold native execution also needs an owner-selected MACROFOLD_WORKER_ID; direct inference does not.'
-            : (latestProblem?.message ??
-              'Jev routes bounded decisions. LLMs handle conversation, reconsideration and new recipes.'),
-      jobs,
-      ...usage,
-    },
+    ai: projectPlayerAi(jobs, usage, { executionSource, jevConfigured, llmConfigured }),
     milestones: BASE_PLAYTEST_MILESTONES.map((milestone) => ({
       ...milestone,
       done: milestones[milestone.id] === true,

@@ -36,8 +36,12 @@ pub(crate) use definitions::{
 mod geometry;
 pub(crate) use geometry::install_geometry;
 mod core;
+mod working_set;
+pub(crate) use working_set::{InstalledWorkingSet, WorkingSetSelection};
 mod scope;
-pub(crate) use core::{CoreInstallError, CoreInstallInput, CoreInstallation, assemble_core};
+pub(crate) use core::{
+    CoreInstallError, CoreInstallInput, CoreInstallation, assemble_core, assemble_working_core,
+};
 pub(crate) use scope::{SelectedInstallation, finish_selected_installation};
 
 mod physical;
@@ -46,6 +50,7 @@ pub(crate) use physical::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum InstallError {
+    Capacity,
     CurrentFormat,
     Identity,
     RowIdentity,
@@ -66,6 +71,7 @@ pub enum InstallError {
 impl fmt::Display for InstallError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::Capacity => f.write_str("Native installation exceeds its byte allowance."),
             Self::UnsupportedFamily(family) => write!(
                 f,
                 "Native proof does not support the installed {family} family."
@@ -235,6 +241,7 @@ pub struct ImportedCollection {
 /// process-local index is discarded when installation finishes; it is neither a
 /// writable world nor an alternative current-row database.
 pub struct RowImport {
+    working_set: Option<InstalledWorkingSet>,
     world_id: String,
     generation: String,
     durable_revision: u64,
@@ -324,6 +331,7 @@ impl RowImport {
             }
         }
         Ok(Self {
+            working_set: None,
             world_id: input.world_id,
             generation: input.generation,
             durable_revision: input.durable_revision,
@@ -337,6 +345,22 @@ impl RowImport {
 
     pub fn world_id(&self) -> &str {
         &self.world_id
+    }
+    fn install_working_set(
+        &mut self,
+        selection: WorkingSetSelection,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(), InstallError> {
+        self.working_set = Some(selection.install(
+            &self.world_id,
+            &self.generation,
+            self.durable_revision,
+            budget,
+        )?);
+        Ok(())
+    }
+    pub(crate) fn working_set(&self) -> Option<&InstalledWorkingSet> {
+        self.working_set.as_ref()
     }
     pub fn generation(&self) -> &str {
         &self.generation

@@ -15,6 +15,7 @@ use std::mem::size_of;
 pub(crate) struct TemporalSaveLimits {
     pub target_bytes: usize,
     pub row_bytes: usize,
+    pub resident_bytes: usize,
 }
 
 #[derive(Serialize)]
@@ -213,6 +214,7 @@ fn flush(
     world_id: &str,
     limits: TemporalSaveLimits,
     output: &mut RowEncoder<'_>,
+    saved: &mut Vec<Arc<TemporalPageRecord>>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
     if pages.is_empty() {
@@ -290,8 +292,8 @@ fn flush(
         drop(id);
         drop(metadata);
         drop(_metadata);
-        flush(&pages[..middle], world_id, limits, output, budget)?;
-        return flush(&pages[middle..], world_id, limits, output, budget);
+        flush(&pages[..middle], world_id, limits, output, saved, budget)?;
+        return flush(&pages[middle..], world_id, limits, output, saved, budget);
     }
     let _payload = budget
         .reserve(
@@ -364,19 +366,31 @@ fn flush(
             received_value_additions: Some(&metadata.references),
             ..RowEffects::default()
         },
-    )
+    )?;
+    let mut batches = Vec::new();
+    batches
+        .try_reserve_exact(pages.len())
+        .map_err(|_| error())?;
+    batches.extend(pages.iter().map(|page| Arc::clone(page.batch())));
+    saved.push(Arc::new(
+        TemporalPageRecord::from_packed(&placement, payload, columns, batches, metadata, budget)
+            .map_err(|_| error())?,
+    ));
+    Ok(())
 }
 
 /// This read is performed synchronously at the accepted cut before handing the
 /// prefix to PostgreSQL. A retry reuses its fixed EncodedRows/SavePrefix bytes.
 pub(crate) fn pack_temporal_save(
-    state: &TemporalState,
-    world_id: &str,
+    cut: &crate::records::save::TemporalSaveCut<'_>,
+    existing_changes: &crate::records::ChangedRows,
     acknowledged_before: Option<u64>,
     limits: TemporalSaveLimits,
     schema: &RecordSchema,
     budget: &ByteBudget,
-) -> Result<EncodedRows, RecordEncodingError> {
+) -> Result<PackedTemporalSave, RecordEncodingError> {
+    let state = cut.temporal;
+    let world_id = cut.world_id;
     if limits.target_bytes == 0 || limits.row_bytes == 0 {
         return Err(error());
     }
@@ -402,6 +416,15 @@ pub(crate) fn pack_temporal_save(
                 .ok_or_else(error)?,
         )
         .map_err(|_| error())?;
+    let _saved_backing = budget
+        .reserve(
+            count
+                .checked_mul(2 * size_of::<Arc<TemporalPageRecord>>())
+                .ok_or_else(error)?,
+        )
+        .map_err(|_| error())?;
+    let mut saved = Vec::new();
+    saved.try_reserve_exact(count).map_err(|_| error())?;
     let mut pending = Vec::new();
     pending.try_reserve_exact(count).map_err(|_| error())?;
     for actor in state.actors.values() {
@@ -458,13 +481,35 @@ pub(crate) fn pack_temporal_save(
             if index > start
                 && estimated.checked_add(bytes).ok_or_else(error)? > limits.target_bytes
             {
-                flush(&pages[start..index], world_id, limits, &mut output, budget)?;
+                flush(
+                    &pages[start..index],
+                    world_id,
+                    limits,
+                    &mut output,
+                    &mut saved,
+                    budget,
+                )?;
                 start = index;
                 estimated = 0;
             }
             estimated = estimated.checked_add(bytes).ok_or_else(error)?;
         }
-        flush(&pages[start..], world_id, limits, &mut output, budget)?;
+        flush(
+            &pages[start..],
+            world_id,
+            limits,
+            &mut output,
+            &mut saved,
+            budget,
+        )?;
     }
-    output.finish()
+    let rows = output.finish()?;
+    let residency = SavedTemporalResidency::prepare(
+        cut,
+        saved,
+        existing_changes,
+        limits.resident_bytes,
+        budget,
+    )?;
+    Ok(PackedTemporalSave { rows, residency })
 }

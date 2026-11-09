@@ -28,11 +28,15 @@ impl From<RecordEncodingError> for SaveError {
 pub(crate) struct SavePrefix {
     rows: SaveRows,
     presence: BTreeMap<String, BTreeMap<String, bool>>,
+    temporal_residency: Arc<crate::received::SavedTemporalResidency>,
     _reservation: ByteReservation,
 }
 impl SavePrefix {
     pub(crate) fn rows(&self) -> &SaveRows {
         &self.rows
+    }
+    pub(crate) fn temporal_residency(&self) -> &Arc<crate::received::SavedTemporalResidency> {
+        &self.temporal_residency
     }
     fn presence(&self, table: &str, id: &str) -> Option<bool> {
         self.presence
@@ -316,8 +320,8 @@ impl SaveJournal {
             return Err(SaveError::Binding);
         }
         let pages = crate::received::pack_temporal_save(
-            cut.temporal,
-            cut.world_id,
+            &cut,
+            &self.suffix,
             Some(self.durable_identity_through),
             limits,
             schema,
@@ -359,7 +363,7 @@ impl SaveJournal {
             .resize(peak)
             .map_err(|_| SaveError::Capacity)?;
         let replacement = self.budget.reserve(0).map_err(|_| SaveError::Capacity)?;
-        let (pages, owners, pages_guard) = pages.into_parts();
+        let (pages, owners, pages_guard, temporal_residency) = pages.into_parts();
         let previous = std::mem::take(&mut self.suffix);
         let changes = merge_changes(previous, pages, schema)
             .expect("validated immutable save inputs with complete capacity admission");
@@ -386,6 +390,7 @@ impl SaveJournal {
                 changes,
             },
             presence,
+            temporal_residency,
             _reservation: reservation,
         });
         ledger
@@ -396,7 +401,10 @@ impl SaveJournal {
         Ok(prefix)
     }
 
-    pub(crate) fn acknowledge(&mut self, ack: SaveAcknowledgement<'_>) -> Result<(), SaveError> {
+    pub(crate) fn acknowledge(
+        &mut self,
+        ack: SaveAcknowledgement<'_>,
+    ) -> Result<Option<Arc<crate::received::SavedTemporalResidency>>, SaveError> {
         if ack.world_id != self.world_id || ack.generation != self.generation {
             return Err(SaveError::Binding);
         }
@@ -408,7 +416,7 @@ impl SaveJournal {
             identity_through: ack.identity_through,
         };
         if self.last_acknowledged == Some(completed) {
-            return Ok(());
+            return Ok(None);
         }
         let prefix = self.in_flight.as_ref().ok_or(SaveError::Binding)?;
         let rows = &prefix.rows;
@@ -427,11 +435,12 @@ impl SaveJournal {
         {
             return Err(SaveError::Revision);
         }
+        let residency = Arc::clone(prefix.temporal_residency());
         self.durable_revision = ack.revision;
         self.durable_identity_through = ack.identity_through;
         self.in_flight = None;
         self.last_acknowledged = Some(completed);
-        Ok(())
+        Ok(Some(residency))
     }
 
     pub(crate) fn durable_revision(&self) -> u64 {

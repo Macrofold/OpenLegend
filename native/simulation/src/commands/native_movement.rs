@@ -79,6 +79,7 @@ pub(crate) fn begin_native_stop(
         command,
         encoded,
         CommandOptions {
+            preview: false,
             native_controller: true,
             native_movement: None,
         },
@@ -178,6 +179,7 @@ pub(crate) fn begin_native_movement(
         command,
         encoded,
         CommandOptions {
+            preview: false,
             native_controller: true,
             native_movement: Some(NativeMovementInput { binding, route }),
         },

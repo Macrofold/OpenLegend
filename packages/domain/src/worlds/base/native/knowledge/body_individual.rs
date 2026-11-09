@@ -93,19 +93,8 @@ pub(crate) fn ensure_body_individual(
     if received.exposure.is_empty() {
         return Ok(None);
     }
-    let individual = loop {
-        let issued = core.state.physical.identity.allocate("individual")?;
-        if !core
-            .state
-            .reception
-            .observer_identities
-            .as_ref()
-            .and_then(|owners| owners.get(observer))
-            .is_some_and(|identities| identities.contains_key(&issued.id))
-        {
-            break issued.id;
-        }
-    };
+    let individual =
+        super::allocate_individual(&mut core.state.physical, &core.state.reception, observer)?;
     let identity = ObserverIdentity {
         retained: None,
         familiarity: None,

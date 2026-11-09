@@ -83,6 +83,7 @@ pub(crate) struct RetainedDefinitionInputs {
 }
 pub(crate) struct RetainedDefinitions {
     pub knowledge_policy: Option<RetainedOne>,
+    pub knowledge_limits: Option<crate::knowledge::KnowledgePolicy>,
     pub item_handling: RetainedOne,
     pub item_handling_read: ItemHandlingReadPolicy,
     pub gathering_policy: Option<RetainedOne>,
@@ -266,8 +267,12 @@ pub(crate) fn install_retained(
         .transpose()
         .map_err(|_| InstallError::CurrentFormat)?
         .flatten();
+    let knowledge_limits = knowledge_policy.as_ref()
+        .map(|policy| serde_json::from_str::<Option<crate::knowledge::KnowledgePolicy>>(policy.payload()))
+        .transpose().map_err(|_| InstallError::CurrentFormat)?.flatten();
     Ok(RetainedDefinitions {
         knowledge_policy,
+        knowledge_limits,
         item_handling,
         item_handling_read,
         gathering_policy: r.one(

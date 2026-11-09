@@ -2,6 +2,8 @@
 //! this journal together with values, identity, temporal and physical owners.
 //! This leaf does not install current grants or finalize attention/history.
 
+mod residency;
+pub(super) use residency::OriginalMetadata;
 mod save;
 
 use super::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -63,6 +65,7 @@ enum OriginalUndo {
         sequence: u64,
         received: Vec<Arc<ReceivedObservation>>,
         receipts: IndexMap<String, u64>,
+        storage: Option<OriginalMetadata>,
     },
     Append {
         observer: String,
@@ -75,6 +78,7 @@ enum OriginalUndo {
 pub(crate) struct OriginalJournal {
     undo: Vec<OriginalUndo>,
     reservation: ByteReservation,
+    budget: ByteBudget,
 }
 
 fn invalid() -> ReceivedError {
@@ -94,6 +98,7 @@ impl OriginalJournal {
         Ok(Self {
             undo: Vec::new(),
             reservation: budget.reserve(size_of::<Self>()).map_err(|_| capacity())?,
+            budget: budget.clone(),
         })
     }
     pub(crate) fn checkpoint(&self) -> OriginalCheckpoint {
@@ -112,10 +117,20 @@ impl OriginalJournal {
             .map_err(|_| capacity())
     }
     fn slot(&mut self, heap: usize) -> Result<(), ReceivedError> {
-        self.reserve(
-            heap.checked_add(2 * size_of::<OriginalUndo>())
-                .ok_or_else(capacity)?,
-        )?;
+        let next_capacity = if self.undo.len() == self.undo.capacity() {
+            self.undo
+                .capacity()
+                .checked_mul(2)
+                .ok_or_else(capacity)?
+                .max(4)
+        } else {
+            self.undo.capacity()
+        };
+        let growth = next_capacity
+            .checked_sub(self.undo.capacity())
+            .and_then(|n| n.checked_mul(size_of::<OriginalUndo>()))
+            .ok_or_else(capacity)?;
+        self.reserve(heap.checked_add(growth).ok_or_else(capacity)?)?;
         self.undo.try_reserve(1).map_err(|_| capacity())
     }
     pub(crate) fn rollback_to(
@@ -166,13 +181,20 @@ impl OriginalJournal {
                         return Err(invalid());
                     }
                     owner.received.pop();
-                    owner.receipts.shift_remove(&key);
+                    let (key, _) = owner
+                        .receipts
+                        .shift_remove_entry(&key)
+                        .ok_or_else(invalid)?;
+                    let key_bytes = key.capacity();
+                    drop(key);
+                    OriginalMetadata::removed(owner, key_bytes)?;
                 }
                 OriginalUndo::PhaseReset {
                     observer,
                     sequence,
                     received,
                     receipts,
+                    storage,
                 } => {
                     let owner = state
                         .perception_evidence
@@ -181,6 +203,7 @@ impl OriginalJournal {
                         .ok_or_else(invalid)?;
                     owner.received = received;
                     owner.receipts = receipts;
+                    owner.original_storage = storage;
                     owner.received_at_sequence = sequence;
                 }
                 OriginalUndo::OwnerInsert {
@@ -266,6 +289,7 @@ impl OriginalJournal {
                         }),
                         next_contact: 0,
                         received: Vec::new(),
+                        original_storage: Some(OriginalMetadata::empty(&self.budget)?),
                         receipts: IndexMap::new(),
                         current: IndexMap::new(),
                         gaps: IndexMap::new(),
@@ -279,27 +303,18 @@ impl OriginalJournal {
             .and_then(|owners| owners.get_mut(&observer.id))
             .ok_or_else(invalid)?;
         if owner.received_at_sequence != sequence {
-            let mut held = heap_sum([
-                observer.id.len(),
-                owner.received.capacity() * size_of::<Arc<ReceivedObservation>>(),
-                owner.receipts.heap_bytes().ok_or_else(capacity)?,
-            ])
-            .ok_or_else(capacity)?;
-            for original in &owner.received {
-                held = held
-                    .checked_add(
-                        size_of::<ReceivedObservation>()
-                            + 2 * size_of::<usize>()
-                            + original.heap_bytes().ok_or_else(capacity)?,
-                    )
-                    .ok_or_else(capacity)?;
-            }
+            // Bodies and the moved phase arrays/maps retain their own guards.
+            // Only the inverse's actor identifier is newly allocated here.
+            let held = observer.id.len();
             self.slot(held)?;
             self.undo.push(OriginalUndo::PhaseReset {
                 observer: observer.id.clone(),
                 sequence: owner.received_at_sequence,
                 received: std::mem::take(&mut owner.received),
                 receipts: std::mem::take(&mut owner.receipts),
+                storage: owner
+                    .original_storage
+                    .replace(OriginalMetadata::empty(&self.budget)?),
             });
             owner.received_at_sequence = sequence;
         }
@@ -345,33 +360,19 @@ impl OriginalJournal {
             )?)
             .ok_or_else(capacity)
         })?;
-        self.slot(
-            heap_sum([
-                observer.len(),
-                owner.received.iter().try_fold(
-                    owner
-                        .received
-                        .capacity()
-                        .checked_mul(size_of::<Arc<ReceivedObservation>>())
-                        .ok_or_else(capacity)?,
-                    |sum, o| {
-                        heap_sum([
-                            sum,
-                            size_of::<ReceivedObservation>(),
-                            2 * size_of::<usize>(),
-                            o.heap_bytes().ok_or_else(capacity)?,
-                        ])
-                        .ok_or_else(capacity)
-                    },
-                )?,
-                owner.receipts.heap_bytes().ok_or_else(capacity)?,
-                retained
-                    .checked_mul(size_of::<Arc<ReceivedObservation>>())
-                    .ok_or_else(capacity)?,
-                map_storage::<String, u64>(retained).ok_or_else(capacity)?,
-                keys,
-            ])
-            .ok_or_else(capacity)?,
+        self.slot(observer.len())?;
+        // The selected phase has a new pointer/key allocation; old arrays and
+        // immutable bodies move to the inverse without another body charge.
+        let mut storage = OriginalMetadata::projection(
+            &self.budget,
+            retained,
+            retained
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(1))
+                .ok_or_else(capacity)?,
+            keys.checked_mul(2)
+                .and_then(|n| n.checked_add(retained.checked_mul(8)?))
+                .ok_or_else(capacity)?,
         )?;
         let mut received = Vec::new();
         received
@@ -392,6 +393,7 @@ impl OriginalJournal {
             receipts.insert(key, received.len() as u64);
             received.push(Arc::clone(original));
         }
+        storage.settle(received.capacity(), &receipts)?;
         let owner = state
             .perception_evidence
             .as_mut()
@@ -402,6 +404,7 @@ impl OriginalJournal {
             sequence: owner.received_at_sequence,
             received: std::mem::replace(&mut owner.received, received),
             receipts: std::mem::replace(&mut owner.receipts, receipts),
+            storage: owner.original_storage.replace(storage),
         });
         owner.received_at_sequence = sequence;
         Ok(())
@@ -474,6 +477,7 @@ impl OriginalJournal {
             sequence,
             identity,
             limits,
+            &self.budget,
         )?;
         let mut added_bytes = header.added_bytes;
         let original_id = identity
@@ -508,6 +512,7 @@ impl OriginalJournal {
                     sequence,
                     identity,
                     limits,
+                    &self.budget,
                 )?;
                 added_bytes = add(added_bytes, retained.1)?;
                 Ok(ReceivedObservationFacet {
@@ -523,7 +528,7 @@ impl OriginalJournal {
                 })
             })
             .collect::<Result<Vec<_>, ReceivedError>>()?;
-        let original = ReceivedObservation {
+        let mut original = ReceivedObservation {
             id: original_id,
             revision: 1,
             origin: input.origin,
@@ -531,6 +536,7 @@ impl OriginalJournal {
             context: input.context,
             header_ref: header.reference,
             facets,
+            storage: None,
         };
         let encoded = json_record(&original).map_err(|_| invalid())?;
         meters
@@ -548,16 +554,14 @@ impl OriginalJournal {
             2 * observer.id.len()
                 + 2 * key.len()
                 + original.id.len()
-                + size_of::<ReceivedObservation>()
-                + original.heap_bytes().ok_or_else(capacity)?,
+                + residency::body_bytes(&original)?,
         )?;
         let owner = state
             .perception_evidence
             .as_mut()
             .and_then(|owners| owners.get_mut(&observer.id))
             .ok_or_else(invalid)?;
-        owner.received.try_reserve(1).map_err(|_| capacity())?;
-        owner.receipts.try_reserve(1).map_err(|_| capacity())?;
+        OriginalMetadata::prepare_append(owner, &key)?;
         let position = owner.received.len();
         self.undo.push(OriginalUndo::Append {
             observer: observer.id.clone(),
@@ -565,6 +569,11 @@ impl OriginalJournal {
             position,
             original_id: original.id.clone(),
         });
+        original.storage = Some(
+            self.reservation
+                .split_off(residency::body_bytes(&original)?)
+                .map_err(|_| capacity())?,
+        );
         let source = Arc::new(original);
         owner.receipts.insert(key, position as u64);
         owner.received.push(Arc::clone(&source));
@@ -603,15 +612,13 @@ impl OriginalJournal {
             .position(|held| held.id == source.id && held.revision == source.revision)
             .ok_or_else(invalid)?;
         self.slot(
-            heap_sum([
-                observer.len(),
-                size_of::<ReceivedObservation>(),
-                2 * size_of::<usize>(),
-                source.heap_bytes().ok_or_else(capacity)?,
-            ])
-            .ok_or_else(capacity)?,
+            heap_sum([observer.len(), residency::body_bytes(source)?]).ok_or_else(capacity)?,
         )?;
-        let mut after = source.as_ref().clone();
+        let storage = self
+            .reservation
+            .split_off(residency::body_bytes(source)?)
+            .map_err(|_| capacity())?;
+        let mut after = source.copy_with_storage(storage);
         after.context.as_mut().ok_or_else(invalid)?.attended = true;
         let after = Arc::new(after);
         let received = &mut state
@@ -682,6 +689,7 @@ pub(super) fn retain_facet(
     sequence: u64,
     identity: &mut IdentityState,
     limits: &Arc<ActivityDisplayLimits>,
+    budget: &ByteBudget,
 ) -> Result<(ReceivedFacetValue, u64), ReceivedError> {
     let kind = value.kind().to_owned();
     let mut added = 0;
@@ -708,6 +716,7 @@ pub(super) fn retain_facet(
                 sequence,
                 identity,
                 limits,
+                budget,
             )?;
             added = add(added, retained.added_bytes)?;
             reception = Some(FacetReception::Body {
@@ -730,6 +739,7 @@ pub(super) fn retain_facet(
                 sequence,
                 identity,
                 limits,
+                budget,
             )?;
             added = add(added, retained.added_bytes)?;
             reception = Some(FacetReception::Location {
@@ -757,6 +767,7 @@ pub(super) fn retain_facet(
         sequence,
         identity,
         limits,
+        budget,
     )?;
     Ok((
         ReceivedFacetValue {

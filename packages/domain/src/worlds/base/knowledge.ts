@@ -913,6 +913,12 @@ export function assignGivenName(
     return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
   if (current?.givenName === edit.givenName.trim() && (!authored || current.authored))
     return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
+  if (!nameRevisionsAvailable(world, observerId, current?.revision ?? 0))
+    return outcome(
+      false,
+      'identity-revision-exhausted',
+      'The preferred name cannot accept another revision; its previous value was retained.',
+    );
   const identities = ((world.observerIdentities ??= {})[observerId] ??= {});
   const individualId = current?.individualId ?? allocateObserverIndividual(world, observerId);
   const held = retainNameEvidence(world, observerId, evidenceIds);
@@ -1158,6 +1164,13 @@ export interface SubjectNameEdit {
   expectedRevision: number;
   givenName: string;
 }
+function nameRevisionsAvailable(world: WorldState, actorId: string, revision: number): boolean {
+  // Explicit edits must not write a value that current-format loading rejects.
+  return (
+    Number.isSafeInteger(revision + 1) &&
+    Number.isSafeInteger((world.knowledgeRevisions?.[actorId] ?? 0) + 1)
+  );
+}
 /** A private name labels an already supported individual. It creates neither a
  * physical body reference nor new familiarity. */
 export function assignSubjectName(
@@ -1221,6 +1234,12 @@ export function assignSubjectName(
     return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
   if (identity.givenName === edit.givenName.trim())
     return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
+  if (!nameRevisionsAvailable(world, observerId, identity.revision))
+    return outcome(
+      false,
+      'identity-revision-exhausted',
+      'The preferred name cannot accept another revision; its previous value was retained.',
+    );
   const held = retainNameEvidence(world, observerId, evidenceIds);
   if (!held)
     return outcome(

@@ -2,6 +2,7 @@
 //! A physical page is a packing unit; logical receipt addresses and ordinals
 //! remain owned by the original receiver and batch.
 
+use super::TemporalBatch;
 use super::{
     ReceivedBatch, ReceivedChargeDirectory, ReceivedEntry, ReceivedEntryKind, ReceivedError,
     ReceivedValues, TemporalReceipt, TemporalReceiptLocator, TemporalValueMeaning,
@@ -9,6 +10,8 @@ use super::{
     received_record_value_references, temporal_receipt_change_count,
 };
 use crate::encoding::json_record;
+use crate::host::{ByteBudget, ByteReservation};
+mod residency;
 use crate::records::InstalledRow;
 use crate::values::{deserialize_safe_integer, is_safe_record_id};
 use indexmap::IndexSet;
@@ -93,7 +96,7 @@ pub fn temporal_page_metadata(
     actor_id: &str,
     physical_life: u64,
     epoch: &str,
-    batches: &[Arc<ReceivedBatch>],
+    batches: &[Arc<TemporalBatch>],
     values: &ReceivedValues,
     meaning: Option<&dyn TemporalValueMeaning>,
 ) -> Result<TemporalPageMetadata, ReceivedError> {
@@ -238,8 +241,12 @@ pub struct TemporalPageRecord {
     physical_life: u64,
     epoch: String,
     order: u64,
-    batches: Vec<Arc<ReceivedBatch>>,
+    batches: Vec<Arc<TemporalBatch>>,
     metadata: TemporalPageMetadata,
+    // The same edited batch-object lifetime that Source's saved WeakSet tracks.
+    // It is operational custody, never a saved identity, time or RNG draw.
+    edit_identity: Option<Arc<()>>,
+    storage: Option<ByteReservation>,
 }
 
 impl TemporalPageRecord {
@@ -248,9 +255,10 @@ impl TemporalPageRecord {
     /// batch, as the existing page writer does; receipt coordinates never move.
     pub(super) fn replace_batches(
         &self,
-        batches: Vec<Arc<ReceivedBatch>>,
+        batches: Vec<Arc<TemporalBatch>>,
         values: &ReceivedValues,
         meaning: &dyn TemporalValueMeaning,
+        budget: &ByteBudget,
     ) -> Result<Option<Self>, ReceivedError> {
         if batches.is_empty() {
             return Ok(None);
@@ -295,21 +303,26 @@ impl TemporalPageRecord {
             &self.epoch,
             payload.len(),
         )?;
-        Ok(Some(Self {
-            id: self.id.clone(),
-            row_id: self.row_id.clone(),
-            parent: self.parent.clone(),
-            slot: self.slot.clone(),
-            position: batches[0].batch_order,
-            payload: Arc::from(payload),
-            columns: Arc::from(columns),
-            actor_id: self.actor_id.clone(),
-            physical_life: self.physical_life,
-            epoch: self.epoch.clone(),
-            order: self.order,
-            batches,
-            metadata,
-        }))
+        Ok(Some(
+            Self {
+                id: self.id.clone(),
+                row_id: self.row_id.clone(),
+                parent: self.parent.clone(),
+                slot: self.slot.clone(),
+                position: batches[0].batch_order,
+                payload: Arc::from(payload),
+                columns: Arc::from(columns),
+                actor_id: self.actor_id.clone(),
+                physical_life: self.physical_life,
+                epoch: self.epoch.clone(),
+                order: self.order,
+                batches,
+                metadata,
+                storage: None,
+                edit_identity: Some(Arc::new(())),
+            }
+            .fund(budget)?,
+        ))
     }
     pub fn install(
         row: InstalledRow,
@@ -317,6 +330,7 @@ impl TemporalPageRecord {
         through: f64,
         values: &ReceivedValues,
         meaning: Option<&dyn TemporalValueMeaning>,
+        budget: &ByteBudget,
     ) -> Result<Self, ReceivedError> {
         let page: StoredPage = serde_json::from_str(&row.payload)
             .map_err(|_| ReceivedError("Invalid current temporal page encoding."))?;
@@ -385,7 +399,7 @@ impl TemporalPageRecord {
                 }
                 previous = Some(entry.entry_index);
             }
-            batches.push(Arc::new(batch));
+            batches.push(TemporalBatch::from_owned(batch, budget)?);
         }
         let metadata = temporal_page_metadata(
             actor_id,
@@ -436,7 +450,68 @@ impl TemporalPageRecord {
             order: page.order,
             batches,
             metadata,
-        })
+            storage: None,
+            edit_identity: None,
+        }
+        .fund(budget)?)
+    }
+    pub(crate) fn edit_identity(&self) -> Option<&Arc<()>> {
+        self.edit_identity.as_ref()
+    }
+    pub(crate) fn inherit_edit_identity(&mut self, previous: &Self) -> Result<(), ReceivedError> {
+        if self.row_id == previous.row_id && self.payload == previous.payload {
+            if self.edit_identity.is_none() && previous.edit_identity.is_some() {
+                let storage = self
+                    .storage
+                    .as_mut()
+                    .ok_or(ReceivedError("Temporal page has no resident allowance."))?;
+                storage
+                    .resize(
+                        storage
+                            .bytes()
+                            .checked_add(2 * std::mem::size_of::<usize>())
+                            .ok_or(ReceivedError("Temporal page allocation overflow."))?,
+                    )
+                    .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?;
+            }
+            self.edit_identity = previous.edit_identity.clone();
+        }
+        Ok(())
+    }
+    pub(crate) fn from_packed(
+        placement: &crate::records::RecordPlacement,
+        payload: String,
+        columns: Vec<crate::records::SqlCell>,
+        batches: Vec<Arc<TemporalBatch>>,
+        metadata: TemporalPageMetadata,
+        budget: &ByteBudget,
+    ) -> Result<Self, ReceivedError> {
+        let first = batches
+            .first()
+            .ok_or(ReceivedError("Packed temporal page has no batch."))?;
+        let actor_id = first.actor_id.clone();
+        let physical_life = first.physical_life;
+        let epoch = first.epoch.clone();
+        Self {
+            id: placement.slot.clone(),
+            row_id: placement.id.clone(),
+            parent: placement.parent.clone(),
+            slot: placement.slot.clone(),
+            position: placement.position,
+            payload: Arc::from(payload),
+            columns: Arc::from(columns),
+            actor_id,
+            physical_life,
+            epoch,
+            order: metadata
+                .first_batch_order
+                .ok_or(ReceivedError("Packed temporal page has no order."))?,
+            batches,
+            metadata,
+            storage: None,
+            edit_identity: None,
+        }
+        .fund(budget)
     }
     pub fn id(&self) -> &str {
         &self.id
@@ -474,7 +549,7 @@ impl TemporalPageRecord {
     pub fn metadata(&self) -> &TemporalPageMetadata {
         &self.metadata
     }
-    pub fn batches(&self) -> impl Iterator<Item = &Arc<ReceivedBatch>> {
+    pub fn batches(&self) -> impl Iterator<Item = &Arc<TemporalBatch>> {
         self.batches.iter()
     }
     pub fn receipt(

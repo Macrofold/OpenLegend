@@ -48,6 +48,7 @@ pub(crate) struct CompleteTemporalPages {
     durable_revision: u64,
     coverage: OwnerCoverage,
     rows: Vec<InstalledRow>,
+    received_values: Vec<InstalledRow>,
 }
 fn error() -> ReceivedError {
     ReceivedError("Temporal physical read is incomplete, stale or differs from accepted contents.")
@@ -145,7 +146,7 @@ pub(crate) fn materialize_temporal_pages(
     }
     let mut bytes =
         map_storage::<String, u64>(response.rows.len()).ok_or(ExecutionError::Capacity)?;
-    for row in &response.rows {
+    for row in response.rows.iter().chain(&response.received_values) {
         bytes = heap_sum([
             bytes,
             crate::experience::encoded_body_bound(&row.payload)?,
@@ -161,6 +162,51 @@ pub(crate) fn materialize_temporal_pages(
         .ok_or(ExecutionError::Capacity)?;
     }
     let reservation = budget.reserve(bytes)?;
+    // The provider closure is exactly this selected physical page set. Rich
+    // pool residence grants no actor access, but unrelated bodies are not input.
+    {
+        let layout = core
+            .state
+            .installed
+            .schema
+            .layout("mind_temporal_pages")
+            .map_err(|_| error())?;
+        let column = layout
+            .columns
+            .iter()
+            .position(|name| name == "value_refs")
+            .ok_or_else(error)?;
+        let mut required = std::collections::BTreeSet::new();
+        for row in &response.rows {
+            for value in row
+                .extra
+                .get(column)
+                .and_then(crate::records::SqlCell::as_array)
+                .ok_or_else(error)?
+            {
+                required.insert(value.as_str().ok_or_else(error)?);
+            }
+        }
+        let mut supplied = std::collections::BTreeSet::new();
+        for row in &response.received_values {
+            if !required.contains(row.slot.as_str()) || !supplied.insert(row.slot.as_str()) {
+                return Err(error().into());
+            }
+        }
+        if supplied != required {
+            return Err(error().into());
+        }
+    }
+    core.state
+        .reception
+        .received_values
+        .as_mut()
+        .ok_or_else(error)?
+        .load_rows(
+            response.received_values,
+            request.at,
+            core.state.physical.header.sequence,
+        )?;
     let values = core
         .state
         .reception
@@ -172,13 +218,24 @@ pub(crate) fn materialize_temporal_pages(
     let mut ids = IndexMap::new();
     let mut batches = IndexMap::new();
     for row in response.rows {
-        let page = Arc::new(TemporalPageRecord::install(
+        let mut page = TemporalPageRecord::install(
             row,
             &request.actor_id,
             request.at,
             values,
             Some(&meaning),
-        )?);
+            budget,
+        )?;
+        if let Some(previous) = core
+            .state
+            .temporal
+            .actors
+            .get(&request.actor_id)
+            .and_then(|actor| actor.pages.get(&page.position()))
+        {
+            page.inherit_edit_identity(previous)?;
+        }
+        let page = Arc::new(page);
         if page.position() >= response.coverage.next_ordinal
             || ids
                 .insert(page.row_id().to_owned(), page.position())
@@ -265,6 +322,7 @@ pub(crate) fn materialize_temporal_pages(
         actor_id: request.actor_id,
         before: std::mem::replace(&mut actor.pages, pages),
         pending: std::mem::take(&mut actor.pending_pages),
+        pending_storage: std::mem::replace(&mut actor.pending_storage, budget.reserve(0)?),
         complete: actor.complete_pages,
         next_ordinal: actor.page_order_upper_bound,
     });

@@ -86,6 +86,7 @@ import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent 
 import {
   selectedRecordingReason,
   selectedAccountAfterRelease,
+  selectedOccurrenceRules,
   selectedTemporalPolicy,
   selectedRetainRecognitionEvidence,
 } from './world-composition.js';
@@ -1993,7 +1994,7 @@ export function rememberInterpretation(
       summary: text.trim(),
       at: through,
       entityIds: [],
-      importance: 5,
+      importance: selectedOccurrenceRules(world).response.interpretation.importance,
       retention: {
         reason: 'deliberate',
         afterRelease: selectedAccountAfterRelease(world, { source: 'summary', own: true }),

@@ -1,7 +1,7 @@
 //! Indexed columns cross as their actual JavaScript values. Using serde_json's
 //! UTF-8 String conversion here would reject or replace retained UTF-16 units.
-use napi::bindgen_prelude::{Array, Null, Object, ToNapiValue, Utf16String};
-use napi::{Env, Error, Result, Status, sys};
+use napi::bindgen_prelude::{Array, JsObjectValue, Null, Object, ToNapiValue, Utf16String};
+use napi::{Env, Error, Property, Result, Status, sys};
 use openlegend_simulation::{records::SqlCell, text::JsText};
 
 pub struct NativeSqlCell(pub SqlCell);
@@ -41,7 +41,28 @@ impl ToNapiValue for NativeSqlCell {
                 let env = Env::from(raw_env);
                 let mut object = Object::new(&env)?;
                 for (key, value) in values {
-                    object.set(key, Self(value))?;
+                    // JSON objects own data properties. Defining the property
+                    // also preserves a literal `__proto__` key instead of
+                    // invoking Object.prototype's inherited setter.
+                    let property = Property::new()
+                        .with_name(&env, key)?
+                        .with_napi_value(&env, Self(value))?;
+                    object.define_properties(&[property])?;
+                }
+                unsafe { ToNapiValue::to_napi_value(raw_env, &object) }
+            }
+            SqlCell::ExactObject(values) => {
+                let env = Env::from(raw_env);
+                let mut object = Object::new(&env)?;
+                // Each property consumes the parent's funded member buffers.
+                // The detached save/read product must retain its output custody
+                // through Node consumption; this UTF16 conversion creates no
+                // additional temporary key/member vector.
+                for (key, value) in values.into_members() {
+                    let property = Property::new()
+                        .with_name(&env, Self(SqlCell::Text(key)))?
+                        .with_napi_value(&env, Self(value))?;
+                    object.define_properties(&[property])?;
                 }
                 unsafe { ToNapiValue::to_napi_value(raw_env, &object) }
             }

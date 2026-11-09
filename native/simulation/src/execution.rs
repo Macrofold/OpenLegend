@@ -127,6 +127,7 @@ pub(crate) enum ActionFinish {
 }
 
 struct CandidateFrame {
+    knowledge: crate::knowledge::KnowledgeCheckpoint,
     encounters: crate::events::EncounterCheckpoint,
     appraisals: crate::appraisals::AppraisalCheckpoint,
     cognition: crate::cognition::CognitionCheckpoint,
@@ -158,6 +159,7 @@ pub(crate) struct CandidateCheckpoint {
 /// token certifies semantic closure; Ready additionally needs complete encoded
 /// output, save/host admission and the actual current authority/input checks.
 pub(crate) struct CandidateJournal {
+    pub knowledge: crate::knowledge::KnowledgeJournal,
     owner: Arc<()>,
     base_cut: u64,
     installed: Arc<crate::simulation::InstalledWorld>,
@@ -185,6 +187,7 @@ pub(crate) struct CandidateJournal {
     root_activity: ActivityCheckpoint,
     root_experience: ExperienceCheckpoint,
     root_commands: CommandCheckpoint,
+    root_knowledge: crate::knowledge::KnowledgeCheckpoint,
     root_responses: crate::response::ResponseCheckpoint,
     root_recognition: crate::worlds::InstalledRecognitionCheckpoint,
     root_cognition: crate::cognition::CognitionCheckpoint,
@@ -219,6 +222,13 @@ impl CandidateJournal {
         budget: &ByteBudget,
     ) -> Result<(), crate::records::RecordEncodingError> {
         let reception = &state.reception;
+        self.knowledge.encode_changes(
+            &reception.actor_knowledge,
+            &state.installed.schema,
+            &state.records,
+            output,
+            budget,
+        )?;
         let schema = &state.installed.schema;
         let records = &state.records;
         crate::reception::encode_perception_owner_changes(
@@ -405,6 +415,8 @@ impl CandidateJournal {
         let experience = ExperienceJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
         let root_experience = experience.checkpoint();
         let commands = CommandJournal::new(budget)?;
+        let knowledge = crate::knowledge::KnowledgeJournal::new(budget)?;
+        let root_knowledge = knowledge.checkpoint(&state.reception.actor_knowledge);
         let root_commands = commands.checkpoint();
         let responses = crate::response::ResponseJournal::new(budget)?;
         let root_responses = responses.checkpoint();
@@ -433,6 +445,7 @@ impl CandidateJournal {
             activity,
             experience,
             commands,
+            knowledge,
             responses,
             acquisitions,
             recognition,
@@ -450,6 +463,7 @@ impl CandidateJournal {
             root_activity,
             root_experience,
             root_commands,
+            root_knowledge,
             root_responses,
             root_recognition,
             sensory_cursor,
@@ -488,6 +502,7 @@ impl CandidateJournal {
             depth: self.frames.len(),
         };
         self.frames.push(CandidateFrame {
+            knowledge: self.knowledge.checkpoint(&state.reception.actor_knowledge),
             encounters,
             appraisals: state.appraisals.checkpoint(),
             cognition: self.cognition.checkpoint(),
@@ -560,6 +575,8 @@ impl CandidateJournal {
             .map_err(ExecutionError::Activity)?;
         self.commands
             .rollback_to(&mut state.commands, frame.commands)?;
+        self.knowledge
+            .rollback_to(&mut state.reception.actor_knowledge, frame.knowledge)?;
         self.responses
             .rollback_to(&mut state.responses, frame.responses)?;
         self.experience
@@ -617,6 +634,8 @@ impl CandidateJournal {
             .map_err(ExecutionError::Activity)?;
         self.commands
             .rollback_to(&mut state.commands, self.root_commands)?;
+        self.knowledge
+            .rollback_to(&mut state.reception.actor_knowledge, self.root_knowledge)?;
         self.responses
             .rollback_to(&mut state.responses, self.root_responses)?;
         self.experience
@@ -940,6 +959,16 @@ impl CoreMutation<'_> {
             order,
             sequence,
             at: self.state.physical.header.sim_time,
+        })
+    }
+    /// The automatic family may create only from a still-owned freshly issued
+    /// original when historical outcomes are cold; a past event is no negative
+    /// lookup proof merely because its active scope is complete.
+    pub(crate) fn owns_pending_occurrence(&self, event: &crate::events::WorldEvent) -> bool {
+        self.journal.pending.iter().any(|pending| {
+            pending.token.id == event.id
+                && Some(pending.token.order) == event.order
+                && pending.token.sequence == event.sequence
         })
     }
     pub(crate) fn acquired_occurrence(

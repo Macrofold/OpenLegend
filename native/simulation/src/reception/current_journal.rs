@@ -846,18 +846,8 @@ impl CurrentJournal {
                     added = added.checked_add(1).ok_or_else(capacity)?;
                 }
             }
-            for original in contact.content.originals.values() {
-                if !self.retained.contains(&(Arc::as_ptr(original) as usize)) {
-                    bytes = heap_sum([
-                        bytes,
-                        size_of::<ReceivedObservation>(),
-                        2 * size_of::<usize>() + align_of::<ReceivedObservation>() - 1,
-                        original.heap_bytes().ok_or_else(capacity)?,
-                    ])
-                    .ok_or_else(capacity)?;
-                    added = added.checked_add(1).ok_or_else(capacity)?;
-                }
-            }
+            // Canonical originals retain their own allowance through each Arc;
+            // this journal copies only contact metadata and pointers.
             if let Some(payload) = &contact.encoded_payload {
                 if !self
                     .retained
@@ -889,9 +879,6 @@ impl CurrentJournal {
                 self.retained
                     .insert(Arc::as_ptr(&group.field_identity) as usize);
                 self.retained.insert(Arc::as_ptr(&group.received) as usize);
-            }
-            for original in contact.content.originals.values() {
-                self.retained.insert(Arc::as_ptr(original) as usize);
             }
             if let Some(payload) = &contact.encoded_payload {
                 self.retained

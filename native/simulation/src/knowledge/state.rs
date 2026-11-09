@@ -182,6 +182,56 @@ impl KnowledgeJournal {
         state.metadata.resize(bytes)?;
         Ok(())
     }
+    pub(super) fn ensure_observer(
+        &mut self,
+        state: &mut KnowledgeState,
+        actor: &str,
+    ) -> Result<(), ExecutionError> {
+        if state
+            .documents
+            .as_ref()
+            .is_some_and(|root| root.contains_key(actor))
+        {
+            return Ok(());
+        }
+        let root = state.documents.as_ref();
+        let growth = if root.is_none_or(|root| root.len() == root.capacity()) {
+            map_storage::<String, IndexMap<String, KnowledgeEntry>>(
+                root.map_or(3, |root| ((root.len() + 1) * 2).max(3)),
+            )
+            .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        state.metadata.resize(
+            state
+                .metadata
+                .bytes()
+                .checked_add(growth)
+                .and_then(|n| n.checked_add(actor.len()))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.reservation.resize(
+            self.reservation
+                .bytes()
+                .checked_add(4 * size_of::<KnowledgeUndo>())
+                .and_then(|n| n.checked_add(actor.len()))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.undo
+            .try_reserve(1)
+            .map_err(|_| ExecutionError::Capacity)?;
+        let root = state.documents.get_or_insert_with(IndexMap::new);
+        root.try_reserve(1).map_err(|_| ExecutionError::Capacity)?;
+        root.insert(actor.into(), IndexMap::new());
+        self.undo.push(KnowledgeUndo::Observer {
+            actor: actor.into(),
+        });
+        state
+            .metadata
+            .resize(state.metadata_bytes().ok_or(ExecutionError::Capacity)?)?;
+        Ok(())
+    }
     pub(super) fn replace(
         &mut self,
         state: &mut KnowledgeState,
@@ -193,31 +243,20 @@ impl KnowledgeJournal {
         if storage.bytes() < document.heap_bytes().ok_or(ExecutionError::Capacity)? {
             return Err(ExecutionError::Capacity);
         }
-        let root = state.documents.as_ref();
-        let docs = root.and_then(|root| root.get(actor));
-        let new_observer = docs.is_none();
-        let new_document = docs.is_none_or(|docs| !docs.contains_key(&key));
-        let root_growth = if new_observer && root.is_none_or(|root| root.len() == root.capacity()) {
-            map_storage::<String, IndexMap<String, KnowledgeEntry>>(
-                root.map_or(1, |root| (root.len() + 1) * 2),
-            )
-            .ok_or(ExecutionError::Capacity)?
-        } else {
-            0
-        };
-        let doc_growth = if new_document && docs.is_none_or(|docs| docs.len() == docs.capacity()) {
-            map_storage::<String, KnowledgeEntry>(docs.map_or(1, |docs| (docs.len() + 1) * 2))
+        let docs = state
+            .documents
+            .as_ref()
+            .and_then(|root| root.get(actor))
+            .ok_or(ExecutionError::Invariant)?;
+        let new_document = !docs.contains_key(&key);
+        let doc_growth = if new_document && docs.len() == docs.capacity() {
+            map_storage::<String, KnowledgeEntry>(((docs.len() + 1) * 2).max(3))
                 .ok_or(ExecutionError::Capacity)?
         } else {
             0
         };
-        let added = heap_sum([
-            root_growth,
-            doc_growth,
-            if new_observer { actor.len() } else { 0 },
-            if new_document { key.capacity() } else { 0 },
-        ])
-        .ok_or(ExecutionError::Capacity)?;
+        let added = heap_sum([doc_growth, if new_document { key.capacity() } else { 0 }])
+            .ok_or(ExecutionError::Capacity)?;
         state.metadata.resize(
             state
                 .metadata
@@ -240,15 +279,11 @@ impl KnowledgeJournal {
         self.undo
             .try_reserve(2)
             .map_err(|_| ExecutionError::Capacity)?;
-        let root = state.documents.get_or_insert_with(IndexMap::new);
-        if new_observer {
-            root.try_reserve(1).map_err(|_| ExecutionError::Capacity)?;
-            root.insert(actor.into(), IndexMap::new());
-            self.undo.push(KnowledgeUndo::Observer {
-                actor: actor.into(),
-            });
-        }
-        let docs = root.get_mut(actor).ok_or(ExecutionError::Invariant)?;
+        let docs = state
+            .documents
+            .as_mut()
+            .and_then(|root| root.get_mut(actor))
+            .ok_or(ExecutionError::Invariant)?;
         if new_document {
             docs.try_reserve(1).map_err(|_| ExecutionError::Capacity)?;
         }

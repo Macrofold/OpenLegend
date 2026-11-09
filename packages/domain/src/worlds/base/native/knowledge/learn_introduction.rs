@@ -1,7 +1,7 @@
 //! A heard introduction may rename only the listener's supported individual.
 //! The canonical speaker is never a substitute for an acquired subject.
 
-use super::name_evidence::{release_created, retain_name_evidence};
+use super::name_evidence::{release_created, retain_event_evidence};
 use super::{HeardIntroductions, ObserverIdentity, PersonalNameReader};
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::experience::Awareness;
@@ -22,7 +22,7 @@ fn reader<'a>(
         observer,
     )?)
 }
-fn clone_identity(
+pub(super) fn clone_identity(
     prior: &ObserverIdentity,
     name: &crate::text::JsText,
     budget: &ByteBudget,
@@ -64,7 +64,7 @@ fn current_local(
     }
     Ok(false)
 }
-fn can_name(
+pub(super) fn can_name(
     reader: &PersonalNameReader<'_>,
     subject: &ObserverSubject,
     identity: &ObserverIdentity,
@@ -132,7 +132,7 @@ fn assign_individual(
     let key_reservation = budget.reserve(key.len())?;
     let key = key.to_owned();
     drop(names);
-    let Some(held) = retain_name_evidence(core, observer, event, None, budget)? else {
+    let Some(held) = retain_event_evidence(core, observer, event, None, budget)? else {
         return Ok(());
     };
     let super::name_evidence::HeldNameEvidence {
@@ -142,11 +142,13 @@ fn assign_individual(
     } = held;
     candidate.name_evidence_ids = Some(ids);
     if commit_observer_identity(core, observer, &key, candidate, budget)? {
-        core.journal
-            .recognition
-            .advance_revision(&mut core.state.reception, observer)?;
+        core.journal.recognition.advance_revision(
+            &mut core.state.reception,
+            observer,
+            &mut core.journal.cognition,
+        )?;
     } else {
-        release_created(core, observer, created.as_deref(), budget)?;
+        release_created(core, observer, &created, budget)?;
     }
     drop(key_reservation);
     Ok(())
@@ -178,7 +180,7 @@ fn assign_entity(
         .get(target)
         .is_some_and(|entity| entity.actor.is_some());
     let permitted = if target_actor {
-        names.remembered(target)
+        names.can_address_remembered_subject(target)
             || names
                 .current_body_association(target)?
                 .and_then(|subject| names.observer_individual(subject))
@@ -254,7 +256,7 @@ fn assign_entity(
         .ok_or(ExecutionError::Invariant)?;
     let _key_reservation = budget.reserve(key.len())?;
     let key = key.to_owned();
-    let Some(held) = retain_name_evidence(core, observer, event, None, budget)? else {
+    let Some(held) = retain_event_evidence(core, observer, event, None, budget)? else {
         return Ok(());
     };
     let super::name_evidence::HeldNameEvidence {
@@ -264,11 +266,13 @@ fn assign_entity(
     } = held;
     candidate.name_evidence_ids = Some(ids);
     if commit_observer_identity(core, observer, &key, candidate, budget)? {
-        core.journal
-            .recognition
-            .advance_revision(&mut core.state.reception, observer)?;
+        core.journal.recognition.advance_revision(
+            &mut core.state.reception,
+            observer,
+            &mut core.journal.cognition,
+        )?;
     } else {
-        release_created(core, observer, created.as_deref(), budget)?;
+        release_created(core, observer, &created, budget)?;
     }
     Ok(())
 }
@@ -342,7 +346,7 @@ pub(crate) fn learn_heard_introductions(
             let (mut candidate, _candidate_reservation) =
                 clone_identity(seed, heard.name(), budget)?;
             let Some(held) =
-                retain_name_evidence(core, observer, heard.event_id(), Some(evidence), budget)?
+                retain_event_evidence(core, observer, heard.event_id(), Some(evidence), budget)?
             else {
                 continue;
             };
@@ -353,7 +357,7 @@ pub(crate) fn learn_heard_introductions(
             } = held;
             candidate.name_evidence_ids = Some(ids);
             if !commit_observer_identity(core, observer, &key, candidate, budget)? {
-                release_created(core, observer, created.as_deref(), budget)?;
+                release_created(core, observer, &created, budget)?;
             }
             // A voice seed is still a provisional sample. Source changes no
             // identity revision or knowledge revision at this branch.

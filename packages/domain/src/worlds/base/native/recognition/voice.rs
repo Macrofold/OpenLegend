@@ -20,6 +20,7 @@ use crate::reception::{
 use crate::simulation::{InstalledWorld, PhysicalState};
 use crate::values::AttributeValue;
 use crate::worlds::base_knowledge::ObserverIdentity;
+use crate::worlds::base_knowledge::allocate_individual;
 use std::mem::size_of;
 
 fn invalid() -> ReceivedError {
@@ -306,6 +307,7 @@ impl VoiceReceptionPreparation {
         let ranks = collation(self.comparisons.finish(answer))?;
         let mut receiving = ReceivingMutation {
             experience: &core.state.experience,
+            cognition: &mut core.journal.cognition,
             current: &mut core.journal.current,
             acquisitions: &mut core.journal.acquisitions,
             meters: &mut core.journal.meters,
@@ -528,27 +530,6 @@ fn blank_identity(
         revision,
         encounter_id,
         authored: false,
-    }
-}
-fn allocate_individual(
-    physical: &mut PhysicalState,
-    state: &ReceptionState,
-    observer: &str,
-) -> Result<String, ReceivedError> {
-    loop {
-        let id = physical
-            .identity
-            .allocate("individual")
-            .map_err(|_| invalid())?
-            .id;
-        if !state
-            .observer_identities
-            .as_ref()
-            .and_then(|root| root.get(observer))
-            .is_some_and(|records| records.contains_key(&id))
-        {
-            return Ok(id);
-        }
     }
 }
 fn add_credit(
@@ -1381,7 +1362,7 @@ fn learn_unseen(
             )?;
         }
         result.learned_subject = Some(local_subject(identity(state, observer, &id)?)?);
-        journal.advance_revision(state, observer)?;
+        journal.advance_revision(state, observer, receiving.cognition)?;
     } else if !unique {
         let mut seed = blank_identity(None, Some(true), None, 0);
         seed.voice = Some(RecognitionKnowledge {

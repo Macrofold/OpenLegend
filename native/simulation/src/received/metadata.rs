@@ -17,6 +17,10 @@ use super::{
 pub trait TemporalValueMeaning {
     fn recognition_support_source_ids(&self, keys: &[String])
     -> Result<Vec<String>, ReceivedError>;
+    fn recognition_support_allocation_bound(
+        &self,
+        keys: &[String],
+    ) -> Option<super::DependencyAliasAllocation>;
 }
 
 fn fact_alias(id: &str, ordinal: u64) -> Result<String, ReceivedError> {

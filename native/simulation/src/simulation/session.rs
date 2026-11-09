@@ -99,6 +99,15 @@ pub(crate) enum SessionStep {
     Continue,
     Question(Arc<ProviderQuestion>),
     Prepared(PreparedCandidate),
+    Preview(PreviewOutcome),
+}
+pub(crate) struct PreviewOutcome {
+    command: crate::commands::CompletedCommand,
+}
+impl PreviewOutcome {
+    pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
+        self.command.outcome()
+    }
 }
 /// Only accepted effects leave the writer. Their existing guards stay with
 /// these actual products until the server's history/output owners consume them.
@@ -106,17 +115,20 @@ pub(crate) struct AcceptedOperation {
     pub key: CandidateKey,
     pub result: CompletedOperation,
     pub history: CapturedHistoryInput,
+    pub notices: crate::cognition::PreparedSemanticNotices,
 }
 struct Preparing {
     journal: CandidateJournal,
     driver: OperationDriver,
     key: CandidateKey,
+    preview: bool,
 }
 struct Prepared {
     journal: CandidateJournal,
     publication: PreparedPublication,
     result: CompletedOperation,
     history: CapturedHistoryInput,
+    notices: crate::cognition::PreparedSemanticNotices,
     key: CandidateKey,
 }
 enum Candidate {
@@ -128,6 +140,7 @@ pub(crate) struct Session {
     simulation: Simulation,
     host: InstalledHostSettings,
     save: SaveJournal,
+    pending_residency: Option<Arc<crate::received::SavedTemporalResidency>>,
     candidate: Option<Candidate>,
     continuation: Option<AcceptedAdvanceContinuation>,
     generation: u64,
@@ -164,6 +177,7 @@ impl Session {
             },
             host: installed.host_settings,
             save,
+            pending_residency: None,
             candidate: None,
             continuation: None,
             generation,
@@ -241,7 +255,7 @@ impl Session {
             .map_err(DriveError::from)?;
             OperationDriver::advance(&mut core, cursor, &self.budget)
         })();
-        self.install_driver(key, journal, driver)
+        self.install_driver(key, journal, driver, false)
     }
     pub(crate) fn begin_command(
         &mut self,
@@ -249,6 +263,10 @@ impl Session {
         canonical: String,
         options: crate::commands::CommandOptions,
     ) -> Result<CandidateKey, SessionError> {
+        let preview = options.preview;
+        if preview && !matches!(&command, crate::commands::NativeCommand::Cancel { .. }) {
+            return Err(ExecutionError::UnsupportedFamily.into());
+        }
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
             let binding = crate::geometry::GeometryBinding::new(
@@ -275,12 +293,31 @@ impl Session {
             )?;
             OperationDriver::command(&mut core, command, &self.budget)
         })();
-        self.install_driver(key, journal, driver)
+        self.install_driver(key, journal, driver, preview)
+    }
+    pub(crate) fn begin_cancel_preview(
+        &mut self,
+        command: crate::commands::NativeCommand,
+        canonical: String,
+    ) -> Result<CandidateKey, SessionError> {
+        if !matches!(&command, crate::commands::NativeCommand::Cancel { .. }) {
+            return Err(ExecutionError::UnsupportedFamily.into());
+        }
+        self.begin_command(
+            command,
+            canonical,
+            crate::commands::CommandOptions {
+                preview: true,
+                native_controller: false,
+                native_movement: None,
+            },
+        )
     }
     fn begin(&mut self) -> Result<(CandidateKey, CandidateJournal), SessionError> {
         if self.candidate.is_some() {
             return Err(FenceError::Busy.into());
         }
+        self.apply_pending_residency()?;
         let key = self
             .simulation
             .fence
@@ -300,6 +337,7 @@ impl Session {
         key: CandidateKey,
         mut journal: CandidateJournal,
         driver: Result<OperationDriver, DriveError>,
+        preview: bool,
     ) -> Result<CandidateKey, SessionError> {
         match driver {
             Ok(driver) => {
@@ -307,6 +345,7 @@ impl Session {
                     journal,
                     driver,
                     key,
+                    preview,
                 }));
                 Ok(key)
             }
@@ -363,9 +402,26 @@ impl Session {
             DriveStep::Continue => Ok(SessionStep::Continue),
             DriveStep::Question(question) => Ok(SessionStep::Question(question)),
             DriveStep::Complete(result) => {
+                if preparing.preview {
+                    let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                        unreachable!()
+                    };
+                    self.simulation.fence.rollback_preparation(key)?;
+                    self.rollback(&mut preparing.journal, key)?;
+                    let CompletedOperation::Command(completed) = result else {
+                        return Err(ExecutionError::Invariant.into());
+                    };
+                    return Ok(SessionStep::Preview(PreviewOutcome {
+                        command: completed.command,
+                    }));
+                }
                 // No candidate is exposed Ready if recording or accumulating
                 // save admission fails after semantic execution has completed.
                 let products = (|| {
+                    let notices = preparing.journal.cognition.prepare_semantic_notices(
+                        self.simulation.state.installed.maximum_change_scopes,
+                        &self.budget,
+                    )?;
                     let captured = capture_history_input(
                         &self.simulation.state,
                         &self.simulation.state.occurrences,
@@ -383,19 +439,20 @@ impl Session {
                         false,
                         &self.budget,
                     )?;
-                    Ok::<_, SessionError>((captured, publication))
+                    Ok::<_, SessionError>((captured, notices, publication))
                 })();
                 let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
                     unreachable!()
                 };
                 match products {
-                    Ok((history, publication)) => {
+                    Ok((history, notices, publication)) => {
                         let allocation = publication.allocation();
                         self.candidate = Some(Candidate::Prepared(Prepared {
                             journal: preparing.journal,
                             publication,
                             result,
                             history,
+                            notices,
                             key,
                         }));
                         Ok(SessionStep::Prepared(PreparedCandidate {
@@ -487,10 +544,12 @@ impl Session {
             return Err(error.into());
         }
         self.simulation.fence.accepted_complete(key)?;
+        self.apply_pending_residency()?;
         Ok(Some(AcceptedOperation {
             key,
             result: prepared.result,
             history: prepared.history,
+            notices: prepared.notices,
         }))
     }
     pub(crate) fn cancel(&mut self, key: CandidateKey) -> Result<(), SessionError> {
@@ -535,6 +594,7 @@ impl Session {
             return Err(error.into());
         }
         self.simulation.fence.rollback_complete(key)?;
+        self.apply_pending_residency()?;
         Ok(())
     }
     pub(crate) fn capture_save(
@@ -543,6 +603,11 @@ impl Session {
     ) -> Result<Arc<SavePrefix>, SessionError> {
         if self.simulation.fence.phase() != CandidatePhase::Idle {
             return Err(FenceError::Busy.into());
+        }
+        // The next immutable prefix must see the physical tail selected by the
+        // previous ACK. Capacity pressure can defer maintenance, never SQL ACK.
+        if !self.apply_pending_residency()? {
+            return Err(ExecutionError::Capacity.into());
         }
         let state = &mut self.simulation.state;
         Ok(self.save.capture(
@@ -562,9 +627,36 @@ impl Session {
     /// ACK touches the independent save owner and durable metadata only; an old
     /// exact prefix may finish while a newer candidate is privately preparing.
     pub(crate) fn acknowledge(&mut self, ack: SaveAcknowledgement<'_>) -> Result<(), SessionError> {
-        self.save.acknowledge(ack)?;
+        if let Some(residency) = self.save.acknowledge(ack)? {
+            // capture_save cannot create another prefix while this token is
+            // pending. Exact duplicate ACKs return no second token.
+            debug_assert!(self.pending_residency.is_none());
+            self.pending_residency = Some(residency);
+        }
         self.simulation.state.durable_revision = self.save.durable_revision();
+        if self.simulation.fence.phase() == CandidatePhase::Idle {
+            self.apply_pending_residency()?;
+        }
         Ok(())
+    }
+    fn apply_pending_residency(&mut self) -> Result<bool, SessionError> {
+        let Some(saved) = self.pending_residency.as_ref() else {
+            return Ok(true);
+        };
+        let prepared = match saved.prepare_apply(&self.simulation.state, &self.budget) {
+            Ok(prepared) => prepared,
+            Err(ExecutionError::Capacity) => return Ok(false),
+            Err(error) => {
+                self.simulation.fence.poison();
+                return Err(error.into());
+            }
+        };
+        if let Err((error, _prepared)) = prepared.apply(&mut self.simulation.state) {
+            self.simulation.fence.poison();
+            return Err(error.into());
+        }
+        self.pending_residency = None;
+        Ok(true)
     }
     pub(crate) fn accepted(&self) -> Result<&Simulation, SessionError> {
         if self.simulation.fence.phase() != CandidatePhase::Idle {

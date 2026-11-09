@@ -41,6 +41,7 @@ pub(crate) fn commit_observer_identity(
 ) -> Result<bool, ExecutionError> {
     let mut receiving = ReceivingMutation {
         experience: &core.state.experience,
+        cognition: &mut core.journal.cognition,
         current: &mut core.journal.current,
         acquisitions: &mut core.journal.acquisitions,
         meters: &mut core.journal.meters,
@@ -73,6 +74,7 @@ pub(crate) fn retire_observer_identity(
 ) -> Result<(), ExecutionError> {
     let mut receiving = ReceivingMutation {
         experience: &core.state.experience,
+        cognition: &mut core.journal.cognition,
         current: &mut core.journal.current,
         acquisitions: &mut core.journal.acquisitions,
         meters: &mut core.journal.meters,
@@ -90,19 +92,10 @@ pub(crate) fn retire_observer_identity(
         &mut receiving,
     )
 }
-fn receipt_source(locator: &TemporalReceiptLocator) -> EvidenceSource {
-    EvidenceSource {
-        family: EvidenceFamily::NativeExposure,
-        id: locator.id(),
-        revision: SourceRevision::Number(1),
-        observer: crate::reception::ObserverLife {
-            actor_id: locator.actor_id.clone(),
-            physical_life: locator.physical_life,
-        },
-    }
-}
 pub(crate) fn source_json(locator: &TemporalReceiptLocator) -> Result<String, ExecutionError> {
-    crate::encoding::json_record(&receipt_source(locator)).map_err(|_| invalid().into())
+    let id = locator.id();
+    crate::encoding::json_record(&crate::received::temporal_receipt_source(locator, &id))
+        .map_err(|_| invalid().into())
 }
 fn rebase_contacts(
     identity: &mut crate::worlds::InstalledObserverIdentity,

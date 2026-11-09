@@ -28,6 +28,7 @@ pub(crate) struct NativeMovementInput {
     pub route: crate::native_refuge::RefugeRoute,
 }
 pub(crate) struct CommandOptions {
+    pub preview: bool,
     pub native_controller: bool,
     pub native_movement: Option<NativeMovementInput>,
 }
@@ -1732,6 +1733,14 @@ impl CommandCursor {
                     self.phase = Phase::Tail;
                 }
                 Phase::Tail => {
+                    if self.options.preview {
+                        // Source's disposable Cancel reaches the real stop
+                        // admission, then returns before receipt/condition and
+                        // common consequence finalization. The outer preview
+                        // owner rolls every private effect back together.
+                        self.phase = Phase::Done;
+                        continue;
+                    }
                     self.begin_chosen_work(core)?;
                     let result = self.outcome.as_ref().ok_or(ExecutionError::Invariant)?;
                     if result.ok && !self.duplicate && !self.options.native_controller {
@@ -1754,7 +1763,7 @@ impl CommandCursor {
                 Phase::Done => {
                     let result = self.outcome.take().ok_or(ExecutionError::Invariant)?;
                     let exposure = self.exposure.take();
-                    self.finalize = result.ok && !self.duplicate;
+                    self.finalize = result.ok && !self.duplicate && !self.options.preview;
                     self.abort(core)?;
                     return Ok(Progress::Complete(super::PendingCommandCompletion::new(
                         core,

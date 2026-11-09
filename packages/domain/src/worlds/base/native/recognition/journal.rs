@@ -484,7 +484,8 @@ impl RecognitionJournal {
         &mut self,
         state: &mut ReceptionState,
         observer: &str,
-    ) -> Result<(), ReceivedError> {
+        cognition: &mut crate::cognition::CognitionJournal,
+    ) -> Result<(), ExecutionError> {
         let prior = state
             .knowledge_revisions
             .as_ref()
@@ -503,6 +504,9 @@ impl RecognitionJournal {
             ])
             .ok_or_else(capacity)?,
         )?;
+        // Knowledge subscriptions change at this same semantic revision,
+        // including learning during speech, not only explicit notepad edits.
+        cognition.note_knowledge_change(observer)?;
         state
             .knowledge_revisions
             .get_or_insert_with(IndexMap::new)

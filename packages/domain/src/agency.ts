@@ -374,6 +374,11 @@ export function changeGoal(
     return reject(
       'Eight active/paused goals are already retained. Explicitly complete or abandon one first.',
     );
+  if (
+    !Number.isSafeInteger(agency.revision + 1) ||
+    (!create && !Number.isSafeInteger(goal!.revision + 1))
+  )
+    return reject('Goal revisions are exhausted; the previous intentions were retained.');
   if (create) {
     if (agency.goals.some((entry) => entry.id === id))
       return reject('Goal identity already exists.');

@@ -106,6 +106,7 @@ impl EpisodeJournal {
                 &selected,
                 after,
                 true,
+                |_| Ok((Vec::new(), budget.reserve(0).map_err(|_| error())?)),
                 output,
                 budget,
             )?;

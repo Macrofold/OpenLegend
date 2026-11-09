@@ -216,6 +216,12 @@ impl crate::experience::PersonalEvidenceMeaning for WildernessEvidenceMeaning {
 }
 
 impl crate::received::TemporalValueMeaning for WildernessEvidenceMeaning {
+    fn recognition_support_allocation_bound(
+        &self,
+        keys: &[String],
+    ) -> Option<crate::received::DependencyAliasAllocation> {
+        recognition_support_allocation_bound(keys)
+    }
     fn recognition_support_source_ids(
         &self,
         keys: &[String],
@@ -224,6 +230,46 @@ impl crate::received::TemporalValueMeaning for WildernessEvidenceMeaning {
             crate::received::ReceivedError("Invalid selected recognition source alias.")
         })
     }
+}
+
+pub(crate) fn recognition_support_allocation_bound(
+    keys: &[String],
+) -> Option<crate::received::DependencyAliasAllocation> {
+    use crate::host::retained_size::{heap_sum, map_storage};
+    // This authored grammar emits at most one source ID and one fact alias
+    // per key. JSON decoding visits only the key, never a retained world body.
+    if keys.is_empty() {
+        return Some(crate::received::DependencyAliasAllocation::empty());
+    }
+    let items = keys.len().checked_mul(2)?;
+    let (strings, decoding) =
+        keys.iter()
+            .try_fold((0usize, 0usize), |(strings, decoding), key| {
+                let personal = key.split_once(':').is_some_and(|(family, id)| {
+                    !id.is_empty() && matches!(family, "awareness" | "memory" | "summary")
+                });
+                Some((
+                    strings.checked_add(key.len().checked_mul(14)?.checked_add(128)?)?,
+                    decoding.checked_add(if personal {
+                        key.len()
+                    } else {
+                        crate::experience::encoded_body_bound(key)
+                            .ok()?
+                            .checked_mul(4)?
+                    })?,
+                ))
+            })?;
+    Some(crate::received::DependencyAliasAllocation {
+        items,
+        strings,
+        temporary: heap_sum([
+            decoding,
+            map_storage::<String, ()>(items.checked_mul(2)?.max(3))?,
+            keys.len()
+                .checked_mul(std::mem::size_of::<RecognitionSupportSource>())?,
+            items.checked_mul(std::mem::size_of::<String>())?,
+        ])?,
+    })
 }
 
 impl RecognitionSupportSource {

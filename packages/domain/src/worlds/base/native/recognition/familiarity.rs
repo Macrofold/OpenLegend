@@ -271,6 +271,7 @@ impl BodyFamiliarityPreparation {
         let key = self.to.individual_id.as_ref().ok_or_else(invalid)?.clone();
         let mut receiving = ReceivingMutation {
             experience: &core.state.experience,
+            cognition: &mut core.journal.cognition,
             current: &mut core.journal.current,
             acquisitions: &mut core.journal.acquisitions,
             meters: &mut core.journal.meters,

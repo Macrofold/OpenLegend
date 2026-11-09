@@ -19,6 +19,7 @@ pub(crate) fn install_temporal(
     reception: &ReceptionState,
     cold_directories: Option<&IndexMap<String, Vec<ReceivedChargeDirectory>>>,
     meaning: &dyn TemporalValueMeaning,
+    budget: &crate::host::ByteBudget,
 ) -> Result<Option<TemporalState>, PersonalInstallError> {
     let generation = import.generation().to_owned();
     let Some((root, header)) = take_one::<TemporalStateHeader>(
@@ -59,6 +60,7 @@ pub(crate) fn install_temporal(
                 through,
                 values,
                 Some(meaning),
+                budget,
             )?));
         }
         let owned_directories;
@@ -93,6 +95,7 @@ pub(crate) fn install_temporal(
             directories,
             &checkpoints,
             through,
+            budget,
         )?;
         let supports = take_collection(
             import,

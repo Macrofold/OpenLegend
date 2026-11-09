@@ -261,3 +261,62 @@ pub(crate) fn received_header_value_references<'a>(
     }
     sorted_unique(references)
 }
+
+/// The resident reference union reads acquired metadata, never physical truth or
+/// materialized personal bodies. Save projection uses this same finite closure.
+pub(crate) fn visit_resident_value_references<'a>(
+    state: &'a super::ReceptionState,
+    visit: &mut impl FnMut(&'a str),
+) {
+    fn reference<'a>(
+        value: &'a crate::received::ReceivedValueReference,
+        visit: &mut impl FnMut(&'a str),
+    ) {
+        if let crate::received::ReceivedValueReference::Shared(id) = value {
+            visit(id)
+        }
+    }
+    for owner in state.perception_evidence.iter().flat_map(IndexMap::values) {
+        for original in &owner.received {
+            for id in super::received_observation_value_references(original) {
+                visit(id)
+            }
+        }
+        if let Some(phase) = &owner.visual_confirmation {
+            reference(&phase.frame_ref, visit);
+            if let Some(complete) = &phase.complete {
+                reference(&complete.frame_ref, visit)
+            }
+        }
+        for motion in owner.motion_samples.iter().flat_map(IndexMap::values) {
+            for id in received_facet_value_references(&motion.earlier.value) {
+                visit(id)
+            }
+        }
+        for contact in owner.current.values() {
+            for source in contact.content.originals.values() {
+                for id in super::received_observation_value_references(source) {
+                    visit(id)
+                }
+            }
+            for group in &contact.content.groups {
+                for field in group.received.fields.values() {
+                    for id in received_facet_value_references(&field.value) {
+                        visit(id)
+                    }
+                }
+                for partition in &group.metadata {
+                    if let Some(frame) = &partition.frame_ref {
+                        reference(frame, visit)
+                    }
+                }
+            }
+            if let Some(sight) = &contact.sight {
+                reference(&sight.frame_ref, visit);
+                if let Some(detail) = &sight.detail {
+                    reference(&detail.frame_ref, visit)
+                }
+            }
+        }
+    }
+}

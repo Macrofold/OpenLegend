@@ -7,6 +7,7 @@ import {
 } from './temporal-page-storage.js';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
 import { LIVE_SAVE_MAX_BYTES } from './pending-world-save.js';
+import { HOT_TEMPORAL_BYTES } from './history-residency.js';
 import { RECORD_NODES, type RecordNode } from './world-record-schema.js';
 import {
   canonicalJson,
@@ -24,6 +25,7 @@ import { createHash } from 'node:crypto';
 /** Application storage settings are supplied once to the native save owner.
  * They remain separate from world definitions and the shared scratch allowance. */
 export const nativeStorageSettings = Object.freeze({
+  temporalResidentBytes: HOT_TEMPORAL_BYTES,
   temporalSave: Object.freeze({
     targetBytes: TEMPORAL_PAGE_TARGET_BYTES,
     rowBytes: CHECKPOINT_LIMITS.rowBytes,

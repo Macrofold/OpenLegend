@@ -1,12 +1,15 @@
 import { nativeCommandSupported } from '../../activity-hosts.js';
 import type { WorldState } from '../../types.js';
+import type { ActivityDefinitionScope } from '../../activity-hosts.js';
 import { BASE_SPECIES } from './bodies.js';
 import type { TypedRequestVocabulary } from '../../typed-requests.js';
 
 /** How the bundled world names its things and requests in typed actions. Engine parsing reads
  * this through typedRequestVocabulary() and never restates these words.
  * docs/worlds/base/typed-requests.md */
-export function baseTypedRequestVocabulary(world: WorldState): TypedRequestVocabulary {
+export function baseTypedRequestVocabulary(
+  world: ActivityDefinitionScope & Pick<WorldState, 'profile'>,
+): TypedRequestVocabulary {
   return {
     heatSources: ['fire', 'campfire'],
     beings: [...BASE_SPECIES, 'person', 'people', 'animal', 'being'],

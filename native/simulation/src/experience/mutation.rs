@@ -445,6 +445,8 @@ impl ExperienceJournal {
                 by_ordinal: BTreeMap::new(),
                 lookup: BTreeMap::new(),
                 agreement_body_count: 0,
+                current_open_heads_selected: false,
+                sensory_selected: false,
                 coverage: SourceCoverage {
                     complete: true,
                     next_ordinal: 0,

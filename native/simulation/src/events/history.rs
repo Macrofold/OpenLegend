@@ -139,6 +139,7 @@ pub struct OccurrenceHistory {
     originals: IndexMap<String, Arc<OriginalOccurrence>>,
     hot: BTreeMap<u64, HotOccurrencePlacement>,
     complete_hot: bool,
+    source_hot_window: Option<usize>,
     next_hot_ordinal: u64,
     archived_count: Option<u64>,
     undo: Vec<OccurrenceUndo>,
@@ -210,6 +211,7 @@ impl OccurrenceHistory {
             originals: sources,
             hot,
             complete_hot: coverage.complete,
+            source_hot_window: None,
             next_hot_ordinal: coverage.next_ordinal,
             archived_count,
             undo: Vec::new(),
@@ -221,6 +223,17 @@ impl OccurrenceHistory {
     pub fn complete_hot(&self) -> bool {
         self.complete_hot
     }
+    /// Indexed active startup supplies the actual Source hot selection. This
+    /// certifies only the resident presentation window, never global history.
+    pub(crate) fn install_hot_selection(&mut self, window: usize) {
+        self.source_hot_window = Some(window);
+    }
+    pub(crate) fn covers_hot_read(&self, window: usize) -> bool {
+        self.complete_hot
+            || self
+                .source_hot_window
+                .is_some_and(|selected| window <= selected)
+    }
     pub fn next_hot_ordinal(&self) -> u64 {
         self.next_hot_ordinal
     }
@@ -230,7 +243,9 @@ impl OccurrenceHistory {
             .and_then(|(_, record)| record.event.event.order)
             .unwrap_or(0)
     }
-    pub fn hot(&self) -> impl DoubleEndedIterator<Item = &HotOccurrencePlacement> + ExactSizeIterator {
+    pub fn hot(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = &HotOccurrencePlacement> + ExactSizeIterator {
         self.hot.values()
     }
     pub(crate) fn appended(&self) -> impl Iterator<Item = &HotOccurrencePlacement> {

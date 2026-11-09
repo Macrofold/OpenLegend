@@ -26,6 +26,11 @@ pub struct ExactObject {
     encoding: Arc<RawValue>,
 }
 impl ExactObject {
+    /// Consume the actual member storage at the output boundary. No code-unit
+    /// key is converted into a lossy UTF-8 property name.
+    pub fn into_members(self) -> impl Iterator<Item = (JsText, SqlCell)> {
+        self.members.into_iter()
+    }
     fn decode(source: &str) -> Result<Self, serde_json::Error> {
         let invalid = || {
             serde_json::Error::io(std::io::Error::new(

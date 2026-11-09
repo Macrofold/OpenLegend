@@ -2,26 +2,12 @@
 //! owner as other memories; a plan retains only the returned evidence pointer.
 use super::*;
 use crate::execution::{CoreMutation, ExecutionError};
-use crate::experience::{MemoryAcquisitionError, acquire_memory, prepare_memory_admission};
+use crate::experience::{acquire_memory, prepare_memory_admission};
 use crate::host::retained_size::HeapBytes;
 use crate::narration::{GrammaticalPerson, Narration, NarrationPart, PersonRole};
 use crate::text::JsText;
 use std::mem::size_of;
 
-fn error(error: MemoryAcquisitionError) -> ExecutionError {
-    match error {
-        MemoryAcquisitionError::Experience(error) => ExecutionError::Experience(error),
-        MemoryAcquisitionError::Received(error) => ExecutionError::Received(error),
-        MemoryAcquisitionError::Append(crate::received::TemporalAppendError::Received(error)) => {
-            ExecutionError::Received(error)
-        }
-        MemoryAcquisitionError::Append(crate::received::TemporalAppendError::Work(error)) => {
-            ExecutionError::Work(error)
-        }
-        MemoryAcquisitionError::Execution(error) => error,
-        MemoryAcquisitionError::Encoding => ExecutionError::Invariant,
-    }
-}
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct PlanMemory<'a> {
@@ -63,9 +49,9 @@ pub(super) fn append_report(
             .ok_or(ExecutionError::Capacity)?,
     )?;
     let body = crate::encoding::json_record(&draft).map_err(|_| ExecutionError::Invariant)?;
-    let admission = prepare_memory_admission(core, actor, body, None, &budget).map_err(error)?;
+    let admission = prepare_memory_admission(core, actor, body, None, &budget)?;
     let schema = core.state.installed.schema.clone();
-    let id = acquire_memory(core, admission, &schema).map_err(error)?;
+    let id = acquire_memory(core, admission, &schema)?;
     Ok(id.map(|id| ResultEvidence::Account {
         source: crate::activity::ResultAccountSource::Memory,
         id,

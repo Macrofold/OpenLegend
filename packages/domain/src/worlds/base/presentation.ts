@@ -39,6 +39,11 @@ export const BASE_PLAYER_VIEW_RULES = {
   attackNormally: 'Attack normally',
   cancelLabel: 'Cancel',
   selectedTool: 'Selected tool',
+  journalMovement: {
+    eventType: 'action-started',
+    actionType: 'move',
+    textSuffix: ' started move.',
+  },
   actionStatusTypes: ['aim'],
   noProgressTypes: ['follow'],
   workingStatusTypes: [

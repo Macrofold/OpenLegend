@@ -19,6 +19,7 @@ pub(crate) fn encode_sparse_map_changes<T: Serialize>(
     before: &IndexMap<&str, Option<&T>>,
     after: Option<&IndexMap<String, T>>,
     unordered: bool,
+    columns: impl Fn(&T) -> Result<(Vec<SqlCell>, crate::host::ByteReservation), RecordEncodingError>,
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
@@ -99,11 +100,12 @@ pub(crate) fn encode_sparse_map_changes<T: Serialize>(
             {
                 continue;
             }
+            let (extra, _columns_guard) = columns(current)?;
             output.write_encoded(
                 table,
                 address.value(),
                 &payload,
-                &[],
+                &extra,
                 false,
                 RowEffects::default(),
             )?;

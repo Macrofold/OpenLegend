@@ -13,8 +13,11 @@ use crate::identity::MAX_SAFE_INTEGER;
 use crate::reception::{EvidenceFamily, EvidenceSource, SourceRevision};
 use crate::values::{deserialize_nullable, deserialize_present_option, deserialize_safe_integer};
 
+mod alias_allocation;
 mod current;
 mod metadata;
+pub use alias_allocation::DependencyAliasAllocation;
+pub(crate) use alias_allocation::temporal_receipt_aliases_bound;
 mod result;
 pub(crate) use current::{
     CurrentRecordingContext, CurrentRecordingRevocation, CurrentRecordingUpdates,
@@ -97,6 +100,36 @@ impl TemporalReceiptLocator {
             "temporal-receipt-{}-{}-{}",
             self.epoch, self.batch_order, self.entry_index
         )
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ReceiptObserver<'a> {
+    actor_id: &'a str,
+    physical_life: u64,
+}
+#[derive(Serialize)]
+pub(crate) struct TemporalReceiptSource<'a> {
+    family: EvidenceFamily,
+    id: &'a str,
+    revision: u64,
+    observer: ReceiptObserver<'a>,
+}
+/// Serialize the actual receipt source factory without cloning its identifiers.
+/// Both callers hold a validated locator and its corresponding receipt ID.
+pub(crate) fn temporal_receipt_source<'a>(
+    locator: &'a TemporalReceiptLocator,
+    id: &'a str,
+) -> TemporalReceiptSource<'a> {
+    TemporalReceiptSource {
+        family: EvidenceFamily::NativeExposure,
+        id,
+        revision: 1,
+        observer: ReceiptObserver {
+            actor_id: &locator.actor_id,
+            physical_life: locator.physical_life,
+        },
     }
 }
 
@@ -685,3 +718,8 @@ pub fn eligible_received_charge_directories(
         .map(|key| blocks.remove(&key).expect("Selected directory is present"))
         .collect())
 }
+
+mod batch;
+pub use batch::TemporalBatch;
+
+pub(crate) use state::{PackedTemporalSave, PreparedTemporalResidency, SavedTemporalResidency};

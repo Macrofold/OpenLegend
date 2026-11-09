@@ -13,10 +13,11 @@ use crate::worlds::{InstalledPersonalNameReader, OwnedPersonalName};
 use serde::{Serialize, Serializer};
 use std::mem::size_of;
 mod controls;
+mod metadata;
+mod navigation;
 mod outcomes;
 mod player;
 mod practice;
-mod metadata;
 pub(crate) use controls::{CapturedPlayerControls, PlayerControlPreparation};
 use player::{CapturedPlayerBody, CapturedPlayerPerception, OwnPlayerView, PlayerReadScope};
 
@@ -154,7 +155,7 @@ pub(crate) fn capture_actor_perception(
     purpose: ActorReadPurpose,
     budget: &ByteBudget,
 ) -> Result<CapturedActorPerception, ExecutionError> {
-    state
+    let observer = state
         .physical
         .entities
         .get(actor_id)
@@ -332,9 +333,15 @@ pub(crate) fn capture_actor_perception(
             });
         }
     }
-    let sight_confirmed_through = scope
+    // This reports the last completed sample for the same physical life. A
+    // currently blocked detector removes body grants, not its measured clock.
+    let sight_confirmed_through = state
+        .reception
+        .perception_evidence
         .as_ref()
-        .and_then(|scope| scope.state().visual_confirmation.as_ref())
+        .and_then(|owners| owners.get(actor_id))
+        .filter(|owner| owner.life == observer.physical_life.unwrap_or(0))
+        .and_then(|owner| owner.visual_confirmation.as_ref())
         .map(|confirmation| confirmation.through);
     drop(names);
     drop(scope);
@@ -393,7 +400,7 @@ pub(crate) fn capture_actor_perception(
         evidence,
         geometry,
         player: player.as_ref().map(|_| CapturedPlayerPerception {
-            trade_history: "no-acquired-agreements",
+            trade_terms: "none",
             // Physical installation admits only actors. Source exposedPlaces
             // requires a non-actor landmark; remembered sites cannot fill it.
             physical_landmarks: "absent",
@@ -480,7 +487,6 @@ struct OwnActorProduct<'a> {
     speech: bool,
     speech_blocked: bool,
     actions_blocked: bool,
-    manual_work: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     agency: Option<&'a crate::state::ActorAgency>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -616,7 +622,13 @@ pub(crate) fn write_actor_self(
     } else {
         None
     };
-    let player_metadata = if private { None } else { Some(metadata::PlayerMetadata::prepare(state, entity, budget)?) };
+    let player_metadata = if private {
+        None
+    } else {
+        Some(metadata::PlayerMetadata::prepare(
+            state, entity, &names, budget,
+        )?)
+    };
     let product = OwnActorProduct {
         world_id: &state.physical.header.id,
         actor_id,
@@ -681,7 +693,6 @@ pub(crate) fn write_actor_self(
             .installed
             .capabilities
             .capability_blocked(Some(entity), "actions")?,
-        manual_work: actor.body.as_ref().is_some_and(|body| body.plan == "biped"),
         agency: private.then_some(&actor.agency),
         recent_result_eligibility: required_results
             .as_ref()
@@ -696,41 +707,57 @@ pub(crate) fn write_actor_self(
                     .and_then(|worlds| worlds.get(actor_id))
             })
             .flatten(),
-        player: if private { None } else { Some(OwnPlayerView {
-            seed: state.physical.header.seed,
-            module_revision: state.installed.manifest.revision,
-            spatial_revision: state.installed.geometry.spatial.revision,
-            body: actor.body.as_ref(),
-            held_stock: inventory.held_stock,
-            equipped: inventory.equipped,
-            knowledge_revision: state
-                .reception
-                .knowledge_revisions
-                .as_ref()
-                .and_then(|revisions| revisions.get(actor_id))
-                .copied()
-                .unwrap_or(0),
-            agency: &actor.agency,
-            practice: actor.practice.as_ref(),
-            practice_records: &practice_records,
-            participation: actor.participation.as_ref(),
-            scars: actor.scars.as_ref(),
-            pending_death: actor.pending_death.as_ref(),
-            remains_phase: entity
-                .remains
-                .as_ref()
-                .map(|remains| remains.phase.as_str()),
-            evasion_ready_at: actor.evasion_ready_at,
-            combat_ready_at: actor.combat_ready_at,
-            natural_strike_ids: actor.natural_strike_ids.as_deref(),
-            action_animation: state
-                .installed
-                .observation_rules
-                .value()
-                .observed_action_animation(entity)?,
-            senses: &player_metadata.as_ref().ok_or(ExecutionError::Invariant)?.senses,
-            map_markers: &player_metadata.as_ref().ok_or(ExecutionError::Invariant)?.markers,
-        }) },
+        player: if private {
+            None
+        } else {
+            Some(OwnPlayerView {
+                seed: state.physical.header.seed,
+                module_revision: state.installed.manifest.revision,
+                spatial_revision: state.installed.geometry.spatial.revision,
+                body: actor.body.as_ref(),
+                held_stock: inventory.held_stock,
+                equipped: inventory.equipped,
+                knowledge_revision: state
+                    .reception
+                    .knowledge_revisions
+                    .as_ref()
+                    .and_then(|revisions| revisions.get(actor_id))
+                    .copied()
+                    .unwrap_or(0),
+                agency: &actor.agency,
+                practice: actor.practice.as_ref(),
+                practice_records: &practice_records,
+                participation: actor.participation.as_ref(),
+                scars: actor.scars.as_ref(),
+                pending_death: actor.pending_death.as_ref(),
+                remains_phase: entity
+                    .remains
+                    .as_ref()
+                    .map(|remains| remains.phase.as_str()),
+                evasion_ready_at: actor.evasion_ready_at,
+                combat_ready_at: actor.combat_ready_at,
+                natural_strike_ids: actor.natural_strike_ids.as_deref(),
+                action_animation: state
+                    .installed
+                    .observation_rules
+                    .value()
+                    .observed_action_animation(entity)?,
+                senses: &player_metadata
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?
+                    .senses,
+                map_markers: &player_metadata
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?
+                    .markers,
+                communication_subjects: &player_metadata
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?
+                    .communications
+                    .subjects,
+                known_recipes: state.learned_capabilities.known_recipes(),
+            })
+        },
     };
     let length =
         crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;

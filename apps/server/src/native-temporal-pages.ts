@@ -70,10 +70,29 @@ export async function readNativeTemporalPages(
           'SELECT count(*) AS count,COALESCE(sum(octet_length(payload)),0) AS bytes FROM mind_temporal_pages WHERE world_id=? AND actor_id=?',
         )
         .get(cut.worldId, actorId);
+      // Rich bodies can be cold after a successful save. Select their exact
+      // current page references inside this same live projection; consulting
+      // the resident native pool would resurrect an older/deleted overlay row.
+      const valueSelection = `WITH wanted AS MATERIALIZED (
+        SELECT DISTINCT unnest(value_refs) AS source_id FROM mind_temporal_pages
+        WHERE world_id=? AND actor_id=?
+      )`;
+      const valueSize = await db
+        .prepare(
+          `${valueSelection}
+        SELECT count(*) AS wanted,count(v.source_id) AS found,
+          COALESCE(sum(octet_length((v.payload::json->'value')::text)),0) AS bytes
+        FROM wanted w LEFT JOIN mind_perception_values v
+          ON v.world_id=? AND v.source_id=w.source_id`,
+        )
+        .get(cut.worldId, actorId, cut.worldId);
       if (
         !size ||
+        !valueSize ||
+        Number(valueSize['wanted']) !== Number(valueSize['found']) ||
         Number(size['count']) > maximumTemporalPreparationRows ||
-        Number(size['bytes']) > maximumTemporalPreparationBytes
+        Number(valueSize['wanted']) > maximumTemporalPreparationRows ||
+        Number(size['bytes']) + Number(valueSize['bytes']) > maximumTemporalPreparationBytes
       )
         throw new Error('Native temporal preparation exceeds the existing history read allowance.');
       const columns = Object.keys(RECORD_NODES.get('mind_temporal_pages')!.columns!);
@@ -82,6 +101,17 @@ export async function readNativeTemporalPages(
           `SELECT id,parent_id,slot,position,payload,${columns.join(',')} FROM mind_temporal_pages WHERE world_id=? AND actor_id=? ORDER BY position,id`,
         )
         .all(cut.worldId, actorId);
+      const valueColumns = Object.keys(RECORD_NODES.get('mind_perception_values')!.columns!);
+      const receivedValues = await db
+        .prepare(
+          `${valueSelection}
+        SELECT v.id,v.parent_id,v.slot,v.position,v.payload,${valueColumns.map((name) => `v.${name}`).join(',')}
+        FROM wanted w JOIN mind_perception_values v
+          ON v.world_id=? AND v.source_id=w.source_id ORDER BY v.parent_id,v.position,v.id`,
+        )
+        .all(cut.worldId, actorId, cut.worldId);
+      if (receivedValues.length !== Number(valueSize['wanted']))
+        throw new Error('Native temporal preparation lost its exact shared-value closure.');
       return {
         binding,
         durableRevision: Number(head['revision']),
@@ -93,6 +123,9 @@ export async function readNativeTemporalPages(
           parentPresent: true,
         },
         rows: rows.map((row) => nativeCurrentRow('mind_temporal_pages', row)),
+        receivedValues: receivedValues.map((row) =>
+          nativeCurrentRow('mind_perception_values', row),
+        ),
       };
     }),
   );

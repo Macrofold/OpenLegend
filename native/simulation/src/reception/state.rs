@@ -83,7 +83,7 @@ pub struct ReceptionGap {
     pub physical_life: Option<u64>,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PerceptionEvidenceOwner {
     #[serde(
@@ -130,6 +130,8 @@ pub struct PerceptionEvidenceOwner {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub next_contact: u64,
     pub received: Vec<Arc<ReceivedObservation>>,
+    #[serde(skip)]
+    pub(super) original_storage: Option<super::originals::OriginalMetadata>,
     #[serde(
         deserialize_with = "crate::values::deserialize_safe_integer_map",
         serialize_with = "crate::encoding::serialize_js_map"

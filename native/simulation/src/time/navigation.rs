@@ -13,7 +13,7 @@ use crate::native_response::{LocomotionMode, NavigationWait};
 use crate::state::{Entity, EntityHandle, Placement};
 use std::mem::size_of;
 
-pub(super) fn action_navigation_pending(
+pub(crate) fn action_navigation_pending(
     entity: &Entity,
     now: f64,
     revision: u64,

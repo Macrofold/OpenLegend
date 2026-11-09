@@ -1,5 +1,6 @@
 import { selectedTypedRequestVocabulary } from './world-composition.js';
 import type { WorldState } from './types.js';
+import type { ActivityDefinitionScope } from './activity-hosts.js';
 
 /** A world's words for typed requests: what its things and creatures are called, requests it
  * recognizes but cannot perform (with its own reason), faithful near-substitutes, and
@@ -29,6 +30,8 @@ export interface TypedRequestVocabulary {
 
 /** Composition point: the bundled world supplies the vocabulary today. An installed world
  * package would supply its own here once external packages exist (EWF); there is no loader. */
-export function typedRequestVocabulary(world: WorldState): TypedRequestVocabulary {
+export function typedRequestVocabulary(
+  world: ActivityDefinitionScope & Pick<WorldState, 'profile'>,
+): TypedRequestVocabulary {
   return selectedTypedRequestVocabulary(world);
 }

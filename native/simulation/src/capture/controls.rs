@@ -9,6 +9,7 @@ pub(crate) struct PlayerControlPreparation {
     queries: GeometryQueries,
     facts: PlayerControlFacts,
     _reservation: ByteReservation,
+    _navigation: ByteReservation,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,6 +21,7 @@ pub(crate) struct PlayerControlFacts {
     physical_life: Option<u64>,
     at: f64,
     can_recover: bool,
+    preparing_navigation: bool,
 }
 pub(crate) struct CapturedPlayerControls {
     facts: PlayerControlFacts,
@@ -73,6 +75,8 @@ impl PlayerControlPreparation {
                 body: entity.body_profile().into_owned(),
             });
         }
+        let (preparing_navigation, navigation) =
+            super::navigation::prepare(state, &mut queries, budget)?;
         Ok(Self {
             queries,
             facts: PlayerControlFacts {
@@ -83,8 +87,10 @@ impl PlayerControlPreparation {
                 physical_life: actor.physical_life,
                 at: state.physical.header.sim_time,
                 can_recover: false,
+                preparing_navigation,
             },
             _reservation: reservation,
+            _navigation: navigation,
         })
     }
     pub(crate) fn queries(&self) -> &GeometryQueries {
@@ -102,6 +108,10 @@ impl PlayerControlPreparation {
         } else {
             answers.standing[0]
         };
+        self.facts.preparing_navigation |= answers
+            .routes
+            .iter()
+            .any(|route| matches!(route, crate::geometry::RoutePlan::Pending { .. }));
         self.complete()
     }
     pub(crate) fn finish_without_geometry(self) -> Result<CapturedPlayerControls, ExecutionError> {

@@ -117,11 +117,11 @@ import {
   creditSubjectFamiliarity,
 } from './worlds/base/recognition.js';
 
-export function selectedAttentionPolicy(world: WorldState) {
+export function selectedAttentionPolicy(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_ATTENTION_POLICY;
 }
-export function selectedTemporalPolicy(world: WorldState) {
+export function selectedTemporalPolicy(world: Pick<WorldState, 'profile'>) {
   return selectedAttentionPolicy(world).retention;
 }
 export function selectedAccountRetentionSelection(
@@ -550,7 +550,9 @@ export function selectedOrdinaryActionRules(world: Pick<WorldState, 'profile'>) 
   selectedCreationProfileForWorld(world);
   return BASE_ORDINARY_ACTION_RULES;
 }
-export function selectedTypedRequestVocabulary(world: WorldState) {
+export function selectedTypedRequestVocabulary(
+  world: import('./activity-hosts.js').ActivityDefinitionScope & Pick<WorldState, 'profile'>,
+) {
   selectedCreationProfileForWorld(world);
   return baseTypedRequestVocabulary(world);
 }
@@ -583,7 +585,7 @@ export function selectedEventDisclosure(world: WorldState) {
   return BASE_EVENT_DISCLOSURE;
 }
 
-export function selectedEventPresentation(world: WorldState) {
+export function selectedEventPresentation(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_EVENT_PRESENTATION;
 }

@@ -92,6 +92,30 @@ pub(crate) fn assemble_core(
     database_schema: &str,
     budget: &ByteBudget,
 ) -> Result<CoreInstallation, CoreInstallError> {
+    assemble_selected_core(input, None, database_schema, budget)
+}
+/// Active cold restoration supplies the exact indexed selection made by the
+/// maintained SQL owner; creation/full current import supplies complete rows.
+pub(crate) fn assemble_working_core(
+    input: CoreInstallInput,
+    selection: WorkingSetSelection,
+    database_schema: &str,
+    budget: &ByteBudget,
+) -> Result<CoreInstallation, CoreInstallError> {
+    // The Source startup prunes hot pointers and forces its archived header
+    // through the same first save. Refuse until that native saved projection
+    // has joined the save owner; importing fewer pointers alone loses counts.
+    if selection.removed_hot_events != 0 {
+        return Err(InstallError::UnsupportedFamily("active hot-history projection").into());
+    }
+    assemble_selected_core(input, Some(selection), database_schema, budget)
+}
+fn assemble_selected_core(
+    input: CoreInstallInput,
+    working_set: Option<WorkingSetSelection>,
+    database_schema: &str,
+    budget: &ByteBudget,
+) -> Result<CoreInstallation, CoreInstallError> {
     if input.accepted_cut > MAX_SAFE_INTEGER {
         return Err(InstallError::Identity.into());
     }
@@ -107,6 +131,9 @@ pub(crate) fn assemble_core(
     let schema = Arc::new(RecordSchema::install(layouts)?);
     let record_ledger = crate::records::RecordLedger::from_records(&records, accepted_cut, budget)?;
     let mut import = RowImport::new(records, CurrentFormat { database_schema })?;
+    if let Some(selection) = working_set {
+        import.install_working_set(selection, budget)?;
+    }
     let host_settings = crate::administration::read_host_settings(&mut import)?;
     let NativeDefinitionInputs {
         manifest,
@@ -316,8 +343,10 @@ pub(crate) fn assemble_core(
         physical.header.sim_time,
         physical.header.sequence,
         display.clone(),
+        budget,
     )?;
-    let reception = read_reception_rows(&mut import, roots, received, &schema, budget)?;
+    let mut reception = read_reception_rows(&mut import, roots, received, &schema, budget)?;
+    reception.fund_originals(budget)?;
     let mut revisions = OriginalRevisionRegistry::new(budget)?;
     let personal_install = install_personal(
         &mut import,

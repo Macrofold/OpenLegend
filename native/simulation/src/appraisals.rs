@@ -17,6 +17,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::BTreeMap, mem::size_of, sync::Arc};
 mod index;
+mod residency;
 use index::AppraisalIndex;
 mod read;
 mod response;
@@ -169,6 +170,7 @@ pub(crate) struct AppraisalRecord {
 pub(crate) struct AppraisalOwner {
     pub row: Option<InstalledRow>,
     pub coverage: OwnerCoverage,
+    pub active_complete: bool,
     pub records: IndexMap<String, Arc<AppraisalRecord>>,
     index: AppraisalIndex,
 }
@@ -180,7 +182,6 @@ pub(crate) struct AppraisalState {
     pub process_next_ordinal: u64,
     deadlines: BTreeMap<(u64, String), (String, String)>,
     undo: Vec<AppraisalUndo>,
-    initial_index: Option<ByteReservation>,
 }
 enum AppraisalUndo {
     Record {
@@ -325,10 +326,15 @@ pub(crate) fn install_appraisals(
                 return Err(InstallError::DuplicateRow);
             }
         }
+        let active_complete = records.coverage.complete
+            || import
+                .working_set()
+                .is_some_and(|working| working.active_appraisals(&row.slot));
         owners.insert(
             row.slot.clone(),
             AppraisalOwner {
                 row: Some(row),
+                active_complete,
                 coverage: records.coverage,
                 records: values,
                 index: AppraisalIndex::default(),
@@ -355,7 +361,6 @@ pub(crate) fn install_appraisals(
         process_next_ordinal: process.coverage.next_ordinal,
         deadlines: BTreeMap::new(),
         undo: Vec::new(),
-        initial_index: None,
     };
     for owner in state.owners.values() {
         for record in owner.records.values() {
@@ -365,23 +370,20 @@ pub(crate) fn install_appraisals(
     Ok(state)
 }
 impl AppraisalState {
-    /// Imported rich rows already have their resident owner. These additional
-    /// query keys are funded once and stay owned after candidate undo is freed.
+    /// A restored record keeps its body and derived-key allowance in that same
+    /// canonical Arc. Replacement or acceptance cannot free a held old body.
     pub(crate) fn prepare_indices(&mut self, budget: &ByteBudget) -> Result<(), ExecutionError> {
-        let bytes = self.owners.values().try_fold(0usize, |bytes, owner| {
-            owner.records.values().try_fold(bytes, |bytes, record| {
-                bytes
-                    .checked_add(AppraisalIndex::entry_bound(&record.value)?)
-                    .ok_or(ExecutionError::Capacity)
-            })
-        })?;
-        let reservation = budget.reserve(bytes)?;
         for owner in self.owners.values_mut() {
-            for record in owner.records.values() {
+            for record in owner.records.values_mut() {
+                let record = Arc::get_mut(record).ok_or(ExecutionError::Invariant)?;
+                if record._reservation.is_some() {
+                    return Err(ExecutionError::Invariant);
+                }
+                record._reservation =
+                    Some(budget.reserve(residency::record_bytes(&record.value, &record.row)?)?);
                 owner.index.insert(&record.value)?;
             }
         }
-        self.initial_index = Some(reservation);
         Ok(())
     }
     pub(crate) fn checkpoint(&self) -> AppraisalCheckpoint {
@@ -542,10 +544,8 @@ fn put(
     core: &mut CoreMutation<'_>,
     value: Appraisal,
     mut reservation: ByteReservation,
-    budget: &ByteBudget,
     checked: Option<&response::CheckedCreation>,
 ) -> Result<(), ExecutionError> {
-    reservation.merge(budget.reserve(AppraisalIndex::entry_bound(&value)?)?)?;
     let actor = &value.actor_id;
     let id = &value.id;
     let state = &mut core.state.appraisals;
@@ -581,6 +581,7 @@ fn put(
                 next_ordinal: 0,
             },
             records: IndexMap::new(),
+            active_complete: true,
             index: AppraisalIndex::default(),
         };
         state.undo.push(AppraisalUndo::Owner {
@@ -624,6 +625,12 @@ fn put(
         payload,
         extra: Vec::new(),
     };
+    // The preparation allowance covers encoding peak; the canonical owner must
+    // keep every actual body/index allocation after that temporary work ends.
+    let resident = residency::record_bytes(&value, &row)?;
+    if resident > reservation.bytes() {
+        reservation.resize(resident)?;
+    }
     let undo = AppraisalUndo::Record {
         actor: actor.clone(),
         id: id.clone(),
@@ -840,27 +847,19 @@ pub(crate) fn appraise_perceived_event(
         Err(ExecutionError::Work(crate::work::WorkError::Unavailable(_))) => return Ok(()),
         Err(error) => return Err(error),
     }
+    let checked = response::CheckedCreation::fresh_occurrence(core, event, actor, &id);
     let owner = core.state.appraisals.owners.get(actor);
     if let Some(owner) = owner {
-        if !owner.coverage.complete {
+        if !owner.active_complete || (!owner.coverage.complete && checked.is_none()) {
             return Err(crate::experience::ExperienceError::Unavailable.into());
         }
     }
-    let previous_count = if definition.value.stacking == "target" {
-        owner.map_or(0, |owner| {
-            owner
-                .records
-                .values()
-                .filter(|prior| {
-                    prior.value.state == "active"
-                        && prior.value.definition_pin == *pin
-                        && prior.value.target_id.as_deref() == Some(target)
-                })
-                .count()
-        })
-    } else {
-        0
-    };
+    let prefix = (definition.value.stacking == "target")
+        .then(|| AppraisalIndex::scope_key(pin, Some(target)))
+        .transpose()?;
+    let previous_count = owner
+        .zip(prefix.as_deref())
+        .map_or(0, |(owner, prefix)| owner.index.scoped(prefix).count());
     let _previous_reservation = budget.reserve(
         previous_count
             .checked_mul(size_of::<Arc<AppraisalRecord>>())
@@ -870,15 +869,11 @@ pub(crate) fn appraise_perceived_event(
     previous
         .try_reserve_exact(previous_count)
         .map_err(|_| ExecutionError::Capacity)?;
-    if definition.value.stacking == "target" {
-        if let Some(owner) = owner {
-            for prior in owner.records.values().filter(|prior| {
-                prior.value.state == "active"
-                    && prior.value.definition_pin == *pin
-                    && prior.value.target_id.as_deref() == Some(target)
-            }) {
-                previous.push(Arc::clone(prior));
-            }
+    if let Some((owner, prefix)) = owner.zip(prefix.as_deref()) {
+        for id in owner.index.scoped(prefix) {
+            previous.push(Arc::clone(
+                owner.records.get(id).ok_or(ExecutionError::Invariant)?,
+            ));
         }
     }
     for previous in previous {
@@ -889,10 +884,10 @@ pub(crate) fn appraise_perceived_event(
         value.changed_at = now;
         value.next_at = None;
         core.physical().release_work(&value.id)?;
-        put(core, value, reservation, budget, None)?;
+        put(core, value, reservation, None)?;
         core.journal.cognition.note_appraisal_change(actor)?;
     }
-    put(core, record, reservation, budget, None)?;
+    put(core, record, reservation, checked.as_ref())?;
     core.journal.cognition.note_appraisal_change(actor)
 }
 
@@ -963,7 +958,7 @@ pub(crate) fn advance_next_appraisal(
     let actor = value.actor_id.clone();
     let revision = value.revision;
     let active = value.state == "active";
-    put(core, value, reservation, budget, None)?;
+    put(core, value, reservation, None)?;
     core.journal.cognition.note_appraisal_change(&actor)?;
     let parts = if active {
         vec![
@@ -1094,11 +1089,14 @@ pub(crate) fn invalidate_appraisals(
             body: String::new(),
         };
         value.predecessor_id = None;
-        put(core, value, reservation, budget, None)?;
+        put(core, value, reservation, None)?;
         if changed {
             core.journal.cognition.note_appraisal_change(actor_id)?;
         }
     }
+    // Source invalidation notifies once even when every record was already a
+    // tombstone (or no records existed), after its per-ended-record notices.
+    core.journal.cognition.note_appraisal_change(actor_id)?;
     // Enrolled processes are a refused installed family and have no selected
     // producer. Their absent owner is not replaced by a synthesized process.
     drop(selection);

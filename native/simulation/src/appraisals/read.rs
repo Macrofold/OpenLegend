@@ -213,9 +213,10 @@ pub(crate) fn write_actor_appraisals(
     let mut seen_scopes = BTreeSet::new();
     let owner = state.appraisals.owners.get(actor_id);
     if (owner.is_none() && !state.appraisals.owner_coverage.complete)
-        || owner.is_some_and(|owner| !owner.coverage.complete)
+        || owner.is_some_and(|owner| !owner.active_complete)
     {
-        // A resident tail cannot establish a complete scope or page prefix.
+        // A historical tail alone cannot establish an active scope. The
+        // same-query active witness is distinct from historical completeness.
         return Err(ExecutionError::UnsupportedFamily);
     }
     let active_maximum = owner.map_or(0, |owner| owner.index.active_len().min(24));

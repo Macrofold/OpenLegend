@@ -16,6 +16,14 @@ pub(crate) struct LearnedCapabilities {
     pub owners: IndexMap<String, EmptyLearnedOwner>,
     pub next_owner_ordinal: u64,
 }
+impl LearnedCapabilities {
+    /// The complete root owner map and every present child were consumed above.
+    /// Source treats an absent actor key as empty; any nonempty present child
+    /// refuses installation rather than disappearing from this read.
+    pub(crate) fn known_recipes(&self) -> &[String] {
+        &[]
+    }
+}
 
 pub(crate) fn install_learned_capabilities(
     import: &mut RowImport,

@@ -401,6 +401,12 @@ impl crate::experience::PersonalEvidenceMeaning for AccountLaw<'_> {
     }
 }
 impl crate::received::TemporalValueMeaning for AccountLaw<'_> {
+    fn recognition_support_allocation_bound(
+        &self,
+        keys: &[String],
+    ) -> Option<crate::received::DependencyAliasAllocation> {
+        crate::worlds::base_recognition::recognition_support_allocation_bound(keys)
+    }
     fn recognition_support_source_ids(
         &self,
         keys: &[String],

@@ -5,6 +5,10 @@ use crate::values::{deserialize_nullable, deserialize_present_option, deserializ
 use crate::worlds::base_recognition::{FamiliarityState, RecognitionKnowledge};
 use serde::{Deserialize, Serialize};
 
+#[path = "knowledge/communications.rs"]
+mod communications;
+pub(crate) use communications::{CommunicationSubject, RememberedCommunications};
+
 #[path = "knowledge/introduction.rs"]
 mod introduction;
 pub(crate) use introduction::{HeardIntroductions, IntroductionWords};
@@ -16,8 +20,11 @@ mod learn_introduction;
 #[path = "knowledge/name_evidence.rs"]
 mod name_evidence;
 pub(crate) use learn_introduction::learn_heard_introductions;
+#[path = "knowledge/assign_name.rs"]
+mod assign_name;
 #[path = "knowledge/body_individual.rs"]
 mod body_individual;
+pub(crate) use assign_name::{CompletedNameEdit, NameEdit, assign_subject_name};
 pub(crate) use body_individual::{EnsuredBodyIndividual, ensure_body_individual};
 
 fn retained_flag<'de, D: serde::Deserializer<'de>>(
@@ -425,9 +432,7 @@ impl<'a> PersonalNameReader<'a> {
                         crate::encoding::json_record(&(kind, id))
                             .ok()
                             .and_then(|key| documents.get(&format!("subject:{key}")))
-                            .is_some_and(|document| {
-                                !document.text.trim_is_empty()
-                            })
+                            .is_some_and(|document| !document.text.trim_is_empty())
                     });
             if annotated {
                 return Ok(Some(local.clone()));
@@ -447,7 +452,7 @@ impl<'a> PersonalNameReader<'a> {
     pub(crate) fn recognizes_subject(&self, id: &str) -> Result<bool, ReceivedError> {
         Ok(self.observer_id == id || self.current_body_identity(id)?.is_some())
     }
-    fn remembered(&self, id: &str) -> bool {
+    pub(crate) fn can_address_remembered_subject(&self, id: &str) -> bool {
         self.entities
             .get(id)
             .is_some_and(|entity| entity.actor.is_some())
@@ -462,6 +467,21 @@ impl<'a> PersonalNameReader<'a> {
                                 .is_some_and(|individual| !individual.is_empty())
                     })
                 }))
+    }
+    pub(crate) fn can_remember_subject(&self, id: &str) -> Result<bool, ReceivedError> {
+        if self
+            .entities
+            .get(id)
+            .is_some_and(|entity| entity.actor.is_some())
+        {
+            return Ok(self.can_address_remembered_subject(id)
+                || self
+                    .current_body_association(id)?
+                    .and_then(|subject| self.observer_individual(subject))
+                    .and_then(|identity| identity.canonical_id.as_deref())
+                    == Some(id));
+        }
+        Ok(self.current_body_grant(id)?.is_some())
     }
     pub(crate) fn outward_body_name(
         &self,
@@ -546,7 +566,7 @@ impl<'a> PersonalNameReader<'a> {
         id: &str,
         role: SpeechTargetRole,
     ) -> Result<PersonalName<'_>, ReceivedError> {
-        if role == SpeechTargetRole::Remembered && self.remembered(id) {
+        if role == SpeechTargetRole::Remembered && self.can_address_remembered_subject(id) {
             if let Some(identity) = self.identity_for_entity(id) {
                 if let Some(name) = identity
                     .nickname
@@ -625,4 +645,24 @@ fn named(identity: &ObserverIdentity) -> bool {
         .as_ref()
         .is_some_and(|name| !name.is_empty())
         || !identity.given_name.is_empty()
+}
+
+/// The same observer-local ID owner serves visible strangers, learned voices
+/// and explicit personal names. It never joins a private canonical actor name.
+pub(crate) fn allocate_individual(
+    physical: &mut PhysicalState,
+    state: &ReceptionState,
+    observer: &str,
+) -> Result<String, crate::execution::ExecutionError> {
+    loop {
+        let id = physical.identity.allocate("individual")?.id;
+        if !state
+            .observer_identities
+            .as_ref()
+            .and_then(|root| root.get(observer))
+            .is_some_and(|identities| identities.contains_key(&id))
+        {
+            return Ok(id);
+        }
+    }
 }

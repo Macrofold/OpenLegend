@@ -92,6 +92,7 @@ impl RecognitionJournal {
                     &selected,
                     Some(after),
                     false,
+                    |_| Ok((Vec::new(), budget.reserve(0).map_err(|_| error())?)),
                     output,
                     budget,
                 )?;
@@ -107,6 +108,7 @@ impl RecognitionJournal {
                 &revisions,
                 state.knowledge_revisions.as_ref(),
                 false,
+                |_| Ok((Vec::new(), budget.reserve(0).map_err(|_| error())?)),
                 output,
                 budget,
             )?;

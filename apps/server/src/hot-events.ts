@@ -7,7 +7,7 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 
-const RECENT_EVENTS = 512;
+export const HOT_EVENT_RECENT_ROWS = 512;
 const EVICTION_BATCH = 256;
 type Counts = ObjectIndexNode<number> | undefined;
 function dependencies<T>(references: (value: T) => Iterable<string>) {
@@ -84,12 +84,12 @@ function pins(world: WorldState, selected?: EventPinRoots) {
 const checked = new WeakMap<WorldState['events'], Counts[]>();
 /** Placement is never forgetting. Reference counts preserve independent owners. */
 export function retainHotEvents(world: WorldState, selectPins?: () => EventPinRoots): WorldState {
-  if (world.events.length <= RECENT_EVENTS + EVICTION_BATCH) return world;
+  if (world.events.length <= HOT_EVENT_RECENT_ROWS + EVICTION_BATCH) return world;
   const counts = pins(world, selectPins?.()),
     prior = Object.isFrozen(world.events) ? checked.get(world.events) : undefined;
   if (prior && counts.every((tree, index) => tree === prior[index])) return world;
   const held = (id: string) => counts.some((tree) => objectIndexGet(tree, id) !== undefined);
-  const tail = world.events.length - RECENT_EVENTS;
+  const tail = world.events.length - HOT_EVENT_RECENT_ROWS;
   let removable = 0;
   for (let i = 0; i < tail && removable < EVICTION_BATCH; i++)
     if (!held(world.events[i]!.id)) removable++;

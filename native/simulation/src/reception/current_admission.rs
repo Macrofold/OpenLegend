@@ -374,6 +374,7 @@ pub(super) fn prepare_current_sample(
             core.state.physical.header.sequence,
             &mut core.state.physical.identity,
             &core.state.activity.display,
+            budget,
         )?;
         if added > 0 {
             core.journal

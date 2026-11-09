@@ -32,6 +32,20 @@ pub(crate) enum MemoryAcquisitionError {
     Encoding,
     Execution(crate::execution::ExecutionError),
 }
+impl From<MemoryAcquisitionError> for crate::execution::ExecutionError {
+    fn from(error: MemoryAcquisitionError) -> Self {
+        match error {
+            MemoryAcquisitionError::Experience(error) => Self::Experience(error),
+            MemoryAcquisitionError::Received(error) => Self::Received(error),
+            MemoryAcquisitionError::Append(TemporalAppendError::Received(error)) => {
+                Self::Received(error)
+            }
+            MemoryAcquisitionError::Append(TemporalAppendError::Work(error)) => Self::Work(error),
+            MemoryAcquisitionError::Execution(error) => error,
+            MemoryAcquisitionError::Encoding => Self::Invariant,
+        }
+    }
+}
 impl From<crate::execution::ExecutionError> for MemoryAcquisitionError {
     fn from(error: crate::execution::ExecutionError) -> Self {
         Self::Execution(error)

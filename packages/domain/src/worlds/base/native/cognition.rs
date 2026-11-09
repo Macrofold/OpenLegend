@@ -41,7 +41,13 @@ pub struct OccurrenceRules {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ResponseRules {
     pub thought: ThoughtRule,
+    pub interpretation: InterpretationRule,
     pub expression: ExpressionRules,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct InterpretationRule {
+    pub importance: f64,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

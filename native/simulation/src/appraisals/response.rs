@@ -45,6 +45,17 @@ pub(super) struct CheckedCreation {
     id: String,
 }
 impl CheckedCreation {
+    pub(super) fn fresh_occurrence(
+        core: &CoreMutation<'_>,
+        event: &WorldEvent,
+        actor: &str,
+        id: &str,
+    ) -> Option<Self> {
+        core.owns_pending_occurrence(event).then(|| Self {
+            actor: actor.to_owned(),
+            id: id.to_owned(),
+        })
+    }
     pub(super) fn matches(&self, actor: &str, id: &str) -> bool {
         self.actor == actor && self.id == id
     }
@@ -484,7 +495,7 @@ impl AppraisalChangeCursor {
             }
         }
         let id = value.id.clone();
-        put(core, value, reservation, budget, None)?;
+        put(core, value, reservation, None)?;
         if matches!(input.kind, EditKind::Resolve) {
             core.journal.cognition.note_appraisal_change(&self.actor)?;
         }
@@ -739,7 +750,7 @@ impl AppraisalChangeCursor {
                 old.changed_at = now;
                 old.next_at = None;
                 core.physical().release_work(&old.id)?;
-                put(core, old, guard, budget, None)?;
+                put(core, old, guard, None)?;
                 core.journal.cognition.note_appraisal_change(&self.actor)?;
             }
         }
@@ -747,7 +758,7 @@ impl AppraisalChangeCursor {
             actor: self.actor.clone(),
             id: record.id.clone(),
         };
-        put(core, record, reservation, budget, Some(&checked))?;
+        put(core, record, reservation, Some(&checked))?;
         core.journal.cognition.note_appraisal_change(&self.actor)?;
         let changed = Arc::clone(
             core.state

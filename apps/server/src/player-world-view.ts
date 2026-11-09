@@ -1,8 +1,19 @@
 import type { WorldState } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
-import { worldClockParts } from '@open-legend/protocol';
+import { worldClockParts, worldDayText } from '@open-legend/protocol';
 
 type Presentation = WorldState['presentation'];
+
+/** The date label uses the world's offset; elapsed whole intervals do not. */
+export function playerHistoryText(
+  seconds: number,
+  offsetHours: number,
+  calendar: NonNullable<Presentation>['calendar'],
+) {
+  return calendar?.historyTemplate
+    ?.replaceAll('{startDay}', worldDayText(worldClockParts(0, offsetHours).day, calendar.dayLabel))
+    .replaceAll('{elapsedDays}', String(worldClockParts(seconds, 0).day - 1));
+}
 
 /** Formatting accepts only authored presentation and an already permitted
  * current place label. A remembered place cannot stand in for current exposure. */
@@ -64,7 +75,10 @@ export function projectPlayerClock(
   presentation: Presentation,
   namedTimes: Readonly<Record<string, number>>,
   offsetHours: number,
-  operational: Pick<GameView['clock'], 'weather' | 'speed' | 'baseRatio' | 'paused' | 'pauseReason' | 'preparingNavigation'>,
+  operational: Pick<
+    GameView['clock'],
+    'weather' | 'speed' | 'baseRatio' | 'paused' | 'pauseReason' | 'preparingNavigation'
+  >,
 ): GameView['clock'] {
   return {
     weather: operational.weather,

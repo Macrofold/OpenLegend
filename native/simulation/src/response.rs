@@ -18,6 +18,8 @@ mod save;
 pub(crate) use envelope::{ActorResponse, ResponseKind, ResponseOperation};
 mod digest;
 pub(crate) use digest::{ResponseDigestAnswer, ResponseDigestRequest};
+mod think;
+pub(crate) use think::{CompletedThought, Thought, remember_thought};
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 use serde::Serialize;
 use std::mem::size_of;
 
-#[derive(Serialize)]
+#[derive(PartialEq, Eq, Hash, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "lowercase",
@@ -23,21 +23,12 @@ pub(crate) enum SemanticNotice {
         actor_id: String,
     },
 }
-#[derive(Clone, Copy, Serialize)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum PrivateStateField {
     Appraisal,
 }
 impl SemanticNotice {
-    pub(super) fn key(&self) -> String {
-        match self {
-            Self::State {
-                entity_id,
-                field: PrivateStateField::Appraisal,
-            } => format!("state:{entity_id}:appraisal"),
-            Self::Knowledge { actor_id } => format!("knowledge:{actor_id}"),
-        }
-    }
     pub(super) fn actor(&self) -> &str {
         match self {
             Self::State { entity_id, .. } => entity_id,
@@ -84,16 +75,18 @@ impl PreparedSemanticNotices {
     where
         I: Iterator<Item = &'a SemanticNotice> + Clone,
     {
-        let count = records.clone().count();
-        let strings = records
+        let count = records.clone().count().min(maximum_scopes);
+        let longest_actor = records
             .clone()
-            .try_fold(0usize, |n, record| {
-                n.checked_add(record.actor().len().checked_mul(4)?.checked_add(64)?)
-            })
-            .ok_or(ExecutionError::Capacity)?;
+            .map(|record| record.actor().len())
+            .max()
+            .unwrap_or(0);
         let bound = heap_sum([
-            strings,
-            map_storage::<String, &SemanticNotice>(count).ok_or(ExecutionError::Capacity)?,
+            longest_actor
+                .checked_mul(count)
+                .ok_or(ExecutionError::Capacity)?,
+            map_storage::<&SemanticNotice, &SemanticNotice>(count)
+                .ok_or(ExecutionError::Capacity)?,
             count
                 .checked_mul(size_of::<SemanticNotice>())
                 .ok_or(ExecutionError::Capacity)?,
@@ -102,6 +95,7 @@ impl PreparedSemanticNotices {
         let mut reservation = budget.reserve(bound)?;
         let mut coalesced = IndexMap::with_capacity(count);
         let mut appraisal_revision = 0u64;
+        let mut conservative = false;
         for record in records {
             if matches!(record, SemanticNotice::State { .. }) {
                 appraisal_revision = appraisal_revision
@@ -109,12 +103,14 @@ impl PreparedSemanticNotices {
                     .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
                     .ok_or(ExecutionError::Invariant)?;
             }
-            coalesced.insert(record.key(), record);
+            // Source retains its first bounded set of distinct scopes; a
+            // later repeat still replaces its entry without changing order.
+            if !coalesced.contains_key(record) && coalesced.len() >= maximum_scopes {
+                conservative = true;
+                continue;
+            }
+            coalesced.insert(record, record);
         }
-        let conservative = coalesced.len() > maximum_scopes;
-        // Keep the affected actor facts even after overflow so the publication
-        // consumer cannot accidentally turn a conservative rebuild into an
-        // empty scope. Ordinary bounded output preserves Source insertion order.
         let mut changes = Vec::with_capacity(coalesced.len());
         changes.extend(coalesced.values().map(|record| record.copy()));
         drop(coalesced);

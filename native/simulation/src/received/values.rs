@@ -11,13 +11,19 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::activity::ActivityDisplayLimits;
-use crate::encoding::json_record;
+use crate::encoding::{json_record, json_record_len};
+use crate::host::retained_size::HeapBytes;
+use crate::host::{ByteBudget, ByteReservation};
+mod residency;
+mod rows;
 use crate::identity::IdentityState;
 use crate::reception::{
     ObservationFrame, ObservedBodyDetails, ObservedBodyPose, ObservedLocation,
     ReceivedObservationHeader, SensoryFacet,
 };
 use crate::values::{deserialize_present_option, deserialize_safe_integer, is_safe_record_id};
+pub(crate) use residency::PreparedValueResidency;
+pub(crate) use rows::decode_received_value_row;
 
 use super::{ActionResultValue, ReceivedError};
 
@@ -284,7 +290,7 @@ impl ReceivedValueFragment {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReceivedValueRecord {
     pub id: String,
@@ -294,6 +300,17 @@ pub struct ReceivedValueRecord {
     pub value: ReceivedValueFragment,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub bytes: u64,
+    #[serde(skip)]
+    storage: Option<ByteReservation>,
+}
+impl PartialEq for ReceivedValueRecord {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+            && self.at == other.at
+            && self.sequence == other.sequence
+            && self.value == other.value
+            && self.bytes == other.bytes
+    }
 }
 
 pub struct RetainedValue {
@@ -312,31 +329,105 @@ pub struct ReceivedValuesCheckpoint {
 #[derive(Debug)]
 enum ReceivedValuesUndo {
     SourceInsert(String),
+    SourceLoaded(String),
     PhaseReplace {
         at: Option<f64>,
-        values: BTreeMap<Arc<str>, String>,
+        values: BTreeMap<ValueEncoding, String>,
     },
     PhaseInsert {
-        key: Arc<str>,
+        key: ValueEncoding,
         previous: Option<String>,
     },
 }
 
-#[derive(Debug)]
 pub struct ReceivedValues {
     sources: IndexMap<String, SharedReceivedValue>,
     phase_at: Option<f64>,
-    phase_values: BTreeMap<Arc<str>, String>,
+    phase_values: BTreeMap<ValueEncoding, String>,
     undo: Vec<ReceivedValuesUndo>,
     activity_limits: Arc<ActivityDisplayLimits>,
+    budget: ByteBudget,
+    backing: ByteReservation,
 }
-
-#[derive(Debug)]
+impl std::fmt::Debug for ReceivedValues {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ReceivedValues")
+            .field("sources", &self.sources)
+            .field("phase_at", &self.phase_at)
+            .finish_non_exhaustive()
+    }
+}
+#[derive(Clone, Debug)]
 struct SharedReceivedValue {
+    // Encoding and its own allowance travel together, including phase keys.
+    encoding: ValueEncoding,
     record: Arc<ReceivedValueRecord>,
-    /// Immutable fragment encoding is charged by every owning logical block.
-    /// Derive once with the source; repeated metadata reads do not serialize it.
-    encoding: Arc<str>,
+}
+#[derive(Clone, Debug)]
+struct ValueEncoding(Arc<EncodingStorage>);
+#[derive(Debug)]
+struct EncodingStorage {
+    text: Arc<str>,
+    _storage: ByteReservation,
+}
+impl std::borrow::Borrow<str> for ValueEncoding {
+    fn borrow(&self) -> &str {
+        &self.0.text
+    }
+}
+impl AsRef<str> for ValueEncoding {
+    fn as_ref(&self) -> &str {
+        &self.0.text
+    }
+}
+impl std::ops::Deref for ValueEncoding {
+    type Target = str;
+    fn deref(&self) -> &str {
+        &self.0.text
+    }
+}
+impl PartialEq for ValueEncoding {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.text == other.0.text
+    }
+}
+impl Eq for ValueEncoding {}
+impl PartialOrd for ValueEncoding {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl Ord for ValueEncoding {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.text.cmp(&other.0.text)
+    }
+}
+impl ValueEncoding {
+    fn install(
+        encoded: String,
+        mut storage: ByteReservation,
+        id_capacity: usize,
+    ) -> Result<Self, ReceivedError> {
+        // Arc conversion briefly owns both UTF-8 allocations. Its allowance
+        // follows the resulting encoding through source and old phase maps.
+        let retained = residency::encoding_bytes(encoded.len(), id_capacity)
+            .ok_or(ReceivedError("Received encoding exceeds native allowance."))?;
+        storage
+            .resize(
+                retained
+                    .checked_add(encoded.capacity())
+                    .ok_or(ReceivedError("Received encoding exceeds native allowance."))?,
+            )
+            .map_err(|_| ReceivedError("Received encoding exceeds native allowance."))?;
+        let text: Arc<str> = Arc::from(encoded);
+        storage
+            .resize(retained)
+            .map_err(|_| ReceivedError("Received encoding exceeds native allowance."))?;
+        Ok(Self(Arc::new(EncodingStorage {
+            text,
+            _storage: storage,
+        })))
+    }
 }
 
 enum RetentionPlan {
@@ -344,6 +435,7 @@ enum RetentionPlan {
     Shared {
         value: ReceivedValueFragment,
         encoded: String,
+        encoded_storage: ByteReservation,
     },
 }
 
@@ -353,8 +445,17 @@ fn retention_plan(
     preferred: Option<&ReceivedValueReference>,
     at: f64,
     limits: &ActivityDisplayLimits,
+    budget: &ByteBudget,
 ) -> Result<RetentionPlan, ReceivedError> {
     value.validate(at, limits)?;
+    let encoded_len =
+        json_record_len(&value).map_err(|_| ReceivedError("Received value encoding failed."))?;
+    let encoded_storage = budget
+        .reserve(
+            residency::encoding_scratch(encoded_len)
+                .ok_or(ReceivedError("Received value exceeds native allowance."))?,
+        )
+        .map_err(|_| ReceivedError("Received value exceeds native allowance."))?;
     let encoded =
         json_record(&value).map_err(|_| ReceivedError("Received value encoding failed."))?;
     let value_bytes = encoded.len() as u64;
@@ -387,7 +488,11 @@ fn retention_plan(
             value_bytes,
         }));
     }
-    Ok(RetentionPlan::Shared { value, encoded })
+    Ok(RetentionPlan::Shared {
+        value,
+        encoded,
+        encoded_storage,
+    })
 }
 
 /// Root presence follows actual retention: an inline value cannot create an
@@ -401,21 +506,31 @@ pub fn retain_received_value(
     sequence: u64,
     identity: &mut IdentityState,
     limits: &Arc<ActivityDisplayLimits>,
+    budget: &ByteBudget,
 ) -> Result<RetainedValue, ReceivedError> {
     if let Some(values) = values {
         return values.retain(value, preferred, at, sequence, identity);
     }
-    match retention_plan(None, value, preferred, at, limits)? {
+    match retention_plan(None, value, preferred, at, limits, budget)? {
         RetentionPlan::Resolved(retained) => Ok(retained),
-        RetentionPlan::Shared { value, encoded } => {
+        RetentionPlan::Shared {
+            value,
+            encoded,
+            encoded_storage,
+        } => {
             let mut owner = ReceivedValues {
                 sources: IndexMap::new(),
                 phase_at: None,
                 phase_values: BTreeMap::new(),
                 undo: Vec::new(),
                 activity_limits: Arc::clone(limits),
+                budget: budget.clone(),
+                backing: budget
+                    .reserve(0)
+                    .map_err(|_| ReceivedError("Received values exceed native allowance."))?,
             };
-            let retained = owner.retain_shared(value, encoded, at, sequence, identity)?;
+            let retained =
+                owner.retain_shared(value, encoded, encoded_storage, at, sequence, identity)?;
             *values = Some(owner);
             Ok(retained)
         }
@@ -423,6 +538,44 @@ pub fn retain_received_value(
 }
 
 impl ReceivedValues {
+    fn prepare_backing(
+        &mut self,
+        additional_sources: usize,
+        additional_undo: usize,
+    ) -> Result<(), ReceivedError> {
+        let capacity = || ReceivedError("Received-value backing exceeds native allowance.");
+        let sources = self
+            .sources
+            .len()
+            .checked_add(additional_sources)
+            .ok_or_else(capacity)?;
+        let source_capacity = if sources > self.sources.capacity() {
+            self.sources
+                .capacity()
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(sources))
+                .ok_or_else(capacity)?
+        } else {
+            self.sources.capacity()
+        };
+        let undo_capacity = self
+            .undo
+            .len()
+            .checked_add(additional_undo)
+            .ok_or_else(capacity)?
+            .max(self.undo.capacity());
+        let bytes = residency::backing(source_capacity, undo_capacity).ok_or_else(capacity)?;
+        if bytes > self.backing.bytes() {
+            self.backing.resize(bytes).map_err(|_| capacity())?;
+        }
+        self.sources
+            .try_reserve(additional_sources)
+            .map_err(|_| capacity())?;
+        self.undo
+            .try_reserve_exact(additional_undo)
+            .map_err(|_| capacity())?;
+        Ok(())
+    }
     /// Source's sharing index belongs to a particular working world object as
     /// well as its simulation time. A command's isolated draft cannot reuse an
     /// earlier caller's index merely because both ran at the same instant.
@@ -441,9 +594,7 @@ impl ReceivedValues {
         if self.phase_at.is_none() && self.phase_values.is_empty() {
             return Ok(());
         }
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ReceivedError("Received-value scope exceeds native allowance."))?;
+        self.prepare_backing(0, 1)?;
         self.undo.push(ReceivedValuesUndo::PhaseReplace {
             at: self.phase_at.take(),
             values: std::mem::take(&mut self.phase_values),
@@ -461,49 +612,81 @@ impl ReceivedValues {
         through: f64,
         sequence: u64,
         activity_limits: Arc<ActivityDisplayLimits>,
+        budget: &ByteBudget,
     ) -> Result<Self, ReceivedError> {
         let mut sources = IndexMap::new();
+        let mut backing = budget
+            .reserve(
+                residency::backing(
+                    records
+                        .len()
+                        .checked_mul(2)
+                        .and_then(|n| n.checked_add(1))
+                        .ok_or(ReceivedError("Received values exceed native allowance."))?,
+                    0,
+                )
+                .ok_or(ReceivedError("Received values exceed native allowance."))?,
+            )
+            .map_err(|_| ReceivedError("Received values exceed native allowance."))?;
+        sources
+            .try_reserve(records.len())
+            .map_err(|_| ReceivedError("Received values exceed native allowance."))?;
         for record in records {
-            record.value.validate(through, &activity_limits)?;
-            if !is_safe_record_id(&record.id)
-                || !record.at.is_finite()
-                || record.at < 0.0
-                || record.at > through
-                || record.sequence > sequence
-                || sources.contains_key(&record.id)
-            {
+            if sources.contains_key(&record.id) {
                 return Err(ReceivedError(
                     "Invalid or duplicate received value identity.",
                 ));
             }
-            let encoded = json_record(&record)
-                .map_err(|_| ReceivedError("Received value encoding failed."))?;
-            if encoded.len() as u64 != record.bytes {
-                return Err(ReceivedError(
-                    "Received value bytes disagree with its current body.",
-                ));
-            }
-            let encoding: Arc<str> = Arc::from(
-                json_record(&record.value)
-                    .map_err(|_| ReceivedError("Received value encoding failed."))?,
-            );
-            sources.insert(
-                record.id.clone(),
-                SharedReceivedValue {
-                    record: Arc::new(record),
-                    encoding,
-                },
-            );
+            let owned = restore_record(record, through, sequence, &activity_limits, budget)?;
+            sources.insert(owned.record.id.clone(), owned);
         }
+        backing
+            .resize(
+                residency::backing(sources.capacity(), 0)
+                    .ok_or(ReceivedError("Received values exceed native allowance."))?,
+            )
+            .map_err(|_| ReceivedError("Received values exceed native allowance."))?;
         Ok(Self {
             sources,
             phase_at: None,
             phase_values: BTreeMap::new(),
             undo: Vec::new(),
             activity_limits,
+            budget: budget.clone(),
+            backing,
         })
     }
 
+    pub(crate) fn load_rows(
+        &mut self,
+        rows: Vec<crate::records::InstalledRow>,
+        through: f64,
+        sequence: u64,
+    ) -> Result<(), ReceivedError> {
+        for row in rows {
+            let record = decode_received_value_row(&row)?;
+            if let Some(known) = self.sources.get(&record.id) {
+                if known.record.as_ref() != &record {
+                    return Err(ReceivedError(
+                        "Received-value identity has a different current body.",
+                    ));
+                }
+                continue;
+            }
+            let value = restore_record(
+                record,
+                through,
+                sequence,
+                &self.activity_limits,
+                &self.budget,
+            )?;
+            self.prepare_backing(1, 1)?;
+            let id = value.record.id.clone();
+            self.undo.push(ReceivedValuesUndo::SourceLoaded(id.clone()));
+            self.sources.insert(id, value);
+        }
+        Ok(())
+    }
     pub fn activity_limits(&self) -> &ActivityDisplayLimits {
         &self.activity_limits
     }
@@ -553,11 +736,20 @@ impl ReceivedValues {
         sequence: u64,
         identity: &mut IdentityState,
     ) -> Result<RetainedValue, ReceivedError> {
-        match retention_plan(Some(self), value, preferred, at, &self.activity_limits)? {
+        match retention_plan(
+            Some(self),
+            value,
+            preferred,
+            at,
+            &self.activity_limits,
+            &self.budget,
+        )? {
             RetentionPlan::Resolved(retained) => Ok(retained),
-            RetentionPlan::Shared { value, encoded } => {
-                self.retain_shared(value, encoded, at, sequence, identity)
-            }
+            RetentionPlan::Shared {
+                value,
+                encoded,
+                encoded_storage,
+            } => self.retain_shared(value, encoded, encoded_storage, at, sequence, identity),
         }
     }
 
@@ -565,12 +757,14 @@ impl ReceivedValues {
         &mut self,
         value: ReceivedValueFragment,
         encoded: String,
+        encoded_storage: ByteReservation,
         at: f64,
         sequence: u64,
         identity: &mut IdentityState,
     ) -> Result<RetainedValue, ReceivedError> {
         let value_bytes = encoded.len() as u64;
         if self.phase_at != Some(at) {
+            self.prepare_backing(0, 1)?;
             self.undo.push(ReceivedValuesUndo::PhaseReplace {
                 at: self.phase_at,
                 values: std::mem::take(&mut self.phase_values),
@@ -586,6 +780,22 @@ impl ReceivedValues {
                 value_bytes,
             });
         }
+        self.prepare_backing(1, 2)?;
+        // The pinned formatter's growable ASCII ID needs at most twice its
+        // complete prefix+safe-integer length. Final custody uses its capacity.
+        let id_capacity =
+            ("received-value-".len() + crate::identity::MAX_SAFE_INTEGER.ilog10() as usize + 1) * 2;
+        let body = residency::body_parts_bytes(
+            id_capacity,
+            value
+                .heap_bytes()
+                .ok_or(ReceivedError("Received value exceeds native allowance."))?,
+        )
+        .ok_or(ReceivedError("Received value exceeds native allowance."))?;
+        let mut body_storage = self
+            .budget
+            .reserve(body)
+            .map_err(|_| ReceivedError("Received value exceeds native allowance."))?;
         let issued = identity
             .allocate("received-value")
             .map_err(|_| ReceivedError("Received value identity is exhausted."))?;
@@ -595,8 +805,19 @@ impl ReceivedValues {
             sequence,
             value,
             bytes: 0,
+            storage: None,
         };
         for _ in 0..4 {
+            let _encoding = self
+                .budget
+                .reserve(
+                    residency::encoding_scratch(
+                        json_record_len(&record)
+                            .map_err(|_| ReceivedError("Received value encoding failed."))?,
+                    )
+                    .ok_or(ReceivedError("Received value exceeds native allowance."))?,
+                )
+                .map_err(|_| ReceivedError("Received value exceeds native allowance."))?;
             let bytes = json_record(&record)
                 .map_err(|_| ReceivedError("Received value encoding failed."))?
                 .len() as u64;
@@ -605,18 +826,25 @@ impl ReceivedValues {
             }
             record.bytes = bytes;
         }
+        body_storage
+            .resize(
+                residency::record_bytes(&record)
+                    .ok_or(ReceivedError("Received value exceeds native allowance."))?,
+            )
+            .map_err(|_| ReceivedError("Received value exceeds native allowance."))?;
+        record.storage = Some(body_storage);
+        let key = ValueEncoding::install(encoded, encoded_storage, record.id.capacity())?;
         let id = record.id.clone();
         let added_bytes = record.bytes;
         self.undo.push(ReceivedValuesUndo::SourceInsert(id.clone()));
-        let key: Arc<str> = Arc::from(encoded);
         self.sources.insert(
             id.clone(),
             SharedReceivedValue {
                 record: Arc::new(record),
-                encoding: Arc::clone(&key),
+                encoding: key.clone(),
             },
         );
-        let previous = self.phase_values.insert(Arc::clone(&key), id.clone());
+        let previous = self.phase_values.insert(key.clone(), id.clone());
         self.undo
             .push(ReceivedValuesUndo::PhaseInsert { key, previous });
         Ok(RetainedValue {
@@ -644,10 +872,13 @@ impl ReceivedValues {
         }
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().expect("Journal length checked") {
-                ReceivedValuesUndo::SourceInsert(id) => {
-                    if self.sources.shift_remove(&id).is_none() {
-                        return Err(ReceivedError("Received-value rollback source is absent."));
-                    }
+                ReceivedValuesUndo::SourceInsert(id) | ReceivedValuesUndo::SourceLoaded(id) => {
+                    let removed = self
+                        .sources
+                        .shift_remove(&id)
+                        .ok_or(ReceivedError("Received-value rollback source is absent."))?;
+                    drop(id);
+                    drop(removed);
                 }
                 ReceivedValuesUndo::PhaseReplace { at, values } => {
                     self.phase_at = at;
@@ -669,6 +900,68 @@ impl ReceivedValues {
     /// Called once the outer candidate is accepted, after all nested event
     /// checkpoints have finished. No durable-save acknowledgement is implied.
     pub fn discard_undo(&mut self) {
-        self.undo = Vec::new();
+        // Reuse its actual funded backing; clearing releases old phase maps
+        // and their shared source guards, while capacity stays honestly owned.
+        self.undo.clear();
     }
+}
+
+fn restore_record(
+    mut record: ReceivedValueRecord,
+    through: f64,
+    sequence: u64,
+    activity_limits: &ActivityDisplayLimits,
+    budget: &ByteBudget,
+) -> Result<SharedReceivedValue, ReceivedError> {
+    record.value.validate(through, &activity_limits)?;
+    if !is_safe_record_id(&record.id)
+        || !record.at.is_finite()
+        || record.at < 0.0
+        || record.at > through
+        || record.sequence > sequence
+    {
+        return Err(ReceivedError(
+            "Invalid or duplicate received value identity.",
+        ));
+    }
+    let _record_encoding = budget
+        .reserve(
+            residency::encoding_scratch(
+                json_record_len(&record)
+                    .map_err(|_| ReceivedError("Received value encoding failed."))?,
+            )
+            .ok_or(ReceivedError("Received encoding exceeds native allowance."))?,
+        )
+        .map_err(|_| ReceivedError("Received encoding exceeds native allowance."))?;
+    let encoded =
+        json_record(&record).map_err(|_| ReceivedError("Received value encoding failed."))?;
+    if encoded.len() as u64 != record.bytes {
+        return Err(ReceivedError(
+            "Received value bytes disagree with its current body.",
+        ));
+    }
+    let encoded_len = json_record_len(&record.value)
+        .map_err(|_| ReceivedError("Received value encoding failed."))?;
+    let storage = budget
+        .reserve(
+            residency::record_bytes(&record)
+                .ok_or(ReceivedError("Received values exceed native allowance."))?,
+        )
+        .map_err(|_| ReceivedError("Received values exceed native allowance."))?;
+    let encoded_storage = budget
+        .reserve(
+            residency::encoding_scratch(encoded_len)
+                .ok_or(ReceivedError("Received encoding exceeds native allowance."))?,
+        )
+        .map_err(|_| ReceivedError("Received encoding exceeds native allowance."))?;
+    let encoding = ValueEncoding::install(
+        json_record(&record.value).map_err(|_| ReceivedError("Received value encoding failed."))?,
+        encoded_storage,
+        record.id.capacity(),
+    )?;
+    record.storage = Some(storage);
+    Ok(SharedReceivedValue {
+        encoding,
+        record: Arc::new(record),
+    })
 }

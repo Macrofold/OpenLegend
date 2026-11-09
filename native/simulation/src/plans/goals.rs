@@ -175,6 +175,11 @@ pub(crate) fn change_goal(
         );
     }
     let mut remove = None;
+    if actor.agency.revision >= crate::identity::MAX_SAFE_INTEGER
+        || (!create && goal.is_some_and(|goal| goal.revision >= crate::identity::MAX_SAFE_INTEGER))
+    {
+        return reject("Goal revisions are exhausted; the previous intentions were retained.");
+    }
     if create {
         if goals.iter().any(|goal| goal.id == id) {
             return reject("Goal identity already exists.");

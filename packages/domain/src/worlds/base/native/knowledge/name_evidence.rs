@@ -12,7 +12,7 @@ use std::{collections::BTreeSet, mem::size_of};
 
 pub(super) struct HeldNameEvidence {
     pub ids: Vec<String>,
-    pub created: Option<String>,
+    pub created: Vec<String>,
     pub reservation: ByteReservation,
 }
 fn grow(reservation: &mut ByteReservation, bytes: usize) -> Result<(), ExecutionError> {
@@ -54,22 +54,23 @@ fn name_indices<'a>(facets: impl Iterator<Item = (u64, &'a str)> + Clone) -> Opt
 pub(super) fn release_created(
     core: &mut CoreMutation<'_>,
     observer: &str,
-    id: Option<&str>,
+    ids: &[String],
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
-    let Some(id) = id else { return Ok(()) };
-    core.state.temporal.release_support(
-        observer,
-        id,
-        core.state.physical.header.sim_time,
-        &core.state.installed.attention.value().retention,
-        Some(KnownPlaceMutation {
-            state: &mut core.state.experience,
-            journal: &mut core.journal.experience,
-            limits: &core.state.installed.personal_evidence_preparation,
-            budget,
-        }),
-    )?;
+    for id in ids {
+        core.state.temporal.release_support(
+            observer,
+            id,
+            core.state.physical.header.sim_time,
+            &core.state.installed.attention.value().retention,
+            Some(KnownPlaceMutation {
+                state: &mut core.state.experience,
+                journal: &mut core.journal.experience,
+                limits: &core.state.installed.personal_evidence_preparation,
+                budget,
+            }),
+        )?;
+    }
     Ok(())
 }
 fn selected_members(
@@ -117,7 +118,7 @@ fn selected_members(
 }
 /// One actual `awareness:event` reference from the introduction caller. Stored
 /// account wrappers and native delivery wrappers may have different receipts.
-pub(super) fn retain_name_evidence(
+pub(super) fn retain_event_evidence(
     core: &mut CoreMutation<'_>,
     observer: &str,
     event_id: &str,
@@ -341,7 +342,71 @@ pub(super) fn retain_name_evidence(
     ids.push(source);
     Ok(Some(HeldNameEvidence {
         ids,
-        created: (!already_held).then_some(id),
+        created: if already_held { Vec::new() } else { vec![id] },
+        reservation,
+    }))
+}
+
+/// Explicit edits may carry several acquired events and plain historical IDs.
+/// Every awareness reference retains its own exact sparse words; if one fails,
+/// only supports newly acquired by this attempt are released, in source order.
+pub(super) fn retain_name_evidence(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    references: &[String],
+    actual: Option<&Awareness>,
+    budget: &ByteBudget,
+) -> Result<Option<HeldNameEvidence>, ExecutionError> {
+    let strings = references
+        .iter()
+        .try_fold(0usize, |n, id| n.checked_add(id.len()))
+        .ok_or(ExecutionError::Capacity)?;
+    let mut reservation = budget.reserve(
+        strings
+            .checked_add(
+                references
+                    .len()
+                    .checked_mul(4 * size_of::<String>())
+                    .ok_or(ExecutionError::Capacity)?,
+            )
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let mut ids = Vec::with_capacity(
+        references
+            .len()
+            .checked_mul(3)
+            .ok_or(ExecutionError::Capacity)?,
+    );
+    let mut created = Vec::with_capacity(references.len());
+    for id in references {
+        if !ids.contains(id) {
+            ids.push(id.clone());
+        }
+    }
+    for reference in references {
+        let Some(event_id) = reference.strip_prefix("awareness:") else {
+            continue;
+        };
+        let Some(held) = retain_event_evidence(core, observer, event_id, actual, budget)? else {
+            release_created(core, observer, &created, budget)?;
+            return Ok(None);
+        };
+        reservation.merge(held.reservation)?;
+        for id in held.ids {
+            if !ids.contains(&id) {
+                ids.push(id);
+            }
+        }
+        created.extend(held.created);
+    }
+    reservation.resize(
+        ids.heap_bytes()
+            .and_then(|n| n.checked_add(created.heap_bytes()?))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    Ok(Some(HeldNameEvidence {
+        ids,
+        created,
         reservation,
     }))
 }

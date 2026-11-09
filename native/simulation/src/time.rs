@@ -18,6 +18,7 @@ pub(crate) use input::AdmittedWorldInput;
 pub(crate) use movement::MotionSliceCursor;
 mod advance;
 mod navigation;
+pub(crate) use navigation::action_navigation_pending;
 mod reconcile;
 mod sensing;
 pub(crate) use advance::{

@@ -162,27 +162,27 @@ export function perceivedParticipantReferences(
     scope.actorId,
   ),
 ) {
-  const result: ReturnType<import('./perceived-events.js').PublicEventRoleProjection> = {};
+  const facts: PlayerEventRoleFacts = { selfContact: false };
   const body = event.sourceBody;
   if (body) {
     const entity = entityGet(world.entities, body.entityId);
     if (body.entityId === scope.actorId && body.physicalLife === (entity?.actor?.physicalLife ?? 0))
-      result.actor = { contactReference: scope.actorId };
+      facts.selfContact = true;
     else if (entity && reads && body.physicalLife === (entity.actor?.physicalLife ?? 0)) {
       const received = currentBodyGrant(world, scope.actorId, body.entityId, reads);
       if (received?.leaseId === body.leaseId)
-        result.actor = { contactReference: currentContactReference(world, scope, entity, reads) };
+        facts.actorContact = {
+          id: entity.id,
+          life: entity.actor?.physicalLife ?? 0,
+          leaseId: received.leaseId,
+        };
     }
   }
   const subject = event.sourceSubject;
   const identity =
     subject?.kind === 'individual' ? observerIndividual(world, scope.actorId, subject) : undefined;
   const remembered = identity && !identity.seedOnly ? identity.canonicalId : undefined;
-  if (remembered && remembered !== scope.actorId && remembered === event.actorId)
-    result.actor = {
-      ...result.actor,
-      communicationReference: communicationReference(scope, { id: remembered }),
-    };
+  facts.sourceCommunicationId = remembered;
   // An admitted addressee label establishes its original recognized role. A
   // separate present association still gates its current body/communication link.
   const targetId = event.speech?.addressee ? event.targetId : undefined;
@@ -191,14 +191,63 @@ export function perceivedParticipantReferences(
     targetId !== scope.actorId &&
     canAddressRememberedSubject(world, scope.actorId, targetId)
   ) {
-    result.target = { communicationReference: communicationReference(scope, { id: targetId }) };
+    facts.targetCommunicationId = targetId;
     const target = entityGet(world.entities, targetId);
     if (
       target &&
       reads &&
       currentCommunicationSubject(world, scope.actorId, targetId, reads) === targetId
     )
-      result.target.contactReference = currentContactReference(world, scope, target, reads);
+      facts.targetContact = {
+        id: target.id,
+        life: target.actor?.physicalLife ?? 0,
+        leaseId: currentBodyGrant(world, scope.actorId, target.id, reads)!.leaseId,
+      };
+  }
+  return projectPlayerEventRoles(scope, event, facts);
+}
+
+export interface PlayerEventRoleFacts {
+  selfContact: boolean;
+  actorContact?: { id: string; life: number; leaseId: string };
+  sourceCommunicationId?: string;
+  targetCommunicationId?: string;
+  targetContact?: { id: string; life: number; leaseId: string };
+}
+/** Current-role witnesses are captured separately from immutable event wording.
+ * Token formatting cannot turn a newly learned name into an old speaker label. */
+export function projectPlayerEventRoles(
+  scope: RequestScope,
+  event: ActorEvent,
+  facts: PlayerEventRoleFacts,
+) {
+  const result: ReturnType<import('./perceived-events.js').PublicEventRoleProjection> = {};
+  if (facts.selfContact) result.actor = { contactReference: scope.actorId };
+  else if (facts.actorContact) {
+    const body = facts.actorContact;
+    result.actor = {
+      contactReference: currentContactReferenceFor(scope, body.id, body.life, body.leaseId),
+    };
+  }
+  const remembered = facts.sourceCommunicationId;
+  if (remembered && remembered !== scope.actorId && remembered === event.actorId)
+    result.actor = {
+      ...result.actor,
+      communicationReference: communicationReference(scope, { id: remembered }),
+    };
+  if (facts.targetCommunicationId) {
+    result.target = {
+      communicationReference: communicationReference(scope, { id: facts.targetCommunicationId }),
+    };
+    if (facts.targetContact) {
+      const body = facts.targetContact;
+      result.target.contactReference = currentContactReferenceFor(
+        scope,
+        body.id,
+        body.life,
+        body.leaseId,
+      );
+    }
   }
   return result;
 }

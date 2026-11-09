@@ -201,7 +201,7 @@ pub struct ReceivedObservationFacet {
     pub value: ReceivedFacetValue,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReceivedObservation {
     pub id: String,
@@ -222,6 +222,8 @@ pub struct ReceivedObservation {
     pub context: Option<ObservationContext>,
     pub header_ref: ReceivedValueReference,
     pub facets: Vec<ReceivedObservationFacet>,
+    #[serde(skip)]
+    pub(super) storage: Option<crate::host::ByteReservation>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

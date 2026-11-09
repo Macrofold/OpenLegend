@@ -559,7 +559,16 @@ export function perceivedEventType(
 ): string | undefined {
   return evidence.sound && !evidence.speech ? 'sound' : evidence.eventType;
 }
-export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence): ActorEvent {
+export type EventOriginalMetadata = Pick<
+  WorldEvent,
+  'id' | 'sequence' | 'at' | 'order' | 'type' | 'scope'
+> & {
+  data?: { responseId?: unknown };
+};
+export function projectEventEvidence(
+  event: EventOriginalMetadata,
+  evidence: EventEvidence,
+): ActorEvent {
   if (event.type === 'speech' && !evidence.speech && !evidence.sound)
     throw new Error('Speech is missing its committed listener perspective.');
   if (!evidence.speech && !evidence.sound && (!evidence.eventData || !evidence.eventType))

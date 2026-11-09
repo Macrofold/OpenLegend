@@ -230,20 +230,23 @@ impl TemporalState {
                     });
                 }
                 if !entries.is_empty() {
-                    batches.push(Arc::new(ReceivedBatch {
-                        actor_id: batch.actor_id.clone(),
-                        physical_life: batch.physical_life,
-                        epoch: batch.epoch.clone(),
-                        batch_order: batch.batch_order,
-                        entries,
-                    }));
+                    batches.push(crate::received::TemporalBatch::from_owned(
+                        ReceivedBatch {
+                            actor_id: batch.actor_id.clone(),
+                            physical_life: batch.physical_life,
+                            epoch: batch.epoch.clone(),
+                            batch_order: batch.batch_order,
+                            entries,
+                        },
+                        budget,
+                    )?);
                 }
             }
             if !changed {
                 continue;
             }
             let after = page
-                .replace_batches(batches, values, meaning)?
+                .replace_batches(batches, values, meaning, budget)?
                 .map(Arc::new);
             let actor = self.actors.get(actor_id).ok_or_else(invalid)?;
             let appended = after

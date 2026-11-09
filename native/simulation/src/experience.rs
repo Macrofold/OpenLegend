@@ -33,11 +33,11 @@ mod evidence;
 pub use evidence::*;
 mod history;
 mod player_events;
-pub(crate) use player_events::write_player_events;
 pub(crate) use history::{
     CapturedHistoryCuts, CapturedHistoryInput, HistorySettings, capture_history_cuts,
     capture_history_input,
 };
+pub(crate) use player_events::{CapturedPlayerEvents, capture_player_events};
 mod header_input;
 mod install;
 pub use install::*;
@@ -50,7 +50,9 @@ pub(crate) use obligation::{
 mod commitments;
 mod receipt;
 pub(crate) use commitments::{advance_commitments, next_commitment_deadline};
+mod impression;
 mod memory;
+pub(crate) use impression::{reinforce_experience, remember_interpretation};
 pub(crate) use memory::{
     MemoryAcquisitionError, MemoryAdmission, acquire_memory, encoded_body_bound,
     prepare_memory_admission,
@@ -1102,6 +1104,8 @@ pub struct PersonalSourceCollection {
     lookup: BTreeMap<String, u64>,
     coverage: SourceCoverage,
     agreement_body_count: usize,
+    current_open_heads_selected: bool,
+    sensory_selected: bool,
 }
 
 impl PersonalSourceCollection {
@@ -1126,6 +1130,8 @@ impl PersonalSourceCollection {
             by_ordinal: BTreeMap::new(),
             lookup: BTreeMap::new(),
             agreement_body_count: 0,
+            current_open_heads_selected: false,
+            sensory_selected: false,
             coverage: SourceCoverage {
                 complete: coverage.complete,
                 next_ordinal: coverage.next_ordinal,
@@ -1153,15 +1159,25 @@ impl PersonalSourceCollection {
         Ok(installed)
     }
 
-    pub(crate) fn has_agreement_bodies(&self) -> Result<bool, ExperienceError> {
+    pub(crate) fn install_current_selection(&mut self, open_heads: bool, sensory: bool) {
+        self.current_open_heads_selected = open_heads;
+        self.sensory_selected = sensory;
+    }
+    /// An active cold read selects every eligible open agreement head in the
+    /// same SQL union as this resident tail. It does not make all old awareness
+    /// resident or certify that closed historical agreements never existed.
+    pub(crate) fn may_have_current_trade_terms(&self) -> Result<bool, ExperienceError> {
         if self.agreement_body_count != 0 {
             return Ok(true);
         }
-        if self.coverage.complete {
+        if self.coverage.complete || self.current_open_heads_selected {
             Ok(false)
         } else {
             Err(ExperienceError::Unavailable)
         }
+    }
+    pub(crate) fn complete_current_sensory(&self) -> bool {
+        self.coverage.complete || self.sensory_selected
     }
     pub fn kind(&self) -> PersonalSourceKind {
         self.kind
@@ -1172,7 +1188,9 @@ impl PersonalSourceCollection {
     pub fn coverage(&self) -> &SourceCoverage {
         &self.coverage
     }
-    pub fn records(&self) -> impl DoubleEndedIterator<Item = &Arc<PersonalSourceRecord>> + ExactSizeIterator {
+    pub fn records(
+        &self,
+    ) -> impl DoubleEndedIterator<Item = &Arc<PersonalSourceRecord>> + ExactSizeIterator {
         self.by_ordinal.values()
     }
     pub fn get(&self, id: &str) -> Result<Option<&Arc<PersonalSourceRecord>>, ExperienceError> {
@@ -1221,7 +1239,10 @@ impl ActorPrivacy {
         self.revision.unwrap_or(0)
     }
     pub fn revoked(&self, id: &str) -> bool {
-        self.forgotten_index.contains(id) || self.corrections.contains_key(id)
+        self.is_forgotten(id) || self.corrections.contains_key(id)
+    }
+    pub fn is_forgotten(&self, id: &str) -> bool {
+        self.forgotten_index.contains(id)
     }
     pub fn forgotten(&self) -> impl Iterator<Item = &String> {
         self.forgotten.iter()
